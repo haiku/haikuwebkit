@@ -101,8 +101,9 @@ void RunLoop::dispatch(const SchedulePairHashSet& schedulePairs, Function<void()
 
 // RunLoop::Timer
 
-RunLoop::TimerBase::TimerBase(Ref<RunLoop>&& runLoop)
+RunLoop::TimerBase::TimerBase(Ref<RunLoop>&& runLoop, ASCIILiteral description)
     : m_runLoop(WTFMove(runLoop))
+    , m_description(description)
 {
 }
 

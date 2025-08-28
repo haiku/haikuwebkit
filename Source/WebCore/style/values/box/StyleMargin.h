@@ -44,4 +44,4 @@ using MarginBox = MinimallySerializingSpaceSeparatedRectEdges<MarginEdge>;
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::MarginEdge> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::MarginEdge)

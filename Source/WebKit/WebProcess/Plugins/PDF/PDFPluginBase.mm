@@ -246,14 +246,20 @@ void PDFPluginBase::createPDFDocument()
 
 bool PDFPluginBase::isFullFramePlugin() const
 {
-    // <object> or <embed> plugins will appear to be in their parent frame, so we have to
-    // check whether our frame's widget is exactly our PluginView.
-    RefPtr frame = m_frame.get();
-    if (!frame || !frame->coreLocalFrame())
-        return false;
+    if (!m_cachedIsFullFramePlugin) [[unlikely]] {
+        m_cachedIsFullFramePlugin = [&] {
+            // <object> or <embed> plugins will appear to be in their parent frame,
+            // so we have to check whether our frame's widget is exactly our PluginView.
+            RefPtr frame = m_frame.get();
+            if (!frame || !frame->coreLocalFrame())
+                return false;
 
-    RefPtr document = dynamicDowncast<PluginDocument>(frame->coreLocalFrame()->document());
-    return document && document->pluginWidget() == m_view;
+            RefPtr document = dynamicDowncast<PluginDocument>(frame->coreLocalFrame()->document());
+            return document && document->pluginWidget() == m_view;
+        }();
+    }
+
+    return *m_cachedIsFullFramePlugin;
 }
 
 bool PDFPluginBase::handlesPageScaleFactor() const
@@ -386,11 +392,13 @@ void PDFPluginBase::dataSpanForRange(uint64_t sourcePosition, size_t count, Chec
         if (!m_data)
             return false;
 
-        if (haveStreamedDataForRange(sourcePosition, count))
-            return true;
-
         uint64_t dataLength = CFDataGetLength(m_data.get());
-        if (!isSumSmallerThanOrEqual(sourcePosition, static_cast<uint64_t>(count), dataLength))
+        bool rangeExtentIsSmallerThanBufferSize = isSumSmallerThanOrEqual(sourcePosition, static_cast<uint64_t>(count), dataLength);
+
+        if (haveStreamedDataForRange(sourcePosition, count))
+            return rangeExtentIsSmallerThanBufferSize;
+
+        if (!rangeExtentIsSmallerThanBufferSize)
             return false;
 
         if (checkValidRanges == CheckValidRanges::No)

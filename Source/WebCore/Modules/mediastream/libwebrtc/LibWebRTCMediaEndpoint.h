@@ -28,6 +28,7 @@
 
 #include "LibWebRTCObservers.h"
 #include "LibWebRTCProvider.h"
+#include "LibWebRTCRefWrappers.h"
 #include "LibWebRTCRtpSenderBackend.h"
 #include "RTCRtpReceiver.h"
 #include "Timer.h"
@@ -170,7 +171,7 @@ private:
         return result ? webrtc::RefCountReleaseStatus::kOtherRefsRemained : webrtc::RefCountReleaseStatus::kDroppedLastRef;
     }
 
-    std::pair<LibWebRTCRtpSenderBackend::Source, webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>> createSourceAndRTCTrack(MediaStreamTrack&);
+    std::pair<LibWebRTCRtpSenderBackend::Source, Ref<webrtc::MediaStreamTrackInterface>> createSourceAndRTCTrack(MediaStreamTrack&);
     RefPtr<RealtimeMediaSource> sourceFromNewReceiver(webrtc::RtpReceiverInterface&);
 
 #if !RELEASE_LOG_DISABLED
@@ -185,8 +186,8 @@ private:
     RefPtr<LibWebRTCPeerConnectionBackend> protectedPeerConnectionBackend() const;
 
     WeakPtr<LibWebRTCPeerConnectionBackend> m_peerConnectionBackend;
-    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> m_peerConnectionFactory;
-    webrtc::scoped_refptr<webrtc::PeerConnectionInterface> m_backend;
+    const Ref<webrtc::PeerConnectionFactoryInterface> m_peerConnectionFactory;
+    RefPtr<webrtc::PeerConnectionInterface> m_backend;
 
     friend CreateSessionDescriptionObserver<LibWebRTCMediaEndpoint>;
     friend SetLocalSessionDescriptionObserver<LibWebRTCMediaEndpoint>;
@@ -201,7 +202,7 @@ private:
     bool m_isInitiator { false };
     Timer m_statsLogTimer;
 
-    MemoryCompactRobinHoodHashMap<String, webrtc::scoped_refptr<webrtc::MediaStreamInterface>> m_localStreams;
+    MemoryCompactRobinHoodHashMap<String, Ref<webrtc::MediaStreamInterface>> m_localStreams;
 
     const std::unique_ptr<LibWebRTCProvider::SuspendableSocketFactory> m_rtcSocketFactory;
 #if !RELEASE_LOG_DISABLED

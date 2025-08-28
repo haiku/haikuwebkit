@@ -117,7 +117,7 @@ static NSArray<NSString *> *controlArray()
     [self setFrame:frame];
 
     WeakObjCPtr<WKPDFHUDView> weakSelf = self;
-    WorkQueue::protectedMain()->dispatchAfter(Seconds { initialHideTimeInterval }, [weakSelf] {
+    WorkQueue::mainSingleton().dispatchAfter(Seconds { initialHideTimeInterval }, [weakSelf] {
         if (RetainPtr protectedSelf = weakSelf.get())
             [protectedSelf _hideTimerFired];
     });

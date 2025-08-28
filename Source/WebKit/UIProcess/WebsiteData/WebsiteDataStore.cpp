@@ -209,7 +209,7 @@ WebsiteDataStore::~WebsiteDataStore()
     if (RefPtr networkProcess = m_networkProcess)
         networkProcess->removeSession(*this, std::exchange(m_completionHandlerForRemovalFromNetworkProcess, { }));
     if (m_completionHandlerForRemovalFromNetworkProcess) {
-        RunLoop::protectedMain()->dispatch([completionHandler = std::exchange(m_completionHandlerForRemovalFromNetworkProcess, { })]() mutable {
+        RunLoop::mainSingleton().dispatch([completionHandler = std::exchange(m_completionHandlerForRemovalFromNetworkProcess, { })]() mutable {
             completionHandler({ });
         });
     }
@@ -313,7 +313,7 @@ SOAuthorizationCoordinator& WebsiteDataStore::soAuthorizationCoordinator(const W
 {
     RELEASE_ASSERT(pageProxy.protectedPreferences()->isExtensibleSSOEnabled());
     if (!m_soAuthorizationCoordinator)
-        m_soAuthorizationCoordinator = WTF::makeUnique<SOAuthorizationCoordinator>();
+        lazyInitialize(m_soAuthorizationCoordinator, WTF::makeUnique<SOAuthorizationCoordinator>());
 
     return *m_soAuthorizationCoordinator;
 }
@@ -528,7 +528,7 @@ void WebsiteDataStore::resolveDirectoriesAsynchronously()
             m_mediaKeysStorageSalt = WTFMove(mediaKeysStorageSalt);
             m_resolveDirectoriesCondition.notifyOne();
         }
-        RunLoop::protectedMain()->dispatch([protectedThis = WTFMove(protectedThis)] { });
+        RunLoop::mainSingleton().dispatch([protectedThis = WTFMove(protectedThis)] { });
     });
 }
 
@@ -546,7 +546,7 @@ void WebsiteDataStore::handleResolvedDirectoriesAsynchronously(const WebsiteData
     }
 
     // Clear data of deprecated types.
-    protectedQueue()->dispatch([webSQLDirectory = crossThreadCopy(directories.webSQLDatabaseDirectory), applicationCacheDirectory = crossThreadCopy(directories.applicationCacheDirectory), applicationCacheFlatFileSubdirectoryName = crossThreadCopy(directories.applicationCacheFlatFileSubdirectoryName), directoriesToExclude = WTFMove(allCacheDirectories)]() {
+    m_queue->dispatch([webSQLDirectory = crossThreadCopy(directories.webSQLDatabaseDirectory), applicationCacheDirectory = crossThreadCopy(directories.applicationCacheDirectory), applicationCacheFlatFileSubdirectoryName = crossThreadCopy(directories.applicationCacheFlatFileSubdirectoryName), directoriesToExclude = WTFMove(allCacheDirectories)]() {
         if (!webSQLDirectory.isEmpty()) {
             WebCore::DatabaseTracker::trackerWithDatabasePath(webSQLDirectory)->deleteAllDatabasesImmediately();
             FileSystem::deleteEmptyDirectory(webSQLDirectory);
@@ -571,11 +571,6 @@ void WebsiteDataStore::handleResolvedDirectoriesAsynchronously(const WebsiteData
     });
 }
 
-Ref<WorkQueue> WebsiteDataStore::protectedQueue() const
-{
-    return m_queue;
-}
-
 static WebsiteDataStore::ProcessAccessType computeNetworkProcessAccessTypeForDataFetch(OptionSet<WebsiteDataType> dataTypes, bool isNonPersistentStore)
 {
     for (auto dataType : dataTypes) {
@@ -594,7 +589,7 @@ static WebsiteDataStore::ProcessAccessType computeWebProcessAccessTypeForDataFet
 
 void WebsiteDataStore::fetchData(OptionSet<WebsiteDataType> dataTypes, OptionSet<WebsiteDataFetchOption> fetchOptions, Function<void(Vector<WebsiteDataRecord>)>&& completionHandler)
 {
-    fetchDataAndApply(dataTypes, fetchOptions, WorkQueue::main(), WTFMove(completionHandler));
+    fetchDataAndApply(dataTypes, fetchOptions, WorkQueue::mainSingleton(), WTFMove(completionHandler));
 }
 
 void WebsiteDataStore::fetchDataAndApply(OptionSet<WebsiteDataType> dataTypes, OptionSet<WebsiteDataFetchOption> fetchOptions, Ref<WorkQueue>&& queue, Function<void(Vector<WebsiteDataRecord>)>&& apply)
@@ -622,7 +617,7 @@ void WebsiteDataStore::fetchDataAndApply(OptionSet<WebsiteDataType> dataTypes, O
             ASSERT(RunLoop::isMain());
 
             auto records = WTF::map(WTFMove(m_websiteDataRecords), [this](auto&& entry) {
-                return m_queue.ptr() != &WorkQueue::main() ? crossThreadCopy(WTFMove(entry.value)) : WTFMove(entry.value);
+                return m_queue.ptr() != &WorkQueue::mainSingleton() ? crossThreadCopy(WTFMove(entry.value)) : WTFMove(entry.value);
             });
             m_queue->dispatch([apply = WTFMove(m_apply), records = WTFMove(records), sessionID = m_protectedDataStore->sessionID()] () mutable {
                 OptionSet<WebsiteDataType> allTypes;
@@ -638,7 +633,7 @@ void WebsiteDataStore::fetchDataAndApply(OptionSet<WebsiteDataType> dataTypes, O
         void addWebsiteData(WebsiteData&& websiteData)
         {
             if (!RunLoop::isMain()) {
-                RunLoop::protectedMain()->dispatch([protectedThis = Ref { *this }, websiteData = crossThreadCopy(websiteData)]() mutable {
+                RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }, websiteData = crossThreadCopy(websiteData)]() mutable {
                     protectedThis->addWebsiteData(WTFMove(websiteData));
                 });
                 return;
@@ -728,7 +723,7 @@ private:
 
 #if ENABLE(VIDEO)
     if (dataTypes.contains(WebsiteDataType::DiskCache)) {
-        protectedQueue()->dispatch([mediaCacheDirectory = m_configuration->mediaCacheDirectory().isolatedCopy(), callbackAggregator] {
+        m_queue->dispatch([mediaCacheDirectory = m_configuration->mediaCacheDirectory().isolatedCopy(), callbackAggregator] {
             WebsiteData websiteData;
             auto origins = WebCore::HTMLMediaElement::originsInMediaCache(mediaCacheDirectory);
             websiteData.entries = WTF::map(origins, [](auto& origin) {
@@ -779,7 +774,7 @@ private:
 
     if (dataTypes.contains(WebsiteDataType::MediaKeys) && isPersistent()) {
         auto mediaKeysStorageDirectory = resolvedDirectories().mediaKeysStorageDirectory;
-        protectedQueue()->dispatch([mediaKeysStorageDirectory = crossThreadCopy(WTFMove(mediaKeysStorageDirectory)), callbackAggregator] {
+        m_queue->dispatch([mediaKeysStorageDirectory = crossThreadCopy(WTFMove(mediaKeysStorageDirectory)), callbackAggregator] {
             WebsiteData websiteData;
             websiteData.entries = mediaKeysStorageOrigins(mediaKeysStorageDirectory).map([](auto& origin) {
                 return WebsiteData::Entry { origin, WebsiteDataType::MediaKeys, 0 };
@@ -793,7 +788,7 @@ private:
         ScreenTimeWebsiteDataSupport::getScreenTimeURLs(configuration().identifier(), { [callbackAggregator](HashSet<URL> urls) {
             WebsiteData websiteData;
             websiteData.entries = WTF::map(urls, [](auto& url) {
-                return WebsiteData::Entry { SecurityOriginData::fromURL(url), WebsiteDataType::ScreenTime, 0 };
+                return WebsiteData::Entry { WebCore::SecurityOriginData::fromURL(url), WebsiteDataType::ScreenTime, 0 };
             });
             callbackAggregator->addWebsiteData(WTFMove(websiteData));
         } });
@@ -815,7 +810,7 @@ private:
 
 void WebsiteDataStore::fetchDataForRegistrableDomains(OptionSet<WebsiteDataType> dataTypes, OptionSet<WebsiteDataFetchOption> fetchOptions, Vector<WebCore::RegistrableDomain>&& domains, CompletionHandler<void(Vector<WebsiteDataRecord>&&, HashSet<WebCore::RegistrableDomain>&&)>&& completionHandler)
 {
-    fetchDataAndApply(dataTypes, fetchOptions, protectedQueue(), [domains = crossThreadCopy(domains), completionHandler = WTFMove(completionHandler)] (auto&& existingDataRecords) mutable {
+    fetchDataAndApply(dataTypes, fetchOptions, Ref { m_queue }, [domains = crossThreadCopy(domains), completionHandler = WTFMove(completionHandler)] (auto&& existingDataRecords) mutable {
         ASSERT(!RunLoop::isMain());
         
         Vector<WebsiteDataRecord> matchingDataRecords;
@@ -829,7 +824,7 @@ void WebsiteDataStore::fetchDataForRegistrableDomains(OptionSet<WebsiteDataType>
                 }
             }
         }
-        RunLoop::protectedMain()->dispatch([completionHandler = WTFMove(completionHandler), matchingDataRecords = WTFMove(matchingDataRecords), domainsWithMatchingDataRecords = WTFMove(domainsWithMatchingDataRecords)] () mutable {
+        RunLoop::mainSingleton().dispatch([completionHandler = WTFMove(completionHandler), matchingDataRecords = WTFMove(matchingDataRecords), domainsWithMatchingDataRecords = WTFMove(domainsWithMatchingDataRecords)] () mutable {
             completionHandler(WTFMove(matchingDataRecords), WTFMove(domainsWithMatchingDataRecords));
         });
     });
@@ -915,7 +910,7 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, WallTime
 
 #if ENABLE(VIDEO)
     if (dataTypes.contains(WebsiteDataType::DiskCache)) {
-        protectedQueue()->dispatch([modifiedSince, mediaCacheDirectory = m_configuration->mediaCacheDirectory().isolatedCopy(), callbackAggregator] {
+        m_queue->dispatch([modifiedSince, mediaCacheDirectory = m_configuration->mediaCacheDirectory().isolatedCopy(), callbackAggregator] {
             WebCore::HTMLMediaElement::clearMediaCache(mediaCacheDirectory, modifiedSince);
         });
     }
@@ -954,7 +949,7 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, WallTime
 
     if (dataTypes.contains(WebsiteDataType::MediaKeys) && isPersistent()) {
         auto mediaKeysStorageDirectory = resolvedDirectories().mediaKeysStorageDirectory;
-        protectedQueue()->dispatch([mediaKeysStorageDirectory = crossThreadCopy(WTFMove(mediaKeysStorageDirectory)), callbackAggregator, modifiedSince] {
+        m_queue->dispatch([mediaKeysStorageDirectory = crossThreadCopy(WTFMove(mediaKeysStorageDirectory)), callbackAggregator, modifiedSince] {
             removeMediaKeysStorage(mediaKeysStorageDirectory, modifiedSince);
         });
     }
@@ -993,7 +988,7 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, const Ve
         }
         
 #if ENABLE(VIDEO)
-        protectedQueue()->dispatch([origins = WTFMove(origins), mediaCacheDirectory = m_configuration->mediaCacheDirectory().isolatedCopy(), callbackAggregator] {
+        m_queue->dispatch([origins = WTFMove(origins), mediaCacheDirectory = m_configuration->mediaCacheDirectory().isolatedCopy(), callbackAggregator] {
             WebCore::HTMLMediaElement::clearMediaCacheForOrigins(mediaCacheDirectory, origins);
         });
 #endif
@@ -1055,7 +1050,7 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, const Ve
         }
 
         auto mediaKeysStorageDirectory = resolvedDirectories().mediaKeysStorageDirectory;
-        protectedQueue()->dispatch([mediaKeysStorageDirectory = crossThreadCopy(WTFMove(mediaKeysStorageDirectory)), salt = mediaKeysStorageSalt(), callbackAggregator, origins = WTFMove(origins)] {
+        m_queue->dispatch([mediaKeysStorageDirectory = crossThreadCopy(WTFMove(mediaKeysStorageDirectory)), salt = mediaKeysStorageSalt(), callbackAggregator, origins = WTFMove(origins)] {
             removeMediaKeysStorage(mediaKeysStorageDirectory, origins, salt);
         });
     }
@@ -1076,7 +1071,7 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, const Ve
 DeviceIdHashSaltStorage& WebsiteDataStore::ensureDeviceIdHashSaltStorage()
 {
     if (!m_deviceIdHashSaltStorage)
-        m_deviceIdHashSaltStorage = DeviceIdHashSaltStorage::create(isPersistent() ? m_configuration->deviceIdHashSaltsStorageDirectory() : String());
+        lazyInitialize(m_deviceIdHashSaltStorage, DeviceIdHashSaltStorage::create(isPersistent() ? m_configuration->deviceIdHashSaltsStorageDirectory() : String()));
 
     return *m_deviceIdHashSaltStorage;
 }
@@ -1090,7 +1085,7 @@ Ref<DeviceIdHashSaltStorage> WebsiteDataStore::ensureProtectedDeviceIdHashSaltSt
 DeviceIdHashSaltStorage& WebsiteDataStore::ensureMediaKeysHashSaltStorage()
 {
     if (!m_mediaKeysHashSaltStorage)
-        m_mediaKeysHashSaltStorage = DeviceIdHashSaltStorage::create(isPersistent() ? m_configuration->mediaKeysHashSaltsStorageDirectory() : String());
+        lazyInitialize(m_mediaKeysHashSaltStorage, DeviceIdHashSaltStorage::create(isPersistent() ? m_configuration->mediaKeysHashSaltsStorageDirectory() : String()));
 
     return *m_mediaKeysHashSaltStorage;
 }
@@ -1808,7 +1803,7 @@ void WebsiteDataStore::getNetworkProcessConnection(WebProcessProxy& webProcessPr
             }
 
             // Retry on the next RunLoop iteration because we may be inside the WebsiteDataStore destructor.
-            RunLoop::protectedMain()->dispatch([weakThis = WTFMove(weakThis), networkProcessProxy = WTFMove(networkProcessProxy), weakWebProcessProxy = WTFMove(webProcessProxy), reply = WTFMove(reply)] () mutable {
+            RunLoop::mainSingleton().dispatch([weakThis = WTFMove(weakThis), networkProcessProxy = WTFMove(networkProcessProxy), weakWebProcessProxy = WTFMove(webProcessProxy), reply = WTFMove(reply)] () mutable {
                 RefPtr protectedThis = weakThis.get();
                 RefPtr webProcessProxy = weakWebProcessProxy.get();
                 if (protectedThis && webProcessProxy) {
@@ -2052,7 +2047,7 @@ void WebsiteDataStore::propagateSettingUpdates()
 
 void WebsiteDataStore::dispatchOnQueue(Function<void()>&& function)
 {
-    protectedQueue()->dispatch(WTFMove(function));
+    m_queue->dispatch(WTFMove(function));
 }
 
 void WebsiteDataStore::setCacheModelSynchronouslyForTesting(CacheModel cacheModel)
@@ -2280,7 +2275,7 @@ Ref<VirtualAuthenticatorManager> WebsiteDataStore::protectedVirtualAuthenticator
 API::HTTPCookieStore& WebsiteDataStore::cookieStore()
 {
     if (!m_cookieStore)
-        m_cookieStore = API::HTTPCookieStore::create(*this);
+        lazyInitialize(m_cookieStore, API::HTTPCookieStore::create(*this));
 
     return *m_cookieStore;
 }

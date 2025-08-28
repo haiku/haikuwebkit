@@ -51,6 +51,7 @@ typedef SIZE* LPSIZE;
 typedef struct HBITMAP__ *HBITMAP;
 #endif
 
+#include "NativeImage.h"
 #include <wtf/Ref.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
@@ -65,7 +66,6 @@ namespace WebCore {
 
 class Image;
 class IntSize;
-class NativeImage;
 
 class ImageAdapter {
     WTF_MAKE_TZONE_ALLOCATED(ImageAdapter);

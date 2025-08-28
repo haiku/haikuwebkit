@@ -36,16 +36,16 @@ class AccessibilityTable;
     
 class AccessibilityARIAGridRow final : public AccessibilityTableRow {
 public:
-    static Ref<AccessibilityARIAGridRow> create(AXID, RenderObject&);
-    static Ref<AccessibilityARIAGridRow> create(AXID, Node&);
+    static Ref<AccessibilityARIAGridRow> create(AXID, RenderObject&, AXObjectCache&);
+    static Ref<AccessibilityARIAGridRow> create(AXID, Node&, AXObjectCache&);
     virtual ~AccessibilityARIAGridRow();
 
     AccessibilityChildrenVector disclosedRows() final;
     AccessibilityObject* disclosedByRow() const final;
 
 private:
-    explicit AccessibilityARIAGridRow(AXID, RenderObject&);
-    explicit AccessibilityARIAGridRow(AXID, Node&);
+    explicit AccessibilityARIAGridRow(AXID, RenderObject&, AXObjectCache&);
+    explicit AccessibilityARIAGridRow(AXID, Node&, AXObjectCache&);
     bool isAccessibilityARIAGridRowInstance() const final { return true; }
 
     bool isARIAGridRow() const final { return true; }

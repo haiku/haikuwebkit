@@ -270,8 +270,7 @@ void logMemoryStatistics(LogMemoryStatisticsReason reason)
     auto& vm = commonVM();
     JSC::JSLockHolder locker(vm);
     RELEASE_LOG(MemoryPressure, "Live JavaScript objects at time of %" PUBLIC_LOG_STRING ":", description.characters());
-    auto typeCounts = vm.heap.objectTypeCounts();
-    for (auto& it : *typeCounts)
+    for (auto& it : vm.heap.objectTypeCounts())
         RELEASE_LOG(MemoryPressure, "  %" PUBLIC_LOG_STRING ": %d", it.key.characters(), it.value);
 }
 #endif

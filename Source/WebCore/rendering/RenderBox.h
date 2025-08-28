@@ -242,6 +242,8 @@ public:
     LayoutUnit marginStart() const { return marginStart(writingMode()); }
     LayoutUnit marginEnd() const { return marginEnd(writingMode()); }
 
+    inline LayoutUnit marginBoxLogicalHeight(WritingMode) const;
+
     void setMarginBefore(LayoutUnit value, const WritingMode writingMode) { m_marginBox.setBefore(value, writingMode); }
     void setMarginAfter(LayoutUnit value, const WritingMode writingMode) { m_marginBox.setAfter(value, writingMode); }
     void setMarginStart(LayoutUnit value, const WritingMode writingMode) { m_marginBox.setStart(value, writingMode); }
@@ -518,7 +520,7 @@ public:
     
     virtual std::optional<LayoutUnit> firstLineBaseline() const { return { }; }
     virtual std::optional<LayoutUnit> lastLineBaseline() const { return { }; }
-    virtual std::optional<LayoutUnit> inlineBlockBaseline(LineDirectionMode) const { return { }; } // Returns empty if we should skip this box when computing the baseline of an inline-block.
+    virtual std::optional<LayoutUnit> inlineBlockBaseline() const { return { }; } // Returns empty if we should skip this box when computing the baseline of an inline-block.
     LayoutUnit synthesizeBaseline(FontBaseline baselineType, BaselineSynthesisEdge) const;
 
     bool shrinkToAvoidFloats() const;
@@ -526,8 +528,7 @@ public:
 
     virtual void markForPaginationRelayoutIfNeeded() { }
     
-    LayoutUnit lineHeight(bool firstLine, LineDirectionMode, LinePositionMode = PositionOnContainingLine) const override;
-    LayoutUnit baselinePosition(bool firstLine, LineDirectionMode, LinePositionMode = PositionOnContainingLine) const override;
+    LayoutUnit lineHeight() const;
 
     LayoutUnit offsetLeft() const override;
     LayoutUnit offsetTop() const override;
@@ -556,7 +557,6 @@ public:
     bool hasVisualOverflow() const { return m_overflow && !borderBoxRect().contains(m_overflow->visualOverflowRect()); }
 
     virtual bool shouldInvalidatePreferredWidths() const;
-    virtual void computeIntrinsicRatioInformation(FloatSize& /* intrinsicSize */, FloatSize& /* intrinsicRatio */) const { }
 
     ScrollPosition scrollPosition() const;
     LayoutSize cachedSizeForOverflowClip() const;

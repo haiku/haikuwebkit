@@ -35,6 +35,7 @@
 #include "HistoryController.h"
 #include "HistoryItem.h"
 #include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameLoaderClient.h"
 #include "LocalFrameView.h"
 #include "Navigation.h"

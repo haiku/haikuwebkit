@@ -609,7 +609,7 @@ static std::optional<DynamicContentScalingDisplayList> renderPDFTileToDynamicCon
     ASSERT(!isMainRunLoop());
     WebCore::ImageBufferCreationContext creationContext;
     creationContext.dynamicContentScalingResourceCache = dynamicContentScalingResourceCache;
-    RefPtr tileBuffer = ImageBuffer::create<DynamicContentScalingImageBufferBackend, DynamicContentScalingImageBuffer>(renderInfo.tileRect.size(), renderInfo.pageCoverage.deviceScaleFactor, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8, RenderingPurpose::Unspecified, creationContext);
+    RefPtr tileBuffer = ImageBuffer::create<DynamicContentScalingImageBufferBackend, DynamicContentScalingImageBuffer>(renderInfo.tileRect.size(), renderInfo.pageCoverage.deviceScaleFactor, DestinationColorSpace::SRGB(), { ImageBufferPixelFormat::BGRA8 }, RenderingPurpose::Unspecified, creationContext);
     if (!tileBuffer)
         return std::nullopt;
     // Fixup incremental rendering requests to render the contents covering the full tile.

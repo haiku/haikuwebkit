@@ -25,6 +25,7 @@
 #pragma once
 
 #include "CSSGridNamedAreaMap.h"
+#include "StyleValueTypes.h"
 
 namespace WebCore {
 namespace Style {

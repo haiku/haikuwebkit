@@ -264,6 +264,7 @@ $(PROJECT_DIR)/Shared/Cocoa/CoreIPCPlist.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCPresentationIntent.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCSecureCoding.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCString.serialization.in
+$(PROJECT_DIR)/Shared/Cocoa/CoreIPCStringSet.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCURL.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/DataDetectionResult.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/InsertTextOptions.serialization.in
@@ -524,6 +525,7 @@ $(PROJECT_DIR)/UIProcess/Extensions/WebExtensionContext.messages.in
 $(PROJECT_DIR)/UIProcess/Extensions/WebExtensionController.messages.in
 $(PROJECT_DIR)/UIProcess/GPU/GPUProcessProxy.messages.in
 $(PROJECT_DIR)/UIProcess/Inspector/RemoteWebInspectorUIProxy.messages.in
+$(PROJECT_DIR)/UIProcess/Inspector/WebInspectorBackendProxy.messages.in
 $(PROJECT_DIR)/UIProcess/Inspector/WebInspectorUIExtensionControllerProxy.messages.in
 $(PROJECT_DIR)/UIProcess/Inspector/WebInspectorUIProxy.messages.in
 $(PROJECT_DIR)/UIProcess/Media/AudioSessionRoutingArbitratorProxy.messages.in

@@ -134,7 +134,7 @@ Texture* XRSubImage::depthTexture()
 
 RefPtr<XRSubImage> XRBinding::getViewSubImage(XRProjectionLayer& projectionLayer)
 {
-    return protectedDevice()->getXRViewSubImage(projectionLayer);
+    return device().getXRViewSubImage(projectionLayer);
 }
 
 } // namespace WebGPU

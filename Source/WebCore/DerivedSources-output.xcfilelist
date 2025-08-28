@@ -1030,6 +1030,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSErrorEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSErrorEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSEvent.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSEventCounts.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSEventCounts.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSEventInit.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSEventInit.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSEventListenerOptions.cpp
@@ -1714,6 +1716,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIIRFilterNode.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIIRFilterNode.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIIRFilterOptions.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIIRFilterOptions.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIPAddressSpace.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIPAddressSpace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIdentityCredentialProtocol.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIdentityCredentialProtocol.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIdleDeadline.cpp
@@ -2085,6 +2089,12 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorShare.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorShare.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorStorage.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorStorage.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorUA.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorUA.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorUABrandVersion.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorUABrandVersion.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorUAData.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNavigatorUAData.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNode.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNode.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSNodeFilter.cpp
@@ -2232,6 +2242,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPaymentValidationErrors.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPaymentValidationErrors.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPbkdf2Params.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPbkdf2Params.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformance+EventCounts.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformance+EventCounts.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformance+NavigationTiming.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformance+NavigationTiming.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformance+PerformanceTimeline.cpp
@@ -2244,6 +2256,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformance.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformance.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformanceEntry.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformanceEntry.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformanceEventTiming.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformanceEventTiming.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformanceMark.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformanceMark.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPerformanceMarkOptions.cpp
@@ -3078,6 +3092,10 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSTrustedTypePolicyOptions.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSTrustedTypePolicyOptions.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSTypeConversions.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSTypeConversions.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSUADataValues.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSUADataValues.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSUALowEntropyJSON.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSUALowEntropyJSON.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSUIEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSUIEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSUIEventInit.cpp
@@ -3340,10 +3358,14 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeys.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeys.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNamespace.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNamespace.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNodeInfo.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNodeInfo.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPlaybackTargetAvailabilityEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPlaybackTargetAvailabilityEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPoint.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPoint.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitSerializedNode.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitSerializedNode.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebLock.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebLock.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebLockGrantedCallback.cpp

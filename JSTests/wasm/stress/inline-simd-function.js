@@ -1,3 +1,4 @@
+//@ slow!
 //@ skip if !$isWasmPlatform or $buildType == "debug"
 
 function instantiate(moduleBase64, importObject) {

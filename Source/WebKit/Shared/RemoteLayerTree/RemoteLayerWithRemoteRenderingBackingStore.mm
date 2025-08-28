@@ -50,7 +50,7 @@ RemoteLayerWithRemoteRenderingBackingStore::RemoteLayerWithRemoteRenderingBackin
         return;
     }
 
-    m_bufferSet = collection->protectedLayerTreeContext()->ensureProtectedRemoteRenderingBackendProxy()->createImageBufferSet();
+    m_bufferSet = collection->protectedLayerTreeContext()->ensureProtectedRemoteRenderingBackendProxy()->createImageBufferSet(*CheckedPtr { this }.get());
 }
 
 RemoteLayerWithRemoteRenderingBackingStore::~RemoteLayerWithRemoteRenderingBackingStore()
@@ -73,6 +73,17 @@ bool RemoteLayerWithRemoteRenderingBackingStore::frontBufferMayBeVolatile() cons
 
 void RemoteLayerWithRemoteRenderingBackingStore::prepareToDisplay()
 {
+    if (performDelegatedLayerDisplay())
+        return;
+
+    RefPtr bufferSet = this->bufferSet();
+    if (!bufferSet)
+        return;
+
+    if (!hasFrontBuffer() || !supportsPartialRepaint())
+        setNeedsDisplay();
+
+    bufferSet->prepareToDisplay(dirtyRegion(), supportsPartialRepaint(), hasEmptyDirtyRegion(), drawingRequiresClearedPixels());
     m_contentsBufferHandle = std::nullopt;
 
     if (!hasFrontBuffer() || !supportsPartialRepaint())
@@ -115,13 +126,15 @@ void RemoteLayerWithRemoteRenderingBackingStore::ensureBackingStore(const Parame
 
     m_parameters = parameters;
     clearBackingStore();
+
+    auto useLosslessCompression = UseLosslessCompression::No;
     if (m_bufferSet) {
         RemoteImageBufferSetConfiguration configuration {
             .logicalSize = size(),
             .resolutionScale = scale(),
             .colorSpace = colorSpace(),
             .contentsFormat = contentsFormat(),
-            .pixelFormat = pixelFormat(),
+            .bufferFormat = { pixelFormat(), useLosslessCompression },
             .renderingMode = type() == RemoteLayerBackingStore::Type::IOSurface ? RenderingMode::Accelerated : RenderingMode::Unaccelerated,
             .renderingPurpose = WebCore::RenderingPurpose::LayerBacking,
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
@@ -153,6 +166,11 @@ std::optional<RemoteImageBufferSetIdentifier> RemoteLayerWithRemoteRenderingBack
     if (!m_bufferSet)
         return std::nullopt;
     return m_bufferSet->identifier();
+}
+
+void RemoteLayerWithRemoteRenderingBackingStore::setNeedsDisplay()
+{
+    RemoteLayerBackingStore::setNeedsDisplay();
 }
 
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)

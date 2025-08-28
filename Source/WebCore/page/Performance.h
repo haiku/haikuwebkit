@@ -52,6 +52,7 @@ class CachedResource;
 class Document;
 class DocumentLoadTiming;
 class DocumentLoader;
+class EventCounts;
 class NetworkLoadMetrics;
 class PerformanceUserTiming;
 class PerformanceEntry;
@@ -81,6 +82,9 @@ public:
 
     PerformanceNavigation* navigation();
     PerformanceTiming* timing();
+    EventCounts* eventCounts() { return nullptr; }
+
+    unsigned interactionCount() { return 0; }
 
     Vector<Ref<PerformanceEntry>> getEntries() const;
     Vector<Ref<PerformanceEntry>> getEntriesByType(const String& entryType) const;
@@ -114,7 +118,7 @@ public:
     DOMHighResTimeStamp relativeTimeFromTimeOriginInReducedResolution(MonotonicTime) const;
     MonotonicTime monotonicTimeFromRelativeTime(DOMHighResTimeStamp) const;
 
-    ScriptExecutionContext* scriptExecutionContext() const final { return ContextDestructionObserver::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
 
     using RefCounted::ref;
     using RefCounted::deref;

@@ -27,6 +27,7 @@
 
 #include "PerformanceEntry.h"
 #include "PerformanceObserverCallback.h"
+#include "dom/DOMHighResTimeStamp.h"
 #include <wtf/OptionSet.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
@@ -44,6 +45,7 @@ public:
         std::optional<Vector<String>> entryTypes;
         std::optional<String> type;
         bool buffered;
+        std::optional<DOMHighResTimeStamp> durationThreshold;
     };
 
     static Ref<PerformanceObserver> create(ScriptExecutionContext& context, Ref<PerformanceObserverCallback>&& callback)

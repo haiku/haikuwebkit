@@ -136,7 +136,8 @@ class Events(service.BuildbotService):
             "status": "started",
             "hostname": self.master_hostname,
             "change_id": self.extractProperty(build, 'github.head.sha') or self.extractProperty(build, 'patch_id'),
-            "pr_id": self.extractProperty(build, 'github.number') or -1,
+            "pr_author": self.extractProperty(build, 'github.head.user.login'),
+            "pr_number": self.extractProperty(build, 'github.number') or -1,
             "pr_project": self.extractProperty(build, 'project') or '',
             "build_id": build.get('buildid'),
             "builder_id": build.get('builderid'),
@@ -195,7 +196,8 @@ class Events(service.BuildbotService):
             "status": "finished",
             "hostname": self.master_hostname,
             "change_id": self.extractProperty(build, 'github.head.sha') or self.extractProperty(build, 'patch_id'),
-            "pr_id": self.extractProperty(build, 'github.number') or -1,
+            "pr_author": self.extractProperty(build, 'github.head.user.login'),
+            "pr_number": self.extractProperty(build, 'github.number') or -1,
             "pr_project": self.extractProperty(build, 'project') or '',
             "build_id": build.get('buildid'),
             "builder_id": build.get('builderid'),
@@ -349,7 +351,7 @@ class GitHubEventHandlerNoEdits(GitHubEventHandler):
     PUBLIC_REPOS = ('WebKit/WebKit',)
     SENSATIVE_FIELDS = ('github.title',)
     LABEL_PROCESS_DELAY = 10
-    ACCOUNTS_TO_IGNORE = ('webkit-early-warning-system', 'webkit-commit-queue', 'chgibb-apple')
+    ACCOUNTS_TO_IGNORE = ('webkit-early-warning-system', 'webkit-commit-queue')
     TRAILER_RE = re.compile(r'^(?P<key>[^:()\t\/*]+): (?P<value>.+)')
 
     _commit_classes = []

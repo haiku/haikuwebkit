@@ -4,6 +4,7 @@
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
  * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -24,20 +25,30 @@
 
 #pragma once
 
-#include "BlockEllipsis.h"
 #include "Length.h"
-#include "ListStyleType.h"
 #include "RenderStyleConstants.h"
-#include "ScrollbarColor.h"
+#include "StyleBlockEllipsis.h"
 #include "StyleColor.h"
+#include "StyleCursor.h"
 #include "StyleCustomPropertyData.h"
 #include "StyleLineBoxContain.h"
 #include "StyleDynamicRangeLimit.h"
+#include "StyleHyphenateCharacter.h"
+#include "StyleHyphenateLimitEdge.h"
+#include "StyleHyphenateLimitLines.h"
+#include "StyleListStyleType.h"
+#include "StyleQuotes.h"
+#include "StyleScrollbarColor.h"
+#include "StyleStrokeWidth.h"
 #include "StyleTextEdge.h"
 #include "StyleTextEmphasisStyle.h"
 #include "StyleTextIndent.h"
 #include "StyleTextShadow.h"
 #include "StyleTextUnderlineOffset.h"
+#include "StyleWebKitLineGrid.h"
+#include "StyleWebKitOverflowScrolling.h"
+#include "StyleWebKitTextStrokeWidth.h"
+#include "StyleWebKitTouchCallout.h"
 #include "TabSize.h"
 #include "TouchAction.h"
 #include <wtf/DataRef.h>
@@ -51,7 +62,7 @@
 #endif
 
 #if ENABLE(TEXT_AUTOSIZING)
-#include "TextSizeAdjustment.h"
+#include "StyleTextSizeAdjust.h"
 #endif
 
 #if ENABLE(DARK_MODE_CSS)
@@ -64,8 +75,6 @@ class TextStream;
 
 namespace WebCore {
 
-class CursorList;
-class QuotesData;
 class StyleFilterData;
 class StyleImage;
 
@@ -74,7 +83,7 @@ class StyleImage;
 // actually uses one of these properties.
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleRareInheritedData);
 class StyleRareInheritedData : public RefCounted<StyleRareInheritedData> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleRareInheritedData);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleRareInheritedData, StyleRareInheritedData);
 public:
     static Ref<StyleRareInheritedData> create() { return adoptRef(*new StyleRareInheritedData); }
     Ref<StyleRareInheritedData> copy() const;
@@ -88,10 +97,11 @@ public:
 
     bool hasColorFilters() const;
 
-    float textStrokeWidth;
+    float usedZoom;
 
     RefPtr<StyleImage> listStyleImage;
 
+    Style::WebkitTextStrokeWidth textStrokeWidth;
     Style::Color textStrokeColor;
     Style::Color textFillColor;
     Style::Color textEmphasisColor;
@@ -105,12 +115,16 @@ public:
 
     Style::Color accentColor;
 
+    Style::ScrollbarColor scrollbarColor;
+
     Style::DynamicRangeLimit dynamicRangeLimit;
 
     Style::TextShadows textShadow;
 
-    RefPtr<CursorList> cursorData;
-    float usedZoom;
+    // The `cursor` property's state is stored broken up into two parts:
+    //  - the cursor's `predefined` state is stored in `RenderStyle::InheritedFlags::cursor`.
+    //  - the cursor's `images` state is stored here in `StyleRareInheritedData::cursorImages`.
+    Style::Cursor::Images cursorImages;
 
     Style::TextEmphasisStyle textEmphasisStyle;
     Style::TextIndent textIndent;
@@ -147,8 +161,8 @@ public:
     PREFERRED_TYPE(ImageRendering) unsigned imageRendering : 3;
     PREFERRED_TYPE(LineSnap) unsigned lineSnap : 2;
     PREFERRED_TYPE(LineAlign) unsigned lineAlign : 1;
-#if ENABLE(OVERFLOW_SCROLLING_TOUCH)
-    PREFERRED_TYPE(bool) unsigned useTouchOverflowScrolling: 1;
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
+    PREFERRED_TYPE(Style::WebkitOverflowScrolling) unsigned webkitOverflowScrolling: 1;
 #endif
     PREFERRED_TYPE(TextAlignLast) unsigned textAlignLast : 3;
     PREFERRED_TYPE(TextJustify) unsigned textJustify : 2;
@@ -158,8 +172,8 @@ public:
     PREFERRED_TYPE(RubyAlign) unsigned rubyAlign : 2;
     PREFERRED_TYPE(RubyOverhang) unsigned rubyOverhang : 1;
     PREFERRED_TYPE(TextZoom) unsigned textZoom: 1;
-#if PLATFORM(IOS_FAMILY)
-    PREFERRED_TYPE(bool) unsigned touchCalloutEnabled : 1;
+#if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
+    PREFERRED_TYPE(Style::WebkitTouchCallout) unsigned webkitTouchCallout : 1;
 #endif
     PREFERRED_TYPE(OptionSet<HangingPunctuation>) unsigned hangingPunctuation : 4;
     PREFERRED_TYPE(PaintOrder) unsigned paintOrder : 3;
@@ -184,38 +198,35 @@ public:
     OptionSet<TouchAction> usedTouchActions;
     OptionSet<EventListenerRegionType> eventListenerRegionTypes;
 
-    Length strokeWidth;
+    Style::StrokeWidth strokeWidth;
     Style::Color strokeColor;
     Style::Color visitedLinkStrokeColor;
 
-    AtomString hyphenationString;
-    short hyphenationLimitBefore { -1 };
-    short hyphenationLimitAfter { -1 };
-    short hyphenationLimitLines { -1 };
+    Style::HyphenateCharacter hyphenateCharacter;
+    Style::HyphenateLimitEdge hyphenateLimitBefore;
+    Style::HyphenateLimitEdge hyphenateLimitAfter;
+    Style::HyphenateLimitLines hyphenateLimitLines;
 
 #if ENABLE(DARK_MODE_CSS)
     Style::ColorScheme colorScheme;
 #endif
 
-    RefPtr<QuotesData> quotes;
+    Style::Quotes quotes;
+
     DataRef<StyleFilterData> appleColorFilter;
 
-    AtomString lineGrid;
+    Style::WebkitLineGrid lineGrid;
     TabSize tabSize;
 
 #if ENABLE(TEXT_AUTOSIZING)
-    TextSizeAdjustment textSizeAdjust;
+    Style::TextSizeAdjust textSizeAdjust;
 #endif
 
 #if ENABLE(TOUCH_EVENTS)
     Style::Color tapHighlightColor;
 #endif
-
-    ListStyleType listStyleType;
-
-    Markable<ScrollbarColor> scrollbarColor;
-
-    BlockEllipsis blockEllipsis;
+    Style::ListStyleType listStyleType;
+    Style::BlockEllipsis blockEllipsis;
 
 private:
     StyleRareInheritedData();

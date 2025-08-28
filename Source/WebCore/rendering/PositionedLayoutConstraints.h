@@ -42,12 +42,16 @@ public:
 
     /*** The following are available without calling computeInsets(). ***/
 
+    const RenderBoxModelObject& container() const { return *m_container; }
     LayoutUnit containingSize() const { return m_containingRange.size(); }
     LayoutUnit containingInlineSize() const { return m_containingInlineSize; }
+    LayoutRange containingRange() const { return m_containingRange; }
+    LayoutRange extractRange(LayoutRect);
+
     BoxAxis physicalAxis() const { return m_physicalAxis; }
     LogicalBoxAxis containingAxis() const { return m_containingAxis; }
     WritingMode containingWritingMode() const { return m_containingWritingMode; }
-    const RenderBoxModelObject& container() const { return *m_container; }
+    WritingMode selfWritingMode() const { return m_writingMode; }
 
     bool needsAnchor() const;
     const RenderBoxModelObject* defaultAnchorBox() const { return m_defaultAnchorBox.get(); }
@@ -56,6 +60,7 @@ public:
     bool alignmentAppliesStretch(ItemPosition normalAlignment) const;
 
     bool isOrthogonal() const { return m_containingWritingMode.isOrthogonal(m_writingMode); }
+    inline bool isOpposing() const;
     bool isBlockOpposing() const { return m_containingWritingMode.isBlockOpposing(m_writingMode); }
     bool isBlockFlipped() const { return m_containingWritingMode.isBlockFlipped(); }
     bool startIsBefore() const { return m_containingAxis == LogicalBoxAxis::Block || m_containingWritingMode.isLogicalLeftInlineStart(); }
@@ -91,6 +96,8 @@ private:
     void captureAnchorGeometry();
     LayoutRange adjustForPositionArea(const LayoutRange rangeToAdjust, const LayoutRange anchorArea, const BoxAxis containerAxis);
 
+    bool needsGridAreaAdjustmentBeforeStaticPositioning() const;
+    bool isEligibleForStaticRangeAlignment(LayoutUnit spaceInStaticRange, LayoutUnit itemSize) const;
     void computeStaticPosition();
     void computeInlineStaticDistance();
     void computeBlockStaticDistance();
@@ -119,5 +126,13 @@ private:
     Style::InsetEdge m_insetAfter;
     bool m_useStaticPosition { false };
 };
+
+inline bool PositionedLayoutConstraints::isOpposing() const
+{
+    return m_containingAxis == LogicalBoxAxis::Inline
+        ? m_containingWritingMode.isInlineOpposing(m_writingMode)
+        : m_containingWritingMode.isBlockOpposing(m_writingMode);
+
+}
 
 }

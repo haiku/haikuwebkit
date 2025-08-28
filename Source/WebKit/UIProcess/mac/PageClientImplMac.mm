@@ -190,31 +190,43 @@ void PageClientImpl::makeFirstResponder()
     [[m_view window] makeFirstResponder:m_view.get().get()];
 }
     
-bool PageClientImpl::isViewVisible()
+bool PageClientImpl::isViewVisible(NSView *view, NSWindow *viewWindow)
 {
-    RetainPtr activeView = this->activeView();
-    RetainPtr activeViewWindow = activeWindow();
-
     auto windowIsOccluded = [&]()->bool {
-        return m_impl && m_impl->windowOcclusionDetectionEnabled() && (activeViewWindow.get().occlusionState & NSWindowOcclusionStateVisible) != NSWindowOcclusionStateVisible;
+        return m_impl && m_impl->windowOcclusionDetectionEnabled() && (viewWindow.occlusionState & NSWindowOcclusionStateVisible) != NSWindowOcclusionStateVisible;
     };
 
-    LOG_WITH_STREAM(ActivityState, stream << "PageClientImpl " << this << " isViewVisible(): activeViewWindow " << activeViewWindow.get()
-        << " (window visible " << activeViewWindow.get().isVisible << ", view hidden " << activeView.get().isHiddenOrHasHiddenAncestor << ", window occluded " << windowIsOccluded() << ")");
+    RELEASE_LOG(ActivityState, "PageClientImpl %p isViewVisible(): viewWindow %p, window visible %d, view hidden %d, window occluded %d", this, viewWindow, viewWindow.isVisible, view.isHiddenOrHasHiddenAncestor, windowIsOccluded());
 
-    if (!activeViewWindow)
+    if (!viewWindow)
         return false;
 
-    if (!activeViewWindow.get().isVisible)
+    if (!viewWindow.isVisible)
         return false;
 
-    if (activeView.get().isHiddenOrHasHiddenAncestor)
+    if (view.isHiddenOrHasHiddenAncestor)
         return false;
 
     if (windowIsOccluded())
         return false;
 
     return true;
+}
+
+bool PageClientImpl::isActiveViewVisible()
+{
+    RetainPtr activeView = this->activeView();
+    RetainPtr activeViewWindow = activeWindow();
+
+    return isViewVisible(activeView.get(), activeViewWindow.get());
+}
+
+bool PageClientImpl::isMainViewVisible()
+{
+    RetainPtr mainView = m_view.get();
+    RetainPtr mainViewWindow = [m_view window];
+
+    return isViewVisible(mainView.get(), mainViewWindow.get());
 }
 
 bool PageClientImpl::isViewVisibleOrOccluded()
@@ -229,7 +241,7 @@ bool PageClientImpl::isViewInWindow()
 
 bool PageClientImpl::isVisuallyIdle()
 {
-    return WindowServerConnection::singleton().applicationWindowModificationsHaveStopped() || !isViewVisible();
+    return WindowServerConnection::singleton().applicationWindowModificationsHaveStopped() || !isActiveViewVisible();
 }
 
 void PageClientImpl::viewWillMoveToAnotherWindow()
@@ -386,9 +398,9 @@ void PageClientImpl::executeUndoRedo(UndoOrRedo undoOrRedo)
     return (undoOrRedo == UndoOrRedo::Undo) ? [[m_view undoManager] undo] : [[m_view undoManager] redo];
 }
 
-void PageClientImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Handle&& image, const std::optional<WebCore::ElementIdentifier>& elementID)
+void PageClientImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Handle&& image, const std::optional<WebCore::NodeIdentifier>& nodeID)
 {
-    UNUSED_PARAM(elementID);
+    UNUSED_PARAM(nodeID);
     checkedImpl()->startDrag(item, WTFMove(image));
 }
 
@@ -675,7 +687,7 @@ void PageClientImpl::didPerformDictionaryLookup(const DictionaryPopupInfo& dicti
 void PageClientImpl::showCorrectionPanel(AlternativeTextType type, const FloatRect& boundingBoxOfReplacedString, const String& replacedString, const String& replacementString, const Vector<String>& alternativeReplacementStrings)
 {
 #if USE(AUTOCORRECTION_PANEL)
-    if (!isViewVisible() || !isViewInWindow())
+    if (!isActiveViewVisible() || !isViewInWindow())
         return;
     m_correctionPanel.show(m_view.get().get(), *checkedImpl(), type, boundingBoxOfReplacedString, replacedString, replacementString, alternativeReplacementStrings);
 #endif
@@ -742,7 +754,7 @@ bool PageClientImpl::executeSavedCommandBySelector(const String& selectorString)
 
 void PageClientImpl::showDictationAlternativeUI(const WebCore::FloatRect& boundingBoxOfDictatedText, WebCore::DictationContext dictationContext)
 {
-    if (!isViewVisible() || !isViewInWindow())
+    if (!isActiveViewVisible() || !isViewInWindow())
         return;
     m_alternativeTextUIController->showAlternatives(m_view.get().get(), boundingBoxOfDictatedText, dictationContext, ^(NSString *acceptedAlternative) {
         checkedImpl()->handleAcceptedAlternativeText(acceptedAlternative);

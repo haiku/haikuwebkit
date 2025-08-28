@@ -469,6 +469,8 @@ Vector<WebCore::FloatRect> WebFoundTextRangeController::rectsForTextMatchesInRec
             if (!frameName.length())
                 frameName = emptyAtom();
 
+            Vector<WebFoundTextRange::PDFData> foundRanges;
+
             for (auto& [range, style] : m_decoratedRanges) {
                 if (style != FindDecorationStyle::Found)
                     continue;
@@ -476,11 +478,11 @@ Vector<WebCore::FloatRect> WebFoundTextRangeController::rectsForTextMatchesInRec
                 if (range.frameIdentifier != frameName)
                     continue;
 
-                if (auto* pdfData = std::get_if<WebFoundTextRange::PDFData>(&range.data)) {
-                    for (auto& rect : pluginView->rectsForTextMatch(*pdfData))
-                        rects.append(rect);
-                }
+                if (auto* pdfData = std::get_if<WebFoundTextRange::PDFData>(&range.data))
+                    foundRanges.append(*pdfData);
             }
+
+            rects.appendVector(pluginView->rectsForTextMatchesInRect(foundRanges, clipRect));
 
             continue;
         }
@@ -490,7 +492,7 @@ Vector<WebCore::FloatRect> WebFoundTextRangeController::rectsForTextMatchesInRec
         if (!document)
             continue;
 
-        for (auto rect : document->markers().renderedRectsForMarkers(WebCore::DocumentMarkerType::TextMatch)) {
+        for (auto rect : document->checkedMarkers()->renderedRectsForMarkers(WebCore::DocumentMarkerType::TextMatch)) {
             if (!localFrame->isMainFrame())
                 rect = mainFrameView->windowToContents(localFrame->protectedView()->contentsToWindow(enclosingIntRect(rect)));
 

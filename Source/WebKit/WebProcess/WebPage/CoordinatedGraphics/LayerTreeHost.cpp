@@ -74,7 +74,7 @@ LayerTreeHost::LayerTreeHost(WebPage& webPage, WebCore::PlatformDisplayID displa
 #endif
     : m_webPage(webPage)
     , m_sceneState(CoordinatedSceneState::create())
-    , m_layerFlushTimer(RunLoop::main(), this, &LayerTreeHost::layerFlushTimerFired)
+    , m_layerFlushTimer(RunLoop::mainSingleton(), "LayerTreeHost::LayerFlushTimer"_s, this, &LayerTreeHost::layerFlushTimerFired)
 #if !HAVE(DISPLAY_LINK)
     , m_displayID(displayID)
 #endif
@@ -96,7 +96,6 @@ LayerTreeHost::LayerTreeHost(WebPage& webPage, WebCore::PlatformDisplayID displa
 
 #if USE(GLIB_EVENT_LOOP)
     m_layerFlushTimer.setPriority(RunLoopSourcePriority::LayerFlushTimer);
-    m_layerFlushTimer.setName("[WebKit] LayerTreeHost"_s);
 #endif
     scheduleLayerFlush();
 

@@ -88,7 +88,7 @@ ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost, ThreadedDis
     , m_flipY(m_surface->shouldPaintMirrored())
     , m_compositingRunLoop(makeUnique<CompositingRunLoop>([this] { renderLayerTree(); }))
 #if HAVE(DISPLAY_LINK)
-    , m_didRenderFrameTimer(RunLoop::main(), this, &ThreadedCompositor::didRenderFrameTimerFired)
+    , m_didRenderFrameTimer(RunLoop::mainSingleton(), "ThreadedCompositor::DidRenderFrameTimer"_s, this, &ThreadedCompositor::didRenderFrameTimerFired)
 #else
     , m_displayRefreshMonitor(ThreadedDisplayRefreshMonitor::create(displayID, displayRefreshMonitorClient, WebCore::DisplayUpdate { 0, c_defaultRefreshRate / 1000 }))
 #endif
@@ -116,10 +116,9 @@ ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost, ThreadedDis
 
     m_compositingRunLoop->performTaskSync([this, protectedThis = Ref { *this }] {
 #if !HAVE(DISPLAY_LINK)
-        m_display.updateTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), this, &ThreadedCompositor::displayUpdateFired);
+        m_display.updateTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), "ThreadedCompositor::UpdateTimer"_s, this, &ThreadedCompositor::displayUpdateFired);
 #if USE(GLIB_EVENT_LOOP)
         m_display.updateTimer->setPriority(RunLoopSourcePriority::CompositingThreadUpdateTimer);
-        m_display.updateTimer->setName("[WebKit] ThreadedCompositor::DisplayUpdate");
 #endif
         m_display.updateTimer->startOneShot(Seconds { 1.0 / m_display.displayUpdate.updatesPerSecond });
 #endif
@@ -309,8 +308,12 @@ void ThreadedCompositor::paintToCurrentGLContext(const TransformationMatrix& mat
 #endif
 
 #if ENABLE(DAMAGE_TRACKING)
-    if (m_damage.visualizer)
+    if (m_damage.visualizer) {
         m_damage.visualizer->paintDamage(*m_textureMapper, m_surface->frameDamage());
+        // When damage visualizer is active, we cannot send the original damage to the platform as in this case
+        // the damage rects visualized previous frame may not get erased if platform actually uses damage.
+        m_surface->setFrameDamage(Damage(size, Damage::Mode::Full));
+    }
 #endif
 
     m_textureMapper->endClip();
@@ -365,7 +368,7 @@ void ThreadedCompositor::renderLayerTree()
     bool needsGLViewportResize = m_surface->resize(viewportSize);
 
     m_surface->willRenderFrame();
-    RunLoop::protectedMain()->dispatch([this, protectedThis = Ref { *this }] {
+    RunLoop::mainSingleton().dispatch([this, protectedThis = Ref { *this }] {
         if (m_layerTreeHost)
             m_layerTreeHost->willRenderFrame();
     });
@@ -396,7 +399,7 @@ void ThreadedCompositor::renderLayerTree()
 
     m_surface->didRenderFrame();
 
-    RunLoop::protectedMain()->dispatch([this, protectedThis = Ref { *this }] {
+    RunLoop::mainSingleton().dispatch([this, protectedThis = Ref { *this }] {
         if (m_layerTreeHost)
             m_layerTreeHost->didRenderFrame();
     });

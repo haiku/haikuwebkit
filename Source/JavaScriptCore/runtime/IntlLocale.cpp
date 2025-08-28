@@ -535,7 +535,10 @@ const String& IntlLocale::language()
         Vector<char, 8> buffer;
         auto status = callBufferProducingFunction(uloc_getLanguage, m_localeID.data(), buffer);
         ASSERT_UNUSED(status, U_SUCCESS(status));
-        m_language = buffer.span();
+        if (!buffer.size())
+            m_language = "und"_s;
+        else
+            m_language = buffer.span();
     }
     return m_language;
 }

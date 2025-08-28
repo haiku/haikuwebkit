@@ -535,8 +535,6 @@ private:
     WebsiteDataStore();
     static WorkQueue& websiteDataStoreIOQueueSingleton();
 
-    Ref<WorkQueue> protectedQueue() const;
-
     // FIXME: Only Cocoa ports respect ShouldCreateDirectory, so you cannot rely on it to create
     // directories. This is confusing.
     enum class ShouldCreateDirectory : bool { No, Yes };
@@ -588,9 +586,9 @@ private:
     FileSystem::Salt m_mediaKeysStorageSalt WTF_GUARDED_BY_LOCK(m_resolveDirectoriesLock);
     const Ref<const WebsiteDataStoreConfiguration> m_configuration;
     bool m_hasResolvedDirectories { false };
-    RefPtr<DeviceIdHashSaltStorage> m_deviceIdHashSaltStorage;
+    const RefPtr<DeviceIdHashSaltStorage> m_deviceIdHashSaltStorage;
 #if ENABLE(ENCRYPTED_MEDIA)
-    RefPtr<DeviceIdHashSaltStorage> m_mediaKeysHashSaltStorage;
+    const RefPtr<DeviceIdHashSaltStorage> m_mediaKeysHashSaltStorage;
 #endif
 #if PLATFORM(IOS_FAMILY)
     String m_resolvedContainerCachesWebContentDirectory;
@@ -640,11 +638,11 @@ private:
 
     UniqueRef<WebsiteDataStoreClient> m_client;
 
-    RefPtr<API::HTTPCookieStore> m_cookieStore;
+    const RefPtr<API::HTTPCookieStore> m_cookieStore;
     RefPtr<NetworkProcessProxy> m_networkProcess;
 
 #if HAVE(APP_SSO)
-    std::unique_ptr<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
+    const std::unique_ptr<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
 #endif
     mutable std::optional<WebCore::ThirdPartyCookieBlockingMode> m_thirdPartyCookieBlockingMode; // Lazily computed.
     const Ref<WebCore::LocalWebLockRegistry> m_webLockRegistry;

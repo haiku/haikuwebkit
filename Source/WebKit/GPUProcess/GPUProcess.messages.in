@@ -109,6 +109,7 @@ messages -> GPUProcess : AuxiliaryProcess {
 
 #if PLATFORM(COCOA)
     PostWillTakeSnapshotNotification() -> ()
+    RegisterFonts(Vector<WebKit::SandboxExtensionHandle> sandboxExtensions)
 #endif
 }
 

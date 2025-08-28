@@ -593,7 +593,7 @@ const RealtimeMediaSourceCapabilities& AVVideoCaptureSource::capabilities()
 
 AVCapturePhotoOutput* AVVideoCaptureSource::photoOutput()
 {
-    assertIsCurrent(RunLoop::main());
+    assertIsCurrent(RunLoop::mainSingleton());
 
     if (!m_photoOutput) {
         m_photoOutput = adoptNS([PAL::allocAVCapturePhotoOutputInstance() init]);
@@ -670,7 +670,7 @@ IntSize AVVideoCaptureSource::maxPhotoSizeForCurrentPreset(IntSize requestedSize
 
 RetainPtr<AVCapturePhotoSettings> AVVideoCaptureSource::photoConfiguration(const PhotoSettings& photoSettings)
 {
-    assertIsCurrent(RunLoop::main());
+    assertIsCurrent(RunLoop::mainSingleton());
 
     IntSize requestedPhotoDimensions = { 0, 0 };
     if (photoSettings.imageHeight && photoSettings.imageWidth)
@@ -706,7 +706,7 @@ RetainPtr<AVCapturePhotoSettings> AVVideoCaptureSource::photoConfiguration(const
 
 auto AVVideoCaptureSource::takePhotoInternal(PhotoSettings&& photoSettings) -> Ref<TakePhotoNativePromise>
 {
-    assertIsCurrent(RunLoop::main());
+    assertIsCurrent(RunLoop::mainSingleton());
 
     RetainPtr<AVCapturePhotoOutput> photoOutput = this->photoOutput();
     if (!photoOutput)
@@ -1293,7 +1293,7 @@ void AVVideoCaptureSource::captureOutputDidFinishProcessingPhoto(RetainPtr<AVCap
 {
     if (error) {
         rejectPendingPhotoRequest("AVCapturePhotoOutput failed"_s);
-        RunLoop::protectedMain()->dispatch([protectedThis = Ref { *this }, logIdentifier = LOGIDENTIFIER, error = WTFMove(error)] {
+        RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }, logIdentifier = LOGIDENTIFIER, error = WTFMove(error)] {
             ASSERT(isMainThread());
             ALWAYS_LOG_WITH_THIS_IF_POSSIBLE(protectedThis, logIdentifier, "failed: ", [error code], ", ", error.get());
         });

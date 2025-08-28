@@ -26,6 +26,7 @@
 #pragma once
 
 #include <wtf/Assertions.h>
+#include <wtf/ForbidHeapAllocation.h>
 #include <wtf/Forward.h>
 #include <wtf/GetPtr.h>
 #include <wtf/RawPtrTraits.h>
@@ -68,6 +69,7 @@ template<typename T, typename PtrTraits = RawPtrTraits<T>, typename RefDerefTrai
 
 template<typename T, typename _PtrTraits, typename RefDerefTraits>
 class Ref {
+    WTF_FORBID_HEAP_ALLOCATION_ALLOWING_PLACEMENT_NEW;
 public:
     using PtrTraits = _PtrTraits;
     static constexpr bool isRef = true;

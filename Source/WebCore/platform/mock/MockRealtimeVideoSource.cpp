@@ -141,7 +141,7 @@ const FontCascade& MockRealtimeVideoSource::DrawingState::statsFont()
 MockRealtimeVideoSource::MockRealtimeVideoSource(String&& deviceID, AtomString&& name, MediaDeviceHashSalts&& hashSalts, std::optional<PageIdentifier> pageIdentifier)
     : RealtimeVideoCaptureSource(CaptureDevice { WTFMove(deviceID), CaptureDevice::DeviceType::Camera, WTFMove(name) }, WTFMove(hashSalts), pageIdentifier)
     , m_runLoop(RunLoop::create("WebKit::MockRealtimeVideoSource generateFrame runloop"_s))
-    , m_emitFrameTimer(m_runLoop.get(), [weakThis = ThreadSafeWeakPtr { *this }]() {
+    , m_emitFrameTimer(m_runLoop.get(), "MockRealtimeVideoSource::EmitFrameTimer"_s, [weakThis = ThreadSafeWeakPtr { *this }]() {
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->generateFrame();
       })

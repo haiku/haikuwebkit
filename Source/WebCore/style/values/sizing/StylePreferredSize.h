@@ -70,7 +70,7 @@ using PreferredSizePair = SpaceSeparatedSize<PreferredSize>;
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::PreferredSize> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::PreferredSize)
 
 namespace WTF {
 

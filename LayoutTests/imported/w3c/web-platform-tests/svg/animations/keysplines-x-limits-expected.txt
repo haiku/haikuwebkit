@@ -1,3 +1,11 @@
+CONSOLE MESSAGE: Error: Invalid value for <animate> attribute keySplines="-1 0 1 1"
+CONSOLE MESSAGE: Error: Invalid value for <animate> attribute keySplines="2 0 1 1"
+CONSOLE MESSAGE: Error: Invalid value for <animate> attribute keySplines="0 0 -1 1"
+CONSOLE MESSAGE: Error: Invalid value for <animate> attribute keySplines="0 0 2 1"
+CONSOLE MESSAGE: Error: Invalid value for <animateMotion> attribute keySplines="-10 0 1 1"
+CONSOLE MESSAGE: Error: Invalid value for <animateMotion> attribute keySplines="10 0 1 1"
+CONSOLE MESSAGE: Error: Invalid value for <animateMotion> attribute keySplines="0 0 -10 1"
+CONSOLE MESSAGE: Error: Invalid value for <animateMotion> attribute keySplines="0 0 10 1"
 
 PASS 'keySplines' with x-values outside of the 0 to 1 range
 

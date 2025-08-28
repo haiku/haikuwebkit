@@ -110,7 +110,7 @@ void PlatformXRSystem::enumerateImmersiveXRDevices(CompletionHandler<void(Vector
     }
 
     xrCoordinator->getPrimaryDeviceInfo(*page, [completionHandler = WTFMove(completionHandler)](std::optional<XRDeviceInfo> deviceInfo) mutable {
-        RunLoop::protectedMain()->dispatch([completionHandler = WTFMove(completionHandler), deviceInfo = WTFMove(deviceInfo)]() mutable {
+        RunLoop::mainSingleton().dispatch([completionHandler = WTFMove(completionHandler), deviceInfo = WTFMove(deviceInfo)]() mutable {
             if (!deviceInfo) {
                 completionHandler({ });
                 return;
@@ -237,7 +237,11 @@ void PlatformXRSystem::requestFrame(IPC::Connection& connection, std::optional<P
         completionHandler({ });
 }
 
+#if USE(OPENXR)
+void PlatformXRSystem::submitFrame(IPC::Connection& connection, Vector<XRDeviceLayer>&& layers)
+#else
 void PlatformXRSystem::submitFrame(IPC::Connection& connection)
+#endif
 {
     ASSERT(RunLoop::isMain());
     MESSAGE_CHECK(m_immersiveSessionState == ImmersiveSessionState::SessionRunning || m_immersiveSessionState == ImmersiveSessionState::SessionEndingFromSystem, connection);
@@ -248,8 +252,13 @@ void PlatformXRSystem::submitFrame(IPC::Connection& connection)
     if (!page)
         return;
 
-    if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator())
+    if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator()) {
+#if USE(OPENXR)
+        xrCoordinator->submitFrame(*page, WTFMove(layers));
+#else
         xrCoordinator->submitFrame(*page);
+#endif
+    }
 }
 
 void PlatformXRSystem::didCompleteShutdownTriggeredBySystem(IPC::Connection& connection)

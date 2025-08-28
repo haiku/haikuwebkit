@@ -37,7 +37,7 @@ namespace WebCore {
     
 class AccessibilityImageMapLink final : public AccessibilityNodeObject {
 public:
-    static Ref<AccessibilityImageMapLink> create(AXID, HTMLAreaElement&);
+    static Ref<AccessibilityImageMapLink> create(AXID, HTMLAreaElement&, AXObjectCache&);
     virtual ~AccessibilityImageMapLink();
     
     AccessibilityRole determineAccessibilityRole() final;
@@ -54,7 +54,7 @@ public:
     LayoutRect elementRect() const final;
 
 private:
-    explicit AccessibilityImageMapLink(AXID, HTMLAreaElement&);
+    explicit AccessibilityImageMapLink(AXID, HTMLAreaElement&, AXObjectCache&);
 
     Path elementPath() const final;
     RenderElement* imageMapLinkRenderer() const;

@@ -89,6 +89,15 @@ inline Check checkLiteral(const String& pattern)
     };
 }
 
+inline Check checkNotLiteral(const String& pattern)
+{
+    return [&](const String& msl, unsigned offset) -> unsigned {
+        auto result = msl.find(pattern, offset);
+        EXPECT_TRUE(result == notFound);
+        return offset;
+    };
+}
+
 inline Check checkNot(const String& pattern)
 {
     return [&](const String& msl, unsigned offset) -> unsigned {

@@ -58,6 +58,7 @@ class HTMLMediaElement;
 class MediaMetadata;
 class MediaSessionCoordinator;
 class MediaSessionCoordinatorPrivate;
+class MediaSessionManagerInterface;
 class Navigator;
 struct NowPlayingInfo;
 template<typename> class DOMPromiseDeferred;
@@ -107,7 +108,8 @@ public:
     void willPausePlayback();
 
     Document* document() const;
-    
+    RefPtr<Document> protectedDocument() const;
+
 #if ENABLE(MEDIA_SESSION_COORDINATOR)
     MediaSessionReadyState readyState() const { return m_readyState; };
     void setReadyState(MediaSessionReadyState);
@@ -170,6 +172,8 @@ private:
     void suspend(ReasonForSuspension) final;
     void stop() final;
     bool virtualHasPendingActivity() const final;
+
+    RefPtr<MediaSessionManagerInterface> sessionManager() const;
 
     WeakPtr<Navigator> m_navigator;
     RefPtr<MediaMetadata> m_metadata;

@@ -37,15 +37,15 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityMenuListOption::AccessibilityMenuListOption(AXID axID, HTMLOptionElement& element)
-    : AccessibilityNodeObject(axID, &element)
+AccessibilityMenuListOption::AccessibilityMenuListOption(AXID axID, HTMLOptionElement& element, AXObjectCache& cache)
+    : AccessibilityNodeObject(axID, &element, cache)
     , m_parent(nullptr)
 {
 }
 
-Ref<AccessibilityMenuListOption> AccessibilityMenuListOption::create(AXID axID, HTMLOptionElement& element)
+Ref<AccessibilityMenuListOption> AccessibilityMenuListOption::create(AXID axID, HTMLOptionElement& element, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityMenuListOption(axID, element));
+    return adoptRef(*new AccessibilityMenuListOption(axID, element, cache));
 }
 
 HTMLOptionElement* AccessibilityMenuListOption::optionElement() const

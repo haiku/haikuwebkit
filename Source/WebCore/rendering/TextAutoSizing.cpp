@@ -40,7 +40,7 @@
 #include "RenderTreeBuilder.h"
 #include "Settings.h"
 #include "StyleResolver.h"
-#include "TextSizeAdjustment.h"
+#include "StyleTextSizeAdjust.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

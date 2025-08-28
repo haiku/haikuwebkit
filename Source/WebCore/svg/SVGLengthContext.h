@@ -35,6 +35,13 @@ template<typename> class ExceptionOr;
 
 namespace Style {
 struct PreferredSize;
+struct SVGCenterCoordinateComponent;
+struct SVGCoordinateComponent;
+struct SVGRadius;
+struct SVGRadiusComponent;
+struct SVGStrokeDasharrayValue;
+struct SVGStrokeDashoffset;
+struct StrokeWidth;
 }
 
 class SVGLengthContext {
@@ -54,6 +61,13 @@ public:
 
     float valueForLength(const Length&, SVGLengthMode = SVGLengthMode::Other);
     float valueForLength(const Style::PreferredSize&, SVGLengthMode = SVGLengthMode::Other);
+    float valueForLength(const Style::SVGCenterCoordinateComponent&, SVGLengthMode = SVGLengthMode::Other);
+    float valueForLength(const Style::SVGCoordinateComponent&, SVGLengthMode = SVGLengthMode::Other);
+    float valueForLength(const Style::SVGRadius&, SVGLengthMode = SVGLengthMode::Other);
+    float valueForLength(const Style::SVGRadiusComponent&, SVGLengthMode = SVGLengthMode::Other);
+    float valueForLength(const Style::SVGStrokeDasharrayValue&, SVGLengthMode = SVGLengthMode::Other);
+    float valueForLength(const Style::SVGStrokeDashoffset&, SVGLengthMode = SVGLengthMode::Other);
+    float valueForLength(const Style::StrokeWidth&, SVGLengthMode = SVGLengthMode::Other);
 
     ExceptionOr<float> convertValueToUserUnits(float, SVGLengthType, SVGLengthMode) const;
     ExceptionOr<float> convertValueFromUserUnits(float, SVGLengthType, SVGLengthMode) const;
@@ -80,6 +94,8 @@ private:
     std::optional<FloatSize> computeViewportSize() const;
 
     RefPtr<const SVGElement> protectedContext() const;
+
+    template<typename SizeType> float valueForSizeType(const SizeType&, SVGLengthMode = SVGLengthMode::Other);
 
     WeakPtr<const SVGElement, WeakPtrImplWithEventTargetData> m_context;
     mutable std::optional<FloatSize> m_viewportSize;

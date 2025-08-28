@@ -59,7 +59,6 @@ protected:
 private:
     bool isFrameSet() const final;
     Ref<DocumentParser> createParser() override;
-    Ref<Document> cloneDocumentWithoutChildren() const final;
 
     TreeScopeOrderedMap m_documentNamedItem;
     TreeScopeOrderedMap m_windowNamedItem;

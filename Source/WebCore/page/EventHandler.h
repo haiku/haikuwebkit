@@ -27,12 +27,12 @@
 
 #include "Cursor.h"
 #include "DragActions.h"
-#include "ElementIdentifier.h"
 #include "FocusDirection.h"
 #include "HitTestRequest.h"
 #include "ImmediateActionStage.h"
 #include "IntPointHash.h"
 #include "LayoutPoint.h"
+#include "NodeIdentifier.h"
 #include "PlatformMouseEvent.h"
 #include "RenderObject.h"
 #include "ScrollTypes.h"
@@ -364,9 +364,9 @@ public:
     static Widget* widgetForEventTarget(Element* eventTarget);
 
 #if ENABLE(MODEL_PROCESS)
-    WEBCORE_EXPORT std::optional<ElementIdentifier> requestInteractiveModelElementAtPoint(const IntPoint& clientPosition);
-    WEBCORE_EXPORT void stageModeSessionDidUpdate(std::optional<ElementIdentifier>, const TransformationMatrix&);
-    WEBCORE_EXPORT void stageModeSessionDidEnd(std::optional<ElementIdentifier>);
+    WEBCORE_EXPORT std::optional<NodeIdentifier> requestInteractiveModelElementAtPoint(const IntPoint& clientPosition);
+    WEBCORE_EXPORT void stageModeSessionDidUpdate(std::optional<NodeIdentifier>, const TransformationMatrix&);
+    WEBCORE_EXPORT void stageModeSessionDidEnd(std::optional<NodeIdentifier>);
 #endif
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(DRAG_SUPPORT)

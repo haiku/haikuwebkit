@@ -38,14 +38,14 @@ namespace WebCore {
     
 using namespace HTMLNames;
 
-AccessibilityAttachment::AccessibilityAttachment(AXID axID, RenderAttachment& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilityAttachment::AccessibilityAttachment(AXID axID, RenderAttachment& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
 }
 
-Ref<AccessibilityAttachment> AccessibilityAttachment::create(AXID axID, RenderAttachment& renderer)
+Ref<AccessibilityAttachment> AccessibilityAttachment::create(AXID axID, RenderAttachment& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityAttachment(axID, renderer));
+    return adoptRef(*new AccessibilityAttachment(axID, renderer, cache));
 }
 
 bool AccessibilityAttachment::hasProgress(float* progress) const

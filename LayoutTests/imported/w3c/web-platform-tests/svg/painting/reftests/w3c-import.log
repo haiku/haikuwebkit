@@ -136,3 +136,5 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/small-nested-viewbox.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/symbol-in-mask-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/symbol-in-mask.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/zero-scale-svg-transform-inside-g-tag-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/zero-scale-svg-transform-inside-g-tag.html

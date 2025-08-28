@@ -105,7 +105,7 @@ class TestExporterTest(testing.PathTestCase):
             host = TestExporterTest.MyMockHost()
             host.filesystem.maybe_make_directory(self.path)
             host.web.responses.append({'status_code': 200, 'body': '{"login": "USER"}'})
-            options = parse_args(['test_exporter.py', '-g', 'HEAD', '-b', '1', '-c', '-n', 'USER', '-t', 'TOKEN', '-d', self.path])
+            options = parse_args(['test_exporter.py', '-g', '1@main', '-b', '1', '-c', '-n', 'USER', '-t', 'TOKEN', '-d', self.path])
             exporter = WebPlatformTestExporter(host, options, TestExporterTest.MockBugzilla, TestExporterTest.MockWPTLinter, 1)
             exporter.do_export()
 

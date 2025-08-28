@@ -249,7 +249,7 @@ void WebPageProxy::beginSafeBrowsingCheck(const URL& url, RefPtr<API::Navigation
         navigation->setSafeBrowsingCheckOngoing(redirectChainIndex, true);
 
     auto completionHandler = makeBlockPtr([navigation = WTFMove(navigation), forMainFrameNavigation = frame.isMainFrame(), url, weakThis = WeakPtr { *this }, frame = Ref { frame }, redirectChainIndex] (SSBLookupResult *result, NSError *error) mutable {
-        RunLoop::protectedMain()->dispatch([frame = WTFMove(frame), navigation = WTFMove(navigation), result = retainPtr(result), error = retainPtr(error), forMainFrameNavigation, url = WTFMove(url), weakThis, redirectChainIndex] {
+        RunLoop::mainSingleton().dispatch([frame = WTFMove(frame), navigation = WTFMove(navigation), result = retainPtr(result), error = retainPtr(error), forMainFrameNavigation, url = WTFMove(url), weakThis, redirectChainIndex] {
             if (!navigation)
                 return;
             navigation->setSafeBrowsingCheckOngoing(redirectChainIndex, false);
@@ -353,10 +353,10 @@ bool WebPageProxy::scrollingUpdatesDisabledForTesting()
 
 #if ENABLE(DRAG_SUPPORT)
 
-void WebPageProxy::startDrag(const DragItem& dragItem, ShareableBitmap::Handle&& dragImageHandle, const std::optional<ElementIdentifier>& elementID)
+void WebPageProxy::startDrag(const DragItem& dragItem, ShareableBitmap::Handle&& dragImageHandle, const std::optional<NodeIdentifier>& nodeID)
 {
     if (RefPtr pageClient = this->pageClient())
-        pageClient->startDrag(dragItem, WTFMove(dragImageHandle), elementID);
+        pageClient->startDrag(dragItem, WTFMove(dragImageHandle), nodeID);
 }
 
 #endif
@@ -795,7 +795,7 @@ void WebPageProxy::scheduleActivityStateUpdate()
             // We can't call dispatchActivityStateChange directly underneath this commit handler, because it has side-effects
             // that may result in other frameworks trying to install commit handlers for the same phase, which is not allowed.
             // So, dispatch_async here; we only care that the activity state change doesn't apply until after the active commit is complete.
-            WorkQueue::protectedMain()->dispatch([weakThis] {
+            WorkQueue::mainSingleton().dispatch([weakThis] {
                 RefPtr protectedThis { weakThis.get() };
                 if (!protectedThis)
                     return;
@@ -1758,23 +1758,36 @@ String WebPageProxy::presentingApplicationBundleIdentifier() const
     return { };
 }
 
+#if PLATFORM(MAC)
 NSDictionary *WebPageProxy::getAccessibilityWebProcessDebugInfo()
-    {
-        const Seconds messageTimeout(2);
-        auto sendResult = protectedLegacyMainFrameProcess()->sendSync(Messages::WebPage::GetAccessibilityWebProcessDebugInfo(), webPageIDInMainFrameProcess(), messageTimeout);
+{
+    const Seconds messageTimeout(2);
+    auto sendResult = protectedLegacyMainFrameProcess()->sendSync(Messages::WebPage::GetAccessibilityWebProcessDebugInfo(), webPageIDInMainFrameProcess(), messageTimeout);
 
-        if (!sendResult.succeeded())
-            return @{ };
+    if (!sendResult.succeeded())
+        return @{ };
 
-        auto [result] = sendResult.takeReplyOr(WebCore::AXDebugInfo({ 0, 0 }));
+    auto [result] = sendResult.takeReplyOr(WebCore::AXDebugInfo({ 0, 0 }));
 
-        return @{
-            @"axIsEnabled": [NSNumber numberWithBool:result.isAccessibilityEnabled],
-            @"axIsThreadInitialized": [NSNumber numberWithBool:result.isAccessibilityThreadInitialized],
-            @"axLiveTree": result.liveTree.createNSString().get(),
-            @"axIsolatedTree": result.isolatedTree.createNSString().get()
-        };
-    }
+    return @{
+        @"axIsEnabled": [NSNumber numberWithBool:result.isAccessibilityEnabled],
+        @"axIsThreadInitialized": [NSNumber numberWithBool:result.isAccessibilityThreadInitialized],
+        @"axLiveTree": result.liveTree.createNSString().get(),
+        @"axIsolatedTree": result.isolatedTree.createNSString().get(),
+        @"axWebProcessRemoteHash": [NSNumber numberWithUnsignedInteger:result.remoteTokenHash],
+        @"axWebProcessLocalHash": [NSNumber numberWithUnsignedInteger:result.webProcessLocalTokenHash]
+    };
+}
+
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+void WebPageProxy::clearAccessibilityIsolatedTree()
+{
+    forEachWebContentProcess([&](auto& webProcess, auto pageID) {
+        webProcess.send(Messages::WebPage::ClearAccessibilityIsolatedTree(), pageID);
+    });
+}
+#endif
+#endif // PLATFORM(MAC)
 
 } // namespace WebKit
 

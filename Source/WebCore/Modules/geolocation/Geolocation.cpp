@@ -31,6 +31,7 @@
 #if ENABLE(GEOLOCATION)
 
 #include "Document.h"
+#include "DocumentInlines.h"
 #include "EventLoop.h"
 #include "GeoNotifier.h"
 #include "GeolocationController.h"

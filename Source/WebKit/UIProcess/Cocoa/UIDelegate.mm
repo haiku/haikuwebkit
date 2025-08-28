@@ -1754,34 +1754,31 @@ std::optional<double> UIDelegate::UIClient::dataDetectionReferenceDate()
 
 #if ENABLE(POINTER_LOCK)
 
-void UIDelegate::UIClient::requestPointerLock(WebPageProxy* page)
+void UIDelegate::UIClient::requestPointerLock(WebPageProxy* page, CompletionHandler<void(bool)>&& completionHandler)
 {
     RefPtr uiDelegate = m_uiDelegate.get();
     if (!uiDelegate)
-        return;
+        return completionHandler(false);
 
     if (!uiDelegate->m_delegateMethods.webViewRequestPointerLock && !uiDelegate->m_delegateMethods.webViewDidRequestPointerLockCompletionHandler)
-        return;
+        return completionHandler(false);
 
     RetainPtr delegate = uiDelegatePrivate();
     if (!delegate)
-        return;
+        return completionHandler(false);
 
     if (uiDelegate->m_delegateMethods.webViewRequestPointerLock) {
         [static_cast<id<WKUIDelegatePrivate>>(delegate) _webViewRequestPointerLock:uiDelegate->m_webView.get().get()];
-        return;
+        return completionHandler(false);
     }
 
     auto checker = CompletionHandlerCallChecker::create(delegate.get(), @selector(_webViewDidRequestPointerLock:completionHandler:));
-    [static_cast<id<WKUIDelegatePrivate>>(delegate) _webViewDidRequestPointerLock:uiDelegate->m_webView.get().get() completionHandler:makeBlockPtr([checker = WTFMove(checker), page = RefPtr { page }] (BOOL allow) {
+    [static_cast<id<WKUIDelegatePrivate>>(delegate) _webViewDidRequestPointerLock:uiDelegate->m_webView.get().get() completionHandler:makeBlockPtr([checker = WTFMove(checker), page = RefPtr { page }, completionHandler = WTFMove(completionHandler)](BOOL allow) mutable {
         if (checker->completionHandlerHasBeenCalled())
             return;
         checker->didCallCompletionHandler();
 
-        if (allow)
-            page->didAllowPointerLock();
-        else
-            page->didDenyPointerLock();
+        completionHandler(allow);
     }).get()];
 }
 

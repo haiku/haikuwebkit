@@ -27,6 +27,7 @@
 
 #include "AXObjectCache.h"
 #include "Autofill.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "ElementInlines.h"

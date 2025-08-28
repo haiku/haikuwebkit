@@ -398,7 +398,7 @@ def serialized_identifiers():
         'WebCore::BackgroundFetchRecordIdentifier',
         'WebCore::DOMCacheIdentifierID',
         'WebCore::DictationContext',
-        'WebCore::ElementIdentifier',
+        'WebCore::NodeIdentifier',
         'WebCore::FetchIdentifier',
         'WebCore::FileSystemHandleIdentifier',
         'WebCore::FileSystemSyncAccessHandleIdentifier',
@@ -633,7 +633,7 @@ def conditions_for_header(header):
         '"CoreIPCAuditToken.h"': ["HAVE(AUDIT_TOKEN)"],
         '"DataDetectionResult.h"': ["PLATFORM(COCOA)"],
         '"DynamicViewportSizeUpdate.h"': ["PLATFORM(IOS_FAMILY)"],
-        '"DMABufRendererBufferFormat.h"': ["PLATFORM(GTK)", "PLATFORM(WPE)"],
+        '"RendererBufferFormat.h"': ["PLATFORM(GTK)", "PLATFORM(WPE)"],
         '"GestureTypes.h"': ["PLATFORM(IOS_FAMILY)"],
         '"InputMethodState.h"': ["PLATFORM(GTK)", "PLATFORM(WPE)"],
         '"MediaPlaybackTargetContextSerialized.h"': ["ENABLE(WIRELESS_PLAYBACK_TARGET)"],
@@ -1064,6 +1064,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::GraphicsDropShadow': ['<WebCore/GraphicsStyle.h>'],
         'WebCore::HasAvailableTargets': ['<WebCore/MediaSessionHelperIOS.h>'],
         'WebCore::HasInsecureContent': ['<WebCore/FrameLoaderTypes.h>'],
+        'WebCore::Headroom': ['<WebCore/ImageTypes.h>'],
         'WebCore::HighlightRequestOriginatedInApp': ['<WebCore/AppHighlight.h>'],
         'WebCore::HighlightVisibility': ['<WebCore/HighlightVisibility.h>'],
         'WebCore::InterpolationQuality': ['<WebCore/GraphicsTypes.h>'],
@@ -1161,7 +1162,9 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::RubberBandingBehavior': ['<WebCore/ScrollTypes.h>'],
         'WebCore::SameSiteStrictEnforcementEnabled': ['<WebCore/NetworkStorageSession.h>'],
         'WebCore::ScriptExecutionContextIdentifier': ['<WebCore/ProcessQualified.h>', '<WebCore/ScriptExecutionContextIdentifier.h>', '<wtf/ObjectIdentifier.h>'],
+        'WebCore::ScriptTrackingPrivacyFlag': ['<WebCore/ScriptTrackingPrivacyCategory.h>'],
         'WebCore::ScheduleLocationChangeResult': ['<WebCore/NavigationScheduler.h>'],
+        'WebCore::ScrollUpdate': ['<WebCore/ScrollingCoordinatorTypes.h>'],
         'WebCore::ScrollbarMode': ['<WebCore/ScrollTypes.h>'],
         'WebCore::ScrollbarOverlayStyle': ['<WebCore/ScrollTypes.h>'],
         'WebCore::ScrollDirection': ['<WebCore/ScrollTypes.h>'],
@@ -1339,6 +1342,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebKit::RemoteVideoInfo': ['"RemoteTrackInfo.h"'],
         'WebKit::RespectSelectionAnchor': ['"GestureTypes.h"'],
         'WebKit::SandboxExtensionHandle': ['"SandboxExtension.h"'],
+        'WebKit::ScriptTrackingPrivacyHost': ['"ScriptTrackingPrivacyFilter.h"'],
         'WebKit::ScriptTrackingPrivacyRules': ['"ScriptTrackingPrivacyFilter.h"'],
         'WebKit::SelectionFlags': ['"GestureTypes.h"'],
         'WebKit::SelectionTouch': ['"GestureTypes.h"'],
@@ -1754,6 +1758,7 @@ def generate_message_names_header(receivers):
     result.append('\n')
     result.append('#include <algorithm>\n')
     result.append('#include <array>\n')
+    result.append('#include <type_traits>\n')
     result.append('#include <wtf/EnumTraits.h>\n')
     result.append('#include <wtf/text/ASCIILiteral.h>\n')
     result.append('\n')

@@ -1439,7 +1439,8 @@ inline bool PropertyParserCustom::consumeGridTemplateShorthand(CSSParserTokenRan
         }
 
         // Handle a template-area's row.
-        if (range.peek().type() != StringToken || !parseGridTemplateAreasRow(range.consumeIncludingWhitespace().value(), gridAreaMap))
+        auto row = consumeUnresolvedGridTemplateAreasRow(range, state);
+        if (!row || !CSS::addRow(gridAreaMap, *row))
             return false;
 
         // Handle template-rows's track-size.

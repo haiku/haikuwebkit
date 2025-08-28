@@ -909,4 +909,9 @@ bool CSSSelector::isHostPseudoClass() const
     return match() == Match::PseudoClass && pseudoClass() == PseudoClass::Host;
 }
 
+bool CSSSelector::isScopePseudoClass() const
+{
+    return match() == Match::PseudoClass && pseudoClass() == PseudoClass::Scope;
+}
+
 } // namespace WebCore

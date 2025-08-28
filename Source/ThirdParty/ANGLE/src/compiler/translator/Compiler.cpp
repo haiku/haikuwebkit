@@ -59,7 +59,6 @@
 #include "compiler/translator/tree_ops/glsl/RewriteRepeatedAssignToSwizzled.h"
 #include "compiler/translator/tree_ops/glsl/UseInterfaceBlockFields.h"
 #include "compiler/translator/tree_ops/glsl/apple/AddAndTrueToLoopCondition.h"
-#include "compiler/translator/tree_ops/glsl/apple/RewriteDoWhile.h"
 #include "compiler/translator/tree_ops/glsl/apple/UnfoldShortCircuitAST.h"
 #include "compiler/translator/tree_ops/msl/EnsureLoopForwardProgress.h"
 #include "compiler/translator/tree_util/BuiltIn.h"
@@ -377,23 +376,6 @@ int GetMaxUniformVectorsForShaderType(GLenum shaderType, const ShBuiltInResource
 namespace
 {
 
-class [[nodiscard]] TScopedPoolAllocator
-{
-  public:
-    TScopedPoolAllocator(angle::PoolAllocator *allocator) : mAllocator(allocator)
-    {
-        mAllocator->push();
-        SetGlobalPoolAllocator(mAllocator);
-    }
-    ~TScopedPoolAllocator()
-    {
-        SetGlobalPoolAllocator(nullptr);
-        mAllocator->pop(angle::PoolAllocator::ReleaseStrategy::All);
-    }
-
-  private:
-    angle::PoolAllocator *mAllocator;
-};
 
 class [[nodiscard]] TScopedSymbolTableLevel
 {
@@ -483,14 +465,12 @@ bool ValidateFragColorAndFragData(GLenum shaderType,
 
 TShHandleBase::TShHandleBase()
 {
-    allocator.push();
     SetGlobalPoolAllocator(&allocator);
 }
 
 TShHandleBase::~TShHandleBase()
 {
     SetGlobalPoolAllocator(nullptr);
-    allocator.popAll();
 }
 
 TCompiler::TCompiler(sh::GLenum type, ShShaderSpec spec, ShShaderOutput output)
@@ -1110,15 +1090,6 @@ bool TCompiler::checkAndSimplifyAST(TIntermBlock *root,
         }
     }
 
-    // This pass might emit short circuits so keep it before the short circuit unfolding
-    if (compileOptions.rewriteDoWhileLoops)
-    {
-        if (!RewriteDoWhile(this, root, &mSymbolTable))
-        {
-            return false;
-        }
-    }
-
     if (compileOptions.addAndTrueToLoopCondition)
     {
         if (!AddAndTrueToLoopCondition(this, root))
@@ -1515,7 +1486,7 @@ bool TCompiler::compile(const char *const shaderStrings[],
         compileOptions.flattenPragmaSTDGLInvariantAll = true;
     }
 
-    TScopedPoolAllocator scopedAlloc(&allocator);
+    TScopedPoolAllocator scopedAlloc;
     TIntermBlock *root = compileTreeImpl(shaderStrings, numStrings, compileOptions);
 
     if (root)

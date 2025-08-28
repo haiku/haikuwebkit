@@ -26,7 +26,6 @@
 
 #include "AXTextStateChangeIntent.h"
 #include "ContainerNode.h"
-#include "ElementIdentifier.h"
 #include "EventOptions.h"
 #include "FocusOptions.h"
 #include "HitTestRequest.h"
@@ -370,8 +369,8 @@ public:
 
     String nodeName() const override;
 
-    Ref<Element> cloneElementWithChildren(Document&, CustomElementRegistry*);
-    Ref<Element> cloneElementWithoutChildren(Document&, CustomElementRegistry*);
+    Ref<Element> cloneElementWithChildren(Document&, CustomElementRegistry*) const;
+    Ref<Element> cloneElementWithoutChildren(Document&, CustomElementRegistry*) const;
 
     void normalizeAttributes();
 
@@ -839,9 +838,6 @@ public:
     ExceptionOr<Ref<WebAnimation>> animate(JSC::JSGlobalObject&, JSC::Strong<JSC::JSObject>&&, std::optional<Variant<double, KeyframeAnimationOptions>>&&);
     Vector<RefPtr<WebAnimation>> getAnimations(std::optional<GetAnimationsOptions>);
 
-    WEBCORE_EXPORT ElementIdentifier identifier() const;
-    WEBCORE_EXPORT static Element* fromIdentifier(ElementIdentifier);
-
     String description() const override;
     String debugDescription() const override;
     String attributesForDescription() const;
@@ -967,9 +963,10 @@ private:
     void disconnectFromResizeObserversSlow(ResizeObserverData&);
 
     // The cloneNode function is private so that non-virtual cloneElementWith/WithoutChildren are used instead.
-    Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) override;
-    void cloneShadowTreeIfPossible(Element& newHost, CustomElementRegistry*);
-    virtual Ref<Element> cloneElementWithoutAttributesAndChildren(Document&, CustomElementRegistry*);
+    Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) const override;
+    SerializedNode serializeNode(CloningOperation) const override;
+    void cloneShadowTreeIfPossible(Element& newHost) const;
+    virtual Ref<Element> cloneElementWithoutAttributesAndChildren(Document&, CustomElementRegistry*) const;
 
     inline void removeShadowRoot(); // Defined in ElementRareData.h.
     void removeShadowRootSlow(ShadowRoot&);

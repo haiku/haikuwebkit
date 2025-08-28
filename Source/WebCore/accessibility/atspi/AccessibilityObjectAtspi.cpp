@@ -1037,7 +1037,7 @@ RelationMap AccessibilityObjectAtspi::relationMap() const
     } else if (m_coreObject->role() == AccessibilityRole::Legend) {
         if (auto* renderFieldset = ancestorsOfType<RenderBlock>(*m_coreObject->renderer()).first()) {
             if (renderFieldset->isFieldset())
-                ariaLabelledByElements.append(*m_coreObject->axObjectCache()->getOrCreate(renderFieldset));
+                ariaLabelledByElements.append(*downcast<AccessibilityObject>(m_coreObject)->axObjectCache()->getOrCreate(renderFieldset));
         }
     } else {
         auto* liveObject = dynamicDowncast<AccessibilityObject>(m_coreObject.get());

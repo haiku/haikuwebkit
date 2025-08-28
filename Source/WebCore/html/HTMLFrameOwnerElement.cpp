@@ -22,6 +22,7 @@
 #include "config.h"
 #include "HTMLFrameOwnerElement.h"
 
+#include "ContainerNodeInlines.h"
 #include "FrameLoader.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"

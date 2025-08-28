@@ -132,24 +132,40 @@
 
 namespace TestWebKitAPI {
 
-static void enableSiteIsolation(WKWebViewConfiguration *configuration)
+static void enableFeature(WKWebViewConfiguration *configuration, NSString *featureName)
 {
     auto preferences = [configuration preferences];
     for (_WKFeature *feature in [WKPreferences _features]) {
-        if ([feature.key isEqualToString:@"SiteIsolationEnabled"]) {
+        if ([feature.key isEqualToString:featureName]) {
             [preferences _setEnabled:YES forFeature:feature];
             break;
         }
     }
 }
 
+static void enableSiteIsolation(WKWebViewConfiguration *configuration)
+{
+    enableFeature(configuration, @"SiteIsolationEnabled");
+}
+
 static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> siteIsolatedViewAndDelegate(RetainPtr<WKWebViewConfiguration> configuration, CGRect rect = CGRectZero, bool enable = true)
 {
     auto navigationDelegate = adoptNS([TestNavigationDelegate new]);
     [navigationDelegate allowAnyTLSCertificate];
-    if (enable)
-        enableSiteIsolation(configuration.get());
+    enableSiteIsolation(configuration.get());
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:rect configuration:configuration.get()]);
+    webView.get().navigationDelegate = navigationDelegate.get();
+    return { WTFMove(webView), WTFMove(navigationDelegate) };
+}
+
+static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> siteIsolatedViewWithSharedProcess(const HTTPServer& server)
+{
+    auto* configuration = server.httpsProxyConfiguration();
+    auto navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    enableSiteIsolation(configuration);
+    enableFeature(configuration, @"SiteIsolationSharedProcessEnabled");
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
     webView.get().navigationDelegate = navigationDelegate.get();
     return { WTFMove(webView), WTFMove(navigationDelegate) };
 }
@@ -3597,12 +3613,12 @@ TEST(SiteIsolation, ThemeColor)
     [webView.get() removeObserver:observer.get() forKeyPath:@"underPageBackgroundColor"];
 }
 
-static WebViewAndDelegates makeWebViewAndDelegates(HTTPServer& server)
+static WebViewAndDelegates makeWebViewAndDelegates(HTTPServer& server, bool enable = true)
 {
     RetainPtr messageHandler = adoptNS([TestMessageHandler new]);
     RetainPtr configuration = server.httpsProxyConfiguration();
     [[configuration userContentController] addScriptMessageHandler:messageHandler.get() name:@"testHandler"];
-    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(configuration.get());
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(configuration.get(), CGRectZero, enable);
     RetainPtr uiDelegate = adoptNS([TestUIDelegate new]);
     [webView setUIDelegate:uiDelegate.get()];
     return {
@@ -4993,5 +5009,147 @@ TEST(SiteIsolation, UserScript)
     [[webView configuration].userContentController _addUserScriptImmediately:script.get()];
     EXPECT_WK_STREQ([webView _test_waitForAlert], "script ran in iframe");
 }
+
+TEST(SiteIsolation, SharedProcessMostBasic)
+{
+    HTTPServer server({
+        { "/example"_s, { "<!DOCTYPE html><iframe src='https://webkit.org/webkit'></iframe>"_s } },
+        { "/webkit"_s, { "<!DOCTYPE html><iframe src='https://apple.com/apple'></iframe>"_s } },
+        { "/apple"_s, { "hi"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+    auto [webView, navigationDelegate] = siteIsolatedViewWithSharedProcess(server);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    checkFrameTreesInProcesses(webView.get(), {
+        {
+            "https://example.com"_s,
+            { { RemoteFrame, { { RemoteFrame } } } }
+        },
+        {
+            RemoteFrame,
+            { { "https://webkit.org"_s, { { "https://apple.com"_s } } } }
+        },
+    });
+}
+
+static auto advanceFocusAcrossFramesMainFrame = R"FOCUSRESOURCE(
+<script>
+
+function sendResult(msg) {
+    window.webkit.messageHandlers.testHandler.postMessage(msg);
+}
+
+function postResult(event) {
+    sendResult(event.data)
+}
+
+addEventListener('message', postResult, false);
+
+</script>
+<div id="div1" tabindex="1">Main 1</div><br>
+<div id="div2" tabindex="2">Main 2</div><br>
+<iframe id="iframe1" src="https://webkit.org/iframe"></iframe><br>
+<script>
+document.body.addEventListener("focus", (event) => {
+    sendResult('main - focus body', '*');
+});
+document.getElementById("div1").addEventListener("focus", (event) => {
+    sendResult('main - focus div1', '*');
+});
+document.getElementById("div2").addEventListener("focus", (event) => {
+    sendResult('main - focus div2', '*');
+});
+document.getElementById("iframe1").addEventListener("focus", (event) => {
+    sendResult('main - focus iframe element', '*');
+});
+</script>
+)FOCUSRESOURCE"_s;
+
+static auto advanceFocusAcrossFramesChildFrame = R"FOCUSRESOURCE(
+<div id="div1" tabindex="1">Child 1</div><br>
+<div id="div2" tabindex="2">Child 2</div><br>
+<div id="log">Initial logging</div>
+<script>
+document.body.addEventListener("focus", (event) => {
+    parent.postMessage('iframe - focus body', '*');
+});
+document.getElementById("div1").addEventListener("focus", (event) => {
+    parent.postMessage('iframe - focus div1', '*');
+});
+document.getElementById("div2").addEventListener("focus", (event) => {
+    parent.postMessage('iframe - focus div2', '*');
+});
+</script>
+)FOCUSRESOURCE"_s;
+
+// FIXME: To enable, need `typeCharacter:` support for TestWKWebView on iOS
+#if PLATFORM(MAC)
+TEST(SiteIsolation, AdvanceFocusAcrossFrames)
+{
+    HTTPServer server({
+        { "/example"_s, { advanceFocusAcrossFramesMainFrame } },
+        { "/iframe"_s, { advanceFocusAcrossFramesChildFrame } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto webViewAndDelegates = makeWebViewAndDelegates(server);
+    auto webView = WTFMove(webViewAndDelegates.webView);
+    auto messageHandler = WTFMove(webViewAndDelegates.messageHandler);
+    auto navigationDelegate = WTFMove(webViewAndDelegates.navigationDelegate);
+    auto uiDelegate = WTFMove(webViewAndDelegates.uiDelegate);
+
+    __block RetainPtr<NSString> mostRecentMessage;
+    __block bool messageReceived = false;
+    [messageHandler setDidReceiveScriptMessage:^(NSString *message) {
+        mostRecentMessage = message;
+        messageReceived = true;
+    }];
+
+    uiDelegate.get().takeFocus = ^(WKWebView *, _WKFocusDirection) {
+        mostRecentMessage = @"Chrome focus taken";
+        messageReceived = true;
+    };
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    NSArray *expectedMessages = @[
+        @"main - focus div1",
+        @"main - focus div1",
+        @"main - focus div2",
+        @"iframe - focus div1",
+        @"iframe - focus div2",
+        @"Chrome focus taken"
+    ];
+    size_t currentExpected = 0;
+
+    [webView typeCharacter:'\t'];
+    Util::run(&messageReceived);
+    EXPECT_TRUE([mostRecentMessage isEqualToString:expectedMessages[currentExpected++]]);
+    messageReceived = false;
+    Util::run(&messageReceived);
+    EXPECT_TRUE([mostRecentMessage isEqualToString:expectedMessages[currentExpected++]]);
+
+    messageReceived = false;
+    [webView typeCharacter:'\t'];
+    Util::run(&messageReceived);
+    EXPECT_TRUE([mostRecentMessage isEqualToString:expectedMessages[currentExpected++]]);
+
+    messageReceived = false;
+    [webView typeCharacter:'\t'];
+    Util::run(&messageReceived);
+    EXPECT_TRUE([mostRecentMessage isEqualToString:expectedMessages[currentExpected++]]);
+
+    messageReceived = false;
+    [webView typeCharacter:'\t'];
+    Util::run(&messageReceived);
+    EXPECT_TRUE([mostRecentMessage isEqualToString:expectedMessages[currentExpected++]]);
+
+    messageReceived = false;
+    [webView typeCharacter:'\t'];
+    Util::run(&messageReceived);
+    EXPECT_TRUE([mostRecentMessage isEqualToString:expectedMessages[currentExpected++]]);
+}
+#endif // PLATFORM(MAC)
 
 }

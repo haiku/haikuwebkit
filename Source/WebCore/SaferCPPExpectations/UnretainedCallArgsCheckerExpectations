@@ -45,9 +45,10 @@ editing/SmartReplaceCF.cpp
 editing/cocoa/AttributedString.mm
 editing/cocoa/DataDetection.mm
 editing/cocoa/DictionaryLookup.mm
+editing/cocoa/EditingHTMLConverter.mm
 editing/cocoa/FontAttributeChangesCocoa.mm
 editing/cocoa/FontAttributesCocoa.mm
-editing/cocoa/HTMLConverter.mm
+editing/cocoa/NodeHTMLConverter.mm
 editing/cocoa/WebContentReaderCocoa.mm
 editing/mac/EditorMac.mm
 editing/mac/TextAlternativeWithRange.mm
@@ -102,7 +103,6 @@ platform/gamepad/cocoa/GameControllerGamepadProvider.mm
 platform/gamepad/cocoa/GameControllerHapticEffect.mm
 platform/gamepad/cocoa/GameControllerHapticEngines.mm
 platform/gamepad/cocoa/GameControllerSoftLink.h
-platform/gamepad/mac/HIDGamepad.cpp
 platform/gamepad/mac/HIDGamepadElement.cpp
 platform/gamepad/mac/HIDGamepadProvider.mm
 platform/graphics/BitmapImageDescriptor.cpp

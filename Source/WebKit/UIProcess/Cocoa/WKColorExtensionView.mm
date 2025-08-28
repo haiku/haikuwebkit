@@ -26,6 +26,7 @@
 #import "config.h"
 #import "WKColorExtensionView.h"
 
+#import <QuartzCore/CoreAnimation.h>
 #import <wtf/RetainPtr.h>
 
 @interface WKColorExtensionView () <CAAnimationDelegate>

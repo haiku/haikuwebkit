@@ -38,6 +38,9 @@ fast/forms/appearance-default-button.html  [ Skip ]
 fast/forms/form-control-refresh [ Skip ]
 imported/w3c/web-platform-tests/css/css-ui/button-author-level-padding-applies.html [ Skip ]
 
+# Tests which pass only with form control refresh disabled (support added in Tahoe)
+fast/forms/datalist/input-appearance-range-with-datalist-rtl.html [ Pass ]
+
 # -- The above has different, expected behavior on Tahoe than Sequoia --
 # -- New failure expectations for Sequoia below this point only!! --
 

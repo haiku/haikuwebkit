@@ -1,4 +1,3 @@
-NetworkProcess/CustomProtocols/Cocoa/LegacyCustomProtocolManagerCocoa.mm
 Platform/spi/Cocoa/NearFieldSPI.h
 Shared/API/Cocoa/_WKHitTestResult.h
 Shared/API/Cocoa/_WKRemoteObjectInterface.h

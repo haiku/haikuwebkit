@@ -128,6 +128,7 @@ public:
     virtual void scrollingTreeNodeDidStopAnimatedScroll(ScrollingTreeScrollingNode&) { }
     virtual void scrollingTreeNodeWillStartWheelEventScroll(ScrollingTreeScrollingNode&) { }
     virtual void scrollingTreeNodeDidStopWheelEventScroll(ScrollingTreeScrollingNode&) { }
+    virtual void scrollingTreeNodeDidStopProgrammaticScroll(ScrollingTreeScrollingNode&) { }
 
     // Called for requested scroll position updates. Returns true if handled.
     virtual bool scrollingTreeNodeRequestsScroll(ScrollingNodeID, const RequestedScrollData&) { return false; }

@@ -217,7 +217,7 @@ namespace ax = WebCore::Accessibility;
     return m_remoteFrameOffset;
 }
 
-- (void)setRemoteParent:(id)parent
+- (void)setRemoteParent:(id)parent token:(NSData *)token
 {
     ASSERT(isMainRunLoop());
 
@@ -225,6 +225,12 @@ namespace ax = WebCore::Accessibility;
     Locker lock { m_parentLock };
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     m_parent = parent;
+    m_remoteToken = token;
+}
+
+- (NSUInteger)remoteTokenHash
+{
+    return [m_remoteToken.get() hash];
 }
 
 - (void)setFrameIdentifier:(const WebCore::FrameIdentifier&)frameID

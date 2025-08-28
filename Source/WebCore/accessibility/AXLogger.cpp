@@ -748,9 +748,6 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
     case AXProperty::EmbeddedImageDescription:
         stream << "EmbeddedImageDescription";
         break;
-    case AXProperty::TextEmissionBehavior:
-        stream << "TextEmissionBehavior";
-        break;
     case AXProperty::ExpandedTextValue:
         stream << "ExpandedTextValue";
         break;
@@ -818,9 +815,6 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::HasTextShadow:
         stream << "HasTextShadow";
-        break;
-    case AXProperty::HasUnderline:
-        stream << "HasUnderline";
         break;
     case AXProperty::HorizontalScrollBar:
         stream << "HorizontalScrollBar";
@@ -965,6 +959,15 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::IsTableRow:
         stream << "IsTableRow";
+        break;
+    case AXProperty::IsTextEmissionBehaviorDoubleNewline:
+        stream << "IsTextEmissionBehaviorDoubleNewline";
+        break;
+    case AXProperty::IsTextEmissionBehaviorNewline:
+        stream << "IsTextEmissionBehaviorNewline";
+        break;
+    case AXProperty::IsTextEmissionBehaviorTab:
+        stream << "IsTextEmissionBehaviorTab";
         break;
     case AXProperty::IsTree:
         stream << "IsTree";
@@ -1145,9 +1148,6 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::SupportsCurrent:
         stream << "SupportsCurrent";
-        break;
-    case AXProperty::SupportsDatetimeAttribute:
-        stream << "SupportsDatetimeAttribute";
         break;
     case AXProperty::SupportsExpanded:
         stream << "SupportsExpanded";

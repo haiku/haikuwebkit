@@ -41,7 +41,7 @@ class Node;
 
 class AccessibilityNodeObject : public AccessibilityObject {
 public:
-    static Ref<AccessibilityNodeObject> create(AXID, Node&);
+    static Ref<AccessibilityNodeObject> create(AXID, Node&, AXObjectCache&);
     virtual ~AccessibilityNodeObject();
 
     void init() override;
@@ -139,7 +139,7 @@ public:
 #endif
 
 protected:
-    explicit AccessibilityNodeObject(AXID, Node*);
+    explicit AccessibilityNodeObject(AXID, Node*, AXObjectCache&);
     void detachRemoteParts(AccessibilityDetachmentType) override;
 
     AccessibilityRole m_ariaRole { AccessibilityRole::Unknown };
@@ -205,7 +205,7 @@ private:
     void visibleText(Vector<AccessibilityText>&) const;
     String alternativeTextForWebArea() const;
     void ariaLabeledByText(Vector<AccessibilityText>&) const;
-    bool usesAltTagForTextComputation() const;
+    bool usesAltForTextComputation() const;
     bool roleIgnoresTitle() const;
     bool postKeyboardKeysForValueChange(StepAction);
     void setNodeValue(StepAction, float);

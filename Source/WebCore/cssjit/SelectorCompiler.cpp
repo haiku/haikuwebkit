@@ -1247,8 +1247,7 @@ static inline FunctionType addPseudoClassType(const CSSSelector& selector, Selec
         return FunctionType::SimpleSelectorChecker;
 
     case CSSSelector::PseudoClass::Scope:
-        fragment.pseudoClasses.add(CSSSelector::PseudoClass::Scope);
-        return FunctionType::SelectorCheckerWithCheckingContext;
+        return FunctionType::CannotCompile;
 
     case CSSSelector::PseudoClass::Active:
     case CSSSelector::PseudoClass::Empty:
@@ -1514,7 +1513,7 @@ static FunctionType constructFragmentsInternal(const CSSSelector* rootSelector, 
             break;
         }
         case CSSSelector::Match::List:
-            if (selector->value().find(isASCIIWhitespace<UChar>) != notFound)
+            if (selector->value().find(isASCIIWhitespace<char16_t>) != notFound)
                 return FunctionType::CannotMatchAnything;
             [[fallthrough]];
         case CSSSelector::Match::Begin:

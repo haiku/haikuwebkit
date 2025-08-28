@@ -100,54 +100,6 @@ function union(other)
     return result;
 }
 
-function intersection(other)
-{
-    "use strict";
-
-    if (!@isSet(this))
-        @throwTypeError("Set operation called on non-Set object");
-
-    // Get Set Record
-    var size = @getSetSizeAsInt(other);
-
-    var has = other.has;
-    if (!@isCallable(has))
-        @throwTypeError("Set.prototype.intersection expects other.has to be callable");
-
-    var keys = other.keys;
-    if (!@isCallable(keys))
-        @throwTypeError("Set.prototype.intersection expects other.keys to be callable");
-
-    var result = new @Set();
-    if (this.@size <= size) {
-        var storage = @setStorage(this);
-        var entry = 0;
-
-        do {
-            storage = @setIterationNext(storage, entry);
-            if (storage == @orderedHashTableSentinel)
-                break;
-            entry = @setIterationEntry(storage) + 1;
-            var key = @setIterationEntryKey(storage);
-
-            if (has.@call(other, key))
-                result.@add(key);
-        } while (true);
-    } else {
-        var iterator = keys.@call(other);
-        var wrapper = {
-            @@iterator: function () { return iterator; }
-        };
-
-        for (var key of wrapper) {
-            if (this.@has(key))
-                result.@add(key);
-        }
-    }
-
-    return result;
-}
-
 function difference(other)
 {
     "use strict";

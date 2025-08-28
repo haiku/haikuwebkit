@@ -89,7 +89,6 @@ public:
 
     Device& device() const { return m_device; }
     PipelineLayout& pipelineLayout() const { return m_pipelineLayout; }
-    Ref<PipelineLayout> protectedPipelineLayout() const { return m_pipelineLayout; }
     bool colorDepthStencilTargetsMatch(const WGPURenderPassDescriptor&, const Vector<RefPtr<TextureView>>&, const RefPtr<TextureView>&) const;
     bool validateRenderBundle(const WGPURenderBundleEncoderDescriptor&) const;
     bool writesDepth() const;
@@ -129,7 +128,7 @@ private:
     MTLDepthStencilDescriptor *m_depthStencilDescriptor { nil };
     id<MTLDepthStencilState> m_depthStencilState;
     RequiredBufferIndicesContainer m_requiredBufferIndices;
-    Ref<PipelineLayout> m_pipelineLayout;
+    const Ref<PipelineLayout> m_pipelineLayout;
     mutable RefPtr<RenderPipeline> m_lastStrideAsStridePipeline;
     WGPURenderPipelineDescriptor m_descriptor;
     WGPUDepthStencilState m_descriptorDepthStencil;

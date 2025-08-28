@@ -42,26 +42,26 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityTableCell::AccessibilityTableCell(AXID axID, RenderObject& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilityTableCell::AccessibilityTableCell(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
 }
 
-AccessibilityTableCell::AccessibilityTableCell(AXID axID, Node& node)
-    : AccessibilityRenderObject(axID, node)
+AccessibilityTableCell::AccessibilityTableCell(AXID axID, Node& node, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, node, cache)
 {
 }
 
 AccessibilityTableCell::~AccessibilityTableCell() = default;
 
-Ref<AccessibilityTableCell> AccessibilityTableCell::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityTableCell> AccessibilityTableCell::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTableCell(axID, renderer));
+    return adoptRef(*new AccessibilityTableCell(axID, renderer, cache));
 }
 
-Ref<AccessibilityTableCell> AccessibilityTableCell::create(AXID axID, Node& node)
+Ref<AccessibilityTableCell> AccessibilityTableCell::create(AXID axID, Node& node, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTableCell(axID, node));
+    return adoptRef(*new AccessibilityTableCell(axID, node, cache));
 }
 
 bool AccessibilityTableCell::computeIsIgnored() const

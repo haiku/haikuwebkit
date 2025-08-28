@@ -43,7 +43,7 @@ class JSFunction;
 DECLARE_COMPACT_ALLOCATOR_WITH_HEAP_IDENTIFIER(InlineCallFrame);
 
 struct InlineCallFrame {
-    WTF_MAKE_STRUCT_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(InlineCallFrame);
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(InlineCallFrame, InlineCallFrame);
 
     enum Kind {
         Call,

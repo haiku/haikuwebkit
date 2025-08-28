@@ -37,11 +37,7 @@ typedef struct CGPoint CGPoint;
 #endif
 
 #if PLATFORM(MAC)
-#ifdef NSGEOMETRY_TYPES_SAME_AS_CGGEOMETRY_TYPES
 typedef struct CGPoint NSPoint;
-#else
-typedef struct _NSPoint NSPoint;
-#endif
 #endif // PLATFORM(MAC)
 
 #if PLATFORM(HAIKU)
@@ -179,11 +175,6 @@ public:
 #if USE(CG)
     WEBCORE_EXPORT FloatPoint(const CGPoint&);
     WEBCORE_EXPORT operator CGPoint() const;
-#endif
-
-#if PLATFORM(MAC) && !defined(NSGEOMETRY_TYPES_SAME_AS_CGGEOMETRY_TYPES)
-    WEBCORE_EXPORT FloatPoint(const NSPoint&);
-    WEBCORE_EXPORT operator NSPoint() const;
 #endif
 
 #if PLATFORM(HAIKU)

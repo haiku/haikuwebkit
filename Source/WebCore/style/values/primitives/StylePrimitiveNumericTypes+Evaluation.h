@@ -42,9 +42,9 @@ using namespace CSS::Literals;
 // MARK: - Percentage
 
 template<auto R, typename V> struct Evaluation<Percentage<R, V>> {
-    constexpr double operator()(const Percentage<R, V>& percentage)
+    constexpr typename Percentage<R, V>::ResolvedValueType operator()(const Percentage<R, V>& percentage)
     {
-        return static_cast<double>(percentage.value) / 100.0;
+        return percentage.value / static_cast<typename Percentage<R, V>::ResolvedValueType>(100.0);
     }
     template<typename Reference> constexpr auto operator()(const Percentage<R, V>& percentage, Reference referenceLength) -> Reference
     {
@@ -61,9 +61,9 @@ template<auto R, typename V> constexpr LayoutUnit evaluate(const Percentage<R, V
 // MARK: - Numeric
 
 template<NonCompositeNumeric StyleType> struct Evaluation<StyleType> {
-    constexpr double operator()(const StyleType& value)
+    constexpr typename StyleType::ResolvedValueType operator()(const StyleType& value)
     {
-        return static_cast<double>(value.value);
+        return value.value;
     }
     template<typename Reference> constexpr auto operator()(const StyleType& value, Reference) -> Reference
     {

@@ -36,6 +36,7 @@
 #include "BlobLoader.h"
 #include "BlobPart.h"
 #include "BlobURL.h"
+#include "ContextDestructionObserverInlines.h"
 #include "File.h"
 #include "JSDOMPromiseDeferred.h"
 #include "PolicyContainer.h"
@@ -179,6 +180,18 @@ Blob::Blob(ScriptExecutionContext* context, Vector<uint8_t>&& data, const String
     , m_internalURL(BlobURL::createInternalURL())
 {
     ThreadableBlobRegistry::registerInternalBlobURL(m_internalURL, { BlobPart(WTFMove(data)) }, contentType);
+}
+
+Blob::Blob(ScriptExecutionContext* context, Ref<FragmentedSharedBuffer>&& buffer, const String& contentType)
+    : ActiveDOMObject(context)
+    , m_type(contentType)
+    , m_size(buffer->size())
+    , m_memoryCost(buffer->size())
+    , m_internalURL(BlobURL::createInternalURL())
+{
+    BlobBuilder builder(EndingType::Transparent);
+    builder.append(WTFMove(buffer));
+    ThreadableBlobRegistry::registerInternalBlobURL(m_internalURL, builder.finalize(), contentType);
 }
 
 Blob::Blob(ReferencingExistingBlobConstructor, ScriptExecutionContext* context, const Blob& blob)

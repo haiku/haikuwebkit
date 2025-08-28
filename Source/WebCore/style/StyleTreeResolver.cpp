@@ -1375,14 +1375,37 @@ std::unique_ptr<Update> TreeResolver::resolve()
         for (auto entry : m_document->styleScope().anchorPositionedToAnchorMap()) {
             CheckedRef anchorPositionedElement = entry.key;
             auto& anchors = entry.value;
-            for (auto& anchor : anchors) {
-                if (m_changedAnchorNames.contains(anchor.name.name()) || m_allAnchorNamesInvalid) {
-                    // We need to recompute this anchored element as a change in anchor names may have caused it to be anchored differently.
-                    anchorPositionedElement->invalidateForResumingAnchorPositionedElementResolution();
-                    m_needsInterleavedLayout = true;
+
+            bool anchorPositionedReferencesChangedAnchorNames = [&] {
+                if (m_allAnchorNamesInvalid)
+                    return true;
+
+                for (auto anchor : anchors.anchors) {
+                    if (m_changedAnchorNames.contains(anchor.name.name()))
+                        return true;
+                }
+
+                return false;
+            }();
+
+            if (anchorPositionedReferencesChangedAnchorNames) {
+                // Invalidate the anchor-positioned element, so subsequent style resolution rounds would visit it.
+                anchorPositionedElement->invalidateForResumingAnchorPositionedElementResolution();
+
+                // Mark that additional style resolution round is needed.
+                m_needsInterleavedLayout = true;
+
+                // If the anchor-positioned element is currently being tracked for resolution,
+                // reset the resolution stage to FindAnchor. This re-runs anchor resolution to
+                // pick up new anchor name changes.
+                auto stateIt = m_treeResolutionState.anchorPositionedStates.find(anchors.key);
+                if (stateIt != m_treeResolutionState.anchorPositionedStates.end()) {
+                    ASSERT(stateIt->value);
+                    stateIt->value->stage = AnchorPositionResolutionStage::FindAnchors;
                 }
             }
         }
+
         m_changedAnchorNames = { };
         m_allAnchorNamesInvalid = false;
     }

@@ -157,15 +157,16 @@ void RunLoop::notify(RunLoop::Event event, const char* name)
     });
 }
 
-RunLoop::TimerBase::TimerBase(Ref<RunLoop>&& runLoop)
+RunLoop::TimerBase::TimerBase(Ref<RunLoop>&& runLoop, ASCIILiteral description)
     : m_runLoop(WTFMove(runLoop))
+    , m_description(description)
     , m_source(adoptGRef(g_source_new(&RunLoop::s_runLoopSourceFunctions, sizeof(RunLoopSource))))
 {
     auto& runLoopSource = *reinterpret_cast<RunLoopSource*>(m_source.get());
     runLoopSource.runLoop = m_runLoop.ptr();
 
     g_source_set_priority(m_source.get(), RunLoopSourcePriority::RunLoopTimer);
-    g_source_set_name(m_source.get(), "[WebKit] RunLoop::Timer work");
+    g_source_set_name(m_source.get(), m_description);
     g_source_set_callback(m_source.get(), [](gpointer userData) -> gboolean {
         // fired() executes the user's callback. It may destroy timer,
         // so we must check if the source is still active afterwards
@@ -185,11 +186,6 @@ RunLoop::TimerBase::TimerBase(Ref<RunLoop>&& runLoop)
 RunLoop::TimerBase::~TimerBase()
 {
     g_source_destroy(m_source.get());
-}
-
-void RunLoop::TimerBase::setName(ASCIILiteral name)
-{
-    g_source_set_name(m_source.get(), name);
 }
 
 void RunLoop::TimerBase::setPriority(int priority)

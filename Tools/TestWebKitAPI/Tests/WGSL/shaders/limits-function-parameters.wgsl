@@ -1,5 +1,3 @@
-// RUN: %not %wgslc | %check
-
 fn f(
 x: i32,
 x: i32,

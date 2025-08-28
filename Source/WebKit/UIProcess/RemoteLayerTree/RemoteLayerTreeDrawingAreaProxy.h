@@ -122,11 +122,13 @@ protected:
     void forEachProcessState(NOESCAPE Function<void(ProcessState&, WebProcessProxy&)>&&);
 
 private:
+#if ENABLE(TILED_CA_DRAWING_AREA)
+    DrawingAreaType type() const final { return DrawingAreaType::RemoteLayerTree; }
+#endif
 
     void remotePageProcessDidTerminate(WebCore::ProcessIdentifier) final;
     void sizeDidChange() final;
     void deviceScaleFactorDidChange(CompletionHandler<void()>&&) final;
-    void windowKindDidChange() final;
     void minimumSizeForAutoLayoutDidChange() final;
     void sizeToContentAutoSizeMaximumSizeDidChange() final;
     void didUpdateGeometry();
@@ -146,8 +148,6 @@ private:
     void hideContentUntilPendingUpdate() final;
     void hideContentUntilAnyUpdate() final;
     bool hasVisibleContent() const final;
-
-    void prepareForAppSuspension() final;
 
     WebCore::FloatPoint indicatorLocation() const;
 

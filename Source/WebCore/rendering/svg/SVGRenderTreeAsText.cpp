@@ -83,7 +83,7 @@ namespace WebCore {
  */
 class TextStreamSeparator {
 public:
-    TextStreamSeparator(UChar s)
+    TextStreamSeparator(char16_t s)
         : m_separator(s)
         , m_needToSeparate(false)
     {
@@ -92,7 +92,7 @@ public:
 private:
     friend TextStream& operator<<(TextStream&, TextStreamSeparator&);
 
-    UChar m_separator;
+    char16_t m_separator;
     bool m_needToSeparate;
 };
 
@@ -208,7 +208,7 @@ static void writeSVGStrokePaintingResource(TextStream& ts, const RenderElement& 
     SVGLengthContext lengthContext(&shape);
     double dashOffset = lengthContext.valueForLength(svgStyle.strokeDashOffset());
     double strokeWidth = lengthContext.valueForLength(style.strokeWidth());
-    auto dashArray = WTF::map(svgStyle.strokeDashArray(), [&](auto& length) -> DashArrayElement {
+    auto dashArray = DashArray::map(svgStyle.strokeDashArray(), [&](auto& length) -> DashArrayElement {
         return lengthContext.valueForLength(length);
     });
 

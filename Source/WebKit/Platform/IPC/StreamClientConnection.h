@@ -137,7 +137,7 @@ private:
         void didReceiveMessage(Connection&, Decoder&) final;
         bool didReceiveSyncMessage(Connection&, Decoder&, UniqueRef<Encoder>&) final;
         void didClose(Connection&) final;
-        void didReceiveInvalidMessage(Connection&, MessageName, int32_t indexOfObjectFailingDecoding) final;
+        void didReceiveInvalidMessage(Connection&, MessageName, const Vector<uint32_t>& indicesOfObjectsFailingDecoding) final;
     private:
         const CheckedRef<StreamClientConnection> m_owner;
         const CheckedRef<Connection::Client> m_receiver;
@@ -226,7 +226,7 @@ std::optional<StreamClientConnection::AsyncReplyID> StreamClientConnection::send
         // FIXME(https://bugs.webkit.org/show_bug.cgi?id=248947): Current contract is that completionHandler
         // is called on the connection run loop.
         // This does not make sense. However, this needs a change that is done later.
-        RunLoop::protectedMain()->dispatch([completionHandler = WTFMove(replyHandlerToCancel)]() mutable {
+        RunLoop::mainSingleton().dispatch([completionHandler = WTFMove(replyHandlerToCancel)]() mutable {
             completionHandler(nullptr, nullptr);
         });
     }

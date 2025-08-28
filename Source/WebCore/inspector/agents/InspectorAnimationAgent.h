@@ -108,7 +108,7 @@ private:
     Timer m_animationDestroyedTimer;
 
     struct TrackedStyleOriginatedAnimationData {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(TrackedStyleOriginatedAnimationData);
         Inspector::Protocol::Animation::AnimationId trackingAnimationId;
         ComputedEffectTiming lastComputedTiming;
     };

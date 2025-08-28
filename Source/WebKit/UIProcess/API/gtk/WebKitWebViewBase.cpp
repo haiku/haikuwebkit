@@ -270,7 +270,7 @@ struct _WebKitWebViewBasePrivate {
     _WebKitWebViewBasePrivate()
         : pageScaleFactor(1.0)
 #if GTK_CHECK_VERSION(3, 24, 0)
-        , releaseEmojiChooserTimer(RunLoop::main(), this, &_WebKitWebViewBasePrivate::releaseEmojiChooserTimerFired)
+        , releaseEmojiChooserTimer(RunLoop::mainSingleton(), "_WebKitWebViewBasePrivate::ReleaseEmojiChooserTimer"_s, this, &_WebKitWebViewBasePrivate::releaseEmojiChooserTimerFired)
 #endif
     {
 #if GTK_CHECK_VERSION(3, 24, 0)
@@ -3047,7 +3047,7 @@ static void emojiChooserClosed(WebKitWebViewBase* webkitWebViewBase)
 {
     // The emoji chooser first closes the popover and then emits emoji-picked signal, so complete
     // the request if the emoji isn't picked before the next run loop iteration.
-    RunLoop::protectedMain()->dispatch([webViewBase = GRefPtr<WebKitWebViewBase>(webkitWebViewBase)] {
+    RunLoop::mainSingleton().dispatch([webViewBase = GRefPtr<WebKitWebViewBase>(webkitWebViewBase)] {
         webkitWebViewBaseCompleteEmojiChooserRequest(webViewBase.get(), emptyString());
     });
     webkitWebViewBase->priv->releaseEmojiChooserTimer.startOneShot(2_min);
@@ -3085,7 +3085,7 @@ void webkitWebViewBaseShowEmojiChooser(WebKitWebViewBase* webkitWebViewBase, con
 }
 
 #if ENABLE(POINTER_LOCK)
-void webkitWebViewBaseRequestPointerLock(WebKitWebViewBase* webViewBase)
+void webkitWebViewBaseRequestPointerLock(WebKitWebViewBase* webViewBase, CompletionHandler<void(bool)>&& completionHandler)
 {
     WebKitWebViewBasePrivate* priv = webViewBase->priv;
     ASSERT(!priv->pointerLockManager);
@@ -3093,13 +3093,11 @@ void webkitWebViewBaseRequestPointerLock(WebKitWebViewBase* webViewBase)
         priv->lastMotionEvent = MotionEvent(GTK_WIDGET(webViewBase), nullptr);
     priv->pointerLockManager = PointerLockManager::create(*priv->pageProxy, priv->lastMotionEvent->position, priv->lastMotionEvent->globalPosition,
         priv->lastMotionEvent->button, priv->lastMotionEvent->buttons, priv->lastMotionEvent->modifiers);
-    if (priv->pointerLockManager->lock()) {
-        priv->pageProxy->didAllowPointerLock();
-        return;
-    }
+    if (priv->pointerLockManager->lock())
+        return completionHandler(true);
 
     priv->pointerLockManager = nullptr;
-    priv->pageProxy->didDenyPointerLock();
+    completionHandler(false);
 }
 
 void webkitWebViewBaseDidLosePointerLock(WebKitWebViewBase* webViewBase)
@@ -3476,13 +3474,13 @@ void webkitWebViewBaseSetPlugID(WebKitWebViewBase* webViewBase, const String& pl
 }
 #endif
 
-RendererBufferFormat webkitWebViewBaseGetRendererBufferFormat(WebKitWebViewBase* webViewBase)
+RendererBufferDescription webkitWebViewBaseGetRendererBufferDescription(WebKitWebViewBase* webViewBase)
 {
     auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(webViewBase->priv->pageProxy->drawingArea());
     if (!drawingArea || !drawingArea->isInAcceleratedCompositingMode())
         return { };
 
-    return webViewBase->priv->acceleratedBackingStore->bufferFormat();
+    return webViewBase->priv->acceleratedBackingStore->bufferDescription();
 }
 
 #if USE(CAIRO)

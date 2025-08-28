@@ -118,7 +118,7 @@ class WebMediaSessionManager;
 class SelectionData;
 #endif
 
-struct ElementIdentifierType;
+struct NodeIdentifierType;
 enum class MouseEventPolicy : uint8_t;
 enum class RouteSharingPolicy : uint8_t;
 enum class ScrollbarStyle : uint8_t;
@@ -151,7 +151,7 @@ struct PromisedAttachmentInfo;
 struct TranslationContextMenuInfo;
 #endif
 
-using ElementIdentifier = ObjectIdentifier<ElementIdentifierType>;
+using NodeIdentifier = ObjectIdentifier<NodeIdentifierType>;
 
 #if ENABLE(WRITING_TOOLS)
 namespace WritingTools {
@@ -260,8 +260,12 @@ public:
     // Return whether the view is focused.
     virtual bool isViewFocused() = 0;
 
-    // Return whether the view is visible.
-    virtual bool isViewVisible() = 0;
+    // Return whether the active view is visible.
+    virtual bool isActiveViewVisible() = 0;
+
+    // Return whether the main view is visible.
+    // This is relevant for page client that can have multiple views.
+    virtual bool isMainViewVisible() { return isActiveViewVisible(); }
 
     // Called when the activity state of the page transitions from non-visible to visible.
     virtual void viewIsBecomingVisible() { }
@@ -274,13 +278,13 @@ public:
 #endif
 
     // Return whether the view is visible, or occluded by another window.
-    virtual bool isViewVisibleOrOccluded() { return isViewVisible(); }
+    virtual bool isViewVisibleOrOccluded() { return isActiveViewVisible(); }
 
     // Return whether the view is in a window.
     virtual bool isViewInWindow() = 0;
 
     // Return whether the view is visually idle.
-    virtual bool isVisuallyIdle() { return !isViewVisible(); }
+    virtual bool isVisuallyIdle() { return !isActiveViewVisible(); }
 
     virtual WindowKind windowKind() { return isViewInWindow() ? WindowKind::Normal : WindowKind::Unparented; }
 
@@ -342,7 +346,7 @@ public:
 #if PLATFORM(GTK)
     virtual void startDrag(WebCore::SelectionData&&, OptionSet<WebCore::DragOperation>, RefPtr<WebCore::ShareableBitmap>&& dragImage, WebCore::IntPoint&& dragImageHotspot) = 0;
 #else
-    virtual void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmap::Handle&&, const std::optional<WebCore::ElementIdentifier>&) { }
+    virtual void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmap::Handle&&, const std::optional<WebCore::NodeIdentifier>&) { }
 #endif
     virtual void didPerformDragOperation(bool) { }
     virtual void didPerformDragControllerAction() { }
@@ -720,7 +724,7 @@ public:
 #endif
 
 #if ENABLE(MODEL_PROCESS)
-    virtual void didReceiveInteractiveModelElement(std::optional<WebCore::ElementIdentifier>) = 0;
+    virtual void didReceiveInteractiveModelElement(std::optional<WebCore::NodeIdentifier>) = 0;
 #endif
 
     virtual void requestDOMPasteAccess(WebCore::DOMPasteAccessCategory, WebCore::DOMPasteRequiresInteraction, const WebCore::IntRect& elementRect, const String& originIdentifier, CompletionHandler<void(WebCore::DOMPasteAccessResponse)>&&) = 0;

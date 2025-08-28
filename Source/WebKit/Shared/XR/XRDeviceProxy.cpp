@@ -89,7 +89,7 @@ void XRDeviceProxy::initializeTrackingAndRendering(const WebCore::SecurityOrigin
 
         if (trackingAndRenderingClient())
             trackingAndRenderingClient()->sessionDidInitializeInputSources({ });
-    });    
+    });
 }
 
 void XRDeviceProxy::shutDownTrackingAndRendering()
@@ -129,10 +129,16 @@ std::optional<PlatformXR::LayerHandle> XRDeviceProxy::createLayerProjection(uint
     return xrSystem ? xrSystem->createLayerProjection(width, height, alpha) : std::nullopt;
 }
 
-void XRDeviceProxy::submitFrame(Vector<PlatformXR::Device::Layer>&&)
+void XRDeviceProxy::submitFrame(Vector<PlatformXR::Device::Layer>&& layers)
 {
-    if (RefPtr xrSystem = m_xrSystem.get())
+    if (RefPtr xrSystem = m_xrSystem.get()) {
+#if USE(OPENXR)
+        xrSystem->submitFrame(WTFMove(layers));
+#else
+        UNUSED_PARAM(layers);
         xrSystem->submitFrame();
+#endif
+    }
 }
 
 } // namespace WebKit

@@ -56,40 +56,15 @@ public:
     bool canDropAnonymousBlockChild() const final { return false; }
     void layoutBlock(RelayoutChildren, LayoutUnit pageLogicalHeight = 0_lu) final;
 
-    LayoutUnit baselinePosition(bool firstLine, LineDirectionMode, LinePositionMode = PositionOnContainingLine) const override;
     std::optional<LayoutUnit> firstLineBaseline() const override;
     std::optional<LayoutUnit> lastLineBaseline() const override;
-    std::optional<LayoutUnit> inlineBlockBaseline(LineDirectionMode) const override;
 
     void styleDidChange(StyleDifference, const RenderStyle*) override;
     bool hitTestChildren(const HitTestRequest&, HitTestResult&, const HitTestLocation&, const LayoutPoint& adjustedLocation, HitTestAction) override;
     void paintChildren(PaintInfo& forSelf, const LayoutPoint&, PaintInfo& forChild, bool usePrintRect) override;
 
     bool isHorizontalFlow() const;
-    inline Direction crossAxisDirection() const
-    {
-        switch (writingMode().blockDirection()) {
-        case FlowDirection::TopToBottom:
-            if (style().isRowFlexDirection())
-                return (style().flexWrap() == FlexWrap::Reverse) ? Direction::BottomToTop : Direction::TopToBottom;
-            return (style().flexWrap() == FlexWrap::Reverse) ? Direction::RightToLeft : Direction::LeftToRight;
-        case FlowDirection::BottomToTop:
-            if (style().isRowFlexDirection())
-                return (style().flexWrap() == FlexWrap::Reverse) ? Direction::TopToBottom : Direction::BottomToTop;
-            return (style().flexWrap() == FlexWrap::Reverse) ? Direction::RightToLeft : Direction::LeftToRight;
-        case FlowDirection::LeftToRight:
-            if (style().isRowFlexDirection())
-                return (style().flexWrap() == FlexWrap::Reverse) ? Direction::RightToLeft : Direction::LeftToRight;
-            return (style().flexWrap() == FlexWrap::Reverse) ? Direction::BottomToTop : Direction::TopToBottom;
-        case FlowDirection::RightToLeft:
-            if (style().isRowFlexDirection())
-                return (style().flexWrap() == FlexWrap::Reverse) ? Direction::LeftToRight : Direction::RightToLeft;
-            return (style().flexWrap() == FlexWrap::Reverse) ? Direction::BottomToTop : Direction::TopToBottom;
-        default:
-            ASSERT_NOT_REACHED();
-            return Direction::TopToBottom;
-        }
-    }
+    Direction crossAxisDirection() const;
 
     const OrderIterator& orderIterator() const { return m_orderIterator; }
 
@@ -333,8 +308,8 @@ private:
     void resetHasDefiniteHeight() { m_hasDefiniteHeight = SizeDefiniteness::Unknown; }
     const RenderBox* flexItemForFirstBaseline() const;
     const RenderBox* flexItemForLastBaseline() const;
-    const RenderBox* firstBaselineCandidateOnLine(OrderIterator, ItemPosition baselinePosition, size_t numberOfItemsOnLine) const;
-    const RenderBox* lastBaselineCandidateOnLine(OrderIterator, ItemPosition baselinePosition, size_t numberOfItemsOnLine) const;
+    const RenderBox* firstBaselineCandidateOnLine(OrderIterator, size_t numberOfItemsOnLine) const;
+    const RenderBox* lastBaselineCandidateOnLine(OrderIterator, size_t numberOfItemsOnLine) const;
 
     bool layoutUsingFlexFormattingContext();
 

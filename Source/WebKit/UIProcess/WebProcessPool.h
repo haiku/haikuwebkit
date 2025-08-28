@@ -626,11 +626,12 @@ public:
 #endif
 
 #if PLATFORM(COCOA)
-    void registerUserInstalledFonts(WebProcessProxy&);
     void registerAssetFonts(WebProcessProxy&);
+    void registerFontsForGPUProcessIfNeeded();
 #endif
 
 #if PLATFORM(MAC)
+    void registerUserInstalledFonts(WebProcessProxy&);
     void registerAdditionalFonts(NSArray *fontNames);
 #endif
 

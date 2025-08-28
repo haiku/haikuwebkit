@@ -166,6 +166,10 @@ http/tests/security/model-element [ Pass ]
 # Tests which pass only with form control refresh enabled (visionOS 26)
 fast/forms/form-control-refresh [ Pass ]
 
+# Window inactive appearance is only used on macOS.
+fast/forms/form-control-refresh/checkbox-radio-inactive-appearance-dark-bg-light-color-scheme.html [ Skip ]
+fast/forms/form-control-refresh/checkbox-radio-inactive-appearance-light-bg-dark-color-scheme.html [ Skip ]
+
 ### END OF Triaged failures
 ###################################################################################################
 

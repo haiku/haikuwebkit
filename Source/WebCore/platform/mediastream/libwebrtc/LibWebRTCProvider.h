@@ -28,6 +28,7 @@
 #if USE(LIBWEBRTC)
 
 #include "LibWebRTCMacros.h"
+#include "LibWebRTCRefWrappers.h"
 #include "ScriptExecutionContextIdentifier.h"
 #include "WebRTCProvider.h"
 #include <wtf/Compiler.h>
@@ -51,7 +52,6 @@ namespace webrtc {
 class AsyncDnsResolverFactory;
 class NetworkManager;
 class PacketSocketFactory;
-class PeerConnectionFactoryInterface;
 class RTCCertificateGenerator;
 class Thread;
 }
@@ -122,7 +122,7 @@ protected:
 
     webrtc::scoped_refptr<webrtc::PeerConnectionInterface> createPeerConnection(webrtc::PeerConnectionObserver&, webrtc::NetworkManager&, webrtc::PacketSocketFactory&, webrtc::PeerConnectionInterface::RTCConfiguration&&, std::unique_ptr<webrtc::AsyncDnsResolverFactoryInterface>&&);
 
-    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> createPeerConnectionFactory(webrtc::Thread* networkThread, webrtc::Thread* signalingThread);
+    Ref<webrtc::PeerConnectionFactoryInterface> createPeerConnectionFactory(webrtc::Thread* networkThread, webrtc::Thread* signalingThread);
     virtual std::unique_ptr<webrtc::VideoDecoderFactory> createDecoderFactory();
     virtual std::unique_ptr<webrtc::VideoEncoderFactory> createEncoderFactory();
 
@@ -131,7 +131,7 @@ protected:
     PeerConnectionFactoryAndThreads& getStaticFactoryAndThreads(bool useNetworkThreadWithSocketServer);
 
     RefPtr<LibWebRTCAudioModule> m_audioModule;
-    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> m_factory;
+    RefPtr<webrtc::PeerConnectionFactoryInterface> m_factory;
     // FIXME: Remove m_useNetworkThreadWithSocketServer member variable and make it a global.
     bool m_useNetworkThreadWithSocketServer { true };
 

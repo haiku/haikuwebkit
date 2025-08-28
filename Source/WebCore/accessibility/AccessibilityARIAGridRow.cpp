@@ -34,26 +34,26 @@
 
 namespace WebCore {
     
-AccessibilityARIAGridRow::AccessibilityARIAGridRow(AXID axID, RenderObject& renderer)
-    : AccessibilityTableRow(axID, renderer)
+AccessibilityARIAGridRow::AccessibilityARIAGridRow(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityTableRow(axID, renderer, cache)
 {
 }
 
-AccessibilityARIAGridRow::AccessibilityARIAGridRow(AXID axID, Node& node)
-    : AccessibilityTableRow(axID, node)
+AccessibilityARIAGridRow::AccessibilityARIAGridRow(AXID axID, Node& node, AXObjectCache& cache)
+    : AccessibilityTableRow(axID, node, cache)
 {
 }
 
 AccessibilityARIAGridRow::~AccessibilityARIAGridRow() = default;
 
-Ref<AccessibilityARIAGridRow> AccessibilityARIAGridRow::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityARIAGridRow> AccessibilityARIAGridRow::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityARIAGridRow(axID, renderer));
+    return adoptRef(*new AccessibilityARIAGridRow(axID, renderer, cache));
 }
 
-Ref<AccessibilityARIAGridRow> AccessibilityARIAGridRow::create(AXID axID, Node& node)
+Ref<AccessibilityARIAGridRow> AccessibilityARIAGridRow::create(AXID axID, Node& node, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityARIAGridRow(axID, node));
+    return adoptRef(*new AccessibilityARIAGridRow(axID, node, cache));
 }
 
 bool AccessibilityARIAGridRow::isARIATreeGridRow() const

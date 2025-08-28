@@ -29,6 +29,7 @@
 #if ENABLE(VIDEO)
 
 #include "AudioTrackList.h"
+#include "CSSValueKeywords.h"
 #include "ColorSerialization.h"
 #include "CommonAtomStrings.h"
 #include "FloatConversion.h"

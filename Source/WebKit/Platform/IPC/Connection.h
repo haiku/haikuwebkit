@@ -34,8 +34,14 @@
 #include "ReceiverMatcher.h"
 #include "SyncRequestID.h"
 #include "Timeout.h"
+#include <atomic>
+#include <bmalloc/TZoneHeap.h>
+#include <bmalloc/bmalloc.h>
+#include <new>
+#include <tuple>
 #include <wtf/Assertions.h>
 #include <wtf/CheckedPtr.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Condition.h>
 #include <wtf/Deque.h>
@@ -51,6 +57,8 @@
 #include <wtf/Noncopyable.h>
 #include <wtf/ObjectIdentifier.h>
 #include <wtf/OptionSet.h>
+#include <wtf/Ref.h>
+#include <wtf/RefPtr.h>
 #include <wtf/RunLoop.h>
 #include <wtf/ThreadAssertions.h>
 #include <wtf/ThreadSafeWeakPtr.h>
@@ -65,7 +73,10 @@
 #include <mach/mach_port.h>
 #include <wtf/OSObjectPtr.h>
 #include <wtf/spi/darwin/XPCSPI.h>
+#if HAVE(XPC_API)
+#include <xpc/xpc.h>
 #endif
+#endif // OS(DARWIN)
 
 #if USE(GLIB)
 #include <wtf/glib/GSocketMonitor.h>
@@ -258,11 +269,11 @@ public:
     using AsyncReplyID = IPC::AsyncReplyID;
 
     class Client : public MessageReceiver, public CanMakeThreadSafeCheckedPtr<Client> {
-        WTF_MAKE_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_FAST_ALLOCATED(Client);
         WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(Client);
     public:
         virtual void didClose(Connection&) = 0;
-        virtual void didReceiveInvalidMessage(Connection&, MessageName, int32_t indexOfObjectFailingDecoding) = 0;
+        virtual void didReceiveInvalidMessage(Connection&, MessageName, const Vector<uint32_t>& indicesOfObjectsFailingDecoding) = 0;
         virtual void requestRemoteProcessTermination() { }
 
     protected:
@@ -338,7 +349,7 @@ public:
     ~Connection();
 
     Client* client() const { return m_client.get(); }
-    CheckedPtr<Client> checkedClient() const { return m_client; }
+    RefPtr<Client> protectedClient() const { return m_client.get(); }
 
     enum UniqueIDType { };
     using UniqueID = AtomicObjectIdentifier<UniqueIDType>;
@@ -511,7 +522,7 @@ public:
 
     template<typename MessageReceiverType> void dispatchMessageReceiverMessage(MessageReceiverType&, UniqueRef<Decoder>&&);
     // Can be called from any thread.
-    void dispatchDidReceiveInvalidMessage(MessageName, int32_t indexOfObjectFailingDecoding);
+    void dispatchDidReceiveInvalidMessage(MessageName, const Vector<uint32_t>& indicesOfObjectsFailingDecoding);
     void dispatchDidCloseAndInvalidate();
 
     size_t pendingMessageCountForTesting() const;
@@ -884,7 +895,7 @@ template<typename T> Error Connection::waitForAndDispatchImmediately(uint64_t de
         return Error::InvalidConnection;
 
     ASSERT(decoderOrError.value()->destinationID() == destinationID);
-    checkedClient()->didReceiveMessage(*this, decoderOrError.value());
+    protectedClient()->didReceiveMessage(*this, decoderOrError.value());
     return Error::NoError;
 }
 

@@ -91,8 +91,7 @@ private:
  */
 class WTF_CAPABILITY("is current") WTF_EXPORT_PRIVATE WorkQueue : public WorkQueueBase, public GuaranteedSerialFunctionDispatcher {
 public:
-    static WorkQueue& main();
-    static Ref<WorkQueue> protectedMain() { return main(); }
+    static WorkQueue& mainSingleton();
     static Ref<WorkQueue> create(ASCIILiteral name, QOS = QOS::Default);
 
 

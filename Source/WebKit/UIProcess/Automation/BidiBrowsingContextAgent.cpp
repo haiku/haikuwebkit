@@ -132,7 +132,7 @@ void BidiBrowsingContextAgent::create(Inspector::Protocol::BidiBrowsingContext::
     });
 }
 
-Protocol::BidiBrowsingContext::BrowsingContext BidiBrowsingContextAgent::getBrowsingContextID(const WebCore::FrameIdentifier& frameID) const
+Inspector::Protocol::BidiBrowsingContext::BrowsingContext BidiBrowsingContextAgent::getBrowsingContextID(const WebCore::FrameIdentifier& frameID) const
 {
     RefPtr session = m_session.get();
     if (!session)
@@ -146,7 +146,7 @@ Protocol::BidiBrowsingContext::BrowsingContext BidiBrowsingContextAgent::getBrow
     return session->handleForWebFrameID(frameID);
 }
 
-Ref<Protocol::BidiBrowsingContext::Info> BidiBrowsingContextAgent::getNavigableInfo(const WebKit::FrameTreeNodeData& tree, std::optional<uint64_t> maxDepth, IncludeParentID includeParentID)
+Ref<Inspector::Protocol::BidiBrowsingContext::Info> BidiBrowsingContextAgent::getNavigableInfo(const WebKit::FrameTreeNodeData& tree, std::optional<uint64_t> maxDepth, IncludeParentID includeParentID)
 {
     // https://w3c.github.io/webdriver-bidi/#get-the-navigable-info
 
@@ -187,7 +187,7 @@ Ref<Protocol::BidiBrowsingContext::Info> BidiBrowsingContextAgent::getNavigableI
 
 // Recursively traverses the frame tree of the given pages, one page at a time.
 // We need such recursion because we need to wait for the frame tree of the current page to be fully processed before moving on to the next page.
-void BidiBrowsingContextAgent::getNextTree(Vector<Ref<WebPageProxy>>&& pagesToProcess, Ref<JSON::ArrayOf<Protocol::BidiBrowsingContext::Info>> resultsObject, std::optional<uint64_t> maxDepth, CommandCallback<Ref<JSON::ArrayOf<Protocol::BidiBrowsingContext::Info>>>&& callback)
+void BidiBrowsingContextAgent::getNextTree(Vector<Ref<WebPageProxy>>&& pagesToProcess, Ref<JSON::ArrayOf<Inspector::Protocol::BidiBrowsingContext::Info>> resultsObject, std::optional<uint64_t> maxDepth, CommandCallback<Ref<JSON::ArrayOf<Inspector::Protocol::BidiBrowsingContext::Info>>>&& callback)
 {
     if (pagesToProcess.isEmpty()) {
         callback(WTFMove(resultsObject));
@@ -204,7 +204,7 @@ void BidiBrowsingContextAgent::getNextTree(Vector<Ref<WebPageProxy>>&& pagesToPr
     });
 }
 
-void BidiBrowsingContextAgent::getTree(const BrowsingContext& optionalRoot, std::optional<double>&& optionalMaxDepth, CommandCallback<Ref<JSON::ArrayOf<Protocol::BidiBrowsingContext::Info>>>&& callback)
+void BidiBrowsingContextAgent::getTree(const BrowsingContext& optionalRoot, std::optional<double>&& optionalMaxDepth, CommandCallback<Ref<JSON::ArrayOf<Inspector::Protocol::BidiBrowsingContext::Info>>>&& callback)
 {
     // https://w3c.github.io/webdriver-bidi/#command-browsingContext-getTree
     RefPtr session = m_session.get();

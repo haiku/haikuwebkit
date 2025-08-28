@@ -32,4 +32,14 @@ struct WebKit::XRDeviceInfo {
     double minimumNearClipPlane;
 };
 
+#if USE(OPENXR)
+
+struct WebKit::XRDeviceLayer {
+    PlatformXR::LayerHandle handle;
+    bool visible;
+    Vector<PlatformXR::Device::LayerView> views;
+};
+
+#endif
+
 #endif

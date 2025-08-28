@@ -30,9 +30,9 @@
 #include "AccessibilityList.h"
 
 #include "AXObjectCache.h"
+#include "ContainerNodeInlines.h"
 #include "HTMLElement.h"
 #include "HTMLNames.h"
-#include "ListStyleType.h"
 #include "PseudoElement.h"
 #include "RenderElementInlines.h"
 #include "RenderListItem.h"
@@ -42,26 +42,26 @@ namespace WebCore {
     
 using namespace HTMLNames;
 
-AccessibilityList::AccessibilityList(AXID axID, RenderObject& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilityList::AccessibilityList(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
 }
 
-AccessibilityList::AccessibilityList(AXID axID, Node& node)
-    : AccessibilityRenderObject(axID, node)
+AccessibilityList::AccessibilityList(AXID axID, Node& node, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, node, cache)
 {
 }
 
 AccessibilityList::~AccessibilityList() = default;
 
-Ref<AccessibilityList> AccessibilityList::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityList> AccessibilityList::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityList(axID, renderer));
+    return adoptRef(*new AccessibilityList(axID, renderer, cache));
 }
 
-Ref<AccessibilityList> AccessibilityList::create(AXID axID, Node& node)
+Ref<AccessibilityList> AccessibilityList::create(AXID axID, Node& node, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityList(axID, node));
+    return adoptRef(*new AccessibilityList(axID, node, cache));
 }
 
 bool AccessibilityList::computeIsIgnored() const
@@ -173,7 +173,7 @@ AccessibilityRole AccessibilityList::determineAccessibilityRoleWithCleanChildren
         else if (child->role() == AccessibilityRole::ListItem) {
             // Rendered list items always count.
             if (CheckedPtr renderListItem = dynamicDowncast<RenderListItem>(child->renderer())) {
-                if (!hasVisibleMarkers && (renderListItem->style().listStyleType().type != ListStyleType::Type::None || renderListItem->style().listStyleImage() || childHasPseudoVisibleListItemMarkers(renderListItem->element())))
+                if (!hasVisibleMarkers && (!renderListItem->style().listStyleType().isNone() || renderListItem->style().listStyleImage() || childHasPseudoVisibleListItemMarkers(renderListItem->element())))
                     hasVisibleMarkers = true;
                 listItemCount++;
             } else if (WebCore::elementName(node.get()) == ElementName::HTML_li) {

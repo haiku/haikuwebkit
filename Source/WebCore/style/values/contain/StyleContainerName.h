@@ -44,4 +44,4 @@ struct ContainerNames : ListOrNone<ContainerNameList> { using ListOrNone<Contain
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::ContainerNames> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::ContainerNames)

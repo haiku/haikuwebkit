@@ -308,18 +308,18 @@ void LibWebRTCProvider::clearFactory()
     m_videoEncodingCapabilities = { };
 }
 
-webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> LibWebRTCProvider::createPeerConnectionFactory(webrtc::Thread* networkThread, webrtc::Thread* signalingThread)
+Ref<webrtc::PeerConnectionFactoryInterface> LibWebRTCProvider::createPeerConnectionFactory(webrtc::Thread* networkThread, webrtc::Thread* signalingThread)
 {
     willCreatePeerConnectionFactory();
 
     ASSERT(!m_audioModule);
     m_audioModule = LibWebRTCAudioModule::create();
 
-    return webrtc::CreatePeerConnectionFactory(networkThread, signalingThread, signalingThread, webrtc::scoped_refptr<webrtc::AudioDeviceModule>(m_audioModule.get()), webrtc::CreateBuiltinAudioEncoderFactory(), webrtc::CreateBuiltinAudioDecoderFactory(), createEncoderFactory(), createDecoderFactory(), nullptr, nullptr, nullptr, nullptr
+    return toRef(webrtc::CreatePeerConnectionFactory(networkThread, signalingThread, signalingThread, webrtc::scoped_refptr<webrtc::AudioDeviceModule>(m_audioModule.get()), webrtc::CreateBuiltinAudioEncoderFactory(), webrtc::CreateBuiltinAudioDecoderFactory(), createEncoderFactory(), createDecoderFactory(), nullptr, nullptr, nullptr, nullptr
 #if PLATFORM(COCOA)
         , webrtc::CreateTaskQueueGcdFactory()
 #endif
-    );
+    ));
 }
 
 std::unique_ptr<webrtc::VideoDecoderFactory> LibWebRTCProvider::createDecoderFactory()
@@ -340,7 +340,7 @@ void LibWebRTCProvider::startedNetworkThread()
 void LibWebRTCProvider::setPeerConnectionFactory(webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>&& factory)
 {
     auto* thread = getStaticFactoryAndThreads(m_useNetworkThreadWithSocketServer).signalingThread.get();
-    m_factory = webrtc::PeerConnectionFactoryProxy::Create(thread, thread, WTFMove(factory));
+    m_factory = toRef<webrtc::PeerConnectionFactoryInterface>(webrtc::PeerConnectionFactoryProxy::Create(thread, thread, WTFMove(factory)));
 }
 
 webrtc::scoped_refptr<webrtc::PeerConnectionInterface> LibWebRTCProvider::createPeerConnection(ScriptExecutionContextIdentifier, webrtc::PeerConnectionObserver& observer, webrtc::PacketSocketFactory*, webrtc::PeerConnectionInterface::RTCConfiguration&& configuration)

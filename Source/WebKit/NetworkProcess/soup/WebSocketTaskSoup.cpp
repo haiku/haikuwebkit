@@ -64,7 +64,7 @@ WebSocketTask::WebSocketTask(NetworkSocketChannel& channel, const WebCore::Resou
     , m_request(request)
     , m_handshakeMessage(msg)
     , m_cancellable(adoptGRef(g_cancellable_new()))
-    , m_delayFailTimer(RunLoop::main(), this, &WebSocketTask::delayFailTimerFired)
+    , m_delayFailTimer(RunLoop::mainSingleton(), "WebSocketTask::DelayFailTimer"_s, this, &WebSocketTask::delayFailTimerFired)
 {
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE port
     auto protocolList = protocol.split(',');

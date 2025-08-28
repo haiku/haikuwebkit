@@ -33,6 +33,7 @@
 #include "WebPageInspectorAgentBase.h"
 #include "WebPageInspectorTarget.h"
 #include "WebPageProxy.h"
+#include "WebsiteDataStore.h"
 #include <JavaScriptCore/InspectorAgentBase.h>
 #include <JavaScriptCore/InspectorBackendDispatcher.h>
 #include <JavaScriptCore/InspectorBackendDispatchers.h>

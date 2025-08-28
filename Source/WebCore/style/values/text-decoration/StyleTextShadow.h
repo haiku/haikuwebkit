@@ -97,4 +97,4 @@ constexpr LayoutUnit paintingSpread(const TextShadow&)
 } // namespace WebCore
 
 DEFINE_SPACE_SEPARATED_TUPLE_LIKE_CONFORMANCE(WebCore::Style::TextShadow, 3)
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::TextShadows> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::TextShadows)

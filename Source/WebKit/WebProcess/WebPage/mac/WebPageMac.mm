@@ -64,6 +64,7 @@
 #import <WebCore/DataDetection.h>
 #import <WebCore/DictionaryLookup.h>
 #import <WebCore/Editing.h>
+#import <WebCore/EditingHTMLConverter.h>
 #import <WebCore/Editor.h>
 #import <WebCore/EventHandler.h>
 #import <WebCore/FocusController.h>
@@ -72,7 +73,6 @@
 #import <WebCore/GraphicsContext.h>
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/HTMLAttachmentElement.h>
-#import <WebCore/HTMLConverter.h>
 #import <WebCore/HTMLImageElement.h>
 #import <WebCore/HTMLPlugInImageElement.h>
 #import <WebCore/HitTestResult.h>
@@ -83,6 +83,7 @@
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/MIMETypeRegistry.h>
 #import <WebCore/NetworkStorageSession.h>
+#import <WebCore/NodeHTMLConverter.h>
 #import <WebCore/NodeRenderStyle.h>
 #import <WebCore/Page.h>
 #import <WebCore/PageOverlayController.h>
@@ -451,7 +452,7 @@ void WebPage::registerRemoteFrameAccessibilityTokens(pid_t pid, std::span<const 
     auto remoteElement = [elementTokenData length] ? adoptNS([[NSAccessibilityRemoteUIElement alloc] initWithRemoteToken:elementTokenData.get()]) : nil;
 
     createMockAccessibilityElement(pid);
-    [accessibilityRemoteObject() setRemoteParent:remoteElement.get()];
+    [accessibilityRemoteObject() setRemoteParent:remoteElement.get() token:elementTokenData.get()];
     [accessibilityRemoteObject() setFrameIdentifier:frameID];
 }
 
@@ -465,7 +466,7 @@ void WebPage::registerUIProcessAccessibilityTokens(std::span<const uint8_t> elem
     [remoteElement setWindowUIElement:remoteWindow.get()];
     [remoteElement setTopLevelUIElement:remoteWindow.get()];
     [accessibilityRemoteObject() setWindow:remoteWindow.get()];
-    [accessibilityRemoteObject() setRemoteParent:remoteElement.get()];
+    [accessibilityRemoteObject() setRemoteParent:remoteElement.get() token:elementTokenData.get()];
 }
 
 void WebPage::getStringSelectionForPasteboard(CompletionHandler<void(String&&)>&& completionHandler)

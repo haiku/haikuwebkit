@@ -87,7 +87,7 @@ static const CFStringRef LegacyWebArchiveResourceTextEncodingNameKey = CFSTR("We
 static const CFStringRef LegacyWebArchiveResourceResponseKey = CFSTR("WebResourceResponse");
 static const CFStringRef LegacyWebArchiveResourceResponseVersionKey = CFSTR("WebResourceResponseVersion");
 
-static bool isUnreservedURICharacter(UChar character)
+static bool isUnreservedURICharacter(char16_t character)
 {
     return isASCIIAlphanumeric(character) || character == '-' || character == '.' || character == '_' || character == '~';
 }
@@ -105,7 +105,7 @@ static String getFileNameFromURIComponent(StringView input)
     StringBuilder result;
     result.reserveCapacity(length);
     for (unsigned index = 0; index < length; ++index) {
-        UChar character = decodedInput->characterAt(index);
+        char16_t character = decodedInput->characterAt(index);
         if (isUnreservedURICharacter(character)) {
             result.append(character);
             continue;
@@ -158,9 +158,9 @@ RetainPtr<CFDictionaryRef> LegacyWebArchive::createPropertyListRepresentation(Ar
     auto propertyList = adoptCF(CFDictionaryCreateMutable(0, 6, 0, &kCFTypeDictionaryValueCallBacks));
 
     // Resource data can be empty, but must be represented by an empty CFDataRef
-    auto& data = resource->data();
+    Ref data = resource->data();
 
-    CFDictionarySetValue(propertyList.get(), LegacyWebArchiveResourceDataKey, data.makeContiguous()->createCFData().get());
+    CFDictionarySetValue(propertyList.get(), LegacyWebArchiveResourceDataKey, data->makeContiguous()->createCFData().get());
 
     // Resource URL cannot be null
     if (auto cfURL = resource->url().string().createCFString())
@@ -513,7 +513,7 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::create(Node& node)
 
 RefPtr<LegacyWebArchive> LegacyWebArchive::create(Node& node, ArchiveOptions&& options, NOESCAPE const Function<bool(LocalFrame&)>& frameFilter)
 {
-    auto* frame = node.document().frame();
+    RefPtr frame = node.document().frame();
     if (!frame)
         return create();
 
@@ -576,8 +576,8 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::create(const SimpleRange& range)
 
 RefPtr<LegacyWebArchive> LegacyWebArchive::create(const SimpleRange& range, ArchiveOptions&& options)
 {
-    auto& document = range.start.document();
-    auto* frame = document.frame();
+    Ref document = range.start.document();
+    RefPtr frame = document->frame();
     if (!frame)
         return nullptr;
 
@@ -595,8 +595,8 @@ static void addSubresourcesForAttachmentElementsIfNecessary(LocalFrame& frame, c
         return;
 
     Vector<String> identifiers;
-    for (auto& node : nodes) {
-        auto* attachment = dynamicDowncast<HTMLAttachmentElement>(node.get());
+    for (Ref node : nodes) {
+        RefPtr attachment = dynamicDowncast<HTMLAttachmentElement>(node);
         if (!attachment)
             continue;
 
@@ -748,7 +748,7 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::createInternal(const String& markupSt
                 continue;
 
             if (auto subframeArchive = createInternal(*localChildFrame->document(), options, frameFilter)) {
-                auto subframeMainResource = subframeArchive->mainResource();
+                RefPtr subframeMainResource = subframeArchive->mainResource();
                 auto subframeMainResourceURL = subframeMainResource ? subframeMainResource->url() : URL { };
                 if (!subframeMainResourceURL.isEmpty()) {
                     auto subframeMainResourceRelativePath = frame.isMainFrame() ? subframeMainResource->relativeFilePath() : FileSystem::lastComponentOfPathIgnoringTrailingSlash(subframeMainResource->relativeFilePath());
@@ -827,7 +827,7 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::createInternal(const String& markupSt
     }
 
     if (!options.mainResourceFileName.isNull()) {
-        auto* document = frame.document();
+        RefPtr document = frame.document();
         if (!document)
             return nullptr;
 
@@ -870,7 +870,7 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::createFromSelection(LocalFrame* frame
     if (!frame)
         return nullptr;
 
-    auto* document = frame->document();
+    RefPtr document = frame->document();
     if (!document)
         return nullptr;
 

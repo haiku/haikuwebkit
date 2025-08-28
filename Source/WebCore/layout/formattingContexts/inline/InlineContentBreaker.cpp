@@ -412,12 +412,12 @@ static std::optional<TextUtil::WordBreakLeft> midWordBreak(const InlineContentBr
 
 static size_t limitBeforeValue(const RenderStyle& style)
 {
-    return style.hyphenationLimitBefore() == RenderStyle::initialHyphenationLimitBefore() ? 0 : style.hyphenationLimitBefore();
+    return style.hyphenateLimitBefore().tryValue().value_or(0).value;
 }
 
 static size_t limitAfterValue(const RenderStyle& style)
 {
-    return style.hyphenationLimitAfter() == RenderStyle::initialHyphenationLimitAfter() ? 0 : style.hyphenationLimitAfter();
+    return style.hyphenateLimitAfter().tryValue().value_or(0).value;
 }
 
 static inline bool hasEnoughContentForHyphenation(size_t contentLength, const RenderStyle& style)
@@ -427,7 +427,7 @@ static inline bool hasEnoughContentForHyphenation(size_t contentLength, const Re
 
 static std::optional<size_t> firstHyphenPosition(StringView content, const RenderStyle& style)
 {
-    // FIXME: We may produce slighly incorrect (less fine-grained) hyphenation here as the incoming content may just be a partial word.
+    // FIXME: We may produce slightly incorrect (less fine-grained) hyphenation here as the incoming content may just be a partial word.
     // (same applies to hyphenPosition below)
     size_t contentLength = content.length();
     if (!hasEnoughContentForHyphenation(contentLength, style))

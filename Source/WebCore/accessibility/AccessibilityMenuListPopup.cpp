@@ -38,8 +38,8 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityMenuListPopup::AccessibilityMenuListPopup(AXID axID)
-    : AccessibilityMockObject(axID)
+AccessibilityMenuListPopup::AccessibilityMenuListPopup(AXID axID, AXObjectCache& cache)
+    : AccessibilityMockObject(axID, cache)
 {
 }
 

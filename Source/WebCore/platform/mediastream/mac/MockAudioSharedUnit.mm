@@ -203,8 +203,8 @@ static AudioStreamBasicDescription createAudioFormat(Float64 sampleRate, UInt32 
 MockAudioSharedInternalUnit::MockAudioSharedInternalUnit(bool enableEchoCancellation)
     : m_internalState(MockAudioSharedInternalUnitState::create())
     , m_enableEchoCancellation(enableEchoCancellation)
-    , m_timer(RunLoop::currentSingleton(), [this] { this->start(); })
-    , m_voiceDetectionTimer(RunLoop::currentSingleton(), [this] { this->voiceDetected(); })
+    , m_timer(RunLoop::currentSingleton(), "MockAudioSharedInternalUnit::Timer"_s, [this] { this->start(); })
+    , m_voiceDetectionTimer(RunLoop::currentSingleton(), "MockAudioSharedInternalUnit::VoiceDetectionTimer"_s, [this] { this->voiceDetected(); })
     , m_workQueue(WorkQueue::create("MockAudioSharedInternalUnit Capture Queue"_s, WorkQueue::QOS::UserInteractive))
 {
     m_streamFormat = m_outputStreamFormat = createAudioFormat(44100, 2);
@@ -353,7 +353,7 @@ void MockAudioSharedInternalUnit::generateSampleBuffers(MonotonicTime renderTime
         reconfigure();
 
     uint32_t totalFrameCount = alignTo16Bytes(delta.seconds() * sampleRate());
-    uint32_t frameCount = std::min(totalFrameCount, static_cast<uint32_t>(AudioSession::sharedSession().bufferSize()));
+    uint32_t frameCount = std::min(totalFrameCount, static_cast<uint32_t>(AudioSession::singleton().bufferSize()));
 
     while (frameCount) {
         uint32_t bipBopStart = m_samplesRendered % m_bipBopBuffer.size();
@@ -368,7 +368,7 @@ void MockAudioSharedInternalUnit::generateSampleBuffers(MonotonicTime renderTime
         emitSampleBuffers(bipBopCount);
         m_samplesRendered += bipBopCount;
         totalFrameCount -= bipBopCount;
-        frameCount = std::min(totalFrameCount, static_cast<uint32_t>(AudioSession::sharedSession().bufferSize()));
+        frameCount = std::min(totalFrameCount, static_cast<uint32_t>(AudioSession::singleton().bufferSize()));
     }
 }
 

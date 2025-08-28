@@ -29,9 +29,11 @@
 #include "AbortController.h"
 #include "CommonVM.h"
 #include "Element.h"
+#include "FrameDestructionObserverInlines.h"
 #include "ExceptionCode.h"
 #include "HTMLBodyElement.h"
 #include "HistoryController.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "Navigation.h"
 #include "NavigationNavigationType.h"
@@ -48,6 +50,7 @@ NavigateEvent::NavigateEvent(const AtomString& type, const NavigateEvent::Init& 
     , m_signal(init.signal)
     , m_formData(init.formData)
     , m_downloadRequest(init.downloadRequest)
+    , m_sourceElement(init.sourceElement)
     , m_canIntercept(init.canIntercept)
     , m_userInitiated(init.userInitiated)
     , m_hashChange(init.hashChange)

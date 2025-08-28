@@ -26,7 +26,7 @@
 #include "DisabledAdaptations.h"
 #include "FocusDirection.h"
 #include "HostWindow.h"
-#include "ImageBufferPixelFormat.h"
+#include "ImageBufferFormat.h"
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/FunctionDispatcher.h>
@@ -125,7 +125,7 @@ public:
     void setCursor(const Cursor&) override;
     void setCursorHiddenUntilMouseMoves(bool) override;
 
-    RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, RenderingMode, RenderingPurpose, float resolutionScale, const DestinationColorSpace&, ImageBufferPixelFormat) const override;
+    RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, RenderingMode, RenderingPurpose, float resolutionScale, const DestinationColorSpace&, ImageBufferFormat) const override;
     RefPtr<WebCore::ImageBuffer> sinkIntoImageBuffer(std::unique_ptr<WebCore::SerializedImageBuffer>) override;
 
 #if ENABLE(WEBGL)

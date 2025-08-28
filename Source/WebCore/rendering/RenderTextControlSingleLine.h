@@ -26,6 +26,7 @@
 #include "RenderTextControl.h"
 
 namespace WebCore {
+class RenderTextControlInnerBlock;
 
 class RenderTextControlSingleLine : public RenderTextControl {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderTextControlSingleLine);
@@ -33,6 +34,8 @@ class RenderTextControlSingleLine : public RenderTextControl {
 public:
     RenderTextControlSingleLine(Type, HTMLInputElement&, RenderStyle&&);
     virtual ~RenderTextControlSingleLine();
+
+    RenderTextControlInnerBlock* innerTextRenderer() const;
 
 protected:
     HTMLElement* containerElement() const;

@@ -106,8 +106,8 @@ private:
 } // namespace Xsum
 
 // Threshold for PreciseSum to determine whether to use XsumSmall or XsumLarge
-// if expected array size if more than PRECISE_SUM_THRESHOLD, use Xsum::XsumLarge
-// otherwise, use Xsum::XsumSmall
+// If the expected array length is greater than PRECISE_SUM_THRESHOLD, use Xsum::XsumLarge;
+// otherwise use Xsum::XsumSmall
 constexpr uint64_t PRECISE_SUM_THRESHOLD = 1'000;
 
 template<std::derived_from<Xsum::XsumInterface> T = Xsum::XsumSmall>

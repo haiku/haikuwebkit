@@ -39,7 +39,6 @@
 #include "Settings.h"
 #include "Text.h"
 #include "TextBoxPainter.h"
-#include "TextDecorationThickness.h"
 #include <math.h>
 #include <wtf/TZoneMallocInlines.h>
 

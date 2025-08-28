@@ -27,6 +27,7 @@
 #include "DOMTokenList.h"
 
 #include "ExceptionOr.h"
+#include "NodeInlines.h"
 #include "SpaceSplitString.h"
 #include <wtf/HashSet.h>
 #include <wtf/SetForScope.h>
@@ -47,7 +48,7 @@ DOMTokenList::DOMTokenList(Element& element, const QualifiedName& attributeName,
 
 static inline bool tokenContainsHTMLSpace(StringView token)
 {
-    return token.find(isASCIIWhitespace<UChar>) != notFound;
+    return token.find(isASCIIWhitespace<char16_t>) != notFound;
 }
 
 ExceptionOr<void> DOMTokenList::validateToken(StringView token)

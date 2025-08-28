@@ -61,6 +61,7 @@
 #include "SVGUseElement.h"
 #include "ScriptDisallowedScope.h"
 #include "SelectorQuery.h"
+#include "SerializedNode.h"
 #include "SlotAssignment.h"
 #include "StaticNodeList.h"
 #include "TemplateContentDocumentFragment.h"
@@ -1031,15 +1032,17 @@ void ContainerNode::childrenChanged(const ChildChange& change)
         cache->childrenChanged(*this);
 }
 
-void ContainerNode::cloneChildNodes(Document& document, CustomElementRegistry* registry, ContainerNode& clone, size_t currentDepth)
+static constexpr size_t cloneMaxDepth = 1024;
+
+void ContainerNode::cloneChildNodes(Document& document, CustomElementRegistry* fallbackRegistry, ContainerNode& clone, size_t currentDepth) const
 {
-    if (currentDepth == 1024)
+    if (currentDepth >= cloneMaxDepth)
         return;
 
     NodeVector postInsertionNotificationTargets;
     bool hadElement = false;
     for (RefPtr child = firstChild(); child; child = child->nextSibling()) {
-        Ref clonedChild = child->cloneNodeInternal(document, CloningOperation::SelfWithTemplateContent, registry);
+        Ref clonedChild = child->cloneNodeInternal(document, CloningOperation::SelfWithTemplateContent, fallbackRegistry);
         {
             WidgetHierarchyUpdatesSuspensionScope suspendWidgetHierarchyUpdates;
             ScriptDisallowedScope::InMainThread scriptDisallowedScope;
@@ -1052,12 +1055,32 @@ void ContainerNode::cloneChildNodes(Document& document, CustomElementRegistry* r
             hadElement = hadElement || is<Element>(clonedChild);
         }
         if (RefPtr childAsContainerNode = dynamicDowncast<ContainerNode>(*child))
-            childAsContainerNode->cloneChildNodes(document, registry, downcast<ContainerNode>(clonedChild), currentDepth + 1);
+            childAsContainerNode->cloneChildNodes(document, fallbackRegistry, downcast<ContainerNode>(clonedChild), currentDepth + 1);
     }
     clone.childrenChanged(makeChildChangeForCloneInsertion(hadElement ? ClonedChildIncludesElements::Yes : ClonedChildIncludesElements::No));
 
     for (auto& target : postInsertionNotificationTargets)
         target->didFinishInsertingNode();
+}
+
+Vector<SerializedNode> ContainerNode::serializeChildNodes(size_t currentDepth) const
+{
+    if (currentDepth >= cloneMaxDepth)
+        return { };
+
+    Vector<SerializedNode> result;
+    for (RefPtr child = firstChild(); child; child = child->nextSibling()) {
+        result.append(child->serializeNode(CloningOperation::SelfWithTemplateContent));
+        RefPtr childAsContainerNode = dynamicDowncast<ContainerNode>(*child);
+        if (!childAsContainerNode)
+            continue;
+        WTF::switchOn(result.last().data, [&] (SerializedNode::ContainerNode& node) {
+            node.children = childAsContainerNode->serializeChildNodes(currentDepth + 1);
+        }, []<typename T>(const T&) requires (!std::derived_from<T, SerializedNode::ContainerNode>) {
+            RELEASE_ASSERT_NOT_REACHED();
+        });
+    }
+    return result;
 }
 
 unsigned ContainerNode::countChildNodes() const

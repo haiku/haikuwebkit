@@ -65,7 +65,7 @@ using namespace PAL;
 namespace WebCore {
 
 class DummyServiceWorkerThreadProxy final : public WorkerObjectProxy, public CanMakeThreadSafeCheckedPtr<DummyServiceWorkerThreadProxy> {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(DummyServiceWorkerThreadProxy);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(DummyServiceWorkerThreadProxy);
 public:
     static DummyServiceWorkerThreadProxy& shared()
@@ -191,7 +191,23 @@ void ServiceWorkerThread::queueTaskToPostMessage(MessageWithMessagePorts&& messa
         if (std::holds_alternative<ServiceWorkerClientData>(sourceData)) {
             RefPtr<ServiceWorkerClient> sourceClient = ServiceWorkerClient::create(serviceWorkerGlobalScope, WTFMove(std::get<ServiceWorkerClientData>(sourceData)));
 
-            RELEASE_ASSERT(!sourceClient->url().protocolIsInHTTPFamily() || !serviceWorkerGlobalScope->url().protocolIsInHTTPFamily() || protocolHostAndPortAreEqual(serviceWorkerGlobalScope->url(), sourceClient->url()));
+            if (sourceClient->url().protocolIsInHTTPFamily() && serviceWorkerGlobalScope->url().protocolIsInHTTPFamily() && !protocolHostAndPortAreEqual(serviceWorkerGlobalScope->url(), sourceClient->url())) {
+                StringBuilder mismatchParts;
+                auto addMismatch = [&](ASCIILiteral partName) {
+                    if (mismatchParts.length())
+                        mismatchParts.append(", "_s);
+                    mismatchParts.append(partName);
+                };
+                if (serviceWorkerGlobalScope->url().protocol() != sourceClient->url().protocol())
+                    addMismatch("protocol"_s);
+                if (serviceWorkerGlobalScope->url().host() != sourceClient->url().host())
+                    addMismatch("host"_s);
+                if (serviceWorkerGlobalScope->url().port() != sourceClient->url().port())
+                    addMismatch("port"_s);
+                RELEASE_LOG_FAULT(ServiceWorker, "ServiceWorkerThread::queueTaskToPostMessage service worker and client mismatch: %s", mismatchParts.toString().utf8().data());
+                ASSERT_NOT_REACHED();
+                return;
+            }
 
             sourceURL = sourceClient->url();
             source = WTFMove(sourceClient);

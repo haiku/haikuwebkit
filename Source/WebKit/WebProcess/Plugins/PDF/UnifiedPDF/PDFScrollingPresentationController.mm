@@ -114,6 +114,7 @@ PDFPageCoverage PDFScrollingPresentationController::pageCoverageForContentsRect(
     auto& documentLayout = m_plugin->documentLayout();
     auto pageCoverage = PDFPageCoverage { };
     for (PDFDocumentLayout::PageIndex i = 0; i < documentLayout.pageCount(); ++i) {
+        // FIXME: This instantiates PDFPages needlessly, just to determine if they exist.
         auto page = documentLayout.pageAtIndex(i);
         if (!page)
             continue;

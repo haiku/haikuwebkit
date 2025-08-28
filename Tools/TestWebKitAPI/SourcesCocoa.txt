@@ -28,6 +28,7 @@ WKWebViewConfigurationExtras.mm
 
 cocoa/CGImagePixelReader.cpp
 cocoa/DaemonTestUtilities.mm
+cocoa/DecomposedAttributedText.mm
 cocoa/DragAndDropSimulator.mm
 cocoa/HostWindowManager.mm
 cocoa/ImageAnalysisTestingUtilities.mm
@@ -202,6 +203,7 @@ Tests/WebKitCocoa/NetworkProcess.mm
 Tests/WebKitCocoa/NetworkProcessCrashNonPersistentDataStore.mm
 Tests/WebKitCocoa/NoPauseWhenSwitchingTabs.mm
 Tests/WebKitCocoa/NoResumeSoundPlayedToTheEndAfterThePageBecomesVisible.mm
+Tests/WebKitCocoa/NodeInfo.mm
 Tests/WebKitCocoa/NotificationAPI.mm
 Tests/WebKitCocoa/NowPlaying.mm
 Tests/WebKitCocoa/NowPlayingControlsTests.mm

@@ -679,7 +679,7 @@ private:
             break;
         }
 
-        // FIXME: handle RegExpSearch here if possible.
+        case RegExpSearch:
         case RegExpExec:
         case RegExpTest:
         case RegExpMatchFast:
@@ -703,7 +703,7 @@ private:
             Node* regExpObjectNode = nullptr;
             RegExp* regExp = nullptr;
             bool regExpObjectNodeIsConstant = false;
-            if (m_node->op() == RegExpExec || m_node->op() == RegExpTest || m_node->op() == RegExpMatchFast) {
+            if (m_node->op() == RegExpExec || m_node->op() == RegExpTest || m_node->op() == RegExpMatchFast || m_node->op() == RegExpSearch) {
                 regExpObjectNode = m_node->child2().node();
                 if (RegExpObject* regExpObject = regExpObjectNode->dynamicCastConstant<RegExpObject*>()) {
                     JSGlobalObject* globalObject = regExpObject->globalObject();
@@ -994,8 +994,13 @@ private:
                         m_node->convertToIdentityOn(resultNode);
                     } else
                         m_graph.convertToConstant(m_node, jsNull());
-                } else
+                } else if (m_node->op() == RegExpTest)
                     m_graph.convertToConstant(m_node, jsBoolean(!!result));
+                else {
+                    ASSERT(m_node->op() == RegExpSearch);
+                    int32_t searchResult = result ? result.start : -1;
+                    m_graph.convertToConstant(m_node, jsNumber(searchResult));
+                }
 
                 // Whether it's Exec or Test, we need to tell the globalObject and RegExpObject what's up.
                 // Because SetRegExpObjectLastIndex may exit and it clobbers exit state, we do that

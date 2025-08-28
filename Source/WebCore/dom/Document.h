@@ -396,6 +396,8 @@ enum class CustomElementNameValidationStatus {
     ConflictsWithStandardElementName
 };
 
+enum class ClonedDocumentType : uint8_t { XMLDocument, XHTMLDocument, HTMLDocument, SVGDocument, Document };
+
 using RenderingContext = Variant<
 #if ENABLE(WEBGL)
     RefPtr<WebGLRenderingContext>,
@@ -435,6 +437,7 @@ public:
     inline static Ref<Document> create(const Settings&, const URL&);
     static Ref<Document> createNonRenderedPlaceholder(LocalFrame&, const URL&);
     static Ref<Document> create(Document&);
+    static Ref<Document> createCloned(ClonedDocumentType, const Settings&, const URL&, const URL& baseURL, const URL& baseURLOverride, const Variant<String, URL>& documentURI, DocumentCompatibilityMode, Document& contextDocument, SecurityOriginPolicy*, const String& contentType, TextResourceDecoder*);
 
     virtual ~Document();
 
@@ -532,6 +535,7 @@ public:
     WEBCORE_EXPORT Ref<Element> createElement(const QualifiedName&, bool createdByParser, CustomElementRegistry* = nullptr);
 
     RefPtr<CustomElementRegistry> customElementRegistryForBindings();
+    CustomElementRegistry* effectiveGlobalCustomElementRegistry();
     static CustomElementNameValidationStatus validateCustomElementName(const AtomString&);
     void setActiveCustomElementRegistry(CustomElementRegistry*);
     CustomElementRegistry* activeCustomElementRegistry() { return m_activeCustomElementRegistry.get(); }
@@ -618,6 +622,7 @@ public:
     WEBCORE_EXPORT Ref<NodeList> getElementsByName(const AtomString& elementName);
 
     WakeLockManager& wakeLockManager();
+    Ref<WakeLockManager> protectedWakeLockManager();
 
     // Other methods (not part of DOM)
     bool isSynthesized() const { return m_isSynthesized; }
@@ -700,8 +705,8 @@ public:
     const Settings& settings() const { return m_settings.get(); }
     EditingBehavior editingBehavior() const;
 
-    inline Quirks& quirks();
-    inline const Quirks& quirks() const;
+    inline Quirks& quirks(); // Defined in DocumentInlines.h
+    inline const Quirks& quirks() const; // Defined in DocumentInlines.h
 
     float deviceScaleFactor() const;
 
@@ -767,7 +772,7 @@ public:
     void stopActiveDOMObjects() final;
     GraphicsClient* graphicsClient() final;
 
-    inline const SettingsValues& settingsValues() const final;
+    inline const SettingsValues& settingsValues() const final; // Defined in DocumentInlines.h.
 
     void suspendDeviceMotionAndOrientationUpdates();
     void resumeDeviceMotionAndOrientationUpdates();
@@ -901,6 +906,7 @@ public:
     bool inQuirksMode() const { return m_compatibilityMode == DocumentCompatibilityMode::QuirksMode; }
     bool inLimitedQuirksMode() const { return m_compatibilityMode == DocumentCompatibilityMode::LimitedQuirksMode; }
     bool inNoQuirksMode() const { return m_compatibilityMode == DocumentCompatibilityMode::NoQuirksMode; }
+    DocumentCompatibilityMode compatibilityMode() const { return m_compatibilityMode; }
 
     void setReadyState(ReadyState);
     void setParsing(bool);
@@ -1496,8 +1502,8 @@ public:
     WEBCORE_EXPORT unsigned styleRecalcCount() const;
 
 #if ENABLE(TOUCH_EVENTS)
-    bool hasTouchEventHandlers() const { return m_touchEventTargets && !m_touchEventTargets->isEmptyIgnoringNullReferences(); }
-    bool touchEventTargetsContain(Node& node) const { return m_touchEventTargets && m_touchEventTargets->contains(node); }
+    bool hasTouchEventHandlers() const { return !m_touchEventTargets.isEmptyIgnoringNullReferences(); }
+    bool touchEventTargetsContain(Node& node) const { return m_touchEventTargets.contains(node); }
 #else
     bool hasTouchEventHandlers() const { return false; }
     bool touchEventTargetsContain(Node&) const { return false; }
@@ -1522,21 +1528,10 @@ public:
 
     void didRemoveEventTargetNode(Node&);
 
-    const EventTargetSet* touchEventTargets() const
-    {
-#if ENABLE(TOUCH_EVENTS)
-        return m_touchEventTargets.get();
-#else
-        return nullptr;
-#endif
-    }
-
-    bool hasWheelEventHandlers() const { return m_wheelEventTargets && !m_wheelEventTargets->isEmptyIgnoringNullReferences(); }
-    const EventTargetSet* wheelEventTargets() const { return m_wheelEventTargets.get(); }
+    bool hasWheelEventHandlers() const { return !m_wheelEventTargets.isEmptyIgnoringNullReferences(); }
 
     using RegionFixedPair = std::pair<Region, bool>;
-    RegionFixedPair absoluteEventRegionForNode(Node&);
-    RegionFixedPair absoluteRegionForEventTargets(const EventTargetSet*);
+    RegionFixedPair absoluteRegionForWheelEventTargets();
 
     LayoutRect absoluteEventHandlerBounds(bool&) final;
 
@@ -1641,6 +1636,7 @@ public:
     void runResizeSteps();
     void flushDeferredResizeEvents();
 
+    void addPendingScrollendEventTarget(ContainerNode&);
     void addPendingScrollEventTarget(ContainerNode&);
     void setNeedsVisualViewportScrollEvent();
     void runScrollSteps();
@@ -1949,7 +1945,7 @@ public:
     WEBCORE_EXPORT JSC::VM& vm() final;
     JSC::VM* vmIfExists() const final;
 
-    String debugDescription() const;
+    String debugDescription() const override;
 
     URL fallbackBaseURL() const;
 
@@ -2020,8 +2016,6 @@ protected:
 
     void clearXMLVersion() { m_xmlVersion = String(); }
 
-    virtual Ref<Document> cloneDocumentWithoutChildren() const;
-
 private:
     friend class DocumentParserYieldToken;
     friend class DocumentSyncData;
@@ -2076,8 +2070,10 @@ private:
 
     String nodeName() const final;
     bool childTypeAllowed(NodeType) const final;
-    Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) final;
-    void cloneDataFromDocument(const Document&);
+    Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) const final;
+    ClonedDocumentType clonedDocumentType() const;
+
+    SerializedNode serializeNode(CloningOperation) const final;
 
     Seconds minimumDOMTimerInterval() const final;
 
@@ -2187,6 +2183,8 @@ private:
     void populateDocumentSyncDataForNewlyConstructedDocument(ProcessSyncDataType);
 
     bool mainFrameDocumentHasHadUserInteraction() const;
+
+    RegionFixedPair absoluteEventRegionForNode(Node&);
 
     const Ref<const Settings> m_settings;
 
@@ -2343,7 +2341,7 @@ private:
     WeakHashSet<VisibilityChangeClient> m_visibilityStateCallbackClients;
     bool m_deferResizeEventForVisibilityChange { false };
 
-    std::unique_ptr<HashMap<String, WeakPtr<Element, WeakPtrImplWithEventTargetData>, ASCIICaseInsensitiveHash>> m_accessKeyCache;
+    std::optional<HashMap<String, WeakPtr<Element, WeakPtrImplWithEventTargetData>, ASCIICaseInsensitiveHash>> m_accessKeyCache;
 
     std::unique_ptr<ConstantPropertyMap> m_constantPropertyMap;
 
@@ -2388,10 +2386,10 @@ private:
     RefPtr<MediaQueryMatcher> m_mediaQueryMatcher;
     
 #if ENABLE(TOUCH_EVENTS)
-    std::unique_ptr<EventTargetSet> m_touchEventTargets;
+    EventTargetSet m_touchEventTargets;
 #endif
 
-    std::unique_ptr<EventTargetSet> m_wheelEventTargets;
+    EventTargetSet m_wheelEventTargets;
 
     MonotonicTime m_lastHandledUserGestureTimestamp;
     MonotonicTime m_userActivatedMediaFinishedPlayingTimestamp;
@@ -2547,6 +2545,7 @@ private:
 
     struct PendingScrollEventTargetList;
     std::unique_ptr<PendingScrollEventTargetList> m_pendingScrollEventTargetList;
+    std::unique_ptr<PendingScrollEventTargetList> m_pendingScrollendEventTargetList;
 
     WeakHashSet<ValidationMessage> m_validationMessagesToPosition;
 

@@ -337,7 +337,7 @@ void WorkerMainRunLoop::postTaskAndTerminate(ScriptExecutionContext::Task&& task
     if (m_terminated)
         return;
 
-    RunLoop::protectedMain()->dispatch([weakThis = WeakPtr { *this }, task = WTFMove(task)]() mutable {
+    RunLoop::mainSingleton().dispatch([weakThis = WeakPtr { *this }, task = WTFMove(task)]() mutable {
         if (!weakThis || weakThis->m_terminated)
             return;
         RefPtr workerOrWorkletGlobalScope = weakThis->m_workerOrWorkletGlobalScope.get();
@@ -354,7 +354,7 @@ void WorkerMainRunLoop::postTaskForMode(ScriptExecutionContext::Task&& task, con
     if (m_terminated)
         return;
 
-    RunLoop::protectedMain()->dispatch([weakThis = WeakPtr { *this }, task = WTFMove(task)]() mutable {
+    RunLoop::mainSingleton().dispatch([weakThis = WeakPtr { *this }, task = WTFMove(task)]() mutable {
         if (!weakThis || weakThis->m_terminated)
             return;
         RefPtr workerOrWorkletGlobalScope = weakThis->m_workerOrWorkletGlobalScope.get();
@@ -367,7 +367,7 @@ void WorkerMainRunLoop::postTaskForMode(ScriptExecutionContext::Task&& task, con
 
 bool WorkerMainRunLoop::runInMode(WorkerOrWorkletGlobalScope*, const String&, bool)
 {
-    RunLoop::main().cycle();
+    RunLoop::mainSingleton().cycle();
     return true;
 }
 

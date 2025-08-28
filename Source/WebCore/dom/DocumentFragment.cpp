@@ -29,6 +29,7 @@
 #include "HTMLDocumentParser.h"
 #include "HTMLDocumentParserFastPath.h"
 #include "Page.h"
+#include "SerializedNode.h"
 #include "TypedElementDescendantIteratorInlines.h"
 #include "XMLDocumentParser.h"
 #include "markup.h"
@@ -76,7 +77,7 @@ bool DocumentFragment::childTypeAllowed(NodeType type) const
     }
 }
 
-Ref<Node> DocumentFragment::cloneNodeInternal(Document& document, CloningOperation type, CustomElementRegistry* registry)
+Ref<Node> DocumentFragment::cloneNodeInternal(Document& document, CloningOperation type, CustomElementRegistry* registry) const
 {
     Ref clone = create(document);
     switch (type) {
@@ -129,6 +130,12 @@ Element* DocumentFragment::getElementById(const AtomString& id) const
     }
 
     return nullptr;
+}
+
+SerializedNode DocumentFragment::serializeNode(CloningOperation) const
+{
+    // FIXME: Implement.
+    return { SerializedNode::DocumentFragment { } };
 }
 
 }

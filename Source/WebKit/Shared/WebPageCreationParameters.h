@@ -74,7 +74,7 @@
 #endif
 
 #if (PLATFORM(GTK) || PLATFORM(WPE)) && USE(GBM)
-#include "DMABufRendererBufferFormat.h"
+#include "RendererBufferFormat.h"
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -108,7 +108,9 @@ struct WebPageCreationParameters {
     OptionSet<WebCore::ActivityState> activityState { };
     
     WebPreferencesStore store { };
+#if ENABLE(TILED_CA_DRAWING_AREA)
     DrawingAreaType drawingAreaType { };
+#endif
     DrawingAreaIdentifier drawingAreaIdentifier;
     WebPageProxyIdentifier webPageProxyIdentifier;
     WebPageGroupData pageGroupData;
@@ -216,7 +218,7 @@ struct WebPageCreationParameters {
     Vector<SandboxExtension::Handle> gpuIOKitExtensionHandles { };
     Vector<SandboxExtension::Handle> gpuMachExtensionHandles { };
 #endif
-#if PLATFORM(MAC)
+#if ENABLE(TILED_CA_DRAWING_AREA)
     SandboxExtension::Handle renderServerMachExtensionHandle { };
 #endif
 #if HAVE(STATIC_FONT_REGISTRY)
@@ -335,7 +337,7 @@ struct WebPageCreationParameters {
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
 #if USE(GBM)
-    Vector<DMABufRendererBufferFormat> preferredBufferFormats { };
+    Vector<RendererBufferFormat> preferredBufferFormats { };
 #endif
 #endif
 

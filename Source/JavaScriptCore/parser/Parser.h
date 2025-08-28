@@ -1788,8 +1788,8 @@ private:
 
     template <class TreeBuilder> TreeSourceElements parseSourceElements(TreeBuilder&, SourceElementsMode);
     template <class TreeBuilder> TreeSourceElements parseGeneratorFunctionSourceElements(TreeBuilder&, const Identifier& name, SourceElementsMode);
-    template <class TreeBuilder> TreeSourceElements parseAsyncFunctionSourceElements(TreeBuilder&, bool isArrowFunctionBodyExpression, SourceElementsMode);
-    template <class TreeBuilder> TreeSourceElements parseAsyncGeneratorFunctionSourceElements(TreeBuilder&, bool isArrowFunctionBodyExpression, SourceElementsMode);
+    template <class TreeBuilder> TreeSourceElements parseAsyncFunctionSourceElements(TreeBuilder&, const Identifier& calleeName, bool isArrowFunctionBodyExpression, SourceElementsMode);
+    template <class TreeBuilder> TreeSourceElements parseAsyncGeneratorFunctionSourceElements(TreeBuilder&, const Identifier& calleeName, bool isArrowFunctionBodyExpression, SourceElementsMode);
     template <class TreeBuilder> TreeSourceElements parseSingleFunction(TreeBuilder&, std::optional<int> functionConstructorParametersEndPosition);
     template <class TreeBuilder> TreeSourceElements parseClassFieldInitializerSourceElements(TreeBuilder&, const FixedVector<UnlinkedFunctionExecutable::ClassElementDefinition>&);
     template <class TreeBuilder> TreeStatement parseStatementListItem(TreeBuilder&, const Identifier*& directive, unsigned* directiveLiteralLength);

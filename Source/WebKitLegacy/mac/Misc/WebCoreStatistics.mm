@@ -93,13 +93,13 @@ static RetainPtr<NSCountedSet> createNSCountedSet(const HashCountedSet<ASCIILite
 + (NSCountedSet *)javaScriptProtectedObjectTypeCounts
 {
     JSLockHolder lock(commonVM());
-    return createNSCountedSet(*commonVM().heap.protectedObjectTypeCounts()).autorelease();
+    return createNSCountedSet(commonVM().heap.protectedObjectTypeCounts()).autorelease();
 }
 
 + (NSCountedSet *)javaScriptObjectTypeCounts
 {
     JSLockHolder lock(commonVM());
-    return createNSCountedSet(*commonVM().heap.objectTypeCounts()).autorelease();
+    return createNSCountedSet(commonVM().heap.objectTypeCounts()).autorelease();
 }
 
 + (void)garbageCollectJavaScriptObjects

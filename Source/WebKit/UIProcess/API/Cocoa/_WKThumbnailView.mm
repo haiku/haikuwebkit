@@ -147,7 +147,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         static_cast<int>(obscuredContentInsets.left()),
         static_cast<int>(obscuredContentInsets.top())
     });
-    WebKit::SnapshotOptions options { WebKit::SnapshotOption::InViewCoordinates, WebKit::SnapshotOption::UseScreenColorSpace, WebKit::SnapshotOption::Accelerated };
+    WebKit::SnapshotOptions options { WebKit::SnapshotOption::InViewCoordinates, WebKit::SnapshotOption::UseScreenColorSpace, WebKit::SnapshotOption::Accelerated, WebKit::SnapshotOption::AllowHDR };
     WebCore::IntSize bitmapSize = snapshotRect.size();
     bitmapSize.scale(_scale * webPageProxy->deviceScaleFactor());
 
@@ -162,35 +162,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     _lastSnapshotScale = _scale;
     _lastSnapshotMaximumSize = _maximumSnapshotSize;
-    webPageProxy->takeSnapshot(snapshotRect, bitmapSize, options, [thumbnailView](std::optional<WebKit::ImageBufferBackendHandle>&& imageHandle) {
-        if (!imageHandle)
+    webPageProxy->takeSnapshot(snapshotRect, bitmapSize, options, [thumbnailView](CGImageRef image) {
+        if (!image)
             return;
-        RetainPtr<id> contents;
-        CGSize size;
-        WTF::switchOn(*imageHandle,
-            [&contents, &size] (WebCore::ShareableBitmap::Handle& handle) {
-                if (auto bitmap = WebCore::ShareableBitmap::create(WTFMove(handle), WebCore::SharedMemory::Protection::ReadOnly)) {
-                    RetainPtr image = bitmap->makeCGImage();
-                    contents = bridge_id_cast(image);
-                    size = CGSizeMake(CGImageGetWidth(image.get()), CGImageGetHeight(image.get()));
-                }
-            }
-#if PLATFORM(COCOA)
-            , [&] (MachSendRight& machSendRight) {
-                if (auto surface = WebCore::IOSurface::createFromSendRight(WTFMove(machSendRight))) {
-                    contents = surface->asLayerContents();
-                    size = CGSizeMake(surface->size().width(), surface->size().height());
-                }
-            }
-#endif
-#if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
-            , [&] (WebCore::DynamicContentScalingDisplayList& handle) {
-                ASSERT_NOT_REACHED();
-            }
-#endif
-        );
-        tracePoint(TakeSnapshotEnd, !!contents);
-        [thumbnailView _didTakeSnapshot:contents.get() size:size];
+        tracePoint(TakeSnapshotEnd, !!image);
+        [thumbnailView _didTakeSnapshot:image];
     });
 }
 
@@ -264,15 +240,24 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [self requestSnapshot];
 }
 
-- (void)_didTakeSnapshot:(id)image size:(CGSize)size
+- (void)_didTakeSnapshot:(CGImageRef)image
 {
     [self willChangeValueForKey:@"snapshotSize"];
 
-    _snapshotSize = size;
+    _snapshotSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));
     _waitingForSnapshot = NO;
     self.layer.sublayers = @[];
     self.layer.contentsGravity = kCAGravityResizeAspectFill;
-    self.layer.contents = image;
+    self.layer.contents = (__bridge id)image;
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+    if (CGImageGetContentHeadroom(image) > 1) {
+        self.layer.toneMapMode = CAToneMapModeIfSupported;
+        self.layer.preferredDynamicRange = CADynamicRangeHigh;
+    } else {
+        self.layer.toneMapMode = CAToneMapModeAutomatic;
+        self.layer.preferredDynamicRange = CADynamicRangeAutomatic;
+    }
+#endif
 
     // If we got a scale change while snapshotting, we'll take another snapshot once the first one returns.
     if (_snapshotWasDeferred) {

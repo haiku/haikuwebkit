@@ -1488,7 +1488,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (superview)
         return;
 
-    RunLoop::protectedMain()->dispatch([self, strongSelf = retainPtr(self)] {
+    RunLoop::mainSingleton().dispatch([self, strongSelf = retainPtr(self)] {
         if ([_webViewPlaceholder superview] == nil && [_webViewPlaceholder parent] == self)
             [self close];
     });
@@ -1604,6 +1604,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return;
     }
 
+    RetainPtr webView = [self _webView];
+#if HAVE(LIQUID_GLASS)
+    [webView _removeReasonToHideTopScrollPocket:WebKit::HideScrollPocketReason::FullScreen];
+#endif
+
     OBJC_ALWAYS_LOG(OBJC_LOGIDENTIFIER);
 
     _shouldReturnToFullscreenFromPictureInPicture = false;
@@ -1612,7 +1617,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _fullScreenState = WebKit::NotInFullScreen;
     _shouldReturnToFullscreenFromPictureInPicture = false;
 
-    auto* page = [self._webView _page].get();
+    RefPtr page = [webView _page].get();
     if (page)
         page->setSuppressVisibilityUpdates(true);
 

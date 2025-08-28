@@ -56,7 +56,7 @@ struct ViewTimelineInsetItem;
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleOriginatedTimelinesController);
 class StyleOriginatedTimelinesController final : public CanMakeCheckedPtr<StyleOriginatedTimelinesController> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleOriginatedTimelinesController);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleOriginatedTimelinesController, StyleOriginatedTimelinesController);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(StyleOriginatedTimelinesController);
 public:
     explicit StyleOriginatedTimelinesController() = default;

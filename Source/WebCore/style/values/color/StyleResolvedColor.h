@@ -37,7 +37,7 @@ struct Color;
 struct ColorResolutionState;
 
 struct ResolvedColor {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(ResolvedColor);
 
     WebCore::Color color;
 
@@ -55,6 +55,9 @@ constexpr bool containsCurrentColor(const ResolvedColor&)
 {
     return false;
 }
+
+void serializationForCSSTokenization(StringBuilder&, const CSS::SerializationContext&, const ResolvedColor&);
+String serializationForCSSTokenization(const CSS::SerializationContext&, const ResolvedColor&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const ResolvedColor&);
 

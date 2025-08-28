@@ -102,17 +102,15 @@ FloatSize RenderSVGRoot::calculateIntrinsicSize() const
     return FloatSize(floatValueForLength(svgSVGElement().intrinsicWidth(), 0), floatValueForLength(svgSVGElement().intrinsicHeight(), 0));
 }
 
-void RenderSVGRoot::computeIntrinsicRatioInformation(FloatSize& intrinsicSize, FloatSize& intrinsicRatio) const
+std::pair<FloatSize, FloatSize> RenderSVGRoot::computeIntrinsicSizeAndPreferredAspectRatio() const
 {
     ASSERT(!shouldApplySizeContainment());
 
     // https://www.w3.org/TR/SVG/coords.html#IntrinsicSizing
-    intrinsicSize = calculateIntrinsicSize();
+    auto intrinsicSize = calculateIntrinsicSize();
 
-    if (style().aspectRatio().isRatio()) {
-        intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
-        return;
-    }
+    if (style().aspectRatio().isRatio())
+        return { intrinsicSize,  FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value) };
 
     std::optional<LayoutSize> intrinsicRatioValue;
     if (!intrinsicSize.isEmpty())
@@ -126,9 +124,10 @@ void RenderSVGRoot::computeIntrinsicRatioInformation(FloatSize& intrinsicSize, F
     }
 
     if (intrinsicRatioValue)
-        intrinsicRatio = *intrinsicRatioValue;
+        return { intrinsicSize, *intrinsicRatioValue };
     else if (style().aspectRatio().isAutoAndRatio())
-        intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
+        return { intrinsicSize, FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value) };
+    return { intrinsicSize, { } };
 }
 
 bool RenderSVGRoot::isEmbeddedThroughSVGImage() const

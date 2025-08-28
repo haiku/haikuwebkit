@@ -82,7 +82,7 @@ StyleStrokeData::StyleStrokeData()
     : opacity(SVGRenderStyle::initialStrokeOpacity())
     , paint(SVGRenderStyle::initialStroke())
     , visitedLinkPaint(SVGRenderStyle::initialStroke())
-    , dashOffset(RenderStyle::zeroLength())
+    , dashOffset(SVGRenderStyle::initialStrokeDashOffset())
     , dashArray(SVGRenderStyle::initialStrokeDashArray())
 {
 }
@@ -162,7 +162,7 @@ StyleMiscData::StyleMiscData()
     : floodOpacity(SVGRenderStyle::initialFloodOpacity())
     , floodColor(SVGRenderStyle::initialFloodColor())
     , lightingColor(SVGRenderStyle::initialLightingColor())
-    , baselineShiftValue(SVGRenderStyle::initialBaselineShiftValue())
+    , baselineShift(SVGRenderStyle::initialBaselineShift())
 {
 }
 
@@ -171,7 +171,7 @@ inline StyleMiscData::StyleMiscData(const StyleMiscData& other)
     , floodOpacity(other.floodOpacity)
     , floodColor(other.floodColor)
     , lightingColor(other.lightingColor)
-    , baselineShiftValue(other.baselineShiftValue)
+    , baselineShift(other.baselineShift)
 {
 }
 
@@ -185,7 +185,7 @@ bool StyleMiscData::operator==(const StyleMiscData& other) const
     return floodOpacity == other.floodOpacity
         && floodColor == other.floodColor
         && lightingColor == other.lightingColor
-        && baselineShiftValue == other.baselineShiftValue;
+        && baselineShift == other.baselineShift;
 }
 
 #if !LOG_DISABLED
@@ -194,7 +194,7 @@ void StyleMiscData::dumpDifferences(TextStream& ts, const StyleMiscData& other) 
     LOG_IF_DIFFERENT(floodOpacity);
     LOG_IF_DIFFERENT(floodColor);
     LOG_IF_DIFFERENT(lightingColor);
-    LOG_IF_DIFFERENT(baselineShiftValue);
+    LOG_IF_DIFFERENT(baselineShift);
 }
 #endif
 
@@ -269,13 +269,13 @@ void StyleInheritedResourceData::dumpDifferences(TextStream& ts, const StyleInhe
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleLayoutData);
 
 StyleLayoutData::StyleLayoutData()
-    : cx(RenderStyle::zeroLength())
-    , cy(RenderStyle::zeroLength())
-    , r(RenderStyle::zeroLength())
-    , rx(RenderStyle::initialRadius())
-    , ry(RenderStyle::initialRadius())
-    , x(RenderStyle::zeroLength())
-    , y(RenderStyle::zeroLength())
+    : cx(RenderStyle::initialCx())
+    , cy(RenderStyle::initialCy())
+    , r(RenderStyle::initialR())
+    , rx(RenderStyle::initialRx())
+    , ry(RenderStyle::initialRy())
+    , x(RenderStyle::initialX())
+    , y(RenderStyle::initialY())
     , d(nullptr)
 {
 }
@@ -338,17 +338,6 @@ TextStream& operator<<(TextStream& ts, AlignmentBaseline value)
     case AlignmentBaseline::Alphabetic: ts << "alphabetic"_s; break;
     case AlignmentBaseline::Hanging: ts << "hanging"_s; break;
     case AlignmentBaseline::Mathematical: ts << "mathematical"_s; break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, BaselineShift value)
-{
-    switch (value) {
-    case BaselineShift::Baseline: ts << "baseline"_s; break;
-    case BaselineShift::Sub: ts << "sub"_s; break;
-    case BaselineShift::Super: ts << "super"_s; break;
-    case BaselineShift::Length: ts << "length"_s; break;
     }
     return ts;
 }
@@ -483,7 +472,7 @@ TextStream& operator<<(TextStream& ts, const StyleMiscData& data)
     ts.dumpProperty("flood-opacity"_s, data.floodOpacity);
     ts.dumpProperty("flood-color"_s, data.floodColor);
     ts.dumpProperty("lighting-color"_s, data.lightingColor);
-    ts.dumpProperty("baseline-shift"_s, data.baselineShiftValue);
+    ts.dumpProperty("baseline-shift"_s, data.baselineShift);
     return ts;
 }
 

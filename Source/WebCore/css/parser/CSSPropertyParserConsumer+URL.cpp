@@ -101,6 +101,8 @@ std::optional<CSS::URL> consumeURLRaw(CSSParserTokenRange& range, CSS::PropertyP
                     break;
                 }
                 case CSSValueIntegrity: {
+                    if (!state.context.cssURLIntegrityModifierEnabled)
+                        return { };
                     if (!allowedURLModifiers.contains(AllowedURLModifiers::Integrity))
                         return { };
                     if (result->modifiers.integrity)

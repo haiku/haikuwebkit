@@ -35,6 +35,7 @@
 #include "PixelBuffer.h"
 #include "PixelBufferConformerCV.h"
 #include "ProcessIdentity.h"
+#include <Accelerate/Accelerate.h>
 #include <pal/avfoundation/MediaTimeAVFoundation.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/Scope.h>
@@ -73,6 +74,33 @@ static std::span<const uint8_t> copyToCVPixelBufferPlane(CVPixelBufferRef pixelB
         skip(destination, bytesPerRowDestination);
     }
     return source;
+}
+
+static vImage_Buffer makeVImageBuffer8888(std::span<uint8_t> data, size_t width, size_t height, size_t rowBytes)
+{
+    constexpr size_t bytesPerPixel = 4;
+    size_t minRowBytes = 0;
+    RELEASE_ASSERT(!__builtin_mul_overflow(bytesPerPixel, width, &minRowBytes));
+    RELEASE_ASSERT(minRowBytes <= rowBytes);
+    size_t minDataSize = 0;
+    RELEASE_ASSERT(!__builtin_mul_overflow(rowBytes, height, &minDataSize));
+    RELEASE_ASSERT(minDataSize <= data.size());
+
+    return vImage_Buffer {
+        .data = data.data(),
+        .height = height,
+        .width = width,
+        .rowBytes = rowBytes,
+    };
+}
+
+static vImage_Buffer makeVImageBuffer8888(CVPixelBufferRef buffer)
+{
+    return makeVImageBuffer8888(
+        CVPixelBufferGetSpan(buffer),
+        CVPixelBufferGetWidth(buffer),
+        CVPixelBufferGetHeight(buffer),
+        CVPixelBufferGetBytesPerRow(buffer));
 }
 
 RefPtr<VideoFrame> VideoFrame::createNV12(std::span<const uint8_t> span, size_t width, size_t height, const ComputedPlaneLayout& planeY, const ComputedPlaneLayout& planeUV, PlatformVideoColorSpace&& colorSpace)
@@ -127,22 +155,13 @@ RefPtr<VideoFrame> VideoFrame::createRGBA(std::span<const uint8_t> span, size_t 
         CVPixelBufferUnlockBaseAddress(rawPixelBuffer, 0);
     });
 
-    auto source = span;
-    auto destination = CVPixelBufferGetSpanOfPlane(rawPixelBuffer, 0);
-    size_t bytesPerRowDestination = CVPixelBufferGetBytesPerRowOfPlane(rawPixelBuffer, 0);
-    for (unsigned i = 0; i < height; ++i) {
-        size_t j = 0;
-        while (j < std::min(plane.sourceWidthBytes, bytesPerRowDestination)) {
-            // RGBA -> ARGB.
-            destination[j] = source[j + 3];
-            destination[j + 1] = source[j];
-            destination[j + 2] = source[j + 1];
-            destination[j + 3] = source[j + 2];
-            j += 4;
-        }
-        skip(source, plane.sourceWidthBytes);
-        skip(destination, bytesPerRowDestination);
-    }
+    // Convert from RGBA to ARGB.
+    auto sourceBuffer = makeVImageBuffer8888(spanConstCast<uint8_t>(span), width, height, plane.sourceWidthBytes);
+    auto destinationBuffer = makeVImageBuffer8888(rawPixelBuffer);
+    uint8_t channelMap[4] = { 3, 0, 1, 2 };
+    auto error = vImagePermuteChannels_ARGB8888(&sourceBuffer, &destinationBuffer, channelMap, kvImageNoFlags);
+    // Permutation will not fail as long as the provided arguments are valid.
+    ASSERT_UNUSED(error, error == kvImageNoError);
 
     return VideoFrameCV::create({ }, false, Rotation::None, WTFMove(pixelBuffer), WTFMove(colorSpace));
 }
@@ -164,7 +183,11 @@ RefPtr<VideoFrame> VideoFrame::createBGRA(std::span<const uint8_t> span, size_t 
         CVPixelBufferUnlockBaseAddress(rawPixelBuffer, 0);
     });
 
-    copyToCVPixelBufferPlane(rawPixelBuffer, 0, span, height, plane.sourceWidthBytes);
+    auto sourceBuffer = makeVImageBuffer8888(spanConstCast<uint8_t>(span), width, height, plane.sourceWidthBytes);
+    auto destinationBuffer = makeVImageBuffer8888(rawPixelBuffer);
+    auto error = vImageCopyBuffer(&sourceBuffer, &destinationBuffer, 4, kvImageNoFlags);
+    // Copy will not fail as long as the provided arguments are valid.
+    ASSERT_UNUSED(error, error == kvImageNoError);
 
     return VideoFrameCV::create({ }, false, Rotation::None, WTFMove(pixelBuffer), WTFMove(colorSpace));
 }

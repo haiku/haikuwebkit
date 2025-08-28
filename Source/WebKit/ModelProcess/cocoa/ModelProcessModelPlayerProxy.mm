@@ -286,7 +286,7 @@ ModelProcessModelPlayerProxy::ModelProcessModelPlayerProxy(ModelProcessModelPlay
     , m_manager(manager)
     , m_attributionTaskID(attributionTaskID)
     , m_debugEntityMemoryLimit(debugEntityMemoryLimit)
-    , m_unloadModelTimer(RunLoop::main(), this, &ModelProcessModelPlayerProxy::unloadModelTimerFired)
+    , m_unloadModelTimer(RunLoop::mainSingleton(), "ModelProcessModelPlayerProxy::UnloadModelTimer"_s, this, &ModelProcessModelPlayerProxy::unloadModelTimerFired)
 {
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayerProxy initialized id=%" PRIu64, this, identifier.toUInt64());
     m_objCAdapter = adoptNS([[WKModelProcessModelPlayerProxyObjCAdapter alloc] initWithModelProcessModelPlayerProxy:*this]);

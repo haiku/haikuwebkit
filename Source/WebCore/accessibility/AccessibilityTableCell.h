@@ -37,8 +37,8 @@ class AccessibilityTableRow;
 
 class AccessibilityTableCell : public AccessibilityRenderObject {
 public:
-    static Ref<AccessibilityTableCell> create(AXID, RenderObject&);
-    static Ref<AccessibilityTableCell> create(AXID, Node&);
+    static Ref<AccessibilityTableCell> create(AXID, RenderObject&, AXObjectCache&);
+    static Ref<AccessibilityTableCell> create(AXID, Node&, AXObjectCache&);
     virtual ~AccessibilityTableCell();
     bool isTableCell() const final { return true; }
 
@@ -73,8 +73,8 @@ public:
 #endif
 
 protected:
-    explicit AccessibilityTableCell(AXID, RenderObject&);
-    explicit AccessibilityTableCell(AXID, Node&);
+    explicit AccessibilityTableCell(AXID, RenderObject&, AXObjectCache&);
+    explicit AccessibilityTableCell(AXID, Node&, AXObjectCache&);
 
     AccessibilityTableRow* parentRow() const;
     AccessibilityRole determineAccessibilityRole() final;

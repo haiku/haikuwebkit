@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "LengthPoint.h"
 #include "StylePosition.h"
 #include "StyleValueTypes.h"
 
@@ -94,4 +95,4 @@ template<> struct ToPlatform<OffsetAnchor> { auto operator()(const OffsetAnchor&
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::OffsetAnchor> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::OffsetAnchor)

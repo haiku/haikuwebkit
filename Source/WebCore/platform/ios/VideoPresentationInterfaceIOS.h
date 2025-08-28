@@ -113,7 +113,7 @@ public:
     WEBCORE_EXPORT virtual void enterExternalPlayback(CompletionHandler<void(bool, UIViewController *)>&&, CompletionHandler<void(bool)>&&);
     WEBCORE_EXPORT virtual void exitExternalPlayback();
     virtual bool cleanupExternalPlayback() { return false; }
-
+    virtual void didSetPlayerIdentifier() { }
 
     enum class ExitFullScreenReason {
         DoneButtonTapped,

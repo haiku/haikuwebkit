@@ -117,8 +117,36 @@ HTMLMEDIAELEMENT_CANTRANSITIONFROMAUTOPLAYTOPLAY, "HTMLMediaElement::canTransiti
 HTMLMEDIAELEMENT_CONFIGURETEXTTRACKDISPLAY, "HTMLMediaElement::configureTextTrackDisplay(%" PRIX64 ") %s", (uint64_t, CString), DEFAULT, Media
 HTMLMEDIAELEMENT_CONFIGURETEXTTRACKGROUP, "HTMLMediaElement::configureTextTrackGroup(%" PRIX64 ") %s track with language %s and BCP 47 language %s has score %d", (uint64_t, CString, CString, CString, int), DEFAULT, Media
 HTMLMEDIAELEMENT_MEDIAENGINEWASUPDATED, "HTMLMediaElement::mediaEngineWasUpdated(%" PRIX64 ")", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_MEDIAPLAYERCHARACTERISTICSCHANGED, "HTMLMediaElement::mediaPlayerCharacteristicChanged(%" PRIX64 ") %s", (uint64_t, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_MEDIAPLAYERDURATIONCHANGED, "HTMLMediaElement::mediaPlayerDurationChanged(%" PRIX64 ") duration = %f, current time = %f", (uint64_t, float, float), DEFAULT, Media
+HTMLMEDIAELEMENT_MEDIAPLAYERSIZECHANGED, "HTMLMediaElement::mediaPlayerSizeChanged(%" PRIX64 ") w = %f, h = %f", (uint64_t, float, float), DEFAULT, Media
+HTMLMEDIAELEMENT_PAUSE, "HTMLMediaElement::pause(%" PRIX64 ")", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_PAUSEINTERNAL, "HTMLMediaElement::pauseInternal(%" PRIX64 ")", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_PREPAREFORLOAD, "HTMLMediaElement::prepareForLoad(%" PRIX64 ") gesture = %d", (uint64_t, int), DEFAULT, Media
+HTMLMEDIAELEMENT_REMOVEAUDIOTRACK, "HTMLMediaElement::removeAudioTrack(%" PRIX64 ") id: %s, %s", (uint64_t, CString, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_SCENEIDENTIFIERDIDCHANGE, "HTMLMediaElement::sceneIdentifierDidChange(%" PRIX64 ") %s", (uint64_t, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_SCHEDULECONFIGURETEXTTRACKS_TASK_SCHEDULED, "HTMLMediaElement::scheduleConfigureTextTracks(%" PRIX64 ") task scheduled", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SCHEDULECONFIGURETEXTTRACKS_LAMBDA_TASK_FIRED, "HTMLMediaElement::scheduleConfigureTextTracks(%" PRIX64 ") lambda(), task fired", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SCHEDULEMEDIAENGINEWASUPDATED_TASK_SCHEDULED, "HTMLMediaElement::scheduleMediaEngineWasUpdated(%" PRIX64 ") task scheduled", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SCHEDULEMEDIAENGINEWASUPDATED_LAMBDA_TASK_FIRED, "HTMLMediaElement::scheduleMediaEngineWasUpdated(%" PRIX64 ") lambda(), task fired", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SELECTMEDIARESOURCE_LAMBDA_TASK_FIRED, "HTMLMediaElement::selectMediaResource(%" PRIX64 ") lambda(), task fired", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SELECTMEDIARESOURCE_NOTHING_TO_LOAD, "HTMLMediaElement::selectMediaResource(%" PRIX64 ") nothing to load", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SELECTMEDIARESOURCE_HAS_SRCATTR_PLAYER_NOT_CREATED, "HTMLMediaElement::selectMediaResource(%" PRIX64 ") has srcAttr but m_player is not created", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SELECTMEDIARESOURCE_ATTEMPTING_USE_OF_UNATTACHED_MEDIASOURCEHANDLE, "HTMLMediaElement::selectMediaResource(%" PRIX64 ") Attempting to use a detached or a previously attached MediaSourceHandle", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SELECTMEDIARESOURCE_USING_SRCOBJECT_PROPERTY, "HTMLMediaElement::selectMediaResource(%" PRIX64 ") using 'srcObject' property", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SELECTMEDIARESOURCE_USING_SRC_ATTRIBUTE_URL, "HTMLMediaElement::selectMediaResource(%" PRIX64 ") using 'src' attribute url", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SELECTMEDIARESOURCE_EMPTY_SRC, "HTMLMediaElement::selectMediaResource(%" PRIX64 ") empty 'src'", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_SETAUTOPLAYEVENTPLAYBACKSTATE, "HTMLMediaElement::setAutoplayEventPlaybackState(%" PRIX64 ") %s", (uint64_t, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_SETMUTEDINTERNAL, "HTMLMediaElement::setMutedInternal(%" PRIX64 ") %d", (uint64_t, int), DEFAULT, Media
+HTMLMEDIAELEMENT_SETNETWORKSTATE, "HTMLMediaElement::setNetworkState(%" PRIX64 ") new state = %s, current state = %s", (uint64_t, CString, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_SETPLAYBACKRATE, "HTMLMediaElement::setPlaybackRate(%" PRIX64 ") %f", (uint64_t, double), DEFAULT, Media
+HTMLMEDIAELEMENT_SETREADYSTATE, "HTMLMediaElement::setReadyState(%" PRIX64 ") new state = %s, current state = %s", (uint64_t, CString, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_SETSHOWPOSTERFLAG, "HTMLMediaElement::setShowPosterFlag(%" PRIX64 ") %d", (uint64_t, int), DEFAULT, Media
+HTMLMEDIAELEMENT_SETVOLUME, "HTMLMediaElement::setVolume(%" PRIX64 ") %f", (uint64_t, double), DEFAULT, Media
 
 HTMLVIDEOELEMENT_MEDIAPLAYERRENDERINGMODECHANGED, "HTMLVideoElement::mediaPlayerRenderingModeChanged(%" PRIX64 ")", (uint64_t), DEFAULT, Media
+HTMLVIDEOELEMENT_MEDIAPLAYERFIRSTVIDEOFRAMEAVAILABLE, "HTMLVideoElement::mediaPlayerFirstVideoFrameAvailable(%" PRIX64 ") m_showPoster = %d", (uint64_t, int), DEFAULT, Media
+HTMLVIDEOELEMENT_SCHEDULERESIZEEVENT, "HTMLMediaElement::scheduleResizeEvent(%" PRIX64 ") width: %f height: %f", (uint64_t, float, float), DEFAULT, Media
 
 PERFORMANCELOGGING_MEMORY_USAGE_INFO, "Memory usage info dump at %s:", (CString), DEFAULT, PerformanceLogging
 PERFORMANCELOGGING_MEMORY_USAGE_FOR_KEY, "  %s: %llu", (CString, uint64_t), DEFAULT, PerformanceLogging

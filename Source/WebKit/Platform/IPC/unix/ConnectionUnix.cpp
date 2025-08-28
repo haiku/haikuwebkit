@@ -665,7 +665,7 @@ pid_t readPIDFromPeer(int socket)
         g_error("readPIDFromPeer: Failed to read pid from PID socket: %s", g_strerror(errno));
 
     if (message.msg_controllen <= 0)
-        g_error("readPIDFromPeer: Unexpected short read from PID socket");
+        g_error("readPIDFromPeer: Unexpected short read from PID socket. (This usually means the auxiliary process crashed immediately. Investigate that instead!)");
 
     for (cmsghdr* header = CMSG_FIRSTHDR(&message); header; header = CMSG_NXTHDR(&message, header)) {
         const unsigned payloadLength = header->cmsg_len - CMSG_LEN(0);

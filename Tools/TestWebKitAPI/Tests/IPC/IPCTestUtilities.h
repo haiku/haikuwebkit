@@ -70,7 +70,7 @@ struct MockTestMessageWithAsyncReply1 {
 };
 
 class MockConnectionClient final : public IPC::Connection::Client, public RefCounted<MockConnectionClient> {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(MockConnectionClient);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MockConnectionClient);
 public:
     static Ref<MockConnectionClient> create()
@@ -147,7 +147,7 @@ public:
         m_didClose = true;
     }
 
-    void didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName message, int32_t) override
+    void didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName message, const Vector<uint32_t>&) override
     {
         m_didReceiveInvalidMessage = message;
     }

@@ -30,6 +30,7 @@
 #include "BackgroundPainter.h"
 #include "BorderPainter.h"
 #include "BorderShape.h"
+#include "ContainerNodeInlines.h"
 #include "CSSFontSelector.h"
 #include "Document.h"
 #include "DocumentInlines.h"
@@ -79,6 +80,7 @@
 #include "RenderLayerInlines.h"
 #include "RenderLayerScrollableArea.h"
 #include "RenderLayoutState.h"
+#include "RenderListMarker.h"
 #include "RenderMathMLBlock.h"
 #include "RenderMultiColumnFlow.h"
 #include "RenderObjectInlines.h"
@@ -411,14 +413,14 @@ void RenderBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle
 
 static bool hasEquivalentGridPositioningStyle(const RenderStyle& style, const RenderStyle& oldStyle)
 {
-    return (oldStyle.gridItemColumnStart() == style.gridItemColumnStart()
+    return oldStyle.gridItemColumnStart() == style.gridItemColumnStart()
         && oldStyle.gridItemColumnEnd() == style.gridItemColumnEnd()
         && oldStyle.gridItemRowStart() == style.gridItemRowStart()
         && oldStyle.gridItemRowEnd() == style.gridItemRowEnd()
         && oldStyle.order() == style.order()
-        && oldStyle.hasOutOfFlowPosition() == style.hasOutOfFlowPosition())
-        && (oldStyle.gridSubgridColumns() == style.gridSubgridColumns() || style.orderedNamedGridColumnLines().map.isEmpty())
-        && (oldStyle.gridSubgridRows() == style.gridSubgridRows() || style.orderedNamedGridRowLines().map.isEmpty());
+        && oldStyle.hasOutOfFlowPosition() == style.hasOutOfFlowPosition()
+        && (oldStyle.gridTemplateColumns().subgrid == style.gridTemplateColumns().subgrid || style.gridTemplateColumns().orderedNamedLines.map.isEmpty())
+        && (oldStyle.gridTemplateRows().subgrid == style.gridTemplateRows().subgrid || style.gridTemplateRows().orderedNamedLines.map.isEmpty());
 }
 
 void RenderBox::updateGridPositionAfterStyleChange(const RenderStyle& style, const RenderStyle* oldStyle)
@@ -833,8 +835,8 @@ LayoutRect RenderBox::paddingBoxRect() const
 
 LayoutPoint RenderBox::contentBoxLocation() const
 {
-    LayoutUnit verticalScrollbarSpace = (shouldPlaceVerticalScrollbarOnLeft() || style().scrollbarGutter().bothEdges) ? verticalScrollbarWidth() : 0;
-    LayoutUnit horizontalScrollbarSpace = style().scrollbarGutter().bothEdges ? horizontalScrollbarHeight() : 0;
+    LayoutUnit verticalScrollbarSpace = (shouldPlaceVerticalScrollbarOnLeft() || style().scrollbarGutter().isStableBothEdges()) ? verticalScrollbarWidth() : 0;
+    LayoutUnit horizontalScrollbarSpace = style().scrollbarGutter().isStableBothEdges() ? horizontalScrollbarHeight() : 0;
     return { borderLeft() + paddingLeft() + verticalScrollbarSpace, borderTop() + paddingTop() + horizontalScrollbarSpace };
 }
 
@@ -950,14 +952,14 @@ bool RenderBox::includeVerticalScrollbarSize() const
 {
     return hasNonVisibleOverflow() && layer() && !layer()->hasOverlayScrollbars()
         && (style().overflowY() == Overflow::Scroll || style().overflowY() == Overflow::Auto
-            || (style().overflowY() == Overflow::Hidden && !style().scrollbarGutter().isAuto));
+            || (style().overflowY() == Overflow::Hidden && !style().scrollbarGutter().isAuto()));
 }
 
 bool RenderBox::includeHorizontalScrollbarSize() const
 {
     return hasNonVisibleOverflow() && layer() && !layer()->hasOverlayScrollbars()
         && (style().overflowX() == Overflow::Scroll || style().overflowX() == Overflow::Auto
-            || (style().overflowX() == Overflow::Hidden && !style().scrollbarGutter().isAuto));
+            || (style().overflowX() == Overflow::Hidden && !style().scrollbarGutter().isAuto()));
 }
 
 int RenderBox::verticalScrollbarWidth() const
@@ -981,15 +983,15 @@ int RenderBox::intrinsicScrollbarLogicalWidthIncludingGutter() const
     if (!hasNonVisibleOverflow())
         return 0;
 
-    auto shouldIncludeScrollbarGutter = [](ScrollbarGutter gutter, bool hasVisibleOverflow, Overflow overflow) {
-        return (overflow == Overflow::Auto && (!gutter.isAuto || hasVisibleOverflow)) || (overflow == Overflow::Hidden && !gutter.isAuto);
+    auto shouldIncludeScrollbarGutter = [](Style::ScrollbarGutter gutter, bool hasVisibleOverflow, Overflow overflow) {
+        return (overflow == Overflow::Auto && (!gutter.isAuto() || hasVisibleOverflow)) || (overflow == Overflow::Hidden && !gutter.isAuto());
     };
 
     if (isHorizontalWritingMode() && ((style().overflowY() == Overflow::Scroll || shouldIncludeScrollbarGutter(style().scrollbarGutter(), hasScrollableOverflowY(), style().overflowY())) && !canUseOverlayScrollbars()))
-        return style().scrollbarGutter().bothEdges ? verticalScrollbarWidth() * 2 : verticalScrollbarWidth();
+        return style().scrollbarGutter().isStableBothEdges() ? verticalScrollbarWidth() * 2 : verticalScrollbarWidth();
 
     if (!isHorizontalWritingMode() && ((style().overflowX() == Overflow::Scroll || shouldIncludeScrollbarGutter(style().scrollbarGutter(), hasScrollableOverflowX(), style().overflowX())) && !canUseOverlayScrollbars()))
-        return style().scrollbarGutter().bothEdges ? horizontalScrollbarHeight() * 2 : horizontalScrollbarHeight();
+        return style().scrollbarGutter().isStableBothEdges() ? horizontalScrollbarHeight() * 2 : horizontalScrollbarHeight();
 
     return 0;
 }
@@ -2226,31 +2228,38 @@ LayoutRect RenderBox::overflowClipRect(const LayoutPoint& location, OverlayScrol
 
 LayoutRect RenderBox::clipRect(const LayoutPoint& location) const
 {
-    LayoutRect borderBoxRect = this->borderBoxRect();
-    LayoutRect clipRect = LayoutRect(borderBoxRect.location() + location, borderBoxRect.size());
+    auto borderBoxRect = this->borderBoxRect();
+    auto clipRect = LayoutRect(borderBoxRect.location() + location, borderBoxRect.size());
 
-    if (!style().clipLeft().isAuto()) {
-        LayoutUnit c = valueForLength(style().clipLeft(), borderBoxRect.width());
-        clipRect.move(c, 0_lu);
-        clipRect.contract(c, 0_lu);
-    }
+    return WTF::switchOn(style().clip(),
+        [&](const CSS::Keyword::Auto&) {
+            return clipRect;
+        },
+        [&](const Style::ClipRect& rect) {
+            if (auto clipLeft = rect.value->left().tryLength()) {
+                auto c = LayoutUnit { clipLeft->value };
+                clipRect.move(c, 0_lu);
+                clipRect.contract(c, 0_lu);
+            }
 
-    // We don't use the fragment-specific border box's width and height since clip offsets are (stupidly) specified
-    // from the left and top edges. Therefore it's better to avoid constraining to smaller widths and heights.
+            // We don't use the fragment-specific border box's width and height since clip offsets are (stupidly) specified
+            // from the left and top edges. Therefore it's better to avoid constraining to smaller widths and heights.
 
-    if (!style().clipRight().isAuto())
-        clipRect.contract(width() - valueForLength(style().clipRight(), width()), 0_lu);
+            if (auto clipRight = rect.value->right().tryLength())
+                clipRect.contract(width() - LayoutUnit { clipRight->value }, 0_lu);
 
-    if (!style().clipTop().isAuto()) {
-        LayoutUnit c = valueForLength(style().clipTop(), borderBoxRect.height());
-        clipRect.move(0_lu, c);
-        clipRect.contract(0_lu, c);
-    }
+            if (auto clipTop = rect.value->top().tryLength()) {
+                auto c = LayoutUnit { clipTop->value };
+                clipRect.move(0_lu, c);
+                clipRect.contract(0_lu, c);
+            }
 
-    if (!style().clipBottom().isAuto())
-        clipRect.contract(0_lu, height() - valueForLength(style().clipBottom(), height()));
+            if (auto clipBottom = rect.value->bottom().tryLength())
+                clipRect.contract(0_lu, height() - LayoutUnit { clipBottom->value });
 
-    return clipRect;
+            return clipRect;
+        }
+    );
 }
 
 LayoutUnit RenderBox::shrinkLogicalWidthToAvoidFloats(LayoutUnit childMarginStart, LayoutUnit childMarginEnd, const RenderBlock& containingBlock) const
@@ -2310,11 +2319,6 @@ LayoutUnit RenderBox::containingBlockLogicalWidthForContent() const
 
 LayoutUnit RenderBox::containingBlockLogicalHeightForContent(AvailableLogicalHeightType heightType) const
 {
-    if (isOutOfFlowPositioned()) {
-        PositionedLayoutConstraints constraints(*this, LogicalBoxAxis::Block);
-        return constraints.containingSize();
-    }
-
     if (isGridItem()) {
         if (auto gridAreaContentLogicalHeight = this->gridAreaContentLogicalHeight(); gridAreaContentLogicalHeight && *gridAreaContentLogicalHeight) {
             // FIXME: Containing block for a grid item is the grid area it's located in. We need to return whatever
@@ -2979,11 +2983,11 @@ bool RenderBox::hasStretchedLogicalHeight() const
         return false;
     }
     if (containingBlock->isHorizontalWritingMode() != isHorizontalWritingMode()) {
-        if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(GridTrackSizingDirection::ForColumns))
+        if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Columns))
             return true;
         return style.resolvedJustifySelf(&containingBlock->style(), containingBlock->selfAlignmentNormalBehavior(this)).position() == ItemPosition::Stretch;
     }
-    if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(GridTrackSizingDirection::ForRows))
+    if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Rows))
         return true;
     return style.resolvedAlignSelf(&containingBlock->style(), containingBlock->selfAlignmentNormalBehavior(this)).position() == ItemPosition::Stretch;
 }
@@ -3002,11 +3006,11 @@ bool RenderBox::hasStretchedLogicalWidth(StretchingMode stretchingMode) const
     }
     auto normalItemPosition = stretchingMode == StretchingMode::Any ? containingBlock->selfAlignmentNormalBehavior(this) : ItemPosition::Normal;
     if (containingBlock->isHorizontalWritingMode() != isHorizontalWritingMode()) {
-        if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(GridTrackSizingDirection::ForRows))
+        if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Rows))
             return true;
         return style.resolvedAlignSelf(&containingBlock->style(), normalItemPosition).position() == ItemPosition::Stretch;
     }
-    if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(GridTrackSizingDirection::ForColumns))
+    if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Columns))
         return true;
     return style.resolvedJustifySelf(&containingBlock->style(), normalItemPosition).position() == ItemPosition::Stretch;
 }
@@ -4958,18 +4962,22 @@ bool RenderBox::isUnsplittableForPagination() const
         || shouldApplySizeContainment();
 }
 
-LayoutUnit RenderBox::lineHeight(bool /*firstLine*/, LineDirectionMode direction, LinePositionMode /*linePositionMode*/) const
+LayoutUnit RenderBox::lineHeight() const
 {
-    if (isBlockLevelReplacedOrAtomicInline())
-        return direction == HorizontalLine ? m_marginBox.top() + height() + m_marginBox.bottom() : m_marginBox.right() + width() + m_marginBox.left();
-    return 0;
-}
+    auto shouldUseLineHeightFromStyle = [&] {
+        if (is<RenderBlock>(*this))
+            return true;
+        if (CheckedPtr listMarkerRenderer = dynamicDowncast<RenderListMarker>(*this))
+            return !listMarkerRenderer->isImage();
+        return false;
+    };
+    if (shouldUseLineHeightFromStyle())
+        return LayoutUnit::fromFloatCeil(firstLineStyle().computedLineHeight());
 
-LayoutUnit RenderBox::baselinePosition(bool /*firstLine*/, LineDirectionMode direction, LinePositionMode /*linePositionMode*/) const
-{
     if (isBlockLevelReplacedOrAtomicInline())
-        return roundToInt(direction == HorizontalLine ? m_marginBox.top() + height() + m_marginBox.bottom() : m_marginBox.right() + width() + m_marginBox.left());
-    return 0;
+        return marginBefore() + logicalHeight() + marginAfter();
+
+    return { };
 }
 
 RenderLayer* RenderBox::enclosingFloatPaintingLayer() const

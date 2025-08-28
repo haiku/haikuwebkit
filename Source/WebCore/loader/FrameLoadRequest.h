@@ -36,6 +36,7 @@
 namespace WebCore {
 
 class Document;
+class Element;
 class LocalFrame;
 class SecurityOrigin;
 
@@ -108,6 +109,9 @@ public:
 
     const AtomString& downloadAttribute() const { return m_downloadAttribute; }
 
+    Element* sourceElement() const { return m_sourceElement.get(); }
+    void setSourceElement(Element* sourceElement) { m_sourceElement = sourceElement; }
+
     InitiatedByMainFrame initiatedByMainFrame() const { return m_initiatedByMainFrame; }
 
     void setIsRequestFromClientOrUserInput() { m_isRequestFromClientOrUserInput = true; }
@@ -143,6 +147,7 @@ private:
     ShouldReplaceDocumentIfJavaScriptURL m_shouldReplaceDocumentIfJavaScriptURL { ReplaceDocumentIfJavaScriptURL };
     ShouldOpenExternalURLsPolicy m_shouldOpenExternalURLsPolicy { ShouldOpenExternalURLsPolicy::ShouldNotAllow };
     AtomString m_downloadAttribute;
+    RefPtr<Element> m_sourceElement;
     InitiatedByMainFrame m_initiatedByMainFrame { InitiatedByMainFrame::Unknown };
     bool m_isRequestFromClientOrUserInput { false };
     bool m_isInitialFrameSrcLoad { false };

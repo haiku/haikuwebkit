@@ -83,4 +83,4 @@ template<> struct Blending<CornerShapeValue> {
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::CornerShapeValue> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::CornerShapeValue)

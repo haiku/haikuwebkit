@@ -909,6 +909,8 @@ accessibility/mac/clipped-radio-input-frame.html [ WontFix ]
 
 accessibility/range-input-increment-decrement-fires-input-event.html [ WontFix ]
 
+accessibility/mac/stale-input-value-from-subfield-change.html [ WontFix ]
+
 # Default ARIA for custom elements are not yet enabled
 accessibility/custom-elements/ [ Skip ]
 
@@ -1067,6 +1069,7 @@ http/tests/local/blob/navigate-blob.html [ Skip ]
 media/no-fullscreen-when-hidden.html [ Skip ]
 fullscreen/full-screen-enter-while-exiting-fully-mid-completion-handler.html [ Skip ]
 fullscreen/full-screen-enter-while-exiting-mid-completion-handler.html [ Skip ]
+fullscreen/fullscreen-zero-height-element-with-non-zero-children.html [ Skip ]
 
 # Multi-process test
 fullscreen/iframe-fullscreen-system-exit.html [ Skip ]
@@ -1779,6 +1782,8 @@ fast/events/wheel/wheel-event-in-passive-region-non-cancelable.html [ Skip ]
 # WK1 main frame scrollbars are native widgets whose size is unaffected by webkit-scrollbar.
 fast/visual-viewport/viewport-dimensions-exclude-custom-scrollbars.html [ Skip ]
 
+imported/w3c/web-platform-tests/visual-viewport/viewport-apply-initial-scale-after-navigation.html [ ImageOnlyFailure ]
+
 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/history_go_no_argument.html [ Pass Failure ]
 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/history_go_to_uri.html [ Pass Failure ]
 
@@ -1953,6 +1958,8 @@ fast/html/details-remove-summary-6-and-click.html [ Pass Failure ]
 
 webkit.org/b/165541 compositing/layer-creation/fixed-overlap-extent-rtl.html [ Failure ]
 webkit.org/b/165541 compositing/rtl/rtl-fixed-overflow.html [ Failure ]
+
+compositing/layer-creation/sticky-overlap-extent.html
 
 webkit.org/b/154612 compositing/repaint/fixed-background-scroll.html [ Pass Failure ]
 
@@ -3081,6 +3088,43 @@ webkit.org/b/288627 editing/spelling/spellcheck-async-mutation.html [ Timeout ]
 
 webkit.org/b/288725 http/tests/security/file-system-access-via-dataTransfer.html [ Pass Failure ]
 
+# `scrollend` events are not supported on WK1
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-sequence-of-scrolls.tentative.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-snap.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-mandatory-snap-point-after-load.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-to-document.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-to-element-with-overscroll-behavior.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-to-window.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fires-on-visual-viewport.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fires-to-iframe-window.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-handler-content-attributes.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-not-fired-after-removing-scroller.tentative.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-not-fired-on-no-scroll.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-fires-to-text-input.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-with-snap-on-fractional-offset.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollBy-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollBy-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollTo-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollTo-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollBy-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollBy-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollTo-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollTo-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollLeft-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollLeft-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollTop-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollTop-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollLeft-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollLeft-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollTop-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollTop-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=nested-scrollIntoView [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=root-inline-end-block-end-behavior-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=root-inline-start-block-start-behavior-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=subframe-inline-end-block-end-behavior-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=subframe-inline-start-block-start-behavior-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-for-user-scroll.html [ Skip ]
+
 webkit.org/b/288769 fast/ruby/after-block-doesnt-crash.html [ Failure Pass ]
 webkit.org/b/288769 fast/ruby/after-table-doesnt-crash.html [ Failure Pass ]
 webkit.org/b/288769 fast/ruby/before-block-doesnt-crash.html [ Failure Pass ]
@@ -3141,8 +3185,6 @@ http/tests/websocket/tests/hybi/websocket-allowed-setting-cookie-as-third-party-
 
 webkit.org/b/294301 http/tests/media/hls/hls-audio-tracks-language.html [ Pass Failure ]
 
-http/tests/lockdown-mode [ Skip ]
-
 imported/w3c/web-platform-tests/css/css-transforms/individual-transform/individual-transform-3.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/conic-gradient-001.html [ ImageOnlyFailure ]
 
@@ -3158,3 +3200,11 @@ webkit.org/b/295119  imported/w3c/web-platform-tests/css/css-fonts/font-size-adj
 # imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-input-number.html [ Failure ]
 # platform/mac/fast/text/line-break-locale.html [ Failure ]
 # fast/forms/appearance-default-button.html [ ImageOnlyFailure ]
+
+# setSinkId is not enabled on WK1
+media/video-setSinkId-default.html [ Skip ]
+
+# Lockdown Mode does not apply
+dom/xsl/lockdown-mode [ Skip ]
+http/tests/lockdown-mode [ Skip ]
+js/dom/lockdown-mode [ Skip ]

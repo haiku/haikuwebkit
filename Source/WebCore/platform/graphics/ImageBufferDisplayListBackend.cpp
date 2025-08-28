@@ -39,7 +39,7 @@ std::unique_ptr<ImageBufferDisplayListBackend> ImageBufferDisplayListBackend::cr
 
 std::unique_ptr<ImageBufferDisplayListBackend> ImageBufferDisplayListBackend::create(const FloatSize& size, float resolutionScale, const DestinationColorSpace& colorSpace, ImageBufferPixelFormat pixelFormat, RenderingPurpose purpose, ControlFactory& controlFactory)
 {
-    Parameters parameters { ImageBuffer::calculateBackendSize(size, resolutionScale), resolutionScale, colorSpace, pixelFormat, purpose };
+    Parameters parameters { ImageBuffer::calculateBackendSize(size, resolutionScale), resolutionScale, colorSpace, { pixelFormat }, purpose };
     return std::unique_ptr<ImageBufferDisplayListBackend>(new ImageBufferDisplayListBackend(parameters, controlFactory));
 }
 

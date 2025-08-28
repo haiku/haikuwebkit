@@ -39,13 +39,15 @@
 #include "FontSizeAdjust.h"
 #include "GraphicsTypes.h"
 #include "Length.h"
-#include "ListStyleType.h"
 #include "PositionTryFallback.h"
 #include "RenderStyleConstants.h"
 #include "SVGRenderStyleDefs.h"
 #include "ScrollAxis.h"
 #include "ScrollTypes.h"
 #include "StyleBuilderState.h"
+#include "StyleScrollBehavior.h"
+#include "StyleWebKitOverflowScrolling.h"
+#include "StyleWebKitTouchCallout.h"
 #include "TextFlags.h"
 #include "ThemeTypes.h"
 #include "TouchAction.h"
@@ -898,28 +900,6 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
-
-constexpr CSSValueID toCSSValueID(ListStyleType::Type style)
-{
-    switch (style) {
-    case ListStyleType::Type::None:
-        return CSSValueNone;
-    default:
-        ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-        return CSSValueInvalid;
-    }
-}
-
-template<> constexpr ListStyleType::Type fromCSSValueID(CSSValueID valueID)
-{
-    switch (valueID) {
-    case CSSValueNone:
-        return ListStyleType::Type::None;
-    default:
-        ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-        return ListStyleType::Type::None;
-    }
-}
 
 #define TYPE MarqueeBehavior
 #define FOR_EACH(CASE) CASE(None) CASE(Scroll) CASE(Slide) CASE(Alternate)
@@ -2650,6 +2630,32 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
+
+#define TYPE Style::ScrollBehavior
+#define FOR_EACH(CASE) CASE(Auto) CASE(Smooth)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
+
+#define TYPE Style::WebkitOverflowScrolling
+#define FOR_EACH(CASE) CASE(Auto) CASE(Touch)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#endif
+
+#if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
+
+#define TYPE Style::WebkitTouchCallout
+#define FOR_EACH(CASE) CASE(Default) CASE(None)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#endif
 
 #undef EMIT_TO_CSS_SWITCH_CASE
 #undef EMIT_FROM_CSS_SWITCH_CASE

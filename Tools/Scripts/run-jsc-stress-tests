@@ -165,7 +165,7 @@ $model = nil
 $runJITlessWasm = true
 $filter = nil
 $envVars = []
-$mode = "full"
+$mode = :full
 $buildType = "release"
 $forceCollectContinuously = false
 $reportExecutionTime = false
@@ -271,6 +271,7 @@ GetoptLong.new(['--help', '-h', GetoptLong::NO_ARGUMENT],
                ['--release', GetoptLong::NO_ARGUMENT],
                ['--quick', '-q', GetoptLong::NO_ARGUMENT],
                ['--basic', GetoptLong::NO_ARGUMENT],
+               ['--no-slow', GetoptLong::NO_ARGUMENT],
                ['--jitless-wasm', GetoptLong::NO_ARGUMENT],
                ['--no-retry', GetoptLong::NO_ARGUMENT]).each {
     | opt, arg |
@@ -382,9 +383,11 @@ GetoptLong.new(['--help', '-h', GetoptLong::NO_ARGUMENT],
     when '--env-vars'
         $envVars = arg.gsub(/\s+/, ' ').split(' ')
     when '--quick'
-        $mode = "quick"
+        $mode = :quick
     when '--basic'
-        $mode = "basic"
+        $mode = :basic
+    when '--no-slow'
+        $mode = :noSlow
     when '--jitless-wasm'
         $runJITlessWasm = true
     when '--debug'
@@ -947,7 +950,7 @@ end
 
 def slow!
     $runCommandOptions[:isSlow] = true
-    skip() if ($mode == "quick")
+    skip() if ($mode == :quick or $mode == :basic or $mode == :noSlow)
 end
 
 def mustCrash!
@@ -1579,7 +1582,7 @@ BASE_MODES.each { |mode|
 # Default set of tests to run; propagates the cfg to every callee.
 def defaultRunCfg(cfg, subsetOptions, *optionalTestSpecificOptions)
     cfg.freeze
-    if not subsetOptions.has_key?(:ignoreQuickMode) and $mode == "quick"
+    if not subsetOptions.has_key?(:ignoreQuickMode) and $mode == :quick
         defaultQuickRunCfg(cfg, *optionalTestSpecificOptions)
     else
         runDefaultCfg(cfg, *optionalTestSpecificOptions)
@@ -1594,7 +1597,7 @@ def defaultRunCfg(cfg, subsetOptions, *optionalTestSpecificOptions)
             runNoCJITCollectContinuouslyCfg(cfg, *optionalTestSpecificOptions) if shouldCollectContinuously?
             if not subsetOptions.has_key?(:skipEager)
                 runDFGEagerCfg(cfg)
-                if $mode != "basic"
+                if $mode != :basic
                     runDFGEagerNoCJITValidateCfg(cfg, *optionalTestSpecificOptions)
                     runEagerJettisonNoCJITCfg(cfg, *optionalTestSpecificOptions)
                 end
@@ -1609,7 +1612,7 @@ def defaultRunCfg(cfg, subsetOptions, *optionalTestSpecificOptions)
             end
             runFTLNoCJITSmallPoolCfg(cfg, *optionalTestSpecificOptions)
 
-            return if $mode == "basic"
+            return if $mode == :basic
 
             runFTLNoCJITValidateCfg(cfg, *optionalTestSpecificOptions)
             runFTLNoCJITB3O0Cfg(cfg, *optionalTestSpecificOptions)
@@ -1832,7 +1835,7 @@ end
 def runWebAssembly
     return unless $isWasmPlatform
     run("default-wasm", "-m", *FTL_OPTIONS)
-    if $mode != "quick"
+    if $mode != :quick
         run("wasm-no-cjit", "-m", *(FTL_OPTIONS + NO_CJIT_OPTIONS))
         run("wasm-eager", "-m", "--useRandomizingExecutableIslandAllocation=true", *(FTL_OPTIONS + EAGER_OPTIONS))
         run("wasm-eager-jettison", "-m", "--forceCodeBlockToJettisonDueToOldAge=true", "--useRandomizingExecutableIslandAllocation=true", "--verifyGC=true", *FTL_OPTIONS)
@@ -1865,7 +1868,7 @@ def runWebAssemblyJetStream2
 
     run("default-wasm", *FTL_OPTIONS)
 
-    if $mode != "quick"
+    if $mode != :quick
         run("wasm-no-cjit", *(FTL_OPTIONS + NO_CJIT_OPTIONS))
         run("wasm-eager", "--useRandomizingExecutableIslandAllocation=true", *(FTL_OPTIONS + EAGER_OPTIONS))
         run("wasm-eager-jettison", "--forceCodeBlockToJettisonDueToOldAge=true", "--verifyGC=true", *FTL_OPTIONS)
@@ -1900,7 +1903,7 @@ def runWebAssemblySuite(*optionalTestSpecificOptions)
       optionalTestSpecificOptions.unshift "-m"
     end
     runDefaultWasm(*optionalTestSpecificOptions)
-    if $mode != "quick"
+    if $mode != :quick
         run("wasm-no-cjit", *(FTL_OPTIONS + NO_CJIT_OPTIONS + optionalTestSpecificOptions))
         run("wasm-eager", *(FTL_OPTIONS + EAGER_OPTIONS + optionalTestSpecificOptions))
         run("wasm-eager-jettison", "--forceCodeBlockToJettisonDueToOldAge=true", "--useRandomizingExecutableIslandAllocation=true", "--verifyGC=true", *(FTL_OPTIONS + optionalTestSpecificOptions))
@@ -1934,7 +1937,7 @@ def runV8WebAssemblySuite(*optionalTestSpecificOptions)
       optionalTestSpecificOptions.unshift "-m"
     end
     runDefaultWasm(*optionalTestSpecificOptions)
-    if $mode != "quick"
+    if $mode != :quick
         run("wasm-no-cjit", *(FTL_OPTIONS + NO_CJIT_OPTIONS + optionalTestSpecificOptions))
         run("wasm-eager", *(FTL_OPTIONS + EAGER_OPTIONS + optionalTestSpecificOptions))
         run("wasm-eager-jettison", "--forceCodeBlockToJettisonDueToOldAge=true", "--useRandomizingExecutableIslandAllocation=true", "--verifyGC=true", *(FTL_OPTIONS + optionalTestSpecificOptions))
@@ -1989,7 +1992,7 @@ def runWebAssemblyWithHarness(*optionalTestSpecificOptions)
     prepareExtraRelativeFiles(wasmFiles.map { |f| f.basename }, $collection)
 
     runWasmHarnessTest("default-wasm", *(FTL_OPTIONS + optionalTestSpecificOptions))
-    if $mode != "quick"
+    if $mode != :quick
         runWasmHarnessTest("wasm-no-cjit", *(FTL_OPTIONS + NO_CJIT_OPTIONS + optionalTestSpecificOptions))
         runWasmHarnessTest("wasm-eager", *(FTL_OPTIONS + EAGER_OPTIONS + optionalTestSpecificOptions))
         runWasmHarnessTest("wasm-eager-jettison", "--forceCodeBlockToJettisonDueToOldAge=true", "--useRandomizingExecutableIslandAllocation=true", "--verifyGC=true", *(FTL_OPTIONS + optionalTestSpecificOptions))
@@ -2017,7 +2020,7 @@ def runWebAssemblyEmscripten(mode)
     wasm = $benchmark.to_s.sub! '.js', '.wasm'
     prepareExtraRelativeFiles([Pathname('..') + wasm], $collection)
     run("default-wasm", *FTL_OPTIONS)
-    if $mode != "quick"
+    if $mode != :quick
         run("wasm-no-cjit", *(FTL_OPTIONS + NO_CJIT_OPTIONS))
         run("wasm-eager-jettison", "--forceCodeBlockToJettisonDueToOldAge=true", "--useRandomizingExecutableIslandAllocation=true", "--verifyGC=true", *FTL_OPTIONS)
         run("wasm-collect-continuously", "--collectContinuously=true", "--verifyGC=true", *FTL_OPTIONS) if shouldCollectContinuously?
@@ -2055,7 +2058,7 @@ def runWebAssemblySpecTestBase(mode, specHarnessPath, postfix, *optionalTestSpec
 
     specHarnessJsPath = "../" + specHarnessPath + ".js"
     runWithOutputHandler("default-wasm" + (postfix || ''), noisyOutputHandler, specHarnessJsPath, *(FTL_OPTIONS + optionalTestSpecificOptions))
-    if $mode != "quick"
+    if $mode != :quick
         runWithOutputHandler("wasm-no-cjit" + (postfix || ''), noisyOutputHandler, specHarnessJsPath,  *(FTL_OPTIONS + NO_CJIT_OPTIONS + optionalTestSpecificOptions))
         # FIXME: We should probably only run these two for GC spec tests.
         runWithOutputHandler("wasm-eager-jettison" + (postfix || ''), noisyOutputHandler, specHarnessJsPath, "--forceCodeBlockToJettisonDueToOldAge=true", "--useRandomizingExecutableIslandAllocation=true", "--verifyGC=true", *(FTL_OPTIONS + optionalTestSpecificOptions))
@@ -2222,7 +2225,7 @@ def defaultQuickRunLayoutTest
 end
 
 def defaultRunLayoutTest
-    if $mode == "quick"
+    if $mode == :quick
         defaultQuickRunLayoutTest
     else
         runLayoutTestDefault
@@ -2365,7 +2368,7 @@ def defaultQuickRunMozillaTest(mode, *extraFiles)
 end
 
 def defaultRunMozillaTest(mode, *extraFiles)
-    if $mode == "quick"
+    if $mode == :quick
         defaultQuickRunMozillaTest(mode, *extraFiles)
     else
         runMozillaTestNoFTL(mode, *extraFiles)
@@ -3160,7 +3163,7 @@ end
 # We do not adjust hardTimeout. If we are not producing any results during 1200 seconds, buildbot terminates the tests. So we should terminate hung tests.
 
 if !ENV["JSCTEST_memoryLimit"] && $memoryLimited
-    ENV["JSCTEST_memoryLimit"] = (600 * 1024 * 1024).to_s
+    ENV["JSCTEST_memoryLimit"] = (1 * 1024 * 1024 * 1024).to_s
 end
 
 # Some tests fail if the time zone is not set to US/Pacific

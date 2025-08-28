@@ -39,4 +39,5 @@ content_files = [
     "environment-variables.md",
     "profiling.md",
     "remote-inspector.md",
+    "android.md",
 ]

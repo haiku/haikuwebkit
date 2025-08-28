@@ -39,26 +39,26 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityTableRow::AccessibilityTableRow(AXID axID, RenderObject& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilityTableRow::AccessibilityTableRow(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
 }
 
-AccessibilityTableRow::AccessibilityTableRow(AXID axID, Node& node)
-    : AccessibilityRenderObject(axID, node)
+AccessibilityTableRow::AccessibilityTableRow(AXID axID, Node& node, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, node, cache)
 {
 }
 
 AccessibilityTableRow::~AccessibilityTableRow() = default;
 
-Ref<AccessibilityTableRow> AccessibilityTableRow::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityTableRow> AccessibilityTableRow::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTableRow(axID, renderer));
+    return adoptRef(*new AccessibilityTableRow(axID, renderer, cache));
 }
 
-Ref<AccessibilityTableRow> AccessibilityTableRow::create(AXID axID, Node& node)
+Ref<AccessibilityTableRow> AccessibilityTableRow::create(AXID axID, Node& node, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTableRow(axID, node));
+    return adoptRef(*new AccessibilityTableRow(axID, node, cache));
 }
 
 AccessibilityRole AccessibilityTableRow::determineAccessibilityRole()

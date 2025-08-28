@@ -56,6 +56,7 @@ public:
     void audioMediaSelectionIndexChanged(uint64_t) final;
     void legibleMediaSelectionIndexChanged(uint64_t) final;
     void externalPlaybackChanged(bool, WebCore::PlaybackSessionModel::ExternalPlaybackTargetType, const String&) final { }
+    void setPlayerIdentifier(std::optional<WebCore::MediaPlayerIdentifier>) final;
     void wirelessVideoPlaybackDisabledChanged(bool) final { }
     void mutedChanged(bool) final;
     void volumeChanged(double) final;

@@ -206,7 +206,7 @@ public:
     FloatSize pixelAlignmentOffset() const override { return m_pixelAlignmentOffset; }
 
     struct CommitState {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(CommitState);
         unsigned treeDepth { 0 };
         unsigned totalBackdropFilterArea { 0 };
         bool ancestorHadChanges { false };
@@ -403,7 +403,7 @@ private:
     typedef unsigned ComputeVisibleRectFlags;
     
     struct VisibleAndCoverageRects {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(VisibleAndCoverageRects);
         FloatRect visibleRect;
         FloatRect coverageRect;
         TransformationMatrix animatingTransform;
@@ -428,7 +428,7 @@ private:
 
     // Used to track the path down the tree for replica layers.
     struct ReplicaState {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(ReplicaState);
         static const size_t maxReplicaDepth = 16;
         enum ReplicaBranchType { ChildBranch = 0, ReplicaBranch = 1 };
         ReplicaState(ReplicaBranchType firstBranch)
@@ -708,7 +708,7 @@ private:
 
     // References to clones of our layers, for replicated layers.
     struct LayerClones {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(LayerClones);
         LayerMap primaryLayerClones;
         LayerMap structuralLayerClones;
         LayerMap contentsLayerClones;

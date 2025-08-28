@@ -393,6 +393,7 @@ public:
     SkiaHarfBuzzFont* skiaHarfBuzzFont() const { return m_hbFont.get(); }
     hb_font_t* hbFont() const;
     const Vector<hb_feature_t>& features() const { return m_features; }
+    static bool skiaTypefaceHasAnySupportedColorTable(const SkTypeface&);
 #endif
 
 #if ENABLE(MATHML) && USE(HARFBUZZ)

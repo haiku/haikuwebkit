@@ -39,6 +39,7 @@
 #include "HTMLNames.h"
 #include "NodeInlines.h"
 #include "NodeTraversal.h"
+#include "SerializedNode.h"
 #include "ShadowRoot.h"
 #include "ShadowRootInit.h"
 #include "SlotAssignmentMode.h"
@@ -106,7 +107,7 @@ void HTMLTemplateElement::setDeclarativeShadowRoot(ShadowRoot& shadowRoot)
     m_declarativeShadowRoot = shadowRoot;
 }
 
-Ref<Node> HTMLTemplateElement::cloneNodeInternal(Document& document, CloningOperation type, CustomElementRegistry* registry)
+Ref<Node> HTMLTemplateElement::cloneNodeInternal(Document& document, CloningOperation type, CustomElementRegistry* registry) const
 {
     RefPtr<Node> clone;
     switch (type) {
@@ -125,6 +126,12 @@ Ref<Node> HTMLTemplateElement::cloneNodeInternal(Document& document, CloningOper
         content().cloneChildNodes(fragment->document(), nullptr, fragment);
     }
     return clone.releaseNonNull();
+}
+
+SerializedNode HTMLTemplateElement::serializeNode(CloningOperation) const
+{
+    // FIXME: Implement.
+    return { SerializedNode::HTMLTemplateElement { } };
 }
 
 void HTMLTemplateElement::didMoveToNewDocument(Document& oldDocument, Document& newDocument)

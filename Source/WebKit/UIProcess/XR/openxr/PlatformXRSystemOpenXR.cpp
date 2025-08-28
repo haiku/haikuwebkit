@@ -43,6 +43,18 @@ PlatformXRCoordinator* PlatformXRSystem::xrCoordinator()
     return &xrCoordinator.get();
 }
 
+void PlatformXRSystem::createLayerProjection(IPC::Connection&, uint32_t width, uint32_t height, bool alpha)
+{
+    ASSERT(RunLoop::isMain());
+
+    RefPtr page = m_page.get();
+    if (!page)
+        return;
+
+    if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator())
+        xrCoordinator->createLayerProjection(width, height, alpha);
+}
+
 } // namespace WebKit
 
 #endif // ENABLE(WEBXR) && USE(OPENXR)

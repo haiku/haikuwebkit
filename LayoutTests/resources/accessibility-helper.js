@@ -25,13 +25,17 @@ function dumpAXTable(axElement, options) {
 
 // Dumps the result of a traversal via the UI element search API (which is what some ATs use).
 // `options` is an object with these keys:
+//
 //   * `excludeRoles`: Array of strings representing roles you don't want to include in the output.
 //                     Case insensitive, partial match is fine, e.g. "scrollbar" will exclude "AXScrollBar".
+//
+//   * `visibleOnly`: True if only elements in the viewport should be returned.
 function dumpAXSearchTraversal(axElement, options = { }) {
     let output = "";
     let searchResult = null;
+    const { visibleOnly = false } = options;
     while (true) {
-        searchResult = axElement.uiElementForSearchPredicate(searchResult, true, "AXAnyTypeSearchKey", "", false);
+        searchResult = axElement.uiElementForSearchPredicate(searchResult, /* directionIsNext */ true, "AXAnyTypeSearchKey", /* searchText */ "", visibleOnly);
         if (!searchResult)
             break;
 

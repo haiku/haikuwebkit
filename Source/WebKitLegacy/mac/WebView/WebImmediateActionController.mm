@@ -38,12 +38,12 @@
 #import "WebViewInternal.h"
 #import <WebCore/DataDetection.h>
 #import <WebCore/DictionaryLookup.h>
+#import <WebCore/EditingHTMLConverter.h>
 #import <WebCore/Editor.h>
 #import <WebCore/EventHandler.h>
 #import <WebCore/FocusController.h>
 #import <WebCore/FontMetrics.h>
 #import <WebCore/GeometryUtilities.h>
-#import <WebCore/HTMLConverter.h>
 #import <WebCore/ImmediateActionStage.h>
 #import <WebCore/LocalFrame.h>
 #import <WebCore/LocalFrameView.h>
@@ -203,7 +203,7 @@
 
     if (![_immediateActionRecognizer animationController]) {
         // FIXME: We should be able to remove the dispatch_async when rdar://problem/19502927 is resolved.
-        RunLoop::protectedMain()->dispatch([self, strongSelf = retainPtr(self)] {
+        RunLoop::mainSingleton().dispatch([self, strongSelf = retainPtr(self)] {
             [self _cancelImmediateAction];
         });
     }

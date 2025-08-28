@@ -29,14 +29,17 @@
 #if ENABLE(FULLSCREEN_API) && !PLATFORM(IOS_FAMILY)
 
 #import "AppKitSPI.h"
+#import "GPUProcessProxy.h"
 #import "LayerTreeContext.h"
 #import "NativeWebMouseEvent.h"
 #import "VideoPresentationManagerProxy.h"
 #import "WKAPICast.h"
 #import "WKViewInternal.h"
 #import "WKViewPrivate.h"
+#import "WKWebViewInternal.h"
 #import "WebFullScreenManagerProxy.h"
 #import "WebPageProxy.h"
+#import "WebProcessProxy.h"
 #import <QuartzCore/QuartzCore.h>
 #import <WebCore/CGWindowUtilities.h>
 #import <WebCore/FloatRect.h>
@@ -491,6 +494,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [_webViewPlaceholder setExitWarningVisible:NO];
     _fullScreenState = ExitingFullScreen;
     [self finishedExitFullScreenAnimationAndExitImmediately:YES];
+
+#if HAVE(LIQUID_GLASS)
+    if (RefPtr page = _page.get())
+        [page->cocoaView() _removeReasonToHideTopScrollPocket:WebKit::HideScrollPocketReason::FullScreen];
+#endif
 }
 
 - (void)requestExitFullScreen

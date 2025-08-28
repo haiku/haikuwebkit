@@ -23,6 +23,7 @@
 #include "SVGDocumentExtensions.h"
 
 #include "Document.h"
+#include "DocumentInlines.h"
 #include "EventListener.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"

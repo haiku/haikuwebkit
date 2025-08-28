@@ -28,8 +28,6 @@
 42266349 VULKAN : MultithreadingTestES3.UnsynchronizedTextureReads/* = SKIP
 42266349 VULKAN : MultithreadingTestES3.UnsynchronizedTextureReads2/* = SKIP
 377614665 VULKAN : GLSLTest.StructSamplerVsComma/* = SKIP
-404418769 VULKAN : GLSLTest.MaxVaryingVec2Arrays/* = SKIP
-404418769 VULKAN : GLSLTest.MaxVaryingVec3ArrayAndOneFloatArray/* = SKIP
 410584007 VULKAN : ImageTestES31.UseSourceTextureAsStorageImage/* = SKIP
 // Incorrectly handled pretty much in all backends
 42266871 : CopyTexImageTestES3.RedefineSameLevel/* = SKIP
@@ -279,6 +277,7 @@ b/390710636 LINUX NVIDIA VULKAN : TextureBorderClampTestES32.CustomBorderColorWi
 // Nvidia does not ignore gl_Layer for non-layered framebuffers
 374790899 NVIDIA OPENGL : GeometryShaderTest.GLLayerIneffectiveWithoutLayeredFramebuffer/* = SKIP
 374790899 NVIDIA GLES : GeometryShaderTest.GLLayerIneffectiveWithoutLayeredFramebuffer/* = SKIP
+42265887 NVIDIA VULKAN : CopyCompressedTextureTestES31.CopyFromUncompressedToCompressed/* = SKIP
 
 // Nvidia Vulkan
 42265709 NVIDIA VULKAN : GLSLTest_ES31.TessellationControlShaderMatrixCopyBug/* = SKIP
@@ -841,6 +840,7 @@ b/217922015 PIXEL6 VULKAN : GLSLTest_ES3.NestedPowFromUniform/* = SKIP
 42266242 PIXEL6 VULKAN : PixelLocalStorageTestES31.DrawStateReset/* = SKIP
 378404998 PIXEL6 VULKAN : VulkanPerformanceCounterTest_ES31.ColorMaskedFramebufferFetchDrawThenClear/* = SKIP
 b/330697097 PIXEL6 VULKAN : FramebufferTest_ES31.MultisampleResolveBothAttachments/* = SKIP
+42266019 PIXEL6 VULKAN : VulkanPerformanceCounterTest.MultisampleDepthStencilResolveSeparately/* = SKIP
 
 // Some Metal tests fail on iOS Intel simulator
 40096874 IOS METAL : CubeMapTextureTest.SampleCoordinateTransformGrad/* = SKIP

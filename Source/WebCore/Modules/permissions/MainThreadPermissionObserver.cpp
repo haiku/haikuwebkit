@@ -47,13 +47,13 @@ MainThreadPermissionObserver::MainThreadPermissionObserver(ThreadSafeWeakPtr<Per
     , m_origin(WTFMove(origin))
 {
     ASSERT(isMainThread());
-    PermissionController::protectedShared()->addObserver(*this);
+    PermissionController::singleton().addObserver(*this);
 }
 
 MainThreadPermissionObserver::~MainThreadPermissionObserver()
 {
     ASSERT(isMainThread());
-    PermissionController::protectedShared()->removeObserver(*this);
+    PermissionController::singleton().removeObserver(*this);
 }
 
 void MainThreadPermissionObserver::stateChanged(PermissionState newPermissionState)

@@ -256,26 +256,26 @@ WebProcessPool::WebProcessPool(API::ProcessPoolConfiguration& configuration)
     , m_userObservablePageCounter([this](RefCounterEvent) { updateProcessSuppressionState(); })
     , m_processSuppressionDisabledForPageCounter([this](RefCounterEvent) { updateProcessSuppressionState(); })
     , m_hiddenPageThrottlingAutoIncreasesCounter([this](RefCounterEvent) { m_hiddenPageThrottlingTimer.startOneShot(0_s); })
-    , m_hiddenPageThrottlingTimer(RunLoop::main(), this, &WebProcessPool::updateHiddenPageThrottlingAutoIncreaseLimit)
+    , m_hiddenPageThrottlingTimer(RunLoop::mainSingleton(), "WebProcessPool::HiddenPageThrottlingTimer"_s, this, &WebProcessPool::updateHiddenPageThrottlingAutoIncreaseLimit)
 #if ENABLE(GPU_PROCESS)
-    , m_resetGPUProcessCrashCountTimer(RunLoop::main(), [this] { m_recentGPUProcessCrashCount = 0; })
+    , m_resetGPUProcessCrashCountTimer(RunLoop::mainSingleton(), "WebProcessPool::ResetGPUProcessCrashCountTimer"_s, [this] { m_recentGPUProcessCrashCount = 0; })
 #endif
 #if ENABLE(MODEL_PROCESS)
-    , m_resetModelProcessCrashCountTimer(RunLoop::main(), [this] { m_recentModelProcessCrashCount = 0; })
+    , m_resetModelProcessCrashCountTimer(RunLoop::mainSingleton(), "WebProcessPool::ResetModelProcessCrashCountTimer"_s, [this] { m_recentModelProcessCrashCount = 0; })
 #endif
     , m_foregroundWebProcessCounter([this](RefCounterEvent) { updateProcessAssertions(); })
     , m_backgroundWebProcessCounter([this](RefCounterEvent) { updateProcessAssertions(); })
     , m_backForwardCache(makeUniqueRefWithoutRefCountedCheck<WebBackForwardCache>(*this))
     , m_webProcessCache(makeUniqueRef<WebProcessCache>(*this))
     , m_webProcessWithAudibleMediaCounter([this](RefCounterEvent) { updateAudibleMediaAssertions(); })
-    , m_audibleActivityTimer(RunLoop::main(), this, &WebProcessPool::clearAudibleActivity)
+    , m_audibleActivityTimer(RunLoop::mainSingleton(), "WebProcessPool::AudibleActivityTimer"_s, this, &WebProcessPool::clearAudibleActivity)
     , m_webProcessWithMediaStreamingCounter([this](RefCounterEvent) { updateMediaStreamingActivity(); })
 #if ENABLE(WEB_PROCESS_SUSPENSION_DELAY)
     , m_lastMemoryPressureStatusTime(ApproximateTime::now() - memoryPressureCheckInterval())
-    , m_checkMemoryPressureStatusTimer(RunLoop::main(), this, &WebProcessPool::checkMemoryPressureStatus)
+    , m_checkMemoryPressureStatusTimer(RunLoop::mainSingleton(), "WebProcessPool::CheckMemoryPressureStatusTimer"_s, this, &WebProcessPool::checkMemoryPressureStatus)
 #endif
 #if ENABLE(CONTENT_EXTENSIONS)
-    , m_resourceMonitorRuleListRefreshTimer(RunLoop::main(), this, &WebProcessPool::loadOrUpdateResourceMonitorRuleList)
+    , m_resourceMonitorRuleListRefreshTimer(RunLoop::mainSingleton(), "WebProcessPool::ResourceMonitorRuleListRefreshTimer"_s, this, &WebProcessPool::loadOrUpdateResourceMonitorRuleList)
 #endif
 #if ENABLE(IPC_TESTING_API)
     , m_ipcTester(IPCTester::create())
@@ -532,6 +532,9 @@ GPUProcessProxy& WebProcessPool::ensureGPUProcess()
         for (Ref process : m_processes)
             gpuProcess->updatePreferences(process);
         gpuProcess->updateScreenPropertiesIfNeeded();
+#if PLATFORM(COCOA)
+        registerFontsForGPUProcessIfNeeded();
+#endif
     }
     return *m_gpuProcess;
 }
@@ -2745,7 +2748,7 @@ void WebProcessPool::updateWebProcessSuspensionDelayWithPacing(WeakHashSet<WebPr
     // triggers other operations (like full GC and cache clearing) that can be expensive. We pace
     // these state changes to reduce the likelihood of CPU or swap storms.
     static constexpr Seconds intervalBetweenUpdates { 500_ms };
-    WorkQueue::protectedMain()->dispatchAfter(intervalBetweenUpdates, [weakThis = WeakPtr { *this }, processes = WTFMove(processes)]() mutable {
+    WorkQueue::mainSingleton().dispatchAfter(intervalBetweenUpdates, [weakThis = WeakPtr { *this }, processes = WTFMove(processes)]() mutable {
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->updateWebProcessSuspensionDelayWithPacing(WTFMove(processes));
     });

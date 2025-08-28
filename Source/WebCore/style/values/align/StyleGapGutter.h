@@ -38,4 +38,4 @@ struct GapGutter : LengthWrapperBase<LengthPercentage<CSS::Nonnegative>, CSS::Ke
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::GapGutter> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::GapGutter)

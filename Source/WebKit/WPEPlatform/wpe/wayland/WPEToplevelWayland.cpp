@@ -31,6 +31,9 @@
 #include "WPEToplevelWaylandPrivate.h"
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+#include "xdg-decoration-unstable-v1-client-protocol.h"
+#endif
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <wtf/Vector.h>
@@ -46,7 +49,7 @@
 #endif
 
 struct DMABufFeedback {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(DMABufFeedback);
 
     struct FormatTable {
         struct Data {
@@ -223,6 +226,10 @@ struct _WPEToplevelWaylandPrivate {
     struct wl_surface* wlSurface;
     struct xdg_surface* xdgSurface;
     struct xdg_toplevel* xdgToplevel;
+
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+    struct zxdg_toplevel_decoration_v1* xdgToplevelDecoration;
+#endif
 
     struct zwp_linux_dmabuf_feedback_v1* dmabufFeedback;
     struct zwp_linux_surface_synchronization_v1* surfaceSync;
@@ -557,6 +564,15 @@ static void wpeToplevelWaylandConstructed(GObject *object)
             const char* title = defaultTitle();
             xdg_toplevel_set_title(priv->xdgToplevel, title ? title : "");
             xdg_toplevel_set_app_id(priv->xdgToplevel, WTF::applicationID().data());
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+            if (auto* xdgDecorationManager = wpeDisplayWaylandGetXDGDecorationManager(display)) {
+                // Even when asking for server-side decorations, the compositor may prefer
+                // client-side ones. This could be detected by attaching a listener, but that
+                // is pointless because painting client-side decorations is not supported.
+                priv->xdgToplevelDecoration = zxdg_decoration_manager_v1_get_toplevel_decoration(xdgDecorationManager, priv->xdgToplevel);
+                zxdg_toplevel_decoration_v1_set_mode(priv->xdgToplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+            }
+#endif // USE(XDG_DECORATION_UNSTABLE_V1)
             wl_surface_commit(priv->wlSurface);
         }
     }
@@ -587,6 +603,11 @@ static void wpeToplevelWaylandDispose(GObject* object)
     auto* priv = WPE_TOPLEVEL_WAYLAND(object)->priv;
     priv->currentScreen = nullptr;
     priv->screens.clear();
+
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+    g_clear_pointer(&priv->xdgToplevelDecoration, zxdg_toplevel_decoration_v1_destroy);
+#endif
+
     g_clear_pointer(&priv->xdgToplevel, xdg_toplevel_destroy);
     g_clear_pointer(&priv->dmabufFeedback, zwp_linux_dmabuf_feedback_v1_destroy);
     g_clear_pointer(&priv->surfaceSync, zwp_linux_surface_synchronization_v1_destroy);

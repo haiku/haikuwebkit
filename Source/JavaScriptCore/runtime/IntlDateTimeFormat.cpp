@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 Andy VanWagoner (andy@vanwagoner.family)
- * Copyright (C) 2016-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -102,15 +102,13 @@ void IntlDateTimeFormat::setBoundFormat(VM& vm, JSBoundFunction* format)
     m_boundFormat.set(vm, this, format);
 }
 
-static String canonicalizeTimeZoneName(const String& timeZoneName)
+// https://tc39.es/ecma402/#sec-getavailablenamedtimezoneidentifier
+static String availableNamedTimeZoneIdentifier(StringView timeZoneName)
 {
-    // 6.4.1 IsValidTimeZoneName (timeZone)
-    // The abstract operation returns true if timeZone, converted to upper case as described in 6.1, is equal to one of the Zone or Link names of the IANA Time Zone Database, converted to upper case as described in 6.1. It returns false otherwise.
     UErrorCode status = U_ZERO_ERROR;
     UEnumeration* timeZones = ucal_openTimeZones(&status);
     ASSERT(U_SUCCESS(status));
 
-    String canonical;
     do {
         status = U_ZERO_ERROR;
         int32_t ianaTimeZoneLength;
@@ -125,25 +123,11 @@ static String canonicalizeTimeZoneName(const String& timeZoneName)
         StringView ianaTimeZoneView(std::span(ianaTimeZone, ianaTimeZoneLength));
         if (!equalIgnoringASCIICase(timeZoneName, ianaTimeZoneView))
             continue;
-
-        // Found a match, now canonicalize.
-        // 6.4.2 CanonicalizeTimeZoneName (timeZone) (ECMA-402 2.0)
-        // 1. Let ianaTimeZone be the Zone or Link name of the IANA Time Zone Database such that timeZone, converted to upper case as described in 6.1, is equal to ianaTimeZone, converted to upper case as described in 6.1.
-        // 2. If ianaTimeZone is a Link name, then let ianaTimeZone be the corresponding Zone name as specified in the “backward” file of the IANA Time Zone Database.
-
-        Vector<char16_t, 32> buffer;
-        auto status = callBufferProducingFunction(ucal_getCanonicalTimeZoneID, ianaTimeZone, ianaTimeZoneLength, buffer, nullptr);
-        ASSERT_UNUSED(status, U_SUCCESS(status));
-        canonical = String(buffer);
-    } while (canonical.isNull());
+        return ianaTimeZoneView.toString();
+    } while (true);
     uenum_close(timeZones);
 
-    // 3. If ianaTimeZone is "Etc/UTC", "Etc/GMT", or "GMT", then return "UTC".
-    if (isUTCEquivalent(canonical))
-        return "UTC"_s;
-
-    // 4. Return ianaTimeZone.
-    return canonical;
+    return String();
 }
 
 Vector<String> IntlDateTimeFormat::localeData(const String& locale, RelevantExtensionKey key)
@@ -747,7 +731,7 @@ void IntlDateTimeFormat::initializeDateTimeFormat(JSGlobalObject* globalObject, 
             tz = makeString(minutes < 0 ? '-' : '+', pad('0', 2, absMinutes / 60), ':', pad('0', 2, absMinutes % 60));
             timeZoneForICU = makeString("GMT"_s, minutes < 0 ? '-' : '+', pad('0', 2, absMinutes / 60), pad('0', 2, absMinutes % 60));
         } else {
-            tz = canonicalizeTimeZoneName(originalTz);
+            tz = availableNamedTimeZoneIdentifier(originalTz);
             if (tz.isNull()) {
                 String message = tryMakeString("invalid time zone: "_s, originalTz);
                 if (!message)

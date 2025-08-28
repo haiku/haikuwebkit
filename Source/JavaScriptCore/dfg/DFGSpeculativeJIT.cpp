@@ -11357,19 +11357,47 @@ void SpeculativeJIT::compileNewSymbol(Node* node)
 
 void SpeculativeJIT::compileNewMap(Node* node)
 {
-    flushRegisters();
-    GPRFlushedCallResult result(this);
+    GPRTemporary result(this);
+    GPRTemporary scratch1(this);
+    GPRTemporary scratch2(this);
+
     GPRReg resultGPR = result.gpr();
-    callOperation(operationNewMap, resultGPR, TrustedImmPtr(&vm()), node->structure());
+    GPRReg scratch1GPR = scratch1.gpr();
+    GPRReg scratch2GPR = scratch2.gpr();
+
+    JumpList slowCases;
+
+    FrozenValue* structure = m_graph.freezeStrong(node->structure().get());
+    auto butterfly = TrustedImmPtr(nullptr);
+    emitAllocateJSObjectWithKnownSize<JSMap>(resultGPR, TrustedImmPtr(structure), butterfly, scratch1GPR, scratch2GPR, slowCases, sizeof(JSMap), SlowAllocationResult::UndefinedBehavior);
+    storePtr(TrustedImmPtr(nullptr), Address(resultGPR, JSMap::offsetOfButterfly()));
+    mutatorFence(vm());
+
+    addSlowPathGenerator(slowPathCall(slowCases, this, operationNewMap, resultGPR, TrustedImmPtr(&vm()), TrustedImmPtr(structure)));
+
     cellResult(resultGPR, node);
 }
 
 void SpeculativeJIT::compileNewSet(Node* node)
 {
-    flushRegisters();
-    GPRFlushedCallResult result(this);
+    GPRTemporary result(this);
+    GPRTemporary scratch1(this);
+    GPRTemporary scratch2(this);
+
     GPRReg resultGPR = result.gpr();
-    callOperation(operationNewSet, resultGPR, TrustedImmPtr(&vm()), node->structure());
+    GPRReg scratch1GPR = scratch1.gpr();
+    GPRReg scratch2GPR = scratch2.gpr();
+
+    JumpList slowCases;
+
+    FrozenValue* structure = m_graph.freezeStrong(node->structure().get());
+    auto butterfly = TrustedImmPtr(nullptr);
+    emitAllocateJSObjectWithKnownSize<JSSet>(resultGPR, TrustedImmPtr(structure), butterfly, scratch1GPR, scratch2GPR, slowCases, sizeof(JSSet), SlowAllocationResult::UndefinedBehavior);
+    storePtr(TrustedImmPtr(nullptr), Address(resultGPR, JSSet::offsetOfButterfly()));
+    mutatorFence(vm());
+
+    addSlowPathGenerator(slowPathCall(slowCases, this, operationNewSet, resultGPR, TrustedImmPtr(&vm()), TrustedImmPtr(structure)));
+
     cellResult(resultGPR, node);
 }
 
@@ -16661,6 +16689,8 @@ void SpeculativeJIT::compileMakeAtomString(Node* node)
     SpeculateCellOperand op1(this, node->child1());
     SpeculateCellOperand op2(this, node->child2());
     SpeculateCellOperand op3(this, node->child3());
+    GPRTemporary cachePtr(this);
+
     GPRReg opGPRs[3] { InvalidGPRReg, InvalidGPRReg, InvalidGPRReg };
     unsigned numOpGPRs;
     opGPRs[0] = op1.gpr();
@@ -16673,6 +16703,7 @@ void SpeculativeJIT::compileMakeAtomString(Node* node)
             numOpGPRs = 2;
     } else
         numOpGPRs = 1;
+    GPRReg cachePtrGPR = cachePtr.gpr();
 
     flushRegisters();
     GPRFlushedCallResult result(this);
@@ -16683,32 +16714,68 @@ void SpeculativeJIT::compileMakeAtomString(Node* node)
         break;
     case 2: {
         const ConcatKeyAtomStringCache* cache = nullptr;
-        if (auto string = node->child1()->tryGetString(m_graph); !string.isNull())
+        GPRReg variableGPR = InvalidGPRReg;
+        if (auto string = node->child1()->tryGetString(m_graph); !string.isNull()) {
             cache = m_graph.tryAddConcatKeyAtomStringCache(string, emptyString(), ConcatKeyAtomStringCache::Mode::Variable1);
-        else if (auto string = node->child2()->tryGetString(m_graph); !string.isNull())
+            variableGPR = opGPRs[1];
+        } else if (auto string = node->child2()->tryGetString(m_graph); !string.isNull()) {
             cache = m_graph.tryAddConcatKeyAtomStringCache(string, emptyString(), ConcatKeyAtomStringCache::Mode::Variable0);
+            variableGPR = opGPRs[0];
+        }
 
-        if (cache)
-            callOperation(operationMakeAtomString2WithCache, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], TrustedImmPtr(cache));
-        else
+        if (cache) {
+            JumpList doneCases;
+            move(TrustedImmPtr(cache), cachePtrGPR);
+            auto notEqual0 = branchPtr(NotEqual, variableGPR, Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey()));
+            loadPtr(Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue()), resultGPR);
+            doneCases.append(jump());
+            notEqual0.link(this);
+
+            auto notEqual1 = branchPtr(NotEqual, variableGPR, Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey()));
+            loadPtr(Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue()), resultGPR);
+            doneCases.append(jump());
+            notEqual1.link(this);
+
+            callOperation(operationMakeAtomString2WithCache, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], cachePtrGPR);
+            doneCases.link(this);
+        } else
             callOperation(operationMakeAtomString2, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1]);
         break;
     }
     case 3: {
         const ConcatKeyAtomStringCache* cache = nullptr;
+        GPRReg variableGPR = InvalidGPRReg;
         if (auto s0 = node->child1()->tryGetString(m_graph); !s0.isNull()) {
-            if (auto s1 = node->child2()->tryGetString(m_graph); !s1.isNull())
+            if (auto s1 = node->child2()->tryGetString(m_graph); !s1.isNull()) {
                 cache = m_graph.tryAddConcatKeyAtomStringCache(s0, s1, ConcatKeyAtomStringCache::Mode::Variable2);
-            else if (auto s2 = node->child3()->tryGetString(m_graph); !s2.isNull())
+                variableGPR = opGPRs[2];
+            } else if (auto s2 = node->child3()->tryGetString(m_graph); !s2.isNull()) {
                 cache = m_graph.tryAddConcatKeyAtomStringCache(s0, s2, ConcatKeyAtomStringCache::Mode::Variable1);
+                variableGPR = opGPRs[1];
+            }
         } else if (auto s1 = node->child2()->tryGetString(m_graph); !s1.isNull()) {
-            if (auto s2 = node->child3()->tryGetString(m_graph); !s2.isNull())
+            if (auto s2 = node->child3()->tryGetString(m_graph); !s2.isNull()) {
                 cache = m_graph.tryAddConcatKeyAtomStringCache(s1, s2, ConcatKeyAtomStringCache::Mode::Variable0);
+                variableGPR = opGPRs[0];
+            }
         }
 
-        if (cache)
-            callOperation(operationMakeAtomString3WithCache, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], opGPRs[2], TrustedImmPtr(cache));
-        else
+        if (cache) {
+            JumpList doneCases;
+            move(TrustedImmPtr(cache), cachePtrGPR);
+            auto notEqual0 = branchPtr(NotEqual, variableGPR, Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey()));
+            loadPtr(Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue()), resultGPR);
+            doneCases.append(jump());
+            notEqual0.link(this);
+
+            auto notEqual1 = branchPtr(NotEqual, variableGPR, Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey()));
+            loadPtr(Address(cachePtrGPR, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue()), resultGPR);
+            doneCases.append(jump());
+            notEqual1.link(this);
+
+            callOperation(operationMakeAtomString3WithCache, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], opGPRs[2], cachePtrGPR);
+            doneCases.link(this);
+        } else
             callOperation(operationMakeAtomString3, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], opGPRs[2]);
         break;
     }

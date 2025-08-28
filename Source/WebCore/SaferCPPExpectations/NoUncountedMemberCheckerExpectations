@@ -10,7 +10,6 @@ Modules/webdatabase/SQLTransactionBackend.h
 accessibility/AXSearchManager.h
 bindings/js/JSEventTargetCustom.h
 bindings/js/JSLazyEventListener.cpp
-css/CSSFontSelector.h
 css/CSSPrimitiveValue.h
 css/CSSRule.h
 css/CSSRuleList.h
@@ -30,7 +29,7 @@ dom/Node.cpp
 dom/Node.h
 dom/QualifiedName.h
 dom/TreeScope.h
-editing/cocoa/HTMLConverter.mm
+editing/cocoa/NodeHTMLConverter.mm
 html/FormListedElement.cpp
 html/parser/HTMLTreeBuilder.h
 html/track/TrackBase.h
@@ -62,6 +61,10 @@ platform/graphics/avfoundation/objc/WebCoreAVFResourceLoader.mm
 platform/graphics/ca/TileController.h
 platform/graphics/controls/PlatformControl.h
 platform/graphics/coretext/DrawGlyphsRecorder.h
+platform/graphics/filters/software/FEConvolveMatrixSoftwareApplier.h
+platform/graphics/filters/software/FELightingSoftwareApplier.h
+platform/graphics/filters/software/FEMorphologySoftwareApplier.h
+platform/graphics/filters/software/FETurbulenceSoftwareApplier.h
 platform/mac/VideoPresentationInterfaceMac.mm
 platform/mediarecorder/MediaRecorderPrivate.h
 platform/mediastream/AudioMediaStreamTrackRenderer.h

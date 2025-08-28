@@ -57,6 +57,7 @@
 #include "JSDOMWindowCustom.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "SecurityOrigin.h"
 #include "WindowOrWorkerGlobalScopeIndexedDatabase.h"
 #include <JavaScriptCore/HeapInlines.h>
@@ -248,7 +249,7 @@ private:
     DatabaseLoader(ScriptExecutionContext* context, Ref<IndexedDBBackendDispatcherHandler::RequestDatabaseCallback>&& requestCallback)
         : ExecutableWithDatabase(context)
         , m_requestCallback(WTFMove(requestCallback)) { }
-    Ref<IndexedDBBackendDispatcherHandler::RequestDatabaseCallback> m_requestCallback;
+    const Ref<IndexedDBBackendDispatcherHandler::RequestDatabaseCallback> m_requestCallback;
 };
 
 static RefPtr<IDBKey> idbKeyFromInspectorObject(Ref<JSON::Object>&& key)
@@ -420,7 +421,7 @@ private:
     {
     }
     InjectedScript m_injectedScript;
-    Ref<IndexedDBBackendDispatcherHandler::RequestDataCallback> m_requestCallback;
+    const Ref<IndexedDBBackendDispatcherHandler::RequestDataCallback> m_requestCallback;
     Ref<JSON::ArrayOf<Inspector::Protocol::IndexedDB::DataEntry>> m_result;
     int m_skipCount;
     unsigned m_pageSize;
@@ -489,11 +490,11 @@ public:
         , m_idbKeyRange(WTFMove(idbKeyRange))
         , m_skipCount(skipCount)
         , m_pageSize(pageSize) { }
-    Ref<IndexedDBBackendDispatcherHandler::RequestDataCallback> m_requestCallback;
+    const Ref<IndexedDBBackendDispatcherHandler::RequestDataCallback> m_requestCallback;
     InjectedScript m_injectedScript;
     String m_objectStoreName;
     String m_indexName;
-    RefPtr<IDBKeyRange> m_idbKeyRange;
+    const RefPtr<IDBKeyRange> m_idbKeyRange;
     int m_skipCount;
     unsigned m_pageSize;
 };
@@ -654,7 +655,7 @@ private:
     {
     }
 
-    Ref<IndexedDBBackendDispatcherHandler::ClearObjectStoreCallback> m_requestCallback;
+    const Ref<IndexedDBBackendDispatcherHandler::ClearObjectStoreCallback> m_requestCallback;
 };
 
 class ClearObjectStore final : public ExecutableWithDatabase {
@@ -702,7 +703,7 @@ public:
     BackendDispatcher::CallbackBase& requestCallback() override { return m_requestCallback.get(); }
 private:
     const String m_objectStoreName;
-    Ref<IndexedDBBackendDispatcherHandler::ClearObjectStoreCallback> m_requestCallback;
+    const Ref<IndexedDBBackendDispatcherHandler::ClearObjectStoreCallback> m_requestCallback;
 };
 
 } // anonymous namespace

@@ -74,6 +74,7 @@ Shared/API/glib/WebKitUserMessage.cpp @no-unify
 
 Shared/glib/ArgumentCodersGLib.cpp
 Shared/glib/InputMethodState.cpp
+Shared/glib/JavaScriptEvaluationResultGLib.cpp
 Shared/glib/ProcessExecutablePathGLib.cpp
 Shared/glib/UserMessage.cpp
 Shared/glib/WebContextMenuItemGlib.cpp
@@ -256,7 +257,7 @@ UIProcess/linux/MemoryPressureMonitor.cpp
 
 UIProcess/soup/WebProcessPoolSoup.cpp
 
-UIProcess/wpe/AcceleratedBackingStoreDMABuf.cpp
+UIProcess/wpe/AcceleratedBackingStore.cpp
 UIProcess/wpe/DisplayVBlankMonitorWPE.cpp
 UIProcess/wpe/ScreenManagerWPE.cpp
 UIProcess/wpe/SystemSettingsManagerProxyWPE.cpp
@@ -266,6 +267,8 @@ UIProcess/wpe/WebPasteboardProxyWPE.cpp
 UIProcess/wpe/WebPreferencesWPE.cpp
 
 UIProcess/XR/openxr/OpenXRExtensions.cpp
+UIProcess/XR/openxr/OpenXRLayer.cpp
+UIProcess/XR/openxr/OpenXRSwapchain.cpp
 UIProcess/XR/openxr/PlatformXROpenXR.cpp
 UIProcess/XR/openxr/PlatformXRSystemOpenXR.cpp
 

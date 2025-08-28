@@ -42,8 +42,6 @@
 #include "CSSRegisteredCustomProperty.h"
 #include "CSSTextShadowPropertyValue.h"
 #include "CSSURLValue.h"
-#include "CounterContent.h"
-#include "CursorList.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "FontVariantBuilder.h"
 #include "HTMLElement.h"
@@ -62,7 +60,6 @@
 #include "StyleResolver.h"
 #include "StyleScope.h"
 #include "StyleTextShadow.h"
-#include "TextSizeAdjustment.h"
 
 namespace WebCore {
 namespace Style {
@@ -73,12 +70,16 @@ namespace Style {
     static void applyValue##property(BuilderState&, CSSValue&)
 
 template<typename T> inline T forwardInheritedValue(T&& value) { return std::forward<T>(value); }
+template<auto R, typename V> inline Length<R, V> forwardInheritedValue(const Length<R, V>& value) { auto copy = value; return copy; }
 inline AnchorNames forwardInheritedValue(const AnchorNames& value) { auto copy = value; return copy; }
 inline AspectRatio forwardInheritedValue(const AspectRatio& value) { auto copy = value; return copy; }
+inline BlockEllipsis forwardInheritedValue(const BlockEllipsis& value) { auto copy = value; return copy; }
+inline BlockStepSize forwardInheritedValue(const BlockStepSize& value) { auto copy = value; return copy; }
 inline BorderRadiusValue forwardInheritedValue(const BorderRadiusValue& value) { auto copy = value; return copy; }
 inline BoxShadows forwardInheritedValue(const BoxShadows& value) { auto copy = value; return copy; }
 inline ContainIntrinsicSize forwardInheritedValue(const ContainIntrinsicSize& value) { auto copy = value; return copy; }
 inline ContainerNames forwardInheritedValue(const ContainerNames& value) { auto copy = value; return copy; }
+inline Content forwardInheritedValue(const Content& value) { auto copy = value; return copy; }
 inline WebCore::Color forwardInheritedValue(const WebCore::Color& value) { auto copy = value; return copy; }
 inline Color forwardInheritedValue(const Color& value) { auto copy = value; return copy; }
 inline WebCore::Length forwardInheritedValue(const WebCore::Length& value) { auto copy = value; return copy; }
@@ -93,6 +94,7 @@ inline MarginEdge forwardInheritedValue(const MarginEdge& value) { auto copy = v
 inline PaddingEdge forwardInheritedValue(const PaddingEdge& value) { auto copy = value; return copy; }
 inline InsetEdge forwardInheritedValue(const InsetEdge& value) { auto copy = value; return copy; }
 inline Perspective forwardInheritedValue(const Perspective& value) { auto copy = value; return copy; }
+inline Quotes forwardInheritedValue(const Quotes& value) { auto copy = value; return copy; }
 inline Rotate forwardInheritedValue(const Rotate& value) { auto copy = value; return copy; }
 inline Scale forwardInheritedValue(const Scale& value) { auto copy = value; return copy; }
 inline Translate forwardInheritedValue(const Translate& value) { auto copy = value; return copy; }
@@ -101,15 +103,35 @@ inline MinimumSize forwardInheritedValue(const MinimumSize& value) { auto copy =
 inline MaximumSize forwardInheritedValue(const MaximumSize& value) { auto copy = value; return copy; }
 inline FlexBasis forwardInheritedValue(const FlexBasis& value) { auto copy = value; return copy; }
 inline DynamicRangeLimit forwardInheritedValue(const DynamicRangeLimit& value) { auto copy = value; return copy; }
+inline Clip forwardInheritedValue(const Clip& value) { auto copy = value; return copy; }
 inline ClipPath forwardInheritedValue(const ClipPath& value) { auto copy = value; return copy; }
 inline CornerShapeValue forwardInheritedValue(const CornerShapeValue& value) { auto copy = value; return copy; }
+inline GridPosition forwardInheritedValue(const GridPosition& value) { auto copy = value; return copy; }
 inline GridTemplateAreas forwardInheritedValue(const GridTemplateAreas& value) { auto copy = value; return copy; }
+inline GridTemplateList forwardInheritedValue(const GridTemplateList& value) { auto copy = value; return copy; }
+inline GridTrackSizes forwardInheritedValue(const GridTrackSizes& value) { auto copy = value; return copy; }
+inline HyphenateCharacter forwardInheritedValue(const HyphenateCharacter& value) { auto copy = value; return copy; }
+inline ListStyleType forwardInheritedValue(const ListStyleType& value) { auto copy = value; return copy; }
 inline OffsetAnchor forwardInheritedValue(const OffsetAnchor& value) { auto copy = value; return copy; }
 inline OffsetDistance forwardInheritedValue(const OffsetDistance& value) { auto copy = value; return copy; }
 inline OffsetPath forwardInheritedValue(const OffsetPath& value) { auto copy = value; return copy; }
 inline OffsetPosition forwardInheritedValue(const OffsetPosition& value) { auto copy = value; return copy; }
 inline OffsetRotate forwardInheritedValue(const OffsetRotate& value) { auto copy = value; return copy; }
+inline Position forwardInheritedValue(const Position& value) { auto copy = value; return copy; }
+inline PositionX forwardInheritedValue(const PositionX& value) { auto copy = value; return copy; }
+inline PositionY forwardInheritedValue(const PositionY& value) { auto copy = value; return copy; }
+inline SVGBaselineShift forwardInheritedValue(const SVGBaselineShift& value) { auto copy = value; return copy; }
+inline SVGCenterCoordinateComponent forwardInheritedValue(const SVGCenterCoordinateComponent& value) { auto copy = value; return copy; }
+inline SVGCoordinateComponent forwardInheritedValue(const SVGCoordinateComponent& value) { auto copy = value; return copy; }
 inline SVGPaint forwardInheritedValue(const SVGPaint& value) { auto copy = value; return copy; }
+inline SVGRadius forwardInheritedValue(const SVGRadius& value) { auto copy = value; return copy; }
+inline SVGRadiusComponent forwardInheritedValue(const SVGRadiusComponent& value) { auto copy = value; return copy; }
+inline SVGStrokeDasharray forwardInheritedValue(const SVGStrokeDasharray& value) { auto copy = value; return copy; }
+inline SVGStrokeDashoffset forwardInheritedValue(const SVGStrokeDashoffset& value) { auto copy = value; return copy; }
+inline ScrollbarColor forwardInheritedValue(const ScrollbarColor& value) { auto copy = value; return copy; }
+inline ScrollbarGutter forwardInheritedValue(const ScrollbarGutter& value) { auto copy = value; return copy; }
+inline StrokeWidth forwardInheritedValue(const StrokeWidth& value) { auto copy = value; return copy; }
+inline TextDecorationThickness forwardInheritedValue(const TextDecorationThickness& value) { auto copy = value; return copy; }
 inline TextEmphasisStyle forwardInheritedValue(const TextEmphasisStyle& value) { auto copy = value; return copy; }
 inline TextIndent forwardInheritedValue(const TextIndent& value) { auto copy = value; return copy; }
 inline TextShadows forwardInheritedValue(const TextShadows& value) { auto copy = value; return copy; }
@@ -125,6 +147,7 @@ inline ViewTimelines forwardInheritedValue(const ViewTimelines& value) { auto co
 inline ViewTransitionClasses forwardInheritedValue(const ViewTransitionClasses& value) { auto copy = value; return copy; }
 inline ViewTransitionName forwardInheritedValue(const ViewTransitionName& value) { auto copy = value; return copy; }
 inline Vector<GridTrackSize> forwardInheritedValue(const Vector<GridTrackSize>& value) { auto copy = value; return copy; }
+inline WebkitLineGrid forwardInheritedValue(const WebkitLineGrid& value) { auto copy = value; return copy; }
 
 // Note that we assume the CSS parser only allows valid CSSValue types.
 class BuilderCustom {
@@ -141,13 +164,10 @@ public:
     DECLARE_PROPERTY_CUSTOM_HANDLERS(BorderImageWidth);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(BoxShadow);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(CaretColor);
-    DECLARE_PROPERTY_CUSTOM_HANDLERS(Clip);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(Color);
-    DECLARE_PROPERTY_CUSTOM_HANDLERS(Content);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(CounterIncrement);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(CounterReset);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(CounterSet);
-    DECLARE_PROPERTY_CUSTOM_HANDLERS(Cursor);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(Fill);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(FontFamily);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(FontSize);
@@ -175,8 +195,6 @@ public:
     // Custom handling of inherit + value setting only.
     static void applyInheritVerticalAlign(BuilderState&);
     static void applyValueVerticalAlign(BuilderState&, CSSValue&);
-    static void applyInheritBaselineShift(BuilderState&);
-    static void applyValueBaselineShift(BuilderState&, CSSValue&);
 
     // Custom handling of inherit setting only.
     static void applyInheritWordSpacing(BuilderState&);
@@ -557,51 +575,6 @@ inline void BuilderCustom::applyValueCaretColor(BuilderState& builderState, CSSV
     }
 }
 
-inline void BuilderCustom::applyInitialClip(BuilderState& builderState)
-{
-    builderState.style().setClip(WebCore::Length(), WebCore::Length(), WebCore::Length(), WebCore::Length());
-    builderState.style().setHasClip(false);
-}
-
-inline void BuilderCustom::applyInheritClip(BuilderState& builderState)
-{
-    auto& parentStyle = builderState.parentStyle();
-    if (!parentStyle.hasClip())
-        return applyInitialClip(builderState);
-    builderState.style().setClip(WebCore::Length { parentStyle.clipTop() }, WebCore::Length { parentStyle.clipRight() },
-        WebCore::Length { parentStyle.clipBottom() }, WebCore::Length { parentStyle.clipLeft() });
-    builderState.style().setHasClip(true);
-}
-
-inline void BuilderCustom::applyValueClip(BuilderState& builderState, CSSValue& value)
-{
-    if (value.isRect()) {
-        auto primitiveValueTop = requiredDowncast<CSSPrimitiveValue>(builderState, value.rect().top());
-        if (!primitiveValueTop)
-            return;
-        auto primitiveValueRight = requiredDowncast<CSSPrimitiveValue>(builderState, value.rect().right());
-        if (!primitiveValueRight)
-            return;
-        auto primitiveValueBottom = requiredDowncast<CSSPrimitiveValue>(builderState, value.rect().bottom());
-        if (!primitiveValueBottom)
-            return;
-        auto primitiveValueLeft = requiredDowncast<CSSPrimitiveValue>(builderState, value.rect().left());
-        if (!primitiveValueLeft)
-            return;
-
-        auto top = BuilderConverter::convertLengthOrAuto(builderState, *primitiveValueTop);
-        auto right = BuilderConverter::convertLengthOrAuto(builderState, *primitiveValueRight);
-        auto bottom = BuilderConverter::convertLengthOrAuto(builderState, *primitiveValueBottom);
-        auto left = BuilderConverter::convertLengthOrAuto(builderState, *primitiveValueLeft);
-
-        builderState.style().setClip(WTFMove(top), WTFMove(right), WTFMove(bottom), WTFMove(left));
-        builderState.style().setHasClip(true);
-    } else {
-        ASSERT(value.valueID() == CSSValueAuto);
-        applyInitialClip(builderState);
-    }
-}
-
 inline void BuilderCustom::applyValueWebkitLocale(BuilderState& builderState, CSSValue& value)
 {
     auto primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
@@ -628,17 +601,7 @@ inline void BuilderCustom::applyValueTextOrientation(BuilderState& builderState,
 #if ENABLE(TEXT_AUTOSIZING)
 inline void BuilderCustom::applyValueWebkitTextSizeAdjust(BuilderState& builderState, CSSValue& value)
 {
-    auto primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return;
-
-    if (primitiveValue->valueID() == CSSValueAuto)
-        builderState.style().setTextSizeAdjust(TextSizeAdjustment::autoAdjust());
-    else if (primitiveValue->valueID() == CSSValueNone)
-        builderState.style().setTextSizeAdjust(TextSizeAdjustment::none());
-    else
-        builderState.style().setTextSizeAdjust(TextSizeAdjustment(primitiveValue->resolveAsPercentage<float>(builderState.cssToLengthConversionData())));
-
+    builderState.style().setTextSizeAdjust(toStyleFromCSSValue<TextSizeAdjust>(builderState, value));
     builderState.setFontDirty();
 }
 #endif
@@ -814,41 +777,6 @@ inline void BuilderCustom::applyValueBorderTopRightRadius(BuilderState& builderS
     builderState.style().setHasExplicitlySetBorderTopRightRadius(true);
 }
 
-inline void BuilderCustom::applyInheritBaselineShift(BuilderState& builderState)
-{
-    auto& svgStyle = builderState.style().accessSVGStyle();
-    auto& svgParentStyle = builderState.parentStyle().svgStyle();
-    svgStyle.setBaselineShift(forwardInheritedValue(svgParentStyle.baselineShift()));
-    svgStyle.setBaselineShiftValue(forwardInheritedValue(svgParentStyle.baselineShiftValue()));
-}
-
-inline void BuilderCustom::applyValueBaselineShift(BuilderState& builderState, CSSValue& value)
-{
-    auto& svgStyle = builderState.style().accessSVGStyle();
-    auto primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return;
-
-    if (primitiveValue->isValueID()) {
-        switch (primitiveValue->valueID()) {
-        case CSSValueBaseline:
-            svgStyle.setBaselineShift(BaselineShift::Baseline);
-            break;
-        case CSSValueSub:
-            svgStyle.setBaselineShift(BaselineShift::Sub);
-            break;
-        case CSSValueSuper:
-            svgStyle.setBaselineShift(BaselineShift::Super);
-            break;
-        default:
-            break;
-        }
-    } else {
-        svgStyle.setBaselineShift(BaselineShift::Length);
-        svgStyle.setBaselineShiftValue(BuilderConverter::convertLength(builderState, *primitiveValue));
-    }
-}
-
 template<BuilderCustom::CounterBehavior counterBehavior>
 inline void BuilderCustom::applyInheritCounter(BuilderState& builderState)
 {
@@ -949,48 +877,6 @@ inline void BuilderCustom::applyValueCounterSet(BuilderState& builderState, CSSV
     applyValueCounter<Set>(builderState, value);
 }
 
-inline void BuilderCustom::applyInitialCursor(BuilderState& builderState)
-{
-    builderState.style().clearCursorList();
-    builderState.style().setCursor(RenderStyle::initialCursor());
-}
-
-inline void BuilderCustom::applyInheritCursor(BuilderState& builderState)
-{
-    builderState.style().setCursor(forwardInheritedValue(builderState.parentStyle().cursor()));
-    builderState.style().setCursorList(forwardInheritedValue(builderState.parentStyle().cursors()));
-}
-
-inline void BuilderCustom::applyValueCursor(BuilderState& builderState, CSSValue& value)
-{
-    builderState.style().clearCursorList();
-    if (is<CSSPrimitiveValue>(value)) {
-        auto cursor = fromCSSValue<CursorType>(value);
-        if (builderState.style().cursor() != cursor)
-            builderState.style().setCursor(cursor);
-        return;
-    }
-
-    builderState.style().setCursor(CursorType::Auto);
-
-    auto list = requiredListDowncast<CSSValueList, CSSValue>(builderState, value);
-    if (!list)
-        return;
-
-    for (auto& item : *list) {
-        if (auto* image = dynamicDowncast<CSSCursorImageValue>(item)) {
-            auto styleImage = image->createStyleImage(builderState);
-            auto hotSpot = styleImage->hotSpot();
-            builderState.style().addCursor(WTFMove(styleImage), hotSpot);
-            continue;
-        }
-
-        builderState.style().setCursor(fromCSSValue<CursorType>(item));
-        ASSERT_WITH_MESSAGE(&item == &list->item(list->size() - 1), "Cursor ID fallback should always be last in the list");
-        return;
-    }
-}
-
 inline void BuilderCustom::applyInitialFill(BuilderState& builderState)
 {
     auto& svgStyle = builderState.style().accessSVGStyle();
@@ -1047,122 +933,6 @@ inline void BuilderCustom::applyValueStroke(BuilderState& builderState, CSSValue
         svgStyle.setStroke(BuilderConverter::convertStyleType<SVGPaint>(builderState, value, ForVisitedLink::No));
     if (builderState.applyPropertyToVisitedLinkStyle())
         svgStyle.setVisitedLinkStroke(BuilderConverter::convertStyleType<SVGPaint>(builderState, value, ForVisitedLink::Yes));
-}
-
-inline void BuilderCustom::applyInitialContent(BuilderState& builderState)
-{
-    builderState.style().clearContent();
-    builderState.style().setHasContentNone(false);
-}
-
-inline void BuilderCustom::applyInheritContent(BuilderState&)
-{
-}
-
-inline void BuilderCustom::applyValueContent(BuilderState& builderState, CSSValue& value)
-{
-    if (is<CSSPrimitiveValue>(value)) {
-        ASSERT(value.valueID() == CSSValueNormal || value.valueID() == CSSValueNone);
-        builderState.style().clearContent();
-        builderState.style().setHasContentNone(value.valueID() == CSSValueNone);
-        return;
-    }
-
-    auto* altTextPair = dynamicDowncast<CSSValuePair>(value);
-    auto visibleContentList = requiredDowncast<CSSValueList>(builderState, altTextPair ? altTextPair->first() : value);
-    if (!visibleContentList)
-        return;
-
-    auto processAttrContent = [&](const CSSPrimitiveValue& primitiveValue) -> AtomString {
-        // FIXME: Can a namespace be specified for an attr(foo)?
-        if (builderState.style().pseudoElementType() == PseudoId::None)
-            builderState.style().setHasAttrContent();
-        else
-            const_cast<RenderStyle&>(builderState.parentStyle()).setHasAttrContent();
-
-        auto value = primitiveValue.cssAttrValue();
-        QualifiedName attr(nullAtom(), value->attributeName().impl(), nullAtom());
-        const AtomString& attributeValue = builderState.element() ? builderState.element()->getAttribute(attr) : nullAtom();
-
-        // Register the fact that the attribute value affects the style.
-        builderState.registerContentAttribute(attr.localName());
-
-        if (attributeValue.isNull()) {
-            auto fallback = dynamicDowncast<CSSPrimitiveValue>(value->fallback());
-            return fallback && fallback->isString() ? fallback->stringValue().impl() : emptyAtom();
-        }
-        return attributeValue.impl();
-    };
-
-
-    bool didSet = false;
-    for (auto& item : *visibleContentList) {
-        if (item.isImage()) {
-            builderState.style().setContent(builderState.createStyleImage(item), didSet);
-            didSet = true;
-            continue;
-        }
-
-        auto* primitive = dynamicDowncast<CSSPrimitiveValue>(item);
-        if (primitive && primitive->isString()) {
-            builderState.style().setContent(primitive->stringValue().impl(), didSet);
-            didSet = true;
-        } else if (primitive && primitive->isAttr()) {
-            builderState.style().setContent(processAttrContent(*primitive), didSet);
-            didSet = true;
-        } else if (auto* counter = dynamicDowncast<CSSCounterValue>(item)) {
-            ListStyleType listStyleType;
-            if (counter->counterStyle())
-                listStyleType = BuilderConverter::convertListStyleType(builderState, *counter->counterStyle());
-            builderState.style().setContent(makeUnique<CounterContent>(counter->identifier(), listStyleType, counter->separator()), didSet);
-            didSet = true;
-        } else {
-            switch (item.valueID()) {
-            case CSSValueOpenQuote:
-                builderState.style().setContent(QuoteType::OpenQuote, didSet);
-                didSet = true;
-                break;
-            case CSSValueCloseQuote:
-                builderState.style().setContent(QuoteType::CloseQuote, didSet);
-                didSet = true;
-                break;
-            case CSSValueNoOpenQuote:
-                builderState.style().setContent(QuoteType::NoOpenQuote, didSet);
-                didSet = true;
-                break;
-            case CSSValueNoCloseQuote:
-                builderState.style().setContent(QuoteType::NoCloseQuote, didSet);
-                didSet = true;
-                break;
-            default:
-                // normal and none do not have any effect.
-                break;
-            }
-        }
-    }
-
-    if (!didSet) {
-        builderState.style().clearContent();
-        return;
-    }
-
-    if (!altTextPair) {
-        builderState.style().setContentAltText({ });
-        return;
-    }
-
-    auto altTextContentList = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(builderState, altTextPair->second());
-    if (!altTextContentList)
-        return;
-
-    StringBuilder altText;
-    for (auto& item : *altTextContentList) {
-        if (item.isString())
-            altText.append(item.stringValue());
-        else if (item.isAttr())
-            altText.append(processAttrContent(item));
-    }
-    builderState.style().setContentAltText(altText.toString());
 }
 
 inline void BuilderCustom::applyInheritFontVariantLigatures(BuilderState& builderState)
@@ -1442,7 +1212,7 @@ inline void BuilderCustom::applyValueFontSizeAdjust(BuilderState& builderState, 
 
 inline void BuilderCustom::applyValueStrokeWidth(BuilderState& builderState, CSSValue& value)
 {
-    builderState.style().setStrokeWidth(BuilderConverter::convertLengthAllowingNumber(builderState, value));
+    builderState.style().setStrokeWidth(toStyleFromCSSValue<StrokeWidth>(builderState, value));
     builderState.style().setHasExplicitlySetStrokeWidth(true);
 }
 

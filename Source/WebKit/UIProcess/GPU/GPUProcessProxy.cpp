@@ -122,7 +122,7 @@ void GPUProcessProxy::keepProcessAliveTemporarily()
         return;
 
     keptAliveGPUProcessProxy() = singleton().get();
-    static NeverDestroyed<RunLoop::Timer> releaseGPUProcessTimer(RunLoop::main(), [] {
+    static NeverDestroyed<RunLoop::Timer> releaseGPUProcessTimer(RunLoop::mainSingleton(), "GPUProcessProxy::KeepProcessAliveTemporarily::ReleaseGPUProcessTimer"_s, [] {
         keptAliveGPUProcessProxy() = nullptr;
     });
     releaseGPUProcessTimer.get().startOneShot(durationToKeepGPUProcessAliveAfterDestruction);
@@ -623,7 +623,7 @@ void GPUProcessProxy::didClose(IPC::Connection&)
     gpuProcessExited(ProcessTerminationReason::Crash); // May cause |this| to get deleted.
 }
 
-void GPUProcessProxy::didReceiveInvalidMessage(IPC::Connection& connection, IPC::MessageName messageName, int32_t)
+void GPUProcessProxy::didReceiveInvalidMessage(IPC::Connection& connection, IPC::MessageName messageName, const Vector<uint32_t>&)
 {
     logInvalidMessage(connection, messageName);
 
@@ -664,7 +664,7 @@ void GPUProcessProxy::didFinishLaunching(ProcessLauncher* launcher, IPC::Connect
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr([weakThis = WeakPtr { *this }] () mutable {
         if (!isPowerLoggingInTaskMode())
             return;
-        RunLoop::protectedMain()->dispatch([weakThis = WTFMove(weakThis)] () {
+        RunLoop::mainSingleton().dispatch([weakThis = WTFMove(weakThis)] () {
             if (!weakThis)
                 return;
             weakThis->enablePowerLogging();

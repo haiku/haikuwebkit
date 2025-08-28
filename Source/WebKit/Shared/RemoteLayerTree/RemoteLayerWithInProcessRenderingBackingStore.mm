@@ -193,13 +193,13 @@ bool RemoteLayerWithInProcessRenderingBackingStore::setBufferVolatile(BufferType
 }
 
 template<typename ImageBufferType>
-static RefPtr<ImageBuffer> allocateBufferInternal(RemoteLayerBackingStore::Type type, const WebCore::FloatSize& logicalSize, WebCore::RenderingPurpose purpose, float resolutionScale, const WebCore::DestinationColorSpace& colorSpace, WebCore::ImageBufferPixelFormat pixelFormat, WebCore::ImageBufferCreationContext& creationContext)
+static RefPtr<ImageBuffer> allocateBufferInternal(RemoteLayerBackingStore::Type type, const WebCore::FloatSize& logicalSize, WebCore::RenderingPurpose purpose, float resolutionScale, const WebCore::DestinationColorSpace& colorSpace, WebCore::ImageBufferFormat bufferFormat, WebCore::ImageBufferCreationContext& creationContext)
 {
     switch (type) {
     case RemoteLayerBackingStore::Type::IOSurface:
-        return WebCore::ImageBuffer::create<ImageBufferShareableMappedIOSurfaceBackend, ImageBufferType>(logicalSize, resolutionScale, colorSpace, pixelFormat, purpose, creationContext);
+        return WebCore::ImageBuffer::create<ImageBufferShareableMappedIOSurfaceBackend, ImageBufferType>(logicalSize, resolutionScale, colorSpace, bufferFormat, purpose, creationContext);
     case RemoteLayerBackingStore::Type::Bitmap:
-        return WebCore::ImageBuffer::create<ImageBufferShareableBitmapBackend, ImageBufferType>(logicalSize, resolutionScale, colorSpace, pixelFormat, purpose, creationContext);
+        return WebCore::ImageBuffer::create<ImageBufferShareableBitmapBackend, ImageBufferType>(logicalSize, resolutionScale, colorSpace, bufferFormat, purpose, creationContext);
     }
 }
 
@@ -211,11 +211,11 @@ RefPtr<WebCore::ImageBuffer> RemoteLayerWithInProcessRenderingBackingStore::allo
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
     if (m_parameters.includeDisplayList == WebCore::IncludeDynamicContentScalingDisplayList::Yes) {
         creationContext.dynamicContentScalingResourceCache = ensureDynamicContentScalingResourceCache();
-        return allocateBufferInternal<DynamicContentScalingBifurcatedImageBuffer>(type(), size(), RenderingPurpose::LayerBacking, scale(), colorSpace(), pixelFormat(), creationContext);
+        return allocateBufferInternal<DynamicContentScalingBifurcatedImageBuffer>(type(), size(), RenderingPurpose::LayerBacking, scale(), colorSpace(), { pixelFormat(), UseLosslessCompression::No }, creationContext);
     }
 #endif
 
-    return allocateBufferInternal<ImageBuffer>(type(), size(), RenderingPurpose::LayerBacking, scale(), colorSpace(), pixelFormat(), creationContext);
+    return allocateBufferInternal<ImageBuffer>(type(), size(), RenderingPurpose::LayerBacking, scale(), colorSpace(), { pixelFormat(), UseLosslessCompression::No }, creationContext);
 }
 
 void RemoteLayerWithInProcessRenderingBackingStore::ensureFrontBuffer()

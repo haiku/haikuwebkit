@@ -113,7 +113,6 @@ private:
 
 Data concatenate(const Data&, const Data&);
 bool bytesEqual(const Data&, const Data&);
-Data adoptAndMapFile(FileSystem::FileHandle&&, size_t offset, size_t);
 Data mapFile(const String& path);
 
 using Salt = FileSystem::Salt;

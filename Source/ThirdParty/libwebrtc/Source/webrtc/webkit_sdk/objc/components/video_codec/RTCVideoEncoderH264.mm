@@ -855,7 +855,8 @@ uint32_t computeFramerate(uint32_t proposedFramerate, uint32_t maxAllowedFramera
   else
 #endif
   SetVTSessionProperty(_vtCompressionSession, kVTCompressionPropertyKey_ProfileLevel, ExtractProfile(*_profile_level_id));
-  SetVTSessionProperty(_vtCompressionSession, kVTCompressionPropertyKey_AllowFrameReordering, false);
+  if (_profile_level_id->profile != webrtc::H264Profile::kProfileConstrainedBaseline && _profile_level_id->profile != webrtc::H264Profile::kProfileBaseline)
+    SetVTSessionProperty(_vtCompressionSession, kVTCompressionPropertyKey_AllowFrameReordering, false);
   if (_enableL1T2ScalabilityMode) {
     const double kL1T2Fraction = 0.5;
     SetVTSessionProperty(_vtCompressionSession, kVTCompressionPropertyKey_BaseLayerFrameRateFraction, kL1T2Fraction);

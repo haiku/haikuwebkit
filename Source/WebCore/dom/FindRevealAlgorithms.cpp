@@ -31,6 +31,7 @@
 #include "EventNames.h"
 #include "HTMLDetailsElement.h"
 #include "HTMLSlotElement.h"
+#include "NodeRenderStyle.h"
 #include "Settings.h"
 #include "UserAgentParts.h"
 

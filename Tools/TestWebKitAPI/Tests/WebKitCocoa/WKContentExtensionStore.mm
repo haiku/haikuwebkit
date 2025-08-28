@@ -1412,3 +1412,62 @@ TEST_F(WKContentRuleListStoreTest, NonASCIIEscaped)
     }];
     TestWebKitAPI::Util::run(&done);
 }
+
+static RetainPtr<NSString> createMixedContentAutoUpgradeJsonRuleList()
+{
+    auto* mixedContentAutoupgrade = @{
+        @"trigger" : @{
+            @"url-filter" : @"http://.*",
+            @"if-top-url" : @[ @"https://.*" ],
+            @"resource-type" : @[
+                // Only upgrade image and media (i.e. audio and video) per
+                // https://www.w3.org/TR/mixed-content/#upgrade-algorithm
+                @"image", @"media"
+            ],
+        },
+        @"action" : @{
+            @"type" : @"make-https",
+        },
+    };
+
+    RetainPtr jsonData = [NSJSONSerialization dataWithJSONObject:@[ mixedContentAutoupgrade ] options:NSJSONWritingPrettyPrinted error:nil];
+    return adoptNS([[NSString alloc] initWithData:jsonData.get() encoding:NSUTF8StringEncoding]);
+}
+
+TEST_F(WKContentRuleListStoreTest, ConcurrentCompilationsSingleStore)
+{
+    RetainPtr string = createMixedContentAutoUpgradeJsonRuleList();
+    static constexpr unsigned totalRequests = 30;
+    __block unsigned finishedCount = 0;
+    for (unsigned i = 0; i < totalRequests; ++i) {
+        [[WKContentRuleListStore defaultStore] compileContentRuleListForIdentifier:@"test" encodedContentRuleList:string.get() completionHandler:^(WKContentRuleList *filter, NSError *error) {
+            EXPECT_NOT_NULL(filter);
+            EXPECT_NULL(error);
+            ++finishedCount;
+        }];
+    }
+    while (finishedCount < totalRequests)
+        TestWebKitAPI::Util::spinRunLoop();
+}
+
+TEST_F(WKContentRuleListStoreTest, ConcurrentCompilationsMultipleStores)
+{
+    static constexpr unsigned totalRequests = 30;
+
+    Vector<RetainPtr<WKContentRuleListStore>> stores;
+    RetainPtr tempDir = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"ContentRuleListTest"] isDirectory:YES];
+    for (unsigned i = 0; i < totalRequests; ++i)
+        stores.append([WKContentRuleListStore storeWithURL:tempDir.get()]);
+
+    RetainPtr string = createMixedContentAutoUpgradeJsonRuleList();
+    __block unsigned finishedCount = 0;
+    for (unsigned i = 0; i < totalRequests; ++i) {
+        [stores[i] compileContentRuleListForIdentifier:@"test" encodedContentRuleList:string.get() completionHandler:^(WKContentRuleList *filter, NSError *error) {
+            EXPECT_NOT_NULL(filter);
+            EXPECT_NULL(error);
+            ++finishedCount;
+        }];
+    }
+    while (finishedCount < totalRequests)
+        TestWebKitAPI::Util::spinRunLoop();
+}

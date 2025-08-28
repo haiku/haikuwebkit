@@ -114,6 +114,19 @@ enum class MailBlockquoteHandling : bool {
     IgnoreBlockquote,
 };
 
+enum class ClipboardEventKind : uint8_t {
+    Copy,
+    CopyFont,
+    Cut,
+    Paste,
+    PasteFont,
+    PasteAsPlainText,
+    PasteAsQuotation,
+    BeforeCopy,
+    BeforeCut,
+    BeforePaste,
+};
+
 enum class AllowTextReplacement : bool { No, Yes };
 
 #if ENABLE(ATTACHMENT_ELEMENT)
@@ -653,6 +666,9 @@ private:
     void pasteAsPlainTextWithPasteboard(Pasteboard&);
     void pasteWithPasteboard(Pasteboard*, OptionSet<PasteOption>);
     String plainTextFromPasteboard(const PasteboardPlainText&);
+
+    bool dispatchClipboardEvent(RefPtr<Element>&&, ClipboardEventKind);
+    bool dispatchClipboardEvent(RefPtr<Element>&&, ClipboardEventKind, Ref<DataTransfer>&&);
 
     void platformCopyFont();
     void platformPasteFont();

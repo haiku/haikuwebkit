@@ -627,6 +627,7 @@ CustomElementRegistry& LocalDOMWindow::ensureCustomElementRegistry()
         }
         document()->setCustomElementRegistry(*m_customElementRegistry);
     }
+    ASSERT(!m_customElementRegistry->isScoped());
     ASSERT(m_customElementRegistry->scriptExecutionContext() == document());
     return *m_customElementRegistry;
 }
@@ -831,6 +832,9 @@ VisualViewport& LocalDOMWindow::visualViewport()
 
 bool LocalDOMWindow::shouldHaveWebKitNamespaceForWorld(DOMWrapperWorld& world)
 {
+    if (world.nodeInfoEnabled())
+        return true;
+
     RefPtr frame = this->frame();
     if (!frame)
         return false;

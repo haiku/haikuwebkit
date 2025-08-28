@@ -92,27 +92,6 @@ Ref<RemoteLayerTreeDrawingAreaProxy> RemoteLayerTreeHost::protectedDrawingArea()
     return drawingArea();
 }
 
-LayerContentsType RemoteLayerTreeHost::layerContentsType() const
-{
-    // If a surface will be referenced by multiple layers (as in the tile debug indicator), CAMachPort cannot be used.
-    Ref drawingArea = *m_drawingArea;
-    if (drawingArea->hasDebugIndicator())
-        return LayerContentsType::IOSurface;
-
-    // If e.g. SceneKit will be doing an in-process snapshot of the layer tree, CAMachPort cannot be used: rdar://problem/47481972
-    RefPtr page = drawingArea->page();
-    if (page && page->windowKind() == WindowKind::InProcessSnapshotting)
-        return LayerContentsType::IOSurface;
-
-    if (PAL::canLoad_QuartzCore_CAIOSurfaceCreate())
-        return LayerContentsType::CachedIOSurface;
-#if HAVE(MACH_PORT_CALAYER_CONTENTS)
-    return LayerContentsType::CAMachPort;
-#else
-    return LayerContentsType::IOSurface;
-#endif
-}
-
 bool RemoteLayerTreeHost::replayDynamicContentScalingDisplayListsIntoBackingStore() const
 {
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
@@ -195,7 +174,6 @@ bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, con
     };
     Vector<LayerAndClone> clonesToUpdate;
 
-    auto layerContentsType = this->layerContentsType();
     for (auto& [layerID, properties] : transaction.changedLayerProperties()) {
         RefPtr node = nodeForID(layerID);
         ASSERT(node);
@@ -235,7 +213,7 @@ bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, con
         if (properties.changedProperties.contains(LayerChange::ClonedContentsChanged) && properties.clonedLayerID)
             clonesToUpdate.append({ layerID, *properties.clonedLayerID });
 
-        RemoteLayerTreePropertyApplier::applyProperties(*node, this, properties, m_nodes, layerContentsType);
+        RemoteLayerTreePropertyApplier::applyProperties(*node, this, properties, m_nodes);
 
         if (m_isDebugLayerTreeHost) {
             if (properties.changedProperties.contains(LayerChange::BorderWidthChanged))
@@ -275,7 +253,7 @@ void RemoteLayerTreeHost::asyncSetLayerContents(PlatformLayerIdentifier layerID,
     if (!node)
         return;
 
-    node->applyBackingStore(this, layerContentsType(), properties);
+    node->applyBackingStore(this, properties);
 }
 
 RemoteLayerTreeNode* RemoteLayerTreeHost::nodeForID(std::optional<PlatformLayerIdentifier> layerID) const
@@ -511,23 +489,6 @@ void RemoteLayerTreeHost::detachRootLayer()
 {
     if (RefPtr rootNode = std::exchange(m_rootNode, nullptr).get())
         rootNode->detachFromParent();
-}
-
-static void recursivelyMapIOSurfaceBackingStore(CALayer *layer)
-{
-    if (layer.contents && CFGetTypeID((__bridge CFTypeRef)layer.contents) == CAMachPortGetTypeID()) {
-        MachSendRight port = MachSendRight::create(CAMachPortGetPort((__bridge CAMachPortRef)layer.contents));
-        auto surface = WebCore::IOSurface::createFromSendRight(WTFMove(port));
-        layer.contents = surface ? surface->asLayerContents() : nil;
-    }
-
-    for (CALayer *sublayer in layer.sublayers)
-        recursivelyMapIOSurfaceBackingStore(sublayer);
-}
-
-void RemoteLayerTreeHost::mapAllIOSurfaceBackingStore()
-{
-    recursivelyMapIOSurfaceBackingStore(rootLayer());
 }
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)

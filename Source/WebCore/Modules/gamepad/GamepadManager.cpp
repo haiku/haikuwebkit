@@ -49,7 +49,7 @@ namespace WebCore {
 
 static NavigatorGamepad& navigatorGamepadFromDOMWindow(LocalDOMWindow& window)
 {
-    return NavigatorGamepad::from(window.navigator());
+    return NavigatorGamepad::from(window.protectedNavigator().get());
 }
 
 GamepadManager& GamepadManager::singleton()
@@ -134,7 +134,7 @@ void GamepadManager::platformGamepadDisconnected(PlatformGamepad& platformGamepa
         navigatorGamepad.gamepadDisconnected(platformGamepad);
         notifiedNavigators.add(navigator.get());
 
-        window->dispatchEvent(GamepadEvent::create(eventNames().gamepaddisconnectedEvent, gamepad.get()), window->document());
+        window->dispatchEvent(GamepadEvent::create(eventNames().gamepaddisconnectedEvent, gamepad.get()), window->protectedDocument().get());
     }
 
     // Notify all the Navigators that haven't already been notified.
@@ -186,7 +186,7 @@ void GamepadManager::makeGamepadVisible(PlatformGamepad& platformGamepad, WeakHa
 
         LOG(Gamepad, "(%u) GamepadManager::makeGamepadVisible - Dispatching gamepadconnected event for gamepad '%s'", (unsigned)getpid(), platformGamepad.id().utf8().data());
         UserGestureIndicator gestureIndicator(IsProcessingUserGesture::Yes, document.get());
-        window->dispatchEvent(GamepadEvent::create(eventNames().gamepadconnectedEvent, gamepad.get()), window->document());
+        window->dispatchEvent(GamepadEvent::create(eventNames().gamepadconnectedEvent, gamepad.get()), window->protectedDocument().get());
     }
 }
 

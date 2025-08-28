@@ -38,6 +38,7 @@
 #include "InstrumentingAgents.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "Page.h"
 #include "SecurityOrigin.h"
 #include "SecurityOriginData.h"

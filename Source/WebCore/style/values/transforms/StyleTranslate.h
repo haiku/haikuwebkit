@@ -116,5 +116,5 @@ template<> struct ToPlatform<Translate> { auto operator()(const Translate&) -> R
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::Translate::Operation> = true;
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::Translate> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::Translate::Operation)
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::Translate)

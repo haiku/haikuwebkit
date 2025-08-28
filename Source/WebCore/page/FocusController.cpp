@@ -30,6 +30,7 @@
 #include "AXObjectCache.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "ContainerNodeInlines.h"
 #include "Editing.h"
 #include "Editor.h"
 #include "EditorClient.h"
@@ -55,12 +56,14 @@
 #include "Logging.h"
 #include "Page.h"
 #include "PopoverData.h"
+#include "RemoteFrame.h"
 #include "RemoteFrameClient.h"
 #include "ScrollAnimator.h"
 #include "SelectionRestorationMode.h"
 #include "Settings.h"
 #include "ShadowRoot.h"
 #include "SpatialNavigation.h"
+#include "UserGestureIndicator.h"
 #include "Widget.h"
 #include <limits>
 #include <wtf/Ref.h>
@@ -523,6 +526,19 @@ void FocusController::setFocusedInternal(bool focused)
     }
 }
 
+FocusableElementSearchResult FocusController::findAndFocusElementStartingWithLocalFrame(FocusDirection direction, const FocusEventData& focusEventData, LocalFrame& frame)
+{
+    RefPtr document = frame.document();
+    if (!document)
+        return { nullptr };
+
+    // We are advancing focus in this frame's process in response to a keypress in a different frame's process.
+    // We therefore assume we have an active user gesture, which is necessary for element-finding and focus-advancing to work.
+    UserGestureIndicator gestureIndicator(IsProcessingUserGesture::Yes, document.get());
+
+    return findAndFocusElementInDocumentOrderStartingWithFrame(frame, document->documentElement(), nullptr, direction, focusEventData, InitialFocus::No, ContinuingRemoteSearch::Yes);
+}
+
 FocusableElementSearchResult FocusController::findFocusableElementDescendingIntoSubframes(FocusDirection direction, Element* startingElement, const FocusEventData& focusEventData)
 {
     // The node we found might be a HTMLFrameOwnerElement, so descend down the tree until we find either:
@@ -532,8 +548,7 @@ FocusableElementSearchResult FocusController::findFocusableElementDescendingInto
     while (RefPtr owner = dynamicDowncast<HTMLFrameOwnerElement>(element)) {
         if (RefPtr remoteFrame = dynamicDowncast<RemoteFrame>(owner->contentFrame())) {
             remoteFrame->client().findFocusableElementDescendingIntoRemoteFrame(direction, focusEventData, [](FoundElementInRemoteFrame found) {
-                // FIXME: Refactor focus folowup work that is still relevant for this asynchronous remote frame result
-                LOG(SiteIsolation, "FocusController::findFocusableElementDescendingIntoSubframes - Remote frame advanced focus which is not yet fully supported. Result was '%s'", found == FoundElementInRemoteFrame::Yes ? "found" : "not found");
+                // FIXME: Implement sibling frame search by continuing here.
                 UNUSED_PARAM(found);
             });
 
@@ -574,7 +589,7 @@ bool FocusController::advanceFocus(FocusDirection direction, KeyboardEvent* even
     switch (direction) {
     case FocusDirection::Forward:
     case FocusDirection::Backward:
-        return advanceFocusInDocumentOrder(direction, focusEventData, initialFocus);
+        return advanceFocusInDocumentOrder(direction, focusEventData, initialFocus ? InitialFocus::Yes : InitialFocus::No);
     case FocusDirection::Left:
     case FocusDirection::Right:
     case FocusDirection::Up:
@@ -608,58 +623,79 @@ bool FocusController::relinquishFocusToChrome(FocusDirection direction)
     return true;
 }
 
-bool FocusController::advanceFocusInDocumentOrder(FocusDirection direction, const FocusEventData& focusEventData, bool initialFocus)
+bool FocusController::advanceFocusInDocumentOrder(FocusDirection direction, const FocusEventData& focusEventData, InitialFocus initialFocus)
 {
     RefPtr frame = focusedOrMainFrame();
     if (!frame)
         return false;
 
     RefPtr document = frame->document();
+    if (!document)
+        return false;
 
-    RefPtr<Node> currentNode = document->focusNavigationStartingNode(direction);
+    RefPtr startingNode = document->focusNavigationStartingNode(direction);
+    auto findResult = findAndFocusElementInDocumentOrderStartingWithFrame(*frame, startingNode, startingNode, direction, focusEventData, initialFocus, ContinuingRemoteSearch::No);
+
+    return findResult.element;
+}
+
+FocusableElementSearchResult FocusController::findAndFocusElementInDocumentOrderStartingWithFrame(Ref<LocalFrame> frame, RefPtr<Node> scopeNode, RefPtr<Node> startingNode, FocusDirection direction, const FocusEventData& focusEventData, InitialFocus initialFocus, ContinuingRemoteSearch continuingRemoteSearch)
+{
+    RefPtr document = frame->document();
+    RELEASE_ASSERT(document);
+
     // FIXME: Not quite correct when it comes to focus transitions leaving/entering the WebView itself
     bool caretBrowsing = frame->settings().caretBrowsingEnabled();
 
-    if (caretBrowsing && !currentNode)
-        currentNode = frame->selection().selection().start().deprecatedNode();
+    if (caretBrowsing && !scopeNode)
+        scopeNode = frame->selection().selection().start().deprecatedNode();
 
-    document->updateLayoutIgnorePendingStylesheets();
+    if (continuingRemoteSearch == ContinuingRemoteSearch::No)
+        document->updateLayoutIgnorePendingStylesheets();
 
-    auto findResult = findFocusableElementAcrossFocusScope(direction, FocusNavigationScope::scopeOf(currentNode ? *currentNode : *document), currentNode.get(), focusEventData);
+    auto findResult = findFocusableElementAcrossFocusScope(direction, FocusNavigationScope::scopeOf(scopeNode ? *scopeNode : *document), startingNode.get(), focusEventData);
+    if (findResult.continuedSearchInRemoteFrame == ContinuedSearchInRemoteFrame::Yes) {
+        // In currently supported cases (e.g. descendant-frame-only search), the following steps occurs in the remote frame's WebContent process
+        // FIXME: Make sure they happen in all cases (e.g. searching sibling frames)
+        return findResult;
+    }
 
     if (!findResult.element) {
+        if (continuingRemoteSearch == ContinuingRemoteSearch::Yes)
+            return findResult;
+
         // We didn't find a node to focus, so we should try to pass focus to Chrome.
-        if (!initialFocus) {
+        if (initialFocus == InitialFocus::No) {
             if (relinquishFocusToChrome(direction))
-                return true;
+                return findResult;
         }
 
         // Chrome doesn't want focus, so we should wrap focus.
         RefPtr localTopDocument = m_page->localTopDocument();
         if (!localTopDocument)
-            return false;
+            return findResult;
         findResult = findFocusableElementAcrossFocusScope(direction, FocusNavigationScope::scopeOf(*localTopDocument), nullptr, focusEventData);
 
         if (!findResult.element)
-            return false;
+            return findResult;
     }
     RefPtr element = findResult.element;
     ASSERT(element);
 
     if (element == document->focusedElement()) {
         // Focus wrapped around to the same element.
-        return true;
+        return findResult;
     }
 
     if (RefPtr owner = dynamicDowncast<HTMLFrameOwnerElement>(*element); owner && (!is<HTMLPlugInElement>(*element) || !element->isKeyboardFocusable(focusEventData))) {
         // We focus frames rather than frame owners.
         // FIXME: We should not focus frames that have no scrollbars, as focusing them isn't useful to the user.
         if (!owner->contentFrame())
-            return false;
+            return findResult;
 
         document->setFocusedElement(nullptr);
         setFocusedFrame(owner->protectedContentFrame().get());
-        return true;
+        return findResult;
     }
     
     // FIXME: It would be nice to just be able to call setFocusedElement(node) here, but we can't do
@@ -684,7 +720,7 @@ bool FocusController::advanceFocusInDocumentOrder(FocusDirection direction, cons
     }
 
     element->focus({ SelectionRestorationMode::SelectAll, direction, { }, { }, FocusVisibility::Visible });
-    return true;
+    return findResult;
 }
 
 FocusableElementSearchResult FocusController::findFocusableElementAcrossFocusScope(FocusDirection direction, const FocusNavigationScope& scope, Node* currentNode, const FocusEventData& focusEventData)
@@ -715,7 +751,7 @@ FocusableElementSearchResult FocusController::findFocusableElementAcrossFocusSco
                     break;
             }
         }
-        return { candidateInCurrentScope };
+        return candidateInCurrentScope;
     }
 
     // If there's no focusable node to advance to, move up the focus scopes until we find one.
@@ -735,7 +771,7 @@ FocusableElementSearchResult FocusController::findFocusableElementAcrossFocusSco
             return candidateInOuterScope;
         owner = outerScope.owner();
     }
-    return { nullptr };
+    return candidateInCurrentScope;
 }
 
 FocusableElementSearchResult FocusController::findFocusableElementWithinScope(FocusDirection direction, const FocusNavigationScope& scope, Node* start, const FocusEventData& focusEventData)

@@ -183,17 +183,24 @@ void ArgumentCoder<Namespace::Subnamespace::StructName>::encode(OtherEncoder& en
 
 std::optional<Namespace::Subnamespace::StructName> ArgumentCoder<Namespace::Subnamespace::StructName>::decode(Decoder& decoder)
 {
+    bool addedDecodingFailureIndex = false;
     auto firstMemberName = decoder.decode<FirstMemberType>();
-    if (!firstMemberName) [[unlikely]]
-        decoder.setIndexOfDecodingFailure(0);
+    if (!firstMemberName && !addedDecodingFailureIndex) [[unlikely]] {
+        decoder.addIndexOfDecodingFailure(0);
+        addedDecodingFailureIndex = true;
+    }
 #if ENABLE(SECOND_MEMBER)
     auto secondMemberName = decoder.decode<SecondMemberType>();
-    if (!secondMemberName) [[unlikely]]
-        decoder.setIndexOfDecodingFailure(1);
+    if (!secondMemberName && !addedDecodingFailureIndex) [[unlikely]] {
+        decoder.addIndexOfDecodingFailure(1);
+        addedDecodingFailureIndex = true;
+    }
 #endif
     auto nullableTestMember = decoder.decode<RetainPtr<CFTypeRef>>();
-    if (!nullableTestMember) [[unlikely]]
-        decoder.setIndexOfDecodingFailure(2);
+    if (!nullableTestMember && !addedDecodingFailureIndex) [[unlikely]] {
+        decoder.addIndexOfDecodingFailure(2);
+        addedDecodingFailureIndex = true;
+    }
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;
     return {

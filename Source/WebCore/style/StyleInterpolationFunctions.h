@@ -30,31 +30,26 @@
 
 #pragma once
 
-#include "BlockEllipsis.h"
 #include "CSSPropertyNames.h"
 #include "CachedImage.h"
 #include "CalculationValue.h"
 #include "ColorBlending.h"
-#include "ContentData.h"
 #include "Document.h"
 #include "FloatConversion.h"
 #include "FontCascade.h"
 #include "FontSelectionAlgorithm.h"
 #include "FontSelectionValueInlines.h"
 #include "FontTaggedSettings.h"
-#include "GridPositionsResolver.h"
 #include "IdentityTransformOperation.h"
 #include "LengthPoint.h"
 #include "Logging.h"
 #include "Matrix3DTransformOperation.h"
 #include "MatrixTransformOperation.h"
 #include "PathOperation.h"
-#include "QuotesData.h"
 #include "RenderBox.h"
 #include "RenderStyleSetters.h"
 #include "SVGRenderStyle.h"
 #include "ScopedName.h"
-#include "ScrollbarGutter.h"
 #include "Settings.h"
 #include "StyleBoxShadow.h"
 #include "StyleCachedImage.h"
@@ -251,25 +246,6 @@ inline LengthBox blendFunc(const LengthBox& from, const LengthBox& to, const Con
     };
 }
 
-inline FixedVector<WebCore::Length> blendFunc(const FixedVector<WebCore::Length>& from, const FixedVector<WebCore::Length>& to, const Context& context)
-{
-    size_t fromLength = from.size();
-    size_t toLength = to.size();
-    if (!fromLength || !toLength)
-        return context.progress < 0.5 ? from : to;
-
-    size_t resultLength = fromLength;
-    if (fromLength != toLength) {
-        if (!remainder(std::max(fromLength, toLength), std::min(fromLength, toLength)))
-            resultLength = std::max(fromLength, toLength);
-        else
-            resultLength = fromLength * toLength;
-    }
-    return FixedVector<WebCore::Length>::createWithSizeFromGenerator(resultLength, [&](auto i) {
-        return blendFunc(from[i % fromLength], to[i % toLength], context);
-    });
-}
-
 inline RefPtr<StyleImage> crossfadeBlend(StyleCachedImage& fromStyleImage, StyleCachedImage& toStyleImage, const Context& context)
 {
     // If progress is at one of the extremes, we want getComputedStyle to show the image,
@@ -396,141 +372,6 @@ inline std::optional<FontSelectionValue> blendFunc(std::optional<FontSelectionVa
     };
 
     return normalizedFontItalicValue(blendFunc(valueOrDefault(from), valueOrDefault(to), context));
-}
-
-inline bool canInterpolate(const GridTrackList& from, const GridTrackList& to)
-{
-    if (from.list.size() != to.list.size())
-        return false;
-
-    size_t i = 0;
-    auto visitor = WTF::makeVisitor(
-        [&](const GridTrackSize&) {
-            return std::holds_alternative<GridTrackSize>(to.list[i]);
-        },
-        [&](const Vector<String>&) {
-            return std::holds_alternative<Vector<String>>(to.list[i]);
-        },
-        [&](const GridTrackEntryRepeat& repeat) {
-            if (!std::holds_alternative<GridTrackEntryRepeat>(to.list[i]))
-                return false;
-            auto& toEntry = std::get<GridTrackEntryRepeat>(to.list[i]);
-            return repeat.repeats == toEntry.repeats && repeat.list.size() == toEntry.list.size();
-        },
-        [](const GridTrackEntryAutoRepeat&) {
-            return false;
-        },
-        [](const GridTrackEntrySubgrid&) {
-            return false;
-        },
-        [](const GridTrackEntryMasonry&) {
-            return false;
-        }
-    );
-
-    for (i = 0; i < from.list.size(); i++) {
-        if (!WTF::visit(visitor, from.list[i]))
-            return false;
-    }
-
-    return true;
-}
-
-inline GridTrackBreadth blendFunc(const GridTrackBreadth& from, const GridTrackBreadth& to, const Context& context)
-{
-    if (from.isFlex() != to.isFlex())
-        return context.progress < 0.5 ? from : to;
-
-    if (from.isFlex())
-        return WebCore::Style::blend(from.flex(), to.flex(), context);
-    return WebCore::Style::blend(from.length(), to.length(), context);
-}
-
-inline GridTrackSize blendFunc(const GridTrackSize& from, const GridTrackSize& to, const Context& context)
-{
-    if (from.type() != to.type())
-        return context.progress < 0.5 ? from : to;
-
-    if (from.type() == GridTrackSizeType::Length) {
-        auto length = blendFunc(from.minTrackBreadth(), to.minTrackBreadth(), context);
-        return GridTrackSize(length, GridTrackSizeType::Length);
-    }
-    if (from.type() == GridTrackSizeType::MinMax) {
-        auto minTrackBreadth = blendFunc(from.minTrackBreadth(), to.minTrackBreadth(), context);
-        auto maxTrackBreadth = blendFunc(from.maxTrackBreadth(), to.maxTrackBreadth(), context);
-        return GridTrackSize(minTrackBreadth, maxTrackBreadth);
-    }
-
-    auto fitContentBreadth = blendFunc(from.fitContentTrackBreadth(), to.fitContentTrackBreadth(), context);
-    return GridTrackSize(fitContentBreadth, GridTrackSizeType::FitContent);
-}
-
-inline RepeatTrackList blendFunc(const RepeatTrackList& from, const RepeatTrackList& to, const Context& context)
-{
-    RepeatTrackList result;
-    size_t i = 0;
-
-    auto visitor = WTF::makeVisitor(
-        [&](const GridTrackSize& size) {
-            result.append(blendFunc(size, std::get<GridTrackSize>(to[i]), context));
-        },
-        [&](const Vector<String>& names) {
-            if (context.progress < 0.5)
-                result.append(names);
-            else
-                result.append(std::get<Vector<String>>(to[i]));
-        }
-    );
-
-    for (i = 0; i < from.size(); i++)
-        WTF::visit(visitor, from[i]);
-
-    return result;
-}
-
-inline GridTrackList blendFunc(const GridTrackList& from, const GridTrackList& to, const Context& context)
-{
-    if (!canInterpolate(from, to))
-        return context.progress < 0.5 ? from : to;
-
-    GridTrackList result;
-    size_t i = 0;
-
-    auto visitor = WTF::makeVisitor(
-        [&](const GridTrackSize& size) {
-            result.list.append(blendFunc(size, std::get<GridTrackSize>(to.list[i]), context));
-        },
-        [&](const Vector<String>& names) {
-            if (context.progress < 0.5)
-                result.list.append(names);
-            else
-                result.list.append(std::get<Vector<String>>(to.list[i]));
-        },
-        [&](const GridTrackEntryRepeat& repeatFrom) {
-            auto& repeatTo = std::get<GridTrackEntryRepeat>(to.list[i]);
-            GridTrackEntryRepeat repeatResult;
-            repeatResult.repeats = repeatFrom.repeats;
-            repeatResult.list = blendFunc(repeatFrom.list, repeatTo.list, context);
-            result.list.append(WTFMove(repeatResult));
-        },
-        [&](const GridTrackEntryAutoRepeat& repeatFrom) {
-            auto& repeatTo = std::get<GridTrackEntryAutoRepeat>(to.list[i]);
-            GridTrackEntryAutoRepeat repeatResult;
-            repeatResult.type = repeatFrom.type;
-            repeatResult.list = blendFunc(repeatFrom.list, repeatTo.list, context);
-            result.list.append(WTFMove(repeatResult));
-        },
-        [](const GridTrackEntrySubgrid&) {
-        },
-        [](const GridTrackEntryMasonry&) {
-        }
-    );
-
-
-    for (i = 0; i < from.list.size(); i++)
-        WTF::visit(visitor, from.list[i]);
-
-    return result;
 }
 
 inline RefPtr<StylePathData> blendFunc(StylePathData* from, StylePathData* to, const Context& context)

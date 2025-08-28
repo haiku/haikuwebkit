@@ -1094,10 +1094,10 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
         }
         client().willPerformDragSourceAction(DragSourceAction::Selection, dragOrigin, dataTransfer);
         if (!dragImage) {
-            TextIndicatorData textIndicator;
-            dragImage = DragImage { dissolveDragImageToFraction(createDragImageForSelection(src, textIndicator), DragImageAlpha) };
-            if (textIndicator.contentImage)
-                dragImage.setTextIndicator(TextIndicator::create(textIndicator));
+            auto [dragImageRef, textIndicator] = createDragImageForSelection(src);
+            dragImage = DragImage { dissolveDragImageToFraction(dragImageRef, DragImageAlpha) };
+            if (textIndicator && textIndicator->contentImage())
+                dragImage.setTextIndicator(textIndicator);
             dragLoc = dragLocForSelectionDrag(src);
             m_dragOffset = IntPoint(dragOrigin.x() - dragLoc.x(), dragOrigin.y() - dragLoc.y());
         }
@@ -1240,15 +1240,15 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
         client().willPerformDragSourceAction(DragSourceAction::Attachment, dragOrigin, dataTransfer);
         
         if (!dragImage) {
-            TextIndicatorData textIndicator;
             CheckedPtr attachmentRenderer = dynamicDowncast<RenderAttachment>(attachment->renderer());
             if (attachmentRenderer)
                 attachmentRenderer->setShouldDrawBorder(false);
-            dragImage = DragImage { dissolveDragImageToFraction(createDragImageForSelection(src, textIndicator), DragImageAlpha) };
+            auto [dragImageRef, textIndicator] = createDragImageForSelection(src);
+            dragImage = DragImage { dissolveDragImageToFraction(dragImageRef, DragImageAlpha) };
             if (attachmentRenderer)
                 attachmentRenderer->setShouldDrawBorder(true);
-            if (textIndicator.contentImage)
-                dragImage.setTextIndicator(TextIndicator::create(textIndicator));
+            if (textIndicator && textIndicator->contentImage())
+                dragImage.setTextIndicator(textIndicator);
             dragLoc = dragLocForSelectionDrag(src);
             m_dragOffset = IntPoint(dragOrigin.x() - dragLoc.x(), dragOrigin.y() - dragLoc.y());
         }
@@ -1402,7 +1402,7 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
     item.dragLocationInContentCoordinates = mainFrameView->rootViewToContents(dragLocationInRootViewCoordinates);
     item.dragLocationInWindowCoordinates = mainFrameView->contentsToWindow(item.dragLocationInContentCoordinates);
 
-    std::optional<ElementIdentifier> elementID;
+    std::optional<NodeIdentifier> nodeID;
     if (RefPtr element = state.source) {
         RefPtr dataTransferImageElement = state.dataTransfer->dragImageElement();
         if (state.type == DragSourceAction::DHTML) {
@@ -1431,9 +1431,9 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
         if (RefPtr modelElement = dynamicDowncast<HTMLModelElement>(state.source); modelElement && m_dragSourceAction.contains(DragSourceAction::Model))
             item.modelLayerID = modelElement->layerID();
 #endif
-        elementID = element->identifier();
+        nodeID = element->nodeIdentifier();
     }
-    client().startDrag(WTFMove(item), *state.dataTransfer, mainFrame.get(), elementID);
+    client().startDrag(WTFMove(item), *state.dataTransfer, mainFrame.get(), nodeID);
     // DragClient::startDrag can cause our Page to dispear, deallocating |this|.
     if (!mainFrame->page())
         return;

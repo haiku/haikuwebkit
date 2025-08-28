@@ -157,12 +157,11 @@ bool SVGRenderStyle::changeRequiresLayout(const SVGRenderStyle& other) const
         || m_inheritedFlags.glyphOrientationHorizontal != other.m_inheritedFlags.glyphOrientationHorizontal
         || m_inheritedFlags.glyphOrientationVertical != other.m_inheritedFlags.glyphOrientationVertical
         || m_nonInheritedFlags.flagBits.alignmentBaseline != other.m_nonInheritedFlags.flagBits.alignmentBaseline
-        || m_nonInheritedFlags.flagBits.dominantBaseline != other.m_nonInheritedFlags.flagBits.dominantBaseline
-        || m_nonInheritedFlags.flagBits.baselineShift != other.m_nonInheritedFlags.flagBits.baselineShift)
+        || m_nonInheritedFlags.flagBits.dominantBaseline != other.m_nonInheritedFlags.flagBits.dominantBaseline)
         return true;
 
     // Text related properties influence layout.
-    if (m_miscData->baselineShiftValue != other.m_miscData->baselineShiftValue)
+    if (m_miscData->baselineShift != other.m_miscData->baselineShift)
         return true;
 
     // The x or y properties require relayout.
@@ -271,7 +270,7 @@ void SVGRenderStyle::conservativelyCollectChangedAnimatableProperties(const SVGR
             changingProperties.m_properties.set(CSSPropertyFloodColor);
         if (first.lightingColor != second.lightingColor)
             changingProperties.m_properties.set(CSSPropertyLightingColor);
-        if (first.baselineShiftValue != second.baselineShiftValue)
+        if (first.baselineShift != second.baselineShift)
             changingProperties.m_properties.set(CSSPropertyBaselineShift);
     };
 
@@ -325,8 +324,6 @@ void SVGRenderStyle::conservativelyCollectChangedAnimatableProperties(const SVGR
     auto conservativelyCollectChangedAnimatablePropertiesViaNonInheritedFlags = [&](auto& first, auto& second) {
         if (first.flagBits.alignmentBaseline != second.flagBits.alignmentBaseline)
             changingProperties.m_properties.set(CSSPropertyAlignmentBaseline);
-        if (first.flagBits.baselineShift != second.flagBits.baselineShift)
-            changingProperties.m_properties.set(CSSPropertyBaselineShift);
         if (first.flagBits.bufferedRendering != second.flagBits.bufferedRendering)
             changingProperties.m_properties.set(CSSPropertyBufferedRendering);
         if (first.flagBits.dominantBaseline != second.flagBits.dominantBaseline)
@@ -373,7 +370,6 @@ void SVGRenderStyle::NonInheritedFlags::dumpDifferences(TextStream& ts, const SV
 {
     LOG_IF_DIFFERENT_WITH_CAST(AlignmentBaseline, flagBits.alignmentBaseline);
     LOG_IF_DIFFERENT_WITH_CAST(DominantBaseline, flagBits.dominantBaseline);
-    LOG_IF_DIFFERENT_WITH_CAST(BaselineShift, flagBits.baselineShift);
     LOG_IF_DIFFERENT_WITH_CAST(VectorEffect, flagBits.vectorEffect);
     LOG_IF_DIFFERENT_WITH_CAST(BufferedRendering, flagBits.bufferedRendering);
     LOG_IF_DIFFERENT_WITH_CAST(MaskType, flagBits.maskType);

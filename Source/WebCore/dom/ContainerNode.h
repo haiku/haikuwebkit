@@ -30,6 +30,7 @@ namespace WebCore {
 class HTMLCollection;
 class RadioNodeList;
 class RenderElement;
+struct SerializedNode;
 
 enum class CollectionType : uint8_t;
 
@@ -78,7 +79,8 @@ public:
 
     void takeAllChildrenFrom(ContainerNode*);
 
-    void cloneChildNodes(Document&, CustomElementRegistry*, ContainerNode& clone, size_t currentDepth = 0);
+    void cloneChildNodes(Document&, CustomElementRegistry*, ContainerNode& clone, size_t currentDepth = 0) const;
+    Vector<SerializedNode> serializeChildNodes(size_t currentDepth = 0) const;
 
     enum class CanDelayNodeDeletion : uint8_t { No, Yes, Unknown };
     struct ChildChange {

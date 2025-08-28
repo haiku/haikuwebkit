@@ -314,7 +314,7 @@ my @features = (
       define => "ENABLE_ORIENTATION_EVENTS", value => \$orientationEventsSupport },
 
     { option => "overflow-scrolling-touch", desc => "Toggle accelerated scrolling support",
-      define => "ENABLE_OVERFLOW_SCROLLING_TOUCH", value => \$overflowScrollingTouchSupport },
+      define => "ENABLE_WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY", value => \$overflowScrollingTouchSupport },
 
     { option => "payment-request", desc => "Toggle Payment Request support",
       define => "ENABLE_PAYMENT_REQUEST", value => \$paymentRequestSupport },

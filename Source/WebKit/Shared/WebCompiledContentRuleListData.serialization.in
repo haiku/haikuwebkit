@@ -22,7 +22,7 @@
 
 #if ENABLE(CONTENT_EXTENSIONS)
 
-class WebKit::WebCompiledContentRuleListData {
+[DebugDecodingFailure] class WebKit::WebCompiledContentRuleListData {
     String identifier;
     std::optional<WebCore::SharedMemoryHandle> createDataHandle();
     uint64_t actionsOffset;

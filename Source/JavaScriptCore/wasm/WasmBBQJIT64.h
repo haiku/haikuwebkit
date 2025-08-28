@@ -36,6 +36,11 @@
 
 namespace JSC { namespace Wasm { namespace BBQJITImpl {
 
+ALWAYS_INLINE bool BBQJIT::typeNeedsGPR2(TypeKind)
+{
+    return false;
+}
+
 template<typename Functor>
 auto BBQJIT::emitCheckAndPrepareAndMaterializePointerApply(Value pointer, uint32_t uoffset, uint32_t sizeOfOperation, Functor&& functor) -> decltype(auto)
 {
@@ -556,18 +561,18 @@ void BBQJIT::emitCCall(Func function, const Vector<Value, N>& arguments, Value& 
     case TypeKind::Struct:
     case TypeKind::Func: {
         resultLocation = Location::fromGPR(GPRInfo::returnValueGPR);
-        ASSERT(m_validGPRs.contains(GPRInfo::returnValueGPR, IgnoreVectors));
+        ASSERT(validGPRs().contains(GPRInfo::returnValueGPR, IgnoreVectors));
         break;
     }
     case TypeKind::F32:
     case TypeKind::F64: {
         resultLocation = Location::fromFPR(FPRInfo::returnValueFPR);
-        ASSERT(m_validFPRs.contains(FPRInfo::returnValueFPR, Width::Width128));
+        ASSERT(validFPRs().contains(FPRInfo::returnValueFPR, Width::Width128));
         break;
     }
     case TypeKind::V128: {
         resultLocation = Location::fromFPR(FPRInfo::returnValueFPR);
-        ASSERT(m_validFPRs.contains(FPRInfo::returnValueFPR, Width::Width128));
+        ASSERT(validFPRs().contains(FPRInfo::returnValueFPR, Width::Width128));
         break;
     }
     case TypeKind::Void:
@@ -577,9 +582,9 @@ void BBQJIT::emitCCall(Func function, const Vector<Value, N>& arguments, Value& 
 
     RegisterBinding currentBinding;
     if (resultLocation.isGPR())
-        currentBinding = gprBindings()[resultLocation.asGPR()];
+        currentBinding = bindingFor(resultLocation.asGPR());
     else if (resultLocation.isFPR())
-        currentBinding = fprBindings()[resultLocation.asFPR()];
+        currentBinding = bindingFor(resultLocation.asFPR());
     RELEASE_ASSERT(!currentBinding.isScratch());
 
     bind(result, resultLocation);

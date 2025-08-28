@@ -1032,6 +1032,11 @@ private:
                 // 1. If PutByVal/GetByVal cause escape, materialize both at the same site.
                 // 2. If the Array escapes, also escape the ArrayButterfly since sinking it isn't beneficial.
                 m_heap.newAllocation(node, Allocation::Kind::ArrayButterfly);
+
+                // Re-get the array after potential HashMap modifications in above newAllocation() call which
+                // can trigger HashMap rehash in m_allocations.
+                array = m_heap.onlyLocalAllocation(base);
+                ASSERT(array && array->isArrayAllocation());
                 array->set(PromotedLocationDescriptor(ArrayButterflyPropertyPLoc, array->arrayButterflyId()), node);
             } else
                 goto escapeChildren;

@@ -84,7 +84,7 @@ Ref<ViewGestureController> ViewGestureController::create(WebPageProxy& page)
 ViewGestureController::ViewGestureController(WebPageProxy& webPageProxy)
     : m_webPageProxy(webPageProxy)
     , m_webPageProxyIdentifier(webPageProxy.identifier())
-    , m_swipeActiveLoadMonitoringTimer(RunLoop::main(), this, &ViewGestureController::checkForActiveLoads)
+    , m_swipeActiveLoadMonitoringTimer(RunLoop::mainSingleton(), "ViewGestureController::SwipeActiveLoadMonitoringTimer"_s, this, &ViewGestureController::checkForActiveLoads)
 #if !PLATFORM(IOS_FAMILY)
     , m_pendingSwipeTracker(webPageProxy, *this)
 #endif
@@ -310,7 +310,7 @@ void ViewGestureController::checkForActiveLoads()
 }
 
 ViewGestureController::SnapshotRemovalTracker::SnapshotRemovalTracker()
-    : m_watchdogTimer(RunLoop::main(), this, &SnapshotRemovalTracker::watchdogTimerFired)
+    : m_watchdogTimer(RunLoop::mainSingleton(), "SnapshotRemovalTracker::SnapshotRemovalTracker::WatchdogTimer"_s, this, &SnapshotRemovalTracker::watchdogTimerFired)
 {
 }
 

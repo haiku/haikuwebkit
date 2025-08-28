@@ -74,7 +74,7 @@ using PlatformImage = SkImage*;
 namespace WTR {
 
 class PlatformWebView {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(PlatformWebView);
 public:
     PlatformWebView(WKPageConfigurationRef, const TestOptions&);
     ~PlatformWebView();

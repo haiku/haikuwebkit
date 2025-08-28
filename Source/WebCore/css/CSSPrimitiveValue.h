@@ -782,6 +782,18 @@ inline String CSSValue::customIdent() const
     return downcast<CSSPrimitiveValue>(*this).stringValue();
 }
 
+inline bool CSSValue::isString() const
+{
+    auto* value = dynamicDowncast<CSSPrimitiveValue>(*this);
+    return value && value->isString();
+}
+
+inline String CSSValue::string() const
+{
+    ASSERT(isString());
+    return downcast<CSSPrimitiveValue>(*this).stringValue();
+}
+
 inline bool CSSValue::isInteger() const
 {
     auto* value = dynamicDowncast<CSSPrimitiveValue>(*this);

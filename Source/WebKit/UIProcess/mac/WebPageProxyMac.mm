@@ -418,6 +418,9 @@ void WebPageProxy::handleAcceptsFirstMouse(bool acceptsFirstMouse)
 
 void WebPageProxy::setAutomaticallyAdjustsContentInsets(bool automaticallyAdjustsContentInsets)
 {
+    if (m_automaticallyAdjustsContentInsets == automaticallyAdjustsContentInsets)
+        return;
+
     m_automaticallyAdjustsContentInsets = automaticallyAdjustsContentInsets;
     updateContentInsetsIfAutomatic();
 }

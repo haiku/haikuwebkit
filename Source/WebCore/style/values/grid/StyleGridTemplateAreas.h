@@ -27,6 +27,7 @@
 #include "CSSGridTemplateAreas.h"
 #include "StyleGridNamedAreaMap.h"
 #include "StyleGridNamedLinesMap.h"
+#include "StyleGridTrackSizingDirection.h"
 
 namespace WebCore {
 namespace Style {
@@ -51,6 +52,16 @@ struct GridTemplateAreas {
         if (isNone())
             return visitor(CSS::Keyword::None { });
         return visitor(map);
+    }
+
+    size_t count(GridTrackSizingDirection direction) const
+    {
+        return direction == GridTrackSizingDirection::Columns ? map.columnCount : map.rowCount;
+    }
+
+    const GridNamedLinesMap& implicitNamedGridLines(GridTrackSizingDirection direction) const
+    {
+        return direction == GridTrackSizingDirection::Columns ? implicitNamedGridColumnLines : implicitNamedGridRowLines;
     }
 
     bool operator==(const GridTemplateAreas& other) const

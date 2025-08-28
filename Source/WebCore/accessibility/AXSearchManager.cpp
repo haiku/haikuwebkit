@@ -199,9 +199,9 @@ static void appendAccessibilityObject(Ref<AXCoreObject> object, AccessibilityObj
 {
     if (!object->isAttachment()) [[likely]]
         results.append(WTFMove(object));
-    else {
+    else if (RefPtr axObject = dynamicDowncast<AccessibilityObject>(object)) {
         // Find the next descendant of this attachment object so search can continue through frames.
-        RefPtr widget = object->widgetForAttachmentView();
+        RefPtr widget = axObject->widgetForAttachmentView();
         RefPtr frameView = dynamicDowncast<LocalFrameView>(widget);
         if (!frameView)
             return;
@@ -209,9 +209,9 @@ static void appendAccessibilityObject(Ref<AXCoreObject> object, AccessibilityObj
         if (!document || !document->hasLivingRenderTree())
             return;
 
-        CheckedPtr cache = object->axObjectCache();
+        CheckedPtr cache = axObject->axObjectCache();
         if (RefPtr axDocument = cache ? cache->getOrCreate(*document) : nullptr)
-            results.append(*axDocument);
+            results.append(axDocument.releaseNonNull());
     }
 }
 
@@ -284,7 +284,7 @@ AXCoreObject::AccessibilityChildrenVector AXSearchManager::findMatchingObjectsIn
         return { };
 
 #if PLATFORM(MAC)
-    if (criteria.searchKeys.size() == 1 && criteria.usePreCachedResults) {
+    if (criteria.searchKeys.size() == 1) {
         // Only perform these optimizations if we aren't expected to start from somewhere mid-tree.
         // We could probably implement these optimizations when we do have a startObject and get
         // performance benefits, but no known assistive technology needs this right now.
@@ -411,37 +411,6 @@ std::optional<AXTextMarkerRange> AXSearchManager::findMatchingRange(Accessibilit
         return forward ? ranges[0] : ranges.last();
     }
     return std::nullopt;
-}
-
-AXCoreObject* AXSearchManager::findNextStartingFrom(AccessibilitySearchKey key, AXCoreObject* start, AXCoreObject& anchor)
-{
-    AccessibilitySearchCriteria criteria;
-    criteria.startObject = start;
-    criteria.anchorObject = &anchor;
-    criteria.searchDirection = AccessibilitySearchDirection::Next;
-    criteria.searchKeys = { key };
-    criteria.resultsLimit = 1;
-    criteria.visibleOnly = false;
-    criteria.immediateDescendantsOnly = false;
-    criteria.usePreCachedResults = false;
-
-    auto results = findMatchingObjectsInternal(criteria);
-    return results.size() ? results[0].ptr() : nullptr;
-}
-
-AXCoreObject::AccessibilityChildrenVector AXSearchManager::findAllMatchingObjectsIgnoringCache(Vector<AccessibilitySearchKey>&& keys, AXCoreObject& anchor)
-{
-    AccessibilitySearchCriteria criteria;
-    criteria.anchorObject = &anchor;
-    criteria.startObject = nullptr;
-    criteria.searchDirection = AccessibilitySearchDirection::Next;
-    criteria.searchKeys = WTFMove(keys);
-    criteria.resultsLimit = std::numeric_limits<unsigned>::max();
-    criteria.visibleOnly = false;
-    criteria.immediateDescendantsOnly = false;
-    criteria.usePreCachedResults = false;
-
-    return findMatchingObjectsInternal(criteria);
 }
 
 } // namespace WebCore

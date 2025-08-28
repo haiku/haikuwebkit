@@ -29,6 +29,7 @@
 #include "config.h"
 #include "CanvasStyle.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "CSSParserContext.h"
 #include "CSSParserMode.h"
 #include "CSSPropertyNames.h"
@@ -39,6 +40,7 @@
 #include "Gradient.h"
 #include "GraphicsContext.h"
 #include "HTMLCanvasElement.h"
+#include "NodeInlines.h"
 #include "StyleProperties.h"
 
 #if ENABLE(OFFSCREEN_CANVAS)

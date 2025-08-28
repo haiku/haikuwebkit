@@ -516,8 +516,8 @@ void InlineFormattingContext::initializeInlineLayoutState(const LayoutState& glo
 {
     auto& inlineLayoutState = layoutState();
 
-    if (auto limitLinesValue = root().style().hyphenationLimitLines(); limitLinesValue != RenderStyle::initialHyphenationLimitLines())
-        inlineLayoutState.setHyphenationLimitLines(limitLinesValue);
+    if (auto limitLinesValue = root().style().hyphenateLimitLines().tryValue())
+        inlineLayoutState.setHyphenationLimitLines(limitLinesValue->value);
     // FIXME: Remove when IFC takes care of running layout on inline-blocks.
     inlineLayoutState.setShouldNotSynthesizeInlineBlockBaseline();
     if (globalLayoutState.inStandardsMode())

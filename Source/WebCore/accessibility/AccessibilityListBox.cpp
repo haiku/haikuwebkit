@@ -42,16 +42,16 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityListBox::AccessibilityListBox(AXID axID, RenderObject& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilityListBox::AccessibilityListBox(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
 }
 
 AccessibilityListBox::~AccessibilityListBox() = default;
 
-Ref<AccessibilityListBox> AccessibilityListBox::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityListBox> AccessibilityListBox::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityListBox(axID, renderer));
+    return adoptRef(*new AccessibilityListBox(axID, renderer, cache));
 }
 
 void AccessibilityListBox::addChildren()

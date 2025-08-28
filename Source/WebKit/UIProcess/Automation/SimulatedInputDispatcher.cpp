@@ -102,7 +102,7 @@ SimulatedInputKeyFrame SimulatedInputKeyFrame::keyFrameToResetInputSources(const
 SimulatedInputDispatcher::SimulatedInputDispatcher(WebPageProxy& page, SimulatedInputDispatcher::Client& client)
     : m_page(page)
     , m_client(client)
-    , m_keyFrameTransitionDurationTimer(RunLoop::currentSingleton(), this, &SimulatedInputDispatcher::keyFrameTransitionDurationTimerFired)
+    , m_keyFrameTransitionDurationTimer(RunLoop::currentSingleton(), "SimulatedInputDispatcher::KeyFrameTransitionDurationTimer"_s, this, &SimulatedInputDispatcher::keyFrameTransitionDurationTimerFired)
 {
 }
 

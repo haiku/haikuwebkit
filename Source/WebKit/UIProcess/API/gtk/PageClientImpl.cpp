@@ -142,7 +142,7 @@ bool PageClientImpl::isViewFocused()
     return webkitWebViewBaseIsFocused(WEBKIT_WEB_VIEW_BASE(m_viewWidget));
 }
 
-bool PageClientImpl::isViewVisible()
+bool PageClientImpl::isActiveViewVisible()
 {
     return webkitWebViewBaseIsVisible(WEBKIT_WEB_VIEW_BASE(m_viewWidget));
 }

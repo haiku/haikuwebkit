@@ -59,7 +59,7 @@ class WebSharedWorkerObjectConnection;
 enum class WebsiteDataType : uint32_t;
 
 class NetworkProcessConnection final : public RefCounted<NetworkProcessConnection>, IPC::Connection::Client {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(NetworkProcessConnection);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(NetworkProcessConnection);
 public:
     static Ref<NetworkProcessConnection> create(IPC::Connection::Identifier&& connectionIdentifier, WebCore::HTTPCookieAcceptPolicy httpCookieAcceptPolicy)
@@ -105,7 +105,7 @@ private:
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
     bool didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&) override;
     void didClose(IPC::Connection&) override;
-    void didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, int32_t) override;
+    void didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, const Vector<uint32_t>&) override;
     bool dispatchMessage(IPC::Connection&, IPC::Decoder&);
     bool dispatchSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&);
 

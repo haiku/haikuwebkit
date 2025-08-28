@@ -111,7 +111,7 @@ static WeakHashSet<AudioSessionIOS::CategoryChangedObserver>& audioSessionCatego
 void AudioSessionIOS::addAudioSessionCategoryChangedObserver(const CategoryChangedObserver& observer)
 {
     audioSessionCategoryChangedObservers().add(observer);
-    observer(AudioSession::sharedSession(), AudioSession::sharedSession().category());
+    observer(AudioSession::singleton(), AudioSession::singleton().category());
 }
 
 Ref<AudioSessionIOS> AudioSessionIOS::create()

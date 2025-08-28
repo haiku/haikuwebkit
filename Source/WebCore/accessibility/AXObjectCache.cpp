@@ -138,6 +138,10 @@
 #include <wtf/text/AtomString.h>
 #include <wtf/text/MakeString.h>
 
+#if PLATFORM(COCOA)
+#include <wtf/spi/darwin/OSVariantSPI.h>
+#endif
+
 namespace WebCore {
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(AXComputedObjectAttributeCache);
@@ -330,6 +334,19 @@ AXObjectCache::~AXObjectCache()
 #endif
 
     AXTreeStore::remove(m_id);
+}
+
+String AXObjectCache::debugDescription() const
+{
+    TextStream stream;
+    stream << this;
+    return makeString(
+        "AXObjectCache "_s,
+        stream.release(),
+        " { "_s,
+        m_document ? m_document->debugDescription() : "null document"_s,
+        " }"_s
+    );
 }
 
 bool AXObjectCache::isModalElement(Element& element) const
@@ -773,37 +790,37 @@ Ref<AccessibilityRenderObject> AXObjectCache::createObjectFromRenderer(RenderObj
     RefPtr node = renderer.node();
     if (RefPtr element = dynamicDowncast<Element>(node)) {
         if (isAccessibilityList(*element))
-            return AccessibilityList::create(AXID::generate(), renderer);
+            return AccessibilityList::create(AXID::generate(), renderer, *this);
 
         if (isAccessibilityARIATable(*element))
-            return AccessibilityARIATable::create(AXID::generate(), renderer);
+            return AccessibilityARIATable::create(AXID::generate(), renderer, *this);
         if (isAccessibilityARIAGridRow(*element))
-            return AccessibilityARIAGridRow::create(AXID::generate(), renderer);
+            return AccessibilityARIAGridRow::create(AXID::generate(), renderer, *this);
         if (isAccessibilityARIAGridCell(*element))
-            return AccessibilityARIAGridCell::create(AXID::generate(), renderer);
+            return AccessibilityARIAGridCell::create(AXID::generate(), renderer, *this);
 
         if (isAccessibilityTree(*element))
-            return AccessibilityTree::create(AXID::generate(), renderer);
+            return AccessibilityTree::create(AXID::generate(), renderer, *this);
         if (isAccessibilityTreeItem(*element))
-            return AccessibilityTreeItem::create(AXID::generate(), renderer);
+            return AccessibilityTreeItem::create(AXID::generate(), renderer, *this);
 
         if (is<HTMLLabelElement>(*element) && hasRole(*element, nullAtom()))
-            return AccessibilityLabel::create(AXID::generate(), renderer);
+            return AccessibilityLabel::create(AXID::generate(), renderer, *this);
 
 #if PLATFORM(IOS_FAMILY)
         if (is<HTMLMediaElement>(*element) && hasRole(*element, nullAtom()))
-            return AccessibilityMediaObject::create(AXID::generate(), renderer);
+            return AccessibilityMediaObject::create(AXID::generate(), renderer, *this);
 #endif
     }
 
     if (renderer.isRenderOrLegacyRenderSVGRoot())
-        return AccessibilitySVGRoot::create(AXID::generate(), renderer, this);
+        return AccessibilitySVGRoot::create(AXID::generate(), renderer, *this);
 
     if (is<SVGElement>(node) || is<RenderSVGInlineText>(renderer))
-        return AccessibilitySVGObject::create(AXID::generate(), renderer, this);
+        return AccessibilitySVGObject::create(AXID::generate(), renderer, *this);
 
     if (auto* renderImage = toSimpleImage(renderer))
-        return AXImage::create(AXID::generate(), *renderImage);
+        return AXImage::create(AXID::generate(), *renderImage, *this);
 
 #if ENABLE(MATHML)
     // The mfenced element creates anonymous RenderMathMLOperators which should be treated
@@ -811,11 +828,11 @@ Ref<AccessibilityRenderObject> AXObjectCache::createObjectFromRenderer(RenderObj
     // inclusion and role mapping is not bypassed.
     bool isAnonymousOperator = renderer.isAnonymous() && is<RenderMathMLOperator>(renderer);
     if (isAnonymousOperator || is<MathMLElement>(node))
-        return AccessibilityMathMLElement::create(AXID::generate(), renderer, isAnonymousOperator);
+        return AccessibilityMathMLElement::create(AXID::generate(), renderer, *this, isAnonymousOperator);
 #endif
 
     if (is<RenderListBox>(renderer))
-        return AccessibilityListBox::create(AXID::generate(), renderer);
+        return AccessibilityListBox::create(AXID::generate(), renderer, *this);
     if (CheckedPtr renderMenuList = dynamicDowncast<RenderMenuList>(renderer))
         return AccessibilityMenuList::create(AXID::generate(), *renderMenuList, *this);
 
@@ -829,54 +846,54 @@ Ref<AccessibilityRenderObject> AXObjectCache::createObjectFromRenderer(RenderObj
     // We don't want to consider these tables (since they are typically wrapped by an actual <table> element),
     // so only create an AccessibilityTable when !is<HTMLTableSectionElement>.
     if ((is<RenderTable>(renderer) && !isAnonymous && !is<HTMLTableSectionElement>(node.get())) || isAccessibilityTable(node.get()))
-        return AccessibilityTable::create(AXID::generate(), renderer);
+        return AccessibilityTable::create(AXID::generate(), renderer, *this);
     if ((is<RenderTableRow>(renderer) && !isAnonymous) || isAccessibilityTableRow(node.get()))
-        return AccessibilityTableRow::create(AXID::generate(), renderer);
+        return AccessibilityTableRow::create(AXID::generate(), renderer, *this);
     if ((is<RenderTableCell>(renderer) && !isAnonymous) || isAccessibilityTableCell(node.get()))
-        return AccessibilityTableCell::create(AXID::generate(), renderer);
+        return AccessibilityTableCell::create(AXID::generate(), renderer, *this);
 
     // Progress indicator.
     if (is<RenderProgress>(renderer) || is<RenderMeter>(renderer)
         || is<HTMLProgressElement>(node) || is<HTMLMeterElement>(node))
-        return AccessibilityProgressIndicator::create(AXID::generate(), renderer);
+        return AccessibilityProgressIndicator::create(AXID::generate(), renderer, *this);
 
 #if ENABLE(ATTACHMENT_ELEMENT)
     if (auto* renderAttachment = dynamicDowncast<RenderAttachment>(renderer))
-        return AccessibilityAttachment::create(AXID::generate(), *renderAttachment);
+        return AccessibilityAttachment::create(AXID::generate(), *renderAttachment, *this);
 #endif
 
     // input type=range
     if (is<RenderSlider>(renderer))
-        return AccessibilitySlider::create(AXID::generate(), renderer);
+        return AccessibilitySlider::create(AXID::generate(), renderer, *this);
 
-    return AccessibilityRenderObject::create(AXID::generate(), renderer);
+    return AccessibilityRenderObject::create(AXID::generate(), renderer, *this);
 }
 
 Ref<AccessibilityNodeObject> AXObjectCache::createFromNode(Node& node)
 {
     if (RefPtr element = dynamicDowncast<Element>(node)) {
         if (isAccessibilityList(*element))
-            return AccessibilityList::create(AXID::generate(), *element);
+            return AccessibilityList::create(AXID::generate(), *element, *this);
         if (isAccessibilityTable(element.get()))
-            return AccessibilityTable::create(AXID::generate(), *element);
+            return AccessibilityTable::create(AXID::generate(), *element, *this);
         if (isAccessibilityTableRow(element.get()))
-            return AccessibilityTableRow::create(AXID::generate(), *element);
+            return AccessibilityTableRow::create(AXID::generate(), *element, *this);
         if (isAccessibilityTableCell(element.get()))
-            return AccessibilityTableCell::create(AXID::generate(), *element);
+            return AccessibilityTableCell::create(AXID::generate(), *element, *this);
         if (isAccessibilityTree(*element))
-            return AccessibilityTree::create(AXID::generate(), *element);
+            return AccessibilityTree::create(AXID::generate(), *element, *this);
         if (isAccessibilityTreeItem(*element))
-            return AccessibilityTreeItem::create(AXID::generate(), *element);
+            return AccessibilityTreeItem::create(AXID::generate(), *element, *this);
         if (isAccessibilityARIATable(*element))
-            return AccessibilityARIATable::create(AXID::generate(), *element);
+            return AccessibilityARIATable::create(AXID::generate(), *element, *this);
         if (isAccessibilityARIAGridRow(*element))
-            return AccessibilityARIAGridRow::create(AXID::generate(), *element);
+            return AccessibilityARIAGridRow::create(AXID::generate(), *element, *this);
         if (isAccessibilityARIAGridCell(*element))
-            return AccessibilityARIAGridCell::create(AXID::generate(), *element);
+            return AccessibilityARIAGridCell::create(AXID::generate(), *element, *this);
         if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(*element))
-            return AccessibilityImageMapLink::create(AXID::generate(), *areaElement);
+            return AccessibilityImageMapLink::create(AXID::generate(), *areaElement, *this);
     }
-    return AccessibilityNodeObject::create(AXID::generate(), node);
+    return AccessibilityNodeObject::create(AXID::generate(), node, *this);
 }
 
 void AXObjectCache::cacheAndInitializeWrapper(AccessibilityObject& newObject, DOMObjectVariant domObject)
@@ -911,9 +928,9 @@ AccessibilityObject* AXObjectCache::getOrCreate(Widget& widget)
 
     RefPtr<AccessibilityObject> newObject;
     if (auto* scrollView = dynamicDowncast<ScrollView>(widget))
-        newObject = AccessibilityScrollView::create(AXID::generate(), *scrollView);
+        newObject = AccessibilityScrollView::create(AXID::generate(), *scrollView, *this);
     else if (auto* scrollbar = dynamicDowncast<Scrollbar>(widget))
-        newObject = AccessibilityScrollbar::create(AXID::generate(), *scrollbar);
+        newObject = AccessibilityScrollbar::create(AXID::generate(), *scrollbar, *this);
 
     // Will crash later if we have two objects for the same widget.
     ASSERT(!get(widget));
@@ -953,9 +970,9 @@ AccessibilityObject* AXObjectCache::getOrCreate(Node& node, IsPartOfRelation isP
         if (select->usesMenuList()) {
             if (!optionElement || !select->renderer())
                 return nullptr;
-            object = AccessibilityMenuListOption::create(AXID::generate(), *optionElement);
+            object = AccessibilityMenuListOption::create(AXID::generate(), *optionElement, *this);
         } else
-            object = AccessibilityListBoxOption::create(AXID::generate(), downcast<HTMLElement>(node));
+            object = AccessibilityListBoxOption::create(AXID::generate(), downcast<HTMLElement>(node), *this);
         cacheAndInitializeWrapper(*object, &node);
         return object.get();
     }
@@ -1119,25 +1136,25 @@ AccessibilityObject* AXObjectCache::create(AccessibilityRole role)
     RefPtr<AccessibilityObject> object;
     switch (role) {
     case AccessibilityRole::Column:
-        object = AccessibilityTableColumn::create(AXID::generate());
+        object = AccessibilityTableColumn::create(AXID::generate(), *this);
         break;
     case AccessibilityRole::TableHeaderContainer:
-        object = AccessibilityTableHeaderContainer::create(AXID::generate());
+        object = AccessibilityTableHeaderContainer::create(AXID::generate(), *this);
         break;
     case AccessibilityRole::RemoteFrame:
-        object = AXRemoteFrame::create(AXID::generate());
+        object = AXRemoteFrame::create(AXID::generate(), *this);
         break;
     case AccessibilityRole::SliderThumb:
-        object = AccessibilitySliderThumb::create(AXID::generate());
+        object = AccessibilitySliderThumb::create(AXID::generate(), *this);
         break;
     case AccessibilityRole::MenuListPopup:
-        object = AccessibilityMenuListPopup::create(AXID::generate());
+        object = AccessibilityMenuListPopup::create(AXID::generate(), *this);
         break;
     case AccessibilityRole::SpinButton:
         object = AccessibilitySpinButton::create(AXID::generate(), *this);
         break;
     case AccessibilityRole::SpinButtonPart:
-        object = AccessibilitySpinButtonPart::create(AXID::generate());
+        object = AccessibilitySpinButtonPart::create(AXID::generate(), *this);
         break;
     default:
         break;
@@ -1545,16 +1562,20 @@ void AXObjectCache::onTextRunsChanged(const RenderObject& renderer)
 
 void AXObjectCache::handleMenuOpened(Element& element)
 {
-    if (!element.renderer() || !hasRole(element, "menu"_s))
+    if (!element.renderer() || !hasRole(element, "menu"_s)) {
+        // FIXME: Doesn't this early-return mean we are going to handle display:contents menus incorrectly?
         return;
+    }
 
     postNotification(getOrCreate(element), protectedDocument().get(), AXNotification::MenuOpened);
 }
 
 void AXObjectCache::handleLiveRegionCreated(Element& element)
 {
-    if (!element.renderer())
+    if (!element.renderer()) {
+        // FIXME: Doesn't this early-return mean we are going to handle display:contents live regions incorrectly?
         return;
+    }
 
     auto liveRegionStatus = element.attributeWithoutSynchronization(aria_liveAttr);
     if (liveRegionStatus.isEmpty()) {
@@ -1567,7 +1588,7 @@ void AXObjectCache::handleLiveRegionCreated(Element& element)
         RefPtr axObject = getOrCreate(element);
 #if PLATFORM(MAC)
         if (axObject)
-            addSortedObject(*axObject, PreSortedObjectType::LiveRegion);
+            deferSortForNewLiveRegion(*axObject);
 #endif // PLATFORM(MAC)
 
         postNotification(axObject.get(), protectedDocument().get(), AXNotification::LiveRegionCreated);
@@ -2100,10 +2121,7 @@ void AXObjectCache::onAccessibilityPaintFinished()
 
     for (auto iterator = m_mostRecentlyPaintedText.begin(); iterator != m_mostRecentlyPaintedText.end(); ++iterator) {
         const auto& renderText = iterator->key;
-        // FIXME: Use InlineIteratorLogicalOrderTraversal instead. Otherwise we'll do the wrong thing for mixed direction
-        // content. We should do this at the same time AccessibilityRenderObject::textRuns switches to this function.
-        // Tracked by: https://bugs.webkit.org/show_bug.cgi?id=294632
-        if (auto textBox = InlineIterator::lineLeftmostTextBoxFor(renderText)) {
+        if (auto textBox = InlineIterator::firstTextBoxInLogicalOrderFor(renderText).first) {
             // The line index from TextBox::lineIndex is relative to the containing block, which count lines from
             // other renderers. The LineRange struct we have built expects the start and end line indices to be
             // relative to just this renderer, so normalize them by getting the first line index for this renderer.
@@ -2213,7 +2231,7 @@ void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference differ
     auto oldDecor = oldStyle->textDecorationLineInEffect();
     auto newDecor = newStyle.textDecorationLineInEffect();
     if ((oldDecor & TextDecorationLine::Underline) != (newDecor & TextDecorationLine::Underline))
-        tree->queueNodeUpdate(object->objectID(), { AXProperty::HasUnderline });
+        tree->queueNodeUpdate(object->objectID(), { AXProperty::UnderlineColor });
 
     if ((oldDecor & TextDecorationLine::LineThrough) != (newDecor & TextDecorationLine::LineThrough))
         tree->queueNodeUpdate(object->objectID(), { AXProperty::HasLinethrough });
@@ -2609,7 +2627,7 @@ static AXTextChangeContext secureContext(AccessibilityObject& object, AXTextChan
         if (text.isEmpty())
             return;
 
-        std::span<UChar> characters;
+        std::span<char16_t> characters;
         text = String::createUninitialized(text.length(), characters);
         for (unsigned i = 0; i < text.length(); ++i)
             characters[i] = maskingCharacter;
@@ -2877,8 +2895,8 @@ void AXObjectCache::handleRoleChanged(Element& element, const AtomString& oldVal
         return;
 
     // The class of an AX object created for an Element depends on the role attribute of that Element.
-    // Thus when the role changes, remove the existing AX object and force a ChildrenChanged on the parent so that the object is re-created.
-    // At the moment this is done only for table and row roles. Other roles may be added here if needed.
+    // Thus when the role changes, remove the existing AX object and force a ChildrenChanged on the parent
+    // so that the object is re-created.
     if (oldValue.isEmpty() || isTableOrRowRole(oldValue)
         || newValue.isEmpty() || isTableOrRowRole(newValue)) {
         if (auto* parent = object->parentObject()) {
@@ -2898,7 +2916,7 @@ void AXObjectCache::handleRoleChanged(AccessibilityObject& axObject, Accessibili
 
 #if PLATFORM(MAC)
     if (axObject.supportsLiveRegion())
-        addSortedObject(axObject, PreSortedObjectType::LiveRegion);
+        deferSortForNewLiveRegion(axObject);
     else if (AXCoreObject::liveRegionStatusIsEnabled(AtomString { AXCoreObject::defaultLiveRegionStatusForRole(oldRole) }))
         removeLiveRegion(axObject);
 #else
@@ -3036,9 +3054,17 @@ void AXObjectCache::handleAttributeChange(Element* element, const QualifiedName&
         postNotification(element, AXNotification::RequiredStatusChanged);
     else if (attrName == tabindexAttr) {
         if (oldValue.isEmpty() || newValue.isEmpty()) {
+#if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
+            // When ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE), we don't need to do issue any children-changed events,
+            // which is quite expensive — just re-compute is-ignored on this single object.
+            if (RefPtr object = get(*element))
+                object->recomputeIsIgnored();
+#else
             RefPtr parent = element->parentNode();
             if (auto* renderer = parent ? parent->renderer() : nullptr)
                 childrenChanged(*renderer);
+#endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
+
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
             postNotification(element, AXNotification::FocusableStateChanged);
 #endif
@@ -3155,7 +3181,7 @@ void AXObjectCache::handleAttributeChange(Element* element, const QualifiedName&
 #if PLATFORM(MAC)
         if (RefPtr object = getOrCreate(element)) {
             if (object->supportsLiveRegion())
-                addSortedObject(*object, PreSortedObjectType::LiveRegion);
+                deferSortForNewLiveRegion(object.releaseNonNull());
             else
                 removeLiveRegion(*object);
         }
@@ -4179,7 +4205,7 @@ CharacterOffset AXObjectCache::nextBoundary(const CharacterOffset& characterOffs
 
     auto searchRange = rangeForNodeContents(*boundary);
 
-    Vector<UChar, 1024> string;
+    Vector<char16_t, 1024> string;
     unsigned prefixLength = 0;
     
     if (requiresContextForWordBoundary(characterAfter(characterOffset))) {
@@ -4224,7 +4250,7 @@ CharacterOffset AXObjectCache::previousBoundary(const CharacterOffset& character
         return CharacterOffset();
     
     auto searchRange = rangeForNodeContents(*boundary);
-    Vector<UChar, 1024> string;
+    Vector<char16_t, 1024> string;
     unsigned suffixLength = 0;
 
     if (needsContextAtParagraphStart == NeedsContextAtParagraphStart::Yes && startCharacterOffsetOfParagraph(characterOffset).isEqual(characterOffset)) {
@@ -4731,13 +4757,13 @@ void AXObjectCache::performDeferredCacheUpdate(ForceLayout forceLayout)
     handleAllDeferredChildrenChanged();
 
     AXLOGDeferredCollection("ElementAddedOrRemovedList"_s, m_deferredElementAddedOrRemovedList);
-    auto nodeAddedOrRemovedList = copyToVector(m_deferredElementAddedOrRemovedList);
-    for (auto& weakNode : nodeAddedOrRemovedList) {
-        if (RefPtr node = weakNode.get()) {
-            handleMenuOpened(*node);
-            handleLiveRegionCreated(*node);
+    auto elementAddedOrRemovedList = copyToVector(m_deferredElementAddedOrRemovedList);
+    for (auto& weakElement : elementAddedOrRemovedList) {
+        if (RefPtr element = weakElement.get()) {
+            handleMenuOpened(*element);
+            handleLiveRegionCreated(*element);
 
-            if (RefPtr label = dynamicDowncast<HTMLLabelElement>(node.get())) {
+            if (RefPtr label = dynamicDowncast<HTMLLabelElement>(*element)) {
                 // A label was added or removed. Update its LabelFor relationships.
                 handleLabelChanged(getOrCreate(*label));
             }
@@ -5938,5 +5964,18 @@ void AXObjectCache::onWidgetVisibilityChanged(RenderWidget& widget)
     UNUSED_PARAM(widget);
 #endif
 }
+
+#if PLATFORM(MAC)
+bool AXObjectCache::isAppleInternalInstall()
+{
+    static bool isInternal = false;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        isInternal = os_variant_allows_internal_security_policies("com.apple.Accessibility");
+    });
+
+    return isInternal;
+}
+#endif // PLATFORM(COCOA)
 
 } // namespace WebCore

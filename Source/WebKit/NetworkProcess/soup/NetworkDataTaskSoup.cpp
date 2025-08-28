@@ -63,7 +63,7 @@ NetworkDataTaskSoup::NetworkDataTaskSoup(NetworkSession& session, NetworkDataTas
     , m_shouldContentSniff(parameters.contentSniffingPolicy)
     , m_shouldPreconnectOnly(parameters.shouldPreconnectOnly)
     , m_sourceOrigin(parameters.sourceOrigin)
-    , m_timeoutSource(RunLoop::main(), this, &NetworkDataTaskSoup::timeoutFired)
+    , m_timeoutSource(RunLoop::mainSingleton(), "NetworkDataTaskSoup::TimeoutSource"_s, this, &NetworkDataTaskSoup::timeoutFired)
 {
     auto request = parameters.request;
     if (request.url().protocolIsInHTTPFamily()) {

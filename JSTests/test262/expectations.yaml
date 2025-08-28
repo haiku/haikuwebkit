@@ -25,9 +25,6 @@ test/built-ins/Iterator/concat/fresh-iterator-result.js:
 test/built-ins/Iterator/concat/next-method-returns-throwing-value.js:
   default: 'Test262Error: '
   strict mode: 'Test262Error: '
-test/built-ins/Map/prototype/getOrInsertComputed/canonical-key-passed-to-callback.js:
-  default: 'Test262Error: Expected SameValue(«0», «-0») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«0», «-0») to be true'
 test/built-ins/Proxy/apply/arguments-realm.js:
   default: 'Test262Error: Expected SameValue(«function Array() {'
   strict mode: 'Test262Error: Expected SameValue(«function Array() {'
@@ -1075,21 +1072,6 @@ test/built-ins/TypedArrayConstructors/internals/Set/key-is-valid-index-prototype
 test/built-ins/TypedArrayConstructors/internals/Set/key-is-valid-index-reflect-set.js:
   default: 'Test262Error: target[0] should remain unchanged (receiver: empty object) Expected SameValue(«2.3», «0») to be true (Testing with Float64Array.)'
   strict mode: 'Test262Error: target[0] should remain unchanged (receiver: empty object) Expected SameValue(«2.3», «0») to be true (Testing with Float64Array.)'
-test/built-ins/Uint8Array/fromBase64/last-chunk-invalid.js:
-  default: 'Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all'
-  strict mode: 'Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all'
-test/built-ins/Uint8Array/prototype/setFromBase64/last-chunk-handling.js:
-  default: 'Test262Error: Expected SameValue(«6», «4») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«6», «4») to be true'
-test/built-ins/Uint8Array/prototype/setFromBase64/target-size.js:
-  default: 'Test262Error: Expected SameValue(«7», «4») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«7», «4») to be true'
-test/intl402/DateTimeFormat/canonicalize-timezone.js:
-  default: 'Test262Error: Time zone name Australia/Canberra should be preserved and not canonicalized to Australia/Sydney Expected SameValue(«"Australia/Sydney"», «"Australia/Canberra"») to be true'
-  strict mode: 'Test262Error: Time zone name Australia/Canberra should be preserved and not canonicalized to Australia/Sydney Expected SameValue(«"Australia/Sydney"», «"Australia/Canberra"») to be true'
-test/intl402/DateTimeFormat/canonicalize-utc-timezone.js:
-  default: "Test262Error: Time zone name Etc/GMT should be preserved and not canonicalized to 'UTC' Expected SameValue(«\"UTC\"», «\"Etc/GMT\"») to be true"
-  strict mode: "Test262Error: Time zone name Etc/GMT should be preserved and not canonicalized to 'UTC' Expected SameValue(«\"UTC\"», «\"Etc/GMT\"») to be true"
 test/intl402/DateTimeFormat/prototype/format/temporal-objects-not-overlapping-options.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
@@ -1141,15 +1123,9 @@ test/intl402/DateTimeFormat/prototype/formatToParts/temporal-objects-not-overlap
 test/intl402/DateTimeFormat/prototype/formatToParts/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
-test/intl402/DateTimeFormat/timezone-case-insensitive.js:
-  default: 'Test262Error: Time zone created from string "America/Argentina/Buenos_Aires" Expected SameValue(«"America/Buenos_Aires"», «"America/Argentina/Buenos_Aires"») to be true'
-  strict mode: 'Test262Error: Time zone created from string "America/Argentina/Buenos_Aires" Expected SameValue(«"America/Buenos_Aires"», «"America/Argentina/Buenos_Aires"») to be true'
 test/intl402/DateTimeFormat/timezone-legacy-non-iana.js:
   default: 'Test262Error: Time zone: ACT Expected a RangeError to be thrown but no exception was thrown at all'
   strict mode: 'Test262Error: Time zone: ACT Expected a RangeError to be thrown but no exception was thrown at all'
-test/intl402/DateTimeFormat/timezone-not-canonicalized.js:
-  default: 'Test262Error: Expected SameValue(«"Asia/Calcutta"», «"Asia/Kolkata"») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«"Asia/Calcutta"», «"Asia/Kolkata"») to be true'
 test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DateTimeFormat.js:
   default: 'RangeError: calendar is not a well-formed calendar value'
   strict mode: 'RangeError: calendar is not a well-formed calendar value'
@@ -1159,15 +1135,9 @@ test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DisplayNames.js:
 test/intl402/Intl/supportedValuesOf/calendars.js:
   default: "Test262Error: malayalam matches the 'type' production"
   strict mode: "Test262Error: malayalam matches the 'type' production"
-test/intl402/Intl/supportedValuesOf/timeZones-include-non-continental.js:
-  default: 'Test262Error: non-continental timezone Etc/GMT+1 is not supported'
-  strict mode: 'Test262Error: non-continental timezone Etc/GMT+1 is not supported'
 test/intl402/Locale/extensions-grandfathered.js:
   default: 'Test262Error: Expected SameValue(«"fr-Cyrl-FR-gaulish-u-nu-latn"», «"fr-Cyrl-FR-u-nu-latn"») to be true'
   strict mode: 'Test262Error: Expected SameValue(«"fr-Cyrl-FR-gaulish-u-nu-latn"», «"fr-Cyrl-FR-u-nu-latn"») to be true'
-test/intl402/Locale/getters.js:
-  default: 'Test262Error: Expected SameValue(«undefined», «"und"») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«undefined», «"und"») to be true'
 test/intl402/NumberFormat/currency-digits-nonstandard-notation.js:
   default: "Test262Error: Didn't get correct maximumFractionDigits for JPY in engineering notation. Expected SameValue(«0», «3») to be true"
   strict mode: "Test262Error: Didn't get correct maximumFractionDigits for JPY in engineering notation. Expected SameValue(«0», «3») to be true"

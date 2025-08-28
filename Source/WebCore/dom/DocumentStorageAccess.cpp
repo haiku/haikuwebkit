@@ -76,7 +76,7 @@ void DocumentStorageAccess::hasStorageAccess(Document& document, Ref<DeferredPro
     DocumentStorageAccess::from(document)->hasStorageAccess(WTFMove(promise));
 }
 
-static bool hasSameOrigin(const Document& document)
+static bool hasSameOriginAsAllAncestors(const Document& document)
 {
     if (document.isTopDocument())
         return true;
@@ -102,7 +102,7 @@ std::optional<bool> DocumentStorageAccess::hasStorageAccessQuickCheck()
     if (!frame || document->protectedSecurityOrigin()->isOpaque())
         return false;
 
-    if (hasSameOrigin(document))
+    if (hasSameOriginAsAllAncestors(document))
         return true;
 
     if (!frame->page())
@@ -172,8 +172,11 @@ std::optional<StorageAccessQuickResult> DocumentStorageAccess::requestStorageAcc
     if (!frame || securityOrigin->isOpaque() || !isAllowedToRequestStorageAccess())
         return StorageAccessQuickResult::Reject;
 
-    if (hasSameOrigin(document))
+    if (hasSameOriginAsAllAncestors(document))
         return StorageAccessQuickResult::Grant;
+
+    if (securityOrigin->isSameSiteAs(document->protectedTopOrigin()))
+        return std::nullopt;
 
     // If there is a sandbox, it has to allow the storage access API to be called.
     if (!document->sandboxFlags().isEmpty() && document->isSandboxed(SandboxFlag::StorageAccessByUserActivation))

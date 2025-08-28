@@ -35,9 +35,35 @@ struct AttachmentLayout;
 
 namespace WebCore {
 
+#if ENABLE(FORM_CONTROL_REFRESH)
+
+enum class CornerType : uint8_t {
+    Noncontinuous,
+    Continuous
+};
+
+struct RoundedShape {
+    std::optional<Path> path;
+    FloatRect boundingRect;
+    float cornerRadius = 0;
+    CornerType cornerType = CornerType::Noncontinuous;
+};
+
+enum class ShouldComputePath : bool  {
+    No,
+    Yes
+};
+
+#endif
+
 class RenderThemeCocoa : public RenderTheme {
 public:
     WEBCORE_EXPORT static RenderThemeCocoa& singleton();
+
+#if ENABLE(FORM_CONTROL_REFRESH)
+    static std::optional<RoundedShape> shapeForInteractionRegion(const RenderBox&, const FloatRect&, ShouldComputePath);
+    static FloatSize inflateRectForInteractionRegion(const RenderObject&, FloatRect&);
+#endif
 
     struct IconAndSize {
 #if PLATFORM(IOS_FAMILY)
@@ -238,6 +264,8 @@ protected:
     Color disabledSubmitButtonTextColor() const final;
 
     bool mayNeedBleedAvoidance(const RenderStyle&) const final;
+
+    float adjustedMaximumLogicalWidthForControl(const RenderStyle&, const Element&, float) const final;
 #endif
 
 private:
@@ -252,6 +280,8 @@ private:
 #if ENABLE(APPLE_PAY)
     void adjustApplePayButtonStyle(RenderStyle&, const Element*) const override;
 #endif
+
+    LayoutRect adjustedPaintRect(const RenderBox&, const LayoutRect&) const final;
 
 #if ENABLE(VIDEO)
     Vector<String, 2> mediaControlsStyleSheets(const HTMLMediaElement&) override;

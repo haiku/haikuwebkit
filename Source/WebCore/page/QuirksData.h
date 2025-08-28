@@ -192,6 +192,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool needsMediaRewriteRangeRequestQuirk : 1 { false };
     bool shouldEnterNativeFullscreenWhenCallingElementRequestFullscreen : 1 { false };
     bool shouldDelayReloadWhenRegisteringServiceWorker : 1 { false };
+    bool shouldDisableDOMAudioSession : 1 { false };
 };
 
 } // namespace WebCore

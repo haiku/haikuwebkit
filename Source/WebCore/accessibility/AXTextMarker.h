@@ -213,7 +213,7 @@ using PlatformTextMarkerData = NSData *;
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(AXTextMarker);
 class AXTextMarker {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(AXTextMarker);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(AXTextMarker, AXTextMarker);
     friend class AXTextMarkerRange;
     friend std::partial_ordering operator<=>(const AXTextMarker&, const AXTextMarker&);
 public:
@@ -410,7 +410,7 @@ public:
     bool isCollapsed() const { return m_start.isEqual(m_end); }
     bool isConfinedTo(std::optional<AXID>) const;
     bool isConfined() const;
-    String toString() const;
+    String toString(IncludeListMarkerText = IncludeListMarkerText::Yes) const;
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
     // Returns the bounds (frame) of the text in this range relative to the viewport.

@@ -82,40 +82,6 @@ bool operator==(const CGRect& a, const CGRect& b)
 
 #endif
 
-#if PLATFORM(MAC) && !defined(NSGEOMETRY_TYPES_SAME_AS_CGGEOMETRY_TYPES)
-
-std::ostream& operator<<(std::ostream& os, const NSPoint& point)
-{
-    return ostreamPointCommon(os, point);
-}
-
-bool operator==(const NSPoint& a, const NSPoint& b)
-{
-    return NSEqualPoints(a, b);
-}
-
-std::ostream& operator<<(std::ostream& os, const NSSize& size)
-{
-    return ostreamSizeCommon(os, size);
-}
-
-bool operator==(const NSSize& a, const NSSize& b)
-{
-    return NSEqualSizes(a, b);
-}
-
-std::ostream& operator<<(std::ostream& os, const NSRect& rect)
-{
-    return ostreamRectCommon(os, rect);
-}
-
-bool operator==(const NSRect& a, const NSRect& b)
-{
-    return NSEqualRects(a, b);
-}
-
-#endif
-
 #if PLATFORM(IOS_FAMILY)
 
 void TestWebKitAPI::Util::instantiateUIApplicationIfNeeded(Class customApplicationClass)

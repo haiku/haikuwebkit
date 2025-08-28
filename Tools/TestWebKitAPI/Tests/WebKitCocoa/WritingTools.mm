@@ -29,6 +29,7 @@
 
 #import "AppKitSPI.h"
 #import "ClassMethodSwizzler.h"
+#import "DecomposedAttributedText.h"
 #import "InstanceMethodSwizzler.h"
 #import "PlatformUtilities.h"
 #import "Test.h"
@@ -2636,7 +2637,7 @@ static void expectScheduleShowAffordanceForSelectionRectCalled(bool expectation)
         TestWebKitAPI::Util::run(&didCallScheduleShowAffordanceForSelectionRect);
     else {
         bool doneWaiting = false;
-        RunLoop::protectedMain()->dispatchAfter(300_ms, [&] {
+        RunLoop::mainSingleton().dispatchAfter(300_ms, [&] {
             EXPECT_FALSE(didCallScheduleShowAffordanceForSelectionRect);
             doneWaiting = true;
         });
@@ -4210,5 +4211,203 @@ TEST(WritingTools, PDFTextSelections)
     EXPECT_EQ([webView writingToolsBehaviorForTesting], CocoaWritingToolsBehaviorNone);
 }
 #endif
+
+static RetainPtr<NSAttributedString> htmlToAttributedString(const ASCIILiteral& html)
+{
+    RetainPtr session = adoptNS([[WTSession alloc] initWithType:WTSessionTypeComposition textViewDelegate:nil]);
+
+    RetainPtr webView = adoptNS([[WritingToolsWKWebView alloc] initWithHTMLString:html.createNSString().get()]);
+    [webView focusDocumentBodyAndSelectAll];
+
+    __block RetainPtr<NSAttributedString> attributedText;
+    __block bool finished = false;
+    [[webView writingToolsDelegate] willBeginWritingToolsSession:session.get() requestContexts:^(NSArray<WTContext *> *contexts) {
+        attributedText = contexts.firstObject.attributedText;
+        finished = true;
+    }];
+    TestWebKitAPI::Util::run(&finished);
+
+    return attributedText;
+}
+
+static void runContextGenerationTest(const ASCIILiteral& html, const DecomposedAttributedText& expected)
+{
+    RetainPtr attributedText = htmlToAttributedString(html);
+    auto actual = decompose(attributedText.get());
+
+    TextStream stream;
+    stream << "expected " << actual << " to equal " << expected;
+    EXPECT_EQ(actual, expected) << stream.release().utf8().data();
+}
+
+TEST(WritingToolsContextGeneration, ContextWithBasicOrderedList)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <ol>
+            <li>A</li>
+            <li>B</li>
+            <li>C</li>
+        </ol>
+    </body>
+    )"""_s;
+
+    DecomposedAttributedText expected { {
+        DecomposedAttributedText::OrderedList { {
+            "A\nB\nC"_s,
+        } },
+    } };
+
+    runContextGenerationTest(html, expected);
+}
+
+TEST(WritingToolsContextGeneration, ContextWithCustomizedOrderedList)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <ol start='4' style='list-style-type: lower-roman;'>
+            <li>A</li>
+            <li>B</li>
+            <li>C</li>
+        </ol>
+    </body>
+    )"""_s;
+
+    DecomposedAttributedText expected { {
+        DecomposedAttributedText::OrderedList { 4, DecomposedAttributedText::ListMarker::LowercaseRoman, {
+            "A\nB\nC"_s,
+        } },
+    } };
+
+    runContextGenerationTest(html, expected);
+}
+
+TEST(WritingToolsContextGeneration, ContextWithNestedLists)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <ol>
+            <li>
+                <ul>
+                    <li>T</li>
+                    <ol>
+                        <li>I</li><li>J</li><li>K</li>
+                    </ol>
+                    <li>U</li>
+                </ul>
+            </li>
+        <li>B</li>
+        <li>
+            <ol>
+                <li>V</li><li>W</li>
+            </ol>
+        </li>
+        <li>C</li>
+        </ol>
+        <div>Z</div>
+    </body>
+    )"""_s;
+
+    DecomposedAttributedText expected { {
+        DecomposedAttributedText::OrderedList { {
+            DecomposedAttributedText::UnorderedList { DecomposedAttributedText::ListMarker::Circle, {
+                "T"_s,
+                DecomposedAttributedText::OrderedList { {
+                    "I\nJ\nK"_s
+                } },
+                "U"_s,
+            } },
+            "B"_s,
+            DecomposedAttributedText::OrderedList { {
+                "V\nW"_s,
+            } },
+            "C"_s,
+        } },
+        "Z"_s,
+    } };
+
+    runContextGenerationTest(html, expected);
+}
+
+TEST(WritingToolsContextGeneration, ContextWithDiscontiguousLists)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <div>Hello</div>
+        <ol>
+            <li>A</li><li>B</li><li>C</li>
+        </ol>
+        <div>World</div>
+        <ul>
+            <li>X</li><li>Y</li><li>Z</li>
+        </ul>
+    </body>
+    )"""_s;
+
+    DecomposedAttributedText expected { {
+        "Hello"_s,
+        DecomposedAttributedText::OrderedList { {
+            "A\nB\nC"_s,
+        } },
+        "World"_s,
+        DecomposedAttributedText::UnorderedList { {
+            "X\nY\nZ"_s,
+        } },
+    } };
+
+    runContextGenerationTest(html, expected);
+}
+
+TEST(WritingToolsContextGeneration, ContextWithBasicUnorderedList)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <ul>
+            <li>A</li>
+            <li>B</li>
+            <li>C</li>
+        </ul>
+    </body>
+    )"""_s;
+
+    DecomposedAttributedText expected { {
+        DecomposedAttributedText::UnorderedList { {
+            "A\nB\nC"_s,
+        } },
+    } };
+
+    runContextGenerationTest(html, expected);
+}
+
+TEST(WritingToolsContextGeneration, ContextWithStyledContentChildrenInList)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <ul>
+            <li>
+                <div>The <i>quick</i></div>
+            </li>
+            <li>brown fox</li>
+            <li>jumped <b>over</b> the dog</li>
+        </ul>
+    </body>
+    )"""_s;
+
+    DecomposedAttributedText expected { {
+        DecomposedAttributedText::UnorderedList { {
+            "The"_s,
+            DecomposedAttributedText::Italic { {
+                "quick"_s,
+            } },
+            "brown fox\njumped"_s,
+            DecomposedAttributedText::Bold { {
+                "over"_s,
+            } },
+            "the dog"_s,
+        } },
+    } };
+
+    runContextGenerationTest(html, expected);
+}
 
 #endif

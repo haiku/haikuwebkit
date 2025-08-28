@@ -182,7 +182,7 @@ Logger& ModelConnectionToWebProcess::logger()
     return *m_logger;
 }
 
-void ModelConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection& connection, IPC::MessageName messageName, int32_t)
+void ModelConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection& connection, IPC::MessageName messageName, const Vector<uint32_t>&)
 {
 #if ENABLE(IPC_TESTING_API)
     if (connection.ignoreInvalidMessageForTesting())

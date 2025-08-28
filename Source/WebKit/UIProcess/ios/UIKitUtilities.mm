@@ -400,6 +400,16 @@ UIRectEdge uiRectEdgeForSide(WebCore::BoxSide side)
     return UIRectEdgeNone;
 }
 
+UIEdgeInsets maxEdgeInsets(const UIEdgeInsets& a, const UIEdgeInsets& b)
+{
+    return UIEdgeInsetsMake(
+        std::max<CGFloat>(a.top, b.top),
+        std::max<CGFloat>(a.left, b.left),
+        std::max<CGFloat>(a.bottom, b.bottom),
+        std::max<CGFloat>(a.right, b.right)
+    );
+}
+
 } // namespace WebKit
 
 #endif // PLATFORM(IOS_FAMILY)

@@ -35,7 +35,7 @@ FAIL :number_of_dynamic_buffers_exceeds_the_maximum_value: assert_unreached:
     OK
   - EXCEPTION: Error: Unexpected validation error occurred: Storage buffers count(45) exceeded max count per stage(44)
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :number_of_bind_group_layouts_exceeds_the_maximum_value: assert_unreached:
   - VALIDATION FAILED: Validation succeeded unexpectedly.
@@ -113,6 +113,6 @@ FAIL :bind_group_layouts,set_pipeline_with_null_bind_group_layouts: assert_unrea
     OK
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 

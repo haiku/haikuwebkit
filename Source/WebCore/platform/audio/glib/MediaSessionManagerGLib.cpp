@@ -115,7 +115,7 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaSessionManagerGLib);
 
-const std::unique_ptr<PlatformMediaSessionManager> PlatformMediaSessionManager::create()
+RefPtr<PlatformMediaSessionManager> PlatformMediaSessionManager::create(std::optional<PageIdentifier>)
 {
     GUniqueOutPtr<GError> error;
     auto mprisInterface = adoptGRef(g_dbus_node_info_new_for_xml(s_mprisInterface, &error.outPtr()));
@@ -123,7 +123,7 @@ const std::unique_ptr<PlatformMediaSessionManager> PlatformMediaSessionManager::
         g_warning("Failed at parsing XML Interface definition: %s", error->message);
         return nullptr;
     }
-    return makeUniqueWithoutRefCountedCheck<MediaSessionManagerGLib, PlatformMediaSessionManager>(WTFMove(mprisInterface));
+    return adoptRef(new MediaSessionManagerGLib(WTFMove(mprisInterface)));
 }
 
 MediaSessionManagerGLib::MediaSessionManagerGLib(GRefPtr<GDBusNodeInfo>&& mprisInterface)
@@ -313,6 +313,10 @@ void MediaSessionManagerGLib::updateNowPlayingInfo()
         return;
     }
 
+    auto session = m_sessions.get(platformSession->mediaSessionIdentifier());
+    if (!session)
+        return;
+
     auto nowPlayingInfo = platformSession->nowPlayingInfo();
     if (!nowPlayingInfo)
         return;
@@ -342,7 +346,6 @@ void MediaSessionManagerGLib::updateNowPlayingInfo()
 
     m_nowPlayingActive = nowPlayingInfo->allowsNowPlayingControlsVisibility;
 
-    auto session = m_sessions.get(platformSession->mediaSessionIdentifier());
     session->updateNowPlaying(*nowPlayingInfo);
 }
 

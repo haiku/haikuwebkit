@@ -50,7 +50,7 @@ public:
     };
 
     struct MockBookmarkNode: public CanMakeWeakPtr<MockBookmarkNode>, public RefCounted<MockBookmarkNode> {
-        WTF_MAKE_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_FAST_ALLOCATED(MockBookmarkNode);
 
     public:
         template<typename... Args>

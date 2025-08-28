@@ -212,4 +212,4 @@ struct MarkableTraits<WebCore::CSS::Color> {
 
 } // namespace WTF
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::CSS::Color> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::CSS::Color)

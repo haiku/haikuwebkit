@@ -147,7 +147,7 @@ static const Seconds scrollFrequency { 1000_s / 60. };
 DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, frameCounter, ("Frame"));
 
 struct OverrideScreenSize {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(OverrideScreenSize);
 
     FloatSize size;
 };

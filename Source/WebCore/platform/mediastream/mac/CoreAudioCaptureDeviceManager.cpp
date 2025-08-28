@@ -116,7 +116,9 @@ static bool isValidMicrophoneDevice(const CoreAudioCaptureDevice& device, bool f
 #if HAVE(AUDIO_DEVICE_PROPERTY_REFERENCE_STREAM_ENABLED)
             kAudioDevicePropertyReferenceStreamEnabled,
 #else
+            ALLOW_DEPRECATED_DECLARATIONS_BEGIN
             kAudioDevicePropertyTapEnabled,
+            ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
             kAudioDevicePropertyScopeOutput,
             kAudioObjectPropertyElementMain

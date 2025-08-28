@@ -37,9 +37,11 @@ class FrameLoadRequest;
 class IntSize;
 class SecurityOriginData;
 
+enum class FocusDirection : uint8_t;
 enum class FoundElementInRemoteFrame : bool;
 enum class RenderAsTextFlag : uint16_t;
 
+struct FocusEventData;
 struct MessageWithMessagePorts;
 
 class RemoteFrameClient : public FrameLoaderClient {

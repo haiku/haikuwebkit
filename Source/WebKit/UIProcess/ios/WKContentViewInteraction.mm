@@ -117,7 +117,6 @@
 #import <WebCore/CompositionHighlight.h>
 #import <WebCore/DOMPasteAccess.h>
 #import <WebCore/DataDetection.h>
-#import <WebCore/ElementIdentifier.h>
 #import <WebCore/FloatQuad.h>
 #import <WebCore/FloatRect.h>
 #import <WebCore/FontAttributeChanges.h>
@@ -126,6 +125,7 @@
 #import <WebCore/KeyboardScroll.h>
 #import <WebCore/LocalizedStrings.h>
 #import <WebCore/MIMETypeRegistry.h>
+#import <WebCore/NodeIdentifier.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/Pasteboard.h>
 #import <WebCore/Path.h>
@@ -2129,7 +2129,7 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
         _isHandlingActivePressesEvent = NO;
 
         if (!_keyWebEventHandlers.isEmpty()) {
-            RunLoop::protectedMain()->dispatch([weakSelf = WeakObjCPtr<WKContentView>(self)] {
+            RunLoop::mainSingleton().dispatch([weakSelf = WeakObjCPtr<WKContentView>(self)] {
                 RetainPtr strongSelf = weakSelf.get();
                 if (!strongSelf || [strongSelf isFirstResponder])
                     return;
@@ -2273,6 +2273,18 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
 }
 #endif // ENABLE(TOUCH_EVENTS)
 
+- (BOOL)_isTouchActionSwipeGestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
+{
+    return gestureRecognizer == _touchActionLeftSwipeGestureRecognizer || gestureRecognizer == _touchActionRightSwipeGestureRecognizer || gestureRecognizer == _touchActionUpSwipeGestureRecognizer || gestureRecognizer == _touchActionDownSwipeGestureRecognizer;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveEvent:(UIEvent *)event
+{
+    if ([self _isTouchActionSwipeGestureRecognizer:gestureRecognizer])
+        return event.type != UIEventTypeScroll;
+    return YES;
+}
+
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 {
 #if HAVE(LOOKUP_GESTURE_RECOGNIZER)
@@ -2292,7 +2304,7 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
         return touch.type != UITouchTypeIndirectPointer;
 #endif
 
-    if (gestureRecognizer == _touchActionLeftSwipeGestureRecognizer || gestureRecognizer == _touchActionRightSwipeGestureRecognizer || gestureRecognizer == _touchActionUpSwipeGestureRecognizer || gestureRecognizer == _touchActionDownSwipeGestureRecognizer) {
+    if ([self _isTouchActionSwipeGestureRecognizer:gestureRecognizer]) {
         // We update the enabled state of the various swipe gesture recognizers such that if we have a unidirectional touch-action
         // specified (only pan-x or only pan-y) we enable the two recognizers in the opposite axis to prevent scrolling from starting
         // if the initial gesture is such a swipe. Since the recognizers are specified to use a single finger for recognition, we don't
@@ -2866,7 +2878,7 @@ static inline WebCore::FloatSize tapHighlightBorderRadius(WebCore::FloatSize bor
     // Mail, we won't take the keyboard height into account when scrolling.
     // Mitigate this by deferring the call to -_zoomToRevealFocusedElement in this case until after the
     // keyboard has finished animating. We can revert this once rdar://87733414 is fixed.
-    RunLoop::protectedMain()->dispatch([weakSelf = WeakObjCPtr<WKContentView>(self)] {
+    RunLoop::mainSingleton().dispatch([weakSelf = WeakObjCPtr<WKContentView>(self)] {
         auto strongSelf = weakSelf.get();
         if (!strongSelf || !strongSelf->_revealFocusedElementDeferrer)
             return;
@@ -5544,7 +5556,7 @@ static void selectionChangedWithTouch(WKTextInteractionWrapper *interaction, con
 
         // Give the page some time to present custom editing UI before attempting to detect and evade it.
         auto delayBeforeShowingEditMenu = std::max(0_s, 0.25_s - (ApproximateTime::now() - startTime));
-        WorkQueue::protectedMain()->dispatchAfter(delayBeforeShowingEditMenu, [completion = WTFMove(completion), weakSelf]() mutable {
+        WorkQueue::mainSingleton().dispatchAfter(delayBeforeShowingEditMenu, [completion = WTFMove(completion), weakSelf]() mutable {
             auto strongSelf = weakSelf.get();
             if (!strongSelf) {
                 completion(UIEditMenuArrowDirectionAutomatic);
@@ -10504,12 +10516,12 @@ static BOOL shouldEnableDragInteractionForPolicy(_WKDragInteractionPolicy policy
     [self cleanUpDragSourceSessionState];
 }
 
-- (void)_startDrag:(RetainPtr<CGImageRef>)image item:(const WebCore::DragItem&)item elementID:(std::optional<WebCore::ElementIdentifier>)elementID
+- (void)_startDrag:(RetainPtr<CGImageRef>)image item:(const WebCore::DragItem&)item nodeID:(std::optional<WebCore::NodeIdentifier>)nodeID
 {
     ASSERT(item.sourceAction);
 
 #if ENABLE(MODEL_PROCESS)
-    _dragDropInteractionState.setElementIdentifier(elementID);
+    _dragDropInteractionState.setElementIdentifier(nodeID);
     if (item.modelLayerID && _page) {
         if (RefPtr modelPresentationManager = _page->modelPresentationManagerProxy()) {
             if (RetainPtr viewForDragPreview = modelPresentationManager->startDragForModel(*item.modelLayerID)) {
@@ -10655,8 +10667,8 @@ static std::optional<WebCore::DragOperation> coreDragOperationForUIDropOperation
         if (RefPtr modelPresentationManager = _page->modelPresentationManagerProxy())
             modelPresentationManager->doneWithCurrentDragSession();
 
-        if (_dragDropInteractionState.elementIdentifier())
-            _page->modelDragEnded(_dragDropInteractionState.elementIdentifier().value());
+        if (_dragDropInteractionState.nodeIdentifier())
+            _page->modelDragEnded(_dragDropInteractionState.nodeIdentifier().value());
     }
 #endif
 
@@ -11424,6 +11436,29 @@ static Vector<WebCore::IntSize> sizesOfPlaceholderElementsToInsertWhenDroppingIt
 
 #endif // ENABLE(DRAG_SUPPORT)
 
+#if HAVE(UITOOLTIPINTERACTION)
+- (void)_toolTipChanged:(NSString *)newToolTip
+{
+    if (!_toolTip) {
+        _toolTip = adoptNS([[UIToolTipInteraction alloc] init]);
+        [_toolTip setDelegate:self];
+        [self addInteraction:_toolTip.get()];
+    }
+
+    // FIXME: rdar://156729915 ([Catalyst] Cannot update tooltip interaction on the same view)
+    [_toolTip setDefaultToolTip:newToolTip];
+    RetainPtr sceneView = [[UINSSharedApplicationDelegate() hostWindowForUIWindow:[self window]] sceneView];
+    [[sceneView _dynamicToolTipManager] windowChangedKeyState];
+}
+
+// MARK: UIToolTipInteractionDelegate
+
+- (UIToolTipConfiguration *)toolTipInteraction:(UIToolTipInteraction *)interaction configurationAtPoint:(CGPoint)point
+{
+    return [UIToolTipConfiguration configurationWithToolTip:interaction.defaultToolTip];
+}
+#endif
+
 #pragma mark - Model Interaction Support
 #if ENABLE(MODEL_PROCESS)
 - (void)modelInteractionPanGestureDidBeginAtPoint:(CGPoint)inputPoint
@@ -11440,25 +11475,25 @@ static Vector<WebCore::IntSize> sizesOfPlaceholderElementsToInsertWhenDroppingIt
         WebCore::TransformationMatrix transform;
         transform.translate3d(inputPoint.x, inputPoint.y, 0);
         _stageModeSession->transform = transform;
-        _page->stageModeSessionDidUpdate(_stageModeSession->elementID, _stageModeSession->transform);
+        _page->stageModeSessionDidUpdate(_stageModeSession->nodeID, _stageModeSession->transform);
     }
 }
 
 - (void)modelInteractionPanGestureDidEnd
 {
     if (_stageModeSession && !_stageModeSession->isPreparingForInteraction)
-        _page->stageModeSessionDidEnd(_stageModeSession->elementID);
+        _page->stageModeSessionDidEnd(_stageModeSession->nodeID);
 
     [self cleanUpStageModeSessionState];
 }
 
-- (void)didReceiveInteractiveModelElement:(std::optional<WebCore::ElementIdentifier>)elementID
+- (void)didReceiveInteractiveModelElement:(std::optional<WebCore::NodeIdentifier>)nodeID
 {
     if (!_stageModeSession || !_stageModeSession->isPreparingForInteraction)
         return;
 
-    _stageModeSession->isPreparingForInteraction = !elementID;
-    _stageModeSession->elementID = elementID;
+    _stageModeSession->isPreparingForInteraction = !nodeID;
+    _stageModeSession->nodeID = nodeID;
 }
 
 - (void)cleanUpStageModeSessionState
@@ -11548,13 +11583,15 @@ static RetainPtr<UITargetedPreview> createTargetedPreview(UIImage *image, UIView
     return adoptNS([[UITargetedPreview alloc] initWithView:imageView.get() parameters:parameters.get() target:target.get()]);
 }
 
-- (UITargetedPreview *)_createTargetedPreviewFromTextIndicator:(WebCore::TextIndicatorData)textIndicatorData previewContainer:(UIView *)previewContainer
+- (UITargetedPreview *)_createTargetedPreviewFromTextIndicator:(RefPtr<WebCore::TextIndicator>&&)textIndicator previewContainer:(UIView *)previewContainer
 {
-    RetainPtr textIndicatorImage = uiImageForImage(textIndicatorData.contentImage.get());
+    if (!textIndicator)
+        return nil;
 
-    RetainPtr preview = createTargetedPreview(textIndicatorImage.get(), self, previewContainer, textIndicatorData.textBoundingRectInRootViewCoordinates, textIndicatorData.textRectsInBoundingRectCoordinates, ^{
-        if (textIndicatorData.estimatedBackgroundColor != WebCore::Color::transparentBlack)
-            return cocoaColor(textIndicatorData.estimatedBackgroundColor).autorelease();
+    RetainPtr textIndicatorImage = uiImageForImage(textIndicator->contentImage());
+    RetainPtr preview = createTargetedPreview(textIndicatorImage.get(), self, previewContainer, textIndicator->textBoundingRectInRootViewCoordinates(), textIndicator->textRectsInBoundingRectCoordinates(), ^{
+        if (textIndicator->estimatedBackgroundColor() != WebCore::Color::transparentBlack)
+            return cocoaColor(textIndicator->estimatedBackgroundColor()).autorelease();
 
         // In the case where background color estimation fails, it doesn't make sense to
         // show a text indicator preview with a clear background in light mode. Default
@@ -11665,10 +11702,10 @@ static RetainPtr<UITargetedPreview> createFallbackTargetedPreview(UIView *rootVi
     RetainPtr<UITargetedPreview> targetedPreview;
 
     if (_positionInformation.isLink && _positionInformation.textIndicator && _positionInformation.textIndicator->contentImage()) {
-        RefPtr indicator = _positionInformation.textIndicator;
-        _positionInformationLinkIndicator = indicator ? std::optional { indicator->data() } : std::nullopt;
+        RefPtr textIndicator = _positionInformation.textIndicator;
+        _positionInformationLinkIndicator = textIndicator ? std::optional { textIndicator->data() } : std::nullopt;
 
-        targetedPreview = [self _createTargetedPreviewFromTextIndicator:indicator->data() previewContainer:self.containerForContextMenuHintPreviews];
+        targetedPreview = [self _createTargetedPreviewFromTextIndicator:WTFMove(textIndicator) previewContainer:self.containerForContextMenuHintPreviews];
     } else if ((_positionInformation.isAttachment || _positionInformation.isImage) && _positionInformation.image) {
         auto cgImage = _positionInformation.image->makeCGImageCopy();
         auto image = adoptNS([[UIImage alloc] initWithCGImage:cgImage.get()]);
@@ -13871,7 +13908,7 @@ inline static NSString *extendSelectionCommand(UITextLayoutDirection direction)
             return;
         }
 
-        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:textIndicator->data() previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
+        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:WTFMove(textIndicator) previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
         completionHandler(targetedPreview.get());
     });
 }
@@ -13911,13 +13948,13 @@ inline static NSString *extendSelectionCommand(UITextLayoutDirection direction)
     // Store this completion handler so that it can be called after the execution of the next
     // call to replace the text and eventually use this completion handler to pass the
     // text indicator to UIKit.
-    _page->storeDestinationCompletionHandlerForAnimationID(*animationUUID, [protectedSelf = retainPtr(self), completionHandler = makeBlockPtr(completionHandler)] (auto&& indicatorData) {
-        if (!indicatorData) {
+    _page->storeDestinationCompletionHandlerForAnimationID(*animationUUID, [protectedSelf = retainPtr(self), completionHandler = makeBlockPtr(completionHandler)] (auto&& textIndicatorData) {
+        if (!textIndicatorData) {
             completionHandler(nil);
             return;
         }
 
-        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:*indicatorData previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
+        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:WebCore::TextIndicator::create(*textIndicatorData) previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
         completionHandler(targetedPreview.get());
     });
 
@@ -14499,7 +14536,7 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
 
     return @{
         @"awaitingResult" : @(_stageModeSession->isPreparingForInteraction),
-        @"hitTestSuccessful" : @(_stageModeSession->elementID.has_value()),
+        @"hitTestSuccessful" : @(_stageModeSession->nodeID.has_value()),
     };
 }
 #endif

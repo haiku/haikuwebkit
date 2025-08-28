@@ -404,6 +404,7 @@ void ScrollingTreeScrollingNode::handleScrollPositionRequest(const RequestedScro
     }
 
     scrollTo(destinationPosition, requestedScrollData.scrollType, requestedScrollData.clamping);
+    scrollingTree()->scrollingTreeNodeDidStopProgrammaticScroll(*this);
 }
 
 FloatPoint ScrollingTreeScrollingNode::adjustedScrollPosition(const FloatPoint& scrollPosition, ScrollClamping clamping) const

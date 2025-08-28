@@ -30,10 +30,12 @@
 #include "WebFrameProxyMessages.h"
 #include "WebPage.h"
 #include "WebPageProxyMessages.h"
+#include <WebCore/FrameInlines.h>
 #include <WebCore/FrameLoadRequest.h>
 #include <WebCore/FrameTree.h>
 #include <WebCore/HTMLFrameOwnerElement.h>
 #include <WebCore/HitTestResult.h>
+#include <WebCore/NodeInlines.h>
 #include <WebCore/PolicyChecker.h>
 #include <WebCore/RemoteFrame.h>
 

@@ -256,6 +256,7 @@ private:
     void setVideoRenderer(WebSampleBufferVideoRendering *);
     void stageVideoRenderer(WebSampleBufferVideoRendering *);
 
+    void setVideoFrameMetadataGatheringCallbackIfNeeded(VideoMediaSampleRenderer&);
     void startVideoFrameMetadataGathering() final;
     void stopVideoFrameMetadataGathering() final;
     std::optional<VideoFrameMetadata> videoFrameMetadata() final { return std::exchange(m_videoFrameMetadata, { }); }

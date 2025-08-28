@@ -27,6 +27,7 @@
 #include "config.h"
 #include "StyleResolvedColor.h"
 
+#include "ColorSerialization.h"
 #include "StyleColor.h"
 #include <wtf/text/TextStream.h>
 
@@ -38,6 +39,18 @@ namespace Style {
 Color toStyleColor(const CSS::ResolvedColor& unresolved, ColorResolutionState&)
 {
     return Color { ResolvedColor { unresolved.value } };
+}
+
+// MARK: - Serialization
+
+void serializationForCSSTokenization(StringBuilder& builder, const CSS::SerializationContext&, const ResolvedColor& absoluteColor)
+{
+    builder.append(WebCore::serializationForCSS(absoluteColor.color));
+}
+
+String serializationForCSSTokenization(const CSS::SerializationContext&, const ResolvedColor& absoluteColor)
+{
+    return WebCore::serializationForCSS(absoluteColor.color);
 }
 
 // MARK: - TextStream

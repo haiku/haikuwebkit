@@ -30,6 +30,7 @@
 #include "Animation.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "ContainerNodeInlines.h"
 #include "DOMTimer.h"
 #include "Document.h"
 #include "DocumentFullscreen.h"
@@ -40,9 +41,10 @@
 #include "Logging.h"
 #include "NodeRenderStyle.h"
 #include "Page.h"
-#include "RenderDescendantIterator.h"
-#include "RenderStyleInlines.h"
 #include "Quirks.h"
+#include "RenderDescendantIterator.h"
+#include "RenderElementInlines.h"
+#include "RenderStyleInlines.h"
 #include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 

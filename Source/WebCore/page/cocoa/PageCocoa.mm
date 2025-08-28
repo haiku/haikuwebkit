@@ -136,7 +136,7 @@ const String& Page::presentingApplicationBundleIdentifier() const
 void Page::setPresentingApplicationBundleIdentifier(String&& bundleIdentifier)
 {
     m_presentingApplicationBundleIdentifier = WTFMove(bundleIdentifier);
-    PlatformMediaSessionManager::updateNowPlayingInfoIfNecessary();
+    mediaSessionManager().updateNowPlayingInfoIfNecessary();
 }
 
 } // namespace WebCore

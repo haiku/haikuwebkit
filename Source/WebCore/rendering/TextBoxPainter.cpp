@@ -47,8 +47,8 @@
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "RenderedDocumentMarker.h"
+#include "StyleTextDecorationThickness.h"
 #include "StyledMarkedText.h"
-#include "TextDecorationThickness.h"
 #include "TextPaintStyle.h"
 #include "TextPainter.h"
 
@@ -568,7 +568,7 @@ static inline float computedTextDecorationThickness(const RenderStyle& styleToUs
 
 static inline float computedAutoTextDecorationThickness(const RenderStyle& styleToUse, float deviceScaleFactor)
 {
-    return ceilToDevicePixel(TextDecorationThickness::createWithAuto().resolve(styleToUse.computedFontSize(), styleToUse.metricsOfPrimaryFont()), deviceScaleFactor);
+    return ceilToDevicePixel(Style::TextDecorationThickness { CSS::Keyword::Auto { } }.resolve(styleToUse.computedFontSize(), styleToUse.metricsOfPrimaryFont()), deviceScaleFactor);
 }
 
 static inline float computedLinethroughCenter(const RenderStyle& styleToUse, float textDecorationThickness, float autoTextDecorationThickness)

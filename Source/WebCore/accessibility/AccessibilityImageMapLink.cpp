@@ -38,16 +38,16 @@ namespace WebCore {
 
 using namespace HTMLNames;
     
-AccessibilityImageMapLink::AccessibilityImageMapLink(AXID axID, HTMLAreaElement& element)
-    : AccessibilityNodeObject(axID, &element)
+AccessibilityImageMapLink::AccessibilityImageMapLink(AXID axID, HTMLAreaElement& element, AXObjectCache& cache)
+    : AccessibilityNodeObject(axID, &element, cache)
 {
 }
 
 AccessibilityImageMapLink::~AccessibilityImageMapLink() = default;
 
-Ref<AccessibilityImageMapLink> AccessibilityImageMapLink::create(AXID axID, HTMLAreaElement& element)
+Ref<AccessibilityImageMapLink> AccessibilityImageMapLink::create(AXID axID, HTMLAreaElement& element, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityImageMapLink(axID, element));
+    return adoptRef(*new AccessibilityImageMapLink(axID, element, cache));
 }
 
 AccessibilityObject* AccessibilityImageMapLink::parentObject() const
@@ -114,11 +114,7 @@ String AccessibilityImageMapLink::description() const
     if (!ariaLabel.isEmpty())
         return ariaLabel;
 
-    const auto& alt = getAttribute(altAttr);
-    if (!alt.isEmpty())
-        return alt;
-
-    return { };
+    return altTextFromAttributeOrStyle();
 }
 
 String AccessibilityImageMapLink::title() const

@@ -24,6 +24,7 @@
 #include "config.h"
 #include "SVGLengthContext.h"
 
+#include "ContainerNodeInlines.h"
 #include "CSSUnits.h"
 #include "FontCascade.h"
 #include "FontMetrics.h"
@@ -35,6 +36,13 @@
 #include "SVGSVGElement.h"
 #include "StylePreferredSize.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
+#include "StyleSVGCenterCoordinateComponent.h"
+#include "StyleSVGCoordinateComponent.h"
+#include "StyleSVGRadius.h"
+#include "StyleSVGRadiusComponent.h"
+#include "StyleSVGStrokeDasharray.h"
+#include "StyleSVGStrokeDashoffset.h"
+#include "StyleStrokeWidth.h"
 #include <numbers>
 #include <wtf/MathExtras.h>
 
@@ -124,19 +132,19 @@ float SVGLengthContext::valueForLength(const Length& length, SVGLengthMode lengt
     }
 }
 
-float SVGLengthContext::valueForLength(const Style::PreferredSize& size, SVGLengthMode lengthMode)
+template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeType& size, SVGLengthMode lengthMode)
 {
     return WTF::switchOn(size,
-        [&](const Style::PreferredSize::Fixed& fixed) -> float {
+        [&](const typename SizeType::Fixed& fixed) -> float {
             return fixed.value;
         },
-        [&](const Style::PreferredSize::Percentage& percentage) -> float {
+        [&](const typename SizeType::Percentage& percentage) -> float {
             auto result = convertValueFromPercentageToUserUnits(percentage.value / 100, lengthMode);
             if (result.hasException())
                 return 0;
             return result.releaseReturnValue();
         },
-        [&](const Style::PreferredSize::Calc& calc) -> float {
+        [&](const typename SizeType::Calc& calc) -> float {
             auto viewportSize = this->viewportSize().value_or(FloatSize { });
             return Style::evaluate(calc, dimensionForLengthMode(lengthMode, viewportSize));
         },
@@ -144,6 +152,46 @@ float SVGLengthContext::valueForLength(const Style::PreferredSize& size, SVGLeng
             return 0;
         }
     );
+
+}
+float SVGLengthContext::valueForLength(const Style::PreferredSize& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::SVGCenterCoordinateComponent& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::SVGCoordinateComponent& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::SVGRadius& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::SVGRadiusComponent& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::SVGStrokeDasharrayValue& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::SVGStrokeDashoffset& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::StrokeWidth& size, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, lengthMode);
 }
 
 ExceptionOr<float> SVGLengthContext::convertValueToUserUnits(float value, SVGLengthType lengthType, SVGLengthMode lengthMode) const

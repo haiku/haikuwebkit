@@ -122,7 +122,7 @@ static Ref<SuspendableWorkQueue> sharedStatisticsQueue()
 WebResourceLoadStatisticsStore::WebResourceLoadStatisticsStore(NetworkSession& networkSession, const String& resourceLoadStatisticsDirectory, ShouldIncludeLocalhost shouldIncludeLocalhost, ResourceLoadStatistics::IsEphemeral isEphemeral)
     : m_networkSession(networkSession)
     , m_statisticsQueue(sharedStatisticsQueue())
-    , m_dailyTasksTimer(RunLoop::main(), this, &WebResourceLoadStatisticsStore::performDailyTasks)
+    , m_dailyTasksTimer(RunLoop::mainSingleton(), "WebResourceLoadStatisticsStore::DailyTasksTimer"_s, this, &WebResourceLoadStatisticsStore::performDailyTasks)
     , m_isEphemeral(isEphemeral)
 {
     RELEASE_ASSERT(RunLoop::isMain());
@@ -184,7 +184,7 @@ inline void WebResourceLoadStatisticsStore::postTask(WTF::Function<void(WebResou
 inline void WebResourceLoadStatisticsStore::postTaskReply(WTF::Function<void()>&& reply)
 {
     ASSERT(!RunLoop::isMain());
-    RunLoop::protectedMain()->dispatch(WTFMove(reply));
+    RunLoop::mainSingleton().dispatch(WTFMove(reply));
 }
 
 void WebResourceLoadStatisticsStore::destroyResourceLoadStatisticsStore(CompletionHandler<void()>&& completionHandler)

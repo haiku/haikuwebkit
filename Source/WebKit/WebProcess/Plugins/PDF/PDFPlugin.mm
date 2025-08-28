@@ -1605,7 +1605,7 @@ bool PDFPlugin::handleWheelEvent(const WebWheelEvent& event)
     bool atScrollTop = !scrollPosition().y();
     bool atScrollBottom = scrollPosition().y() == maximumScrollPosition().y();
 
-    bool inMomentumScroll = event.momentumPhase() != WebWheelEvent::PhaseNone;
+    bool inMomentumScroll = event.isMomentumEvent();
 
     int scrollMagnitudeThresholdForPageFlip = defaultScrollMagnitudeThresholdForPageFlip;
 

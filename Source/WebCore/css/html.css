@@ -179,31 +179,6 @@ h1 {
     font-weight: bold;
 }
 
-:is(article, aside, nav, section) h1 {
-    font-size: 1.5em;
-    margin-block: 0.83__qem 0.83em;
-}
-
-:is(article, aside, nav, section) :is(article, aside, nav, section) h1 {
-    font-size: 1.17em;
-    margin-block: 1__qem 1em;
-}
-
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 {
-    font-size: 1.00em;
-    margin-block: 1.33__qem 1.33em;
-}
-
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 {
-    font-size: .83em;
-    margin-block: 1.67__qem 1.67em;
-}
-
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 {
-    font-size: .67em;
-    margin-block: 2.33__qem 2.33em;
-}
-
 h2 {
     display: block;
     font-size: 1.5em;

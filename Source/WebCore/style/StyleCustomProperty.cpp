@@ -170,6 +170,69 @@ void CustomProperty::propertyValueSerialization(StringBuilder& builder, const CS
     );
 }
 
+String CustomProperty::propertyValueSerializationForTokenization(const CSS::SerializationContext& context, const RenderStyle& style) const
+{
+    StringBuilder builder;
+    propertyValueSerializationForTokenization(builder, context, style);
+    return builder.toString();
+}
+
+void CustomProperty::propertyValueSerializationForTokenization(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style) const
+{
+    // `propertyValueSerializationForTokenization` differs from `propertyValueSerialization` only in how it handles custom `color`
+    // values:
+    //
+    //   `propertyValueSerialization`: serializes the used/resolved value of `color` values (needed for getComputedStyle)
+    //   `propertyValueSerializationForTokenization`: serializes the computed value of `color` values (needed for style building)
+
+    auto serializeValue = [&](StringBuilder& builder, const Value& value) {
+        WTF::switchOn(value,
+            [&](const WebCore::Length& value) {
+                if (value.type() == LengthType::Calculated) {
+                    // FIXME: Implement serialization for CalculationValue directly.
+                    builder.append(CSSCalcValue::create(value.protectedCalculationValue(), style)->cssText(context));
+                    return;
+                }
+                builder.append(CSSPrimitiveValue::create(value, style)->cssText(context));
+            },
+            [&](const Numeric& value) {
+                builder.append(CSSPrimitiveValue::create(value.value, value.unitType)->cssText(context));
+            },
+            [&](const RefPtr<StyleImage>& value) {
+                builder.append(value->computedStyleValue(style)->cssText(context));
+            },
+            [&](const Transform& value) {
+                ExtractorSerializer::serializeTransformOperation(style, builder, context, value.operation);
+            },
+            [&](const Color& value) {
+                Style::serializationForCSSTokenization(builder, context, value);
+            },
+            [&](const auto& value) {
+                Style::serializationForCSS(builder, context, style, value);
+            }
+        );
+    };
+
+    WTF::switchOn(m_value,
+        [&](const GuaranteedInvalid&) {
+            // "The guaranteed-invalid value serializes as the empty string".
+            // https://drafts.csswg.org/css-variables-2/#guaranteed-invalid
+            builder.append(emptyString());
+        },
+        [&](const Ref<CSSVariableData>& value) {
+            builder.append(value->serialize());
+        },
+        [&](const Value& value) {
+            serializeValue(builder, value);
+        },
+        [&](const ValueList& valueList) {
+            builder.append(interleave(valueList.values, [&](auto& builder, const auto& value) {
+                serializeValue(builder, value);
+            }, CSSValue::separatorCSSText(valueList.separator)));
+        }
+    );
+}
+
 const Vector<CSSParserToken>& CustomProperty::tokens() const
 {
     static NeverDestroyed<Vector<CSSParserToken>> emptyTokens;
@@ -180,7 +243,7 @@ const Vector<CSSParserToken>& CustomProperty::tokens() const
         },
         [&](auto&) -> const Vector<CSSParserToken>& {
             if (!m_cachedTokens) {
-                CSSTokenizer tokenizer { propertyValueSerialization(CSS::defaultSerializationContext(), RenderStyle::defaultStyleSingleton()) };
+                CSSTokenizer tokenizer { propertyValueSerializationForTokenization(CSS::defaultSerializationContext(), RenderStyle::defaultStyleSingleton()) };
                 m_cachedTokens = CSSVariableData::create(tokenizer.tokenRange());
             }
             return m_cachedTokens->tokens();

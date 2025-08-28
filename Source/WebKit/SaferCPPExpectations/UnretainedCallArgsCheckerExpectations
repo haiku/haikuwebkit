@@ -45,7 +45,6 @@ Shared/Cocoa/ArgumentCodersCocoa.mm
 Shared/Cocoa/AuxiliaryProcessCocoa.mm
 Shared/Cocoa/CompletionHandlerCallChecker.mm
 Shared/Cocoa/CoreIPCContacts.mm
-Shared/Cocoa/CoreIPCPKPaymentSetupFeature.mm
 Shared/Cocoa/CoreIPCPKSecureElementPass.mm
 Shared/Cocoa/CoreIPCPassKit.mm
 Shared/Cocoa/CoreIPCPersonNameComponents.mm

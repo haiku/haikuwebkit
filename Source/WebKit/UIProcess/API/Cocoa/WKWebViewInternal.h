@@ -231,6 +231,7 @@ struct PerWebProcessState {
 
     BOOL viewportMetaTagWidthWasExplicit { NO };
     BOOL viewportMetaTagCameFromImageDocument { NO };
+    BOOL lastTransactionWasInStableState { NO };
 
     std::optional<WebCore::FloatSize> lastSentViewLayoutSize;
     std::optional<WebCore::IntDegrees> lastSentDeviceOrientation;
@@ -249,6 +250,8 @@ struct PerWebProcessState {
     Markable<WebCore::PlatformLayerIdentifier> committedFindLayerID;
 
     std::optional<LiveResizeParameters> liveResizeParameters;
+
+    std::optional<WebKit::TransactionID> firstTransactionIDAfterObscuredInsetChange;
 };
 
 #endif // PLATFORM(IOS_FAMILY)
@@ -346,6 +349,7 @@ struct PerWebProcessState {
     std::optional<OverriddenLayoutParameters> _overriddenLayoutParameters;
 #if PLATFORM(IOS_FAMILY)
     BOOL _forcesInitialScaleFactor;
+    BOOL _automaticallyAdjustsViewLayoutSizesWithObscuredInset;
 #endif
     CGRect _inputViewBoundsInWindow;
 

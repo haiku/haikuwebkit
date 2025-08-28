@@ -30,6 +30,7 @@
 #include "LayoutUnit.h"
 #include "RenderObject.h"
 #include "RenderStyleInlines.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 
 namespace WebCore {
 
@@ -66,7 +67,7 @@ BorderEdges borderEdgesForOutline(const RenderStyle& style, BorderStyle borderSt
 {
     auto color = style.visitedDependentColorWithColorFilter(CSSPropertyOutlineColor);
     auto isTransparent = color.isValid() && !color.isVisible();
-    auto size = style.outlineWidth();
+    auto size = Style::evaluate(style.outlineWidth());
     return {
         BorderEdge { size, color, borderStyle, isTransparent, true, deviceScaleFactor },
         BorderEdge { size, color, borderStyle, isTransparent, true, deviceScaleFactor },

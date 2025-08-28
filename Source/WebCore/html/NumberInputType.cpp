@@ -32,6 +32,7 @@
 #include "config.h"
 #include "NumberInputType.h"
 
+#include "ContainerNodeInlines.h"
 #include "Decimal.h"
 #include "ElementInlines.h"
 #include "HTMLInputElement.h"
@@ -240,7 +241,7 @@ String NumberInputType::serialize(const Decimal& value) const
     return serializeForNumberType(value);
 }
 
-static bool isE(UChar ch)
+static bool isE(char16_t ch)
 {
     return ch == 'e' || ch == 'E';
 }

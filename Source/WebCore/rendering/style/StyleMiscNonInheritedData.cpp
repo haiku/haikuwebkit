@@ -27,7 +27,6 @@
 #include "StyleMiscNonInheritedData.h"
 
 #include "AnimationList.h"
-#include "ContentData.h"
 #include "FillLayer.h"
 #include "RenderStyleDifference.h"
 #include "RenderStyleInlines.h"
@@ -53,6 +52,7 @@ StyleMiscNonInheritedData::StyleMiscNonInheritedData()
     , transform(StyleTransformData::create())
     , mask(FillLayer::create(FillLayerType::Mask))
     , visitedLinkColor(StyleVisitedLinkColorData::create())
+    , content(RenderStyle::initialContent())
     , boxShadow(RenderStyle::initialBoxShadow())
     , aspectRatio(RenderStyle::initialAspectRatio())
     , alignContent(RenderStyle::initialContentAlignment())
@@ -85,9 +85,8 @@ StyleMiscNonInheritedData::StyleMiscNonInheritedData(const StyleMiscNonInherited
     , visitedLinkColor(o.visitedLinkColor)
     , animations(o.animations ? o.animations->copy() : o.animations)
     , transitions(o.transitions ? o.transitions->copy() : o.transitions)
-    , content(o.content ? o.content->clone() : nullptr)
+    , content(o.content)
     , boxShadow(o.boxShadow)
-    , altText(o.altText)
     , aspectRatio(o.aspectRatio)
     , alignContent(o.alignContent)
     , justifyContent(o.justifyContent)
@@ -133,9 +132,8 @@ bool StyleMiscNonInheritedData::operator==(const StyleMiscNonInheritedData& o) c
         && visitedLinkColor == o.visitedLinkColor
         && arePointingToEqualData(animations, o.animations)
         && arePointingToEqualData(transitions, o.transitions)
-        && contentDataEquivalent(o)
+        && content == o.content
         && boxShadow == o.boxShadow
-        && altText == o.altText
         && aspectRatio == o.aspectRatio
         && alignContent == o.alignContent
         && justifyContent == o.justifyContent
@@ -159,17 +157,6 @@ bool StyleMiscNonInheritedData::operator==(const StyleMiscNonInheritedData& o) c
         && userDrag == o.userDrag
         && objectFit == o.objectFit
         && resize == o.resize;
-}
-
-bool StyleMiscNonInheritedData::contentDataEquivalent(const StyleMiscNonInheritedData& other) const
-{
-    auto* a = content.get();
-    auto* b = other.content.get();
-    while (a && b && *a == *b) {
-        a = a->next();
-        b = b->next();
-    }
-    return !a && !b;
 }
 
 bool StyleMiscNonInheritedData::hasFilters() const
@@ -199,7 +186,6 @@ void StyleMiscNonInheritedData::dumpDifferences(TextStream& ts, const StyleMiscN
     LOG_IF_DIFFERENT(content);
     LOG_IF_DIFFERENT(boxShadow);
 
-    LOG_IF_DIFFERENT(altText);
     LOG_IF_DIFFERENT(aspectRatio);
     LOG_IF_DIFFERENT(alignContent);
     LOG_IF_DIFFERENT(justifyContent);

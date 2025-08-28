@@ -30,6 +30,7 @@
 #include "AccessibilitySlider.h"
 
 #include "AXObjectCache.h"
+#include "ContainerNodeInlines.h"
 #include "HTMLInputElement.h"
 #include "HTMLNames.h"
 #include "RenderSlider.h"
@@ -42,14 +43,14 @@ namespace WebCore {
     
 using namespace HTMLNames;
 
-AccessibilitySlider::AccessibilitySlider(AXID axID, RenderObject& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilitySlider::AccessibilitySlider(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
 }
 
-Ref<AccessibilitySlider> AccessibilitySlider::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilitySlider> AccessibilitySlider::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilitySlider(axID, renderer));
+    return adoptRef(*new AccessibilitySlider(axID, renderer, cache));
 }
 
 std::optional<AccessibilityOrientation> AccessibilitySlider::explicitOrientation() const
@@ -153,14 +154,14 @@ HTMLInputElement* AccessibilitySlider::inputElement() const
 }
 
 
-AccessibilitySliderThumb::AccessibilitySliderThumb(AXID axID)
-    : AccessibilityMockObject(axID)
+AccessibilitySliderThumb::AccessibilitySliderThumb(AXID axID, AXObjectCache& cache)
+    : AccessibilityMockObject(axID, cache)
 {
 }
 
-Ref<AccessibilitySliderThumb> AccessibilitySliderThumb::create(AXID axID)
+Ref<AccessibilitySliderThumb> AccessibilitySliderThumb::create(AXID axID, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilitySliderThumb(axID));
+    return adoptRef(*new AccessibilitySliderThumb(axID, cache));
 }
     
 LayoutRect AccessibilitySliderThumb::elementRect() const

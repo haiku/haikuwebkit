@@ -68,7 +68,7 @@ RenderStyle resolveForDocument(const Document& document)
     documentStyle.setUserModify(document.inDesignMode() ? UserModify::ReadWrite : UserModify::ReadOnly);
 #if PLATFORM(IOS_FAMILY)
     if (document.inDesignMode())
-        documentStyle.setTextSizeAdjust(TextSizeAdjustment::none());
+        documentStyle.setTextSizeAdjust(CSS::Keyword::None { });
 #endif
 
     Adjuster::adjustEventListenerRegionTypesForRootStyle(documentStyle, document);

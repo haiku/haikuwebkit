@@ -68,6 +68,7 @@ private:
     void enterExternalPlayback(CompletionHandler<void(bool, UIViewController *)> &&, CompletionHandler<void(bool)>&&) final;
     void exitExternalPlayback() final;
     bool cleanupExternalPlayback() final;
+    void didSetPlayerIdentifier() final;
     void didSetVideoReceiverEndpoint() final;
     void tryToStartPictureInPicture() final { }
     void stopPictureInPicture() final { }

@@ -34,11 +34,7 @@ typedef struct CGRect CGRect;
 #endif
 
 #if PLATFORM(MAC)
-#ifdef NSGEOMETRY_TYPES_SAME_AS_CGGEOMETRY_TYPES
 typedef struct CGRect NSRect;
-#else
-typedef struct _NSRect NSRect;
-#endif
 #endif // PLATFORM(MAC)
 
 #if PLATFORM(HAIKU)
@@ -224,11 +220,6 @@ public:
 #if USE(CG)
     WEBCORE_EXPORT FloatRect(const CGRect&);
     WEBCORE_EXPORT operator CGRect() const;
-#endif
-
-#if PLATFORM(MAC) && !defined(NSGEOMETRY_TYPES_SAME_AS_CGGEOMETRY_TYPES)
-    WEBCORE_EXPORT FloatRect(const NSRect&);
-    WEBCORE_EXPORT operator NSRect() const;
 #endif
 
 #if PLATFORM(HAIKU)

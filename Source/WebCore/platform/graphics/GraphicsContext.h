@@ -34,7 +34,7 @@
 #include "FontCascade.h"
 #include "GraphicsContextState.h"
 #include "Image.h"
-#include "ImageBufferPixelFormat.h"
+#include "ImageBufferFormat.h"
 #include "ImageOrientation.h"
 #include "ImagePaintingOptions.h"
 #include "IntRect.h"
@@ -251,7 +251,7 @@ public:
 
     IntSize compatibleImageBufferSize(const FloatSize&) const;
 
-    WEBCORE_EXPORT virtual RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, float resolutionScale = 1, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt, ImageBufferPixelFormat = ImageBufferPixelFormat::BGRA8) const;
+    WEBCORE_EXPORT virtual RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, float resolutionScale = 1, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt, ImageBufferFormat = { ImageBufferPixelFormat::BGRA8 }) const;
 
     WEBCORE_EXPORT RefPtr<ImageBuffer> createScaledImageBuffer(const FloatSize&, const FloatSize& scale = { 1, 1 }, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt) const;
     WEBCORE_EXPORT RefPtr<ImageBuffer> createScaledImageBuffer(const FloatRect&, const FloatSize& scale = { 1, 1 }, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt) const;

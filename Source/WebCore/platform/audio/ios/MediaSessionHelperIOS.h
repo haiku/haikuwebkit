@@ -27,6 +27,7 @@
 
 #if PLATFORM(IOS_FAMILY)
 
+#include "MediaPlaybackTarget.h"
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {
@@ -39,8 +40,6 @@ template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::MediaSession
 }
 
 namespace WebCore {
-
-class MediaPlaybackTarget;
 
 enum class SuspendedUnderLock : bool { No, Yes };
 enum class HasAvailableTargets : bool { No, Yes };

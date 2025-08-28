@@ -37,7 +37,13 @@ messages -> PlatformXRSystem {
     InitializeTrackingAndRendering()
     ShutDownTrackingAndRendering()
     RequestFrame(struct std::optional<PlatformXR::RequestData> requestData) -> (struct PlatformXR::FrameData frameData)
+#if USE(OPENXR)
+    CreateLayerProjection(uint32_t width, uint32_t height, bool alpha)
+    SubmitFrame(Vector<WebKit::XRDeviceLayer> layers)
+#endif
+#if !USE(OPENXR)
     SubmitFrame()
+#endif
     DidCompleteShutdownTriggeredBySystem()
 }
 

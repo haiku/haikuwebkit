@@ -263,7 +263,7 @@ class EmptyDragClient final : public DragClient {
     void willPerformDragDestinationAction(DragDestinationAction, const DragData&) final { }
     void willPerformDragSourceAction(DragSourceAction, const IntPoint&, DataTransfer&) final { }
     OptionSet<DragSourceAction> dragSourceActionMaskForPoint(const IntPoint&) final { return { }; }
-    void startDrag(DragItem, DataTransfer&, Frame&, const std::optional<ElementIdentifier>&) final { }
+    void startDrag(DragItem, DataTransfer&, Frame&, const std::optional<NodeIdentifier>&) final { }
 };
 
 #endif // ENABLE(DRAG_SUPPORT)

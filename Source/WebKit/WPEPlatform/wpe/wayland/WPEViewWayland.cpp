@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Igalia S.L.
+ * Copyright (C) 2023, 2025 Igalia S.L.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,9 +32,15 @@
 #include "WPEWaylandSHMPool.h"
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
 #include "pointer-constraints-unstable-v1-client-protocol.h"
+#if USE(SYSPROF_CAPTURE)
+#include "presentation-time-client-protocol.h"
+#endif
 #include "relative-pointer-unstable-v1-client-protocol.h"
 #include <gio/gio.h>
+#include <wtf/Deque.h>
 #include <wtf/FastMalloc.h>
+#include <wtf/MonotonicTime.h>
+#include <wtf/SystemTracing.h>
 #include <wtf/Vector.h>
 #include <wtf/glib/GRefPtr.h>
 #include <wtf/glib/GSpanExtras.h>
@@ -52,6 +58,29 @@
 typedef struct wl_buffer *(EGLAPIENTRYP PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWL)(EGLDisplay dpy, EGLImageKHR image);
 #endif
 
+#if USE(SYSPROF_CAPTURE)
+static constexpr unsigned kFrameHistorySize = 30;
+
+class PresentationFeedbackStatistics {
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(PresentationFeedbackStatistics);
+    WTF_MAKE_NONCOPYABLE(PresentationFeedbackStatistics);
+public:
+    explicit PresentationFeedbackStatistics(unsigned historySize);
+    ~PresentationFeedbackStatistics();
+
+    void beginFrame(struct wp_presentation*, WPEView*);
+    void presentedFrame(struct wp_presentation_feedback*, Seconds presentationTime, Seconds refreshInterval, uint64_t sequence, uint32_t flags);
+    void discardedFrame(struct wp_presentation_feedback*);
+
+    Seconds calculateAverageLatency() const;
+
+private:
+    unsigned m_maxHistorySize { 0 };
+    Vector<std::tuple<struct wp_presentation_feedback*, MonotonicTime>, 3> m_pendingFeedbacks;
+    Deque<Seconds> m_latencyHistory;
+};
+#endif
+
 /**
  * WPEViewWayland:
  *
@@ -59,6 +88,10 @@ typedef struct wl_buffer *(EGLAPIENTRYP PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWL)(EG
 struct _WPEViewWaylandPrivate {
     GRefPtr<WPEBuffer> buffer;
     struct wl_callback* frameCallback;
+
+#if USE(SYSPROF_CAPTURE)
+    std::unique_ptr<PresentationFeedbackStatistics> presentationFeedbackStatistics;
+#endif
 
     Vector<WPERectangle, 1> opaqueRegion;
     unsigned long resizedID;
@@ -129,11 +162,15 @@ static void wpeViewWaylandDispose(GObject* object)
     g_clear_pointer(&priv->lockedPointer, zwp_locked_pointer_v1_destroy);
     g_clear_pointer(&priv->relativePointer, zwp_relative_pointer_v1_destroy);
 
+#if USE(SYSPROF_CAPTURE)
+    priv->presentationFeedbackStatistics = nullptr;
+#endif
+
     G_OBJECT_CLASS(wpe_view_wayland_parent_class)->dispose(object);
 }
 
 class WaylandBuffer {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(WaylandBuffer);
 public:
     virtual ~WaylandBuffer()
     {
@@ -359,6 +396,129 @@ const struct wl_callback_listener frameListener = {
     }
 };
 
+#if USE(SYSPROF_CAPTURE)
+static const struct wp_presentation_feedback_listener presentationFeedbackListener = {
+    // sync_output
+    [](void*, struct wp_presentation_feedback*, struct wl_output*) {
+        // Quoting https://wayland.app/protocols/presentation-time#wp_presentation_feedback:event:presented:
+        // As presentation can be synchronized to only one output at a time, this event tells which output it was.
+        // This event is only sent prior to the presented event.
+    },
+    // presented
+    [](void* data, struct wp_presentation_feedback* feedback, uint32_t tvSecHi, uint32_t tvSecLo, uint32_t tvNsec, uint32_t refreshNsec, uint32_t seqHi, uint32_t seqLo, uint32_t flags) {
+        auto* priv = WPE_VIEW_WAYLAND(data)->priv;
+
+        auto combineToUInt64 = [](uint32_t lo, uint32_t hi) -> uint64_t {
+            return (static_cast<uint64_t>(hi) << 32) | lo;
+        };
+
+        auto parseTimeValue = [&](uint32_t secLo, uint32_t secHi, uint32_t nsec) -> Seconds {
+            return Seconds { static_cast<double>(combineToUInt64(secLo, secHi)) } + Seconds::fromNanoseconds(nsec);
+        };
+
+        // Quoting https://wayland.app/protocols/presentation-time#wp_presentation_feedback:event:presented:
+        // The associated content update was displayed to the user at the indicated time (tvSecHi/Lo, tvNsec).
+        // For the interpretation of the timestamp, see presentation.clock_id event.
+        auto presentationTime = parseTimeValue(tvSecLo, tvSecHi, tvNsec);
+        auto refreshInterval = Seconds::fromNanoseconds(refreshNsec);
+        auto sequence = combineToUInt64(seqLo, seqHi);
+        priv->presentationFeedbackStatistics->presentedFrame(feedback, presentationTime, refreshInterval, sequence, flags);
+    },
+    // discarded
+    [](void* data, struct wp_presentation_feedback* feedback) {
+        auto* priv = WPE_VIEW_WAYLAND(data)->priv;
+
+        // Quoting https://wayland.app/protocols/presentation-time#wp_presentation_feedback:event:discarded:
+        // The content update was never displayed to the user.
+        priv->presentationFeedbackStatistics->discardedFrame(feedback);
+    },
+};
+// END
+
+PresentationFeedbackStatistics::PresentationFeedbackStatistics(unsigned historySize)
+    : m_maxHistorySize(historySize)
+{
+}
+
+PresentationFeedbackStatistics::~PresentationFeedbackStatistics()
+{
+    for (auto [presentationFeedback, frameStartTime] : m_pendingFeedbacks)
+        wp_presentation_feedback_destroy(presentationFeedback);
+}
+
+void PresentationFeedbackStatistics::beginFrame(struct wp_presentation* presentation, WPEView* view)
+{
+    auto* wlSurface = wpe_view_wayland_get_wl_surface(WPE_VIEW_WAYLAND(view));
+
+    auto* presentationFeedback = wp_presentation_feedback(presentation, wlSurface);
+    wp_presentation_feedback_add_listener(presentationFeedback, &presentationFeedbackListener, view);
+    m_pendingFeedbacks.append({ presentationFeedback, MonotonicTime::now() });
+
+    WTFEmitSignpost(this, WaylandFrameBegin, "pending feedbacks? %lu", m_pendingFeedbacks.size());
+}
+
+void PresentationFeedbackStatistics::presentedFrame(struct wp_presentation_feedback* feedback, Seconds presentationTime, Seconds refreshInterval, uint64_t sequence, uint32_t flags)
+{
+    Seconds frameStartTime;
+    bool found = m_pendingFeedbacks.removeFirstMatching([&](const auto& entry) {
+        auto [presentationFeedback, frameStartTimeForFeedback] = entry;
+        if (presentationFeedback == feedback) {
+            frameStartTime = frameStartTimeForFeedback.secondsSinceEpoch();
+            wp_presentation_feedback_destroy(feedback);
+            return true;
+        }
+        return false;
+    });
+
+    RELEASE_ASSERT(found);
+
+    auto latency = presentationTime - frameStartTime;
+    m_latencyHistory.append(latency);
+    if (m_latencyHistory.size() > m_maxHistorySize)
+        m_latencyHistory.removeFirst();
+
+    bool hasHardwareClockFlag = flags & WP_PRESENTATION_FEEDBACK_KIND_HW_CLOCK;
+    bool hasHardwareCompletionFlag = flags & WP_PRESENTATION_FEEDBACK_KIND_HW_COMPLETION;
+    bool hasVSyncFlag = flags & WP_PRESENTATION_FEEDBACK_KIND_VSYNC;
+    bool hasZeroCopyFlag = flags & WP_PRESENTATION_FEEDBACK_KIND_ZERO_COPY;
+
+    auto averageLatency = calculateAverageLatency();
+    WTFSetCounter(FrameLatency, static_cast<int>(std::round(averageLatency.milliseconds())));
+    WTFEmitSignpost(this, WaylandFramePresented,
+        "sequence=%lu, latency=%.3f ms, refreshInterval=%.3f ms, flags =%s%s%s%s, pending feedbacks? %lu (avg. latency %.3f ms)",
+        sequence, latency.milliseconds(), refreshInterval.milliseconds(),
+        hasHardwareClockFlag ? " [hw-clock]" : "",
+        hasHardwareCompletionFlag ? " [hw-completion]" : "",
+        hasVSyncFlag ? " [vsync]" : "",
+        hasZeroCopyFlag ? "  [zero-copy]" : "",
+        m_pendingFeedbacks.size(),
+        averageLatency.milliseconds());
+}
+
+void PresentationFeedbackStatistics::discardedFrame(struct wp_presentation_feedback* feedback)
+{
+    m_pendingFeedbacks.removeFirstMatching([&](const auto& entry) {
+        auto [presentationFeedback, frameStartTimeForFeedback] = entry;
+        if (presentationFeedback == feedback) {
+            wp_presentation_feedback_destroy(feedback);
+            return true;
+        }
+        return false;
+    });
+
+    WTFEmitSignpost(this, WaylandFrameDiscarded, "pending feedbacks? %lu", m_pendingFeedbacks.size());
+}
+
+Seconds PresentationFeedbackStatistics::calculateAverageLatency() const
+{
+    if (m_latencyHistory.isEmpty())
+        return Seconds { 1.0 / 60.0 };
+
+    auto total = std::accumulate(m_latencyHistory.begin(), m_latencyHistory.end(), Seconds { });
+    return total / m_latencyHistory.size();
+}
+#endif
+
 static void dmaBufBufferReleased(WPEBuffer* buffer)
 {
     auto* dmaBufBuffer = static_cast<DMABufBuffer*>(wpe_buffer_get_user_data(buffer));
@@ -433,10 +593,21 @@ static gboolean wpeViewWaylandRenderBuffer(WPEView* view, WPEBuffer* buffer, con
     } else
         wl_surface_damage(wlSurface, 0, 0, INT32_MAX, INT32_MAX);
 
+    RELEASE_ASSERT(!priv->frameCallback);
     priv->frameCallback = wl_surface_frame(wlSurface);
     wl_callback_add_listener(priv->frameCallback, &frameListener, view);
-    wl_surface_commit(wlSurface);
 
+#if USE(SYSPROF_CAPTURE)
+    if (auto* annotator = SysprofAnnotator::singletonIfCreated()) {
+        if (auto* presentation = wpeDisplayWaylandGetPresentation(display)) {
+            if (!priv->presentationFeedbackStatistics)
+                priv->presentationFeedbackStatistics = makeUnique<PresentationFeedbackStatistics>(kFrameHistorySize);
+            priv->presentationFeedbackStatistics->beginFrame(presentation, view);
+        }
+    }
+#endif
+
+    wl_surface_commit(wlSurface);
     return TRUE;
 }
 

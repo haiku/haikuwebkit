@@ -202,4 +202,18 @@ header: <WebCore/PlatformXR.h>
     Vector<PlatformXR::FrameData::InputSource> inputSources;
 };
 
+#if USE(OPENXR)
+enum class PlatformXR::Eye : uint8_t {
+    None,
+    Left,
+    Right,
+};
+
+header: <WebCore/PlatformXR.h>
+[Nested] struct PlatformXR::Device::LayerView {
+    PlatformXR::Eye eye;
+    WebCore::IntRect viewport;
+};
+#endif
+
 #endif

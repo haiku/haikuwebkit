@@ -207,7 +207,8 @@ private PUBLIC_IN_WEBGPU_SWIFT:
     uint32_t m_currentResidencySetCount { 0 };
 #endif
 private:
-} SWIFT_SHARED_REFERENCE(refCommandEncoder, derefCommandEncoder);
+// FIXME: remove @safe once rdar://151039766 lands
+} __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(refCommandEncoder, derefCommandEncoder);
 
 } // namespace WebGPU
 

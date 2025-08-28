@@ -41,23 +41,29 @@ Ref<WebImage> WebImage::createEmpty()
 
 Ref<WebImage> WebImage::create(const IntSize& size, ImageOptions options, const DestinationColorSpace& colorSpace, ChromeClient* client)
 {
+    auto pixelFormat = ImageBufferPixelFormat::BGRA8;
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+    if (options.contains(ImageOption::AllowHDR) && colorSpace.usesExtendedRange())
+        pixelFormat = ImageBufferPixelFormat::RGBA16F;
+#endif
+
     if (client) {
         auto purpose = options.contains(ImageOption::Shareable) ? RenderingPurpose::ShareableSnapshot : RenderingPurpose::Snapshot;
         purpose = options.contains(ImageOption::Local) ? RenderingPurpose::ShareableLocalSnapshot : purpose;
-        auto accelerated = (options.contains(ImageOption::Accelerated) && options.contains(ImageOption::SupportsBackendHandleVariant)) ? RenderingMode::Accelerated : RenderingMode::Unaccelerated;
+        auto accelerated = options.contains(ImageOption::Accelerated) ? RenderingMode::Accelerated : RenderingMode::Unaccelerated;
 
-        if (auto buffer = client->createImageBuffer(size, accelerated, purpose, 1, colorSpace, ImageBufferPixelFormat::BGRA8))
+        if (auto buffer = client->createImageBuffer(size, accelerated, purpose, 1, colorSpace, { pixelFormat }))
             return WebImage::create(buffer.releaseNonNull());
     }
 
     if (options.contains(ImageOption::Shareable)) {
-        auto buffer = ImageBuffer::create<ImageBufferShareableBitmapBackend>(size, 1, colorSpace, ImageBufferPixelFormat::BGRA8, RenderingPurpose::ShareableSnapshot, { });
+        auto buffer = ImageBuffer::create<ImageBufferShareableBitmapBackend>(size, 1, colorSpace, { pixelFormat }, RenderingPurpose::ShareableSnapshot, { });
         if (!buffer)
             return createEmpty();
         return WebImage::create(buffer.releaseNonNull());
     }
 
-    auto buffer = ImageBuffer::create(size, RenderingMode::Unaccelerated, RenderingPurpose::Snapshot, 1, colorSpace, ImageBufferPixelFormat::BGRA8);
+    auto buffer = ImageBuffer::create(size, RenderingMode::Unaccelerated, RenderingPurpose::Snapshot, 1, colorSpace, pixelFormat);
     if (!buffer)
         return createEmpty();
     return WebImage::create(buffer.releaseNonNull());

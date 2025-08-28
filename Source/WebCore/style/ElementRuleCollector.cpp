@@ -51,6 +51,7 @@
 #include "StyleResolver.h"
 #include "StyleRuleImport.h"
 #include "StyleScope.h"
+#include "StyleScopeOrdinal.h"
 #include "StyleScopeRuleSets.h"
 #include "StyleSheetContents.h"
 #include "StyledElement.h"
@@ -350,7 +351,7 @@ void ElementRuleCollector::matchHostPseudoClassRules(CascadeLevel level)
         collectMatchingRulesForList(&rules, hostMatchRequest);
     };
 
-    if (shadowRules->hasHostPseudoClassRulesInUniversalBucket()) {
+    if (shadowRules->hasHostOrScopePseudoClassRulesInUniversalBucket()) {
         if (auto* universalRules = shadowRules->universalRules())
             collect(*universalRules);
     }
@@ -654,6 +655,7 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
 
     SelectorChecker checker(element().rootElement()->document());
     SelectorChecker::CheckingContext context(SelectorChecker::Mode::CollectingRulesIgnoringVirtualPseudoElements);
+    context.styleScopeOrdinal = matchRequest.styleScopeOrdinal;
 
     Vector<ScopingRootWithDistance> scopingRoots;
     auto isWithinScope = [&](auto& rule) {
@@ -663,11 +665,16 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
 
         auto findScopingRoots = [&](const auto& selectorList) {
             unsigned distance = 0;
-            const auto* ancestor = &element();
-            while (ancestor) {
-                for (auto& selector : selectorList) {
+            RefPtr ancestor = &element();
+            bool shadowHostCrossed = false;
+            while (ancestor && !shadowHostCrossed) {
+                auto subContext = context;
+                if (ancestor->shadowRoot()) {
+                    subContext.styleScopeOrdinal = Style::ScopeOrdinal::Shadow;
+                    shadowHostCrossed = true;
+                }
+                for (const auto& selector : selectorList) {
                     auto appendIfMatch = [&] (const ContainerNode* previousScopingRoot = nullptr) {
-                        auto subContext = context;
                         subContext.scope = previousScopingRoot;
                         auto match = checker.match(selector, *ancestor, subContext);
                         if (match)
@@ -680,8 +687,9 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
                             appendIfMatch(previousScopingRoot.get());
                     }
                 }
-                ancestor = ancestor->parentElement();
+
                 ++distance;
+                ancestor = ancestor->parentOrShadowHostElement();
             }
         };
         /* 
@@ -690,19 +698,19 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
             It is not an inclusive descendant of a scoping limit.
         */
         auto isWithinScopingRootsAndScopeEnd = [&](const CSSSelectorList& scopeEnd) {
-            auto match = [&] (const auto* scopingRoot, const auto* selector) {
+            auto match = [&] (const auto* scopingRoot, const auto& selector) {
                 auto subContext = context;
                 subContext.scope = scopingRoot;
                 const auto* ancestor = &element();
                 while (ancestor) {
-                    auto match = checker.match(*selector, *ancestor, subContext);
+                    auto match = checker.match(selector, *ancestor, subContext);
                     if (match)
                         return true;
                     if (ancestor == scopingRoot) {
                         // The end of the scope can't be an ancestor of the start of the scope.
                         return false;
                     }
-                    ancestor = ancestor->parentElement();
+                    ancestor = ancestor->parentOrShadowHostElement();
                 }
                 return false;
             };
@@ -710,8 +718,8 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
             Vector<ScopingRootWithDistance> scopingRootsWithinScope;
             for (auto scopingRootWithDistance : scopingRoots) {
                 bool anyScopingLimitMatch = false;
-                for (auto& selector : scopeEnd) {
-                    if (match(scopingRootWithDistance.scopingRoot.get(), &selector)) {
+                for (const auto& selector : scopeEnd) {
+                    if (match(scopingRootWithDistance.scopingRoot.get(), selector)) {
                         anyScopingLimitMatch = true;
                         break;
                     }
@@ -747,8 +755,9 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
                 if (!owner)
                     return;
                 // Find the parent node of the <style>
-                const auto* implicitParentNode = owner->parentNode();
-                const auto* implicitParentContainerNode = dynamicDowncast<ContainerNode>(implicitParentNode);
+                const auto* implicitParentNode = owner->parentOrShadowHostElement();
+                if (!implicitParentNode)
+                    return;
                 const auto* ancestor = &element();
                 unsigned distance = 0;
                 while (ancestor) {
@@ -757,7 +766,7 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
                     ancestor = ancestor->parentElement();
                     ++distance;
                 }
-                scopingRoots.append({ implicitParentContainerNode, distance });
+                scopingRoots.append({ implicitParentNode, distance });
             };
 
             // Each client might act as a scoping root.

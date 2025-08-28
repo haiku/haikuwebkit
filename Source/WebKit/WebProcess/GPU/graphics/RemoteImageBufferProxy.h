@@ -51,9 +51,9 @@ class RemoteImageBufferProxy final : public WebCore::ImageBuffer {
     friend class RemoteSerializedImageBufferProxy;
 public:
     template<typename BackendType>
-    static RefPtr<RemoteImageBufferProxy> create(const WebCore::FloatSize& size, float resolutionScale, const WebCore::DestinationColorSpace& colorSpace, WebCore::ImageBufferPixelFormat pixelFormat, WebCore::RenderingPurpose purpose, RemoteRenderingBackendProxy& remoteRenderingBackendProxy)
+    static RefPtr<RemoteImageBufferProxy> create(const WebCore::FloatSize& size, float resolutionScale, const WebCore::DestinationColorSpace& colorSpace, WebCore::ImageBufferFormat bufferFormat, WebCore::RenderingPurpose purpose, RemoteRenderingBackendProxy& remoteRenderingBackendProxy)
     {
-        Parameters parameters { size, resolutionScale, colorSpace, pixelFormat, purpose };
+        Parameters parameters { size, resolutionScale, colorSpace, bufferFormat, purpose };
         auto backendParameters = ImageBuffer::backendParameters(parameters);
         if (BackendType::calculateSafeBackendSize(backendParameters).isEmpty())
             return nullptr;

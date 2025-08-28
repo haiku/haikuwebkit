@@ -44,6 +44,7 @@
 #import <WebKit/WebKit.h>
 #import <WebKit/_WKContentWorldConfiguration.h>
 #import <WebKit/_WKFrameTreeNode.h>
+#import <WebKit/_WKInputDelegate.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
 #import <WebKit/_WKUserContentWorld.h>
 #import <WebKit/_WKUserStyleSheet.h>
@@ -52,6 +53,23 @@
 #import <wtf/WeakObjCPtr.h>
 
 static bool isDoneWithNavigation;
+static bool isDoneWithFormSubmission;
+
+@interface InputDelegateForFormSubmission : NSObject <_WKInputDelegate>
+@end
+
+@implementation InputDelegateForFormSubmission {
+}
+
+- (void)_webView:(WKWebView *)webView willSubmitFormValues:(NSDictionary *)values frameInfo:(WKFrameInfo *)frameInfo sourceFrameInfo:(WKFrameInfo *)sourceFrameInfo userObject:(NSObject <NSSecureCoding> *)userObject submissionHandler:(void (^)(void))submissionHandler
+{
+    auto *dictionary = (NSDictionary *)userObject;
+    EXPECT_WK_STREQ((NSString *)dictionary[@"foo"], @"bar");
+    submissionHandler();
+    isDoneWithFormSubmission = true;
+}
+
+@end
 
 @interface SimpleNavigationDelegate : NSObject <WKNavigationDelegate>
 @end
@@ -1482,4 +1500,30 @@ TEST(WKUserContentController, DisableLegacyBuiltinOverrides)
     TestWebKitAPI::Util::run(&isDoneEvaluatingScript);
     isDoneEvaluatingScript = false;
     EXPECT_WK_STREQ(@"function", resultValue.get());
+}
+
+TEST(WKUserContentController, FormSubmissionWithUserInfo)
+{
+    auto inputDelegate = adoptNS([[InputDelegateForFormSubmission alloc] init]);
+    isDoneWithFormSubmission = false;
+
+    RetainPtr contentWorldConfiguration = adoptNS([[_WKContentWorldConfiguration alloc] init]);
+    [contentWorldConfiguration setName:@"TestWillWithSubmitFormWithAllowElementUserInfo"];
+    [contentWorldConfiguration setAllowElementUserInfo:YES];
+
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:contentWorldConfiguration.get()];
+    RetainPtr userScript = adoptNS([[WKUserScript alloc] _initWithSource:@"window.addEventListener(\"load\", function() { document.getElementById(\"formID\").setUserInfo({foo: \"bar\"}); document.getElementById(\"formID\").submit()});"
+        injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO includeMatchPatternStrings:@[] excludeMatchPatternStrings:@[] associatedURL:nil contentWorld:world.get() deferRunningUntilNotification:NO]);
+
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    [[configuration userContentController] addUserScript:userScript.get()];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView _setInputDelegate:inputDelegate.get()];
+    [webView loadHTMLString:@"<body><form id='formID' method='post' action='https://webkit.org/'>"
+        "<input type='text' name='testname1' value='testvalue1'/>"
+        "<input type='password' name='testname2' value='testvalue2'/>"
+        "<input type='hidden' name='testname3' value='testvalue3'/>"
+    "</form></body>" baseURL:nil];
+    TestWebKitAPI::Util::run(&isDoneWithFormSubmission);
 }

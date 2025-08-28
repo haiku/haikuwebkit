@@ -173,7 +173,7 @@ private:
         std::optional<double> dataDetectionReferenceDate() final;
 
 #if ENABLE(POINTER_LOCK)
-        void requestPointerLock(WebPageProxy*) final;
+        void requestPointerLock(WebPageProxy*, CompletionHandler<void(bool)>&&) final;
         void didLosePointerLock(WebPageProxy*) final;
 #endif
         

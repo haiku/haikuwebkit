@@ -450,16 +450,17 @@ static bool isVideoWithDefaultObjectSize(const RenderReplaced* maybeVideo)
     return false;
 } 
 
-void RenderReplaced::computeAspectRatioInformationForRenderBox(RenderBox* contentRenderer, FloatSize& constrainedSize, FloatSize& intrinsicRatio) const
+void RenderReplaced::computeAspectRatioInformationForRenderBox(RenderBox* contentRenderer, FloatSize& constrainedSize, FloatSize& preferredAspectRatio) const
 {
     FloatSize intrinsicSize;
     if (shouldApplySizeOrInlineSizeContainment())
-        RenderReplaced::computeIntrinsicRatioInformation(intrinsicSize, intrinsicRatio);
+        std::tie(intrinsicSize, preferredAspectRatio) = RenderReplaced::computeIntrinsicSizeAndPreferredAspectRatio();
     else if (contentRenderer) {
-        contentRenderer->computeIntrinsicRatioInformation(intrinsicSize, intrinsicRatio);
+        if (auto* renderReplaced = dynamicDowncast<RenderReplaced>(contentRenderer))
+            std::tie(intrinsicSize, preferredAspectRatio) = renderReplaced->computeIntrinsicSizeAndPreferredAspectRatio();
 
-        if (style().aspectRatio().isRatio() || (style().aspectRatio().isAutoAndRatio() && intrinsicRatio.isEmpty()))
-            intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioWidth().value, style().aspectRatioHeight().value);
+        if (style().aspectRatio().isRatio() || (style().aspectRatio().isAutoAndRatio() && preferredAspectRatio.isEmpty()))
+            preferredAspectRatio = FloatSize::narrowPrecision(style().aspectRatioWidth().value, style().aspectRatioHeight().value);
 
         // Handle zoom & vertical writing modes here, as the embedded document doesn't know about them.
         intrinsicSize.scale(style().usedZoom());
@@ -470,17 +471,17 @@ void RenderReplaced::computeAspectRatioInformationForRenderBox(RenderBox* conten
         // Update our intrinsic size to match what the content renderer has computed, so that when we
         // constrain the size below, the correct intrinsic size will be obtained for comparison against
         // min and max widths.
-        if (!intrinsicRatio.isEmpty() && !intrinsicSize.isZero())
+        if (!preferredAspectRatio.isEmpty() && !intrinsicSize.isZero())
             m_intrinsicSize = LayoutSize(intrinsicSize);
 
         if (!isHorizontalWritingMode()) {
-            if (!intrinsicRatio.isEmpty())
-                intrinsicRatio = intrinsicRatio.transposedSize();
+            if (!preferredAspectRatio.isEmpty())
+                preferredAspectRatio = preferredAspectRatio.transposedSize();
             intrinsicSize = intrinsicSize.transposedSize();
         }
     } else {
-        computeIntrinsicRatioInformation(intrinsicSize, intrinsicRatio);
-        if (!intrinsicRatio.isEmpty() && !intrinsicSize.isZero())
+        std::tie(intrinsicSize, preferredAspectRatio) = computeIntrinsicSizeAndPreferredAspectRatio();
+        if (!preferredAspectRatio.isEmpty() && !intrinsicSize.isZero())
             m_intrinsicSize = LayoutSize(isHorizontalWritingMode() ? intrinsicSize : intrinsicSize.transposedSize());
     }
     constrainedSize = intrinsicSize;
@@ -538,10 +539,10 @@ LayoutRect RenderReplaced::replacedContentRect(const LayoutSize& intrinsicSize) 
         break;
     }
 
-    LengthPoint objectPosition = style().objectPosition();
+    auto& objectPosition = style().objectPosition();
 
-    LayoutUnit xOffset = minimumValueForLength(objectPosition.x, contentRect.width() - finalRect.width());
-    LayoutUnit yOffset = minimumValueForLength(objectPosition.y, contentRect.height() - finalRect.height());
+    LayoutUnit xOffset = Style::evaluate(objectPosition.x, contentRect.width() - finalRect.width());
+    LayoutUnit yOffset = Style::evaluate(objectPosition.y, contentRect.height() - finalRect.height());
 
     finalRect.move(xOffset, yOffset);
 
@@ -556,26 +557,27 @@ double RenderReplaced::computeIntrinsicAspectRatio() const
     return intrinsicRatio.aspectRatioDouble();
 }
 
-void RenderReplaced::computeIntrinsicRatioInformation(FloatSize& intrinsicSize, FloatSize& intrinsicRatio) const
+std::pair<FloatSize, FloatSize> RenderReplaced::computeIntrinsicSizeAndPreferredAspectRatio() const
 {
     // If there's an embeddedContentBox() of a remote, referenced document available, this code-path should never be used.
     ASSERT(!embeddedContentBox() || shouldApplySizeOrInlineSizeContainment());
-    intrinsicSize = FloatSize(intrinsicLogicalWidth(), intrinsicLogicalHeight());
+    auto intrinsicSize = FloatSize(intrinsicLogicalWidth(), intrinsicLogicalHeight());
+    FloatSize preferredAspectRatio;
 
     if (style().hasAspectRatio()) {
-        intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
+        preferredAspectRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
         if (style().aspectRatio().isRatio() || isVideoWithDefaultObjectSize(this))
-            return;
+            return { intrinsicSize, preferredAspectRatio };
     }
     // Figure out if we need to compute an intrinsic ratio.
     if (!RenderBox::hasIntrinsicAspectRatio() && !isRenderOrLegacyRenderSVGRoot())
-        return;
+        return { intrinsicSize, preferredAspectRatio };
 
     // After supporting contain-intrinsic-size, the intrinsicSize of size containment is not always empty.
     if (intrinsicSize.isEmpty() || shouldApplySizeContainment())
-        return;
+        return { intrinsicSize, preferredAspectRatio };
 
-    intrinsicRatio = { intrinsicSize.width(), intrinsicSize.height() };
+    return { intrinsicSize, { intrinsicSize.width(), intrinsicSize.height() } };
 }
 
 LayoutUnit RenderReplaced::computeConstrainedLogicalWidth() const

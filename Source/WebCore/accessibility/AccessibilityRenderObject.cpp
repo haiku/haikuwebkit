@@ -39,6 +39,7 @@
 #include "CachedImage.h"
 #include "ComplexTextController.h"
 #include "ComposedTreeIterator.h"
+#include "ContainerNodeInlines.h"
 #include "DocumentSVG.h"
 #include "Editing.h"
 #include "Editor.h"
@@ -73,6 +74,7 @@
 #include "HitTestResult.h"
 #include "Image.h"
 #include "InlineIteratorBoxInlines.h"
+#include "InlineIteratorLogicalOrderTraversal.h"
 #include "InlineIteratorTextBoxInlines.h"
 #include "LegacyRenderSVGRoot.h"
 #include "LegacyRenderSVGShape.h"
@@ -118,6 +120,7 @@
 #include "SVGElementTypeHelpers.h"
 #include "SVGImage.h"
 #include "SVGSVGElement.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "Text.h"
 #include "TextControlInnerElements.h"
 #include "TextIterator.h"
@@ -147,8 +150,8 @@ static Node* nodeForRenderer(RenderObject& renderer)
     return &renderer.document();
 }
 
-AccessibilityRenderObject::AccessibilityRenderObject(AXID axID, RenderObject& renderer)
-    : AccessibilityNodeObject(axID, nodeForRenderer(renderer))
+AccessibilityRenderObject::AccessibilityRenderObject(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityNodeObject(axID, nodeForRenderer(renderer), cache)
     , m_renderer(renderer)
 {
 #if ASSERT_ENABLED
@@ -156,8 +159,8 @@ AccessibilityRenderObject::AccessibilityRenderObject(AXID axID, RenderObject& re
 #endif
 }
 
-AccessibilityRenderObject::AccessibilityRenderObject(AXID axID, Node& node)
-    : AccessibilityNodeObject(axID, &node)
+AccessibilityRenderObject::AccessibilityRenderObject(AXID axID, Node& node, AXObjectCache& cache)
+    : AccessibilityNodeObject(axID, &node, cache)
 {
     // We should only ever create an instance of this class with a node if that node has no renderer (i.e. because of display:contents).
     ASSERT(!node.renderer());
@@ -168,9 +171,9 @@ AccessibilityRenderObject::~AccessibilityRenderObject()
     ASSERT(isDetached());
 }
 
-Ref<AccessibilityRenderObject> AccessibilityRenderObject::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityRenderObject> AccessibilityRenderObject::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityRenderObject(axID, renderer));
+    return adoptRef(*new AccessibilityRenderObject(axID, renderer, cache));
 }
 
 void AccessibilityRenderObject::detachRemoteParts(AccessibilityDetachmentType detachmentType)
@@ -511,7 +514,7 @@ RenderObject* AccessibilityRenderObject::renderParentObject() const
 
 AccessibilityObject* AccessibilityRenderObject::parentObject() const
 {
-    if (RefPtr ownerParent = ownerParentObject())
+    if (RefPtr ownerParent = ownerParentObject()) [[unlikely]]
         return ownerParent.get();
 
 #if USE(ATSPI)
@@ -848,7 +851,7 @@ bool AccessibilityRenderObject::canHavePlainText() const
 // within the parent page, otherwise they are in relative coordinates only.
 void AccessibilityRenderObject::offsetBoundingBoxForRemoteSVGElement(LayoutRect& rect) const
 {
-    for (RefPtr parent = parentObject(); parent; parent = parent->parentObject()) {
+    for (RefPtr<AccessibilityObject> parent = const_cast<AccessibilityRenderObject*>(this); parent; parent = parent->parentObject()) {
         if (parent->isAccessibilitySVGRoot()) {
             rect.moveBy(parent->parentObject()->boundingBoxRect().location());
             break;
@@ -939,7 +942,7 @@ Path AccessibilityRenderObject::elementPath() const
         if (!needsPath)
             return { };
 
-        float outlineOffset = style.outlineOffset();
+        float outlineOffset = Style::evaluate(style.outlineOffset());
         float deviceScaleFactor = renderText->document().deviceScaleFactor();
         Vector<FloatRect> pixelSnappedRects;
         for (auto rect : rects) {
@@ -1069,7 +1072,7 @@ bool AccessibilityRenderObject::isAllowedChildOfTree() const
 
 static AccessibilityObjectInclusion objectInclusionFromAltText(const String& altText)
 {
-    // Don't ignore an image that has an alt tag.
+    // Don't ignore an image that has alt text.
     if (!altText.containsOnly<isASCIIWhitespace>())
         return AccessibilityObjectInclusion::IncludeObject;
 
@@ -1239,7 +1242,7 @@ bool AccessibilityRenderObject::computeIsIgnored() const
         if (image)
             altTextInclusion = objectInclusionFromAltText(image->altText());
         else
-            altTextInclusion = objectInclusionFromAltText(getAttribute(altAttr).string());
+            altTextInclusion = objectInclusionFromAltText(altTextFromAttributeOrStyle());
 
         if (altTextInclusion == AccessibilityObjectInclusion::IgnoreObject)
             return true;
@@ -1569,7 +1572,7 @@ AXTextRuns AccessibilityRenderObject::textRuns()
 
         lineString.reserveCapacity(lineString.length() + text.length());
         for (unsigned i = 0; i < text.length(); i++) {
-            UChar character = text[i];
+            char16_t character = text[i];
             if (character == '\t' && collapseTabs)
                 lineString.append(' ');
             else if (character == '\n' && collapseNewlines)
@@ -1586,9 +1589,7 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     };
 
     Vector<std::array<uint16_t, 2>> textRunDomOffsets;
-    // FIXME: Use InlineIteratorLogicalOrderTraversal instead. Otherwise we'll do the wrong thing for mixed direction content.
-    // Tracked by: https://bugs.webkit.org/show_bug.cgi?id=294632
-    auto textBox = InlineIterator::lineLeftmostTextBoxFor(*renderText);
+    auto [textBox, orderCache] = InlineIterator::firstTextBoxInLogicalOrderFor(*renderText);
     size_t currentLineIndex = textBox ? textBox->lineIndex() : 0;
 
     bool containsOnlyASCII = true;
@@ -1636,7 +1637,7 @@ AXTextRuns AccessibilityRenderObject::textRuns()
 
         // Within each iteration of this loop, we are looking at the *next* text box to compare to the current.
         // So, we need to set the textRunDomOffsets after the line index comparison, in order to assign the right DOM offsets per text box.
-        textBox.traverseNextTextBox();
+        textBox = InlineIterator::nextTextBoxInLogicalOrder(textBox, orderCache);
         textRunDomOffsets.append({ startDOMOffset, endDOMOffset });
     }
 
@@ -2143,7 +2144,7 @@ AccessibilityObject* AccessibilityRenderObject::accessibilityImageMapHitTest(HTM
 
 AccessibilityObject* AccessibilityRenderObject::remoteSVGElementHitTest(const IntPoint& point) const
 {
-    RefPtr remote = remoteSVGRootElement(Create);
+    RefPtr remote = remoteSVGRootElement(CreateIfNecessary::Yes);
     if (!remote)
         return nullptr;
     
@@ -2308,7 +2309,7 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
         if (is<HTMLInputElement>(node))
             return selfOrAncestorLinkHasPopup() ? AccessibilityRole::PopUpButton : AccessibilityRole::Button;
 
-        if (RefPtr svgRoot = remoteSVGRootElement(Create)) {
+        if (RefPtr svgRoot = remoteSVGRootElement(CreateIfNecessary::Yes)) {
             if (svgRoot->hasAccessibleContent())
                 return AccessibilityRole::SVGRoot;
         }
@@ -2466,16 +2467,16 @@ void AccessibilityRenderObject::addTextFieldChildren()
     
 bool AccessibilityRenderObject::isSVGImage() const
 {
-    return remoteSVGRootElement(Create);
+    return remoteSVGRootElement(CreateIfNecessary::Yes);
 }
     
 void AccessibilityRenderObject::detachRemoteSVGRoot()
 {
-    if (RefPtr root = remoteSVGRootElement(Retrieve))
+    if (RefPtr root = remoteSVGRootElement(CreateIfNecessary::No))
         root->setParent(nullptr);
 }
 
-AccessibilitySVGRoot* AccessibilityRenderObject::remoteSVGRootElement(CreationChoice createIfNecessary) const
+AccessibilitySVGRoot* AccessibilityRenderObject::remoteSVGRootElement(CreateIfNecessary createIfNecessary) const
 {
     auto* renderImage = dynamicDowncast<RenderImage>(renderer());
     if (!renderImage)
@@ -2511,14 +2512,14 @@ AccessibilitySVGRoot* AccessibilityRenderObject::remoteSVGRootElement(CreationCh
     if (!cache)
         return nullptr;
 
-    RefPtr rootSVGObject = createIfNecessary == Create ? cache->getOrCreate(*rendererRoot) : cache->get(rendererRoot);
-    ASSERT(!createIfNecessary || rootSVGObject);
+    RefPtr rootSVGObject = createIfNecessary == CreateIfNecessary::Yes ? cache->getOrCreate(*rendererRoot) : cache->get(rendererRoot);
+    ASSERT(createIfNecessary == CreateIfNecessary::No || rootSVGObject);
     return dynamicDowncast<AccessibilitySVGRoot>(rootSVGObject).get();
 }
     
 void AccessibilityRenderObject::addRemoteSVGChildren()
 {
-    RefPtr<AccessibilitySVGRoot> root = remoteSVGRootElement(Create);
+    RefPtr<AccessibilitySVGRoot> root = remoteSVGRootElement(CreateIfNecessary::Yes);
     if (!root)
         return;
 
@@ -2635,22 +2636,15 @@ void AccessibilityRenderObject::addNodeOnlyChildren()
 }
 #endif // USE(ATSPI)
 
-#if PLATFORM(COCOA)
+#if PLATFORM(MAC)
 void AccessibilityRenderObject::updateAttachmentViewParents()
 {
-    // Only the unignored parent should set the attachment parent, because that's
-    // what is reflected in the AX hierarchy to the client.
-    if (isIgnored())
-        return;
-
-    for (const auto& child : unignoredChildren(/* updateChildrenIfNeeded */ false)) {
-        if (child->isAttachment()) {
-            if (RefPtr liveChild = dynamicDowncast<AccessibilityObject>(child.get()))
-                liveChild->overrideAttachmentParent(this);
-        }
-    }
+    // updateChildrenIfNeeded == false because this is called right after we've added children, so we know
+    // they're clean and don't need updating.
+    for (const auto& child : children(/* updateChildrenIfNeeded */ false))
+        downcast<AccessibilityObject>(child)->overrideAttachmentParent(this);
 }
-#endif // PLATFORM(COCOA)
+#endif // PLATFORM(MAC)
 
 RenderObject* AccessibilityRenderObject::markerRenderer() const
 {
@@ -2787,7 +2781,7 @@ void AccessibilityRenderObject::addChildren()
     addImageMapChildren();
     addTextFieldChildren();
     addRemoteSVGChildren();
-#if PLATFORM(COCOA)
+#if PLATFORM(MAC)
     updateAttachmentViewParents();
 #endif
     updateOwnedChildren();

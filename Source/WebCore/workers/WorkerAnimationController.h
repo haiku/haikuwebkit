@@ -38,6 +38,7 @@
 namespace WebCore {
 
 class RequestAnimationFrameCallback;
+class WeakPtrImplWithEventTargetData;
 class WorkerGlobalScope;
 
 class WorkerAnimationController final : public ThreadSafeRefCounted<WorkerAnimationController>, public ActiveDOMObject {

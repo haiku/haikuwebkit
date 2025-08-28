@@ -47,6 +47,7 @@ class LayoutSize;
 class RenderBlock;
 class RenderBox;
 class RenderBoxModelObject;
+class RenderElement;
 class RenderStyle;
 
 enum CSSPropertyID : uint16_t;
@@ -93,7 +94,17 @@ struct ResolvedAnchor {
     ResolvedScopedName name;
 };
 
-using AnchorPositionedToAnchorMap = WeakHashMap<Element, Vector<ResolvedAnchor>, WeakPtrImplWithEventTargetData>;
+struct AnchorPositionedToAnchorEntry {
+    // This key can be used to access the AnchorPositionedState struct of the current element
+    // in an AnchorPositionedStates map.
+    AnchorPositionedKey key;
+
+    Vector<ResolvedAnchor> anchors;
+
+    WTF_MAKE_STRUCT_TZONE_ALLOCATED(AnchorPositionedToAnchorEntry);
+};
+
+using AnchorPositionedToAnchorMap = WeakHashMap<Element, AnchorPositionedToAnchorEntry, WeakPtrImplWithEventTargetData>;
 using AnchorToAnchorPositionedMap = SingleThreadWeakHashMap<const RenderBoxModelObject, Vector<Ref<Element>>>;
 
 class AnchorPositionEvaluator {
@@ -110,7 +121,7 @@ public:
     static void updatePositionsAfterScroll(Document&);
     static void updateAnchorPositionedStateForDefaultAnchor(Element&, const RenderStyle&, AnchorPositionedStates&);
 
-    static LayoutRect computeAnchorRectRelativeToContainingBlock(CheckedRef<const RenderBoxModelObject> anchorBox, const RenderBlock& containingBlock);
+    static LayoutRect computeAnchorRectRelativeToContainingBlock(CheckedRef<const RenderBoxModelObject> anchorBox, const RenderElement& containingBlock);
 
     static AnchorToAnchorPositionedMap makeAnchorPositionedForAnchorMap(AnchorPositionedToAnchorMap&);
 

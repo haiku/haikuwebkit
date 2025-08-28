@@ -191,7 +191,7 @@ public:
 #endif
 
 #if ENABLE(POINTER_LOCK)
-    virtual void requestPointerLock(WebKit::WebPageProxy*) { }
+    virtual void requestPointerLock(WebKit::WebPageProxy*, CompletionHandler<void(bool)>&& completionHandler) { completionHandler(false); }
     virtual void didLosePointerLock(WebKit::WebPageProxy*) { }
 #endif
 

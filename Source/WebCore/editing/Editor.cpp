@@ -421,19 +421,6 @@ bool Editor::canEditRichly() const
     return document().selection().selection().isContentRichlyEditable();
 }
 
-enum class ClipboardEventKind {
-    Copy,
-    CopyFont,
-    Cut,
-    Paste,
-    PasteFont,
-    PasteAsPlainText,
-    PasteAsQuotation,
-    BeforeCopy,
-    BeforeCut,
-    BeforePaste,
-};
-
 static AtomString eventNameForClipboardEvent(ClipboardEventKind kind)
 {
     switch (kind) {
@@ -490,13 +477,11 @@ static Ref<DataTransfer> createDataTransferForClipboardEvent(Document& document,
 // Returns whether caller should continue with "the default processing", which is the same as
 // the event handler NOT setting the return value to false
 // https://w3c.github.io/clipboard-apis/#fire-a-clipboard-event
-static bool dispatchClipboardEvent(RefPtr<Element>&& target, ClipboardEventKind kind)
+bool Editor::dispatchClipboardEvent(RefPtr<Element>&& target, ClipboardEventKind kind, Ref<DataTransfer>&& dataTransfer)
 {
     // FIXME: Move the target selection code here.
     if (!target)
         return true;
-
-    auto dataTransfer = createDataTransferForClipboardEvent(target->document(), kind);
 
     auto event = ClipboardEvent::create(eventNameForClipboardEvent(kind), dataTransfer.copyRef());
 
@@ -508,6 +493,14 @@ static bool dispatchClipboardEvent(RefPtr<Element>&& target, ClipboardEventKind 
     dataTransfer->makeInvalidForSecurity();
 
     return !noDefaultProcessing;
+}
+
+bool Editor::dispatchClipboardEvent(RefPtr<Element>&& target, ClipboardEventKind kind)
+{
+    if (!target)
+        return true;
+
+    return Editor::dispatchClipboardEvent(WTFMove(target), kind, createDataTransferForClipboardEvent(target->document(), kind));
 }
 
 // WinIE uses onbeforecut and onbeforepaste to enables the cut and paste menu items.  They

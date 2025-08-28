@@ -2270,9 +2270,41 @@ ByteCodeParser::CallOptimizationResult ByteCodeParser::handleInlining(
     // simplification on the fly and this helps reduce compile times, but we can only leverage
     // this in cases where we don't need control flow diamonds to check the callee.
     if (!callLinkStatus.couldTakeSlowPath() && callLinkStatus.size() == 1) {
-        return handleCallVariant(
-            callTargetNode, result, callLinkStatus[0], registerOffset, thisArgument,
-            argumentCountIncludingThis, osrExitIndex, callOp, kind, prediction, newTarget, inliningBalance, nullptr, true);
+        auto callee = callLinkStatus[0];
+        constexpr bool needsToCheckCallee = true;
+        CallOptimizationResult inliningResult = handleCallVariant(
+            callTargetNode, result, callee, registerOffset, thisArgument,
+            argumentCountIncludingThis, osrExitIndex, callOp, kind, prediction, newTarget, inliningBalance, nullptr, needsToCheckCallee);
+        if (inliningResult == CallOptimizationResult::DidNothing) {
+            // When non inlined call is only having one call variant , let's emit DirectCall with appropriate checks instead.
+            if (!m_inlineStackTop->m_exitProfile.hasExitSite(m_currentIndex, BadConstantValue)
+                && !m_inlineStackTop->m_exitProfile.hasExitSite(m_currentIndex, BadType)
+                && callee.executable()
+                && (callOp == Call || callOp == TailCall || callOp == Construct)) {
+                auto* executable = callee.executable();
+                if (executable->intrinsic() == WasmFunctionIntrinsic && !Options::forceICFailure())
+                    return inliningResult;
+
+                if (auto* functionExecutable = jsDynamicCast<FunctionExecutable*>(executable)) {
+                    // We need to update m_parameterSlots before we get to the backend, but we don't
+                    // want to do too much of this.
+                    unsigned numAllocatedArgs = std::max(static_cast<unsigned>(functionExecutable->parameterCount()) + 1, static_cast<unsigned>(argumentCountIncludingThis));
+                    if (numAllocatedArgs > Options::maximumDirectCallStackSize())
+                        return inliningResult;
+
+                    m_parameterSlots = std::max(m_parameterSlots, Graph::parameterSlotsForArgCount(numAllocatedArgs));
+                }
+
+                m_graph.m_plan.recordedStatuses().addCallLinkStatus(currentNodeOrigin().semantic, CallLinkStatus(callee));
+                emitFunctionChecks(callee, callTargetNode, thisArgument);
+                Node* callNode = addCall(result, callOp, OpInfo(), callTargetNode, argumentCountIncludingThis, registerOffset, prediction);
+                ASSERT(callNode->op() != TailCallVarargs && callNode->op() != TailCallForwardVarargs);
+                auto emittedCallOp = callNode->op();
+                callNode->convertToDirectCall(m_graph.freeze(executable));
+                return emittedCallOp == TailCall ? CallOptimizationResult::InlinedTerminal : CallOptimizationResult::Inlined;
+            }
+        }
+        return inliningResult;
     }
 
     // We need to create some kind of switch over callee. For now we only do this if we believe that
@@ -2364,11 +2396,12 @@ ByteCodeParser::CallOptimizationResult ByteCodeParser::handleInlining(
         m_exitOK = true;
         
         Node* myCallTargetNode = getDirect(calleeReg);
-        
+
+        constexpr bool needsToCheckCallee = false;
         auto inliningResult = handleCallVariant(
             myCallTargetNode, result, callLinkStatus[i], registerOffset,
             thisArgument, argumentCountIncludingThis, osrExitIndex, callOp, kind, prediction, newTarget,
-            inliningBalance, continuationBlock, false);
+            inliningBalance, continuationBlock, needsToCheckCallee);
         
         if (inliningResult == CallOptimizationResult::DidNothing) {
             // That failed so we let the block die. Nothing interesting should have been added to

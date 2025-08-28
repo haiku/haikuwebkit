@@ -27,6 +27,7 @@
 
 #include <JavaScriptCore/JSRetainPtr.h>
 #include <JavaScriptCore/JSValueRef.h>
+#include <wtf/HashTraits.h>
 
 namespace WebKit {
 

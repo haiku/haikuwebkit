@@ -294,6 +294,16 @@ bool containsCurrentColor(const Color& value)
 
 // MARK: - Serialization
 
+String serializationForCSSTokenization(const CSS::SerializationContext& context, const Color& value)
+{
+    return WTF::switchOn(value, [&](const auto& kind) { return WebCore::Style::serializationForCSSTokenization(context, kind); });
+}
+
+void serializationForCSSTokenization(StringBuilder& builder, const CSS::SerializationContext& context, const Color& value)
+{
+    WTF::switchOn(value, [&](const auto& kind) { WebCore::Style::serializationForCSSTokenization(builder, context, kind); });
+}
+
 void Serialize<Color>::operator()(StringBuilder& builder, const CSS::SerializationContext&, const RenderStyle& style, const Color& value)
 {
     // NOTE: The specialization of Style::Serialize is used for computed value serialization, so the resolved "used" value is used.

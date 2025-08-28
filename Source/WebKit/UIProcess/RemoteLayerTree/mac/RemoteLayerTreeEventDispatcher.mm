@@ -219,7 +219,7 @@ void RemoteLayerTreeEventDispatcher::scrollingThreadHandleWheelEvent(const WebWh
     ASSERT(ScrollingThread::isCurrentThread());
     
     auto continueEventHandlingOnMainThread = [protectedThis = Ref { *this }](WheelEventHandlingResult handlingResult) {
-        RunLoop::protectedMain()->dispatch([protectedThis, handlingResult] {
+        RunLoop::mainSingleton().dispatch([protectedThis, handlingResult] {
             protectedThis->continueWheelEventHandling(handlingResult);
         });
     };
@@ -311,7 +311,7 @@ void RemoteLayerTreeEventDispatcher::wheelEventHandlingCompleted(const PlatformW
             return;
 
         auto result = scrollingTree->handleWheelEventAfterDefaultHandling(wheelEvent, scrollingNodeID, gestureState);
-        RunLoop::protectedMain()->dispatch([protectedThis, wasHandled, result]() {
+        RunLoop::mainSingleton().dispatch([protectedThis, wasHandled, result]() {
             if (CheckedPtr scrollingCoordinator = protectedThis->m_scrollingCoordinator.get())
                 scrollingCoordinator->protectedWebPageProxy()->wheelEventHandlingCompleted(wasHandled || result.wasHandled);
         });
@@ -369,7 +369,7 @@ void RemoteLayerTreeEventDispatcher::startOrStopDisplayLink()
         return;
     }
 
-    RunLoop::protectedMain()->dispatch([protectedThis = Ref { *this }] {
+    RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }] {
         protectedThis->startOrStopDisplayLinkOnMainThread();
     });
 }
@@ -498,7 +498,7 @@ void RemoteLayerTreeEventDispatcher::scheduleDelayedRenderingUpdateDetectionTime
     ASSERT(ScrollingThread::isCurrentThread());
 
     if (!m_delayedRenderingUpdateDetectionTimer)
-        m_delayedRenderingUpdateDetectionTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), [weakThis = ThreadSafeWeakPtr { *this }] {
+        m_delayedRenderingUpdateDetectionTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), "RemoteLayerTreeEventDispatcher::DelayedRenderingUpdateDetectionTimer"_s, [weakThis = ThreadSafeWeakPtr { *this }] {
             auto strongThis = weakThis.get();
             if (strongThis)
                 strongThis->delayedRenderingUpdateDetectionTimerFired();

@@ -499,7 +499,7 @@ bool TextOnlySimpleLineBuilder::isEligibleForSimplifiedInlineLayoutByStyle(const
         return false;
     if (!style.hangingPunctuation().isEmpty())
         return false;
-    if (style.hyphenationLimitLines() != RenderStyle::initialHyphenationLimitLines())
+    if (!style.hyphenateLimitLines().isNoLimit())
         return false;
     if (style.textWrapMode() == TextWrapMode::Wrap && (style.textWrapStyle() == TextWrapStyle::Balance || style.textWrapStyle() == TextWrapStyle::Pretty))
         return false;

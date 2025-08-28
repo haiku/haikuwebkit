@@ -26,9 +26,12 @@
 #pragma once
 
 #include "LengthPoint.h"
+#include "StyleAppearance.h"
 #include "StyleAspectRatio.h"
 #include "StyleBoxShadow.h"
+#include "StyleContent.h"
 #include "StyleContentAlignmentData.h"
+#include "StyleObjectPosition.h"
 #include "StyleSelfAlignmentData.h"
 #include <memory>
 #include <wtf/DataRef.h>
@@ -44,7 +47,6 @@ class TextStream;
 namespace WebCore {
 
 class AnimationList;
-class ContentData;
 class FillLayer;
 class StyleDeprecatedFlexibleBoxData;
 class StyleFilterData;
@@ -53,11 +55,9 @@ class StyleMultiColData;
 class StyleTransformData;
 class StyleVisitedLinkColorData;
 
-constexpr int appearanceBitWidth = 7;
-
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleMiscNonInheritedData);
 class StyleMiscNonInheritedData : public RefCounted<StyleMiscNonInheritedData> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleMiscNonInheritedData);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleMiscNonInheritedData, StyleMiscNonInheritedData);
 public:
     static Ref<StyleMiscNonInheritedData> create() { return adoptRef(*new StyleMiscNonInheritedData); }
     Ref<StyleMiscNonInheritedData> copy() const;
@@ -72,7 +72,6 @@ public:
     bool hasOpacity() const { return opacity < 1; }
     bool hasZeroOpacity() const { return !opacity; }
     bool hasFilters() const;
-    bool contentDataEquivalent(const StyleMiscNonInheritedData&) const;
 
     // This is here to pack in with m_refCount.
     float opacity;
@@ -87,9 +86,8 @@ public:
 
     RefPtr<AnimationList> animations;
     RefPtr<AnimationList> transitions;
-    std::unique_ptr<ContentData> content;
+    Style::Content content;
     Style::BoxShadows boxShadow;
-    String altText;
     Style::AspectRatio aspectRatio;
     StyleContentAlignmentData alignContent;
     StyleContentAlignmentData justifyContent;
@@ -97,7 +95,7 @@ public:
     StyleSelfAlignmentData alignSelf;
     StyleSelfAlignmentData justifyItems;
     StyleSelfAlignmentData justifySelf;
-    LengthPoint objectPosition;
+    Style::ObjectPosition objectPosition;
     int order;
 
     PREFERRED_TYPE(bool) unsigned hasAttrContent : 1 { false };

@@ -30,6 +30,7 @@
 #include "config.h"
 #include "FetchBodyOwner.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "FetchLoader.h"
 #include "HTTPParsers.h"

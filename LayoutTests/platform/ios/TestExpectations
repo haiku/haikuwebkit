@@ -104,7 +104,6 @@ compositing/shared-backing/overflow-scroll [ Pass ]
 compositing/scrolling/async-overflow-scrolling [ Pass ]
 compositing/scrolling/async-overflow-scrolling/mac [ Skip ]
 compositing/layer-creation/clipping-scope [ Pass ]
-contact-picker/contacts-select.html [ Pass ]
 css3/scroll-snap/ios [ Pass ]
 fast/attachment/cocoa [ Pass ]
 fast/device-orientation [ Pass ]
@@ -2323,6 +2322,7 @@ accessibility/button-inside-label-ax-text.html [ Pass ]
 accessibility/changing-aria-hidden-with-display-none-parent.html [ Pass ]
 accessibility/checkbox-mixed-value.html [ Pass ]
 accessibility/clip-path-bounding-box.html [ Pass ]
+accessibility/css-content-alt-text.html [ Pass ]
 accessibility/dialog-slotted-content.html [ Pass ]
 accessibility/dirty-relations-and-modal-tree-update-crash.html [ Pass ]
 accessibility/dirty-style-and-relations-crash.html [ Pass ]
@@ -2400,7 +2400,6 @@ accessibility/tree-update-with-dynamically-ignored-inline-child-div.html [ Pass 
 accessibility/tree-update-with-dynamically-ignored-tabindex-div.html [ Pass ]
 accessibility/url-test.html [ Pass ]
 accessibility/video-element-url-attribute.html [ Pass ]
-accessibility/visible-character-range-basic.html [ Pass ]
 accessibility/visible-character-range-height-changes.html [ Pass ]
 accessibility/visible-character-range-vertical-rl.html [ Pass ]
 accessibility/visibility-visible-inside-hidden.html [ Pass ]
@@ -3206,9 +3205,6 @@ http/wpt/resource-timing/rt-initiatorType-xmlhttprequest.html [ Pass Failure ]
 # <rdar://problem/51826131> REGRESSION (r241747) 2 Layout tests are failing on Internal iOS 13 iOS / iPad Simulator testers fast/repaint/placeholder-after-caps-lock-hidden.html imported/blink/svg/custom/focus-ring-2.svg
 fast/text/incorrect-deselection-across-multiple-elements.html [ Failure ]
 
-# <rdar://problem/51828203> 2 platform/ipad/fast/viewport/viewport* Layout tests are timing out on iOS 13
-platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport.html [ Timeout ]
-
 # Skip until we have the fixes for <rdar://problem/53613454> and <rdar://problem/54001139>.
 fast/events/ios/multiple-key-press-and-release-ordering.html [ Skip ]
 
@@ -3619,6 +3615,43 @@ webkit.org/b/278056 imported/w3c/web-platform-tests/css/css-pseudo/target-text-0
 # <rdar://problem/87944426>
 fast/text/locale-shaping-2.html [ Pass ImageOnlyFailure ]
 fast/text/locale-shaping-3.html [ Pass ImageOnlyFailure ]
+
+# `scrollend` events are not supported on iOS
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-sequence-of-scrolls.tentative.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-snap.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-mandatory-snap-point-after-load.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-to-document.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-to-element-with-overscroll-behavior.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-to-window.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fires-on-visual-viewport.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fires-to-iframe-window.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-handler-content-attributes.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-not-fired-after-removing-scroller.tentative.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-not-fired-on-no-scroll.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-fires-to-text-input.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-with-snap-on-fractional-offset.html [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollBy-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollBy-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollTo-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=root-scrollTo-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollBy-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollBy-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollTo-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-programmatic-scroll.html?include=subframe-scrollTo-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollLeft-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollLeft-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollTop-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=root-scrollTop-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollLeft-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollLeft-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollTop-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scroll-attr-change.html?include=subframe-scrollTop-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=nested-scrollIntoView [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=root-inline-end-block-end-behavior-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=root-inline-start-block-start-behavior-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=subframe-inline-end-block-end-behavior-auto [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=subframe-inline-start-block-start-behavior-smooth [ Skip ]
+webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-for-user-scroll.html [ Skip ]
 
 webkit.org/b/231337 imported/w3c/web-platform-tests/xhr/send-timeout-events.htm [ Pass Failure ]
 
@@ -4473,6 +4506,8 @@ webkit.org/b/254044 http/tests/webxr [ Skip ]
 webkit.org/b/254044 http/wpt/webxr [ Skip ]
 webkit.org/b/254044 imported/w3c/web-platform-tests/feature-policy/reporting/xr-reporting.https.html [ Skip ]
 
+# Test times out:
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/only-observe-firstInput.html [ Skip ]
 
 # rdar://105509003
 imported/w3c/web-platform-tests/css/css-text/line-break/line-break-anywhere-overrides-uax-behavior-009.html [ ImageOnlyFailure ]
@@ -7083,7 +7118,6 @@ webkit.org/b/235765 webrtc/canvas-to-peer-connection-vp8-2d.html [ Failure ]
 
 # display-p3 canvas and ImageData are Cocoa only for now.
 fast/canvas/canvas-color-space-display-p3-ImageData.html [ Pass ]
-fast/canvas/canvas-color-space-display-p3.html [ Pass ]
 fast/canvas/gradient-into-p3-canvas.html [ Pass ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage.https.html [ Pass ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage-ImageBitmap-Blob.html [ Pass ]
@@ -7374,8 +7408,6 @@ webkit.org/b/276013 [ x86_64 ] webgl/2.0.y/conformance/glsl/bugs/sampler-array-u
 webkit.org/b/275963 [ x86_64 ] svg/W3C-SVG-1.1/metadata-example-01-b.svg [ Failure ]
 webkit.org/b/275963 [ x86_64 ] svg/custom/use-on-symbol-inside-pattern.svg [ Failure ]
 
-webkit.org/b/275962 imported/w3c/web-platform-tests/navigation-api/navigation-history-entry/no-referrer-dynamic-url-censored.html [ Timeout ]
-
 # rdar://130594018 (REGRESSION (278344@main?): [ iOS 18 Release ] 2 http/tests/xmlhttprequest/* layout tests are constantly failing.)
 [ Release ] http/tests/xmlhttprequest/resetting-timeout-to-zero.html [ Failure ]
 [ Release ] http/tests/xmlhttprequest/timeout-greater-than-default-network-timeout.html [ Failure ]
@@ -7573,6 +7605,7 @@ imported/w3c/web-platform-tests/navigation-api/scroll-behavior/after-transition-
 imported/w3c/web-platform-tests/navigation-api/scroll-behavior/after-transition-reload.html [ Failure ]
 imported/w3c/web-platform-tests/navigation-api/scroll-behavior/after-transition-timing.html [ Failure ]
 imported/w3c/web-platform-tests/navigation-api/scroll-behavior/manual-scroll-after-dispatch.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/scroll-behavior/manual-scroll-in-precommit-handler.html [ Failure ]
 imported/w3c/web-platform-tests/navigation-api/scroll-behavior/manual-scroll-reload.html [ Failure ]
 imported/w3c/web-platform-tests/navigation-api/scroll-behavior/manual-scroll-repeated.html [ Failure ]
 
@@ -7678,11 +7711,6 @@ imported/w3c/web-platform-tests/html/interaction/focus/sequential-focus-navigati
 
 # webkit.org/b/284886 [iOS] 2 tests in fast/writing-mode are constantly failing (flaky in EWS)
 fast/writing-mode/vertical-subst-font-vert-no-dflt.html [ ImageOnlyFailure ]
-
-# webkit.org/b/288409 [ MacOS iOS ] 3x imported/w3c/web-platform-tests/navigation-api/navigation are consistent failures 
-imported/w3c/web-platform-tests/navigation-api/navigation-activation/activation-traverse-not-in-entries.html [ Failure ]
-imported/w3c/web-platform-tests/navigation-api/navigation-methods/disambigaute-forward.html [ Failure ]
-imported/w3c/web-platform-tests/navigation-api/navigation-methods/disambigaute-traverseTo-forward-multiple.html [ Failure ]
 
 webkit.org/b/286507 compositing/geometry/fixed-position-composited-page-scale-smaller-than-viewport.html [ Pass Failure ]
 
@@ -7885,11 +7913,6 @@ webkit.org/b/292294 webgl/2.0.y/conformance2/extensions/webgl-stencil-texturing.
 
 webkit.org/b/292402 http/tests/site-isolation/draw-after-cross-origin-navigation-between-two-remote-frames.html [ ImageOnlyFailure ]
 
-# webkit.org/b/292582 REGRESSION (294079@main): [ MacOS iOS WK2 ] 3X imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-form are consistent failures 
-imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-form-userInitiated.html [ Failure ]
-imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-form-with-target.html [ Failure ]
-imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-form.html [ Failure ]
-
 webkit.org/b/292650 http/tests/iframe-monitor/throttler.html [ Timeout ]
 
 webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/border-collapse-dynamic-column-001.xht [ ImageOnlyFailure ]
@@ -7955,6 +7978,10 @@ fast/forms/datalist/datalist-fallback-content.html [ ImageOnlyFailure ]
 # Tests which pass only with form-control-refresh enabled (iOS 26)
 fast/forms/form-control-refresh [ Pass ]
 imported/w3c/web-platform-tests/css/css-ui/button-author-level-padding-applies.html [ Pass ]
+
+# Window inactive appearance is only used on macOS.
+fast/forms/form-control-refresh/checkbox-radio-inactive-appearance-dark-bg-light-color-scheme.html [ Skip ]
+fast/forms/form-control-refresh/checkbox-radio-inactive-appearance-light-bg-dark-color-scheme.html [ Skip ]
 
 # rdar://155348715 (REGRESSION (Liquid Glass): [ iOS 26 ] 72 WPT/css/css-ui/compute-kind-widget-generated/kind-of-widget-fallback-select-*.html tests are constantly failing (IMAGE).)
 # Explicit pass expectations for many of these tests are set above. Uncomment that block once this is resolved.
@@ -8051,3 +8078,100 @@ webkit.org/b/295798 fast/visual-viewport/ios/get-bounding-client-rect-unstable.h
 webkit.org/b/295800 [ Release ] http/wpt/resource-timing/rt-resource-errors.html [ Pass Failure ]
 
 webkit.org/b/295820 [ Debug ] webrtc/audio-peer-connection-webaudio.html [ Pass Failure ]
+
+webkit.org/b/295907 contact-picker/contacts-select.html [ Pass Timeout ] 
+
+webkit.org/b/295911 scrollingcoordinator/scrolling-tree/fixed-inside-frame.html [ Pass Failure ]
+
+webkit.org/b/295913 [ Release ] media/video-seek-pause.html [ Pass Failure ]
+
+webkit.org/b/295915 [ Debug ] accessibility/visible-character-range-basic.html [ Pass Timeout ]
+
+webkit.org/b/295918 [ Release ] fast/visual-viewport/ios/resize-event-for-keyboard.html [ Pass Failure ]
+
+webkit.org/b/295999 media/media-garbage-collection.html [ Pass Failure Timeout ]
+
+webkit.org/b/296010 [ Debug ] fast/frames/frame-append-body-child-crash.html [ Pass Failure ]
+
+webkit.org/b/295992 [ Release ] http/tests/geolocation/geolocation-watch-position-does-not-leak.https.html [ Pass Failure ]
+
+webkit.org/b/295993 http/tests/IndexedDB/storage-limit-1.https.html [ Pass Failure ]
+
+webkit.org/b/295989 [ Release ] http/tests/misc/embed-image-load-outlives-gc-without-crashing.html [ Pass Timeout ]
+
+webkit.org/b/296095 fast/forms/switch/click-animation-disabled.html [ Pass Timeout ]
+
+webkit.org/b/296101 imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-012.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/295408 imported/w3c/web-platform-tests/xhr/send-redirect.htm [ Pass Failure ]
+
+# webkit.org/b/296182 [ iOS ] 2x imported/w3c/web-platform-tests/beacon (layout tests) are flakey text failures 
+[ Debug ] imported/w3c/web-platform-tests/beacon/beacon-redirect.https.window.html [ Pass Failure ]
+imported/w3c/web-platform-tests/beacon/beacon-cors.https.window.html [ Pass Failure ]
+
+webkit.org/b/296183 [ Debug ] imported/w3c/web-platform-tests/workers/WorkerGlobalScope_ErrorEvent_colno.htm [ Pass Failure ]
+
+webkit.org/b/296199 fast/events/onunload-not-on-body.html [ Pass Failure ]
+
+webkit.org/b/296200 [ Debug ] fast/dom/Element/scale-page-bounding-client-rect.html [ Pass Failure ]
+
+webkit.org/b/296202 imported/w3c/web-platform-tests/service-workers/service-worker/skip-waiting-installed.https.html [ Pass Failure ]
+
+webkit.org/b/296209 http/tests/workers/service/basic-timeout.https.html [ Pass Failure ]
+
+# rdar://156353464 ☂️Bug for iOS26 reproduction and expectations
+fast/forms/ios/focus-input-via-button.html [ Pass Timeout ]
+compositing/layer-creation/sticky-overlap-extent.html [ Failure ]
+editing/pasteboard/copy-paste-bidi.html [ Failure ]
+editing/selection/ios/show-selection-in-transformed-container-2.html [ Failure ]
+editing/selection/select-from-textfield-outwards.html [ Failure ]
+fast/css/input-search-padding.html [ Failure ]
+fast/events/touch/page-scaled-touch-gesture-click.html [ Failure ]
+fast/forms/basic-textareas-quirks.html [ Failure ]
+fast/forms/basic-textareas.html [ Failure ]
+fast/forms/placeholder-position.html [ Failure ]
+fast/mediastream/play-newly-added-audio-track.html [ Failure ]
+http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect.html [ Failure ]
+http/tests/site-isolation/touch-events/touch-event-coordinates.html [ Failure ]
+http/tests/websocket/tests/hybi/websocket-allowed-setting-cookie-as-third-party-with-third-party-cookie-blocking.https.html [ Failure ]
+http/tests/workers/service/basic-install-event-sw-fetch-third-party.html [ Failure ]
+http/wpt/webcodecs/videoFrame-negative-timestamp.html [ Failure ]
+imported/w3c/web-platform-tests/css/selectors/invalidation/has-with-nesting-parent-containing-hover.html [ Failure ]
+imported/w3c/web-platform-tests/digital-credentials/allow-attribute-with-get.https.html [ Failure ]
+imported/w3c/web-platform-tests/digital-credentials/get.tentative.https.html [ Failure ]
+imported/w3c/web-platform-tests/digital-credentials/user-activation.https.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-anchor-download-userInitiated.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-anchor-download.html [ Failure ]
+imported/w3c/web-platform-tests/shadow-dom/reference-target/tentative/interesttarget.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/uievents/mouse/mousemove_after_mouseover_target_removed.html [ Failure ]
+platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport.html [ Failure ]
+editing/selection/ios/selection-handles-in-readonly-input.html [ Timeout ]
+fast/events/ios/dragstart-hang-does-not-dismiss-context-menu.html [ Timeout ]
+media/modern-media-controls/tracks-support/show-contextmenu-then-double-click-on-tracks-button.html [ Timeout ]
+fast/css/accent-color/button.html [ ImageOnlyFailure ]
+fast/css/accent-color/date.html [ ImageOnlyFailure ]
+fast/css/accent-color/select.html [ ImageOnlyFailure ]
+fast/forms/form-control-refresh/submit-button-appearance-matches-button-window-inactive.html [ ImageOnlyFailure ]
+fast/forms/ios/form-control-refresh/button/button-type-submit.html [ ImageOnlyFailure ]
+fast/forms/ios/form-control-refresh/color/paint-within-box.html [ ImageOnlyFailure ]
+fast/forms/ios/form-control-refresh/select/decoration-color.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/fractional-translation-from-position.html [ ImageOnlyFailure ]
+
+# <rdar://156470462> RTL inputs with type=password have larger logical width than RTL inputs with type number, url, tel, & text
+fast/forms/input-password-logical-widths.html [ Failure ]
+
+webkit.org/b/296338 http/tests/site-isolation/fullscreen.html [ Pass Failure ]
+
+# webkit.org/b/296017 4x imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-021.html (layout-tests) are flakey image failures
+imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-006.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-022.html [ Pass ImageOnlyFailure ]
+[ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-021.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/296389 [ Release ] http/tests/dom/noreferrer-window-not-targetable.html [ Pass Failure ]
+
+# webkit.org/b/296388 [ Release ] 3x http/tests/canvas/ (layout-tests) are flakey text failures 
+[ Release ] http/tests/canvas/ctx.2d-canvas-style-color-no-document-leak.html [ Pass Failure ]
+[ Release ] http/tests/canvas/ctx.2d-canvas-style-gradient-no-document-leak.html [ Pass Failure ]
+[ Release ] http/tests/canvas/ctx.2d-canvas-style-pattern-no-document-leak.html [ Pass Failure ]
+
+webkit.org/b/296566 [ Release ] imported/w3c/web-platform-tests/screen-orientation/lock-basic.html [ Pass Failure ]

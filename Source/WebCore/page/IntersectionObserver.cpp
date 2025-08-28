@@ -27,10 +27,12 @@
 #include "config.h"
 #include "IntersectionObserver.h"
 
+#include "ContainerNodeInlines.h"
 #include "CSSParserTokenRange.h"
 #include "CSSPropertyParserConsumer+CSSPrimitiveValueResolver.h"
 #include "CSSPropertyParserConsumer+LengthPercentageDefinitions.h"
 #include "CSSTokenizer.h"
+#include "DocumentInlines.h"
 #include "Element.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameView.h"

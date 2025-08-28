@@ -35,7 +35,7 @@
 #include <wtf/TZoneMalloc.h>
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(MODEL_PROCESS)
-#include <WebCore/ElementIdentifier.h>
+#include <WebCore/NodeIdentifier.h>
 #endif
 
 OBJC_CLASS CAAnimation;
@@ -89,10 +89,6 @@ public:
     // Detach the root layer; it will be reattached upon the next incoming commit.
     void detachRootLayer();
 
-    // Turn all CAMachPort objects in layer contents into actual IOSurfaces.
-    // This avoids keeping an outstanding InUse reference when suspended.
-    void mapAllIOSurfaceBackingStore();
-
     CALayer *layerWithIDForTesting(WebCore::PlatformLayerIdentifier) const;
 
     bool replayDynamicContentScalingDisplayListsIntoBackingStore() const;
@@ -116,8 +112,6 @@ private:
     bool updateBannerLayers(const RemoteLayerTreeTransaction&);
 
     void layerWillBeRemoved(WebCore::ProcessIdentifier, WebCore::PlatformLayerIdentifier);
-
-    LayerContentsType layerContentsType() const;
 
     WeakPtr<RemoteLayerTreeDrawingAreaProxy> m_drawingArea;
     WeakPtr<RemoteLayerTreeNode> m_rootNode;

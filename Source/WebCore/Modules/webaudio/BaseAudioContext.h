@@ -72,6 +72,7 @@ class DynamicsCompressorNode;
 class GainNode;
 class IIRFilterNode;
 class MediaElementAudioSourceNode;
+class MediaSessionManagerInterface;
 class OscillatorNode;
 class PannerNode;
 class PeriodicWave;
@@ -256,6 +257,8 @@ protected:
     void setState(State);
 
     void clear();
+
+    RefPtr<MediaSessionManagerInterface> mediaSessionManager() const;
 
 protected:
     // Only accessed when the graph lock is held.

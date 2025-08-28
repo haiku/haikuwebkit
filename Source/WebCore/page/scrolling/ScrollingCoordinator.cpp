@@ -180,14 +180,13 @@ EventTrackingRegions ScrollingCoordinator::absoluteEventTrackingRegionsForFrame(
     }
 
 #if !ENABLE(WHEEL_EVENT_REGIONS)
-    auto wheelHandlerRegion = frame.document()->absoluteRegionForEventTargets(frame.document()->wheelEventTargets());
+    auto wheelHandlerRegion = frame.document()->absoluteRegionForWheelEventTargets();
     bool wheelHandlerInFixedContent = wheelHandlerRegion.second;
     if (wheelHandlerInFixedContent) {
         // FIXME: need to handle position:sticky here too.
         LayoutRect inflatedWheelHandlerBounds = frameView->fixedScrollableAreaBoundsInflatedForScrolling(LayoutRect(wheelHandlerRegion.first.bounds()));
         wheelHandlerRegion.first.unite(enclosingIntRect(inflatedWheelHandlerBounds));
     }
-    
     nonFastScrollableRegion.unite(wheelHandlerRegion.first);
 #endif
 

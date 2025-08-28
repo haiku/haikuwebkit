@@ -57,7 +57,7 @@ class WebInspectorUI final
     : public RefCounted<WebInspectorUI>
     , private IPC::Connection::Client
     , public WebCore::InspectorFrontendClient {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(WebInspectorUI);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebInspectorUI);
 public:
     static Ref<WebInspectorUI> create(WebPage&);
@@ -71,7 +71,7 @@ public:
 
     // IPC::Connection::Client
     void didClose(IPC::Connection&) override { /* Do nothing, the inspected page process may have crashed and may be getting replaced. */ }
-    void didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, int32_t indexOfObjectFailingDecoding) override { closeWindow(); }
+    void didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, const Vector<uint32_t>& indicesOfObjectsFailingDecoding) override { closeWindow(); }
 
     // Called by WebInspectorUI messages
     void establishConnection(WebPageProxyIdentifier inspectedPageIdentifier, const DebuggableInfoData&, bool underTest, unsigned inspectionLevel);

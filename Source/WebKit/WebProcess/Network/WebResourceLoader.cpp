@@ -44,9 +44,11 @@
 #include <WebCore/DiagnosticLoggingClient.h>
 #include <WebCore/DiagnosticLoggingKeys.h>
 #include <WebCore/DocumentLoader.h>
+#include <WebCore/FrameInlines.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/InspectorInstrumentationWebKit.h>
 #include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameLoaderClient.h>
 #include <WebCore/NetworkLoadMetrics.h>
 #include <WebCore/Page.h>

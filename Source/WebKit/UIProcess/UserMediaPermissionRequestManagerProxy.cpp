@@ -107,8 +107,8 @@ Ref<UserMediaPermissionRequestManagerProxy> UserMediaPermissionRequestManagerPro
 
 UserMediaPermissionRequestManagerProxy::UserMediaPermissionRequestManagerProxy(WebPageProxy& page)
     : m_page(page)
-    , m_rejectionTimer(RunLoop::protectedMain(), this, &UserMediaPermissionRequestManagerProxy::rejectionTimerFired)
-    , m_watchdogTimer(RunLoop::protectedMain(), this, &UserMediaPermissionRequestManagerProxy::watchdogTimerFired)
+    , m_rejectionTimer(RunLoop::mainSingleton(), "UserMediaPermissionRequestManagerProxy::RejectionTimer"_s, this, &UserMediaPermissionRequestManagerProxy::rejectionTimerFired)
+    , m_watchdogTimer(RunLoop::mainSingleton(), "UserMediaPermissionRequestManagerProxy::WatchdogTimer"_s, this, &UserMediaPermissionRequestManagerProxy::watchdogTimerFired)
 #if !RELEASE_LOG_DISABLED
     , m_logger(page.logger())
     , m_logIdentifier(uniqueLogIdentifier())

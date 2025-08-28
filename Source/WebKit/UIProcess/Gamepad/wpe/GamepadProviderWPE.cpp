@@ -46,7 +46,7 @@ GamepadProviderWPE& GamepadProviderWPE::singleton()
 }
 
 GamepadProviderWPE::GamepadProviderWPE()
-    : m_inputNotificationTimer(RunLoop::currentSingleton(), this, &GamepadProviderWPE::inputNotificationTimerFired)
+    : m_inputNotificationTimer(RunLoop::currentSingleton(), "GamepadProviderWPE::InputNotificationTimer"_s, this, &GamepadProviderWPE::inputNotificationTimerFired)
 {
 }
 

@@ -1,5 +1,3 @@
-// RUN: %not %wgslc | %check
-
 fn main()
 {
     _ = array(

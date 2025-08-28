@@ -35,6 +35,7 @@
 #include "LocalDOMWindowProperty.h"
 #include "LocalFrame.h"
 #include "NavigationScheduler.h"
+#include "Quirks.h"
 #include "SecurityOrigin.h"
 #include "ServiceWorkerContainer.h"
 #include <wtf/TZoneMallocInlines.h>

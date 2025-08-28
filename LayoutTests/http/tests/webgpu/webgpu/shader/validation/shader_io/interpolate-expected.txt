@@ -3846,7 +3846,7 @@ FAIL :interpolation_validation:attr="trailing_comma_one_arg" assert_unreached:
   - EXCEPTION: Error: Unexpected validation error occurred: 1 error generated while compiling the shader:
     2:34: Expected a Identifier, but got a )
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 PASS :interpolation_validation:attr="trailing_comma_two_arg"
 PASS :interpolation_validation:attr="newline"

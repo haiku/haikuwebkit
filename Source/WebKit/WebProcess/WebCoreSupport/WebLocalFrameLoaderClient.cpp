@@ -48,6 +48,7 @@
 #include "WKBundleAPICast.h"
 #include "WebAutomationSessionProxy.h"
 #include "WebBackForwardListProxy.h"
+#include "WebChromeClient.h"
 #include "WebErrors.h"
 #include "WebEvent.h"
 #include "WebFrame.h"
@@ -1116,7 +1117,15 @@ void WebLocalFrameLoaderClient::dispatchWillSubmitForm(FormState& formState, Com
     RefPtr<API::Object> userData;
     webPage->injectedBundleFormClient().willSubmitForm(webPage.get(), form.ptr(), m_frame.ptr(), sourceFrame.get(), values, userData);
 
-    webPage->sendWithAsyncReply(Messages::WebPageProxy::WillSubmitForm(m_frame->frameID(), sourceFrame->frameID(), values, UserData(WebProcess::singleton().transformObjectsToHandles(userData.get()).get())), WTFMove(completionHandler));
+    if (!userData) {
+        auto userInfo = form->userInfo();
+        if (!userInfo.isNull()) {
+            if (auto data = JSON::Value::parseJSON(userInfo))
+                userData = userDataFromJSONData(*data);
+        }
+    }
+
+    webPage->sendWithAsyncReply(Messages::WebPageProxy::WillSubmitForm(m_frame->info(), sourceFrame->info(), values, UserData(WebProcess::singleton().transformObjectsToHandles(userData.get()).get())), WTFMove(completionHandler));
 }
 
 void WebLocalFrameLoaderClient::revertToProvisionalState(DocumentLoader*)

@@ -32,6 +32,7 @@
 #include "AXIsolatedTree.h"
 #include "AXLogger.h"
 #include "AXSearchManager.h"
+#include "AXTextMarker.h"
 #include "AXTextRun.h"
 #include "AccessibilityNodeObject.h"
 #include "DateComponents.h"
@@ -52,13 +53,12 @@ namespace WebCore {
 using namespace HTMLNames;
 
 AXIsolatedObject::AXIsolatedObject(IsolatedObjectData&& data)
-    : AXCoreObject(data.axID, data.role)
-    , m_childrenIDs(WTFMove(data.childrenIDs))
+    : AXCoreObject(data.axID, data.role, data.getsGeometryFromChildren)
+    , m_unresolvedChildrenIDs(WTFMove(data.childrenIDs))
     , m_properties(WTFMove(data.properties))
     , m_tree(WTFMove(data.tree))
     , m_parentID(data.parentID)
     , m_propertyFlags(data.propertyFlags)
-    , m_getsGeometryFromChildren(data.getsGeometryFromChildren)
 {
     ASSERT(!isMainThread());
 }
@@ -120,7 +120,7 @@ static bool isDefaultValue(AXProperty property, AXPropertyValueVariant& value)
                 return typedValue == Color::black;
             if (property == AXProperty::TextColor)
                 return false;
-            return typedValue.toColorTypeLossy<SRGBA<uint8_t>>() == Color().toColorTypeLossy<SRGBA<uint8_t>>();
+            return typedValue.toColorTypeLossy<SRGBA<uint8_t>>() == Accessibility::defaultColor();
         },
         [](std::shared_ptr<URL>& typedValue) { return !typedValue || *typedValue == URL(); },
         [](LayoutRect& typedValue) { return typedValue == LayoutRect(); },
@@ -153,7 +153,6 @@ static bool isDefaultValue(AXProperty property, AXPropertyValueVariant& value)
         [](std::shared_ptr<AXTextRuns> typedValue) { return !typedValue || !typedValue->size(); },
         [](RetainPtr<CTFontRef>& typedValue) { return !typedValue; },
         [](FontOrientation typedValue) { return typedValue == FontOrientation::Horizontal; },
-        [](TextEmissionBehavior typedValue) { return typedValue == TextEmissionBehavior::None; },
         [](AXTextRunLineID typedValue) { return !typedValue; },
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
         [] (WallTime& time) { return !time; },
@@ -225,12 +224,17 @@ void AXIsolatedObject::detachRemoteParts(AccessibilityDetachmentType)
 {
     ASSERT(!isMainThread());
 
-    for (const auto& childID : m_childrenIDs) {
+    for (const auto& child : m_children)
+        child->detachFromParent();
+
+    for (const auto& childID : m_unresolvedChildrenIDs) {
+        // Also loop through unresolved IDs in case they have become resolved.
         if (RefPtr child = tree()->objectForID(childID))
             child->detachFromParent();
     }
-    m_childrenIDs.clear();
-    m_childrenDirty = true;
+    m_unresolvedChildrenIDs.clear();
+    m_children.clear();
+    m_childrenDirty = false;
 }
 
 #if !PLATFORM(MAC)
@@ -248,7 +252,7 @@ void AXIsolatedObject::detachFromParent()
 
 void AXIsolatedObject::setChildrenIDs(Vector<AXID>&& ids)
 {
-    m_childrenIDs = WTFMove(ids);
+    m_unresolvedChildrenIDs = WTFMove(ids);
     m_childrenDirty = true;
 }
 
@@ -262,16 +266,21 @@ const AXCoreObject::AccessibilityChildrenVector& AXIsolatedObject::children(bool
 #endif
     if (updateChildrenIfNeeded && m_childrenDirty) {
         unsigned index = 0;
-        m_children = WTF::compactMap(m_childrenIDs, [&] (auto& childID) -> std::optional<Ref<AXCoreObject>> {
+        Vector<AXID> unresolvedIDs;
+        m_children = WTF::compactMap(m_unresolvedChildrenIDs, [&] (auto& childID) -> std::optional<Ref<AXCoreObject>> {
             if (RefPtr child = tree()->objectForID(childID)) {
                 if (setChildIndexInParent(*child, index))
                     ++index;
                 return child.releaseNonNull();
             }
+            unresolvedIDs.append(childID);
             return std::nullopt;
         });
         m_childrenDirty = false;
-        ASSERT(m_children.size() == m_childrenIDs.size());
+        m_unresolvedChildrenIDs = WTFMove(unresolvedIDs);
+        // Having any unresolved children IDs at this point means we should've had a child / children, but they didn't
+        // exist in tree()->objectForID(), so we were never able to hydrate it into an object.
+        ASSERT(m_unresolvedChildrenIDs.isEmpty());
 
 #ifndef NDEBUG
         verifyChildrenIndexInParent();
@@ -556,6 +565,18 @@ AXIsolatedObject* AXIsolatedObject::accessibilityHitTest(const IntPoint& point) 
     return tree()->objectForID(axID);
 }
 
+TextEmissionBehavior AXIsolatedObject::textEmissionBehavior() const
+{
+    if (hasPropertyFlag(AXProperty::IsTextEmissionBehaviorNewline))
+        return TextEmissionBehavior::Newline;
+    if (hasPropertyFlag(AXProperty::IsTextEmissionBehaviorDoubleNewline))
+        return TextEmissionBehavior::DoubleNewline;
+    if (hasPropertyFlag(AXProperty::IsTextEmissionBehaviorTab))
+        return TextEmissionBehavior::Tab;
+
+    return TextEmissionBehavior::None;
+}
+
 IntPoint AXIsolatedObject::intPointAttributeValue(AXProperty property) const
 {
     size_t index = indexOfProperty(property);
@@ -731,7 +752,7 @@ Color AXIsolatedObject::colorAttributeValue(AXProperty property) const
             if (RefPtr parent = parentObject())
                 return parent->textColor();
         }
-        return Color();
+        return Accessibility::defaultColor();
     }
 
 #ifndef NDEBUG
@@ -1650,7 +1671,20 @@ String AXIsolatedObject::titleAttributeValue() const
 String AXIsolatedObject::stringValue() const
 {
 #if ENABLE(AX_THREAD_TEXT_APIS)
-    return stringAttributeValue(AXProperty::StringValue);
+    size_t index = indexOfProperty(AXProperty::StringValue);
+    if (index == notFound) {
+        if (isStaticText()) {
+            // We can compute the stringValue of rendered text on-demand using AXProperty::TextRuns.
+            // See AccessibilityObject::shouldCacheStringValue.
+            return textMarkerRange().toString(IncludeListMarkerText::No);
+        }
+        return emptyString();
+    }
+
+    return WTF::switchOn(m_properties[index].second,
+        [] (const String& typedValue) { return typedValue; },
+        [] (auto&) { return emptyString(); }
+    );
 #else
     if (std::optional stringValue = optionalAttributeValue<String>(AXProperty::StringValue))
         return *stringValue;

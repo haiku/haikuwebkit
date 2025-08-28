@@ -55,9 +55,9 @@ struct PlatformVideoColorSpace;
 
 class WebCoreDecompressionSession : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<WebCoreDecompressionSession> {
 public:
-    WEBCORE_EXPORT static Ref<WebCoreDecompressionSession> createOpenGL();
-    WEBCORE_EXPORT static Ref<WebCoreDecompressionSession> createRGB();
-    static Ref<WebCoreDecompressionSession> create(NSDictionary *pixelBufferAttributes) { return adoptRef(*new WebCoreDecompressionSession(pixelBufferAttributes)); }
+    WEBCORE_EXPORT static Ref<WebCoreDecompressionSession> createOpenGL(GuaranteedSerialFunctionDispatcher* = nullptr);
+    WEBCORE_EXPORT static Ref<WebCoreDecompressionSession> createRGB(GuaranteedSerialFunctionDispatcher* = nullptr);
+    static Ref<WebCoreDecompressionSession> create(NSDictionary *pixelBufferAttributes, GuaranteedSerialFunctionDispatcher* dispatcher = nullptr) { return adoptRef(*new WebCoreDecompressionSession(pixelBufferAttributes, dispatcher)); }
 
     WEBCORE_EXPORT ~WebCoreDecompressionSession();
     WEBCORE_EXPORT void invalidate();
@@ -79,7 +79,7 @@ public:
     bool isHardwareAccelerated() const;
 
 private:
-    WEBCORE_EXPORT WebCoreDecompressionSession(NSDictionary *);
+    WEBCORE_EXPORT WebCoreDecompressionSession(NSDictionary *, GuaranteedSerialFunctionDispatcher*);
     static NSDictionary *defaultPixelBufferAttributes();
 
     Expected<RetainPtr<VTDecompressionSessionRef>, OSStatus> ensureDecompressionSessionForSample(CMSampleBufferRef);
@@ -90,8 +90,9 @@ private:
     Ref<MediaPromise> initializeVideoDecoder(FourCharCode, std::span<const uint8_t>, const std::optional<PlatformVideoColorSpace>&);
     bool isInvalidated() const { return m_invalidated; }
 
-    static WorkQueue& queueSingleton();
     const RetainPtr<NSDictionary> m_pixelBufferAttributes;
+    static WorkQueue& queueSingleton();
+    const Ref<GuaranteedSerialFunctionDispatcher> m_dispatcher;
 
     mutable Lock m_lock;
     RetainPtr<VTDecompressionSessionRef> m_decompressionSession WTF_GUARDED_BY_LOCK(m_lock);
@@ -103,15 +104,15 @@ private:
     struct PendingDecodeData {
         DecodingFlags flags;
     };
-    std::optional<PendingDecodeData> m_pendingDecodeData WTF_GUARDED_BY_CAPABILITY(queueSingleton());
-    Vector<RetainPtr<CMSampleBufferRef>> m_lastDecodedSamples WTF_GUARDED_BY_CAPABILITY(queueSingleton());
-    OSStatus m_lastDecodingError WTF_GUARDED_BY_CAPABILITY(queueSingleton()) { noErr };
-    RetainPtr<CMFormatDescriptionRef> m_currentImageDescription WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    std::optional<PendingDecodeData> m_pendingDecodeData WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get());
+    Vector<RetainPtr<CMSampleBufferRef>> m_lastDecodedSamples WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get());
+    OSStatus m_lastDecodingError WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get()) { noErr };
+    RetainPtr<CMFormatDescriptionRef> m_currentImageDescription WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get());
 
     // Stereo playback support
     const bool m_stereoSupported { false };
-    bool m_stereoConfigured WTF_GUARDED_BY_CAPABILITY(queueSingleton()) { false };
-    RetainPtr<CFArrayRef> m_tagCollections WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    bool m_stereoConfigured WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get()) { false };
+    RetainPtr<CFArrayRef> m_tagCollections WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get());
 
     std::atomic<bool> m_invalidated { false };
 

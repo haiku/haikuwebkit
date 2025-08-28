@@ -1333,7 +1333,7 @@ void WebProcessProxy::processDidTerminateOrFailedToLaunch(ProcessTerminationReas
         remotePage->processDidTerminate(*this, reason);
 }
 
-void WebProcessProxy::didReceiveInvalidMessage(IPC::Connection& connection, IPC::MessageName messageName, int32_t indexOfObjectFailingDecoding)
+void WebProcessProxy::didReceiveInvalidMessage(IPC::Connection& connection, IPC::MessageName messageName, const Vector<uint32_t>& indexOfObjectFailingDecoding)
 {
     logInvalidMessage(connection, messageName);
 
@@ -1555,15 +1555,6 @@ void WebProcessProxy::didDestroyUserGestureToken(PageIdentifier pageID, UserGest
 
 bool WebProcessProxy::canBeAddedToWebProcessCache() const
 {
-#if PLATFORM(IOS_FAMILY)
-    // Don't add the Web process to the cache if there are still assertions being held, preventing it from suspending.
-    // This is a fix for a regression in page load speed we see on http://www.youtube.com when adding it to the cache.
-    if (PAL::deviceClassIsSmallScreen() && throttler().shouldBeRunnable()) {
-        WEBPROCESSPROXY_RELEASE_LOG(Process, "canBeAddedToWebProcessCache: Not adding to process cache because the process is runnable");
-        return false;
-    }
-#endif
-
     if (isRunningServiceWorkers()) {
         WEBPROCESSPROXY_RELEASE_LOG(Process, "canBeAddedToWebProcessCache: Not adding to process cache because the process is running workers");
         return false;
@@ -2002,7 +1993,7 @@ void WebProcessProxy::isResponsive(CompletionHandler<void(bool isWebProcessRespo
 {
     if (m_isResponsive == NoOrMaybe::No) {
         if (callback) {
-            RunLoop::protectedMain()->dispatch([callback = WTFMove(callback)]() mutable {
+            RunLoop::mainSingleton().dispatch([callback = WTFMove(callback)]() mutable {
                 bool isWebProcessResponsive = false;
                 callback(isWebProcessResponsive);
             });
@@ -2207,7 +2198,7 @@ void WebProcessProxy::didStartProvisionalLoadForMainFrame(const URL& url)
     WEBPROCESSPROXY_RELEASE_LOG(Loading, "didStartProvisionalLoadForMainFrame:");
 
     // This process has been used for several registrable domains already.
-    if (m_site && m_site->isEmpty())
+    if (!m_site && m_site.error() == SiteState::MultipleSites)
         return;
 
     if (url.protocolIsAbout())
@@ -2216,7 +2207,7 @@ void WebProcessProxy::didStartProvisionalLoadForMainFrame(const URL& url)
     if (!url.protocolIsInHTTPFamily() && !processPool().configuration().processSwapsOnNavigationWithinSameNonHTTPFamilyProtocol()) {
         // Unless the processSwapsOnNavigationWithinSameNonHTTPFamilyProtocol flag is set, we don't process swap on navigations withing the same
         // non HTTP(s) protocol. For this reason, we ignore the registrable domain and processes are not eligible for the process cache.
-        m_site = Site { { }, { } };
+        m_site = makeUnexpected(SiteState::MultipleSites);
         return;
     }
 
@@ -2228,23 +2219,27 @@ void WebProcessProxy::didStartProvisionalLoadForMainFrame(const URL& url)
         if (isRunningSharedWorkers())
             dataStore->protectedNetworkProcess()->terminateRemoteWorkerContextConnectionWhenPossible(RemoteWorkerType::SharedWorker, dataStore->sessionID(), m_site->domain(), coreProcessIdentifier());
 
-        // Null out registrable domain since this process has now been used for several domains.
-        m_site = Site { { }, { } };
+        m_site = makeUnexpected(SiteState::MultipleSites);
         return;
     }
 
     if (m_sharedPreferencesForWebProcess.siteIsolationEnabled)
-        ASSERT(m_site == site);
+        ASSERT((m_site && *m_site == site) || m_site.error() == SiteState::SharedProcess);
     else {
         // Associate the process with this site.
         m_site = WTFMove(site);
     }
 }
 
-void WebProcessProxy::didStartUsingProcessForSiteIsolation(const WebCore::Site& site)
+void WebProcessProxy::didStartUsingProcessForSiteIsolation(const std::optional<WebCore::Site>& site)
 {
-    ASSERT(!m_site || m_site == site);
-    m_site = site;
+    if (!site) {
+        ASSERT(m_site.error() == SiteState::NotYetSpecified || m_site.error() == SiteState::SharedProcess);
+        m_site = makeUnexpected(SiteState::SharedProcess);
+        return;
+    }
+    ASSERT(m_site ? (m_site.value().isEmpty() || m_site.value() == *site) : m_site.error() == SiteState::NotYetSpecified);
+    m_site = *site;
 }
 
 void WebProcessProxy::addSuspendedPageProxy(SuspendedPageProxy& suspendedPage)
@@ -2817,7 +2812,7 @@ void WebProcessProxy::getWebCryptoMasterKey(CompletionHandler<void(std::optional
     m_websiteDataStore->client().webCryptoMasterKey([completionHandler = WTFMove(completionHandler)](std::optional<Vector<uint8_t>>&& key) mutable {
         if (key)
             return completionHandler(WTFMove(key));
-        return completionHandler(WebCore::defaultWebCryptoMasterKey());
+        return WebCore::getDefaultWebCryptoMasterKey(WTFMove(completionHandler));
     });
 }
 

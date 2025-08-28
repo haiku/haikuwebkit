@@ -115,6 +115,9 @@ private:
     {
     }
 
+    String propertyValueSerializationForTokenization(const CSS::SerializationContext&, const RenderStyle&) const;
+    void propertyValueSerializationForTokenization(StringBuilder&, const CSS::SerializationContext&, const RenderStyle&) const;
+
     const AtomString m_name;
     const Kind m_value;
     mutable RefPtr<CSSVariableData> m_cachedTokens;

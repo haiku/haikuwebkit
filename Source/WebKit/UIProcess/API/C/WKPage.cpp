@@ -1212,7 +1212,7 @@ void WKPageSetFullScreenClientForTesting(WKPageRef pageRef, const WKPageFullScre
     CRASH_IF_SUSPENDED;
 #if ENABLE(FULLSCREEN_API)
     class FullScreenClientForTesting : public API::Client<WKPageFullScreenClientBase>, public WebKit::WebFullScreenManagerProxyClient {
-        WTF_MAKE_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_FAST_ALLOCATED(FullScreenClientForTesting);
         WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FullScreenClientForTesting);
     public:
         FullScreenClientForTesting(const WKPageFullScreenClientBase* client, WebPageProxy* page)
@@ -2240,12 +2240,13 @@ void WKPageSetPageUIClient(WKPageRef pageRef, const WKPageUIClientBase* wkClient
         }
 
 #if ENABLE(POINTER_LOCK)
-        void requestPointerLock(WebPageProxy* page) final
+        void requestPointerLock(WebPageProxy* page, CompletionHandler<void(bool)>&& completionHandler) final
         {
             if (!m_client.requestPointerLock)
-                return;
-            
-            m_client.requestPointerLock(toAPI(page), m_client.base.clientInfo);
+                return completionHandler(false);
+
+            Ref listener = CompletionListener::create([completionHandler = WTFMove(completionHandler)] mutable { completionHandler(true); });
+            m_client.requestPointerLock(toAPI(page), toAPI(listener.ptr()), m_client.base.clientInfo);
         }
 
         void didLosePointerLock(WebPageProxy* page) final
@@ -2507,7 +2508,7 @@ void WKPageSetPageNavigationClient(WKPageRef pageRef, const WKPageNavigationClie
                 if (auto data = adoptRef(toImpl(m_client.copyWebCryptoMasterKey(toAPI(&page), m_client.base.clientInfo))))
                     return completionHandler(Vector(data->span()));
             }
-            return completionHandler(defaultWebCryptoMasterKey());
+            return WebCore::getDefaultWebCryptoMasterKey(WTFMove(completionHandler));
         }
 
         void navigationActionDidBecomeDownload(WebKit::WebPageProxy& page, API::NavigationAction& action, WebKit::DownloadProxy& download) override
@@ -3024,31 +3025,11 @@ bool WKPageGetMediaCaptureEnabled(WKPageRef page)
     return toProtectedImpl(page)->mediaCaptureEnabled();
 }
 
-void WKPageDidAllowPointerLock(WKPageRef pageRef)
-{
-    CRASH_IF_SUSPENDED;
-#if ENABLE(POINTER_LOCK)
-    toProtectedImpl(pageRef)->didAllowPointerLock();
-#else
-    UNUSED_PARAM(pageRef);
-#endif
-}
-
 void WKPageClearUserMediaState(WKPageRef pageRef)
 {
     CRASH_IF_SUSPENDED;
 #if ENABLE(MEDIA_STREAM)
     toProtectedImpl(pageRef)->clearUserMediaState();
-#else
-    UNUSED_PARAM(pageRef);
-#endif
-}
-
-void WKPageDidDenyPointerLock(WKPageRef pageRef)
-{
-    CRASH_IF_SUSPENDED;
-#if ENABLE(POINTER_LOCK)
-    toProtectedImpl(pageRef)->didDenyPointerLock();
 #else
     UNUSED_PARAM(pageRef);
 #endif

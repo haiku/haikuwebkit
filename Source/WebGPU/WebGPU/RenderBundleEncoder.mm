@@ -46,7 +46,7 @@
 
 static bool setCommandEncoder(auto& buffer, auto& renderPassEncoder)
 {
-    buffer.setCommandEncoder(renderPassEncoder->protectedParentEncoder().get());
+    buffer.setCommandEncoder(renderPassEncoder->parentEncoder());
     return !!renderPassEncoder->renderCommandEncoder();
 }
 
@@ -374,7 +374,7 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
             m_makeSubmitInvalid = true;
     }
 
-    if (NSString* error = pipeline->protectedPipelineLayout()->errorValidatingBindGroupCompatibility(m_bindGroups)) {
+    if (NSString* error = pipeline->pipelineLayout().errorValidatingBindGroupCompatibility(m_bindGroups)) {
         makeInvalid(error);
         return false;
     }

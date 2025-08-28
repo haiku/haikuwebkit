@@ -101,9 +101,10 @@ private:
     const std::optional<WGPUExtent3D> m_renderExtent;
 
     const Ref<Device> m_device;
-    Ref<Texture> m_parentTexture;
+    const Ref<Texture> m_parentTexture;
     mutable Vector<uint64_t> m_commandEncoders;
-} SWIFT_SHARED_REFERENCE(refTextureView, derefTextureView);
+// FIXME: remove @safe once rdar://151039766 lands
+} __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(refTextureView, derefTextureView);
 
 } // namespace WebGPU
 

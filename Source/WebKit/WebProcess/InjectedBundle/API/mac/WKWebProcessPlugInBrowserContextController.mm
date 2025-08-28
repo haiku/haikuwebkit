@@ -399,7 +399,7 @@ static void setUpResourceLoadClient(WKWebProcessPlugInBrowserContextController *
 
 - (WKDOMDocument *)mainFrameDocument
 {
-    auto* webCoreMainFrame = dynamicDowncast<WebCore::LocalFrame>(_page->mainFrame());
+    RefPtr webCoreMainFrame = dynamicDowncast<WebCore::LocalFrame>(_page->mainFrame());
     if (!webCoreMainFrame)
         return nil;
 

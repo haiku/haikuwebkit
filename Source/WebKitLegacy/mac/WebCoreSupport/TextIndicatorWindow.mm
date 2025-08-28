@@ -55,7 +55,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(TextIndicatorWindow);
 
 TextIndicatorWindow::TextIndicatorWindow(NSView *targetView)
     : m_targetView(targetView)
-    , m_temporaryTextIndicatorTimer(RunLoop::main(), this, &TextIndicatorWindow::startFadeOut)
+    , m_temporaryTextIndicatorTimer(RunLoop::mainSingleton(), "TextIndicatorWindow::TemporaryTextIndicatorTimer"_s, this, &TextIndicatorWindow::startFadeOut)
 {
 }
 

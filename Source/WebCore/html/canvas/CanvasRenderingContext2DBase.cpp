@@ -34,6 +34,7 @@
 #include "CanvasRenderingContext2DBase.h"
 
 #include "BitmapImage.h"
+#include "ContainerNodeInlines.h"
 #include "CSSFontSelector.h"
 #include "CSSMarkup.h"
 #include "CSSPrimitiveNumericTypes+Serialization.h"
@@ -81,6 +82,7 @@
 #include "TextMetrics.h"
 #include "TextRun.h"
 #include "WebCodecsVideoFrame.h"
+#include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -1946,15 +1948,6 @@ ExceptionOr<void> CanvasRenderingContext2DBase::drawImage(ImageBitmap& imageBitm
     return { };
 }
 
-void CanvasRenderingContext2DBase::drawImageFromRect(HTMLImageElement& imageElement, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh, const String& compositeOperation)
-{
-    CompositeOperator op;
-    auto blendOp = BlendMode::Normal;
-    if (!parseCompositeAndBlendOperator(compositeOperation, op, blendOp) || blendOp != BlendMode::Normal)
-        op = CompositeOperator::SourceOver;
-    drawImage(imageElement, FloatRect { sx, sy, sw, sh }, FloatRect { dx, dy, dw, dh }, op, BlendMode::Normal);
-}
-
 void CanvasRenderingContext2DBase::clearCanvas()
 {
     auto* c = effectiveDrawingContext();
@@ -2302,7 +2295,7 @@ ExceptionOr<RefPtr<CanvasPattern>> CanvasRenderingContext2DBase::createPattern(H
 #endif
 
     auto renderingMode = drawingContext() ? drawingContext()->renderingMode() : RenderingMode::Unaccelerated;
-    auto imageBuffer = videoElement.createBufferForPainting(size(videoElement), renderingMode, colorSpace(), pixelFormat());
+    auto imageBuffer = videoElement.createBufferForPainting(size(videoElement), renderingMode, colorSpace(), { pixelFormat() });
     if (!imageBuffer)
         return nullptr;
 
@@ -2810,7 +2803,7 @@ bool CanvasRenderingContext2DBase::canDrawText(double x, double y, bool fill, st
     return true;
 }
 
-static inline bool isSpaceThatNeedsReplacing(UChar c)
+static inline bool isSpaceThatNeedsReplacing(char16_t c)
 {
     // According to specification all space characters should be replaced with 0x0020 space character.
     // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html#text-preparation-algorithm
@@ -2828,7 +2821,7 @@ String CanvasRenderingContext2DBase::normalizeSpaces(const String& text)
         return text;
 
     unsigned textLength = text.length();
-    Vector<UChar> charVector(textLength);
+    Vector<char16_t> charVector(textLength);
     StringView(text).getCharacters(charVector.mutableSpan());
 
     charVector[i++] = ' ';

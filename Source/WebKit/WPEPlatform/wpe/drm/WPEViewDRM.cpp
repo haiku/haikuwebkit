@@ -498,7 +498,7 @@ static void wpeViewDRMScheduleCursorUpdate(WPEViewDRM* view)
         return;
 
     if (!priv->cursorUpdateTimer) {
-        priv->cursorUpdateTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), [view] {
+        priv->cursorUpdateTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), "_WPEViewDRMPrivate::cursorUpdateTimer"_s, [view] {
             if (wpeViewDRMRequestUpdate(view, nullptr))
                 view->priv->updateFlags.add(UpdateFlags::CursorUpdateRequested);
         });

@@ -121,7 +121,7 @@ void CachedImage::load(CachedResourceLoader& loader)
 void CachedImage::setBodyDataFrom(const CachedResource& resource)
 {
     ASSERT(resource.type() == type());
-    const CachedImage& image = static_cast<const CachedImage&>(resource);
+    const auto& image = downcast<const CachedImage>(resource);
 
     CachedResource::setBodyDataFrom(resource);
 
@@ -286,9 +286,9 @@ Image* CachedImage::imageForRenderer(const RenderObject* renderer)
         return &Image::nullImage();
 
     if (m_image->drawsSVGImage()) {
-        Image* image = m_svgImageCache->imageForRenderer(renderer);
+        RefPtr image = m_svgImageCache->imageForRenderer(renderer);
         if (image != &Image::nullImage())
-            return image;
+            return image.get();
     }
     return m_image.get();
 }

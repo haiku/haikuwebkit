@@ -109,6 +109,7 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
     , cssRandomFunctionEnabled { document.settings().cssRandomFunctionEnabled() }
     , cssTreeCountingFunctionsEnabled { document.settings().cssTreeCountingFunctionsEnabled() }
     , cssURLModifiersEnabled { document.settings().cssURLModifiersEnabled() }
+    , cssURLIntegrityModifierEnabled { document.settings().cssURLIntegrityModifierEnabled() }
     , cssAxisRelativePositionKeywordsEnabled { document.settings().cssAxisRelativePositionKeywordsEnabled() }
     , cssDynamicRangeLimitMixEnabled { document.settings().cssDynamicRangeLimitMixEnabled() }
     , cssConstrainedDynamicRangeLimitEnabled { document.settings().cssConstrainedDynamicRangeLimitEnabled() }
@@ -149,9 +150,10 @@ void add(Hasher& hasher, const CSSParserContext& context)
         | context.cssRandomFunctionEnabled                  << 23
         | context.cssTreeCountingFunctionsEnabled           << 24
         | context.cssURLModifiersEnabled                    << 25
-        | context.cssAxisRelativePositionKeywordsEnabled    << 26
-        | context.cssDynamicRangeLimitMixEnabled            << 27
-        | context.cssConstrainedDynamicRangeLimitEnabled    << 28;
+        | context.cssURLIntegrityModifierEnabled            << 26
+        | context.cssAxisRelativePositionKeywordsEnabled    << 27
+        | context.cssDynamicRangeLimitMixEnabled            << 28
+        | context.cssConstrainedDynamicRangeLimitEnabled    << 29;
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
 }
 

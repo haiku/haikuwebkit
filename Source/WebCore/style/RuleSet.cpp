@@ -81,16 +81,16 @@ static unsigned rulesCountForName(const RuleSet::AtomRuleMap& map, const AtomStr
 
 // FIXME: Maybe we can unify both following functions
 
-static bool hasHostPseudoClassSubjectInSelectorList(const CSSSelectorList* selectorList)
+static bool hasHostOrScopePseudoClassSubjectInSelectorList(const CSSSelectorList* selectorList)
 {
     if (!selectorList)
         return false;
 
     for (auto& selector : *selectorList) {
-        if (selector.isHostPseudoClass())
+        if (selector.isHostPseudoClass() || selector.isScopePseudoClass())
             return true;
 
-        if (hasHostPseudoClassSubjectInSelectorList(selector.selectorList()))
+        if (hasHostOrScopePseudoClassSubjectInSelectorList(selector.selectorList()))
             return true;
     }
 
@@ -257,9 +257,12 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
             case CSSSelector::PseudoClass::Root:
                 rootElementSelector = selector;
                 break;
+            case CSSSelector::PseudoClass::Scope:
+                m_hasHostOrScopePseudoClassRulesInUniversalBucket = true;
+                break;
             default:
-                if (hasHostPseudoClassSubjectInSelectorList(selector->selectorList()))
-                    m_hasHostPseudoClassRulesInUniversalBucket = true;
+                if (hasHostOrScopePseudoClassSubjectInSelectorList(selector->selectorList()))
+                    m_hasHostOrScopePseudoClassRulesInUniversalBucket = true;
                 break;
             }
             break;

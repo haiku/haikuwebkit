@@ -48,6 +48,7 @@
 #include "Editor.h"
 #include "EventHandler.h"
 #include "EventLoop.h"
+#include "EventTargetInlines.h"
 #include "EventNames.h"
 #include "FindRevealAlgorithms.h"
 #include "FixedContainerEdges.h"
@@ -1071,6 +1072,18 @@ LayoutPoint LocalFrameView::scrollPositionRespectingCustomFixedPosition() const
 #endif
 
     return scrollPositionForFixedPosition();
+}
+
+void LocalFrameView::clearObscuredInsetsAdjustmentsIfNeeded()
+{
+    if (CheckedPtr tiledBacking = this->tiledBacking())
+        tiledBacking->clearObscuredInsetsAdjustments();
+}
+
+void LocalFrameView::obscuredInsetsWillChange(FloatBoxExtent&& obscuredInsetsDelta)
+{
+    if (CheckedPtr tiledBacking = this->tiledBacking())
+        tiledBacking->obscuredInsetsWillChange(WTFMove(obscuredInsetsDelta));
 }
 
 void LocalFrameView::obscuredContentInsetsDidChange(const FloatBoxExtent& newObscuredContentInsets)
@@ -2876,8 +2889,10 @@ bool LocalFrameView::scrollToFragment(const URL& url)
                 RefPtr commonAncestor = commonInclusiveAncestor<ComposedTree>(range);
                 if (commonAncestor && !is<Element>(commonAncestor))
                     commonAncestor = commonAncestor->parentElement();
-                if (commonAncestor)
+                if (commonAncestor) {
                     document->setCSSTarget(downcast<Element>(commonAncestor.get()));
+                    revealClosedDetailsAndHiddenUntilFoundAncestors(*commonAncestor);
+                }
                 // FIXME: <http://webkit.org/b/245262> (Scroll To Text Fragment should use DelegateMainFrameScroll)
                 TemporarySelectionChange selectionChange(document, { range }, { TemporarySelectionOption::RevealSelection, TemporarySelectionOption::RevealSelectionBounds, TemporarySelectionOption::UserTriggered, TemporarySelectionOption::ForceCenterScroll });
                 if (m_frame->settings().scrollToTextFragmentIndicatorEnabled() && !m_frame->page()->isControlledByAutomation())
@@ -4511,7 +4526,8 @@ void LocalFrameView::updateScrollAnchoringPositionForScrollableAreas()
 
 void LocalFrameView::updateAnchorPositionedAfterScroll()
 {
-    Style::AnchorPositionEvaluator::updatePositionsAfterScroll(*m_frame->protectedDocument());
+    if (RefPtr document = m_frame->document())
+        Style::AnchorPositionEvaluator::updatePositionsAfterScroll(*document);
 }
 
 IntSize LocalFrameView::sizeForResizeEvent() const
@@ -6130,8 +6146,20 @@ void LocalFrameView::scrollableAreaSetChanged()
         scrollingCoordinator->frameViewEventTrackingRegionsChanged(*this);
 }
 
+void LocalFrameView::scrollDidEnd()
+{
+    if (!isAwaitingScrollend())
+        return;
+    setIsAwaitingScrollend(false);
+    if (!m_frame->view())
+        return;
+    if (RefPtr document = m_frame->document())
+        document->addPendingScrollendEventTarget(*document);
+}
+
 void LocalFrameView::scheduleScrollEvent()
 {
+    setIsAwaitingScrollend(true);
     m_frame->eventHandler().scheduleScrollEvent();
     m_frame->eventHandler().dispatchFakeMouseMoveEventSoon();
 }
@@ -6806,13 +6834,13 @@ Color LocalFrameView::scrollbarTrackColorStyle() const
     return { };
 }
 
-ScrollbarGutter LocalFrameView::scrollbarGutterStyle()  const
+Style::ScrollbarGutter LocalFrameView::scrollbarGutterStyle()  const
 {
     auto* document = m_frame->document();
     auto scrollingObject = document && document->documentElement() ? document->documentElement()->renderer() : nullptr;
     if (scrollingObject)
         return scrollingObject->style().scrollbarGutter();
-    return { };
+    return CSS::Keyword::Auto { };
 }
 
 ScrollbarWidth LocalFrameView::scrollbarWidthStyle()  const
@@ -6924,7 +6952,7 @@ int LocalFrameView::scrollbarGutterWidth(bool isHorizontalWritingMode) const
     if (verticalScrollbar() && verticalScrollbar()->isOverlayScrollbar())
         return 0;
 
-    if (!verticalScrollbar() && !(scrollbarGutterStyle().isAuto || ScrollbarTheme::theme().usesOverlayScrollbars()) && isHorizontalWritingMode)
+    if (!verticalScrollbar() && !(scrollbarGutterStyle().isAuto() || ScrollbarTheme::theme().usesOverlayScrollbars()) && isHorizontalWritingMode)
         return ScrollbarTheme::theme().scrollbarThickness(scrollbarWidthStyle());
 
     if (!verticalScrollbar())
@@ -6938,7 +6966,7 @@ IntSize LocalFrameView::totalScrollbarSpace() const
     IntSize scrollbarGutter = { horizontalScrollbarIntrusion(), verticalScrollbarIntrusion() };
 
     if (isHorizontalWritingMode()) {
-        if (scrollbarGutterStyle().bothEdges)
+        if (scrollbarGutterStyle().isStableBothEdges())
             scrollbarGutter.setWidth(scrollbarGutterWidth() * 2);
         else
             scrollbarGutter.setWidth(scrollbarGutterWidth());
@@ -6948,7 +6976,7 @@ IntSize LocalFrameView::totalScrollbarSpace() const
 
 int LocalFrameView::insetForLeftScrollbarSpace() const
 {
-    if (scrollbarGutterStyle().bothEdges)
+    if (scrollbarGutterStyle().isStableBothEdges())
         return scrollbarGutterWidth();
     if (shouldPlaceVerticalScrollbarOnLeft())
         return verticalScrollbar() ? verticalScrollbar()->occupiedWidth() : 0;

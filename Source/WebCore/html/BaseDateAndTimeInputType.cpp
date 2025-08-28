@@ -32,6 +32,7 @@
 #include "config.h"
 #include "BaseDateAndTimeInputType.h"
 
+#include "AXObjectCache.h"
 #include "BaseClickableWithKeyInputType.h"
 #include "Chrome.h"
 #include "ContainerNodeInlines.h"
@@ -543,8 +544,16 @@ void BaseDateAndTimeInputType::didChangeValueFromControl()
 
     InputType::setValue(value, valueChanged, DispatchNoEvent, DoNotSet);
 
-    if (!valueChanged)
+    if (!valueChanged) {
+        if (CheckedPtr cache = input->protectedDocument()->existingAXObjectCache()) {
+            // This method is called when a sub-field of a date or time input changes. An HTML input's DOM value
+            // only changes when all fields are filled out, but accessibility needs to represent the partial value
+            // for assistive technologies, so notify accessibility here so it can take the appropriate actions, e.g.
+            // updating the accessibility tree.
+            cache->valueChanged(input.get());
+        }
         return;
+    }
 
     if (input->protectedUserAgentShadowRoot()->containsFocusedElement())
         input->dispatchFormControlInputEvent();

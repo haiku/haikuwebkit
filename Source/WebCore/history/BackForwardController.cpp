@@ -27,7 +27,9 @@
 #include "BackForwardController.h"
 
 #include "BackForwardClient.h"
+#include "Frame.h"
 #include "HistoryItem.h"
+#include "LocalFrame.h"
 #include "Page.h"
 #include "ShouldTreatAsContinuingLoad.h"
 #include <wtf/TZoneMallocInlines.h>
@@ -179,6 +181,17 @@ Vector<Ref<HistoryItem>> BackForwardController::allItems()
     for (int index = -1 * static_cast<int>(backCount()); index <= static_cast<int>(forwardCount()); index++) {
         if (RefPtr item = itemAtIndex(index))
             historyItems.append(item.releaseNonNull());
+    }
+
+    return historyItems;
+}
+
+Vector<Ref<HistoryItem>> BackForwardController::itemsForFrame(FrameIdentifier frameID)
+{
+    Vector<Ref<HistoryItem>> historyItems;
+    for (Ref item : allItems()) {
+        if (item->frameID() == frameID)
+            historyItems.append(WTFMove(item));
     }
 
     return historyItems;

@@ -33,7 +33,7 @@
 namespace WebCore {
 
 AccessibilitySpinButton::AccessibilitySpinButton(AXID axID, AXObjectCache& cache)
-    : AccessibilityMockObject(axID)
+    : AccessibilityMockObject(axID, cache)
     , m_spinButtonElement(nullptr)
     , m_incrementor(downcast<AccessibilitySpinButtonPart>(*cache.create(AccessibilityRole::SpinButtonPart)))
     , m_decrementor(downcast<AccessibilitySpinButtonPart>(*cache.create(AccessibilityRole::SpinButtonPart)))

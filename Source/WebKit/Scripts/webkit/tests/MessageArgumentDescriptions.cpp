@@ -394,7 +394,7 @@ Vector<ASCIILiteral> serializedIdentifiers()
         "WebCore::BackgroundFetchRecordIdentifier"_s,
         "WebCore::DOMCacheIdentifierID"_s,
         "WebCore::DictationContext"_s,
-        "WebCore::ElementIdentifier"_s,
+        "WebCore::NodeIdentifier"_s,
         "WebCore::FetchIdentifier"_s,
         "WebCore::FileSystemHandleIdentifier"_s,
         "WebCore::FileSystemSyncAccessHandleIdentifier"_s,

@@ -218,8 +218,6 @@ public:
 
     WEBCORE_EXPORT static HashSet<WeakRef<HTMLMediaElement>>& allMediaElements();
 
-    WEBCORE_EXPORT static RefPtr<HTMLMediaElement> bestMediaElementForRemoteControls(MediaElementSession::PlaybackControlsPurpose, const Document* = nullptr);
-
     WEBCORE_EXPORT void rewind(double timeDelta);
     WEBCORE_EXPORT void returnToRealtime() override;
 
@@ -1055,6 +1053,7 @@ private:
 
     DOMWrapperWorld& ensureIsolatedWorld();
 
+    RefPtr<MediaSessionManagerInterface> sessionManager() const final;
     PlatformMediaSession::MediaType mediaType() const override;
     PlatformMediaSession::MediaType presentationType() const override;
     PlatformMediaSession::DisplayType displayType() const override;
@@ -1097,6 +1096,7 @@ private:
     void unregisterWithDocument(Document&);
 
     void initializeMediaSession();
+    void invalidateMediaSession();
 
     void updateCaptionContainer();
     bool ensureMediaControls();
@@ -1217,7 +1217,7 @@ private:
     RefPtr<MediaError> m_error;
 
     struct PendingSeek {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(PendingSeek);
         PendingSeek(const MediaTime& now, const SeekTarget& inTarget)
             : now(now)
             , target(inTarget)

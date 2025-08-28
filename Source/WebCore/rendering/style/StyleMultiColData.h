@@ -38,7 +38,7 @@ namespace WebCore {
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleMultiColData);
 class StyleMultiColData : public RefCounted<StyleMultiColData> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleMultiColData);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleMultiColData, StyleMultiColData);
 public:
     static Ref<StyleMultiColData> create() { return adoptRef(*new StyleMultiColData); }
     Ref<StyleMultiColData> copy() const;

@@ -31,9 +31,9 @@
 #include "PDFPageCoverage.h"
 #include "PDFPluginBase.h"
 #include <WebCore/ContextMenuItem.h>
-#include <WebCore/ElementIdentifier.h>
 #include <WebCore/GraphicsLayer.h>
 #include <WebCore/GraphicsLayerClient.h>
+#include <WebCore/NodeIdentifier.h>
 #include <WebCore/Page.h>
 #include <WebCore/ScrollView.h>
 #include <WebCore/Timer.h>
@@ -438,11 +438,11 @@ private:
     void updateFindOverlay(HideFindIndicator = HideFindIndicator::No);
 
     Vector<WebFoundTextRange::PDFData> findTextMatches(const String&, WebCore::FindOptions) final;
-    Vector<WebCore::FloatRect> rectsForTextMatch(const WebFoundTextRange::PDFData&) final;
+    Vector<WebCore::FloatRect> rectsForTextMatchesInRect(const Vector<WebFoundTextRange::PDFData>&, const WebCore::IntRect&) final;
     RefPtr<WebCore::TextIndicator> textIndicatorForTextMatch(const WebFoundTextRange::PDFData&, WebCore::TextIndicatorPresentationTransition) final;
     void scrollToRevealTextMatch(const WebFoundTextRange::PDFData&) final;
 
-    Vector<WebCore::FloatRect> visibleRectsForFindMatchRects(PDFPageCoverage) const;
+    Vector<WebCore::FloatRect> visibleRectsForFindMatchRects(const PDFPageCoverage&, const WebCore::IntRect&) const;
     PDFSelection *selectionFromWebFoundTextRangePDFData(const WebFoundTextRange::PDFData&);
 
     static WebCore::Color selectionTextIndicatorHighlightColor();
@@ -740,6 +740,8 @@ private:
 #endif
 
     HashMap<WebFoundTextRange::PDFData, RetainPtr<PDFSelection>> m_webFoundTextRangePDFDataSelectionMap;
+
+    mutable std::optional<bool> m_cachedIsFullMainFramePlugin;
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, RepaintRequirement);

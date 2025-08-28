@@ -723,7 +723,7 @@ bool RemoteDisplayListRecorderProxy::recordResourceUse(Filter& filter)
     return true;
 }
 
-RefPtr<ImageBuffer> RemoteDisplayListRecorderProxy::createImageBuffer(const FloatSize& size, float resolutionScale, const DestinationColorSpace& colorSpace, std::optional<RenderingMode> renderingMode, std::optional<RenderingMethod> renderingMethod, WebCore::ImageBufferPixelFormat pixelFormat) const
+RefPtr<ImageBuffer> RemoteDisplayListRecorderProxy::createImageBuffer(const FloatSize& size, float resolutionScale, const DestinationColorSpace& colorSpace, std::optional<RenderingMode> renderingMode, std::optional<RenderingMethod> renderingMethod, WebCore::ImageBufferFormat pixelFormat) const
 {
     RefPtr renderingBackend = m_renderingBackend.get();
     if (!renderingBackend) [[unlikely]] {

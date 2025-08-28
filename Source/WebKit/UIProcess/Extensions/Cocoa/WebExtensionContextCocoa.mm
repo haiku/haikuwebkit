@@ -3496,8 +3496,10 @@ WKWebViewConfiguration *WebExtensionContext::webViewConfiguration(WebViewPurpose
         configuration.webExtensionController = nil;
     }
 
+#if PLATFORM(MAC)
     if (purpose == WebViewPurpose::Popup || purpose == WebViewPurpose::Sidebar)
         configuration._drawsBackground = NO;
+#endif
 
     auto *preferences = configuration.preferences;
     preferences._javaScriptCanAccessClipboard = hasPermission(WKWebExtensionPermissionClipboardWrite);
@@ -3716,7 +3718,7 @@ void WebExtensionContext::scheduleBackgroundContentToUnload()
     RELEASE_LOG_DEBUG(Extensions, "Scheduling background content to unload in %{public}.0f seconds", delayBeforeUnloading.seconds());
 
     if (!m_unloadBackgroundWebViewTimer)
-        m_unloadBackgroundWebViewTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), this, &WebExtensionContext::unloadBackgroundContentIfPossible);
+        m_unloadBackgroundWebViewTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), "WebExtensionContext::UnloadBackgroundWebViewTimer"_s, this, &WebExtensionContext::unloadBackgroundContentIfPossible);
     m_unloadBackgroundWebViewTimer->startOneShot(delayBeforeUnloading);
 }
 

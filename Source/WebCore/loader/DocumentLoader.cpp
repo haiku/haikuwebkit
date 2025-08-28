@@ -1502,7 +1502,7 @@ void DocumentLoader::applyPoliciesToSettings()
 #if ENABLE(MEDIA_SOURCE)
     m_frame->settings().setMediaSourceEnabled(m_mediaSourcePolicy == MediaSourcePolicy::Default ? Settings::platformDefaultMediaSourceEnabled() : m_mediaSourcePolicy == MediaSourcePolicy::Enable);
 #endif
-#if ENABLE(OVERFLOW_SCROLLING_TOUCH)
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
     if (m_legacyOverflowScrollingTouchPolicy == LegacyOverflowScrollingTouchPolicy::Disable)
         m_frame->settings().setLegacyOverflowScrollingTouchEnabled(false);
 #endif
@@ -2149,10 +2149,7 @@ void DocumentLoader::loadErrorDocument()
 
 static bool canUseServiceWorkers(LocalFrame* frame)
 {
-    if (!frame || !frame->settings().serviceWorkersEnabled())
-        return false;
-    auto* ownerElement = frame->ownerElement();
-    return !ownerElement || !is<HTMLPlugInElement>(ownerElement);
+    return frame && frame->settings().serviceWorkersEnabled() && !is<HTMLPlugInElement>(frame->ownerElement());
 }
 
 bool DocumentLoader::shouldCancelLoadingAboutURL(const URL& url) const

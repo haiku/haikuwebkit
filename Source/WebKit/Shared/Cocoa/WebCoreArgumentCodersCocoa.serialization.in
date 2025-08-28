@@ -506,6 +506,7 @@ NSNumber wrapped by CoreIPCNumber
 NSString wrapped by CoreIPCString
 NSDictionary wrapped by CoreIPCDictionary
 NSPresentationIntent wrapped by CoreIPCPresentationIntent
+NSSet wrapped by CoreIPCStringSet
 
 #if PLATFORM(MAC)
 using CGDirectDisplayID = uint32_t

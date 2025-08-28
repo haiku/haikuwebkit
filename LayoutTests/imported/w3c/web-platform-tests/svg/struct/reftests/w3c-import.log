@@ -92,6 +92,8 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-svg-dimensions-override-001.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-svg-dimensions-override-002-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-svg-dimensions-override-002.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-svg-inline-css-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-svg-inline-css.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-switch-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-switch.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-dimensions-override-001-expected.svg
@@ -100,3 +102,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-dimensions-override-002.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-display-none-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-display-none.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-inline-css-001-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-inline-css-001.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-inline-css-002-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-inline-css-002.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-inline-css-003-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/struct/reftests/use-symbol-inline-css-003.svg

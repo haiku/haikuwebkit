@@ -51,6 +51,7 @@
 #include "Document.h"
 #include "Element.h"
 #include "ExtensionStyleSheets.h"
+#include "EventTargetInlines.h"
 #include "FrameDestructionObserverInlines.h"
 #include "HTMLHeadElement.h"
 #include "HTMLNames.h"
@@ -361,7 +362,7 @@ void StyleSheetHandler::endRuleHeader(unsigned offset)
     if (m_parsedText.is8Bit())
         setRuleHeaderEnd<LChar>(m_parsedText.span8().first(offset));
     else
-        setRuleHeaderEnd<UChar>(m_parsedText.span16().first(offset));
+        setRuleHeaderEnd<char16_t>(m_parsedText.span16().first(offset));
 }
 
 void StyleSheetHandler::observeSelector(unsigned startOffset, unsigned endOffset)
@@ -485,7 +486,7 @@ void StyleSheetHandler::fixUnparsedPropertyRanges(CSSRuleSourceData* ruleData)
         return;
     }
     
-    fixUnparsedProperties<UChar>(m_parsedText.span16(), ruleData);
+    fixUnparsedProperties<char16_t>(m_parsedText.span16(), ruleData);
 }
 
 void StyleSheetHandler::observeProperty(unsigned startOffset, unsigned endOffset, bool isImportant, bool isParsed)
@@ -1471,7 +1472,7 @@ Ref<Inspector::Protocol::CSS::CSSStyle> InspectorStyleSheet::buildObjectForStyle
     return result;
 }
 
-static inline bool isNotSpaceOrTab(UChar character)
+static inline bool isNotSpaceOrTab(char16_t character)
 {
     return character != ' ' && character != '\t';
 }

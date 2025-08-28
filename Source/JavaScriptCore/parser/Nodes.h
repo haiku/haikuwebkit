@@ -135,7 +135,7 @@ namespace JSC {
 
     DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(ParserArenaRoot);
     class ParserArenaRoot {
-        WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(ParserArenaRoot);
+        WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(ParserArenaRoot, ParserArenaRoot);
     protected:
         ParserArenaRoot(ParserArena&);
 

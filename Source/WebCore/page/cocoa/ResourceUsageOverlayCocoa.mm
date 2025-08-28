@@ -149,7 +149,7 @@ struct HistoricMemoryCategoryInfo {
 };
 
 struct HistoricResourceUsageData {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(HistoricResourceUsageData);
     HistoricResourceUsageData();
 
     RingBuffer<float> cpu;

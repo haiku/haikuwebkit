@@ -62,6 +62,7 @@
 		078B044A2CF139BF00B453A6 /* Foundation+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B04492CF139BF00B453A6 /* Foundation+Extras.swift */; };
 		078B0CA92DF656BD00B3E569 /* TestPDFDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B0CA82DF656BD00B3E569 /* TestPDFDocument.swift */; };
 		079D45F22A2A6BBE003830C7 /* Viewport.mm in Sources */ = {isa = PBXBuildFile; fileRef = 079D45F12A2A6BBE003830C7 /* Viewport.mm */; };
+		07A1E0042E2C1F25004E5C66 /* SwiftUI+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A1DFFC2E2C1F20004E5C66 /* SwiftUI+Extras.swift */; };
 		07C02FD22D6D6FBC0004ED97 /* rtl-sideways-scrolling.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 07C02FD12D6D6FBC0004ED97 /* rtl-sideways-scrolling.html */; };
 		07C046CA1E4262A8007201E7 /* CARingBufferTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 07C046C91E42573E007201E7 /* CARingBufferTest.cpp */; };
 		07CE1CF31F06A7E000BF89F5 /* GetUserMediaNavigation.mm in Sources */ = {isa = PBXBuildFile; fileRef = 07CE1CF21F06A7E000BF89F5 /* GetUserMediaNavigation.mm */; };
@@ -238,6 +239,7 @@
 		516B289E2CFEA5BC003C544C /* AudioSampleFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 516B289D2CFEA5BC003C544C /* AudioSampleFormat.cpp */; };
 		5175C7A226F876230003AF5C /* BundlePageConsoleMessage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5175C7A126F876230003AF5C /* BundlePageConsoleMessage.mm */; };
 		51820A4D22F4EE7F00DF0A01 /* JavascriptURLNavigation.mm in Sources */ = {isa = PBXBuildFile; fileRef = 51820A4C22F4EE7700DF0A01 /* JavascriptURLNavigation.mm */; };
+		518C1C532E2149EE00083695 /* MediaReorderQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 518C1C522E2149EE00083695 /* MediaReorderQueue.cpp */; };
 		51DB16CE1F085137001FA4C5 /* WebViewIconLoading.mm in Sources */ = {isa = PBXBuildFile; fileRef = 51DB16CD1F085047001FA4C5 /* WebViewIconLoading.mm */; };
 		51EB125724C67257000CB030 /* VirtualGamepad.mm in Sources */ = {isa = PBXBuildFile; fileRef = 51EB125624C66FE8000CB030 /* VirtualGamepad.mm */; };
 		51EB125924C68592000CB030 /* HIDGamepads.mm in Sources */ = {isa = PBXBuildFile; fileRef = 51EB125824C68589000CB030 /* HIDGamepads.mm */; };
@@ -633,6 +635,8 @@
 		95C52729275F35E100DA7E40 /* FontShadowTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95C52728275F35E100DA7E40 /* FontShadowTests.cpp */; };
 		97A826852DF8B677004EA039 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC90964D1255620C00083756 /* JavaScriptCore.framework */; };
 		97A826862DF8B677004EA039 /* JavaScriptCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BC90964D1255620C00083756 /* JavaScriptCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		97B250AD2E26F36F0056806C /* switch.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB431F2E1D633600C63F41 /* switch.wgsl */; };
+		97B250AE2E2701AB0056806C /* const-assert.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E52E1D633600C63F41 /* const-assert.wgsl */; };
 		97DAA8CE2DF1F325004B3040 /* MetalCompilationTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = 97DAA8CD2DF1F325004B3040 /* MetalCompilationTests.mm */; };
 		97DAA8D02DF70B91004B3040 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97DAA8CF2DF70B91004B3040 /* Metal.framework */; };
 		97FB432E2E1D637C00C63F41 /* access-expression.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42D52E1D633600C63F41 /* access-expression.wgsl */; };
@@ -646,33 +650,22 @@
 		97FB43362E1D637C00C63F41 /* array-primitive-struct.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42DD2E1D633600C63F41 /* array-primitive-struct.wgsl */; };
 		97FB43372E1D637C00C63F41 /* array-vec3.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42DE2E1D633600C63F41 /* array-vec3.wgsl */; };
 		97FB43382E1D637C00C63F41 /* atomics.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42DF2E1D633600C63F41 /* atomics.wgsl */; };
-		97FB43392E1D637C00C63F41 /* attribute-validation.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E02E1D633600C63F41 /* attribute-validation.wgsl */; };
 		97FB433A2E1D637C00C63F41 /* attributes.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E12E1D633600C63F41 /* attributes.wgsl */; };
-		97FB433B2E1D637C00C63F41 /* attributes-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E22E1D633600C63F41 /* attributes-errors.wgsl */; };
 		97FB433C2E1D637C00C63F41 /* binding-uint-max.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E32E1D633600C63F41 /* binding-uint-max.wgsl */; };
-		97FB433D2E1D637C00C63F41 /* concretization.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E42E1D633600C63F41 /* concretization.wgsl */; };
-		97FB433E2E1D637C00C63F41 /* const-assert.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E52E1D633600C63F41 /* const-assert.wgsl */; };
-		97FB433F2E1D637C00C63F41 /* const-assert-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E62E1D633600C63F41 /* const-assert-errors.wgsl */; };
-		97FB43402E1D637C00C63F41 /* constant-matrix.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E72E1D633600C63F41 /* constant-matrix.wgsl */; };
-		97FB43412E1D637C00C63F41 /* constants-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E82E1D633600C63F41 /* constants-errors.wgsl */; };
 		97FB43422E1D637C00C63F41 /* constants-utf8.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42E92E1D633600C63F41 /* constants-utf8.wgsl */; };
 		97FB43432E1D637C00C63F41 /* constants-utf16.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42EA2E1D633600C63F41 /* constants-utf16.wgsl */; };
 		97FB43442E1D637C00C63F41 /* division.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42EB2E1D633600C63F41 /* division.wgsl */; };
-		97FB43452E1D637C00C63F41 /* division-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42EC2E1D633600C63F41 /* division-errors.wgsl */; };
 		97FB43462E1D637C00C63F41 /* for.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42ED2E1D633600C63F41 /* for.wgsl */; };
 		97FB43472E1D637C00C63F41 /* fragment-output.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42EE2E1D633600C63F41 /* fragment-output.wgsl */; };
-		97FB43482E1D637C00C63F41 /* function-call.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42EF2E1D633600C63F41 /* function-call.wgsl */; };
 		97FB43492E1D637C00C63F41 /* fuzz-127229681.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F02E1D633600C63F41 /* fuzz-127229681.wgsl */; };
 		97FB434A2E1D637C00C63F41 /* fuzz-128785160.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F12E1D633600C63F41 /* fuzz-128785160.wgsl */; };
 		97FB434B2E1D637C00C63F41 /* fuzz-130082002.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F22E1D633600C63F41 /* fuzz-130082002.wgsl */; };
 		97FB434C2E1D637C00C63F41 /* fuzz-130088292.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F32E1D633600C63F41 /* fuzz-130088292.wgsl */; };
 		97FB434D2E1D637C00C63F41 /* fuzz-130092499.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F42E1D633600C63F41 /* fuzz-130092499.wgsl */; };
 		97FB434E2E1D637C00C63F41 /* fuzz-133788509.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F52E1D633600C63F41 /* fuzz-133788509.wgsl */; };
-		97FB434F2E1D637C00C63F41 /* fuzz-136222279.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F62E1D633600C63F41 /* fuzz-136222279.wgsl */; };
 		97FB43502E1D637C00C63F41 /* global-constant-vector.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F72E1D633600C63F41 /* global-constant-vector.wgsl */; };
 		97FB43512E1D637C00C63F41 /* global-ordering.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F82E1D633600C63F41 /* global-ordering.wgsl */; };
 		97FB43522E1D637C00C63F41 /* global-same-binding.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42F92E1D633600C63F41 /* global-same-binding.wgsl */; };
-		97FB43532E1D637C00C63F41 /* global-used-by-callee.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42FA2E1D633600C63F41 /* global-used-by-callee.wgsl */; };
 		97FB43542E1D637C00C63F41 /* hex-double-lchar.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42FB2E1D633600C63F41 /* hex-double-lchar.wgsl */; };
 		97FB43552E1D637C00C63F41 /* hex-double-uchar.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42FC2E1D633600C63F41 /* hex-double-uchar.wgsl */; };
 		97FB43562E1D637C00C63F41 /* if.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB42FD2E1D633600C63F41 /* if.wgsl */; };
@@ -689,40 +682,23 @@
 		97FB43612E1D637C00C63F41 /* location-uint-max.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43082E1D633600C63F41 /* location-uint-max.wgsl */; };
 		97FB43622E1D637C00C63F41 /* loop.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43092E1D633600C63F41 /* loop.wgsl */; };
 		97FB43632E1D637C00C63F41 /* minus-minus-ambiguity.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB430A2E1D633600C63F41 /* minus-minus-ambiguity.wgsl */; };
-		97FB43642E1D637C00C63F41 /* modulo.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB430B2E1D633600C63F41 /* modulo.wgsl */; };
 		97FB43652E1D637C00C63F41 /* name-mangling.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB430C2E1D633600C63F41 /* name-mangling.wgsl */; };
 		97FB43662E1D637C00C63F41 /* overload.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB430D2E1D633600C63F41 /* overload.wgsl */; };
-		97FB43672E1D637C00C63F41 /* overload-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB430E2E1D633600C63F41 /* overload-errors.wgsl */; };
 		97FB43682E1D637C00C63F41 /* override.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB430F2E1D633600C63F41 /* override.wgsl */; };
 		97FB43692E1D637C00C63F41 /* pack-unpack.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43102E1D633600C63F41 /* pack-unpack.wgsl */; };
-		97FB436A2E1D637C00C63F41 /* packing.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43112E1D633600C63F41 /* packing.wgsl */; };
 		97FB436B2E1D637C00C63F41 /* packing-nested-array.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43122E1D633600C63F41 /* packing-nested-array.wgsl */; };
 		97FB436C2E1D637C00C63F41 /* packing-pointer-arguments.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43132E1D633600C63F41 /* packing-pointer-arguments.wgsl */; };
-		97FB436D2E1D637C00C63F41 /* parse-pointer-assignment.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43142E1D633600C63F41 /* parse-pointer-assignment.wgsl */; };
 		97FB436E2E1D637C00C63F41 /* pointers.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43152E1D633600C63F41 /* pointers.wgsl */; };
 		97FB436F2E1D637C00C63F41 /* references.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43162E1D633600C63F41 /* references.wgsl */; };
-		97FB43702E1D637C00C63F41 /* references-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43172E1D633600C63F41 /* references-errors.wgsl */; };
 		97FB43712E1D637C00C63F41 /* reordering.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43182E1D633600C63F41 /* reordering.wgsl */; };
-		97FB43722E1D637C00C63F41 /* required-alignment.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43192E1D633600C63F41 /* required-alignment.wgsl */; };
 		97FB43732E1D637C00C63F41 /* runtime-sized-array-resource.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB431A2E1D633600C63F41 /* runtime-sized-array-resource.wgsl */; };
 		97FB43742E1D637C00C63F41 /* scope.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB431B2E1D633600C63F41 /* scope.wgsl */; };
 		97FB43752E1D637C00C63F41 /* shadowing.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB431C2E1D633600C63F41 /* shadowing.wgsl */; };
 		97FB43762E1D637C00C63F41 /* struct.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB431D2E1D633600C63F41 /* struct.wgsl */; };
-		97FB43772E1D637C00C63F41 /* struct-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB431E2E1D633600C63F41 /* struct-errors.wgsl */; };
-		97FB43782E1D637C00C63F41 /* switch.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB431F2E1D633600C63F41 /* switch.wgsl */; };
-		97FB43792E1D637C00C63F41 /* switch-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43202E1D633600C63F41 /* switch-errors.wgsl */; };
 		97FB437A2E1D637C00C63F41 /* swizzle.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43212E1D633600C63F41 /* swizzle.wgsl */; };
 		97FB437B2E1D637C00C63F41 /* texture-external.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43222E1D633600C63F41 /* texture-external.wgsl */; };
-		97FB437C2E1D637C00C63F41 /* texture-gather.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43232E1D633600C63F41 /* texture-gather.wgsl */; };
-		97FB437D2E1D637C00C63F41 /* texture-offset.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43242E1D633600C63F41 /* texture-offset.wgsl */; };
 		97FB437E2E1D637C00C63F41 /* type-promotion.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43252E1D633600C63F41 /* type-promotion.wgsl */; };
-		97FB437F2E1D637C00C63F41 /* types-vs-values.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43262E1D633600C63F41 /* types-vs-values.wgsl */; };
-		97FB43802E1D637C00C63F41 /* unicode.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43272E1D633600C63F41 /* unicode.wgsl */; };
-		97FB43812E1D637C00C63F41 /* unterminated-comment.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43282E1D633600C63F41 /* unterminated-comment.wgsl */; };
-		97FB43822E1D637C00C63F41 /* var-initialization-with-var.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB43292E1D633600C63F41 /* var-initialization-with-var.wgsl */; };
-		97FB43832E1D637C00C63F41 /* visibility.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB432A2E1D633600C63F41 /* visibility.wgsl */; };
 		97FB43842E1D637C00C63F41 /* while.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB432B2E1D633600C63F41 /* while.wgsl */; };
-		97FB43852E1D637C00C63F41 /* while-errors.wgsl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 97FB432C2E1D633600C63F41 /* while-errors.wgsl */; };
 		97FB43872E1D655E00C63F41 /* TypeCheckingTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = 97FB43862E1D655E00C63F41 /* TypeCheckingTests.mm */; };
 		9B0786A51C5885C300D159E3 /* InjectedBundleMakeAllShadowRootsOpen_Bundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B0786A41C5885C300D159E3 /* InjectedBundleMakeAllShadowRootsOpen_Bundle.cpp */; };
 		9B0C051924FDFB7D00F2FE31 /* CompactUniquePtrTuple.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B0C051824FDFB7000F2FE31 /* CompactUniquePtrTuple.cpp */; };
@@ -910,6 +886,7 @@
 		A17C46F62C98E54B0023F3C7 /* test-without-audio-track.mp4 in Copy Resources */ = {isa = PBXBuildFile; fileRef = C95984F61E36BCD7002C0D45 /* test-without-audio-track.mp4 */; };
 		A17C46F72C98E54B0023F3C7 /* test.mp4 in Copy Resources */ = {isa = PBXBuildFile; fileRef = 524BBCA019E30C63002F1AF1 /* test.mp4 */; };
 		A17C46F82C98E54B0023F3C7 /* test.pdf in Copy Resources */ = {isa = PBXBuildFile; fileRef = 7AE9E5081AE5AE8B00CF874B /* test.pdf */; };
+		A17C46F92C98E54B0023F3C8 /* test_form.pdf in Copy Resources */ = {isa = PBXBuildFile; fileRef = 7AE9E5091AE5AE8B00CF874C /* test_form.pdf */; };
 		A17C46F92C98E54B0023F3C7 /* test.xml in Copy Resources */ = {isa = PBXBuildFile; fileRef = 44D3F8422BE1DAD800BE0218 /* test.xml */; };
 		A17C46FA2C98E54B0023F3C7 /* UserInstalledAhem.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 1C51534B261596BD00FBC4FE /* UserInstalledAhem.html */; };
 		A17C46FB2C98E54B0023F3C7 /* video-with-play-button.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = C9C9A91C21DED79400FDE96E /* video-with-play-button.html */; };
@@ -1741,33 +1718,23 @@
 				97FB43362E1D637C00C63F41 /* array-primitive-struct.wgsl in CopyFiles */,
 				97FB43372E1D637C00C63F41 /* array-vec3.wgsl in CopyFiles */,
 				97FB43382E1D637C00C63F41 /* atomics.wgsl in CopyFiles */,
-				97FB43392E1D637C00C63F41 /* attribute-validation.wgsl in CopyFiles */,
-				97FB433B2E1D637C00C63F41 /* attributes-errors.wgsl in CopyFiles */,
 				97FB433A2E1D637C00C63F41 /* attributes.wgsl in CopyFiles */,
 				97FB433C2E1D637C00C63F41 /* binding-uint-max.wgsl in CopyFiles */,
-				97FB433D2E1D637C00C63F41 /* concretization.wgsl in CopyFiles */,
-				97FB433F2E1D637C00C63F41 /* const-assert-errors.wgsl in CopyFiles */,
-				97FB433E2E1D637C00C63F41 /* const-assert.wgsl in CopyFiles */,
-				97FB43402E1D637C00C63F41 /* constant-matrix.wgsl in CopyFiles */,
-				97FB43412E1D637C00C63F41 /* constants-errors.wgsl in CopyFiles */,
+				97B250AE2E2701AB0056806C /* const-assert.wgsl in CopyFiles */,
 				97FB43432E1D637C00C63F41 /* constants-utf16.wgsl in CopyFiles */,
 				97FB43422E1D637C00C63F41 /* constants-utf8.wgsl in CopyFiles */,
-				97FB43452E1D637C00C63F41 /* division-errors.wgsl in CopyFiles */,
 				97FB43442E1D637C00C63F41 /* division.wgsl in CopyFiles */,
 				97FB43462E1D637C00C63F41 /* for.wgsl in CopyFiles */,
 				97FB43472E1D637C00C63F41 /* fragment-output.wgsl in CopyFiles */,
-				97FB43482E1D637C00C63F41 /* function-call.wgsl in CopyFiles */,
 				97FB43492E1D637C00C63F41 /* fuzz-127229681.wgsl in CopyFiles */,
 				97FB434A2E1D637C00C63F41 /* fuzz-128785160.wgsl in CopyFiles */,
 				97FB434B2E1D637C00C63F41 /* fuzz-130082002.wgsl in CopyFiles */,
 				97FB434C2E1D637C00C63F41 /* fuzz-130088292.wgsl in CopyFiles */,
 				97FB434D2E1D637C00C63F41 /* fuzz-130092499.wgsl in CopyFiles */,
 				97FB434E2E1D637C00C63F41 /* fuzz-133788509.wgsl in CopyFiles */,
-				97FB434F2E1D637C00C63F41 /* fuzz-136222279.wgsl in CopyFiles */,
 				97FB43502E1D637C00C63F41 /* global-constant-vector.wgsl in CopyFiles */,
 				97FB43512E1D637C00C63F41 /* global-ordering.wgsl in CopyFiles */,
 				97FB43522E1D637C00C63F41 /* global-same-binding.wgsl in CopyFiles */,
-				97FB43532E1D637C00C63F41 /* global-used-by-callee.wgsl in CopyFiles */,
 				97FB43542E1D637C00C63F41 /* hex-double-lchar.wgsl in CopyFiles */,
 				97FB43552E1D637C00C63F41 /* hex-double-uchar.wgsl in CopyFiles */,
 				97FB43562E1D637C00C63F41 /* if.wgsl in CopyFiles */,
@@ -1784,39 +1751,23 @@
 				97FB43612E1D637C00C63F41 /* location-uint-max.wgsl in CopyFiles */,
 				97FB43622E1D637C00C63F41 /* loop.wgsl in CopyFiles */,
 				97FB43632E1D637C00C63F41 /* minus-minus-ambiguity.wgsl in CopyFiles */,
-				97FB43642E1D637C00C63F41 /* modulo.wgsl in CopyFiles */,
 				97FB43652E1D637C00C63F41 /* name-mangling.wgsl in CopyFiles */,
-				97FB43672E1D637C00C63F41 /* overload-errors.wgsl in CopyFiles */,
 				97FB43662E1D637C00C63F41 /* overload.wgsl in CopyFiles */,
 				97FB43682E1D637C00C63F41 /* override.wgsl in CopyFiles */,
 				97FB43692E1D637C00C63F41 /* pack-unpack.wgsl in CopyFiles */,
 				97FB436B2E1D637C00C63F41 /* packing-nested-array.wgsl in CopyFiles */,
 				97FB436C2E1D637C00C63F41 /* packing-pointer-arguments.wgsl in CopyFiles */,
-				97FB436A2E1D637C00C63F41 /* packing.wgsl in CopyFiles */,
-				97FB436D2E1D637C00C63F41 /* parse-pointer-assignment.wgsl in CopyFiles */,
 				97FB436E2E1D637C00C63F41 /* pointers.wgsl in CopyFiles */,
-				97FB43702E1D637C00C63F41 /* references-errors.wgsl in CopyFiles */,
 				97FB436F2E1D637C00C63F41 /* references.wgsl in CopyFiles */,
 				97FB43712E1D637C00C63F41 /* reordering.wgsl in CopyFiles */,
-				97FB43722E1D637C00C63F41 /* required-alignment.wgsl in CopyFiles */,
 				97FB43732E1D637C00C63F41 /* runtime-sized-array-resource.wgsl in CopyFiles */,
 				97FB43742E1D637C00C63F41 /* scope.wgsl in CopyFiles */,
 				97FB43752E1D637C00C63F41 /* shadowing.wgsl in CopyFiles */,
-				97FB43772E1D637C00C63F41 /* struct-errors.wgsl in CopyFiles */,
 				97FB43762E1D637C00C63F41 /* struct.wgsl in CopyFiles */,
-				97FB43792E1D637C00C63F41 /* switch-errors.wgsl in CopyFiles */,
-				97FB43782E1D637C00C63F41 /* switch.wgsl in CopyFiles */,
+				97B250AD2E26F36F0056806C /* switch.wgsl in CopyFiles */,
 				97FB437A2E1D637C00C63F41 /* swizzle.wgsl in CopyFiles */,
 				97FB437B2E1D637C00C63F41 /* texture-external.wgsl in CopyFiles */,
-				97FB437C2E1D637C00C63F41 /* texture-gather.wgsl in CopyFiles */,
-				97FB437D2E1D637C00C63F41 /* texture-offset.wgsl in CopyFiles */,
 				97FB437E2E1D637C00C63F41 /* type-promotion.wgsl in CopyFiles */,
-				97FB437F2E1D637C00C63F41 /* types-vs-values.wgsl in CopyFiles */,
-				97FB43802E1D637C00C63F41 /* unicode.wgsl in CopyFiles */,
-				97FB43812E1D637C00C63F41 /* unterminated-comment.wgsl in CopyFiles */,
-				97FB43822E1D637C00C63F41 /* var-initialization-with-var.wgsl in CopyFiles */,
-				97FB43832E1D637C00C63F41 /* visibility.wgsl in CopyFiles */,
-				97FB43852E1D637C00C63F41 /* while-errors.wgsl in CopyFiles */,
 				97FB43842E1D637C00C63F41 /* while.wgsl in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2293,6 +2244,7 @@
 				A17C480A2C98E5C20023F3C7 /* test.pages in Copy Resources */,
 				A17C46F82C98E54B0023F3C7 /* test.pdf in Copy Resources */,
 				A17C46F92C98E54B0023F3C7 /* test.xml in Copy Resources */,
+				A17C46F92C98E54B0023F3C8 /* test_form.pdf in Copy Resources */,
 				A17C47012C98E58C0023F3C7 /* test_print.pdf in Copy Resources */,
 				A17C480B2C98E5C20023F3C7 /* TestModalContainerControls.mlmodelc in Copy Resources */,
 				A17C480C2C98E5C20023F3C7 /* text-and-password-inputs.html in Copy Resources */,
@@ -2458,6 +2410,9 @@
 		0794742C25CB33B000C597EE /* camera-to-canvas.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "camera-to-canvas.html"; sourceTree = "<group>"; };
 		0799C34A1EBA32F4003B7532 /* disableGetUserMedia.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = disableGetUserMedia.html; sourceTree = "<group>"; };
 		079D45F12A2A6BBE003830C7 /* Viewport.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Viewport.mm; sourceTree = "<group>"; };
+		07A1DFFC2E2C1F20004E5C66 /* SwiftUI+Extras.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftUI+Extras.swift"; sourceTree = "<group>"; };
+		07A1E0222E2EB852004E5C66 /* DecomposedAttributedText.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DecomposedAttributedText.h; path = cocoa/DecomposedAttributedText.h; sourceTree = "<group>"; };
+		07A1E0232E2EB852004E5C66 /* DecomposedAttributedText.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = DecomposedAttributedText.mm; path = cocoa/DecomposedAttributedText.mm; sourceTree = "<group>"; };
 		07C02FD12D6D6FBC0004ED97 /* rtl-sideways-scrolling.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "rtl-sideways-scrolling.html"; sourceTree = "<group>"; };
 		07C046C91E42573E007201E7 /* CARingBufferTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CARingBufferTest.cpp; sourceTree = "<group>"; };
 		07CC7DFD2266330800E39181 /* MediaBufferingPolicy.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaBufferingPolicy.mm; sourceTree = "<group>"; };
@@ -2990,6 +2945,7 @@
 		51820A4C22F4EE7700DF0A01 /* JavascriptURLNavigation.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = JavascriptURLNavigation.mm; sourceTree = "<group>"; };
 		5182C22D1F2BCB410059BA7C /* WKURLSchemeHandler-leaks.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "WKURLSchemeHandler-leaks.mm"; sourceTree = "<group>"; };
 		518C1152205B04F9001FF4AE /* ProcessSwapOnNavigation.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ProcessSwapOnNavigation.mm; sourceTree = "<group>"; };
+		518C1C522E2149EE00083695 /* MediaReorderQueue.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MediaReorderQueue.cpp; sourceTree = "<group>"; };
 		518EE51A20A78CFB00E024F3 /* DoAfterNextPresentationUpdateAfterCrash.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DoAfterNextPresentationUpdateAfterCrash.mm; sourceTree = "<group>"; };
 		518EE51C20A78D3300E024F3 /* DecidePolicyForNavigationAction.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DecidePolicyForNavigationAction.mm; sourceTree = "<group>"; };
 		51A24D10294BE9B300E43A29 /* Badging.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Badging.mm; sourceTree = "<group>"; };
@@ -3339,6 +3295,7 @@
 		7AC7B57220D9BAF0002C09A0 /* CustomBundleObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomBundleObject.h; sourceTree = "<group>"; };
 		7AD3FE8D1D75FB8D00B169A4 /* TransformationMatrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TransformationMatrix.cpp; sourceTree = "<group>"; };
 		7AE9E5081AE5AE8B00CF874B /* test.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = test.pdf; sourceTree = "<group>"; };
+		7AE9E5091AE5AE8B00CF874C /* test_form.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = test_form.pdf; sourceTree = "<group>"; };
 		7AEAD47C1E20113800416EFE /* CrossPartitionFileSchemeAccess.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CrossPartitionFileSchemeAccess.mm; sourceTree = "<group>"; };
 		7AEAD47D1E20114E00416EFE /* CrossPartitionFileSchemeAccess.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = CrossPartitionFileSchemeAccess.html; path = Tests/mac/CrossPartitionFileSchemeAccess.html; sourceTree = SOURCE_ROOT; };
 		7AFEA30F2CB838FF007EFE75 /* element-targeting-11.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "element-targeting-11.html"; sourceTree = "<group>"; };
@@ -4352,6 +4309,7 @@
 		F6FDDDD214241AD4004F1729 /* PrivateBrowsingPushStateNoHistoryCallback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PrivateBrowsingPushStateNoHistoryCallback.cpp; sourceTree = "<group>"; };
 		F6FDDDD514241C48004F1729 /* push-state.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "push-state.html"; sourceTree = "<group>"; };
 		FA049D0F2BCF22210099C221 /* LoadAndDecodeImage.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LoadAndDecodeImage.mm; sourceTree = "<group>"; };
+		FA58F4572E1E062B0098E1C8 /* NodeInfo.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = NodeInfo.mm; sourceTree = "<group>"; };
 		FA65EFFC2C87F43C00A0A123 /* CoroutineUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoroutineUtilities.h; sourceTree = "<group>"; };
 		FA65F0042C87F4CF00A0A123 /* NetworkConnection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NetworkConnection.h; sourceTree = "<group>"; };
 		FA65F0052C87F4CF00A0A123 /* NetworkConnection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = NetworkConnection.mm; sourceTree = "<group>"; };
@@ -4483,6 +4441,7 @@
 			children = (
 				074E87E42CF920A20059E469 /* Bundle+Extras.swift */,
 				078B04492CF139BF00B453A6 /* Foundation+Extras.swift */,
+				07A1DFFC2E2C1F20004E5C66 /* SwiftUI+Extras.swift */,
 				070721102CE2F4B8004D9EC8 /* TestWebKitAPIBundle-Bridging-Header.h */,
 				078B04472CF118BD00B453A6 /* URLSchemeHandlerTests.swift */,
 				07DF05172E0531AD00007A1B /* WebPageNavigationTests.swift */,
@@ -4574,6 +4533,8 @@
 				5C157A082717C56600ED5280 /* DaemonTestUtilities.h */,
 				5C157A072717C56600ED5280 /* DaemonTestUtilities.mm */,
 				F47DFB2721A885E700021FB6 /* DataDetectorsCoreSPI.h */,
+				07A1E0222E2EB852004E5C66 /* DecomposedAttributedText.h */,
+				07A1E0232E2EB852004E5C66 /* DecomposedAttributedText.mm */,
 				F46128B4211C861A00D9FADB /* DragAndDropSimulator.h */,
 				3302A64D2A11B4410093FA2A /* DragAndDropSimulator.mm */,
 				F44D06481F3962E3001A0E29 /* EditingTestHarness.h */,
@@ -4885,6 +4846,7 @@
 				F4037D2C2E2077FD00C138B0 /* NavigationSwipeTests.mm */,
 				5C8BC798218CF3E900813886 /* NetworkProcess.mm */,
 				5CAE4637201937CD0051610F /* NetworkProcessCrashNonPersistentDataStore.mm */,
+				FA58F4572E1E062B0098E1C8 /* NodeInfo.mm */,
 				CDCFFEC022E268D500DF4223 /* NoPauseWhenSwitchingTabs.mm */,
 				07CC7DFD2266330800E39281 /* NoResumeSoundPlayedToTheEndAfterThePageBecomesVisible.mm */,
 				46A80F25264C29D400EEF20D /* NotificationAPI.mm */,
@@ -5220,6 +5182,7 @@
 				076E507E1F45031E006E9F5A /* Logging.cpp */,
 				6BF4A682239ED4CD00E2F45B /* LoginStatus.cpp */,
 				CE1866471F72E8F100A0CAB6 /* MarkedText.cpp */,
+				518C1C522E2149EE00083695 /* MediaReorderQueue.cpp */,
 				512F290F2BA1D03100F1C326 /* MIMESniffer.cpp */,
 				A5B149DD1F5A19DC00C6DAFF /* MIMETypeRegistry.cpp */,
 				EB6836D32CC967E00073A8E5 /* MixedContentChecker.cpp */,
@@ -6522,6 +6485,7 @@
 				524BBCA019E30C63002F1AF1 /* test.mp4 */,
 				7AE9E5081AE5AE8B00CF874B /* test.pdf */,
 				44D3F8422BE1DAD800BE0218 /* test.xml */,
+				7AE9E5091AE5AE8B00CF874C /* test_form.pdf */,
 				1C51534B261596BD00FBC4FE /* UserInstalledAhem.html */,
 				C9C9A91C21DED79400FDE96E /* video-with-play-button.html */,
 				07CD32F72065B72A0064A4BE /* video.html */,
@@ -7820,6 +7784,7 @@
 				CE1866491F72E8F100A0CAB6 /* MarkedText.cpp in Sources */,
 				A17C57EB2C9A5383009DD0B5 /* MediaLoading.mm in Sources */,
 				CDA315981ED53651009F60D3 /* MediaPlaybackSleepAssertion.mm in Sources */,
+				518C1C532E2149EE00083695 /* MediaReorderQueue.cpp in Sources */,
 				075A9CF526177218006DFA3A /* MediaSessionCoordinatorTest.mm in Sources */,
 				CDC9442E1EF1FC080059C3C4 /* MediaStreamTrackDetached.mm in Sources */,
 				7CCE7EC51A411A7E00447C4C /* MemoryCacheDisableWithinResourceLoadDelegate.mm in Sources */,
@@ -8179,6 +8144,7 @@
 				078B044A2CF139BF00B453A6 /* Foundation+Extras.swift in Sources */,
 				A17C58472C9BF524009DD0B5 /* GoogleTests.mm in Sources */,
 				DD5698002DC1320500050321 /* rdar150228472.swift in Sources */,
+				07A1E0042E2C1F25004E5C66 /* SwiftUI+Extras.swift in Sources */,
 				078B0CA92DF656BD00B3E569 /* TestPDFDocument.swift in Sources */,
 				078B04482CF118BD00B453A6 /* URLSchemeHandlerTests.swift in Sources */,
 				07DF05182E0531AD00007A1B /* WebPageNavigationTests.swift in Sources */,

@@ -33,8 +33,11 @@
 
 namespace WebCore {
 
+class Node;
 class UserContentProvider;
 class UserMessageHandlersNamespace;
+class WebKitNodeInfo;
+class WebKitSerializedNode;
 
 class WebKitNamespace : public LocalDOMWindowProperty, public RefCounted<WebKitNamespace> {
 public:
@@ -46,6 +49,12 @@ public:
     virtual ~WebKitNamespace();
 
     UserMessageHandlersNamespace* messageHandlers();
+    Ref<WebKitNodeInfo> createNodeInfo(Node&);
+
+    struct SerializedNodeInit {
+        bool deep { false };
+    };
+    Ref<WebKitSerializedNode> serializeNode(Node&, SerializedNodeInit&&);
 
 private:
     explicit WebKitNamespace(LocalDOMWindow&, UserContentProvider&);

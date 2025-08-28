@@ -114,14 +114,24 @@ static constexpr bool verboseStop = false;
 
 namespace {
 
-double maxPauseMS(double thisPauseMS)
+static double maxPauseMS(double thisPauseMS)
 {
     static double maxPauseMS;
     maxPauseMS = std::max(thisPauseMS, maxPauseMS);
     return maxPauseMS;
 }
 
-size_t minHeapSize(HeapType heapType, size_t ramSize)
+static GrowthMode growthMode(size_t ramSize)
+{
+    // An Aggressive heap uses more memory to go faster.
+    // We do this for machines with enough RAM.
+    size_t aggressiveHeapThresholdInBytes = static_cast<size_t>(Options::aggressiveHeapThresholdInMB()) * MB;
+    if (ramSize >= aggressiveHeapThresholdInBytes)
+        return GrowthMode::Aggressive;
+    return GrowthMode::Default;
+}
+
+static size_t minHeapSize(HeapType heapType, size_t ramSize)
 {
     switch (heapType) {
     case HeapType::Large:
@@ -138,19 +148,23 @@ size_t minHeapSize(HeapType heapType, size_t ramSize)
     }
 }
 
-size_t proportionalHeapSize(size_t heapSize, size_t ramSize)
+static size_t maxEdenSizeForRateLimiting(GrowthMode growthMode, size_t minBytesPerCycle)
+{
+    // Only do rate limiting for Aggressive heaps.
+    if (growthMode == GrowthMode::Aggressive)
+        return Options::maxEdenSizeForRateLimitingMultiplier() * minBytesPerCycle;
+    return 0.0;
+}
+
+static size_t proportionalHeapSize(size_t heapSize, GrowthMode growthMode, size_t ramSize)
 {
     if (VM::isInMiniMode())
         return Options::miniVMHeapGrowthFactor() * heapSize;
 
-    bool useNewHeapGrowthFactor = true;
+    bool useNewHeapGrowthFactor = growthMode == GrowthMode::Aggressive;
 
-    // Use new heuristic function for machines >= 16GB RAM.
+    // Use new heuristic function for Aggressive heaps (machines >= 16GB RAM).
     // https://www.mathway.com/en/Algebra?asciimath=2%20*%20e%5E(-1%20*%20x)%20%2B%201%20%3Dy
-    size_t heapGrowthFunctionThresholdInBytes = static_cast<size_t>(Options::heapGrowthFunctionThresholdInMB()) * MB;
-    if (ramSize < heapGrowthFunctionThresholdInBytes)
-        useNewHeapGrowthFactor = false;
-
     // Disable it for Darwin Intel machine.
 #if OS(DARWIN) && CPU(X86_64)
     useNewHeapGrowthFactor = false;
@@ -177,7 +191,7 @@ size_t proportionalHeapSize(size_t heapSize, size_t ramSize)
     return Options::largeHeapGrowthFactor() * heapSize;
 }
 
-void recordType(TypeCountSet& set, JSCell* cell)
+static void recordType(TypeCountSet& set, JSCell* cell)
 {
     auto typeName = "[unknown]"_s;
     const ClassInfo* info = cell->classInfo();
@@ -302,12 +316,14 @@ private:
     , name ISO_SUBSPACE_INIT(*this, heapCellType, type)
 
 #define INIT_SERVER_STRUCTURE_ISO_SUBSPACE(name, heapCellType, type) \
-    , name("IsoSubspace" #name, *this, heapCellType, WTF::roundUpToMultipleOf<type::atomSize>(sizeof(type)), type::numberOfLowerTierPreciseCells, makeUnique<StructureAlignedMemoryAllocator>())
+    , name(#name, *this, heapCellType, WTF::roundUpToMultipleOf<type::atomSize>(sizeof(type)), type::numberOfLowerTierPreciseCells, makeUnique<StructureAlignedMemoryAllocator>())
 
 Heap::Heap(VM& vm, HeapType heapType)
     : m_heapType(heapType)
     , m_ramSize(Options::forceRAMSize() ? Options::forceRAMSize() : ramSize())
+    , m_growthMode(growthMode(m_ramSize))
     , m_minBytesPerCycle(minHeapSize(m_heapType, m_ramSize))
+    , m_maxEdenSizeForRateLimiting(maxEdenSizeForRateLimiting(m_growthMode, m_minBytesPerCycle))
     , m_maxEdenSize(m_minBytesPerCycle)
     , m_maxHeapSize(m_minBytesPerCycle)
     , m_objectSpace(this)
@@ -1055,25 +1071,25 @@ size_t Heap::protectedObjectCount()
     return result;
 }
 
-std::unique_ptr<TypeCountSet> Heap::protectedObjectTypeCounts()
+TypeCountSet Heap::protectedObjectTypeCounts()
 {
-    std::unique_ptr<TypeCountSet> result = makeUnique<TypeCountSet>();
+    TypeCountSet result;
     forEachProtectedCell(
         [&] (JSCell* cell) {
-            recordType(*result, cell);
+            recordType(result, cell);
         });
     return result;
 }
 
-std::unique_ptr<TypeCountSet> Heap::objectTypeCounts()
+TypeCountSet Heap::objectTypeCounts()
 {
-    std::unique_ptr<TypeCountSet> result = makeUnique<TypeCountSet>();
+    TypeCountSet result;
     HeapIterationScope iterationScope(*this);
     m_objectSpace.forEachLiveCell(
         iterationScope,
         [&] (HeapCell* cell, HeapCell::Kind kind) -> IterationStatus {
             if (isJSCellKind(kind))
-                recordType(*result, static_cast<JSCell*>(cell));
+                recordType(result, static_cast<JSCell*>(cell));
             return IterationStatus::Continue;
         });
     return result;
@@ -1766,8 +1782,13 @@ NEVER_INLINE bool Heap::runEndPhase(GCConductor conn)
 
     setNeedFinalize();
 
+    MonotonicTime now = MonotonicTime::now();
+    if (m_maxEdenSizeForRateLimiting) {
+        m_gcRateLimitingValue = projectedGCRateLimitingValue(now);
+        m_gcRateLimitingValue += 1.0;
+    }
     m_lastGCStartTime = m_currentGCStartTime;
-    m_lastGCEndTime = MonotonicTime::now();
+    m_lastGCEndTime = now;
     m_totalGCTime += m_lastGCEndTime - m_lastGCStartTime;
     if (endingCollectionScope == CollectionScope::Full)
         m_lastFullGCEndTime = m_lastGCEndTime;
@@ -2437,6 +2458,16 @@ void Heap::notifyIncrementalSweeper()
     m_sweeper->startSweeping(*this);
 }
 
+double Heap::projectedGCRateLimitingValue(MonotonicTime now)
+{
+    if (!m_lastGCEndTime) {
+        ASSERT(!m_gcRateLimitingValue);
+        return 0.0;
+    }
+    Seconds timeSinceLastGC = now - m_lastGCEndTime;
+    return m_gcRateLimitingValue * pow(0.5, timeSinceLastGC.milliseconds() / Options::gcRateLimitingHalfLifeInMS());
+}
+
 void Heap::updateAllocationLimits()
 {
     constexpr bool verbose = false;
@@ -2475,7 +2506,7 @@ void Heap::updateAllocationLimits()
         // the new allocation limit based on the current size of the heap, with a
         // fixed minimum.
         size_t lastMaxHeapSize = m_maxHeapSize;
-        m_maxHeapSize = std::max(minHeapSize(m_heapType, m_ramSize), proportionalHeapSize(currentHeapSize, m_ramSize));
+        m_maxHeapSize = std::max(m_minBytesPerCycle, proportionalHeapSize(currentHeapSize, m_growthMode, m_ramSize));
         m_maxEdenSize = m_maxHeapSize - currentHeapSize;
         if (m_isInOpportunisticTask) {
             // After an Opportunistic Full GC, we allow eden to occupy all the space we recovered.
@@ -2854,6 +2885,10 @@ void Heap::collectIfNecessaryOrDefer(GCDeferralContext* deferralContext)
         size_t bytesAllocatedThisCycle = totalBytesAllocatedThisCycle();
         if (bytesAllocatedThisCycle <= bytesAllowedThisCycle)
             return false;
+        if (bytesAllocatedThisCycle < m_maxEdenSizeForRateLimiting) {
+            if (projectedGCRateLimitingValue(MonotonicTime::now()) > 1.0)
+                return false;
+        }
 
         // We don't want to GC if the last oversized allocation makes up too much of the memory allocated this cycle since it's likely
         //  that object is still live and doesn't give us much indication about how much memory we could actually reclaim. That said,

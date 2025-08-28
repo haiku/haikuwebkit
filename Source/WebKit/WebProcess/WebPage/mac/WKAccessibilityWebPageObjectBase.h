@@ -58,6 +58,7 @@ class AXIsolatedTree;
     Lock m_parentLock;
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     RetainPtr<id> m_parent;
+    RetainPtr<NSData> m_remoteToken;
     bool m_hasMainFramePlugin;
     std::optional<WebCore::FrameIdentifier> m_frameID;
 }
@@ -70,7 +71,7 @@ class AXIsolatedTree;
 - (void)setWindow:(id)window;
 - (void)_buildIsolatedTreeIfNeeded;
 #endif
-- (void)setRemoteParent:(id)parent;
+- (void)setRemoteParent:(id)parent token:(NSData *)token;
 - (void)setRemoteFrameOffset:(WebCore::IntPoint)offset;
 - (void)setHasMainFramePlugin:(bool)hasPlugin;
 - (void)setFrameIdentifier:(const WebCore::FrameIdentifier&)frameID;
@@ -79,5 +80,6 @@ class AXIsolatedTree;
 - (id)accessibilityFocusedUIElement;
 - (WebCore::IntPoint)accessibilityRemoteFrameOffset;
 - (WebCore::LocalFrame *)focusedLocalFrame;
+- (NSUInteger)remoteTokenHash;
 
 @end

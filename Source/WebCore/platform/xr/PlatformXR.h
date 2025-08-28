@@ -79,7 +79,7 @@ enum class ReferenceSpaceType : uint8_t {
     Unbounded
 };
 
-enum class Eye {
+enum class Eye : uint8_t {
     None,
     Left,
     Right,
@@ -144,7 +144,7 @@ inline SessionFeature sessionFeatureFromReferenceSpaceType(ReferenceSpaceType re
 
 inline std::optional<SessionFeature> parseSessionFeatureDescriptor(StringView string)
 {
-    auto feature = string.trim(isUnicodeCompatibleASCIIWhitespace<UChar>).convertToASCIILowercase();
+    auto feature = string.trim(isUnicodeCompatibleASCIIWhitespace<char16_t>).convertToASCIILowercase();
 
     if (feature == "viewer"_s)
         return SessionFeature::ReferenceSpaceTypeViewer;
@@ -297,7 +297,7 @@ struct FrameData {
 #endif
 
     struct LayerData {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(LayerData);
 #if PLATFORM(COCOA)
         std::optional<LayerSetupData> layerSetup = { std::nullopt };
         uint64_t renderingFrameIndex { 0 };

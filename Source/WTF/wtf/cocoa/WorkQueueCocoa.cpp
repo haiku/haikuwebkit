@@ -34,7 +34,7 @@ namespace WTF {
 namespace {
 
 struct DispatchWorkItem {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(DispatchWorkItem);
     Function<void()> m_function;
     void operator()() { m_function(); }
 };

@@ -41,7 +41,7 @@ class CommandEncoder;
 class Device;
 
 class XRProjectionLayer : public RefCountedAndCanMakeWeakPtr<XRProjectionLayer>, public WGPUXRProjectionLayerImpl {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(XRProjectionLayer);
 public:
     static Ref<XRProjectionLayer> create(Device& device)
     {
@@ -75,7 +75,7 @@ private:
     std::pair<id<MTLSharedEvent>, uint64_t> m_sharedEvent;
     size_t m_reusableTextureIndex { 0 };
 
-    Ref<Device> m_device;
+    const Ref<Device> m_device;
 };
 
 } // namespace WebGPU

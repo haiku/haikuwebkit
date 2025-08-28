@@ -99,7 +99,6 @@ public:
     id<MTLRenderCommandEncoder> renderCommandEncoder() const;
     void makeInvalid(NSString* = nil);
     CommandEncoder& parentEncoder() const { return m_parentEncoder; }
-    Ref<CommandEncoder> protectedParentEncoder() const { return m_parentEncoder; }
 
     bool setCommandEncoder(const BindGroupEntryUsageData::Resource&);
     void addResourceToActiveResources(const BindGroupEntryUsageData::Resource&, OptionSet<BindGroupEntryUsage>);
@@ -166,7 +165,7 @@ private:
     Vector<uint32_t> m_priorVertexDynamicOffsets;
     Vector<uint32_t> m_fragmentDynamicOffsets;
     Vector<uint32_t> m_priorFragmentDynamicOffsets;
-    Ref<CommandEncoder> m_parentEncoder;
+    const Ref<CommandEncoder> m_parentEncoder;
     HashMap<uint32_t, Vector<uint32_t>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_bindGroupDynamicOffsets;
     using EntryUsage = OptionSet<BindGroupEntryUsage>;
     using EntryMap = HashMap<uint64_t, EntryUsage, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>>;
@@ -214,7 +213,8 @@ private:
     bool m_passEnded { false };
     bool m_ignoreBufferCache { false };
     Vector<bool> m_bindGroupDynamicOffsetsChanged;
-} SWIFT_SHARED_REFERENCE(refRenderPassEncoder, derefRenderPassEncoder);
+// FIXME: remove @safe once rdar://151039766 lands
+} __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(refRenderPassEncoder, derefRenderPassEncoder);
 
 } // namespace WebGPU
 

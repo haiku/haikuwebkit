@@ -32,6 +32,18 @@
 namespace WebCore {
 namespace Style {
 
+// MARK: - Serialization
+
+void serializationForCSSTokenization(StringBuilder& builder, const CSS::SerializationContext&, const CurrentColor&)
+{
+    builder.append("currentcolor"_s);
+}
+
+String serializationForCSSTokenization(const CSS::SerializationContext&, const CurrentColor&)
+{
+    return "currentcolor"_s;
+}
+
 // MARK: - TextStream
 
 WTF::TextStream& operator<<(WTF::TextStream& ts, const CurrentColor&)

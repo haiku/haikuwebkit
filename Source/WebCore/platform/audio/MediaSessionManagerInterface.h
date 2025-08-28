@@ -25,15 +25,19 @@
 
 #pragma once
 
+#include "MediaSessionGroupIdentifier.h"
 #include "MediaUniqueIdentifier.h"
 #include "NowPlayingMetadataObserver.h"
-#include "PlatformMediaSession.h"
-#include "RemoteCommandListener.h"
+#include "PlatformMediaSessionTypes.h"
+#include <wtf/LoggerHelper.h>
+#include <wtf/ProcessID.h>
+#include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {
 
 class Page;
+class PlatformMediaSessionInterface;
 struct MediaConfiguration;
 struct NowPlayingInfo;
 struct NowPlayingMetadata;
@@ -50,8 +54,9 @@ enum class MediaSessionRestriction : uint32_t {
 using MediaSessionRestrictions = OptionSet<MediaSessionRestriction>;
 
 class MediaSessionManagerInterface
+    : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<MediaSessionManagerInterface>
 #if !RELEASE_LOG_DISABLED
-    : private LoggerHelper
+    , private LoggerHelper
 #endif
 {
 public:
@@ -64,6 +69,12 @@ public:
     virtual bool activeAudioSessionRequired() const = 0;
     virtual bool hasActiveAudioSession() const = 0;
     virtual bool canProduceAudio() const = 0;
+
+    virtual void setShouldDeactivateAudioSession(bool) = 0;
+    virtual bool shouldDeactivateAudioSession() = 0;
+
+    virtual void updateNowPlayingInfoIfNecessary() = 0;
+    virtual void updateAudioSessionCategoryIfNecessary() = 0;
 
     virtual std::optional<NowPlayingInfo> nowPlayingInfo() const = 0;
     virtual bool hasActiveNowPlayingSession() const { return false; }
@@ -82,8 +93,8 @@ public:
 
     virtual bool willIgnoreSystemInterruptions() const = 0;
     virtual void setWillIgnoreSystemInterruptions(bool) = 0;
-    virtual void beginInterruption(PlatformMediaSession::InterruptionType) = 0;
-    virtual void endInterruption(PlatformMediaSession::EndInterruptionFlags) = 0;
+    virtual void beginInterruption(PlatformMediaSessionInterruptionType) = 0;
+    virtual void endInterruption(PlatformMediaSessionEndInterruptionFlags) = 0;
 
     virtual void applicationWillEnterForeground(bool) = 0;
     virtual void applicationDidEnterBackground(bool) = 0;
@@ -100,9 +111,9 @@ public:
     virtual void suspendAllMediaBufferingForGroup(std::optional<MediaSessionGroupIdentifier>) = 0;
     virtual void resumeAllMediaBufferingForGroup(std::optional<MediaSessionGroupIdentifier>) = 0;
 
-    virtual void addRestriction(PlatformMediaSession::MediaType, MediaSessionRestrictions) = 0;
-    virtual void removeRestriction(PlatformMediaSession::MediaType, MediaSessionRestrictions) = 0;
-    virtual MediaSessionRestrictions restrictions(PlatformMediaSession::MediaType) = 0;
+    virtual void addRestriction(PlatformMediaSessionMediaType, MediaSessionRestrictions) = 0;
+    virtual void removeRestriction(PlatformMediaSessionMediaType, MediaSessionRestrictions) = 0;
+    virtual MediaSessionRestrictions restrictions(PlatformMediaSessionMediaType) = 0;
     virtual void resetRestrictions() = 0;
 
     virtual bool sessionWillBeginPlayback(PlatformMediaSessionInterface&) = 0;
@@ -131,7 +142,7 @@ public:
     virtual void audioCaptureSourceStateChanged() = 0;
     virtual size_t audioCaptureSourceCount() const = 0;
 
-    virtual void processDidReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType, const PlatformMediaSession::RemoteCommandArgument&) = 0;
+    virtual void processDidReceiveRemoteControlCommand(PlatformMediaSessionRemoteControlCommandType, const PlatformMediaSessionRemoteCommandArgument&) = 0;
     virtual bool processIsSuspended() const = 0;
     virtual void processSystemWillSleep() = 0;
     virtual void processSystemDidWake() = 0;
@@ -140,14 +151,14 @@ public:
     virtual bool isInterrupted() const = 0;
     virtual bool hasNoSession() const = 0;
 
-    virtual void addSupportedCommand(PlatformMediaSession::RemoteControlCommandType) { };
-    virtual void removeSupportedCommand(PlatformMediaSession::RemoteControlCommandType) { };
-    virtual RemoteCommandListener::RemoteCommandsSet supportedCommands() const { return { }; };
+    virtual void addSupportedCommand(PlatformMediaSessionRemoteControlCommandType) { };
+    virtual void removeSupportedCommand(PlatformMediaSessionRemoteControlCommandType) { };
+    virtual PlatformMediaSessionRemoteCommandsSet supportedCommands() const { return { }; };
 
     virtual void scheduleSessionStatusUpdate() { }
     virtual void resetSessionState() { };
 
-    virtual WeakPtr<PlatformMediaSessionInterface> bestEligibleSessionForRemoteControls(NOESCAPE const Function<bool(const PlatformMediaSessionInterface&)>&, PlatformMediaSession::PlaybackControlsPurpose) = 0;
+    virtual WeakPtr<PlatformMediaSessionInterface> bestEligibleSessionForRemoteControls(NOESCAPE const Function<bool(const PlatformMediaSessionInterface&)>&, PlatformMediaSessionPlaybackControlsPurpose) = 0;
 
     virtual void updatePresentingApplicationPIDIfNecessary(ProcessID) { }
 };

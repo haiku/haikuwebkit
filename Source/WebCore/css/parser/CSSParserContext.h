@@ -39,7 +39,7 @@ namespace WebCore {
 class Document;
 
 struct CSSParserContext {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(CSSParserContext);
 
     URL baseURL;
     ASCIILiteral charset;
@@ -82,6 +82,7 @@ struct CSSParserContext {
     bool cssRandomFunctionEnabled : 1 { false };
     bool cssTreeCountingFunctionsEnabled : 1 { false };
     bool cssURLModifiersEnabled : 1 { false };
+    bool cssURLIntegrityModifierEnabled : 1 { false };
     bool cssAxisRelativePositionKeywordsEnabled : 1 { false };
     bool cssDynamicRangeLimitMixEnabled : 1 { false };
     bool cssConstrainedDynamicRangeLimitEnabled : 1 { false };

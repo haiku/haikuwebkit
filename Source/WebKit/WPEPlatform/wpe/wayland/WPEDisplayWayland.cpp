@@ -40,12 +40,16 @@
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
 #include "linux-explicit-synchronization-unstable-v1-client-protocol.h"
 #include "pointer-constraints-unstable-v1-client-protocol.h"
+#if USE(SYSPROF_CAPTURE)
+#include "presentation-time-client-protocol.h"
+#endif
 #include "relative-pointer-unstable-v1-client-protocol.h"
 #include "text-input-unstable-v1-client-protocol.h"
 #include "text-input-unstable-v3-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 #include <gio/gio.h>
 #include <wtf/HashSet.h>
+#include <wtf/SystemTracing.h>
 #include <wtf/Vector.h>
 #include <wtf/glib/GRefPtr.h>
 #include <wtf/glib/WTFGType.h>
@@ -87,6 +91,12 @@ struct _WPEDisplayWaylandPrivate {
     struct zwp_text_input_v3* textInputV3;
     struct zwp_pointer_constraints_v1* pointerConstraints;
     struct zwp_relative_pointer_manager_v1* relativePointerManager;
+#if USE(SYSPROF_CAPTURE)
+    struct wp_presentation* presentation;
+#endif
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+    struct zxdg_decoration_manager_v1* xdgDecorationManager;
+#endif
     Vector<std::pair<uint32_t, uint64_t>> linuxDMABufFormats;
     std::unique_ptr<WPE::WaylandSeat> wlSeat;
     std::unique_ptr<WPE::WaylandCursor> wlCursor;
@@ -179,6 +189,16 @@ static GRefPtr<GSource> wpeDisplayWaylandCreateEventSource(WPEDisplayWayland* di
     return source;
 }
 
+static void wpeDisplayWaylandConstructed(GObject* object)
+{
+    G_OBJECT_CLASS(wpe_display_wayland_parent_class)->constructed(object);
+#if USE(SYSPROF_CAPTURE)
+    // libWPEPlatform brings its own SysprofAnnotator copy, due to linking against static libWTF.
+    // Therefore we need to initialize it here, otherwise no marks will be received by sysprof.
+    SysprofAnnotator::createIfNeeded("WPE/Wayland Platform"_s);
+#endif
+}
+
 static void wpeDisplayWaylandDispose(GObject* object)
 {
     auto* priv = WPE_DISPLAY_WAYLAND(object)->priv;
@@ -208,6 +228,12 @@ static void wpeDisplayWaylandDispose(GObject* object)
     }
     g_clear_pointer(&priv->pointerConstraints, zwp_pointer_constraints_v1_destroy);
     g_clear_pointer(&priv->relativePointerManager, zwp_relative_pointer_manager_v1_destroy);
+#if USE(SYSPROF_CAPTURE)
+    g_clear_pointer(&priv->presentation, wp_presentation_destroy);
+#endif
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+    g_clear_pointer(&priv->xdgDecorationManager, zxdg_decoration_manager_v1_destroy);
+#endif
 #if USE(LIBDRM)
     g_clear_pointer(&priv->dmabufFeedback, zwp_linux_dmabuf_feedback_v1_destroy);
 #endif
@@ -254,13 +280,20 @@ const struct wl_registry_listener registryListener = {
         else if (interfaceName == "zwp_text_input_manager_v1"_s) {
             priv->textInputManagerV1 = static_cast<struct zwp_text_input_manager_v1*>(wl_registry_bind(registry, name, &zwp_text_input_manager_v1_interface, 1));
             priv->textInputV1 = zwp_text_input_manager_v1_create_text_input(priv->textInputManagerV1);
-        } else if (interfaceName == "zwp_text_input_manager_v3"_s) {
+        } else if (interfaceName == "zwp_text_input_manager_v3"_s)
             priv->textInputManagerV3 = static_cast<struct zwp_text_input_manager_v3*>(wl_registry_bind(registry, name, &zwp_text_input_manager_v3_interface, 1));
-        } else if (interfaceName == "zwp_pointer_constraints_v1"_s) {
+        else if (interfaceName == "zwp_pointer_constraints_v1"_s)
             priv->pointerConstraints = static_cast<struct zwp_pointer_constraints_v1*>(wl_registry_bind(registry, name, &zwp_pointer_constraints_v1_interface, 1));
-        } else if (interfaceName == "zwp_relative_pointer_manager_v1"_s) {
+        else if (interfaceName == "zwp_relative_pointer_manager_v1"_s)
             priv->relativePointerManager = static_cast<struct zwp_relative_pointer_manager_v1*>(wl_registry_bind(registry, name, &zwp_relative_pointer_manager_v1_interface, 1));
-        }
+#if USE(SYSPROF_CAPTURE)
+        else if (interfaceName == "wp_presentation"_s)
+            priv->presentation = static_cast<struct wp_presentation*>(wl_registry_bind(registry, name, &wp_presentation_interface, 1));
+#endif
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+        else if (interfaceName == "zxdg_decoration_manager_v1"_s)
+            priv->xdgDecorationManager = static_cast<struct zxdg_decoration_manager_v1*>(wl_registry_bind(registry, name, &zxdg_decoration_manager_v1_interface, 1));
+#endif
     },
     // global_remove
     [](void* data, struct wl_registry*, uint32_t name)
@@ -604,6 +637,20 @@ struct zwp_relative_pointer_manager_v1* wpeDisplayWaylandGetRelativePointerManag
     return display->priv->relativePointerManager;
 }
 
+#if USE(SYSPROF_CAPTURE)
+struct wp_presentation* wpeDisplayWaylandGetPresentation(WPEDisplayWayland* display)
+{
+    return display->priv->presentation;
+}
+#endif
+
+#if USE(XDG_DECORATION_UNSTABLE_V1)
+struct zxdg_decoration_manager_v1* wpeDisplayWaylandGetXDGDecorationManager(WPEDisplayWayland* display)
+{
+    return display->priv->xdgDecorationManager;
+}
+#endif // USE(XDG_DECORATION_UNSTABLE_V1)
+
 struct zwp_linux_explicit_synchronization_v1* wpeDisplayWaylandGetLinuxExplicitSync(WPEDisplayWayland* display)
 {
     return display->priv->linuxExplicitSync;
@@ -612,6 +659,7 @@ struct zwp_linux_explicit_synchronization_v1* wpeDisplayWaylandGetLinuxExplicitS
 static void wpe_display_wayland_class_init(WPEDisplayWaylandClass* displayWaylandClass)
 {
     GObjectClass* objectClass = G_OBJECT_CLASS(displayWaylandClass);
+    objectClass->constructed = wpeDisplayWaylandConstructed;
     objectClass->dispose = wpeDisplayWaylandDispose;
 
     WPEDisplayClass* displayClass = WPE_DISPLAY_CLASS(displayWaylandClass);

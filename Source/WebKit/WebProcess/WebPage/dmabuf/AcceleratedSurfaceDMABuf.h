@@ -29,8 +29,8 @@
 
 #include "AcceleratedSurface.h"
 
-#include "DMABufRendererBufferFormat.h"
 #include "MessageReceiver.h"
+#include "RendererBufferFormat.h"
 #include <WebCore/Damage.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RunLoop.h>
@@ -158,7 +158,7 @@ private:
         }
         BufferFormat& operator=(BufferFormat&& other)
         {
-            usage = std::exchange(other.usage, DMABufRendererBufferFormat::Usage::Rendering);
+            usage = std::exchange(other.usage, RendererBufferFormat::Usage::Rendering);
             drmDevice = WTFMove(other.drmDevice);
             fourcc = std::exchange(other.fourcc, 0);
             modifiers = WTFMove(other.modifiers);
@@ -171,7 +171,7 @@ private:
             return usage == other.usage && drmDevice == other.drmDevice && fourcc == other.fourcc && modifiers == other.modifiers;
         }
 
-        DMABufRendererBufferFormat::Usage usage { DMABufRendererBufferFormat::Usage::Rendering };
+        RendererBufferFormat::Usage usage { RendererBufferFormat::Usage::Rendering };
         CString drmDevice;
         uint32_t fourcc { 0 };
         Vector<uint64_t, 1> modifiers;
@@ -181,7 +181,7 @@ private:
     class RenderTargetEGLImage final : public RenderTarget {
     public:
         static std::unique_ptr<RenderTarget> create(uint64_t, const WebCore::IntSize&, const BufferFormat&);
-        RenderTargetEGLImage(uint64_t, const WebCore::IntSize&, EGLImage, uint32_t format, Vector<WTF::UnixFileDescriptor>&&, Vector<uint32_t>&& offsets, Vector<uint32_t>&& strides, uint64_t modifier, DMABufRendererBufferFormat::Usage);
+        RenderTargetEGLImage(uint64_t, const WebCore::IntSize&, EGLImage, uint32_t format, Vector<WTF::UnixFileDescriptor>&&, Vector<uint32_t>&& offsets, Vector<uint32_t>&& strides, uint64_t modifier, RendererBufferFormat::Usage);
         ~RenderTargetEGLImage();
 
     private:
@@ -247,7 +247,7 @@ private:
         unsigned size() const { return m_freeTargets.size() + m_lockedTargets.size(); }
 
 #if USE(GBM)
-        void setupBufferFormat(const Vector<DMABufRendererBufferFormat>&, bool);
+        void setupBufferFormat(const Vector<RendererBufferFormat>&, bool);
 #endif
 
     private:
@@ -261,9 +261,9 @@ private:
         Vector<std::unique_ptr<RenderTarget>, s_maximumBuffers> m_freeTargets;
         Vector<std::unique_ptr<RenderTarget>, s_maximumBuffers> m_lockedTargets;
 #if USE(GBM)
-        Lock m_dmabufFormatLock;
-        BufferFormat m_dmabufFormat WTF_GUARDED_BY_LOCK(m_dmabufFormatLock);
-        bool m_dmabufFormatChanged WTF_GUARDED_BY_LOCK(m_dmabufFormatLock) { false };
+        Lock m_bufferFormatLock;
+        BufferFormat m_bufferFormat WTF_GUARDED_BY_LOCK(m_bufferFormatLock);
+        bool m_bufferFormatChanged WTF_GUARDED_BY_LOCK(m_bufferFormatLock) { false };
 #endif
     };
 

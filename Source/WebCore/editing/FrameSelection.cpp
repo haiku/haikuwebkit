@@ -28,9 +28,11 @@
 #include "FrameSelection.h"
 
 #include "AXObjectCache.h"
+#include "BoundaryPointInlines.h"
 #include "CaretAnimator.h"
 #include "CharacterData.h"
 #include "ColorBlending.h"
+#include "ContainerNodeInlines.h"
 #include "DeleteSelectionCommand.h"
 #include "DictationCaretAnimator.h"
 #include "DocumentInlines.h"
@@ -2829,7 +2831,7 @@ void FrameSelection::expandSelectionToStartOfWordContainingCaretSelection()
     moveTo(s2, e1);
 }
 
-UChar FrameSelection::characterInRelationToCaretSelection(int amount) const
+char16_t FrameSelection::characterInRelationToCaretSelection(int amount) const
 {
     auto position = m_selection.visibleStart();
     if (amount < 0) {
@@ -2854,7 +2856,7 @@ bool FrameSelection::selectionAtWordStart() const
         previousCount++;
         if (isStartOfParagraph(position))
             return previousCount != 1;
-        if (UChar c = position.characterAfter())
+        if (char16_t c = position.characterAfter())
             return deprecatedIsSpaceOrNewline(c) || c == noBreakSpace || (u_ispunct(c) && c != ',' && c != '-' && c != '\'');
     }
     return true;
@@ -2887,7 +2889,7 @@ VisibleSelection FrameSelection::wordSelectionContainingCaretSelection(const Vis
         return VisibleSelection();
 
     if (isEndOfParagraph(endVisiblePosBeforeExpansion)) {
-        UChar c(endVisiblePosBeforeExpansion.characterBefore());
+        char16_t c(endVisiblePosBeforeExpansion.characterBefore());
         if (deprecatedIsSpaceOrNewline(c) || c == noBreakSpace) {
             // End of paragraph with space.
             return VisibleSelection();
@@ -2930,7 +2932,7 @@ VisibleSelection FrameSelection::wordSelectionContainingCaretSelection(const Vis
             // Empty document
             return VisibleSelection();
         }
-        UChar c(previous.characterAfter());
+        char16_t c(previous.characterAfter());
         if (deprecatedIsSpaceOrNewline(c) || c == noBreakSpace) {
             // Space at end of line
             return VisibleSelection();
@@ -2945,7 +2947,7 @@ VisibleSelection FrameSelection::wordSelectionContainingCaretSelection(const Vis
             // On empty line
             return VisibleSelection();
         }
-        UChar c(previous.characterAfter());
+        char16_t c(previous.characterAfter());
         if (deprecatedIsSpaceOrNewline(c) || c == noBreakSpace) {
             // Space at end of line
             return VisibleSelection();
@@ -2965,7 +2967,7 @@ VisibleSelection FrameSelection::wordSelectionContainingCaretSelection(const Vis
     // Now loop backwards until we find a non-space.
     while (endVisiblePos != startVisiblePos) {
         VisiblePosition previous(endVisiblePos.previous());
-        UChar c(previous.characterAfter());
+        char16_t c(previous.characterAfter());
         if (!deprecatedIsSpaceOrNewline(c) && c != noBreakSpace)
             break;
         endVisiblePos = previous;

@@ -505,7 +505,7 @@
                   {
                     "name": "GTK-Linux-64bit-Release-GNOMEWebCanary-Packaging-Nightly", "factory": "BuildAndUploadBuiltProductviaSftpFactory",
                     "platform": "gtk", "configuration": "release", "architectures": ["x86_64"],
-                    "additionalArguments": ["--prefix=/app/webkit/WebKitBuild/Release/install", "--cmakeargs=-DUSE_SYSTEM_UNIFDEF=OFF"],
+                    "additionalArguments": ["--prefix=/app/webkit/WebKitBuild/Release/install", "--cmakeargs=-DUSE_SYSTEM_UNIFDEF=OFF", "--cmakeargs=-DENABLE_WEBXR=OFF"],
                     "workernames": ["gtk-linux-bot-23"]
                   },
                   {

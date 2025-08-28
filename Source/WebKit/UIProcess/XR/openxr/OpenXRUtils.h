@@ -22,6 +22,7 @@
 #if ENABLE(WEBXR) && USE(OPENXR)
 
 #include "Logging.h"
+#include <WebCore/PlatformXR.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_reflection.h>
 #include <wtf/text/MakeString.h>
@@ -69,6 +70,21 @@ inline XrResult checkXrResult(XrResult res, const char* originator = nullptr, co
 }
 
 #define CHECK_XRCMD(cmd) checkXrResult(cmd, #cmd, FILE_AND_LINE);
+
+inline PlatformXR::FrameData::Pose XrIdentityPose()
+{
+    return { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+}
+
+inline PlatformXR::FrameData::Pose XrPosefToPose(XrPosef pose)
+{
+    return { { pose.position.x, pose.position.y, pose.position.z }, { pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w } };
+}
+
+inline PlatformXR::FrameData::View XrViewToView(XrView view)
+{
+    return { XrPosefToPose(view.pose), PlatformXR::FrameData::Fov { std::abs(view.fov.angleUp), std::abs(view.fov.angleDown), std::abs(view.fov.angleLeft), std::abs(view.fov.angleRight) } };
+}
 
 } // namespace WebKit
 

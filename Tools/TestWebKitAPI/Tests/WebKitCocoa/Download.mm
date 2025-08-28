@@ -3221,6 +3221,16 @@ TEST(WKDownload, DestinationFileAlreadyExists)
     Util::run(&failed);
 }
 
+static void frameInfoShouldBeEqual(WKFrameInfo *a, WKFrameInfo *b)
+{
+    EXPECT_EQ(a.isMainFrame, b.isMainFrame);
+    EXPECT_WK_STREQ(a.request.URL.absoluteString, b.request.URL.absoluteString);
+    EXPECT_WK_STREQ(a.securityOrigin.protocol, b.securityOrigin.protocol);
+    EXPECT_WK_STREQ(a.securityOrigin.host, b.securityOrigin.host);
+    EXPECT_EQ(a.securityOrigin.port, b.securityOrigin.port);
+    EXPECT_EQ(a.webView, b.webView);
+}
+
 TEST(WKDownload, OriginatingFrameWhenConvertingNavigationInNewWindow)
 {
     HTTPServer server { {
@@ -3245,15 +3255,6 @@ TEST(WKDownload, OriginatingFrameWhenConvertingNavigationInNewWindow)
         openedWebView = adoptNS([[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration]);
         [openedWebView setNavigationDelegate:navigationDelegate.get()];
         return openedWebView.get();
-    };
-
-    auto frameInfoShouldBeEqual = ^(WKFrameInfo *a, WKFrameInfo *b) {
-        EXPECT_EQ(a.isMainFrame, b.isMainFrame);
-        EXPECT_WK_STREQ(a.request.URL.absoluteString, b.request.URL.absoluteString);
-        EXPECT_WK_STREQ(a.securityOrigin.protocol, b.securityOrigin.protocol);
-        EXPECT_WK_STREQ(a.securityOrigin.host, b.securityOrigin.host);
-        EXPECT_EQ(a.securityOrigin.port, b.securityOrigin.port);
-        EXPECT_EQ(a.webView, b.webView);
     };
 
     __block bool checkedDownload { false };
@@ -3296,6 +3297,44 @@ TEST(WKDownload, OriginatingFrameWhenConvertingNavigationInNewWindow)
         checkedDownload = true;
     };
     tryOpenerInitiatedDownloads();
+}
+
+TEST(WKDownload, OriginatingFrameWhenNavigatingToNewDomainWithRedirect)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/original_page"_s, { "hi"_s } },
+        { "/redirect"_s, { 301, { { "Location"_s, "/redirectTarget"_s } } } },
+        { "/redirectTarget"_s, { "hi"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto configuration = server.httpsProxyConfiguration();
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:configuration]);
+    auto navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    [webView setNavigationDelegate:navigationDelegate.get()];
+    auto request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/original_page"]];
+    [webView loadRequest:request];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    RetainPtr<WKFrameInfo> mainFrame = [webView mainFrame].info;
+    __block bool checkedDownload = false;
+    navigationDelegate.get().decidePolicyForNavigationAction = ^(WKNavigationAction *action, void (^completionHandler)(WKNavigationActionPolicy)) {
+        frameInfoShouldBeEqual(action.sourceFrame, mainFrame.get());
+        EXPECT_EQ(action.sourceFrame, action.targetFrame);
+        completionHandler(WKNavigationActionPolicyAllow);
+    };
+    navigationDelegate.get().decidePolicyForNavigationResponse = ^(WKNavigationResponse *response, void (^handler)(WKNavigationResponsePolicy)) {
+        frameInfoShouldBeEqual(response._navigationInitiatingFrame, mainFrame.get());
+        handler(WKNavigationResponsePolicyDownload);
+    };
+    navigationDelegate.get().navigationResponseDidBecomeDownload = ^(WKNavigationResponse *response, WKDownload *download) {
+        frameInfoShouldBeEqual(response._navigationInitiatingFrame, mainFrame.get());
+        frameInfoShouldBeEqual(download.originatingFrame, mainFrame.get());
+        checkedDownload = true;
+    };
+
+    [webView evaluateJavaScript:@"window.location.href = 'https://webkit.org/redirect'" completionHandler:nil];
+    TestWebKitAPI::Util::run(&checkedDownload);
 }
 
 }

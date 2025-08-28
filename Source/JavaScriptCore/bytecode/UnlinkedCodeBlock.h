@@ -463,7 +463,7 @@ private:
 
 public:
     struct RareData {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(UnlinkedCodeBlock_RareData);
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(RareData, UnlinkedCodeBlock_RareData);
 
         size_t sizeInBytes(const AbstractLocker&) const;
 

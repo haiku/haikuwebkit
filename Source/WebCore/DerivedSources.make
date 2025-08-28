@@ -399,6 +399,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/indexeddb/IDBTransactionMode.idl \
     $(WebCore)/Modules/indexeddb/IDBVersionChangeEvent.idl \
     $(WebCore)/Modules/indexeddb/WindowOrWorkerGlobalScope+IndexedDatabase.idl \
+    $(WebCore)/Modules/fetch/IPAddressSpace.idl \
     $(WebCore)/Modules/mediacapabilities/AudioConfiguration.idl \
     $(WebCore)/Modules/mediacapabilities/ColorGamut.idl \
     $(WebCore)/Modules/mediacapabilities/HdrMetadataType.idl \
@@ -1520,6 +1521,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/page/DOMWindow+RequestIdleCallback.idl \
     $(WebCore)/page/DOMWindow+Selection.idl \
     $(WebCore)/page/DOMWindow+VisualViewport.idl \
+    $(WebCore)/page/EventCounts.idl \
     $(WebCore)/page/EventSource.idl \
     $(WebCore)/page/FragmentDirective.idl \
     $(WebCore)/page/GetComposedRangesOptions.idl \
@@ -1539,6 +1541,9 @@ JS_BINDING_IDLS := \
     $(WebCore)/page/NavigationNavigationType.idl \
     $(WebCore)/page/NavigationTransition.idl \
     $(WebCore)/page/Navigator.idl \
+    $(WebCore)/page/NavigatorUA.idl \
+    $(WebCore)/page/NavigatorUABrandVersion.idl \
+    $(WebCore)/page/NavigatorUAData.idl \
     $(WebCore)/page/Navigator+LoginStatus.idl \
     $(WebCore)/page/Navigator+UserActivation.idl \
     $(WebCore)/page/NavigatorCookies.idl \
@@ -1549,12 +1554,14 @@ JS_BINDING_IDLS := \
     $(WebCore)/page/NavigatorServiceWorker.idl \
     $(WebCore)/page/NavigatorShare.idl \
     $(WebCore)/page/NavigatorStorage.idl \
+    $(WebCore)/page/Performance+EventCounts.idl \
     $(WebCore)/page/Performance+NavigationTiming.idl \
     $(WebCore)/page/Performance+PerformanceTimeline.idl \
     $(WebCore)/page/Performance+ResourceTiming.idl \
     $(WebCore)/page/Performance+UserTiming.idl \
     $(WebCore)/page/Performance.idl \
     $(WebCore)/page/PerformanceEntry.idl \
+    $(WebCore)/page/PerformanceEventTiming.idl \
     $(WebCore)/page/PerformanceMark.idl \
     $(WebCore)/page/PerformanceMarkOptions.idl \
     $(WebCore)/page/PerformanceMeasure.idl \
@@ -1584,13 +1591,17 @@ JS_BINDING_IDLS := \
     $(WebCore)/page/ShadowRealmGlobalScope.idl \
     $(WebCore)/page/ShareData.idl \
     $(WebCore)/page/StructuredSerializeOptions.idl \
+    $(WebCore)/page/UADataValues.idl \
+    $(WebCore)/page/UALowEntropyJSON.idl \
     $(WebCore)/page/UndoItem.idl \
     $(WebCore)/page/UndoManager.idl \
     $(WebCore)/page/UserMessageHandler.idl \
     $(WebCore)/page/UserMessageHandlersNamespace.idl \
     $(WebCore)/page/VisualViewport.idl \
     $(WebCore)/page/WebKitNamespace.idl \
+    $(WebCore)/page/WebKitNodeInfo.idl \
     $(WebCore)/page/WebKitPoint.idl \
+    $(WebCore)/page/WebKitSerializedNode.idl \
     $(WebCore)/page/WindowEventHandlers.idl \
     $(WebCore)/page/WindowLocalStorage.idl \
     $(WebCore)/page/WindowOrWorkerGlobalScope+Crypto.idl \

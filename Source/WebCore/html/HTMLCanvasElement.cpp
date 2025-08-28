@@ -35,6 +35,7 @@
 #include "CanvasPattern.h"
 #include "CanvasRenderingContext2D.h"
 #include "CanvasRenderingContext2DSettings.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "ElementInlines.h"

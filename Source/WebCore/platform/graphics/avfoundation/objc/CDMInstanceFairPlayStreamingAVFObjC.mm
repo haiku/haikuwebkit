@@ -282,7 +282,7 @@ AVContentKeySession* CDMInstanceFairPlayStreamingAVFObjC::contentKeySession()
         return nullptr;
 
     if (!m_delegate)
-        m_delegate = adoptNS([[WebCoreFPSContentKeySessionDelegate alloc] initWithParent:*this]);
+        lazyInitialize(m_delegate, adoptNS([[WebCoreFPSContentKeySessionDelegate alloc] initWithParent:*this]));
 
     [m_session setDelegate:m_delegate.get() queue:dispatch_get_main_queue()];
     return m_session.get();
@@ -1748,7 +1748,7 @@ bool CDMInstanceSessionFairPlayStreamingAVFObjC::ensureSessionOrGroup(KeyGroupin
         return true;
 
     if (auto* session = m_instance->contentKeySession()) {
-        m_group = ContentKeyGroupFactoryAVFObjC::createContentKeyGroup(keyGroupingStrategy, session, *this);
+        lazyInitialize(m_group, ContentKeyGroupFactoryAVFObjC::createContentKeyGroup(keyGroupingStrategy, session, *this));
         return true;
     }
 

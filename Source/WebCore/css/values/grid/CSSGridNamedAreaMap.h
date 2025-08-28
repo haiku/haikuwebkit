@@ -43,7 +43,17 @@ struct GridNamedAreaMap {
     bool operator==(const GridNamedAreaMap&) const = default;
 };
 
+// A single `<string>` of <'grid-template-areas'>.
+using GridNamedAreaMapRow = Vector<String, 8>;
+
+// Adds a row to a `GridNamedAreaMap`. Returns `true` on success, `false` on failure.
+bool addRow(GridNamedAreaMap&, const GridNamedAreaMapRow&);
+
+// MARK: - Serialization
+
 template<> struct Serialize<GridNamedAreaMap> { void operator()(StringBuilder&, const CSS::SerializationContext&, const GridNamedAreaMap&); };
+
+// MARK: - Logging
 
 WTF::TextStream& operator<<(WTF::TextStream&, const GridNamedAreaMap&);
 

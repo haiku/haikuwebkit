@@ -40,7 +40,7 @@ namespace Style {
 struct ColorResolutionState;
 
 struct ColorLayers {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(ColorLayers);
 
     BlendMode blendMode;
     CommaSeparatedVector<Color> colors;
@@ -56,6 +56,9 @@ inline bool operator==(const UniqueRef<ColorLayers>& a, const UniqueRef<ColorLay
 Color toStyleColor(const CSS::ColorLayers&, ColorResolutionState&);
 WebCore::Color resolveColor(const ColorLayers&, const WebCore::Color& currentColor);
 bool containsCurrentColor(const ColorLayers&);
+
+void serializationForCSSTokenization(StringBuilder&, const CSS::SerializationContext&, const ColorLayers&);
+String serializationForCSSTokenization(const CSS::SerializationContext&, const ColorLayers&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const ColorLayers&);
 

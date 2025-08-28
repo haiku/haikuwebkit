@@ -38,6 +38,7 @@
 #include "Color.h"
 #include "ColorSerialization.h"
 #include "ColorTypes.h"
+#include "ContainerNodeInlines.h"
 #include "ElementRareData.h"
 #include "Event.h"
 #include "HTMLDataListElement.h"

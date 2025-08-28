@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <array>
+#include <type_traits>
 #include <wtf/EnumTraits.h>
 #include <wtf/text/ASCIILiteral.h>
 

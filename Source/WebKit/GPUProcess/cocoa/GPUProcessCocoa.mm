@@ -216,6 +216,12 @@ void GPUProcess::postWillTakeSnapshotNotification(CompletionHandler<void()>&& co
     completionHandler();
 }
 
+void GPUProcess::registerFonts(Vector<SandboxExtension::Handle>&& sandboxExtensions)
+{
+    for (auto& sandboxExtension : sandboxExtensions)
+        SandboxExtension::consumePermanently(sandboxExtension);
+}
+
 } // namespace WebKit
 
 #endif // ENABLE(GPU_PROCESS) && PLATFORM(COCOA)

@@ -38,4 +38,4 @@ struct OffsetDistance : LengthWrapperBase<LengthPercentage<>> {
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::OffsetDistance> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::OffsetDistance)

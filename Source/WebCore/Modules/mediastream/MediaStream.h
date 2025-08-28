@@ -47,6 +47,7 @@
 namespace WebCore {
 
 class Document;
+class MediaSessionManagerInterface;
 
 class MediaStream final
     : public EventTarget
@@ -152,6 +153,7 @@ private:
     MediaStreamTrackVector filteredTracks(NOESCAPE const Function<bool(const MediaStreamTrack&)>&) const;
 
     Document* document() const;
+    RefPtr<MediaSessionManagerInterface> mediaSessionManager() const;
 
     const Ref<MediaStreamPrivate> m_private;
 

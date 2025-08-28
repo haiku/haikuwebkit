@@ -221,7 +221,7 @@ void InjectedBundle::extendClassesForParameterCoder(API::Array& classes)
     auto mutableSet = adoptNS([classesForCoder() mutableCopy]);
 
     for (size_t i = 0; i < size; ++i) {
-        API::String* classNameString = classes.at<API::String>(i);
+        RefPtr classNameString = classes.at<API::String>(i);
         if (!classNameString) {
             WTFLogAlways("InjectedBundle::extendClassesForParameterCoder - No class provided as argument %d.\n", i);
             break;

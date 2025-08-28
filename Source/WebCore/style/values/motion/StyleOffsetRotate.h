@@ -79,4 +79,4 @@ WTF::TextStream& operator<<(WTF::TextStream&, const OffsetRotate&);
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::OffsetRotate> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::OffsetRotate)

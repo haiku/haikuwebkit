@@ -35,7 +35,6 @@ namespace WebCore {
 
 class Animation;
 class ContainerNode;
-class ContentData;
 class BlendingKeyframes;
 class ReferencedSVGResources;
 class RenderBlock;
@@ -51,13 +50,17 @@ namespace Layout {
 class ElementBox;
 }
 
+namespace Style {
+struct Content;
+}
+
 class RenderElement : public RenderObject {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderElement);
 public:
     virtual ~RenderElement();
 
-    static bool isContentDataSupported(const ContentData&);
+    static bool isContentDataSupported(const Style::Content&);
 
     enum class ConstructBlockLevelRendererFor {
         Inline           = 1 << 0,
@@ -190,7 +193,7 @@ public:
     inline bool isTransparent() const; // FIXME: This function is incorrectly named. It's isNotOpaque, sometimes called hasOpacity, not isEntirelyTransparent.
     inline float opacity() const;
 
-    inline bool visibleToHitTesting(const std::optional<HitTestRequest>& = std::nullopt) const;
+    inline bool visibleToHitTesting(const std::optional<HitTestRequest>& = std::nullopt) const; // Defined in RenderElementInlines.h.
 
     inline bool hasBackground() const;
     inline bool hasMask() const;

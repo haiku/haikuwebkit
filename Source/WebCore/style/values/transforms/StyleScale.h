@@ -117,5 +117,5 @@ template<> struct ToPlatform<Scale> { auto operator()(const Scale&) -> RefPtr<Sc
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::Scale::Operation> = true;
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::Scale> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::Scale::Operation)
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::Scale)

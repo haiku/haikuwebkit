@@ -32,6 +32,7 @@
 #include "StreamClientConnection.h"
 #include <WebCore/LogClient.h>
 #include <wtf/Lock.h>
+#include <wtf/Locker.h>
 
 #if __has_include("WebCoreLogDefinitions.h")
 #include "WebCoreLogDefinitions.h"
@@ -43,7 +44,7 @@
 namespace WebKit {
 
 class LogClient final : public WebCore::LogClient {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(LogClient);
 public:
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
     LogClient(IPC::StreamClientConnection&, const LogStreamIdentifier&);

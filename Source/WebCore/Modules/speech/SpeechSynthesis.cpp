@@ -28,6 +28,7 @@
 
 #if ENABLE(SPEECH_SYNTHESIS)
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
@@ -60,13 +61,13 @@ SpeechSynthesis::SpeechSynthesis(ScriptExecutionContext& context)
     : ActiveDOMObject(&context)
     , m_currentSpeechUtterance(nullptr)
     , m_isPaused(false)
-    , m_restrictions(NoRestrictions)
+    , m_restrictions({ })
     , m_speechSynthesisClient(nullptr)
 {
     if (RefPtr document = dynamicDowncast<Document>(context)) {
 #if PLATFORM(IOS_FAMILY)
         if (document->requiresUserGestureForAudioPlayback())
-            m_restrictions = RequireUserGestureForSpeechStartRestriction;
+            m_restrictions = BehaviorRestrictionFlags::RequireUserGestureForSpeechStart;
 #endif
         m_speechSynthesisClient = document->frame()->page()->speechSynthesisClient();
     }
@@ -169,7 +170,7 @@ void SpeechSynthesis::speak(SpeechSynthesisUtterance& utterance)
     // Like Audio, we should require that the user interact to start a speech synthesis session.
 #if PLATFORM(IOS_FAMILY)
     if (UserGestureIndicator::processingUserGesture())
-        removeBehaviorRestriction(RequireUserGestureForSpeechStartRestriction);
+        removeBehaviorRestriction(BehaviorRestrictionFlags::RequireUserGestureForSpeechStart);
     else if (userGestureRequiredForSpeechStart())
         return;
 #endif

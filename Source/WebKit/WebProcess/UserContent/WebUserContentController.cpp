@@ -134,6 +134,8 @@ InjectedBundleScriptWorld* WebUserContentController::addContentWorld(const Conte
             scriptWorld->setAllowElementUserInfo();
         if (world.options.contains(ContentWorldOption::DisableLegacyBuiltinOverrides))
             scriptWorld->disableOverrideBuiltinsBehavior();
+        if (world.options.contains(ContentWorldOption::AllowNodeInfo))
+            scriptWorld->setNodeInfoEnabled();
         return scriptWorld.ptr();
     }
     return nullptr;

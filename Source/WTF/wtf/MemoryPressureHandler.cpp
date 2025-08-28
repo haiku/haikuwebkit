@@ -69,9 +69,9 @@ static MemoryPressureHandler* memoryPressureHandlerIfExists()
 
 MemoryPressureHandler::MemoryPressureHandler()
 #if OS(LINUX) || OS(FREEBSD) || OS(HAIKU) || OS(QNX)
-    : m_holdOffTimer(RunLoop::main(), this, &MemoryPressureHandler::holdOffTimerFired)
+    : m_holdOffTimer(RunLoop::mainSingleton(), "MemoryPressureHandler::HoldOffTimer"_s, this, &MemoryPressureHandler::holdOffTimerFired)
 #elif OS(WINDOWS)
-    : m_windowsMeasurementTimer(RunLoop::main(), this, &MemoryPressureHandler::windowsMeasurementTimerFired)
+    : m_windowsMeasurementTimer(RunLoop::mainSingleton(), "MemoryPressureHandler::WindowsMeasurementTimer"_s, this, &MemoryPressureHandler::windowsMeasurementTimerFired)
 #endif
 {
 #if PLATFORM(COCOA)
@@ -87,7 +87,7 @@ void MemoryPressureHandler::setMemoryFootprintPollIntervalForTesting(Seconds pol
 void MemoryPressureHandler::setShouldUsePeriodicMemoryMonitor(bool use)
 {
     if (use) {
-        m_measurementTimer = makeUnique<RunLoop::Timer>(RunLoop::main(), this, &MemoryPressureHandler::measurementTimerFired);
+        m_measurementTimer = makeUnique<RunLoop::Timer>(RunLoop::mainSingleton(), "MemoryPressureHandler::MeasurementTimer"_s, this, &MemoryPressureHandler::measurementTimerFired);
         m_measurementTimer->startRepeating(m_configuration.pollInterval);
     } else
         m_measurementTimer = nullptr;

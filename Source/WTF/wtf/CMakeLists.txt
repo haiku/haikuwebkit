@@ -328,6 +328,7 @@ set(WTF_PUBLIC_HEADERS
     StringPrintStream.h
     StructDump.h
     SuspendableWorkQueue.h
+    SwiftBridging.h
     SynchronizedFixedQueue.h
     SystemFree.h
     SystemMalloc.h

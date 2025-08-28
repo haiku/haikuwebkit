@@ -53,6 +53,7 @@
 #import <WebCore/DocumentMarkerController.h>
 #import <WebCore/DragImage.h>
 #import <WebCore/Editing.h>
+#import <WebCore/EditingHTMLConverter.h>
 #import <WebCore/Editor.h>
 #import <WebCore/EventHandler.h>
 #import <WebCore/EventNames.h>
@@ -62,7 +63,6 @@
 #import <WebCore/FrameView.h>
 #import <WebCore/GraphicsContextCG.h>
 #import <WebCore/HTMLBodyElement.h>
-#import <WebCore/HTMLConverter.h>
 #import <WebCore/HTMLImageElement.h>
 #import <WebCore/HTMLOListElement.h>
 #import <WebCore/HTMLTextFormControlElement.h>
@@ -75,6 +75,7 @@
 #import <WebCore/MIMETypeRegistry.h>
 #import <WebCore/MutableStyleProperties.h>
 #import <WebCore/NetworkExtensionContentFilter.h>
+#import <WebCore/NodeHTMLConverter.h>
 #import <WebCore/NodeRenderStyle.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/NowPlayingInfo.h>
@@ -192,9 +193,9 @@ void WebPage::platformDidReceiveLoadParameters(const LoadParameters& parameters)
 
 void WebPage::requestActiveNowPlayingSessionInfo(CompletionHandler<void(bool, WebCore::NowPlayingInfo&&)>&& completionHandler)
 {
-    if (RefPtr sharedManager = WebCore::PlatformMediaSessionManager::singletonIfExists()) {
-        if (auto nowPlayingInfo = sharedManager->nowPlayingInfo()) {
-            bool registeredAsNowPlayingApplication = sharedManager->registeredAsNowPlayingApplication();
+    if (RefPtr manager = mediaSessionManagerIfExists()) {
+        if (auto nowPlayingInfo = manager->nowPlayingInfo()) {
+            bool registeredAsNowPlayingApplication = manager->registeredAsNowPlayingApplication();
             completionHandler(registeredAsNowPlayingApplication, WTFMove(*nowPlayingInfo));
             return;
         }
@@ -524,6 +525,39 @@ void WebPage::resolveAccessibilityHitTestForTesting(WebCore::FrameIdentifier fra
     UNUSED_PARAM(point);
     completionHandler("NULL"_s);
 }
+
+#if PLATFORM(MAC)
+void WebPage::getAccessibilityWebProcessDebugInfo(CompletionHandler<void(WebCore::AXDebugInfo)>&& completionHandler)
+{
+    if (!AXObjectCache::isAppleInternalInstall()) {
+        completionHandler({ });
+        return;
+    }
+
+    if (auto treeData = protectedCorePage()->accessibilityTreeData(IncludeDOMInfo::No)) {
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+        completionHandler({ WebCore::AXObjectCache::accessibilityEnabled(), WebCore::AXObjectCache::isAXThreadInitialized(), treeData->liveTree, treeData->isolatedTree, [m_mockAccessibilityElement remoteTokenHash], [accessibilityRemoteTokenData() hash] });
+#else
+        completionHandler({ WebCore::AXObjectCache::accessibilityEnabled(), false, treeData->liveTree, treeData->isolatedTree, [m_mockAccessibilityElement remoteTokenHash], [accessibilityRemoteTokenData() hash] });
+#endif
+        return;
+    }
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    completionHandler({ WebCore::AXObjectCache::accessibilityEnabled(), WebCore::AXObjectCache::isAXThreadInitialized(), { }, { }, 0, 0 });
+#else
+    completionHandler({ WebCore::AXObjectCache::accessibilityEnabled(), false, { }, { }, 0, 0 });
+#endif
+}
+
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+void WebPage::clearAccessibilityIsolatedTree()
+{
+    if (RefPtr page = m_page)
+        page->clearAccessibilityIsolatedTree();
+}
+#endif
+
+#endif // PLATFORM(MAC)
 
 #if ENABLE(APPLE_PAY)
 WebPaymentCoordinator* WebPage::paymentCoordinator()
@@ -1408,6 +1442,18 @@ void WebPage::getWebArchives(CompletionHandler<void(HashMap<WebCore::FrameIdenti
             result.add(localFrame->frameID(), archive.releaseNonNull());
     }
     completionHandler(WTFMove(result));
+}
+
+void WebPage::processSystemWillSleep() const
+{
+    if (RefPtr manager = mediaSessionManagerIfExists())
+        manager->processSystemWillSleep();
+}
+
+void WebPage::processSystemDidWake() const
+{
+    if (RefPtr manager = mediaSessionManagerIfExists())
+        manager->processSystemDidWake();
 }
 
 } // namespace WebKit

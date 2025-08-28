@@ -336,9 +336,9 @@ static void runJavaScriptConfirm(WKPageRef page, WKStringRef message, WKFrameRef
     TestController::singleton().handleJavaScriptConfirm(message, listener);
 }
 
-static void requestPointerLock(WKPageRef page, const void*)
+static void requestPointerLock(WKPageRef page, WKCompletionListenerRef listener, const void*)
 {
-    WKPageDidAllowPointerLock(page);
+    WKCompletionListenerComplete(listener);
 }
 
 static void printFrame(WKPageRef page, WKFrameRef frame, const void*)
@@ -3456,7 +3456,7 @@ void TestController::decidePolicyForNavigationAction(WKPageRef page, WKNavigatio
     }
 
     if (m_shouldDecideNavigationPolicyAfterDelay)
-        RunLoop::protectedMain()->dispatch(WTFMove(decisionFunction));
+        RunLoop::mainSingleton().dispatch(WTFMove(decisionFunction));
     else
         decisionFunction();
 }
@@ -3499,7 +3499,7 @@ void TestController::decidePolicyForNavigationResponse(WKNavigationResponseRef n
     }
 
     if (m_shouldDecideResponsePolicyAfterDelay)
-        RunLoop::protectedMain()->dispatch(WTFMove(decisionFunction));
+        RunLoop::mainSingleton().dispatch(WTFMove(decisionFunction));
     else
         decisionFunction();
 }

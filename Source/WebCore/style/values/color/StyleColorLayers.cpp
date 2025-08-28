@@ -28,7 +28,7 @@
 #include "StyleColorLayers.h"
 
 #include "CSSColorLayersResolver.h"
-#include "CSSSerializationContext.h"
+#include "CSSPrimitiveValueMappings.h"
 #include "ColorSerialization.h"
 #include "StyleBuilderState.h"
 #include "StyleColorResolutionState.h"
@@ -90,6 +90,29 @@ bool containsCurrentColor(const ColorLayers& colorLayers)
     return std::ranges::any_of(colorLayers.colors, [&](auto& color) {
         return WebCore::Style::containsCurrentColor(color);
     });
+}
+
+// MARK: - Serialization
+
+void serializationForCSSTokenization(StringBuilder& builder, const CSS::SerializationContext& context, const ColorLayers& value)
+{
+    builder.append("color-layers("_s);
+
+    if (value.blendMode != BlendMode::Normal)
+        builder.append(nameLiteralForSerialization(toCSSValueID(value.blendMode)), ", "_s);
+
+    builder.append(interleave(value.colors, [&](auto& builder, auto& color) {
+        serializationForCSSTokenization(builder, context, color);
+    }, ", "_s));
+
+    builder.append(')');
+}
+
+String serializationForCSSTokenization(const CSS::SerializationContext& context, const ColorLayers& colorLayers)
+{
+    StringBuilder builder;
+    serializationForCSSTokenization(builder, context, colorLayers);
+    return builder.toString();
 }
 
 // MARK: - TextStream

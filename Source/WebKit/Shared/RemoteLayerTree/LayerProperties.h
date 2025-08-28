@@ -127,7 +127,7 @@ struct RemoteLayerBackingStoreOrProperties {
 };
 
 struct LayerProperties {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(LayerProperties);
 
     void notePropertiesChanged(OptionSet<LayerChange> changeFlags)
     {

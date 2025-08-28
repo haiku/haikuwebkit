@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 1999 Antti Koivisto (koivisto@kde.org)
  * Copyright (C) 2004-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -22,8 +23,6 @@
 #include "config.h"
 #include "StyleRareInheritedData.h"
 
-#include "CursorList.h"
-#include "QuotesData.h"
 #include "RenderStyleInlines.h"
 #include "RenderStyleConstants.h"
 #include "RenderStyleDifference.h"
@@ -39,6 +38,7 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
     void* styleImage;
     Style::Color firstColor;
     Style::Color colors[10];
+    Style::ScrollbarColor scrollbarColor;
     Style::DynamicRangeLimit dynamicRangeLimit;
     void* ownPtrs[1];
     AtomString atomStrings[5];
@@ -56,7 +56,7 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
     short hyphenationShorts[3];
 
 #if ENABLE(TEXT_AUTOSIZING)
-    TextSizeAdjustment textSizeAdjust;
+    Style::TextSizeAdjust textSizeAdjust;
 #endif
 
 #if ENABLE(TOUCH_EVENTS)
@@ -66,11 +66,8 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
 #if ENABLE(DARK_MODE_CSS)
     Style::ColorScheme colorScheme;
 #endif
-    ListStyleType listStyleType;
-
-    Markable<ScrollbarColor> scrollbarColor;
-
-    BlockEllipsis blockEllipsis;
+    Style::ListStyleType listStyleType;
+    Style::BlockEllipsis blockEllipsis;
 };
 
 static_assert(sizeof(StyleRareInheritedData) <= sizeof(GreaterThanOrSameSizeAsStyleRareInheritedData), "StyleRareInheritedData should bit pack");
@@ -78,8 +75,9 @@ static_assert(sizeof(StyleRareInheritedData) <= sizeof(GreaterThanOrSameSizeAsSt
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleRareInheritedData);
 
 StyleRareInheritedData::StyleRareInheritedData()
-    : textStrokeWidth(RenderStyle::initialTextStrokeWidth())
+    : usedZoom(RenderStyle::initialZoom())
     , listStyleImage(RenderStyle::initialListStyleImage())
+    , textStrokeWidth(RenderStyle::initialTextStrokeWidth())
     , textStrokeColor(RenderStyle::initialTextStrokeColor())
     , textFillColor(RenderStyle::initialTextFillColor())
     , textEmphasisColor(RenderStyle::initialTextEmphasisColor())
@@ -89,9 +87,10 @@ StyleRareInheritedData::StyleRareInheritedData()
     , caretColor(Style::Color::currentColor())
     , visitedLinkCaretColor(Style::Color::currentColor())
     , accentColor(Style::Color::currentColor())
+    , scrollbarColor(RenderStyle::initialScrollbarColor())
     , dynamicRangeLimit(RenderStyle::initialDynamicRangeLimit())
     , textShadow(RenderStyle::initialTextShadow())
-    , usedZoom(RenderStyle::initialZoom())
+    , cursorImages(RenderStyle::initialCursor().images)
     , textEmphasisStyle(RenderStyle::initialTextEmphasisStyle())
     , textIndent(RenderStyle::initialTextIndent())
     , textUnderlineOffset(RenderStyle::initialTextUnderlineOffset())
@@ -119,8 +118,8 @@ StyleRareInheritedData::StyleRareInheritedData()
     , imageRendering(static_cast<unsigned>(RenderStyle::initialImageRendering()))
     , lineSnap(static_cast<unsigned>(RenderStyle::initialLineSnap()))
     , lineAlign(static_cast<unsigned>(RenderStyle::initialLineAlign()))
-#if ENABLE(OVERFLOW_SCROLLING_TOUCH)
-    , useTouchOverflowScrolling(RenderStyle::initialUseTouchOverflowScrolling())
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
+    , webkitOverflowScrolling(static_cast<unsigned>(RenderStyle::initialOverflowScrolling()))
 #endif
     , textAlignLast(static_cast<unsigned>(RenderStyle::initialTextAlignLast()))
     , textJustify(static_cast<unsigned>(RenderStyle::initialTextJustify()))
@@ -130,8 +129,8 @@ StyleRareInheritedData::StyleRareInheritedData()
     , rubyAlign(static_cast<unsigned>(RenderStyle::initialRubyAlign()))
     , rubyOverhang(static_cast<unsigned>(RenderStyle::initialRubyOverhang()))
     , textZoom(static_cast<unsigned>(RenderStyle::initialTextZoom()))
-#if PLATFORM(IOS_FAMILY)
-    , touchCalloutEnabled(RenderStyle::initialTouchCalloutEnabled())
+#if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
+    , webkitTouchCallout(static_cast<unsigned>(RenderStyle::initialTouchCallout()))
 #endif
     , hangingPunctuation(RenderStyle::initialHangingPunctuation().toRaw())
     , paintOrder(static_cast<unsigned>(RenderStyle::initialPaintOrder()))
@@ -155,6 +154,10 @@ StyleRareInheritedData::StyleRareInheritedData()
     , usedTouchActions(RenderStyle::initialTouchActions())
     , strokeWidth(RenderStyle::initialStrokeWidth())
     , strokeColor(RenderStyle::initialStrokeColor())
+    , hyphenateCharacter(RenderStyle::initialHyphenateCharacter())
+    , hyphenateLimitBefore(RenderStyle::initialHyphenateLimitBefore())
+    , hyphenateLimitAfter(RenderStyle::initialHyphenateLimitAfter())
+    , hyphenateLimitLines(RenderStyle::initialHyphenateLimitLines())
 #if ENABLE(DARK_MODE_CSS)
     , colorScheme(RenderStyle::initialColorScheme())
 #endif
@@ -169,15 +172,15 @@ StyleRareInheritedData::StyleRareInheritedData()
     , tapHighlightColor(RenderStyle::initialTapHighlightColor())
 #endif
     , listStyleType(RenderStyle::initialListStyleType())
-    , scrollbarColor(RenderStyle::initialScrollbarColor())
     , blockEllipsis(RenderStyle::initialBlockEllipsis())
 {
 }
 
 inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedData& o)
     : RefCounted<StyleRareInheritedData>()
-    , textStrokeWidth(o.textStrokeWidth)
+    , usedZoom(o.usedZoom)
     , listStyleImage(o.listStyleImage)
+    , textStrokeWidth(o.textStrokeWidth)
     , textStrokeColor(o.textStrokeColor)
     , textFillColor(o.textFillColor)
     , textEmphasisColor(o.textEmphasisColor)
@@ -187,10 +190,10 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , caretColor(o.caretColor)
     , visitedLinkCaretColor(o.visitedLinkCaretColor)
     , accentColor(o.accentColor)
+    , scrollbarColor(o.scrollbarColor)
     , dynamicRangeLimit(o.dynamicRangeLimit)
     , textShadow(o.textShadow)
-    , cursorData(o.cursorData)
-    , usedZoom(o.usedZoom)
+    , cursorImages(o.cursorImages)
     , textEmphasisStyle(o.textEmphasisStyle)
     , textIndent(o.textIndent)
     , textUnderlineOffset(o.textUnderlineOffset)
@@ -219,8 +222,8 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , imageRendering(o.imageRendering)
     , lineSnap(o.lineSnap)
     , lineAlign(o.lineAlign)
-#if ENABLE(OVERFLOW_SCROLLING_TOUCH)
-    , useTouchOverflowScrolling(o.useTouchOverflowScrolling)
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
+    , webkitOverflowScrolling(o.webkitOverflowScrolling)
 #endif
     , textAlignLast(o.textAlignLast)
     , textJustify(o.textJustify)
@@ -230,8 +233,8 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , rubyAlign(o.rubyAlign)
     , rubyOverhang(o.rubyOverhang)
     , textZoom(o.textZoom)
-#if PLATFORM(IOS_FAMILY)
-    , touchCalloutEnabled(o.touchCalloutEnabled)
+#if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
+    , webkitTouchCallout(o.webkitTouchCallout)
 #endif
     , hangingPunctuation(o.hangingPunctuation)
     , paintOrder(o.paintOrder)
@@ -257,10 +260,10 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , strokeWidth(o.strokeWidth)
     , strokeColor(o.strokeColor)
     , visitedLinkStrokeColor(o.visitedLinkStrokeColor)
-    , hyphenationString(o.hyphenationString)
-    , hyphenationLimitBefore(o.hyphenationLimitBefore)
-    , hyphenationLimitAfter(o.hyphenationLimitAfter)
-    , hyphenationLimitLines(o.hyphenationLimitLines)
+    , hyphenateCharacter(o.hyphenateCharacter)
+    , hyphenateLimitBefore(o.hyphenateLimitBefore)
+    , hyphenateLimitAfter(o.hyphenateLimitAfter)
+    , hyphenateLimitLines(o.hyphenateLimitLines)
 #if ENABLE(DARK_MODE_CSS)
     , colorScheme(o.colorScheme)
 #endif
@@ -275,7 +278,6 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , tapHighlightColor(o.tapHighlightColor)
 #endif
     , listStyleType(o.listStyleType)
-    , scrollbarColor(o.scrollbarColor)
     , blockEllipsis(o.blockEllipsis)
 {
     ASSERT(o == *this, "StyleRareInheritedData should be properly copied.");
@@ -290,8 +292,9 @@ StyleRareInheritedData::~StyleRareInheritedData() = default;
 
 bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
 {
-    return textStrokeColor == o.textStrokeColor
+    return usedZoom == o.usedZoom
         && textStrokeWidth == o.textStrokeWidth
+        && textStrokeColor == o.textStrokeColor
         && textFillColor == o.textFillColor
         && textEmphasisColor == o.textEmphasisColor
         && visitedLinkTextStrokeColor == o.visitedLinkTextStrokeColor
@@ -300,13 +303,13 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && caretColor == o.caretColor
         && visitedLinkCaretColor == o.visitedLinkCaretColor
         && accentColor == o.accentColor
+        && scrollbarColor == o.scrollbarColor
         && dynamicRangeLimit == o.dynamicRangeLimit
 #if ENABLE(TOUCH_EVENTS)
         && tapHighlightColor == o.tapHighlightColor
 #endif
         && textShadow == o.textShadow
-        && arePointingToEqualData(cursorData, o.cursorData)
-        && usedZoom == o.usedZoom
+        && cursorImages == o.cursorImages
         && textEmphasisStyle == o.textEmphasisStyle
         && textIndent == o.textIndent
         && textUnderlineOffset == o.textUnderlineOffset
@@ -324,8 +327,8 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && overflowWrap == o.overflowWrap
         && nbspMode == o.nbspMode
         && lineBreak == o.lineBreak
-#if ENABLE(OVERFLOW_SCROLLING_TOUCH)
-        && useTouchOverflowScrolling == o.useTouchOverflowScrolling
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
+        && webkitOverflowScrolling == o.webkitOverflowScrolling
 #endif
 #if ENABLE(TEXT_AUTOSIZING)
         && textSizeAdjust == o.textSizeAdjust
@@ -333,20 +336,20 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && userSelect == o.userSelect
         && speakAs == o.speakAs
         && hyphens == o.hyphens
-        && hyphenationLimitBefore == o.hyphenationLimitBefore
-        && hyphenationLimitAfter == o.hyphenationLimitAfter
-        && hyphenationLimitLines == o.hyphenationLimitLines
+        && hyphenateLimitBefore == o.hyphenateLimitBefore
+        && hyphenateLimitAfter == o.hyphenateLimitAfter
+        && hyphenateLimitLines == o.hyphenateLimitLines
 #if ENABLE(DARK_MODE_CSS)
         && colorScheme == o.colorScheme
 #endif
         && textCombine == o.textCombine
         && textEmphasisPosition == o.textEmphasisPosition
         && lineBoxContain == o.lineBoxContain
-#if PLATFORM(IOS_FAMILY)
-        && touchCalloutEnabled == o.touchCalloutEnabled
+#if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
+        && webkitTouchCallout == o.webkitTouchCallout
 #endif
-        && hyphenationString == o.hyphenationString
-        && arePointingToEqualData(quotes, o.quotes)
+        && hyphenateCharacter == o.hyphenateCharacter
+        && quotes == o.quotes
         && appleColorFilter == o.appleColorFilter
         && tabSize == o.tabSize
         && lineGrid == o.lineGrid
@@ -390,7 +393,6 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && customProperties == o.customProperties
         && arePointingToEqualData(listStyleImage, o.listStyleImage)
         && listStyleType == o.listStyleType
-        && scrollbarColor == o.scrollbarColor
         && blockEllipsis == o.blockEllipsis;
 }
 
@@ -404,9 +406,12 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 {
     customProperties->dumpDifferences(ts, other.customProperties);
 
-    LOG_IF_DIFFERENT(textStrokeWidth);
+    LOG_IF_DIFFERENT(usedZoom);
 
     LOG_IF_DIFFERENT(listStyleImage);
+
+    LOG_IF_DIFFERENT(textStrokeWidth);
+
     LOG_IF_DIFFERENT(textStrokeColor);
     LOG_IF_DIFFERENT(textFillColor);
     LOG_IF_DIFFERENT(textEmphasisColor);
@@ -418,13 +423,15 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT(caretColor);
     LOG_IF_DIFFERENT(visitedLinkCaretColor);
 
+    LOG_IF_DIFFERENT(accentColor);
+
+    LOG_IF_DIFFERENT(scrollbarColor);
+
     LOG_IF_DIFFERENT(dynamicRangeLimit);
 
     LOG_IF_DIFFERENT(textShadow);
 
-    LOG_IF_DIFFERENT(cursorData);
-
-    LOG_IF_DIFFERENT(usedZoom);
+    LOG_IF_DIFFERENT(cursorImages);
 
     LOG_IF_DIFFERENT(textEmphasisStyle);
     LOG_IF_DIFFERENT(textIndent);
@@ -465,8 +472,8 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(LineSnap, lineSnap);
     LOG_IF_DIFFERENT_WITH_CAST(LineAlign, lineAlign);
 
-#if ENABLE(OVERFLOW_SCROLLING_TOUCH)
-    LOG_IF_DIFFERENT_WITH_CAST(bool, useTouchOverflowScrolling);
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
+    LOG_IF_DIFFERENT_WITH_CAST(Style::WebkitOverflowScrolling, webkitOverflowScrolling);
 #endif
 
     LOG_IF_DIFFERENT_WITH_CAST(TextAlignLast, textAlignLast);
@@ -479,8 +486,8 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 
     LOG_IF_DIFFERENT_WITH_CAST(TextZoom, textZoom);
 
-#if PLATFORM(IOS_FAMILY)
-    LOG_IF_DIFFERENT_WITH_CAST(bool, touchCalloutEnabled);
+#if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
+    LOG_IF_DIFFERENT_WITH_CAST(Style::WebkitTouchCallout, webkitTouchCallout);
 #endif
 
     LOG_RAW_OPTIONSET_IF_DIFFERENT(HangingPunctuation, hangingPunctuation);
@@ -518,10 +525,10 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT(strokeColor);
     LOG_IF_DIFFERENT(visitedLinkStrokeColor);
 
-    LOG_IF_DIFFERENT(hyphenationString);
-    LOG_IF_DIFFERENT(hyphenationLimitBefore);
-    LOG_IF_DIFFERENT(hyphenationLimitAfter);
-    LOG_IF_DIFFERENT(hyphenationLimitLines);
+    LOG_IF_DIFFERENT(hyphenateCharacter);
+    LOG_IF_DIFFERENT(hyphenateLimitBefore);
+    LOG_IF_DIFFERENT(hyphenateLimitAfter);
+    LOG_IF_DIFFERENT(hyphenateLimitLines);
 
 #if ENABLE(DARK_MODE_CSS)
     LOG_IF_DIFFERENT(colorScheme);
@@ -542,7 +549,6 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 #endif
 
     LOG_IF_DIFFERENT(listStyleType);
-    LOG_IF_DIFFERENT(scrollbarColor);
     LOG_IF_DIFFERENT(blockEllipsis);
 }
 #endif

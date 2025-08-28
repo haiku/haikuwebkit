@@ -59,4 +59,4 @@ struct AppleColorFilterProperty : ListOrNone<AppleColorFilterValueList> { using 
 } // namespace CSS
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::CSS::AppleColorFilterProperty> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::CSS::AppleColorFilterProperty)

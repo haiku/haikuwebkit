@@ -166,19 +166,8 @@ public:
             m_opaque = opaque;
         }
 
-#if HAVE(SUPPORT_HDR_DISPLAY)
-#if ENABLE(PIXEL_FORMAT_RGBA16F)
-        bool hasExtendedDynamicRangeContent = convertToContentsFormat(clone->pixelFormat()) == ContentsFormat::RGBA16F;
-#else
-        bool hasExtendedDynamicRangeContent = false;
-#endif
-        RemoteLayerBackingStoreProperties properties(WTFMove(*backendHandle), clone->renderingResourceIdentifier(), opaque, hasExtendedDynamicRangeContent);
-#else
         RemoteLayerBackingStoreProperties properties(WTFMove(*backendHandle), clone->renderingResourceIdentifier(), opaque);
-#endif
-
         m_connection->send(Messages::RemoteLayerTreeDrawingAreaProxy::AsyncSetLayerContents(*m_layerID, WTFMove(properties)), m_drawingArea.toUInt64());
-
         return true;
     }
 

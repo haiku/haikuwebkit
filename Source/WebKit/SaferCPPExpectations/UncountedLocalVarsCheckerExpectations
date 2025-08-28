@@ -1,12 +1,4 @@
 WebProcess/Extensions/Bindings/JSWebExtensionWrapper.cpp
 WebProcess/FullScreen/WebFullScreenManager.cpp
-WebProcess/InjectedBundle/API/c/WKBundle.cpp
-WebProcess/InjectedBundle/API/c/WKBundleFrame.cpp
 WebProcess/InjectedBundle/API/c/WKBundlePage.cpp
-WebProcess/InjectedBundle/API/mac/WKWebProcessPlugInBrowserContextController.mm
-WebProcess/InjectedBundle/InjectedBundleDOMWindowExtension.cpp
 WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
-WebProcess/InjectedBundle/InjectedBundlePageContextMenuClient.cpp
-WebProcess/InjectedBundle/InjectedBundlePageEditorClient.cpp
-WebProcess/InjectedBundle/InjectedBundleScriptWorld.cpp
-WebProcess/InjectedBundle/mac/InjectedBundleMac.mm

@@ -26,6 +26,8 @@
 #include "StyleContrastColor.h"
 
 #include "CSSContrastColorResolver.h"
+#include "CSSSerializationContext.h"
+#include "ColorSerialization.h"
 #include "StyleBuilderState.h"
 #include "StyleColorResolutionState.h"
 #include <wtf/text/TextStream.h>
@@ -72,6 +74,22 @@ WebCore::Color resolveColor(const ContrastColor& contrastColor, const WebCore::C
 bool containsCurrentColor(const ContrastColor& contrastColor)
 {
     return WebCore::Style::containsCurrentColor(contrastColor.color);
+}
+
+// MARK: - Serialization
+
+void serializationForCSSTokenization(StringBuilder& builder, const CSS::SerializationContext& context, const ContrastColor& contrastColor)
+{
+    builder.append("contrast-color("_s);
+    serializationForCSSTokenization(builder, context, contrastColor.color);
+    builder.append(')');
+}
+
+String serializationForCSSTokenization(const CSS::SerializationContext& context, const ContrastColor& contrastColor)
+{
+    StringBuilder builder;
+    serializationForCSSTokenization(builder, context, contrastColor);
+    return builder.toString();
 }
 
 // MARK: - TextStream

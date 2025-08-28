@@ -166,6 +166,7 @@ MESSAGE_RECEIVERS = \
 	UIProcess/WebAuthentication/WebAuthenticatorCoordinatorProxy \
 	UIProcess/WebPasteboardProxy \
 	UIProcess/UserContent/WebUserContentControllerProxy \
+	UIProcess/Inspector/WebInspectorBackendProxy \
 	UIProcess/Inspector/WebInspectorUIProxy \
 	UIProcess/Inspector/RemoteWebInspectorUIProxy \
 	UIProcess/Inspector/WebInspectorUIExtensionControllerProxy \
@@ -672,6 +673,7 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/Cocoa/CoreIPCPresentationIntent.serialization.in \
 	Shared/Cocoa/CoreIPCSecureCoding.serialization.in \
 	Shared/Cocoa/CoreIPCString.serialization.in \
+	Shared/Cocoa/CoreIPCStringSet.serialization.in \
 	Shared/Cocoa/CoreIPCURL.serialization.in \
 	Shared/Cocoa/CoreIPCCFCharacterSet.serialization.in \
 	Shared/Cocoa/DataDetectionResult.serialization.in \

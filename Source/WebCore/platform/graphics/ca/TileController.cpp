@@ -931,6 +931,15 @@ std::optional<DynamicContentScalingDisplayList> TileController::dynamicContentSc
 }
 #endif
 
+FloatRect TileController::adjustedTileClipRectForObscuredInsets(const FloatRect& clipRect) const
+{
+    auto delta = m_obscuredInsetsDelta;
+    if (!delta)
+        return clipRect;
+    FloatSize sizeAdjustment { delta->left() + delta->right(), delta->top() + delta->bottom() };
+    return { clipRect.location(), clipRect.size() + sizeAdjustment.expandedTo({ }) };
+}
+
 
 } // namespace WebCore
 

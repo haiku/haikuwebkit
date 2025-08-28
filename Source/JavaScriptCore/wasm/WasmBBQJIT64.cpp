@@ -94,11 +94,6 @@ bool Location::isRegister() const
     return isGPR() || isFPR();
 }
 
-bool BBQJIT::typeNeedsGPR2(TypeKind)
-{
-    return false;
-}
-
 uint32_t BBQJIT::sizeOfType(TypeKind type)
 {
     switch (type) {
@@ -1643,7 +1638,7 @@ void BBQJIT::emitAllocateGCArrayUninitialized(GPRReg resultGPR, uint32_t typeInd
     // if we hit the slow path. But the way Labels work we need to know the exact offset we're returning to when moving to the slow path.
     JIT_COMMENT(m_jit, "Slow path return");
     MacroAssembler::Label done(m_jit);
-    m_slowPaths.append({ WTFMove(slowPath), WTFMove(done), m_bindings, [typeIndex, size, sizeLocation, resultGPR](BBQJIT& bbq, CCallHelpers& jit) {
+    m_slowPaths.append({ WTFMove(slowPath), WTFMove(done), copyBindings(), [typeIndex, size, sizeLocation, resultGPR](BBQJIT& bbq, CCallHelpers& jit) {
         jit.prepareWasmCallOperation(GPRInfo::wasmContextInstancePointer);
         if (size.isConst())
             jit.setupArguments<decltype(operationWasmArrayNewEmpty)>(GPRInfo::wasmContextInstancePointer, TrustedImm32(typeIndex), TrustedImm32(size.asI32()));
@@ -1665,7 +1660,9 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addArrayNew(uint32_t typeIndex, Express
         emitAllocateGCArrayUninitialized(resultGPR, typeIndex, size, wasmScratchGPR, scratchGPR);
 
         JIT_COMMENT(m_jit, "Array allocation done do initialization");
-        Location sizeLocation = materializeToRegister(size);
+
+        std::optional<ScratchScope<1, 0>> sizeScratch;
+        Location sizeLocation = materializeToGPR(size, sizeScratch);
         StorageType elementType = getArrayElementType(typeIndex);
         emitArrayGetPayload(elementType, resultGPR, scratchGPR);
 
@@ -1766,7 +1763,8 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addArrayNewDefault(uint32_t typeIndex, 
         emitAllocateGCArrayUninitialized(resultGPR, typeIndex, size, wasmScratchGPR, scratchGPR);
 
         JIT_COMMENT(m_jit, "Array allocation done do initialization");
-        Location sizeLocation = materializeToRegister(size);
+        std::optional<ScratchScope<1, 0>> sizeScratch;
+        Location sizeLocation = materializeToGPR(size, sizeScratch);
         Value initValue = Value::fromI64(Wasm::isRefType(elementType.unpacked()) ? JSValue::encode(jsNull()) : 0);
 
         emitArrayGetPayload(elementType, resultGPR, scratchGPR);
@@ -2146,7 +2144,7 @@ void BBQJIT::emitAllocateGCStructUninitialized(GPRReg resultGPR, uint32_t typeIn
 
     JIT_COMMENT(m_jit, "Slow path return");
     MacroAssembler::Label done(m_jit);
-    m_slowPaths.append({ WTFMove(slowPath), WTFMove(done), m_bindings, [typeIndex, resultGPR](BBQJIT& bbq, CCallHelpers& jit) {
+    m_slowPaths.append({ WTFMove(slowPath), WTFMove(done), copyBindings(), [typeIndex, resultGPR](BBQJIT& bbq, CCallHelpers& jit) {
         jit.prepareWasmCallOperation(GPRInfo::wasmContextInstancePointer);
         jit.setupArguments<decltype(operationWasmStructNewEmpty)>(GPRInfo::wasmContextInstancePointer, TrustedImm32(typeIndex));
         jit.callOperation<OperationPtrTag>(operationWasmStructNewEmpty);
@@ -5233,12 +5231,14 @@ void BBQJIT::emitLoad(TypeKind type, Location src, Location dst)
     }
 }
 
-Location BBQJIT::materializeToRegister(Value value)
+Location BBQJIT::materializeToGPR(Value value, std::optional<ScratchScope<1, 0>>& sizeScratch)
 {
     if (value.isPinned())
         return value.asPinned();
     if (value.isConst()) {
-        Location result = allocateRegister(value);
+        sizeScratch.emplace(*this);
+        Location result = Location::fromGPR(sizeScratch->gpr(0));
+
         switch (value.type()) {
         case TypeKind::I32:
             m_jit.move(TrustedImm32(value.asI32()), result.asGPR());
@@ -5259,12 +5259,6 @@ Location BBQJIT::materializeToRegister(Value value)
         case TypeKind::Nullexternref:
         case TypeKind::I64:
             m_jit.move(TrustedImm64(value.asI64()), result.asGPR());
-            return result;
-        case TypeKind::F32:
-            m_jit.move32ToFloat(TrustedImm32(value.asI32()), result.asFPR());
-            return result;
-        case TypeKind::F64:
-            m_jit.move64ToDouble(TrustedImm64(value.asI64()), result.asFPR());
             return result;
         default:
             RELEASE_ASSERT_NOT_REACHED();
@@ -5302,11 +5296,6 @@ void BBQJIT::emitMove(StorageType type, Value src, Address dst)
         emitMoveMemory(type, srcLocation, dst);
     else
         emitStore(type, srcLocation, dst);
-}
-
-Location BBQJIT::allocateRegisterPair()
-{
-    RELEASE_ASSERT_NOT_REACHED();
 }
 
 PartialResult WARN_UNUSED_RETURN BBQJIT::addCallRef(const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType callType)

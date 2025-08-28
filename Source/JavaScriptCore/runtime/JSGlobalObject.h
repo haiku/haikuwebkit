@@ -487,6 +487,7 @@ public:
     InlineWatchpointSet m_regExpPrimordialPropertiesWatchpointSet { IsWatched };
     InlineWatchpointSet m_mapSetWatchpointSet { IsWatched };
     InlineWatchpointSet m_setAddWatchpointSet { IsWatched };
+    InlineWatchpointSet m_setPrimordialPropertiesWatchpointSet { IsWatched };
     InlineWatchpointSet m_arraySpeciesWatchpointSet { ClearWatchpoint };
     InlineWatchpointSet m_arrayJoinWatchpointSet { IsWatched };
     InlineWatchpointSet m_arrayToStringWatchpointSet { IsWatched };
@@ -553,6 +554,7 @@ public:
     InlineWatchpointSet& regExpPrimordialPropertiesWatchpointSet() { return m_regExpPrimordialPropertiesWatchpointSet; }
     InlineWatchpointSet& mapSetWatchpointSet() { return m_mapSetWatchpointSet; }
     InlineWatchpointSet& setAddWatchpointSet() { return m_setAddWatchpointSet; }
+    InlineWatchpointSet& setPrimordialPropertiesWatchpointSet() { return m_setPrimordialPropertiesWatchpointSet; }
     InlineWatchpointSet& arraySpeciesWatchpointSet() { return m_arraySpeciesWatchpointSet; }
     InlineWatchpointSet& arrayPrototypeChainIsSaneWatchpointSet() { return m_arrayPrototypeChainIsSaneWatchpointSet; }
     InlineWatchpointSet& objectPrototypeChainIsSaneWatchpointSet() { return m_objectPrototypeChainIsSaneWatchpointSet; }

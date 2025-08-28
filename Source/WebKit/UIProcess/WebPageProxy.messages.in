@@ -178,7 +178,7 @@ messages -> WebPageProxy {
     DidFinishLoadingDataForCustomContentProvider(String suggestedFilename, std::span<const uint8_t> data)
 
     # Forms messages
-    WillSubmitForm(WebCore::FrameIdentifier frameID, WebCore::FrameIdentifier sourceFrameID, Vector<std::pair<String, String>> textFieldValues, WebKit::UserData userData) -> ()
+    WillSubmitForm(struct WebKit::FrameInfoData frame, struct WebKit::FrameInfoData sourceFrame, Vector<std::pair<String, String>> textFieldValues, WebKit::UserData userData) -> ()
 
 #if PLATFORM(IOS_FAMILY)
     InterpretKeyEvent(struct WebKit::EditorState state, struct WebKit::KeyEventInterpretationContext context) -> (bool handled) Synchronous
@@ -330,7 +330,7 @@ messages -> WebPageProxy {
 
     # Drag and drop messages
 #if PLATFORM(COCOA) && ENABLE(DRAG_SUPPORT)
-    StartDrag(struct WebCore::DragItem dragItem, WebCore::ShareableBitmapHandle dragImage, std::optional<WebCore::ElementIdentifier> elementID)
+    StartDrag(struct WebCore::DragItem dragItem, WebCore::ShareableBitmapHandle dragImage, std::optional<WebCore::NodeIdentifier> nodeID)
     SetPromisedDataForImage(String pasteboardName, WebCore::SharedMemory::Handle imageHandle, String filename, String extension, String title, String url, String visibleURL, WebCore::SharedMemory::Handle archiveHandle, String originIdentifier)
 #endif
 #if PLATFORM(GTK) && ENABLE(DRAG_SUPPORT)
@@ -343,7 +343,7 @@ messages -> WebPageProxy {
 #endif
 
 #if ENABLE(MODEL_PROCESS)
-    DidReceiveInteractiveModelElement(std::optional<WebCore::ElementIdentifier> elementID)
+    DidReceiveInteractiveModelElement(std::optional<WebCore::NodeIdentifier> nodeID)
 #endif
 
 #if PLATFORM(COCOA)
@@ -498,8 +498,8 @@ messages -> WebPageProxy {
 #endif
 
 #if ENABLE(POINTER_LOCK)
-    RequestPointerLock()
-    RequestPointerUnlock()
+    RequestPointerLock() -> (bool result)
+    RequestPointerUnlock() -> (bool result)
 #endif
 
     ImageOrMediaDocumentSizeChanged(WebCore::IntSize newSize)

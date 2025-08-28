@@ -49,6 +49,7 @@ namespace WebCore {
 
 class AudioSourceProvider;
 class Document;
+class MediaSessionManagerInterface;
 
 struct MediaTrackConstraints;
 
@@ -217,6 +218,8 @@ private:
     // AudioCaptureSource
     bool isCapturingAudio() const final;
     bool wantsToCaptureAudio() const final;
+
+    RefPtr<MediaSessionManagerInterface> mediaSessionManager() const;
 
 #if !RELEASE_LOG_DISABLED
     ASCIILiteral logClassName() const final { return "MediaStreamTrack"_s; }

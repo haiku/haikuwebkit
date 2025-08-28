@@ -118,8 +118,9 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityObject::AccessibilityObject(AXID axID)
+AccessibilityObject::AccessibilityObject(AXID axID, AXObjectCache& cache)
     : AXCoreObject(axID)
+    , m_axObjectCache(cache)
 {
 }
 
@@ -164,6 +165,12 @@ String AccessibilityObject::dbgInternal(bool verbose, OptionSet<AXDebugStringOpt
         result.append(", "_s, renderer->debugDescription());
     else if (auto* node = this->node())
         result.append(", "_s, node->debugDescription());
+
+    if (String extraDebugInfo = this->extraDebugInfo(); !extraDebugInfo.isEmpty()) {
+        result.append(" ("_s);
+        result.append(WTFMove(extraDebugInfo));
+        result.append(")"_s);
+    }
 
     result.append("}"_s);
     return result.toString();
@@ -1196,6 +1203,19 @@ Vector<String> AccessibilityObject::performTextOperation(const AccessibilityText
     return result;
 }
 
+String AccessibilityObject::altTextFromAttributeOrStyle() const
+{
+    const auto& alt = getAttribute(altAttr);
+    if (!alt.isNull()) {
+        // Note that !isNull() is explicitly chosen over !isEmpty(), as alt="" is a meaningful value
+        // and should be respected.
+        return alt;
+    }
+
+    CheckedPtr style = this->style();
+    return style ? style->altFromContent() : nullString();
+}
+
 bool AccessibilityObject::isARIAInput(AccessibilityRole ariaRole)
 {
     switch (ariaRole) {
@@ -1848,6 +1868,41 @@ String AccessibilityObject::textContentPrefixFromListMarker() const
             return firstCharacterText.left(firstCharacterText.length() - 1);
     }
     return { };
+}
+
+bool AccessibilityObject::shouldCacheStringValue() const
+{
+    if (!isStaticText()) {
+        // Quick non-virtual exit path (this only checks m_role — renderer() is virtual).
+        return true;
+    }
+
+    CheckedPtr renderer = this->renderer();
+    if (!renderer || !is<RenderText>(*renderer))
+        return true;
+    // Only consider RenderTexts for now.
+
+    if (renderer->isAnonymous()) {
+        CheckedPtr parent = renderer ? renderer->parent() : nullptr;
+        if (is<PseudoElement>(parent ? parent->element() : nullptr)) {
+            // RenderTexts descending from pseudo-elements (e.g. ::before) can have alt text that
+            // we don't currently handle via text runs, and thus we must cache the string value.
+            return true;
+        }
+    }
+
+    if (CheckedPtr containingBlock = renderer->containingBlock()) {
+        // Check for ::first-letter, which would require some special handling to serve off the main-thread
+        // that we don't have right now.
+        if (containingBlock->style().hasPseudoStyle(PseudoId::FirstLetter))
+            return true;
+        if (containingBlock->isAnonymous()) {
+            containingBlock = containingBlock->containingBlock();
+            return containingBlock && containingBlock->style().hasPseudoStyle(PseudoId::FirstLetter);
+        }
+    }
+    // Getting to the end means we can avoid caching string value.
+    return false;
 }
 
 String AccessibilityObject::stringForVisiblePositionRange(const VisiblePositionRange& visiblePositionRange)
@@ -2888,12 +2943,6 @@ String AccessibilityObject::embeddedImageDescription() const
     return renderImage->accessibilityDescription();
 }
 
-bool AccessibilityObject::supportsDatetimeAttribute() const
-{
-    auto elementName = this->elementName();
-    return elementName == ElementName::HTML_ins || elementName == ElementName::HTML_del || elementName == ElementName::HTML_time;
-}
-
 String AccessibilityObject::datetimeAttributeValue() const
 {
     return getAttribute(datetimeAttr);
@@ -3122,12 +3171,6 @@ AccessibilityObject* AccessibilityObject::elementAccessibilityHitTest(const IntP
     return const_cast<AccessibilityObject*>(this);
 }
     
-AXObjectCache* AccessibilityObject::axObjectCache() const
-{
-    RefPtr document = this->document();
-    return document ? document->axObjectCache() : nullptr;
-}
-
 CommandType AccessibilityObject::commandType() const
 {
     return CommandType::Invalid;
@@ -3584,37 +3627,34 @@ static int computeBestScrollOffset(int currentScrollOffset, int subfocusMin, int
 }
 
 bool AccessibilityObject::isOnScreen() const
-{   
-    bool isOnscreen = true;
-
+{
     // To figure out if the element is onscreen, we start by building of a stack starting with the
     // element, and then include every scrollable parent in the hierarchy.
-    Vector<const AccessibilityObject*> objects;
-    
+    Vector<RefPtr<const AccessibilityObject>> objects;
+
     objects.append(this);
-    for (AccessibilityObject* parentObject = this->parentObject(); parentObject; parentObject = parentObject->parentObject()) {
-        if (parentObject->getScrollableAreaIfScrollable())
-            objects.append(parentObject);
+    for (RefPtr ancestor = parentObject(); ancestor; ancestor = ancestor->parentObject()) {
+        if (ancestor->getScrollableAreaIfScrollable())
+            objects.append(ancestor);
     }
 
     // Now, go back through that chain and make sure each inner object is within the
     // visible bounds of the outer object.
     size_t levels = objects.size() - 1;
-    
     for (size_t i = levels; i >= 1; i--) {
         RefPtr outer = objects[i];
         RefPtr inner = objects[i - 1];
         // FIXME: unclear if we need LegacyIOSDocumentVisibleRect.
         const IntRect outerRect = i < levels ? snappedIntRect(outer->boundingBoxRect()) : outer->getScrollableAreaIfScrollable()->visibleContentRect(ScrollableArea::LegacyIOSDocumentVisibleRect);
-        const IntRect innerRect = snappedIntRect(inner->isScrollView() ? inner->parentObject()->boundingBoxRect() : inner->boundingBoxRect());
-        
-        if (!outerRect.intersects(innerRect)) {
-            isOnscreen = false;
-            break;
-        }
+
+        IntRect innerRect = snappedIntRect(inner->boundingBoxRect());
+        if (RefPtr scrollView = !outer->isRoot() ? outer->scrollView() : nullptr)
+            innerRect = scrollView->contentsToRootView(innerRect);
+
+        if (!outerRect.intersects(innerRect))
+            return false;
     }
-    
-    return isOnscreen;
+    return true;
 }
 
 void AccessibilityObject::scrollToMakeVisible() const

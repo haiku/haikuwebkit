@@ -68,7 +68,7 @@ WithProperties = properties.WithProperties
 Interpolate = properties.Interpolate
 GITHUB_URL = 'https://github.com/'
 # First project is treated as the default
-GITHUB_PROJECTS = ['WebKit/WebKit', 'WebKit/WebKit-security', 'apple/WebKit']
+GITHUB_PROJECTS = ['WebKit/WebKit', 'WebKit/WebKit-security']
 HASH_LENGTH_TO_DISPLAY = 8
 DEFAULT_BRANCH = 'main'
 DEFAULT_REMOTE = 'origin'
@@ -3226,17 +3226,6 @@ class InstallWpeDependencies(shell.ShellCommandNewStyle):
         super().__init__(logEnviron=False, **kwargs)
 
 
-class InstallWinDependencies(shell.ShellCommandNewStyle):
-    name = 'win-deps'
-    description = ['Updating Win dependencies']
-    descriptionDone = ['Updated Win dependencies']
-    command = ['python3', 'Tools/Scripts/update-webkit-win-libs.py']
-    haltOnFailure = True
-
-    def __init__(self, **kwargs):
-        super().__init__(logEnviron=False, **kwargs)
-
-
 def customBuildFlag(platform, fullPlatform):
     # FIXME: Make a common 'supported platforms' list.
     if platform not in ('gtk', 'ios', 'visionos', 'jsc-only', 'wpe', 'playstation', 'tvos', 'watchos'):
@@ -4073,6 +4062,8 @@ class RunWebKitTests(shell.Test, AddToLogMixin, ShellMixin):
                 self.setCommand(self.command + ['--exit-after-n-failures', '{}'.format(self.EXIT_AFTER_FAILURES)])
             if not self.STRESS_MODE:
                 self.setCommand(self.command + ['--skip-failing-tests'])
+            else:
+                self.setCommand(self.command + ['--skipped', 'always'])
 
         if platform in ['gtk', 'wpe']:
             self.setCommand(self.command + ['--enable-core-dumps-nolimit'])
@@ -6692,9 +6683,9 @@ class ValidateCommitMessage(steps.ShellSequence, ShellMixin, AddToLogMixin):
         self.commands = []
         commands = [
             f"git log {head_ref} ^{base_ref} | grep -q '{self.OOPS_RE}' && echo 'Commit message contains (OOPS!){reviewer_error_msg}' || test $? -eq 1",
-            "git log {} ^{} | grep -q '\\({}\\)' || echo 'No reviewer information in commit message'".format(
+            "git log {} ^{} > commit_msg.txt; grep -q '\\({}\\)' commit_msg.txt || echo 'No reviewer information in commit message';".format(
                 head_ref, base_ref,
-                '\\|'.join(self.REVIEWED_STRINGS),
+                '\\|'.join(self.REVIEWED_STRINGS)
             ), "git log {} ^{} | grep '\\({}\\)' || true".format(
                 head_ref, base_ref,
                 '\\|'.join(self.REVIEWED_STRINGS[:3]),

@@ -55,7 +55,8 @@ public:
 private:
     HTMLTemplateElement(const QualifiedName&, Document&);
 
-    Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) final;
+    Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) const final;
+    SerializedNode serializeNode(CloningOperation) const override;
     void didMoveToNewDocument(Document& oldDocument, Document& newDocument) final;
 
     mutable RefPtr<TemplateContentDocumentFragment> m_content;

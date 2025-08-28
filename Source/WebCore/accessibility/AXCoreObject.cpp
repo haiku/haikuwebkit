@@ -219,27 +219,35 @@ bool AXCoreObject::isTextControl() const
     }
 }
 
-bool AXCoreObject::isValidListBox() const
+ListBoxInterpretation AXCoreObject::listBoxInterpretation() const
 {
     if (role() != AccessibilityRole::ListBox)
-        return false;
+        return ListBoxInterpretation::NotListBox;
 
     Deque<Ref<AXCoreObject>, /* inlineCapacity */ 100> queue;
     for (Ref child : const_cast<AXCoreObject*>(this)->childrenIncludingIgnored())
         queue.append(WTFMove(child));
 
     unsigned iterations = 0;
+    bool foundListItem = false;
     while (!queue.isEmpty()) {
         Ref current = queue.takeFirst();
 
         // Technically, per ARIA, the only valid children of listboxes are options, or groups containing options.
         // But be permissive and call this listbox valid if it has at least one option.
         if (current->isListBoxOption())
-            return true;
+            return ListBoxInterpretation::ActuallyListBox;
+        if (current->isListItem())
+            foundListItem = true;
+
+        // If we've checked 10 children and found a list item but no options, treat it as a static list.
+        if (iterations > 10 && foundListItem)
+            return ListBoxInterpretation::ActuallyStaticList;
+
         // Don't iterate forever in case someone added role="listbox" to some high-level element.
         // If we haven't found an option after checking 200 objects, this probably isn't valid anyways.
         if (iterations >= 250)
-            return false;
+            break;
         ++iterations;
 
         if (current->isGroup() || current->isIgnored()) {
@@ -247,7 +255,7 @@ bool AXCoreObject::isValidListBox() const
                 queue.append(WTFMove(child));
         }
     }
-    return false;
+    return foundListItem ? ListBoxInterpretation::ActuallyStaticList : ListBoxInterpretation::InvalidListBox;
 }
 
 AXCoreObject::AccessibilityChildrenVector AXCoreObject::tabChildren()
@@ -1169,6 +1177,12 @@ String AXCoreObject::ariaLandmarkRoleDescription() const
     }
 }
 
+bool AXCoreObject::supportsDatetimeAttribute() const
+{
+    auto elementName = this->elementName();
+    return elementName == ElementName::HTML_ins || elementName == ElementName::HTML_del || elementName == ElementName::HTML_time;
+}
+
 unsigned AXCoreObject::blockquoteLevel() const
 {
     unsigned level = 0;
@@ -1728,6 +1742,12 @@ bool inRenderTreeOrStyleUpdate(const Document& document)
         return true;
     auto* view = document.view();
     return view && view->layoutContext().isInRenderTreeLayout();
+}
+
+Color defaultColor()
+{
+    static NeverDestroyed<Color> color = Color().toColorTypeLossy<SRGBA<uint8_t>>();
+    return color.get();
 }
 
 } // namespace Accessibility

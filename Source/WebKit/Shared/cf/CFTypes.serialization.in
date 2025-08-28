@@ -72,7 +72,6 @@ additional_forward_declaration: typedef struct CF_BRIDGED_TYPE(id) __CVBuffer *C
 [WebKitPlatform, CustomHeader,  AdditionalEncoder=StreamConnectionEncoder, ToCFMethod=result->toCF()] CVPixelBufferRef wrapped by WebKit::CoreIPCCVPixelBufferRef {
 }
 
-additional_forward_declaration: typedef struct CF_BRIDGED_TYPE(id) __SecTrust *SecTrustRef
 [WebKitPlatform, CustomHeader, AdditionalEncoder=StreamConnectionEncoder, ToCFMethod=result->createSecTrust()] SecTrustRef wrapped by WebKit::CoreIPCSecTrust {
 }
 

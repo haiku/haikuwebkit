@@ -115,11 +115,16 @@ void AuxiliaryProcess::platformInitialize(const AuxiliaryProcessInitializationPa
 #endif
 }
 
-void AuxiliaryProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName messageName, int32_t indexOfObjectFailingDecoding)
+void AuxiliaryProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName messageName, const Vector<uint32_t>& indicesOfObjectsFailingDecoding)
 {
-    auto errorMessage = makeString("Received invalid message: '"_s, description(messageName), "' ("_s, messageName, ", "_s, indexOfObjectFailingDecoding, ')');
+    auto errorMessage = makeString("Received invalid message: '"_s, description(messageName), "' ("_s, messageName, ')');
     logAndSetCrashLogMessage(errorMessage.utf8().data());
-    CRASH_WITH_INFO(WTF::enumToUnderlyingType(messageName), indexOfObjectFailingDecoding);
+
+    ASSERT(indicesOfObjectsFailingDecoding.size() <= 6);
+    auto index = [&](size_t i) -> int32_t {
+        return i < indicesOfObjectsFailingDecoding.size() ? indicesOfObjectsFailingDecoding[i] : -1;
+    };
+    CRASH_WITH_INFO(WTF::enumToUnderlyingType(messageName), index(5), index(4), index(3), index(2), index(1), index(0));
 }
 
 bool AuxiliaryProcess::parentProcessHasEntitlement(ASCIILiteral entitlement)

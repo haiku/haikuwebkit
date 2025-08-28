@@ -36,10 +36,10 @@ class Scrollbar;
 
 class AccessibilityScrollbar final : public AccessibilityMockObject {
 public:
-    static Ref<AccessibilityScrollbar> create(AXID, Scrollbar&);
+    static Ref<AccessibilityScrollbar> create(AXID, Scrollbar&, AXObjectCache&);
 
 private:
-    explicit AccessibilityScrollbar(AXID, Scrollbar&);
+    explicit AccessibilityScrollbar(AXID, Scrollbar&, AXObjectCache&);
 
     bool canSetValueAttribute() const final { return true; }
 

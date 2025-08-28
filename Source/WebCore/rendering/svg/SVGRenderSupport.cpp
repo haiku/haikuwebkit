@@ -85,7 +85,7 @@ std::optional<FloatRect> SVGRenderSupport::computeFloatVisibleRectInContainer(co
         return FloatRect();
 
     FloatRect adjustedRect = rect;
-    adjustedRect.inflate(renderer.style().outlineWidth());
+    adjustedRect.inflate(Style::evaluate(renderer.style().outlineWidth()));
 
     // Translate to coords in our parent renderer, and then call computeFloatVisibleRectInContainer() on our parent.
     adjustedRect = renderer.localToParentTransform().mapRect(adjustedRect);
@@ -488,7 +488,7 @@ void SVGRenderSupport::applyStrokeStyleToContext(GraphicsContext& context, const
         context.setMiterLimit(style.strokeMiterLimit());
 
     auto& dashes = svgStyle.strokeDashArray();
-    if (dashes.isEmpty())
+    if (dashes.isNone())
         context.setStrokeStyle(StrokeStyle::SolidStroke);
     else {
         float scaleFactor = 1;
@@ -505,7 +505,7 @@ void SVGRenderSupport::applyStrokeStyleToContext(GraphicsContext& context, const
         }
         
         bool canSetLineDash = false;
-        auto dashArray = WTF::map(dashes, [&](auto& dash) -> DashArrayElement {
+        auto dashArray = DashArray::map(dashes, [&](auto& dash) -> DashArrayElement {
             auto value = lengthContext.valueForLength(dash) * scaleFactor;
             if (value > 0)
                 canSetLineDash = true;

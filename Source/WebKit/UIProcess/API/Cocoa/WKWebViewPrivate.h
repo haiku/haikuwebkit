@@ -621,6 +621,11 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 
 @property (nonatomic, setter=_setShouldSuppressTopColorExtensionView:) BOOL _shouldSuppressTopColorExtensionView WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
 
+#if TARGET_OS_OSX
+- (NSUInteger)accessibilityRemoteChildTokenHash;
+- (NSUInteger)accessibilityUIProcessLocalTokenHash;
+#endif
+
 @end
 
 #if TARGET_OS_IPHONE

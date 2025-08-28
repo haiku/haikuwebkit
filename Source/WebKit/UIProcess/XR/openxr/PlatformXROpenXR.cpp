@@ -24,6 +24,7 @@
 
 #include "APIUIClient.h"
 #include "OpenXRExtensions.h"
+#include "OpenXRLayer.h"
 #include "OpenXRUtils.h"
 #include "WebPageProxy.h"
 #if USE(LIBEPOXY)
@@ -36,12 +37,14 @@
 #include <WebCore/PlatformDisplaySurfaceless.h>
 #include <openxr/openxr_platform.h>
 #include <wtf/RunLoop.h>
+#include <wtf/threads/BinarySemaphore.h>
 
 namespace WebKit {
 
 struct OpenXRCoordinator::RenderState {
     std::atomic<bool> terminateRequested;
     PlatformXR::Device::RequestFrameCallback onFrameUpdate;
+    BinarySemaphore presentFrame;
     XrFrameState frameState;
 };
 
@@ -52,8 +55,10 @@ OpenXRCoordinator::OpenXRCoordinator()
 
 OpenXRCoordinator::~OpenXRCoordinator()
 {
-    if (m_session != XR_NULL_HANDLE)
-        xrDestroySession(m_session);
+    cleanupSessionAndAssociatedResources();
+
+    m_views.clear();
+    m_viewConfigurationViews.clear();
 
     if (m_instance != XR_NULL_HANDLE)
         xrDestroyInstance(m_instance);
@@ -74,6 +79,11 @@ void OpenXRCoordinator::getPrimaryDeviceInfo(WebPageProxy&, DeviceInfoCallback&&
         XrSystemProperties systemProperties = createOpenXRStruct<XrSystemProperties, XR_TYPE_SYSTEM_PROPERTIES>();
         CHECK_XRCMD(xrGetSystemProperties(instance, system, &systemProperties));
         return systemProperties.trackingProperties.orientationTracking == XR_TRUE;
+    };
+
+    auto recommendedResolution = [&views = m_viewConfigurationViews]() -> WebCore::IntSize {
+        // OpenXR is very flexible wrt views resolution, but the current WebKit architecture expects a single resolution for all views.
+        return { static_cast<int>(views.size() * views.first().recommendedImageRectWidth), static_cast<int>(views.first().recommendedImageRectHeight) };
     };
 
     XRDeviceInfo deviceInfo { .identifier = m_deviceIdentifier, .vrFeatures = { }, .arFeatures = { } };
@@ -113,6 +123,17 @@ void OpenXRCoordinator::requestPermissionOnSessionFeatures(WebPageProxy& page, c
     page.uiClient().requestPermissionOnXRSessionFeatures(page, securityOriginData, mode, granted, consentRequired, consentOptional, requiredFeaturesRequested, optionalFeaturesRequested, [callback = WTFMove(callback)](std::optional<Vector<PlatformXR::SessionFeature>> userGranted) mutable {
         callback(WTFMove(userGranted));
     });
+}
+
+void OpenXRCoordinator::createLayerProjection(uint32_t width, uint32_t height, bool alpha)
+{
+    ASSERT(RunLoop::isMain());
+    LOG(XR, "OpenXRCoordinator::createLayerProjection");
+    auto format = alpha ? GL_RGBA8 : GL_RGB8;
+    auto sampleCount = m_viewConfigurationViews.isEmpty() ? 1 : m_viewConfigurationViews.first().recommendedSwapchainSampleCount;
+
+    if (auto layer = OpenXRLayerProjection::create(m_instance, m_session, width, height, format, sampleCount))
+        m_layers.add(defaultLayerHandle(), WTFMove(layer));
 }
 
 void OpenXRCoordinator::startSession(WebPageProxy& page, WeakPtr<PlatformXRCoordinatorSessionEventClient>&& sessionEventClient, const WebCore::SecurityOriginData&, PlatformXR::SessionMode sessionMode, const PlatformXR::Device::FeatureList&)
@@ -169,6 +190,7 @@ void OpenXRCoordinator::endSessionIfExists(std::optional<WebCore::PageIdentifier
             // OpenXR will transition the session to STOPPING state and then we will call xrEndSession().
             CHECK_XRCMD(xrRequestExitSession(m_session));
 
+            active.renderState->presentFrame.signal();
             active.renderThread->waitForCompletion();
 
             if (active.renderState->onFrameUpdate)
@@ -207,19 +229,34 @@ void OpenXRCoordinator::scheduleAnimationFrame(WebPageProxy& page, std::optional
         });
 }
 
-void OpenXRCoordinator::submitFrameInternal(Box<RenderState> renderState)
+void OpenXRCoordinator::submitFrameInternal(Box<RenderState> renderState, Vector<XRDeviceLayer>&& layers)
 {
-    Vector<XrCompositionLayerBaseHeader*> layers;
+    WebCore::GLContext::ScopedGLContextCurrent scopedContext(*m_glContext);
+    Vector<const XrCompositionLayerBaseHeader*, 1> frameEndLayers;
+    for (auto& layer : layers) {
+        auto it = m_layers.find(layer.handle);
+        if (it == m_layers.end()) {
+            LOG(XR, "Didn't find a OpenXRLayer with %d handle", layer.handle);
+            continue;
+        }
+        auto header = it->value->endFrame(layer, m_localSpace, m_views);
+        if (!header) {
+            LOG(XR, "endFrame() call failed in OpenXRLayer with %d handle", layer.handle);
+            continue;
+        }
+
+        frameEndLayers.append(header);
+    }
 
     XrFrameEndInfo frameEndInfo = createOpenXRStruct<XrFrameEndInfo, XR_TYPE_FRAME_END_INFO>();
     frameEndInfo.displayTime = renderState->frameState.predictedDisplayTime;
     frameEndInfo.environmentBlendMode = m_sessionMode == PlatformXR::SessionMode::ImmersiveAr ? m_arBlendMode : m_vrBlendMode;
-    frameEndInfo.layerCount = static_cast<uint32_t>(layers.size());
-    frameEndInfo.layers = layers.mutableSpan().data();
+    frameEndInfo.layerCount = static_cast<uint32_t>(frameEndLayers.size());
+    frameEndInfo.layers = frameEndLayers.mutableSpan().data();
     CHECK_XRCMD(xrEndFrame(m_session, &frameEndInfo));
 }
 
-void OpenXRCoordinator::submitFrame(WebPageProxy& page)
+void OpenXRCoordinator::submitFrame(WebPageProxy& page, Vector<XRDeviceLayer>&& layers)
 {
     ASSERT(RunLoop::isMain());
     WTF::switchOn(m_state,
@@ -237,7 +274,8 @@ void OpenXRCoordinator::submitFrame(WebPageProxy& page)
                 return;
             }
 
-            submitFrameInternal(active.renderState);
+            submitFrameInternal(active.renderState, WTFMove(layers));
+            active.renderState->presentFrame.signal();
         });
 }
 
@@ -264,25 +302,6 @@ void OpenXRCoordinator::createInstance()
     CHECK_XRCMD(xrCreateInstance(&createInfo, &m_instance));
 }
 
-WebCore::IntSize OpenXRCoordinator::recommendedResolution() const
-{
-    ASSERT(RunLoop::isMain());
-    ASSERT(m_viewConfigurations.size());
-
-    uint32_t viewCount;
-    CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, m_currentViewConfiguration, 0, &viewCount, nullptr));
-    if (!viewCount) {
-        LOG(XR, "No views available for configuration type %s", toString(m_currentViewConfiguration));
-        return { 0, 0 };
-    }
-
-    Vector<XrViewConfigurationView> views(viewCount, createOpenXRStruct<XrViewConfigurationView, XR_TYPE_VIEW_CONFIGURATION_VIEW>());
-    CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, m_currentViewConfiguration, viewCount, &viewCount, views.mutableSpan().data()));
-
-    // OpenXR is very flexible wrt views resolution, but the current WebKit architecture expects a single resolution for all views.
-    return { static_cast<int>(viewCount * views.first().recommendedImageRectWidth), static_cast<int>(views.first().recommendedImageRectHeight) };
-}
-
 void OpenXRCoordinator::collectViewConfigurations()
 {
     ASSERT(RunLoop::isMain());
@@ -294,12 +313,24 @@ void OpenXRCoordinator::collectViewConfigurations()
     if (!viewConfigurationCount)
         return;
 
-    m_viewConfigurations.resize(viewConfigurationCount);
-    CHECK_XRCMD(xrEnumerateViewConfigurations(m_instance, m_systemId, viewConfigurationCount, &viewConfigurationCount, m_viewConfigurations.mutableSpan().data()));
+    Vector<XrViewConfigurationType> viewConfigurations(viewConfigurationCount);
+    CHECK_XRCMD(xrEnumerateViewConfigurations(m_instance, m_systemId, viewConfigurationCount, &viewConfigurationCount, viewConfigurations.mutableSpan().data()));
 
     const XrViewConfigurationType preferredViewConfiguration = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-    m_currentViewConfiguration = m_viewConfigurations.find(preferredViewConfiguration) != notFound ? preferredViewConfiguration : m_viewConfigurations.first();
+    m_currentViewConfiguration = viewConfigurations.find(preferredViewConfiguration) != notFound ? preferredViewConfiguration : viewConfigurations.first();
     LOG(XR, "OpenXR selected view configurations: %s", toString(m_currentViewConfiguration));
+
+    uint32_t viewCount;
+    CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, m_currentViewConfiguration, 0, &viewCount, nullptr));
+    if (!viewCount) {
+        LOG(XR, "No views available for configuration type %s", toString(m_currentViewConfiguration));
+        return;
+    }
+
+    m_views.resize(viewCount);
+
+    m_viewConfigurationViews.fill(createOpenXRStruct<XrViewConfigurationView, XR_TYPE_VIEW_CONFIGURATION_VIEW>(), viewCount);
+    CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, m_currentViewConfiguration, viewCount, &viewCount, m_viewConfigurationViews.mutableSpan().data()));
 }
 
 void OpenXRCoordinator::initializeSystem()
@@ -351,7 +382,7 @@ void OpenXRCoordinator::initializeBlendModes()
 {
     ASSERT(RunLoop::isMain());
     ASSERT(m_instance != XR_NULL_HANDLE);
-    ASSERT(m_viewConfigurations.size());
+    ASSERT(m_viewConfigurationViews.size());
 
     uint32_t count;
     CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(m_instance, m_systemId, m_currentViewConfiguration, 0, &count, nullptr));
@@ -426,6 +457,30 @@ void OpenXRCoordinator::createSessionIfNeeded()
     CHECK_XRCMD(xrCreateSession(m_instance, &sessionCreateInfo, &m_session));
 }
 
+void OpenXRCoordinator::cleanupSessionAndAssociatedResources()
+{
+    if (m_localSpace != XR_NULL_HANDLE) {
+        CHECK_XRCMD(xrDestroySpace(m_localSpace));
+        m_localSpace = XR_NULL_HANDLE;
+    }
+
+    if (m_floorSpace != XR_NULL_HANDLE) {
+        CHECK_XRCMD(xrDestroySpace(m_floorSpace));
+        m_floorSpace = XR_NULL_HANDLE;
+    }
+
+    m_layers.clear();
+
+    if (m_session != XR_NULL_HANDLE) {
+        CHECK_XRCMD(xrDestroySession(m_session));
+        m_session = XR_NULL_HANDLE;
+    }
+
+    m_glContext.reset();
+    m_platformDisplay.reset();
+}
+
+
 void OpenXRCoordinator::handleSessionStateChange(Box<RenderState> active)
 {
     ASSERT(!RunLoop::isMain());
@@ -446,11 +501,9 @@ void OpenXRCoordinator::handleSessionStateChange(Box<RenderState> active)
         m_isSessionRunning = false;
         break;
     case XR_SESSION_STATE_LOSS_PENDING:
-    case XR_SESSION_STATE_EXITING: {
-        xrDestroySession(m_session);
-        m_session = XR_NULL_HANDLE;
+    case XR_SESSION_STATE_EXITING:
+        cleanupSessionAndAssociatedResources();
         break;
-    }
     default:
         LOG(XR, "OpenXR session state changed to %s", toString(m_sessionState));
         break;
@@ -482,6 +535,120 @@ OpenXRCoordinator::PollResult OpenXRCoordinator::pollEvents(Box<RenderState> act
     return PollResult::Continue;
 }
 
+PlatformXR::FrameData OpenXRCoordinator::populateFrameData(Box<RenderState> active)
+{
+    ASSERT(!RunLoop::isMain());
+    WebCore::GLContext::ScopedGLContextCurrent scopedContext(*m_glContext);
+
+    PlatformXR::FrameData frameData;
+    frameData.predictedDisplayTime = active->frameState.predictedDisplayTime;
+    frameData.shouldRender = active->frameState.shouldRender;
+    if (!frameData.shouldRender)
+        return frameData;
+
+    XrViewLocateInfo viewLocateInfo = createOpenXRStruct<XrViewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO>();
+    viewLocateInfo.viewConfigurationType = m_currentViewConfiguration;
+    viewLocateInfo.displayTime = active->frameState.predictedDisplayTime;
+    viewLocateInfo.space = m_localSpace;
+
+    uint32_t viewCapacityInput = static_cast<uint32_t>(m_views.size());
+    m_views.fill(createOpenXRStruct<XrView, XR_TYPE_VIEW>(), viewCapacityInput);
+
+    XrViewState viewState = createOpenXRStruct<XrViewState, XR_TYPE_VIEW_STATE>();
+    uint32_t viewCountOutput;
+    CHECK_XRCMD(xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, m_views.mutableSpan().data()));
+    ASSERT(viewCountOutput == viewCapacityInput);
+
+    for (auto& view : m_views)
+        frameData.views.append(XrViewToView(view));
+
+    frameData.isTrackingValid = viewState.viewStateFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+    frameData.isPositionValid = viewState.viewStateFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT;
+    frameData.isPositionEmulated = !(viewState.viewStateFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT);
+
+    frameData.origin = XrIdentityPose();
+
+    if (m_floorSpace != XR_NULL_HANDLE) {
+        XrSpaceLocation floorLocation = createOpenXRStruct<XrSpaceLocation, XR_TYPE_SPACE_LOCATION>();
+        CHECK_XRCMD(xrLocateSpace(m_floorSpace, m_localSpace, active->frameState.predictedDisplayTime, &floorLocation));
+        frameData.floorTransform = XrPosefToPose(floorLocation.pose);
+    } else
+        frameData.floorTransform = XrIdentityPose();
+
+    for (auto& layer : m_layers) {
+        auto layerData = layer.value->startFrame();
+        if (layerData) {
+            auto layerDataRef = makeUniqueRef<PlatformXR::FrameData::LayerData>(*layerData);
+            frameData.layers.add(layer.key, WTFMove(layerDataRef));
+        }
+    }
+
+    return frameData;
+}
+
+void OpenXRCoordinator::createReferenceSpacesIfNeeded(Box<RenderState> active)
+{
+    ASSERT(!RunLoop::isMain());
+    ASSERT(m_session != XR_NULL_HANDLE);
+    if (m_localSpace != XR_NULL_HANDLE)
+        return;
+
+    uint32_t spaceCount;
+    CHECK_XRCMD(xrEnumerateReferenceSpaces(m_session, 0, &spaceCount, nullptr));
+    Vector<XrReferenceSpaceType> supportedSpaces(spaceCount);
+    CHECK_XRCMD(xrEnumerateReferenceSpaces(m_session, spaceCount, &spaceCount, supportedSpaces.mutableSpan().data()));
+
+    if (supportedSpaces.isEmpty()) {
+        LOG(XR, "No reference spaces available for the current OpenXR session.");
+        return;
+    }
+
+#if !LOG_DISABLED
+    LOG(XR, "OpenXR reference spaces available:");
+    for (const auto& spaceType : supportedSpaces)
+        LOG(XR, "\t%s", toString(spaceType));
+#endif
+
+    auto createReferenceSpace = [&](XrReferenceSpaceType type) -> XrSpace {
+        XrSpace referenceSpace = XR_NULL_HANDLE;
+        XrReferenceSpaceCreateInfo createInfo = createOpenXRStruct<XrReferenceSpaceCreateInfo, XR_TYPE_REFERENCE_SPACE_CREATE_INFO>();
+        createInfo.referenceSpaceType = type;
+        createInfo.poseInReferenceSpace = { { 0, 0, 0, 1 }, { 0, 0, 0 } };
+        CHECK_XRCMD(xrCreateReferenceSpace(m_session, &createInfo, &referenceSpace));
+        return referenceSpace;
+    };
+
+    m_localSpace = createReferenceSpace(XR_REFERENCE_SPACE_TYPE_LOCAL);
+
+#if defined(XR_EXT_local_floor)
+    if (supportedSpaces.contains(XR_REFERENCE_SPACE_TYPE_LOCAL_FLOOR_EXT) && m_extensions->isExtensionSupported(XR_EXT_LOCAL_FLOOR_EXTENSION_NAME ""_span)) {
+        m_floorSpace = createReferenceSpace(XR_REFERENCE_SPACE_TYPE_LOCAL_FLOOR_EXT);
+        LOG(XR, "OpenXRCoordinator: created LOCAL_FLOOR reference space");
+    }
+#endif
+    if (m_floorSpace != XR_NULL_HANDLE)
+        return;
+
+    // If neither LOCAL_FLOOR nor STAGE are available then we won't return any floorTransform information. WebXR will make an educated guess
+    // in that case (see WebXRReferenceSpace::floorOriginTransform()).
+    if (!supportedSpaces.contains(XR_REFERENCE_SPACE_TYPE_STAGE))
+        return;
+
+    // Build a LOCAL_FLOOR like reference space from local and stage spaces
+    XrSpace stageSpace = createReferenceSpace(XR_REFERENCE_SPACE_TYPE_STAGE);
+
+    XrSpaceLocation stageLocation = createOpenXRStruct<XrSpaceLocation, XR_TYPE_SPACE_LOCATION>();
+    CHECK_XRCMD(xrLocateSpace(stageSpace, m_localSpace, active->frameState.predictedDisplayTime , &stageLocation));
+    CHECK_XRCMD(xrDestroySpace(stageSpace));
+
+    float floorOffset = stageLocation.pose.position.y;
+
+    XrReferenceSpaceCreateInfo localFloorCreateInfo = createOpenXRStruct<XrReferenceSpaceCreateInfo, XR_TYPE_REFERENCE_SPACE_CREATE_INFO>();
+    localFloorCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+    localFloorCreateInfo.poseInReferenceSpace = { { 0.f, 0.f, 0.f, 1.f }, { 0.f, floorOffset, 0.f } };
+    CHECK_XRCMD(xrCreateReferenceSpace(m_session, &localFloorCreateInfo, &m_floorSpace));
+}
+
 void OpenXRCoordinator::renderLoop(Box<RenderState> active)
 {
     for (;;) {
@@ -509,9 +676,8 @@ void OpenXRCoordinator::renderLoop(Box<RenderState> active)
         // We should not directly use active->frameState in the xrWaitFrame() in order not to override the previous (ongoing) value.
         active->frameState = frameState;
 
-        PlatformXR::FrameData frameData;
-        frameData.predictedDisplayTime = active->frameState.predictedDisplayTime;
-        frameData.shouldRender = active->frameState.shouldRender;
+        createReferenceSpacesIfNeeded(active);
+        PlatformXR::FrameData frameData = populateFrameData(active);
 
         callOnMainRunLoop([callback = WTFMove(active->onFrameUpdate), frameData = WTFMove(frameData)]() mutable {
             callback(WTFMove(frameData));
@@ -520,9 +686,11 @@ void OpenXRCoordinator::renderLoop(Box<RenderState> active)
         if (!active->frameState.shouldRender) {
             // We must always call xrEndFrame() if we had previously called xrBeginFrame(), even if we don't render anything. Don't wait
             // for submitFrame() as in the normal flow because it won't ever be called (see WebXRSession::onFrame()).
-            submitFrameInternal(active);
+            submitFrameInternal(active, { });
             continue;
         }
+
+        active->presentFrame.wait();
 
         throttleThreadIfNeeded();
     }

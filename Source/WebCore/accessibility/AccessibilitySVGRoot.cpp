@@ -39,14 +39,14 @@
 
 namespace WebCore {
 
-AccessibilitySVGRoot::AccessibilitySVGRoot(AXID axID, RenderObject& renderer, AXObjectCache* cache)
+AccessibilitySVGRoot::AccessibilitySVGRoot(AXID axID, RenderObject& renderer, AXObjectCache& cache)
     : AccessibilitySVGObject(axID, renderer, cache)
 {
 }
 
 AccessibilitySVGRoot::~AccessibilitySVGRoot() = default;
 
-Ref<AccessibilitySVGRoot> AccessibilitySVGRoot::create(AXID axID, RenderObject& renderer, AXObjectCache* cache)
+Ref<AccessibilitySVGRoot> AccessibilitySVGRoot::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
     return adoptRef(*new AccessibilitySVGRoot(axID, renderer, cache));
 }

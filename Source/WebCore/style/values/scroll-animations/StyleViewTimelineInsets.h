@@ -68,5 +68,4 @@ template<> struct Serialize<ViewTimelineInsetItem> { void operator()(StringBuild
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsRangeLike<WebCore::Style::ViewTimelineInsets> = true;
-template<> inline constexpr auto WebCore::SerializationSeparator<WebCore::Style::ViewTimelineInsets> = WebCore::SerializationSeparator<typename WebCore::Style::ViewTimelineInsets::List>;
+DEFINE_RANGE_LIKE_CONFORMANCE_FOR_LIST_OR_DEFAULT_DERIVED_TYPE(WebCore::Style::ViewTimelineInsets)

@@ -2394,6 +2394,7 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
                 || node->isBinaryUseKind(StringIdentUse)
                 || (node->op() == CompareEq && node->isBinaryUseKind(ObjectUse))
                 || (node->op() == CompareEq && node->isSymmetricBinaryUseKind(ObjectUse, ObjectOrOtherUse))
+                || (node->op() == CompareEq && value.isType(SpecObject))
                 || value.isType(SpecInt32Only)
                 || value.isType(SpecInt52Any)
                 || value.isType(SpecAnyIntAsDouble)
@@ -2401,15 +2402,25 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
                 || value.isType(SpecString)
                 || value.isType(SpecBoolean)
                 || value.isType(SpecSymbol)
-                || (node->op() == CompareEq && value.isType(SpecObject))
                 || value.isType(SpecOther)) {
                 switch (node->op()) {
                 case CompareLess:
                 case CompareGreater:
+                    // symbol < symbol, symbol > symbol throws TypeError
+                    if (value.isType(SpecSymbol))
+                        break;
                     setConstant(node, jsBoolean(false));
                     break;
                 case CompareLessEq:
-                case CompareGreaterEq:
+                case CompareGreaterEq: {
+                    // null <= null is true, but undefined <= undefined is false.
+                    if (value.isType(SpecOther))
+                        break;
+                    // symbol <= symbol, symbol >= symbol throws TypeError
+                    if (value.isType(SpecSymbol))
+                        break;
+                    [[fallthrough]];
+                }
                 case CompareEq:
                     setConstant(node, jsBoolean(true));
                     break;

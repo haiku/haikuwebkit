@@ -1699,13 +1699,15 @@ FloatRect RenderLayer::referenceBoxRectForClipPath(CSSBoxType boxType, const Lay
 
 void RenderLayer::updateTransformFromStyle(TransformationMatrix& transform, const RenderStyle& style, OptionSet<RenderStyle::TransformOperationOption> options) const
 {
-    auto referenceBoxRect = snapRectToDevicePixelsIfNeeded(renderer().transformReferenceBoxRect(style), renderer());
-    renderer().applyTransform(transform, style, referenceBoxRect, options);
-
-    // https://drafts.csswg.org/css-anchor-position-1/#anchor-pos
-    // "The positioned element is additionally visually shifted by its snapshotted scroll offset, as if by an additional translate() transform."
+    // https://drafts.csswg.org/css-anchor-position-1/#default-scroll-shift
+    // > After layout has been performed for abspos, it is additionally shifted by
+    // > the default scroll shift, as if affected by a transform
+    // > ** (before any other transforms). **
     if (m_snapshottedScrollOffsetForAnchorPositioning)
         transform.translate(m_snapshottedScrollOffsetForAnchorPositioning->width(), m_snapshottedScrollOffsetForAnchorPositioning->height());
+
+    auto referenceBoxRect = snapRectToDevicePixelsIfNeeded(renderer().transformReferenceBoxRect(style), renderer());
+    renderer().applyTransform(transform, style, referenceBoxRect, options);
 
     makeMatrixRenderable(transform, canRender3DTransforms());
 }
@@ -2283,7 +2285,7 @@ FloatPoint RenderLayer::perspectiveOrigin() const
 {
     if (!renderer().hasTransformRelatedProperty())
         return { };
-    return floatPointForLengthPoint(renderer().style().perspectiveOrigin(), renderer().transformReferenceBoxRect(renderer().style()).size());
+    return Style::evaluate(renderer().style().perspectiveOrigin(), renderer().transformReferenceBoxRect(renderer().style()).size());
 }
 
 static inline bool isContainerForPositioned(RenderLayer& layer, PositionType position, bool establishesTopLayer)

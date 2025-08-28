@@ -258,7 +258,7 @@ static String extractMIMETypeFromTypeAttributeForLookup(const String& typeAttrib
     auto semicolonIndex = typeAttribute.find(';');
     if (semicolonIndex == notFound)
         return typeAttribute.trim(isASCIIWhitespace);
-    return StringView(typeAttribute).left(semicolonIndex).trim(isASCIIWhitespace<UChar>).toStringWithoutCopying();
+    return StringView(typeAttribute).left(semicolonIndex).trim(isASCIIWhitespace<char16_t>).toStringWithoutCopying();
 }
 
 ImageCandidate HTMLImageElement::bestFitSourceFromPictureElement()
@@ -893,7 +893,7 @@ bool HTMLImageElement::childShouldCreateRenderer(const Node& child) const
 bool HTMLImageElement::willRespondToMouseClickEventsWithEditability(Editability editability, IgnoreTouchCallout ignoreTouchCallout) const
 {
     auto renderer = this->renderer();
-    if (ignoreTouchCallout == IgnoreTouchCallout::No && (!renderer || renderer->style().touchCalloutEnabled()))
+    if (ignoreTouchCallout == IgnoreTouchCallout::No && (!renderer || renderer->style().touchCallout() == Style::WebkitTouchCallout::Default))
         return true;
     return HTMLElement::willRespondToMouseClickEventsWithEditability(editability);
 }
@@ -1016,7 +1016,7 @@ void HTMLImageElement::invalidateAttributeMapping()
     invalidateStyle();
 }
 
-Ref<Element> HTMLImageElement::cloneElementWithoutAttributesAndChildren(Document& document, CustomElementRegistry*)
+Ref<Element> HTMLImageElement::cloneElementWithoutAttributesAndChildren(Document& document, CustomElementRegistry*) const
 {
     auto clone = create(document);
 #if ENABLE(ATTACHMENT_ELEMENT)

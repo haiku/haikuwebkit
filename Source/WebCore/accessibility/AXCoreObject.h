@@ -109,7 +109,7 @@ enum class ClickHandlerFilter : bool {
     IncludeBody,
 };
 
-enum class PreSortedObjectType : bool { LiveRegion, WebArea };
+enum class PreSortedObjectType : uint8_t { LiveRegion, WebArea };
 
 enum class DateComponentsType : uint8_t;
 
@@ -659,6 +659,7 @@ enum class AccessibilityOrientation : uint8_t {
     Vertical
 };
 
+enum class IncludeListMarkerText : bool { No, Yes };
 enum class TrimWhitespace : bool { No, Yes };
 
 struct TextUnderElementMode {
@@ -806,10 +807,16 @@ enum class AXDebugStringOption {
 
 enum class TextEmissionBehavior : uint8_t {
     None,
-    Space,
     Tab,
     Newline,
     DoubleNewline
+};
+
+enum class ListBoxInterpretation : uint8_t {
+    ActuallyListBox,
+    ActuallyStaticList,
+    InvalidListBox,
+    NotListBox
 };
 
 class AXCoreObject : public RefCountedAndCanMakeWeakPtr<AXCoreObject> {
@@ -851,9 +858,8 @@ public:
     bool isCheckbox() const { return role() == AccessibilityRole::Checkbox; }
     bool isRadioButton() const { return role() == AccessibilityRole::RadioButton; }
     bool isListBox() const { return role() == AccessibilityRole::ListBox; }
-    // The children of listboxes must be of specific roles. Returns true if at least one of those is present.
-    bool isValidListBox() const;
-    bool isInvalidListBox() const { return isListBox() && !isValidListBox(); }
+    // For elements with role=listbox, checks its children to determine if it's actually a valid listbox, a static list, or neither.
+    ListBoxInterpretation listBoxInterpretation() const;
     bool isListBoxOption() const { return role() == AccessibilityRole::ListBoxOption; }
     virtual bool isAttachment() const = 0;
     bool isMenuRelated() const;
@@ -1032,7 +1038,7 @@ public:
 
     virtual WallTime dateTimeValue() const = 0;
     virtual DateComponentsType dateTimeComponentsType() const = 0;
-    virtual bool supportsDatetimeAttribute() const = 0;
+    bool supportsDatetimeAttribute() const;
     virtual String datetimeAttributeValue() const = 0;
 
     virtual bool canSetFocusAttribute() const = 0;
@@ -1237,8 +1243,6 @@ public:
     String ariaLandmarkRoleDescription() const;
     // Non-localized string associated with the object's subrole.
     virtual String subrolePlatformString() const = 0;
-
-    virtual AXObjectCache* axObjectCache() const = 0;
 
     bool supportsPressAction() const;
     virtual Element* actionElement() const = 0;
@@ -1609,6 +1613,12 @@ protected:
         , m_id(axID)
     { }
 
+    explicit AXCoreObject(AXID axID, AccessibilityRole role, bool getsGeometryFromChildren)
+        : m_role(role)
+        , m_getsGeometryFromChildren(getsGeometryFromChildren)
+        , m_id(axID)
+    { }
+
 private:
     virtual String dbgInternal(bool, OptionSet<AXDebugStringOption>) const = 0;
 
@@ -1623,10 +1633,27 @@ private:
 // MARK: Member variables
 protected:
     AccessibilityRole m_role { AccessibilityRole::Unknown };
+    // Only used by AccessibilityObject, but placed here to use space that would otherwise be taken by padding.
+    OptionSet<AXAncestorFlag> m_ancestorFlags;
+    // Only used by AccessibilityObject, but placed here to use space that would otherwise be taken by padding.
+    AccessibilityObjectInclusion m_lastKnownIsIgnoredValue { AccessibilityObjectInclusion::DefaultBehavior };
+    // Only used by AccessibilityObject, but placed here to use space that would otherwise be taken by padding.
+    // FIXME: This can be replaced by AXAncestorFlags.
+    AccessibilityIsIgnoredFromParentData m_isIgnoredFromParentData;
+
     // This index always refers to the parent's m_children. Keep in mind that when
     // ENABLE(INCLUDE_IGNORE_IN_CORE_AX_TREE), m_children includes ignored objects, so cannot be
     // used to determine the place of |this| relative to its unignored siblings (only its ignored ones).
     unsigned m_indexInParent;
+
+    bool m_childrenDirty { false };
+    // Only used by AccessibilityObject, but placed here to use space that would otherwise be taken by padding.
+    bool m_subtreeDirty { false };
+    // Only used by AccessibilityObject, but placed here to use space that would otherwise be taken by padding.
+    mutable bool m_childrenInitialized { false };
+    // Only used by AXIsolatedObject, but placed here to use space that would otherwise be taken by padding.
+    // Some objects (e.g. display:contents) form their geometry through their children.
+    bool m_getsGeometryFromChildren { false };
 
 private:
     AXID m_id;
@@ -1978,6 +2005,7 @@ String roleToPlatformString(AccessibilityRole);
 #if ENABLE(AX_THREAD_TEXT_APIS)
 std::optional<AXTextMarkerRange> markerRangeFrom(NSRange, const AXCoreObject&);
 #endif
+Color defaultColor();
 
 // Intended to work with size-types (like IntSize) or rect-types (like LayoutRect).
 template <typename SizeOrRectType>

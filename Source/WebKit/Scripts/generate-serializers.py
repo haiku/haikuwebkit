@@ -372,6 +372,8 @@ class MemberVariable(object):
             return 'NSPersonNameComponents'
         if value.startswith('Array'):
             return 'NSArray'
+        if value == 'Set':
+            return 'NSSet'
         return value
 
     def ns_type_pointer(self):
@@ -677,6 +679,14 @@ def generate_header(serialized_types, serialized_enums, additional_forward_decla
     for header in ['<wtf/ArgumentCoder.h>', '<wtf/OptionSet.h>', '<wtf/Ref.h>', '<wtf/RetainPtr.h>']:
         result.append(f'#include {header}')
 
+    result.append('#if USE(CF)')
+    result.append('#ifdef __swift__')
+    result.append('#include <Security/SecTrust.h>')
+    result.append('#else')
+    result.append('typedef struct CF_BRIDGED_TYPE(id) __SecTrust *SecTrustRef;')
+    result.append('#endif')
+    result.append('#endif')
+
     result += generate_forward_declarations(serialized_types, serialized_enums, additional_forward_declarations)
     result.append('')
     result.append('namespace IPC {')
@@ -871,6 +881,9 @@ def decode_type(type, serialized_types):
     if type.has_optional_tuple_bits() and type.populate_from_empty_constructor:
         result.append(f'    {type.namespace_and_name()} result;')
 
+    if type.debug_decoding_failure:
+        result.append('    bool addedDecodingFailureIndex = false;')
+
     for i in range(len(type.serialized_members())):
         member = type.serialized_members()[i]
         if member.condition is not None:
@@ -936,8 +949,10 @@ def decode_type(type, serialized_types):
                 result.append(f'            {sanitized_variable_name}->setHTTPBody({sanitized_variable_name}Body->takeData());')
                 result.append('    }')
             if type.debug_decoding_failure:
-                result.append(f'    if (!{sanitized_variable_name}) [[unlikely]]')
-                result.append(f'        decoder.setIndexOfDecodingFailure({str(i)});')
+                result.append(f'    if (!{sanitized_variable_name} && !addedDecodingFailureIndex) [[unlikely]] {{')
+                result.append(f'        decoder.addIndexOfDecodingFailure({str(i)});')
+                result.append('        addedDecodingFailureIndex = true;')
+                result.append('    }')
         for attribute in member.attributes:
             match = re.search(r'Validator=\'(.*)\'', attribute)
             if match:

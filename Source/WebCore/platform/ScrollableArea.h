@@ -32,7 +32,6 @@
 #include "ScrollSnapOffsetsInfo.h"
 #include "ScrollTypes.h"
 #include "Scrollbar.h"
-#include "ScrollbarColor.h"
 #include <wtf/CheckedPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
@@ -58,8 +57,9 @@ class Element;
 
 enum class WheelScrollGestureState : uint8_t;
 
-struct ScrollbarColor;
+namespace Style {
 struct ScrollbarGutter;
+}
 
 inline int offsetForOrientation(ScrollOffset offset, ScrollbarOrientation orientation)
 {
@@ -157,7 +157,7 @@ public:
 
     WEBCORE_EXPORT virtual Color scrollbarThumbColorStyle() const;
     WEBCORE_EXPORT virtual Color scrollbarTrackColorStyle() const;
-    WEBCORE_EXPORT virtual ScrollbarGutter scrollbarGutterStyle() const;
+    WEBCORE_EXPORT virtual Style::ScrollbarGutter scrollbarGutterStyle() const;
     virtual ScrollbarWidth scrollbarWidthStyle() const { return ScrollbarWidth::Auto; }
 
     WEBCORE_EXPORT bool allowsHorizontalScrolling() const;
@@ -440,6 +440,7 @@ public:
 #if ENABLE(FORM_CONTROL_REFRESH)
     virtual bool formControlRefreshEnabled() const { return false; }
 #endif
+    virtual void scrollDidEnd() { }
 
 protected:
     WEBCORE_EXPORT ScrollableArea();
@@ -460,6 +461,8 @@ protected:
     bool hasLayerForScrollCorner() const;
 
     WEBCORE_EXPORT LayoutRect getRectToExposeForScrollIntoView(const LayoutRect& visibleBounds, const LayoutRect& exposeRect, const ScrollAlignment& alignX, const ScrollAlignment& alignY, const std::optional<LayoutRect> = std::nullopt) const;
+    bool isAwaitingScrollend() const { return m_isAwaitingScrollend; }
+    void setIsAwaitingScrollend(bool isAwaitingScrollend) { m_isAwaitingScrollend = isAwaitingScrollend; }
 
 private:
     WEBCORE_EXPORT virtual IntRect visibleContentRectInternal(VisibleContentRectIncludesScrollbars, VisibleContentRectBehavior) const;
@@ -504,6 +507,7 @@ private:
     bool m_inLiveResize { false };
     bool m_scrollOriginChanged { false };
     bool m_scrollShouldClearLatchedState { false };
+    bool m_isAwaitingScrollend { false };
 
     Markable<ScrollingNodeID> m_scrollingNodeIDForTesting;
 };

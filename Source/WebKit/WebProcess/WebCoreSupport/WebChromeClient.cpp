@@ -732,20 +732,28 @@ OptionSet<PointerCharacteristics> WebChromeClient::pointerCharacteristicsOfAllAv
 
 #if ENABLE(POINTER_LOCK)
 
-bool WebChromeClient::requestPointerLock()
+void WebChromeClient::requestPointerLock(CompletionHandler<void(WebCore::PointerLockRequestResult)>&& completionHandler)
 {
     RefPtr page = m_page.get();
-    if (!page)
-        return false;
+    if (!page) {
+        completionHandler(WebCore::PointerLockRequestResult::Failure);
+        return;
+    }
 
-    page->send(Messages::WebPageProxy::RequestPointerLock());
-    return true;
+    page->sendWithAsyncReply(Messages::WebPageProxy::RequestPointerLock(), [completionHandler = WTFMove(completionHandler)](bool result) mutable {
+        if (result)
+            completionHandler(WebCore::PointerLockRequestResult::Success);
+        else
+            completionHandler(WebCore::PointerLockRequestResult::Failure);
+    });
 }
 
-void WebChromeClient::requestPointerUnlock()
+void WebChromeClient::requestPointerUnlock(CompletionHandler<void(bool)>&& completionHandler)
 {
     if (RefPtr page = m_page.get())
-        page->send(Messages::WebPageProxy::RequestPointerUnlock());
+        page->sendWithAsyncReply(Messages::WebPageProxy::RequestPointerUnlock(), WTFMove(completionHandler));
+    else
+        completionHandler(false);
 }
 
 #endif
@@ -1108,7 +1116,7 @@ WebCore::DisplayRefreshMonitorFactory* WebChromeClient::displayRefreshMonitorFac
 }
 
 #if ENABLE(GPU_PROCESS)
-RefPtr<ImageBuffer> WebChromeClient::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, const DestinationColorSpace& colorSpace, ImageBufferPixelFormat pixelFormat) const
+RefPtr<ImageBuffer> WebChromeClient::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, const DestinationColorSpace& colorSpace, ImageBufferFormat pixelFormat) const
 {
     if (WebProcess::singleton().shouldUseRemoteRenderingFor(purpose)) {
         RefPtr page = m_page.get();
@@ -1118,7 +1126,7 @@ RefPtr<ImageBuffer> WebChromeClient::createImageBuffer(const FloatSize& size, Re
     }
 
     if (purpose == RenderingPurpose::ShareableSnapshot || purpose == RenderingPurpose::ShareableLocalSnapshot)
-        return ImageBuffer::create<ImageBufferShareableBitmapBackend>(size, resolutionScale, colorSpace, ImageBufferPixelFormat::BGRA8, purpose, { });
+        return ImageBuffer::create<ImageBufferShareableBitmapBackend>(size, resolutionScale, colorSpace, { ImageBufferPixelFormat::BGRA8 }, purpose, { });
 
     return nullptr;
 }
@@ -1371,17 +1379,18 @@ RefPtr<WebCore::ScrollingCoordinator> WebChromeClient::createScrollingCoordinato
         return nullptr;
 
     ASSERT_UNUSED(corePage, page->corePage() == &corePage);
-#if PLATFORM(COCOA)
+#if ENABLE(TILED_CA_DRAWING_AREA)
     switch (page->drawingArea()->type()) {
-#if PLATFORM(MAC)
     case DrawingAreaType::TiledCoreAnimation:
         return TiledCoreAnimationScrollingCoordinator::create(page.get());
-#endif
     case DrawingAreaType::RemoteLayerTree:
         return RemoteScrollingCoordinator::create(page.get());
     }
-#endif
+#elif PLATFORM(COCOA)
+    return RemoteScrollingCoordinator::create(page.get());
+#else
     return nullptr;
+#endif
 }
 
 #endif
@@ -1400,7 +1409,8 @@ void WebChromeClient::ensureScrollbarsController(Page& corePage, ScrollableArea&
         ASSERT(!currentScrollbarsController || is<ScrollbarsControllerMock>(currentScrollbarsController));
         return;
     }
-    
+
+#if ENABLE(TILED_CA_DRAWING_AREA)
     switch (page->drawingArea()->type()) {
     case DrawingAreaType::RemoteLayerTree: {
         if (!area.usesCompositedScrolling() && (!currentScrollbarsController || is<RemoteScrollbarsController>(currentScrollbarsController)))
@@ -1414,6 +1424,12 @@ void WebChromeClient::ensureScrollbarsController(Page& corePage, ScrollableArea&
             area.setScrollbarsController(ScrollbarsController::create(area));
     }
     }
+#else
+    if (!area.usesCompositedScrolling() && (!currentScrollbarsController || is<RemoteScrollbarsController>(currentScrollbarsController)))
+        area.setScrollbarsController(ScrollbarsController::create(area));
+    else if (area.usesCompositedScrolling() && (!currentScrollbarsController || !is<RemoteScrollbarsController>(currentScrollbarsController)))
+        area.setScrollbarsController(makeUnique<RemoteScrollbarsController>(area, corePage.scrollingCoordinator()));
+#endif
 }
 
 #endif
@@ -2231,9 +2247,11 @@ void WebChromeClient::requestCookieConsent(CompletionHandler<void(CookieConsentD
 
 bool WebChromeClient::isUsingUISideCompositing() const
 {
-#if PLATFORM(COCOA)
+#if ENABLE(TILED_CA_DRAWING_AREA)
     RefPtr page = m_page.get();
     return page && page->drawingArea()->type() == DrawingAreaType::RemoteLayerTree;
+#elif PLATFORM(COCOA)
+    return true;
 #else
     return false;
 #endif
@@ -2347,6 +2365,11 @@ void WebChromeClient::getImageBufferResourceLimitsForTesting(CompletionHandler<v
 bool WebChromeClient::requiresScriptTrackingPrivacyProtections(const URL& url, const SecurityOrigin& topOrigin) const
 {
     return WebProcess::singleton().requiresScriptTrackingPrivacyProtections(url, topOrigin);
+}
+
+bool WebChromeClient::shouldAllowScriptAccess(const URL& url, const SecurityOrigin& topOrigin, ScriptTrackingPrivacyCategory category) const
+{
+    return WebProcess::singleton().shouldAllowScriptAccess(url, topOrigin, category);
 }
 
 void WebChromeClient::callAfterPendingSyntheticClick(CompletionHandler<void(SyntheticClickResult)>&& completion)

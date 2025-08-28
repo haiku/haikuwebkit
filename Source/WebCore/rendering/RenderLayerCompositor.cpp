@@ -2123,8 +2123,9 @@ void RenderLayerCompositor::logLayerInfo(const RenderLayer& layer, ASCIILiteral 
 
 static bool clippingChanged(const RenderStyle& oldStyle, const RenderStyle& newStyle)
 {
-    return oldStyle.overflowX() != newStyle.overflowX() || oldStyle.overflowY() != newStyle.overflowY()
-        || oldStyle.hasClip() != newStyle.hasClip() || oldStyle.clip() != newStyle.clip();
+    return oldStyle.overflowX() != newStyle.overflowX()
+        || oldStyle.overflowY() != newStyle.overflowY()
+        || oldStyle.clip() != newStyle.clip();
 }
 
 static bool styleAffectsLayerGeometry(const RenderStyle& style)
@@ -2144,8 +2145,7 @@ static bool recompositeChangeRequiresGeometryUpdate(const RenderStyle& oldStyle,
         || oldStyle.transformOriginZ() != newStyle.transformOriginZ()
         || oldStyle.usedTransformStyle3D() != newStyle.usedTransformStyle3D()
         || oldStyle.perspective() != newStyle.perspective()
-        || oldStyle.perspectiveOriginX() != newStyle.perspectiveOriginX()
-        || oldStyle.perspectiveOriginY() != newStyle.perspectiveOriginY()
+        || oldStyle.perspectiveOrigin() != newStyle.perspectiveOrigin()
         || oldStyle.backfaceVisibility() != newStyle.backfaceVisibility()
         || oldStyle.offsetPath() != newStyle.offsetPath()
         || oldStyle.offsetAnchor() != newStyle.offsetAnchor()
@@ -2577,6 +2577,22 @@ void RenderLayerCompositor::computeExtent(const LayerOverlapMap& overlapMap, con
     if (extent.extentComputed)
         return;
 
+    auto markExtentAsComputed = WTF::makeScopeExit([&]() {
+        extent.extentComputed = true;
+    });
+
+    RenderLayerModelObject& renderer = layer.renderer();
+    if (renderer.isStickilyPositioned()) {
+        // Use rectangle that represents union of all possible sticky element positions,
+        // because it could be moved around without re-computing overlap.
+        auto const& box = downcast<RenderBoxModelObject>(renderer);
+        StickyPositionViewportConstraints constraints;
+        auto constrainingRectForStickyPosition = box.constrainingRectForStickyPosition();
+        box.computeStickyPositionConstraints(constraints, constrainingRectForStickyPosition);
+        extent.bounds = LayoutRect(constraints.computeStickyExtent());
+        return;
+    }
+
     LayoutRect layerBounds;
     if (extent.hasTransformAnimation)
         extent.animationCausesExtentUncertainty = !layer.getOverlapBoundsIncludingChildrenAccountingForTransformAnimations(layerBounds);
@@ -2591,15 +2607,11 @@ void RenderLayerCompositor::computeExtent(const LayerOverlapMap& overlapMap, con
     if (extent.bounds.isEmpty())
         extent.bounds.setSize(LayoutSize(1, 1));
 
-    RenderLayerModelObject& renderer = layer.renderer();
     if (renderer.isFixedPositioned() && renderer.container() == &m_renderView) {
         // Because fixed elements get moved around without re-computing overlap, we have to compute an overlap
         // rect that covers all the locations that the fixed element could move to.
-        // FIXME: need to handle sticky too.
         extent.bounds = m_renderView.frameView().fixedScrollableAreaBoundsInflatedForScrolling(extent.bounds);
     }
-
-    extent.extentComputed = true;
 }
 
 enum class AncestorTraversal { Continue, Stop };

@@ -29,6 +29,7 @@
 #include "CharacterRange.h"
 #include "CompositionHighlight.h"
 #include "CompositionUnderline.h"
+#include <wtf/ASCIICType.h>
 #include <wtf/Assertions.h>
 #include <wtf/text/WTFString.h>
 

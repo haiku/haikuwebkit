@@ -38,7 +38,7 @@ typedef void (*(*PFNEGLGETPROCADDRESSPROC)(const char *))(void);
 namespace WebKit {
 
 struct OpenXRExtensionMethods {
-    WTF_MAKE_FAST_ALLOCATED(OpenXRExtensionMethods);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(OpenXRExtensionMethods);
 public:
 #if defined(XR_USE_PLATFORM_EGL)
     PFNEGLGETPROCADDRESSPROC getProcAddressFunc { nullptr };

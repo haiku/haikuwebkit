@@ -39,7 +39,7 @@ namespace WTF {
 
 // FIXME: This should be `: private BitVector`.
 class FixedBitVector final {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(FixedBitVector);
     using WordType = decltype(BitVector::m_bitsOrPointer);
 
 public:

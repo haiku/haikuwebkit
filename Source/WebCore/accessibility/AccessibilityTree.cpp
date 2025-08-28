@@ -40,26 +40,26 @@ namespace WebCore {
 
 using namespace HTMLNames;
     
-AccessibilityTree::AccessibilityTree(AXID axID, RenderObject& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilityTree::AccessibilityTree(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
 }
 
-AccessibilityTree::AccessibilityTree(AXID axID, Node& node)
-    : AccessibilityRenderObject(axID, node)
+AccessibilityTree::AccessibilityTree(AXID axID, Node& node, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, node, cache)
 {
 }
 
 AccessibilityTree::~AccessibilityTree() = default;
     
-Ref<AccessibilityTree> AccessibilityTree::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityTree> AccessibilityTree::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTree(axID, renderer));
+    return adoptRef(*new AccessibilityTree(axID, renderer, cache));
 }
 
-Ref<AccessibilityTree> AccessibilityTree::create(AXID axID, Node& node)
+Ref<AccessibilityTree> AccessibilityTree::create(AXID axID, Node& node, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTree(axID, node));
+    return adoptRef(*new AccessibilityTree(axID, node, cache));
 }
 
 bool AccessibilityTree::computeIsIgnored() const

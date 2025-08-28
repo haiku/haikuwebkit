@@ -150,8 +150,8 @@ private:
     void updateTextIndicator(const WebCore::TextIndicatorData&) const final;
 
 #if ENABLE(POINTER_LOCK)
-    bool requestPointerLock() final;
-    void requestPointerUnlock() final;
+    void requestPointerLock(CompletionHandler<void(WebCore::PointerLockRequestResult)>&&) final;
+    void requestPointerUnlock(CompletionHandler<void(bool)>&&) final;
 #endif
 
     WebCore::KeyboardUIMode keyboardUIMode() final;

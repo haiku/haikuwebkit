@@ -1056,7 +1056,9 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
         // 5.6 Set first initialization segment flag to true.
         m_receivedFirstInitializationSegment = true;
 
+#if !PLATFORM(WPE)
         if (hasVideo())
+#endif
             m_private->setMaximumBufferSize(maximumBufferSize());
     }
 

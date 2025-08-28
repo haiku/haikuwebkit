@@ -152,7 +152,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
 // This is needed for external clients to be able to create a text marker without having a pointer to the cache.
 - (id)initWithData:(NSData *)data accessibilityObject:(AccessibilityObjectWrapper *)wrapper
 {
-    WebCore::AXCoreObject* axObject = wrapper.axBackingObject;
+    RefPtr<AccessibilityObject> axObject = wrapper.axBackingObject;
     if (!axObject)
         return nil;
     

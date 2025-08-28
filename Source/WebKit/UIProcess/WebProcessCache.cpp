@@ -64,7 +64,7 @@ static uint64_t generateAddRequestIdentifier()
 }
 
 WebProcessCache::WebProcessCache(WebProcessPool& processPool)
-    : m_evictionTimer(RunLoop::main(), this, &WebProcessCache::clear)
+    : m_evictionTimer(RunLoop::mainSingleton(), "WebProcessCache::EvictionTimer"_s, this, &WebProcessCache::clear)
 {
     updateCapacity(processPool);
     platformInitialize();
@@ -311,9 +311,9 @@ Ref<WebProcessCache::CachedProcess> WebProcessCache::CachedProcess::create(Ref<W
 
 WebProcessCache::CachedProcess::CachedProcess(Ref<WebProcessProxy>&& process)
     : m_process(WTFMove(process))
-    , m_evictionTimer(RunLoop::main(), this, &CachedProcess::evictionTimerFired)
+    , m_evictionTimer(RunLoop::mainSingleton(), "WebProcessCache::CachedProcess::EvictionTimer"_s, this, &CachedProcess::evictionTimerFired)
 #if PLATFORM(MAC) || PLATFORM(GTK) || PLATFORM(WPE)
-    , m_suspensionTimer(RunLoop::main(), this, &CachedProcess::suspensionTimerFired)
+    , m_suspensionTimer(RunLoop::mainSingleton(), "WebProcessCache::CachedProcess::SuspensionTimer"_s, this, &CachedProcess::suspensionTimerFired)
 #endif
 {
     RELEASE_ASSERT(!m_process->pageCount());

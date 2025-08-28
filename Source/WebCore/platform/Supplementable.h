@@ -80,7 +80,12 @@ public:
     // a TypeCastTraits specialization. The isBar() function needed for this
     // specialization can be implemented here and overridden in the base class.
 
+    virtual bool isDOMWindowCaches() const { return false; }
+    virtual bool isNavigatorClipboard() const { return false; }
     virtual bool isNavigatorCookieConsent() const { return false; }
+    virtual bool isNavigatorGamepad() const { return false; }
+    virtual bool isUserMediaController() const { return false; }
+    virtual bool isWorkerGlobalScopeCaches() const { return false; }
 };
 
 template<typename T>

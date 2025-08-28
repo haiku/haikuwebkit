@@ -111,6 +111,83 @@ bool containsCurrentColor(const ColorMix& colorMix)
         || WebCore::Style::containsCurrentColor(colorMix.mixComponents2.color);
 }
 
+// MARK: - Serialization
+
+namespace ColorMixSerializationDetails {
+
+static bool sumTo100Percent(const ColorMix::Component::Percentage& a, const ColorMix::Component::Percentage& b)
+{
+    return a.value + b.value == 100.0;
+}
+
+static std::optional<ColorMix::Component::Percentage> subtractFrom100Percent(const ColorMix::Component::Percentage& percentage)
+{
+    return ColorMix::Component::Percentage { 100.0 - percentage.value };
+}
+
+static void serializeColorMixPercentage(StringBuilder& builder, const CSS::SerializationContext& context, const ColorMix::Component::Percentage& percentage)
+{
+    CSS::serializationForCSS(builder, context, CSS::PercentageRaw<> { percentage.value });
+}
+
+static void serializationForColorMixPercentage1(StringBuilder& builder, const CSS::SerializationContext& context, const ColorMix& value)
+{
+    if (value.mixComponents1.percentage && value.mixComponents2.percentage) {
+        if (*value.mixComponents1.percentage == 50_css_percentage && *value.mixComponents2.percentage == 50_css_percentage)
+            return;
+        builder.append(' ');
+        serializeColorMixPercentage(builder, context, *value.mixComponents1.percentage);
+    } else if (value.mixComponents1.percentage) {
+        if (*value.mixComponents1.percentage == 50_css_percentage)
+            return;
+        builder.append(' ');
+        serializeColorMixPercentage(builder, context, *value.mixComponents1.percentage);
+    } else if (value.mixComponents2.percentage) {
+        if (*value.mixComponents2.percentage == 50_css_percentage)
+            return;
+
+        auto subtractedPercent = subtractFrom100Percent(*value.mixComponents2.percentage);
+        if (!subtractedPercent)
+            return;
+
+        builder.append(' ');
+        serializeColorMixPercentage(builder, context, *subtractedPercent);
+    }
+}
+
+static void serializationForColorMixPercentage2(StringBuilder& builder, const CSS::SerializationContext& context, const ColorMix& value)
+{
+    if (value.mixComponents1.percentage && value.mixComponents2.percentage) {
+        if (sumTo100Percent(*value.mixComponents1.percentage, *value.mixComponents2.percentage))
+            return;
+
+        builder.append(' ');
+        serializeColorMixPercentage(builder, context, *value.mixComponents2.percentage);
+    }
+}
+
+} // namespace ColorMixSerializationDetails
+
+void serializationForCSSTokenization(StringBuilder& builder, const CSS::SerializationContext& context, const ColorMix& colorMix)
+{
+    builder.append("color-mix(in "_s);
+    WebCore::serializationForCSS(builder, colorMix.colorInterpolationMethod);
+    builder.append(", "_s);
+    serializationForCSSTokenization(builder, context, colorMix.mixComponents1.color);
+    ColorMixSerializationDetails::serializationForColorMixPercentage1(builder, context, colorMix);
+    builder.append(", "_s);
+    serializationForCSSTokenization(builder, context, colorMix.mixComponents2.color);
+    ColorMixSerializationDetails::serializationForColorMixPercentage2(builder, context, colorMix);
+    builder.append(')');
+}
+
+String serializationForCSSTokenization(const CSS::SerializationContext& context, const ColorMix& colorMix)
+{
+    StringBuilder builder;
+    serializationForCSSTokenization(builder, context, colorMix);
+    return builder.toString();
+}
+
 // MARK: - TextStream
 
 static WTF::TextStream& operator<<(WTF::TextStream& ts, const ColorMix::Component& component)

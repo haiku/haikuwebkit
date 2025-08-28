@@ -26,6 +26,7 @@
 
 #include "CSSFontSelector.h"
 #include "CSSValueKeywords.h"
+#include "ContainerNodeInlines.h"
 #include "DocumentInlines.h"
 #include "Font.h"
 #include "FrameSelection.h"
@@ -494,6 +495,11 @@ HTMLInputElement& RenderTextControlSingleLine::inputElement() const
 Ref<HTMLInputElement> RenderTextControlSingleLine::protectedInputElement() const
 {
     return downcast<HTMLInputElement>(RenderTextControl::textFormControlElement());
+}
+
+RenderTextControlInnerBlock* RenderTextControlSingleLine::innerTextRenderer() const
+{
+    return innerTextElement() ? innerTextElement()->renderer() : nullptr;
 }
 
 RenderTextControlInnerBlock::RenderTextControlInnerBlock(Element& element, RenderStyle&& style)

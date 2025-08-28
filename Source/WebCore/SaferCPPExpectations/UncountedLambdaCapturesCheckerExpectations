@@ -2,7 +2,6 @@ Modules/WebGPU/Implementation/WebGPUDeviceImpl.cpp
 Modules/cache/DOMCache.cpp
 Modules/cache/DOMCacheStorage.cpp
 Modules/encryptedmedia/NavigatorEME.cpp
-Modules/gamepad/GamepadHapticActuator.cpp
 Modules/indexeddb/client/IDBConnectionProxy.cpp
 Modules/indexeddb/server/UniqueIDBDatabaseConnection.cpp
 Modules/mediacontrols/MediaControlsHost.cpp

@@ -239,7 +239,7 @@ PluginView::PluginView(HTMLPlugInElement& element, const URL& mainResourceURL, c
     , m_webPage(page)
     , m_mainResourceURL(mainResourceURL)
     , m_shouldUseManualLoader(shouldUseManualLoader)
-    , m_pendingResourceRequestTimer(RunLoop::main(), this, &PluginView::pendingResourceRequestTimerFired)
+    , m_pendingResourceRequestTimer(RunLoop::mainSingleton(), "PluginView::PendingResourceRequestTimer"_s, this, &PluginView::pendingResourceRequestTimerFired)
 {
     m_plugin->startLoading();
     page.addPluginView(*this);
@@ -654,12 +654,12 @@ Vector<WebFoundTextRange::PDFData> PluginView::findTextMatches(const String& tar
     return m_plugin->findTextMatches(target, options);
 }
 
-Vector<FloatRect> PluginView::rectsForTextMatch(const WebFoundTextRange::PDFData& match)
+Vector<WebCore::FloatRect> PluginView::rectsForTextMatchesInRect(const Vector<WebFoundTextRange::PDFData>& matches, const WebCore::IntRect& clipRect)
 {
     if (!m_isInitialized)
         return { };
 
-    return m_plugin->rectsForTextMatch(match);
+    return m_plugin->rectsForTextMatchesInRect(matches, clipRect);
 }
 
 RefPtr<WebCore::TextIndicator> PluginView::textIndicatorForTextMatch(const WebFoundTextRange::PDFData& match, WebCore::TextIndicatorPresentationTransition transition)

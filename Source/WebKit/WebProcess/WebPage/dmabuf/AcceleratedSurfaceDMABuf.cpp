@@ -28,7 +28,7 @@
 
 #if (PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM)))
 
-#include "AcceleratedBackingStoreDMABufMessages.h"
+#include "AcceleratedBackingStoreMessages.h"
 #include "AcceleratedSurfaceDMABufMessages.h"
 #include "ThreadedCompositor.h"
 #include "WebPage.h"
@@ -134,7 +134,7 @@ AcceleratedSurfaceDMABuf::RenderTarget::~RenderTarget()
     if (m_depthStencilBuffer)
         glDeleteRenderbuffers(1, &m_depthStencilBuffer);
 
-    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStoreDMABuf::DidDestroyBuffer(m_id), m_surfaceID);
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidDestroyBuffer(m_id), m_surfaceID);
 }
 
 #if ENABLE(DAMAGE_TRACKING)
@@ -175,16 +175,16 @@ void AcceleratedSurfaceDMABuf::RenderTarget::setReleaseFenceFD(UnixFileDescripto
 }
 
 #if USE(GBM)
-std::unique_ptr<AcceleratedSurfaceDMABuf::RenderTarget> AcceleratedSurfaceDMABuf::RenderTargetEGLImage::create(uint64_t surfaceID, const WebCore::IntSize& size, const BufferFormat& dmabufFormat)
+std::unique_ptr<AcceleratedSurfaceDMABuf::RenderTarget> AcceleratedSurfaceDMABuf::RenderTargetEGLImage::create(uint64_t surfaceID, const WebCore::IntSize& size, const BufferFormat& bufferFormat)
 {
-    if (!dmabufFormat.fourcc) {
+    if (!bufferFormat.fourcc) {
         WTFLogAlways("Failed to create GBM buffer of size %dx%d: no valid format found", size.width(), size.height());
         return nullptr;
     }
 
-    auto* device = dmabufFormat.drmDeviceNode ? dmabufFormat.drmDeviceNode->gbmDevice() : nullptr;
+    auto* device = bufferFormat.drmDeviceNode ? bufferFormat.drmDeviceNode->gbmDevice() : nullptr;
     if (!device) {
-        device = WebCore::DRMDeviceManager::singleton().mainGBMDeviceNode(dmabufFormat.usage == DMABufRendererBufferFormat::Usage::Scanout ?
+        device = WebCore::DRMDeviceManager::singleton().mainGBMDeviceNode(bufferFormat.usage == RendererBufferFormat::Usage::Scanout ?
             WebCore::DRMDeviceManager::NodeType::Primary : WebCore::DRMDeviceManager::NodeType::Render);
     }
     if (!device) {
@@ -193,15 +193,15 @@ std::unique_ptr<AcceleratedSurfaceDMABuf::RenderTarget> AcceleratedSurfaceDMABuf
     }
 
     struct gbm_bo* bo = nullptr;
-    uint32_t flags = dmabufFormat.usage == DMABufRendererBufferFormat::Usage::Scanout ? GBM_BO_USE_SCANOUT : GBM_BO_USE_RENDERING;
-    bool disableModifiers = dmabufFormat.modifiers.size() == 1 && dmabufFormat.modifiers[0] == DRM_FORMAT_MOD_INVALID;
-    if (!disableModifiers && !dmabufFormat.modifiers.isEmpty())
-        bo = gbm_bo_create_with_modifiers2(device, size.width(), size.height(), dmabufFormat.fourcc, dmabufFormat.modifiers.span().data(), dmabufFormat.modifiers.size(), flags);
+    uint32_t flags = bufferFormat.usage == RendererBufferFormat::Usage::Scanout ? GBM_BO_USE_SCANOUT : GBM_BO_USE_RENDERING;
+    bool disableModifiers = bufferFormat.modifiers.size() == 1 && bufferFormat.modifiers[0] == DRM_FORMAT_MOD_INVALID;
+    if (!disableModifiers && !bufferFormat.modifiers.isEmpty())
+        bo = gbm_bo_create_with_modifiers2(device, size.width(), size.height(), bufferFormat.fourcc, bufferFormat.modifiers.span().data(), bufferFormat.modifiers.size(), flags);
 
     if (!bo) {
-        if (dmabufFormat.usage == DMABufRendererBufferFormat::Usage::Mapping)
+        if (bufferFormat.usage == RendererBufferFormat::Usage::Mapping)
             flags |= GBM_BO_USE_LINEAR;
-        bo = gbm_bo_create(device, size.width(), size.height(), dmabufFormat.fourcc, flags);
+        bo = gbm_bo_create(device, size.width(), size.height(), bufferFormat.fourcc, flags);
     }
 
     if (!bo) {
@@ -263,10 +263,10 @@ std::unique_ptr<AcceleratedSurfaceDMABuf::RenderTarget> AcceleratedSurfaceDMABuf
         return nullptr;
     }
 
-    return makeUnique<RenderTargetEGLImage>(surfaceID, size, image, format, WTFMove(fds), WTFMove(offsets), WTFMove(strides), modifier, dmabufFormat.usage);
+    return makeUnique<RenderTargetEGLImage>(surfaceID, size, image, format, WTFMove(fds), WTFMove(offsets), WTFMove(strides), modifier, bufferFormat.usage);
 }
 
-AcceleratedSurfaceDMABuf::RenderTargetEGLImage::RenderTargetEGLImage(uint64_t surfaceID, const WebCore::IntSize& size, EGLImage image, uint32_t format, Vector<UnixFileDescriptor>&& fds, Vector<uint32_t>&& offsets, Vector<uint32_t>&& strides, uint64_t modifier, DMABufRendererBufferFormat::Usage usage)
+AcceleratedSurfaceDMABuf::RenderTargetEGLImage::RenderTargetEGLImage(uint64_t surfaceID, const WebCore::IntSize& size, EGLImage image, uint32_t format, Vector<UnixFileDescriptor>&& fds, Vector<uint32_t>&& offsets, Vector<uint32_t>&& strides, uint64_t modifier, RendererBufferFormat::Usage usage)
     : RenderTarget(surfaceID, size)
     , m_image(image)
 {
@@ -275,7 +275,7 @@ AcceleratedSurfaceDMABuf::RenderTargetEGLImage::RenderTargetEGLImage(uint64_t su
     glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER, m_image);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorBuffer);
 
-    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStoreDMABuf::DidCreateBuffer(m_id, size, format, WTFMove(fds), WTFMove(offsets), WTFMove(strides), modifier, usage), surfaceID);
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidCreateDMABufBuffer(m_id, size, format, WTFMove(fds), WTFMove(offsets), WTFMove(strides), modifier, usage), surfaceID);
 }
 
 AcceleratedSurfaceDMABuf::RenderTargetEGLImage::~RenderTargetEGLImage()
@@ -314,7 +314,7 @@ AcceleratedSurfaceDMABuf::RenderTargetSHMImage::RenderTargetSHMImage(uint64_t su
     glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, size.width(), size.height());
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorBuffer);
 
-    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStoreDMABuf::DidCreateBufferSHM(m_id, WTFMove(bitmapHandle)), surfaceID);
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidCreateSHMBuffer(m_id, WTFMove(bitmapHandle)), surfaceID);
 }
 
 AcceleratedSurfaceDMABuf::RenderTargetSHMImage::~RenderTargetSHMImage()
@@ -388,7 +388,7 @@ AcceleratedSurfaceDMABuf::RenderTargetTexture::RenderTargetTexture(uint64_t surf
 {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture, 0);
 
-    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStoreDMABuf::DidCreateBuffer(m_id, size, format, WTFMove(fds), WTFMove(offsets), WTFMove(strides), modifier, DMABufRendererBufferFormat::Usage::Rendering), surfaceID);
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidCreateDMABufBuffer(m_id, size, format, WTFMove(fds), WTFMove(offsets), WTFMove(strides), modifier, RendererBufferFormat::Usage::Rendering), surfaceID);
 }
 
 AcceleratedSurfaceDMABuf::RenderTargetTexture::~RenderTargetTexture()
@@ -422,7 +422,7 @@ AcceleratedSurfaceDMABuf::SwapChain::SwapChain(uint64_t surfaceID)
 }
 
 #if USE(GBM)
-void AcceleratedSurfaceDMABuf::SwapChain::setupBufferFormat(const Vector<DMABufRendererBufferFormat>& preferredFormats, bool isOpaque)
+void AcceleratedSurfaceDMABuf::SwapChain::setupBufferFormat(const Vector<RendererBufferFormat>& preferredFormats, bool isOpaque)
 {
     auto isOpaqueFormat = [](uint32_t fourcc) -> bool {
         return fourcc != DRM_FORMAT_ARGB8888
@@ -436,8 +436,8 @@ void AcceleratedSurfaceDMABuf::SwapChain::setupBufferFormat(const Vector<DMABufR
     };
 
     // The preferred formats vector is sorted by usage, but all formats for the same usage has the same priority.
-    Locker locker { m_dmabufFormatLock };
-    BufferFormat dmabufFormat;
+    Locker locker { m_bufferFormatLock };
+    BufferFormat newBufferFormat;
     const auto& supportedFormats = WebCore::PlatformDisplay::sharedDisplay().dmabufFormats();
     for (const auto& bufferFormat : preferredFormats) {
 
@@ -450,16 +450,16 @@ void AcceleratedSurfaceDMABuf::SwapChain::setupBufferFormat(const Vector<DMABufR
                 const auto& preferredFormat = bufferFormat.formats[index];
 
                 matchesOpacity = isOpaqueFormat(preferredFormat.fourcc) == isOpaque;
-                if (!matchesOpacity && dmabufFormat.fourcc)
+                if (!matchesOpacity && newBufferFormat.fourcc)
                     continue;
 
-                dmabufFormat.usage = bufferFormat.usage;
-                dmabufFormat.drmDevice = bufferFormat.drmDevice;
-                dmabufFormat.fourcc = preferredFormat.fourcc;
+                newBufferFormat.usage = bufferFormat.usage;
+                newBufferFormat.drmDevice = bufferFormat.drmDevice;
+                newBufferFormat.fourcc = preferredFormat.fourcc;
                 if (preferredFormat.modifiers[0] == DRM_FORMAT_MOD_INVALID)
-                    dmabufFormat.modifiers = preferredFormat.modifiers;
+                    newBufferFormat.modifiers = preferredFormat.modifiers;
                 else {
-                    dmabufFormat.modifiers = WTF::compactMap(preferredFormat.modifiers, [&format](uint64_t modifier) -> std::optional<uint64_t> {
+                    newBufferFormat.modifiers = WTF::compactMap(preferredFormat.modifiers, [&format](uint64_t modifier) -> std::optional<uint64_t> {
                         if (format.modifiers.contains(modifier))
                             return modifier;
                         return std::nullopt;
@@ -471,22 +471,22 @@ void AcceleratedSurfaceDMABuf::SwapChain::setupBufferFormat(const Vector<DMABufR
             }
         }
 
-        if (dmabufFormat.fourcc && matchesOpacity)
+        if (newBufferFormat.fourcc && matchesOpacity)
             break;
     }
 
-    if (!dmabufFormat.fourcc || dmabufFormat == m_dmabufFormat)
+    if (!newBufferFormat.fourcc || newBufferFormat == m_bufferFormat)
         return;
 
-    if (!dmabufFormat.drmDevice.isNull()) {
-        if (dmabufFormat.drmDevice == m_dmabufFormat.drmDevice)
-            dmabufFormat.drmDeviceNode = m_dmabufFormat.drmDeviceNode;
+    if (!newBufferFormat.drmDevice.isNull()) {
+        if (newBufferFormat.drmDevice == m_bufferFormat.drmDevice)
+            newBufferFormat.drmDeviceNode = m_bufferFormat.drmDeviceNode;
         else
-            dmabufFormat.drmDeviceNode = WebCore::DRMDeviceManager::singleton().deviceNode(dmabufFormat.drmDevice);
+            newBufferFormat.drmDeviceNode = WebCore::DRMDeviceManager::singleton().deviceNode(newBufferFormat.drmDevice);
     }
 
-    m_dmabufFormat = WTFMove(dmabufFormat);
-    m_dmabufFormatChanged = true;
+    m_bufferFormat = WTFMove(newBufferFormat);
+    m_bufferFormatChanged = true;
 }
 #endif
 
@@ -504,7 +504,7 @@ std::unique_ptr<AcceleratedSurfaceDMABuf::RenderTarget> AcceleratedSurfaceDMABuf
     switch (m_type) {
 #if USE(GBM)
     case Type::EGLImage:
-        return RenderTargetEGLImage::create(m_surfaceID, m_size, m_dmabufFormat);
+        return RenderTargetEGLImage::create(m_surfaceID, m_size, m_bufferFormat);
 #endif
     case Type::Texture:
         return RenderTargetTexture::create(m_surfaceID, m_size);
@@ -519,10 +519,10 @@ std::unique_ptr<AcceleratedSurfaceDMABuf::RenderTarget> AcceleratedSurfaceDMABuf
 AcceleratedSurfaceDMABuf::RenderTarget* AcceleratedSurfaceDMABuf::SwapChain::nextTarget()
 {
 #if USE(GBM)
-    Locker locker { m_dmabufFormatLock };
-    if (m_dmabufFormatChanged) {
+    Locker locker { m_bufferFormatLock };
+    if (m_bufferFormatChanged) {
         reset();
-        m_dmabufFormatChanged = false;
+        m_bufferFormatChanged = false;
     }
 #endif
 
@@ -617,7 +617,7 @@ void AcceleratedSurfaceDMABuf::releaseUnusedBuffersTimerFired()
 
 void AcceleratedSurfaceDMABuf::didCreateCompositingRunLoop(RunLoop& runLoop)
 {
-    m_releaseUnusedBuffersTimer = makeUnique<RunLoop::Timer>(runLoop, this, &AcceleratedSurfaceDMABuf::releaseUnusedBuffersTimerFired);
+    m_releaseUnusedBuffersTimer = makeUnique<RunLoop::Timer>(runLoop, "AcceleratedSurfaceDMABuf::ReleaseUnusedBuffersTimer"_s, this, &AcceleratedSurfaceDMABuf::releaseUnusedBuffersTimerFired);
 #if USE(GLIB_EVENT_LOOP)
     m_releaseUnusedBuffersTimer->setPriority(RunLoopSourcePriority::ReleaseUnusedResourcesTimer);
 #endif
@@ -679,14 +679,17 @@ void AcceleratedSurfaceDMABuf::didRenderFrame()
 
     Vector<WebCore::IntRect, 1> damageRects;
 #if ENABLE(DAMAGE_TRACKING)
-    m_target->setDamage(WebCore::Damage(m_size));
+    // For now, we use bounding box damage for render target damage, as its only 2 consumers so far
+    // (CoordinatedBackingStore & ThreadedCompositor) only fetch bounds. Thus having damage with
+    // better resolution is pointless as the bounds are the same in such case.
+    m_target->setDamage(WebCore::Damage(m_size, WebCore::Damage::Mode::BoundingBox));
     if (m_frameDamage) {
         damageRects = m_frameDamage->rects();
         m_frameDamage = std::nullopt;
     }
 #endif
 
-    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStoreDMABuf::Frame(m_target->id(), WTFMove(damageRects), WTFMove(renderingFence)), m_id);
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::Frame(m_target->id(), WTFMove(damageRects), WTFMove(renderingFence)), m_id);
 }
 
 #if ENABLE(DAMAGE_TRACKING)

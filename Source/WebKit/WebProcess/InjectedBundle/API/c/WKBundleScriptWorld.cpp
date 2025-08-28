@@ -66,6 +66,11 @@ void WKBundleScriptWorldDisableOverrideBuiltinsBehavior(WKBundleScriptWorldRef s
     WebKit::toImpl(scriptWorldRef)->disableOverrideBuiltinsBehavior();
 }
 
+void WKBundleScriptWorldSetAllowElementUserInfo(WKBundleScriptWorldRef scriptWorldRef)
+{
+    WebKit::toImpl(scriptWorldRef)->setAllowElementUserInfo();
+}
+
 WKStringRef WKBundleScriptWorldCopyName(WKBundleScriptWorldRef scriptWorldRef)
 {
     return WebKit::toCopiedAPI(WebKit::toImpl(scriptWorldRef)->name());

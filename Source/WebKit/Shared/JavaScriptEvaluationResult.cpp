@@ -28,24 +28,30 @@
 
 #include "APIArray.h"
 #include "APIDictionary.h"
+#include "APINodeInfo.h"
 #include "APINumber.h"
 #include "APISerializedScriptValue.h"
 #include "APIString.h"
 #include "WKSharedAPICast.h"
+#include "WebFrame.h"
+#include <WebCore/Document.h>
 #include <WebCore/ExceptionDetails.h>
+#include <WebCore/JSWebKitNodeInfo.h>
+#include <WebCore/JSWebKitSerializedNode.h>
+#include <WebCore/ScriptWrappableInlines.h>
 #include <WebCore/SerializedScriptValue.h>
 
 namespace WebKit {
 
-#if PLATFORM(COCOA)
+WTF_MAKE_STRUCT_TZONE_ALLOCATED_IMPL(JavaScriptEvaluationResult::Value);
 
-JavaScriptEvaluationResult::JavaScriptEvaluationResult(JSObjectID root, HashMap<JSObjectID, Variant>&& map)
+JavaScriptEvaluationResult::JavaScriptEvaluationResult(JSObjectID root, HashMap<JSObjectID, UniqueRef<Value>>&& map)
     : m_map(WTFMove(map))
     , m_root(root) { }
 
-RefPtr<API::Object> JavaScriptEvaluationResult::toAPI(Variant&& root)
+RefPtr<API::Object> JavaScriptEvaluationResult::toAPI(Value&& root)
 {
-    return WTF::switchOn(WTFMove(root), [] (NullType) -> RefPtr<API::Object> {
+    return WTF::switchOn(WTFMove(root.value), [] (EmptyType) -> RefPtr<API::Object> {
         return nullptr;
     }, [] (bool value) -> RefPtr<API::Object> {
         return API::Boolean::create(value);
@@ -63,13 +69,17 @@ RefPtr<API::Object> JavaScriptEvaluationResult::toAPI(Variant&& root)
         Ref dictionary = API::Dictionary::create();
         m_dictionaries.append({ WTFMove(map), dictionary });
         return { WTFMove(dictionary) };
+    }, [] (NodeInfo&&) -> RefPtr<API::Object> {
+        return nullptr;
+    }, [] (WebCore::SerializedNode&&) -> RefPtr<API::Object> {
+        return nullptr;
     });
 }
 
-WKRetainPtr<WKTypeRef> JavaScriptEvaluationResult::toWK()
+RefPtr<API::Object> JavaScriptEvaluationResult::toAPI()
 {
-    for (auto [identifier, variant] : std::exchange(m_map, { }))
-        m_instantiatedObjects.add(identifier, toAPI(WTFMove(variant)));
+    for (auto&& [identifier, value] : std::exchange(m_map, { }))
+        m_instantiatedObjects.add(identifier, toAPI(WTFMove(value.get())));
     for (auto [vector, array] : std::exchange(m_arrays, { })) {
         for (auto identifier : vector) {
             if (RefPtr object = m_instantiatedObjects.get(identifier))
@@ -87,7 +97,12 @@ WKRetainPtr<WKTypeRef> JavaScriptEvaluationResult::toWK()
             Ref { dictionary }->add(key->string(), WTFMove(value));
         }
     }
-    return WebKit::toAPI(std::exchange(m_instantiatedObjects, { }).take(m_root).get());
+    return std::exchange(m_instantiatedObjects, { }).take(m_root);
+}
+
+WKRetainPtr<WKTypeRef> JavaScriptEvaluationResult::toWK()
+{
+    return WebKit::toAPI(toAPI().get());
 }
 
 JSObjectID JavaScriptEvaluationResult::addObjectToMap(JSGlobalContextRef context, JSValueRef object)
@@ -95,7 +110,7 @@ JSObjectID JavaScriptEvaluationResult::addObjectToMap(JSGlobalContextRef context
     if (!object) {
         if (!m_nullObjectID) {
             m_nullObjectID = JSObjectID::generate();
-            m_map.add(*m_nullObjectID, Variant { NullType::NullPointer });
+            m_map.add(*m_nullObjectID, makeUniqueRef<Value>(Value { { EmptyType::Undefined } }));
         }
         return *m_nullObjectID;
     }
@@ -107,14 +122,22 @@ JSObjectID JavaScriptEvaluationResult::addObjectToMap(JSGlobalContextRef context
 
     auto identifier = JSObjectID::generate();
     m_jsObjectsInMap.set(WTFMove(value), identifier);
-    m_map.add(identifier, toVariant(context, object));
+    m_map.add(identifier, makeUniqueRef<Value>(toValue(context, object)));
     return identifier;
 }
 
-static std::optional<JSValueRef> roundTripThroughSerializedScriptValue(JSGlobalContextRef serializationContext, JSGlobalContextRef deserializationContext, JSValueRef value)
+static std::optional<std::pair<JSGlobalContextRef, JSValueRef>> roundTripThroughSerializedScriptValue(JSGlobalContextRef serializationContext, JSGlobalContextRef deserializationContext, JSValueRef value)
 {
+    // FIXME: Make the SerializedScriptValue roundtrip allow JSWebKitNodeInfo to allow arrays of WebKitNodeInfo.
+    auto* globalObject = ::toJS(serializationContext);
+    JSC::JSValue jsValue = ::toJS(globalObject, value);
+    if (auto* object = jsValue.isObject() ? jsValue.toObject(globalObject) : nullptr) {
+        if (object->inherits<WebCore::JSWebKitNodeInfo>() || object->inherits<WebCore::JSWebKitSerializedNode>())
+            return { { serializationContext, value } };
+    }
+
     if (RefPtr serialized = WebCore::SerializedScriptValue::create(serializationContext, value, nullptr))
-        return serialized->deserialize(deserializationContext, nullptr);
+        return { { deserializationContext, serialized->deserialize(deserializationContext, nullptr) } };
     return std::nullopt;
 }
 
@@ -125,49 +148,59 @@ std::optional<JavaScriptEvaluationResult> JavaScriptEvaluationResult::extract(JS
     auto result = roundTripThroughSerializedScriptValue(context, deserializationContext.get(), value);
     if (!result)
         return std::nullopt;
-    return { JavaScriptEvaluationResult { deserializationContext.get(), *result } };
+    return { JavaScriptEvaluationResult { result->first, result->second } };
 }
 
 // Similar to JSValue's valueToObjectWithoutCopy.
-auto JavaScriptEvaluationResult::toVariant(JSGlobalContextRef context, JSValueRef value) -> Variant
+auto JavaScriptEvaluationResult::toValue(JSGlobalContextRef context, JSValueRef value) -> Value
 {
     if (!JSValueIsObject(context, value)) {
         if (JSValueIsBoolean(context, value))
-            return JSValueToBoolean(context, value);
+            return { JSValueToBoolean(context, value) };
         if (JSValueIsNumber(context, value)) {
             value = JSValueMakeNumber(context, JSValueToNumber(context, value, 0));
-            return JSValueToNumber(context, value, 0);
+            return { JSValueToNumber(context, value, 0) };
         }
         if (JSValueIsString(context, value)) {
             auto* globalObject = ::toJS(context);
             JSC::JSValue jsValue = ::toJS(globalObject, value);
-            return jsValue.toWTFString(globalObject);
+            return { jsValue.toWTFString(globalObject) };
         }
         if (JSValueIsNull(context, value))
-            return NullType::NSNull;
-        return NullType::NullPointer;
+            return { EmptyType::Null };
+        return { EmptyType::Undefined };
     }
 
     JSObjectRef object = JSValueToObject(context, value, 0);
 
+    if (auto* info = jsDynamicCast<WebCore::JSWebKitNodeInfo*>(::toJS(::toJS(context), object))) {
+        Ref nodeInfo { info->wrapped() };
+        return { NodeInfo { nodeInfo->nodeIdentifier(), nodeInfo->contentFrameIdentifier() } };
+    }
+
+    if (auto* node = jsDynamicCast<WebCore::JSWebKitSerializedNode*>(::toJS(::toJS(context), object))) {
+        Ref serializedNode { node->wrapped() };
+        return { WebCore::SerializedNode { serializedNode->serializedNode() } };
+    }
+
     if (JSValueIsDate(context, object))
-        return Seconds(JSValueToNumber(context, object, 0) / 1000.0);
+        return { Seconds(JSValueToNumber(context, object, 0) / 1000.0) };
 
     if (JSValueIsArray(context, object)) {
         SUPPRESS_UNCOUNTED_ARG JSValueRef lengthPropertyName = JSValueMakeString(context, adopt(JSStringCreateWithUTF8CString("length")).get());
         JSValueRef lengthValue = JSObjectGetPropertyForKey(context, object, lengthPropertyName, nullptr);
         double lengthDouble = JSValueToNumber(context, lengthValue, nullptr);
         if (lengthDouble < 0 || lengthDouble > static_cast<double>(std::numeric_limits<size_t>::max()))
-            return NullType::NullPointer;
+            return { EmptyType::Undefined };
 
         size_t length = lengthDouble;
         Vector<JSObjectID> vector;
         if (!vector.tryReserveInitialCapacity(length))
-            return NullType::NullPointer;
+            return { EmptyType::Undefined };
 
         for (size_t i = 0; i < length; ++i)
             vector.append(addObjectToMap(context, JSObjectGetPropertyAtIndex(context, object, i, nullptr)));
-        return WTFMove(vector);
+        return { { WTFMove(vector) } };
     }
 
     JSPropertyNameArrayRef names = JSObjectCopyPropertyNames(context, object);
@@ -178,7 +211,7 @@ auto JavaScriptEvaluationResult::toVariant(JSGlobalContextRef context, JSValueRe
         SUPPRESS_UNCOUNTED_ARG map.add(addObjectToMap(context, JSValueMakeString(context, key.get())), addObjectToMap(context, JSObjectGetPropertyForKey(context, object, JSValueMakeString(context, key.get()), nullptr)));
     }
     JSPropertyNameArrayRelease(names);
-    return WTFMove(map);
+    return { { WTFMove(map) } };
 }
 
 JavaScriptEvaluationResult::JavaScriptEvaluationResult(JSGlobalContextRef context, JSValueRef value)
@@ -188,10 +221,15 @@ JavaScriptEvaluationResult::JavaScriptEvaluationResult(JSGlobalContextRef contex
     m_nullObjectID = std::nullopt;
 }
 
-JSValueRef JavaScriptEvaluationResult::toJS(JSGlobalContextRef context, Variant&& root)
+JSValueRef JavaScriptEvaluationResult::toJS(JSGlobalContextRef context, Value&& root)
 {
-    return WTF::switchOn(WTFMove(root), [&] (NullType) -> JSValueRef {
-        return JSValueMakeNull(context);
+    return WTF::switchOn(WTFMove(root.value), [&] (EmptyType emptyType) -> JSValueRef {
+        switch (emptyType) {
+        case EmptyType::Undefined:
+            return JSValueMakeUndefined(context);
+        case EmptyType::Null:
+            return JSValueMakeNull(context);
+        }
     }, [&] (bool value) -> JSValueRef {
         return JSValueMakeBoolean(context, value);
     }, [&] (double value) -> JSValueRef {
@@ -210,13 +248,29 @@ JSValueRef JavaScriptEvaluationResult::toJS(JSGlobalContextRef context, Variant&
         JSObjectRef dictionary = JSObjectMake(context, 0, 0);
         m_jsDictionaries.append({ WTFMove(map), Protected<JSObjectRef>(context, dictionary) });
         return dictionary;
+    }, [] (NodeInfo&&) -> JSValueRef {
+        // FIXME: Implement with checks for the element being in the expected frame.
+        return nullptr;
+    }, [&] (WebCore::SerializedNode&& serializedNode) -> JSValueRef {
+        auto* globalObject = ::toJS(context);
+        if (!globalObject->inherits<WebCore::JSDOMGlobalObject>()) {
+            ASSERT_NOT_REACHED();
+            return nullptr;
+        }
+        auto* domGlobalObject = jsCast<WebCore::JSDOMGlobalObject*>(globalObject);
+        RefPtr document = dynamicDowncast<WebCore::Document>(domGlobalObject->scriptExecutionContext());
+        if (!document) {
+            ASSERT_NOT_REACHED();
+            return nullptr;
+        }
+        return ::toRef(globalObject, WebCore::SerializedNode::deserialize(WTFMove(serializedNode), globalObject, domGlobalObject, *document));
     });
 }
 
 Protected<JSValueRef> JavaScriptEvaluationResult::toJS(JSGlobalContextRef context)
 {
-    for (auto [identifier, variant] : std::exchange(m_map, { }))
-        m_instantiatedJSObjects.add(identifier, Protected<JSValueRef>(context, toJS(context, WTFMove(variant))));
+    for (auto&& [identifier, value] : std::exchange(m_map, { }))
+        m_instantiatedJSObjects.add(identifier, Protected<JSValueRef>(context, toJS(context, WTFMove(value.get()))));
     for (auto& [vector, array] : std::exchange(m_jsArrays, { })) {
         JSObjectRef jsArray = JSValueToObject(context, array.get(), 0);
         for (size_t index = 0; index < vector.size(); ++index) {
@@ -243,41 +297,21 @@ Protected<JSValueRef> JavaScriptEvaluationResult::toJS(JSGlobalContextRef contex
     return std::exchange(m_instantiatedJSObjects, { }).take(m_root);
 }
 
-#else // PLATFORM(COCOA)
-
-Ref<API::SerializedScriptValue> JavaScriptEvaluationResult::legacySerializedScriptValue() const
-{
-    return API::SerializedScriptValue::createFromWireBytes(Vector(wireBytes()));
-}
-
-WKRetainPtr<WKTypeRef> JavaScriptEvaluationResult::toWK()
-{
-    return API::SerializedScriptValue::deserializeWK(legacySerializedScriptValue()->internalRepresentation());
-}
-
-Protected<JSValueRef> JavaScriptEvaluationResult::toJS(JSGlobalContextRef context)
-{
-    Ref serializedScriptValue = API::SerializedScriptValue::createFromWireBytes(wireBytes());
-    return Protected<JSValueRef>(context, serializedScriptValue->internalRepresentation().deserialize(context, nullptr));
-}
-
-JavaScriptEvaluationResult::JavaScriptEvaluationResult(JSGlobalContextRef context, JSValueRef value)
-    : m_valueFromJS(WebCore::SerializedScriptValue::create(context, value, nullptr))
-    , m_wireBytes(m_valueFromJS ? m_valueFromJS->wireBytes().span() : std::span<const uint8_t>())
-{
-}
-
-std::optional<JavaScriptEvaluationResult> JavaScriptEvaluationResult::extract(JSGlobalContextRef context, JSValueRef value)
-{
-    return JavaScriptEvaluationResult { context, value };
-}
-
-#endif // PLATFORM(COCOA)
-
 JavaScriptEvaluationResult::JavaScriptEvaluationResult(JavaScriptEvaluationResult&&) = default;
 
 JavaScriptEvaluationResult& JavaScriptEvaluationResult::operator=(JavaScriptEvaluationResult&&) = default;
 
 JavaScriptEvaluationResult::~JavaScriptEvaluationResult() = default;
+
+String JavaScriptEvaluationResult::toString() const
+{
+    auto it = m_map.find(m_root);
+    if (it == m_map.end())
+        return { };
+    auto* string = std::get_if<String>(&it->value->value);
+    if (!string)
+        return { };
+    return *string;
+}
 
 } // namespace WebKit

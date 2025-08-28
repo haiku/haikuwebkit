@@ -150,6 +150,10 @@ DECLARE_SYSTEM_HEADER
 #import <UIKit/UIView+SpatialComputing.h>
 #endif
 
+#if HAVE(UITOOLTIPINTERACTION)
+#import <UIKitMacHelper/UINSWindow.h>
+#endif
+
 #if PLATFORM(IOS)
 @interface UIWebClip(Staging_134304426)
 + (NSString *)pathForWebClipWithIdentifier:(NSString *)identifier;
@@ -161,6 +165,12 @@ DECLARE_SYSTEM_HEADER
 #endif
 
 #else // USE(APPLE_INTERNAL_SDK)
+
+#if HAVE(UITOOLTIPINTERACTION)
+@protocol UINSWindow <NSObject>
+@property (nonatomic, readonly, weak) NSObject *sceneView;
+@end
+#endif
 
 @interface UIWebClip : NSObject
 + (UIWebClip *)webClipWithIdentifier:(NSString *)identifier;
@@ -1062,6 +1072,21 @@ extern void _UIApplicationCatalystRequestViewServiceIdiomAndScaleFactor(UIUserIn
 
 #endif // USE(APPLE_INTERNAL_SDK)
 
+#if HAVE(UITOOLTIPINTERACTION)
+@interface NSObject (NSViewDynamicToolTipManager)
+@property (readonly) NSObject *_dynamicToolTipManager;
+- (void)windowChangedKeyState;
+@end
+
+@protocol UINSApplicationDelegate <NSObject>
+- (id<UINSWindow>)hostWindowForUIWindow:(id)window;
+@end
+
+WTF_EXTERN_C_BEGIN
+extern id<UINSApplicationDelegate> UINSSharedApplicationDelegate(void);
+WTF_EXTERN_C_END
+#endif
+
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
 typedef NS_ENUM(NSUInteger, _UIScrollDeviceCategory) {
     _UIScrollDeviceCategoryOverlayScroll = 6
@@ -1250,6 +1275,18 @@ typedef NS_ENUM(NSUInteger, _UIScrollDeviceCategory) {
 @interface UIWindowSceneGeometry (Staging_143004359)
 @property (nonatomic, readonly, getter=isInteractivelyResizing) BOOL interactivelyResizing;
 @end
+
+#if HAVE(LIQUID_GLASS)
+
+@interface _UIScrollPocket : UIView
+- (void)invalidateAllElements;
+@end
+
+@interface UIScrollView (ScrollPocket_IPI)
+- (_UIScrollPocket *)_pocketForEdge:(UIRectEdge)edge makeIfNeeded:(BOOL)makeIfNeeded;
+@end
+
+#endif // HAVE(LIQUID_GLASS)
 
 WTF_EXTERN_C_BEGIN
 

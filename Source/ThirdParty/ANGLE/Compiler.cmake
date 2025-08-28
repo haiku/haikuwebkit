@@ -211,9 +211,7 @@ set(angle_translator_sources
     "src/compiler/translator/tree_ops/glsl/RewriteRepeatedAssignToSwizzled.h"
     "src/compiler/translator/tree_ops/glsl/UseInterfaceBlockFields.h"
     "src/compiler/translator/tree_ops/glsl/apple/AddAndTrueToLoopCondition.h"
-    "src/compiler/translator/tree_ops/glsl/apple/RewriteDoWhile.h"
     "src/compiler/translator/tree_ops/glsl/apple/RewriteRowMajorMatrices.h"
-    "src/compiler/translator/tree_ops/glsl/apple/RewriteUnaryMinusOperatorFloat.h"
     "src/compiler/translator/tree_ops/glsl/apple/UnfoldShortCircuitAST.h"
     "src/compiler/translator/tree_ops/msl/EnsureLoopForwardProgress.h"
     "src/compiler/translator/tree_util/BuiltIn.h"
@@ -287,9 +285,7 @@ set(angle_translator_glsl_sources
 
 set(angle_translator_glsl_apple_sources
     "src/compiler/translator/tree_ops/glsl/apple/AddAndTrueToLoopCondition.cpp"
-    "src/compiler/translator/tree_ops/glsl/apple/RewriteDoWhile.cpp"
     "src/compiler/translator/tree_ops/glsl/apple/RewriteRowMajorMatrices.cpp"
-    "src/compiler/translator/tree_ops/glsl/apple/RewriteUnaryMinusOperatorFloat.cpp"
     "src/compiler/translator/tree_ops/glsl/apple/UnfoldShortCircuitAST.cpp"
 )
 

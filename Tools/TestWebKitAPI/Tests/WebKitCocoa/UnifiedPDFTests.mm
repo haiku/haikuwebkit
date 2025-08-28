@@ -226,6 +226,41 @@ UNIFIED_PDF_TEST(DictionaryLookupDoesNotAssertOnEmptyRange)
     [webView simulateImmediateAction:NSMakePoint(200, 200)];
 }
 
+UNIFIED_PDF_TEST(TabKeyOnPDFTextFieldShouldNotCrash)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 600, 600) configuration:configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
+    RetainPtr delegate = adoptNS([[ObserveWebContentCrashNavigationDelegate alloc] init]);
+    [webView setNavigationDelegate:delegate.get()];
+
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"test_form" withExtension:@"pdf"]];
+    [webView loadRequest:request.get()];
+
+    Util::waitFor([delegate] {
+        return [delegate webProcessCrashed] || [delegate navigationFinished];
+    });
+    EXPECT_FALSE([delegate webProcessCrashed]);
+
+    auto pressTabKey = [&](auto completionHandler) {
+        [webView sendKey:@"\t" code:0x30 isDown:YES modifiers:0];
+        [webView sendKey:@"\t" code:0x30 isDown:NO modifiers:0];
+        completionHandler();
+    };
+
+    auto testTabKeysAtPoint = [&](NSPoint point) {
+        [webView sendClickAtPoint:point];
+        [webView waitForNextPresentationUpdate];
+
+        bool doneWaiting = false;
+        pressTabKey([&doneWaiting] {
+            doneWaiting = true;
+        });
+        Util::run(&doneWaiting);
+        EXPECT_FALSE([delegate webProcessCrashed]);
+    };
+
+    testTabKeysAtPoint(NSMakePoint(220, 300));
+}
+
 #endif // PLATFORM(MAC)
 
 UNIFIED_PDF_TEST(SnapshotsPaintPageContent)

@@ -781,10 +781,6 @@ public:
     void setPaintContainmentApplies(bool value = true) { m_stateBitfields.setFlag(StateFlag::PaintContainmentApplies, value); }
     void setHasSVGTransform(bool value = true) { m_stateBitfields.setFlag(StateFlag::HasSVGTransform, value); }
 
-    // Hook so that RenderTextControl can return the line height of its inner renderer.
-    // For other renderers, the value is the same as lineHeight(false).
-    virtual int innerLineHeight() const;
-
     // used for element state updates that cannot be fixed with a
     // repaint and do not need a relayout
     virtual void updateFromElement() { }

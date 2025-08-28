@@ -527,6 +527,15 @@
 #define SUPPRESS_USE_AFTER_MOVE \
     IGNORE_CLANG_STATIC_ANALYZER_WARNINGS_ATTRIBUTE("cplusplus.Move")
 
+#define SUPPRESS_UNCHECKED_ARG \
+    IGNORE_CLANG_STATIC_ANALYZER_WARNINGS_ATTRIBUTE_ON_MEMBER("alpha.webkit.UncheckedCallArgsChecker")
+
+#define SUPPRESS_UNCHECKED_LOCAL \
+    IGNORE_CLANG_STATIC_ANALYZER_WARNINGS_ATTRIBUTE("alpha.webkit.UncheckedLocalVarsChecker")
+
+#define SUPPRESS_UNCHECKED_MEMBER \
+    IGNORE_CLANG_STATIC_ANALYZER_WARNINGS_ATTRIBUTE_ON_MEMBER("webkit.NoUncheckedPtrMemberChecker")
+
 #define SUPPRESS_UNCOUNTED_ARG \
     IGNORE_CLANG_STATIC_ANALYZER_WARNINGS_ATTRIBUTE_ON_MEMBER("alpha.webkit.UncountedCallArgsChecker")
 
@@ -665,3 +674,7 @@
 // Used to indicate that a class member has a specialized implementation in Swift. See
 // "SwiftCXXThunk.h".
 #define HAS_SWIFTCXX_THUNK  NS_REFINED_FOR_SWIFT
+
+// This comment is incremented each time we add or remove a modulemap file, to force
+// rebuild of all WTF's dependencies. This is a workaround for rdar://151920332.
+// Current increment: 2.

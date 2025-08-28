@@ -148,20 +148,27 @@ public:
         , m_padName(padName)
         , m_consumerIsVideoPlayer(consumerIsVideoPlayer)
     {
-        m_isIncomingVideoSource = m_track->source().isIncomingVideoSource();
+        auto& trackSource = m_track->source();
+        m_isIncomingVideoSource = trackSource.isIncomingVideoSource();
         m_isVideoTrack = m_track->isVideo();
+
+        ASCIILiteral namePrefix;
+        if (trackSource.isIncomingAudioSource() || m_isIncomingVideoSource)
+            namePrefix = "incoming-"_s;
+        else if (trackSource.isCaptureSource())
+            namePrefix = "capture-"_s;
 
         static uint64_t audioCounter = 0;
         static uint64_t videoCounter = 0;
         String elementName;
         if (track.isAudio()) {
             m_audioTrack = AudioTrackPrivateMediaStream::create(track);
-            elementName = makeString("audiosrc"_s, audioCounter);
+            elementName = makeString(namePrefix, "audiosrc"_s, audioCounter);
             audioCounter++;
         } else {
             RELEASE_ASSERT(m_isVideoTrack);
             m_videoTrack = VideoTrackPrivateMediaStream::create(track);
-            elementName = makeString("videosrc"_s, videoCounter);
+            elementName = makeString(namePrefix, "videosrc"_s, videoCounter);
             videoCounter++;
         }
 
@@ -222,6 +229,11 @@ public:
             }
             return GST_PAD_PROBE_OK;
         }), this, nullptr);
+
+        if (!trackSource.isIncomingAudioSource() && !trackSource.isIncomingVideoSource())
+            return;
+
+        connectIncomingTrack();
     }
 
     void replaceTrack(RefPtr<MediaStreamTrackPrivate>&& newTrack)
@@ -243,8 +255,10 @@ public:
     void connectIncomingTrack()
     {
 #if USE(GSTREAMER_WEBRTC)
-        if (!m_track)
+        if (!m_track) {
+            GST_WARNING_OBJECT(m_src.get(), "No track found!");
             return;
+        }
         auto& trackSource = m_track->source();
         int clientId;
         auto client = GRefPtr<GstElement>(m_src);
@@ -254,6 +268,7 @@ public:
                 GST_DEBUG_OBJECT(m_src.get(), "Incoming audio track already registered.");
                 return;
             }
+            GST_DEBUG_OBJECT(m_src.get(), "Registering incoming audio track");
             clientId = source.registerClient(WTFMove(client));
         } else {
             RELEASE_ASSERT(trackSource.isIncomingVideoSource());
@@ -262,6 +277,7 @@ public:
                 GST_DEBUG_OBJECT(m_src.get(), "Incoming video track already registered.");
                 return;
             }
+            GST_DEBUG_OBJECT(m_src.get(), "Registering incoming video track");
             clientId = source.registerClient(WTFMove(client));
         }
 
@@ -317,7 +333,7 @@ public:
         stopObserving();
 
         // Flushing unlocks the basesrc in case its hasn't emitted its first buffer yet.
-        if (m_src)
+        if (m_src && !m_hasPushedInitialSample)
             flush();
 
         if (m_src)
@@ -443,6 +459,7 @@ public:
             m_needsDiscont = false;
         }
 
+        m_hasPushedInitialSample = true;
         gst_app_src_push_sample(GST_APP_SRC(m_src.get()), sample.get());
     }
 
@@ -717,6 +734,7 @@ private:
     RefPtr<RealtimeMediaSource> m_trackSource;
     GRefPtr<GstElement> m_src;
     bool m_hasPushedInitialTags { false };
+    bool m_hasPushedInitialSample { false };
     bool m_enoughData { false };
     bool m_needsDiscont { false };
     String m_padName;
@@ -1083,6 +1101,8 @@ static void webkit_media_stream_src_class_init(WebKitMediaStreamSrcClass* klass)
     gst_element_class_add_pad_template(gstElementClass, gst_static_pad_template_get(&audioSrcTemplate));
 }
 
+static GRefPtr<GstStreamCollection> webkitMediaStreamSrcCreateStreamCollection(WebKitMediaStreamSrc* self);
+
 struct PadChainData {
     GRefPtr<GstStream> stream;
     WebKitMediaStreamSrc* element;
@@ -1106,10 +1126,11 @@ static GstFlowReturn webkitMediaStreamSrcChain(GstPad* pad, GstObject*, GstBuffe
         }
 
         // Make sure that the video.videoWidth is reset to 0.
-        webkitMediaStreamSrcEnsureStreamCollectionPosted(self);
+        auto streamCollection = webkitMediaStreamSrcCreateStreamCollection(self);
+        gst_pad_send_event(pad, gst_event_new_stream_collection(streamCollection.leakRef()));
 
         auto tags = mediaStreamTrackPrivateGetTags(source->track());
-        gst_pad_push_event(pad, gst_event_new_tag(tags.leakRef()));
+        gst_pad_send_event(pad, gst_event_new_tag(tags.leakRef()));
 
         {
             Locker locker { *source->eosLocker() };

@@ -311,6 +311,7 @@ set(WebKit_MESSAGES_IN_FILES
     UIProcess/Model/ModelProcessProxy
 
     UIProcess/Inspector/RemoteWebInspectorUIProxy
+    UIProcess/Inspector/WebInspectorBackendProxy
     UIProcess/Inspector/WebInspectorUIProxy
 
     UIProcess/Network/NetworkProcessProxy

@@ -30,6 +30,7 @@
 #include "ColorLuminance.h"
 #include "ColorSerialization.h"
 #include "ColorWellPart.h"
+#include "ContainerNodeInlines.h"
 #include "DeprecatedGlobalSettings.h"
 #include "Document.h"
 #include "FileList.h"
@@ -62,6 +63,7 @@
 #include "PaintInfo.h"
 #include "ProgressBarPart.h"
 #include "RenderMeter.h"
+#include "RenderElementInlines.h"
 #include "RenderProgress.h"
 #include "RenderStyleSetters.h"
 #include "RenderView.h"
@@ -1165,9 +1167,7 @@ Color RenderTheme::platformInactiveListBoxSelectionForegroundColor(OptionSet<Sty
 
 int RenderTheme::baselinePosition(const RenderBox& box) const
 {
-    if (box.isHorizontalWritingMode())
-        return box.height() + box.marginTop();
-    return (box.width() / 2.0f) + box.marginBefore();
+    return box.isHorizontalWritingMode() ? box.height() : LayoutUnit(box.width() / 2.0f);
 }
 
 bool RenderTheme::isControlContainer(StyleAppearance appearance) const
@@ -1729,11 +1729,8 @@ void RenderTheme::adjustSwitchStyle(RenderStyle& style, const Element*) const
 
 void RenderTheme::adjustSwitchThumbOrSwitchTrackStyle(RenderStyle& style) const
 {
-    GridPosition position;
-    position.setExplicitPosition(1, nullString());
-
-    style.setGridItemRowStart(position);
-    style.setGridItemColumnStart(position);
+    style.setGridItemRowStart(Style::GridPosition::Explicit { { 1 } });
+    style.setGridItemColumnStart(Style::GridPosition::Explicit { { 1 } });
 }
 
 Style::PaddingBox RenderTheme::popupInternalPaddingBox(const RenderStyle&) const

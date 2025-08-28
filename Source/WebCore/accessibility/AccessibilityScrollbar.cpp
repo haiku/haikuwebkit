@@ -36,15 +36,15 @@
 
 namespace WebCore {
 
-AccessibilityScrollbar::AccessibilityScrollbar(AXID axID, Scrollbar& scrollbar)
-    : AccessibilityMockObject(axID)
+AccessibilityScrollbar::AccessibilityScrollbar(AXID axID, Scrollbar& scrollbar, AXObjectCache& cache)
+    : AccessibilityMockObject(axID, cache)
     , m_scrollbar(scrollbar)
 {
 }
 
-Ref<AccessibilityScrollbar> AccessibilityScrollbar::create(AXID axID, Scrollbar& scrollbar)
+Ref<AccessibilityScrollbar> AccessibilityScrollbar::create(AXID axID, Scrollbar& scrollbar, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityScrollbar(axID, scrollbar));
+    return adoptRef(*new AccessibilityScrollbar(axID, scrollbar, cache));
 }
     
 LayoutRect AccessibilityScrollbar::elementRect() const

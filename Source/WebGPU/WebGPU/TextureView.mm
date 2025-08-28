@@ -64,12 +64,12 @@ id<MTLTexture> TextureView::parentTexture() const
 
 bool TextureView::previouslyCleared() const
 {
-    return Ref { m_parentTexture }->previouslyCleared(m_texture.parentRelativeLevel, m_texture.parentRelativeSlice);
+    return m_parentTexture->previouslyCleared(m_texture.parentRelativeLevel, m_texture.parentRelativeSlice);
 }
 
 void TextureView::setPreviouslyCleared(uint32_t mipLevel, uint32_t slice)
 {
-    Ref { m_parentTexture }->setPreviouslyCleared(m_texture.parentRelativeLevel + mipLevel, m_texture.parentRelativeSlice + slice);
+    m_parentTexture->setPreviouslyCleared(m_texture.parentRelativeLevel + mipLevel, m_texture.parentRelativeSlice + slice);
 }
 
 uint32_t TextureView::parentRelativeMipLevel() const
@@ -85,17 +85,17 @@ uint32_t TextureView::parentRelativeSlice() const
 
 uint32_t TextureView::width() const
 {
-    return Ref { m_parentTexture }->physicalMiplevelSpecificTextureExtent(baseMipLevel()).width;
+    return m_parentTexture->physicalMiplevelSpecificTextureExtent(baseMipLevel()).width;
 }
 
 uint32_t TextureView::height() const
 {
-    return Ref { m_parentTexture }->physicalMiplevelSpecificTextureExtent(baseMipLevel()).height;
+    return m_parentTexture->physicalMiplevelSpecificTextureExtent(baseMipLevel()).height;
 }
 
 uint32_t TextureView::depthOrArrayLayers() const
 {
-    return Ref { m_parentTexture }->physicalMiplevelSpecificTextureExtent(baseMipLevel()).depthOrArrayLayers;
+    return m_parentTexture->physicalMiplevelSpecificTextureExtent(baseMipLevel()).depthOrArrayLayers;
 }
 
 WGPUTextureUsageFlags TextureView::usage() const

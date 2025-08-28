@@ -26,20 +26,9 @@
 import Testing
 @_spi(Testing) import WebKit
 
-extension RangeReplaceableCollection {
-    fileprivate init<Failure>(
-        _ sequence: some AsyncSequence<Element, Failure>,
-        isolation: isolated (any Actor)? = #isolation
-    ) async throws(Failure) where Failure: Error {
-        self.init()
-
-        for try await element in sequence {
-            append(element)
-        }
-    }
-}
-
 private struct NeverLoadingSchemeHandler: URLSchemeHandler {
+    // This force unwrap is safe because the scheme is a static String.
+    // swift-format-ignore: NeverForceUnwrap
     @MainActor
     static let scheme = URLScheme("never-loading")!
 
@@ -55,7 +44,7 @@ struct WebPageNavigationTests {
         let page = WebPage()
 
         let html = "<html><div>Hello</div></html>"
-        let sequence = page.load(html: html, baseURL: .aboutBlank)
+        let sequence = page.load(html: html)
 
         let expected: [WebPage.NavigationEvent] = [.startedProvisionalNavigation, .committed, .finished]
         let actual = try await Array(sequence)
@@ -67,8 +56,7 @@ struct WebPageNavigationTests {
     func failedNavigationProducesExpectedNavigationError() async throws {
         let page = WebPage()
 
-        let request = URLRequest(url: URL(string: "about:foo")!)
-        let sequence = page.load(request)
+        let sequence = page.load(URL(string: "about:foo"))
 
         var actual: [WebPage.NavigationEvent] = []
         let expected: [WebPage.NavigationEvent] = [.startedProvisionalNavigation]
@@ -88,14 +76,12 @@ struct WebPageNavigationTests {
         configuration.urlSchemeHandlers[NeverLoadingSchemeHandler.scheme] = NeverLoadingSchemeHandler()
 
         let page = WebPage(configuration: configuration)
-        let sequence = page.load(URLRequest(url: URL(string: "never-loading:///index.html")!))
+        let sequence = page.load(URL(string: "never-loading:///index.html"))
 
         // FIXME: `#expect` should work here, but due to a Swift Testing issue causes the test to hang.
         do {
-            for try await event in sequence {
-                if event == .startedProvisionalNavigation {
-                    page.stopLoading()
-                }
+            for try await event in sequence where event == .startedProvisionalNavigation {
+                page.stopLoading()
             }
             Issue.record("Stopping page load should trigger an error and therefore the loop should never finish.")
         } catch {
@@ -110,7 +96,7 @@ struct WebPageNavigationTests {
         let page = WebPage(configuration: configuration)
 
         let allNavigations = page.navigations
-        let sequence = page.load(URLRequest(url: URL(string: "never-loading:///index.html")!))
+        let sequence = page.load(URL(string: "never-loading:///index.html"))
 
         var task: Task<Void, any Error>? = nil
 
@@ -150,14 +136,12 @@ struct WebPageNavigationTests {
         configuration.urlSchemeHandlers[NeverLoadingSchemeHandler.scheme] = NeverLoadingSchemeHandler()
 
         let page = WebPage(configuration: configuration)
-        let sequence = page.load(URLRequest(url: URL(string: "never-loading:///index.html")!))
+        let sequence = page.load(URL(string: "never-loading:///index.html"))
 
         // FIXME: `#expect` should work here, but a Swift Testing issue causes the test to hang.
         do {
-            for try await event in sequence {
-                if event == .startedProvisionalNavigation {
-                    page.terminateWebContentProcess()
-                }
+            for try await event in sequence where event == .startedProvisionalNavigation {
+                page.terminateWebContentProcess()
             }
             Issue.record("Terminating the web content process should trigger an error and therefore the loop should never finish.")
         } catch {
@@ -170,7 +154,7 @@ struct WebPageNavigationTests {
         let page = WebPage()
 
         let html = "<title>A title</title>"
-        page.load(html: html, baseURL: .aboutBlank)
+        page.load(html: html)
 
         // A timeout is used since observing the navigation sequence itself alters the outcome of this test.
         try await Task.sleep(for: .seconds(10))

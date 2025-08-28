@@ -33,6 +33,7 @@
 #include <utility>
 #include <wtf/FixedVector.h>
 #include <wtf/Markable.h>
+#include <wtf/RefCountedFixedVector.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/Vector.h>
 #include <wtf/text/AtomString.h>
@@ -60,7 +61,7 @@ template<typename T> inline constexpr ASCIILiteral SerializationSeparatorString 
 // Helper to define a type by extending another type via inheritance.
 #define DEFINE_TYPE_EXTENDER(wrapper, wrapped)                                \
     struct wrapper : wrapped {                                                \
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;                                       \
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(wrapper);                                       \
         using Wrapped = wrapped;                                              \
         using Wrapped::Wrapped;                                               \
         template<size_t I> friend const auto& get(const wrapper& self)        \
@@ -73,7 +74,7 @@ template<typename T> inline constexpr ASCIILiteral SerializationSeparatorString 
 // Helper to define a type via direct wrapping of another type.
 #define DEFINE_TYPE_WRAPPER(wrapper, wrapped)                                 \
     struct wrapper {                                                          \
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;                                       \
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(wrapper);                                       \
         using Wrapped = wrapped;                                              \
         wrapped value;                                                        \
         template<typename... Args>                                            \
@@ -135,6 +136,25 @@ template<typename T> inline constexpr ASCIILiteral SerializationSeparatorString 
 #define DEFINE_RANGE_LIKE_CONFORMANCE(t) \
     template<> inline constexpr auto WebCore::TreatAsRangeLike<t> = true;
 
+// Helper to define a range-like conformance and that the type should be serialized as space separated.
+#define DEFINE_SPACE_SEPARATED_RANGE_LIKE_CONFORMANCE(t) \
+    DEFINE_RANGE_LIKE_CONFORMANCE(t) \
+    template<> inline constexpr WebCore::SerializationSeparatorType WebCore::SerializationSeparator<t> = WebCore::SerializationSeparatorType::Space;
+
+// Helper to define a range-like conformance and that the type should be serialized as comma separated.
+#define DEFINE_COMMA_SEPARATED_RANGE_LIKE_CONFORMANCE(t) \
+    DEFINE_RANGE_LIKE_CONFORMANCE(t) \
+    template<> inline constexpr WebCore::SerializationSeparatorType WebCore::SerializationSeparator<t> = WebCore::SerializationSeparatorType::Comma;
+
+// Helper to define a range-like conformance and that the type should be serialized as slash separated.
+#define DEFINE_SLASH_SEPARATED_RANGE_LIKE_CONFORMANCE(t) \
+    DEFINE_RANGE_LIKE_CONFORMANCE(t) \
+    template<> inline constexpr WebCore::SerializationSeparatorType WebCore::SerializationSeparator<t> = WebCore::SerializationSeparatorType::Slash;
+
+// Helper to define an empty-like conformance for a type.
+#define DEFINE_EMPTY_LIKE_CONFORMANCE(t) \
+    template<> inline constexpr auto WebCore::TreatAsEmptyLike<t> = true;
+
 // MARK: - Conforming Existing Types
 
 // - Optional-like
@@ -167,7 +187,7 @@ template<CSSValueID C> TextStream& operator<<(TextStream& ts, const Constant<C>&
 
 // Helper type used to represent a CSS function.
 template<CSSValueID C, typename T> struct FunctionNotation {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(CustomIdentifier);
 
     static constexpr auto name = C;
     T parameters;
@@ -386,6 +406,135 @@ template<typename T> struct CommaSeparatedFixedVector {
 template<typename T> inline constexpr auto TreatAsRangeLike<CommaSeparatedFixedVector<T>> = true;
 template<typename T> inline constexpr auto SerializationSeparator<CommaSeparatedFixedVector<T>> = SerializationSeparatorType::Comma;
 
+// Wraps a variable (though known at construction) number of elements of a single type in a reference counted container, semantically marking them as serializing as "space separated".
+template<typename T> struct SpaceSeparatedRefCountedFixedVector {
+    using Container = WTF::RefCountedFixedVector<T>;
+    using const_iterator = typename Container::const_iterator;
+    using const_reverse_iterator = typename Container::const_reverse_iterator;
+    using value_type = typename Container::value_type;
+
+    SpaceSeparatedRefCountedFixedVector(Ref<Container>&& value)
+        : value { WTFMove(value) }
+    {
+    }
+
+    template<typename SizedRange, typename Mapper>
+    static SpaceSeparatedRefCountedFixedVector map(SizedRange&& range, NOESCAPE Mapper&& mapper)
+    {
+        auto size = range.size();
+        return Container::map(size, std::forward<SizedRange>(range), std::forward<Mapper>(mapper));
+    }
+
+    const_iterator begin() const { return value->begin(); }
+    const_iterator end() const { return value->end(); }
+    const_reverse_iterator rbegin() const { return value->rbegin(); }
+    const_reverse_iterator rend() const { return value->rend(); }
+
+    bool isEmpty() const { return value->isEmpty(); }
+    size_t size() const { return value->size(); }
+    const T& operator[](size_t i) const { return value.get()[i]; }
+
+    const T& first() const LIFETIME_BOUND { return value->first(); }
+    const T& last() const LIFETIME_BOUND { return value->last(); }
+
+    bool operator==(const SpaceSeparatedRefCountedFixedVector& other) const
+    {
+        return arePointingToEqualData(value, other.value);
+    }
+
+    Ref<Container> value;
+};
+
+template<typename T> inline constexpr auto TreatAsRangeLike<SpaceSeparatedRefCountedFixedVector<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<SpaceSeparatedRefCountedFixedVector<T>> = SerializationSeparatorType::Space;
+
+// Wraps a variable (though known at construction) number of elements of a single type in a reference counted container, semantically marking them as serializing as "comma separated".
+template<typename T> struct CommaSeparatedRefCountedFixedVector {
+    using Container = WTF::RefCountedFixedVector<T>;
+    using const_iterator = typename Container::const_iterator;
+    using const_reverse_iterator = typename Container::const_reverse_iterator;
+    using value_type = typename Container::value_type;
+
+    CommaSeparatedRefCountedFixedVector(Ref<Container>&& value)
+        : value { WTFMove(value) }
+    {
+    }
+
+    template<typename SizedRange, typename Mapper>
+    static CommaSeparatedRefCountedFixedVector map(SizedRange&& range, NOESCAPE Mapper&& mapper)
+    {
+        auto size = range.size();
+        return Container::map(size, std::forward<SizedRange>(range), std::forward<Mapper>(mapper));
+    }
+
+    const_iterator begin() const { return value->begin(); }
+    const_iterator end() const { return value->end(); }
+    const_reverse_iterator rbegin() const { return value->rbegin(); }
+    const_reverse_iterator rend() const { return value->rend(); }
+
+    bool isEmpty() const { return value->isEmpty(); }
+    size_t size() const { return value->size(); }
+    const T& operator[](size_t i) const { return value.get()[i]; }
+
+    const T& first() const LIFETIME_BOUND { return value->first(); }
+    const T& last() const LIFETIME_BOUND { return value->last(); }
+
+    bool operator==(const CommaSeparatedRefCountedFixedVector& other) const
+    {
+        return arePointingToEqualData(value, other.value);
+    }
+
+    Ref<Container> value;
+};
+
+template<typename T> inline constexpr auto TreatAsRangeLike<CommaSeparatedRefCountedFixedVector<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<CommaSeparatedRefCountedFixedVector<T>> = SerializationSeparatorType::Comma;
+
+// Wraps a `markable` type and enforces the invariant that it is either created with a non-empty value or the provided keyword.
+template<typename T, typename K, typename Traits = MarkableTraits<T>> struct ValueOrKeyword {
+    using Base = ValueOrKeyword<T, K, Traits>;
+    using Value = T;
+    using Keyword = K;
+
+    constexpr ValueOrKeyword(Keyword)
+    {
+    }
+
+    constexpr ValueOrKeyword(Value&& value)
+        : m_value { WTFMove(value) }
+    {
+    }
+
+    constexpr bool isKeyword() const { return !m_value; }
+    constexpr bool isValue() const { return !!m_value; }
+    constexpr std::optional<Value> tryValue() const { return m_value; }
+
+    template<typename U> bool holdsAlternative() const
+    {
+             if constexpr (std::same_as<U, Keyword>) return isKeyword();
+        else if constexpr (std::same_as<U, Value>)   return isValue();
+    }
+
+    template<typename... F> constexpr decltype(auto) switchOn(F&&... f) const
+    {
+        auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
+
+        if (isKeyword())
+            return visitor(Keyword { });
+        return visitor(*m_value);
+    }
+
+    constexpr bool operator==(const ValueOrKeyword&) const = default;
+
+private:
+    Markable<Value, Traits> m_value { };
+};
+
+template<typename T, typename K, typename Traits> inline constexpr auto TreatAsVariantLike<ValueOrKeyword<T, K, Traits>> = true;
+
+// Concept to constrain types to only those that derive from `ValueOrKeyword`.
+template<typename T> concept ValueOrKeywordDerived = WTF::IsBaseOfTemplate<ValueOrKeyword, T>::value;
+
 // Wraps a list and enforces the invariant that it is either created with a non-empty value or `CSS::Keyword::None`.
 template<typename T> struct ListOrNone {
     using List = T;
@@ -531,6 +680,11 @@ template<typename List, typename Defaulter> inline constexpr auto SerializationS
 
 // Concept to constrain types to only those that derive from `ListOrDefault`.
 template<typename T> concept ListOrDefaultDerived = WTF::IsBaseOfTemplate<ListOrDefault, T>::value;
+
+// Helper to define a range-like conformance for a type that derives from `ListOrDefault`.
+#define DEFINE_RANGE_LIKE_CONFORMANCE_FOR_LIST_OR_DEFAULT_DERIVED_TYPE(t) \
+    DEFINE_RANGE_LIKE_CONFORMANCE(t) \
+    template<> inline constexpr auto WebCore::SerializationSeparator<t> = WebCore::SerializationSeparator<typename t::List>;
 
 // Wraps a fixed size list of elements of a single type, semantically marking them as serializing as "space separated".
 template<typename T, size_t N> struct SpaceSeparatedArray {
@@ -801,6 +955,43 @@ template<size_t I, typename T> const auto& get(const SpaceSeparatedRectEdges<T>&
 template<typename T> inline constexpr auto TreatAsTupleLike<SpaceSeparatedRectEdges<T>> = true;
 template<typename T> inline constexpr auto SerializationSeparator<SpaceSeparatedRectEdges<T>> = SerializationSeparatorType::Space;
 
+// Wraps a quad of elements of a single type representing the edges of a rect, semantically marking them as serializing as "comma separated".
+template<typename T> struct CommaSeparatedRectEdges : RectEdges<T> {
+    using value_type = T;
+
+    constexpr CommaSeparatedRectEdges(T repeat)
+        : RectEdges<T> { repeat, repeat, repeat, repeat }
+    {
+    }
+
+    constexpr CommaSeparatedRectEdges(T top, T right, T bottom, T left)
+        : RectEdges<T> { WTFMove(top), WTFMove(right), WTFMove(bottom), WTFMove(left) }
+    {
+    }
+
+    constexpr CommaSeparatedRectEdges(RectEdges<T>&& rectEdges)
+        : RectEdges<T> { WTFMove(rectEdges) }
+    {
+    }
+
+    constexpr bool operator==(const CommaSeparatedRectEdges<T>&) const = default;
+};
+
+template<size_t I, typename T> const auto& get(const CommaSeparatedRectEdges<T>& rectEdges)
+{
+    if constexpr (!I)
+        return rectEdges.top();
+    else if constexpr (I == 1)
+        return rectEdges.right();
+    else if constexpr (I == 2)
+        return rectEdges.bottom();
+    else if constexpr (I == 3)
+        return rectEdges.left();
+}
+
+template<typename T> inline constexpr auto TreatAsTupleLike<CommaSeparatedRectEdges<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<CommaSeparatedRectEdges<T>> = SerializationSeparatorType::Comma;
+
 
 // A set of 4 values parsed and interpreted in the same manner as defined for the margin shorthand.
 //
@@ -950,6 +1141,18 @@ template<typename T> TextStream& operator<<(TextStream& ts, const CommaSeparated
     return ts;
 }
 
+template<typename T> TextStream& operator<<(TextStream& ts, const SpaceSeparatedRefCountedFixedVector<T>& value)
+{
+    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<SpaceSeparatedRefCountedFixedVector<T>>);
+    return ts;
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const CommaSeparatedRefCountedFixedVector<T>& value)
+{
+    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<CommaSeparatedRefCountedFixedVector<T>>);
+    return ts;
+}
+
 template<typename... Ts> TextStream& operator<<(TextStream& ts, const SpaceSeparatedTuple<Ts...>& value)
 {
     logForCSSOnTupleLike(ts, value, SerializationSeparatorString<SpaceSeparatedTuple<Ts...>>);
@@ -959,6 +1162,18 @@ template<typename... Ts> TextStream& operator<<(TextStream& ts, const SpaceSepar
 template<typename... Ts> TextStream& operator<<(TextStream& ts, const CommaSeparatedTuple<Ts...>& value)
 {
     logForCSSOnTupleLike(ts, value, SerializationSeparatorString<CommaSeparatedTuple<Ts...>>);
+    return ts;
+}
+
+template<typename T, size_t N> TextStream& operator<<(TextStream& ts, const SpaceSeparatedArray<T, N>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<SpaceSeparatedArray<T, N>>);
+    return ts;
+}
+
+template<typename T, size_t N> TextStream& operator<<(TextStream& ts, const CommaSeparatedArray<T, N>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<CommaSeparatedArray<T, N>>);
     return ts;
 }
 
@@ -1020,6 +1235,12 @@ public:
     using type = T;
 };
 
+template<typename T> class tuple_size<WebCore::CommaSeparatedRectEdges<T>> : public std::integral_constant<size_t, 4> { };
+template<size_t I, typename T> class tuple_element<I, WebCore::CommaSeparatedRectEdges<T>> {
+public:
+    using type = T;
+};
+
 template<typename T> class tuple_size<WebCore::MinimallySerializingSpaceSeparatedRectEdges<T>> : public std::integral_constant<size_t, 4> { };
 template<size_t I, typename T> class tuple_element<I, WebCore::MinimallySerializingSpaceSeparatedRectEdges<T>> {
 public:
@@ -1034,14 +1255,30 @@ public:
 
 } // namespace std
 
-template<typename T, size_t inlineCapacity>
-struct WTF::supports_text_stream_insertion<WebCore::SpaceSeparatedVector<T, inlineCapacity>> : supports_text_stream_insertion<T> { };
+namespace WTF {
 
 template<typename T, size_t inlineCapacity>
-struct WTF::supports_text_stream_insertion<WebCore::CommaSeparatedVector<T, inlineCapacity>> : supports_text_stream_insertion<T> { };
+struct supports_text_stream_insertion<WebCore::SpaceSeparatedVector<T, inlineCapacity>> : supports_text_stream_insertion<T> { };
+
+template<typename T, size_t inlineCapacity>
+struct supports_text_stream_insertion<WebCore::CommaSeparatedVector<T, inlineCapacity>> : supports_text_stream_insertion<T> { };
 
 template<typename T>
-struct WTF::supports_text_stream_insertion<WebCore::SpaceSeparatedFixedVector<T>> : supports_text_stream_insertion<T> { };
+struct supports_text_stream_insertion<WebCore::SpaceSeparatedFixedVector<T>> : supports_text_stream_insertion<T> { };
 
 template<typename T>
-struct WTF::supports_text_stream_insertion<WebCore::CommaSeparatedFixedVector<T>> : supports_text_stream_insertion<T> { };
+struct supports_text_stream_insertion<WebCore::CommaSeparatedFixedVector<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::SpaceSeparatedRefCountedFixedVector<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::CommaSeparatedRefCountedFixedVector<T>> : supports_text_stream_insertion<T> { };
+
+template<>
+struct MarkableTraits<WebCore::CustomIdentifier> {
+    static bool isEmptyValue(const WebCore::CustomIdentifier& value) { return value.value.isNull(); }
+    static WebCore::CustomIdentifier emptyValue() { return WebCore::CustomIdentifier { nullAtom() }; }
+};
+
+} // namespace WTF

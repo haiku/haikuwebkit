@@ -636,6 +636,8 @@ public:
 
     LayoutPoint scrollPositionRespectingCustomFixedPosition() const;
 
+    WEBCORE_EXPORT void clearObscuredInsetsAdjustmentsIfNeeded();
+    void obscuredInsetsWillChange(FloatBoxExtent&& delta);
     void obscuredContentInsetsDidChange(const FloatBoxExtent&);
 
     void topContentDirectionDidChange();
@@ -729,7 +731,7 @@ public:
 
     Color scrollbarThumbColorStyle() const final;
     Color scrollbarTrackColorStyle() const final;
-    ScrollbarGutter scrollbarGutterStyle() const final;
+    Style::ScrollbarGutter scrollbarGutterStyle() const final;
     ScrollbarWidth scrollbarWidthStyle() const final;
 
     void dequeueScrollableAreaForScrollAnchoringUpdate(ScrollableArea&);
@@ -782,6 +784,7 @@ public:
         AutoPreventLayerAccess(LocalFrameView*) { }
     };
 #endif
+    void scrollDidEnd() final;
 
 private:
     explicit LocalFrameView(LocalFrame&);

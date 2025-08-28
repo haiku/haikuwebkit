@@ -28,6 +28,7 @@
 
 #include "ClipRect.h"
 #include "ColorSerialization.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "ElementInlines.h"
 #include "FrameSelection.h"
@@ -77,6 +78,7 @@
 #include "ScriptDisallowedScope.h"
 #include "ShadowRoot.h"
 #include "StylePropertiesInlines.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/HexNumber.h>
 #include <wtf/Vector.h>
 #include <wtf/text/TextStream.h>
@@ -160,7 +162,7 @@ String quoteAndEscapeNonPrintables(StringView s)
     StringBuilder result;
     result.append('"');
     for (unsigned i = 0; i != s.length(); ++i) {
-        UChar c = s[i];
+        char16_t c = s[i];
         if (c == '\\') {
             result.append("\\\\"_s);
         } else if (c == '"') {
@@ -271,8 +273,8 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
                 && textStrokeColor != color && textStrokeColor != Color::transparentBlack)
                 ts << " [textStrokeColor="_s << serializationForRenderTreeAsText(textStrokeColor) << ']';
 
-            if (renderElement->parent()->style().textStrokeWidth() != renderElement->style().textStrokeWidth() && renderElement->style().textStrokeWidth() > 0)
-                ts << " [textStrokeWidth="_s << renderElement->style().textStrokeWidth() << ']';
+            if (renderElement->parent()->style().textStrokeWidth() != renderElement->style().textStrokeWidth() && renderElement->style().textStrokeWidth().isPositive())
+                ts << " [textStrokeWidth="_s << Style::evaluate(renderElement->style().textStrokeWidth()) << ']';
         }
 
         auto* box = dynamicDowncast<RenderBoxModelObject>(o);

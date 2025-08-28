@@ -55,7 +55,7 @@ list(APPEND WebKit_UNIFIED_SOURCE_LIST_FILES
 list(APPEND WebKit_MESSAGES_IN_FILES
     UIProcess/ViewGestureController
 
-    UIProcess/dmabuf/AcceleratedBackingStoreDMABuf
+    UIProcess/glib/AcceleratedBackingStore
 
     WebProcess/WebPage/ViewGestureGeometryCollector
 
@@ -70,7 +70,7 @@ endif ()
 
 list(APPEND WebKit_SERIALIZATION_IN_FILES
     Shared/glib/AvailableInputDevices.serialization.in
-    Shared/glib/DMABufRendererBufferFormat.serialization.in
+    Shared/glib/RendererBufferFormat.serialization.in
     Shared/glib/InputMethodState.serialization.in
     Shared/glib/RendererBufferTransportMode.serialization.in
     Shared/glib/SelectionData.serialization.in

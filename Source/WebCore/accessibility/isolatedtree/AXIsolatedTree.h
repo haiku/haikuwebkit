@@ -55,7 +55,7 @@ class AccessibilityObject;
 class Page;
 enum class AXStreamOptions : uint16_t;
 
-static constexpr uint16_t lastPropertyFlagIndex = 21;
+static constexpr uint16_t lastPropertyFlagIndex = 24;
 // The most common boolean properties are stored in a bitfield rather than in a HashMap.
 // If you edit these, make sure the corresponding AXProperty is ordered correctly in that
 // enum, and update lastPropertyFlagIndex above.
@@ -75,12 +75,16 @@ enum class AXPropertyFlag : uint32_t {
     IsKeyboardFocusable                           = 1 << 12,
     IsNonLayerSVGObject                           = 1 << 13,
     IsTableRow                                    = 1 << 14,
-    IsVisited                                     = 1 << 15,
-    SupportsCheckedState                          = 1 << 16,
-    SupportsDragging                              = 1 << 17,
-    SupportsExpanded                              = 1 << 18,
-    SupportsPath                                  = 1 << 19,
-    SupportsPosInSet                              = 1 << 20,
+    // These IsTextEmissionBehavior flags are the variants of enum TextEmissionBehavior.
+    IsTextEmissionBehaviorTab                     = 1 << 15,
+    IsTextEmissionBehaviorNewline                 = 1 << 16,
+    IsTextEmissionBehaviorDoubleNewline           = 1 << 17,
+    IsVisited                                     = 1 << 18,
+    SupportsCheckedState                          = 1 << 19,
+    SupportsDragging                              = 1 << 20,
+    SupportsExpanded                              = 1 << 21,
+    SupportsPath                                  = 1 << 22,
+    SupportsPosInSet                              = 1 << 23,
     SupportsSetSize                               = 1 << lastPropertyFlagIndex
 };
 
@@ -100,12 +104,15 @@ enum class AXProperty : uint16_t {
     IsKeyboardFocusable = 12,
     IsNonLayerSVGObject = 13,
     IsTableRow = 14,
-    IsVisited = 15,
-    SupportsCheckedState = 16,
-    SupportsDragging = 17,
-    SupportsExpanded = 18,
-    SupportsPath = 19,
-    SupportsPosInSet = 20,
+    IsTextEmissionBehaviorTab = 15,
+    IsTextEmissionBehaviorNewline = 16,
+    IsTextEmissionBehaviorDoubleNewline = 17,
+    IsVisited = 18,
+    SupportsCheckedState = 19,
+    SupportsDragging = 20,
+    SupportsExpanded = 21,
+    SupportsPath = 22,
+    SupportsPosInSet = 23,
     SupportsSetSize = lastPropertyFlagIndex,
     // End bool attributes that are matched in order by AXPropertyFlag.
 
@@ -172,7 +179,6 @@ enum class AXProperty : uint16_t {
     IsSubscript,
     IsSuperscript,
     HasTextShadow,
-    HasUnderline,
     HorizontalScrollBar,
     IdentifierAttribute,
     IncrementButton,
@@ -273,7 +279,6 @@ enum class AXProperty : uint16_t {
     SupportsDropping,
     SupportsARIAOwns,
     SupportsCurrent,
-    SupportsDatetimeAttribute,
     SupportsExpandedTextValue,
     SupportsKeyShortcuts,
     TextContentPrefixFromListMarker,
@@ -282,7 +287,6 @@ enum class AXProperty : uint16_t {
     // synthesize it on-the-fly using AXProperty::TextRuns.
     TextContent,
 #endif // !ENABLE(AX_THREAD_TEXT_APIS)
-    TextEmissionBehavior,
     TextInputMarkedTextMarkerRange,
 #if ENABLE(AX_THREAD_TEXT_APIS)
     TextRuns,
@@ -316,7 +320,6 @@ using AXPropertyValueVariant = Variant<std::nullptr_t, Markable<AXID>, String, b
     , RetainPtr<CTFontRef>
     , FontOrientation
     , std::shared_ptr<AXTextRuns>
-    , TextEmissionBehavior
     , AXTextRunLineID
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 >;
@@ -418,7 +421,15 @@ public:
     std::optional<AXID> focusedNodeID();
     WEBCORE_EXPORT RefPtr<AXIsolatedObject> focusedNode();
 
-    AXIsolatedObject* objectForID(AXID) const;
+    inline AXIsolatedObject* objectForID(AXID axID) const
+    {
+        ASSERT(!isMainThread());
+
+        auto iterator = m_readerThreadNodeMap.find(axID);
+        if (iterator != m_readerThreadNodeMap.end())
+            return iterator->value.ptr();
+        return nullptr;
+    }
     inline AXIsolatedObject* objectForID(std::optional<AXID> axID) const
     {
         return axID ? objectForID(*axID) : nullptr;
@@ -633,7 +644,7 @@ private:
     Markable<AXID> m_pendingRootNodeID WTF_GUARDED_BY_LOCK(m_changeLogLock);
     Vector<NodeChange> m_pendingAppends WTF_GUARDED_BY_LOCK(m_changeLogLock); // Nodes to be added to the tree and platform-wrapped.
     Vector<AXPropertyChange> m_pendingPropertyChanges WTF_GUARDED_BY_LOCK(m_changeLogLock);
-    Vector<AXID> m_pendingSubtreeRemovals WTF_GUARDED_BY_LOCK(m_changeLogLock); // Nodes whose subtrees are to be removed from the tree.
+    HashSet<AXID> m_pendingSubtreeRemovals WTF_GUARDED_BY_LOCK(m_changeLogLock); // Nodes whose subtrees are to be removed from the tree.
     Vector<std::pair<AXID, Vector<AXID>>> m_pendingChildrenUpdates WTF_GUARDED_BY_LOCK(m_changeLogLock);
     HashSet<AXID> m_pendingProtectedFromDeletionIDs WTF_GUARDED_BY_LOCK(m_changeLogLock);
     HashMap<AXID, AXID> m_pendingParentUpdates WTF_GUARDED_BY_LOCK(m_changeLogLock);

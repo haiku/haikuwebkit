@@ -44,8 +44,6 @@ DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleRareNonInheritedData);
 StyleRareNonInheritedData::StyleRareNonInheritedData()
     : containIntrinsicWidth(RenderStyle::initialContainIntrinsicWidth())
     , containIntrinsicHeight(RenderStyle::initialContainIntrinsicHeight())
-    , perspectiveOriginX(RenderStyle::initialPerspectiveOriginX())
-    , perspectiveOriginY(RenderStyle::initialPerspectiveOriginY())
     , lineClamp(RenderStyle::initialLineClamp())
     , zoom(RenderStyle::initialZoom())
     , maxLines(RenderStyle::initialMaxLines())
@@ -58,7 +56,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , backdropFilter(StyleFilterData::create())
     , grid(StyleGridData::create())
     , gridItem(StyleGridItemData::create())
-    // clip
+    , clip(RenderStyle::initialClip())
     // scrollMargin
     // scrollPadding
     // counterDirectives
@@ -70,6 +68,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , shapeMargin(RenderStyle::initialShapeMargin())
     , shapeImageThreshold(RenderStyle::initialShapeImageThreshold())
     , perspective(RenderStyle::initialPerspective())
+    , perspectiveOrigin(RenderStyle::initialPerspectiveOrigin())
     , clipPath(RenderStyle::initialClipPath())
     , textDecorationColor(RenderStyle::initialTextDecorationColor())
     , customProperties(Style::CustomPropertyData::create())
@@ -96,7 +95,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , viewTimelineAxes(RenderStyle::initialViewTimelineAxes())
     , viewTimelineNames(RenderStyle::initialViewTimelineNames())
     // timelineScope
-    // scrollbarGutter
+    , scrollbarGutter(RenderStyle::initialScrollbarGutter())
     // scrollSnapType
     // scrollSnapAlign
     // scrollSnapStop
@@ -116,7 +115,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , transformStyle3D(static_cast<unsigned>(RenderStyle::initialTransformStyle3D()))
     , transformStyleForcedToFlat(false)
     , backfaceVisibility(static_cast<unsigned>(RenderStyle::initialBackfaceVisibility()))
-    , useSmoothScrolling(static_cast<unsigned>(RenderStyle::initialUseSmoothScrolling()))
+    , scrollBehavior(static_cast<unsigned>(RenderStyle::initialScrollBehavior()))
     , textDecorationStyle(static_cast<unsigned>(RenderStyle::initialTextDecorationStyle()))
     , textGroupAlign(static_cast<unsigned>(RenderStyle::initialTextGroupAlign()))
     , contentVisibility(static_cast<unsigned>(RenderStyle::initialContentVisibility()))
@@ -133,7 +132,6 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , containerType(static_cast<unsigned>(RenderStyle::initialContainerType()))
     , textBoxTrim(static_cast<unsigned>(RenderStyle::initialTextBoxTrim()))
     , overflowAnchor(static_cast<unsigned>(RenderStyle::initialOverflowAnchor()))
-    , hasClip(false)
     , positionTryOrder(static_cast<unsigned>(RenderStyle::initialPositionTryOrder()))
     , positionVisibility(RenderStyle::initialPositionVisibility().toRaw())
     , fieldSizing(static_cast<unsigned>(RenderStyle::initialFieldSizing()))
@@ -152,8 +150,6 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     : RefCounted<StyleRareNonInheritedData>()
     , containIntrinsicWidth(o.containIntrinsicWidth)
     , containIntrinsicHeight(o.containIntrinsicHeight)
-    , perspectiveOriginX(o.perspectiveOriginX)
-    , perspectiveOriginY(o.perspectiveOriginY)
     , lineClamp(o.lineClamp)
     , zoom(o.zoom)
     , maxLines(o.maxLines)
@@ -178,6 +174,7 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , shapeMargin(o.shapeMargin)
     , shapeImageThreshold(o.shapeImageThreshold)
     , perspective(o.perspective)
+    , perspectiveOrigin(o.perspectiveOrigin)
     , clipPath(o.clipPath)
     , textDecorationColor(o.textDecorationColor)
     , customProperties(o.customProperties)
@@ -224,7 +221,7 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , transformStyle3D(o.transformStyle3D)
     , transformStyleForcedToFlat(o.transformStyleForcedToFlat)
     , backfaceVisibility(o.backfaceVisibility)
-    , useSmoothScrolling(o.useSmoothScrolling)
+    , scrollBehavior(o.scrollBehavior)
     , textDecorationStyle(o.textDecorationStyle)
     , textGroupAlign(o.textGroupAlign)
     , contentVisibility(o.contentVisibility)
@@ -241,7 +238,6 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , containerType(o.containerType)
     , textBoxTrim(o.textBoxTrim)
     , overflowAnchor(o.overflowAnchor)
-    , hasClip(o.hasClip)
     , positionTryOrder(o.positionTryOrder)
     , positionVisibility(o.positionVisibility)
     , fieldSizing(o.fieldSizing)
@@ -267,8 +263,6 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
 {
     return containIntrinsicWidth == o.containIntrinsicWidth
         && containIntrinsicHeight == o.containIntrinsicHeight
-        && perspectiveOriginX == o.perspectiveOriginX
-        && perspectiveOriginY == o.perspectiveOriginY
         && lineClamp == o.lineClamp
         && zoom == o.zoom
         && maxLines == o.maxLines
@@ -293,6 +287,7 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && shapeMargin == o.shapeMargin
         && shapeImageThreshold == o.shapeImageThreshold
         && perspective == o.perspective
+        && perspectiveOrigin == o.perspectiveOrigin
         && clipPath == o.clipPath
         && textDecorationColor == o.textDecorationColor
         && customProperties == o.customProperties
@@ -337,7 +332,7 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && transformStyle3D == o.transformStyle3D
         && transformStyleForcedToFlat == o.transformStyleForcedToFlat
         && backfaceVisibility == o.backfaceVisibility
-        && useSmoothScrolling == o.useSmoothScrolling
+        && scrollBehavior == o.scrollBehavior
         && textDecorationStyle == o.textDecorationStyle
         && textGroupAlign == o.textGroupAlign
         && effectiveBlendMode == o.effectiveBlendMode
@@ -356,7 +351,6 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && overflowAnchor == o.overflowAnchor
         && viewTransitionClasses == o.viewTransitionClasses
         && viewTransitionName == o.viewTransitionName
-        && hasClip == o.hasClip
         && positionTryOrder == o.positionTryOrder
         && positionVisibility == o.positionVisibility
         && fieldSizing == o.fieldSizing
@@ -404,9 +398,6 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
     LOG_IF_DIFFERENT(containIntrinsicWidth);
     LOG_IF_DIFFERENT(containIntrinsicHeight);
 
-    LOG_IF_DIFFERENT(perspectiveOriginX);
-    LOG_IF_DIFFERENT(perspectiveOriginY);
-
     LOG_IF_DIFFERENT(lineClamp);
 
     LOG_IF_DIFFERENT(zoom);
@@ -436,7 +427,9 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
 
     LOG_IF_DIFFERENT(shapeMargin);
     LOG_IF_DIFFERENT(shapeImageThreshold);
+
     LOG_IF_DIFFERENT(perspective);
+    LOG_IF_DIFFERENT(perspectiveOrigin);
 
     LOG_IF_DIFFERENT(clipPath);
 
@@ -506,7 +499,7 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
     LOG_IF_DIFFERENT_WITH_CAST(bool, transformStyleForcedToFlat);
     LOG_IF_DIFFERENT_WITH_CAST(BackfaceVisibility, backfaceVisibility);
 
-    LOG_IF_DIFFERENT_WITH_CAST(ScrollBehavior, useSmoothScrolling);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::ScrollBehavior, scrollBehavior);
     LOG_IF_DIFFERENT_WITH_CAST(TextDecorationStyle, textDecorationStyle);
     LOG_IF_DIFFERENT_WITH_CAST(TextGroupAlign, textGroupAlign);
 
@@ -529,7 +522,6 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
     LOG_IF_DIFFERENT_WITH_CAST(ContainerType, containerType);
     LOG_IF_DIFFERENT_WITH_CAST(TextBoxTrim, textBoxTrim);
     LOG_IF_DIFFERENT_WITH_CAST(OverflowAnchor, overflowAnchor);
-    LOG_IF_DIFFERENT_WITH_CAST(bool, hasClip);
     LOG_IF_DIFFERENT_WITH_CAST(Style::PositionTryOrder, positionTryOrder);
     LOG_IF_DIFFERENT(fieldSizing);
 

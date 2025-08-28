@@ -22,6 +22,7 @@
 #if ENABLE(WEB_RTC) && USE(GSTREAMER_WEBRTC)
 #include "GStreamerWebRTCUtils.h"
 
+#include "ExceptionOr.h"
 #include "GStreamerRegistryScanner.h"
 #include "OpenSSLCryptoUniquePtr.h"
 #include "RTCIceCandidate.h"
@@ -1002,7 +1003,9 @@ bool sdpMediaHasRTPHeaderExtension(const GstSDPMedia* media, const String& uri)
 
 GRefPtr<GstCaps> extractMidAndRidFromRTPBuffer(const GstMappedRtpBuffer& buffer, const GstSDPMessage* sdp)
 {
+    ensureDebugCategoryInitialized();
     unsigned totalMedias = gst_sdp_message_medias_len(sdp);
+    GST_DEBUG("Looking for mid and rid ext ids in %u SDP medias", totalMedias);
     for (unsigned i = 0; i < totalMedias; i++) {
         const auto media = gst_sdp_message_get_media(sdp, i);
         auto mediaCaps = adoptGRef(gst_caps_new_empty_simple("application/x-rtp"));

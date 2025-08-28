@@ -40,6 +40,7 @@
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
 #include "ElementInlines.h"
+#include "EventTargetInlines.h"
 #include "ForcedAccessibilityValue.h"
 #include "FrameLoadRequest.h"
 #include "FrameLoader.h"

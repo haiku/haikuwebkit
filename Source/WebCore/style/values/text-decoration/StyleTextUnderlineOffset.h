@@ -34,6 +34,7 @@ namespace Style {
 struct TextUnderlineOffset : LengthWrapperBase<LengthPercentage<>, CSS::Keyword::Auto> {
     using Base::Base;
 
+    float resolve(const RenderStyle&, float autoValue = 0.0f) const;
     float resolve(float fontSize, float autoValue = 0.0f) const;
 };
 
@@ -47,4 +48,4 @@ template<> struct Blending<TextUnderlineOffset> {
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::TextUnderlineOffset> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::TextUnderlineOffset)

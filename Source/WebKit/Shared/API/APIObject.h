@@ -52,7 +52,7 @@ class Object
 {
     WTF_MAKE_NONCOPYABLE(Object);
 public:
-    enum class Type {
+    enum class Type : uint8_t {
         // Base types
         Null = 0,
         Array,
@@ -149,6 +149,7 @@ public:
         NavigationAction,
         NavigationData,
         NavigationResponse,
+        NodeInfo,
         Notification,
         NotificationManager,
         NotificationPermissionRequest,
@@ -170,6 +171,7 @@ public:
         RunJavaScriptAlertResultListener,
         RunJavaScriptConfirmResultListener,
         RunJavaScriptPromptResultListener,
+        SerializedNode,
         SpeechRecognitionPermissionCallback,
         TextChecker,
         TextRun,

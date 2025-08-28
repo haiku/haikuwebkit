@@ -213,7 +213,6 @@ public:
     WebCore::SWServer* swServer() { return m_swServer.get(); }
     WebCore::SWServer& ensureSWServer();
     Ref<WebCore::SWServer> ensureProtectedSWServer();
-    WebSWOriginStore* swOriginStore() const; // FIXME: Can be private?
     void registerSWServerConnection(WebSWServerConnection&);
     void unregisterSWServerConnection(WebSWServerConnection&);
 
@@ -306,6 +305,7 @@ protected:
     NetworkSession(NetworkProcess&, const NetworkSessionCreationParameters&);
 
     void forwardResourceLoadStatisticsSettings();
+    WebSWOriginStore* swOriginStore() const;
 
     // SWServerDelegate
     void softUpdate(WebCore::ServiceWorkerJobData&&, bool shouldRefreshCache, WebCore::ResourceRequest&&, CompletionHandler<void(WebCore::WorkerFetchResult&&)>&&) final;

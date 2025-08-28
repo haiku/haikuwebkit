@@ -25,6 +25,7 @@
 #pragma once
 
 #include "EventTarget.h"
+#include "NodeIdentifier.h"
 #include "RenderStyleConstants.h"
 #include "StyleValidity.h"
 #include <compare>
@@ -76,6 +77,8 @@ class TouchEvent;
 class TreeScope;
 class WebCoreOpaqueRoot;
 
+struct SerializedNode;
+
 enum class TextDirection : bool;
 
 template<typename T> class ExceptionOr;
@@ -89,6 +92,8 @@ struct PseudoElementIdentifier;
 WTF_ALLOW_COMPACT_POINTERS_TO_INCOMPLETE_TYPE(WebCore::NodeRareData);
 
 namespace WebCore {
+
+class JSDOMGlobalObject;
 
 enum class MutationObserverOptionType : uint8_t;
 enum class TaskSource : uint8_t;
@@ -191,9 +196,10 @@ public:
         SelfWithTemplateContent,
         Everything,
     };
-    virtual Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) = 0;
-    Ref<Node> cloneNode(bool deep);
-    WEBCORE_EXPORT ExceptionOr<Ref<Node>> cloneNodeForBindings(bool deep);
+    virtual Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) const = 0;
+    virtual SerializedNode serializeNode(CloningOperation) const = 0;
+    Ref<Node> cloneNode(bool deep) const;
+    WEBCORE_EXPORT ExceptionOr<Ref<Node>> cloneNodeForBindings(bool deep) const;
 
     virtual const AtomString& localName() const;
     virtual const AtomString& namespaceURI() const;
@@ -493,7 +499,7 @@ public:
     inline RenderBoxModelObject* renderBoxModelObject() const; // Defined in NodeInlines.h
 
     // Wrapper for nodes that don't have a renderer, but still cache the style (like HTMLOptionElement).
-    inline const RenderStyle* renderStyle() const;
+    inline const RenderStyle* renderStyle() const; // Defined in NodeRenderStyle.h
 
     WEBCORE_EXPORT const RenderStyle* computedStyle();
     virtual const RenderStyle* computedStyle(const std::optional<Style::PseudoElementIdentifier>&);
@@ -611,6 +617,9 @@ public:
     bool containsSelectionEndPoint() const { return hasStateFlag(StateFlag::ContainsSelectionEndPoint); }
     void setContainsSelectionEndPoint(bool value) { setStateFlag(StateFlag::ContainsSelectionEndPoint, value); }
 
+    WEBCORE_EXPORT NodeIdentifier nodeIdentifier() const;
+    WEBCORE_EXPORT static Node* fromIdentifier(NodeIdentifier);
+
 protected:
     enum class TypeFlag : uint16_t {
         IsCharacterData = 1 << 0,
@@ -645,7 +654,7 @@ protected:
         ContainsOnlyASCIIWhitespaceIsValid = 1 << 8, // Only used on CharacterData.
         HasHeldBackChildrenChanged = 1 << 9,
         ContainsSelectionEndPoint = 1 << 10,
-        HasElementIdentifier = 1 << 11,
+        HasNodeIdentifier = 1 << 11,
         IsUserActionElement = 1 << 12,
         IsInCustomElementReactionQueue = 1 << 13,
         UsesNullCustomElementRegistry = 1 << 14,

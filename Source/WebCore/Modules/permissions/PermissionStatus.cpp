@@ -26,8 +26,8 @@
 #include "config.h"
 #include "PermissionStatus.h"
 
-#include "ContextDestructionObserverInlines.h"
 #include "ClientOrigin.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "EventNames.h"

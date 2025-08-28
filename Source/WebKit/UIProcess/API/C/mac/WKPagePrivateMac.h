@@ -68,6 +68,7 @@ WK_EXPORT WKWebView *WKPageGetWebView(WKPageRef page);
 
 @class NSDictionary;
 WK_EXPORT NSDictionary *WKPageGetAccessibilityWebProcessDebugInfo(WKPageRef page);
+WK_EXPORT void WKPageAccessibilityClearIsolatedTree(WKPageRef page);
 
 #endif // __OBJC__
 

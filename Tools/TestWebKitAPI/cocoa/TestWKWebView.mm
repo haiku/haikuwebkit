@@ -1262,6 +1262,20 @@ static UIWindowScene *windowScene()
     return samples;
 }
 
+- (RetainPtr<_WKFrameTreeNode>)frameTree
+{
+    __block RetainPtr<_WKFrameTreeNode> result;
+    __block bool isDone = false;
+
+    [self _frames:^(_WKFrameTreeNode *tree) {
+        result = tree;
+        isDone = true;
+    }];
+    TestWebKitAPI::Util::run(&isDone);
+
+    return result;
+}
+
 #if PLATFORM(IOS_FAMILY)
 
 - (NSString *)textForSpeakSelection

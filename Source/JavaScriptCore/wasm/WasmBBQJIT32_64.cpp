@@ -3712,35 +3712,6 @@ void BBQJIT::emitLoad(TypeKind type, Location src, Location dst)
     }
 }
 
-Location BBQJIT::allocateRegisterPair()
-{
-    GPRReg hi, lo;
-
-    do {
-        // we loop here until we can get _two_ register from m_gprSet
-        // this wouldn't be necessary except that evictGPR modifies m_gprSet and nextGPR _doesn't_
-
-        if (m_gprSet.isEmpty()) {
-            evictGPR();
-            continue;
-        }
-
-        auto iter = m_gprSet.begin();
-        ASSERT(iter != m_gprSet.end());
-        hi = (*iter).gpr();
-        ++iter;
-        if (iter == m_gprSet.end()) {
-            m_gprLRU.lock(hi);
-            evictGPR();
-            m_gprLRU.unlock(hi);
-            continue;
-        }
-        lo = (*iter).gpr();
-
-        return Location::fromGPR2(hi, lo);
-    } while (1);
-}
-
 PartialResult WARN_UNUSED_RETURN BBQJIT::addCallRef(const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType callType)
 {
     Value callee = args.takeLast();

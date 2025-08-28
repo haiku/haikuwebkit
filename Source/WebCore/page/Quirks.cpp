@@ -1770,7 +1770,7 @@ bool Quirks::shouldAvoidStartingSelectionOnMouseDownOverPointerCursor(const Node
         return false;
 
     if (CheckedPtr style = target.renderStyle()) {
-        if (style->cursor() == CursorType::Pointer)
+        if (style->cursorType() == CursorType::Pointer)
             return true;
     }
 
@@ -1934,6 +1934,11 @@ bool Quirks::shouldEnterNativeFullscreenWhenCallingElementRequestFullscreenQuirk
 bool Quirks::shouldDelayReloadWhenRegisteringServiceWorker() const
 {
     return needsQuirks() && m_quirksData.shouldDelayReloadWhenRegisteringServiceWorker;
+}
+
+bool Quirks::shouldDisableDOMAudioSessionQuirk() const
+{
+    return needsQuirks() && m_quirksData.shouldDisableDOMAudioSession;
 }
 
 URL Quirks::topDocumentURL() const
@@ -2431,6 +2436,17 @@ static void handleBungalowQuirks(QuirksData& quirksData, const URL& quirksURL, c
     UNUSED_PARAM(documentURL);
     // bungalow.com rdar://61658940
     quirksData.shouldBypassAsyncScriptDeferring = true;
+}
+
+static void handleDescriptQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
+{
+    if (quirksDomainString != "descript.com"_s)
+        return;
+
+    UNUSED_PARAM(quirksURL);
+    UNUSED_PARAM(documentURL);
+    // descript.com rdar://156024693
+    quirksData.shouldDisableDOMAudioSession = true;
 }
 
 static void handleESPNQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2974,6 +2990,7 @@ void Quirks::determineRelevantQuirks()
         { "digitaltrends"_s, &handleDigitalTrendsQuirks },
         { "steampowered"_s, &handleSteamQuirks },
 #endif
+        { "descript"_s, &handleDescriptQuirks },
 #if PLATFORM(IOS_FAMILY)
         { "disneyplus"_s, &handleDisneyPlusQuirks },
 #endif

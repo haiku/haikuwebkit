@@ -238,9 +238,4 @@ bool HTMLDocument::isFrameSet() const
     return !!childrenOfType<HTMLFrameSetElement>(*documentElement()).first();
 }
 
-Ref<Document> HTMLDocument::cloneDocumentWithoutChildren() const
-{
-    return create(nullptr, settings(), url());
-}
-
 }

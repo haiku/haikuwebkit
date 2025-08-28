@@ -27,7 +27,7 @@
 namespace WTF {
 
 class AtomString final {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(AtomString);
 public:
     AtomString();
     AtomString(std::span<const LChar>);
@@ -333,6 +333,11 @@ template<> struct IntegerToStringConversionTrait<AtomString> {
     using ReturnType = AtomString;
     using AdditionalArgumentType = void;
     static AtomString flush(std::span<const LChar> characters, void*) { return characters; }
+};
+
+template<> struct MarkableTraits<AtomString> {
+    static bool isEmptyValue(const AtomString& string) { return string.isNull(); }
+    static AtomString emptyValue() { return nullAtom(); }
 };
 
 } // namespace WTF

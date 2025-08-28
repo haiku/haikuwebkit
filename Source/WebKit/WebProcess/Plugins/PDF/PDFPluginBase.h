@@ -197,7 +197,7 @@ public:
     virtual WebCore::DictionaryPopupInfo dictionaryPopupInfoForSelection(PDFSelection *, WebCore::TextIndicatorPresentationTransition) = 0;
 
     virtual Vector<WebFoundTextRange::PDFData> findTextMatches(const String& target, WebCore::FindOptions) = 0;
-    virtual Vector<WebCore::FloatRect> rectsForTextMatch(const WebFoundTextRange::PDFData&) = 0;
+    virtual Vector<WebCore::FloatRect> rectsForTextMatchesInRect(const Vector<WebFoundTextRange::PDFData>&, const WebCore::IntRect&) = 0;
     virtual RefPtr<WebCore::TextIndicator> textIndicatorForTextMatch(const WebFoundTextRange::PDFData&, WebCore::TextIndicatorPresentationTransition) { return { }; }
     virtual void scrollToRevealTextMatch(const WebFoundTextRange::PDFData&) { }
 
@@ -524,6 +524,8 @@ protected:
     CompletionHandler<void(const String&, const URL&, std::span<const uint8_t>)> m_pendingSaveCompletionHandler;
     CompletionHandler<void(const String&, std::optional<FrameInfoData>&&, std::span<const uint8_t>)> m_pendingOpenCompletionHandler;
 #endif
+
+    mutable std::optional<bool> m_cachedIsFullFramePlugin;
 };
 
 } // namespace WebKit

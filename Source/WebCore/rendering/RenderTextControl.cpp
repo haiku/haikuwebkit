@@ -108,7 +108,7 @@ RenderBox::LogicalExtentComputedValues RenderTextControl::computeLogicalHeight(L
 
     if (RenderBox* innerTextBox = innerText->renderBox()) {
         LayoutUnit nonContentHeight = innerTextBox->borderAndPaddingLogicalHeight() + innerTextBox->marginLogicalHeight();
-        logicalHeight = computeControlLogicalHeight(innerTextBox->lineHeight(true, HorizontalLine, PositionOfInteriorLineBoxes), nonContentHeight);
+        logicalHeight = computeControlLogicalHeight(innerTextBox->lineHeight(), nonContentHeight);
 
         // We are able to have a horizontal scrollbar if the overflow style is scroll, or if its auto and there's no word wrap.
         auto shouldIncludeScrollbarHeight = [&] {
@@ -148,7 +148,7 @@ float RenderTextControl::getAverageCharWidth()
     if (style().fontCascade().fastAverageCharWidthIfAvailable(width))
         return width;
 
-    const UChar ch = '0';
+    const char16_t ch = '0';
     const String str = span(ch);
     const FontCascade& font = style().fontCascade();
     TextRun textRun = constructTextRun(str, style(), ExpansionBehavior::allowRightOnly());
@@ -178,6 +178,8 @@ void RenderTextControl::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidt
     }
     // Use average character width. Matches IE.
     maxLogicalWidth = preferredContentLogicalWidth(const_cast<RenderTextControl*>(this)->getAverageCharWidth());
+    maxLogicalWidth = RenderTheme::singleton().adjustedMaximumLogicalWidthForControl(style(), textFormControlElement(), maxLogicalWidth);
+
     auto& logicalWidth = style().logicalWidth();
     if (logicalWidth.isCalculated())
         minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu));
@@ -239,9 +241,8 @@ bool RenderTextControl::canScroll() const
 
 int RenderTextControl::innerLineHeight() const
 {
-    auto innerText = innerTextElement();
-    if (innerText && innerText->renderer())
-        return innerText->renderer()->style().computedLineHeight();
+    if (auto innerTextElement = this->innerTextElement(); innerTextElement && innerTextElement->renderer())
+        return innerTextElement->renderer()->style().computedLineHeight();
     return style().computedLineHeight();
 }
 #endif

@@ -46,16 +46,14 @@
 
 namespace WebCore {
 
-AccessibilitySVGObject::AccessibilitySVGObject(AXID axID, RenderObject& renderer, AXObjectCache* cache)
-    : AccessibilityRenderObject(axID, renderer)
-    , m_axObjectCache(cache)
+AccessibilitySVGObject::AccessibilitySVGObject(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
 {
-    ASSERT(cache);
 }
 
 AccessibilitySVGObject::~AccessibilitySVGObject() = default;
 
-Ref<AccessibilitySVGObject> AccessibilitySVGObject::create(AXID axID, RenderObject& renderer, AXObjectCache* cache)
+Ref<AccessibilitySVGObject> AccessibilitySVGObject::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
     return adoptRef(*new AccessibilitySVGObject(axID, renderer, cache));
 }

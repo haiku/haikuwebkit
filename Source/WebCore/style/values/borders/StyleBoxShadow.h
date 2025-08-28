@@ -25,6 +25,7 @@
 #pragma once
 
 #include "CSSBoxShadow.h"
+#include "CSSPrimitiveNumeric.h"
 #include "StyleColor.h"
 #include "StylePrimitiveNumericTypes.h"
 #include "StyleShadow.h"
@@ -104,4 +105,4 @@ inline LayoutUnit paintingSpread(const BoxShadow& shadow)
 } // namespace WebCore
 
 DEFINE_SPACE_SEPARATED_TUPLE_LIKE_CONFORMANCE(WebCore::Style::BoxShadow, 5)
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::BoxShadows> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::BoxShadows)

@@ -67,15 +67,16 @@ void appendPlatformProperties(AXPropertyVector& properties, OptionSet<AXProperty
         setProperty(AXProperty::BackgroundColor, WTFMove(style.backgroundColor));
         setProperty(AXProperty::HasLinethrough, style.hasLinethrough());
         setProperty(AXProperty::HasTextShadow, style.hasTextShadow);
-        setProperty(AXProperty::HasUnderline, style.hasUnderline());
         setProperty(AXProperty::IsSubscript, style.isSubscript);
         setProperty(AXProperty::IsSuperscript, style.isSuperscript);
         setProperty(AXProperty::LinethroughColor, style.linethroughColor());
-        setProperty(AXProperty::UnderlineColor, style.underlineColor());
+        if (style.hasUnderline())
+            setProperty(AXProperty::UnderlineColor, style.underlineColor());
         setProperty(AXProperty::FontOrientation, object->fontOrientation());
     }
-    // FIXME: Can we compute this off the main-thread with our cached text runs?
-    setProperty(AXProperty::StringValue, object->stringValue().isolatedCopy());
+
+    if (object->shouldCacheStringValue())
+        setProperty(AXProperty::StringValue, object->stringValue().isolatedCopy());
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 
 #if !ENABLE(AX_THREAD_TEXT_APIS)
@@ -127,6 +128,9 @@ void appendPlatformProperties(AXPropertyVector& properties, OptionSet<AXProperty
 
 AttributedStringStyle AXIsolatedObject::stylesForAttributedString() const
 {
+    auto underlineColor = colorAttributeValue(AXProperty::UnderlineColor);
+    bool hasUnderlineColor = underlineColor != Accessibility::defaultColor();
+
     return {
         font(),
         textColor(),
@@ -135,8 +139,8 @@ AttributedStringStyle AXIsolatedObject::stylesForAttributedString() const
         boolAttributeValue(AXProperty::IsSuperscript),
         boolAttributeValue(AXProperty::HasTextShadow),
         LineDecorationStyle(
-            boolAttributeValue(AXProperty::HasUnderline),
-            colorAttributeValue(AXProperty::UnderlineColor),
+            hasUnderlineColor,
+            WTFMove(underlineColor),
             boolAttributeValue(AXProperty::HasLinethrough),
             colorAttributeValue(AXProperty::LinethroughColor)
         )

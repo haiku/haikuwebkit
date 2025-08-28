@@ -27,6 +27,7 @@
 #include "config.h"
 #include "WebPageProxy.h"
 
+#include "AcceleratedBackingStore.h"
 #include "DrawingAreaMessages.h"
 #include "DrawingAreaProxy.h"
 #include "InputMethodState.h"
@@ -147,6 +148,13 @@ OptionSet<WebCore::PlatformEvent::Modifier> WebPageProxy::currentStateOfModifier
         modifiers.add(WebCore::PlatformEvent::Modifier::CapsLockKey);
     return modifiers;
 }
+
+#if USE(GBM)
+Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
+{
+    return AcceleratedBackingStore::preferredBufferFormats();
+}
+#endif
 
 void WebPageProxy::callAfterNextPresentationUpdate(CompletionHandler<void()>&& callback)
 {

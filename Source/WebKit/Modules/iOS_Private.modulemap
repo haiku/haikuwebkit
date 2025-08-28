@@ -2785,6 +2785,11 @@ framework module WebKit_Private [system] {
     export *
   }
 
+  explicit module _WKNodeInfo {
+    header "_WKNodeInfo.h"
+    export *
+  }
+
   explicit module _WKPublicKeyCredentialCreationOptions {
     header "_WKPublicKeyCredentialCreationOptions.h"
     export *
@@ -2867,6 +2872,11 @@ framework module WebKit_Private [system] {
 
   explicit module _WKSameDocumentNavigationType {
     header "_WKSameDocumentNavigationType.h"
+    export *
+  }
+
+  explicit module _WKSerializedNode {
+    header "_WKSerializedNode.h"
     export *
   }
 

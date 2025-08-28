@@ -105,7 +105,7 @@ public:
     JSC::JSValue get(const AtomString&);
     String getName(JSC::JSValue);
     void upgrade(Node& root);
-    void initialize(Node& root);
+    ExceptionOr<void> initialize(Node& root);
 
     MemoryCompactRobinHoodHashMap<AtomString, Ref<DeferredPromise>>& promiseMap() { return m_promiseMap; }
     bool isShadowDisabled(const AtomString& name) const { return m_disabledShadowSet.contains(name); }

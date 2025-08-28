@@ -36,8 +36,8 @@ class AccessibilityTable;
 
 class AccessibilityTableRow : public AccessibilityRenderObject {
 public:
-    static Ref<AccessibilityTableRow> create(AXID, RenderObject&);
-    static Ref<AccessibilityTableRow> create(AXID, Node&);
+    static Ref<AccessibilityTableRow> create(AXID, RenderObject&, AXObjectCache&);
+    static Ref<AccessibilityTableRow> create(AXID, Node&, AXObjectCache&);
     virtual ~AccessibilityTableRow();
 
     virtual AccessibilityTable* parentTable() const;
@@ -55,8 +55,8 @@ public:
     std::optional<unsigned> axRowIndex() const final;
 
 protected:
-    explicit AccessibilityTableRow(AXID, RenderObject&);
-    explicit AccessibilityTableRow(AXID, Node&);
+    explicit AccessibilityTableRow(AXID, RenderObject&, AXObjectCache&);
+    explicit AccessibilityTableRow(AXID, Node&, AXObjectCache&);
 
     AccessibilityRole determineAccessibilityRole() final;
 

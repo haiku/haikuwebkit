@@ -90,5 +90,19 @@ promise_test(async t => {
     );
 }, `<model> invalid state for incorrect usdz file`);
 
+promise_test(async t => {
+    const [model, source] = createModelAndSource(t, "resources/heart.usdz");
+    model.className = "model-element";
+    assert_equals(internals.modelElementState(model), "Deferred");
+    assert_false(internals.isModelElementIntersectingViewport(model));
+
+    scrollElementIntoView(model);
+    await model.ready;
+
+    source.src = "resources/cube.usdz";
+    await model.ready;
+}, `<model> reload visible model after source change`);
+
+
 </script>
 </body>

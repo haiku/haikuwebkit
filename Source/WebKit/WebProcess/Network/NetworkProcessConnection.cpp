@@ -212,7 +212,7 @@ void NetworkProcessConnection::didClose(IPC::Connection&)
         swConnection->connectionToServerLost();
 }
 
-void NetworkProcessConnection::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, int32_t)
+void NetworkProcessConnection::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, const Vector<uint32_t>&)
 {
 }
 

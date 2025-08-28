@@ -827,31 +827,31 @@ static WebCore::StorageBlockingPolicy core(WebStorageBlockingPolicy storageBlock
 
 @implementation WebUITextIndicatorData (WebUITextIndicatorInternal)
 
-- (WebUITextIndicatorData *)initWithImage:(CGImageRef)image textIndicatorData:(const WebCore::TextIndicatorData&)indicatorData scale:(CGFloat)scale
+- (WebUITextIndicatorData *)initWithImage:(CGImageRef)image textIndicator:(RefPtr<WebCore::TextIndicator>&&)indicator scale:(CGFloat)scale
 {
     if (!(self = [super init]))
         return nil;
 
     _dataInteractionImage = [PAL::allocUIImageInstance() initWithCGImage:image scale:scale orientation:UIImageOrientationDownMirrored];
-    _selectionRectInRootViewCoordinates = indicatorData.selectionRectInRootViewCoordinates;
-    _textBoundingRectInRootViewCoordinates = indicatorData.textBoundingRectInRootViewCoordinates;
-    _textRectsInBoundingRectCoordinates = createNSArray(indicatorData.textRectsInBoundingRectCoordinates).leakRef();
-    _contentImageScaleFactor = indicatorData.contentImageScaleFactor;
-    if (indicatorData.contentImageWithHighlight)
-        _contentImageWithHighlight = [PAL::allocUIImageInstance() initWithCGImage:indicatorData.contentImageWithHighlight.get()->nativeImage()->platformImage().get() scale:scale orientation:UIImageOrientationDownMirrored];
-    if (indicatorData.contentImage)
-        _contentImage = [PAL::allocUIImageInstance() initWithCGImage:indicatorData.contentImage.get()->nativeImage()->platformImage().get() scale:scale orientation:UIImageOrientationUp];
+    _selectionRectInRootViewCoordinates = indicator->selectionRectInRootViewCoordinates();
+    _textBoundingRectInRootViewCoordinates = indicator->textBoundingRectInRootViewCoordinates();
+    _textRectsInBoundingRectCoordinates = createNSArray(indicator->textRectsInBoundingRectCoordinates()).leakRef();
+    _contentImageScaleFactor = indicator->contentImageScaleFactor();
+    if (indicator->contentImageWithHighlight())
+        _contentImageWithHighlight = [PAL::allocUIImageInstance() initWithCGImage:indicator->contentImageWithHighlight()->nativeImage()->platformImage().get() scale:scale orientation:UIImageOrientationDownMirrored];
+    if (indicator->contentImage())
+        _contentImage = [PAL::allocUIImageInstance() initWithCGImage:indicator->contentImage()->nativeImage()->platformImage().get() scale:scale orientation:UIImageOrientationUp];
 
-    if (indicatorData.contentImageWithoutSelection) {
-        auto nativeImage = indicatorData.contentImageWithoutSelection.get()->nativeImage();
+    if (indicator->contentImageWithoutSelection()) {
+        auto nativeImage = indicator->contentImageWithoutSelection()->nativeImage();
         if (nativeImage) {
             _contentImageWithoutSelection = [PAL::allocUIImageInstance() initWithCGImage:nativeImage->platformImage().get() scale:scale orientation:UIImageOrientationUp];
-            _contentImageWithoutSelectionRectInRootViewCoordinates = indicatorData.contentImageWithoutSelectionRectInRootViewCoordinates;
+            _contentImageWithoutSelectionRectInRootViewCoordinates = indicator->contentImageWithoutSelectionRectInRootViewCoordinates();
         }
     }
 
-    if (indicatorData.options.contains(WebCore::TextIndicatorOption::ComputeEstimatedBackgroundColor))
-        _estimatedBackgroundColor = cocoaColor(indicatorData.estimatedBackgroundColor).leakRef();
+    if (indicator->options().contains(WebCore::TextIndicatorOption::ComputeEstimatedBackgroundColor))
+        _estimatedBackgroundColor = cocoaColor(indicator->estimatedBackgroundColor()).leakRef();
 
     return self;
 }
@@ -1863,7 +1863,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 {
     WebThreadRun(^{
         [WebView _releaseMemoryNow];
-        RunLoop::protectedMain()->dispatch([handler = makeBlockPtr(handler)] {
+        RunLoop::mainSingleton().dispatch([handler = makeBlockPtr(handler)] {
             handler();
         });
     });
@@ -1916,7 +1916,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
     RefPtr<WebCore::TextIndicator> textIndicator = dragImage.textIndicator();
 
     if (textIndicator)
-        _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image textIndicatorData:textIndicator->data() scale:_private->page->deviceScaleFactor()]);
+        _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image textIndicator:WTFMove(textIndicator) scale:_private->page->deviceScaleFactor()]);
     else
         _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image scale:_private->page->deviceScaleFactor()]);
     _private->draggedLinkURL = dragItem.url.isEmpty() ? RetainPtr<NSURL>() : dragItem.url.createNSURL();
@@ -2053,8 +2053,8 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
     if (!frame)
         return;
     if (auto range = frame->selection().selection().toNormalizedRange()) {
-        if (auto textIndicator = WebCore::TextIndicator::createWithRange(*range, defaultEditDragTextIndicatorOptions, WebCore::TextIndicatorPresentationTransition::None, WebCore::FloatSize()))
-            _private->dataOperationTextIndicator = adoptNS([[WebUITextIndicatorData alloc] initWithImage:nil textIndicatorData:textIndicator->data() scale:page->deviceScaleFactor()]);
+        if (RefPtr textIndicator = WebCore::TextIndicator::createWithRange(*range, defaultEditDragTextIndicatorOptions, WebCore::TextIndicatorPresentationTransition::None, WebCore::FloatSize()))
+            _private->dataOperationTextIndicator = adoptNS([[WebUITextIndicatorData alloc] initWithImage:nil textIndicator:WTFMove(textIndicator) scale:page->deviceScaleFactor()]);
     }
 }
 
@@ -4984,7 +4984,7 @@ IGNORE_WARNINGS_END
 {
     if (WebThreadIsCurrent()) {
         [invocation retainArguments];
-        RunLoop::protectedMain()->dispatch([forwarder = retainPtr(_forwarder), invocation = retainPtr(invocation)] {
+        RunLoop::mainSingleton().dispatch([forwarder = retainPtr(_forwarder), invocation = retainPtr(invocation)] {
             [forwarder forwardInvocation:invocation.get()];
         });
     } else
@@ -6399,7 +6399,7 @@ static bool needsWebViewInitThreadWorkaround()
                 if (errorOrNil)
                     return;
 
-                RunLoop::protectedMain()->dispatch([self, path = RetainPtr<NSString>(fileURL.path), fileNames, fileCount, dragData] {
+                RunLoop::mainSingleton().dispatch([self, path = RetainPtr<NSString>(fileURL.path), fileNames, fileCount, dragData] {
                     fileNames->append(path.get());
                     if (fileNames->size() == fileCount) {
                         dragData->setFileNames(*fileNames);
@@ -7924,7 +7924,7 @@ static NSAppleEventDescriptor* aeDescFromJSValue(JSC::JSGlobalObject* lexicalGlo
             _private->page->setTabKeyCyclesThroughElements(!flag);
 #if PLATFORM(MAC)
         if (flag) {
-            RunLoop::protectedMain()->dispatch([] {
+            RunLoop::mainSingleton().dispatch([] {
                 [[NSSpellChecker sharedSpellChecker] _preflightChosenSpellServer];
             });
         }

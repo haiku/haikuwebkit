@@ -159,7 +159,7 @@ constexpr OptionSet<TextIndicatorOption> defaultSelectionDragImageTextIndicatorO
     TextIndicatorOption::ComputeEstimatedBackgroundColor
 };
 
-DragImageRef createDragImageForSelection(LocalFrame& frame, TextIndicatorData& indicatorData, bool forceBlackText)
+DragImageData createDragImageForSelection(LocalFrame& frame, bool forceBlackText)
 {
     if (auto document = frame.document())
         document->updateLayout();
@@ -168,12 +168,11 @@ DragImageRef createDragImageForSelection(LocalFrame& frame, TextIndicatorData& i
     if (!forceBlackText)
         options.add(TextIndicatorOption::RespectTextColor);
 
-    auto textIndicator = TextIndicator::createWithSelectionInFrame(frame, options, TextIndicatorPresentationTransition::None, FloatSize());
+    RefPtr textIndicator = TextIndicator::createWithSelectionInFrame(frame, options, TextIndicatorPresentationTransition::None, FloatSize());
     if (!textIndicator)
-        return nullptr;
+        return { nullptr, nullptr };
 
-    indicatorData = textIndicator->data();
-    return cgImageFromTextIndicator(*textIndicator).autorelease();
+    return { cgImageFromTextIndicator(*textIndicator).autorelease(), textIndicator };
 }
 
 DragImageRef dissolveDragImageToFraction(DragImageRef image, float)

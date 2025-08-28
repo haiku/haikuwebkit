@@ -109,7 +109,7 @@ struct TextRecognitionResult;
 enum class DOMPasteAccessCategory : uint8_t;
 enum class DOMPasteAccessResponse : uint8_t;
 enum class DOMPasteRequiresInteraction : bool;
-struct ElementIdentifierType;
+struct NodeIdentifierType;
 enum class MouseEventPolicy : uint8_t;
 enum class RouteSharingPolicy : uint8_t;
 enum class TextIndicatorDismissalAnimation : uint8_t;
@@ -118,7 +118,7 @@ enum class TextIndicatorDismissalAnimation : uint8_t;
 struct DragItem;
 #endif
 
-using ElementIdentifier = ObjectIdentifier<ElementIdentifierType>;
+using NodeIdentifier = ObjectIdentifier<NodeIdentifierType>;
 }
 
 namespace WebKit {
@@ -388,6 +388,10 @@ struct ImageAnalysisContextMenuActionData {
     RetainPtr<UIPointerInteraction> _pointerInteraction;
     RetainPtr<UIPointerRegion> _lastPointerRegion;
     BOOL _pointerInteractionRegionNeedsUpdate;
+#endif
+
+#if HAVE(UITOOLTIPINTERACTION)
+    RetainPtr<UIToolTipInteraction> _toolTip;
 #endif
 
     RetainPtr<WKTextInteractionWrapper> _textInteractionWrapper;
@@ -702,6 +706,9 @@ struct ImageAnalysisContextMenuActionData {
     , WTWritingToolsDelegate
     , WKTextAnimationSourceDelegate
 #endif
+#if HAVE(UITOOLTIPINTERACTION)
+    , UIToolTipInteractionDelegate
+#endif
 >
 
 @property (nonatomic, readonly) CGPoint lastInteractionLocation;
@@ -871,12 +878,17 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(DECLARE_WKCONTENTVIEW_ACTION_FOR_WEB_VIEW)
 - (void)doAfterEditorStateUpdateAfterFocusingElement:(dispatch_block_t)block;
 - (void)runModalJavaScriptDialog:(CompletionHandler<void()>&&)callback;
 
+#if HAVE(UITOOLTIPINTERACTION)
+- (void)_toolTipChanged:(NSString *)newToolTip;
+- (UIToolTipConfiguration *)toolTipInteraction:(UIToolTipInteraction *)interaction configurationAtPoint:(CGPoint)point;
+#endif
+
 #if ENABLE(DRAG_SUPPORT)
 - (void)_didChangeDragInteractionPolicy;
 - (void)_didPerformDragOperation:(BOOL)handled;
 - (void)_didHandleDragStartRequest:(BOOL)started;
 - (void)_didHandleAdditionalDragItemsRequest:(BOOL)added;
-- (void)_startDrag:(RetainPtr<CGImageRef>)image item:(const WebCore::DragItem&)item elementID:(std::optional<WebCore::ElementIdentifier>)elementID;
+- (void)_startDrag:(RetainPtr<CGImageRef>)image item:(const WebCore::DragItem&)item nodeID:(std::optional<WebCore::NodeIdentifier>)nodeID;
 - (void)_willReceiveEditDragSnapshot;
 - (void)_didReceiveEditDragSnapshot:(std::optional<WebCore::TextIndicatorData>)data;
 - (void)_didChangeDragCaretRect:(CGRect)previousRect currentRect:(CGRect)rect;
@@ -886,7 +898,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(DECLARE_WKCONTENTVIEW_ACTION_FOR_WEB_VIEW)
 - (void)modelInteractionPanGestureDidBeginAtPoint:(CGPoint)inputPoint;
 - (void)modelInteractionPanGestureDidUpdateWithPoint:(CGPoint)inputPoint;
 - (void)modelInteractionPanGestureDidEnd;
-- (void)didReceiveInteractiveModelElement:(std::optional<WebCore::ElementIdentifier>)elementID;
+- (void)didReceiveInteractiveModelElement:(std::optional<WebCore::NodeIdentifier>)nodeID;
 #endif
 
 - (void)reloadContextViewForPresentedListViewController;
@@ -935,7 +947,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(DECLARE_WKCONTENTVIEW_ACTION_FOR_WEB_VIEW)
 #if USE(UICONTEXTMENU)
 - (UIView *)containerForContextMenuHintPreviews;
 - (UIView *)textEffectsWindow;
-- (UITargetedPreview *)_createTargetedPreviewFromTextIndicator:(WebCore::TextIndicatorData)textIndicatorData previewContainer:(UIView *)previewContainer;
+- (UITargetedPreview *)_createTargetedPreviewFromTextIndicator:(RefPtr<WebCore::TextIndicator>&&)textIndicator previewContainer:(UIView *)previewContainer;
 - (UITargetedPreview *)_createTargetedContextMenuHintPreviewForFocusedElement:(WebKit::TargetedPreviewPositioning)positioning;
 - (UITargetedPreview *)_createTargetedContextMenuHintPreviewIfPossible;
 - (void)_removeContextMenuHintContainerIfPossible;

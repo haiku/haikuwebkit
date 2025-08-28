@@ -87,6 +87,7 @@ NS_SWIFT_UI_ACTOR
 - (void)linearMediaPlayer:(WKSLinearMediaPlayer *)player seekThumbnailToTime:(NSTimeInterval)time;
 - (void)linearMediaPlayer:(WKSLinearMediaPlayer *)player setVideoReceiverEndpoint:(xpc_object_t)videoReceiverEndpoint;
 - (void)linearMediaPlayerClearVideoReceiverEndpoint:(WKSLinearMediaPlayer *)player;
+- (uint64_t)linearMediaPlayerLogIdentifier:(WKSLinearMediaPlayer *)player;
 @end
 
 NS_SWIFT_UI_ACTOR
@@ -156,8 +157,9 @@ NS_SWIFT_UI_ACTOR
 - (WKSPlayableViewControllerHost *)makeViewController;
 - (void)enterFullscreenWithCompletionHandler:(NS_SWIFT_UI_ACTOR NS_SWIFT_SENDABLE void (^)(BOOL, NSError * _Nullable))completionHandler;
 - (void)exitFullscreenWithCompletionHandler:(NS_SWIFT_UI_ACTOR NS_SWIFT_SENDABLE void (^)(BOOL, NSError * _Nullable))completionHandler;
-- (void)enterExternalPresentationWithCompletionHandler:(NS_SWIFT_UI_ACTOR NS_SWIFT_SENDABLE void (^)(BOOL, NSError * _Nullable))completionHandler;
-- (void)exitExternalPresentationWithCompletionHandler:(NS_SWIFT_UI_ACTOR NS_SWIFT_SENDABLE void (^)(BOOL, NSError * _Nullable))completionHandler;
+- (void)enterExternalPlaybackWithCompletionHandler:(NS_SWIFT_UI_ACTOR NS_SWIFT_SENDABLE void (^)(BOOL, NSError * _Nullable))completionHandler;
+- (void)completeEnterExternalPlayback;
+- (void)exitExternalPlaybackWithCompletionHandler:(NS_SWIFT_UI_ACTOR NS_SWIFT_SENDABLE void (^)(BOOL, NSError * _Nullable))completionHandler;
 @end
 
 NS_HEADER_AUDIT_END(nullability, sendability)

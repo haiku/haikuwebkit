@@ -58,7 +58,7 @@ RealtimeMediaSourceCenter& RealtimeMediaSourceCenter::singleton()
 }
 
 RealtimeMediaSourceCenter::RealtimeMediaSourceCenter()
-    : m_debounceTimer(RunLoop::main(), this, &RealtimeMediaSourceCenter::triggerDevicesChangedObservers)
+    : m_debounceTimer(RunLoop::mainSingleton(), "RealtimeMediaSourceCenter::DebounceTimer"_s, this, &RealtimeMediaSourceCenter::triggerDevicesChangedObservers)
 {
 }
 

@@ -106,112 +106,6 @@ static LayoutSize computeLogicalBoxSize(const RenderBox& renderer, bool isHorizo
     return size;
 }
 
-void ShapeOutsideInfo::invalidateForSizeChangeIfNeeded()
-{
-    auto newSize = computeLogicalBoxSize(m_renderer, m_renderer.containingBlock()->isHorizontalWritingMode());
-    if (m_cachedShapeLogicalSize == newSize)
-        return;
-
-    markShapeAsDirty();
-    m_cachedShapeLogicalSize = newSize;
-}
-
-static LayoutRect getShapeImageMarginRect(const RenderBox& renderBox, const LayoutSize& referenceBoxLogicalSize)
-{
-    LayoutPoint marginBoxOrigin(-renderBox.marginLogicalLeft() - renderBox.borderAndPaddingLogicalLeft(), -renderBox.marginBefore() - renderBox.borderBefore() - renderBox.paddingBefore());
-    LayoutSize marginBoxSizeDelta(renderBox.marginLogicalWidth() + renderBox.borderAndPaddingLogicalWidth(), renderBox.marginLogicalHeight() + renderBox.borderAndPaddingLogicalHeight());
-    LayoutSize marginRectSize(referenceBoxLogicalSize + marginBoxSizeDelta);
-    marginRectSize.clampNegativeToZero();
-    return LayoutRect(marginBoxOrigin, marginRectSize);
-}
-
-Ref<const LayoutShape> makeShapeForShapeOutside(const RenderBox& renderer)
-{
-    auto& style = renderer.style();
-    auto& containingBlock = *renderer.containingBlock();
-    auto writingMode = containingBlock.style().writingMode();
-    bool isHorizontalWritingMode = containingBlock.isHorizontalWritingMode();
-    float shapeImageThreshold = style.shapeImageThreshold();
-    auto& shapeValue = *style.shapeOutside();
-
-    auto boxSize = computeLogicalBoxSize(renderer, isHorizontalWritingMode);
-
-    auto margin = [&] {
-        auto shapeMargin = floatValueForLength(style.shapeMargin(), containingBlock.contentBoxWidth());
-        return isnan(shapeMargin) ? 0.0f : shapeMargin;
-    }();
-
-
-    switch (shapeValue.type()) {
-    case ShapeValue::Type::Shape: {
-        ASSERT(shapeValue.shape());
-        auto offset = LayoutPoint { logicalLeftOffset(renderer), logicalTopOffset(renderer) };
-        return LayoutShape::createShape(*shapeValue.shape(), offset, boxSize, writingMode, margin);
-    }
-    case ShapeValue::Type::Image: {
-        ASSERT(shapeValue.isImageValid());
-        auto* styleImage = shapeValue.image();
-        auto imageSize = renderer.calculateImageIntrinsicDimensions(styleImage, boxSize, RenderImage::ScaleByUsedZoom::Yes);
-        styleImage->setContainerContextForRenderer(renderer, imageSize, style.usedZoom());
-
-        auto marginRect = getShapeImageMarginRect(renderer, boxSize);
-        auto* renderImage = dynamicDowncast<RenderImage>(renderer);
-        auto imageRect = renderImage ? renderImage->replacedContentRect() : LayoutRect { { }, imageSize };
-
-        ASSERT(!styleImage->isPending());
-        RefPtr<Image> image = styleImage->image(const_cast<RenderBox*>(&renderer), imageSize);
-        return LayoutShape::createRasterShape(image.get(), shapeImageThreshold, imageRect, marginRect, writingMode, margin);
-    }
-    case ShapeValue::Type::Box: {
-        auto shapeRect = computeRoundedRectForBoxShape(shapeValue.effectiveCSSBox(), renderer);
-        auto flipForWritingAndInlineDirection = [&] {
-            // FIXME: We should consider this moving to LayoutRoundedRect::transposedRect.
-            if (!isHorizontalWritingMode) {
-                shapeRect = shapeRect.transposedRect();
-                auto radiiForBlockDirection = shapeRect.radii();
-                if (writingMode.isBlockLeftToRight())
-                    shapeRect.setRadii({ radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft(), radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight() });
-                else
-                    shapeRect.setRadii({ radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight(), radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft() });
-            }
-            if (writingMode.isBidiRTL()) {
-                auto radii = shapeRect.radii();
-                shapeRect.setRadii({ radii.topRight(), radii.topLeft(), radii.bottomRight(), radii.bottomLeft() });
-            }
-        };
-        flipForWritingAndInlineDirection();
-        return LayoutShape::createBoxShape(shapeRect, writingMode, margin);
-    }
-    }
-    ASSERT_NOT_REACHED();
-    return LayoutShape::createBoxShape(LayoutRoundedRect { { } }, writingMode, 0);
-}
-
-static inline bool checkShapeImageOrigin(Document& document, const StyleImage& styleImage)
-{
-    if (styleImage.isGeneratedImage())
-        return true;
-
-    ASSERT(styleImage.cachedImage());
-    CachedImage& cachedImage = *(styleImage.cachedImage());
-    if (cachedImage.isOriginClean(&document.securityOrigin()))
-        return true;
-
-    const URL& url = cachedImage.url();
-    String urlString = url.isNull() ? "''"_s : url.stringCenterEllipsizedToLength();
-    document.addConsoleMessage(MessageSource::Security, MessageLevel::Error, makeString("Unsafe attempt to load URL "_s, urlString, '.'));
-
-    return false;
-}
-
-const LayoutShape& ShapeOutsideInfo::computedShape() const
-{
-    if (!m_shape)
-        m_shape = makeShapeForShapeOutside(m_renderer);
-
-    return *m_shape;
-}
-
 static inline LayoutUnit borderBeforeInWritingMode(const RenderBox& renderer, WritingMode writingMode)
 {
     switch (writingMode.blockDirection()) {
@@ -291,6 +185,16 @@ static inline LayoutUnit borderAndPaddingStartWithStyleForWritingMode(const Rend
     return renderer.borderBottom() + renderer.paddingBottom();
 }
 
+static inline LayoutUnit marginBorderAndPaddingStartWithStyleForWritingMode(const RenderBox& renderer, WritingMode writingMode)
+{
+    return (writingMode.isHorizontal() ? renderer.marginLeft() : renderer.marginTop()) + borderAndPaddingStartWithStyleForWritingMode(renderer, writingMode);
+}
+
+static inline LayoutUnit marginBorderAndPaddingBeforeWithStyleForWritingMode(const RenderBox& renderer, WritingMode writingMode)
+{
+    return (writingMode.isHorizontal() ? renderer.marginTop() : renderer.marginRight()) + borderAndPaddingBeforeInWritingMode(renderer, writingMode);
+}
+
 static LayoutUnit logicalLeftOffset(const RenderBox& renderer)
 {
     if (renderer.isRenderFragmentContainer())
@@ -317,6 +221,116 @@ static LayoutUnit logicalLeftOffset(const RenderBox& renderer)
 
     ASSERT_NOT_REACHED();
     return 0_lu;
+}
+
+void ShapeOutsideInfo::invalidateForSizeChangeIfNeeded()
+{
+    auto newSize = computeLogicalBoxSize(m_renderer, m_renderer.containingBlock()->isHorizontalWritingMode());
+    if (m_cachedShapeLogicalSize == newSize)
+        return;
+
+    markShapeAsDirty();
+    m_cachedShapeLogicalSize = newSize;
+}
+
+static LayoutRect shapeImageMarginRect(const RenderBox& renderBox, const LayoutSize& referenceBoxLogicalSize)
+{
+    auto writingMode = renderBox.containingBlock()->writingMode();
+    auto marginBoxOffsetFromContentBox = LayoutPoint { -marginBorderAndPaddingStartWithStyleForWritingMode(renderBox, writingMode), -marginBorderAndPaddingBeforeWithStyleForWritingMode(renderBox, writingMode) };
+    auto marginBorderAndPaddingSize = LayoutSize { renderBox.marginLogicalWidth() + renderBox.borderAndPaddingLogicalWidth(), renderBox.marginLogicalHeight() + renderBox.borderAndPaddingLogicalHeight() };
+
+    auto marginRectSize = LayoutSize { referenceBoxLogicalSize + marginBorderAndPaddingSize };
+    marginRectSize.clampNegativeToZero();
+    return LayoutRect(marginBoxOffsetFromContentBox, marginRectSize);
+}
+
+Ref<const LayoutShape> makeShapeForShapeOutside(const RenderBox& renderer)
+{
+    auto& style = renderer.style();
+    auto& containingBlock = *renderer.containingBlock();
+    auto writingMode = containingBlock.style().writingMode();
+    bool isHorizontalWritingMode = containingBlock.isHorizontalWritingMode();
+    float shapeImageThreshold = style.shapeImageThreshold();
+    auto& shapeValue = *style.shapeOutside();
+
+    auto boxSize = computeLogicalBoxSize(renderer, isHorizontalWritingMode);
+
+    auto logicalMargin = [&] {
+        auto shapeMargin = floatValueForLength(style.shapeMargin(), containingBlock.contentBoxLogicalWidth());
+        return isnan(shapeMargin) ? 0.0f : shapeMargin;
+    }();
+
+    switch (shapeValue.type()) {
+    case ShapeValue::Type::Shape: {
+        ASSERT(shapeValue.shape());
+        auto offset = LayoutPoint { logicalLeftOffset(renderer), logicalTopOffset(renderer) };
+        return LayoutShape::createShape(*shapeValue.shape(), offset, boxSize, writingMode, logicalMargin);
+    }
+    case ShapeValue::Type::Image: {
+        ASSERT(shapeValue.isImageValid());
+        auto* styleImage = shapeValue.image();
+        auto logicalImageSize = renderer.calculateImageIntrinsicDimensions(styleImage, boxSize, RenderImage::ScaleByUsedZoom::Yes);
+        styleImage->setContainerContextForRenderer(renderer, logicalImageSize, style.usedZoom());
+
+        auto logicalMarginRect = shapeImageMarginRect(renderer, boxSize);
+        auto* renderImage = dynamicDowncast<RenderImage>(renderer);
+        auto logicalImageRect = renderImage ? renderImage->replacedContentRect() : LayoutRect { { }, logicalImageSize };
+
+        ASSERT(!styleImage->isPending());
+        auto physicalImageSize = writingMode.isHorizontal() ? logicalImageSize : logicalImageSize.transposedSize();
+        RefPtr image = styleImage->image(const_cast<RenderBox*>(&renderer), physicalImageSize);
+        return LayoutShape::createRasterShape(image.get(), shapeImageThreshold, logicalImageRect, logicalMarginRect, writingMode, logicalMargin);
+    }
+    case ShapeValue::Type::Box: {
+        auto shapeRect = computeRoundedRectForBoxShape(shapeValue.effectiveCSSBox(), renderer);
+        auto flipForWritingAndInlineDirection = [&] {
+            // FIXME: We should consider this moving to LayoutRoundedRect::transposedRect.
+            if (!isHorizontalWritingMode) {
+                shapeRect = shapeRect.transposedRect();
+                auto radiiForBlockDirection = shapeRect.radii();
+                if (writingMode.isLineOverLeft()) // sideways-lr
+                    shapeRect.setRadii({ radiiForBlockDirection.bottomLeft(), radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomRight(), radiiForBlockDirection.topRight() });
+                else if (writingMode.isBlockLeftToRight()) // vertical-lr
+                    shapeRect.setRadii({ radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft(), radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight() });
+                else // vertical-rl, sideways-rl
+                    shapeRect.setRadii({ radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight(), radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft() });
+            }
+            if (writingMode.isBidiRTL()) {
+                auto radii = shapeRect.radii();
+                shapeRect.setRadii({ radii.topRight(), radii.topLeft(), radii.bottomRight(), radii.bottomLeft() });
+            }
+        };
+        flipForWritingAndInlineDirection();
+        return LayoutShape::createBoxShape(shapeRect, writingMode, logicalMargin);
+    }
+    }
+    ASSERT_NOT_REACHED();
+    return LayoutShape::createBoxShape(LayoutRoundedRect { { } }, writingMode, 0);
+}
+
+static inline bool checkShapeImageOrigin(Document& document, const StyleImage& styleImage)
+{
+    if (styleImage.isGeneratedImage())
+        return true;
+
+    ASSERT(styleImage.cachedImage());
+    CachedImage& cachedImage = *(styleImage.cachedImage());
+    if (cachedImage.isOriginClean(&document.securityOrigin()))
+        return true;
+
+    const URL& url = cachedImage.url();
+    String urlString = url.isNull() ? "''"_s : url.stringCenterEllipsizedToLength();
+    document.addConsoleMessage(MessageSource::Security, MessageLevel::Error, makeString("Unsafe attempt to load URL "_s, urlString, '.'));
+
+    return false;
+}
+
+const LayoutShape& ShapeOutsideInfo::computedShape() const
+{
+    if (!m_shape)
+        m_shape = makeShapeForShapeOutside(m_renderer);
+
+    return *m_shape;
 }
 
 bool ShapeOutsideInfo::isEnabledFor(const RenderBox& box)

@@ -1,8 +1,6 @@
 Modules/airplay/WebMediaSessionManager.cpp
 Modules/applicationmanifest/ApplicationManifestParser.cpp
-Modules/async-clipboard/ClipboardItemBindingsDataSource.cpp
 Modules/credentialmanagement/CredentialsContainer.cpp
-Modules/gamepad/GamepadManager.cpp
 Modules/indexeddb/IDBCursor.cpp
 Modules/indexeddb/IDBIndex.cpp
 Modules/indexeddb/IDBTransaction.cpp
@@ -16,7 +14,6 @@ Modules/indexeddb/server/UniqueIDBDatabase.cpp
 Modules/mediacontrols/MediaControlsHost.cpp
 Modules/mediarecorder/MediaRecorder.cpp
 Modules/mediasession/MediaMetadata.cpp
-Modules/mediasession/MediaSession.cpp
 Modules/mediastream/RTCController.cpp
 Modules/mediastream/RTCPeerConnection.cpp
 Modules/mediastream/RTCRtpScriptTransformer.cpp
@@ -26,8 +23,6 @@ Modules/push-api/PushDatabase.cpp
 Modules/push-api/PushManager.cpp
 Modules/push-api/PushSubscription.cpp
 Modules/remoteplayback/RemotePlayback.cpp
-Modules/screen-wake-lock/WakeLock.cpp
-Modules/screen-wake-lock/WakeLockManager.cpp
 Modules/storage/StorageManager.cpp
 Modules/webaudio/BiquadFilterNode.cpp
 Modules/webaudio/DefaultAudioDestinationNode.cpp
@@ -48,7 +43,6 @@ StyleExtractorGenerated.cpp
 accessibility/AXImage.cpp
 accessibility/AXObjectCache.cpp
 accessibility/AXObjectCache.h
-accessibility/AXTextMarker.cpp
 accessibility/AccessibilityList.cpp
 accessibility/AccessibilityListBox.cpp
 accessibility/AccessibilityListBoxOption.cpp
@@ -224,8 +218,9 @@ editing/VisiblePosition.h
 editing/VisibleSelection.cpp
 editing/VisibleUnits.cpp
 editing/cocoa/AutofillElements.cpp
+editing/cocoa/EditingHTMLConverter.mm
 editing/cocoa/EditorCocoa.mm
-editing/cocoa/HTMLConverter.mm
+editing/cocoa/NodeHTMLConverter.mm
 editing/cocoa/WebContentReaderCocoa.mm
 editing/mac/EditorMac.mm
 editing/mac/FrameSelectionMac.mm
@@ -342,14 +337,12 @@ inspector/agents/worker/WorkerDebuggerAgent.cpp
 inspector/agents/worker/WorkerRuntimeAgent.cpp
 layout/floats/FloatingContext.cpp
 layout/floats/PlacedFloats.cpp
-layout/formattingContexts/FormattingContext.h
 layout/formattingContexts/FormattingGeometry.cpp
 layout/formattingContexts/block/BlockFormattingContext.cpp
 layout/formattingContexts/block/BlockFormattingQuirks.cpp
 layout/formattingContexts/block/BlockMarginCollapse.cpp
 layout/formattingContexts/block/PrecomputedBlockMarginCollapse.cpp
 layout/formattingContexts/block/tablewrapper/TableWrapperBlockFormattingContext.cpp
-layout/formattingContexts/flex/FlexFormattingContext.cpp
 layout/formattingContexts/flex/FlexLayout.cpp
 layout/formattingContexts/inline/AbstractLineBuilder.cpp
 layout/formattingContexts/inline/InlineContentAligner.cpp
@@ -381,7 +374,6 @@ layout/formattingContexts/inline/ruby/RubyFormattingContext.cpp
 layout/formattingContexts/inline/text/TextUtil.cpp
 layout/formattingContexts/table/TableFormattingContext.cpp
 layout/formattingContexts/table/TableFormattingGeometry.cpp
-layout/formattingContexts/table/TableFormattingQuirks.cpp
 layout/formattingContexts/table/TableGrid.cpp
 layout/formattingContexts/table/TableLayout.cpp
 layout/integration/LayoutIntegrationBoxGeometryUpdater.cpp
@@ -431,7 +423,6 @@ loader/appcache/ApplicationCacheGroup.cpp
 loader/appcache/ApplicationCacheStorage.cpp
 loader/archive/cf/LegacyWebArchive.cpp
 loader/cache/CachedImage.cpp
-loader/icon/IconLoader.cpp
 mathml/MathMLElement.cpp
 mathml/MathMLMathElement.cpp
 mathml/MathMLOperatorElement.cpp
@@ -447,7 +438,6 @@ page/EventHandler.cpp
 page/FocusController.cpp
 page/Frame.cpp
 page/FrameSnapshotting.cpp
-page/History.cpp
 page/ImageOverlayController.cpp
 page/IntelligenceTextEffectsSupport.cpp
 page/InteractionRegion.cpp
@@ -666,8 +656,6 @@ rendering/mathml/RenderMathMLSpace.cpp
 rendering/mathml/RenderMathMLToken.cpp
 rendering/mathml/RenderMathMLUnderOver.cpp
 rendering/shapes/ShapeOutsideInfo.cpp
-rendering/style/ContentData.cpp
-rendering/style/GridPositionsResolver.cpp
 rendering/style/RenderStyle.cpp
 rendering/style/RenderStyleInlines.h
 rendering/style/StyleCachedImage.cpp
@@ -779,6 +767,8 @@ style/Styleable.cpp
 style/Styleable.h
 style/values/color/StyleColor.cpp
 style/values/color/StyleKeywordColor.cpp
+style/values/content/StyleContent.cpp
+style/values/grid/StyleGridPositionsResolver.cpp
 style/values/primitives/StyleLengthResolution.cpp
 svg/SVGAElement.cpp
 svg/SVGClipPathElement.cpp

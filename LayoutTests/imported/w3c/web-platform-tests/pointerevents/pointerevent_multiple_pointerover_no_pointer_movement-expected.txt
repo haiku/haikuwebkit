@@ -1,0 +1,5 @@
+CONSOLE MESSAGE: Viewport argument key "initial-scale:1" not recognized and ignored.
+initial position
+
+FAIL Pointer boundary events should be fired per pointer assert_equals: expected "pointerover@div#target, pointerover@div#target, pointerover@div#container, pointerover@div#container" but got "pointerover@div#target"
+

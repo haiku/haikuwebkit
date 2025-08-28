@@ -136,7 +136,7 @@ void CompositorIntegrationImpl::withDisplayBufferAsNativeImage(uint32_t bufferIn
         auto& renderBuffer = m_renderBuffers[bufferIndex];
         std::optional<CGImageAlphaInfo> alphaInfo;
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
-        if (renderBuffer->hasFormat(IOSurface::Format::RGBA16F))
+        if (renderBuffer->pixelFormat() == IOSurface::Format::RGBA16F)
             alphaInfo = kCGImageAlphaNoneSkipLast;
 #endif
         RetainPtr<CGContextRef> cgContext = renderBuffer->createPlatformContext(0, alphaInfo);

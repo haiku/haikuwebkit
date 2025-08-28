@@ -120,7 +120,7 @@ public:
 
     Color scrollbarThumbColorStyle() const final;
     Color scrollbarTrackColorStyle() const final;
-    ScrollbarGutter scrollbarGutterStyle() const final;
+    Style::ScrollbarGutter scrollbarGutterStyle() const final;
     ScrollbarWidth scrollbarWidthStyle() const final;
 
     bool requiresScrollPositionReconciliation() const { return m_requiresScrollPositionReconciliation; }
@@ -305,6 +305,7 @@ private:
     void registerScrollableAreaForAnimatedScroll();
 
     float deviceScaleFactor() const final;
+    void scrollDidEnd() final;
 
 private:
     bool m_scrollDimensionsDirty { true };

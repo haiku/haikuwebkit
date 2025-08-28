@@ -12,6 +12,7 @@ http/tests/security/model-element [ Skip ]
 
 # Tests which pass only with form control refresh enabled
 fast/forms/form-control-refresh [ Skip ]
+interaction-region/form-control-refresh [ Skip ]
 
 # -- The above has different, expected behavior on visionOS 26 than visionOS 2 --
 # -- New failure expectations below this point only!! --

@@ -183,6 +183,7 @@ class Color;
 - (std::optional<CGPoint>)getElementMidpoint:(NSString *)selector;
 - (Vector<WebCore::Color>)sampleColors;
 - (Vector<WebCore::Color>)sampleColorsWithInterval:(unsigned)interval;
+- (RetainPtr<_WKFrameTreeNode>)frameTree;
 @end
 
 #if PLATFORM(IOS_FAMILY)

@@ -195,6 +195,7 @@ namespace WebCore {
     macro(ElementInternals) \
     macro(EncodedAudioChunk) \
     macro(EncodedVideoChunk) \
+    macro(EventCounts) \
     macro(ExtendableCookieChangeEvent) \
     macro(ExtendableEvent) \
     macro(ExtendableMessageEvent) \
@@ -331,6 +332,8 @@ namespace WebCore {
     macro(NavigationPreloadManager) \
     macro(NavigationTransition) \
     macro(NavigatorCredentials) \
+    macro(NavigatorUA) \
+    macro(NavigatorUAData) \
     macro(NavigatorMediaDevices) \
     macro(NavigatorPermissions) \
     macro(NavigatorUserMedia) \
@@ -355,6 +358,7 @@ namespace WebCore {
     macro(PaintWorkletGlobalScope) \
     macro(PerformanceEntry) \
     macro(PerformanceEntryList) \
+    macro(PerformanceEventTiming) \
     macro(PerformanceMark) \
     macro(PerformanceMeasure) \
     macro(PerformanceObserver) \
@@ -500,6 +504,8 @@ namespace WebCore {
     macro(WebKitMediaKeyNeededEvent) \
     macro(WebKitMediaKeySession) \
     macro(WebKitMediaKeys) \
+    macro(WebKitNodeInfo) \
+    macro(WebKitSerializedNode) \
     macro(WebSocket) \
     macro(WebTransport) \
     macro(WebTransportBidirectionalStream) \
@@ -552,6 +558,7 @@ namespace WebCore {
     macro(XRWebGLBinding) \
     macro(XRWebGLLayer) \
     macro(XRWebGLSubImage) \
+    macro(XSLTProcessor) \
     macro(VideoTrackGenerator) \
     macro(abortAlgorithm) \
     macro(abortSteps) \

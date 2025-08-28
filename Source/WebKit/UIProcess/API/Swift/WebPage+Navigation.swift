@@ -26,16 +26,6 @@
 import Foundation
 
 extension WebPage {
-    @available(*, deprecated, message: "Navigations are now observed using async sequences directly.")
-    @_spi(_)
-    public struct NavigationID: Sendable, Hashable, Equatable {
-        let rawValue: ObjectIdentifier
-
-        init(_ cocoaNavigation: WKNavigation) {
-            self.rawValue = ObjectIdentifier(cocoaNavigation)
-        }
-    }
-
     /// A particular state that occurs during the progression of a navigation.
     @available(iOS 26.0, macOS 26.0, visionOS 26.0, *)
     @available(watchOS, unavailable)

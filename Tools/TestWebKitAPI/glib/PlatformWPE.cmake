@@ -33,6 +33,6 @@ if (ENABLE_WPE_PLATFORM)
     list(APPEND WebKitGLibAPITest_LIBRARIES
         WPEPlatform-${WPE_API_VERSION}
     )
-endif ()
 
-add_subdirectory(WPEPlatform)
+    add_subdirectory(WPEPlatform)
+endif ()

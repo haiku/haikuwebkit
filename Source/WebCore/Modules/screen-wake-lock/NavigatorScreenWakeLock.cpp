@@ -26,6 +26,7 @@
 #include "config.h"
 #include "NavigatorScreenWakeLock.h"
 
+#include "Document.h"
 #include "Navigator.h"
 #include "WakeLock.h"
 #include <wtf/TZoneMallocInlines.h>

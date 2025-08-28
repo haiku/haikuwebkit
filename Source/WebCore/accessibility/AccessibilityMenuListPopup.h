@@ -36,7 +36,7 @@ class HTMLElement;
 class AccessibilityMenuListPopup final : public AccessibilityMockObject {
     friend class AXObjectCache;
 public:
-    static Ref<AccessibilityMenuListPopup> create(AXID axID) { return adoptRef(*new AccessibilityMenuListPopup(axID)); }
+    static Ref<AccessibilityMenuListPopup> create(AXID axID, AXObjectCache& cache) { return adoptRef(*new AccessibilityMenuListPopup(axID, cache)); }
 
     bool isEnabled() const final;
     bool isOffScreen() const final;
@@ -44,7 +44,7 @@ public:
     void didUpdateActiveOption(int optionIndex);
 
 private:
-    explicit AccessibilityMenuListPopup(AXID);
+    explicit AccessibilityMenuListPopup(AXID, AXObjectCache&);
 
     bool isMenuListPopup() const final { return true; }
 

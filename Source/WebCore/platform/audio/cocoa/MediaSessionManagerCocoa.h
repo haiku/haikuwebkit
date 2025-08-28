@@ -133,7 +133,7 @@ private:
     RefPtr<AudioHardwareListener> m_audioHardwareListener;
 
     AudioHardwareListener::BufferSizeRange m_supportedAudioHardwareBufferSizes;
-    size_t m_defaultBufferSize;
+    std::optional<size_t> m_defaultBufferSize;
 
     RunLoop::Timer m_delayCategoryChangeTimer;
     AudioSession::CategoryType m_previousCategory { AudioSession::CategoryType::None };

@@ -95,13 +95,20 @@ public:
 
     WEBCORE_EXPORT bool relinquishFocusToChrome(FocusDirection);
 
+    WEBCORE_EXPORT FocusableElementSearchResult findAndFocusElementStartingWithLocalFrame(FocusDirection, const FocusEventData&, LocalFrame&);
+
 private:
     void setActiveInternal(bool);
     void setFocusedInternal(bool);
     void setIsVisibleAndActiveInternal(bool);
 
+    enum class InitialFocus : bool { No, Yes };
+    enum class ContinuingRemoteSearch : bool { No, Yes };
+
     bool advanceFocusDirectionally(FocusDirection, const FocusEventData&);
-    bool advanceFocusInDocumentOrder(FocusDirection, const FocusEventData&, bool initialFocus);
+    bool advanceFocusInDocumentOrder(FocusDirection, const FocusEventData&, InitialFocus);
+
+    FocusableElementSearchResult findAndFocusElementInDocumentOrderStartingWithFrame(Ref<LocalFrame>, RefPtr<Node> scopeNode, RefPtr<Node> startingNode, FocusDirection, const FocusEventData&, InitialFocus, ContinuingRemoteSearch);
 
     FocusableElementSearchResult findFocusableElementAcrossFocusScope(FocusDirection, const FocusNavigationScope& startScope, Node* start, const FocusEventData&);
 

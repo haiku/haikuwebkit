@@ -1539,10 +1539,21 @@ std::optional<ResourceResponse> WebFrame::resourceResponseForURL(const URL& url)
     return std::nullopt;
 }
 
-void WebFrame::findFocusableElementDescendingIntoRemoteFrame(WebCore::FocusDirection, const WebCore::FocusEventData&, CompletionHandler<void(WebCore::FoundElementInRemoteFrame)>&& completionHandler)
+void WebFrame::findFocusableElementDescendingIntoRemoteFrame(WebCore::FocusDirection direction, const WebCore::FocusEventData& focusEventData, CompletionHandler<void(WebCore::FoundElementInRemoteFrame)>&& completionHandler)
 {
-    // FIXME: Implement
-    completionHandler(WebCore::FoundElementInRemoteFrame::No);
+    auto foundElementInRemoteFrame = WebCore::FoundElementInRemoteFrame::No;
+
+    if (m_coreFrame) {
+        if (RefPtr localFrame = dynamicDowncast<LocalFrame>(m_coreFrame.get())) {
+            if (RefPtr page = localFrame->page()) {
+                auto result = page->focusController().findAndFocusElementStartingWithLocalFrame(direction, focusEventData, *localFrame);
+                if (result.element)
+                    foundElementInRemoteFrame = WebCore::FoundElementInRemoteFrame::Yes;
+            }
+        }
+    }
+
+    completionHandler(foundElementInRemoteFrame);
 }
 
 } // namespace WebKit

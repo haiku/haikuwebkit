@@ -37,7 +37,7 @@ namespace Style {
 struct ColorResolutionState;
 
 struct ContrastColor {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(ContrastColor);
 
     Color color;
 
@@ -52,6 +52,9 @@ inline bool operator==(const UniqueRef<ContrastColor>& a, const UniqueRef<Contra
 Color toStyleColor(const CSS::ContrastColor&, ColorResolutionState&);
 WebCore::Color resolveColor(const ContrastColor&, const WebCore::Color& currentColor);
 bool containsCurrentColor(const ContrastColor&);
+
+void serializationForCSSTokenization(StringBuilder&, const CSS::SerializationContext&, const ContrastColor&);
+String serializationForCSSTokenization(const CSS::SerializationContext&, const ContrastColor&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const ContrastColor&);
 

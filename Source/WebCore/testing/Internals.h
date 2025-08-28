@@ -110,6 +110,7 @@ class InternalsSetLike;
 class LocalFrame;
 class Location;
 class MallocStatistics;
+class MediaSessionManagerInterface;
 class MediaStream;
 class MediaStreamTrack;
 class MemoryInfo;
@@ -1618,6 +1619,8 @@ private:
     CachedResource* resourceFromMemoryCache(const String& url);
 
     bool hasMarkerFor(DocumentMarkerType, int from, int length);
+
+    RefPtr<MediaSessionManagerInterface> sessionManager() const;
 
 #if ENABLE(MEDIA_STREAM)
     // RealtimeMediaSourceObserver API

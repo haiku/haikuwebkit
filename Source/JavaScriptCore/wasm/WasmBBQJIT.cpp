@@ -460,8 +460,8 @@ ControlData::ControlData(BBQJIT& generator, BlockType blockType, BlockSignature 
     }
 
     if (!isAnyCatch(*this)) {
-        auto gprSetCopy = generator.m_validGPRs;
-        auto fprSetCopy = generator.m_validFPRs;
+        auto gprSetCopy = generator.validGPRs();
+        auto fprSetCopy = generator.validFPRs();
         liveScratchGPRs.forEach([&] (auto r) { gprSetCopy.remove(r); });
         liveScratchFPRs.forEach([&] (auto r) { fprSetCopy.remove(r); });
 
@@ -469,8 +469,8 @@ ControlData::ControlData(BBQJIT& generator, BlockType blockType, BlockSignature 
             m_argumentLocations.append(allocateArgumentOrResult(generator, signature.m_signature->argumentType(i).kind, i, gprSetCopy, fprSetCopy));
     }
 
-    auto gprSetCopy = generator.m_validGPRs;
-    auto fprSetCopy = generator.m_validFPRs;
+    auto gprSetCopy = generator.validGPRs();
+    auto fprSetCopy = generator.validFPRs();
     for (unsigned i = 0; i < signature.m_signature->returnCount(); ++i)
         m_resultLocations.append(allocateArgumentOrResult(generator, signature.m_signature->returnType(i).kind, i, gprSetCopy, fprSetCopy));
 }
@@ -659,8 +659,6 @@ BBQJIT::BBQJIT(CCallHelpers& jit, const TypeDefinition& signature, BBQCallee& ca
     , m_directCallees(m_info.internalFunctionCount())
     , m_hasExceptionHandlers(hasExceptionHandlers)
     , m_loopIndexForOSREntry(loopIndexForOSREntry)
-    , m_gprLRU(jit.numberOfRegisters())
-    , m_fprLRU(jit.numberOfFPRegisters())
     , m_lastUseTimestamp(0)
     , m_compilation(compilation)
     , m_pcToCodeOriginMapBuilder(Options::useSamplingProfiler())
@@ -695,17 +693,12 @@ BBQJIT::BBQJIT(CCallHelpers& jit, const TypeDefinition& signature, BBQCallee& ca
 #endif
     fprSetBuilder.remove(wasmScratchFPR);
 
-    m_gprSet = m_validGPRs = gprSetBuilder.buildAndValidate();
-    m_fprSet = m_validFPRs = fprSetBuilder.buildAndValidate();
+    ASCIILiteral logPrefix = Options::verboseBBQJITAllocation() ? "BBQ"_s : ASCIILiteral();
+    m_gprAllocator.initialize(gprSetBuilder.buildAndValidate(), logPrefix);
+    m_fprAllocator.initialize(fprSetBuilder.buildAndValidate(), logPrefix);
     m_callerSaveGPRs = callerSaveGprs.buildAndValidate();
     m_callerSaveFPRs = callerSaveFprs.buildAndValidate();
     m_callerSaves = callerSaveGprs.merge(callerSaveFprs).buildAndValidate();
-
-    m_gprLRU.add(m_gprSet);
-    m_fprLRU.add(m_fprSet);
-
-    if ((Options::verboseBBQJITAllocation()))
-        dataLogLn("BBQ\tUsing GPR set: ", m_gprSet, "\n   \tFPR set: ", m_fprSet);
 
     if (shouldDumpDisassemblyFor(CompilationMode::BBQMode)) [[unlikely]] {
         m_disassembler = makeUnique<BBQDisassembler>();
@@ -3771,7 +3764,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addSwitch(Value condition, const Vector
             m_jit.lshiftPtr(TrustedImm32(3), wasmScratchGPR);
         else
             m_jit.lshiftPtr(TrustedImm32(2), wasmScratchGPR);
-        m_jit.addPtr(TrustedImmPtr(jumpTable->data()), wasmScratchGPR);
+        m_jit.addPtr(TrustedImmPtr(jumpTable->span().data()), wasmScratchGPR);
         m_jit.farJump(Address(wasmScratchGPR), JSSwitchPtrTag);
 
         auto labels = WTF::map(targets, [&](auto& target) {
@@ -3953,6 +3946,20 @@ void BBQJIT::flushValue(Value value)
     bind(value, slot);
 }
 
+void BBQJIT::flush(GPRReg, const RegisterBinding& binding)
+{
+    Value value = binding.toValue();
+    ASSERT(value.isLocal() || value.isTemp());
+    flushValue(value);
+}
+
+void BBQJIT::flush(FPRReg, const RegisterBinding& binding)
+{
+    Value value = binding.toValue();
+    ASSERT(value.isLocal() || value.isTemp());
+    flushValue(value);
+}
+
 void BBQJIT::restoreWebAssemblyContextInstance()
 {
     m_jit.loadPtr(Address(GPRInfo::callFrameRegister, CallFrameSlot::codeBlock * sizeof(Register)), GPRInfo::wasmContextInstancePointer);
@@ -3967,30 +3974,20 @@ void BBQJIT::loadWebAssemblyGlobalState(GPRReg wasmBaseMemoryPointer, GPRReg was
 void BBQJIT::flushRegistersForException()
 {
     // Flush all locals.
-    for (RegisterBinding& binding : gprBindings()) {
-        if (binding.toValue().isLocal())
-            flushValue(binding.toValue());
-    }
-
-    for (RegisterBinding& binding : fprBindings()) {
-        if (binding.toValue().isLocal())
-            flushValue(binding.toValue());
-    }
+    m_gprAllocator.flushIf(*this, [&](const RegisterBinding& binding) {
+        return binding.toValue().isLocal();
+    });
+    m_fprAllocator.flushIf(*this, [&](const RegisterBinding& binding) {
+        return binding.toValue().isLocal();
+    });
 }
 
 void BBQJIT::flushRegisters()
 {
     // Just flush everything.
     // FIXME: These should be store pairs.
-    for (const RegisterBinding& binding : gprBindings()) {
-        if (!binding.toValue().isNone())
-            flushValue(binding.toValue());
-    }
-
-    for (const RegisterBinding& binding : fprBindings()) {
-        if (!binding.toValue().isNone())
-            flushValue(binding.toValue());
-    }
+    m_gprAllocator.flushAllRegisters(*this);
+    m_fprAllocator.flushAllRegisters(*this);
 }
 
 void BBQJIT::RegisterBindings::dump(PrintStream& out) const
@@ -4003,7 +4000,6 @@ void BBQJIT::RegisterBindings::dump(PrintStream& out) const
     if (comma.didPrint())
         out.print("]");
 
-    // FIXME: These should be store load pairs.
     comma = CommaPrinter(", ", comma.didPrint() ? ", ["_s : "["_s);
     for (unsigned i = 0; i < m_gprBindings.size(); ++i) {
         if (!m_gprBindings[i].isNone())
@@ -4067,7 +4063,8 @@ void BBQJIT::saveValuesAcrossCallAndPassArguments(const Vector<Value, N>& argume
 
     // Next, for all values currently still occupying a caller-saved register, we flush them to their canonical slot.
     for (Reg reg : m_callerSaves) {
-        RegisterBinding binding = reg.isGPR() ? gprBindings()[reg.gpr()] : fprBindings()[reg.fpr()];
+        RegisterBinding binding = bindingFor(reg);
+        ASSERT(!binding.isScratch());
         if (!binding.toValue().isNone())
             flushValue(binding.toValue());
     }
@@ -4081,11 +4078,11 @@ void BBQJIT::saveValuesAcrossCallAndPassArguments(const Vector<Value, N>& argume
         if (paramLocation.isRegister()) {
             RegisterBinding binding;
             if (paramLocation.isGPR())
-                binding = gprBindings()[paramLocation.asGPR()];
+                binding = bindingFor(paramLocation.asGPR());
             else if (paramLocation.isFPR())
-                binding = fprBindings()[paramLocation.asFPR()];
+                binding = bindingFor(paramLocation.asFPR());
             else if (paramLocation.isGPR2())
-                binding = gprBindings()[paramLocation.asGPRhi()];
+                binding = bindingFor(paramLocation.asGPRhi());
             if (!binding.toValue().isNone())
                 flushValue(binding.toValue());
         }
@@ -4119,29 +4116,13 @@ void BBQJIT::returnValuesFromCall(Vector<Value, N>& results, const FunctionSigna
         if (returnLocation.isRegister()) {
             RegisterBinding currentBinding;
             if (returnLocation.isGPR())
-                currentBinding = gprBindings()[returnLocation.asGPR()];
+                currentBinding = bindingFor(returnLocation.asGPR());
             else if (returnLocation.isFPR())
-                currentBinding = fprBindings()[returnLocation.asFPR()];
+                currentBinding = bindingFor(returnLocation.asFPR());
             else if (returnLocation.isGPR2())
-                currentBinding = gprBindings()[returnLocation.asGPRhi()];
-            if (currentBinding.isScratch()) {
-                // FIXME: This is a total hack and could cause problems. We assume scratch registers (allocated by a ScratchScope)
-                // will never be live across a call. So far, this is probably true, but it's fragile. Probably the fix here is to
-                // exclude all possible return value registers from ScratchScope so we can guarantee there's never any interference.
-                currentBinding = RegisterBinding::none();
-                if (returnLocation.isGPR()) {
-                    ASSERT(m_validGPRs.contains(returnLocation.asGPR(), IgnoreVectors));
-                    m_gprSet.add(returnLocation.asGPR(), IgnoreVectors);
-                } else if (returnLocation.isGPR2()) {
-                    ASSERT(m_validGPRs.contains(returnLocation.asGPRlo(), IgnoreVectors));
-                    ASSERT(m_validGPRs.contains(returnLocation.asGPRhi(), IgnoreVectors));
-                    m_gprSet.add(returnLocation.asGPRlo(), IgnoreVectors);
-                    m_gprSet.add(returnLocation.asGPRhi(), IgnoreVectors);
-                } else {
-                    ASSERT(m_validFPRs.contains(returnLocation.asFPR(), Width::Width128));
-                    m_fprSet.add(returnLocation.asFPR(), Width::Width128);
-                }
-            }
+                currentBinding = bindingFor(returnLocation.asGPRhi());
+            // There's no way to preserve an abritrary scratch over a call so we shouldn't try to do so.
+            ASSERT(!currentBinding.isScratch());
         } else {
             ASSERT(returnLocation.isStackArgument());
             // FIXME: Ideally, we would leave these values where they are but a subsequent call could clobber them before they are used.
@@ -4194,6 +4175,7 @@ void BBQJIT::emitTailCall(FunctionSpaceIndex functionIndex, const TypeDefinition
         preserved.add(callingConvention.prologueScratchGPRs[0], IgnoreVectors);
     ScratchScope<1, 0> scratches(*this, WTFMove(preserved));
     GPRReg callerFramePointer = scratches.gpr(0);
+    scratches.unbindPreserved();
 #if CPU(X86_64)
     m_jit.loadPtr(Address(MacroAssembler::framePointerRegister), callerFramePointer);
     resolvedArguments.append(Value::pinned(pointerType(), Location::fromStack(sizeof(Register))));
@@ -4270,12 +4252,10 @@ void BBQJIT::emitTailCall(FunctionSpaceIndex functionIndex, const TypeDefinition
 
     LOG_INSTRUCTION("ReturnCall", functionIndex, arguments);
 
-    // Because we're returning, we need to consume all elements of the
+    // Because we're returning, we need to unbind all elements of the
     // expression stack here so they don't spuriously hold onto their bindings
     // in the subsequent unreachable code.
-
-    for (const auto& value : m_parser->expressionStack())
-        consume(value);
+    unbindAllRegisters();
 }
 
 
@@ -4429,6 +4409,7 @@ void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRRe
         preserved.add(callingConvention.prologueScratchGPRs[0], IgnoreVectors);
     ScratchScope<1, 0> scratches(*this, WTFMove(preserved));
     GPRReg callerFramePointer = scratches.gpr(0);
+    scratches.unbindPreserved();
     m_jit.loadPairPtr(MacroAssembler::framePointerRegister, callerFramePointer, MacroAssembler::linkRegister);
 #else
     UNREACHABLE_FOR_PLATFORM();
@@ -4684,6 +4665,8 @@ ALWAYS_INLINE void BBQJIT::willParseOpcode()
         }
         m_disassembler->setOpcode(m_jit.label(), PrefixedOpcode(m_parser->currentOpcode()), m_parser->currentOpcodeStartingOffset());
     }
+    m_gprAllocator.assertAllValidRegistersAreUnlocked();
+    m_fprAllocator.assertAllValidRegistersAreUnlocked();
 
 #if ASSERT_ENABLED
     if (shouldFuseBranchCompare && isCompareOpType(m_prevOpcode)
@@ -4871,29 +4854,20 @@ ControlData& BBQJIT::currentControlData()
 
 void BBQJIT::setLRUKey(Location location, LocalOrTempIndex key)
 {
+    ASSERT(location.isRegister());
     if (location.isGPR()) {
-        m_gprLRU.increaseKey(location.asGPR(), key);
+        m_gprAllocator.setSpillHint(location.asGPR(), key);
     } else if (location.isFPR()) {
-        m_fprLRU.increaseKey(location.asFPR(), key);
+        m_fprAllocator.setSpillHint(location.asFPR(), key);
     } else if (location.isGPR2()) {
-        m_gprLRU.increaseKey(location.asGPRhi(), key);
-        m_gprLRU.increaseKey(location.asGPRlo(), key);
+        m_gprAllocator.setSpillHint(location.asGPRhi(), key);
+        m_gprAllocator.setSpillHint(location.asGPRlo(), key);
     }
 }
 
-void BBQJIT::increaseKey(Location location)
+void BBQJIT::increaseLRUKey(Location location)
 {
-    setLRUKey(location, ++m_lastUseTimestamp);
-}
-
-Location BBQJIT::bind(Value value)
-{
-    if (value.isPinned())
-        return value.asPinned();
-
-    Location reg = allocateRegister(value);
-    increaseKey(reg);
-    return bind(value, reg);
+    setLRUKey(location, nextLRUKey());
 }
 
 Location BBQJIT::allocate(Value value)
@@ -4906,20 +4880,25 @@ Location BBQJIT::allocateWithHint(Value value, Location hint)
     if (value.isPinned())
         return value.asPinned();
 
-    Location reg = hint;
-    if (reg.kind() == Location::None
-        || value.isFloat() != reg.isFPR()
-        || (reg.isGPR() && !m_gprSet.contains(reg.asGPR(), IgnoreVectors))
-        || (reg.isGPR2() && !typeNeedsGPR2(value.type()))
-        || (reg.isGPR() && typeNeedsGPR2(value.type()))
-        || (reg.isFPR() && !m_fprSet.contains(reg.asFPR(), Width::Width128)))
-        reg = allocateRegister(value);
-    increaseKey(reg);
+    Location result;
+    if (value.isFloat())
+        result = Location::fromFPR(m_fprAllocator.allocate(*this, RegisterBinding::fromValue(value), nextLRUKey(), hint.isFPR() ? hint.asFPR() : InvalidFPRReg));
+    else if (!typeNeedsGPR2(value.type()))
+        result = Location::fromGPR(m_gprAllocator.allocate(*this, RegisterBinding::fromValue(value), nextLRUKey(), hint.isGPR() ? hint.asGPR() : InvalidGPRReg));
+    else if constexpr (is32Bit()) {
+        // FIXME: Add hint support for GPR2s.
+        auto lruKey = nextLRUKey();
+        GPRReg lo = m_gprAllocator.allocate(*this, RegisterBinding::fromValue(value), lruKey);
+        GPRReg hi = m_gprAllocator.allocate(*this, RegisterBinding::fromValue(value), lruKey);
+        result = Location::fromGPR2(hi, lo);
+    } else
+        RELEASE_ASSERT_NOT_REACHED();
+
     if (value.isLocal())
         currentControlData().touch(value.asLocal());
     if (Options::verboseBBQJITAllocation()) [[unlikely]]
-        dataLogLn("BBQ\tAllocated ", value, " with type ", makeString(value.type()), " to ", reg);
-    return bind(value, reg);
+        dataLogLn("BBQ\tAllocated ", value, " with type ", makeString(value.type()), " to ", result);
+    return bind(value, result);
 }
 
 Location BBQJIT::locationOfWithoutBinding(Value value)
@@ -4959,14 +4938,13 @@ Location BBQJIT::loadIfNecessary(Value value)
     if (loc.isMemory()) {
         if (Options::verboseBBQJITAllocation()) [[unlikely]]
             dataLogLn("BBQ\tLoading local ", value, " to ", loc);
-        loc = allocateRegister(value); // Find a register to store this value. Might spill older values if we run out.
-        emitLoad(value, loc); // Generate the load instructions to move the value into the register.
-        increaseKey(loc);
+        Location dst = allocate(value); // Find a register to store this value. Might spill older values if we run out.
+        emitLoad(value.type(), loc, dst); // Generate the load instructions to move the value into the register.
         if (value.isLocal())
             currentControlData().touch(value.asLocal());
-        bind(value, loc); // Bind the value to the register in the register/local/temp bindings.
+        loc = dst;
     } else
-        increaseKey(loc);
+        increaseLRUKey(loc);
     ASSERT(loc.isRegister());
     return loc;
 }
@@ -4986,20 +4964,6 @@ void BBQJIT::consume(Value value)
 #endif
 }
 
-Location BBQJIT::allocateRegister(TypeKind type)
-{
-    if (isFloatingPointType(type))
-        return Location::fromFPR(m_fprSet.isEmpty() ? evictFPR() : nextFPR());
-    if (typeNeedsGPR2(type))
-        return allocateRegisterPair();
-    return Location::fromGPR(m_gprSet.isEmpty() ? evictGPR() : nextGPR());
-}
-
-Location BBQJIT::allocateRegister(Value value)
-{
-    return allocateRegister(value.type());
-}
-
 Location BBQJIT::bind(Value value, Location loc)
 {
     // Bind a value to a location. Doesn't touch the LRU, but updates the register set
@@ -5016,25 +4980,23 @@ Location BBQJIT::bind(Value value, Location loc)
     // for it here.
     ASSERT(!currentLocation.isRegister());
 
+    // Some callers have already updated the allocator to bind value to loc. But if not, we should do that bookkeeping now.
     if (loc.isRegister()) {
         if (value.isFloat()) {
-            ASSERT(m_fprSet.contains(loc.asFPR(), Width::Width128));
-            m_fprSet.remove(loc.asFPR());
-            fprBindings()[loc.asFPR()] = RegisterBinding::fromValue(value);
+            if (m_fprAllocator.freeRegisters().contains(loc.asFPR(), Width::Width128))
+                m_fprAllocator.bind(loc.asFPR(), RegisterBinding::fromValue(value), std::nullopt);
+            ASSERT(bindingFor(loc.asFPR()) == RegisterBinding::fromValue(value));
         } else if (loc.isGPR2()) {
-            ASSERT(gprBindings()[loc.asGPRlo()].isNone());
-            ASSERT(gprBindings()[loc.asGPRhi()].isNone());
-            ASSERT(m_gprSet.contains(loc.asGPRlo(), IgnoreVectors));
-            ASSERT(m_gprSet.contains(loc.asGPRhi(), IgnoreVectors));
-            m_gprSet.remove(loc.asGPRlo());
-            m_gprSet.remove(loc.asGPRhi());
-            auto binding = RegisterBinding::fromValue(value);
-            gprBindings()[loc.asGPRlo()] = binding;
-            gprBindings()[loc.asGPRhi()] = binding;
+            if (m_gprAllocator.freeRegisters().contains(loc.asGPRlo(), IgnoreVectors))
+                m_gprAllocator.bind(loc.asGPRlo(), RegisterBinding::fromValue(value), std::nullopt);
+            ASSERT(bindingFor(loc.asGPRlo()) == RegisterBinding::fromValue(value));
+            if (m_gprAllocator.freeRegisters().contains(loc.asGPRhi(), IgnoreVectors))
+                m_gprAllocator.bind(loc.asGPRhi(), RegisterBinding::fromValue(value), std::nullopt);
+            ASSERT(bindingFor(loc.asGPRhi()) == RegisterBinding::fromValue(value));
         } else {
-            ASSERT(m_gprSet.contains(loc.asGPR(), IgnoreVectors));
-            m_gprSet.remove(loc.asGPR());
-            gprBindings()[loc.asGPR()] = RegisterBinding::fromValue(value);
+            if (m_gprAllocator.freeRegisters().contains(loc.asGPR(), IgnoreVectors))
+                m_gprAllocator.bind(loc.asGPR(), RegisterBinding::fromValue(value), std::nullopt);
+            ASSERT(bindingFor(loc.asGPR()) == RegisterBinding::fromValue(value));
         }
     }
     if (value.isLocal())
@@ -5055,19 +5017,13 @@ void BBQJIT::unbind(Value value, Location loc)
 {
     // Unbind a value from a location. Doesn't touch the LRU, but updates the register set
     // and local/temp tables accordingly.
-    if (loc.isFPR()) {
-        ASSERT(m_validFPRs.contains(loc.asFPR(), Width::Width128));
-        m_fprSet.add(loc.asFPR(), Width::Width128);
-        fprBindings()[loc.asFPR()] = RegisterBinding::none();
-    } else if (loc.isGPR()) {
-        ASSERT(m_validGPRs.contains(loc.asGPR(), IgnoreVectors));
-        m_gprSet.add(loc.asGPR(), IgnoreVectors);
-        gprBindings()[loc.asGPR()] = RegisterBinding::none();
-    } else if (loc.isGPR2()) {
-        m_gprSet.add(loc.asGPRlo(), IgnoreVectors);
-        m_gprSet.add(loc.asGPRhi(), IgnoreVectors);
-        gprBindings()[loc.asGPRlo()] = RegisterBinding::none();
-        gprBindings()[loc.asGPRhi()] = RegisterBinding::none();
+    if (loc.isFPR())
+        m_fprAllocator.unbind(loc.asFPR());
+    else if (loc.isGPR())
+        m_gprAllocator.unbind(loc.asGPR());
+    else if (loc.isGPR2()) {
+        m_gprAllocator.unbind(loc.asGPRlo());
+        m_gprAllocator.unbind(loc.asGPRhi());
     }
     if (value.isLocal())
         m_locals[value.asLocal()] = m_localSlots[value.asLocal()];
@@ -5080,89 +5036,21 @@ void BBQJIT::unbind(Value value, Location loc)
 
 void BBQJIT::unbindAllRegisters()
 {
-    for (const auto& binding : gprBindings()) {
-        if (!binding.isNone())
-            consume(binding.toValue());
-    }
-    for (const auto& binding : fprBindings()) {
-        if (!binding.isNone())
-            consume(binding.toValue());
-    }
-}
+    auto doUnbind = [&](Reg reg) {
+        const auto& binding = bindingFor(reg);
+        Value value = binding.toValue();
+        if (value.isNone())
+            return;
 
-GPRReg BBQJIT::nextGPR()
-{
-    auto next = m_gprSet.begin();
-    ASSERT(next != m_gprSet.end());
-    GPRReg reg = (*next).gpr();
-    ASSERT(gprBindings()[reg].m_kind == RegisterBinding::None);
-    return reg;
-}
+        ASSERT(value.isTemp() || value.isLocal());
+        unbind(value, locationOfWithoutBinding(value));
+    };
 
-FPRReg BBQJIT::nextFPR()
-{
-    auto next = m_fprSet.begin();
-    ASSERT(next != m_fprSet.end());
-    FPRReg reg = (*next).fpr();
-    ASSERT(fprBindings()[reg].m_kind == RegisterBinding::None);
-    return reg;
-}
+    for (auto reg : m_gprAllocator.validRegisters())
+        doUnbind(reg);
 
-GPRReg BBQJIT::evictGPR()
-{
-    auto lruGPR = m_gprLRU.findMin();
-    auto lruBinding = gprBindings()[lruGPR];
-
-    if (Options::verboseBBQJITAllocation()) [[unlikely]]
-        dataLogLn("BBQ\tEvicting GPR ", MacroAssembler::gprName(lruGPR), " currently bound to ", lruBinding);
-    flushValue(lruBinding.toValue());
-
-    ASSERT(m_gprSet.contains(lruGPR, IgnoreVectors));
-    ASSERT(gprBindings()[lruGPR].m_kind == RegisterBinding::None);
-    return lruGPR;
-}
-
-FPRReg BBQJIT::evictFPR()
-{
-    auto lruFPR = m_fprLRU.findMin();
-    auto lruBinding = fprBindings()[lruFPR];
-
-    if (Options::verboseBBQJITAllocation()) [[unlikely]]
-        dataLogLn("BBQ\tEvicting FPR ", MacroAssembler::fprName(lruFPR), " currently bound to ", lruBinding);
-    flushValue(lruBinding.toValue());
-
-    ASSERT(m_fprSet.contains(lruFPR, Width::Width128));
-    ASSERT(fprBindings()[lruFPR].m_kind == RegisterBinding::None);
-    return lruFPR;
-}
-
-// We use this to free up specific registers that might get clobbered by an instruction.
-
-void BBQJIT::clobber(GPRReg gpr)
-{
-    if (m_validGPRs.contains(gpr, IgnoreVectors) && !m_gprSet.contains(gpr, IgnoreVectors)) {
-        RegisterBinding& binding = gprBindings()[gpr];
-        if (Options::verboseBBQJITAllocation()) [[unlikely]]
-            dataLogLn("BBQ\tClobbering GPR ", MacroAssembler::gprName(gpr), " currently bound to ", binding);
-        RELEASE_ASSERT(!binding.isNone() && !binding.isScratch()); // We could probably figure out how to handle this, but let's just crash if it happens for now.
-        flushValue(binding.toValue());
-    }
-}
-
-void BBQJIT::clobber(FPRReg fpr)
-{
-    if (m_validFPRs.contains(fpr, Width::Width128) && !m_fprSet.contains(fpr, Width::Width128)) {
-        RegisterBinding& binding = fprBindings()[fpr];
-        if (Options::verboseBBQJITAllocation()) [[unlikely]]
-            dataLogLn("BBQ\tClobbering FPR ", MacroAssembler::fprName(fpr), " currently bound to ", binding);
-        RELEASE_ASSERT(!binding.isNone() && !binding.isScratch()); // We could probably figure out how to handle this, but let's just crash if it happens for now.
-        flushValue(binding.toValue());
-    }
-}
-
-void BBQJIT::clobber(JSC::Reg reg)
-{
-    reg.isGPR() ? clobber(reg.gpr()) : clobber(reg.fpr());
+    for (auto reg : m_fprAllocator.validRegisters())
+        doUnbind(reg);
 }
 
 Location BBQJIT::canonicalSlot(Value value)

@@ -56,7 +56,6 @@ OBJC_CLASS NSView;
 
 namespace WebCore {
 
-class AccessibilityObject;
 class IntPoint;
 class IntSize;
 class ScrollableArea;
@@ -69,6 +68,7 @@ public:
 
     std::optional<AXID> treeID() const final;
     String dbgInternal(bool, OptionSet<AXDebugStringOption>) const final;
+    virtual String extraDebugInfo() const { return emptyString(); }
 
     // After constructing an AccessibilityObject, it must be given a
     // unique ID, then added to AXObjectCache, and finally init() must
@@ -123,6 +123,8 @@ public:
     bool isMediaTimeline() const { return false; }
     virtual bool isSliderThumb() const { return false; }
     bool isLabel() const { return isAccessibilityLabelInstance() || labelForObjects().size(); }
+    // FIXME: Re-evaluate what this means when site isolation is enabled (is this method name accurate?)
+    virtual bool isRoot() const { return false; }
 
     std::optional<InputType::Type> inputType() const final;
 
@@ -233,7 +235,6 @@ public:
 
     WallTime dateTimeValue() const override { return { }; }
     DateComponentsType dateTimeComponentsType() const final;
-    bool supportsDatetimeAttribute() const final;
     String datetimeAttributeValue() const final;
 
     bool canSetFocusAttribute() const override { return false; }
@@ -360,6 +361,7 @@ public:
     String title() const override { return { }; }
     String description() const override { return { }; }
     virtual String helpText() const { return { }; }
+    String altTextFromAttributeOrStyle() const;
 
     std::optional<String> textContent() const final;
     bool hasTextContent() const;
@@ -370,6 +372,8 @@ public:
 
     // Methods for determining accessibility text.
     bool isARIAStaticText() const { return ariaRoleAttribute() == AccessibilityRole::StaticText; }
+    // Whether this object should cache a string value when an isolated object is created for it.
+    bool shouldCacheStringValue() const;
     String stringValue() const override { return { }; }
     bool dependsOnTextUnderElement() const;
     String textUnderElement(TextUnderElementMode = { }) const override { return { }; }
@@ -425,7 +429,7 @@ public:
 
     String ariaRoleDescription() const final { return getAttributeTrimmed(HTMLNames::aria_roledescriptionAttr); };
 
-    AXObjectCache* axObjectCache() const override;
+    AXObjectCache* axObjectCache() const;
 
     static AccessibilityObject* anchorElementForNode(Node&);
     static AccessibilityObject* headingElementForNode(Node*);
@@ -714,7 +718,7 @@ public:
     bool isHidden() const { return isAXHidden() || isRenderHidden(); }
     bool isOnScreen() const final;
 
-#if PLATFORM(COCOA)
+#if PLATFORM(MAC)
     void overrideAttachmentParent(AccessibilityObject* parent);
 #else
     void overrideAttachmentParent(AccessibilityObject*) { }
@@ -871,7 +875,7 @@ public:
     }; // class iterator
 
 protected:
-    explicit AccessibilityObject(AXID);
+    explicit AccessibilityObject(AXID, AXObjectCache&);
 
     // FIXME: Make more of these member functions private.
 
@@ -930,18 +934,11 @@ private:
 protected: // FIXME: Make the data members private.
     AccessibilityChildrenVector m_children;
 private:
+    const WeakPtr<AXObjectCache> m_axObjectCache;
 #if PLATFORM(IOS_FAMILY)
     InlineTextPrediction m_lastPresentedTextPrediction;
     InlineTextPrediction m_lastPresentedTextPredictionComplete;
 #endif
-    OptionSet<AXAncestorFlag> m_ancestorFlags;
-    AccessibilityObjectInclusion m_lastKnownIsIgnoredValue { AccessibilityObjectInclusion::DefaultBehavior };
-protected: // FIXME: Make the data members private.
-    // FIXME: This can be replaced by AXAncestorFlags.
-    AccessibilityIsIgnoredFromParentData m_isIgnoredFromParentData;
-    bool m_childrenDirty { false };
-    bool m_subtreeDirty { false };
-    mutable bool m_childrenInitialized { false };
 };
 
 inline bool AccessibilityObject::hasDisplayContents() const

@@ -106,6 +106,12 @@
         _runOpenPanelWithParameters(webView, parameters, frame, completionHandler);
 }
 
+- (void)_webView:(WKWebView *)webView takeFocus:(_WKFocusDirection)direction
+{
+    if (_takeFocus)
+        _takeFocus(webView, direction);
+}
+
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
 - (NSColor *)_webView:(WKWebView *)webView adjustedColorForTopContentInsetColor:(NSColor *)proposedColor

@@ -54,6 +54,7 @@
 #include "SVGNames.h"
 #include "SVGParsingError.h"
 #include "SVGPropertyAnimatorFactory.h"
+#include "SVGPropertyOwnerRegistry.h"
 #include "SVGRenderStyle.h"
 #include "SVGRenderSupport.h"
 #include "SVGResourceElementClient.h"

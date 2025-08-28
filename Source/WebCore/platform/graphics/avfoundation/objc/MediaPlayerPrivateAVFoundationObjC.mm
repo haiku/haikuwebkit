@@ -31,6 +31,7 @@
 #import "AVAssetMIMETypeCache.h"
 #import "AVAssetTrackUtilities.h"
 #import "AVTrackPrivateAVFObjCImpl.h"
+#import "AudioMediaStreamTrackRenderer.h"
 #import "AudioSourceProviderAVFObjC.h"
 #import "AudioTrackPrivateAVFObjC.h"
 #import "AuthenticationChallenge.h"
@@ -1029,7 +1030,7 @@ void MediaPlayerPrivateAVFoundationObjC::setAVPlayerItem(AVPlayerItem *item)
 
     RetainPtr<AVPlayer> strongPlayer = m_avPlayer.get();
     RetainPtr<AVPlayerItem> strongItem = item;
-    RunLoop::protectedMain()->dispatch([strongPlayer, strongItem] {
+    RunLoop::mainSingleton().dispatch([strongPlayer, strongItem] {
         [strongPlayer replaceCurrentItemWithPlayerItem:strongItem.get()];
     });
 }
@@ -1120,7 +1121,7 @@ void MediaPlayerPrivateAVFoundationObjC::createAVPlayer()
 #if HAVE(AUDIO_OUTPUT_DEVICE_UNIQUE_ID)
     auto audioOutputDeviceId = player->audioOutputDeviceIdOverride();
     if (!audioOutputDeviceId.isNull()) {
-        if (audioOutputDeviceId.isEmpty())
+        if (audioOutputDeviceId.isEmpty() || audioOutputDeviceId == AudioMediaStreamTrackRenderer::defaultDeviceID())
             m_avPlayer.get().audioOutputDeviceUniqueID = nil;
         else
             m_avPlayer.get().audioOutputDeviceUniqueID = audioOutputDeviceId.createNSString().get();
@@ -2142,7 +2143,7 @@ bool MediaPlayerPrivateAVFoundationObjC::shouldWaitForLoadingOfResource(AVAssetR
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA)
         // Create an initData with the following layout:
         // [4 bytes: keyURI size], [keyURI size bytes: keyURI]
-        unsigned keyURISize = keyURI.length() * sizeof(UChar);
+        unsigned keyURISize = keyURI.length() * sizeof(char16_t);
         auto initDataBuffer = ArrayBuffer::create(4 + keyURISize, 1);
         unsigned byteLength = initDataBuffer->byteLength();
         auto initDataView = JSC::DataView::create(initDataBuffer.copyRef(), 0, byteLength);
@@ -2864,13 +2865,13 @@ auto MediaPlayerPrivateAVFoundationObjC::waitForVideoOutputMediaDataWillChange()
     if (!m_runLoopNestingLevel) {
         m_waitForVideoOutputMediaDataWillChangeObserver = WTF::makeUnique<Observer<void()>>([weakThis = ThreadSafeWeakPtr { *this }] {
             if (RefPtr protectedThis = weakThis.get(); protectedThis && protectedThis->m_runLoopNestingLevel)
-                RunLoop::protectedMain()->stop();
+                RunLoop::mainSingleton().stop();
         });
         if (RefPtr videoOutput = m_videoOutput)
             videoOutput->addCurrentImageChangedObserver(*m_waitForVideoOutputMediaDataWillChangeObserver);
 
-        timeoutTimer.emplace(RunLoop::protectedMain(), [&] {
-            RunLoop::protectedMain()->stop();
+        timeoutTimer.emplace(RunLoop::mainSingleton(), "MediaPlayerPrivateAVFoundationObjC::TimeoutTimer"_s, [&] {
+            RunLoop::mainSingleton().stop();
         });
         timeoutTimer->startOneShot(1_s);
     }
@@ -2884,7 +2885,7 @@ auto MediaPlayerPrivateAVFoundationObjC::waitForVideoOutputMediaDataWillChange()
     --m_runLoopNestingLevel;
 
     if (m_runLoopNestingLevel) {
-        RunLoop::protectedMain()->stop();
+        RunLoop::mainSingleton().stop();
         return UpdateResult::Failed;
     }
 
@@ -4031,7 +4032,7 @@ void MediaPlayerPrivateAVFoundationObjC::audioOutputDeviceChanged()
     if (!m_avPlayer || !player)
         return;
     auto deviceId = player->audioOutputDeviceId();
-    if (deviceId.isEmpty())
+    if (deviceId.isEmpty() || deviceId == AudioMediaStreamTrackRenderer::defaultDeviceID())
         m_avPlayer.get().audioOutputDeviceUniqueID = nil;
     else
         m_avPlayer.get().audioOutputDeviceUniqueID = deviceId.createNSString().get();

@@ -38,11 +38,9 @@ bindings/js/JSDOMConvertBase.h
 bindings/js/JSLocationCustom.cpp
 bindings/js/JSPaintRenderingContext2DCustom.cpp
 bindings/js/WebCoreOpaqueRootInlines.h
-bindings/js/WindowProxy.h
 bridge/objc/objc_runtime.h
 crypto/cocoa/CryptoAlgorithmEd25519Cocoa.cpp
 crypto/cocoa/CryptoKeyOKPCocoa.cpp
-css/CSSFontSelector.h
 css/CSSImageValue.cpp
 css/CSSStyleProperties.h
 css/CSSToLengthConversionData.h
@@ -77,13 +75,10 @@ inspector/UserGestureEmulationScope.h
 inspector/agents/InspectorDOMAgent.h
 inspector/agents/InspectorNetworkAgent.h
 inspector/agents/InspectorPageAgent.h
-layout/floats/FloatingContext.h
-layout/formattingContexts/FormattingContext.h
 layout/formattingContexts/inline/InlineFormattingContext.h
 layout/formattingContexts/inline/InlineItemsBuilder.cpp
 layout/formattingContexts/inline/InlineLine.h
 layout/formattingContexts/inline/text/TextUtil.cpp
-layout/integration/LayoutIntegrationUtils.h
 layout/integration/inline/LayoutIntegrationLineLayout.h
 layout/layouttree/LayoutElementBox.h
 loader/cache/CachedImageClient.h

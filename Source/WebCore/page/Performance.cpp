@@ -33,11 +33,13 @@
 #include "config.h"
 #include "Performance.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentLoader.h"
 #include "Event.h"
 #include "EventLoop.h"
 #include "EventNames.h"
+#include "ExceptionOr.h"
 #include "LocalFrame.h"
 #include "PerformanceEntry.h"
 #include "PerformanceMarkOptions.h"
@@ -133,6 +135,11 @@ DOMHighResTimeStamp Performance::relativeTimeFromTimeOriginInReducedResolution(M
 MonotonicTime Performance::monotonicTimeFromRelativeTime(DOMHighResTimeStamp relativeTime) const
 {
     return m_timeOrigin + Seconds::fromMilliseconds(relativeTime);
+}
+
+ScriptExecutionContext* Performance::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
 }
 
 PerformanceNavigation* Performance::navigation()

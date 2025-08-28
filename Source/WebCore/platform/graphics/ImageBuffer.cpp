@@ -84,7 +84,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(SerializedImageBuffer);
 static const float MaxClampedLength = 4096;
 static const float MaxClampedArea = MaxClampedLength * MaxClampedLength;
 
-RefPtr<ImageBuffer> ImageBuffer::create(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, const DestinationColorSpace& colorSpace, ImageBufferPixelFormat pixelFormat, GraphicsClient* graphicsClient)
+RefPtr<ImageBuffer> ImageBuffer::create(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, const DestinationColorSpace& colorSpace, ImageBufferFormat pixelFormat, GraphicsClient* graphicsClient)
 {
     RefPtr<ImageBuffer> imageBuffer;
 
@@ -147,7 +147,7 @@ IntSize ImageBuffer::calculateBackendSize(FloatSize logicalSize, float resolutio
 
 ImageBufferBackendParameters ImageBuffer::backendParameters(const ImageBufferParameters& parameters)
 {
-    return { calculateBackendSize(parameters.logicalSize, parameters.resolutionScale), parameters.resolutionScale, parameters.colorSpace, parameters.pixelFormat, parameters.purpose };
+    return { calculateBackendSize(parameters.logicalSize, parameters.resolutionScale), parameters.resolutionScale, parameters.colorSpace, parameters.bufferFormat, parameters.purpose };
 }
 
 bool ImageBuffer::sizeNeedsClamping(const FloatSize& size)
@@ -250,7 +250,7 @@ static RefPtr<ImageBuffer> copyImageBuffer(Ref<ImageBuffer> source, PreserveReso
     }
     auto copySize = source->logicalSize();
     auto copyScale = preserveResolution == PreserveResolution::Yes ? source->resolutionScale() : 1.f;
-    auto copyBuffer = source->context().createImageBuffer(copySize, copyScale, source->colorSpace(), renderingMode, std::nullopt, source->pixelFormat());
+    auto copyBuffer = source->context().createImageBuffer(copySize, copyScale, source->colorSpace(), renderingMode, std::nullopt, { source->pixelFormat() });
     if (!copyBuffer)
         return nullptr;
     if (source->hasOneRef())

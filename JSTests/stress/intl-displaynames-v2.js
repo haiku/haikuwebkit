@@ -47,7 +47,7 @@ function shouldThrow(func, errorMessage) {
     shouldBe(dn.of("gregory"), "Gregorian Calendar");
     shouldBe(dn.of("ethioaa"), "Ethiopic Amete Alem Calendar");
     shouldBe(dn.of("japanese"), "Japanese Calendar");
-    shouldBe(dn.of("dangi"), "Dangi Calendar");
+    shouldBeOneOf(dn.of("dangi"), ["Dangi Calendar", "Korean Calendar"]);
     shouldBe(dn.of("chinese"), "Chinese Calendar");
 }
 {
@@ -57,7 +57,7 @@ function shouldThrow(func, errorMessage) {
     shouldBe(dn.of("gregory"), "公历");
     shouldBe(dn.of("ethioaa"), "埃塞俄比亚阿米特阿莱姆日历");
     shouldBe(dn.of("japanese"), "和历");
-    shouldBe(dn.of("dangi"), "檀纪历");
+    shouldBeOneOf(dn.of("dangi"), ["檀纪历", "韩国历"]);
     shouldBe(dn.of("chinese"), "农历");
 }
 {

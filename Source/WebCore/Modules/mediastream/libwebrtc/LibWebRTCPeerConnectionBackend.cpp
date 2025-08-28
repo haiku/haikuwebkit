@@ -224,7 +224,9 @@ void LibWebRTCPeerConnectionBackend::getStats(RTCRtpSender& sender, Ref<Deferred
 
 void LibWebRTCPeerConnectionBackend::getStats(RTCRtpReceiver& receiver, Ref<DeferredPromise>&& promise)
 {
-    webrtc::RtpReceiverInterface* rtcReceiver = receiver.backend() ? static_cast<LibWebRTCRtpReceiverBackend*>(receiver.backend())->rtcReceiver() : nullptr;
+    RefPtr<webrtc::RtpReceiverInterface> rtcReceiver;
+    if (auto* backend = receiver.backend())
+        rtcReceiver = &static_cast<LibWebRTCRtpReceiverBackend*>(backend)->rtcReceiver();
 
     if (!rtcReceiver) {
         m_endpoint->getStats(WTFMove(promise));

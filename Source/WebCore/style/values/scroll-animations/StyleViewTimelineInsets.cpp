@@ -38,11 +38,7 @@ namespace Style {
 
 auto ViewTimelineInsetDefaulter::operator()() const -> const ViewTimelineInsetItem&
 {
-    static LazyNeverDestroyed<ViewTimelineInsetItem> staticValue;
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [] {
-        staticValue.construct(ViewTimelineInsetItem { WebCore::Length(WebCore::LengthType::Auto), std::nullopt });
-    });
+    static NeverDestroyed staticValue = ViewTimelineInsetItem { WebCore::Length(WebCore::LengthType::Auto), std::nullopt };
     return staticValue.get();
 }
 

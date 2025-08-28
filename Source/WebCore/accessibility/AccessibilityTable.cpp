@@ -34,6 +34,7 @@
 #include "AccessibilityTableColumn.h"
 #include "AccessibilityTableHeaderContainer.h"
 #include "AccessibilityTableRow.h"
+#include "ContainerNodeInlines.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "ElementChildIteratorInlines.h"
 #include "HTMLTableCaptionElement.h"
@@ -55,15 +56,15 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityTable::AccessibilityTable(AXID axID, RenderObject& renderer)
-    : AccessibilityRenderObject(axID, renderer)
+AccessibilityTable::AccessibilityTable(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, renderer, cache)
     , m_headerContainer(nullptr)
     , m_isExposable(true)
 {
 }
 
-AccessibilityTable::AccessibilityTable(AXID axID, Node& node)
-    : AccessibilityRenderObject(axID, node)
+AccessibilityTable::AccessibilityTable(AXID axID, Node& node, AXObjectCache& cache)
+    : AccessibilityRenderObject(axID, node, cache)
     , m_headerContainer(nullptr)
     , m_isExposable(true)
 {
@@ -80,14 +81,14 @@ void AccessibilityTable::init()
     AccessibilityRenderObject::init();
 }
 
-Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, RenderObject& renderer)
+Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTable(axID, renderer));
+    return adoptRef(*new AccessibilityTable(axID, renderer, cache));
 }
 
-Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, Node& node)
+Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, Node& node, AXObjectCache& cache)
 {
-    return adoptRef(*new AccessibilityTable(axID, node));
+    return adoptRef(*new AccessibilityTable(axID, node, cache));
 }
 
 bool AccessibilityTable::hasNonTableARIARole() const

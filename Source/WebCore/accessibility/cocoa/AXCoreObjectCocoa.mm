@@ -438,8 +438,21 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     } else if (role == AccessibilityRole::Canvas && firstUnignoredChild() && !containsOnlyStaticText()) {
         // If this is a canvas with fallback content (one or more non-text thing), re-map to group.
         role = AccessibilityRole::Group;
-    } else if (isInvalidListBox())
-        role = AccessibilityRole::Group;
+    } else {
+        switch (listBoxInterpretation()) {
+        case ListBoxInterpretation::ActuallyListBox:
+            role = AccessibilityRole::ListBox;
+            break;
+        case ListBoxInterpretation::ActuallyStaticList:
+            role = AccessibilityRole::List;
+            break;
+        case ListBoxInterpretation::InvalidListBox:
+            role = AccessibilityRole::Group;
+            break;
+        case ListBoxInterpretation::NotListBox:
+            break;
+        }
+    }
 
     return Accessibility::roleToPlatformString(role);
 }

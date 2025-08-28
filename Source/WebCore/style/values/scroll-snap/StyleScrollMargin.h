@@ -123,4 +123,4 @@ WTF::TextStream& operator<<(WTF::TextStream&, const ScrollMarginEdge&);
 } // namespace Style
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::ScrollMarginEdge> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::Style::ScrollMarginEdge)

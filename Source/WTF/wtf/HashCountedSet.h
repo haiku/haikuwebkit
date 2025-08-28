@@ -29,7 +29,7 @@ namespace WTF {
 
 template<typename Value, typename HashFunctions, typename Traits>
 class HashCountedSet final {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(HashCountedSet);
 private:
     using ImplType = HashMap<Value, unsigned, HashFunctions, Traits>;
 public:

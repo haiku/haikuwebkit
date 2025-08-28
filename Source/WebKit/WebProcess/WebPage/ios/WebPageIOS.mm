@@ -85,6 +85,7 @@
 #import <WebCore/DocumentLoader.h>
 #import <WebCore/DocumentMarkerController.h>
 #import <WebCore/DragController.h>
+#import <WebCore/EditingHTMLConverter.h>
 #import <WebCore/EditingInlines.h>
 #import <WebCore/Editor.h>
 #import <WebCore/EditorClient.h>
@@ -102,7 +103,6 @@
 #import <WebCore/HTMLAreaElement.h>
 #import <WebCore/HTMLAttachmentElement.h>
 #import <WebCore/HTMLBodyElement.h>
-#import <WebCore/HTMLConverter.h>
 #import <WebCore/HTMLElement.h>
 #import <WebCore/HTMLElementTypeHelpers.h>
 #import <WebCore/HTMLFormElement.h>
@@ -3613,7 +3613,7 @@ static void elementPositionInformation(WebPage& page, Element& element, const In
     if (linkElement && info.title.isEmpty())
         info.title = element.innerText();
     if (element.renderer())
-        info.touchCalloutEnabled = element.renderer()->style().touchCalloutEnabled();
+        info.touchCalloutEnabled = element.renderer()->style().touchCallout() == WebCore::Style::WebkitTouchCallout::Default;
 
     if (linkElement && !info.isImageOverlayText) {
         info.isLink = true;
@@ -3770,7 +3770,7 @@ static bool canForceCaretForPosition(const VisiblePosition& position)
 
     auto* renderer = node->renderer();
     auto* style = renderer ? &renderer->style() : nullptr;
-    auto cursorType = style ? style->cursor() : CursorType::Auto;
+    auto cursorType = style ? style->cursorType() : CursorType::Auto;
 
     if (cursorType == CursorType::Text)
         return true;
@@ -4934,7 +4934,7 @@ void WebPage::applicationWillResignActive()
     [[NSNotificationCenter defaultCenter] postNotificationName:WebUIApplicationWillResignActiveNotification object:nil];
 
     // FIXME(224775): Move to WebProcess
-    if (auto* manager = PlatformMediaSessionManager::singletonIfExists())
+    if (RefPtr manager = mediaSessionManagerIfExists())
         manager->applicationWillBecomeInactive();
 
     if (m_page)
@@ -4949,7 +4949,7 @@ void WebPage::applicationDidEnterBackground(bool isSuspendedUnderLock)
     freezeLayerTree(LayerTreeFreezeReason::BackgroundApplication);
 
     // FIXME(224775): Move to WebProcess
-    if (auto* manager = PlatformMediaSessionManager::singletonIfExists())
+    if (RefPtr manager = mediaSessionManagerIfExists())
         manager->applicationDidEnterBackground(isSuspendedUnderLock);
 
     if (m_page)
@@ -4971,7 +4971,7 @@ void WebPage::applicationWillEnterForeground(bool isSuspendedUnderLock)
     [[NSNotificationCenter defaultCenter] postNotificationName:WebUIApplicationWillEnterForegroundNotification object:nil userInfo:@{@"isSuspendedUnderLock": @(isSuspendedUnderLock)}];
 
     // FIXME(224775): Move to WebProcess
-    if (auto* manager = PlatformMediaSessionManager::singletonIfExists())
+    if (RefPtr manager = mediaSessionManagerIfExists())
         manager->applicationWillEnterForeground(isSuspendedUnderLock);
 
     if (m_page)
@@ -4983,7 +4983,7 @@ void WebPage::applicationDidBecomeActive()
     [[NSNotificationCenter defaultCenter] postNotificationName:WebUIApplicationDidBecomeActiveNotification object:nil];
 
     // FIXME(224775): Move to WebProcess
-    if (auto* manager = PlatformMediaSessionManager::singletonIfExists())
+    if (RefPtr manager = mediaSessionManagerIfExists())
         manager->applicationDidBecomeActive();
 
     if (m_page)
@@ -4992,13 +4992,13 @@ void WebPage::applicationDidBecomeActive()
 
 void WebPage::applicationDidEnterBackgroundForMedia(bool isSuspendedUnderLock)
 {
-    if (auto* manager = PlatformMediaSessionManager::singletonIfExists())
+    if (RefPtr manager = mediaSessionManagerIfExists())
         manager->applicationDidEnterBackground(isSuspendedUnderLock);
 }
 
 void WebPage::applicationWillEnterForegroundForMedia(bool isSuspendedUnderLock)
 {
-    if (auto* manager = PlatformMediaSessionManager::singletonIfExists())
+    if (RefPtr manager = mediaSessionManagerIfExists())
         manager->applicationWillEnterForeground(isSuspendedUnderLock);
 }
 
@@ -5182,6 +5182,7 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     if (m_viewportConfiguration.setMinimumEffectiveDeviceWidthWhenIgnoringScalingConstraints(minimumEffectiveDeviceWidthWhenIgnoringScalingConstraints))
         viewportConfigurationChanged();
 
+    frameView.clearObscuredInsetsAdjustmentsIfNeeded();
     frameView.setUnobscuredContentSize(unobscuredContentRect.size());
     m_page->setContentInsets(visibleContentRectUpdateInfo.contentInsets());
     m_page->setObscuredInsets(visibleContentRectUpdateInfo.obscuredInsets());
@@ -5953,7 +5954,7 @@ void WebPage::textInputContextsInRect(FloatRect searchRect, CompletionHandler<vo
         ElementContext context;
         context.webPageIdentifier = m_identifier;
         context.documentIdentifier = document.identifier();
-        context.elementIdentifier = element->identifier();
+        context.nodeIdentifier = element->nodeIdentifier();
         context.boundingRect = element->boundingBoxInRootViewCoordinates();
         return context;
     });

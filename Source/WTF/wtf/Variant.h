@@ -420,13 +420,10 @@ namespace mpark {
       template <typename T, std::size_t N>
       struct array {
         constexpr const T &operator[](std::size_t index) const {
-          RELEASE_ASSERT(index < ((N == 0) ? 1 : N));
-          WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
           return data[index];
-          WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
         }
 
-        T data[N == 0 ? 1 : N];
+        std::array<T, N == 0 ? 1 : N> data;
       };
 
       template <typename T>

@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include "AutosizeStatus.h"
 #include "RenderStyleConstants.h"
-#include "TextSizeAdjustment.h"
 #include <wtf/CheckedRef.h>
 #include <wtf/OptionSet.h>
 

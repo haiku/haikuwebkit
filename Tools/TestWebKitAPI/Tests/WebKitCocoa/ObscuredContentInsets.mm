@@ -191,21 +191,20 @@ TEST(ObscuredContentInsets, SetAndGetObscuredContentInsets)
     [webView _setAutomaticallyAdjustsContentInsets:NO];
 
     auto initialInsets = NSEdgeInsetsMake(100, 150, 0, 10);
-    [webView _setObscuredContentInsets:initialInsets immediate:NO];
+    [webView setObscuredContentInsets:initialInsets];
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     EXPECT_TRUE(NSEdgeInsetsEqual([webView _obscuredContentInsets], initialInsets));
 
     auto finalInsets = NSEdgeInsetsMake(50, 100, 0, 10);
-    [webView _setObscuredContentInsets:finalInsets immediate:NO];
+    [webView setObscuredContentInsets:finalInsets];
     EXPECT_TRUE(NSEdgeInsetsEqual([webView _obscuredContentInsets], finalInsets));
 }
 
 TEST(ObscuredContentInsets, ScrollViewFrameWithObscuredInsets)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
-    [webView _setAutomaticallyAdjustsContentInsets:NO];
 
-    [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 150, 30, 10) immediate:NO];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(100, 150, 30, 10)];
     [webView synchronouslyLoadTestPageNamed:@"simple"];
 
     EXPECT_EQ([webView scrollViewFrame], NSMakeRect(150, 0, 640, 600));
@@ -216,8 +215,7 @@ TEST(ObscuredContentInsets, ScrollViewFrameWithObscuredInsets)
 TEST(ObscuredContentInsets, ResizeScrollPocket)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 600)]);
-    [webView _setAutomaticallyAdjustsContentInsets:NO];
-    [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 100, 0, 0) immediate:NO];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(100, 100, 0, 0)];
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     [webView waitForNextPresentationUpdate];
     EXPECT_EQ(NSMakeRect(0, 0, 400, 100), [webView _topScrollPocket].frame);
@@ -232,8 +230,7 @@ TEST(ObscuredContentInsets, ScrollPocketCaptureColor)
 {
     RetainPtr webView = adoptNS([TestWKWebView new]);
 
-    [webView _setAutomaticallyAdjustsContentInsets:NO];
-    [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0) immediate:NO];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0)];
     [webView setFrame:NSMakeRect(0, 0, 600, 400)];
     [webView waitForNextPresentationUpdate];
 
@@ -259,8 +256,7 @@ TEST(ObscuredContentInsets, TopOverhangColorExtensionLayer)
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 600, 400)]);
 
     [webView setAllowsMagnification:YES];
-    [webView _setAutomaticallyAdjustsContentInsets:NO];
-    [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0) immediate:NO];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0)];
     [webView waitForNextPresentationUpdate];
 
     [webView synchronouslyLoadTestPageNamed:@"top-fixed-element"];
@@ -308,15 +304,15 @@ TEST(ObscuredContentInsets, TopScrollPocketKVO)
     EXPECT_NULL([webView _topScrollPocket]);
     EXPECT_EQ([observer changeCount], 0u);
 
-    [webView _setAutomaticallyAdjustsContentInsets:NO];
-    [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0) immediate:YES];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0)];
     [webView waitForNextPresentationUpdate];
 
     [webView synchronouslyLoadTestPageNamed:@"top-fixed-element"];
     EXPECT_NOT_NULL([webView _topScrollPocket]);
     EXPECT_EQ([observer changeCount], 1u);
 
-    [webView _setObscuredContentInsets:NSEdgeInsetsMake(0, 0, 0, 0) immediate:YES];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(0, 0, 0, 0)];
+    [webView waitForNextPresentationUpdate];
     EXPECT_NULL([webView _topScrollPocket]);
     EXPECT_EQ([observer changeCount], 2u);
 }
@@ -338,8 +334,7 @@ TEST(ObscuredContentInsets, AdjustedColorForTopContentInsetColor)
 
     [webView setUIDelegate:delegate.get()];
     [webView setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameAqua]];
-    [webView _setAutomaticallyAdjustsContentInsets:NO];
-    [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0) immediate:YES];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0)];
     [webView synchronouslyLoadTestPageNamed:@"top-fixed-element"];
     [webView waitForNextPresentationUpdate];
 

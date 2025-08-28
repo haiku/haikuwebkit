@@ -108,7 +108,7 @@ namespace {
 
 class InspectorThreadableLoaderClient final : public ThreadableLoaderClient {
     WTF_MAKE_NONCOPYABLE(InspectorThreadableLoaderClient);
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Loader);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(InspectorThreadableLoaderClient, Loader);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(InspectorThreadableLoaderClient);
 public:
     InspectorThreadableLoaderClient(RefPtr<LoadResourceCallback>&& callback)

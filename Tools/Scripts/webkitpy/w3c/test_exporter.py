@@ -77,6 +77,7 @@ class WebPlatformTestExporter(object):
                 if not issue:
                     raise ValueError('Unable to find associated bug.')
                 self._bug_id = issue.id
+                self._options.git_commit = commit.hash
 
         if Tracker.instance() and (isinstance(self._bug_id, int) or string_utils.decode(self._bug_id).isnumeric()):
             issue = Tracker.instance().issue(int(self._bug_id))

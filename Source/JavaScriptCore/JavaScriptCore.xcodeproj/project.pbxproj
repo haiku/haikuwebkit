@@ -790,6 +790,17 @@
 		14F7256614EE265E00B1652B /* WeakHandleOwner.h in Headers */ = {isa = PBXBuildFile; fileRef = 14F7256414EE265E00B1652B /* WeakHandleOwner.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		14F79F70216EAFD200046D39 /* Opcode.h in Headers */ = {isa = PBXBuildFile; fileRef = 969A07950ED1D3AE00F1F681 /* Opcode.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		1A28D4A8177B71C80007FA3C /* JSStringRefPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1A28D4A7177B71C80007FA3C /* JSStringRefPrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		233D76752E288A2F00EB9FFB /* basic.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 53C3D5E421ECE6CE0087FDFC /* basic.js */; };
+		233D76762E288A2F00EB9FFB /* foo.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 52D1308F221CE03A009C836C /* foo.js */; };
+		233D76882E288AD500EB9FFB /* testapi.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D767F2E288A8600EB9FFB /* testapi.js */; };
+		233D76892E288AD500EB9FFB /* testapi-function-overrides.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D76802E288A8600EB9FFB /* testapi-function-overrides.js */; };
+		233D768B2E288BCA00EB9FFB /* badModuleImportId.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D76772E288A8600EB9FFB /* badModuleImportId.js */; };
+		233D768C2E288BCA00EB9FFB /* bar.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D76782E288A8600EB9FFB /* bar.js */; };
+		233D768D2E288BCA00EB9FFB /* dependenciesEntry.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D76792E288A8600EB9FFB /* dependenciesEntry.js */; };
+		233D768E2E288BCA00EB9FFB /* foo.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D767A2E288A8600EB9FFB /* foo.js */; };
+		233D768F2E288BCA00EB9FFB /* missingImport.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D767B2E288A8600EB9FFB /* missingImport.js */; };
+		233D76902E288BCA00EB9FFB /* referenceError.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D767C2E288A8600EB9FFB /* referenceError.js */; };
+		233D76912E288BCA00EB9FFB /* syntaxError.js in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233D767D2E288A8600EB9FFB /* syntaxError.js */; };
 		2600B5A7152BAAA70091EE5F /* JSStringJoiner.h in Headers */ = {isa = PBXBuildFile; fileRef = 2600B5A5152BAAA70091EE5F /* JSStringJoiner.h */; };
 		262D85B71C0D650F006ACB61 /* AirFixPartialRegisterStalls.h in Headers */ = {isa = PBXBuildFile; fileRef = 262D85B51C0D650F006ACB61 /* AirFixPartialRegisterStalls.h */; };
 		2684D4381C00161C0081D663 /* AirLiveness.h in Headers */ = {isa = PBXBuildFile; fileRef = 2684D4371C00161C0081D663 /* AirLiveness.h */; };
@@ -1201,6 +1212,7 @@
 		539BFBB022AD3CDC0023F4C0 /* JSWeakObjectRef.h in Headers */ = {isa = PBXBuildFile; fileRef = 539BFBAF22AD3CDC0023F4C0 /* JSWeakObjectRef.h */; };
 		539DD7F523C1BBB500905F13 /* JSArrayIterator.h in Headers */ = {isa = PBXBuildFile; fileRef = 539DD7F423C1BBA900905F13 /* JSArrayIterator.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		539FB8BA1C99DA7C00940FA1 /* JSArrayInlines.h in Headers */ = {isa = PBXBuildFile; fileRef = 539FB8B91C99DA7C00940FA1 /* JSArrayInlines.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		53B0D0C42E2E834300FC209B /* SimpleRegisterAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 53B0D0C32E2E834300FC209B /* SimpleRegisterAllocator.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		53B4BD121F68B32500D2BEA3 /* WasmOps.h in Headers */ = {isa = PBXBuildFile; fileRef = 533B15DE1DC7F463004D500A /* WasmOps.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		53B601EC2034B8C5006BE667 /* JSCast.h in Headers */ = {isa = PBXBuildFile; fileRef = 53B601EB2034B8C5006BE667 /* JSCast.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		53C2CE9C22FCC3D6008B2853 /* AirHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C2CE9B22FCC3D6008B2853 /* AirHelpers.h */; };
@@ -2568,6 +2580,35 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		233D76732E28893100EB9FFB /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = testapiScripts;
+			dstSubfolderSpec = 7;
+			files = (
+				233D76752E288A2F00EB9FFB /* basic.js in CopyFiles */,
+				233D76762E288A2F00EB9FFB /* foo.js in CopyFiles */,
+				233D76892E288AD500EB9FFB /* testapi-function-overrides.js in CopyFiles */,
+				233D76882E288AD500EB9FFB /* testapi.js in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		233D768A2E288B6900EB9FFB /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = testapiScripts/dependencyListTests;
+			dstSubfolderSpec = 7;
+			files = (
+				233D768B2E288BCA00EB9FFB /* badModuleImportId.js in CopyFiles */,
+				233D768C2E288BCA00EB9FFB /* bar.js in CopyFiles */,
+				233D768D2E288BCA00EB9FFB /* dependenciesEntry.js in CopyFiles */,
+				233D768E2E288BCA00EB9FFB /* foo.js in CopyFiles */,
+				233D768F2E288BCA00EB9FFB /* missingImport.js in CopyFiles */,
+				233D76902E288BCA00EB9FFB /* referenceError.js in CopyFiles */,
+				233D76912E288BCA00EB9FFB /* syntaxError.js in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		446997032AFED699008B930C /* Product Dependencies */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -3846,6 +3887,15 @@
 		1CAA8B4A0D32C39A0041BCFF /* JavaScript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JavaScript.h; sourceTree = "<group>"; };
 		1CAA8B4B0D32C39A0041BCFF /* JavaScriptCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JavaScriptCore.h; sourceTree = "<group>"; };
 		20ECB15EFC524624BC2F02D5 /* ModuleNamespaceAccessCase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ModuleNamespaceAccessCase.cpp; sourceTree = "<group>"; };
+		233D76772E288A8600EB9FFB /* badModuleImportId.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = badModuleImportId.js; sourceTree = "<group>"; };
+		233D76782E288A8600EB9FFB /* bar.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = bar.js; sourceTree = "<group>"; };
+		233D76792E288A8600EB9FFB /* dependenciesEntry.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = dependenciesEntry.js; sourceTree = "<group>"; };
+		233D767A2E288A8600EB9FFB /* foo.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = foo.js; sourceTree = "<group>"; };
+		233D767B2E288A8600EB9FFB /* missingImport.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = missingImport.js; sourceTree = "<group>"; };
+		233D767C2E288A8600EB9FFB /* referenceError.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = referenceError.js; sourceTree = "<group>"; };
+		233D767D2E288A8600EB9FFB /* syntaxError.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = syntaxError.js; sourceTree = "<group>"; };
+		233D767F2E288A8600EB9FFB /* testapi.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = testapi.js; sourceTree = "<group>"; };
+		233D76802E288A8600EB9FFB /* testapi-function-overrides.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "testapi-function-overrides.js"; sourceTree = "<group>"; };
 		2600B5A4152BAAA70091EE5F /* JSStringJoiner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSStringJoiner.cpp; sourceTree = "<group>"; };
 		2600B5A5152BAAA70091EE5F /* JSStringJoiner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSStringJoiner.h; sourceTree = "<group>"; };
 		262D85B41C0D650F006ACB61 /* AirFixPartialRegisterStalls.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AirFixPartialRegisterStalls.cpp; path = b3/air/AirFixPartialRegisterStalls.cpp; sourceTree = "<group>"; };
@@ -4361,6 +4411,7 @@
 		53B0BE331E561AC900A8FC29 /* GetterSetterAccessCase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GetterSetterAccessCase.cpp; sourceTree = "<group>"; };
 		53B0BE351E561B0900A8FC29 /* ProxyableAccessCase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProxyableAccessCase.cpp; sourceTree = "<group>"; };
 		53B0BE371E561B2400A8FC29 /* IntrinsicGetterAccessCase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IntrinsicGetterAccessCase.cpp; sourceTree = "<group>"; };
+		53B0D0C32E2E834300FC209B /* SimpleRegisterAllocator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SimpleRegisterAllocator.h; sourceTree = "<group>"; };
 		53B601EB2034B8C5006BE667 /* JSCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JSCast.h; sourceTree = "<group>"; };
 		53C2CE9B22FCC3D6008B2853 /* AirHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AirHelpers.h; path = b3/air/AirHelpers.h; sourceTree = "<group>"; };
 		53C3D5E421ECE6CE0087FDFC /* basic.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = basic.js; sourceTree = "<group>"; };
@@ -7045,6 +7096,7 @@
 				4B8F57F32953B29600090D27 /* SIMDInfo.cpp */,
 				4BC18E5428FDE6C800ECD68D /* SIMDInfo.h */,
 				E379B58F29834EC5007C4C0E /* SIMDShuffle.h */,
+				53B0D0C32E2E834300FC209B /* SimpleRegisterAllocator.h */,
 				6B731CC02647A8370014646F /* SlowPathCall.cpp */,
 				A709F2EF17A0AC0400512E98 /* SlowPathCall.h */,
 				E3F23A7B1ECF13E500978D99 /* Snippet.h */,
@@ -7439,6 +7491,20 @@
 			tabWidth = 4;
 			usesTabs = 0;
 		};
+		233D767E2E288A8600EB9FFB /* dependencyListTests */ = {
+			isa = PBXGroup;
+			children = (
+				233D76772E288A8600EB9FFB /* badModuleImportId.js */,
+				233D76782E288A8600EB9FFB /* bar.js */,
+				233D76792E288A8600EB9FFB /* dependenciesEntry.js */,
+				233D767A2E288A8600EB9FFB /* foo.js */,
+				233D767B2E288A8600EB9FFB /* missingImport.js */,
+				233D767C2E288A8600EB9FFB /* referenceError.js */,
+				233D767D2E288A8600EB9FFB /* syntaxError.js */,
+			);
+			path = dependencyListTests;
+			sourceTree = "<group>";
+		};
 		4487DB802AF8257200AFECAE /* fuzzilli */ = {
 			isa = PBXGroup;
 			children = (
@@ -7673,8 +7739,11 @@
 		53C3D5E321ECE68E0087FDFC /* testapiScripts */ = {
 			isa = PBXGroup;
 			children = (
+				233D767E2E288A8600EB9FFB /* dependencyListTests */,
 				53C3D5E421ECE6CE0087FDFC /* basic.js */,
 				52D1308F221CE03A009C836C /* foo.js */,
+				233D76802E288A8600EB9FFB /* testapi-function-overrides.js */,
+				233D767F2E288A8600EB9FFB /* testapi.js */,
 			);
 			name = testapiScripts;
 			path = API/tests/testapiScripts;
@@ -11788,6 +11857,7 @@
 				4BC18E5628FDE6C800ECD68D /* SIMDInfo.h in Headers */,
 				E379B59029834EC5007C4C0E /* SIMDShuffle.h in Headers */,
 				0F4D8C781FCA3CFA001D32AC /* SimpleMarkingConstraint.h in Headers */,
+				53B0D0C42E2E834300FC209B /* SimpleRegisterAllocator.h in Headers */,
 				0F2B670517B6B5AB00A7AE3F /* SimpleTypedArrayController.h in Headers */,
 				14BA78F113AAB88F005B7C2C /* SlotVisitor.h in Headers */,
 				C2160FE715F7E95E00942DFC /* SlotVisitorInlines.h in Headers */,
@@ -12222,7 +12292,8 @@
 				E3D6F6EE25D78CF600C20EB4 /* Generate Entitlements */,
 				14BD59BC0A3E8F9000BAF59C /* Sources */,
 				14BD59BD0A3E8F9000BAF59C /* Frameworks */,
-				5366FDB222D5485B00BF94AF /* Copy Support Scripts */,
+				233D76732E28893100EB9FFB /* CopyFiles */,
+				233D768A2E288B6900EB9FFB /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -12532,24 +12603,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "Scripts/check-xcfilelists.sh && touch \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-		};
-		5366FDB222D5485B00BF94AF /* Copy Support Scripts */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Copy Support Scripts";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "rsync -r ${SRCROOT}/API/tests/testapiScripts ${BUILT_PRODUCTS_DIR}\n";
 		};
 		539966E3237CD6740033B0D2 /* Create Versions/Current/Helpers symlink */ = {
 			isa = PBXShellScriptBuildPhase;

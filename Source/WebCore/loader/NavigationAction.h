@@ -43,6 +43,7 @@
 namespace WebCore {
 
 class Document;
+class Element;
 class Event;
 class HistoryItem;
 class MouseEvent;
@@ -58,8 +59,8 @@ enum class NavigationNavigationType : uint8_t;
 class NavigationAction {
 public:
     NavigationAction();
-    WEBCORE_EXPORT NavigationAction(Document&, const ResourceRequest&, InitiatedByMainFrame, bool, NavigationType = NavigationType::Other, ShouldOpenExternalURLsPolicy = ShouldOpenExternalURLsPolicy::ShouldNotAllow, Event* = nullptr, const AtomString& downloadAttribute = nullAtom());
-    NavigationAction(Document&, const ResourceRequest&, InitiatedByMainFrame, bool, FrameLoadType, bool isFormSubmission, Event* = nullptr, ShouldOpenExternalURLsPolicy = ShouldOpenExternalURLsPolicy::ShouldNotAllow, const AtomString& downloadAttribute = nullAtom());
+    WEBCORE_EXPORT NavigationAction(Document&, const ResourceRequest&, InitiatedByMainFrame, bool, NavigationType = NavigationType::Other, ShouldOpenExternalURLsPolicy = ShouldOpenExternalURLsPolicy::ShouldNotAllow, Event* = nullptr, const AtomString& downloadAttribute = nullAtom(), Element* sourceElement = nullptr);
+    NavigationAction(Document&, const ResourceRequest&, InitiatedByMainFrame, bool, FrameLoadType, bool isFormSubmission, Event* = nullptr, ShouldOpenExternalURLsPolicy = ShouldOpenExternalURLsPolicy::ShouldNotAllow, const AtomString& downloadAttribute = nullAtom(), Element* sourceElement = nullptr);
 
     WEBCORE_EXPORT ~NavigationAction();
 
@@ -109,6 +110,8 @@ public:
     InitiatedByMainFrame initiatedByMainFrame() const { return m_initiatedByMainFrame; }
 
     const AtomString& downloadAttribute() const { return m_downloadAttribute; }
+
+    Element* sourceElement() const { return m_sourceElement.get(); }
 
     bool treatAsSameOriginNavigation() const { return m_treatAsSameOriginNavigation; }
 
@@ -165,6 +168,7 @@ private:
     std::optional<MouseEventData> m_mouseEventData;
     RefPtr<UserGestureToken> m_userGestureToken { UserGestureIndicator::currentUserGesture() };
     AtomString m_downloadAttribute;
+    RefPtr<Element> m_sourceElement;
     std::optional<BackForwardItemIdentifier> m_targetBackForwardItemIdentifier;
     std::optional<BackForwardItemIdentifier> m_sourceBackForwardItemIdentifier;
     std::optional<PrivateClickMeasurement> m_privateClickMeasurement;

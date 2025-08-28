@@ -32,6 +32,7 @@
 #include "FontCache.h"
 #include "MIMETypeRegistry.h"
 #include "QualifiedNameCache.h"
+#include "SharedTimer.h"
 #include "ThreadTimers.h"
 #include <wtf/MainThread.h>
 #include <wtf/TZoneMallocInlines.h>

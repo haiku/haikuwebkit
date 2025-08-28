@@ -81,7 +81,7 @@ public:
     void modelDestroyed() override;
 
     std::optional<MediaPlayerIdentifier> playerIdentifier() const;
-    void setPlayerIdentifier(std::optional<MediaPlayerIdentifier>);
+    virtual void setPlayerIdentifier(std::optional<MediaPlayerIdentifier>);
     void setVideoPresentationInterface(WeakPtr<VideoPresentationInterfaceIOS>);
 
     virtual void startObservingNowPlayingMetadata();

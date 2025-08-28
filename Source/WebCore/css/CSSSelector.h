@@ -165,6 +165,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     bool isSiblingSelector() const;
     bool isAttributeSelector() const;
     bool isHostPseudoClass() const;
+    bool isScopePseudoClass() const;
 
     Relation relation() const { return static_cast<Relation>(m_relation); }
     Match match() const { return static_cast<Match>(m_match); }
@@ -229,7 +230,7 @@ private:
     CSSSelector(CSSSelector&&) = delete;
 
     struct RareData : public RefCounted<RareData> {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CSSSelectorRareData);
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CSSSelectorRareData, RareData);
         static Ref<RareData> create(AtomString);
         WEBCORE_EXPORT ~RareData();
 

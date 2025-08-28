@@ -125,11 +125,11 @@ struct TZoneSpecification {
 };
 
 template<typename T>
-inline constexpr bool requiresCompactPointers()
+inline constexpr CompactAllocationMode compactAllocationMode()
 {
     if constexpr (requires { std::remove_pointer_t<T>::allowCompactPointers; })
-        return std::remove_pointer_t<T>::allowCompactPointers;
-    return false;
+        return std::remove_pointer_t<T>::allowCompactPointers ? CompactAllocationMode::Compact : CompactAllocationMode::NonCompact;
+    return CompactAllocationMode::NonCompact;
 }
 
 BEXPORT void determineTZoneMallocFallback();
@@ -169,7 +169,7 @@ public: \
         if (!s_heapRef || size != sizeof(_type)) [[unlikely]] \
             BMUST_TAIL_CALL return operatorNewSlow(size); \
         BASSERT(::bmalloc::api::tzoneMallocFallback > TZoneMallocFallback::ForceDebugMalloc); \
-        if constexpr (::bmalloc::api::requiresCompactPointers<_type>()) \
+        if constexpr (::bmalloc::api::compactAllocationMode<_type>() == CompactAllocationMode::Compact) \
             return ::bmalloc::api::tzoneAllocateCompact(s_heapRef); \
         return ::bmalloc::api::tzoneAllocate ## _compactMode(s_heapRef); \
     } \
@@ -194,8 +194,8 @@ private: \
 private: \
     static _exportMacro BNO_INLINE void* operatorNewSlow(size_t size) \
     { \
-        static const TZoneSpecification s_heapSpec = { &s_heapRef, sizeof(_type), CompactAllocationMode:: _compactMode, SizeAndAlignment::encode<_type>() TZONE_SPEC_NAME_ARG(#_type) }; \
-        if constexpr (::bmalloc::api::requiresCompactPointers<_type>()) \
+        static const TZoneSpecification s_heapSpec = { &s_heapRef, sizeof(_type), ::bmalloc::api::compactAllocationMode<_type>(), SizeAndAlignment::encode<_type>() TZONE_SPEC_NAME_ARG(#_type) }; \
+        if constexpr (::bmalloc::api::compactAllocationMode<_type>() == CompactAllocationMode::Compact) \
             return ::bmalloc::api::tzoneAllocateCompactSlow(size, s_heapSpec); \
         return ::bmalloc::api::tzoneAllocate ## _compactMode ## Slow(size, s_heapSpec); \
     }

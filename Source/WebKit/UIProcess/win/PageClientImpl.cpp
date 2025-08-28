@@ -92,7 +92,7 @@ bool PageClientImpl::isViewFocused()
     return m_view.isFocused();
 }
 
-bool PageClientImpl::isViewVisible()
+bool PageClientImpl::isActiveViewVisible()
 {
     return m_view.isVisible();
 }

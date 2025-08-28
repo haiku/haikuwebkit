@@ -620,16 +620,13 @@ inline IterationStatus MarkedBlock::Handle::forEachMarkedCell(const Functor& fun
     WTF::loadLoadFence();
     if (areMarksStale)
         return IterationStatus::Continue;
-    for (size_t i = m_startAtom; i < endAtom; i += m_atomsPerCell) {
-        if (!block.header().m_marks.get(i))
-            continue;
-
+    IterationStatus result = IterationStatus::Continue;
+    block.header().m_marks.forEachSetBit([&](size_t i) ALWAYS_INLINE_LAMBDA {
         HeapCell* cell = reinterpret_cast_ptr<HeapCell*>(&m_block->atoms()[i]);
-
-        if (functor(i, cell, kind) == IterationStatus::Done)
-            return IterationStatus::Done;
-    }
-    return IterationStatus::Continue;
+        result = functor(i, cell, kind);
+        return result;
+    });
+    return result;
 }
 
 } // namespace JSC

@@ -33,11 +33,11 @@
 #import "CompositeEditCommand.h"
 #import "DocumentInlines.h"
 #import "DocumentMarkerController.h"
+#import "EditingHTMLConverter.h"
 #import "Editor.h"
 #import "FocusController.h"
 #import "FrameSelection.h"
 #import "GeometryUtilities.h"
-#import "HTMLConverter.h"
 #import "IntelligenceTextEffectsSupport.h"
 #import "Logging.h"
 #import "NodeRenderStyle.h"
@@ -207,6 +207,7 @@ void WritingToolsController::willBeginWritingToolsSession(const std::optional<Wr
         IncludedElement::Attachments,
         IncludedElement::PreservedContent,
         IncludedElement::NonRenderedContent,
+        IncludedElement::TextLists,
     };
 
     auto selectedTextRange = document->selection().selection().firstRange();

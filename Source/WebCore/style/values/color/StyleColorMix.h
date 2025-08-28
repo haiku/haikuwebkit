@@ -41,7 +41,7 @@ namespace Style {
 struct ColorResolutionState;
 
 struct ColorMix {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(ColorMix);
 
     struct Component {
         using Percentage = Style::Percentage<CSS::Range{0, 100}>;
@@ -67,6 +67,9 @@ inline bool operator==(const UniqueRef<ColorMix>& a, const UniqueRef<ColorMix>& 
 Color toStyleColor(const CSS::ColorMix&, ColorResolutionState&);
 WebCore::Color resolveColor(const ColorMix&, const WebCore::Color& currentColor);
 bool containsCurrentColor(const ColorMix&);
+
+void serializationForCSSTokenization(StringBuilder&, const CSS::SerializationContext&, const ColorMix&);
+String serializationForCSSTokenization(const CSS::SerializationContext&, const ColorMix&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const ColorMix&);
 

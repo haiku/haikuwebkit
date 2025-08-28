@@ -136,7 +136,7 @@ typedef void (*WKCheckUserMediaPermissionCallback)(WKPageRef page, WKFrameRef fr
 typedef void (*WKPageDidClickAutoFillButtonCallback)(WKPageRef page, WKTypeRef userData, const void *clientInfo);
 typedef void (*WKHandleAutoplayEventCallback)(WKPageRef page, WKAutoplayEvent event, WKAutoplayEventFlags flags, const void* clientInfo);
 typedef void (*WKFullscreenMayReturnToInlineCallback)(WKPageRef page, const void* clientInfo);
-typedef void (*WKRequestPointerLockCallback)(WKPageRef page, const void* clientInfo);
+typedef void (*WKRequestPointerLockCallback)(WKPageRef page, WKCompletionListenerRef listener, const void* clientInfo);
 typedef void (*WKDidLosePointerLockCallback)(WKPageRef page, const void* clientInfo);
 typedef void (*WKHasVideoInPictureInPictureDidChangeCallback)(WKPageRef page, bool hasVideoInPictureInPicture, const void* clientInfo);
 typedef void (*WKPageDidResignInputElementStrongPasswordAppearanceCallback)(WKPageRef page, WKTypeRef userData, const void *clientInfo);

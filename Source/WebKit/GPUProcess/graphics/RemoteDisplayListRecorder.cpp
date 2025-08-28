@@ -92,12 +92,12 @@ std::optional<SourceImage> RemoteDisplayListRecorder::sourceImage(RenderingResou
 
 void RemoteDisplayListRecorder::startListeningForIPC()
 {
-    m_renderingBackend->protectedStreamConnection()->startReceivingMessages(*this, Messages::RemoteDisplayListRecorder::messageReceiverName(), m_identifier.toUInt64());
+    m_renderingBackend->streamConnection().startReceivingMessages(*this, Messages::RemoteDisplayListRecorder::messageReceiverName(), m_identifier.toUInt64());
 }
 
 void RemoteDisplayListRecorder::stopListeningForIPC()
 {
-    m_renderingBackend->protectedStreamConnection()->stopReceivingMessages(Messages::RemoteDisplayListRecorder::messageReceiverName(), m_identifier.toUInt64());
+    m_renderingBackend->streamConnection().stopReceivingMessages(Messages::RemoteDisplayListRecorder::messageReceiverName(), m_identifier.toUInt64());
 }
 
 void RemoteDisplayListRecorder::save()

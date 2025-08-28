@@ -28,15 +28,11 @@
 #include "APIObject.h"
 #include <WebCore/ContentExtensionParser.h>
 #include <system_error>
+#include <wtf/Forward.h>
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
 class FragmentedSharedBuffer;
-}
-
-namespace WTF {
-class ConcurrentWorkQueue;
-class WorkQueue;
 }
 
 namespace API {
@@ -45,7 +41,7 @@ class ContentRuleList;
 
 class ContentRuleListStore final : public ObjectImpl<Object::Type::ContentRuleListStore> {
 public:
-    enum class Error {
+    enum class Error : uint8_t {
         LookupFailed = 1,
         VersionMismatch,
         CompileFailed,
@@ -82,17 +78,10 @@ public:
     void invalidateContentRuleListHeader(const WTF::String& identifier);
     void getContentRuleListSource(WTF::String&& identifier, CompletionHandler<void(WTF::String)>);
 
-    Ref<WTF::ConcurrentWorkQueue> protectedCompileQueue();
-    Ref<WTF::WorkQueue> protectedReadQueue();
-    Ref<WTF::WorkQueue> protectedRemoveQueue();
-
 private:
     WTF::String defaultStorePath();
 
     const WTF::String m_storePath;
-    Ref<WTF::ConcurrentWorkQueue> m_compileQueue;
-    Ref<WTF::WorkQueue> m_readQueue;
-    Ref<WTF::WorkQueue> m_removeQueue;
 #endif // ENABLE(CONTENT_EXTENSIONS)
 };
 

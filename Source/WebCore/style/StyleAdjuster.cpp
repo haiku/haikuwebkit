@@ -75,6 +75,7 @@
 #include "TouchAction.h"
 #include "TypedElementDescendantIterator.h"
 #include "TypedElementDescendantIteratorInlines.h"
+#include "UserAgentParts.h"
 #include "VisibilityAdjustment.h"
 #include "WebAnimationTypes.h"
 #include <wtf/RobinHoodHashSet.h>
@@ -705,9 +706,9 @@ void Adjuster::adjust(RenderStyle& style) const
     if ((style.overflowY() == Overflow::PagedX || style.overflowY() == Overflow::PagedY) && !(m_element && (m_element->hasTagName(htmlTag) || m_element->hasTagName(bodyTag))))
         style.setColumnStylesFromPaginationMode(WebCore::paginationModeForRenderStyle(style));
 
-#if ENABLE(OVERFLOW_SCROLLING_TOUCH)
+#if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
     // Touch overflow scrolling creates a stacking context.
-    if (style.hasAutoUsedZIndex() && style.useTouchOverflowScrolling() && (isScrollableOverflow(style.overflowX()) || isScrollableOverflow(style.overflowY())))
+    if (style.hasAutoUsedZIndex() && style.overflowScrolling() == Style::WebkitOverflowScrolling::Touch && (isScrollableOverflow(style.overflowX()) || isScrollableOverflow(style.overflowY())))
         style.setUsedZIndex(0);
 #endif
 
@@ -801,8 +802,8 @@ void Adjuster::adjust(RenderStyle& style) const
 
 #if ENABLE(INTERACTION_REGIONS_IN_EVENT_REGION)
         // Every element will automatically get an interaction region which is not useful, ignoring the `cursor: pointer;` on the body.
-        if (is<HTMLBodyElement>(*m_element) && style.cursor() == CursorType::Pointer && style.eventListenerRegionTypes().contains(EventListenerRegionType::MouseClick))
-            style.setCursor(CursorType::Auto);
+        if (is<HTMLBodyElement>(*m_element) && style.cursorType() == CursorType::Pointer && style.eventListenerRegionTypes().contains(EventListenerRegionType::MouseClick))
+            style.setCursor(CSS::Keyword::Auto { });
 #endif
 
 #if ENABLE(TEXT_AUTOSIZING)

@@ -40,6 +40,7 @@
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
 #include "LocalizedStrings.h"
+#include "NavigatorUAData.h"
 #include "Page.h"
 #include "PermissionsPolicy.h"
 #include "PlatformStrategies.h"
@@ -211,7 +212,7 @@ void Navigator::showShareData(ExceptionOr<ShareDataWithParsedURL&> readData, Ref
     m_hasPendingShare = true;
 
     if (frame->page()->isControlledByAutomation()) {
-        RunLoop::protectedMain()->dispatch([promise = WTFMove(promise), weakThis = WeakPtr { *this }] {
+        RunLoop::mainSingleton().dispatch([promise = WTFMove(promise), weakThis = WeakPtr { *this }] {
             if (weakThis)
                 weakThis->m_hasPendingShare = false;
             promise->resolve();
@@ -446,5 +447,22 @@ int Navigator::maxTouchPoints() const
 
     return 0;
 }
+
+void Navigator::initializeNavigatorUAData() const
+{
+    if (m_navigatorUAData)
+        return;
+
+    // FIXME(296489): populate the data structure
+    return;
+}
+
+NavigatorUAData& Navigator::userAgentData() const
+{
+    if (!m_navigatorUAData)
+        initializeNavigatorUAData();
+
+    return *m_navigatorUAData;
+};
 
 } // namespace WebCore

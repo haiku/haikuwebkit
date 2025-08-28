@@ -4,14 +4,11 @@ MathMLNames.cpp
 Modules/WebGPU/Implementation/WebGPUBindGroupImpl.cpp
 Modules/WebGPU/Implementation/WebGPUDowncastConvertToBackingContext.cpp
 Modules/WebGPU/Implementation/WebGPUXRBindingImpl.cpp
-Modules/async-clipboard/NavigatorClipboard.cpp
 Modules/audiosession/NavigatorAudioSession.cpp
 Modules/beacon/NavigatorBeacon.cpp
-Modules/cache/WindowOrWorkerGlobalScopeCaches.cpp
 Modules/contact-picker/NavigatorContacts.cpp
 Modules/credentialmanagement/NavigatorCredentials.cpp
 Modules/encryptedmedia/MediaKeySystemController.cpp
-Modules/gamepad/NavigatorGamepad.cpp
 Modules/geolocation/GeolocationController.h
 Modules/geolocation/NavigatorGeolocation.cpp
 Modules/indexeddb/WindowOrWorkerGlobalScopeIndexedDatabase.cpp
@@ -20,7 +17,6 @@ Modules/mediacapabilities/WorkerNavigatorMediaCapabilities.cpp
 Modules/mediasession/NavigatorMediaSession.cpp
 Modules/mediastream/NavigatorMediaDevices.cpp
 Modules/mediastream/PeerConnectionBackend.cpp
-Modules/mediastream/UserMediaController.h
 Modules/mediastream/libwebrtc/LibWebRTCPeerConnectionBackend.cpp
 Modules/mediastream/libwebrtc/LibWebRTCRtpReceiverBackend.cpp
 Modules/mediastream/libwebrtc/LibWebRTCRtpTransformBackend.cpp
@@ -90,9 +86,6 @@ inspector/agents/InspectorCSSAgent.cpp
 inspector/agents/InspectorIndexedDBAgent.cpp
 layout/layouttree/LayoutIterator.h
 layout/layouttree/LayoutTreeBuilder.cpp
-loader/ThreadableLoader.cpp
-loader/cache/CachedCSSStyleSheet.cpp
-loader/cache/CachedImage.cpp
 loader/cache/CachedResourceClientWalker.h
 loader/cache/CachedResourceHandle.h
 mathml/MathMLRowElement.cpp

@@ -53,7 +53,7 @@ class PageClientImpl : public PageClient
     , public WebFullScreenManagerProxyClient
 #endif
 {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(PageClientImpl);
 #if ENABLE(FULLSCREEN_API)
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(PageClientImpl);
 #endif
@@ -70,7 +70,7 @@ private:
     WebCore::IntSize viewSize() override;
     bool isViewWindowActive() override;
     bool isViewFocused() override;
-    bool isViewVisible() override;
+    bool isActiveViewVisible() override;
     bool isViewInWindow() override;
     void processDidExit() override;
     void didRelaunchProcess() override;

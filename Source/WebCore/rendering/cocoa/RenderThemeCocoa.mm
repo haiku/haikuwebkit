@@ -106,6 +106,12 @@ static bool formControlRefreshEnabled(const Element* element)
     return element->document().settings().formControlRefreshEnabled();
 }
 
+static Color colorCompositedOverCanvasColor(const Color& color, OptionSet<StyleColorOptions> styleColorOptions)
+{
+    const auto backingColor = RenderTheme::singleton().systemColor(CSSValueCanvas, styleColorOptions);
+    return blendSourceOver(backingColor, color);
+}
+
 static Color colorCompositedOverCanvasColor(CSSValueID cssValue, OptionSet<StyleColorOptions> styleColorOptions)
 {
     const auto backingColor = RenderTheme::singleton().systemColor(CSSValueCanvas, styleColorOptions);
@@ -121,7 +127,7 @@ static void drawFocusRingForPathForVectorBasedControls(const RenderObject& box, 
     // macOS controls have never honored outline offset.
 #if PLATFORM(IOS_FAMILY)
     auto deviceScaleFactor = box.document().deviceScaleFactor();
-    auto outlineOffset = floorToDevicePixel(box.style().outlineOffset(), deviceScaleFactor);
+    auto outlineOffset = floorToDevicePixel(box.style().outlineOffset().value, deviceScaleFactor);
 
     if (outlineOffset > 0) {
         const auto center = rect.center();
@@ -507,6 +513,21 @@ LengthBox RenderThemeCocoa::controlBorder(StyleAppearance appearance, const Font
     return RenderTheme::controlBorder(appearance, font, zoomedBox, zoomFactor, element);
 }
 
+LayoutRect RenderThemeCocoa::adjustedPaintRect(const RenderBox& box, const LayoutRect& paintRect) const
+{
+#if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(FORM_CONTROL_REFRESH))
+    // Workaround for <rdar://problem/6209763>. Force the painting bounds of checkboxes and radio controls to be square.
+    if (box.style().usedAppearance() == StyleAppearance::Checkbox || box.style().usedAppearance() == StyleAppearance::Radio) {
+        float width = std::min(paintRect.width(), paintRect.height());
+        float height = width;
+        return enclosingLayoutRect(FloatRect(paintRect.x(), paintRect.y() + (box.height() - height) / 2, width, height)); // Vertically center the checkbox.
+    }
+#else
+    UNUSED_PARAM(box);
+#endif
+    return paintRect;
+}
+
 #if ENABLE(FORM_CONTROL_REFRESH)
 
 enum class ControlSize : uint8_t {
@@ -704,23 +725,17 @@ static RefPtr<Gradient> checkboxRadioBackgroundGradientForVectorBasedControls(co
 
 constexpr auto checkboxCornerRadiusRatio = 5.5f / checkboxRadioSizeForVectorBasedControls;
 
-static void paintCheckboxRadioInnerShadowForVectorBasedControls(const PaintInfo& paintInfo, const FloatRect& rect, OptionSet<ControlStyle::State> states, bool isCheckbox)
+static void paintCheckboxRadioInnerShadowForVectorBasedControls(const PaintInfo& paintInfo, const RoundedShape& shape, OptionSet<ControlStyle::State> states, bool isCheckbox)
 {
     auto& context = paintInfo.context();
     GraphicsContextStateSaver stateSaver { context };
 
-    auto cornerSizeForCheckbox = checkboxCornerRadiusRatio * rect.width();
+    const auto paintRect = shape.boundingRect;
+    const auto cornerRadius = shape.cornerRadius;
 
-    if (auto gradient = checkboxRadioBackgroundGradientForVectorBasedControls(rect, states)) {
+    if (auto gradient = checkboxRadioBackgroundGradientForVectorBasedControls(paintRect, states)) {
         context.setFillGradient(*gradient);
-
-        Path path;
-        if (isCheckbox)
-            path.addContinuousRoundedRect(rect, cornerSizeForCheckbox, cornerSizeForCheckbox);
-        else
-            path.addEllipseInRect(rect);
-
-        context.fillPath(path);
+        context.fillPath(shape.path.value_or(Path { }));
     }
 
     const FloatSize innerShadowOffset { 2, 2 };
@@ -732,16 +747,16 @@ static void paintCheckboxRadioInnerShadowForVectorBasedControls(const PaintInfo&
     context.setFillColor(Color::black);
 
     Path innerShadowPath;
-    FloatRect innerShadowRect = rect;
+    auto innerShadowRect = paintRect;
     innerShadowRect.inflate(std::max<float>(innerShadowOffset.width(), innerShadowOffset.height()) + innerShadowBlur);
     innerShadowPath.addRect(innerShadowRect);
 
-    FloatRect innerShadowHoleRect = rect;
+    auto innerShadowHoleRect = paintRect;
     // FIXME: This is not from the spec; but without it we get antialiasing fringe from the fill; we need a better solution.
     innerShadowHoleRect.inflate(0.5);
 
     if (isCheckbox)
-        innerShadowPath.addContinuousRoundedRect(innerShadowHoleRect, cornerSizeForCheckbox, cornerSizeForCheckbox);
+        innerShadowPath.addContinuousRoundedRect(innerShadowHoleRect, cornerRadius, cornerRadius);
     else
         innerShadowPath.addEllipseInRect(innerShadowHoleRect);
 
@@ -773,22 +788,20 @@ Color RenderThemeCocoa::checkboxRadioBackgroundColorForVectorBasedControls(const
     const auto isEnabled = states.contains(ControlStyle::State::Enabled);
     const auto isPressed = states.contains(ControlStyle::State::Pressed);
 
+    Color backgroundColor = Color::white;
+
 #if PLATFORM(IOS_FAMILY)
     if (PAL::currentUserInterfaceIdiomIsVision()) {
-        if (!isEnabled)
-            return RenderTheme::singleton().systemColor(isEmpty ? CSSValueWebkitControlBackground : CSSValueAppleSystemOpaqueTertiaryFill, styleColorOptions);
+        if (isEnabled) {
+            backgroundColor = isEmpty ? Color(DisplayP3<float> { 0.835, 0.835, 0.835 }) : controlTintColor(style, styleColorOptions);
+            if (isPressed)
+                backgroundColor = platformAdjustedColorForPressedState(backgroundColor, styleColorOptions);
+        } else
+            backgroundColor = RenderTheme::singleton().systemColor(isEmpty ? CSSValueWebkitControlBackground : CSSValueAppleSystemOpaqueTertiaryFill, styleColorOptions);
 
-        auto backgroundColor = isEmpty ? Color(DisplayP3<float> { 0.835, 0.835, 0.835 }) : controlTintColor(style, styleColorOptions);
-
-        if (isPressed)
-            return platformAdjustedColorForPressedState(backgroundColor, styleColorOptions);
-
-        return backgroundColor;
+        return colorCompositedOverCanvasColor(backgroundColor, styleColorOptions);
     }
-#endif
 
-    Color backgroundColor;
-#if PLATFORM(IOS_FAMILY)
     backgroundColor = isEmpty ? systemColor(CSSValueWebkitControlBackground, styleColorOptions) : controlTintColor(style, styleColorOptions);
 #else
     const auto isWindowActive = states.contains(ControlStyle::State::WindowActive);
@@ -806,7 +819,191 @@ Color RenderThemeCocoa::checkboxRadioBackgroundColorForVectorBasedControls(const
     else if (isPressed)
         backgroundColor = platformAdjustedColorForPressedState(backgroundColor, styleColorOptions);
 
-    return backgroundColor;
+    return colorCompositedOverCanvasColor(backgroundColor, styleColorOptions);
+}
+
+static RoundedShape continuousRoundedShape(const FloatRect& rect, const float cornerRadius, ShouldComputePath computePath)
+{
+    if (computePath == ShouldComputePath::No)
+        return { { }, rect, cornerRadius, CornerType::Continuous };
+
+    Path path;
+    path.addContinuousRoundedRect(rect, cornerRadius);
+    return { WTFMove(path), rect, cornerRadius, CornerType::Continuous };
+}
+
+static RoundedShape roundedShape(const FloatRect& rect, const float cornerRadius, ShouldComputePath computePath)
+{
+    if (computePath == ShouldComputePath::No)
+        return { { }, rect, cornerRadius, CornerType::Noncontinuous };
+
+    Path path;
+    path.addRoundedRect(FloatRoundedRect { rect, FloatRoundedRect::Radii { cornerRadius, cornerRadius } });
+    return { WTFMove(path), rect, cornerRadius, CornerType::Noncontinuous };
+}
+
+static bool nodeIsDateOrTimeRelatedInput(Node* node)
+{
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(node)) {
+        return input->isDateField()
+        || input->isDateTimeLocalField()
+        || input->isMonthField()
+        || input->isTimeField()
+        || input->isWeekField();
+    }
+
+    return false;
+}
+
+static RoundedShape shapeForButton(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+{
+    CheckedRef style = box.style();
+    const auto zoomScale = style->usedZoom();
+
+    auto controlRadius = 0.f;
+#if PLATFORM(MAC)
+    controlRadius = 6.f * zoomScale;
+#else
+    static constexpr auto largeButtonHeight = 45;
+    static constexpr auto largeButtonRadiusRatio = 0.35 / 2;
+
+    const auto isVertical = !style->writingMode().isHorizontal();
+    const auto boxLogicalHeight = isVertical ? rect.width() : rect.height();
+    const auto minDimension = std::min(rect.width(), rect.height());
+
+    const auto radiusForLargeButton = minDimension * largeButtonRadiusRatio;
+    if (boxLogicalHeight >= largeButtonHeight * zoomScale)
+        controlRadius = radiusForLargeButton;
+    else {
+        controlRadius = minDimension / 2;
+
+        // If trying to make the button pill-shaped would make it a circle
+        // or nearly circle, use the non-pill shape instead.
+        const auto sizeRatio = rect.width() / rect.height();
+        const auto limitingRatio = 1.5f;
+        if (limitingRatio > sizeRatio && sizeRatio > 1 / limitingRatio)
+            controlRadius = radiusForLargeButton;
+    }
+#endif
+
+    return continuousRoundedShape(rect, controlRadius, computePath);
+}
+
+static RoundedShape shapeForCheckbox(const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+{
+    // At paint time, the rect will already be square due to RenderThemeCocoa::adjustedPaintRect.
+    // During the computation of interaction regions, we do not force a square rect.
+    const auto cornerRadius = checkboxCornerRadiusRatio * std::min(rect.width(), rect.height());
+    return continuousRoundedShape(rect, cornerRadius, computePath);
+}
+
+static RoundedShape shapeForRadioButton(const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+{
+    // At paint time, the rect will already be square due to RenderThemeCocoa::adjustedPaintRect.
+    // During the computation of interaction regions, we do not force a square rect.
+    const auto cornerRadius = std::min(rect.width(), rect.height()) / 2.f;
+    return roundedShape(rect, cornerRadius, computePath);
+}
+
+static constexpr auto searchFieldDecorationEmMargin = 0.36f;
+static constexpr auto searchFieldDecorationEmSize = 1.f;
+#if PLATFORM(MAC)
+static constexpr auto searchFieldDecorationWithDropdownEmSizeLTR = 1.5f;
+static constexpr auto searchFieldDecorationWithDropdownEmSizeRTL = 1.7f;
+#endif
+
+static bool searchFieldCanBeCapsule(const RenderObject& box, const FloatRect& rect, float pixelsPerEm, bool supportsResults)
+{
+    // Depending on dimensions and styles, it might not be possible to make the control
+    // capsule-shaped in a reasonable manner, or it may look especially strange with a
+    // capsule shape. We check for these cases below.
+
+    CheckedRef style = box.style();
+    const auto isVertical = style->writingMode().isVertical();
+    const auto inlineLength = isVertical ? rect.height() : rect.width();
+    const auto boxLength = isVertical ? rect.width() : rect.height();
+    const auto borderRadius = boxLength / 2.f;
+
+    // Check if capsule shape would be nearing a circle or if the round ends would
+    // be facing the wrong direction.
+    if (inlineLength < borderRadius * 3.f)
+        return false;
+
+#if PLATFORM(MAC)
+    const auto isInlineFlipped = style->writingMode().isInlineFlipped();
+    const auto sizeWithDropdown = isInlineFlipped ? searchFieldDecorationWithDropdownEmSizeRTL : searchFieldDecorationWithDropdownEmSizeLTR;
+
+    const auto effectiveSearchFieldDecorationEmSize = supportsResults ? sizeWithDropdown : searchFieldDecorationEmSize;
+#else
+    UNUSED_PARAM(supportsResults);
+    const auto effectiveSearchFieldDecorationEmSize = searchFieldDecorationEmSize;
+#endif
+
+    static constexpr auto searchFieldInlinePaddingEmSize = 0.55f;
+
+    // Check if capsule shape would result in text being drawn within the starting
+    // semicircle of the shape rather than the flat area.
+    const auto textGapEmSize = effectiveSearchFieldDecorationEmSize + searchFieldInlinePaddingEmSize + searchFieldDecorationEmMargin;
+
+    return textGapEmSize * pixelsPerEm >= borderRadius;
+}
+
+static RoundedShape shapeForSearchField(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+{
+    CheckedRef style = box.style();
+    const auto isVertical = style->writingMode().isVertical();
+
+    CSSToLengthConversionData conversionData(style, nullptr, nullptr, nullptr);
+
+    auto supportsResults = false;
+#if PLATFORM(MAC)
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.node()))
+        supportsResults = input->maxResults() > 0;
+#endif
+
+    Ref emSize = CSSPrimitiveValue::create(1, CSSUnitType::CSS_EM);
+    const auto pixelsPerEm = emSize->resolveAsLength<float>(conversionData);
+    const auto usingCapsuleShape = searchFieldCanBeCapsule(box, rect, pixelsPerEm, supportsResults);
+
+    float rectRadius = 0.f;
+    if (usingCapsuleShape)
+        rectRadius = (isVertical ? rect.width() : rect.height()) / 2.f;
+    else
+        rectRadius = std::min(rect.width(), rect.height()) * 0.15f;
+
+    return continuousRoundedShape(rect, rectRadius, computePath);
+}
+
+static RoundedShape shapeForSwitchTrack(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+{
+    const auto states = RenderTheme::singleton().extractControlStyleStatesForRenderer(box);
+    const auto isVertical = states.contains(ControlStyle::State::VerticalWritingMode);
+    const auto logicalHeight = isVertical ? rect.width() : rect.height();
+    const auto rectRadius = logicalHeight / 2.f;
+
+#if PLATFORM(VISION)
+    return roundedShape(rect, rectRadius, computePath);
+#else
+    return continuousRoundedShape(rect, rectRadius, computePath);
+#endif
+}
+
+static constexpr auto defaultCornerRadiusForTextBasedControls = 5.f;
+
+static RoundedShape shapeForSliderThumb(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+{
+    const auto deviceScaleFactor = box.document().deviceScaleFactor();
+
+    const auto snappedRect = snapRectToDevicePixels(LayoutRect(rect), deviceScaleFactor);
+    const auto cornerRadius = std::min(snappedRect.width(), snappedRect.height()) / 2.f;
+
+    return continuousRoundedShape(snappedRect, cornerRadius, computePath);
+}
+
+static RoundedShape shapeForTextAreaOrTextField(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+{
+    const auto cornerRadius = defaultCornerRadiusForTextBasedControls * box.style().usedZoom();
+    return continuousRoundedShape(rect, cornerRadius, computePath);
 }
 
 bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
@@ -818,11 +1015,12 @@ bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& b
     if (!formControlRefreshEnabled(box))
         return false;
 
-    FloatRect squareRect(rect);
-    if (rect.width() != rect.height()) {
-        const auto minimumWidthFromRect = std::min(rect.width(), rect.height());
-        squareRect.setSize({ minimumWidthFromRect, minimumWidthFromRect });
-    }
+    const auto checkboxShape = shapeForCheckbox(rect);
+    if (!checkboxShape.path)
+        return false;
+
+    const auto path = checkboxShape.path.value();
+    const auto paintRect = checkboxShape.boundingRect;
 
 #if PLATFORM(IOS_FAMILY)
     bool isVision = PAL::currentUserInterfaceIdiomIsVision();
@@ -844,45 +1042,40 @@ bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& b
     auto indeterminate = controlStates.contains(ControlStyle::State::Indeterminate);
     auto empty = !checked && !indeterminate;
 
-    const auto cornerRadius = checkboxCornerRadiusRatio * squareRect.width();
-
-    Path backgroundPath;
-    backgroundPath.addContinuousRoundedRect(squareRect, cornerRadius, cornerRadius);
-
     if (controlIsFocusedWithOutlineStyleAutoForVectorBasedControls(box))
-        drawFocusRingForPathForVectorBasedControls(box, paintInfo, squareRect, backgroundPath);
+        drawFocusRingForPathForVectorBasedControls(box, paintInfo, paintRect, path);
 
-    context.clipPath(backgroundPath);
+    context.clipPath(path);
 
     if (empty) {
         if (isVision) {
             context.setFillColor(backgroundColor);
-            context.fillPath(backgroundPath);
+            context.fillPath(path);
 
-            paintCheckboxRadioInnerShadowForVectorBasedControls(paintInfo, squareRect, controlStates, true);
+            paintCheckboxRadioInnerShadowForVectorBasedControls(paintInfo, checkboxShape, controlStates, true);
         } else {
             const auto borderColor = checkboxRadioBorderColorForVectorBasedControls(controlStates, styleColorOptions);
             const auto borderThickness = checkboxRadioBorderWidthForVectorBasedControls * usedZoom;
             context.setStrokeStyle(StrokeStyle::SolidStroke);
 
-            drawShapeWithBorder(context, deviceScaleFactor, backgroundPath, squareRect, backgroundColor, borderThickness, borderColor);
+            drawShapeWithBorder(context, deviceScaleFactor, path, paintRect, backgroundColor, borderThickness, borderColor);
         }
 
         return true;
     }
 
     context.setFillColor(backgroundColor);
-    context.fillPath(backgroundPath);
+    context.fillPath(path);
 
     if (isVision)
-        paintCheckboxRadioInnerShadowForVectorBasedControls(paintInfo, squareRect, controlStates, true);
+        paintCheckboxRadioInnerShadowForVectorBasedControls(paintInfo, checkboxShape, controlStates, true);
 
     Path glyphPath;
 
     if (indeterminate) {
-        const FloatSize indeterminateBarSize(0.40625 * squareRect.width(), 0.15625 * squareRect.height());
+        const FloatSize indeterminateBarSize(0.40625 * paintRect.width(), 0.15625 * paintRect.height());
         const FloatSize indeterminateBarRoundingRadii(indeterminateBarSize.height() / 2.f, indeterminateBarSize.height() / 2.f);
-        const FloatPoint indeterminateBarLocation(squareRect.center() - indeterminateBarSize / 2.f);
+        const FloatPoint indeterminateBarLocation(paintRect.center() - indeterminateBarSize / 2.f);
 
         FloatRect indeterminateBarRect(indeterminateBarLocation, indeterminateBarSize);
         glyphPath.addRoundedRect(indeterminateBarRect, indeterminateBarRoundingRadii);
@@ -904,10 +1097,10 @@ bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& b
         const FloatSize checkmarkSize(71.582f, 68.652f);
         const float checkmarkToRectWidthRatio = 0.581875f;
         float topPaddingToHeightRatio = 0.24375f;
-        float scale = (checkmarkToRectWidthRatio * squareRect.width()) / checkmarkSize.width();
+        float scale = (checkmarkToRectWidthRatio * paintRect.width()) / checkmarkSize.width();
 
-        float dx = squareRect.center().x() - (checkmarkSize.width() * scale * 0.5f);
-        float dy = squareRect.y() + (squareRect.height() * topPaddingToHeightRatio);
+        float dx = paintRect.center().x() - (checkmarkSize.width() * scale * 0.5f);
+        float dy = paintRect.y() + (paintRect.height() * topPaddingToHeightRatio);
 
         AffineTransform transform;
         transform.translate(dx, dy);
@@ -935,28 +1128,26 @@ bool RenderThemeCocoa::paintRadioForVectorBasedControls(const RenderObject& box,
     auto& context = paintInfo.context();
     GraphicsContextStateSaver stateSaver(context);
 
-    FloatRect squareRect(rect);
-    if (rect.width() != rect.height()) {
-        const auto minimumWidthFromRect = std::min(rect.width(), rect.height());
-        squareRect.setSize({ minimumWidthFromRect, minimumWidthFromRect });
-    }
+    const auto radioShape = shapeForRadioButton(rect);
+    if (!radioShape.path)
+        return false;
 
-    auto controlStates = RenderTheme::singleton().extractControlStyleStatesForRenderer(box);
-    auto deviceScaleFactor = box.document().deviceScaleFactor();
-    auto styleColorOptions = box.styleColorOptions();
-    auto usedZoom = box.style().usedZoom();
+    const auto boundingPath = radioShape.path.value();
+    const auto paintRect = radioShape.boundingRect;
 
-    auto backgroundColor = checkboxRadioBackgroundColorForVectorBasedControls(box.style(), controlStates, styleColorOptions);
+    const auto controlStates = RenderTheme::singleton().extractControlStyleStatesForRenderer(box);
+    const auto deviceScaleFactor = box.document().deviceScaleFactor();
+    const auto styleColorOptions = box.styleColorOptions();
+    const auto usedZoom = box.style().usedZoom();
 
-    Path boundingPath;
-    boundingPath.addEllipseInRect(squareRect);
+    const auto backgroundColor = checkboxRadioBackgroundColorForVectorBasedControls(box.style(), controlStates, styleColorOptions);
 
     if (isVision) {
         context.save();
         context.clipPath(boundingPath);
         context.setFillColor(backgroundColor);
         context.fillPath(boundingPath);
-        paintCheckboxRadioInnerShadowForVectorBasedControls(paintInfo, squareRect, controlStates, false);
+        paintCheckboxRadioInnerShadowForVectorBasedControls(paintInfo, radioShape, controlStates, false);
         context.restore();
     }
 
@@ -968,7 +1159,7 @@ bool RenderThemeCocoa::paintRadioForVectorBasedControls(const RenderObject& box,
 
         constexpr float innerInverseRatio = 7 / 20.0f;
 
-        FloatRect innerCircleRect(squareRect);
+        FloatRect innerCircleRect(paintRect);
         innerCircleRect.inflateX(-innerCircleRect.width() * innerInverseRatio);
         innerCircleRect.inflateY(-innerCircleRect.height() * innerInverseRatio);
 
@@ -978,31 +1169,14 @@ bool RenderThemeCocoa::paintRadioForVectorBasedControls(const RenderObject& box,
         const auto borderColor = checkboxRadioBorderColorForVectorBasedControls(controlStates, styleColorOptions);
         const auto borderThickness = checkboxRadioBorderWidthForVectorBasedControls * usedZoom;
 
-        drawShapeWithBorder(context, deviceScaleFactor, boundingPath, squareRect, backgroundColor, borderThickness, borderColor);
+        drawShapeWithBorder(context, deviceScaleFactor, boundingPath, paintRect, backgroundColor, borderThickness, borderColor);
     }
 
     if (controlIsFocusedWithOutlineStyleAutoForVectorBasedControls(box))
-        drawFocusRingForPathForVectorBasedControls(box, paintInfo, squareRect, boundingPath);
+        drawFocusRingForPathForVectorBasedControls(box, paintInfo, paintRect, boundingPath);
 
     return true;
 }
-
-#if PLATFORM(IOS_FAMILY)
-
-static bool nodeIsDateOrTimeRelatedInput(Node* node)
-{
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(node)) {
-        return input->isDateField()
-            || input->isDateTimeLocalField()
-            || input->isMonthField()
-            || input->isTimeField()
-            || input->isWeekField();
-    }
-
-    return false;
-}
-
-#endif
 
 bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
@@ -1016,32 +1190,6 @@ bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderObject& box
     const auto zoomScale = style->usedZoom();
     const auto borderWidth = zoomScale;
 
-    auto controlRadius = 0.f;
-#if PLATFORM(MAC)
-    controlRadius = 6.f * zoomScale;
-#else
-    constexpr auto largeButtonHeight = 45;
-    constexpr auto largeButtonRadiusRatio = 0.35f / 2;
-
-    const auto isVertical = !style->writingMode().isHorizontal();
-    const auto boxLogicalHeight = isVertical ? rect.width() : rect.height();
-    const auto minDimension = std::min(rect.width(), rect.height());
-
-    const auto radiusForNonDateRelatedLargeButton = minDimension * largeButtonRadiusRatio;
-    if (nodeIsDateOrTimeRelatedInput(box.node()))
-        controlRadius = 5.f * zoomScale;
-    else if (boxLogicalHeight >= largeButtonHeight * zoomScale)
-        controlRadius = radiusForNonDateRelatedLargeButton;
-    else {
-        controlRadius = minDimension / 2.f;
-
-        // If trying to make the button pill-shaped would make it a circle
-        // or nearly circle, use the non-pill shape instead.
-        const auto sizeRatio = rect.width() / rect.height();
-        if (3 / 2.f > sizeRatio && sizeRatio > 2 / 3.f)
-            controlRadius = radiusForNonDateRelatedLargeButton;
-    }
-#endif
     const auto states = RenderTheme::singleton().extractControlStyleStatesForRenderer(box);
     const auto isEnabled = states.contains(ControlStyle::State::Enabled);
 
@@ -1068,8 +1216,12 @@ bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderObject& box
     auto& context = paintInfo.context();
     GraphicsContextStateSaver stateSaver(context);
 
-    Path boundingPath;
-    boundingPath.addContinuousRoundedRect(rect, controlRadius, controlRadius);
+    const auto buttonShape = shapeForButton(box, rect);
+    if (!buttonShape.path)
+        return false;
+
+    const auto path = buttonShape.path.value();
+    const auto boundingRect = buttonShape.boundingRect;
 
 #if PLATFORM(MAC)
     const auto userPrefersContrast = Theme::singleton().userPrefersContrast();
@@ -1078,10 +1230,10 @@ bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderObject& box
     const auto borderColor = systemColor(CSSValueWebkitControlBackground, styleColorOptions);
 #endif
 
-    drawShapeWithBorder(context, deviceScaleFactor, boundingPath, rect, backgroundColor, borderWidth, borderColor);
+    drawShapeWithBorder(context, deviceScaleFactor, path, boundingRect, backgroundColor, borderWidth, borderColor);
 
     if (controlIsFocusedWithOutlineStyleAutoForVectorBasedControls(box))
-        drawFocusRingForPathForVectorBasedControls(box, paintInfo, rect, boundingPath);
+        drawFocusRingForPathForVectorBasedControls(box, paintInfo, boundingRect, path);
 
     return true;
 }
@@ -1546,15 +1698,13 @@ bool RenderThemeCocoa::paintInnerSpinButtonStyleForVectorBasedControls(const Ren
     const auto isEnabled = controlStates.contains(ControlStyle::State::Enabled);
     const auto isPressed = controlStates.contains(ControlStyle::State::Pressed);
     const auto isSpinningUp = controlStates.contains(ControlStyle::State::SpinUp);
-#if PLATFORM(MAC)
     const auto isWindowActive = controlStates.contains(ControlStyle::State::WindowActive);
-    auto indicatorColor = isWindowActive ? controlTintColor(box.style(), styleColorOptions) : systemColor(CSSValueAppleSystemSecondaryLabel, styleColorOptions);
-#else
-    auto indicatorColor = controlTintColor(box.style(), styleColorOptions);
-#endif
+
+    const auto cssValueForIndicatorColor = isWindowActive ? CSSValueAppleSystemLabel : CSSValueAppleSystemSecondaryLabel;
 
     auto backgroundColor = systemColor(CSSValueAppleSystemQuinaryLabel, styleColorOptions);
     auto dividerColor = systemColor(CSSValueAppleSystemQuaternaryLabel, styleColorOptions);
+    auto indicatorColor = systemColor(cssValueForIndicatorColor, styleColorOptions);
 
     if (!isEnabled) {
         backgroundColor = backgroundColor.colorWithAlphaMultipliedBy(kDisabledControlAlpha);
@@ -1667,17 +1817,18 @@ static void applyEmPadding(RenderStyle& style, const Element* element, float pad
     const auto horizontalPadding = isVertical ? paddingBlockPixels : paddingInlinePixels;
     const auto verticalPadding = isVertical ? paddingInlinePixels : paddingBlockPixels;
 
-    style.setPaddingBox({ verticalPadding, horizontalPadding, verticalPadding, horizontalPadding });
+    Style::PaddingBox paddingBox { verticalPadding, horizontalPadding, verticalPadding, horizontalPadding };
+    applyPaddingIfNotExplicitlySet(style, paddingBox);
 }
 
-#if PLATFORM(MAC)
-static void applyEmPaddingForNumberField(RenderStyle& style, const Element* element, float inlineStartPadding, float inlineEndAndBlockPadding)
-{
-    if (!element)
-        return;
+static constexpr auto standardTextControlInlinePaddingEm = 0.5f;
+static constexpr auto standardTextControlBlockPaddingEm = 0.25f;
 
-    Ref paddingInlineStart = CSSPrimitiveValue::create(inlineStartPadding, CSSUnitType::CSS_EM);
-    Ref paddingInlineEndAndBlock = CSSPrimitiveValue::create(inlineEndAndBlockPadding, CSSUnitType::CSS_EM);
+#if PLATFORM(MAC)
+static Style::PaddingBox paddingBoxForNumberField(const RenderStyle& style, const Element* element)
+{
+    Ref paddingInlineStart = CSSPrimitiveValue::create(standardTextControlInlinePaddingEm, CSSUnitType::CSS_EM);
+    Ref paddingInlineEndAndBlock = CSSPrimitiveValue::create(standardTextControlBlockPaddingEm, CSSUnitType::CSS_EM);
     Ref document = element->document();
 
     const auto paddingInlineStartPixels = Style::PaddingEdge::Fixed { static_cast<float>(paddingInlineStart->resolveAsLength<int>({ style, document->renderStyle(), nullptr, document->renderView() })) };
@@ -1686,12 +1837,17 @@ static void applyEmPaddingForNumberField(RenderStyle& style, const Element* elem
     Style::PaddingBox paddingBox { paddingInlineEndAndBlockPixels };
     paddingBox.setStart(paddingInlineStartPixels, style.writingMode());
 
-    applyPaddingIfNotExplicitlySet(style, paddingBox);
+    return paddingBox;
+}
+
+static void applyEmPaddingForNumberField(RenderStyle& style, const Element* element)
+{
+    if (!element)
+        return;
+
+    applyPaddingIfNotExplicitlySet(style, paddingBoxForNumberField(style, element));
 }
 #endif
-
-static constexpr auto standardTextControlInlinePaddingEm = 0.5f;
-static constexpr auto standardTextControlBlockPaddingEm = 0.25f;
 
 bool RenderThemeCocoa::adjustTextFieldStyleForVectorBasedControls(RenderStyle& style, const Element* element) const
 {
@@ -1713,7 +1869,7 @@ bool RenderThemeCocoa::adjustTextFieldStyleForVectorBasedControls(RenderStyle& s
     // concentricity will be determined by the list button rather than the spin button.
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(*element); input && !input->hasDataList()) {
         if (input->isNumberField())
-            applyEmPaddingForNumberField(style, element, standardTextControlInlinePaddingEm, standardTextControlBlockPaddingEm);
+            applyEmPaddingForNumberField(style, element);
         else
             applyEmPadding(style, element, standardTextControlInlinePaddingEm, standardTextControlBlockPaddingEm);
     }
@@ -1773,7 +1929,6 @@ static float listButtonCornerRadius(ControlSize controlSize)
 }
 #endif
 
-static constexpr auto defaultCornerRadiusForTextBasedControls = 5.f;
 static constexpr auto borderThicknessForTextBasedControl = 0.5f;
 
 #if PLATFORM(MAC)
@@ -2989,7 +3144,12 @@ bool RenderThemeCocoa::paintSliderThumbForVectorBasedControls(const RenderObject
         return false;
 
     CheckedRef style = box.style();
-    const auto deviceScaleFactor = box.document().deviceScaleFactor();
+
+    const auto sliderThumbShape = shapeForSliderThumb(box, rect);
+    if (!sliderThumbShape.path)
+        return false;
+
+    const auto sliderThumbPath = sliderThumbShape.path.value();
 
     auto& context = paintInfo.context();
     GraphicsContextStateSaver stateSaver { context };
@@ -2997,18 +3157,12 @@ bool RenderThemeCocoa::paintSliderThumbForVectorBasedControls(const RenderObject
     Color thumbColor = Color::white;
 
 #if PLATFORM(MAC)
-    auto states = extractControlStyleStatesForRenderer(box);
-    auto styleColorOptions = box.styleColorOptions();
+    const auto states = extractControlStyleStatesForRenderer(box);
+    const auto styleColorOptions = box.styleColorOptions();
 
     if (states.contains(ControlStyle::State::Pressed))
         thumbColor = colorWithContrastOverlay(thumbColor, styleColorOptions, 0.08f);
 #endif
-
-    FloatRect paintRect = snapRectToDevicePixels(LayoutRect(rect), deviceScaleFactor);
-    const auto radius = std::min(paintRect.width(), paintRect.height()) / 2.f;
-
-    Path path;
-    path.addContinuousRoundedRect(paintRect, radius, radius);
 
     // This is the shadow used for the native slider thumb on iOS. Here, it is used on macOS
     // as well to improve contrast against light backgrounds.
@@ -3018,11 +3172,11 @@ bool RenderThemeCocoa::paintSliderThumbForVectorBasedControls(const RenderObject
 
     context.setDropShadow({ innerShadowOffset, innerShadowBlur, firstShadowColor, ShadowRadiusMode::Default });
     context.setFillColor(thumbColor);
-    context.fillPath(path);
+    context.fillPath(sliderThumbPath);
 
 #if PLATFORM(MAC)
     if (Theme::singleton().userPrefersContrast()) {
-        drawHighContrastOutline(context, path, styleColorOptions);
+        drawHighContrastOutline(context, sliderThumbPath, styleColorOptions);
         return true;
     }
 #endif
@@ -3040,51 +3194,6 @@ bool RenderThemeCocoa::adjustSearchFieldStyleForVectorBasedControls(RenderStyle&
     return true;
 }
 
-constexpr auto searchFieldDecorationEmMargin = 0.36f;
-constexpr auto searchFieldDecorationEmSize = 1.0f;
-#if PLATFORM(MAC)
-constexpr auto searchFieldDecorationWithDropdownEmSizeLTR = 1.5f;
-constexpr auto searchFieldDecorationWithDropdownEmSizeRTL = 1.7f;
-#endif
-
-static bool searchFieldCanBeCapsule(const RenderObject& box, const FloatRect& rect, float pixelsPerEm, bool supportsResults)
-{
-    // Depending on dimensions and styles, it might not be possible to make the control
-    // capsule-shaped in a reasonable manner, or it may look especially strange with a
-    // capsule shape. We check for these cases below.
-
-    CheckedRef style = box.style();
-    const auto isVertical = style->writingMode().isVertical();
-    const auto inlineLength = isVertical ? rect.height() : rect.width();
-    const auto boxLength = isVertical ? rect.width() : rect.height();
-    const auto borderRadius = boxLength / 2.0f;
-
-    // Check if capsule shape would be nearing a circle or if the round ends would
-    // be facing the wrong direction.
-    if (inlineLength < borderRadius * 3.0f)
-        return false;
-
-#if PLATFORM(MAC)
-    const auto isInlineFlipped = style->writingMode().isInlineFlipped();
-    const auto sizeWithDropdown = isInlineFlipped ? searchFieldDecorationWithDropdownEmSizeRTL : searchFieldDecorationWithDropdownEmSizeLTR;
-
-    const auto effectiveSearchFieldDecorationEmSize = supportsResults ? sizeWithDropdown : searchFieldDecorationEmSize;
-#else
-    UNUSED_PARAM(supportsResults);
-    const auto effectiveSearchFieldDecorationEmSize = searchFieldDecorationEmSize;
-#endif
-
-    constexpr auto searchFieldInlinePaddingEmSize = 0.55f;
-
-    // Check if capsule shape would result in text being drawn within the starting
-    // semicircle of the shape rather than the flat area.
-    const auto textGapEmSize = effectiveSearchFieldDecorationEmSize + searchFieldInlinePaddingEmSize + searchFieldDecorationEmMargin;
-    if (textGapEmSize * pixelsPerEm < borderRadius)
-        return false;
-
-    return true;
-}
-
 bool RenderThemeCocoa::paintSearchFieldForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
@@ -3093,10 +3202,15 @@ bool RenderThemeCocoa::paintSearchFieldForVectorBasedControls(const RenderObject
     auto& context = paintInfo.context();
     GraphicsContextStateSaver stateSaver(context);
 
+    const auto [optionalPath, boundingRect, cornerRadius, _] = shapeForSearchField(box, rect);
+    if (!optionalPath)
+        return false;
+
+    const auto path = optionalPath.value();
+
     const auto styleColorOptions = box.styleColorOptions();
 
     const auto& style = box.style();
-    const auto isVertical = style.writingMode().isVertical();
     const auto borderThickness = style.usedZoom();
     auto backgroundColor = style.backgroundColor().resolvedColor();
 
@@ -3123,39 +3237,17 @@ bool RenderThemeCocoa::paintSearchFieldForVectorBasedControls(const RenderObject
 
     CSSToLengthConversionData conversionData(style, nullptr, nullptr, nullptr);
 
-    auto supportsResults = false;
-#if PLATFORM(MAC)
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.node()))
-        supportsResults = input->maxResults() > 0;
-#endif
-
-    Ref emSize = CSSPrimitiveValue::create(1, CSSUnitType::CSS_EM);
-    const auto pixelsPerEm = emSize->resolveAsLength<float>(conversionData);
-    const auto usingCapsuleShape = searchFieldCanBeCapsule(box, rect, pixelsPerEm, supportsResults);
-
-    float rectRadius;
-
-    if (usingCapsuleShape)
-        rectRadius = (isVertical ? rect.width() : rect.height()) / 2.f;
-    else
-        rectRadius = std::min(rect.width(), rect.height()) * 0.15f;
-
-    float innerRectRadius = rectRadius - borderThickness;
-
-    Path boundingPath;
-    boundingPath.addContinuousRoundedRect(rect, rectRadius, rectRadius);
-
     if (controlIsFocusedWithOutlineStyleAutoForVectorBasedControls(box))
-        drawFocusRingForPathForVectorBasedControls(box, paintInfo, rect, boundingPath);
+        drawFocusRingForPathForVectorBasedControls(box, paintInfo, boundingRect, path);
 
     context.setFillColor(borderColor);
-    context.fillPath(boundingPath);
+    context.fillPath(path);
 
-    FloatRect innerRect = rect;
+    FloatRect innerRect = boundingRect;
     innerRect.inflate(-borderThickness);
 
     Path innerPath;
-    innerPath.addContinuousRoundedRect(innerRect, innerRectRadius, innerRectRadius);
+    innerPath.addContinuousRoundedRect(innerRect, cornerRadius - borderThickness);
 
     context.setFillColor(backgroundColor);
     context.fillPath(innerPath);
@@ -3289,9 +3381,9 @@ bool RenderThemeCocoa::adjustSearchFieldDecorationPartStyleForVectorBasedControl
 #endif
     auto searchFieldDecorationHeight = searchFieldDecorationEmSize;
 
-    style.setWidth(Style::PreferredSize::Fixed { searchFieldDecorationWidth * pixelsPerEm });
-    style.setHeight(Style::PreferredSize::Fixed { searchFieldDecorationHeight * pixelsPerEm });
-    style.setMarginEnd(Style::MarginEdge::Fixed { searchFieldDecorationEmMargin * pixelsPerEm });
+    style.setWidth(Style::PreferredSize::Fixed { static_cast<float>(searchFieldDecorationWidth * pixelsPerEm) });
+    style.setHeight(Style::PreferredSize::Fixed { static_cast<float>(searchFieldDecorationHeight * pixelsPerEm) });
+    style.setMarginEnd(Style::MarginEdge::Fixed { static_cast<float>(searchFieldDecorationEmMargin * pixelsPerEm) });
     return true;
 }
 
@@ -3603,6 +3695,91 @@ bool RenderThemeCocoa::mayNeedBleedAvoidance(const RenderStyle& style) const
     }
 }
 
+std::optional<RoundedShape> RenderThemeCocoa::shapeForInteractionRegion(const RenderBox& box, const FloatRect& rect, ShouldComputePath computePath)
+{
+    CheckedRef style = box.style();
+
+    // Menulist buttons retain their used appearance even after devolving, so we
+    // must do an additional check before returning an adjusted path. On macOS,
+    // we don't paint menulist buttons.
+    auto tryPathForMenulistButton = [&] -> std::optional<RoundedShape> {
+#if !PLATFORM(MAC)
+        if (style->nativeAppearanceDisabled())
+            return std::nullopt;
+#endif
+        return std::optional { shapeForButton(box, rect, computePath) };
+    }();
+
+    switch (style->usedAppearance()) {
+    case StyleAppearance::Button:
+    case StyleAppearance::DefaultButton:
+    case StyleAppearance::PushButton:
+    case StyleAppearance::SquareButton:
+        return shapeForButton(box, rect, computePath);
+    case StyleAppearance::Checkbox:
+        return shapeForCheckbox(rect, computePath);
+    case StyleAppearance::MenulistButton:
+        return tryPathForMenulistButton;
+    case StyleAppearance::Radio:
+        return shapeForRadioButton(rect, computePath);
+    case StyleAppearance::SearchField:
+        return shapeForSearchField(box, rect, computePath);
+    case StyleAppearance::SliderThumbHorizontal:
+    case StyleAppearance::SliderThumbVertical:
+        return shapeForSliderThumb(box, rect, computePath);
+    case StyleAppearance::Switch:
+    case StyleAppearance::SwitchTrack:
+        return shapeForSwitchTrack(box, rect, computePath);
+    case StyleAppearance::TextField:
+        return shapeForTextAreaOrTextField(box, rect, computePath);
+    default:
+        return std::nullopt;
+    }
+}
+
+FloatSize RenderThemeCocoa::inflateRectForInteractionRegion(const RenderObject& box, FloatRect& rect)
+{
+    if (nodeIsDateOrTimeRelatedInput(box.node())) {
+        const auto cssBorderWidth = box.style().usedZoom();
+        rect.inflate(cssBorderWidth);
+        return { cssBorderWidth, cssBorderWidth };
+    }
+
+    return { 0, 0 };
+}
+
+float RenderThemeCocoa::adjustedMaximumLogicalWidthForControl(const RenderStyle& style, const Element& element, float maximumLogicalWidth) const
+{
+#if PLATFORM(MAC)
+    if (!formControlRefreshEnabled(&element) || !style.hasUsedAppearance() || style.nativeAppearanceDisabled())
+        return maximumLogicalWidth;
+
+    const auto writingMode = style.writingMode();
+
+    const auto inlineEndPaddingExplicitlySet = [&] {
+        const auto isInlineFlipped = writingMode.isInlineFlipped();
+        if (writingMode.isHorizontal())
+            return isInlineFlipped ? style.hasExplicitlySetPaddingLeft() : style.hasExplicitlySetPaddingRight();
+
+        return isInlineFlipped ? style.hasExplicitlySetPaddingTop() : style.hasExplicitlySetPaddingBottom();
+    };
+
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(element); input && input->isNumberField() && !inlineEndPaddingExplicitlySet()) {
+        const auto paddingBox = paddingBoxForNumberField(style, &element);
+        const auto paddingEdgeInlineStart = paddingBox.start(writingMode);
+        const auto paddingEdgeInlineEnd = paddingBox.end(writingMode);
+
+        if (auto paddingEdgeInlineStartFixed = paddingEdgeInlineStart.tryFixed()) {
+            if (auto paddingEdgeInlineEndFixed = paddingEdgeInlineEnd.tryFixed())
+                maximumLogicalWidth += paddingEdgeInlineStartFixed->value - paddingEdgeInlineEndFixed->value;
+        }
+    }
+#else
+    UNUSED_PARAM(style);
+    UNUSED_PARAM(element);
+#endif
+    return maximumLogicalWidth;
+}
 #endif
 
 void RenderThemeCocoa::adjustCheckboxStyle(RenderStyle& style, const Element* element) const

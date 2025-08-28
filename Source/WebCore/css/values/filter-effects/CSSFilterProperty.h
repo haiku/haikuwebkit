@@ -61,4 +61,4 @@ struct FilterProperty : ListOrNone<FilterValueList> { using ListOrNone<FilterVal
 } // namespace CSS
 } // namespace WebCore
 
-template<> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::CSS::FilterProperty> = true;
+DEFINE_VARIANT_LIKE_CONFORMANCE(WebCore::CSS::FilterProperty)

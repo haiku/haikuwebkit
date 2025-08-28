@@ -40,8 +40,8 @@ class ImageBuffer;
 class RenderVideo;
 class PictureInPictureObserver;
 class VideoFrameRequestCallback;
+struct ImageBufferFormat;
 
-enum class ImageBufferPixelFormat : uint8_t;
 enum class RenderingMode : uint8_t;
 
 class HTMLVideoElement final : public HTMLMediaElement, public Supplementable<HTMLVideoElement> {
@@ -76,7 +76,7 @@ public:
     void requestFullscreen(FullscreenOptions&&, RefPtr<DeferredPromise>&&) override;
 #endif
 
-    RefPtr<ImageBuffer> createBufferForPainting(const FloatSize&, RenderingMode, const DestinationColorSpace&, ImageBufferPixelFormat) const;
+    RefPtr<ImageBuffer> createBufferForPainting(const FloatSize&, RenderingMode, const DestinationColorSpace&, ImageBufferFormat) const;
 
     // Used by render painting. Best effort, only paint if we already have an image generator or video output available.
     void paint(GraphicsContext&, const FloatRect&);
@@ -195,7 +195,7 @@ private:
 #endif
 
     struct VideoFrameRequest {
-        WTF_MAKE_STRUCT_FAST_ALLOCATED;
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(VideoFrameRequest);
         VideoFrameRequest(unsigned identifier, Ref<VideoFrameRequestCallback>&& callback)
             : identifier(identifier)
             , callback(WTFMove(callback))

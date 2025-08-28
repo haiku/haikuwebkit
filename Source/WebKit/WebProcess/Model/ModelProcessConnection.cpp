@@ -107,7 +107,7 @@ void ModelProcessConnection::didClose(IPC::Connection&)
     m_clients.clear();
 }
 
-void ModelProcessConnection::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, int32_t)
+void ModelProcessConnection::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, const Vector<uint32_t>&)
 {
 }
 

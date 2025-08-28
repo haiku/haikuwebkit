@@ -8,7 +8,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Null";emptyBindGroupLayoutIndex=1 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -19,7 +19,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Null";emptyBindGroupLayoutIndex=2 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -30,7 +30,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Null";emptyBindGroupLayoutIndex=3 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -41,7 +41,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=0 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -52,7 +52,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=1 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -63,7 +63,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=2 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -74,7 +74,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=3 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -85,7 +85,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=0 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -96,7 +96,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=1 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -107,7 +107,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=2 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -118,7 +118,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=3 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 3.
@@ -129,7 +129,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,rendering:emptyBindGroupLayout
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Null";emptyBindGroupLayoutIndex=0 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -140,7 +140,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Null";emptyBindGroupLayoutIndex=1 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -151,7 +151,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Null";emptyBindGroupLayoutIndex=2 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -162,7 +162,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Null";emptyBindGroupLayoutIndex=3 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -173,7 +173,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=0 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -184,7 +184,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=1 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -195,7 +195,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=2 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -206,7 +206,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Undefined";emptyBindGroupLayoutIndex=3 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -217,7 +217,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=0 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -228,7 +228,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=1 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -239,7 +239,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=2 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -250,7 +250,7 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutType="Empty";emptyBindGroupLayoutIndex=3 assert_unreached:
   - EXPECTATION FAILED: Array had unexpected contents at indices 0 through 0.
@@ -261,6 +261,6 @@ FAIL :pipeline_layout_with_null_bind_group_layout,compute:emptyBindGroupLayoutTy
       at (elided: below max severity)
   - EXCEPTION: Error: Unexpected validation error occurred: Validation failure.
     TestFailedButDeviceReusable@
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
+    attemptEndTestScope@http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:442:44
  Reached unreachable code
 

@@ -1,0 +1,5 @@
+CONSOLE MESSAGE: Unhandled Promise Rejection: Error: assert_greater_than: page should be zoomed in. expected a number greater than 1 but got 1
+
+Harness Error (FAIL), message = Unhandled rejection: assert_greater_than: page should be zoomed in. expected a number greater than 1 but got 1
+
+

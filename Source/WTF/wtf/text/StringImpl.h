@@ -90,7 +90,7 @@ template<bool isSpecialCharacter(char16_t), typename CharacterType, std::size_t 
 #if STRING_STATS
 
 struct StringStats {
-    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(StringStats);
     void add8BitString(unsigned length, bool isSubString = false)
     {
         ++m_totalNumberStrings;
@@ -179,7 +179,7 @@ protected:
 DECLARE_COMPACT_ALLOCATOR_WITH_HEAP_IDENTIFIER(StringImpl);
 class StringImpl : private StringImplShape, public NoVirtualDestructorBase {
     WTF_MAKE_NONCOPYABLE(StringImpl);
-    WTF_MAKE_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(StringImpl);
+    WTF_DEPRECATED_MAKE_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(StringImpl, StringImpl);
 
     friend class AtomStringImpl;
     friend class JSC::LLInt::Data;
