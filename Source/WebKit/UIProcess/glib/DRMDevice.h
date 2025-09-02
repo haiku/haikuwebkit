@@ -33,6 +33,7 @@ namespace WebKit {
 
 const String& drmPrimaryDevice();
 const String& drmRenderNodeDevice();
+const String& drmRenderNodeOrPrimaryDevice();
 
 } // namespace WebKit
 

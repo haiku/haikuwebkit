@@ -50,10 +50,10 @@ messages -> WebSWServerConnection {
     [EnabledBySetting=ServiceWorkersEnabled] SetThrottleState(bool isThrottleable)
     [EnabledBySetting=ServiceWorkersEnabled] StoreRegistrationsOnDisk() -> ()
 
-    [EnabledBySetting=PushAPIEnabled] SubscribeToPushService(WebCore::ServiceWorkerRegistrationIdentifier identifier, Vector<uint8_t> applicationServerKey) -> (Expected<WebCore::PushSubscriptionData, WebCore::ExceptionData> result)
-    [EnabledBySetting=PushAPIEnabled] UnsubscribeFromPushService(WebCore::ServiceWorkerRegistrationIdentifier serviceWorkerRegistrationIdentifier, WebCore::PushSubscriptionIdentifier pushSubscriptionIdentifier) -> (Expected<bool, WebCore::ExceptionData> result)
-    [EnabledBySetting=PushAPIEnabled] GetPushSubscription(WebCore::ServiceWorkerRegistrationIdentifier identifier) -> (Expected<std::optional<WebCore::PushSubscriptionData>, WebCore::ExceptionData> result)
-    [EnabledBySetting=PushAPIEnabled] GetPushPermissionState(WebCore::ServiceWorkerRegistrationIdentifier identifier) -> (Expected<uint8_t, WebCore::ExceptionData> result)
+    [EnabledBy=PushAPIEnabled] SubscribeToPushService(WebCore::ServiceWorkerRegistrationIdentifier identifier, Vector<uint8_t> applicationServerKey) -> (Expected<WebCore::PushSubscriptionData, WebCore::ExceptionData> result)
+    [EnabledBy=PushAPIEnabled] UnsubscribeFromPushService(WebCore::ServiceWorkerRegistrationIdentifier serviceWorkerRegistrationIdentifier, WebCore::PushSubscriptionIdentifier pushSubscriptionIdentifier) -> (Expected<bool, WebCore::ExceptionData> result)
+    [EnabledBy=PushAPIEnabled] GetPushSubscription(WebCore::ServiceWorkerRegistrationIdentifier identifier) -> (Expected<std::optional<WebCore::PushSubscriptionData>, WebCore::ExceptionData> result)
+    [EnabledBy=PushAPIEnabled] GetPushPermissionState(WebCore::ServiceWorkerRegistrationIdentifier identifier) -> (Expected<uint8_t, WebCore::ExceptionData> result)
 
     [EnabledBy=ServiceWorkerNavigationPreloadEnabled] EnableNavigationPreload(WebCore::ServiceWorkerRegistrationIdentifier identifier) -> (struct std::optional<WebCore::ExceptionData> result)
     [EnabledBy=ServiceWorkerNavigationPreloadEnabled] DisableNavigationPreload(WebCore::ServiceWorkerRegistrationIdentifier identifier) -> (struct std::optional<WebCore::ExceptionData> result)

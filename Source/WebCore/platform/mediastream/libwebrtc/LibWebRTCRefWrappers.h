@@ -44,6 +44,9 @@ IGNORE_CLANG_WARNINGS_BEGIN("nullability-completeness")
 IGNORE_CLANG_WARNINGS_END
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 
+#include <wtf/Ref.h>
+#include <wtf/RefPtr.h>
+
 namespace WTF {
 
 template<typename T> struct RTCDefaultRefDerefTraits {

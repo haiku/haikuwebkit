@@ -562,7 +562,7 @@ void SVGImage::subresourcesAreFinished(Document* embedderDocument, CompletionHan
 void SVGImage::tryCreateFromData(std::span<const uint8_t> data, CompletionHandler<void(RefPtr<SVGImage>&&)>&& completionHandler)
 {
     Ref svgImage = SVGImage::create(nullptr);
-    Ref buffer = FragmentedSharedBuffer::create(data);
+    Ref buffer = SharedBuffer::create(data);
     svgImage->setData(buffer.ptr(), true);
     if (!svgImage->rootElement()) {
         completionHandler(nullptr);

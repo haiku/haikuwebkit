@@ -585,8 +585,6 @@ static BOOL areEssentiallyEqual(double a, double b)
         visibleOverlayRegions |= _WKWheelEventHandlerRegion;
     if (settings.interactionRegionOverlayVisible)
         visibleOverlayRegions |= _WKInteractionRegion;
-    if (settings.siteIsolationOverlayEnabled)
-        visibleOverlayRegions |= _WKSiteIsolationRegion;
     
     preferences._visibleDebugOverlayRegions = visibleOverlayRegions;
 

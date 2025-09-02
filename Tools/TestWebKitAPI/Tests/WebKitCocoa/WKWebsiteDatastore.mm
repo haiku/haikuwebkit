@@ -1068,7 +1068,12 @@ static NSString *htmlStringForTotalQuotaRatioTest(uint64_t size, bool shouldPers
     </script>", size, shouldPersist ? "navigator.storage.persist()" : "new String('success')"];
 }
 
+// FIXME when rdar://154214201 is resolved.
+#if PLATFORM(IOS)
+TEST(WKWebsiteDataStoreConfiguration, DISABLED_TotalQuotaRatioWithPersistedDomain)
+#else
 TEST(WKWebsiteDataStoreConfiguration, TotalQuotaRatioWithPersistedDomain)
+#endif
 {
     done = false;
     receivedScriptMessage = false;

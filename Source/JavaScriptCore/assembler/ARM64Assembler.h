@@ -29,12 +29,12 @@
 
 #if ENABLE(ASSEMBLER) && CPU(ARM64)
 
-#include "ARM64Registers.h"
-#include "AssemblerBuffer.h"
-#include "AssemblerCommon.h"
-#include "CPU.h"
-#include "JSCPtrTag.h"
-#include "SIMDInfo.h"
+#include <JavaScriptCore/ARM64Registers.h>
+#include <JavaScriptCore/AssemblerBuffer.h>
+#include <JavaScriptCore/AssemblerCommon.h>
+#include <JavaScriptCore/CPU.h>
+#include <JavaScriptCore/JSCPtrTag.h>
+#include <JavaScriptCore/SIMDInfo.h>
 #include <limits.h>
 #include <wtf/Assertions.h>
 #include <wtf/Vector.h>

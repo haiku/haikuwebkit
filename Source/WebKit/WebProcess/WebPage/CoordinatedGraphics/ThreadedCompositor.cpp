@@ -83,7 +83,7 @@ ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost)
 ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost, ThreadedDisplayRefreshMonitor::Client& displayRefreshMonitorClient, PlatformDisplayID displayID)
 #endif
     : m_layerTreeHost(&layerTreeHost)
-    , m_surface(AcceleratedSurface::create(*this, layerTreeHost.webPage(), [this] { frameComplete(); }))
+    , m_surface(AcceleratedSurface::create(layerTreeHost.webPage(), [this] { frameComplete(); }))
     , m_sceneState(&m_layerTreeHost->sceneState())
     , m_flipY(m_surface->shouldPaintMirrored())
     , m_compositingRunLoop(makeUnique<CompositingRunLoop>([this] { renderLayerTree(); }))
@@ -133,8 +133,6 @@ ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost, ThreadedDis
         if (m_context && m_context->makeContextCurrent()) {
             if (!nativeSurfaceHandle)
                 m_flipY = !m_flipY;
-
-            m_surface->didCreateGLContext();
         }
     });
 }
@@ -167,7 +165,6 @@ void ThreadedCompositor::invalidate()
         m_textureMapper = nullptr;
         m_surface->willDestroyGLContext();
         m_context = nullptr;
-        m_surface->finalize();
 
 #if !HAVE(DISPLAY_LINK)
         m_display.updateTimer = nullptr;
@@ -361,22 +358,12 @@ void ThreadedCompositor::renderLayerTree()
     TransformationMatrix viewportTransform;
     viewportTransform.scale(deviceScaleFactor);
 
-    // Resize the surface, if necessary, before the will-render-frame call is dispatched.
-    // GL viewport is updated separately, if necessary. This establishes sequencing where
-    // everything inside the will-render and did-render scope is done for a constant-sized scene,
-    // and similarly all GL operations are done inside that specific scope.
-    bool needsGLViewportResize = m_surface->resize(viewportSize);
+    m_surface->willRenderFrame(viewportSize);
 
-    m_surface->willRenderFrame();
     RunLoop::mainSingleton().dispatch([this, protectedThis = Ref { *this }] {
         if (m_layerTreeHost)
             m_layerTreeHost->willRenderFrame();
     });
-
-    if (needsGLViewportResize)
-        glViewport(0, 0, viewportSize.width(), viewportSize.height());
-
-    m_surface->clearIfNeeded();
 
     WTFBeginSignpost(this, PaintToGLContext);
     paintToCurrentGLContext(viewportTransform, viewportSize);

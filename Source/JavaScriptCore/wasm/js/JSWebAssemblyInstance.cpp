@@ -216,14 +216,15 @@ void JSWebAssemblyInstance::finalizeCreation(VM& vm, JSGlobalObject* globalObjec
         return;
     }
 
-    RELEASE_ASSERT(wasmCalleeGroup->isSafeToRun(memoryMode()));
-
-    // When memory is imported, we will initialize all memory modes with the initial LLInt compilation
+    // When memory is imported, we will initialize all memory modes with the initial IPInt compilation
     // results, so that later when memory imports become available, the appropriate CalleeGroup can be used.
-    // If LLInt is disabled, we instead defer compilation to module evaluation.
+    // If IPInt is disabled, we instead defer compilation to module evaluation.
     // If the code is already compiled, e.g. the module was already instantiated before, we do not re-initialize.
-    if (Options::useWasmLLInt() && module().moduleInformation().hasMemoryImport())
+    if (Options::useWasmIPInt() && module().moduleInformation().hasMemoryImport())
         module().copyInitialCalleeGroupToAllMemoryModes(memoryMode());
+
+
+    RELEASE_ASSERT(wasmCalleeGroup->isSafeToRun(memoryMode()));
 
     for (unsigned importFunctionNum = 0; importFunctionNum < numImportFunctions(); ++importFunctionNum) {
         auto functionSpaceIndex = FunctionSpaceIndex(importFunctionNum);

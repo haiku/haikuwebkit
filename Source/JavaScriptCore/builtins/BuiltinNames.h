@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "BuiltinUtils.h"
-#include "BytecodeIntrinsicRegistry.h"
-#include "CommonIdentifiers.h"
-#include "JSCBuiltins.h"
+#include <JavaScriptCore/BuiltinUtils.h>
+#include <JavaScriptCore/BytecodeIntrinsicRegistry.h>
+#include <JavaScriptCore/CommonIdentifiers.h>
+#include <JavaScriptCore/JSCBuiltins.h>
 #include <wtf/RobinHoodHashMap.h>
 #include <wtf/RobinHoodHashSet.h>
 #include <wtf/TZoneMalloc.h>

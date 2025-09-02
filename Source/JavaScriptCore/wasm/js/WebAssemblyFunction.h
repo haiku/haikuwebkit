@@ -40,6 +40,8 @@ struct ProtoCallFrame;
 class WebAssemblyInstance;
 
 class WebAssemblyFunction final : public WebAssemblyFunctionBase {
+    friend JSC::LLIntOffsetsExtractor;
+
 public:
     using Base = WebAssemblyFunctionBase;
 
@@ -56,7 +58,9 @@ public:
 
     DECLARE_EXPORT_INFO;
 
-    JS_EXPORT_PRIVATE static WebAssemblyFunction* create(VM&, JSGlobalObject*, Structure*, unsigned, const String&, JSWebAssemblyInstance*, Wasm::JSEntrypointCallee& jsEntrypoint, Wasm::Callee& wasmCallee, WasmToWasmImportableFunction::LoadLocation, Wasm::TypeIndex, RefPtr<const Wasm::RTT>&&);
+    DECLARE_VISIT_CHILDREN;
+
+    JS_EXPORT_PRIVATE static WebAssemblyFunction* create(VM&, JSGlobalObject*, Structure*, unsigned, const String&, JSWebAssemblyInstance*, Wasm::JSEntrypointCallee&, Wasm::IPIntCallee&, WasmToWasmImportableFunction::LoadLocation, Wasm::TypeIndex, RefPtr<const Wasm::RTT>&&);
     static Structure* createStructure(VM&, JSGlobalObject*, JSValue);
 
     Wasm::JSEntrypointCallee* jsToWasmCallee() const { return m_boxedJSToWasmCallee.ptr(); }
@@ -89,14 +93,12 @@ public:
     static constexpr ptrdiff_t offsetOfFrameSize() { return OBJECT_OFFSETOF(WebAssemblyFunction, m_frameSize); }
 
 private:
-    DECLARE_VISIT_CHILDREN;
-    WebAssemblyFunction(VM&, NativeExecutable*, JSGlobalObject*, Structure*, JSWebAssemblyInstance*, Wasm::JSEntrypointCallee& jsEntrypoint, Wasm::Callee& wasmCallee, WasmToWasmImportableFunction::LoadLocation entrypointLoadLocation, Wasm::TypeIndex, RefPtr<const Wasm::RTT>&&);
+    WebAssemblyFunction(VM&, NativeExecutable*, JSGlobalObject*, Structure*, JSWebAssemblyInstance*, Wasm::JSEntrypointCallee&, Wasm::IPIntCallee&, WasmToWasmImportableFunction::LoadLocation entrypointLoadLocation, Wasm::TypeIndex, RefPtr<const Wasm::RTT>&&);
 
     CodePtr<JSEntryPtrTag> jsCallEntrypointSlow();
 
-    // This is the callee needed by LLInt/IPInt
-    // FIXME: Make this a Wasm::IPIntCallee once wasm LLInt goes away.
-    Ref<Wasm::Callee, BoxedNativeCalleePtrTraits<Wasm::Callee>> m_boxedWasmCallee;
+    // This is the callee needed by IPInt
+    Ref<Wasm::IPIntCallee, BoxedNativeCalleePtrTraits<Wasm::IPIntCallee>> m_boxedWasmCallee;
     // This let's the JS->Wasm interpreter find its metadata
     Ref<Wasm::JSEntrypointCallee, BoxedNativeCalleePtrTraits<Wasm::JSEntrypointCallee>> m_boxedJSToWasmCallee;
     uint32_t m_frameSize;

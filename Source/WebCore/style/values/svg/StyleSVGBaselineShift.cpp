@@ -25,6 +25,7 @@
 #include "config.h"
 #include "StyleSVGBaselineShift.h"
 
+#include "AnimationUtilities.h"
 #include "CSSPrimitiveValue.h"
 #include "StyleBuilderChecking.h"
 #include "StyleLengthWrapper+CSSValueConversion.h"

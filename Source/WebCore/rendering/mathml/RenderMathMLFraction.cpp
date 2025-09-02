@@ -178,6 +178,11 @@ RenderMathMLOperator* RenderMathMLFraction::unembellishedOperator() const
     return mathMLBlock ? mathMLBlock->unembellishedOperator() : nullptr;
 }
 
+MathMLFractionElement& RenderMathMLFraction::element() const
+{
+    return static_cast<MathMLFractionElement&>(nodeForNonAnonymous());
+}
+
 void RenderMathMLFraction::computePreferredLogicalWidths()
 {
     ASSERT(needsPreferredLogicalWidthsUpdate());

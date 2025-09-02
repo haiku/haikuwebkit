@@ -3366,6 +3366,7 @@ private:
     {
         static_assert(endState == ArrayEndVisitNamedMember || endState == ObjectEndVisitNamedMember);
         VM& vm = m_lexicalGlobalObject->vm();
+        auto scope = DECLARE_THROW_SCOPE(vm);
         CachedStringRef cachedString;
         bool wasTerminator = false;
         if (!readStringData(cachedString, wasTerminator, ShouldAtomize::Yes)) {
@@ -3384,8 +3385,13 @@ private:
         if constexpr (endState == ArrayEndVisitNamedMember)
             RELEASE_ASSERT(identifier != vm.propertyNames->length);
 
-        if (JSValue terminal = readTerminal()) {
+        JSValue terminal = readTerminal();
+        if (scope.exception()) [[unlikely]]
+            return VisitNamedMemberResult::Error;
+        if (terminal) {
             putProperty(outputObjectStack.last(), identifier, terminal);
+            if (scope.exception()) [[unlikely]]
+                return VisitNamedMemberResult::Error;
             return VisitNamedMemberResult::Start;
         }
 
@@ -3396,7 +3402,11 @@ private:
 
     ALWAYS_INLINE void objectEndVisitNamedMember(MarkedVector<JSObject*, 32>& outputObjectStack, Vector<Identifier, 16>& propertyNameStack, JSValue& outValue)
     {
+        VM& vm = m_lexicalGlobalObject->vm();
+        auto scope = DECLARE_THROW_SCOPE(vm);
         putProperty(outputObjectStack.last(), propertyNameStack.last(), outValue);
+        if (scope.exception()) [[unlikely]]
+            return;
         propertyNameStack.removeLast();
     }
 
@@ -5539,7 +5549,7 @@ private:
 DeserializationResult CloneDeserializer::deserialize()
 {
     VM& vm = m_lexicalGlobalObject->vm();
-    auto scope = DECLARE_THROW_SCOPE(vm);
+    auto scope = DECLARE_CATCH_SCOPE(vm);
 
     Vector<uint32_t, 16> indexStack;
     Vector<Identifier, 16> propertyNameStack;
@@ -5609,7 +5619,13 @@ DeserializationResult CloneDeserializer::deserialize()
                     goto arrayStartVisitNamedMember;
             }
 
-            if (JSValue terminal = readTerminal()) {
+            JSValue terminal = readTerminal();
+            if (scope.exception()) [[unlikely]] {
+                SERIALIZE_TRACE("FAIL deserialize");
+                fail();
+                goto error;
+            }
+            if (terminal) {
                 putProperty(outputObjectStack.last(), index, terminal);
                 if (scope.exception()) [[unlikely]] {
                     SERIALIZE_TRACE("FAIL deserialize");
@@ -5637,7 +5653,13 @@ DeserializationResult CloneDeserializer::deserialize()
         }
         arrayStartVisitNamedMember:
         case ArrayStartVisitNamedMember: {
-            switch (startVisitNamedMember<ArrayEndVisitNamedMember>(outputObjectStack, propertyNameStack, stateStack, outValue)) {
+            auto result = startVisitNamedMember<ArrayEndVisitNamedMember>(outputObjectStack, propertyNameStack, stateStack, outValue);
+            if (scope.exception()) [[unlikely]] {
+                SERIALIZE_TRACE("FAIL deserialize");
+                fail();
+                goto error;
+            }
+            switch (result) {
             case VisitNamedMemberResult::Error:
                 goto error;
             case VisitNamedMemberResult::Break:
@@ -5651,6 +5673,11 @@ DeserializationResult CloneDeserializer::deserialize()
         }
         case ArrayEndVisitNamedMember: {
             objectEndVisitNamedMember(outputObjectStack, propertyNameStack, outValue);
+            if (scope.exception()) [[unlikely]] {
+                SERIALIZE_TRACE("FAIL deserialize");
+                fail();
+                goto error;
+            }
             goto arrayStartVisitNamedMember;
         }
         objectStartState:
@@ -5664,7 +5691,13 @@ DeserializationResult CloneDeserializer::deserialize()
         startVisitNamedMember:
         [[fallthrough]];
         case ObjectStartVisitNamedMember: {
-            switch (startVisitNamedMember<ObjectEndVisitNamedMember>(outputObjectStack, propertyNameStack, stateStack, outValue)) {
+            auto result = startVisitNamedMember<ObjectEndVisitNamedMember>(outputObjectStack, propertyNameStack, stateStack, outValue);
+            if (scope.exception()) [[unlikely]] {
+                SERIALIZE_TRACE("FAIL deserialize");
+                fail();
+                goto error;
+            }
+            switch (result) {
             case VisitNamedMemberResult::Error:
                 goto error;
             case VisitNamedMemberResult::Break:
@@ -5678,6 +5711,11 @@ DeserializationResult CloneDeserializer::deserialize()
         }
         case ObjectEndVisitNamedMember: {
             objectEndVisitNamedMember(outputObjectStack, propertyNameStack, outValue);
+            if (scope.exception()) [[unlikely]] {
+                SERIALIZE_TRACE("FAIL deserialize");
+                fail();
+                goto error;
+            }
             goto startVisitNamedMember;
         }
         mapStartState: {
@@ -5749,7 +5787,13 @@ DeserializationResult CloneDeserializer::deserialize()
 
         stateUnknown:
         case StateUnknown:
-            if (JSValue terminal = readTerminal()) {
+            JSValue terminal = readTerminal();
+            if (scope.exception()) [[unlikely]] {
+                SERIALIZE_TRACE("FAIL deserialize");
+                fail();
+                goto error;
+            }
+            if (terminal) {
                 outValue = terminal;
                 break;
             }
@@ -6543,7 +6587,7 @@ JSValue SerializedScriptValue::deserialize(JSGlobalObject& lexicalGlobalObject, 
 JSValue SerializedScriptValue::deserialize(JSGlobalObject& lexicalGlobalObject, JSGlobalObject* globalObject, const Vector<Ref<MessagePort>>& messagePorts, const Vector<String>& blobURLs, const Vector<String>& blobFilePaths, SerializationErrorMode throwExceptions, bool* didFail)
 {
     VM& vm = lexicalGlobalObject.vm();
-    auto scope = DECLARE_THROW_SCOPE(vm);
+    auto scope = DECLARE_CATCH_SCOPE(vm);
 
     DeserializationResult result = CloneDeserializer::deserialize(&lexicalGlobalObject, globalObject, messagePorts, WTFMove(m_internals.detachedImageBitmaps)
 #if ENABLE(OFFSCREEN_CANVAS_IN_WORKERS)

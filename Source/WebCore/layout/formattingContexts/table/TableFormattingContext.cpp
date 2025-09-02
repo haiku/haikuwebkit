@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2019 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -127,24 +128,22 @@ void TableFormattingContext::setUsedGeometryForCells(LayoutUnit availableHorizon
             auto intrinsicPaddingTop = LayoutUnit { };
             auto intrinsicPaddingBottom = LayoutUnit { };
 
-            switch (cellBox.style().verticalAlign()) {
-            case VerticalAlign::Middle: {
-                auto intrinsicVerticalPadding = std::max(0_lu, cellLogicalHeight - cellBoxGeometry.verticalMarginBorderAndPadding() - cellBoxGeometry.contentBoxHeight());
-                intrinsicPaddingTop = intrinsicVerticalPadding / 2;
-                intrinsicPaddingBottom = intrinsicVerticalPadding / 2;
-                break;
-            }
-            case VerticalAlign::Baseline: {
-                auto rowBaseline = LayoutUnit { rowList[cell->startRow()].baseline() };
-                auto cellBaseline = LayoutUnit { cell->baseline() };
-                intrinsicPaddingTop = std::max(0_lu, rowBaseline - cellBaseline - cellBoxGeometry.borderBefore());
-                intrinsicPaddingBottom = std::max(0_lu, cellLogicalHeight - cellBoxGeometry.verticalMarginBorderAndPadding() - intrinsicPaddingTop - cellBoxGeometry.contentBoxHeight());
-                break;
-            }
-            default:
-                ASSERT_NOT_IMPLEMENTED_YET();
-                break;
-            }
+            WTF::switchOn(cellBox.style().verticalAlign(),
+                [&](const CSS::Keyword::Middle&) {
+                    auto intrinsicVerticalPadding = std::max(0_lu, cellLogicalHeight - cellBoxGeometry.verticalMarginBorderAndPadding() - cellBoxGeometry.contentBoxHeight());
+                    intrinsicPaddingTop = intrinsicVerticalPadding / 2;
+                    intrinsicPaddingBottom = intrinsicVerticalPadding / 2;
+                },
+                [&](const CSS::Keyword::Baseline&) {
+                    auto rowBaseline = LayoutUnit { rowList[cell->startRow()].baseline() };
+                    auto cellBaseline = LayoutUnit { cell->baseline() };
+                    intrinsicPaddingTop = std::max(0_lu, rowBaseline - cellBaseline - cellBoxGeometry.borderBefore());
+                    intrinsicPaddingBottom = std::max(0_lu, cellLogicalHeight - cellBoxGeometry.verticalMarginBorderAndPadding() - intrinsicPaddingTop - cellBoxGeometry.contentBoxHeight());
+                },
+                [&](const auto&) {
+                    ASSERT_NOT_IMPLEMENTED_YET();
+                }
+            );
             if (intrinsicPaddingTop && cellBox.hasInFlowOrFloatingChild()) {
                 auto adjustCellContentWithInstrinsicPaddingBefore = [&] {
                     // Child boxes (and runs) are always in the coordinate system of the containing block's border box.

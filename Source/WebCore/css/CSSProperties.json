@@ -2772,10 +2772,9 @@
                     "resolver": "bottom"
                 },
                 "accepts-quirky-length": true,
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "render-style-initial": "initialBorderWidth",
-                "style-converter": "LineWidth<float>",
+                "style-converter": "StyleType<LineWidth>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<line-width>"
             },
@@ -2874,9 +2873,9 @@
             "animation-type": "by computed value",
             "initial": "0",
             "codegen-properties": {
-                "animation-wrapper": "LengthBoxWrapper",
+                "animation-wrapper": "StyleTypeWrapper",
                 "style-builder-custom": "All",
-                "style-extractor-custom": true,
+                "style-extractor-converter": "StyleType<BorderImageOutset>",
                 "disables-native-appearance": true,
                 "parser-grammar": "[ <number [0,inf]> | <length [0,inf]> ]{1,4}@(type=CSSQuadValue no-single-item-opt)",
                 "parser-exported": true
@@ -2896,10 +2895,8 @@
                 "space"
             ],
             "codegen-properties": {
-                "animation-wrapper": "NinePieceImageRepeatWrapper",
-                "animation-wrapper-requires-override-parameters": ["CSSPropertyBorderImageRepeat", "&RenderStyle::borderImageHorizontalRule", "&RenderStyle::setBorderImageHorizontalRule", "&RenderStyle::borderImageVerticalRule", "&RenderStyle::setBorderImageVerticalRule"],
                 "style-builder-custom": "All",
-                "style-extractor-custom": true,
+                "style-extractor-converter": "StyleType<BorderImageRepeat>",
                 "disables-native-appearance": true,
                 "parser-exported": true,
                 "parser-grammar": "[ stretch | repeat | round | space ]{1,2}@(type=CSSValuePair default=previous)"
@@ -2916,10 +2913,9 @@
                 "fill"
             ],
             "codegen-properties": {
-                "animation-wrapper": "LengthBoxWrapper",
-                "animation-wrapper-requires-additional-parameters": ["{ LengthBoxWrapper::Flags::UsesFillKeyword }"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "style-builder-custom": "All",
-                "style-extractor-custom": true,
+                "style-extractor-converter": "StyleType<BorderImageSlice>",
                 "disables-native-appearance": true,
                 "parser-function": "consumeBorderImageSlice",
                 "parser-function-allows-number-or-integer-input": true,
@@ -2939,8 +2935,8 @@
                 "none"
             ],
             "codegen-properties": {
-                "animation-wrapper": "StyleImageWrapper",
-                "style-converter": "ImageOrNone",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<BorderImageSource>",
                 "disables-native-appearance": true,
                 "parser-grammar": "none | <image>"
             },
@@ -2956,8 +2952,7 @@
                 "auto"
             ],
             "codegen-properties": {
-                "animation-wrapper": "LengthBoxWrapper",
-                "animation-wrapper-requires-additional-parameters": ["{ LengthBoxWrapper::Flags::IsLengthPercentage, LengthBoxWrapper::Flags::MayOverrideBorderWidths }"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "style-builder-custom": "All",
                 "style-extractor-custom": true,
                 "disables-native-appearance": true,
@@ -3309,10 +3304,9 @@
                     "resolver": "left"
                 },
                 "accepts-quirky-length": true,
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "render-style-initial": "initialBorderWidth",
-                "style-converter": "LineWidth<float>",
+                "style-converter": "StyleType<LineWidth>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<line-width>"
             },
@@ -3418,10 +3412,9 @@
                     "resolver": "right"
                 },
                 "accepts-quirky-length": true,
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "render-style-initial": "initialBorderWidth",
-                "style-converter": "LineWidth<float>",
+                "style-converter": "StyleType<LineWidth>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<line-width>"
             },
@@ -3626,10 +3619,9 @@
                     "resolver": "top"
                 },
                 "accepts-quirky-length": true,
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "render-style-initial": "initialBorderWidth",
-                "style-converter": "LineWidth<float>",
+                "style-converter": "StyleType<LineWidth>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<line-width>"
             },
@@ -4458,11 +4450,11 @@
             "inherited": true,
             "initial": "1",
             "codegen-properties": {
-                "animation-wrapper": "Wrapper",
+                "animation-wrapper": "StyleTypeWrapper",
                 "animation-wrapper-requires-render-style": true,
-                "style-converter": "Opacity",
+                "style-converter": "StyleType<Opacity>",
                 "svg": true,
-                "parser-grammar": "<alpha-value>"
+                "parser-grammar": "<opacity-value>"
             },
             "specification": {
                 "category": "svg",
@@ -4531,11 +4523,11 @@
             "animation-type": "by computed value",
             "initial": "1",
             "codegen-properties": {
-                "animation-wrapper": "Wrapper",
+                "animation-wrapper": "StyleTypeWrapper",
                 "animation-wrapper-requires-render-style": true,
-                "style-converter": "Opacity",
+                "style-converter": "StyleType<Opacity>",
                 "svg": true,
-                "parser-grammar": "<alpha-value>"
+                "parser-grammar": "<opacity-value>"
             },
             "specification": {
                 "category": "css-filters",
@@ -5547,15 +5539,15 @@
             }
         },
         "mask-border-outset": {
-            "animation-type": "discrete",
+            "animation-type": "by computed value",
             "initial": "0",
             "codegen-properties": {
                 "aliases": [
                     "-webkit-mask-box-image-outset"
                 ],
-                "animation-wrapper": "LengthBoxWrapper",
+                "animation-wrapper": "StyleTypeWrapper",
                 "style-builder-custom": "All",
-                "style-extractor-custom": true,
+                "style-extractor-converter": "StyleType<MaskBorderOutset>",
                 "parser-grammar": "[ <number [0,inf]> | <length [0,inf]> ]{1,4}@(type=CSSQuadValue no-single-item-opt)"
 
             },
@@ -5577,10 +5569,8 @@
                 "aliases": [
                     "-webkit-mask-box-image-repeat"
                 ],
-                "animation-wrapper": "NinePieceImageRepeatWrapper",
-                "animation-wrapper-requires-override-parameters": ["CSSPropertyMaskBorderRepeat", "&RenderStyle::maskBorderHorizontalRule", "&RenderStyle::setMaskBorderHorizontalRule", "&RenderStyle::maskBorderVerticalRule", "&RenderStyle::setMaskBorderVerticalRule"],
                 "style-builder-custom": "All",
-                "style-extractor-custom": true,
+                "style-extractor-converter": "StyleType<MaskBorderRepeat>",
                 "parser-grammar": "[ stretch | repeat | round | space ]{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
@@ -5589,7 +5579,7 @@
             }
         },
         "mask-border-slice": {
-            "animation-type": "discrete",
+            "animation-type": "by computed value",
             "initial": "0",
             "values": [
                 "fill"
@@ -5598,10 +5588,9 @@
                 "aliases": [
                     "-webkit-mask-box-image-slice"
                 ],
-                "animation-wrapper": "LengthBoxWrapper",
-                "animation-wrapper-requires-additional-parameters": ["{ LengthBoxWrapper::Flags::UsesFillKeyword }"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "style-builder-custom": "All",
-                "style-extractor-custom": true,
+                "style-extractor-converter": "StyleType<MaskBorderSlice>",
                 "parser-function": "consumeBorderImageSlice",
                 "parser-grammar-unused": "[ <number [0,inf]> | <percentage [0,inf]> ]{1,4} && fill?",
                 "parser-grammar-unused-reason": "Needs support for different parsing based on the current shorthand."
@@ -5622,8 +5611,8 @@
                 "aliases": [
                     "-webkit-mask-box-image-source"
                 ],
-                "animation-wrapper": "StyleImageWrapper",
-                "style-converter": "ImageOrNone",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<MaskBorderSource>",
                 "parser-grammar": "none | <image>"
             },
             "specification": {
@@ -5632,7 +5621,7 @@
             }
         },
         "mask-border-width": {
-            "animation-type": "discrete",
+            "animation-type": "by computed value",
             "initial": "auto",
             "values": [
                 "auto"
@@ -5641,10 +5630,9 @@
                 "aliases": [
                     "-webkit-mask-box-image-width"
                 ],
-                "animation-wrapper": "LengthBoxWrapper",
-                "animation-wrapper-requires-additional-parameters": ["{ LengthBoxWrapper::Flags::IsLengthPercentage }"],
+                "animation-wrapper": "StyleTypeWrapper",
                 "style-builder-custom": "All",
-                "style-extractor-custom": true,
+                "style-extractor-converter": "StyleType<MaskBorderWidth>",
                 "parser-function": "consumeBorderImageWidth",
                 "parser-grammar-unused": "[ <length-percentage [0,inf]> | <number [0,inf]> | auto ]{1,4}",
                 "parser-grammar-unused-reason": "Needs support for different parsing based on the current shorthand."
@@ -6565,10 +6553,10 @@
                 "aliases": [
                     "-webkit-opacity"
                 ],
-                "animation-wrapper": "Wrapper",
+                "animation-wrapper": "StyleTypeWrapper",
                 "animation-wrapper-acceleration": "always",
-                "style-converter": "Opacity",
-                "parser-grammar": "<alpha-value>"
+                "style-converter": "StyleType<Opacity>",
+                "parser-grammar": "<opacity-value>"
             },
             "status": {
                 "comment": "Honor -webkit-opacity as a synonym for opacity. This was the only syntax that worked in Safari 1.1, and may be in use on some websites and widgets."
@@ -6583,13 +6571,15 @@
             "inherited": true,
             "initial": "2",
             "codegen-properties": {
-                "animation-wrapper": "PositiveWrapper<unsigned short>",
-                "auto-functions": true,
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<Orphans>",
                 "parser-grammar": "<integer [1,inf]>"
             },
             "specification": {
-                "category": "css-22",
-                "url": "https://www.w3.org/TR/CSS22/page.html#propdef-orphans"
+                "category": "css-break",
+                "url": "https://drafts.csswg.org/css-break/#propdef-orphans",
+                "obsolete-category": "css-22",
+                "obsolete-url": "https://www.w3.org/TR/CSS22/page.html#propdef-orphans"
             }
         },
         "outline": {
@@ -7477,11 +7467,11 @@
             "animation-type": "by computed value",
             "initial": "1",
             "codegen-properties": {
-                "animation-wrapper": "Wrapper",
+                "animation-wrapper": "StyleTypeWrapper",
                 "animation-wrapper-requires-render-style": true,
-                "style-converter": "Opacity",
+                "style-converter": "StyleType<Opacity>",
                 "svg": true,
-                "parser-grammar": "<alpha-value>"
+                "parser-grammar": "<opacity-value>"
             },
             "specification": {
                 "category": "svg",
@@ -7607,10 +7597,11 @@
             "inherited": true,
             "initial": "4",
             "codegen-properties": {
-                "animation-wrapper": "Wrapper",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<StrokeMiterlimit>",
                 "render-style-name-for-methods": "StrokeMiterLimit",
-                "style-converter": "Number<float>",
-                "parser-grammar": "<number [0,inf]>"
+                "parser-grammar": "<number [0,inf]>",
+                "parser-grammar-comment": "Current spec grammar is '<number [1,inf]>'."
             },
             "status": "supported",
             "specification": {
@@ -7625,11 +7616,11 @@
             "inherited": true,
             "initial": "1",
             "codegen-properties": {
-                "animation-wrapper": "Wrapper",
+                "animation-wrapper": "StyleTypeWrapper",
                 "animation-wrapper-requires-render-style": true,
-                "style-converter": "Opacity",
+                "style-converter": "StyleType<Opacity>",
                 "svg": true,
-                "parser-grammar": "<alpha-value>"
+                "parser-grammar": "<opacity-value>"
             },
             "specification": {
                 "category": "svg",
@@ -7817,21 +7808,6 @@
             "specification": {
                 "category": "svg",
                 "url": "https://svgwg.org/svg2-draft/text.html#TextAnchorProperty"
-            }
-        },
-        "text-decoration": {
-            "codegen-properties": {
-                "longhands": [
-                    "text-decoration-line"
-                ],
-                "shorthand-pattern": "Single",
-                "parser-grammar-unused": "<'text-decoration-line'>",
-                "parser-grammar-unused-comment": "Current spec has 'text-decoration' specified as a shorthand with grammar '<'text-decoration-line'> || <'text-decoration-style'> || <'text-decoration-color'>'",
-                "parser-grammar-unused-reason": "Needs support for shorthand grammars."
-            },
-            "specification": {
-                "category": "css-text-decor",
-                "url": "https://drafts.csswg.org/css-text-decor/#text-decoration-property"
             }
         },
         "text-group-align": {
@@ -8239,16 +8215,16 @@
             ],
             "codegen-properties": {
                 "accepts-quirky-length": true,
-                "animation-wrapper": "VerticalAlignWrapper",
-                "animation-wrapper-requires-override-parameters": [],
-                "style-builder-custom": "Inherit|Value",
-                "style-extractor-custom": true,
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<VerticalAlign>",
                 "parser-grammar": "<<values>> | <length-percentage>",
                 "parser-grammar-comment": "Current spec has 'vertical-align' specified as a shorthand with grammar '[ first | last] || <<'alignment-baseline'>> || <<'baseline-shift'>>'"
             },
             "specification": {
-                "category": "css-22",
-                "url": "https://www.w3.org/TR/CSS22/visudet.html#propdef-vertical-align"
+                "category": "css-inline",
+                "url": "https://drafts.csswg.org/css-inline/#propdef-vertical-align",
+                "obsolete-category": "css-22",
+                "obsolete-url": "https://www.w3.org/TR/CSS22/visudet.html#propdef-vertical-align"
             }
         },
         "visibility": {
@@ -8319,13 +8295,15 @@
             "inherited": true,
             "initial": "2",
             "codegen-properties": {
-                "animation-wrapper": "PositiveWrapper<unsigned short>",
-                "auto-functions": true,
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<Widows>",
                 "parser-grammar": "<integer [1,inf]>"
             },
             "specification": {
-                "category": "css-22",
-                "url": "https://www.w3.org/TR/CSS22/page.html#propdef-orphans"
+                "category": "css-break",
+                "url": "https://drafts.csswg.org/css-break/#propdef-widows",
+                "obsolete-category": "css-22",
+                "obsolete-url": "https://www.w3.org/TR/CSS22/page.html#propdef-widows"
             }
         },
         "width": {
@@ -8490,10 +8468,9 @@
                 "auto"
             ],
             "codegen-properties": {
-                "animation-wrapper": "AutoWrapper<int>",
-                "animation-wrapper-requires-additional-parameters": ["&RenderStyle::hasAutoSpecifiedZIndex", "&RenderStyle::setHasAutoSpecifiedZIndex"],
-                "auto-functions": true,
+                "animation-wrapper": "StyleTypeWrapper",
                 "render-style-name-for-methods": "SpecifiedZIndex",
+                "style-converter": "StyleType<ZIndex>",
                 "parser-grammar": "auto | <integer>"
             },
             "specification": {
@@ -8814,10 +8791,8 @@
             "inherited": true,
             "initial": "0px",
             "codegen-properties": {
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
-                "render-style-name-for-methods": "HorizontalBorderSpacing",
-                "style-converter": "ComputedLength<float>",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<WebkitBorderSpacing>",
                 "parser-grammar": "<length [0,inf]>"
             },
             "status": "non-standard"
@@ -8856,14 +8831,12 @@
             }
         },
         "-webkit-border-vertical-spacing": {
-            "animation-type": "discrete",
+            "animation-type": "by computed value",
             "inherited": true,
             "initial": "0px",
             "codegen-properties": {
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
-                "render-style-name-for-methods": "VerticalBorderSpacing",
-                "style-converter": "ComputedLength<float>",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<WebkitBorderSpacing>",
                 "parser-grammar": "<length [0,inf]>"
             },
             "status": "non-standard"
@@ -9106,9 +9079,8 @@
                 "aliases": [
                     "-webkit-column-count"
                 ],
-                "animation-wrapper": "AutoWrapper<unsigned short>",
-                "animation-wrapper-requires-additional-parameters": ["&RenderStyle::hasAutoColumnCount", "&RenderStyle::setHasAutoColumnCount", "1U"],
-                "auto-functions": true,
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<ColumnCount>",
                 "parser-grammar": "auto | <integer [1,inf]>",
                 "parser-exported": true
             },
@@ -9280,8 +9252,8 @@
                 "aliases": [
                     "-webkit-column-rule-width"
                 ],
-                "animation-wrapper": "Wrapper",
-                "style-converter": "LineWidth<unsigned short>",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<LineWidth>",
                 "parser-grammar": "<line-width>"
             },
             "specification":  {
@@ -9317,10 +9289,8 @@
                 "aliases": [
                     "-webkit-column-width"
                 ],
-                "animation-wrapper": "AutoWrapper<float>",
-                "animation-wrapper-requires-additional-parameters": ["&RenderStyle::hasAutoColumnWidth", "&RenderStyle::setHasAutoColumnWidth", "0.0f"],
-                "style-converter": "ComputedLength<float>",
-                "auto-functions": true,
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<ColumnWidth>",
                 "parser-grammar": "auto | <length [0,inf]>",
                 "parser-exported": true
             },
@@ -9681,8 +9651,8 @@
                 "aliases": [
                     "-webkit-flex-grow"
                 ],
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<FlexGrow>",
                 "parser-grammar": "<number [0,inf]>"
             },
             "specification": {
@@ -9697,8 +9667,8 @@
                 "aliases": [
                     "-webkit-flex-shrink"
                 ],
-                "animation-wrapper": "FloatWrapper",
-                "animation-wrapper-requires-additional-parameters": ["FloatWrapper::ValueRange::NonNegative"],
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<FlexShrink>",
                 "parser-grammar": "<number [0,inf]>"
             },
             "specification": {
@@ -10587,12 +10557,13 @@
                 "aliases": [
                     "-webkit-order"
                 ],
-                "animation-wrapper": "Wrapper",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<Order>",
                 "parser-grammar": "<integer>"
             },
             "specification": {
-                "category": "css-flexbox",
-                "url": "https://www.w3.org/TR/css-flexbox-1/#order-property"
+                "category": "css-display",
+                "url": "https://drafts.csswg.org/css-display-4/#propdef-order"
             }
         },
         "perspective": {
@@ -10755,14 +10726,19 @@
                 "url": "https://www.w3.org/TR/css-writing-modes-3/#propdef-direction"
             }
         },
-        "-webkit-text-decoration": {
+        "text-decoration": {
             "codegen-properties": {
                 "longhands": [
                     "text-decoration-line",
+                    "text-decoration-thickness",
                     "text-decoration-style",
                     "text-decoration-color"
                 ],
+                "aliases": [
+                    "-webkit-text-decoration"
+                ],
                 "shorthand-pattern": "StandardSpaceSeparated",
+                "style-extractor-custom": true,
                 "parser-grammar-unused": "<'text-decoration-line'> || <'text-decoration-style'> || <'text-decoration-color'>",
                 "parser-grammar-unused-reason": "Needs support for shorthand grammars."
             },
@@ -11970,8 +11946,8 @@
                 "aliases": [
                     "-webkit-shape-outside"
                 ],
-                "animation-wrapper": "ShapeWrapper",
-                "style-converter": "ShapeValue",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<ShapeOutside>",
                 "parser-function": "consumeShapeOutside",
                 "parser-grammar-unused": "none | [ <basic-shape> || <shape-box> ] | <image>",
                 "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form and the strong value representation."
@@ -11988,9 +11964,8 @@
                 "aliases": [
                     "-webkit-shape-margin"
                 ],
-                "animation-wrapper": "LengthWrapper",
-                "animation-wrapper-requires-additional-parameters": ["{ LengthWrapper::Flags::IsLengthPercentage, LengthWrapper::Flags::NegativeLengthsAreInvalid }"],
-                "style-converter": "Length",
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<ShapeMargin>",
                 "parser-grammar": "<length-percentage [0,inf]>"
             },
             "specification": {
@@ -12005,9 +11980,10 @@
                 "aliases": [
                     "-webkit-shape-image-threshold"
                 ],
-                "animation-wrapper": "Wrapper",
-                "style-converter": "Number<float>",
-                "parser-grammar": "<number>"
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<ShapeImageThreshold>",
+                "parser-grammar": "<number>",
+                "parser-grammar-comment": "Current spec grammar is '<opacity-value>'"
             },
             "specification": {
                 "category": "css-shapes",
@@ -12370,6 +12346,10 @@
                 "-apple-system-blur-material-chrome",
                 {
                     "value": "-apple-system-glass-material",
+                    "enable-if": "HAVE_MATERIAL_HOSTING"
+                },
+                {
+                    "value": "-apple-system-glass-material-clear",
                     "enable-if": "HAVE_MATERIAL_HOSTING"
                 },
                 {
@@ -13117,11 +13097,11 @@
         }
     },
     "shared-grammar-rules": {
-        "<alpha-value>": {
-            "grammar": "<number> | <percentage>",
+        "<opacity-value>": {
+            "grammar": "<number-or-percentage-resolved-to-number>",
             "specification": {
                 "category": "css-color",
-                "url": "https://www.w3.org/TR/css-color-4/#typedef-alpha-value"
+                "url": "https://drafts.csswg.org/css-color-4/#typedef-opacity-opacity-value"
             }
         },
         "<marker-ref>": {

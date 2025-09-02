@@ -250,7 +250,7 @@ void HTMLOptionElement::setSelectedState(bool selected, AllowStyleInvalidation a
     m_isSelected = selected;
 
     if (CheckedPtr cache = protectedDocument()->existingAXObjectCache())
-        cache->onSelectedChanged(*this);
+        cache->onSelectedOptionChanged(*this);
 }
 
 void HTMLOptionElement::childrenChanged(const ChildChange& change)

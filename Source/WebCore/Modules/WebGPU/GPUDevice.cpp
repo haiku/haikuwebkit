@@ -26,6 +26,7 @@
 #include "config.h"
 #include "GPUDevice.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DOMPromiseProxy.h"
 #include "EventNames.h"
 #include "GPUBindGroup.h"
@@ -288,6 +289,11 @@ ExceptionOr<Ref<GPUSampler>> GPUDevice::createSampler(const std::optional<GPUSam
     if (!sampler)
         return Exception { ExceptionCode::InvalidStateError, "GPUDevice.createSampler: Unable to create sampler."_s };
     return GPUSampler::create(sampler.releaseNonNull());
+}
+
+ScriptExecutionContext* GPUDevice::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 #if ENABLE(VIDEO)

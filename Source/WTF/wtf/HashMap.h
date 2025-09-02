@@ -28,6 +28,7 @@
 #include <wtf/HashTraits.h>
 #include <wtf/IteratorRange.h>
 #include <wtf/KeyValuePair.h>
+#include <wtf/OptionSetHash.h>
 
 namespace WTF {
 

@@ -296,6 +296,22 @@ FloatPoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, F
     return point;
 }
 
+DoublePoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, DoublePoint point)
+{
+    if (!rootWidget->platformWidget())
+        return point;
+
+    BEGIN_BLOCK_OBJC_EXCEPTIONS
+    RetainPtr view = checked_objc_cast<WAKScrollView>(rootWidget->platformWidget());
+    if (RetainPtr documentView = [view documentView])
+        return [documentView convertPoint:point fromView:nil];
+    else
+        return [view convertPoint:point fromView:nil];
+    END_BLOCK_OBJC_EXCEPTIONS
+
+    return point;
+}
+
 IntRect Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, const IntRect& rect)
 {
     if (!rootWidget->platformWidget())

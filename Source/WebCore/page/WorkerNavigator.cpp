@@ -110,19 +110,10 @@ void WorkerNavigator::clearAppBadge(Ref<DeferredPromise>&& promise)
     setAppBadge(0, WTFMove(promise));
 }
 
-void WorkerNavigator::initializeNavigatorUAData() const
-{
-    if (m_navigatorUAData)
-        return;
-
-    // FIXME(296489): populate the data structure
-    return;
-}
-
 NavigatorUAData& WorkerNavigator::userAgentData() const
 {
     if (!m_navigatorUAData)
-        initializeNavigatorUAData();
+        m_navigatorUAData = NavigatorUAData::create();
 
     return *m_navigatorUAData;
 };

@@ -1561,14 +1561,6 @@ public:
                 m_alternative->m_terms.append(PatternTerm::ForwardReference(m_flags));
                 return;
             }
-
-            if (parenthesisMatchDirection() == Backward
-                && term.type == PatternTerm::Type::ParentheticalAssertion
-                && term.matchDirection() == Backward
-                && subpatternId >= term.parentheses.subpatternId) {
-                m_alternative->m_terms.append(PatternTerm::ForwardReference(m_flags));
-                return;
-            }
         }
 
         m_alternative->m_terms.append(PatternTerm(subpatternId, m_flags));
@@ -1594,14 +1586,6 @@ public:
                 ASSERT((term.type == PatternTerm::Type::ParenthesesSubpattern) || (term.type == PatternTerm::Type::ParentheticalAssertion));
 
                 if ((term.type == PatternTerm::Type::ParenthesesSubpattern) && term.capture() && (subpatternId == term.parentheses.subpatternId)) {
-                    m_alternative->m_terms.append(PatternTerm::ForwardReference(m_flags));
-                    return;
-                }
-
-                if (parenthesisMatchDirection() == Backward
-                    && term.type == PatternTerm::Type::ParentheticalAssertion
-                    && term.matchDirection() == Backward
-                    && subpatternId >= term.parentheses.subpatternId) {
                     m_alternative->m_terms.append(PatternTerm::ForwardReference(m_flags));
                     return;
                 }

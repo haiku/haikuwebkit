@@ -14,5 +14,7 @@
 15
 16
 
-PASS .target 1
+FAIL .target 1 assert_equals:
+<div class="target" data-offset-x="135" data-offset-y="70" data-expected-height="100"></div>
+height expected 100 but got 0
 

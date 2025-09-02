@@ -37,9 +37,6 @@ namespace Style {
 // https://drafts.csswg.org/css-scroll-snap-1/#padding-longhands-physical
 struct ScrollPaddingEdge : LengthWrapperBase<LengthPercentage<CSS::Nonnegative>, CSS::Keyword::Auto> {
     using Base::Base;
-
-private:
-    friend struct Evaluation<ScrollPaddingEdge>;
 };
 
 // <'scroll-padding'> = [ auto | <length-percentage [0,∞]> ]{1,4}

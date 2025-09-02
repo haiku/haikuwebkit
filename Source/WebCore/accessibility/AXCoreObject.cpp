@@ -1519,6 +1519,9 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::linkedObjects() const
     linkedObjects.appendVector(controlledObjects());
     linkedObjects.appendVector(ownedObjects());
 
+    linkedObjects.removeAllMatching([] (const auto& object) {
+        return object->isIgnored();
+    });
     return linkedObjects;
 }
 

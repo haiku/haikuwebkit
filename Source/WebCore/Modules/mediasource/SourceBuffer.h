@@ -120,7 +120,7 @@ public:
     bool active() const { return m_active; }
 
     // EventTarget
-    ScriptExecutionContext* scriptExecutionContext() const final { return ActiveDOMObject::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
 
     enum class AppendMode { Segments, Sequence };
     AppendMode mode() const { return m_mode; }

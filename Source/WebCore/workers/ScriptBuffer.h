@@ -49,8 +49,9 @@ public:
     WEBCORE_EXPORT explicit ScriptBuffer(const String&);
 
     String toString() const;
-    const FragmentedSharedBuffer* buffer() const { return m_buffer.get().get(); }
+    const SharedBufferBuilder& buffer() const { return m_buffer; }
     RefPtr<const FragmentedSharedBuffer> protectedBuffer() const { return m_buffer.get(); }
+    size_t size() const { return m_buffer.size(); }
 
     ScriptBuffer isolatedCopy() const { return ScriptBuffer(m_buffer ? RefPtr<FragmentedSharedBuffer>(m_buffer.copy()) : nullptr); }
     explicit operator bool() const { return !!m_buffer; }
@@ -69,10 +70,10 @@ public:
     WEBCORE_EXPORT static std::optional<ScriptBuffer> fromIPCData(IPCData&&);
     WEBCORE_EXPORT IPCData ipcData() const;
 
+    bool operator==(const ScriptBuffer& other) const { return m_buffer == other.m_buffer; }
+
 private:
     SharedBufferBuilder m_buffer; // Contains the UTF-8 encoded script.
 };
-
-bool operator==(const ScriptBuffer&, const ScriptBuffer&);
 
 } // namespace WebCore

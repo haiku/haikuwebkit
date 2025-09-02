@@ -27,20 +27,20 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "CCallHelpers.h"
-#include "CallLinkInfo.h"
-#include "CodeLocation.h"
-#include "Identifier.h"
-#include "JSString.h"
-#include "MacroAssemblerCodeRef.h"
-#include "MathCommon.h"
-#include "PageCount.h"
-#include "RegisterAtOffsetList.h"
-#include "WasmMemoryInformation.h"
-#include "WasmName.h"
-#include "WasmNameSection.h"
-#include "WasmOps.h"
-#include "WasmTypeDefinition.h"
+#include <JavaScriptCore/CCallHelpers.h>
+#include <JavaScriptCore/CallLinkInfo.h>
+#include <JavaScriptCore/CodeLocation.h>
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/JSString.h>
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/MathCommon.h>
+#include <JavaScriptCore/PageCount.h>
+#include <JavaScriptCore/RegisterAtOffsetList.h>
+#include <JavaScriptCore/WasmMemoryInformation.h>
+#include <JavaScriptCore/WasmName.h>
+#include <JavaScriptCore/WasmNameSection.h>
+#include <JavaScriptCore/WasmOps.h>
+#include <JavaScriptCore/WasmTypeDefinition.h>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -815,7 +815,7 @@ struct InternalFunction {
 extern const CalleeBits NullWasmCallee;
 
 struct alignas(8) WasmCallableFunction {
-    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(alignas);
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(WasmCallableFunction);
     using LoadLocation = CodePtr<WasmEntryPtrTag>*;
     static constexpr ptrdiff_t offsetOfEntrypointLoadLocation() { return OBJECT_OFFSETOF(WasmCallableFunction, entrypointLoadLocation); }
     static constexpr ptrdiff_t offsetOfBoxedWasmCalleeLoadLocation() { return OBJECT_OFFSETOF(WasmCallableFunction, boxedWasmCalleeLoadLocation); }

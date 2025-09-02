@@ -20,7 +20,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-webkit_platform_headers: <WebCore/Color.h> <WebCore/ColorTypes.h>
+webkit_platform_headers: <WebCore/Color.h> <WebCore/ColorTypes.h> <WebCore/DoublePoint.h> <WebCore/DoubleRect.h> <WebCore/DoubleSize.h>
 
 header: <WebCore/DOMCacheEngine.h>
 [CustomHeader] struct WebCore::DOMCacheEngine::CacheInfo {
@@ -497,6 +497,21 @@ struct WebCore::CharacterRange {
     std::span<const double, 6> span();
 }
 
+[WebKitPlatform] class WebCore::DoublePoint {
+    double x()
+    double y()
+}
+
+[WebKitPlatform] class WebCore::DoubleSize {
+    double width()
+    double height()
+}
+
+[WebKitPlatform] class WebCore::DoubleRect {
+    WebCore::DoublePoint location()
+    WebCore::DoubleSize size()
+}
+
 [AdditionalEncoder=StreamConnectionEncoder] class WebCore::FloatPoint {
     float x()
     float y()
@@ -861,6 +876,12 @@ enum class WebCore::ViewportFit : uint8_t {
     Auto,
     Contain,
     Cover,
+};
+
+enum class WebCore::InteractiveWidget : uint8_t {
+    ResizesVisual,
+    ResizesContent,
+    OverlaysContent
 };
 
 header: <WebCore/ShareData.h>
@@ -2034,6 +2055,7 @@ struct WebCore::ViewportArguments {
     float shrinkToFit;
     WebCore::ViewportFit viewportFit;
     bool widthWasExplicit;
+    WebCore::InteractiveWidget interactiveWidget;
 };
 #endif // ENABLE(META_VIEWPORT)
 
@@ -3231,12 +3253,22 @@ using WebCore::Style::ShapeCommand = Variant<WebCore::Style::MoveCommand, WebCor
     Vector<WebCore::Style::ShapeCommand> value;
 };
 
+header: <WebCore/StyleLengthWrapperData.h>
+[CustomHeader, Nested] struct WebCore::Style::LengthWrapperData::IPCData {
+    float value;
+    uint8_t opaqueType;
+    bool hasQuirk;
+};
+[CustomHeader, Nested] struct WebCore::Style::LengthWrapperData {
+    WebCore::Style::LengthWrapperData::IPCData ipcData();
+};
+
 header: <WebCore/StylePosition.h>
 [CustomHeader, Nested] struct WebCore::Style::PositionX {
-    Variant<WebCore::Length::AutoData, WebCore::Length::NormalData, WebCore::Length::RelativeData, WebCore::Length::PercentData, WebCore::Length::FixedData, WebCore::Length::IntrinsicData, WebCore::Length::MinIntrinsicData, WebCore::Length::MinContentData, WebCore::Length::MaxContentData, WebCore::Length::FillAvailableData, WebCore::Length::FitContentData, WebCore::Length::ContentData, WebCore::Length::UndefinedData> ipcData();
+    WebCore::Style::LengthWrapperData::IPCData ipcData();
 };
 [CustomHeader, Nested] struct WebCore::Style::PositionY {
-    Variant<WebCore::Length::AutoData, WebCore::Length::NormalData, WebCore::Length::RelativeData, WebCore::Length::PercentData, WebCore::Length::FixedData, WebCore::Length::IntrinsicData, WebCore::Length::MinIntrinsicData, WebCore::Length::MinContentData, WebCore::Length::MaxContentData, WebCore::Length::FillAvailableData, WebCore::Length::FitContentData, WebCore::Length::ContentData, WebCore::Length::UndefinedData> ipcData();
+    WebCore::Style::LengthWrapperData::IPCData ipcData();
 };
 [CustomHeader, Nested] struct WebCore::Style::Position {
     WebCore::Style::PositionX x;
@@ -4078,14 +4110,14 @@ header: <WebCore/FEComponentTransfer.h>
 };
 
 [RefCounted, AdditionalEncoder=StreamConnectionEncoder] class WebCore::FEConvolveMatrix {
-    WebCore::IntSize kernelSize();
-    float divisor();
+    [Validator='!kernelSize->isEmpty()'] WebCore::IntSize kernelSize();
+    [Validator='*divisor != 0'] float divisor();
     float bias();
-    WebCore::IntPoint targetOffset();
+    [Validator='WebCore::IntRect({ }, *kernelSize).contains(*targetOffset)'] WebCore::IntPoint targetOffset();
     WebCore::EdgeModeType edgeMode();
-    WebCore::FloatPoint kernelUnitLength();
+    [Validator='kernelUnitLength->x() > 0 && kernelUnitLength->y() > 0'] WebCore::FloatPoint kernelUnitLength();
     bool preserveAlpha();
-    Vector<float> kernel();
+    [Validator='kernelSize->area() == kernel->size()'] Vector<float> kernel();
 
     WebCore::DestinationColorSpace operatingColorSpace();
 };
@@ -4889,7 +4921,7 @@ enum class WebCore::CreateNewGroupForHighlight : bool
 enum class WebCore::HighlightRequestOriginatedInApp : bool
 
 struct WebCore::AppHighlight {
-    Ref<WebCore::FragmentedSharedBuffer> highlight;
+    Ref<WebCore::SharedBuffer> highlight;
     std::optional<String> text;
     WebCore::CreateNewGroupForHighlight isNewGroup;
     WebCore::HighlightRequestOriginatedInApp requestOriginatedInApp;
@@ -5661,6 +5693,8 @@ enum class WebCore::StorageAccessWasGranted : uint8_t {
 
 enum class WebCore::StorageAccessPromptWasShown : bool
 
+enum class WebCore::HasOrShouldIgnoreUserGesture : bool
+
 enum class WebCore::StorageAccessScope : bool
 
 enum class WebCore::StorageAccessQuickResult : bool
@@ -6090,7 +6124,7 @@ header: <WebCore/RTCDataChannelHandler.h>
     bool madeHTTPS;
     bool blockedCookies;
     bool hasNotifications;
-    bool redirectedPriorToBlock;
+    bool redirected;
     [NotSerialized] Vector<WebCore::ContentExtensions::ModifyHeadersAction> modifyHeadersActions;
     [NotSerialized] Vector<std::pair<WebCore::ContentExtensions::RedirectAction, URL>> redirectActions;
 };
@@ -6186,6 +6220,7 @@ enum class WebCore::AllowsContentJavaScript : bool
     LinkDecorationFiltering,
     ScriptTrackingPrivacy,
     FailClosedForAllHosts,
+    StrictFailClosed,
 };
 
 enum class WebCore::ViolationReportType : uint8_t {
@@ -8182,6 +8217,7 @@ enum class WebCore::AppleVisualEffect : uint8_t {
     BlurChromeMaterial,
 #if HAVE(MATERIAL_HOSTING)
     GlassMaterial,
+    GlassClearMaterial,
     GlassSubduedMaterial,
     GlassMediaControlsMaterial,
     GlassSubduedMediaControlsMaterial,
@@ -8582,15 +8618,15 @@ header: <WebCore/VideoTrackPrivate.h>
 
 header: <WebCore/ShareableBitmap.h>
 [CustomHeader] class WebCore::ShareableBitmapConfiguration {
-    [Validator='m_size->width() >= 0 && m_size->height() >= 0'] WebCore::IntSize m_size;
+    [Validator='m_size->width() > 0 && m_size->height() > 0'] WebCore::IntSize m_size;
     std::optional<WebCore::DestinationColorSpace> m_colorSpace;
     WebCore::Headroom m_headroom;
     bool m_isOpaque;
-    unsigned bitsPerComponent();
-    unsigned bytesPerPixel();
-    unsigned bytesPerRow();
+    [Validator='*bitsPerComponent >= 1 && *bitsPerComponent <= 16'] unsigned bitsPerComponent();
+    [Validator='*bytesPerPixel >= 1 && *bytesPerPixel <= 8'] unsigned bytesPerPixel();
+    [Validator='*bytesPerRow >= m_size->width() * *bytesPerPixel'] unsigned bytesPerRow();
 #if USE(CG)
-    CGBitmapInfo m_bitmapInfo;
+    [Validator='!(*m_bitmapInfo & ~(kCGBitmapAlphaInfoMask | static_cast<CGBitmapInfo>(kCGImageByteOrderMask) | kCGBitmapFloatComponents))'] CGBitmapInfo m_bitmapInfo;
 #endif
 }
 
@@ -8789,7 +8825,20 @@ using WebCore::GraphicsContextGL::ExternalImageSource = Variant<WebCore::Graphic
 using WebCore::GraphicsContextGL::ExternalSyncSource = std::tuple<MachSendRight, uint64_t>
 #endif
 #if !PLATFORM(COCOA) && ENABLE(WEBGL)
+#if (PLATFORM(GTK) || PLATFORM(WPE))
+header: <WebCore/GraphicsContextGL.h>
+[CustomHeader] struct WebCore::GraphicsContextGLExternalImageSource {
+    Vector<WTF::UnixFileDescriptor> fds;
+    Vector<uint32_t> strides;
+    Vector<uint32_t> offsets;
+    uint32_t fourcc;
+    uint64_t modifier;
+    WebCore::IntSize size;
+};
+using WebCore::GraphicsContextGL::ExternalImageSource = WebCore::GraphicsContextGLExternalImageSource;
+#else
 using WebCore::GraphicsContextGL::ExternalImageSource = int
+#endif
 using WebCore::GraphicsContextGL::ExternalSyncSource = int
 #endif
 
@@ -9229,57 +9278,3 @@ header: <WebCore/ScriptTrackingPrivacyCategory.h>
     Speech,
     FormControls,
 };
-
-[Nested] struct WebCore::SerializedNode::ContainerNode {
-    Vector<WebCore::SerializedNode> children;
-};
-[Nested] struct WebCore::SerializedNode::Attr {
-    String prefix;
-    String localName;
-    String namespaceURI;
-    String value;
-};
-[Nested] struct WebCore::SerializedNode::CharacterData {
-    String data;
-};
-[Nested] struct WebCore::SerializedNode::Document : WebCore::SerializedNode::ContainerNode {
-    WebCore::ClonedDocumentType type;
-    URL url;
-    URL baseURL;
-    URL baseURLOverride;
-    Variant<String, URL> documentURI;
-    String contentType;
-};
-[Nested] enum class WebCore::ClonedDocumentType : uint8_t {
-    XMLDocument,
-    XHTMLDocument,
-    HTMLDocument,
-    SVGDocument,
-    Document
-};
-[Nested] struct WebCore::SerializedNode::DocumentFragment : WebCore::SerializedNode::ContainerNode {
-};
-[Nested] struct WebCore::SerializedNode::DocumentType {
-    String name;
-    String publicId;
-    String systemId;
-};
-[Nested] struct WebCore::SerializedNode::Element : WebCore::SerializedNode::ContainerNode {
-};
-[Nested] struct WebCore::SerializedNode::Comment : WebCore::SerializedNode::CharacterData {
-};
-[Nested] struct WebCore::SerializedNode::Text : WebCore::SerializedNode::CharacterData {
-};
-[Nested] struct WebCore::SerializedNode::CDATASection : WebCore::SerializedNode::Text {
-};
-[Nested] struct WebCore::SerializedNode::ProcessingInstruction : WebCore::SerializedNode::CharacterData {
-    String target;
-};
-[Nested] struct WebCore::SerializedNode::ShadowRoot : WebCore::SerializedNode::DocumentFragment {
-};
-[Nested] struct WebCore::SerializedNode::HTMLTemplateElement : WebCore::SerializedNode::Element {
-};
-
-struct WebCore::SerializedNode {
-    Variant<WebCore::SerializedNode::Attr, WebCore::SerializedNode::CDATASection, WebCore::SerializedNode::Comment, WebCore::SerializedNode::Document, WebCore::SerializedNode::DocumentFragment, WebCore::SerializedNode::DocumentType, WebCore::SerializedNode::Element, WebCore::SerializedNode::ProcessingInstruction, WebCore::SerializedNode::ShadowRoot, WebCore::SerializedNode::Text, WebCore::SerializedNode::HTMLTemplateElement> data;
-}

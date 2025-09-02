@@ -87,6 +87,7 @@ public:
     static NSString* errorValidatingLinearTextureData(const WGPUTextureDataLayout&, uint64_t, WGPUTextureFormat, WGPUExtent3D);
     static MTLTextureUsage usage(WGPUTextureUsageFlags, WGPUTextureFormat);
     static MTLPixelFormat pixelFormat(WGPUTextureFormat);
+    static WGPUTextureFormat textureFormat(MTLPixelFormat);
     static std::optional<MTLPixelFormat> depthOnlyAspectMetalFormat(WGPUTextureFormat);
     static std::optional<MTLPixelFormat> stencilOnlyAspectMetalFormat(WGPUTextureFormat);
     static WGPUTextureFormat removeSRGBSuffix(WGPUTextureFormat);
@@ -138,6 +139,8 @@ public:
     void updateCompletionEvent(const std::pair<id<MTLSharedEvent>, uint64_t>&);
     id<MTLSharedEvent> sharedEvent() const;
     uint64_t sharedEventSignalValue() const;
+    void setRasterizationRateMaps(std::pair<id<MTLRasterizationRateMap>, id<MTLRasterizationRateMap>>&& rateMaps) { m_leftRightRasterizationMaps = WTFMove(rateMaps); }
+    id<MTLRasterizationRateMap> rasterizationMapForSlice(uint32_t slice) { return slice ? m_leftRightRasterizationMaps.second : m_leftRightRasterizationMaps.first; }
 
 private:
     Texture(id<MTLTexture>, const WGPUTextureDescriptor&, Vector<WGPUTextureFormat>&& viewFormats, Device&);
@@ -169,6 +172,8 @@ private:
     bool m_canvasBacking { false };
     mutable Vector<uint64_t> m_commandEncoders;
     id<MTLSharedEvent> m_sharedEvent { nil };
+    std::pair<id<MTLRasterizationRateMap>, id<MTLRasterizationRateMap>> m_leftRightRasterizationMaps;
+
     uint64_t m_sharedEventSignalValue { 0 };
 // FIXME: remove @safe once rdar://151039766 lands
 } __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(refTexture, derefTexture);

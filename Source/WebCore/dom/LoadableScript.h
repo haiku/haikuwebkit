@@ -52,6 +52,7 @@ public:
     virtual bool hasError() const = 0;
     virtual std::optional<Error> takeError() = 0;
     virtual bool wasCanceled() const = 0;
+    virtual bool isInlineModule() const = 0;
 
     virtual void execute(ScriptElement&) = 0;
 

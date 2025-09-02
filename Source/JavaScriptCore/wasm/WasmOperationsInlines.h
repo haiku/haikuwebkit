@@ -36,7 +36,6 @@
 #include "JSWebAssemblyStruct.h"
 #include "TypedArrayController.h"
 #include "WaiterListManager.h"
-#include "WasmLLIntGenerator.h"
 #include "WasmModuleInformation.h"
 #include "WasmTypeDefinition.h"
 

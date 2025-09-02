@@ -384,9 +384,6 @@ bool Options::isAvailable(Options::ID id, Options::Availability availability)
         return !!LLINT_TRACING;
     if (id == traceLLIntSlowPathID)
         return !!LLINT_TRACING;
-    if (id == traceWasmLLIntExecutionID)
-        return !!LLINT_TRACING;
-
     if (id == validateVMEntryCalleeSavesID)
         return !!ASSERT_ENABLED;
     return false;
@@ -677,7 +674,6 @@ static inline void disableAllWasmOptions()
 
     Options::useWasm() = false;
     Options::useWasmIPInt() = false;
-    Options::useWasmLLInt() = false;
     Options::failToCompileWasmCode() = true;
 
     Options::useWasmFastMemory() = false;
@@ -820,7 +816,7 @@ void Options::notifyOptionsChanged()
     if (!Options::useJIT())
         disableAllWasmJITOptions();
 
-    if (!Options::useWasmLLInt() && !Options::useWasmIPInt())
+    if (!Options::useWasmIPInt())
         Options::thresholdForBBQOptimizeAfterWarmUp() = 0; // Trigger immediate BBQ tier up.
 
     // At initialization time, we may decide that useJIT should be false for any
@@ -886,7 +882,7 @@ void Options::notifyOptionsChanged()
         if (Options::forceAllFunctionsToUseSIMD() && !Options::useWasmSIMD())
             Options::forceAllFunctionsToUseSIMD() = false;
 
-        if (Options::useWasmSIMD() && !(Options::useWasmLLInt() || Options::useWasmIPInt())) {
+        if (Options::useWasmSIMD() && !Options::useWasmIPInt()) {
             // The LLInt is responsible for discovering if functions use SIMD.
             // If we can't run using it, then we should be conservative.
             Options::forceAllFunctionsToUseSIMD() = true;
@@ -1359,9 +1355,9 @@ void Options::assertOptionsAreCoherent()
         coherent = false;
         dataLog("INCOHERENT OPTIONS: at least one of useLLInt or useJIT must be true\n");
     }
-    if (useWasm() && !(useWasmIPInt() || useWasmLLInt() || useBBQJIT())) {
+    if (useWasm() && !(useWasmIPInt() || useBBQJIT())) {
         coherent = false;
-        dataLog("INCOHERENT OPTIONS: at least one of useWasmIPInt, useWasmLLInt, or useBBQJIT must be true\n");
+        dataLog("INCOHERENT OPTIONS: at least one of useWasmIPInt, or useBBQJIT must be true\n");
     }
     if (useProfiler() && useConcurrentJIT()) {
         coherent = false;

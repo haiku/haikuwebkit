@@ -27,6 +27,7 @@
 
 #include "WPEDisplayMock.h"
 #include "WPEMockPlatformTest.h"
+#include "WPEScreenMock.h"
 
 #if USE(LIBDRM)
 #include <drm_fourcc.h>
@@ -75,11 +76,12 @@ static void testDisplayKeymap(WPEMockPlatformTest* test, gconstpointer)
 static void testDisplayDRMNodes(WPEMockPlatformTest* test, gconstpointer)
 {
     g_assert_null(wpe_display_get_drm_device(test->display()));
-    g_assert_null(wpe_display_get_drm_render_node(test->display()));
 
     wpeDisplayMockUseFakeDRMNodes(WPE_DISPLAY_MOCK(test->display()), TRUE);
-    g_assert_cmpstr(wpe_display_get_drm_device(test->display()), ==, "/dev/dri/mock0");
-    g_assert_cmpstr(wpe_display_get_drm_render_node(test->display()), ==, "/dev/dri/mockD128");
+    auto* device = wpe_display_get_drm_device(test->display());
+    g_assert_nonnull(device);
+    g_assert_cmpstr(wpe_drm_device_get_primary_node(device), ==, "/dev/dri/mock0");
+    g_assert_cmpstr(wpe_drm_device_get_render_node(device), ==, "/dev/dri/mockD128");
 }
 
 static void testDisplayDMABufFormats(WPEMockPlatformTest* test, gconstpointer)
@@ -93,11 +95,17 @@ static void testDisplayDMABufFormats(WPEMockPlatformTest* test, gconstpointer)
     test->assertObjectIsDeletedWhenTestFinishes(formats);
 
 #if USE(LIBDRM)
-    g_assert_cmpstr(wpe_buffer_dma_buf_formats_get_device(formats), ==, "/dev/dri/mockD128");
-    g_assert_cmpuint(wpe_buffer_dma_buf_formats_get_n_groups(formats), ==, 2);
+    auto* device = wpe_buffer_dma_buf_formats_get_device(formats);
+    g_assert_nonnull(device);
+    g_assert_cmpstr(wpe_drm_device_get_primary_node(device), ==, "/dev/dri/mock0");
+    g_assert_cmpstr(wpe_drm_device_get_render_node(device), ==, "/dev/dri/mockD128");
 
+    g_assert_cmpuint(wpe_buffer_dma_buf_formats_get_n_groups(formats), ==, 2);
     g_assert_cmpuint(wpe_buffer_dma_buf_formats_get_group_usage(formats, 0), ==, WPE_BUFFER_DMA_BUF_FORMAT_USAGE_SCANOUT);
-    g_assert_cmpstr(wpe_buffer_dma_buf_formats_get_group_device(formats, 0), ==, "/dev/dri/mock0");
+    auto* targetDevice = wpe_buffer_dma_buf_formats_get_group_device(formats, 0);
+    g_assert_nonnull(targetDevice);
+    g_assert_cmpstr(wpe_drm_device_get_primary_node(targetDevice), ==, "/dev/dri/mock1");
+    g_assert_null(wpe_drm_device_get_render_node(targetDevice));
     g_assert_cmpuint(wpe_buffer_dma_buf_formats_get_group_n_formats(formats, 0), ==, 1);
     g_assert_true(wpe_buffer_dma_buf_formats_get_format_fourcc(formats, 0, 0) == DRM_FORMAT_XRGB8888);
     auto* modifiers = wpe_buffer_dma_buf_formats_get_format_modifiers(formats, 0, 0);
@@ -128,6 +136,58 @@ static void testDisplayExplicitSync(WPEMockPlatformTest* test, gconstpointer)
     g_assert_false(wpe_display_use_explicit_sync(test->display()));
     wpeDisplayMockSetUseExplicitSync(WPE_DISPLAY_MOCK(test->display()), TRUE);
     g_assert_true(wpe_display_use_explicit_sync(test->display()));
+}
+
+static void testDisplayScreens(WPEMockPlatformTest* test, gconstpointer)
+{
+    // Mock display has one screen by default.
+    g_assert_cmpuint(wpe_display_get_n_screens(test->display()), ==, 1);
+    auto* mainScreen = wpe_display_get_screen(test->display(), 0);
+    g_assert_true(WPE_IS_SCREEN(mainScreen));
+    test->assertObjectIsDeletedWhenTestFinishes(mainScreen);
+    g_assert_cmpuint(wpe_screen_get_id(mainScreen), ==, 1);
+    g_assert_cmpint(wpe_screen_get_x(mainScreen), ==, 0);
+    g_assert_cmpint(wpe_screen_get_y(mainScreen), ==, 0);
+    g_assert_cmpint(wpe_screen_get_width(mainScreen), ==, 800);
+    g_assert_cmpint(wpe_screen_get_height(mainScreen), ==, 600);
+    g_assert_cmpfloat(wpe_screen_get_scale(mainScreen), ==, 1.);
+    g_assert_cmpint(wpe_screen_get_refresh_rate(mainScreen), ==, 60000);
+
+    g_assert_null(wpe_display_get_screen(test->display(), 1));
+
+    gboolean screenAdded = FALSE;
+    auto screenAddedID = g_signal_connect(test->display(), "screen-added", G_CALLBACK(+[](WPEDisplay*, WPEScreen* screen, gboolean* screenAdded) {
+        *screenAdded = TRUE;
+        g_assert_cmpuint(wpe_screen_get_id(screen), ==, 2);
+    }), &screenAdded);
+    wpeDisplayMockAddSecondaryScreen(WPE_DISPLAY_MOCK(test->display()));
+    g_assert_true(screenAdded);
+    g_assert_cmpuint(wpe_display_get_n_screens(test->display()), ==, 2);
+    auto* secondaryScreen = wpe_display_get_screen(test->display(), 1);
+    g_assert_true(WPE_IS_SCREEN(secondaryScreen));
+    test->assertObjectIsDeletedWhenTestFinishes(secondaryScreen);
+    g_assert_cmpuint(wpe_screen_get_id(secondaryScreen), ==, 2);
+    g_assert_cmpint(wpe_screen_get_x(secondaryScreen), ==, 0);
+    g_assert_cmpint(wpe_screen_get_y(secondaryScreen), ==, 0);
+    g_assert_cmpint(wpe_screen_get_width(secondaryScreen), ==, 1024);
+    g_assert_cmpint(wpe_screen_get_height(secondaryScreen), ==, 768);
+    g_assert_cmpfloat(wpe_screen_get_scale(secondaryScreen), ==, 2.);
+    g_assert_cmpint(wpe_screen_get_refresh_rate(secondaryScreen), ==, 120000);
+
+    g_assert_null(wpe_display_get_screen(test->display(), 2));
+
+    gboolean screenRemoved = FALSE;
+    auto screenRemovedID = g_signal_connect(test->display(), "screen-removed", G_CALLBACK(+[](WPEDisplay*, WPEScreen* screen, gboolean* screenRemoved) {
+        *screenRemoved = TRUE;
+        g_assert_cmpuint(wpe_screen_get_id(screen), ==, 2);
+        g_assert_true(wpeScreenMockIsInvalid(WPE_SCREEN_MOCK(screen)));
+    }), &screenRemoved);
+    wpeDisplayMockRemoveSecondaryScreen(WPE_DISPLAY_MOCK(test->display()));
+    g_assert_true(screenRemoved);
+    g_assert_cmpuint(wpe_display_get_n_screens(test->display()), ==, 1);
+
+    g_signal_handler_disconnect(test->display(), screenAddedID);
+    g_signal_handler_disconnect(test->display(), screenRemovedID);
 }
 
 class WPEMockAvailableInputDevicesTest : public WPEMockPlatformTest {
@@ -215,6 +275,7 @@ void beforeAll()
     WPEMockPlatformTest::add("Display", "drm-nodes", testDisplayDRMNodes);
     WPEMockPlatformTest::add("Display", "dmabuf-formats", testDisplayDMABufFormats);
     WPEMockPlatformTest::add("Display", "explicit-sync", testDisplayExplicitSync);
+    WPEMockPlatformTest::add("Display", "screens", testDisplayScreens);
     WPEMockAvailableInputDevicesTest::add("Display", "available-input-devices", testDisplayAvailableInputDevices);
 }
 

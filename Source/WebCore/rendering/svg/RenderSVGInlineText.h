@@ -73,7 +73,7 @@ private:
 
     FloatRect objectBoundingBox() const override { return floatLinesBoundingBox(); }
 
-    VisiblePosition positionForPoint(const LayoutPoint&, HitTestSource, const RenderFragmentContainer*) override;
+    PositionWithAffinity positionForPoint(const LayoutPoint&, HitTestSource, const RenderFragmentContainer*) override;
     IntRect linesBoundingBox() const override;
 
     void setTextInternal(const String&, bool force) final;

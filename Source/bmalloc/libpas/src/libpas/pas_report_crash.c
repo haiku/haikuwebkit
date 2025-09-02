@@ -93,6 +93,13 @@ kern_return_t pas_report_crash_extract_pgm_failure(vm_address_t fault_address, m
     if (kr != KERN_SUCCESS)
         return KERN_FAILURE;
 
+    kr = reader(task, (vm_address_t)read_pas_dead_root->probabilistic_guard_malloc_has_been_used, sizeof(report->pgm_has_been_used), (void**)&report->pgm_has_been_used);
+    if (kr != KERN_SUCCESS)
+        return KERN_FAILURE;
+
+    if (!report->pgm_has_been_used)
+        return KERN_FAILURE;
+
     kr = reader(task, (vm_address_t)read_pas_dead_root->pas_pgm_hash_map_instance, sizeof(pas_ptr_hash_map), (void**)&hash_map);
     if (kr != KERN_SUCCESS)
         return KERN_FAILURE;

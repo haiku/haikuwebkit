@@ -262,7 +262,7 @@ void MediaRecorderPrivateBackend::fetchData(MediaRecorderPrivate::FetchDataCallb
     callOnMainThread([this, weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTFMove(completionHandler), mimeType = this->mimeType()]() mutable {
         auto protectedThis = weakThis.get();
         if (!protectedThis) {
-            completionHandler(FragmentedSharedBuffer::create(), mimeType, 0);
+            completionHandler(SharedBuffer::create(), mimeType, 0);
             return;
         }
         double timeCode = 0;

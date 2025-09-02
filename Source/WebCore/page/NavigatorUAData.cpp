@@ -25,9 +25,30 @@
 #include "config.h"
 #include "NavigatorUAData.h"
 
+#include "JSUADataValues.h"
+#include "NavigatorUABrandVersion.h"
 #include "NotImplemented.h"
 #include "UADataValues.h"
 #include "UALowEntropyJSON.h"
+#include "UserAgent.h"
+#include <algorithm>
+#include <random>
+#include <wtf/NeverDestroyed.h>
+#include <wtf/WeakRandomNumber.h>
+
+#if USE(GLIB)
+#include <wtf/glib/ChassisType.h>
+#endif
+
+#if OS(LINUX)
+#include "sys/utsname.h"
+#include <wtf/StdLibExtras.h>
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+#import <pal/system/ios/Device.h>
+#import <pal/system/ios/UserInterfaceIdiom.h>
+#endif
 
 namespace WebCore {
 NavigatorUAData::NavigatorUAData() = default;
@@ -40,31 +61,108 @@ Ref<NavigatorUAData> NavigatorUAData::create()
 
 const Vector<NavigatorUABrandVersion>& NavigatorUAData::brands() const
 {
-    return m_brands;
+    static LazyNeverDestroyed<Vector<NavigatorUABrandVersion>> brandVersion;
+    static std::once_flag onceKey;
+    std::call_once(onceKey, [] {
+        Vector<NavigatorUABrandVersion> temp = {
+            NavigatorUABrandVersion {
+                .brand = "AppleWebKit"_s,
+                .version = "605.1.15"_s
+            },
+            NavigatorUABrandVersion {
+                .brand = createArbitraryBrand(),
+                .version = createArbitraryVersion()
+            }
+        };
+
+        auto rng = std::default_random_engine { };
+        std::ranges::shuffle(temp, rng);
+        brandVersion.construct(temp);
+    });
+
+    return brandVersion;
 }
 
 bool NavigatorUAData::mobile() const
 {
+#if PLATFORM(IOS_FAMILY)
+    return !(PAL::currentUserInterfaceIdiomIsDesktop() || PAL::currentUserInterfaceIdiomIsVision());
+#elif USE(GLIB)
+    return chassisType() == WTF::ChassisType::Mobile;
+#else
     return false;
+#endif
 }
 
-const String& NavigatorUAData::platform() const
+String NavigatorUAData::platform() const
 {
-    return m_platform;
+#if OS(LINUX)
+    static LazyNeverDestroyed<String> platformName;
+    static std::once_flag onceKey;
+    std::call_once(onceKey, [] {
+        struct utsname osname;
+        platformName.construct(uname(&osname) >= 0 ? makeString(unsafeSpan(osname.sysname)) : emptyString());
+    });
+    return platformName->isolatedCopy();
+#elif PLATFORM(IOS_FAMILY)
+    return (PAL::currentUserInterfaceIdiomIsDesktop() || PAL::currentUserInterfaceIdiomIsVision()) ? "macOS"_s : "iOS"_s;
+#elif OS(MACOS)
+    return "macOS"_s;
+#else
+    return ""_s;
+#endif
 }
 
 UALowEntropyJSON NavigatorUAData::toJSON() const
 {
     return UALowEntropyJSON {
-        { },
-        false,
-        ""_s
+        brands(),
+        mobile(),
+        platform()
     };
 }
 
-void NavigatorUAData::getHighEntropyValues(const Vector<String>&, NavigatorUAData::ValuesPromise&&) const
+void NavigatorUAData::getHighEntropyValues(const Vector<String>& hints, NavigatorUAData::ValuesPromise&& promise) const
 {
-    notImplemented();
-    return;
+    auto values = UADataValues::create(brands(), mobile(), platform());
+    for (auto& hint : hints) {
+        if (hint == "architecture")
+            values->architecture = ""_s;
+        else if (hint == "bitness")
+            values->bitness = "64"_s;
+        else if (hint == "formFactors")
+            values->formFactors = Vector<String> { };
+        else if (hint == "fullVersionList")
+            values->fullVersionList = brands();
+        else if (hint == "model")
+            values->model = ""_s;
+        else if (hint == "platformVersion") {
+#if OS(LINUX)
+            values->platformVersion = ""_s;
+#elif PLATFORM(IOS_FAMILY)
+            values->platformVersion = systemMarketingVersionForUserAgentString();
+#elif OS(MACOS)
+            values->platformVersion = "10.15.7"_s;
+#else
+            values->platformVersion = ""_s;
+#endif
+        } else if (hint == "uaFullVersion")
+            values->uaFullVersion = "605.1.15"_s;
+        else if (hint == "wow64")
+            values->wow64 = false;
+    }
+
+    promise.resolve(WTFMove(values));
+}
+
+String NavigatorUAData::createArbitraryVersion()
+{
+    return makeString(weakRandomNumber<unsigned>() % 10000, '.', weakRandomNumber<unsigned>() % 10000, '.', weakRandomNumber<unsigned>() % 10000);
+}
+
+String NavigatorUAData::createArbitraryBrand()
+{
+    auto greasyChars= unsafeSpan(" ()-./:;=?_");
+    return makeString("The"_s, greasyChars[weakRandomNumber<unsigned>() % greasyChars.size()], "Best"_s, greasyChars[weakRandomNumber<unsigned>() % greasyChars.size()], "Browser"_s);
 }
 }

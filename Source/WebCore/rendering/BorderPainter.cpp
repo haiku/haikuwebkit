@@ -33,7 +33,7 @@
 #include "FloatRoundedRect.h"
 #include "GeometryUtilities.h"
 #include "GraphicsContext.h"
-#include "NinePieceImage.h"
+#include "NinePieceImagePainter.h"
 #include "PaintInfo.h"
 #include "PathUtilities.h"
 #include "RenderBox.h"
@@ -207,24 +207,24 @@ static bool decorationHasAllSolidEdges(const RectEdges<BorderEdge>& edges)
 
 void BorderPainter::paintBorder(const LayoutRect& rect, const RenderStyle& style, BleedAvoidance bleedAvoidance, RectEdges<bool> closedEdges) const
 {
-    GraphicsContext& graphicsContext = m_paintInfo.context();
+    auto& graphicsContext = m_paintInfo.context();
 
     if (graphicsContext.paintingDisabled())
         return;
 
-    auto paintsBorderImage = [&](LayoutRect rect, const NinePieceImage& ninePieceImage) {
-        auto* styleImage = ninePieceImage.image();
-        if (!styleImage)
+    auto paintsBorderImage = [&](LayoutRect rect, const Style::BorderImage& borderImage) {
+        auto image = borderImage.source().tryImage();
+        if (!image)
             return false;
 
-        if (!styleImage->isLoaded(m_renderer.ptr()))
+        if (!image->value->isLoaded(m_renderer.ptr()))
             return false;
 
-        if (!styleImage->canRender(m_renderer.ptr(), style.usedZoom()))
+        if (!image->value->canRender(m_renderer.ptr(), style.usedZoom()))
             return false;
 
         auto rectWithOutsets = rect;
-        rectWithOutsets.expand(style.imageOutsets(ninePieceImage));
+        rectWithOutsets.expand(style.imageOutsets(borderImage));
         return !rectWithOutsets.isEmpty();
     };
 
@@ -528,16 +528,17 @@ void BorderPainter::paintSides(const BorderShape& borderShape, const Sides& side
         paintBorderSides(borderShape, sides, edgesToDraw, antialias);
 }
 
-bool BorderPainter::paintNinePieceImage(const LayoutRect& rect, const RenderStyle& style, const NinePieceImage& ninePieceImage, CompositeOperator op) const
+template<typename T>
+bool BorderPainter::paintNinePieceImageImpl(const LayoutRect& rect, const RenderStyle& style, const T& ninePieceImage, CompositeOperator op) const
 {
-    StyleImage* styleImage = ninePieceImage.image();
-    if (!styleImage)
+    auto image = ninePieceImage.source().tryStyleImage();
+    if (!image)
         return false;
 
-    if (!styleImage->isLoaded(m_renderer.ptr()))
+    if (!image->isLoaded(m_renderer.ptr()))
         return true; // Never paint a nine-piece image incrementally, but don't paint the fallback borders either.
 
-    if (!styleImage->canRender(m_renderer.ptr(), style.usedZoom()))
+    if (!image->canRender(m_renderer.ptr(), style.usedZoom()))
         return false;
 
     CheckedPtr modelObject = dynamicDowncast<RenderBoxModelObject>(m_renderer.get());
@@ -552,13 +553,23 @@ bool BorderPainter::paintNinePieceImage(const LayoutRect& rect, const RenderStyl
     rectWithOutsets.expand(style.imageOutsets(ninePieceImage));
     LayoutRect destination = LayoutRect(snapRectToDevicePixels(rectWithOutsets, deviceScaleFactor));
 
-    auto source = modelObject->calculateImageIntrinsicDimensions(styleImage, destination.size(), RenderBoxModelObject::ScaleByUsedZoom::No);
+    auto source = modelObject->calculateImageIntrinsicDimensions(image.get(), destination.size(), RenderBoxModelObject::ScaleByUsedZoom::No);
 
     // If both values are ‘auto’ then the intrinsic width and/or height of the image should be used, if any.
-    styleImage->setContainerContextForRenderer(m_renderer, source, style.usedZoom());
+    image->setContainerContextForRenderer(m_renderer, source, style.usedZoom());
 
-    ninePieceImage.paint(m_paintInfo.context(), m_renderer.ptr(), style, destination, source, deviceScaleFactor, op);
+    NinePieceImagePainter::paint(ninePieceImage, m_paintInfo.context(), m_renderer.ptr(), style, destination, source, deviceScaleFactor, op);
     return true;
+}
+
+bool BorderPainter::paintNinePieceImage(const LayoutRect& rect, const RenderStyle& style, const Style::BorderImage& borderImage, CompositeOperator op) const
+{
+    return paintNinePieceImageImpl(rect, style, borderImage, op);
+}
+
+bool BorderPainter::paintNinePieceImage(const LayoutRect& rect, const RenderStyle& style, const Style::MaskBorder& maskBorder, CompositeOperator op) const
+{
+    return paintNinePieceImageImpl(rect, style, maskBorder, op);
 }
 
 void BorderPainter::paintTranslucentBorderSides(const BorderShape& borderShape, const Sides& sides, BoxSideSet edgesToDraw, bool antialias) const

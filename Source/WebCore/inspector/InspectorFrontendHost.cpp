@@ -616,7 +616,7 @@ void InspectorFrontendHost::dispatchEventAsContextMenuEvent(Event& event)
 
     auto& mouseEvent = downcast<MouseEvent>(event);
     LocalFrame& frame = *downcast<Node>(mouseEvent.target())->document().frame();
-    LayoutPoint location = mouseEvent.absoluteLocation();
+    auto location = LayoutPoint(mouseEvent.absoluteLocation());
     if (RefPtr<LocalFrameView> view = frame.view()) {
         FloatBoxExtent insets = view->obscuredContentInsets();
         location.move(insets.left(), insets.top());

@@ -31,10 +31,10 @@
 
 #import "AXCoreObject.h"
 #import "AXIsolatedObject.h"
+#import "AXLoggerBase.h"
 #import "AXObjectCache.h"
 #import "AXRemoteFrame.h"
 #import "AXSearchManager.h"
-#import "AccessibilityARIAGridRow.h"
 #import "AccessibilityList.h"
 #import "AccessibilityListBox.h"
 #import "AccessibilityRenderObject.h"
@@ -373,6 +373,20 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
 }
 #endif
 
+- (NSString *)description
+{
+    if (RefPtr<AXCoreObject> backingObject = self.axBackingObject) {
+        NSString *backingDescription = backingObject->debugDescription().createNSString().autorelease();
+        return [NSString stringWithFormat:@"wrapper %p { object %@ }", self, backingDescription];
+    }
+    return [NSString stringWithFormat:@"%@ (null backing object)", [super description]];
+}
+
+- (NSString *)debugDescription
+{
+    return [self description];
+}
+
 - (id)attachmentView
 {
     return nil;
@@ -384,7 +398,7 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
         return m_axObject.get();
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    ASSERT(AXObjectCache::isIsolatedTreeEnabled());
+    AX_DEBUG_ASSERT(AXObjectCache::isIsolatedTreeEnabled());
     return m_isolatedObject.get();
 #else
     ASSERT_NOT_REACHED();
@@ -413,7 +427,7 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
     RefPtr<AXCoreObject> backingObject = [self baseUpdateBackingStore];
     if (!backingObject)
         return nil;
-    
+
     RetainPtr<NSMutableArray<AXCustomContent *>> accessibilityCustomContent = nil;
     auto extendedDescription = backingObject->extendedDescription();
     if (extendedDescription.length()) {
@@ -423,7 +437,7 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
         [contentItem setImportance:AXCustomContentImportanceHigh];
         [accessibilityCustomContent addObject:contentItem];
     }
-    
+
     return accessibilityCustomContent.autorelease();
 }
 #endif
@@ -551,7 +565,7 @@ NSRange makeNSRange(std::optional<SimpleRange> range)
 {
     if (!range)
         return NSMakeRange(NSNotFound, 0);
-    
+
     Ref document = range->start.document();
     RefPtr frame = document->frame();
     if (!frame)
@@ -707,7 +721,7 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
 - (NSString *)accessibilityPlatformMathSuperscriptKey
 {
     ASSERT_NOT_REACHED();
-    return nil;    
+    return nil;
 }
 
 - (NSArray *)accessibilityMathPostscriptPairs
@@ -890,11 +904,11 @@ static AccessibilitySearchKeyMap* createAccessibilitySearchKeyMap()
         SearchKeyEntry { NSAccessibilityUnvisitedLinkSearchKey, AccessibilitySearchKey::UnvisitedLink },
         SearchKeyEntry { NSAccessibilityVisitedLinkSearchKey, AccessibilitySearchKey::VisitedLink }
     };
-    
+
     AccessibilitySearchKeyMap* searchKeyMap = new AccessibilitySearchKeyMap;
     for (auto& searchKey : searchKeys)
         searchKeyMap->set(searchKey.key, searchKey.value);
-    
+
     return searchKeyMap;
 }
 
@@ -902,9 +916,9 @@ static AccessibilitySearchKey accessibilitySearchKeyForString(const String& valu
 {
     if (value.isEmpty())
         return AccessibilitySearchKey::AnyType;
-    
+
     static const AccessibilitySearchKeyMap* searchKeyMap = createAccessibilitySearchKeyMap();
-    AccessibilitySearchKey searchKey = searchKeyMap->get(value);    
+    AccessibilitySearchKey searchKey = searchKeyMap->get(value);
     return static_cast<int>(searchKey) ? searchKey : AccessibilitySearchKey::AnyType;
 }
 

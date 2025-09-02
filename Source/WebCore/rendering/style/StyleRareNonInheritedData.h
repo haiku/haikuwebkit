@@ -30,12 +30,10 @@
 #include "LengthPoint.h"
 #include "LineClampValue.h"
 #include "NameScope.h"
-#include "NinePieceImage.h"
 #include "PositionArea.h"
 #include "PositionTryFallback.h"
 #include "ScopedName.h"
 #include "ScrollTypes.h"
-#include "ShapeValue.h"
 #include "StyleAnchorName.h"
 #include "StyleBlockStepSize.h"
 #include "StyleClip.h"
@@ -45,6 +43,7 @@
 #include "StyleContainerName.h"
 #include "StyleContentAlignmentData.h"
 #include "StyleGapGutter.h"
+#include "StyleMaskBorder.h"
 #include "StyleMaximumLines.h"
 #include "StyleOffsetAnchor.h"
 #include "StyleOffsetDistance.h"
@@ -65,6 +64,9 @@
 #include "StyleScrollTimelines.h"
 #include "StyleScrollbarGutter.h"
 #include "StyleSelfAlignmentData.h"
+#include "StyleShapeImageThreshold.h"
+#include "StyleShapeMargin.h"
+#include "StyleShapeOutside.h"
 #include "StyleTextDecorationThickness.h"
 #include "StyleTextEdge.h"
 #include "StyleTranslate.h"
@@ -175,13 +177,13 @@ public:
     
     RefPtr<StyleReflection> boxReflect;
 
-    NinePieceImage maskBorder;
+    Style::MaskBorder maskBorder;
 
     LengthSize pageSize;
 
-    RefPtr<ShapeValue> shapeOutside;
-    Length shapeMargin;
-    float shapeImageThreshold;
+    Style::ShapeOutside shapeOutside;
+    Style::ShapeMargin shapeMargin;
+    Style::ShapeImageThreshold shapeImageThreshold;
 
     Style::Perspective perspective;
     Style::PerspectiveOrigin perspectiveOrigin;

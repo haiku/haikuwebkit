@@ -906,7 +906,7 @@ bool ApplyStyleCommand::removeInlineStyleFromElement(EditingStyle& style, HTMLEl
         if (mode == InlineStyleRemovalMode::None)
             return true;
         if (extractedStyle)
-            extractedStyle->mergeInlineStyleOfElement(element, EditingStyle::OverrideValues);
+            extractedStyle->mergeInlineStyleOfElement(element, EditingStyle::CSSPropertyOverrideMode::OverrideValues);
         removeNodePreservingChildren(element);
         return true;
     }
@@ -944,14 +944,14 @@ bool ApplyStyleCommand::removeImplicitlyStyledElement(EditingStyle& style, HTMLE
     }
 
     ASSERT(mode == InlineStyleRemovalMode::IfNeeded || mode == InlineStyleRemovalMode::Always);
-    if (style.conflictsWithImplicitStyleOfElement(element, extractedStyle, mode == InlineStyleRemovalMode::Always ? EditingStyle::ExtractMatchingStyle : EditingStyle::DoNotExtractMatchingStyle)) {
+    if (style.conflictsWithImplicitStyleOfElement(element, extractedStyle, mode == InlineStyleRemovalMode::Always ? EditingStyle::ShouldExtractMatchingStyle::Yes : EditingStyle::ShouldExtractMatchingStyle::No)) {
         replaceWithSpanOrRemoveIfWithoutAttributes(element);
         return true;
     }
 
     // unicode-bidi and direction are pushed down separately so don't push down with other styles
     Vector<QualifiedName> attributes;
-    if (!style.extractConflictingImplicitStyleOfAttributes(element, extractedStyle ? EditingStyle::PreserveWritingDirection : EditingStyle::DoNotPreserveWritingDirection, extractedStyle, attributes, mode == InlineStyleRemovalMode::Always ? EditingStyle::ExtractMatchingStyle : EditingStyle::DoNotExtractMatchingStyle))
+    if (!style.extractConflictingImplicitStyleOfAttributes(element, extractedStyle ? EditingStyle::ShouldPreserveWritingDirection::Yes : EditingStyle::ShouldPreserveWritingDirection::No, extractedStyle, attributes, mode == InlineStyleRemovalMode::Always ? EditingStyle::ShouldExtractMatchingStyle::Yes : EditingStyle::ShouldExtractMatchingStyle::No))
         return false;
 
     for (auto& attribute : attributes)
@@ -1014,7 +1014,7 @@ void ApplyStyleCommand::applyInlineStyleToPushDown(Node& node, EditingStyle* sty
     RefPtr newInlineStyle = style;
     if (auto* htmlElement = dynamicDowncast<HTMLElement>(node); htmlElement && htmlElement->inlineStyle()) {
         newInlineStyle = style->copy();
-        newInlineStyle->mergeInlineStyleOfElement(*htmlElement, EditingStyle::OverrideValues);
+        newInlineStyle->mergeInlineStyleOfElement(*htmlElement, EditingStyle::CSSPropertyOverrideMode::OverrideValues);
     }
 
     // Since addInlineStyleIfNeeded can't add styles to block-flow render objects, add style attribute instead.

@@ -27,8 +27,8 @@
 
 #if ENABLE(REMOTE_INSPECTOR)
 
-#include "RemoteConnectionToTarget.h"
-#include "RemoteControllableTarget.h"
+#include <JavaScriptCore/RemoteConnectionToTarget.h>
+#include <JavaScriptCore/RemoteControllableTarget.h>
 
 #include <utility>
 #include <wtf/Forward.h>
@@ -38,7 +38,7 @@
 #include <wtf/text/WTFString.h>
 
 #if PLATFORM(COCOA)
-#include "RemoteInspectorXPCConnection.h"
+#include <JavaScriptCore/RemoteInspectorXPCConnection.h>
 #include <wtf/HashSet.h>
 #include <wtf/RetainPtr.h>
 
@@ -109,6 +109,7 @@ public:
             std::optional<bool> allowInsecureMediaCapture;
             std::optional<bool> suppressICECandidateFiltering;
             std::optional<bool> alwaysAllowAutoplay;
+            std::optional<bool> siteIsolationEnabled;
 #endif
         };
 

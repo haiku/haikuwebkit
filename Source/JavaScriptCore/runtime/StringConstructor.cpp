@@ -164,9 +164,18 @@ JSC_DEFINE_HOST_FUNCTION(constructWithStringConstructor, (JSGlobalObject* global
 JSString* stringConstructor(JSGlobalObject* globalObject, JSValue argument)
 {
     VM& vm = globalObject->vm();
-    if (argument.isSymbol())
-        return jsNontrivialString(vm, asSymbol(argument)->descriptiveString());
-    return argument.toString(globalObject);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    if (argument.isSymbol()) {
+        auto description = asSymbol(argument)->tryGetDescriptiveString();
+        if (!description) [[unlikely]] {
+            ASSERT(description.error() == ErrorTypeWithExtension::OutOfMemoryError);
+            throwOutOfMemoryError(globalObject, scope);
+            return nullptr;
+        }
+        return jsNontrivialString(vm, description.value());
+    }
+    RELEASE_AND_RETURN(scope, argument.toString(globalObject));
 }
 
 JSC_DEFINE_HOST_FUNCTION(callStringConstructor, (JSGlobalObject* globalObject, CallFrame* callFrame))

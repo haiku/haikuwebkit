@@ -43,6 +43,10 @@ using namespace CSS::Literals;
 
 struct GridTrackBreadthLength : LengthWrapperBase<LengthPercentage<CSS::Nonnegative>, CSS::Keyword::MinContent, CSS::Keyword::MaxContent, CSS::Keyword::Auto> {
     using Base::Base;
+
+    ALWAYS_INLINE bool isMinContent() const { return holdsAlternative<CSS::Keyword::MinContent>(); }
+    ALWAYS_INLINE bool isMaxContent() const { return holdsAlternative<CSS::Keyword::MaxContent>(); }
+    ALWAYS_INLINE bool isAuto() const { return holdsAlternative<CSS::Keyword::Auto>(); }
 };
 
 // <track-breadth> = <length-percentage [0,inf]> | <flex [0,inf]> | min-content | max-content | auto

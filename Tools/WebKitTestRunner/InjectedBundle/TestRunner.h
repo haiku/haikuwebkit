@@ -482,6 +482,7 @@ public:
     // Storage Access API
     void getAllStorageAccessEntries(JSContextRef, JSValueRef callback);
     void setRequestStorageAccessThrowsExceptionUntilReload(bool enabled);
+    void setStorageAccessPermission(JSContextRef, bool, JSStringRef, JSValueRef callback);
 
     // Open panel
     void setOpenPanelFiles(JSContextRef, JSValueRef);

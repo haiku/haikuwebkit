@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "JSSet.h"
+#include <JavaScriptCore/JSSet.h>
 
 namespace JSC {
 

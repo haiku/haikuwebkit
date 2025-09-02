@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "JSCBuiltins.h"
+#include <JavaScriptCore/JSCBuiltins.h>
 
 namespace JSC {
 

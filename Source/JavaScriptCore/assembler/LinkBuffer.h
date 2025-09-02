@@ -35,9 +35,9 @@
 #define GLOBAL_THUNK_ID reinterpret_cast<void*>(static_cast<intptr_t>(-1))
 #define CSS_CODE_ID reinterpret_cast<void*>(static_cast<intptr_t>(-2))
 
-#include "JITCompilationEffort.h"
-#include "MacroAssembler.h"
-#include "MacroAssemblerCodeRef.h"
+#include <JavaScriptCore/JITCompilationEffort.h>
+#include <JavaScriptCore/MacroAssembler.h>
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
 #include <wtf/DataLog.h>
 #include <wtf/TZoneMalloc.h>
 

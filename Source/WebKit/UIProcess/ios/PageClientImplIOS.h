@@ -218,6 +218,8 @@ private:
     void dismissDigitalCredentialsPicker(WTF::CompletionHandler<void(bool)>&&) override;
 #endif
 
+    void dismissAnyOpenPicker() override;
+
     void disableDoubleTapGesturesDuringTapIfNecessary(WebKit::TapIdentifier) override;
     void handleSmartMagnificationInformationForPotentialTap(WebKit::TapIdentifier, const WebCore::FloatRect& renderRect, bool fitEntireRect, double viewportMinimumScale, double viewportMaximumScale, bool nodeIsRootLevel, bool nodeIsPluginElement) override;
 
@@ -299,7 +301,7 @@ private:
     void didPerformDragOperation(bool handled) override;
     void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmap::Handle&& image, const std::optional<WebCore::NodeIdentifier>&) override;
     void willReceiveEditDragSnapshot() override;
-    void didReceiveEditDragSnapshot(std::optional<WebCore::TextIndicatorData>) override;
+    void didReceiveEditDragSnapshot(RefPtr<WebCore::TextIndicator>&&) override;
     void didChangeDragCaretRect(const WebCore::IntRect& previousCaretRect, const WebCore::IntRect& caretRect) override;
 #endif
 

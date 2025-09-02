@@ -1163,6 +1163,11 @@ bool SourceBuffer::hasVideo() const
     return m_videoTracks && m_videoTracks->length();
 }
 
+ScriptExecutionContext* SourceBuffer::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void SourceBuffer::videoTrackSelectedChanged(VideoTrack& track)
 {
     // 2.4.5 Changes to selected/enabled track state

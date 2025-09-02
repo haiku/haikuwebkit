@@ -216,11 +216,6 @@ void OMGPlan::work()
                 Locker locker { ipintCallee.tierUpCounter().m_lock };
                 ipintCallee.tierUpCounter().setCompilationStatus(mode(), IPIntTierUpCounter::CompilationStatus::Compiled);
             }
-            if (!Options::useWasmIPInt() && m_calleeGroup->m_llintCallees) {
-                LLIntCallee& llintCallee = m_calleeGroup->m_llintCallees->at(m_functionIndex).get();
-                Locker locker { llintCallee.tierUpCounter().m_lock };
-                llintCallee.tierUpCounter().setCompilationStatus(mode(), LLIntTierUpCounter::CompilationStatus::Compiled);
-            }
         }
     }
 

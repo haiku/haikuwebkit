@@ -820,7 +820,7 @@ CSSSelector::CSSSelector(const CSSSelector& other)
     }
 }
 
-bool CSSSelector::visitAllSimpleSelectors(auto& apply) const
+bool CSSSelector::visitSimpleSelectors(VisitFunctor&& functor, VisitFunctionalPseudoClasses visitFunctionalPseudoClasses, VisitOnlySubject visitOnlySubject) const
 {
     std::queue<const CSSSelector*> worklist;
     worklist.push(this);
@@ -829,18 +829,23 @@ bool CSSSelector::visitAllSimpleSelectors(auto& apply) const
         worklist.pop();
 
         // Effective C++ advices for this cast to deal with generic const/non-const member function.
-        if (apply(*const_cast<CSSSelector*>(current)))
+        if (functor(*const_cast<CSSSelector*>(current)))
             return true;
 
         // Visit the selector list member (if any) recursively (such as: :has(<list>), :is(<list>),...)
-        if (auto selectorList = current->selectorList()) {
-            for (auto& selector : *selectorList)
-                worklist.push(&selector);
+        if (visitFunctionalPseudoClasses == VisitFunctionalPseudoClasses::Yes) {
+            if (auto selectorList = current->selectorList()) {
+                for (auto& selector : *selectorList)
+                    worklist.push(&selector);
+            }
         }
 
         // Visit the next simple selector
-        if (auto next = current->tagHistory())
-            worklist.push(next);
+        if (auto next = current->tagHistory()) {
+            // We stop visiting at the end of the compound selector (= when relation is anything else than subselector) if we are in subject only mode.
+            if (current->relation() != Relation::Subselector || visitOnlySubject != VisitOnlySubject::Yes)
+                worklist.push(next);
+        }
     }
     return false;
 }
@@ -857,7 +862,7 @@ void CSSSelector::resolveNestingParentSelectors(const CSSSelectorList& parent)
         return false;
     };
 
-    visitAllSimpleSelectors(replaceParentSelector);
+    visitSimpleSelectors(WTFMove(replaceParentSelector), VisitFunctionalPseudoClasses::Yes);
 }
 
 void CSSSelector::replaceNestingParentByPseudoClassScope()
@@ -874,12 +879,12 @@ void CSSSelector::replaceNestingParentByPseudoClassScope()
         return false;
     };
 
-    visitAllSimpleSelectors(replaceParentSelector);
+    visitSimpleSelectors(WTFMove(replaceParentSelector), VisitFunctionalPseudoClasses::Yes);
 }
 
 bool CSSSelector::hasExplicitNestingParent() const
 {
-    auto checkForExplicitParent = [] (const CSSSelector& selector) {
+    return visitSimpleSelectors([](const CSSSelector& selector) {
         if (selector.match() == Match::NestingParent)
             return true;
 
@@ -887,21 +892,17 @@ bool CSSSelector::hasExplicitNestingParent() const
             return true;
 
         return false;
-    };
-
-    return visitAllSimpleSelectors(checkForExplicitParent);
+    } , VisitFunctionalPseudoClasses::Yes);
 }
 
 bool CSSSelector::hasExplicitPseudoClassScope() const
 {
-    auto check = [] (const CSSSelector& selector) {
+    return visitSimpleSelectors([] (const CSSSelector& selector) {
         if (selector.match() == Match::PseudoClass && selector.pseudoClass() == PseudoClass::Scope)
             return true;
 
         return false;
-    };
-
-    return visitAllSimpleSelectors(check);
+    }, VisitFunctionalPseudoClasses::Yes);
 }
 
 bool CSSSelector::isHostPseudoClass() const

@@ -66,18 +66,24 @@ LayoutUnit GridBaselineAlignment::ascentForGridItem(const RenderBox& gridItem, S
     auto gridItemMargin = alignmentContextType == Style::GridTrackSizingDirection::Rows
         ? gridItem.marginBefore(m_writingMode)
         : gridItem.marginStart(m_writingMode);
-    auto& parentStyle = gridItem.parent()->style();
+    auto& gridStyle = gridItem.parent()->style();
 
     if (alignmentContextType == Style::GridTrackSizingDirection::Rows) {
         auto alignmentContextDirection = [&] {
-            return parentStyle.writingMode().isHorizontal() ? LineDirectionMode::HorizontalLine : LineDirectionMode::VerticalLine;
+            return gridStyle.writingMode().isHorizontal() ? LineDirection::Horizontal : LineDirection::Vertical;
         };
 
-        if (!isParallelToAlignmentAxisForGridItem(gridItem, alignmentContextType))
-            return gridItemMargin + synthesizedBaseline(gridItem, parentStyle, alignmentContextDirection(), BaselineSynthesisEdge::BorderBox);
+        if (!isParallelToAlignmentAxisForGridItem(gridItem, alignmentContextType)) {
+            auto gridWritingMode = gridStyle.writingMode();
+            return gridItemMargin + BaselineAlignmentState::synthesizedBaseline(gridItem, BaselineAlignmentState::dominantBaseline(gridWritingMode),
+                gridWritingMode, alignmentContextDirection(), BaselineSynthesisEdge::BorderBox);
+        }
         auto ascent = position == ItemPosition::Baseline ? gridItem.firstLineBaseline() : gridItem.lastLineBaseline();
-        if (!ascent)
-            return gridItemMargin + synthesizedBaseline(gridItem, parentStyle, alignmentContextDirection(), BaselineSynthesisEdge::BorderBox);
+        if (!ascent) {
+            auto gridWritingMode = gridStyle.writingMode();
+            return gridItemMargin + BaselineAlignmentState::synthesizedBaseline(gridItem, BaselineAlignmentState::dominantBaseline(gridWritingMode),
+                gridWritingMode, alignmentContextDirection(), BaselineSynthesisEdge::BorderBox);
+        }
         baseline = ascent.value();
     } else {
         auto computedBaselineValue = position == ItemPosition::Baseline ? gridItem.firstLineBaseline() : gridItem.lastLineBaseline();
@@ -87,7 +93,9 @@ LayoutUnit GridBaselineAlignment::ascentForGridItem(const RenderBox& gridItem, S
             ASSERT(!gridItem.needsLayout());
             if (isVerticalAlignmentContext(alignmentContextType))
                 return m_writingMode.isBlockFlipped() ? gridItemMargin + gridItem.size().width().toInt() : gridItemMargin;
-            return gridItemMargin + synthesizedBaseline(gridItem, parentStyle, LineDirectionMode::HorizontalLine, BaselineSynthesisEdge::BorderBox);
+            auto gridWritingMode = gridStyle.writingMode();
+            return gridItemMargin + BaselineAlignmentState::synthesizedBaseline(gridItem, BaselineAlignmentState::dominantBaseline(gridWritingMode),
+                gridWritingMode, LineDirection::Horizontal, BaselineSynthesisEdge::BorderBox);
         }
     }
 

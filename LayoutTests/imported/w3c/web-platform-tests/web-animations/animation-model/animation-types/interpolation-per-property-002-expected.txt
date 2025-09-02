@@ -325,9 +325,9 @@ PASS text-box-trim uses discrete animation when animating between "none" and "tr
 PASS text-box-trim uses discrete animation when animating between "none" and "trim-start" with effect easing
 PASS text-box-trim uses discrete animation when animating between "none" and "trim-start" with keyframe easing
 PASS text-decoration (type: discrete) has testInterpolation function
-PASS text-decoration uses discrete animation when animating between "underline" and "overline" with linear easing
-PASS text-decoration uses discrete animation when animating between "underline" and "overline" with effect easing
-PASS text-decoration uses discrete animation when animating between "underline" and "overline" with keyframe easing
+FAIL text-decoration uses discrete animation when animating between "underline" and "overline" with linear easing assert_equals: The value should be underline at 0ms expected "underline" but got "underline rgb(0, 0, 0)"
+FAIL text-decoration uses discrete animation when animating between "underline" and "overline" with effect easing assert_equals: The value should be underline at 0ms expected "underline" but got "underline rgb(0, 0, 0)"
+FAIL text-decoration uses discrete animation when animating between "underline" and "overline" with keyframe easing assert_equals: The value should be underline at 0ms expected "underline" but got "underline rgb(0, 0, 0)"
 PASS text-decoration-color (type: color) has testInterpolation function
 PASS text-decoration-color supports animating as color of rgb()
 PASS text-decoration-color supports animating as color of #RGB

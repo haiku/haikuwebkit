@@ -1374,7 +1374,7 @@ WebCore::AXObjectCache* PDFPluginBase::axObjectCache() const
 WebCore::IntPoint PDFPluginBase::lastKnownMousePositionInView() const
 {
     if (m_lastMouseEvent)
-        return convertFromRootViewToPlugin(m_lastMouseEvent->position());
+        return convertFromRootViewToPlugin(flooredIntPoint(m_lastMouseEvent->position()));
     return { };
 }
 

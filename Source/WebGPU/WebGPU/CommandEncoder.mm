@@ -234,9 +234,9 @@ static auto timestampWriteIndex(auto writeIndex)
     return writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? 0 : writeIndex;
 }
 #if !ENABLE(WEBGPU_SWIFT)
-static NSUInteger timestampWriteIndex(NSUInteger writeIndex, NSUInteger defaultValue)
+static NSUInteger timestampWriteIndex(NSUInteger writeIndex, NSUInteger defaultValue, uint32_t offset)
 {
-    return writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? defaultValue : writeIndex;
+    return writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? defaultValue : (writeIndex + offset);
 }
 
 static NSString* errorValidatingTimestampWrites(const auto& timestampWrites, const CommandEncoder& commandEncoder)
@@ -290,19 +290,19 @@ Ref<ComputePassEncoder> CommandEncoder::beginComputePass(const WGPUComputePassDe
 
     MTLComputePassDescriptor* computePassDescriptor = [MTLComputePassDescriptor new];
     computePassDescriptor.dispatchType = MTLDispatchTypeSerial;
-    id<MTLCounterSampleBuffer> counterSampleBuffer;
+    std::pair<id<MTLCounterSampleBuffer>, uint32_t> counterSampleBuffer;
     if (auto* wgpuTimestampWrites = descriptor.timestampWrites) {
         Ref timestampWrites = protectedFromAPI(wgpuTimestampWrites->querySet);
-        counterSampleBuffer = timestampWrites->counterSampleBuffer();
+        counterSampleBuffer = timestampWrites->counterSampleBufferWithOffset();
         timestampWrites->setCommandEncoder(*this);
     }
 
-    if (m_device->enableEncoderTimestamps() || counterSampleBuffer) {
+    if (m_device->enableEncoderTimestamps() || counterSampleBuffer.first) {
         auto* timestampWrites = descriptor.timestampWrites;
-        computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer ?: m_device->timestampsBuffer(m_commandBuffer, 2);
-        computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample) : 0;
-        computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->endOfPassWriteIndex, MTLCounterDontSample) : 1;
-        m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
+        computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.first ?: m_device->timestampsBuffer(m_commandBuffer, 2);
+        computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second) : 0;
+        computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second) : 1;
+        m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer.first);
     }
 
     id<MTLComputeCommandEncoder> computeCommandEncoder = [m_commandBuffer computeCommandEncoderWithDescriptor:computePassDescriptor];
@@ -540,21 +540,21 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
         return RenderPassEncoder::createInvalid(*this, m_device, @"command buffer has already been committed");
 
     MTLRenderPassDescriptor* mtlDescriptor = [MTLRenderPassDescriptor new];
-    id<MTLCounterSampleBuffer> counterSampleBuffer;
+    std::pair<id<MTLCounterSampleBuffer>, uint32_t> counterSampleBuffer;
     if (auto* wgpuTimestampWrites = descriptor.timestampWrites) {
         Ref timestampWrites = protectedFromAPI(wgpuTimestampWrites->querySet);
         timestampWrites->setCommandEncoder(*this);
-        counterSampleBuffer = timestampWrites->counterSampleBuffer();
+        counterSampleBuffer = timestampWrites->counterSampleBufferWithOffset();
     }
 
-    if (m_device->enableEncoderTimestamps() || counterSampleBuffer) {
-        if (counterSampleBuffer) {
-            mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer;
-            mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample);
-            mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample);
-            mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample);
-            mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample);
-            m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
+    if (m_device->enableEncoderTimestamps() || counterSampleBuffer.first) {
+        if (counterSampleBuffer.first) {
+            mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.first;
+            mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
+            mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
+            mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
+            mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
+            m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer.first);
         } else {
             mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = m_device->timestampsBuffer(m_commandBuffer, 4);
             mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = 0;
@@ -655,6 +655,9 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
         if (mtlAttachment.loadAction == MTLLoadActionLoad && !texture->previouslyCleared())
             textureToClear = mtlAttachment.texture;
 
+        if (id<MTLRasterizationRateMap> rateMap = texture->apiParentTexture().rasterizationMapForSlice(texture->parentRelativeSlice()))
+            mtlDescriptor.rasterizationRateMap = rateMap;
+
         if (attachment.resolveTarget) {
             Ref resolveTarget = fromAPI(attachment.resolveTarget);
             if (!isValidToUseWith(resolveTarget, *this))
@@ -664,12 +667,14 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
             if (mtlTexture.sampleCount == 1 || resolveTexture.sampleCount != 1 || isMultisampleTexture(resolveTexture) || !isMultisampleTexture(mtlTexture) || !isRenderableTextureView(resolveTarget) || mtlTexture.pixelFormat != resolveTexture.pixelFormat || !Texture::supportsResolve(resolveTarget->format(), m_device))
                 return RenderPassEncoder::createInvalid(*this, m_device, @"resolve target is invalid");
 
+            if (id<MTLRasterizationRateMap> rateMap = resolveTarget->apiParentTexture().rasterizationMapForSlice(resolveTarget->parentRelativeSlice()))
+                mtlDescriptor.rasterizationRateMap = rateMap;
             mtlAttachment.resolveTexture = resolveTexture;
             mtlAttachment.resolveLevel = 0;
             mtlAttachment.resolveSlice = 0;
             mtlAttachment.resolveDepthPlane = 0;
             if (resolveTarget->width() != texture->width() || resolveTarget->height() != texture->height())
-                return RenderPassEncoder::createInvalid(*this, m_device, @"resolve target dimensions are invalid");
+                return RenderPassEncoder::createInvalid(*this, m_device, [NSString stringWithFormat:@"resolve target dimensions (%u x %u) don't match expected dimensions (%u x %u)", resolveTarget->width(), resolveTarget->height(), texture->width(), texture->height()]);
         }
         if (textureToClear) {
             TextureAndClearColor *textureWithResolve = [[TextureAndClearColor alloc] initWithTexture:textureToClear];
@@ -2240,7 +2245,8 @@ void CommandEncoder::resolveQuerySet(const QuerySet& querySet, uint32_t firstQue
         [m_commandBuffer encodeSignalEvent:workaround value:1];
         [m_commandBuffer encodeWaitForEvent:workaround value:1];
         ensureBlitCommandEncoder();
-        [m_blitCommandEncoder resolveCounters:querySet.counterSampleBuffer() inRange:NSMakeRange(firstQuery, queryCount) destinationBuffer:destination.buffer() destinationOffset:destinationOffset];
+        std::pair<id<MTLCounterSampleBuffer>, uint32_t> counterSampleBuffer = querySet.counterSampleBufferWithOffset();
+        [m_blitCommandEncoder resolveCounters:counterSampleBuffer.first inRange:NSMakeRange(firstQuery + counterSampleBuffer.second, queryCount) destinationBuffer:destination.buffer() destinationOffset:destinationOffset];
         break;
     }
     default:

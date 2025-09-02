@@ -64,6 +64,7 @@
 #include <WebKit/WKProtectionSpace.h>
 #include <WebKit/WKQueryPermissionResultCallback.h>
 #include <WebKit/WKRetainPtr.h>
+#include <WebKit/WKScriptMessageRef.h>
 #include <WebKit/WKSecurityOriginRef.h>
 #include <WebKit/WKSpeechRecognitionPermissionCallback.h>
 #include <WebKit/WKTextChecker.h>
@@ -71,6 +72,7 @@
 #include <WebKit/WKUserContentControllerRef.h>
 #include <WebKit/WKUserContentExtensionStoreRef.h>
 #include <WebKit/WKUserMediaPermissionCheck.h>
+#include <WebKit/WKUserScriptRef.h>
 #include <WebKit/WKWebsiteDataStoreConfigurationRef.h>
 #include <WebKit/WKWebsiteDataStoreRef.h>
 #include <WebKit/WKWebsitePolicies.h>
@@ -84,6 +86,7 @@
 #include <wtf/CompletionHandler.h>
 #include <wtf/CryptographicallyRandomNumber.h>
 #include <wtf/FileSystem.h>
+#include <wtf/Logging.h>
 #include <wtf/MainThread.h>
 #include <wtf/MallocSpan.h>
 #include <wtf/ProcessPrivilege.h>
@@ -97,6 +100,7 @@
 #include <wtf/WTFProcess.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
+#include <wtf/text/TextStream.h>
 #include <wtf/unicode/CharacterNames.h>
 
 #if PLATFORM(COCOA)
@@ -338,7 +342,7 @@ static void runJavaScriptConfirm(WKPageRef page, WKStringRef message, WKFrameRef
 
 static void requestPointerLock(WKPageRef page, WKCompletionListenerRef listener, const void*)
 {
-    WKCompletionListenerComplete(listener);
+    WKCompletionListenerComplete(listener, nullptr);
 }
 
 static void printFrame(WKPageRef page, WKFrameRef frame, const void*)
@@ -502,6 +506,22 @@ static void addMessageToConsole(WKPageRef, WKStringRef message, const void*)
         invocation->outputText(messageString);
 }
 
+void TestController::tooltipDidChange(WKPageRef, WKStringRef tooltip, const void*)
+{
+    TestController::singleton().tooltipDidChange(tooltip);
+}
+
+void TestController::tooltipDidChange(WKStringRef tooltip)
+{
+    if (m_state != RunningTest)
+        return;
+
+    for (auto& listener : m_framesListeningForTooltipChange) {
+        WKRetainPtr js = toWK(makeString(listener.callbackName, "('"_s, toWTFString(tooltip), "')"_s));
+        WKPageEvaluateJavaScriptInFrame(WKFrameInfoGetPage(listener.frame.get()), listener.frame.get(), js.get(), nullptr, nullptr);
+    }
+}
+
 void TestController::closeOtherPage(WKPageRef page, PlatformWebView* view)
 {
     WKPageClose(page);
@@ -540,12 +560,12 @@ void TestController::willEnterFullScreen(WKPageRef page, WKCompletionListenerRef
     if (m_dumpFullScreenCallbacks)
         protectedCurrentInvocation()->outputText("supportsFullScreen() == true\nenterFullScreenForElement()\n"_s);
     if (!m_scrollDuringEnterFullscreen)
-        return WKCompletionListenerComplete(listener);
+        return WKCompletionListenerComplete(listener, nullptr);
 
     // The amount we scroll isn't important, but it should be nonzero to verify it is gone after restoring scroll position.
     WKPageEvaluateJavaScriptInMainFrame(page, toWK("scrollBy(5,7)").get(), (void*)WKRetain(listener), [] (WKTypeRef, WKErrorRef, void* context) {
         auto listener = (WKCompletionListenerRef)context;
-        WKCompletionListenerComplete(listener);
+        WKCompletionListenerComplete(listener, nullptr);
         WKRelease(listener);
     });
 }
@@ -605,7 +625,7 @@ void TestController::beganExitFullScreen(WKPageRef, WKRect initialFrame, WKRect 
     }
 
     m_finishExitFullscreenHandler = [listener = WKRetainPtr { listener }] {
-        WKCompletionListenerComplete(listener.get());
+        WKCompletionListenerComplete(listener.get(), nullptr);
     };
     if (!m_waitBeforeFinishingFullscreenExit)
         finishFullscreenExit();
@@ -718,7 +738,8 @@ PlatformWebView* TestController::createOtherPlatformWebView(PlatformWebView* par
         nullptr, // queryPermission
         nullptr, // lockScreenOrientationCallback,
         nullptr, // unlockScreenOrientationCallback,
-        addMessageToConsole
+        addMessageToConsole,
+        tooltipDidChange
     };
     WKPageSetPageUIClient(newPage, &otherPageUIClient.base);
 
@@ -1091,6 +1112,11 @@ void TestController::simulateClickBackgroundFetch(WKStringRef)
 }
 #endif
 
+void TestController::listenForTooltipChanges(WKFrameInfoRef frame, WKStringRef callbackName)
+{
+    m_framesListeningForTooltipChange.append({ frame, toWTFString(callbackName) });
+}
+
 void TestController::createWebViewWithOptions(const TestOptions& options)
 {
     auto applicationBundleIdentifier = options.applicationBundleIdentifier();
@@ -1198,7 +1224,8 @@ void TestController::createWebViewWithOptions(const TestOptions& options)
         nullptr, // lockScreenOrientation
         nullptr, // unlockScreenOrientation
 #endif
-        addMessageToConsole
+        addMessageToConsole,
+        tooltipDidChange
     };
     WKPageSetPageUIClient(m_mainWebView->page(), &pageUIClient.base);
 
@@ -1541,6 +1568,7 @@ bool TestController::resetStateToConsistentValues(const TestOptions& options, Re
     m_scrollDuringEnterFullscreen = false;
     if (m_finishExitFullscreenHandler)
         m_finishExitFullscreenHandler();
+    m_framesListeningForTooltipChange.clear();
 
     return m_doneResetting;
 }
@@ -1784,6 +1812,28 @@ void TestController::configureViewForTest(const TestInvocation& test)
     updateWindowScaleForTest(mainWebView(), test);
     configureContentExtensionForTest(test);
     platformConfigureViewForTest(test);
+    installUserScript(test);
+}
+
+void TestController::installUserScript(const TestInvocation& test)
+{
+    WKRetainPtr configuration = adoptWK(WKPageCopyPageConfiguration(mainWebView()->page()));
+    WKRetainPtr controller = WKPageConfigurationGetUserContentController(configuration.get());
+    WKUserContentControllerRemoveAllUserScripts(controller.get());
+    WKUserContentControllerRemoveAllUserMessageHandlers(controller.get());
+
+    if (!test.options().shouldInjectTestRunner())
+        return;
+
+    WKRetainPtr js = toWK("if (window.testRunner) { testRunner.installTooltipDidChangeCallback = function (name) { window.webkit.messageHandlers.webkitTestRunner.postMessage(name) } }");
+    constexpr bool forMainFrameOnly { true };
+    WKRetainPtr script = adoptWK(WKUserScriptCreateWithSource(js.get(), kWKInjectAtDocumentStart, forMainFrameOnly));
+    WKUserContentControllerAddUserScript(controller.get(), script.get());
+
+    // FIXME: Generalize this to be able to be used for different test callbacks.
+    WKUserContentControllerAddScriptMessageHandler(controller.get(), toWK("webkitTestRunner").get(), [] (WKScriptMessageRef message, WKCompletionListenerRef, const void *) {
+        TestController::singleton().listenForTooltipChanges(WKScriptMessageGetFrameInfo(message), (WKStringRef)WKScriptMessageGetBody(message));
+    }, nullptr);
 }
 
 #if ENABLE(CONTENT_EXTENSIONS) && !PLATFORM(COCOA)
@@ -1899,7 +1949,7 @@ bool TestController::runTest(const char* inputLine)
     auto command = parseInputLine(std::string(inputLine));
 
     m_state = RunningTest;
-    
+
     TestOptions options = testOptionsForTest(command);
 
     m_mainResourceURL = adoptWK(createTestURL(command.pathOrURL));
@@ -2429,6 +2479,15 @@ void TestController::didReceiveAsyncMessageFromInjectedBundle(WKStringRef messag
             auto completionHandler = WTF::adopt(static_cast<CompletionHandler<void(WKTypeRef)>::Impl*>(context));
             completionHandler(WKBooleanCreate(found));
         });
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "SetStorageAccessPermission")) {
+        auto messageBodyDictionary = dictionaryValue(messageBody);
+        auto value = booleanValue(messageBodyDictionary, "Value");
+        auto subFrameURL = stringValue(messageBodyDictionary, "SubFrameURL");
+        auto page = mainWebView()->page();
+        auto mainFrameURL = adoptWK(WKURLCopyString(WKPageCopyActiveURL(page)));
+        return WKWebsiteDataStoreSetStorageAccessPermissionForTesting(websiteDataStore(), page, value, mainFrameURL.get(), subFrameURL, completionHandler.leak(), adoptAndCallCompletionHandler);
     }
 
     ASSERT_NOT_REACHED();

@@ -51,6 +51,7 @@
 #import "WKOpenPanelParametersInternal.h"
 #import "WKPreferencesInternal.h"
 #import "WKProcessPoolInternal.h"
+#import "WKScriptMessageInternal.h"
 #import "WKSecurityOriginInternal.h"
 #import "WKURLSchemeTaskInternal.h"
 #import "WKUserContentControllerInternal.h"
@@ -524,6 +525,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     case Type::NodeInfo:
         wrapper = [_WKNodeInfo alloc];
+        break;
+
+    case Type::ScriptMessage:
+        wrapper = [WKScriptMessage alloc];
         break;
 
     case Type::SerializedNode:

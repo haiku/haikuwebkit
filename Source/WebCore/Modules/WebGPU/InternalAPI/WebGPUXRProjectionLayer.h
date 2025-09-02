@@ -25,11 +25,9 @@
 
 #pragma once
 
-#include "PlatformXR.h"
 #include "WebGPUTextureFormat.h"
 #include "WebGPUTextureUsage.h"
 #include "WebGPUXREye.h"
-#include "WebGPUXRProjectionLayer.h"
 #include "WebGPUXRSubImage.h"
 
 #include <wtf/Ref.h>
@@ -42,6 +40,10 @@ class MachSendRight;
 
 namespace WebCore {
 class WebXRRigidTransform;
+}
+
+namespace PlatformXR {
+struct RateMapDescription;
 }
 
 namespace WebCore::WebGPU {
@@ -75,7 +77,7 @@ public:
 
     // WebXRLayer
 #if PLATFORM(COCOA)
-    virtual void startFrame(size_t frameIndex, MachSendRight&& colorBuffer, MachSendRight&& depthBuffer, MachSendRight&& completionSyncEvent, size_t reusableTextureIndex) = 0;
+    virtual void startFrame(size_t frameIndex, MachSendRight&& colorBuffer, MachSendRight&& depthBuffer, MachSendRight&& completionSyncEvent, size_t reusableTextureIndex, PlatformXR::RateMapDescription&&) = 0;
 #endif
     virtual void endFrame() = 0;
 

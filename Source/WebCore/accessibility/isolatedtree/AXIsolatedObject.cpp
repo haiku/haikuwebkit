@@ -31,12 +31,14 @@
 #include "AXGeometryManager.h"
 #include "AXIsolatedTree.h"
 #include "AXLogger.h"
+#include "AXLoggerBase.h"
 #include "AXSearchManager.h"
 #include "AXTextMarker.h"
 #include "AXTextRun.h"
 #include "AccessibilityNodeObject.h"
 #include "DateComponents.h"
 #include "HTMLNames.h"
+#include "Logging.h"
 #include "RenderObject.h"
 #include <wtf/text/MakeString.h>
 
@@ -70,32 +72,34 @@ Ref<AXIsolatedObject> AXIsolatedObject::create(IsolatedObjectData&& data)
 
 AXIsolatedObject::~AXIsolatedObject()
 {
-    ASSERT(!wrapper());
+    AX_BROKEN_ASSERT(!wrapper());
 }
 
-String AXIsolatedObject::dbgInternal(bool verbose, OptionSet<AXDebugStringOption> debugOptions) const
+String AXIsolatedObject::debugDescriptionInternal(bool verbose, std::optional<OptionSet<AXDebugStringOption>> debugOptions) const
 {
     StringBuilder result;
     result.append("{"_s);
     result.append("role: "_s, accessibilityRoleToString(role()));
     result.append(", ID "_s, objectID().loggingString());
 
-    if (verbose || debugOptions & AXDebugStringOption::Ignored)
-        result.append(isIgnored() ? ", ignored"_s : emptyString());
+    if (debugOptions) {
+        if (verbose || *debugOptions & AXDebugStringOption::Ignored)
+            result.append(isIgnored() ? ", ignored"_s : emptyString());
 
-    if (verbose || debugOptions & AXDebugStringOption::RelativeFrame) {
-        FloatRect frame = relativeFrame();
-        result.append(", relativeFrame ((x: "_s, frame.x(), ", y: "_s, frame.y(), "), (w: "_s, frame.width(), ", h: "_s, frame.height(), "))"_s);
+        if (verbose || *debugOptions & AXDebugStringOption::RelativeFrame) {
+            FloatRect frame = relativeFrame();
+            result.append(", relativeFrame ((x: "_s, frame.x(), ", y: "_s, frame.y(), "), (w: "_s, frame.width(), ", h: "_s, frame.height(), "))"_s);
+        }
+
+        if (verbose || *debugOptions & AXDebugStringOption::RemoteFrameOffset)
+            result.append(", remoteFrameOffset ("_s, remoteFrameOffset().x(), ", "_s, remoteFrameOffset().y(), ")"_s);
     }
-
-    if (verbose || debugOptions & AXDebugStringOption::RemoteFrameOffset)
-        result.append(", remoteFrameOffset ("_s, remoteFrameOffset().x(), ", "_s, remoteFrameOffset().y(), ")"_s);
 
     result.append("}"_s);
     return result.toString();
 }
 
-static bool isDefaultValue(AXProperty property, AXPropertyValueVariant& value)
+bool isDefaultValue(AXProperty property, AXPropertyValueVariant& value)
 {
     return WTF::switchOn(value,
         [](std::nullptr_t&) { return true; },
@@ -259,7 +263,7 @@ void AXIsolatedObject::setChildrenIDs(Vector<AXID>&& ids)
 const AXCoreObject::AccessibilityChildrenVector& AXIsolatedObject::children(bool updateChildrenIfNeeded)
 {
 #if USE(APPLE_INTERNAL_SDK)
-    ASSERT(_AXSIsolatedTreeModeFunctionIsAvailable() && ((_AXSIsolatedTreeMode_Soft() == AXSIsolatedTreeModeSecondaryThread && !isMainThread())
+    AX_DEBUG_ASSERT(_AXSIsolatedTreeModeFunctionIsAvailable() && ((_AXSIsolatedTreeMode_Soft() == AXSIsolatedTreeModeSecondaryThread && !isMainThread())
         || (_AXSIsolatedTreeMode_Soft() == AXSIsolatedTreeModeMainThread && isMainThread())));
 #elif USE(ATSPI)
     ASSERT(!isMainThread());
@@ -280,7 +284,7 @@ const AXCoreObject::AccessibilityChildrenVector& AXIsolatedObject::children(bool
         m_unresolvedChildrenIDs = WTFMove(unresolvedIDs);
         // Having any unresolved children IDs at this point means we should've had a child / children, but they didn't
         // exist in tree()->objectForID(), so we were never able to hydrate it into an object.
-        ASSERT(m_unresolvedChildrenIDs.isEmpty());
+        AX_BROKEN_ASSERT(m_unresolvedChildrenIDs.isEmpty());
 
 #ifndef NDEBUG
         verifyChildrenIndexInParent();
@@ -384,7 +388,7 @@ AXIsolatedObject* AXIsolatedObject::focusedUIElement() const
 {
     return tree()->focusedNode().get();
 }
-    
+
 AXIsolatedObject* AXIsolatedObject::scrollBar(AccessibilityOrientation orientation)
 {
     return objectAttributeValue(orientation == AccessibilityOrientation::Vertical ? AXProperty::VerticalScrollBar : AXProperty::HorizontalScrollBar);

@@ -29,6 +29,7 @@
 #include "JSDOMPromiseDeferred.h"
 #include "NavigatorUABrandVersion.h"
 #include <wtf/Forward.h>
+#include <wtf/RefCounted.h>
 
 namespace WebCore {
 struct NavigatorUABrandVersion;
@@ -40,17 +41,16 @@ public:
     static Ref<NavigatorUAData> create();
     const Vector<NavigatorUABrandVersion>& brands() const;
     bool mobile() const;
-    const String& platform() const;
+    String platform() const;
     UALowEntropyJSON toJSON() const;
 
-    using ValuesPromise = DOMPromiseDeferred<IDLSequence<IDLDictionary<UADataValues>>>;
+    using ValuesPromise = DOMPromiseDeferred<IDLDictionary<UADataValues>>;
     void getHighEntropyValues(const Vector<String>& hints, ValuesPromise&&) const;
     ~NavigatorUAData();
 
 private:
     NavigatorUAData();
-
-    const Vector<NavigatorUABrandVersion> m_brands = { };
-    const String m_platform = ""_s;
+    static String createArbitraryVersion();
+    static String createArbitraryBrand();
 };
 }

@@ -49,8 +49,8 @@ struct MatchedRule {
 
 class ElementRuleCollector {
 public:
-    ElementRuleCollector(const Element&, const ScopeRuleSets&, SelectorMatchingState*);
-    ElementRuleCollector(const Element&, const RuleSet& authorStyle, SelectorMatchingState*);
+    ElementRuleCollector(const Element&, const ScopeRuleSets&, SelectorMatchingState*, SelectorChecker::Mode = SelectorChecker::Mode::ResolvingStyle);
+    ElementRuleCollector(const Element&, const RuleSet& authorStyle, SelectorMatchingState*, SelectorChecker::Mode = SelectorChecker::Mode::ResolvingStyle);
 
     void setIncludeEmptyRules(bool value) { m_shouldIncludeEmptyRules = value; }
 
@@ -60,9 +60,6 @@ public:
     void matchUserRules();
 
     bool matchesAnyAuthorRules();
-    bool matchesAnyRules(const RuleSet&);
-
-    void setMode(SelectorChecker::Mode mode) { m_mode = mode; }
 
     void setPseudoElementRequest(const std::optional<PseudoElementRequest>& request) { m_pseudoElementRequest = request; }
     void setMedium(const MQ::MediaQueryEvaluator& medium) { m_isPrintStyle = medium.isPrintMedia(); }
@@ -128,10 +125,8 @@ private:
 
     bool m_shouldIncludeEmptyRules { false };
     bool m_isPrintStyle { false };
-    // FIXME: This should be a SelectorChecker::Mode.
-    bool m_firstMatchMode { false };
     std::optional<PseudoElementRequest> m_pseudoElementRequest { };
-    SelectorChecker::Mode m_mode { SelectorChecker::Mode::ResolvingStyle };
+    const SelectorChecker::Mode m_mode { SelectorChecker::Mode::ResolvingStyle };
 
     Vector<MatchedRule, 64> m_matchedRules;
     size_t m_matchedRuleTransferIndex { 0 };

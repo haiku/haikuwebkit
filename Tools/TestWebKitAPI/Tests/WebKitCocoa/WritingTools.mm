@@ -31,6 +31,7 @@
 #import "ClassMethodSwizzler.h"
 #import "DecomposedAttributedText.h"
 #import "InstanceMethodSwizzler.h"
+#import "PDFTestHelpers.h"
 #import "PlatformUtilities.h"
 #import "Test.h"
 #import "TestCocoa.h"
@@ -39,7 +40,6 @@
 #import "TestUIDelegate.h"
 #import "TestWKWebView.h"
 #import "UIKitSPIForTesting.h"
-#import "UnifiedPDFTestHelpers.h"
 #import "WKWebViewConfigurationExtras.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <WebCore/CocoaWritingToolsTypes.h>

@@ -123,7 +123,6 @@ public:
     // MARK: - Shorthand Parsing
 
     static bool consumeStandardSpaceSeparatedShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
-    static bool consumeSingleShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
     static bool consumeCoalescingPairShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
     static bool consumeCoalescingQuadShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
 
@@ -269,19 +268,6 @@ inline bool PropertyParserCustom::consumeStandardSpaceSeparatedShorthand(CSSPars
 
     for (size_t i = 0; i < shorthand.length(); ++i)
         result.addPropertyForCurrentShorthand(state, shorthandProperties[i], WTFMove(longhands[i]));
-    return true;
-}
-
-inline bool PropertyParserCustom::consumeSingleShorthand(CSSParserTokenRange& range, PropertyParserState& state, const StylePropertyShorthand& shorthand, PropertyParserResult& result)
-{
-    ASSERT(shorthand.length() == 1);
-
-    auto longhands = shorthand.properties();
-    auto value = CSSPropertyParsing::parseStylePropertyLonghand(range, longhands[0], state);
-    auto line = CSSPropertyParsing::consumeTextDecorationLine(range);
-    if (!value || !range.atEnd())
-        return false;
-    result.addPropertyForCurrentShorthand(state, longhands[0], value.releaseNonNull());
     return true;
 }
 

@@ -201,25 +201,6 @@ inline Element* ShadowRoot::activeElement() const
     return treeScope().focusedElementInScope();
 }
 
-inline bool Node::isUserAgentShadowRoot() const
-{
-    auto* shadowRoot = dynamicDowncast<ShadowRoot>(*this);
-    return shadowRoot && shadowRoot->mode() == ShadowRootMode::UserAgent;
-}
-
-inline ContainerNode* Node::parentOrShadowHostNode() const
-{
-    ASSERT(isMainThreadOrGCThread());
-    if (auto* shadowRoot = dynamicDowncast<ShadowRoot>(*this))
-        return shadowRoot->host();
-    return parentNode();
-}
-
-inline RefPtr<ContainerNode> Node::protectedParentOrShadowHostNode() const
-{
-    return parentOrShadowHostNode();
-}
-
 inline bool hasShadowRootParent(const Node& node)
 {
     return node.parentNode() && node.parentNode()->isShadowRoot();

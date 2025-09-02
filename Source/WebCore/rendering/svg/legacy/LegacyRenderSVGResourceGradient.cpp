@@ -136,13 +136,13 @@ static inline void applyGradientResource(RenderElement& renderer, const RenderSt
     auto userspaceTransform = gradientData.userspaceTransform;
 
     if (resourceMode.contains(RenderSVGResourceMode::ApplyToFill)) {
-        context.setAlpha(svgStyle.fillOpacity());
+        context.setAlpha(svgStyle.fillOpacity().value.value);
         context.setFillGradient(*gradientData.gradient, userspaceTransform);
         context.setFillRule(svgStyle.fillRule());
     } else if (resourceMode.contains(RenderSVGResourceMode::ApplyToStroke)) {
         if (svgStyle.vectorEffect() == VectorEffect::NonScalingStroke)
             userspaceTransform = LegacyRenderSVGResourceContainer::transformOnNonScalingStroke(&renderer, gradientData.userspaceTransform);
-        context.setAlpha(svgStyle.strokeOpacity());
+        context.setAlpha(svgStyle.strokeOpacity().value.value);
         context.setStrokeGradient(*gradientData.gradient, userspaceTransform);
         SVGRenderSupport::applyStrokeStyleToContext(context, style, renderer);
     }

@@ -92,8 +92,8 @@ std::pair<Vector<LineAdjustment>, std::optional<LayoutRestartLine>> computeAdjus
     std::optional<size_t> previousPageBreakIndex;
     std::optional<LayoutRestartLine> layoutRestartLine;
 
-    size_t widows = flow.style().hasAutoWidows() ? 0 : flow.style().widows();
-    size_t orphans = flow.style().orphans();
+    size_t widows = flow.style().widows().tryValue().value_or(0).value;
+    size_t orphans = flow.style().orphans().tryValue().value_or(2).value;
 
     auto accumulatedOffset = 0_lu;
     for (size_t lineIndex = 0; lineIndex < lineCount;) {

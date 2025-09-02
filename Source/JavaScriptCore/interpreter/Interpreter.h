@@ -29,16 +29,16 @@
 
 #pragma once
 
-#include "BytecodeIndex.h"
-#include "JSCJSValue.h"
-#include "MacroAssemblerCodeRef.h"
-#include "NativeFunction.h"
-#include "Opcode.h"
+#include <JavaScriptCore/BytecodeIndex.h>
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/NativeFunction.h>
+#include <JavaScriptCore/Opcode.h>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>
 
 #if ENABLE(C_LOOP)
-#include "CLoopStack.h"
+#include <JavaScriptCore/CLoopStack.h>
 #endif
 
 
@@ -54,11 +54,9 @@ struct HandlerInfo;
 
 template<typename> struct BaseInstruction;
 struct JSOpcodeTraits;
-struct WasmOpcodeTraits;
 using JSInstruction = BaseInstruction<JSOpcodeTraits>;
-using WasmInstruction = BaseInstruction<WasmOpcodeTraits>;
 
-using JSOrWasmInstruction = Variant<const JSInstruction*, const WasmInstruction*, uintptr_t /* IPIntOffset */>;
+using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffset */>;
 
     class ArgList;
     class CachedCall;

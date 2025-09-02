@@ -253,7 +253,7 @@ bool AccessibilityMathMLElement::isMathMultiscriptObject(AccessibilityMathMultis
     return false;
 }
 
-std::optional<AXCoreObject::AccessibilityChildrenVector> AccessibilityMathMLElement::mathRadicand() 
+std::optional<AXCoreObject::AccessibilityChildrenVector> AccessibilityMathMLElement::mathRadicand()
 {
     if (!isMathRoot())
         return std::nullopt;

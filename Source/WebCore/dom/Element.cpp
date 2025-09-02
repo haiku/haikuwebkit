@@ -636,10 +636,25 @@ Ref<Node> Element::cloneNodeInternal(Document& document, CloningOperation type, 
     return cloneElementWithChildren(document, fallbackRegistry);
 }
 
-SerializedNode Element::serializeNode(CloningOperation) const
+SerializedNode Element::serializeNode(CloningOperation type) const
 {
-    // FIXME: Implement.
-    return { SerializedNode::Element { } };
+    Vector<SerializedNode> children;
+    switch (type) {
+    case CloningOperation::SelfOnly:
+    case CloningOperation::SelfWithTemplateContent:
+        break;
+    case CloningOperation::Everything:
+        children = serializeChildNodes();
+        break;
+    }
+
+    // FIXME: Make an equivalent of cloneShadowTreeIfPossible.
+
+    auto attributes = this->elementData() ? WTF::map(this->attributes(), [] (const auto& attribute) {
+        return SerializedNode::Element::Attribute { { attribute.name() }, attribute.value() };
+    }) : Vector<SerializedNode::Element::Attribute>();
+
+    return { SerializedNode::Element { { WTFMove(children) }, { tagQName() }, WTFMove(attributes) } };
 }
 
 void Element::cloneShadowTreeIfPossible(Element& newHost) const
@@ -4183,7 +4198,7 @@ void Element::updateFocusAppearance(SelectionRestorationMode, SelectionRevealMod
         
         if (frame->selection().shouldChangeSelection(newSelection)) {
             frame->selection().setSelection(newSelection, FrameSelection::defaultSetSelectionOptions(), Element::defaultFocusTextStateChangeIntent());
-            frame->selection().revealSelection(revealMode);
+            frame->selection().revealSelection({ revealMode });
             return;
         }
     }
@@ -6183,7 +6198,7 @@ bool Element::checkVisibility(const CheckVisibilityOptions& options)
         if (ancestorStyle->display() == DisplayType::None)
             return false;
 
-        if ((options.opacityProperty || options.checkOpacity) && ancestorStyle->opacity() == 0.0f)
+        if ((options.opacityProperty || options.checkOpacity) && ancestorStyle->opacity().isTransparent())
             return false;
     }
 

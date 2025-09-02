@@ -124,7 +124,7 @@ auto JSWebAssemblyArray::visitSpanNonVector(auto functor)
 
 uint64_t JSWebAssemblyArray::get(uint32_t index)
 {
-    // V128 is not supported in LLInt.
+    // V128 is not supported in IPInt.
     return visitSpanNonVector([&](auto span) ALWAYS_INLINE_LAMBDA -> uint64_t {
         return span[index];
     });

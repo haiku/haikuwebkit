@@ -26,11 +26,9 @@
 
 #pragma once
 
-#include "BaselineAlignmentInlines.h"
 #include "Grid.h"
 #include "GridMasonryLayout.h"
 #include "GridTrackSizingAlgorithm.h"
-#include "LayoutRange.h"
 #include "RenderBlock.h"
 #include "StyleGridTrackSizingDirection.h"
 #include <wtf/TZoneMalloc.h>
@@ -45,6 +43,7 @@ namespace WebCore {
 class GridArea;
 class GridLayoutState;
 class GridSpan;
+class LayoutRange;
 
 struct ContentAlignmentData {
     LayoutUnit positionOffset;
@@ -161,6 +160,8 @@ private:
     friend class GridMasonryLayout;
     friend class PositionedLayoutConstraints;
 
+    using OutOfFlowPositionsMap = SingleThreadWeakHashMap<const RenderBox, std::optional<size_t>>;
+
     void computeLayoutRequirementsForItemsBeforeLayout(GridLayoutState&) const;
     bool canSetColumnAxisStretchRequirementForItem(const RenderBox&) const;
 
@@ -227,8 +228,13 @@ private:
 
     void populateGridPositionsForDirection(const GridTrackSizingAlgorithm&, Style::GridTrackSizingDirection);
 
-    LayoutRange gridAreaRangeForOutOfFlow(const RenderBox&, Style::GridTrackSizingDirection) const;
+    LayoutUnit gridAreaBreadthForOutOfFlowGridItem(const RenderBox&, Style::GridTrackSizingDirection);
+    LayoutUnit logicalOffsetForOutOfFlowGridItem(const RenderBox&, Style::GridTrackSizingDirection, LayoutUnit) const;
+    std::optional<LayoutRange> gridAreaRowRangeForOutOfFlow(const RenderBox& gridItem) const;
+    std::optional<LayoutRange> gridAreaColumnRangeForOutOfFlow(const RenderBox& gridItem) const;
+    std::pair<LayoutUnit, LayoutUnit> gridAreaPositionForOutOfFlowGridItem(const RenderBox&, Style::GridTrackSizingDirection) const;
     std::pair<LayoutUnit, LayoutUnit> gridAreaPositionForInFlowGridItem(const RenderBox&, Style::GridTrackSizingDirection) const;
+    std::pair<LayoutUnit, LayoutUnit> gridAreaPositionForGridItem(const RenderBox&, Style::GridTrackSizingDirection) const;
 
     GridAxisPosition columnAxisPositionForGridItem(const RenderBox&) const;
     GridAxisPosition rowAxisPositionForGridItem(const RenderBox&) const;
@@ -250,12 +256,6 @@ private:
     StyleSelfAlignmentData alignSelfForGridItem(const RenderBox&, StretchingMode = StretchingMode::Any, const RenderStyle* = nullptr) const;
     void applyStretchAlignmentToGridItemIfNeeded(RenderBox&, GridLayoutState&);
     void applySubgridStretchAlignmentToGridItemIfNeeded(RenderBox&);
-    bool hasAutoSizeInColumnAxis(const RenderBox& gridItem) const;
-    bool hasAutoSizeInRowAxis(const RenderBox& gridItem) const;
-    inline bool allowedToStretchGridItemAlongColumnAxis(const RenderBox& gridItem) const;
-    inline bool allowedToStretchGridItemAlongRowAxis(const RenderBox& gridItem) const;
-    bool hasAutoMarginsInColumnAxis(const RenderBox&) const;
-    bool hasAutoMarginsInRowAxis(const RenderBox&) const;
     void resetAutoMarginsAndLogicalTopInColumnAxis(RenderBox& child);
     void updateAutoMarginsInColumnAxisIfNeeded(RenderBox&);
     void updateAutoMarginsInRowAxisIfNeeded(RenderBox&);
@@ -292,6 +292,9 @@ private:
     ContentAlignmentData& offsetBetweenTracks(Style::GridTrackSizingDirection direction) { return direction == Style::GridTrackSizingDirection::Columns ? m_offsetBetweenColumns : m_offsetBetweenRows; }
     const ContentAlignmentData& offsetBetweenTracks(Style::GridTrackSizingDirection direction) const { return direction == Style::GridTrackSizingDirection::Columns ? m_offsetBetweenColumns : m_offsetBetweenRows; }
 
+    OutOfFlowPositionsMap& outOfFlowItem(Style::GridTrackSizingDirection direction) { return direction == Style::GridTrackSizingDirection::Columns ? m_outOfFlowItemColumn : m_outOfFlowItemRow; }
+    const OutOfFlowPositionsMap& outOfFlowItem(Style::GridTrackSizingDirection direction) const { return direction == Style::GridTrackSizingDirection::Columns ? m_outOfFlowItemColumn : m_outOfFlowItemRow; }
+
     bool canCreateIntrinsicLogicalHeightsForRowSizingFirstPassCache() const;
 
     class GridWrapper {
@@ -312,6 +315,9 @@ private:
     ContentAlignmentData m_offsetBetweenRows;
 
     mutable GridMasonryLayout m_masonryLayout;
+
+    OutOfFlowPositionsMap m_outOfFlowItemColumn;
+    OutOfFlowPositionsMap m_outOfFlowItemRow;
 
     bool m_baselineItemsCached {false};
 

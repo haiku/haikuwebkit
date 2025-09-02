@@ -8,6 +8,8 @@ PASS operator spacing inside Math
 PASS operator spacing inside Menclose
 PASS operator spacing inside Mpadded
 FAIL operator spacing inside Unknown assert_greater_than_equal: expected a number greater than or equal to 50 but got 0
+PASS operator spacing inside Fenced
+FAIL operator spacing inside A assert_greater_than_equal: expected a number greater than or equal to 50 but got 0
 PASS operator spacing inside Mtd
 1
 |
@@ -36,4 +38,8 @@ PASS operator spacing inside Mtd
 1
 |
 2
-   1|2
+
+1
+|
+2
+  1|2

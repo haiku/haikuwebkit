@@ -7058,6 +7058,19 @@ auto Internals::getCookies() const -> Vector<CookieData>
     });
 }
 
+auto Internals::webDriverGetCookies(Document& document) const -> Vector<WebDriverCookieData>
+{
+    auto* page = document.page();
+    if (!page)
+        return { };
+
+    Vector<Cookie> cookies;
+    page->cookieJar().getRawCookies(document, document.cookieURL(), cookies);
+    return WTF::map(cookies, [](auto& cookie) {
+        return WebDriverCookieData { cookie };
+    });
+}
+
 void Internals::setAlwaysAllowLocalWebarchive(bool alwaysAllowLocalWebarchive)
 {
     auto* localFrame = frame();
@@ -7759,8 +7772,11 @@ AccessibilityObject* Internals::axObjectForElement(Element& element) const
         return nullptr;
     WebCore::AXObjectCache::enableAccessibility();
 
-    auto* cache = document->axObjectCache();
-    return cache ? cache->getOrCreate(element) : nullptr;
+    if (CheckedPtr cache = document->axObjectCache()) {
+        cache->performDeferredCacheUpdate(ForceLayout::No);
+        return cache->getOrCreate(element);
+    }
+    return nullptr;
 }
 
 String Internals::getComputedLabel(Element& element) const

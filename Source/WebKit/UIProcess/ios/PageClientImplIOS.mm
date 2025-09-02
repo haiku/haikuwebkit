@@ -41,6 +41,7 @@
 #import "NativeWebKeyboardEvent.h"
 #import "NavigationState.h"
 #import "PDFPluginIdentifier.h"
+#import "PickerDismissalReason.h"
 #import "PlatformXRSystem.h"
 #import "RemoteLayerTreeNode.h"
 #import "RunningBoardServicesSPI.h"
@@ -771,6 +772,11 @@ void PageClientImpl::dismissDigitalCredentialsPicker(CompletionHandler<void(bool
 }
 #endif
 
+void PageClientImpl::dismissAnyOpenPicker()
+{
+    [contentView() dismissPickersIfNeededWithReason:WebKit::PickerDismissalReason::ViewRemoved];
+}
+
 void PageClientImpl::showInspectorHighlight(const WebCore::InspectorOverlay::Highlight& highlight)
 {
     [contentView() _showInspectorHighlight:highlight];
@@ -1054,9 +1060,9 @@ void PageClientImpl::willReceiveEditDragSnapshot()
     [contentView() _willReceiveEditDragSnapshot];
 }
 
-void PageClientImpl::didReceiveEditDragSnapshot(std::optional<TextIndicatorData> data)
+void PageClientImpl::didReceiveEditDragSnapshot(RefPtr<WebCore::TextIndicator>&& textIndicator)
 {
-    [contentView() _didReceiveEditDragSnapshot:data];
+    [contentView() _didReceiveEditDragSnapshot:WTFMove(textIndicator)];
 }
 
 void PageClientImpl::didChangeDragCaretRect(const IntRect& previousCaretRect, const IntRect& caretRect)

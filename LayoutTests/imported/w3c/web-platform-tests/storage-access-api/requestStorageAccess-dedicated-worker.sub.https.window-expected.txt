@@ -1,7 +1,4 @@
-CONSOLE MESSAGE: Unhandled Promise Rejection: Error: Unsupported permission name "storage-access".
 
-Harness Error (TIMEOUT), message = null
-
-TIMEOUT Workers don't inherit storage access Test timed out
-NOTRUN Workers don't observe parent's storage access
+FAIL Workers don't inherit storage access assert_true: frame has access to cookies after request. expected true got false
+FAIL Workers don't observe parent's storage access assert_false: frame lacks storage access before request. expected false got true
 

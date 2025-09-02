@@ -46,12 +46,12 @@ Ref<AccessibilityScrollbar> AccessibilityScrollbar::create(AXID axID, Scrollbar&
 {
     return adoptRef(*new AccessibilityScrollbar(axID, scrollbar, cache));
 }
-    
+
 LayoutRect AccessibilityScrollbar::elementRect() const
 {
     return m_scrollbar->frameRect();
 }
-    
+
 Document* AccessibilityScrollbar::document() const
 {
     RefPtr parent = parentObject();
@@ -73,7 +73,7 @@ bool AccessibilityScrollbar::isEnabled() const
 {
     return m_scrollbar->enabled();
 }
-    
+
 float AccessibilityScrollbar::valueForRange() const
 {
     return m_scrollbar->currentPos() / m_scrollbar->maximum();
@@ -85,5 +85,5 @@ bool AccessibilityScrollbar::setValue(float value)
     m_scrollbar->scrollableArea().scrollToOffsetWithoutAnimation(m_scrollbar->orientation(), newValue);
     return true;
 }
-    
+
 } // namespace WebCore

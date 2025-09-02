@@ -133,6 +133,7 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @class _WKFrameTreeNode;
 @class _WKHitTestResult;
 @class _WKInspector;
+@class _WKNodeInfo;
 @class _WKRemoteObjectRegistry;
 @class _WKSafeBrowsingWarning;
 @class _WKSessionState;
@@ -140,6 +141,8 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @class _WKTargetedElementInfo;
 @class _WKTargetedElementRequest;
 @class _WKTextInputContext;
+@class _WKTextExtractionConfiguration;
+@class WKTextExtractionResult;
 @class _WKTextManipulationConfiguration;
 @class _WKTextManipulationItem;
 @class _WKTextRun;
@@ -164,6 +167,7 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @protocol _WKIconLoadingDelegate;
 @protocol _WKInputDelegate;
 @protocol _WKResourceLoadDelegate;
+@protocol _WKTextExtractionInteraction;
 @protocol _WKTextManipulationDelegate;
 
 @interface WKWebView (WKPrivate)
@@ -432,6 +436,12 @@ for this property.
 
 - (void)_convertPoint:(CGPoint)point fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGPoint, NSError *error))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 - (void)_convertRect:(CGRect)rect fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGRect, NSError *error))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+
+// If frame is nil, the main frame will be used if there is a main frame.
+// If frame is non-nil, not only will frame's coordinate space be used, but frame's subtree will be searched,
+// so a node from a parent node won't be returned, even if point is outside frame's rect.
+// The result frame info is the frame that contains the hit node.
+- (void)_hitTestAtPoint:(CGPoint)point inFrameCoordinateSpace:(WKFrameInfo *)frame completionHandler:(void (^)(_WKNodeInfo *, WKFrameInfo *, NSError *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
 + (NSString *)_userVisibleStringForURL:(NSURL *)url WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
@@ -892,6 +902,7 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 @property (nonatomic, readonly) NSEdgeInsets _obscuredContentInsets WK_API_AVAILABLE(macos(WK_MAC_TBA));
 @property (nonatomic, setter=_setUsesAutomaticContentInsetBackgroundFill:) BOOL _usesAutomaticContentInsetBackgroundFill WK_API_AVAILABLE(macos(WK_MAC_TBA));
 @property (nonatomic, copy, setter=_setOverrideTopScrollEdgeEffectColor:) NSColor *_overrideTopScrollEdgeEffectColor WK_API_AVAILABLE(macos(WK_MAC_TBA));
+@property (nonatomic, setter=_setOverflowHeightForTopScrollEdgeEffect:) CGFloat _overflowHeightForTopScrollEdgeEffect WK_API_AVAILABLE(macos(WK_MAC_TBA));
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
 @property (nonatomic, readonly) NSScrollPocket *_topScrollPocket WK_API_AVAILABLE(macos(26.0));

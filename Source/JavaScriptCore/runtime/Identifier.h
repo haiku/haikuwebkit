@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "ArrayConventions.h"
-#include "PrivateName.h"
-#include "SmallStrings.h"
+#include <JavaScriptCore/ArrayConventions.h>
+#include <JavaScriptCore/PrivateName.h>
+#include <JavaScriptCore/SmallStrings.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/ParsingUtilities.h>
 #include <wtf/text/UniquedStringImpl.h>

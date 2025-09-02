@@ -25,20 +25,20 @@
 
 #pragma once
 
-#include "CodeSpecializationKind.h"
-#include "ConstructAbility.h"
-#include "ConstructorKind.h"
-#include "ExecutableInfo.h"
-#include "Identifier.h"
-#include "ImplementationVisibility.h"
-#include "InlineAttribute.h"
-#include "Intrinsic.h"
-#include "JSCast.h"
-#include "ParserModes.h"
-#include "ParserTokens.h"
-#include "RegExp.h"
-#include "SourceCode.h"
-#include "VariableEnvironment.h"
+#include <JavaScriptCore/CodeSpecializationKind.h>
+#include <JavaScriptCore/ConstructAbility.h>
+#include <JavaScriptCore/ConstructorKind.h>
+#include <JavaScriptCore/ExecutableInfo.h>
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/ImplementationVisibility.h>
+#include <JavaScriptCore/InlineAttribute.h>
+#include <JavaScriptCore/Intrinsic.h>
+#include <JavaScriptCore/JSCast.h>
+#include <JavaScriptCore/ParserModes.h>
+#include <JavaScriptCore/ParserTokens.h>
+#include <JavaScriptCore/RegExp.h>
+#include <JavaScriptCore/SourceCode.h>
+#include <JavaScriptCore/VariableEnvironment.h>
 #include <wtf/FixedVector.h>
 #include <wtf/TZoneMalloc.h>
 

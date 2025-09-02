@@ -263,8 +263,8 @@ PASS text-box-trim (type: discrete) has testAccumulation function
 PASS text-box-trim: "trim-start" onto "none"
 PASS text-box-trim: "none" onto "trim-start"
 PASS text-decoration (type: discrete) has testAccumulation function
-PASS text-decoration: "overline" onto "underline"
-PASS text-decoration: "underline" onto "overline"
+FAIL text-decoration: "overline" onto "underline" assert_equals: The value should be overline at 0ms expected "overline" but got "overline rgb(0, 0, 0)"
+FAIL text-decoration: "underline" onto "overline" assert_equals: The value should be underline at 0ms expected "underline" but got "underline rgb(0, 0, 0)"
 PASS text-decoration-color (type: color) has testAccumulation function
 PASS text-decoration-color supports animating as color of rgb() with overflowed  from and to values
 PASS text-decoration-color supports animating as color of #RGB

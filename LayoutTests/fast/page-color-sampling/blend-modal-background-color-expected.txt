@@ -1,0 +1,5 @@
+PASS colors.top is "rgb(102, 102, 102)"
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

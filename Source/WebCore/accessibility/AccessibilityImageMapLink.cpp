@@ -37,7 +37,7 @@
 namespace WebCore {
 
 using namespace HTMLNames;
-    
+
 AccessibilityImageMapLink::AccessibilityImageMapLink(AXID axID, HTMLAreaElement& element, AXObjectCache& cache)
     : AccessibilityNodeObject(axID, &element, cache)
 {
@@ -80,7 +80,7 @@ Element* AccessibilityImageMapLink::actionElement() const
 {
     return anchorElement();
 }
-    
+
 Element* AccessibilityImageMapLink::anchorElement() const
 {
     ASSERT(!node() || is<HTMLAreaElement>(node()));
@@ -144,12 +144,12 @@ Path AccessibilityImageMapLink::elementPath() const
     RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(node());
     return renderer && areaElement ? areaElement->computePath(*renderer) : Path();
 }
-    
+
 LayoutRect AccessibilityImageMapLink::elementRect() const
 {
     CheckedPtr renderer = imageMapLinkRenderer();
     RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(node());
     return renderer && areaElement ? areaElement->computeRect(renderer.get()) : LayoutRect();
 }
-    
+
 } // namespace WebCore

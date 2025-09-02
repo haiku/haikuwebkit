@@ -30,7 +30,7 @@
 
 #if ENABLE(C_LOOP)
 
-#include "Register.h"
+#include <JavaScriptCore/Register.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/PageReservation.h>
 

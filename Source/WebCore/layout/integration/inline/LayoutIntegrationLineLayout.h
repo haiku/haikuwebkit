@@ -111,9 +111,8 @@ public:
     bool isPaginated() const;
     size_t lineCount() const;
     bool hasInkOverflow() const;
-    LayoutUnit firstLinePhysicalBaseline() const;
-    LayoutUnit lastLinePhysicalBaseline() const;
-    LayoutUnit lastLineLogicalBaseline() const;
+    LayoutUnit firstLineBaseline() const;
+    LayoutUnit lastLineBaseline() const;
     LayoutRect firstInlineBoxRect(const RenderInline&) const;
     LayoutRect enclosingBorderBoxRectFor(const RenderInline&) const;
 
@@ -161,7 +160,7 @@ private:
     void clearInlineContent();
     void releaseCachesAndResetDamage();
 
-    LayoutUnit physicalBaselineForLine(const InlineDisplay::Line&) const;
+    LayoutUnit baselineForLine(const InlineDisplay::Line&) const;
 
     bool isContentConsideredStale() const;
 

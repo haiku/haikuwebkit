@@ -47,6 +47,7 @@
 #include "RenderObject.h"
 #include "RenderTable.h"
 #include "RenderTableCell.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include <wtf/Scope.h>
 #include <wtf/WeakRef.h>
 
@@ -56,17 +57,19 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-AccessibilityTable::AccessibilityTable(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+AccessibilityTable::AccessibilityTable(AXID axID, RenderObject& renderer, AXObjectCache& cache, bool isAriaTable)
     : AccessibilityRenderObject(axID, renderer, cache)
     , m_headerContainer(nullptr)
     , m_isExposable(true)
+    , m_isAriaTable(isAriaTable)
 {
 }
 
-AccessibilityTable::AccessibilityTable(AXID axID, Node& node, AXObjectCache& cache)
+AccessibilityTable::AccessibilityTable(AXID axID, Node& node, AXObjectCache& cache, bool isAriaTable)
     : AccessibilityRenderObject(axID, node, cache)
     , m_headerContainer(nullptr)
     , m_isExposable(true)
+    , m_isAriaTable(isAriaTable)
 {
 }
 
@@ -81,14 +84,14 @@ void AccessibilityTable::init()
     AccessibilityRenderObject::init();
 }
 
-Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
+Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, RenderObject& renderer, AXObjectCache& cache, bool isAriaTable)
 {
-    return adoptRef(*new AccessibilityTable(axID, renderer, cache));
+    return adoptRef(*new AccessibilityTable(axID, renderer, cache, isAriaTable));
 }
 
-Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, Node& node, AXObjectCache& cache)
+Ref<AccessibilityTable> AccessibilityTable::create(AXID axID, Node& node, AXObjectCache& cache, bool isAriaTable)
 {
-    return adoptRef(*new AccessibilityTable(axID, node, cache));
+    return adoptRef(*new AccessibilityTable(axID, node, cache, isAriaTable));
 }
 
 bool AccessibilityTable::hasNonTableARIARole() const
@@ -161,7 +164,7 @@ bool AccessibilityTable::isDataTable() const
             || (tableElement->tFoot() && tableElement->tFoot()->renderer())
             || tableElement->caption())
             return true;
-        
+
         // If someone used "rules" attribute than the table should appear.
         if (!tableElement->rules().isEmpty())
             return true;
@@ -173,11 +176,11 @@ bool AccessibilityTable::isDataTable() const
                 return true;
         }
     }
-    
+
     // The following checks should only apply if this is a real <table> element.
     if (!hasElementName(ElementName::HTML_table))
         return false;
-    
+
     // If the author has used ARIA to specify a valid column or row count, assume they
     // want us to treat the table as a data table.
     auto ariaRowOrColCountIsSet = [this] (const QualifiedName& attribute) {
@@ -205,8 +208,8 @@ bool AccessibilityTable::isDataTable() const
     // Store the background color of the table to check against cell's background colors.
     const auto* tableStyle = this->style();
     Color tableBackgroundColor = tableStyle ? tableStyle->visitedDependentColor(CSSPropertyBackgroundColor) : Color::white;
-    unsigned tableHorizontalBorderSpacing = tableStyle ? tableStyle->horizontalBorderSpacing() : 0;
-    unsigned tableVerticalBorderSpacing = tableStyle ? tableStyle->verticalBorderSpacing() : 0;
+    unsigned tableHorizontalBorderSpacing = tableStyle ? Style::evaluate(tableStyle->borderHorizontalSpacing()) : 0;
+    unsigned tableVerticalBorderSpacing = tableStyle ? Style::evaluate(tableStyle->borderVerticalSpacing()) : 0;
 
     unsigned cellCount = 0;
     unsigned borderedCellCount = 0;
@@ -258,7 +261,7 @@ bool AccessibilityTable::isDataTable() const
                 if (isDataTableBasedOnRowColumnCount())
                     return true;
 
-                if (tableRow->integralAttribute(aria_rowindexAttr) >= 1 || tableRow->integralAttribute(aria_colindexAttr) || hasRole(*tableRow, "row"_s))
+                if (tableRow->integralAttribute(aria_rowindexAttr) >= 1 || tableRow->integralAttribute(aria_colindexAttr) || !tableRow->getAttribute(aria_rowindextextAttr).isEmpty() || hasRole(*tableRow, "row"_s))
                     return true;
 
                 // For the first 5 rows, cache the background color so we can check if this table has zebra-striped rows.
@@ -291,9 +294,9 @@ bool AccessibilityTable::isDataTable() const
                 if (!cell->headers().isEmpty() || !cell->abbr().isEmpty() || !cell->axis().isEmpty() || !cell->scope().isEmpty() || hasCellARIARole(*cell))
                     return true;
 
-                // If the author has used ARIA to specify a valid column or row index, assume they want us
+                // If the author has used ARIA to specify a valid column or row index or index text, assume they want us
                 // to treat the table as a data table.
-                if (cell->integralAttribute(aria_colindexAttr) >= 1 || cell->integralAttribute(aria_rowindexAttr) >= 1)
+                if (cell->integralAttribute(aria_colindexAttr) >= 1 || cell->integralAttribute(aria_rowindexAttr) >= 1 || !cell->getAttribute(aria_colindextextAttr).isEmpty() || !cell->getAttribute(aria_rowindextextAttr).isEmpty())
                     return true;
 
                 // If the author has used ARIA to specify a column or row span, we're supposed to ignore
@@ -367,7 +370,7 @@ bool AccessibilityTable::isDataTable() const
         || cellsWithLeftBorder >= neededCellCount
         || cellsWithRightBorder >= neededCellCount)
         return true;
-    
+
     // At least half of the cells had different background colors, it's a data table.
     if (backgroundDifferenceCellCount >= neededCellCount)
         return true;
@@ -408,6 +411,17 @@ void AccessibilityTable::recomputeIsExposable()
 
         m_childrenDirty = true;
     }
+}
+
+bool AccessibilityTable::isMultiSelectable() const
+{
+    // Per https://w3c.github.io/aria/#table, role="table" elements don't support selection,
+    // or aria-multiselectable — only role="grid" and role="treegrid".
+    if (!hasGridRole())
+        return false;
+
+    const AtomString& ariaMultiSelectable = getAttribute(HTMLNames::aria_multiselectableAttr);
+    return !equalLettersIgnoringASCIICase(ariaMultiSelectable, "false"_s);
 }
 
 Vector<Vector<Markable<AXID>>> AccessibilityTable::cellSlots()
@@ -820,7 +834,7 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityTable::columns()
 AXCoreObject::AccessibilityChildrenVector AccessibilityTable::rows()
 {
     updateChildrenIfNecessary();
-    
+
     return m_rows;
 }
 
@@ -859,18 +873,18 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityTable::cells()
         cells.appendVector(row->unignoredChildren());
     return cells;
 }
-    
+
 unsigned AccessibilityTable::columnCount()
 {
     updateChildrenIfNecessary();
-    
+
     return m_columns.size();
 }
-    
+
 unsigned AccessibilityTable::rowCount()
 {
     updateChildrenIfNecessary();
-    
+
     return m_rows.size();
 }
 
@@ -896,7 +910,7 @@ AccessibilityRole AccessibilityTable::determineAccessibilityRole()
 
     return AccessibilityRole::Table;
 }
-    
+
 bool AccessibilityTable::computeIsIgnored() const
 {
     AccessibilityObjectInclusion decision = defaultObjectInclusion();
@@ -904,7 +918,7 @@ bool AccessibilityTable::computeIsIgnored() const
         return false;
     if (decision == AccessibilityObjectInclusion::IgnoreObject)
         return true;
-    
+
     if (!isExposable())
         return AccessibilityRenderObject::computeIsIgnored();
 
@@ -922,14 +936,14 @@ String AccessibilityTable::title() const
 {
     if (!isExposable())
         return AccessibilityRenderObject::title();
-    
+
     String title;
     // Prefer the table caption if present.
     if (RefPtr tableElement = dynamicDowncast<HTMLTableElement>(node())) {
         if (RefPtr caption = tableElement->caption())
             title = caption->innerText();
     }
-    
+
     // Fall back to standard title computation.
     if (title.isEmpty())
         title = AccessibilityRenderObject::title();
@@ -945,7 +959,7 @@ int AccessibilityTable::axColumnCount() const
     // the user agent." If we have a valid value, make it available to platforms.
     if (colCountInt == -1 || colCountInt >= (int)m_columns.size())
         return colCountInt;
-    
+
     return 0;
 }
 
@@ -958,7 +972,7 @@ int AccessibilityTable::axRowCount() const
     // user agent." If we have a valid value, make it available to platforms.
     if (rowCountInt == -1 || rowCountInt >= (int)m_rows.size())
         return rowCountInt;
-    
+
     return 0;
 }
 

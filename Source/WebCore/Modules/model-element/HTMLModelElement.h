@@ -54,6 +54,7 @@ class CachedResourceRequest;
 class DOMMatrixReadOnly;
 class DOMPointReadOnly;
 class Event;
+class Exception;
 class GraphicsLayer;
 class LayoutPoint;
 class LayoutSize;

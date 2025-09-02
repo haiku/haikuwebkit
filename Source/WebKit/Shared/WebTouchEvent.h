@@ -27,7 +27,7 @@
 #pragma once
 
 #include "WebEvent.h"
-#include <WebCore/IntPoint.h>
+#include <WebCore/DoublePoint.h>
 
 namespace WebCore {
 class RemoteFrameGeometryTransformer;
@@ -56,7 +56,7 @@ public:
     };
 
     WebPlatformTouchPoint() = default;
-    WebPlatformTouchPoint(unsigned identifier, WebCore::IntPoint locationInRootView, WebCore::IntPoint locationInViewport, State phase)
+    WebPlatformTouchPoint(unsigned identifier, WebCore::DoublePoint locationInRootView, WebCore::DoublePoint locationInViewport, State phase)
         : m_identifier(identifier)
         , m_locationInRootView(locationInRootView)
         , m_locationInViewport(locationInViewport)
@@ -64,7 +64,7 @@ public:
     {
     }
 #if ENABLE(IOS_TOUCH_EVENTS)
-    WebPlatformTouchPoint(unsigned identifier, WebCore::IntPoint locationInRootView, WebCore::IntPoint locationInViewport, State phase, double radiusX, double radiusY, double rotationAngle, double force, double altitudeAngle, double azimuthAngle, TouchType touchType)
+    WebPlatformTouchPoint(unsigned identifier, WebCore::DoublePoint locationInRootView, WebCore::DoublePoint locationInViewport, State phase, double radiusX, double radiusY, double rotationAngle, double force, double altitudeAngle, double azimuthAngle, TouchType touchType)
         : m_identifier(identifier)
         , m_locationInRootView(locationInRootView)
         , m_locationInViewport(locationInViewport)
@@ -81,8 +81,8 @@ public:
 #endif
 
     unsigned identifier() const { return m_identifier; }
-    WebCore::IntPoint locationInRootView() const { return m_locationInRootView; }
-    WebCore::IntPoint locationInViewport() const { return m_locationInViewport; }
+    WebCore::DoublePoint locationInRootView() const { return m_locationInRootView; }
+    WebCore::DoublePoint locationInViewport() const { return m_locationInViewport; }
     State phase() const { return m_phase; }
     State state() const { return phase(); }
 
@@ -108,8 +108,8 @@ public:
 
 private:
     unsigned m_identifier { 0 };
-    WebCore::IntPoint m_locationInRootView;
-    WebCore::IntPoint m_locationInViewport;
+    WebCore::DoublePoint m_locationInRootView;
+    WebCore::DoublePoint m_locationInViewport;
     State m_phase { State::Released };
 #if ENABLE(IOS_TOUCH_EVENTS)
     double m_radiusX { 0 };
@@ -124,7 +124,7 @@ private:
 
 class WebTouchEvent : public WebEvent {
 public:
-    WebTouchEvent(WebEvent&& event, const Vector<WebPlatformTouchPoint>& touchPoints, const Vector<WebTouchEvent>& coalescedEvents, const Vector<WebTouchEvent>& predictedEvents, WebCore::IntPoint position, bool isPotentialTap, bool isGesture, float gestureScale, float gestureRotation, bool canPreventNativeGestures = true)
+    WebTouchEvent(WebEvent&& event, const Vector<WebPlatformTouchPoint>& touchPoints, const Vector<WebTouchEvent>& coalescedEvents, const Vector<WebTouchEvent>& predictedEvents, WebCore::DoublePoint position, bool isPotentialTap, bool isGesture, float gestureScale, float gestureRotation, bool canPreventNativeGestures = true)
         : WebEvent(WTFMove(event))
         , m_touchPoints(touchPoints)
         , m_coalescedEvents(coalescedEvents)
@@ -147,7 +147,7 @@ public:
     const Vector<WebTouchEvent>& predictedEvents() const { return m_predictedEvents; }
     void setPredictedEvents(const Vector<WebTouchEvent>& predictedEvents) { m_predictedEvents = predictedEvents; }
 
-    WebCore::IntPoint position() const { return m_position; }
+    WebCore::DoublePoint position() const { return m_position; }
 
     void transformToRemoteFrameCoordinates(const WebCore::RemoteFrameGeometryTransformer&);
 
@@ -167,7 +167,7 @@ private:
     Vector<WebTouchEvent> m_coalescedEvents;
     Vector<WebTouchEvent> m_predictedEvents;
 
-    WebCore::IntPoint m_position;
+    WebCore::DoublePoint m_position;
     bool m_canPreventNativeGestures { false };
     bool m_isPotentialTap { false };
     bool m_isGesture { false };
@@ -193,16 +193,16 @@ public:
     WebPlatformTouchPoint()
         : m_rotationAngle(0.0), m_force(0.0) { }
 
-    WebPlatformTouchPoint(uint32_t id, State, const WebCore::IntPoint& screenPosition, const WebCore::IntPoint& position);
+    WebPlatformTouchPoint(uint32_t id, State, const WebCore::DoublePoint& screenPosition, const WebCore::DoublePoint& position);
 
-    WebPlatformTouchPoint(uint32_t id, State, const WebCore::IntPoint& screenPosition, const WebCore::IntPoint& position, const WebCore::IntSize& radius, float rotationAngle = 0.0, float force = 0.0);
-    
+    WebPlatformTouchPoint(uint32_t id, State, const WebCore::DoublePoint& screenPosition, const WebCore::DoublePoint& position, const WebCore::DoubleSize& radius, float rotationAngle = 0.0, float force = 0.0);
+
     uint32_t id() const { return m_id; }
     State state() const { return m_state; }
 
-    const WebCore::IntPoint& screenPosition() const { return m_screenPosition; }
-    const WebCore::IntPoint& position() const { return m_position; }
-    const WebCore::IntSize& radius() const { return m_radius; }
+    const WebCore::DoublePoint& screenPosition() const { return m_screenPosition; }
+    const WebCore::DoublePoint& position() const { return m_position; }
+    const WebCore::DoubleSize& radius() const { return m_radius; }
     float rotationAngle() const { return m_rotationAngle; }
     float force() const { return m_force; }
 
@@ -211,9 +211,9 @@ public:
 private:
     uint32_t m_id;
     State m_state;
-    WebCore::IntPoint m_screenPosition;
-    WebCore::IntPoint m_position;
-    WebCore::IntSize m_radius;
+    WebCore::DoublePoint m_screenPosition;
+    WebCore::DoublePoint m_position;
+    WebCore::DoubleSize m_radius;
     float m_rotationAngle;
     float m_force;
 };

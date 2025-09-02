@@ -51,3 +51,8 @@ bool WKFrameInfoGetIsMainFrame(WKFrameInfoRef frameInfo)
 {
     return WebKit::toImpl(frameInfo)->isMainFrame();
 }
+
+WKPageRef WKFrameInfoGetPage(WKFrameInfoRef frameInfo)
+{
+    return WebKit::toAPI(RefPtr { WebKit::toProtectedImpl(frameInfo)->page() }.get());
+}

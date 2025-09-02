@@ -28,7 +28,7 @@ namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(OpenXRSwapchain);
 
-std::unique_ptr<OpenXRSwapchain> OpenXRSwapchain::create(XrInstance instance, XrSession session, const XrSwapchainCreateInfo& info)
+std::unique_ptr<OpenXRSwapchain> OpenXRSwapchain::create(XrSession session, const XrSwapchainCreateInfo& info)
 {
     ASSERT(session != XR_NULL_HANDLE);
     ASSERT(info.faceCount == 1);
@@ -58,12 +58,11 @@ std::unique_ptr<OpenXRSwapchain> OpenXRSwapchain::create(XrInstance instance, Xr
     // Get images from an XrSwapchain
     CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, imageHeaders[0]));
 
-    return std::unique_ptr<OpenXRSwapchain>(new OpenXRSwapchain(instance, swapchain, info, WTFMove(imageBuffers)));
+    return std::unique_ptr<OpenXRSwapchain>(new OpenXRSwapchain(swapchain, info, WTFMove(imageBuffers)));
 }
 
-OpenXRSwapchain::OpenXRSwapchain(XrInstance instance, XrSwapchain swapchain, const XrSwapchainCreateInfo& info, Vector<XrSwapchainImageOpenGLESKHR>&& imageBuffers)
-    : m_instance(instance)
-    , m_swapchain(swapchain)
+OpenXRSwapchain::OpenXRSwapchain(XrSwapchain swapchain, const XrSwapchainCreateInfo& info, Vector<XrSwapchainImageOpenGLESKHR>&& imageBuffers)
+    : m_swapchain(swapchain)
     , m_createInfo(info)
     , m_imageBuffers(WTFMove(imageBuffers))
 {

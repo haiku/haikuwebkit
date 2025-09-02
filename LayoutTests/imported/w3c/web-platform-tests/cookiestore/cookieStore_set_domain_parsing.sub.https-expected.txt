@@ -1,0 +1,7 @@
+Blocked access to external URL https://xn--lve-6lad.localhost:9443/cookiestore/resources/domain_parsing-child.sub.https.html?test=IDNA
+
+Harness Error (TIMEOUT), message = null
+
+TIMEOUT cookieStore.set with domain on IDNA host Test timed out
+NOTRUN cookieStore.set with mixed casing domain
+

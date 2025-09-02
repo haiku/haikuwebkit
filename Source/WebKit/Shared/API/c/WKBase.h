@@ -132,6 +132,7 @@ typedef const struct OpaqueWKPageRunJavaScriptPromptResultListener* WKPageRunJav
 typedef const struct OpaqueWKPageRequestStorageAccessConfirmResultListener* WKPageRequestStorageAccessConfirmResultListenerRef;
 typedef const struct OpaqueWKResourceLoadStatisticsManager* WKResourceLoadStatisticsManagerRef;
 typedef const struct OpaqueWKTextChecker* WKTextCheckerRef;
+typedef const struct OpaqueWKScriptMessage* WKScriptMessageRef;
 typedef const struct OpaqueWKSession* WKSessionRef;
 typedef const struct OpaqueWKSessionState* WKSessionStateRef;
 typedef const struct OpaqueWKUserContentController* WKUserContentControllerRef;

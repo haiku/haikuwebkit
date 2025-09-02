@@ -1011,7 +1011,7 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
     auto linkURL = hitTestResult->absoluteLinkURL();
     auto imageURL = hitTestResult->absoluteImageURL();
 
-    IntPoint mouseDraggedPoint = src.view()->windowToContents(dragEvent.position());
+    IntPoint mouseDraggedPoint = src.view()->windowToContents(flooredIntPoint(dragEvent.position()));
 
     m_draggingImageURL = URL();
     m_sourceDragOperationMask = sourceOperationMask;

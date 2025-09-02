@@ -27,12 +27,12 @@
 
 #if !ENABLE(C_LOOP)
 
-#include "FPRInfo.h"
-#include "GPRInfo.h"
-#include "MacroAssembler.h"
-#include "MemoryMode.h"
-#include "Reg.h"
-#include "Width.h"
+#include <JavaScriptCore/FPRInfo.h>
+#include <JavaScriptCore/GPRInfo.h>
+#include <JavaScriptCore/MacroAssembler.h>
+#include <JavaScriptCore/MemoryMode.h>
+#include <JavaScriptCore/Reg.h>
+#include <JavaScriptCore/Width.h>
 #include <wtf/BitSet.h>
 #include <wtf/CommaPrinter.h>
 

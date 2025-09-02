@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "JSExportMacros.h"
+#include <JavaScriptCore/JSExportMacros.h>
 #include <cstddef>
 #include <wtf/Atomics.h>
 #include <wtf/HashTraits.h>

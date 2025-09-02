@@ -70,7 +70,7 @@ JSC_DEFINE_HOST_FUNCTION(callWebAssemblyFunction, (JSGlobalObject* globalObject,
         vm.setMightBeExecutingTaintedCode();
 
     // Note: we specifically use the WebAssemblyFunction as the callee to begin with in the ProtoCallFrame.
-    // The reason for this is that calling into the llint may stack overflow, and the stack overflow
+    // The reason for this is that calling into the IPInt may stack overflow, and the stack overflow
     // handler might read the global object from the callee.
     // For wasm, we setup |codeBlock| and |this| differently.
     //     |codeBlock| : JS entry wrapper expects a JSWebAssemblyInstance* as the |codeBlock| value argument.
@@ -81,7 +81,7 @@ JSC_DEFINE_HOST_FUNCTION(callWebAssemblyFunction, (JSGlobalObject* globalObject,
     return vmEntryToWasm(wasmFunction->jsEntrypoint(ArityCheckMode::MustCheckArity).taggedPtr(), &vm, &protoCallFrame);
 }
 
-WebAssemblyFunction* WebAssemblyFunction::create(VM& vm, JSGlobalObject* globalObject, Structure* structure, unsigned length, const String& name, JSWebAssemblyInstance* instance, Wasm::JSEntrypointCallee& jsEntrypoint, Wasm::Callee& wasmCallee, Wasm::WasmToWasmImportableFunction::LoadLocation wasmToWasmEntrypointLoadLocation, Wasm::TypeIndex typeIndex, RefPtr<const Wasm::RTT>&& rtt)
+WebAssemblyFunction* WebAssemblyFunction::create(VM& vm, JSGlobalObject* globalObject, Structure* structure, unsigned length, const String& name, JSWebAssemblyInstance* instance, Wasm::JSEntrypointCallee& jsEntrypoint, Wasm::IPIntCallee& wasmCallee, Wasm::WasmToWasmImportableFunction::LoadLocation wasmToWasmEntrypointLoadLocation, Wasm::TypeIndex typeIndex, RefPtr<const Wasm::RTT>&& rtt)
 {
     NativeExecutable* base = vm.getHostFunction(callWebAssemblyFunction, ImplementationVisibility::Public, WasmFunctionIntrinsic, callHostFunctionAsConstructor, nullptr, String());
     // Since ClosureCall uses this executable as an identity for Wasm CallIC thunk, we need to make it diversified.
@@ -97,7 +97,7 @@ Structure* WebAssemblyFunction::createStructure(VM& vm, JSGlobalObject* globalOb
     return Structure::create(vm, globalObject, prototype, TypeInfo(JSFunctionType, StructureFlags), info());
 }
 
-WebAssemblyFunction::WebAssemblyFunction(VM& vm, NativeExecutable* executable, JSGlobalObject* globalObject, Structure* structure, JSWebAssemblyInstance* instance, Wasm::JSEntrypointCallee& jsEntrypoint, Wasm::Callee& wasmCallee, Wasm::WasmToWasmImportableFunction::LoadLocation wasmToWasmEntrypointLoadLocation, Wasm::TypeIndex typeIndex, RefPtr<const Wasm::RTT>&& rtt)
+WebAssemblyFunction::WebAssemblyFunction(VM& vm, NativeExecutable* executable, JSGlobalObject* globalObject, Structure* structure, JSWebAssemblyInstance* instance, Wasm::JSEntrypointCallee& jsEntrypoint, Wasm::IPIntCallee& wasmCallee, Wasm::WasmToWasmImportableFunction::LoadLocation wasmToWasmEntrypointLoadLocation, Wasm::TypeIndex typeIndex, RefPtr<const Wasm::RTT>&& rtt)
     : Base { vm, executable, globalObject, structure, instance, Wasm::WasmOrJSImportableFunction { { { reinterpret_cast<CalleeBits*>(&m_boxedWasmCallee), { vm, globalObject, instance }, wasmToWasmEntrypointLoadLocation }, typeIndex, rtt.get() }, { }, { } }, nullptr }
     , m_boxedWasmCallee(wasmCallee)
     , m_boxedJSToWasmCallee(jsEntrypoint)

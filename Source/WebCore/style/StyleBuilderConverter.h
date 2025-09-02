@@ -29,7 +29,6 @@
 #pragma once
 
 #include "AnchorPositionEvaluator.h"
-#include "CSSBasicShapeValue.h"
 #include "CSSCalcSymbolTable.h"
 #include "CSSCalcValue.h"
 #include "CSSContentDistributionValue.h"
@@ -154,7 +153,6 @@ public:
     static TextEdge convertTextEdge(BuilderState&, const CSSValue&);
     static IntSize convertInitialLetter(BuilderState&, const CSSValue&);
     static OptionSet<LineBoxContain> convertLineBoxContain(BuilderState&, const CSSValue&);
-    static RefPtr<ShapeValue> convertShapeValue(BuilderState&, const CSSValue&);
     static ScrollSnapType convertScrollSnapType(BuilderState&, const CSSValue&);
     static ScrollSnapAlign convertScrollSnapAlign(BuilderState&, const CSSValue&);
     // scrollbar-width converter is only needed for quirking.
@@ -181,7 +179,6 @@ public:
     static FontFeatureSettings convertFontFeatureSettings(BuilderState&, const CSSValue&);
     static FontVariationSettings convertFontVariationSettings(BuilderState&, const CSSValue&);
     static PaintOrder convertPaintOrder(BuilderState&, const CSSValue&);
-    static float convertOpacity(BuilderState&, const CSSValue&);
     static URL convertSVGURIReference(BuilderState&, const CSSValue&);
     static StyleSelfAlignmentData convertSelfOrDefaultAlignmentData(BuilderState&, const CSSValue&);
     static StyleContentAlignmentData convertContentAlignmentData(BuilderState&, const CSSValue&);
@@ -588,15 +585,18 @@ inline RefPtr<StyleReflection> BuilderConverter::convertReflection(BuilderState&
     if (!reflectValue)
         return { };
 
-    NinePieceImage mask(NinePieceImage::Type::Mask);
-    mask.setFill(true);
+    Style::MaskBorder mask { };
+    if (RefPtr maskValue = reflectValue->mask())
+        mask = toStyleFromCSSValue<Style::MaskBorder>(builderState, *maskValue);
 
-    builderState.styleMap().mapNinePieceImage(reflectValue->mask(), mask);
+    auto maskSlice = mask.slice();
+    maskSlice.fill = CSS::Keyword::Fill { };
+    mask.setSlice(WTFMove(maskSlice));
 
     auto reflection = StyleReflection::create();
     reflection->setDirection(fromCSSValueID<ReflectionDirection>(reflectValue->direction()));
     reflection->setOffset(convertLength(builderState, reflectValue->offset()));
-    reflection->setMask(mask);
+    reflection->setMask(WTFMove(mask));
     return reflection;
 }
 
@@ -741,41 +741,6 @@ inline OptionSet<LineBoxContain> BuilderConverter::convertLineBoxContain(Builder
         }
     }
     return result;
-}
-
-inline RefPtr<ShapeValue> BuilderConverter::convertShapeValue(BuilderState& builderState, const CSSValue& value)
-{
-    if (is<CSSPrimitiveValue>(value)) {
-        ASSERT(value.valueID() == CSSValueNone);
-        return nullptr;
-    }
-
-    if (value.isImage())
-        return ShapeValue::create(builderState.createStyleImage(value).releaseNonNull());
-
-    std::optional<BasicShape> shape;
-    auto referenceBox = CSSBoxType::BoxMissing;
-    auto processSingleValue = [&](const CSSValue& currentValue) {
-        if (RefPtr shapeValue = dynamicDowncast<CSSBasicShapeValue>(currentValue))
-            shape = toStyle(shapeValue->shape(), builderState, 1.0f);
-        else
-            referenceBox = fromCSSValue<CSSBoxType>(currentValue);
-    };
-    if (auto* list = dynamicDowncast<CSSValueList>(value)) {
-        for (auto& currentValue : *list)
-            processSingleValue(currentValue);
-    } else
-        processSingleValue(value);
-
-    
-    if (shape)
-        return ShapeValue::create(WTFMove(*shape), referenceBox);
-
-    if (referenceBox != CSSBoxType::BoxMissing)
-        return ShapeValue::create(referenceBox);
-
-    ASSERT_NOT_REACHED();
-    return nullptr;
 }
 
 inline ScrollSnapType BuilderConverter::convertScrollSnapType(BuilderState& builderState, const CSSValue& value)
@@ -1009,16 +974,6 @@ inline PaintOrder BuilderConverter::convertPaintOrder(BuilderState& builderState
         ASSERT_NOT_REACHED();
         return PaintOrder::Normal;
     }
-}
-
-inline float BuilderConverter::convertOpacity(BuilderState& builderState, const CSSValue& value)
-{
-    auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return { };
-
-    float opacity = primitiveValue->valueDividingBy100IfPercentage(builderState.cssToLengthConversionData());
-    return std::max(0.0f, std::min(1.0f, opacity));
 }
 
 inline URL BuilderConverter::convertSVGURIReference(BuilderState& builderState, const CSSValue& value)

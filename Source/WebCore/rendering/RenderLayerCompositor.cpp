@@ -2080,8 +2080,8 @@ void RenderLayerCompositor::logLayerInfo(const RenderLayer& layer, ASCIILiteral 
     StringBuilder logString;
     logString.append(pad(' ', 12 + depth * 2, hex(reinterpret_cast<uintptr_t>(&layer), Lowercase)), " id "_s, backing->graphicsLayer()->primaryLayerID() ? backing->graphicsLayer()->primaryLayerID()->object().toUInt64() : 0, " ("_s, absoluteBounds.x().toFloat(), ',', absoluteBounds.y().toFloat(), '-', absoluteBounds.maxX().toFloat(), ',', absoluteBounds.maxY().toFloat(), ") "_s, FormattedNumber::fixedWidth(backing->backingStoreMemoryEstimate() / 1024, 2), "KB"_s);
 
-    if (!layer.renderer().style().hasAutoUsedZIndex())
-        logString.append(" z-index: "_s, layer.renderer().style().usedZIndex());
+    if (auto value = layer.renderer().style().usedZIndex().tryValue())
+        logString.append(" z-index: "_s, value->value);
 
     logString.append(" ("_s, logOneReasonForCompositing(layer), ") "_s);
 
@@ -2292,7 +2292,7 @@ void RenderLayerCompositor::layerStyleChanged(StyleDifference diff, RenderLayer&
             }
             // If we're changing to/from 0 opacity, then we need to reconfigure the layer since we try to
             // skip backing store allocation for opacity:0.
-            if (oldStyle && oldStyle->opacity() != newStyle.opacity() && (!oldStyle->opacity() || !newStyle.opacity()))
+            if (oldStyle && oldStyle->opacity() != newStyle.opacity() && (oldStyle->opacity().isTransparent() || newStyle.opacity().isTransparent()))
                 layer.setNeedsCompositingConfigurationUpdate();
         }
         if (oldStyle && recompositeChangeRequiresGeometryUpdate(*oldStyle, newStyle)) {

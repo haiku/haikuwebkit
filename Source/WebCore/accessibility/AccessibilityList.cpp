@@ -39,7 +39,7 @@
 #include "RenderStyleInlines.h"
 
 namespace WebCore {
-    
+
 using namespace HTMLNames;
 
 AccessibilityList::AccessibilityList(AXID axID, RenderObject& renderer, AXObjectCache& cache)
@@ -66,9 +66,9 @@ Ref<AccessibilityList> AccessibilityList::create(AXID axID, Node& node, AXObject
 
 bool AccessibilityList::computeIsIgnored() const
 {
-    return isIgnoredByDefault();
+    return m_renderer ? isIgnoredByDefault() : AccessibilityNodeObject::computeIsIgnored();
 }
-    
+
 bool AccessibilityList::isUnorderedList() const
 {
     // The ARIA spec says the "list" role is supposed to mimic a UL or OL tag.
@@ -106,15 +106,15 @@ bool AccessibilityList::childHasPseudoVisibleListItemMarkers(const Node* node)
     RefPtr axBeforePseudo = axObjectCache()->getOrCreate(beforePseudo->renderer());
     if (!axBeforePseudo)
         return false;
-    
+
     if (!axBeforePseudo->isIgnored())
         return true;
-    
+
     for (const auto& child : axBeforePseudo->unignoredChildren()) {
         if (!child->isIgnored())
             return true;
     }
-    
+
     // Platforms which expose rendered text content through the parent element will treat
     // those renderers as "ignored" objects.
 #if USE(ATSPI)

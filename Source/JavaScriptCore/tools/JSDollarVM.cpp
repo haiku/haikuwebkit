@@ -2089,6 +2089,7 @@ public:
 
     DECLARE_INFO;
 
+private:
     WriteBarrier<JSPromise> m_promise;
     const Ref<Wasm::StreamingCompiler> m_streamingCompiler;
 };
@@ -2270,6 +2271,7 @@ static JSC_DECLARE_HOST_FUNCTION(functionCallFromCPPAsFirstEntry);
 static JSC_DECLARE_HOST_FUNCTION(functionCallFromCPP);
 static JSC_DECLARE_HOST_FUNCTION(functionCachedCallFromCPP);
 static JSC_DECLARE_HOST_FUNCTION(functionDumpLineBreakData);
+static JSC_DECLARE_HOST_FUNCTION(functionWeakCreate);
 
 const ClassInfo JSDollarVM::s_info = { "DollarVM"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSDollarVM) };
 
@@ -2372,7 +2374,7 @@ JSC_DEFINE_HOST_FUNCTION(functionOMGTrue, (JSGlobalObject* globalObject, CallFra
         if (visitor->codeType() != StackVisitor::Frame::Wasm
             || !visitor->callee().isNativeCallee()) {
             allFramesAreValid = false;
-            return Wasm::CompilationMode::LLIntMode;
+            return Wasm::CompilationMode::IPIntMode;
         }
         return static_cast<Wasm::Callee*>(visitor->callee().asNativeCallee())->compilationMode();
     };
@@ -4308,6 +4310,13 @@ JSC_DEFINE_HOST_FUNCTION(functionDumpLineBreakData, (JSGlobalObject*, CallFrame*
     return JSValue::encode(jsUndefined());
 }
 
+JSC_DEFINE_HOST_FUNCTION(functionWeakCreate, (JSGlobalObject* globalObject, CallFrame*))
+{
+    DollarVMAssertScope assertScope;
+    Weak<JSGlobalObject> unusedWeak(globalObject);
+    return JSValue::encode(jsUndefined());
+}
+
 constexpr unsigned jsDollarVMPropertyAttributes = PropertyAttribute::ReadOnly | PropertyAttribute::DontEnum | PropertyAttribute::DontDelete;
 
 void JSDollarVM::finishCreation(VM& vm)
@@ -4505,6 +4514,7 @@ void JSDollarVM::finishCreation(VM& vm)
     addFunction(vm, "callFromCPP"_s, functionCallFromCPP, 2);
     addFunction(vm, "cachedCallFromCPP"_s, functionCachedCallFromCPP, 2);
     addFunction(vm, "dumpLineBreakData"_s, functionDumpLineBreakData, 0);
+    addFunction(vm, "weakCreate"_s, functionWeakCreate, 0);
 
     m_objectDoingSideEffectPutWithoutCorrectSlotStatusStructureID.set(vm, this, ObjectDoingSideEffectPutWithoutCorrectSlotStatus::createStructure(vm, globalObject, jsNull()));
 }

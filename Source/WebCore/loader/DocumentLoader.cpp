@@ -58,6 +58,7 @@
 #include "HTMLObjectElement.h"
 #include "HTTPHeaderNames.h"
 #include "HTTPParsers.h"
+#include "HTTPStatusCodes.h"
 #include "HistoryItem.h"
 #include "HistoryController.h"
 #include "IconLoader.h"
@@ -834,7 +835,7 @@ bool DocumentLoader::tryLoadingRequestFromApplicationCache()
 void DocumentLoader::setRedirectionAsSubstituteData(ResourceResponse&& response)
 {
     ASSERT(response.isRedirection());
-    m_substituteData = { FragmentedSharedBuffer::create(), { }, WTFMove(response), SubstituteData::SessionHistoryVisibility::Visible };
+    m_substituteData = { SharedBuffer::create(), { }, WTFMove(response), SubstituteData::SessionHistoryVisibility::Visible };
 }
 
 bool DocumentLoader::tryLoadingSubstituteData()
@@ -1177,7 +1178,9 @@ void DocumentLoader::continueAfterContentPolicy(PolicyAction policy)
         if (RefPtr mainResourceLoader = this->mainResourceLoader())
             InspectorInstrumentation::continueWithPolicyDownload(*frame, *mainResourceLoader->identifier(), *this, m_response);
 
-        if (!frame->effectiveSandboxFlags().contains(SandboxFlag::Downloads)) {
+        RefPtr document = frame->document();
+        bool shouldIgnoreSandboxFlags = frame->isMainFrame() && document && document->quirks().shouldAllowDownloadsInSpiteOfCSP();
+        if (!frame->effectiveSandboxFlags().contains(SandboxFlag::Downloads) || shouldIgnoreSandboxFlags) {
             // When starting the request, we didn't know that it would result in download and not navigation. Now we know that main document URL didn't change.
             // Download may use this knowledge for purposes unrelated to cookies, notably for setting file quarantine data.
             protectedFrameLoader()->setOriginalURLForDownloadRequest(m_request);
@@ -1187,8 +1190,8 @@ void DocumentLoader::continueAfterContentPolicy(PolicyAction policy)
                 protectedFrameLoader()->protectedClient()->startDownload(m_request);
             } else
                 protectedFrameLoader()->protectedClient()->convertMainResourceLoadToDownload(this, m_request, m_response);
-        } else if (frame->document())
-            frame->protectedDocument()->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Not allowed to download due to sandboxing"_s);
+        } else if (document)
+            document->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Not allowed to download due to sandboxing"_s);
 
         // The main resource might be loading from the memory cache, or its loader might have gone missing.
         if (RefPtr loader = mainResourceLoader()) {
@@ -1215,12 +1218,18 @@ void DocumentLoader::continueAfterContentPolicy(PolicyAction policy)
 
     if (m_response.isInHTTPFamily()) {
         int status = m_response.httpStatusCode(); // Status may be zero when loading substitute data, in particular from a WebArchive.
-        if (status && (status < 200 || status >= 300)) {
-            if (RefPtr owner = dynamicDowncast<HTMLObjectElement>(frame->ownerElement())) {
-                owner->renderFallbackContent();
-                // object elements are no longer rendered after we fallback, so don't
-                // keep trying to process data from their load
-                cancelMainResourceLoad(protectedFrameLoader()->cancelledError(m_request));
+        if (status) {
+            if (status < httpStatus200OK || status >= httpStatus300MultipleChoices) {
+                if (RefPtr owner = dynamicDowncast<HTMLObjectElement>(frame->ownerElement())) {
+                    owner->renderFallbackContent();
+                    // object elements are no longer rendered after we fallback, so don't
+                    // keep trying to process data from their load
+                    cancelMainResourceLoad(protectedFrameLoader()->cancelledError(m_request));
+                }
+            } else if (status == httpStatus204NoContent || status == httpStatus205ResetContent) {
+                // 204/205 responses should abort navigation without changing the document.
+                stopLoadingForPolicyChange();
+                return;
             }
         }
     }

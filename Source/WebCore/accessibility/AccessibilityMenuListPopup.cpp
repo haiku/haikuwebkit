@@ -52,7 +52,7 @@ bool AccessibilityMenuListPopup::isOffScreen() const
 {
     if (!m_parent)
         return true;
-    
+
     return m_parent->isCollapsed();
 }
 
@@ -60,7 +60,7 @@ bool AccessibilityMenuListPopup::isEnabled() const
 {
     if (!m_parent)
         return false;
-    
+
     return m_parent->isEnabled();
 }
 
@@ -81,7 +81,7 @@ bool AccessibilityMenuListPopup::press()
 {
     if (!m_parent)
         return false;
-    
+
     m_parent->press();
     return true;
 }

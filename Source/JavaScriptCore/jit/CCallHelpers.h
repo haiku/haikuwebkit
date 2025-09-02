@@ -27,12 +27,12 @@
 
 #if ENABLE(JIT)
 
-#include "AssemblyHelpers.h"
-#include "DisallowMacroScratchRegisterUsage.h"
-#include "FPRInfo.h"
-#include "GPRInfo.h"
-#include "OperationResult.h"
-#include "StackAlignment.h"
+#include <JavaScriptCore/AssemblyHelpers.h>
+#include <JavaScriptCore/DisallowMacroScratchRegisterUsage.h>
+#include <JavaScriptCore/FPRInfo.h>
+#include <JavaScriptCore/GPRInfo.h>
+#include <JavaScriptCore/OperationResult.h>
+#include <JavaScriptCore/StackAlignment.h>
 #include <wtf/FunctionTraits.h>
 #include <wtf/ScopedLambda.h>
 #include <wtf/TZoneMalloc.h>

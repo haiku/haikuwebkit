@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "JSCast.h"
-#include "Microtask.h"
-#include "Structure.h"
+#include <JavaScriptCore/JSCast.h>
+#include <JavaScriptCore/Microtask.h>
+#include <JavaScriptCore/Structure.h>
 
 namespace JSC {
 

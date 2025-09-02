@@ -6,6 +6,7 @@
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  * Copyright (C) 2003-2024 Apple Inc. All rights reserved.
  * Copyright (C) 2016-2017 Google Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -255,42 +256,58 @@ bool RenderTableCell::computeIntrinsicPadding(LayoutUnit rowHeight)
     LayoutUnit logicalHeightWithoutIntrinsicPadding = logicalHeight() - oldIntrinsicPaddingBefore - oldIntrinsicPaddingAfter;
 
     auto intrinsicPaddingBefore = oldIntrinsicPaddingBefore;
-    VerticalAlign alignment = style().verticalAlign();
+    auto alignment = style().verticalAlign();
     if (auto alignContent = style().alignContent(); !alignContent.isNormal()) {
         // align-content overrides vertical-align
         if (alignContent.position() == ContentPosition::Baseline)
-            alignment = VerticalAlign::Baseline;
+            alignment = CSS::Keyword::Baseline { };
         else if (alignContent.isCentered())
-            alignment = VerticalAlign::Middle;
+            alignment = CSS::Keyword::Middle { };
         else if (alignContent.isStartward())
-            alignment = VerticalAlign::Top;
+            alignment = CSS::Keyword::Top { };
         else if (alignContent.isEndward())
-            alignment = VerticalAlign::Bottom;
+            alignment = CSS::Keyword::Bottom { };
     }
-    switch (alignment) {
-    case VerticalAlign::Sub:
-    case VerticalAlign::Super:
-    case VerticalAlign::TextTop:
-    case VerticalAlign::TextBottom:
-    case VerticalAlign::Length:
-    case VerticalAlign::Baseline: {
+
+    auto applyStandard = [&] {
         auto baseline = cellBaselinePosition();
         auto needsIntrinsicPadding = baseline > borderAndPaddingBefore() || !logicalHeight();
         if (needsIntrinsicPadding)
             intrinsicPaddingBefore = section()->rowBaseline(rowIndex()) - (baseline - oldIntrinsicPaddingBefore);
-        break;
-    }
-    case VerticalAlign::Top:
-        break;
-    case VerticalAlign::Middle:
-        intrinsicPaddingBefore = (rowHeight - logicalHeightWithoutIntrinsicPadding) / 2;
-        break;
-    case VerticalAlign::Bottom:
-        intrinsicPaddingBefore = rowHeight - logicalHeightWithoutIntrinsicPadding;
-        break;
-    case VerticalAlign::BaselineMiddle:
-        break;
-    }
+    };
+
+    WTF::switchOn(alignment,
+        [&](const CSS::Keyword::Sub&) {
+            applyStandard();
+        },
+        [&](const CSS::Keyword::Super&) {
+            applyStandard();
+        },
+        [&](const CSS::Keyword::TextTop&) {
+            applyStandard();
+        },
+        [&](const CSS::Keyword::TextBottom&) {
+            applyStandard();
+        },
+        [&](const CSS::Keyword::Baseline&) {
+            applyStandard();
+        },
+        [&](const CSS::Keyword::Top&) {
+            // Do nothing.
+        },
+        [&](const CSS::Keyword::Middle&) {
+            intrinsicPaddingBefore = (rowHeight - logicalHeightWithoutIntrinsicPadding) / 2;
+        },
+        [&](const CSS::Keyword::Bottom&) {
+            intrinsicPaddingBefore = rowHeight - logicalHeightWithoutIntrinsicPadding;
+        },
+        [&](const CSS::Keyword::WebkitBaselineMiddle&) {
+            // Do nothing.
+        },
+        [&](const Style::VerticalAlign::Length&) {
+            applyStandard();
+        }
+    );
 
     LayoutUnit intrinsicPaddingAfter = rowHeight - logicalHeightWithoutIntrinsicPadding - intrinsicPaddingBefore;
     setIntrinsicPaddingBefore(intrinsicPaddingBefore);
@@ -412,6 +429,16 @@ void RenderTableCell::setOverridingLogicalHeightFromRowHeight(LayoutUnit rowHeig
 {
     clearIntrinsicPadding();
     setOverridingBorderBoxLogicalHeight(rowHeight);
+}
+
+LayoutUnit RenderTableCell::minLogicalWidthForColumnSizing()
+{
+    return RenderBlockFlow::minPreferredLogicalWidth();
+}
+
+LayoutUnit RenderTableCell::maxLogicalWidthForColumnSizing()
+{
+    return RenderBlockFlow::maxPreferredLogicalWidth();
 }
 
 LayoutSize RenderTableCell::offsetFromContainer(const RenderElement& container, const LayoutPoint& point, bool* offsetDependsOnPoint) const
@@ -1485,7 +1512,7 @@ void RenderTableCell::scrollbarsChanged(bool horizontalScrollbarChanged, bool ve
         return;
 
     // Shrink our intrinsic padding as much as possible to accommodate the scrollbar.
-    if ((style().verticalAlign() == VerticalAlign::Middle && style().alignContent().isNormal())
+    if ((WTF::holdsAlternative<CSS::Keyword::Middle>(style().verticalAlign()) && style().alignContent().isNormal())
         || style().alignContent().isCentered()) {
         LayoutUnit totalHeight = logicalHeight();
         LayoutUnit heightWithoutIntrinsicPadding = totalHeight - intrinsicPaddingBefore() - intrinsicPaddingAfter();

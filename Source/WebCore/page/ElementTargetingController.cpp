@@ -1262,11 +1262,11 @@ Vector<TargetedElementInfo> ElementTargetingController::extractTargets(Vector<Re
                 return false;
 
             auto& style = targetRenderer->style();
-            if (style.specifiedZIndex() < 0)
+            if (auto specifiedZIndexValue = style.specifiedZIndex().tryValue(); specifiedZIndexValue && *specifiedZIndexValue < 0)
                 return true;
 
             return targetRenderer->isOutOfFlowPositioned()
-                && (!style.hasBackground() || !style.opacity())
+                && (!style.hasBackground() || style.opacity().isTransparent())
                 && targetRenderer->usedPointerEvents() == PointerEvents::None;
         }();
 

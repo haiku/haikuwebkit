@@ -79,7 +79,7 @@ public:
 
     void get(CookieStoreGetOptions&&, URL&&, Function<void(CookieStore&, ExceptionOr<Vector<Cookie>>&&)>&&);
     void getAll(CookieStoreGetOptions&&, URL&&, Function<void(CookieStore&, ExceptionOr<Vector<Cookie>>&&)>&&);
-    void set(CookieInit&& options, Cookie&&, URL&&, Function<void(CookieStore&, std::optional<Exception>&&)>&&);
+    void set(Cookie&&, URL&&, Function<void(CookieStore&, std::optional<Exception>&&)>&&);
 
     void detach() { m_cookieStore = nullptr; }
 
@@ -185,11 +185,11 @@ void CookieStore::MainThreadBridge::getAll(CookieStoreGetOptions&& options, URL&
     ensureOnMainThread(WTFMove(getAllCookies));
 }
 
-void CookieStore::MainThreadBridge::set(CookieInit&& options, Cookie&& cookie, URL&& url, Function<void(CookieStore&, std::optional<Exception>&&)>&& completionHandler)
+void CookieStore::MainThreadBridge::set(Cookie&& cookie, URL&& url, Function<void(CookieStore&, std::optional<Exception>&&)>&& completionHandler)
 {
     ASSERT(m_cookieStore);
 
-    auto setCookie = [this, protectedThis = Ref { *this }, options = crossThreadCopy(WTFMove(options)), cookie = crossThreadCopy(WTFMove(cookie)), url = crossThreadCopy(WTFMove(url)), completionHandler = WTFMove(completionHandler)](ScriptExecutionContext& context) mutable {
+    auto setCookie = [this, protectedThis = Ref { *this }, cookie = crossThreadCopy(WTFMove(cookie)), url = crossThreadCopy(WTFMove(url)), completionHandler = WTFMove(completionHandler)](ScriptExecutionContext& context) mutable {
         Ref document = downcast<Document>(context);
         WeakPtr page = document->page();
         if (!page) {
@@ -232,6 +232,13 @@ CookieStore::CookieStore(ScriptExecutionContext* context)
 CookieStore::~CookieStore()
 {
     m_mainThreadBridge->detach();
+}
+
+static String normalize(const String& string)
+{
+    if (string.contains(isTabOrSpace<char16_t>))
+        return string.trim(isTabOrSpace);
+    return string;
 }
 
 static bool containsInvalidCharacters(const String& string)
@@ -286,6 +293,9 @@ void CookieStore::get(CookieStoreGetOptions&& options, Ref<DeferredPromise>&& pr
         url = WTFMove(parsed);
         options.url = nullString();
     }
+
+    if (!options.name.isNull())
+        options.name = normalize(options.name);
 
     m_promises.add(++m_nextPromiseIdentifier, WTFMove(promise));
     auto completionHandler = [promiseIdentifier = m_nextPromiseIdentifier](CookieStore& cookieStore, ExceptionOr<Vector<Cookie>>&& result) {
@@ -350,6 +360,9 @@ void CookieStore::getAll(CookieStoreGetOptions&& options, Ref<DeferredPromise>&&
         options.url = nullString();
     }
 
+    if (!options.name.isNull())
+        options.name = normalize(options.name);
+
     m_promises.add(++m_nextPromiseIdentifier, WTFMove(promise));
     auto completionHandler = [promiseIdentifier = m_nextPromiseIdentifier](CookieStore& cookieStore, ExceptionOr<Vector<Cookie>>&& result) {
         auto promise = cookieStore.takePromise(promiseIdentifier);
@@ -404,8 +417,8 @@ void CookieStore::set(CookieInit&& options, Ref<DeferredPromise>&& promise)
     Cookie cookie;
     cookie.created = WallTime::now().secondsSinceEpoch().milliseconds();
 
-    cookie.name = WTFMove(options.name);
-    cookie.value = WTFMove(options.value);
+    cookie.name = normalize(options.name);
+    cookie.value = normalize(options.value);
 
     if (containsInvalidCharacters(cookie.name)) {
         promise->reject(Exception { ExceptionCode::TypeError, "The cookie name must not contain '\u003B', '\u007F', or any C0 control character except '\u0009'."_s });
@@ -478,9 +491,6 @@ void CookieStore::set(CookieInit&& options, Ref<DeferredPromise>&& promise)
             return;
         }
 
-        if (!cookie.path.endsWith('/'))
-            cookie.path = makeString(cookie.path, '/');
-
         // FIXME: <rdar://85515842> Obtain the encoded length without allocating and encoding.
         if (cookie.path.utf8().length() > maximumAttributeValueSize) {
             promise->reject(Exception { ExceptionCode::TypeError, makeString("The size of the path must not be greater than "_s, maximumAttributeValueSize, " bytes"_s) });
@@ -530,7 +540,7 @@ void CookieStore::set(CookieInit&& options, Ref<DeferredPromise>&& promise)
             promise->resolve();
     };
 
-    m_mainThreadBridge->set(WTFMove(options), WTFMove(cookie), WTFMove(url), WTFMove(completionHandler));
+    m_mainThreadBridge->set(WTFMove(cookie), WTFMove(url), WTFMove(completionHandler));
 }
 
 void CookieStore::remove(String&& name, Ref<DeferredPromise>&& promise)
@@ -558,7 +568,7 @@ void CookieStore::remove(CookieStoreDeleteOptions&& options, Ref<DeferredPromise
     }
 
     CookieInit initOptions;
-    initOptions.name = WTFMove(options.name);
+    initOptions.name = normalize(options.name);
     initOptions.value = emptyString();
     initOptions.domain = WTFMove(options.domain);
     initOptions.path = WTFMove(options.path);

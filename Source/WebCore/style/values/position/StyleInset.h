@@ -33,6 +33,8 @@ namespace Style {
 // https://drafts.csswg.org/css-position/#insets
 struct InsetEdge : LengthWrapperBase<LengthPercentage<>, CSS::Keyword::Auto> {
     using Base::Base;
+
+    ALWAYS_INLINE bool isAuto() const { return holdsAlternative<CSS::Keyword::Auto>(); }
 };
 
 // <'inset'> = <'top'>{1,4}

@@ -47,7 +47,7 @@
 #endif
 
 #if defined(MADV_ZERO) && BOS(DARWIN)
-#define BMALLOC_USE_MADV_ZERO 0
+#define BMALLOC_USE_MADV_ZERO 1
 #else
 #define BMALLOC_USE_MADV_ZERO 0
 #endif

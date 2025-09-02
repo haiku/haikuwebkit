@@ -65,38 +65,30 @@ static void interpolateStandardProperty(CSSPropertyID property, RenderStyle& des
 
 // MARK: - Custom property interpolation support
 
-static CustomProperty::Numeric blendFunc(const CustomProperty::Numeric& from, const CustomProperty::Numeric& to, const Context& context)
-{
-    ASSERT(from.unitType == to.unitType);
-    return { blendFunc(from.value, to.value, context), from.unitType };
-}
-
 static std::optional<CustomProperty::Value> interpolateSyntaxValues(const RenderStyle& fromStyle, const RenderStyle& toStyle, const CustomProperty::Value& from, const CustomProperty::Value& to, const Context& context)
 {
-    if (std::holds_alternative<WebCore::Length>(from) && std::holds_alternative<WebCore::Length>(to))
-        return blendFunc(std::get<WebCore::Length>(from), std::get<WebCore::Length>(to), context);
+    if (from.index() != to.index())
+        return { };
 
-    if (std::holds_alternative<Style::Color>(from) && std::holds_alternative<Style::Color>(to)) {
-        auto& fromStyleColor = std::get<Style::Color>(from);
-        auto& toStyleColor = std::get<Style::Color>(to);
-        if (!fromStyleColor.isCurrentColor() || !toStyleColor.isCurrentColor())
-            return blendFunc(fromStyle.colorResolvingCurrentColor(fromStyleColor), toStyle.colorResolvingCurrentColor(toStyleColor), context);
-    }
-
-    if (std::holds_alternative<CustomProperty::Numeric>(from) && std::holds_alternative<CustomProperty::Numeric>(to)) {
-        auto& fromNumeric = std::get<CustomProperty::Numeric>(from);
-        auto& toNumeric = std::get<CustomProperty::Numeric>(to);
-        if (fromNumeric.unitType == toNumeric.unitType)
-            return blendFunc(fromNumeric, toNumeric, context);
-    }
-
-    if (std::holds_alternative<CustomProperty::Transform>(from) && std::holds_alternative<CustomProperty::Transform>(to)) {
-        auto& fromTransformOperation = std::get<CustomProperty::Transform>(from).operation;
-        auto& toTransformOperation = std::get<CustomProperty::Transform>(to).operation;
-        return CustomProperty::Transform { blendFunc(fromTransformOperation, toTransformOperation, context) };
-    }
-
-    return std::nullopt;
+    return WTF::switchOn(from,
+        [&]<Numeric T>(const T& fromNumeric) -> std::optional<CustomProperty::Value> {
+            return blend(fromNumeric, std::get<T>(to), context);
+        },
+        [&](const Color& fromStyleColor) -> std::optional<CustomProperty::Value> {
+            auto& toStyleColor = std::get<Color>(to);
+            if (!fromStyleColor.isCurrentColor() || !toStyleColor.isCurrentColor())
+                return blendFunc(fromStyle.colorResolvingCurrentColor(fromStyleColor), toStyle.colorResolvingCurrentColor(toStyleColor), context);
+            return { };
+        },
+        [&](const CustomProperty::Transform& fromTransform) -> std::optional<CustomProperty::Value> {
+            auto& fromTransformOperation = fromTransform.operation;
+            auto& toTransformOperation = std::get<CustomProperty::Transform>(to).operation;
+            return CustomProperty::Transform { blendFunc(fromTransformOperation, toTransformOperation, context) };
+        },
+        [&](const auto&) -> std::optional<CustomProperty::Value> {
+            return { };
+        }
+    );
 }
 
 static std::optional<CustomProperty::Value> firstValueInSyntaxValueLists(const CustomProperty::ValueList& a, const CustomProperty::ValueList& b)
@@ -199,14 +191,14 @@ static void interpolateCustomProperty(const AtomString& customProperty, RenderSt
 static bool syntaxValuesRequireInterpolationForAccumulativeIteration(const CustomProperty::Value& a, const CustomProperty::Value& b, bool isList)
 {
     return WTF::switchOn(a,
-        [b, isList](const WebCore::Length& aLength) {
-            ASSERT(std::holds_alternative<WebCore::Length>(b));
-            return !isList && lengthsRequireInterpolationForAccumulativeIteration(aLength, std::get<WebCore::Length>(b));
+        [b, isList](const LengthPercentage<>& aLengthPercentage) {
+            ASSERT(std::holds_alternative<LengthPercentage<>>(b));
+            return !isList && Style::requiresInterpolationForAccumulativeIteration(aLengthPercentage, std::get<LengthPercentage<>>(b));
         },
         [](const RefPtr<TransformOperation>&) {
             return true;
         },
-        [](const Style::Color&) {
+        [](const Color&) {
             return true;
         },
         [](auto&) {
@@ -218,23 +210,26 @@ static bool syntaxValuesRequireInterpolationForAccumulativeIteration(const Custo
 static bool typeOfSyntaxValueCanBeInterpolated(const CustomProperty::Value& syntaxValue)
 {
     return WTF::switchOn(syntaxValue,
-        [](const WebCore::Length&) {
+        []<Numeric T>(const T&) {
             return true;
+        },
+        [](const ImageWrapper&) {
+            return false;
         },
         [](const Color&) {
             return true;
         },
-        [](CustomProperty::Numeric) {
-            return true;
+        [](const URL&) {
+            return false;
+        },
+        [](const CustomIdentifier&) {
+            return false;
+        },
+        [](const String&) {
+            return false;
         },
         [](const CustomProperty::Transform&) {
             return true;
-        },
-        [](RefPtr<StyleImage>) {
-            return false;
-        },
-        [](auto&) {
-            return false;
         }
     );
 }

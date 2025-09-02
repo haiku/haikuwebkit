@@ -27,8 +27,8 @@
 
 #if ENABLE(REMOTE_INSPECTOR)
 
-#include "InspectorFrontendChannel.h"
-#include "RemoteControllableTarget.h"
+#include <JavaScriptCore/InspectorFrontendChannel.h>
+#include <JavaScriptCore/RemoteControllableTarget.h>
 #include <wtf/Lock.h>
 #include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/ThreadSafeWeakPtr.h>

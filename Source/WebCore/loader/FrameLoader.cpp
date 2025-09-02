@@ -1484,8 +1484,7 @@ void FrameLoader::loadFrameRequest(FrameLoadRequest&& request, Event* event, Ref
                 RefPtr<SerializedScriptValue> stateObject;
                 if (RefPtr currentItem = history().currentItem())
                     stateObject = currentItem->navigationAPIStateObject();
-                RefPtr sourceElement = event ? dynamicDowncast<Element>(event->target()) : nullptr;
-                if (!dispatchNavigateEvent(url, loadType, request.downloadAttribute(), request.navigationHistoryBehavior(), false, formState.get(), stateObject.get(), sourceElement.get()))
+                if (!dispatchNavigateEvent(loadType, request, false, formState.get(), event, stateObject.get()))
                     return;
                 if (!frame->page())
                     return;
@@ -1602,6 +1601,7 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
         if (newURL.protocolIsJavaScript() || (documentLoader() && documentLoader()->isInitialAboutBlank()))
             historyHandling = NavigationHistoryBehavior::Replace;
     }
+    frameLoadRequest.setNavigationHistoryBehavior(historyHandling);
     action.setNavigationAPIType(determineNavigationType(newLoadType, historyHandling));
     if (privateClickMeasurement && frame->isMainFrame())
         action.setPrivateClickMeasurement(WTFMove(*privateClickMeasurement));
@@ -1638,8 +1638,7 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
     // exactly the same so pages with '#' links and DHTML side effects
     // work properly.
     if (shouldPerformFragmentNavigation(isFormSubmission, httpMethod, newLoadType, newURL)) {
-        RefPtr sourceElement = event ? dynamicDowncast<Element>(event->target()) : nullptr;
-        if (!dispatchNavigateEvent(newURL, newLoadType, action.downloadAttribute(), historyHandling, true, formState.get(), nullptr, sourceElement.get()))
+        if (!dispatchNavigateEvent(newLoadType, frameLoadRequest, true, formState.get(), event))
             return;
 
         oldDocumentLoader->setTriggeringAction(WTFMove(action));
@@ -1654,8 +1653,7 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
     }
 
     if (isSameOrigin && newLoadType != FrameLoadType::Reload) {
-        RefPtr sourceElement = event ? dynamicDowncast<Element>(event->target()) : nullptr;
-        if (!dispatchNavigateEvent(newURL, newLoadType, action.downloadAttribute(), historyHandling, false, formState.get(), nullptr, sourceElement.get()))
+        if (!dispatchNavigateEvent(newLoadType, frameLoadRequest, false, formState.get(), event))
             return;
     }
 
@@ -3565,6 +3563,7 @@ void FrameLoader::loadPostRequest(FrameLoadRequest&& request, const String& refe
     action.setLockBackForwardList(request.lockBackForwardList());
     action.setShouldReplaceDocumentIfJavaScriptURL(request.shouldReplaceDocumentIfJavaScriptURL());
     action.setNewFrameOpenerPolicy(request.newFrameOpenerPolicy());
+    action.setNavigationAPIType(determineNavigationType(loadType, request.navigationHistoryBehavior()));
 
     if (!frameName.isEmpty()) {
         // The search for a target frame is done earlier in the case of form submission.
@@ -3593,7 +3592,7 @@ void FrameLoader::loadPostRequest(FrameLoadRequest&& request, const String& refe
     }
 
     if (request.protectedRequesterSecurityOrigin()->isSameOriginDomain(frame->protectedDocument()->protectedSecurityOrigin().get())) {
-        if (!dispatchNavigateEvent(url, loadType, action.downloadAttribute(), request.navigationHistoryBehavior(), false, formState.get()))
+        if (!dispatchNavigateEvent(loadType, request, false, formState.get()))
             return completionHandler();
     }
 
@@ -4351,7 +4350,7 @@ RefPtr<Frame> FrameLoader::findFrameForNavigation(const AtomString& name, Docume
     return frame;
 }
 
-bool FrameLoader::dispatchNavigateEvent(const URL& newURL, FrameLoadType loadType, const AtomString& downloadAttribute, NavigationHistoryBehavior historyHandling, bool isSameDocument, FormState* formState, SerializedScriptValue* classicHistoryAPIState, Element* sourceElement)
+bool FrameLoader::dispatchNavigateEvent(FrameLoadType loadType, const FrameLoadRequest& request, bool isSameDocument, FormState* formState, Event* event, SerializedScriptValue* classicHistoryAPIState)
 {
     RefPtr document = m_frame->document();
     if (!document || !document->settings().navigationAPIEnabled())
@@ -4359,13 +4358,17 @@ bool FrameLoader::dispatchNavigateEvent(const URL& newURL, FrameLoadType loadTyp
     RefPtr window = document->window();
     if (!window)
         return true;
-    // Download events are handled later in PolicyChecker::checkNavigationPolicy().
-    if (!downloadAttribute.isNull())
+    if (request.skipNavigateEvent())
         return true;
+    // Download events are handled later in PolicyChecker::checkNavigationPolicy().
+    if (!request.downloadAttribute().isNull())
+        return true;
+
+    const URL& newURL = request.resourceRequest().url();
     if (!isSameDocument && !newURL.hasFetchScheme())
         return true;
 
-    auto navigationType = determineNavigationType(loadType, historyHandling);
+    auto navigationType = determineNavigationType(loadType, request.navigationHistoryBehavior());
 
     if (m_policyDocumentLoader && m_policyDocumentLoader->triggeringAction().isFromNavigationAPI()) {
         auto& action = m_policyDocumentLoader->triggeringAction();
@@ -4379,11 +4382,13 @@ bool FrameLoader::dispatchNavigateEvent(const URL& newURL, FrameLoadType loadTyp
     if (navigationType == NavigationNavigationType::Traverse)
         return true;
 
+    RefPtr sourceElement = event ? dynamicDowncast<Element>(event->target()) : nullptr;
+
     // If sourceElement is from a different frame, it should be null.
     if (sourceElement && sourceElement->document().frame() != m_frame.ptr())
         sourceElement = nullptr;
 
-    return window->protectedNavigation()->dispatchPushReplaceReloadNavigateEvent(newURL, navigationType, isSameDocument, formState, classicHistoryAPIState, sourceElement);
+    return window->protectedNavigation()->dispatchPushReplaceReloadNavigateEvent(newURL, navigationType, isSameDocument, formState, classicHistoryAPIState, sourceElement.get());
 }
 
 void FrameLoader::loadSameDocumentItem(HistoryItem& item)

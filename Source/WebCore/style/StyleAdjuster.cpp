@@ -459,7 +459,7 @@ void Adjuster::adjustFromBuilder(RenderStyle& style)
     // Do some adjustments that don't depend on element or parent style and are safe to cache.
     // This allows copy-on-write to trigger before caching.
 
-    if (style.hasAutoSpecifiedZIndex()) {
+    if (style.specifiedZIndex().isAuto()) {
         if (shouldTreatAutoZIndexAsZero(style))
             style.setUsedZIndex(0);
     } else if (style.position() != PositionType::Static)
@@ -564,7 +564,7 @@ void Adjuster::adjust(RenderStyle& style) const
     }
 
     auto hasAutoZIndex = [](const RenderStyle& style, const RenderStyle& parentBoxStyle, const Element* element) {
-        if (style.hasAutoSpecifiedZIndex())
+        if (style.specifiedZIndex().isAuto())
             return true;
 
         // SVG2: Contrary to the rules in CSS 2.1, the z-index property applies to all SVG elements regardless
@@ -613,7 +613,7 @@ void Adjuster::adjust(RenderStyle& style) const
             || isInTopLayerOrBackdrop(style, m_element.get()))
             style.setUsedZIndex(0);
         else
-            style.setHasAutoUsedZIndex();
+            style.setUsedZIndex(CSS::Keyword::Auto { });
     } else
         style.setUsedZIndex(style.specifiedZIndex());
 
@@ -708,7 +708,7 @@ void Adjuster::adjust(RenderStyle& style) const
 
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
     // Touch overflow scrolling creates a stacking context.
-    if (style.hasAutoUsedZIndex() && style.overflowScrolling() == Style::WebkitOverflowScrolling::Touch && (isScrollableOverflow(style.overflowX()) || isScrollableOverflow(style.overflowY())))
+    if (style.usedZIndex().isAuto() && style.overflowScrolling() == Style::WebkitOverflowScrolling::Touch && (isScrollableOverflow(style.overflowX()) || isScrollableOverflow(style.overflowY())))
         style.setUsedZIndex(0);
 #endif
 
@@ -903,7 +903,7 @@ void Adjuster::adjustSVGElementStyle(RenderStyle& style, const SVGElement& svgEl
     // - a property defined in another specification is applied and that property is defined to establish a stacking context in SVG
     //
     // Some of the rules above were already enforced in StyleResolver::adjust() - for those cases assertions were added.
-    if (svgElement.document().settings().layerBasedSVGEngineEnabled() && style.hasAutoUsedZIndex()) {
+    if (svgElement.document().settings().layerBasedSVGEngineEnabled() && style.usedZIndex().isAuto()) {
         // adjust() has already assigned a z-index of 0 if clip / filter is present or the element is the root element.
         ASSERT(!style.hasClipPath());
         ASSERT(!style.hasFilter());
@@ -944,7 +944,7 @@ void Adjuster::adjustAnimatedStyle(RenderStyle& style, OptionSet<AnimationImpact
     // It's important to not clobber an existing used z-index, since an earlier animation may have set it, but we
     // may still need to update the used z-index value from the specified value.
     
-    if (style.hasAutoUsedZIndex() && impact.contains(AnimationImpact::ForcesStackingContext))
+    if (style.usedZIndex().isAuto() && impact.contains(AnimationImpact::ForcesStackingContext))
         style.setUsedZIndex(0);
 }
 

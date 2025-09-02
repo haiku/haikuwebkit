@@ -81,7 +81,7 @@ public:
 
     ~IntersectionObserver();
 
-    Document* trackingDocument() const { return m_root ? &m_root->document() : m_implicitRootDocument.get(); }
+    Document* trackingDocument() const;
 
     ContainerNode* root() const { return m_root.get(); }
     String rootMargin() const;

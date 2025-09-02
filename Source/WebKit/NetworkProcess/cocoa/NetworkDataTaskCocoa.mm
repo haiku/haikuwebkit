@@ -247,6 +247,11 @@ NetworkDataTaskCocoa::NetworkDataTaskCocoa(NetworkSession& session, NetworkDataT
     enableAdvancedPrivacyProtections(mutableRequest.get(), advancedPrivacyProtections);
 #endif
 
+#if HAVE(STRICT_FAIL_CLOSED)
+    if (advancedPrivacyProtections.contains(WebCore::AdvancedPrivacyProtections::StrictFailClosed))
+        [mutableRequest _setPrivacyProxyStrictFailClosed:YES];
+#endif
+
     if (advancedPrivacyProtections.contains(WebCore::AdvancedPrivacyProtections::FailClosedForUnreachableHosts))
         [mutableRequest _setPrivacyProxyFailClosedForUnreachableHosts:YES];
 

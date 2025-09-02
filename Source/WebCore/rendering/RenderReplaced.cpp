@@ -453,12 +453,14 @@ static bool isVideoWithDefaultObjectSize(const RenderReplaced* maybeVideo)
 void RenderReplaced::computeAspectRatioInformationForRenderBox(RenderBox* contentRenderer, FloatSize& constrainedSize, FloatSize& preferredAspectRatio) const
 {
     FloatSize intrinsicSize;
-    if (shouldApplySizeOrInlineSizeContainment())
-        std::tie(intrinsicSize, preferredAspectRatio) = RenderReplaced::computeIntrinsicSizeAndPreferredAspectRatio();
-    else if (contentRenderer) {
-        if (auto* renderReplaced = dynamicDowncast<RenderReplaced>(contentRenderer))
-            std::tie(intrinsicSize, preferredAspectRatio) = renderReplaced->computeIntrinsicSizeAndPreferredAspectRatio();
-
+    if (shouldApplySizeOrInlineSizeContainment()) {
+        intrinsicSize = RenderReplaced::computeIntrinsicSize();
+        preferredAspectRatio = RenderReplaced::preferredAspectRatio();
+    } else if (contentRenderer) {
+        if (auto* renderReplaced = dynamicDowncast<RenderReplaced>(contentRenderer)) {
+            intrinsicSize = renderReplaced->computeIntrinsicSize();
+            preferredAspectRatio = renderReplaced->preferredAspectRatio();
+        }
         if (style().aspectRatio().isRatio() || (style().aspectRatio().isAutoAndRatio() && preferredAspectRatio.isEmpty()))
             preferredAspectRatio = FloatSize::narrowPrecision(style().aspectRatioWidth().value, style().aspectRatioHeight().value);
 
@@ -480,7 +482,8 @@ void RenderReplaced::computeAspectRatioInformationForRenderBox(RenderBox* conten
             intrinsicSize = intrinsicSize.transposedSize();
         }
     } else {
-        std::tie(intrinsicSize, preferredAspectRatio) = computeIntrinsicSizeAndPreferredAspectRatio();
+        intrinsicSize = computeIntrinsicSize();
+        preferredAspectRatio = this->preferredAspectRatio();
         if (!preferredAspectRatio.isEmpty() && !intrinsicSize.isZero())
             m_intrinsicSize = LayoutSize(isHorizontalWritingMode() ? intrinsicSize : intrinsicSize.transposedSize());
     }
@@ -557,7 +560,14 @@ double RenderReplaced::computeIntrinsicAspectRatio() const
     return intrinsicRatio.aspectRatioDouble();
 }
 
-std::pair<FloatSize, FloatSize> RenderReplaced::computeIntrinsicSizeAndPreferredAspectRatio() const
+FloatSize RenderReplaced::computeIntrinsicSize() const
+{
+    // If there's an embeddedContentBox() of a remote, referenced document available, this code-path should never be used.
+    ASSERT(!embeddedContentBox() || shouldApplySizeOrInlineSizeContainment());
+    return { intrinsicLogicalWidth(), intrinsicLogicalHeight() };
+}
+
+FloatSize RenderReplaced::preferredAspectRatio() const
 {
     // If there's an embeddedContentBox() of a remote, referenced document available, this code-path should never be used.
     ASSERT(!embeddedContentBox() || shouldApplySizeOrInlineSizeContainment());
@@ -567,17 +577,17 @@ std::pair<FloatSize, FloatSize> RenderReplaced::computeIntrinsicSizeAndPreferred
     if (style().hasAspectRatio()) {
         preferredAspectRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
         if (style().aspectRatio().isRatio() || isVideoWithDefaultObjectSize(this))
-            return { intrinsicSize, preferredAspectRatio };
+            return preferredAspectRatio;
     }
     // Figure out if we need to compute an intrinsic ratio.
     if (!RenderBox::hasIntrinsicAspectRatio() && !isRenderOrLegacyRenderSVGRoot())
-        return { intrinsicSize, preferredAspectRatio };
+        return preferredAspectRatio;
 
     // After supporting contain-intrinsic-size, the intrinsicSize of size containment is not always empty.
     if (intrinsicSize.isEmpty() || shouldApplySizeContainment())
-        return { intrinsicSize, preferredAspectRatio };
+        return preferredAspectRatio;
 
-    return { intrinsicSize, { intrinsicSize.width(), intrinsicSize.height() } };
+    return intrinsicSize;
 }
 
 LayoutUnit RenderReplaced::computeConstrainedLogicalWidth() const
@@ -799,7 +809,7 @@ void RenderReplaced::computePreferredLogicalWidths()
     clearNeedsPreferredWidthsUpdate();
 }
 
-VisiblePosition RenderReplaced::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer* fragment)
+PositionWithAffinity RenderReplaced::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer* fragment)
 {
     auto [top, bottom] = [&]() -> std::pair<float, float> {
         if (auto run = InlineIterator::boxFor(*this)) {
@@ -814,15 +824,15 @@ VisiblePosition RenderReplaced::positionForPoint(const LayoutPoint& point, HitTe
     LayoutUnit lineDirectionPosition = isHorizontalWritingMode() ? point.x() + x() : point.y() + y();
     
     if (blockDirectionPosition < top)
-        return createVisiblePosition(caretMinOffset(), Affinity::Downstream); // coordinates are above
-    
+        return createPositionWithAffinity(caretMinOffset(), Affinity::Downstream); // coordinates are above
+
     if (blockDirectionPosition >= bottom)
-        return createVisiblePosition(caretMaxOffset(), Affinity::Downstream); // coordinates are below
-    
+        return createPositionWithAffinity(caretMaxOffset(), Affinity::Downstream); // coordinates are below
+
     if (element()) {
         if (lineDirectionPosition <= logicalLeft() + (logicalWidth() / 2))
-            return createVisiblePosition(0, Affinity::Downstream);
-        return createVisiblePosition(1, Affinity::Downstream);
+            return createPositionWithAffinity(0, Affinity::Downstream);
+        return createPositionWithAffinity(1, Affinity::Downstream);
     }
 
     return RenderBox::positionForPoint(point, source, fragment);

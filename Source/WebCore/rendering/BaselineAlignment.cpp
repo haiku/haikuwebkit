@@ -112,6 +112,28 @@ void BaselineAlignmentState::updateSharedGroup(const RenderBox& alignmentSubject
     group.update(alignmentSubject, ascent);
 }
 
+FontBaseline BaselineAlignmentState::dominantBaseline(WritingMode writingMode)
+{
+    // https://drafts.csswg.org/css-inline-3/#alignment-baseline-property
+    // https://drafts.csswg.org/css-inline-3/#dominant-baseline-property
+    return writingMode.prefersCentralBaseline() ? FontBaseline::Central : FontBaseline::Alphabetic;
+}
+
+LayoutUnit BaselineAlignmentState::synthesizedBaseline(const RenderBox& box, FontBaseline baselineType, WritingMode writingModeForSynthesis, LineDirection lineDirection, BaselineSynthesisEdge edge)
+{
+    auto boxSize = lineDirection == LineDirection::Horizontal ? box.height() : box.width();
+    if (edge == BaselineSynthesisEdge::ContentBox)
+        boxSize -= lineDirection == LineDirection::Horizontal ? box.verticalBorderAndPaddingExtent() : box.horizontalBorderAndPaddingExtent();
+    else if (edge == BaselineSynthesisEdge::MarginBox)
+        boxSize += lineDirection == LineDirection::Horizontal ? box.verticalMarginExtent() : box.horizontalMarginExtent();
+
+    if (baselineType == FontBaseline::Alphabetic) {
+        auto shouldTreatAsHorizontal = lineDirection == LineDirection::Horizontal
+            || (writingModeForSynthesis.isSidewaysOrientation() && writingModeForSynthesis.computedWritingMode() == StyleWritingMode::VerticalRl);
+        return shouldTreatAsHorizontal ? boxSize : LayoutUnit();
+    }
+    return boxSize / 2;
+}
 
 WritingMode BaselineAlignmentState::usedWritingModeForBaselineAlignment(LogicalBoxAxis alignmentContextAxis,
     WritingMode alignmentContainerWritingMode, WritingMode aligmentSubjectWritingMode)

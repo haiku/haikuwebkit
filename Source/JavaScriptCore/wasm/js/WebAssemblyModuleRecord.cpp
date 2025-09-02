@@ -473,8 +473,8 @@ void WebAssemblyModuleRecord::initializeExports(JSGlobalObject* globalObject)
 
     if (moduleInformation.hasMemoryImport()) {
         // Usually at this point the module's code block in any memory mode should be
-        // runnable due to the LLint tier code being shared among all modes. However,
-        // if LLInt is disabled, it is possible that the code needs to be compiled at
+        // runnable due to the IPInt tier code being shared among all modes. However,
+        // if IPInt is disabled, it is possible that the code needs to be compiled at
         // this point when we know which memory mode to use.
         Wasm::CalleeGroup* calleeGroup = m_instance->calleeGroup();
         if (!calleeGroup || !calleeGroup->runnable()) {

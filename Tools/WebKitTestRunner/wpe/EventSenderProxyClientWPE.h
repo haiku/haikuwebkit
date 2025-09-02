@@ -67,6 +67,10 @@ private:
         int y { 0 };
     };
 
+    struct TouchPointContext;
+
+    std::function<bool(TouchPoint&)> pointProcessor(const TouchPointContext&);
+
     Vector<TouchPoint> m_touchPoints;
     unsigned m_touchModifiers { 0 };
 #endif // ENABLE(TOUCH_EVENTS)

@@ -782,7 +782,7 @@ Vector<Ref<MediaStream>> LibWebRTCMediaEndpoint::mediaStreamsFromRTCStreamIds(co
 PeerConnectionBackend::TransceiverStates LibWebRTCMediaEndpoint::generateTransceiverStates(const Vector<LibWebRTCMediaEndpointTransceiverState>& rtcTransceiverStates)
 {
     return WTF::map(rtcTransceiverStates, [this](auto& state) -> PeerConnectionBackend::TransceiverState {
-        return { WTFMove(state.mid), mediaStreamsFromRTCStreamIds(state.receiverStreamIds), state.firedDirection };
+        return { state.mid, mediaStreamsFromRTCStreamIds(state.receiverStreamIds), state.firedDirection };
     });
 }
 

@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "Identifier.h"
-#include "Strong.h"
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/Strong.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RobinHoodHashMap.h>
 #include <wtf/TZoneMalloc.h>

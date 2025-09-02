@@ -103,6 +103,46 @@ promise_test(async t => {
     await model.ready;
 }, `<model> reload visible model after source change`);
 
+promise_test(async t => {
+    const [model, source] = createModelAndSource(t, "resources/heart.usdz");
+    model.className = "model-element";
+    model.setAttribute("stage-mode", "orbit");
+
+    scrollElementIntoView(model);
+    await waitForModelState(model, "Loaded");
+    assert_true(internals.isModelElementIntersectingViewport(model), "first load viewport check");
+
+    await sleepForSeconds(0.5); // make sure entityTransform is synced
+    const firstLoadTransform = model.entityTransform;
+    assert_not_equals(firstLoadTransform, null, "entityTransform should not be null after first load");
+
+    window.scrollTo(0, 0);
+    await waitForModelState(model, "Unloaded");
+    assert_false(internals.isModelElementIntersectingViewport(model), "first unload viewport check");
+
+    scrollElementIntoView(model);
+    await waitForModelState(model, "Loaded");
+    assert_true(internals.isModelElementIntersectingViewport(model), "second load viewport check");
+
+    await sleepForSeconds(0.5); // make sure entityTransform is synced
+    const secondLoadTransform = model.entityTransform;
+    assert_not_equals(secondLoadTransform, null, "entityTransform should not be null after second load");
+    assert_equals(firstLoadTransform.toString(), secondLoadTransform.toString(), "entityTransform should be preserved after second load");
+
+    window.scrollTo(0, 0);
+    await waitForModelState(model, "Unloaded");
+    assert_false(internals.isModelElementIntersectingViewport(model), "second unload viewport check");
+
+    scrollElementIntoView(model);
+    await waitForModelState(model, "Loaded");
+    assert_true(internals.isModelElementIntersectingViewport(model), "third load viewport check");
+
+    await sleepForSeconds(0.5); // make sure entityTransform is synced
+    const thirdLoadTransform = model.entityTransform;
+    assert_not_equals(thirdLoadTransform, null, "entityTransform should not be null after third load");
+    assert_equals(firstLoadTransform.toString(), thirdLoadTransform.toString(), "entityTransform should be preserved after third load");
+
+}, `<model> stage-mode orbit survives multiple unload-reload cycles`);
 
 </script>
 </body>

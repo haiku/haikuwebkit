@@ -25,12 +25,10 @@
 
 #pragma once
 
-#if ENABLE(WEBXR_LAYERS)
-
 #include "GPUTextureFormat.h"
 #include "GPUTextureUsage.h"
 #include "WebGPUXRProjectionLayer.h"
-#include "XRTextureType.h"
+#include "XRCanvasConfiguration.h"
 
 namespace WebCore {
 
@@ -49,12 +47,10 @@ struct XRGPUProjectionLayerInit {
         };
     }
 
-    GPUTextureFormat colorFormat { GPUTextureFormat::Bgra8unormSRGB };
+    GPUTextureFormat colorFormat { GPUTextureFormat::Bgra8unorm };
     std::optional<GPUTextureFormat> depthStencilFormat;
     GPUTextureUsageFlags textureUsage { GPUTextureUsage::RENDER_ATTACHMENT };
     double scaleFactor { 1.0 };
 };
 
 } // namespace WebCore
-
-#endif // ENABLE(WEBXR_LAYERS)

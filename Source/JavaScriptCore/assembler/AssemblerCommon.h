@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "OSCheck.h"
+#include <JavaScriptCore/OSCheck.h>
 #include <optional>
 #include <wtf/Atomics.h>
 #include <wtf/MathExtras.h>

@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "ClassInfo.h"
-#include "JSCast.h"
-#include "JSTypeInfo.h"
-#include "PropertyOffset.h"
-#include "PropertySlot.h"
+#include <JavaScriptCore/ClassInfo.h>
+#include <JavaScriptCore/JSCast.h>
+#include <JavaScriptCore/JSTypeInfo.h>
+#include <JavaScriptCore/PropertyOffset.h>
+#include <JavaScriptCore/PropertySlot.h>
 #include <wtf/FixedVector.h>
 
 namespace JSC {

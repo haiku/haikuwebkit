@@ -27,6 +27,7 @@
 #include "WPEDisplayWayland.h"
 
 #include "WPEClipboardWaylandPrivate.h"
+#include "WPEDRMDevicePrivate.h"
 #include "WPEDisplayWaylandPrivate.h"
 #include "WPEEGLError.h"
 #include "WPEExtensions.h"
@@ -62,7 +63,6 @@
 #include <epoxy/egl.h>
 
 #if USE(LIBDRM)
-#include "LibDRMUtilities.h"
 #include <xf86drm.h>
 #endif
 
@@ -100,8 +100,7 @@ struct _WPEDisplayWaylandPrivate {
     Vector<std::pair<uint32_t, uint64_t>> linuxDMABufFormats;
     std::unique_ptr<WPE::WaylandSeat> wlSeat;
     std::unique_ptr<WPE::WaylandCursor> wlCursor;
-    CString drmDevice;
-    CString drmRenderNode;
+    GRefPtr<WPEDRMDevice> drmDevice;
     Vector<GRefPtr<WPEScreen>, 1> screens;
     GRefPtr<WPEClipboard> clipboard;
     GRefPtr<GSource> eventSource;
@@ -340,10 +339,10 @@ static const struct zwp_linux_dmabuf_feedback_v1_listener linuxDMABufFeedbackLis
             return;
 
         auto* priv = WPE_DISPLAY_WAYLAND(data)->priv;
-        if (drmDevice->available_nodes & (1 << DRM_NODE_PRIMARY))
-            priv->drmDevice = drmDevice->nodes[DRM_NODE_PRIMARY];
-        if (drmDevice->available_nodes & (1 << DRM_NODE_RENDER))
-            priv->drmRenderNode = drmDevice->nodes[DRM_NODE_RENDER];
+        if (drmDevice->available_nodes & (1 << DRM_NODE_PRIMARY)) {
+            priv->drmDevice = adoptGRef(wpe_drm_device_new(drmDevice->nodes[DRM_NODE_PRIMARY],
+                drmDevice->available_nodes & (1 << DRM_NODE_RENDER) ? drmDevice->nodes[DRM_NODE_RENDER] : nullptr));
+        }
         drmFreeDevice(&drmDevice);
     },
     // tranche_done
@@ -398,10 +397,17 @@ static void wpeDisplayWaylandInitializeDRMDeviceFromEGL(WPEDisplayWayland* displ
         return;
 
     const char* extensions = eglQueryDeviceStringEXT(eglDevice, EGL_EXTENSIONS);
-    if (epoxy_extension_in_string(extensions, "EGL_EXT_device_drm"))
-        priv->drmDevice = eglQueryDeviceStringEXT(eglDevice, EGL_DRM_DEVICE_FILE_EXT);
+    if (!epoxy_extension_in_string(extensions, "EGL_EXT_device_drm"))
+        return;
+
+    const char* drmDevice = eglQueryDeviceStringEXT(eglDevice, EGL_DRM_DEVICE_FILE_EXT);
+    if (!drmDevice)
+        return;
+
+    const char* drmRenderNode = nullptr;
     if (epoxy_extension_in_string(extensions, "EGL_EXT_device_drm_render_node"))
-        priv->drmRenderNode = eglQueryDeviceStringEXT(eglDevice, EGL_DRM_RENDER_NODE_FILE_EXT);
+        drmRenderNode = eglQueryDeviceStringEXT(eglDevice, EGL_DRM_RENDER_NODE_FILE_EXT);
+    priv->drmDevice = adoptGRef(wpe_drm_device_new(drmDevice, drmRenderNode));
 }
 
 static gboolean wpeDisplayWaylandSetup(WPEDisplayWayland* display, GError** error)
@@ -451,15 +457,15 @@ static gboolean wpeDisplayWaylandSetup(WPEDisplayWayland* display, GError** erro
             g_debug("Compositor does not support zwp_linux_dmabuf_v1_get_default_feedback");
 #endif
         zwp_linux_dmabuf_v1_add_listener(priv->linuxDMABuf, &linuxDMABufListener, display);
-        wl_display_roundtrip(priv->wlDisplay);
     }
 
-    if (priv->drmDevice.isNull())
+    if (priv->wlSeat || priv->linuxDMABuf || !priv->screens.isEmpty())
+        wl_display_roundtrip(priv->wlDisplay);
+
+    if (!priv->drmDevice)
         wpeDisplayWaylandInitializeDRMDeviceFromEGL(display);
-#if USE(LIBDRM)
-    if (priv->drmDevice.isNull())
-        std::tie(priv->drmDevice, priv->drmRenderNode) = lookupNodesWithLibDRM();
-#endif
+    if (!priv->drmDevice)
+        priv->drmDevice = wpeDRMDeviceCreateForDevice(nullptr);
 
     return TRUE;
 }
@@ -542,7 +548,7 @@ static WPEBufferDMABufFormats* wpeDisplayWaylandGetPreferredDMABufFormats(WPEDis
     if (!priv->linuxDMABuf)
         return nullptr;
 
-    auto* builder = wpe_buffer_dma_buf_formats_builder_new(priv->drmDevice.data());
+    auto* builder = wpe_buffer_dma_buf_formats_builder_new(priv->drmDevice.get());
     wpe_buffer_dma_buf_formats_builder_append_group(builder, nullptr, WPE_BUFFER_DMA_BUF_FORMAT_USAGE_RENDERING);
     for (const auto& format : priv->linuxDMABufFormats)
         wpe_buffer_dma_buf_formats_builder_append_format(builder, format.first, format.second);
@@ -564,17 +570,9 @@ static WPEScreen* wpeDisplayWaylandGetScreen(WPEDisplay* display, guint index)
     return priv->screens[index].get();
 }
 
-static const char* wpeDisplayWaylandGetDRMDevice(WPEDisplay* display)
+static WPEDRMDevice* wpeDisplayWaylandGetDRMDevice(WPEDisplay* display)
 {
-    return WPE_DISPLAY_WAYLAND(display)->priv->drmDevice.data();
-}
-
-static const char* wpeDisplayWaylandGetDRMRenderNode(WPEDisplay* display)
-{
-    auto* priv = WPE_DISPLAY_WAYLAND(display)->priv;
-    if (!priv->drmRenderNode.isNull())
-        return priv->drmRenderNode.data();
-    return priv->drmDevice.data();
+    return WPE_DISPLAY_WAYLAND(display)->priv->drmDevice.get();
 }
 
 static gboolean wpeDisplayWaylandUseExplicitSync(WPEDisplay* display)
@@ -673,7 +671,6 @@ static void wpe_display_wayland_class_init(WPEDisplayWaylandClass* displayWaylan
     displayClass->get_n_screens = wpeDisplayWaylandGetNScreens;
     displayClass->get_screen = wpeDisplayWaylandGetScreen;
     displayClass->get_drm_device = wpeDisplayWaylandGetDRMDevice;
-    displayClass->get_drm_render_node = wpeDisplayWaylandGetDRMRenderNode;
     displayClass->use_explicit_sync = wpeDisplayWaylandUseExplicitSync;
 }
 

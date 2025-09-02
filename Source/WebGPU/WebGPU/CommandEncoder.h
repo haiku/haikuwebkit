@@ -37,6 +37,7 @@
 #import <wtf/RetainReleaseSwift.h>
 #import <wtf/SwiftCXXThunk.h>
 #import <wtf/TZoneMalloc.h>
+#import <wtf/TaggedPtr.h>
 #import <wtf/Vector.h>
 #import <wtf/WeakPtr.h>
 

@@ -119,6 +119,14 @@ private:
     VisiblePosition m_position;
 };
 
+struct RevealSelectionOptions {
+    SelectionRevealMode selectionRevealMode { SelectionRevealMode::Reveal };
+    ScrollAlignment scrollAlignment { ScrollAlignment::alignCenterIfNeeded };
+    RevealExtentOption revealExtentOption { RevealExtentOption::DoNotRevealExtent };
+    ScrollBehavior scrollBehavior { ScrollBehavior::Instant };
+    OnlyAllowForwardScrolling onlyAllowForwardScrolling { OnlyAllowForwardScrolling::No };
+};
+
 class FrameSelection final : private CaretBase, public CaretAnimationClient, public CanMakeCheckedPtr<FrameSelection> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(FrameSelection, WEBCORE_EXPORT);
     WTF_MAKE_NONCOPYABLE(FrameSelection);
@@ -275,7 +283,7 @@ public:
 
     WEBCORE_EXPORT RefPtr<HTMLFormElement> currentForm() const;
 
-    WEBCORE_EXPORT void revealSelection(SelectionRevealMode = SelectionRevealMode::Reveal, const ScrollAlignment& = ScrollAlignment::alignCenterIfNeeded, RevealExtentOption = RevealExtentOption::DoNotRevealExtent, ScrollBehavior = ScrollBehavior::Instant, OnlyAllowForwardScrolling =  OnlyAllowForwardScrolling::No);
+    WEBCORE_EXPORT void revealSelection(const RevealSelectionOptions& = { });
     WEBCORE_EXPORT void setSelectionFromNone();
 
     bool shouldShowBlockCursor() const { return m_shouldShowBlockCursor; }

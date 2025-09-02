@@ -48,6 +48,12 @@ class PlatformWheelEvent;
 class VoidCallback;
 class WeakPtrImplWithEventTargetData;
 
+enum class PointerLockRequestResult : uint8_t {
+    Success,
+    Failure,
+    Unsupported
+};
+
 class PointerLockController {
     WTF_MAKE_NONCOPYABLE(PointerLockController);
     WTF_MAKE_TZONE_ALLOCATED(PointerLockController);

@@ -35,7 +35,7 @@
 
 #ifdef __APPLE__
 
-#include "pas_probabilistic_guard_malloc_allocator.h"
+#include "pas_backtrace_metadata.h"
 #include <mach/mach_types.h>
 #include <mach/vm_types.h>
 
@@ -47,7 +47,7 @@ extern "C" {
 typedef void *(*crash_reporter_memory_reader_t)(task_t task, vm_address_t address, size_t size);
 
 /* Crash Report Version number. This must be in sync between ReportCrash and libpas to generate a report. */
-const unsigned pas_crash_report_version = 3;
+const unsigned pas_crash_report_version = 4;
 
 /* Report sent back to the ReportCrash process. */
 typedef struct pas_report_crash_pgm_report pas_report_crash_pgm_report;
@@ -59,6 +59,7 @@ struct pas_report_crash_pgm_report {
     size_t allocation_size;
     pas_backtrace_metadata* alloc_backtrace;
     pas_backtrace_metadata* dealloc_backtrace;
+    bool pgm_has_been_used;
 };
 #endif /* __APPLE__ */
 

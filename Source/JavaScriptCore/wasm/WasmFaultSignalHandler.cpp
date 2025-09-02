@@ -74,11 +74,11 @@ static SignalAction trapHandler(Signal signal, SigInfo& sigInfo, PlatformRegiste
 #if ENABLE(JIT)
     dataLogLnIf(WasmFaultSignalHandlerInternal::verbose, "JIT memory start: ", RawPointer(startOfFixedExecutableMemoryPool()), " end: ", RawPointer(endOfFixedExecutableMemoryPool()));
 #endif
-    dataLogLnIf(WasmFaultSignalHandlerInternal::verbose, "WasmLLInt memory start: ", RawPointer(untagCodePtr<void*, CFunctionPtrTag>(LLInt::wasmLLIntPCRangeStart)), " end: ", RawPointer(untagCodePtr<void*, CFunctionPtrTag>(LLInt::wasmLLIntPCRangeEnd)));
-    // First we need to make sure we are in JIT code or Wasm LLInt code before we can aquire any locks. Otherwise,
+    dataLogLnIf(WasmFaultSignalHandlerInternal::verbose, "WasmIPInt memory start: ", RawPointer(untagCodePtr<void*, CFunctionPtrTag>(LLInt::wasmIPIntPCRangeStart)), " end: ", RawPointer(untagCodePtr<void*, CFunctionPtrTag>(LLInt::wasmIPIntPCRangeEnd)));
+    // First we need to make sure we are in JIT code or Wasm IPInt code before we can aquire any locks. Otherwise,
     // we might have crashed in code that is already holding one of the locks we want to aquire.
     assertIsNotTagged(faultingInstruction);
-    if (isJITPC(faultingInstruction) || LLInt::isWasmLLIntPC(faultingInstruction)) {
+    if (isJITPC(faultingInstruction) || LLInt::isWasmIPIntPC(faultingInstruction)) {
         bool faultedInActiveGrowableMemory = false;
         {
             void* faultingAddress = sigInfo.faultingAddress;
@@ -89,7 +89,7 @@ static SignalAction trapHandler(Signal signal, SigInfo& sigInfo, PlatformRegiste
             dataLogLnIf(WasmFaultSignalHandlerInternal::verbose, "found active fast memory for faulting address");
 
             auto didFaultInWasm = [](void* faultingInstruction) -> std::tuple<bool, Wasm::Callee*> {
-                if (LLInt::isWasmLLIntPC(faultingInstruction))
+                if (LLInt::isWasmIPIntPC(faultingInstruction))
                     return { true, nullptr };
                 auto& calleeRegistry = NativeCalleeRegistry::singleton();
                 Locker locker { calleeRegistry.getLock() };

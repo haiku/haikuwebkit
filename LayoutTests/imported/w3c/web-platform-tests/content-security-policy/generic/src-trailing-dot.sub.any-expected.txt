@@ -1,0 +1,4 @@
+Blocked access to external URL http://localhost.:8800/content-security-policy/support/resource.py
+
+FAIL Fetch from host with trailing dot should be allowed by CSP. promise_test: Unhandled rejection with value: object "TypeError: Load failed"
+

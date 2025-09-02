@@ -634,6 +634,7 @@ void ModelProcessModelPlayerProxy::didFinishLoading(WebCore::REModelLoader& load
 
     if (m_entityTransformToRestore) {
         setEntityTransform(*m_entityTransformToRestore);
+        notifyModelPlayerOfEntityTransformChange();
         m_entityTransformToRestore = std::nullopt;
     } else {
         computeTransform(true);

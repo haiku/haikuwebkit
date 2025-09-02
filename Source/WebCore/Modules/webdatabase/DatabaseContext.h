@@ -65,7 +65,7 @@ public:
     bool allowDatabaseAccess() const;
     void databaseExceededQuota(const String& name, DatabaseDetails);
 
-    Document* document() const { return downcast<Document>(ActiveDOMObject::scriptExecutionContext()); }
+    Document* document() const;
     const SecurityOriginData& securityOrigin() const;
 
     bool isContextThread() const;

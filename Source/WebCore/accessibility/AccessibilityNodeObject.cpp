@@ -30,6 +30,7 @@
 #include "AccessibilityNodeObject.h"
 
 #include "AXLogger.h"
+#include "AXLoggerBase.h"
 #include "AXObjectCache.h"
 #include "AccessibilityImageMapLink.h"
 #include "AccessibilityLabel.h"
@@ -67,6 +68,7 @@
 #include "HTMLSelectElement.h"
 #include "HTMLSlotElement.h"
 #include "HTMLSummaryElement.h"
+#include "HTMLTableCellElement.h"
 #include "HTMLTextAreaElement.h"
 #include "HTMLTextFormControlElement.h"
 #include "HTMLVideoElement.h"
@@ -123,11 +125,6 @@ void AccessibilityNodeObject::init()
     m_initialized = true;
 #endif
     AccessibilityObject::init();
-}
-
-Ref<AccessibilityNodeObject> AccessibilityNodeObject::create(AXID axID, Node& node, AXObjectCache& cache)
-{
-    return adoptRef(*new AccessibilityNodeObject(axID, &node, cache));
 }
 
 void AccessibilityNodeObject::detachRemoteParts(AccessibilityDetachmentType detachmentType)
@@ -197,7 +194,7 @@ AccessibilityObject* AccessibilityNodeObject::nextSibling() const
 AccessibilityObject* AccessibilityNodeObject::ownerParentObject() const
 {
     auto owners = this->owners();
-    ASSERT(owners.size() <= 1);
+    AX_DEBUG_ASSERT(owners.size() <= 1);
     return owners.size() ? dynamicDowncast<AccessibilityObject>(owners.first().get()) : nullptr;
 }
 
@@ -343,6 +340,9 @@ AccessibilityRole AccessibilityNodeObject::determineAccessibilityRoleFromNode(Tr
         return AccessibilityRole::Legend;
     if (elementName == ElementName::HTML_canvas)
         return AccessibilityRole::Canvas;
+
+    if (is<HTMLTableCellElement>(*element))
+        return Accessibility::layoutTableCellRole;
 
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(*element))
         return roleFromInputElement(*input);
@@ -708,7 +708,6 @@ bool AccessibilityNodeObject::computeIsIgnored() const
     if (!node)
         return true;
 
-    // Handle non-rendered text that is exposed through aria-hidden=false.
     if (node->isTextNode() && !renderer()) {
         RefPtr parent = node->parentNode();
         // Fallback content in iframe nodes should be ignored.
@@ -1542,7 +1541,7 @@ VisiblePositionRange AccessibilityNodeObject::visiblePositionRangeForLine(unsign
 
     // iterate over the lines
     // FIXME: This is wrong when lineNumber is lineCount+1, because nextLinePosition takes you to the last offset of the last line.
-    VisiblePosition position = renderView->positionForPoint(IntPoint(), HitTestSource::User, nullptr);
+    auto position = renderView->visiblePositionForPoint(IntPoint(), HitTestSource::User);
     while (--lineCount) {
         auto previousLinePosition = position;
         position = nextLinePosition(position, 0);

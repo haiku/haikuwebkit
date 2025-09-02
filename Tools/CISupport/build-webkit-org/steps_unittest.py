@@ -413,6 +413,21 @@ class TestCompileWebKit(BuildStepMixinAdditions, unittest.TestCase):
         self.expectOutcome(result=SUCCESS, state_string='compiled')
         return self.runStep()
 
+    def test_custom_timeout_specified_in_factory(self):
+        self.setupStep(CompileWebKit(timeout=2 * 60 * 60))
+        self.setProperty('fullPlatform', 'ios-simulator-11')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(
+                workdir='wkdir',
+                timeout=7200,
+                logEnviron=True,
+                command=['perl', 'Tools/Scripts/build-webkit', '--no-fatal-warnings', '--release'],
+            ) + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='compiled')
+        return self.runStep()
+
     def test_success_architecture(self):
         self.setupStep(CompileWebKit())
         self.setProperty('platform', 'mac')

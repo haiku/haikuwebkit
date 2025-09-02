@@ -908,12 +908,9 @@ static ALWAYS_INLINE bool isSafeStringCharacter(LChar c, LChar terminator)
 template <SafeStringCharacterSet set>
 static ALWAYS_INLINE bool isSafeStringCharacter(char16_t c, char16_t terminator)
 {
-    if constexpr (set == SafeStringCharacterSet::Strict) {
-        if (!isLatin1(c))
-            return true;
-        return isSafeStringCharacter<set>(static_cast<LChar>(c), static_cast<LChar>(terminator));
-    } else
-        return (c >= ' ' && isLatin1(c) && c != '\\' && c != terminator) || (c == '\t');
+    if (!isLatin1(c))
+        return true;
+    return isSafeStringCharacter<set>(static_cast<LChar>(c), static_cast<LChar>(terminator));
 }
 
 template <SafeStringCharacterSet set>
@@ -957,8 +954,31 @@ ALWAYS_INLINE TokenType LiteralParser<CharType, reviverMode>::Lexer::lexString(L
             m_ptr = SIMD::find(std::span { m_ptr, m_end }, vectorMatch, scalarMatch);
         }
     } else {
-        while (m_ptr < m_end && isSafeStringCharacter<SafeStringCharacterSet::Sloppy>(*m_ptr, terminator))
-            ++m_ptr;
+        if constexpr (hint == JSONIdentifierHint::MaybeIdentifier) {
+            while (m_ptr < m_end && isSafeStringCharacterForIdentifier<SafeStringCharacterSet::Sloppy>(*m_ptr, terminator))
+                ++m_ptr;
+        } else {
+            using UnsignedType = std::make_unsigned_t<CharType>;
+            auto quoteMask = SIMD::splat<UnsignedType>(terminator);
+            constexpr auto escapeMask = SIMD::splat<UnsignedType>('\\');
+            constexpr auto controlMask = SIMD::splat<UnsignedType>(' ');
+            constexpr auto tabMask = SIMD::splat<UnsignedType>('\t');
+            auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
+                auto quotes = SIMD::equal(input, quoteMask);
+                auto escapes = SIMD::equal(input, escapeMask);
+                auto controls = SIMD::lessThan(input, controlMask);
+                auto notTabs = SIMD::bitNot(SIMD::equal(input, tabMask));
+                auto controlsExceptTabs = SIMD::bitAnd(notTabs, controls);
+                auto mask = SIMD::bitOr(quotes, escapes, controlsExceptTabs);
+                return SIMD::findFirstNonZeroIndex(mask);
+            };
+
+            auto scalarMatch = [&](auto character) ALWAYS_INLINE_LAMBDA {
+                return !isSafeStringCharacter<SafeStringCharacterSet::Sloppy>(character, terminator);
+            };
+
+            m_ptr = SIMD::find(std::span { m_ptr, m_end }, vectorMatch, scalarMatch);
+        }
     }
 
     if (m_ptr < m_end && *m_ptr == terminator) [[likely]] {

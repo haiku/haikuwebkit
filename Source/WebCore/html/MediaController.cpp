@@ -104,6 +104,11 @@ bool MediaController::everyElement(Function<bool(Ref<HTMLMediaElement>&&)>&& fun
     return isNonEmpty;
 }
 
+ScriptExecutionContext* MediaController::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
+};
+
 void MediaController::addMediaElement(HTMLMediaElement& element)
 {
     ASSERT(!m_mediaElements.contains(&element));

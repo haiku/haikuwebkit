@@ -88,6 +88,10 @@ LayerTreeHost::LayerTreeHost(WebPage& webPage, WebCore::PlatformDisplayID displa
         auto& rootLayer = m_sceneState->rootLayer();
 #if ENABLE(DAMAGE_TRACKING)
         rootLayer.setDamagePropagationEnabled(webPage.corePage()->settings().propagateDamagingInformation());
+        if (webPage.corePage()->settings().propagateDamagingInformation()) {
+            m_damageInGlobalCoordinateSpace = std::make_shared<Damage>(m_webPage.size());
+            rootLayer.setDamageInGlobalCoordinateSpace(m_damageInGlobalCoordinateSpace);
+        }
 #endif
         Locker locker { rootLayer.lock() };
         rootLayer.setAnchorPoint(FloatPoint3D(0, 0, 0));
@@ -415,6 +419,8 @@ void LayerTreeHost::attachLayer(CoordinatedPlatformLayer& layer)
 {
 #if ENABLE(DAMAGE_TRACKING)
     layer.setDamagePropagationEnabled(webPage().corePage()->settings().propagateDamagingInformation());
+    if (m_damageInGlobalCoordinateSpace)
+        layer.setDamageInGlobalCoordinateSpace(m_damageInGlobalCoordinateSpace);
 #endif
     m_sceneState->addLayer(layer);
 }

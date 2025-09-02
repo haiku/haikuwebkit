@@ -70,11 +70,6 @@ namespace WebKit {
 class LayerTreeHost;
 }
 
-namespace WTF {
-template<typename T> struct IsDeprecatedTimerSmartPointerException;
-template<> struct IsDeprecatedTimerSmartPointerException<WebKit::LayerTreeHost> : std::true_type { };
-}
-
 namespace WebKit {
 class CoordinatedSceneState;
 class WebPage;
@@ -237,6 +232,7 @@ private:
 #if ENABLE(DAMAGE_TRACKING)
     Lock m_frameDamageHistoryForTestingLock;
     Vector<WebCore::Region> m_frameDamageHistoryForTesting WTF_GUARDED_BY_LOCK(m_frameDamageHistoryForTestingLock);
+    std::shared_ptr<WebCore::Damage> m_damageInGlobalCoordinateSpace;
 #endif
 };
 

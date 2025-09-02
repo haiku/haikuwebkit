@@ -29,6 +29,7 @@
 #include "PlatformXRSystem.h"
 
 #include "PlatformXROpenXR.h"
+#include "WebPageProxy.h"
 #include <wtf/NeverDestroyed.h>
 
 namespace WebKit {

@@ -395,12 +395,7 @@ void WebUserContentControllerProxy::didPostMessage(WebPageProxyIdentifier pagePr
     if (!handler)
         return reply(makeUnexpected(String()));
 
-    if (!handler->client().supportsAsyncReply()) {
-        handler->client().didPostMessage(*page, WTFMove(frameInfoData), handler->world(), WTFMove(message));
-        return reply(makeUnexpected(String()));
-    }
-
-    handler->client().didPostMessageWithAsyncReply(*page, WTFMove(frameInfoData), handler->world(), WTFMove(message), WTFMove(reply));
+    handler->client().didPostMessage(*page, WTFMove(frameInfoData), handler->world(), WTFMove(message), WTFMove(reply));
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)

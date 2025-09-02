@@ -1177,6 +1177,36 @@ template<typename T, size_t N> TextStream& operator<<(TextStream& ts, const Comm
     return ts;
 }
 
+template<typename T> WTF::TextStream& operator<<(WTF::TextStream& ts, const SpaceSeparatedPoint<T>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<SpaceSeparatedPoint<T>>);
+    return ts;
+}
+
+template<typename T> WTF::TextStream& operator<<(WTF::TextStream& ts, const SpaceSeparatedSize<T>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<SpaceSeparatedSize<T>>);
+    return ts;
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const MinimallySerializingSpaceSeparatedSize<T>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<MinimallySerializingSpaceSeparatedSize<T>>);
+    return ts;
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const MinimallySerializingSpaceSeparatedRectEdges<T>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<MinimallySerializingSpaceSeparatedRectEdges<T>>);
+    return ts;
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const MinimallySerializingSpaceSeparatedRectCorners<T>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<MinimallySerializingSpaceSeparatedRectCorners<T>>);
+    return ts;
+}
+
 } // namespace WebCore
 
 namespace std {
@@ -1274,6 +1304,22 @@ struct supports_text_stream_insertion<WebCore::SpaceSeparatedRefCountedFixedVect
 
 template<typename T>
 struct supports_text_stream_insertion<WebCore::CommaSeparatedRefCountedFixedVector<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::SpaceSeparatedPoint<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::SpaceSeparatedSize<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparatedSize<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparatedRectEdges<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparatedRectCorners<T>> : supports_text_stream_insertion<T> { };
+
 
 template<>
 struct MarkableTraits<WebCore::CustomIdentifier> {

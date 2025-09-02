@@ -118,9 +118,8 @@ static std::pair<bool, bool> computeSynthesisProperties(const SkTypeface& typefa
     return { syntheticBold, syntheticOblique };
 }
 
-RefPtr<Font> FontCache::systemFallbackForCharacterCluster(const FontDescription& description, const Font&, IsForPlatformFont, PreferColoredFont, StringView stringView)
+RefPtr<Font> FontCache::systemFallbackForCharacterCluster(const FontDescription& description, const Font&, IsForPlatformFont, PreferColoredFont preferColoredFont, StringView stringView)
 {
-    // FIXME: matchFamilyStyleCharacter is slow, we need a cache here, see https://bugs.webkit.org/show_bug.cgi?id=203544.
     auto codePoints = stringView.codePoints();
     auto codePointsIterator = codePoints.begin();
     char32_t baseCharacter = *codePointsIterator;
@@ -128,18 +127,21 @@ RefPtr<Font> FontCache::systemFallbackForCharacterCluster(const FontDescription&
     if (isDefaultIgnorableCodePoint(baseCharacter) || isPrivateUseAreaCharacter(baseCharacter))
         return nullptr;
 
-    bool isEmoji = codePointsIterator != codePoints.end() && *codePointsIterator == emojiVariationSelector;
+    bool isEmoji = (codePointsIterator != codePoints.end() && *codePointsIterator == emojiVariationSelector) || preferColoredFont == PreferColoredFont::Yes;
 
+#if OS(ANDROID) || PLATFORM(WIN)
     // FIXME: handle locale.
     Vector<const char*, 1> bcp47;
     if (isEmoji)
         bcp47.append("und-Zsye");
-
-    auto features = computeFeatures(description, { });
     auto typeface = fontManager().matchFamilyStyleCharacter(nullptr, skiaFontStyle(description), bcp47.mutableSpan().data(), bcp47.size(), baseCharacter);
+#else
+    auto typeface = m_skiaSystemFallbackFontCache.fontForCharacterCluster(skiaFontStyle(description), isEmoji ? "und-Zsye"_s : description.computedLocale(), stringView);
+#endif
     if (!typeface)
         return nullptr;
 
+    auto features = computeFeatures(description, { });
     auto [syntheticBold, syntheticOblique] = computeSynthesisProperties(*typeface, description, { });
     FontPlatformData alternateFontData(WTFMove(typeface), description.computedSize(), syntheticBold, syntheticOblique, description.orientation(), description.widthVariant(), description.textRenderingMode(), WTFMove(features));
     return fontForPlatformData(alternateFontData);
@@ -407,6 +409,9 @@ void FontCache::platformInvalidate()
 void FontCache::platformPurgeInactiveFontData()
 {
     m_harfBuzzFontCache.clear();
+#if !OS(ANDROID) && !PLATFORM(WIN)
+    m_skiaSystemFallbackFontCache.clear();
+#endif
 }
 
 } // namespace WebCore

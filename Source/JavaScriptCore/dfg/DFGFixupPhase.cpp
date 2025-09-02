@@ -1756,16 +1756,15 @@ private:
             }
 
             if (node->child2()->shouldSpeculateString()) {
-                m_insertionSet.insertNode(
-                    m_indexInBlock, SpecNone, Check, node->origin,
-                    Edge(node->child2().node(), StringUse));
                 fixEdge<StringUse>(node->child2());
-            } else if (op == StringReplace || op == StringReplaceAll) {
+                break;
+            }
+
+            if (op == StringReplace || op == StringReplaceAll) {
                 if (node->child2()->shouldSpeculateRegExpObject() && m_graph.isWatchingRegExpPrimordialPropertiesWatchpoint(node))
                     addStringReplacePrimordialChecks(node->child2().node());
                 else 
-                    m_insertionSet.insertNode(
-                        m_indexInBlock, SpecNone, ForceOSRExit, node->origin);
+                    m_insertionSet.insertNode(m_indexInBlock, SpecNone, ForceOSRExit, node->origin);
             }
 
             if (node->child1()->shouldSpeculateString()
@@ -2112,15 +2111,32 @@ private:
             fixEdge<KnownCellUse>(node->child1());
             break;
         }
-            
-        case GetClosureVar:
+
+        case GetClosureVar: {
+            fixEdge<KnownCellUse>(node->child1());
+            attemptToMakeDoubleResultForGet(node);
+            break;
+        }
+
+        case GetGlobalVar:
+        case GetGlobalLexicalVariable: {
+            attemptToMakeDoubleResultForGet(node);
+            break;
+        }
+
         case GetFromArguments:
         case GetInternalField: {
             fixEdge<KnownCellUse>(node->child1());
             break;
         }
 
-        case PutClosureVar:
+        case PutClosureVar: {
+            fixEdge<KnownCellUse>(node->child1());
+            if (!attemptToMakeDoubleRepForPut(node, node->child2()))
+                speculateForBarrier(node->child2());
+            break;
+        }
+
         case PutToArguments:
         case PutInternalField: {
             fixEdge<KnownCellUse>(node->child1());
@@ -2410,12 +2426,19 @@ private:
                 fixEdge<Int32Use>(node->child2());
             break;
         }
-            
-        case GetByOffset:
+
         case GetGetterSetterByOffset: {
             if (!node->child1()->hasStorageResult())
                 fixEdge<KnownCellUse>(node->child1());
             fixEdge<KnownCellUse>(node->child2());
+            break;
+        }
+
+        case GetByOffset: {
+            if (!node->child1()->hasStorageResult())
+                fixEdge<KnownCellUse>(node->child1());
+            fixEdge<KnownCellUse>(node->child2());
+            attemptToMakeDoubleResultForGet(node);
             break;
         }
             
@@ -2428,7 +2451,8 @@ private:
             if (!node->child1()->hasStorageResult())
                 fixEdge<KnownCellUse>(node->child1());
             fixEdge<KnownCellUse>(node->child2());
-            speculateForBarrier(node->child3());
+            if (!attemptToMakeDoubleRepForPut(node, node->child3()))
+                speculateForBarrier(node->child3());
             break;
         }
             
@@ -2685,7 +2709,8 @@ private:
 
         case PutGlobalVariable: {
             fixEdge<CellUse>(node->child1());
-            speculateForBarrier(node->child2());
+            if (!attemptToMakeDoubleRepForPut(node, node->child2()))
+                speculateForBarrier(node->child2());
             break;
         }
 
@@ -3443,8 +3468,6 @@ private:
         case GetArgument:
         case Flush:
         case PhantomLocal:
-        case GetGlobalVar:
-        case GetGlobalLexicalVariable:
         case NotifyWrite:
         case DirectCall:
         case CheckTypeInfoFlags:
@@ -5075,6 +5098,45 @@ private:
         fixupCallDOM(node);
         RELEASE_ASSERT(node->child1().node() == thisNode);
         return true;
+    }
+
+    bool attemptToMakeDoubleResultForGet(Node* node)
+    {
+        // Since FTL does more sophisticated analysis based on DoubleRepUse and other phases, we do this only in DFG.
+        // FTL has object allocation sinking, and keeping this node non-double-result makes that phase much simpler.
+        // So FTL will do conversion of this in ValueRepReduction phase instead.
+        UNUSED_PARAM(node);
+#if USE(JSVALUE64)
+        if (!m_graph.m_plan.isFTL()) {
+            if (!m_graph.hasExitSite(node->origin.semantic, BadType)) {
+                if (!node->shouldSpeculateInt32() && node->shouldSpeculateNumber()) {
+                    node->setResult(NodeResultDouble);
+                    return true;
+                }
+            }
+        }
+#endif
+        return false;
+    }
+
+    bool attemptToMakeDoubleRepForPut(Node* node, Edge& edge)
+    {
+        // Since FTL does more sophisticated analysis based on DoubleRepUse and other phases, we do this only in DFG.
+        // FTL has object allocation sinking, and keeping this node non-double-result makes that phase much simpler.
+        // So FTL will do conversion of this in ValueRepReduction phase instead.
+        UNUSED_PARAM(node);
+        UNUSED_PARAM(edge);
+#if USE(JSVALUE64)
+        if (!m_graph.m_plan.isFTL()) {
+            if (!m_graph.hasExitSite(node->origin.semantic, BadType)) {
+                if (!edge->shouldSpeculateInt32() && edge->shouldSpeculateNumber()) {
+                    fixEdge<DoubleRepUse>(edge);
+                    return true;
+                }
+            }
+        }
+#endif
+        return false;
     }
 
     void fixupCheckJSCast(Node* node)

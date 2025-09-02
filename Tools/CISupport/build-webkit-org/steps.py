@@ -361,11 +361,10 @@ class InstallWpeDependencies(shell.ShellCommandNewStyle, CustomFlagsMixin):
         return super().run()
 
 
-class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin):
+class CompileWebKit(shell.CompileNewStyle, CustomFlagsMixin, ShellMixin, AddToLogMixin):
     build_command = ["perl", "Tools/Scripts/build-webkit", "--no-fatal-warnings"]
     filter_command = ['perl', 'Tools/Scripts/filter-build-webkit', '-logfile', 'build-log.txt']
     APPLE_PLATFORMS = ('mac', 'ios', 'visionos', 'tvos', 'watchos')
-    env = {'MFLAGS': ''}
     name = "compile-webkit"
     description = ["compiling"]
     descriptionDone = ["compiled"]
@@ -373,7 +372,8 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin):
     cancelled_due_to_huge_logs = False
     line_count = 0
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         platform = self.getProperty('platform')
         buildOnly = self.getProperty('buildOnly')
         architecture = self.getProperty('architecture')
@@ -409,16 +409,17 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin):
         # filter-build-webkit is specifically designed for Xcode and doesn't work generally
         if platform in self.APPLE_PLATFORMS:
             full_command = f"{' '.join(build_command)} 2>&1 | {' '.join(self.filter_command)}"
-            self.setCommand(self.shell_command(full_command))
+            self.command = self.shell_command(full_command)
         else:
-            self.setCommand(build_command)
+            self.command = build_command
 
-        return shell.Compile.start(self)
+        rc = yield super().run()
+        defer.returnValue(rc)
 
-    def buildCommandKwargs(self, warnings):
-        kwargs = super(CompileWebKit, self).buildCommandKwargs(warnings)
-        kwargs['timeout'] = 60 * 60
-        return kwargs
+    def __init__(self, *args, **kwargs):
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = 60 * 60
+        super().__init__(*args, **kwargs)
 
     def parseOutputLine(self, line):
         self.line_count += 1
@@ -453,14 +454,6 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin):
                 )
             ]
         return []
-
-    @defer.inlineCallbacks
-    def _addToLog(self, logName, message):
-        try:
-            log = self.getLog(logName)
-        except KeyError:
-            log = yield self.addLog(logName)
-        log.addStdout(message)
 
     def evaluateCommand(self, cmd):
         rc = super().evaluateCommand(cmd)
@@ -503,7 +496,7 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin):
             return {'step': MSG_FOR_EXCESSIVE_LOGS, 'build': MSG_FOR_EXCESSIVE_LOGS}
         if self.results == FAILURE:
             return {'step': f'Failed {self.name}'}
-        return shell.Compile.getResultSummary(self)
+        return super().getResultSummary()
 
 
 class CompileLLINTCLoop(CompileWebKit):

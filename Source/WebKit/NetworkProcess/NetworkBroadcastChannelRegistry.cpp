@@ -131,6 +131,14 @@ void NetworkBroadcastChannelRegistry::removeConnection(IPC::Connection& connecti
         m_broadcastChannels.remove(originToRemove);
 }
 
+std::optional<SharedPreferencesForWebProcess> NetworkBroadcastChannelRegistry::sharedPreferencesForWebProcess(const IPC::Connection& connection) const
+{
+    RefPtr webProcessConnection = m_networkProcess->webProcessConnection(connection);
+    if (!webProcessConnection)
+        return std::nullopt;
+    return webProcessConnection->sharedPreferencesForWebProcess();
+}
+
 #undef MESSAGE_CHECK
 #undef MESSAGE_CHECK_COMPLETION
 

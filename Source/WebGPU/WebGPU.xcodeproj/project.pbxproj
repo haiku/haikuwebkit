@@ -387,6 +387,21 @@
 		1CEBD82B2716CAFB00A5254D /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		1CEBD82D2716CB1600A5254D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1CEBD8302716CB3800A5254D /* libicucore.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libicucore.tbd; path = usr/lib/libicucore.tbd; sourceTree = SDKROOT; };
+		2B1B1C5E2E3A874700D7D9ED /* ForwardDeclCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = ForwardDeclCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C5F2E3A874700D7D9ED /* MemoryUnsafeCastCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = MemoryUnsafeCastCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C602E3A874700D7D9ED /* NoUncheckedPtrMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUncheckedPtrMemberCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C612E3A874700D7D9ED /* NoUncountedMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUncountedMemberCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C622E3A874700D7D9ED /* NoUnretainedMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUnretainedMemberCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C632E3A874700D7D9ED /* RefCntblBaseVirtualDtorExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = RefCntblBaseVirtualDtorExpectations; sourceTree = "<group>"; };
+		2B1B1C642E3A874700D7D9ED /* RetainPtrCtorAdoptCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = RetainPtrCtorAdoptCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C652E3A874700D7D9ED /* UncheckedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncheckedCallArgsCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C662E3A874700D7D9ED /* UncheckedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncheckedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C672E3A874700D7D9ED /* UncountedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedCallArgsCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C682E3A874700D7D9ED /* UncountedLambdaCapturesCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedLambdaCapturesCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C692E3A874700D7D9ED /* UncountedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C6A2E3A874700D7D9ED /* UnretainedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedCallArgsCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C6B2E3A874700D7D9ED /* UnretainedLambdaCapturesCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedLambdaCapturesCheckerExpectations; sourceTree = "<group>"; };
+		2B1B1C6C2E3A874700D7D9ED /* UnretainedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
 		338BB2CD27B6B60200E066AB /* Token.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Token.h; sourceTree = "<group>"; };
 		338BB2CF27B6B61B00E066AB /* Token.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Token.cpp; sourceTree = "<group>"; };
 		338BB2D127B6B63F00E066AB /* SourceSpan.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SourceSpan.h; sourceTree = "<group>"; };
@@ -594,6 +609,7 @@
 				1CEBD7E52716AFBA00A5254D /* WebGPU */,
 				1CEBD7E42716AFBA00A5254D /* Products */,
 				1CEBD8252716CACC00A5254D /* Frameworks */,
+				2B1B1C6D2E3A874700D7D9ED /* SaferCPPExpectations */,
 			);
 			sourceTree = "<group>";
 		};
@@ -789,6 +805,28 @@
 				1C2CEDED271E8A7300EDC16F /* Metal.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2B1B1C6D2E3A874700D7D9ED /* SaferCPPExpectations */ = {
+			isa = PBXGroup;
+			children = (
+				2B1B1C5E2E3A874700D7D9ED /* ForwardDeclCheckerExpectations */,
+				2B1B1C5F2E3A874700D7D9ED /* MemoryUnsafeCastCheckerExpectations */,
+				2B1B1C602E3A874700D7D9ED /* NoUncheckedPtrMemberCheckerExpectations */,
+				2B1B1C612E3A874700D7D9ED /* NoUncountedMemberCheckerExpectations */,
+				2B1B1C622E3A874700D7D9ED /* NoUnretainedMemberCheckerExpectations */,
+				2B1B1C632E3A874700D7D9ED /* RefCntblBaseVirtualDtorExpectations */,
+				2B1B1C642E3A874700D7D9ED /* RetainPtrCtorAdoptCheckerExpectations */,
+				2B1B1C652E3A874700D7D9ED /* UncheckedCallArgsCheckerExpectations */,
+				2B1B1C662E3A874700D7D9ED /* UncheckedLocalVarsCheckerExpectations */,
+				2B1B1C672E3A874700D7D9ED /* UncountedCallArgsCheckerExpectations */,
+				2B1B1C682E3A874700D7D9ED /* UncountedLambdaCapturesCheckerExpectations */,
+				2B1B1C692E3A874700D7D9ED /* UncountedLocalVarsCheckerExpectations */,
+				2B1B1C6A2E3A874700D7D9ED /* UnretainedCallArgsCheckerExpectations */,
+				2B1B1C6B2E3A874700D7D9ED /* UnretainedLambdaCapturesCheckerExpectations */,
+				2B1B1C6C2E3A874700D7D9ED /* UnretainedLocalVarsCheckerExpectations */,
+			);
+			path = SaferCPPExpectations;
 			sourceTree = "<group>";
 		};
 		33EA185C27BC193D00A1DD52 /* AST */ = {

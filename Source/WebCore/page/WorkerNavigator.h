@@ -56,8 +56,6 @@ public:
 private:
     explicit WorkerNavigator(ScriptExecutionContext&, const String&, bool isOnline);
 
-    void initializeNavigatorUAData() const;
-
     mutable RefPtr<NavigatorUAData> m_navigatorUAData;
     String m_userAgent;
     bool m_isOnline;

@@ -71,11 +71,13 @@ void* tryLargeZeroedMemalignVirtual(size_t requiredAlignment, size_t requestedSi
     RELEASE_BASSERT(size >= requestedSize);
 
     void* result;
-    if (auto* systemHeap = SystemHeap::tryGet())
+    if (auto* systemHeap = SystemHeap::tryGet()) {
         result = systemHeap->memalignLarge(alignment, size);
-    else {
+        if (result)
+            vmZeroAndPurge(result, size);
+    } else {
 #if BUSE(LIBPAS)
-        result = tryMemalign(alignment, size, mode, kind);
+        result = tryZeroedMemalign(alignment, size, mode, kind);
 #else
         BUNUSED(mode);
         kind = mapToActiveHeapKind(kind);
@@ -89,12 +91,11 @@ void* tryLargeZeroedMemalignVirtual(size_t requiredAlignment, size_t requestedSi
             // pages they dirty:
             // https://bugs.webkit.org/show_bug.cgi?id=184207
             heap.externalDecommit(lock, result, size);
+            vmZeroAndPurge(result, size);
         }
 #endif
     }
 
-    if (result)
-        vmZeroAndPurge(result, size);
     return result;
 }
 

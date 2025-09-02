@@ -775,7 +775,7 @@ void RenderSVGText::applyTransform(TransformationMatrix& transform, const Render
     applySVGTransform(transform, protectedTextElement(), style, boundingBox, std::nullopt, std::nullopt, options);
 }
 
-VisiblePosition RenderSVGText::positionForPoint(const LayoutPoint& pointInContents, HitTestSource source, const RenderFragmentContainer* fragment)
+PositionWithAffinity RenderSVGText::positionForPoint(const LayoutPoint& pointInContents, HitTestSource source, const RenderFragmentContainer* fragment)
 {
     InlineIterator::BoxIterator closestBox;
     InlineIterator::BoxIterator lastBox;
@@ -798,7 +798,7 @@ VisiblePosition RenderSVGText::positionForPoint(const LayoutPoint& pointInConten
         closestBox = lastBox;
 
     if (!closestBox)
-        return createVisiblePosition(0, Affinity::Downstream);
+        return createPositionWithAffinity(0, Affinity::Downstream);
 
     return const_cast<RenderObject&>(closestBox->renderer()).positionForPoint({ pointInContents.x(), LayoutUnit(closestBox->visualRectIgnoringBlockDirection().y()) }, source, fragment);
 }

@@ -98,6 +98,7 @@ public:
 
 #if ENABLE(DAMAGE_TRACKING)
     void setDamagePropagationEnabled(bool enabled) { m_damagePropagationEnabled = enabled; }
+    void setDamageInGlobalCoordinateSpace(std::shared_ptr<Damage> damage) { m_damageInGlobalCoordinateSpace = WTFMove(damage); }
 #endif
 
     void setPosition(FloatPoint&&);
@@ -246,6 +247,7 @@ private:
 
 #if ENABLE(DAMAGE_TRACKING)
     bool m_damagePropagationEnabled { false };
+    std::shared_ptr<Damage> m_damageInGlobalCoordinateSpace;
 #endif
 
     Lock m_lock;

@@ -45,7 +45,7 @@ Ref<AccessibilityTableHeaderContainer> AccessibilityTableHeaderContainer::create
 {
     return adoptRef(*new AccessibilityTableHeaderContainer(axID, cache));
 }
-    
+
 LayoutRect AccessibilityTableHeaderContainer::elementRect() const
 {
     // this will be filled in when addChildren is called
@@ -62,8 +62,8 @@ bool AccessibilityTableHeaderContainer::computeIsIgnored() const
 
 void AccessibilityTableHeaderContainer::addChildren()
 {
-    ASSERT(!m_childrenInitialized); 
-    
+    ASSERT(!m_childrenInitialized);
+
     m_childrenInitialized = true;
     RefPtr parentTable = dynamicDowncast<AccessibilityTable>(m_parent.get());
     if (!parentTable || !parentTable->isExposable())

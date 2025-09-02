@@ -243,8 +243,12 @@ bool HTMLPlugInElement::supportsFocus() const
 
 RenderPtr<RenderElement> HTMLPlugInElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition& insertionPosition)
 {
-    if (m_pluginReplacement && m_pluginReplacement->willCreateRenderer())
-        return m_pluginReplacement->createElementRenderer(*this, WTFMove(style), insertionPosition);
+    if (m_pluginReplacement && m_pluginReplacement->willCreateRenderer()) {
+        RenderPtr<RenderElement> renderer = m_pluginReplacement->createElementRenderer(*this, WTFMove(style), insertionPosition);
+        if (renderer)
+            renderer->markIsYouTubeReplacement();
+        return renderer;
+    }
 
     return createRenderer<RenderEmbeddedObject>(*this, WTFMove(style));
 }

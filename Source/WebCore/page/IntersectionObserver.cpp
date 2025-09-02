@@ -181,6 +181,11 @@ IntersectionObserver::~IntersectionObserver()
     disconnect();
 }
 
+Document* IntersectionObserver::trackingDocument() const
+{
+    return m_root ? &m_root->document() : m_implicitRootDocument.get();
+}
+
 String IntersectionObserver::rootMargin() const
 {
     StringBuilder stringBuilder;

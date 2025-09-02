@@ -967,7 +967,7 @@ bool PDFPlugin::handleMouseEvent(const WebMouseEvent& event)
     m_lastMouseEvent = event;
 
     PlatformMouseEvent platformEvent = platform(event);
-    IntPoint mousePosition = convertFromRootViewToPlugin(event.position());
+    IntPoint mousePosition = convertFromRootViewToPlugin(flooredIntPoint(event.position()));
 
     RefPtr<Scrollbar> targetScrollbar;
     RefPtr<Scrollbar> targetScrollbarForLastMousePosition;
@@ -1106,7 +1106,7 @@ bool PDFPlugin::handleContextMenuEvent(const WebMouseEvent& event)
     if (!frameView)
         return false;
 
-    IntPoint point = frameView->contentsToScreen(IntRect(frameView->windowToContents(event.position()), IntSize())).location();
+    IntPoint point = frameView->contentsToScreen(IntRect(frameView->windowToContents(flooredIntPoint(event.position())), IntSize())).location();
 
     NSUserInterfaceLayoutDirection uiLayoutDirection = webPage->userInterfaceLayoutDirection() == UserInterfaceLayoutDirection::LTR ? NSUserInterfaceLayoutDirectionLeftToRight : NSUserInterfaceLayoutDirectionRightToLeft;
     RetainPtr nsMenu = [m_pdfLayerController menuForEvent:nsEventForWebMouseEvent(event) withUserInterfaceLayoutDirection:uiLayoutDirection];

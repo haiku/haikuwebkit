@@ -263,6 +263,7 @@ bool MediaPlayerPrivateGStreamerMSE::doSeek(const SeekTarget& target, float rate
     // This will also add support for fastSeek once done (see webkit.org/b/260607)
     if (!m_mediaSourcePrivate)
         return false;
+    m_mediaSourcePrivate->willSeek();
     m_mediaSourcePrivate->waitForTarget(target)->whenSettled(RunLoop::currentSingleton(), [this, weakThis = ThreadSafeWeakPtr { *this }](auto&& result) {
         RefPtr self = weakThis.get();
         if (!self || !result)
@@ -272,20 +273,41 @@ bool MediaPlayerPrivateGStreamerMSE::doSeek(const SeekTarget& target, float rate
             m_mediaSourcePrivate->seekToTime(*result);
 
         auto player = m_player.get();
-        if (player && !player->isVideoPlayer() && m_audioSink) {
-            gboolean audioSinkPerformsAsyncStateChanges;
-            g_object_get(m_audioSink.get(), "async", &audioSinkPerformsAsyncStateChanges, nullptr);
+        if (player && !hasVideo() && m_audioSink) {
+            gboolean audioSinkPerformsAsyncStateChanges = true;
+
+            GRefPtr<GstElement> sink = m_audioSink;
+            while (GST_IS_BIN(sink.get())) {
+                GUniquePtr<GstIterator> iter(gst_bin_iterate_sinks(GST_BIN_CAST(sink.get())));
+                GValue value = G_VALUE_INIT;
+                auto result = gst_iterator_next(iter.get(), &value);
+                ASSERT_UNUSED(result, result == GST_ITERATOR_OK);
+                sink = GST_ELEMENT(g_value_get_object(&value));
+                g_value_unset(&value);
+            }
+            if (gstObjectHasProperty(sink.get(), "async"))
+                g_object_get(sink.get(), "async", &audioSinkPerformsAsyncStateChanges, nullptr);
             if (!audioSinkPerformsAsyncStateChanges) {
                 // If audio-only pipeline's sink is not performing async state changes
                 // we must simulate preroll right away as otherwise nothing will trigger it.
-                bool mustPreventPositionReset = m_isWaitingForPreroll && m_isSeeking;
-                if (mustPreventPositionReset)
-                    m_cachedPosition = currentTime();
-                didPreroll();
-                if (mustPreventPositionReset) {
-                    propagateReadyStateToPlayer();
-                    invalidateCachedPosition();
-                }
+
+                // Post this on HTML media element queue so it will be executed
+                // synchonously with media events (e.g. seeking). This will ensure
+                // that HTML element attributes (like HTMLmedia.seeking) are not reseted
+                // before app receives "seeking" event
+                player->queueTaskOnEventLoop([this, weakThis = ThreadSafeWeakPtr { *this }] {
+                    RefPtr self = weakThis.get();
+                    if (!self)
+                        return;
+                    bool mustPreventPositionReset = m_isWaitingForPreroll && m_isSeeking;
+                    if (mustPreventPositionReset)
+                        m_cachedPosition = currentTime();
+                    didPreroll();
+                    if (mustPreventPositionReset) {
+                        propagateReadyStateToPlayer();
+                        invalidateCachedPosition();
+                    }
+                });
             }
         }
     });

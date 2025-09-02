@@ -27,7 +27,7 @@
 
 #if ENABLE(WEBASSEMBLY_OMGJIT)
 
-#include "WasmFormat.h"
+#include <JavaScriptCore/WasmFormat.h>
 
 #include <wtf/ForbidHeapAllocation.h>
 

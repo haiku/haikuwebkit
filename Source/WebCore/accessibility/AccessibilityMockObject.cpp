@@ -34,10 +34,10 @@ AccessibilityMockObject::AccessibilityMockObject(AXID axID, AXObjectCache& cache
 }
 
 AccessibilityMockObject::~AccessibilityMockObject() = default;
-    
+
 bool AccessibilityMockObject::computeIsIgnored() const
 {
     return isIgnoredByDefault();
 }
-    
+
 }

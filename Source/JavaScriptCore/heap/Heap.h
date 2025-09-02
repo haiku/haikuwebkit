@@ -21,32 +21,32 @@
 
 #pragma once
 
-#include "ArrayBuffer.h"
-#include "CellState.h"
-#include "CollectionScope.h"
-#include "CollectorPhase.h"
-#include "CompleteSubspace.h"
-#include "DeleteAllCodeEffort.h"
-#include "GCConductor.h"
-#include "GCIncomingRefCountedSet.h"
-#include "GCMemoryOperations.h"
-#include "GCRequest.h"
-#include "HandleSet.h"
-#include "HeapFinalizerCallback.h"
-#include "HeapObserver.h"
-#include "IsoCellSet.h"
-#include "IsoHeapCellType.h"
-#include "IsoInlinedHeapCellType.h"
-#include "IsoSubspace.h"
-#include "JSDestructibleObjectHeapCellType.h"
-#include "MarkedBlock.h"
-#include "MarkedSpace.h"
-#include "MutatorState.h"
-#include "Options.h"
-#include "PreciseSubspace.h"
-#include "StructureID.h"
-#include "Synchronousness.h"
-#include "WeakHandleOwner.h"
+#include <JavaScriptCore/ArrayBuffer.h>
+#include <JavaScriptCore/CellState.h>
+#include <JavaScriptCore/CollectionScope.h>
+#include <JavaScriptCore/CollectorPhase.h>
+#include <JavaScriptCore/CompleteSubspace.h>
+#include <JavaScriptCore/DeleteAllCodeEffort.h>
+#include <JavaScriptCore/GCConductor.h>
+#include <JavaScriptCore/GCIncomingRefCountedSet.h>
+#include <JavaScriptCore/GCMemoryOperations.h>
+#include <JavaScriptCore/GCRequest.h>
+#include <JavaScriptCore/HandleSet.h>
+#include <JavaScriptCore/HeapFinalizerCallback.h>
+#include <JavaScriptCore/HeapObserver.h>
+#include <JavaScriptCore/IsoCellSet.h>
+#include <JavaScriptCore/IsoHeapCellType.h>
+#include <JavaScriptCore/IsoInlinedHeapCellType.h>
+#include <JavaScriptCore/IsoSubspace.h>
+#include <JavaScriptCore/JSDestructibleObjectHeapCellType.h>
+#include <JavaScriptCore/MarkedBlock.h>
+#include <JavaScriptCore/MarkedSpace.h>
+#include <JavaScriptCore/MutatorState.h>
+#include <JavaScriptCore/Options.h>
+#include <JavaScriptCore/PreciseSubspace.h>
+#include <JavaScriptCore/StructureID.h>
+#include <JavaScriptCore/Synchronousness.h>
+#include <JavaScriptCore/WeakHandleOwner.h>
 #include <wtf/AutomaticThread.h>
 #include <wtf/Box.h>
 #include <wtf/ConcurrentPtrHashSet.h>
@@ -478,7 +478,7 @@ public:
     void deleteAllCodeBlocks(DeleteAllCodeEffort);
     void deleteAllUnlinkedCodeBlocks(DeleteAllCodeEffort);
 
-    void didAllocate(size_t);
+    JS_EXPORT_PRIVATE void didAllocate(size_t);
     bool isPagedOut();
     
     const JITStubRoutineSet& jitStubRoutines() { return *m_jitStubRoutines; }

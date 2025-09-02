@@ -2856,10 +2856,6 @@ end
 
 if WEBASSEMBLY
 
-entry(wasm, macro()
-    include InitWasm
-end)
-
 macro wasmScope()
     # Wrap the script in a macro since it overwrites some of the LLInt macros,
     # but we don't want to interfere with the LLInt opcodes
@@ -2867,12 +2863,12 @@ macro wasmScope()
     include InPlaceInterpreter
 end
 
-global _wasmLLIntPCRangeStart
-_wasmLLIntPCRangeStart:
+global _wasmIPIntPCRangeStart
+_wasmIPIntPCRangeStart:
     break # FIXME: rdar://96556827
 wasmScope()
-global _wasmLLIntPCRangeEnd
-_wasmLLIntPCRangeEnd:
+global _wasmIPIntPCRangeEnd
+_wasmIPIntPCRangeEnd:
     break # FIXME: rdar://96556827
 
 else
@@ -2882,31 +2878,11 @@ op(js_to_wasm_wrapper_entry, macro ()
     crash()
 end)
 
-op(wasm_to_wasm_wrapper_entry, macro ()
-    crash()
-end)
-
 op(wasm_to_wasm_ipint_wrapper_entry, macro ()
     crash()
 end)
 
 op(wasm_to_js_wrapper_entry, macro ()
-    crash()
-end)
-
-op(wasm_function_prologue_trampoline, macro ()
-    crash()
-end)
-
-op(wasm_function_prologue, macro ()
-    crash()
-end)
-
-op(wasm_function_prologue_simd_trampoline, macro ()
-    crash()
-end)
-
-op(wasm_function_prologue_simd, macro ()
     crash()
 end)
 
@@ -2950,24 +2926,12 @@ op(ipint_table_catch_allref_entry, macro()
     crash()
 end)
 
-_wasm_trampoline_wasm_call:
-_wasm_trampoline_wasm_call_indirect:
-_wasm_trampoline_wasm_call_ref:
-_wasm_trampoline_wasm_call_wide16:
-_wasm_trampoline_wasm_call_indirect_wide16:
-_wasm_trampoline_wasm_call_ref_wide16:
-_wasm_trampoline_wasm_call_wide32:
-_wasm_trampoline_wasm_call_indirect_wide32:
-_wasm_trampoline_wasm_call_ref_wide32:
-_wasm_trampoline_wasm_tail_call:
-_wasm_trampoline_wasm_tail_call_indirect:
-_wasm_trampoline_wasm_tail_call_ref:
-_wasm_trampoline_wasm_tail_call_wide16:
-_wasm_trampoline_wasm_tail_call_indirect_wide16:
-_wasm_trampoline_wasm_tail_call_ref_wide16:
-_wasm_trampoline_wasm_tail_call_wide32:
-_wasm_trampoline_wasm_tail_call_indirect_wide32:
-_wasm_trampoline_wasm_tail_call_ref_wide32:
+op(wasm_throw_from_slow_path_trampoline, macro ()
+end)
+
+op(wasm_throw_from_fault_handler_trampoline_reg_instance, macro ()
+end)
+
 _wasm_trampoline_wasm_ipint_call:
 _wasm_trampoline_wasm_ipint_call_wide16:
 _wasm_trampoline_wasm_ipint_call_wide32:

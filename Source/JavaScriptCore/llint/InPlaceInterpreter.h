@@ -27,7 +27,7 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "WasmCallee.h"
+#include <JavaScriptCore/WasmCallee.h>
 
 extern "C" void SYSV_ABI ipint_entry();
 extern "C" void SYSV_ABI ipint_entry_simd();

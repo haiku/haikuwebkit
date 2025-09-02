@@ -648,7 +648,7 @@ bool InteractionRegionOverlay::mouseEvent(PageOverlay& overlay, const PlatformMo
     else if (!valueForSetting("hover"_s))
         cursorToSet = pointerCursor();
 
-    auto eventInContentsCoordinates = mainFrameView->windowToContents(event.position());
+    auto eventInContentsCoordinates = mainFrameView->windowToContents(flooredIntPoint(event.position()));
     for (unsigned i = 0; i < m_settings.size(); i++) {
         if (!rectForSettingAtIndex(i).contains(eventInContentsCoordinates))
             continue;
@@ -673,67 +673,6 @@ bool InteractionRegionOverlay::mouseEvent(PageOverlay& overlay, const PlatformMo
 }
 
 #if COMPILER(CLANG)
-#pragma mark - SiteIsolationOverlay
-#endif
-
-class SiteIsolationOverlay final : public RegionOverlay {
-public:
-    static Ref<SiteIsolationOverlay> create(Page& page)
-    {
-        return adoptRef(*new SiteIsolationOverlay(page));
-    }
-
-private:
-    explicit SiteIsolationOverlay(Page& page)
-        : RegionOverlay(page, Color::green.colorWithAlphaByte(102))
-    {
-    }
-
-    bool updateRegion() final;
-    void drawRect(PageOverlay&, GraphicsContext&, const IntRect& dirtyRect) final;
-
-    bool mouseEvent(PageOverlay&, const PlatformMouseEvent&) final;
-};
-
-bool SiteIsolationOverlay::updateRegion()
-{
-    m_overlay->setNeedsDisplay();
-    return true;
-}
-
-void SiteIsolationOverlay::drawRect(PageOverlay&, GraphicsContext& context, const IntRect&)
-{
-    RefPtr page = m_page.get();
-    if (!page)
-        return;
-    GraphicsContextStateSaver stateSaver(context);
-
-    FontCascadeDescription fontDescription;
-    fontDescription.setOneFamily("Helvetica"_s);
-    fontDescription.setSpecifiedSize(12);
-    fontDescription.setComputedSize(12);
-    fontDescription.setWeight(FontSelectionValue(500));
-    FontCascade font(WTFMove(fontDescription));
-    font.update(nullptr);
-
-    for (RefPtr frame = page->mainFrame(); frame; frame = frame->tree().traverseNext()) {
-        if (!frame->virtualView())
-            continue;
-        auto frameView = frame->virtualView();
-        auto debugStr = makeString(is<RemoteFrame>(frame) ? "remote("_s : "local("_s, frame->frameID().toUInt64(), ')');
-        TextRun textRun = TextRun(debugStr);
-        context.setFillColor(Color::black);
-
-        context.drawText(font, textRun, FloatPoint { static_cast<float>(frameView->x()), static_cast<float>(frameView->y() + 12) });
-    }
-}
-
-bool SiteIsolationOverlay::mouseEvent(PageOverlay& , const PlatformMouseEvent&)
-{
-    return false;
-}
-
-#if COMPILER(CLANG)
 #pragma mark - RegionOverlay
 #endif
 
@@ -746,8 +685,6 @@ Ref<RegionOverlay> RegionOverlay::create(Page& page, DebugPageOverlays::RegionTy
         return NonFastScrollableRegionOverlay::create(page);
     case DebugPageOverlays::RegionType::InteractionRegion:
         return InteractionRegionOverlay::create(page);
-    case DebugPageOverlays::RegionType::SiteIsolationRegion:
-        return SiteIsolationOverlay::create(page);
     }
     ASSERT_NOT_REACHED();
     return MouseWheelRegionOverlay::create(page);
@@ -918,11 +855,6 @@ void DebugPageOverlays::updateOverlayRegionVisibility(Page& page, OptionSet<Debu
         showRegionOverlay(page, RegionType::InteractionRegion);
     else
         hideRegionOverlay(page, RegionType::InteractionRegion);
-
-    if (visibleRegions.contains(DebugOverlayRegions::SiteIsolationRegion))
-        showRegionOverlay(page, RegionType::SiteIsolationRegion);
-    else
-        hideRegionOverlay(page, RegionType::SiteIsolationRegion);
 }
 
 void DebugPageOverlays::settingsChanged(Page& page)

@@ -145,9 +145,7 @@ void LegacyRenderSVGForeignObject::layout()
     // Set box origin to the foreignObject x/y translation, so positioned objects in XHTML content get correct
     // positions. A regular RenderBoxModelObject would pull this information from RenderStyle - in SVG those
     // properties are ignored for non <svg> elements, so we mimic what happens when specifying them through CSS.
-
-    // FIXME: Investigate in location rounding issues - only affects LegacyRenderSVGForeignObject & RenderSVGText
-    setLocation(roundedIntPoint(viewportLocation));
+    setLocation(LayoutPoint(viewportLocation));
 
     bool layoutChanged = everHadLayout() && selfNeedsLayout();
     RenderBlock::layout();

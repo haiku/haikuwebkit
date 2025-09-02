@@ -32,11 +32,11 @@
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-#include "CachedBytecode.h"
-#include "CodeBlockHash.h"
-#include "CodeSpecializationKind.h"
-#include "SourceOrigin.h"
-#include "SourceTaintedOrigin.h"
+#include <JavaScriptCore/CachedBytecode.h>
+#include <JavaScriptCore/CodeBlockHash.h>
+#include <JavaScriptCore/CodeSpecializationKind.h>
+#include <JavaScriptCore/SourceOrigin.h>
+#include <JavaScriptCore/SourceTaintedOrigin.h>
 #include <wtf/RefCounted.h>
 #include <wtf/text/TextPosition.h>
 #include <wtf/text/WTFString.h>
@@ -90,6 +90,7 @@ public:
 
     TextPosition startPosition() const { return m_startPosition; }
     SourceProviderSourceType sourceType() const { return m_sourceType; }
+    bool isModuleType() const { return m_sourceType == SourceProviderSourceType::Module || m_sourceType == SourceProviderSourceType::JSON; }
 
     SourceID asID()
     {

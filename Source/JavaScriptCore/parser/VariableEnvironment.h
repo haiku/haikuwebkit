@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "Identifier.h"
+#include <JavaScriptCore/Identifier.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/IteratorRange.h>

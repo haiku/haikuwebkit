@@ -1049,6 +1049,16 @@
 #endif
         SYS_write))
 
+(define (syscall-unix-blocked-without-report)
+    (syscall-number
+        SYS_connect
+        SYS_persona
+#if !PLATFORM(WATCHOS)
+        SYS_sigreturn
+#endif
+        SYS_socket
+        (when (defined? 'SYS_crossarch_trap) SYS_crossarch_trap)))
+
 (deny syscall-unix (with telemetry))
 (allow syscall-unix
     (syscall-unix-in-use-after-launch)
@@ -1071,17 +1081,8 @@
         (syscall-quicklook)))
 #endif
 
-(deny syscall-unix (with no-report) (syscall-number
-    SYS_connect
-    SYS_persona
-#if !PLATFORM(WATCHOS)
-    SYS_sigreturn
-#endif
-    SYS_socket))
-
-(when (defined? 'SYS_crossarch_trap)
-    (deny syscall-unix (with no-report) (syscall-number
-        SYS_crossarch_trap)))
+(deny syscall-unix (with no-report)
+    (syscall-unix-blocked-without-report))
 
 (when (defined? 'SYS_map_with_linking_np)
     (allow syscall-unix (syscall-number SYS_map_with_linking_np)))

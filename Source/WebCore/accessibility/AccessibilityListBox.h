@@ -42,7 +42,7 @@ public:
     AccessibilityRole determineAccessibilityRole() final { return AccessibilityRole::ListBox; }
 
     AccessibilityChildrenVector visibleChildren() final;
-    
+
     void addChildren() final;
 
 private:
@@ -52,7 +52,7 @@ private:
     AccessibilityObject* listBoxOptionAccessibilityObject(HTMLElement*) const;
     AccessibilityObject* elementAccessibilityHitTest(const IntPoint&) const final;
 };
-    
+
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::AccessibilityListBox) \

@@ -32,6 +32,7 @@
 #include "Editing.h"
 #include "ElementInlines.h"
 #include "HTMLInputElement.h"
+#include "NodeInlines.h"
 #include "PositionInlines.h"
 #include "Settings.h"
 #include "ShadowRoot.h"

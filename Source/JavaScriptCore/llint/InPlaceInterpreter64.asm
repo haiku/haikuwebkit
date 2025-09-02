@@ -254,6 +254,8 @@ else
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
 end
+    sxi2q t0, t0
+    sxi2q t1, t1
     advancePCByReg(t0)
     advanceMCByReg(t1)
     nextIPIntInstruction()
@@ -300,6 +302,7 @@ else
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
 end
+    # always skipping forward - no need to sign-extend t0, t1
     advancePCByReg(t0)
     advanceMCByReg(t1)
     nextIPIntInstruction()
@@ -321,6 +324,7 @@ else
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
 end
+    # always skipping forward - no need to sign-extend t0, t1
     advancePCByReg(t0)
     advanceMCByReg(t1)
     nextIPIntInstruction()
@@ -653,6 +657,7 @@ else
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
 end
+    # always skipping forward - no need to sign-extend t0, t1
     advancePCByReg(t0)
     advanceMCByReg(t1)
     nextIPIntInstruction()
@@ -667,6 +672,7 @@ else
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
 end
+    # always skipping forward - no need to sign-extend t0, t1
     advancePCByReg(t0)
     advanceMCByReg(t1)
     nextIPIntInstruction()
@@ -723,6 +729,7 @@ else
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
 end
+    # always skipping forward - no need to sign-extend t0, t1
     advancePCByReg(t0)
     advanceMCByReg(t1)
     nextIPIntInstruction()
@@ -6807,3 +6814,10 @@ argumINTAlign(_stack)
 
 argumINTAlign(_end)
     jmp .ipint_entry_end_local
+
+if ARM64E
+    global _wasmTailCallTrampoline
+    _wasmTailCallTrampoline:
+        untagReturnAddress ws2
+        jmp ws0, WasmEntryPtrTag
+end

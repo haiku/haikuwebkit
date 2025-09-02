@@ -277,7 +277,7 @@ void ServiceWorkerThread::queueTaskToFireActivateEvent()
 void ServiceWorkerThread::queueTaskToFirePushEvent(std::optional<Vector<uint8_t>>&& data, std::optional<NotificationPayload>&& payload, Function<void(bool, std::optional<NotificationPayload>&&)>&& callback)
 {
 #if ENABLE(DECLARATIVE_WEB_PUSH)
-    // Logic for pushnotification events is different enough to not share this same implementation body.
+    // Logic for Declarative Web Push push events is different enough to not share this same implementation body.
     if (payload) {
         queueTaskToFireDeclarativePushEvent(WTFMove(*payload), WTFMove(callback));
         return;
@@ -323,7 +323,7 @@ void ServiceWorkerThread::queueTaskToFireDeclarativePushEvent(NotificationPayloa
     Ref serviceWorkerGlobalScope = downcast<ServiceWorkerGlobalScope>(*globalScope());
     auto scopeURL = serviceWorkerGlobalScope->registration().data().scopeURL;
     serviceWorkerGlobalScope->eventLoop().queueTask(TaskSource::DOMManipulation, [weakThis = ThreadSafeWeakPtr { *this }, serviceWorkerGlobalScope = Ref { serviceWorkerGlobalScope }, proposedPayload = WTFMove(proposedPayload), callback = WTFMove(callback), scopeURL]() mutable {
-        RELEASE_LOG(ServiceWorker, "ServiceWorkerThread::queueTaskToFireDeclarativePushEvent firing pushnotification event for worker %" PRIu64, serviceWorkerGlobalScope->thread().identifier().toUInt64());
+        RELEASE_LOG(ServiceWorker, "ServiceWorkerThread::queueTaskToFireDeclarativePushEvent firing push event for worker %" PRIu64, serviceWorkerGlobalScope->thread().identifier().toUInt64());
 
         auto notification = Notification::create(serviceWorkerGlobalScope.get(), scopeURL, proposedPayload);
         Ref declarativePushEvent = PushEvent::create(eventNames().pushEvent, { }, notification.get(), proposedPayload.appBadge, ExtendableEvent::IsTrusted::Yes);

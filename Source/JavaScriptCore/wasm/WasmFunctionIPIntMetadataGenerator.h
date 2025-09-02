@@ -31,15 +31,15 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "BytecodeConventions.h"
-#include "HandlerInfo.h"
-#include "InstructionStream.h"
-#include "MacroAssemblerCodeRef.h"
-#include "SIMDInfo.h"
-#include "WasmHandlerInfo.h"
-#include "WasmIPIntGenerator.h"
-#include "WasmIPIntTierUpCounter.h"
-#include "WasmOps.h"
+#include <JavaScriptCore/BytecodeConventions.h>
+#include <JavaScriptCore/HandlerInfo.h>
+#include <JavaScriptCore/InstructionStream.h>
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/SIMDInfo.h>
+#include <JavaScriptCore/WasmHandlerInfo.h>
+#include <JavaScriptCore/WasmIPIntGenerator.h>
+#include <JavaScriptCore/WasmIPIntTierUpCounter.h>
+#include <JavaScriptCore/WasmOps.h>
 #include <wtf/BitVector.h>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>

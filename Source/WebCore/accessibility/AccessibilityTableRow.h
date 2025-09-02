@@ -31,16 +31,16 @@
 #include "AccessibilityRenderObject.h"
 
 namespace WebCore {
-    
+
 class AccessibilityTable;
 
 class AccessibilityTableRow : public AccessibilityRenderObject {
 public:
-    static Ref<AccessibilityTableRow> create(AXID, RenderObject&, AXObjectCache&);
-    static Ref<AccessibilityTableRow> create(AXID, Node&, AXObjectCache&);
+    static Ref<AccessibilityTableRow> create(AXID, RenderObject&, AXObjectCache&, bool isARIAGridRow = false);
+    static Ref<AccessibilityTableRow> create(AXID, Node&, AXObjectCache&, bool isARIAGridRow = false);
     virtual ~AccessibilityTableRow();
 
-    virtual AccessibilityTable* parentTable() const;
+    AccessibilityTable* parentTable() const;
 
     void setRowIndex(unsigned);
     unsigned rowIndex() const override { return m_rowIndex; }
@@ -48,15 +48,20 @@ public:
     // allows the table to add other children that may not originate
     // in the row, but their col/row spans overlap into it
     void appendChild(AccessibilityObject*);
-    
+
     void addChildren() final;
 
     std::optional<unsigned> axColumnIndex() const final;
     std::optional<unsigned> axRowIndex() const final;
+    String axRowIndexText() const final;
+    // aria-colindextext is not allowed on rows
+
+    AccessibilityChildrenVector disclosedRows() override;
+    AccessibilityObject* disclosedByRow() const override;
 
 protected:
-    explicit AccessibilityTableRow(AXID, RenderObject&, AXObjectCache&);
-    explicit AccessibilityTableRow(AXID, Node&, AXObjectCache&);
+    explicit AccessibilityTableRow(AXID, RenderObject&, AXObjectCache&, bool isARIAGridRow = false);
+    explicit AccessibilityTableRow(AXID, Node&, AXObjectCache&, bool isARIAGridRow = false);
 
     AccessibilityRole determineAccessibilityRole() final;
 
@@ -67,7 +72,11 @@ private:
     AccessibilityObject* observableObject() const final;
     bool computeIsIgnored() const final;
 
+    bool isARIAGridRow() const final { return m_isARIAGridRow; }
+    bool isARIATreeGridRow() const final;
+
     unsigned m_rowIndex;
+    bool m_isARIAGridRow { false };
 };
 
 } // namespace WebCore

@@ -105,11 +105,13 @@ RunLoop::TimerBase::TimerBase(Ref<RunLoop>&& runLoop, ASCIILiteral description)
     : m_runLoop(WTFMove(runLoop))
     , m_description(description)
 {
+    m_runLoop->registerTimer(*this);
 }
 
 RunLoop::TimerBase::~TimerBase()
 {
     stop();
+    m_runLoop->unregisterTimer(*this);
 }
 
 void RunLoop::TimerBase::start(Seconds interval, bool repeat)

@@ -1,5 +1,3 @@
 
-Harness Error (TIMEOUT), message = null
-
-TIMEOUT event and promise ordering for same-document navigation.back() intercepted by intercept() Test timed out
+FAIL event and promise ordering for same-document navigation.back() intercepted by intercept() assert_equals: event 2 (handler run): location.hash value expected "" but got "#1"
 

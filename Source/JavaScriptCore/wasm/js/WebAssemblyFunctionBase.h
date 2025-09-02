@@ -38,12 +38,16 @@ using Wasm::WasmToWasmImportableFunction;
 using Wasm::WasmOrJSImportableFunctionCallLinkInfo;
 
 class WebAssemblyFunctionBase : public JSFunction {
+    friend JSC::LLIntOffsetsExtractor;
+
 public:
     using Base = JSFunction;
 
     static constexpr unsigned StructureFlags = Base::StructureFlags;
 
     DECLARE_INFO;
+
+    DECLARE_VISIT_CHILDREN;
 
     JSWebAssemblyInstance* instance() const { return m_instance.get(); }
 
@@ -66,7 +70,6 @@ public:
     static constexpr ptrdiff_t offsetOfRTT() { return OBJECT_OFFSETOF(WebAssemblyFunctionBase, m_importableFunction) + WasmToWasmImportableFunction::offsetOfRTT(); }
 
 protected:
-    DECLARE_VISIT_CHILDREN;
     void finishCreation(VM&, NativeExecutable*, unsigned length, const String& name);
     WebAssemblyFunctionBase(VM&, NativeExecutable*, JSGlobalObject*, Structure*, JSWebAssemblyInstance*, Wasm::WasmOrJSImportableFunction&&, Wasm::WasmOrJSImportableFunctionCallLinkInfo*);
 

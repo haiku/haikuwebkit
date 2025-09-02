@@ -32,7 +32,16 @@
 
 #include <wtf/SwiftBridging.h>
 
+#if __has_include(<swift/bridging>)
+#include <swift/bridging>
+#endif
+
 #ifdef __cplusplus
+
+#include <array>
+#include <optional>
+#include <wtf/Forward.h>
+#include <wtf/StdLibExtras.h>
 
 #if defined(WGPU_SHARED_LIBRARY)
 #    if defined(_WIN32)

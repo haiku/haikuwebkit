@@ -746,20 +746,22 @@ imported/w3c/web-platform-tests/urlpattern/urlpattern.any.serviceworker.html [ S
 imported/w3c/web-platform-tests/urlpattern/urlpattern.any.sharedworker.html [ Skip ]
 imported/w3c/web-platform-tests/urlpattern/urlpattern.https.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/urlpattern/urlpattern.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/acquire.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/held.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/idlharness.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/ifAvailable.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/lock-attributes.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/mode-exclusive.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/mode-mixed.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/mode-shared.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/non-secure-context.tentative.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/query-empty.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/resource-names.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/secure-context.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/signal.tentative.https.any.sharedworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/steal.tentative.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/acquire.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/held.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/idlharness.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/ifAvailable.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/lock-attributes.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/mode-exclusive.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/mode-mixed.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/mode-shared.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/non-secure-context.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/query-empty.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/resource-names.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/secure-context.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/signal.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/steal.https.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/storage-buckets.tentative.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/storage-buckets.tentative.https.any.sharedworker.html [ Skip ]
 imported/w3c/web-platform-tests/websockets/bufferedAmount-unchanged-by-sync-xhr.any.sharedworker.html?default [ Skip ]
 imported/w3c/web-platform-tests/websockets/mixed-content.https.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/websockets/mixed-content.https.any.sharedworker.html [ Skip ]
@@ -982,6 +984,9 @@ accessibility/dynamic-table-row-column-indices.html [ Skip ]
 
 # Skipping because AccessibilityUIElement::boundsForRangeWithPagePosition() is not supported on WK1.
 accessibility/mac/bounds-for-range-centered.html [ Skip ]
+
+# Skipping because different hierarchy on WK1
+accessibility/youtube-embed-accessibility-hierarchy.html [ Skip ]
 
 # DOM paste access requests are not implemented in WebKit1.
 editing/async-clipboard/clipboard-change-data-while-reading.html [ Skip ]
@@ -1244,9 +1249,8 @@ media/video-currenttime-monotonic.html [ Failure ]
 webkit.org/b/251113 inspector/timeline/timeline-event-screenshots.html [ Skip ]
 
 # The Cookie Store API is not supported on WK1.
-imported/w3c/web-platform-tests/cookie-store [ Skip ]
+imported/w3c/web-platform-tests/cookiestore [ Skip ]
 imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies.tentative.https.html [ Skip ]
-http/tests/cookies/cookie-store-get-secure.https.html [ Skip ]
 http/tests/cookies/cookie-store-set-secure.https.html [ Skip ]
 cookies/cookie-store-register-eventlistener-from-file-protocol.html [ Skip ]
 cookies/cookie-store-start-listening-for-change-with-null-url-crash.html [ Skip ]
@@ -1468,20 +1472,20 @@ imported/w3c/web-platform-tests/html/webappapis/microtask-queuing/queue-microtas
 imported/w3c/web-platform-tests/infrastructure/server/context.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/infrastructure/server/secure-context.https.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/html/webappapis/scripting/processing-model-2/integration-with-the-javascript-agent-formalism/requires-failure.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/acquire.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/clientids.tentative.https.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/held.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/idlharness.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/ifAvailable.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/lock-attributes.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/mode-exclusive.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/mode-mixed.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/mode-shared.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/query-empty.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/resource-names.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/secure-context.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/signal.tentative.https.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/web-locks/steal.tentative.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/acquire.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/clientids.https.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/held.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/idlharness.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/ifAvailable.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/lock-attributes.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/mode-exclusive.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/mode-mixed.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/mode-shared.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/query-empty.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/resource-names.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/secure-context.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/signal.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/web-locks/steal.https.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/webmessaging/broadcastchannel/service-worker.https.html [ Skip ]
 imported/w3c/web-platform-tests/workers/Worker-base64.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/workers/Worker-constructor-proto.any.serviceworker.html [ Skip ]
@@ -1511,6 +1515,15 @@ imported/w3c/web-platform-tests/content-security-policy/wasm-unsafe-eval/script-
 imported/w3c/web-platform-tests/content-security-policy/wasm-unsafe-eval/script-src-spv-asynch.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/content-security-policy/wasm-unsafe-eval/script-src-unsafe-eval-allows-wasm.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/content-security-policy/wasm-unsafe-eval/script-src-wasm-unsafe-eval-allows-wasm.any.serviceworker.html [ Skip ]
+
+imported/w3c/web-platform-tests/content-security-policy/connect-src/connect-src-syncxmlhttprequest-redirect-to-blocked.sub.html [ Skip ]
+imported/w3c/web-platform-tests/content-security-policy/connect-src/connect-src-websocket-allowed.sub.html [ Skip ]
+imported/w3c/web-platform-tests/content-security-policy/generic/image-document-ignores-csp.html [ Skip ]
+imported/w3c/web-platform-tests/content-security-policy/generic/policy-inherited-correctly-by-plznavigate.html [ Skip ]
+imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.sharedworker.html [ Skip ]
+imported/w3c/web-platform-tests/content-security-policy/inheritance/history.sub.html [ Skip ]
+
 imported/w3c/web-platform-tests/notifications/idlharness.https.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/streams/idlharness.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/streams/piping/abort.any.serviceworker.html [ Skip ]
@@ -1719,6 +1732,8 @@ webkit.org/b/244308 imported/w3c/web-platform-tests/cookies/attributes/attribute
 
 # Only flakey in WK1
 webarchive/loading/test-loading-archive-subresource-null-mimetype.html [ Failure Pass ]
+
+webarchive/loading/test-loading-archive-with-link.html [ Skip ]
 
 # WebKit1 frames use native scrollbars causing these tests to fail.
 
@@ -3178,6 +3193,9 @@ webkit.org/b/292218 [ Sonoma Release ] media/media-source/media-source-video-ren
 
 http/tests/iframe-memory-monitor/media-video-autoplay-in-frames.html [ Skip ]
 
+# Test times out:
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/event-click-counts.html [ Skip ]
+
 # webkit.org/b/293249 third-party cookie blocking is not supported in WK1
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie-preexisting-cookie.html [ Skip ]
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie.html [ Skip ]
@@ -3208,3 +3226,5 @@ media/video-setSinkId-default.html [ Skip ]
 dom/xsl/lockdown-mode [ Skip ]
 http/tests/lockdown-mode [ Skip ]
 js/dom/lockdown-mode [ Skip ]
+
+webkit.org/b/289382 fast/canvas/offscreen-no-script-context-crash.html [ Skip ]

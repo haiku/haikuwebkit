@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "JSMap.h"
+#include <JavaScriptCore/JSMap.h>
 
 namespace JSC {
 

@@ -18,7 +18,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-new-navigation-before-commit.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-push.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-redirect-options.html
+/LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-redirect-push-changed-to-replace.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-redirect-push.html
+/LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-redirect-replace-changed-to-push.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-redirect-replace.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-redirect-throws.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/precommit-handler/precommitHandler-reload.html

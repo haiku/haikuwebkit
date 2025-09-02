@@ -27,8 +27,8 @@
 
 #if ENABLE(FTL_JIT)
 
-#include "FTLAbbreviatedTypes.h"
-#include "FTLValueRange.h"
+#include <JavaScriptCore/FTLAbbreviatedTypes.h>
+#include <JavaScriptCore/FTLValueRange.h>
 
 namespace JSC {
 

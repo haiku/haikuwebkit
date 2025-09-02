@@ -297,22 +297,6 @@ private:
     ValueRange m_valueRange;
 };
 
-template<typename T>
-class PositiveWrapper final : public Wrapper<T> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(PositiveWrapper, Animation);
-public:
-    PositiveWrapper(CSSPropertyID property, T (RenderStyle::*getter)() const, void (RenderStyle::*setter)(T))
-        : Wrapper<T>(property, getter, setter)
-    {
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        auto blendedValue = blendFunc(this->value(from), this->value(to), context);
-        (destination.*this->m_setter)(blendedValue > 1 ? blendedValue : 1);
-    }
-};
-
 class LengthWrapper : public WrapperWithGetter<const WebCore::Length&> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(LengthWrapper, Animation);
 public:
@@ -633,124 +617,6 @@ private:
 
 // MARK: - Customized Wrappers
 
-class NinePieceImageRepeatWrapper final : public WrapperBase {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(NinePieceImageRepeatWrapper, Animation);
-public:
-    NinePieceImageRepeatWrapper(CSSPropertyID property, NinePieceImageRule (RenderStyle::*horizontalGetter)() const, void (RenderStyle::*horizontalSetter)(NinePieceImageRule), NinePieceImageRule (RenderStyle::*verticalGetter)() const, void (RenderStyle::*verticalSetter)(NinePieceImageRule))
-        : WrapperBase(property)
-        , m_horizontalWrapper(DiscreteWrapper<NinePieceImageRule>(property, horizontalGetter, horizontalSetter))
-        , m_verticalWrapper(DiscreteWrapper<NinePieceImageRule>(property, verticalGetter, verticalSetter))
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        return m_horizontalWrapper.equals(a, b) && m_verticalWrapper.equals(a, b);
-    }
-
-    bool canInterpolate(const RenderStyle&, const RenderStyle&, CompositeOperation) const final
-    {
-        return false;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        m_horizontalWrapper.interpolate(destination, from, to, context);
-        m_verticalWrapper.interpolate(destination, from, to, context);
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const final
-    {
-        m_horizontalWrapper.log(from, to, destination, progress);
-        m_verticalWrapper.log(from, to, destination, progress);
-    }
-#endif
-
-    DiscreteWrapper<NinePieceImageRule> m_horizontalWrapper;
-    DiscreteWrapper<NinePieceImageRule> m_verticalWrapper;
-};
-
-class LengthBoxWrapper : public WrapperWithGetter<const LengthBox&> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(LengthBoxWrapper, Animation);
-public:
-    enum class Flags : uint8_t {
-        IsLengthPercentage      = 1 << 0,
-        UsesFillKeyword         = 1 << 1,
-        AllowsNegativeValues    = 1 << 2,
-        MayOverrideBorderWidths = 1 << 3,
-    };
-    LengthBoxWrapper(CSSPropertyID property, const LengthBox& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(LengthBox&&), OptionSet<Flags> flags = { })
-        : WrapperWithGetter(property, getter)
-        , m_setter(setter)
-        , m_flags(flags)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const override
-    {
-        if (m_flags.contains(Flags::UsesFillKeyword)) {
-            if (property() == CSSPropertyBorderImageSlice && from.borderImage().fill() != to.borderImage().fill())
-                return false;
-            if (property() == CSSPropertyMaskBorderSlice && from.maskBorder().fill() != to.maskBorder().fill())
-                return false;
-        }
-
-        bool isLengthPercentage = m_flags.contains(Flags::IsLengthPercentage);
-
-        if (m_flags.contains(Flags::MayOverrideBorderWidths)) {
-            bool overridesBorderWidths = from.borderImage().overridesBorderWidths();
-            if (overridesBorderWidths != to.borderImage().overridesBorderWidths())
-                return false;
-            // Even if this property accepts <length-percentage>, border widths can only be a <length>.
-            if (overridesBorderWidths)
-                isLengthPercentage = false;
-        }
-
-        auto& fromLengthBox = value(from);
-        auto& toLengthBox = value(to);
-        return canInterpolateLengths(fromLengthBox.top(), toLengthBox.top(), isLengthPercentage)
-            && canInterpolateLengths(fromLengthBox.right(), toLengthBox.right(), isLengthPercentage)
-            && canInterpolateLengths(fromLengthBox.bottom(), toLengthBox.bottom(), isLengthPercentage)
-            && canInterpolateLengths(fromLengthBox.left(), toLengthBox.left(), isLengthPercentage);
-    }
-
-    bool requiresInterpolationForAccumulativeIteration(const RenderStyle& from, const RenderStyle& to) const final
-    {
-        auto& fromLengthBox = value(from);
-        auto& toLengthBox = value(to);
-        return lengthsRequireInterpolationForAccumulativeIteration(fromLengthBox.top(), toLengthBox.top())
-            && lengthsRequireInterpolationForAccumulativeIteration(fromLengthBox.right(), toLengthBox.right())
-            && lengthsRequireInterpolationForAccumulativeIteration(fromLengthBox.bottom(), toLengthBox.bottom())
-            && lengthsRequireInterpolationForAccumulativeIteration(fromLengthBox.left(), toLengthBox.left());
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const override
-    {
-        if (m_flags.contains(Flags::UsesFillKeyword)) {
-            if (property() == CSSPropertyBorderImageSlice)
-                destination.setBorderImageSliceFill((!context.progress || !context.isDiscrete ? from : to).borderImage().fill());
-            else if (property() == CSSPropertyMaskBorderSlice)
-                destination.setMaskBorderSliceFill((!context.progress || !context.isDiscrete ? from : to).maskBorder().fill());
-        }
-        if (m_flags.contains(Flags::MayOverrideBorderWidths))
-            destination.setBorderImageWidthOverridesBorderWidths((!context.progress || !context.isDiscrete ? from : to).borderImage().overridesBorderWidths());
-        if (context.isDiscrete) {
-            // It is important we have this non-interpolated shortcut because certain CSS properties
-            // represented as a LengthBox, such as border-image-slice, don't know how to deal with
-            // calculated Length values, see for instance valueForImageSliceSide(const Length&).
-            (destination.*m_setter)(context.progress ? LengthBox(value(to)) : LengthBox(value(from)));
-            return;
-        }
-        auto valueRange = m_flags.contains(Flags::AllowsNegativeValues) ? ValueRange::All : ValueRange::NonNegative;
-        (destination.*m_setter)(blendFunc(value(from), value(to), context, valueRange));
-    }
-
-private:
-    void (RenderStyle::*m_setter)(LengthBox&&);
-    OptionSet<Flags> m_flags;
-};
-
 #if ENABLE(VARIATION_FONTS)
 
 class FontVariationSettingsWrapper final : public Wrapper<FontVariationSettings> {
@@ -788,37 +654,6 @@ public:
 };
 
 #endif
-
-class ShapeWrapper final : public RefCountedWrapper<ShapeValue> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(ShapeWrapper, Animation);
-public:
-    ShapeWrapper(CSSPropertyID property, ShapeValue* (RenderStyle::*getter)() const, void (RenderStyle::*setter)(RefPtr<ShapeValue>&&))
-        : RefCountedWrapper(property, getter, setter)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        // If the style pointers are the same, don't bother doing the test.
-        if (&a == &b)
-            return true;
-
-        auto* shapeA = value(a);
-        auto* shapeB = value(b);
-        if (shapeA == shapeB)
-            return true;
-        if (!shapeA || !shapeB)
-            return false;
-        return *shapeA == *shapeB;
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        auto* fromShape = value(from);
-        auto* toShape = value(to);
-        return fromShape && toShape && fromShape->canBlend(*toShape);
-    }
-};
 
 class StyleImageWrapper final : public RefCountedWrapper<StyleImage> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleImageWrapper, Animation);
@@ -1328,27 +1163,6 @@ public:
         // The default logic will now apply since <number> and <length-percentage> values
         // are converted to different LengthType values.
         return LengthWrapper::canInterpolate(from, to, compositeOperation);
-    }
-};
-
-class VerticalAlignWrapper final : public LengthWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(VerticalAlignWrapper, Animation);
-public:
-    VerticalAlignWrapper()
-        : LengthWrapper(CSSPropertyVerticalAlign, &RenderStyle::verticalAlignLength, &RenderStyle::setVerticalAlignLength, LengthWrapper::Flags::IsLengthPercentage)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation compositeOperation) const final
-    {
-        return from.verticalAlign() == VerticalAlign::Length && to.verticalAlign() == VerticalAlign::Length && LengthWrapper::canInterpolate(from, to, compositeOperation);
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        LengthWrapper::interpolate(destination, from, to, context);
-        auto& blendingStyle = context.isDiscrete && context.progress ? to : from;
-        destination.setVerticalAlign(blendingStyle.verticalAlign());
     }
 };
 

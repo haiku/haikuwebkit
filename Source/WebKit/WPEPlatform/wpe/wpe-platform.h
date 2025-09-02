@@ -34,6 +34,7 @@
 #include <wpe/WPEClipboard.h>
 #include <wpe/WPEColor.h>
 #include <wpe/WPEConfig.h>
+#include <wpe/WPEDRMDevice.h>
 #include <wpe/WPEDefines.h>
 #include <wpe/WPEDisplay.h>
 #include <wpe/WPEEGLError.h>

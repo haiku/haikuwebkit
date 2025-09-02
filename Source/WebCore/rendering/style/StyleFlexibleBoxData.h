@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2011 Google Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,13 +26,12 @@
 
 #pragma once
 
+#include "RenderStyleConstants.h"
 #include "StyleFlexBasis.h"
+#include "StyleFlexGrow.h"
+#include "StyleFlexShrink.h"
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
-
-namespace WTF {
-class TextStream;
-}
 
 namespace WebCore {
 
@@ -48,12 +48,12 @@ public:
     void dumpDifferences(TextStream&, const StyleFlexibleBoxData&) const;
 #endif
 
-    float flexGrow;
-    float flexShrink;
+    Style::FlexGrow flexGrow;
+    Style::FlexShrink flexShrink;
     Style::FlexBasis flexBasis;
 
-    unsigned flexDirection : 2; // FlexDirection
-    unsigned flexWrap : 2; // FlexWrap
+    PREFERRED_TYPE(FlexDirection) unsigned flexDirection : 2;
+    PREFERRED_TYPE(FlexWrap) unsigned flexWrap : 2;
 
 private:
     StyleFlexibleBoxData();

@@ -4006,6 +4006,14 @@ def check_include_line(filename, file_extension, clean_lines, line_number, inclu
                   '%s Should be: config.h, primary header, blank line, and then alphabetically sorted.' %
                   error_message)
 
+    # Check to make sure there's no self inclusions
+    filename_regex = rf'(?:.*?/)?{re.escape(os.path.basename(filename))}'
+    if re.search(
+        rf'^#include\s*(<{filename_regex}>|\"{filename_regex}\")',
+        line,
+    ):
+        error(line_number, 'build/self_include', 4, 'Self include problem.')
+
 
 def check_language(filename, clean_lines, line_number, file_extension, include_state,
                    file_state, error):
@@ -4935,6 +4943,7 @@ class CppChecker(object):
         'build/webcore_export',
         'build/wk_api_available',
         'build/version_check',
+        'build/self_include',
         'build-speed/inlines',
         'legal/copyright',
         'policy/language',

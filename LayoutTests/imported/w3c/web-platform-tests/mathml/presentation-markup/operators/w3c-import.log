@@ -14,6 +14,7 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/character-level-mirroring.html
 /LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished-op-1-2-expected-mismatch.html
 /LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished-op-1-2-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished-op-1-2.html
@@ -240,3 +241,4 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/stretchy-underbar-1-expected-mismatch.xhtml
 /LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/stretchy-underbar-1-ref.xhtml
 /LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/stretchy-underbar-1.xhtml
+/LayoutTests/imported/w3c/web-platform-tests/mathml/presentation-markup/operators/symmetric-largeop.html

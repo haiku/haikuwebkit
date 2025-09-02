@@ -45,7 +45,8 @@ public:
     bool isEmbeddedThroughSVGImage() const;
     bool isEmbeddedThroughFrameContainingSVGDocument() const;
 
-    std::pair<FloatSize, FloatSize> computeIntrinsicSizeAndPreferredAspectRatio() const final;
+    FloatSize computeIntrinsicSize() const final;
+    FloatSize preferredAspectRatio() const final;
     bool hasIntrinsicAspectRatio() const final;
 
     bool isLayoutSizeChanged() const { return m_isLayoutSizeChanged; }
@@ -94,8 +95,6 @@ private:
     void updateFromStyle() final;
     bool needsHasSVGTransformFlags() const final;
     void updateLayerTransform() final;
-
-    FloatSize calculateIntrinsicSize() const;
 
     bool nodeAtPoint(const HitTestRequest&, HitTestResult&, const HitTestLocation& locationInContainer, const LayoutPoint& accumulatedOffset, HitTestAction) final;
 

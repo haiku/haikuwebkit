@@ -26,70 +26,45 @@
 #include "StyleScrollPadding.h"
 
 #include "LayoutRect.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 
 namespace WebCore {
 namespace Style {
 
 LayoutUnit Evaluation<ScrollPaddingEdge>::operator()(const ScrollPaddingEdge& edge, LayoutUnit referenceLength)
 {
-    switch (edge.m_value.type()) {
-    case LengthType::Fixed:
-        return LayoutUnit(edge.m_value.value());
-
-    case LengthType::Percent:
-        return LayoutUnit(static_cast<float>(referenceLength * edge.m_value.percent() / 100.0f));
-
-    case LengthType::Calculated:
-        return LayoutUnit(edge.m_value.nonNanCalculatedValue(referenceLength));
-
-    case LengthType::Auto:
+    return WTF::switchOn(edge,
+        [&](const ScrollPaddingEdge::Fixed& fixed) {
+            return LayoutUnit(fixed.value);
+        },
+        [&](const ScrollPaddingEdge::Percentage& percentage) {
+            return Style::evaluate(percentage, referenceLength);
+        },
+        [&](const ScrollPaddingEdge::Calc& calculated) {
+            return Style::evaluate(calculated, referenceLength);
+        },
+        [&](const CSS::Keyword::Auto&) {
             return 0_lu;
-
-    case LengthType::FillAvailable:
-    case LengthType::Normal:
-    case LengthType::Content:
-    case LengthType::Relative:
-    case LengthType::Intrinsic:
-    case LengthType::MinIntrinsic:
-    case LengthType::MinContent:
-    case LengthType::MaxContent:
-    case LengthType::FitContent:
-    case LengthType::Undefined:
-        break;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-    return 0_lu;
+        }
+    );
 }
 
 float Evaluation<ScrollPaddingEdge>::operator()(const ScrollPaddingEdge& edge, float referenceLength)
 {
-    switch (edge.m_value.type()) {
-    case LengthType::Fixed:
-        return edge.m_value.value();
-
-    case LengthType::Percent:
-        return referenceLength * edge.m_value.percent() / 100.0f;
-
-    case LengthType::Calculated:
-        return edge.m_value.nonNanCalculatedValue(referenceLength);
-
-    case LengthType::Auto:
-            return 0;
-
-    case LengthType::FillAvailable:
-    case LengthType::Normal:
-    case LengthType::Content:
-    case LengthType::Relative:
-    case LengthType::Intrinsic:
-    case LengthType::MinIntrinsic:
-    case LengthType::MinContent:
-    case LengthType::MaxContent:
-    case LengthType::FitContent:
-    case LengthType::Undefined:
-        break;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-    return 0;
+    return WTF::switchOn(edge,
+        [&](const ScrollPaddingEdge::Fixed& fixed) {
+            return fixed.value;
+        },
+        [&](const ScrollPaddingEdge::Percentage& percentage) {
+            return Style::evaluate(percentage, referenceLength);
+        },
+        [&](const ScrollPaddingEdge::Calc& calculated) {
+            return Style::evaluate(calculated, referenceLength);
+        },
+        [&](const CSS::Keyword::Auto&) {
+            return 0.0f;
+        }
+    );
 }
 
 LayoutBoxExtent extentForRect(const ScrollPaddingBox& padding, const LayoutRect& rect)

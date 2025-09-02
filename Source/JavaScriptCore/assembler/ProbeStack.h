@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "CPU.h"
+#include <JavaScriptCore/CPU.h>
 #include <wtf/HashMap.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMalloc.h>

@@ -25,15 +25,15 @@
 
 #pragma once
 
-#include "Error.h"
-#include "ExceptionHelpers.h"
-#include "GenericTypedArrayViewInlines.h"
-#include "JSArrayBuffer.h"
-#include "JSArrayBufferViewInlines.h"
-#include "JSCellInlines.h"
-#include "JSGenericTypedArrayView.h"
-#include "TypeError.h"
-#include "TypedArrays.h"
+#include <JavaScriptCore/Error.h>
+#include <JavaScriptCore/ExceptionHelpers.h>
+#include <JavaScriptCore/GenericTypedArrayViewInlines.h>
+#include <JavaScriptCore/JSArrayBuffer.h>
+#include <JavaScriptCore/JSArrayBufferViewInlines.h>
+#include <JavaScriptCore/JSCellInlines.h>
+#include <JavaScriptCore/JSGenericTypedArrayView.h>
+#include <JavaScriptCore/TypeError.h>
+#include <JavaScriptCore/TypedArrays.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/text/MakeString.h>
 

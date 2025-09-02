@@ -205,6 +205,48 @@ template<> std::optional<TestObj::Confidence> parseEnumerationFromString<TestObj
 template<> std::optional<TestObj::Confidence> parseEnumeration<TestObj::Confidence>(JSC::JSGlobalObject&, JSC::JSValue);
 template<> ASCIILiteral expectedEnumerationValues<TestObj::Confidence>();
 
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefault);
+template<> JSC::JSString* convertEnumerationToJS(JSC::VM&, TestObj::EnumWithMissingValueDefault);
+
+template<> std::optional<TestObj::EnumWithMissingValueDefault> parseEnumerationFromString<TestObj::EnumWithMissingValueDefault>(const String&);
+template<> std::optional<TestObj::EnumWithMissingValueDefault> parseEnumeration<TestObj::EnumWithMissingValueDefault>(JSC::JSGlobalObject&, JSC::JSValue);
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefault>();
+
+String convertEnumerationToString(TestObj::EnumWithInvalidValueDefault);
+template<> JSC::JSString* convertEnumerationToJS(JSC::VM&, TestObj::EnumWithInvalidValueDefault);
+
+template<> std::optional<TestObj::EnumWithInvalidValueDefault> parseEnumerationFromString<TestObj::EnumWithInvalidValueDefault>(const String&);
+template<> std::optional<TestObj::EnumWithInvalidValueDefault> parseEnumeration<TestObj::EnumWithInvalidValueDefault>(JSC::JSGlobalObject&, JSC::JSValue);
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithInvalidValueDefault>();
+
+String convertEnumerationToString(TestObj::EnumWithMissingAndInvalidValueDefault);
+template<> JSC::JSString* convertEnumerationToJS(JSC::VM&, TestObj::EnumWithMissingAndInvalidValueDefault);
+
+template<> std::optional<TestObj::EnumWithMissingAndInvalidValueDefault> parseEnumerationFromString<TestObj::EnumWithMissingAndInvalidValueDefault>(const String&);
+template<> std::optional<TestObj::EnumWithMissingAndInvalidValueDefault> parseEnumeration<TestObj::EnumWithMissingAndInvalidValueDefault>(JSC::JSGlobalObject&, JSC::JSValue);
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingAndInvalidValueDefault>();
+
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefaultNoQuotes);
+template<> JSC::JSString* convertEnumerationToJS(JSC::VM&, TestObj::EnumWithMissingValueDefaultNoQuotes);
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNoQuotes> parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNoQuotes>(const String&);
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNoQuotes> parseEnumeration<TestObj::EnumWithMissingValueDefaultNoQuotes>(JSC::JSGlobalObject&, JSC::JSValue);
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefaultNoQuotes>();
+
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefaultAsEmptyValue);
+template<> JSC::JSString* convertEnumerationToJS(JSC::VM&, TestObj::EnumWithMissingValueDefaultAsEmptyValue);
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultAsEmptyValue> parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultAsEmptyValue>(const String&);
+template<> std::optional<TestObj::EnumWithMissingValueDefaultAsEmptyValue> parseEnumeration<TestObj::EnumWithMissingValueDefaultAsEmptyValue>(JSC::JSGlobalObject&, JSC::JSValue);
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefaultAsEmptyValue>();
+
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefaultNotInEnumValues);
+template<> JSC::JSString* convertEnumerationToJS(JSC::VM&, TestObj::EnumWithMissingValueDefaultNotInEnumValues);
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNotInEnumValues> parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNotInEnumValues>(const String&);
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNotInEnumValues> parseEnumeration<TestObj::EnumWithMissingValueDefaultNotInEnumValues>(JSC::JSGlobalObject&, JSC::JSValue);
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefaultNotInEnumValues>();
+
 template<> ConversionResult<IDLDictionary<TestObj::Dictionary>> convertDictionary<TestObj::Dictionary>(JSC::JSGlobalObject&, JSC::JSValue);
 
 JSC::JSObject* convertDictionaryToJS(JSC::JSGlobalObject&, JSDOMGlobalObject&, const TestObj::Dictionary&);

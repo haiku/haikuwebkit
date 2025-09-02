@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CacheableIdentifier.h"
-#include "Identifier.h"
-#include "JSGlobalObjectFunctions.h"
-#include "PrivateName.h"
+#include <JavaScriptCore/CacheableIdentifier.h>
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/JSGlobalObjectFunctions.h>
+#include <JavaScriptCore/PrivateName.h>
 #include <wtf/dtoa.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN

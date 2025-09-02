@@ -29,11 +29,14 @@ function dumpAXTable(axElement, options) {
 //   * `excludeRoles`: Array of strings representing roles you don't want to include in the output.
 //                     Case insensitive, partial match is fine, e.g. "scrollbar" will exclude "AXScrollBar".
 //
-//   * `visibleOnly`: True if only elements in the viewport should be returned.
+//   * `visibleOnly`: Specify true if only elements visible in the viewport should be returned.
+//
+//   * `includeAccessibilityText`: Specify true if you want the accessibility text of each element to be included in the output.
 function dumpAXSearchTraversal(axElement, options = { }) {
     let output = "";
     let searchResult = null;
     const { visibleOnly = false } = options;
+    const { includeAccessibilityText = false } = options;
     while (true) {
         searchResult = axElement.uiElementForSearchPredicate(searchResult, /* directionIsNext */ true, "AXAnyTypeSearchKey", /* searchText */ "", visibleOnly);
         if (!searchResult)
@@ -58,6 +61,9 @@ function dumpAXSearchTraversal(axElement, options = { }) {
         let resultDescription = `${id ? `#${id} ` : ""}${role}`;
         if (role.includes("StaticText"))
             resultDescription += ` ${accessibilityController.platformName === "ios" ? searchResult.description : searchResult.stringValue}`;
+
+        if (includeAccessibilityText)
+            resultDescription += `\n${platformTextAlternatives(searchResult)}\n`;
 
         output += `\n{${resultDescription}}\n`;
     }

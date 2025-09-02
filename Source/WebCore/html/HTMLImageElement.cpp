@@ -969,12 +969,6 @@ AtomString HTMLImageElement::srcsetForBindings() const
     return getAttributeForBindings(srcsetAttr);
 }
 
-const AtomString& HTMLImageElement::loadingForBindings() const
-{
-    auto& attributeValue = attributeWithoutSynchronization(HTMLNames::loadingAttr);
-    return hasLazyLoadableAttributeValue(attributeValue) ? lazyAtom() : eagerAtom();
-}
-
 bool HTMLImageElement::isDeferred() const
 {
     return m_imageLoader->isDeferred();

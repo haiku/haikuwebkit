@@ -171,6 +171,7 @@ public:
         RunJavaScriptAlertResultListener,
         RunJavaScriptConfirmResultListener,
         RunJavaScriptPromptResultListener,
+        ScriptMessage,
         SerializedNode,
         SpeechRecognitionPermissionCallback,
         TextChecker,

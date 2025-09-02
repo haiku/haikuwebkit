@@ -305,19 +305,6 @@ enum class Overflow : uint8_t {
     PagedY
 };
 
-enum class VerticalAlign : uint8_t {
-    Baseline,
-    Middle,
-    Sub,
-    Super,
-    TextTop,
-    TextBottom,
-    Top,
-    Bottom,
-    BaselineMiddle,
-    Length
-};
-
 enum class Clear : uint8_t {
     None,
     Left,
@@ -1239,6 +1226,13 @@ enum class PositionVisibility : uint8_t {
     NoOverflow     = 1 << 2
 };
 
+enum class NinePieceImageRule : uint8_t {
+    Stretch,
+    Round,
+    Space,
+    Repeat,
+};
+
 CSSBoxType transformBoxToCSSBoxType(TransformBox);
 
 constexpr float defaultMiterLimit = 4;
@@ -1309,6 +1303,7 @@ WTF::TextStream& operator<<(WTF::TextStream&, MarqueeBehavior);
 WTF::TextStream& operator<<(WTF::TextStream&, MarqueeDirection);
 WTF::TextStream& operator<<(WTF::TextStream&, MaskMode);
 WTF::TextStream& operator<<(WTF::TextStream&, NBSPMode);
+WTF::TextStream& operator<<(WTF::TextStream&, NinePieceImageRule);
 WTF::TextStream& operator<<(WTF::TextStream&, ObjectFit);
 WTF::TextStream& operator<<(WTF::TextStream&, Order);
 WTF::TextStream& operator<<(WTF::TextStream&, OutlineStyle);
@@ -1360,7 +1355,6 @@ WTF::TextStream& operator<<(WTF::TextStream&, TransformStyle3D);
 WTF::TextStream& operator<<(WTF::TextStream&, UserDrag);
 WTF::TextStream& operator<<(WTF::TextStream&, UserModify);
 WTF::TextStream& operator<<(WTF::TextStream&, UserSelect);
-WTF::TextStream& operator<<(WTF::TextStream&, VerticalAlign);
 WTF::TextStream& operator<<(WTF::TextStream&, Visibility);
 WTF::TextStream& operator<<(WTF::TextStream&, WhiteSpace);
 WTF::TextStream& operator<<(WTF::TextStream&, WhiteSpaceCollapse);

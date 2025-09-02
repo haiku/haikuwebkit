@@ -36,9 +36,9 @@ inline bool RenderElement::hasFilter() const { return style().hasFilter(); }
 inline bool RenderElement::hasHiddenBackface() const { return style().backfaceVisibility() == BackfaceVisibility::Hidden; }
 inline bool RenderElement::hasMask() const { return style().hasMask(); }
 inline bool RenderElement::hasOutline() const { return style().hasOutline() || hasOutlineAnnotation(); }
-inline bool RenderElement::hasShapeOutside() const { return style().shapeOutside(); }
+inline bool RenderElement::hasShapeOutside() const { return !style().shapeOutside().isNone(); }
 inline bool RenderElement::isTransparent() const { return style().hasOpacity(); }
-inline float RenderElement::opacity() const { return style().opacity(); }
+inline float RenderElement::opacity() const { return style().opacity().value.value; }
 inline FloatRect RenderElement::transformReferenceBoxRect() const { return transformReferenceBoxRect(style()); }
 inline FloatRect RenderElement::transformReferenceBoxRect(const RenderStyle& style) const { return referenceBoxRect(transformBoxToCSSBoxType(style.transformBox())); }
 inline Element* RenderElement::element() const { return downcast<Element>(RenderObject::node()); }

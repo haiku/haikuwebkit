@@ -31,10 +31,10 @@
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-#include "WasmCalleeGroup.h"
-#include "WasmJS.h"
-#include "WasmMemory.h"
-#include "WasmOps.h"
+#include <JavaScriptCore/WasmCalleeGroup.h>
+#include <JavaScriptCore/WasmJS.h>
+#include <JavaScriptCore/WasmMemory.h>
+#include <JavaScriptCore/WasmOps.h>
 #include <wtf/Expected.h>
 #include <wtf/Lock.h>
 #include <wtf/SharedTask.h>
@@ -47,7 +47,6 @@ class JSWebAssemblyInstance;
 
 namespace Wasm {
 
-class LLIntPlan;
 class IPIntPlan;
 struct ModuleInformation;
 enum class BindingFailure;
@@ -61,10 +60,6 @@ public:
     static ValidationResult validateSync(VM&, Vector<uint8_t>&& source);
     static void validateAsync(VM&, Vector<uint8_t>&& source, Module::AsyncValidationCallback&&);
 
-    static Ref<Module> create(LLIntPlan& plan)
-    {
-        return adoptRef(*new Module(plan));
-    }
     static Ref<Module> create(IPIntPlan& plan)
     {
         return adoptRef(*new Module(plan));
@@ -87,11 +82,9 @@ public:
 private:
     Ref<CalleeGroup> getOrCreateCalleeGroup(VM&, MemoryMode);
 
-    Module(LLIntPlan&);
     Module(IPIntPlan&);
     const Ref<ModuleInformation> m_moduleInformation;
     RefPtr<CalleeGroup> m_calleeGroups[numberOfMemoryModes];
-    const Ref<LLIntCallees> m_llintCallees;
     const Ref<IPIntCallees> m_ipintCallees;
     FixedVector<MacroAssemblerCodeRef<WasmEntryPtrTag>> m_wasmToJSExitStubs;
     Lock m_lock;

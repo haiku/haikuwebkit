@@ -392,7 +392,7 @@ void RenderBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle
             view().compositor().rootOrBodyStyleChanged(*this, oldStyle);
     }
 
-    if ((oldStyle && oldStyle->shapeOutside()) || style().shapeOutside())
+    if ((oldStyle && !oldStyle->shapeOutside().isNone()) || !style().shapeOutside().isNone())
         updateShapeOutsideInfoAfterStyleChange(style(), oldStyle);
     updateGridPositionAfterStyleChange(style(), oldStyle);
 
@@ -444,25 +444,25 @@ void RenderBox::updateGridPositionAfterStyleChange(const RenderStyle& style, con
 
 void RenderBox::updateShapeOutsideInfoAfterStyleChange(const RenderStyle& style, const RenderStyle* oldStyle)
 {
-    const ShapeValue* shapeOutside = style.shapeOutside();
-    const ShapeValue* oldShapeOutside = oldStyle ? oldStyle->shapeOutside() : nullptr;
+    Style::ShapeOutside shapeOutside = style.shapeOutside();
+    Style::ShapeOutside oldShapeOutside = oldStyle ? oldStyle->shapeOutside() : RenderStyle::initialShapeOutside();
 
-    Length shapeMargin = style.shapeMargin();
-    Length oldShapeMargin = oldStyle ? oldStyle->shapeMargin() : RenderStyle::initialShapeMargin();
+    Style::ShapeMargin shapeMargin = style.shapeMargin();
+    Style::ShapeMargin oldShapeMargin = oldStyle ? oldStyle->shapeMargin() : RenderStyle::initialShapeMargin();
 
-    float shapeImageThreshold = style.shapeImageThreshold();
-    float oldShapeImageThreshold = oldStyle ? oldStyle->shapeImageThreshold() : RenderStyle::initialShapeImageThreshold();
+    Style::ShapeImageThreshold shapeImageThreshold = style.shapeImageThreshold();
+    Style::ShapeImageThreshold oldShapeImageThreshold = oldStyle ? oldStyle->shapeImageThreshold() : RenderStyle::initialShapeImageThreshold();
 
     // FIXME: A future optimization would do a deep comparison for equality. (bug 100811)
     if (shapeOutside == oldShapeOutside && shapeMargin == oldShapeMargin && shapeImageThreshold == oldShapeImageThreshold)
         return;
 
-    if (!shapeOutside)
+    if (shapeOutside.isNone())
         removeShapeOutsideInfo();
     else
         ensureShapeOutsideInfo().markShapeAsDirty();
 
-    if (shapeOutside || shapeOutside != oldShapeOutside)
+    if (!shapeOutside.isNone() || shapeOutside != oldShapeOutside)
         markShapeOutsideDependentsForLayout();
 }
 
@@ -1841,7 +1841,7 @@ static bool isCandidateForOpaquenessTest(const RenderBox& childBox)
         return false;
     if (childStyle.usedVisibility() != Visibility::Visible)
         return false;
-    if (childStyle.shapeOutside())
+    if (!childStyle.shapeOutside().isNone())
         return false;
     if (!childBox.width() || !childBox.height())
         return false;
@@ -1849,7 +1849,7 @@ static bool isCandidateForOpaquenessTest(const RenderBox& childBox)
         if (childLayer->isComposited())
             return false;
         // FIXME: Deal with z-index.
-        if (!childStyle.hasAutoUsedZIndex())
+        if (!childStyle.usedZIndex().isAuto())
             return false;
         if (childLayer->isTransformed() || childLayer->isTransparent() || childLayer->hasFilter())
             return false;
@@ -1973,7 +1973,7 @@ void RenderBox::paintMaskImages(const PaintInfo& paintInfo, const LayoutRect& pa
         pushTransparencyLayer = true;
 
         // Don't render a masked element until all the mask images have loaded, to prevent a flash of unmasked content.
-        if (auto* maskBorder = style().maskBorder().image())
+        if (RefPtr maskBorder = style().maskBorder().source().tryStyleImage())
             allMaskImagesLoaded &= maskBorder->isLoaded(this);
 
         allMaskImagesLoaded &= style().maskLayers().imagesAreLoaded(this);
@@ -1994,8 +1994,8 @@ void RenderBox::paintMaskImages(const PaintInfo& paintInfo, const LayoutRect& pa
 
 LayoutRect RenderBox::maskClipRect(const LayoutPoint& paintOffset)
 {
-    const NinePieceImage& maskBorder = style().maskBorder();
-    if (maskBorder.image()) {
+    auto& maskBorder = style().maskBorder();
+    if (!maskBorder.source().isNone()) {
         LayoutRect borderImageRect = borderBoxRect();
         
         // Apply outsets to the border box.
@@ -2025,17 +2025,23 @@ static StyleImage* findLayerUsedImage(WrappedImagePtr image, const FillLayer& la
 
 void RenderBox::imageChanged(WrappedImagePtr image, const IntRect*)
 {
-    if ((style().borderImage().image() && style().borderImage().image()->data() == image) ||
-        (style().maskBorder().image() && style().maskBorder().image()->data() == image)) {
+    if (RefPtr source = style().borderImage().source().tryStyleImage(); source && source->data() == image) {
         if (parent())
             repaint();
         return;
     }
 
-    ShapeValue* shapeOutsideValue = style().shapeOutside();
-    if (!view().frameView().layoutContext().isInRenderTreeLayout() && isFloating() && shapeOutsideValue && shapeOutsideValue->image() && shapeOutsideValue->image()->data() == image) {
-        ensureShapeOutsideInfo().markShapeAsDirty();
-        markShapeOutsideDependentsForLayout();
+    if (RefPtr source = style().maskBorder().source().tryStyleImage(); source && source->data() == image) {
+        if (parent())
+            repaint();
+        return;
+    }
+
+    if (!view().frameView().layoutContext().isInRenderTreeLayout() && isFloating()) {
+        if (RefPtr shapeOutsideImage = style().shapeOutside().image(); shapeOutsideImage && shapeOutsideImage->data() == image) {
+            ensureShapeOutsideInfo().markShapeAsDirty();
+            markShapeOutsideDependentsForLayout();
+        }
     }
 
     bool didFullRepaint = false;
@@ -3886,7 +3892,7 @@ LayoutUnit RenderBox::computeReplacedLogicalHeight(std::optional<LayoutUnit>) co
 static bool allowMinMaxPercentagesInAutoHeightBlocksQuirk()
 {
 #if PLATFORM(COCOA)
-    return WTF::CocoaApplication::isIBooks();
+    return WTF::CocoaApplication::isAppleBooks();
 #else
     return false;
 #endif
@@ -3965,7 +3971,7 @@ bool RenderBox::replacedMinMaxLogicalHeightComputesAsNone(const auto& logicalHei
     // Make sure % min-height and % max-height resolve to none if the containing block has auto height.
     // Note that the "height" case for replaced elements was handled by hasReplacedLogicalHeight, which is why
     // min and max-height are the only ones handled here.
-    // FIXME: For now we put in a quirk for iBooks until we can move them to viewport units.
+    // FIXME: For now we put in a quirk for Apple Books until we can move them to viewport units.
     if (auto* cb = containingBlockForAutoHeightDetection(logicalHeight))
         return allowMinMaxPercentagesInAutoHeightBlocksQuirk() ? false : cb->hasAutoHeightOrContainingBlockWithAutoHeight();
 
@@ -4495,7 +4501,7 @@ void RenderBox::computePositionedLogicalHeight(LogicalExtentComputedValues& comp
 
     // Calculate the position.
     blockConstraints.resolvePosition(computedValues);
-    blockConstraints.fixupLogicalTopPosition(computedValues);
+    blockConstraints.adjustLogicalTopWithLogicalHeightIfNeeded(computedValues);
 
     // Adjust logicalTop if we need to for perpendicular writing modes in fragments.
     // FIXME: Add support for other types of objects as containerBlock, not only RenderBlock.
@@ -4606,14 +4612,14 @@ void RenderBox::computePositionedLogicalHeightReplaced(LogicalExtentComputedValu
     computedValues.m_extent = computeReplacedLogicalHeight() + borderAndPaddingLogicalHeight();
 
     blockConstraints.resolvePosition(computedValues);
-    blockConstraints.fixupLogicalTopPosition(computedValues);
+    blockConstraints.adjustLogicalTopWithLogicalHeightIfNeeded(computedValues);
 }
 
-VisiblePosition RenderBox::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer* fragment)
+PositionWithAffinity RenderBox::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer* fragment)
 {
     // no children...return this render object's element, if there is one, and offset 0
     if (!firstChild())
-        return createVisiblePosition(nonPseudoElement() ? firstPositionInOrBeforeNode(nonPseudoElement()) : Position());
+        return createPositionWithAffinity(nonPseudoElement() ? firstPositionInOrBeforeNode(nonPseudoElement()) : Position());
 
     if (isRenderTable() && nonPseudoElement()) {
         LayoutUnit right = contentBoxWidth() + horizontalBorderAndPaddingExtent();
@@ -4621,8 +4627,8 @@ VisiblePosition RenderBox::positionForPoint(const LayoutPoint& point, HitTestSou
         
         if (point.x() < 0 || point.x() > right || point.y() < 0 || point.y() > bottom) {
             if (point.x() <= right / 2)
-                return createVisiblePosition(firstPositionInOrBeforeNode(nonPseudoElement()));
-            return createVisiblePosition(lastPositionInOrAfterNode(nonPseudoElement()));
+                return createPositionWithAffinity(firstPositionInOrBeforeNode(nonPseudoElement()));
+            return createPositionWithAffinity(lastPositionInOrAfterNode(nonPseudoElement()));
         }
     }
 
@@ -4691,7 +4697,7 @@ VisiblePosition RenderBox::positionForPoint(const LayoutPoint& point, HitTestSou
     if (closestRenderer)
         return closestRenderer->positionForPoint(adjustedPoint - closestRenderer->locationOffset(), source, fragment);
     
-    return createVisiblePosition(firstPositionInOrBeforeNode(nonPseudoElement()));
+    return createPositionWithAffinity(firstPositionInOrBeforeNode(nonPseudoElement()));
 }
 
 bool RenderBox::shrinkToAvoidFloats() const
@@ -5374,27 +5380,6 @@ LayoutBoxExtent RenderBox::scrollPaddingForViewportRect(const LayoutRect& viewpo
     return Style::extentForRect(style().scrollPaddingBox(), viewportRect);
 }
 
-LayoutUnit synthesizedBaseline(const RenderBox& box, const RenderStyle& parentStyle, LineDirectionMode direction, BaselineSynthesisEdge edge)
-{
-    auto parentWritingMode = parentStyle.writingMode();
-    // https://drafts.csswg.org/css-inline-3/#alignment-baseline-property
-    // https://drafts.csswg.org/css-inline-3/#dominant-baseline-property
-    auto baselineType = parentWritingMode.prefersCentralBaseline() ? FontBaseline::CentralBaseline : FontBaseline::AlphabeticBaseline;
-
-    auto boxSize = direction == HorizontalLine ? box.height() : box.width();
-    if (edge == ContentBox)
-        boxSize -= direction == HorizontalLine ? box.verticalBorderAndPaddingExtent() : box.horizontalBorderAndPaddingExtent();
-    else if (edge == MarginBox)
-        boxSize += direction == HorizontalLine ? box.verticalMarginExtent() : box.horizontalMarginExtent();
-    
-    if (baselineType == FontBaseline::AlphabeticBaseline) {
-        auto shouldTreatAsHorizontal = direction == HorizontalLine
-            || (parentWritingMode.isSidewaysOrientation() && parentWritingMode.computedWritingMode() == StyleWritingMode::VerticalRl);
-        return shouldTreatAsHorizontal ? boxSize : LayoutUnit();
-    }
-    return boxSize / 2;
-}
-
 LayoutUnit RenderBox::intrinsicLogicalWidth() const
 {
     return writingMode().isHorizontal() ? intrinsicSize().width() : intrinsicSize().height();
@@ -5470,8 +5455,12 @@ std::optional<LayoutUnit> RenderBox::explicitIntrinsicInnerHeight() const
 // position:static elements that are not flex-items get their z-index coerced to auto.
 bool RenderBox::requiresLayer() const
 {
-    return RenderBoxModelObject::requiresLayer() || hasNonVisibleOverflow() || style().specifiesColumns()
-        || style().containsLayout() || !style().hasAutoUsedZIndex() || hasRunningAcceleratedAnimations();
+    return RenderBoxModelObject::requiresLayer()
+        || hasNonVisibleOverflow()
+        || style().specifiesColumns()
+        || style().containsLayout()
+        || !style().usedZIndex().isAuto()
+        || hasRunningAcceleratedAnimations();
 }
 
 void RenderBox::updateFloatPainterAfterSelfPaintingLayerChange()

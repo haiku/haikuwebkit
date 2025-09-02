@@ -34,6 +34,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 0>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -74,6 +76,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 0>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -114,6 +118,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -154,6 +160,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -194,6 +202,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -235,6 +245,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 0>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -275,6 +287,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -620,6 +634,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 0>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -660,6 +676,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -700,6 +718,8 @@ AXColumnHeaderUIElements: <array of size 0>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -740,6 +760,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -779,6 +801,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -818,6 +842,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 0>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 AXSortDirection: AXUnknownSortDirection
 
@@ -858,6 +884,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -897,6 +925,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -936,6 +966,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -975,6 +1007,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -1014,6 +1048,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -1053,6 +1089,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -1092,6 +1130,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------
@@ -1131,6 +1171,8 @@ AXColumnHeaderUIElements: <array of size 1>
 AXRowHeaderUIElements: <array of size 1>
 AXARIAColumnIndex: -1
 AXARIARowIndex: -1
+AXColumnIndexDescription: (null)
+AXRowIndexDescription: (null)
 AXRequired: 0
 
 ------------

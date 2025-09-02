@@ -637,6 +637,21 @@ static WebEvent *unwrap(BEKeyEntry *event)
     return evalResult.autorelease();
 }
 
+- (id)objectByEvaluatingJavaScript:(NSString *)script inFrame:(WKFrameInfo *)frame inContentWorld:(WKContentWorld *)world
+{
+    __block RetainPtr<id> evalResult;
+    __block bool done { false };
+    [self evaluateJavaScript:script inFrame:frame inContentWorld:world completionHandler:^(id result, NSError *error) {
+        evalResult = result;
+        done = true;
+        EXPECT_FALSE(error);
+        if (error)
+            NSLog(@"Encountered error: %@ while evaluating script: %@", error, script);
+    }];
+    TestWebKitAPI::Util::run(&done);
+    return evalResult.autorelease();
+}
+
 - (id)objectByEvaluatingJavaScriptWithUserGesture:(NSString *)script
 {
     bool callbackComplete = false;
@@ -650,6 +665,14 @@ static WebEvent *unwrap(BEKeyEntry *event)
     }];
     TestWebKitAPI::Util::run(&callbackComplete);
     return evalResult.autorelease();
+}
+
+- (id)objectByCallingAsyncFunction:(NSString *)script withArguments:(NSDictionary *)arguments
+{
+    NSError *error = nil;
+    id result = [self objectByCallingAsyncFunction:script withArguments:arguments error:&error];
+    EXPECT_NULL(error);
+    return result;
 }
 
 - (id)objectByCallingAsyncFunction:(NSString *)script withArguments:(NSDictionary *)arguments error:(NSError **)errorOut
@@ -670,6 +693,21 @@ static WebEvent *unwrap(BEKeyEntry *event)
     if (errorOut)
         *errorOut = strongError.autorelease();
 
+    return evalResult.autorelease();
+}
+
+- (id)objectByCallingAsyncFunction:(NSString *)script withArguments:(NSDictionary *)arguments inFrame:(WKFrameInfo *)frame inContentWorld:(WKContentWorld *)world
+{
+    __block RetainPtr<id> evalResult;
+    __block bool done { false };
+    [self callAsyncJavaScript:script arguments:arguments inFrame:frame inContentWorld:world completionHandler:^(id result, NSError *error) {
+        evalResult = result;
+        done = true;
+        EXPECT_FALSE(error);
+        if (error)
+            NSLog(@"Encountered error: %@ while evaluating script: %@", error, script);
+    }];
+    TestWebKitAPI::Util::run(&done);
     return evalResult.autorelease();
 }
 

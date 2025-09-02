@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "MatchResult.h"
-#include "SlotVisitorMacros.h"
+#include <JavaScriptCore/MatchResult.h>
+#include <JavaScriptCore/SlotVisitorMacros.h>
 #include <array>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>

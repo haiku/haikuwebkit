@@ -1349,6 +1349,51 @@ public:
     void setCookie(CookieData&&);
     Vector<CookieData> getCookies() const;
 
+    // This attempts to implement https://w3c.github.io/webdriver/#cookies but that specification
+    // is not the clearest.
+    struct WebDriverCookieData {
+        String name;
+        String value;
+        String path { "/"_s };
+        String domain;
+        bool secure { false };
+        bool httpOnly { false };
+        std::optional<double> expiry { std::nullopt }; // Cookie's expires field in seconds.
+        String sameSite { "None"_s };
+
+        WebDriverCookieData(Cookie cookie)
+            : name(cookie.name)
+            , value(cookie.value)
+            , path(cookie.path)
+            , domain(cookie.domain)
+            , secure(cookie.secure)
+            , httpOnly(cookie.httpOnly)
+            , expiry(cookie.expires ? std::make_optional(*cookie.expires / 1000) : std::nullopt)
+        {
+            // Due to how CFNetwork handles host-only cookies, we may need to prepend a '.' to the domain when
+            // setting a cookie (see CookieStore::set). So we must strip this '.' when returning the cookie.
+            if (domain.startsWith('.'))
+                domain = domain.substring(1, domain.length() - 1);
+
+            switch (cookie.sameSite) {
+            case Cookie::SameSitePolicy::Strict:
+                sameSite = "Strict"_s;
+                break;
+            case Cookie::SameSitePolicy::Lax:
+                sameSite = "Lax"_s;
+                break;
+            case Cookie::SameSitePolicy::None:
+                sameSite = "None"_s;
+                break;
+            }
+        }
+
+        WebDriverCookieData()
+        { }
+    };
+
+    Vector<WebDriverCookieData> webDriverGetCookies(Document&) const;
+
     void setAlwaysAllowLocalWebarchive(bool);
     void processWillSuspend();
     void processDidResume();

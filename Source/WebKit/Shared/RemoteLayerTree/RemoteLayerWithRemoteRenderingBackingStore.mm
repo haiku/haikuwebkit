@@ -50,7 +50,7 @@ RemoteLayerWithRemoteRenderingBackingStore::RemoteLayerWithRemoteRenderingBackin
         return;
     }
 
-    m_bufferSet = collection->protectedLayerTreeContext()->ensureProtectedRemoteRenderingBackendProxy()->createImageBufferSet(*CheckedPtr { this }.get());
+    lazyInitialize(m_bufferSet, collection->protectedLayerTreeContext()->ensureProtectedRemoteRenderingBackendProxy()->createImageBufferSet(*CheckedPtr { this }.get()));
 }
 
 RemoteLayerWithRemoteRenderingBackingStore::~RemoteLayerWithRemoteRenderingBackingStore()
@@ -128,6 +128,9 @@ void RemoteLayerWithRemoteRenderingBackingStore::ensureBackingStore(const Parame
     clearBackingStore();
 
     auto useLosslessCompression = UseLosslessCompression::No;
+    if (RefPtr context = m_layer->context())
+        useLosslessCompression = context->useIOSurfaceLosslessCompression();
+
     if (m_bufferSet) {
         RemoteImageBufferSetConfiguration configuration {
             .logicalSize = size(),

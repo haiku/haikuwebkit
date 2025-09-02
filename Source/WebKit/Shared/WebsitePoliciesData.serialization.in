@@ -88,6 +88,7 @@ struct WebKit::WebsitePoliciesData {
     bool idempotentModeAutosizingOnlyHonorsPercentages;
     bool allowPrivacyProxy;
     bool allowSiteSpecificQuirksToOverrideContentMode;
+    bool allowSharedProcess;
     WebKit::WebsitePushAndNotificationsEnabledPolicy pushAndNotificationsEnabledPolicy;
     WebKit::WebsiteInlineMediaPlaybackPolicy inlineMediaPlaybackPolicy;
 };

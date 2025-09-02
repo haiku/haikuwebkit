@@ -350,6 +350,7 @@ set(bmalloc_PUBLIC_HEADERS
     libpas/src/libpas/pas_allocator_index.h
     libpas/src/libpas/pas_allocator_scavenge_action.h
     libpas/src/libpas/pas_all_shared_page_directories.h
+    libpas/src/libpas/pas_backtrace_metadata.h
     libpas/src/libpas/pas_baseline_allocator.h
     libpas/src/libpas/pas_baseline_allocator_result.h
     libpas/src/libpas/pas_baseline_allocator_table.h
@@ -690,6 +691,7 @@ set(bmalloc_PUBLIC_HEADERS
 
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     list(APPEND bmalloc_SOURCES
+        bmalloc/TZoneLog.cpp
         bmalloc/Zone.cpp
     )
 endif ()

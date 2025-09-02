@@ -781,16 +781,16 @@ template<typename CharacterType, typename CodeUnitPredicate> inline Ref<StringIm
 
     unsigned start = 0;
     unsigned end = span.size() - 1;
-    
-    // skip white space from start
+
+    // skip matched characters from start
     while (start <= end && predicate(span[start]))
         ++start;
-    
-    // only white space
+
+    // only matched characters
     if (start > end) 
         return *empty();
 
-    // skip white space from end
+    // skip matched characters from end
     while (end && predicate(span[end]))
         --end;
 

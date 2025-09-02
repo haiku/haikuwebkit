@@ -29,20 +29,21 @@
 
 #import "AppKitSPI.h"
 #import "CGImagePixelReader.h"
-#import "ContentSecurityPolicyTestHelpers.h"
 #import "HTTPServer.h"
 #import "IOSMouseEventTestHarness.h"
 #import "InstanceMethodSwizzler.h"
 #import "MouseSupportUIDelegate.h"
+#import "PDFTestHelpers.h"
 #import "PlatformUtilities.h"
 #import "Test.h"
 #import "TestCocoa.h"
 #import "TestNavigationDelegate.h"
 #import "TestPDFDocument.h"
+#import "TestUIDelegate.h"
+#import "TestURLSchemeHandler.h"
 #import "TestWKWebView.h"
 #import "UIKitSPIForTesting.h"
 #import "UISideCompositingScope.h"
-#import "UnifiedPDFTestHelpers.h"
 #import "WKPrinting.h"
 #import "WKWebViewConfigurationExtras.h"
 #import "WKWebViewForTestingImmediateActions.h"
@@ -51,7 +52,9 @@
 #import <WebCore/WebEvent.h>
 #import <WebKit/WKNavigationDelegatePrivate.h>
 #import <WebKit/WKPreferencesPrivate.h>
+#import <WebKit/WKWebViewConfigurationPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
+#import <WebKit/WKWebViewPrivateForTesting.h>
 #import <WebKit/WKWebpagePreferencesPrivate.h>
 #import <WebKit/_WKFeature.h>
 #import <wtf/RetainPtr.h>
@@ -67,6 +70,10 @@
 - (BOOL)_setupPrintPanel:(void (^)(UIPrintInteractionController *printInteractionController, BOOL completed, NSError *error))completion;
 - (void)_generatePrintPreview:(void (^)(NSURL *previewPDF, BOOL shouldRenderOnChosenPaper))completionHandler;
 - (void)_cleanPrintState;
+@end
+
+@interface WKApplicationStateTrackingView : UIView
+- (BOOL)isBackground;
 @end
 #endif
 
@@ -259,6 +266,327 @@ UNIFIED_PDF_TEST(TabKeyOnPDFTextFieldShouldNotCrash)
     };
 
     testTabKeysAtPoint(NSMakePoint(220, 300));
+}
+
+UNIFIED_PDF_TEST(PrintSize)
+{
+    RetainPtr configuration = configurationForWebViewTestingUnifiedPDF();
+    RetainPtr schemeHandler = adoptNS([TestURLSchemeHandler new]);
+    [configuration setURLSchemeHandler:schemeHandler.get() forURLScheme:@"test"];
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    RetainPtr delegate = adoptNS([PDFPrintUIDelegate new]);
+    [webView setUIDelegate:delegate.get()];
+
+    [schemeHandler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
+        auto url = task.request.URL;
+        NSData *data;
+        NSString *mimeType;
+        if ([url.path isEqualToString:@"/main.html"]) {
+            mimeType = @"text/html";
+            const char* html = "<br/><iframe src='test.pdf' id='pdfframe'></iframe>";
+            data = [NSData dataWithBytes:html length:strlen(html)];
+        } else if ([url.path isEqualToString:@"/test.pdf"]) {
+            mimeType = @"application/pdf";
+            data = testPDFData().get();
+        } else {
+            EXPECT_WK_STREQ(url.path, "/test_print.pdf");
+            mimeType = @"application/pdf";
+            data = [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"test_print" withExtension:@"pdf"]];
+        }
+        auto response = adoptNS([[NSURLResponse alloc] initWithURL:url MIMEType:mimeType expectedContentLength:data.length textEncodingName:nil]);
+        [task didReceiveResponse:response.get()];
+        [task didReceiveData:data];
+        [task didFinish];
+    }];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///test_print.pdf"]]];
+    auto size = [delegate waitForPageSize];
+    EXPECT_EQ(size.height, 792.0);
+    EXPECT_EQ(size.width, 612.0);
+
+    __block bool receivedSize = false;
+    [webView _getPDFFirstPageSizeInFrame:[webView _mainFrame] completionHandler:^(CGSize requestedSize) {
+        EXPECT_EQ(requestedSize.height, 792.0);
+        EXPECT_EQ(requestedSize.width, 612.0);
+        receivedSize = true;
+    }];
+    TestWebKitAPI::Util::run(&receivedSize);
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
+    [webView _test_waitForDidFinishNavigation];
+    [webView evaluateJavaScript:@"window.print()" completionHandler:nil];
+    auto mainFrameSize = [delegate waitForPageSize];
+    EXPECT_EQ(mainFrameSize.height, 0.0);
+    EXPECT_EQ(mainFrameSize.width, 0.0);
+
+    receivedSize = false;
+    [webView _getPDFFirstPageSizeInFrame:[webView _mainFrame] completionHandler:^(CGSize requestedSize) {
+        EXPECT_EQ(requestedSize.height, 0.0);
+        EXPECT_EQ(requestedSize.width, 0.0);
+        receivedSize = true;
+    }];
+    TestWebKitAPI::Util::run(&receivedSize);
+
+    [webView evaluateJavaScript:@"pdfframe.contentWindow.print()" completionHandler:nil];
+    auto pdfFrameSize = [delegate waitForPageSize];
+    EXPECT_NEAR(pdfFrameSize.height, 28.799999, .00001);
+    EXPECT_NEAR(pdfFrameSize.width, 129.600006, .00001);
+
+    receivedSize = false;
+    [webView _getPDFFirstPageSizeInFrame:[delegate lastPrintedFrame] completionHandler:^(CGSize requestedSize) {
+        EXPECT_NEAR(requestedSize.height, 28.799999, .00001);
+        EXPECT_NEAR(requestedSize.width, 129.600006, .00001);
+        receivedSize = true;
+    }];
+    TestWebKitAPI::Util::run(&receivedSize);
+}
+
+// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
+UNIFIED_PDF_TEST(DISABLED_SetPageZoomFactorDoesNotBailIncorrectly)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF(true).get()]);
+    [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/testPath"]];
+    [webView _test_waitForDidFinishNavigation];
+
+    double scaleBeforeZooming = [webView _pageZoomFactor];
+
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    [[webView _pdfHUDs].anyObject performSelector:NSSelectorFromString(@"_performActionForControl:") withObject:@"plus.magnifyingglass"];
+    [webView waitForNextPresentationUpdate];
+
+    double scaleAfterZooming = [webView _pageZoomFactor];
+    EXPECT_GT(scaleAfterZooming, scaleBeforeZooming);
+
+    [webView _setPageZoomFactor:1];
+    [webView waitForNextPresentationUpdate];
+
+    double scaleAfterResetting = [webView _pageZoomFactor];
+    EXPECT_LT(scaleAfterResetting, scaleAfterZooming);
+    EXPECT_EQ(scaleAfterResetting, 1.0);
+}
+
+static void checkFrame(NSRect frame, CGFloat x, CGFloat y, CGFloat width, CGFloat height)
+{
+    EXPECT_EQ(frame.origin.x, x);
+    EXPECT_EQ(frame.origin.y, y);
+    EXPECT_EQ(frame.size.width, width);
+    EXPECT_EQ(frame.size.height, height);
+}
+
+// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
+UNIFIED_PDF_TEST(DISABLED_PDFHUDMainResourcePDF)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF(true).get()]);
+    [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/testPath"]];
+    EXPECT_EQ([webView _pdfHUDs].count, 0u);
+    [webView _test_waitForDidFinishNavigation];
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 0, 0, 800, 600);
+
+    RetainPtr delegate = adoptNS([TestUIDelegate new]);
+    [webView setUIDelegate:delegate.get()];
+    __block bool saveRequestReceived = false;
+    [delegate setSaveDataToFile:^(WKWebView *webViewFromDelegate, NSData *data, NSString *suggestedFilename, NSString *mimeType, NSURL *originatingURL) {
+        EXPECT_EQ(webView.get(), webViewFromDelegate);
+        EXPECT_TRUE([data isEqualToData:testPDFData().get()]);
+        EXPECT_WK_STREQ(suggestedFilename, "testPath.pdf");
+        EXPECT_WK_STREQ(mimeType, "application/pdf");
+        saveRequestReceived = true;
+    }];
+    [[webView _pdfHUDs].anyObject performSelector:NSSelectorFromString(@"_performActionForControl:") withObject:@"arrow.down.circle"];
+    TestWebKitAPI::Util::run(&saveRequestReceived);
+
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    [webView _killWebContentProcess];
+    while ([webView _pdfHUDs].count)
+        TestWebKitAPI::Util::spinRunLoop();
+}
+
+// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
+UNIFIED_PDF_TEST(DISABLED_PDFHUDMoveIFrame)
+{
+    RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
+    [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
+        if ([task.request.URL.path isEqualToString:@"/main.html"]) {
+            RetainPtr response = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"text/html" expectedContentLength:0 textEncodingName:nil]);
+            const char* html = "<br/><iframe src='test.pdf' id='pdfframe'></iframe>";
+            [task didReceiveResponse:response.get()];
+            [task didReceiveData:[NSData dataWithBytes:html length:strlen(html)]];
+            [task didFinish];
+        } else {
+            EXPECT_WK_STREQ(task.request.URL.path, "/test.pdf");
+            RetainPtr data = testPDFData();
+            RetainPtr response = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"application/pdf" expectedContentLength:[data length] textEncodingName:nil]);
+            [task didReceiveResponse:response.get()];
+            [task didReceiveData:data.get()];
+            [task didFinish];
+        }
+    }];
+
+    RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
+    [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
+    EXPECT_EQ([webView _pdfHUDs].count, 0u);
+    [webView _test_waitForDidFinishNavigation];
+
+    // If the TestWKWebView is not visible, visibilityDidChange will be called with false, and there will be no HUD.
+    if (![webView _pdfHUDs].count)
+        return;
+
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 10, 28, 300, 150);
+
+    [webView evaluateJavaScript:@"pdfframe.width=400" completionHandler:nil];
+    while ([webView _pdfHUDs].anyObject.frame.size.width != 400)
+        TestWebKitAPI::Util::spinRunLoop();
+    checkFrame([webView _pdfHUDs].anyObject.frame, 10, 28, 400, 150);
+
+    [webView evaluateJavaScript:@"var frameReference = pdfframe; document.body.removeChild(pdfframe)" completionHandler:nil];
+    while ([webView _pdfHUDs].count)
+        TestWebKitAPI::Util::spinRunLoop();
+    [webView evaluateJavaScript:@"document.body.appendChild(frameReference)" completionHandler:nil];
+    while (![webView _pdfHUDs].count)
+        TestWebKitAPI::Util::spinRunLoop();
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 0, 0, 0, 0);
+    while ([webView _pdfHUDs].anyObject.frame.size.width != 400)
+        TestWebKitAPI::Util::spinRunLoop();
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 10, 28, 400, 150);
+
+    [webView setPageZoom:1.4];
+    while ([webView _pdfHUDs].anyObject.frame.size.width != 560)
+        TestWebKitAPI::Util::spinRunLoop();
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 14, 40, 560, 210);
+}
+
+// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
+UNIFIED_PDF_TEST(DISABLED_PDFHUDNestedIFrames)
+{
+    RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
+    [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
+        RetainPtr htmlResponse = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"text/html" expectedContentLength:0 textEncodingName:nil]);
+        if ([task.request.URL.path isEqualToString:@"/main.html"]) {
+            const char* html = "<iframe src='frame.html' id='parentframe'></iframe>";
+            [task didReceiveResponse:htmlResponse.get()];
+            [task didReceiveData:[NSData dataWithBytes:html length:strlen(html)]];
+            [task didFinish];
+        } else if ([task.request.URL.path isEqualToString:@"/frame.html"]) {
+            const char* html = "<iframe src='test.pdf'></iframe>";
+            [task didReceiveResponse:htmlResponse.get()];
+            [task didReceiveData:[NSData dataWithBytes:html length:strlen(html)]];
+            [task didFinish];
+        } else {
+            EXPECT_WK_STREQ(task.request.URL.path, "/test.pdf");
+            RetainPtr data = testPDFData();
+            RetainPtr response = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"application/pdf" expectedContentLength:[data length] textEncodingName:nil]);
+            [task didReceiveResponse:response.get()];
+            [task didReceiveData:data.get()];
+            [task didFinish];
+        }
+    }];
+
+    RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
+    [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
+    EXPECT_EQ([webView _pdfHUDs].count, 0u);
+    [webView _test_waitForDidFinishNavigation];
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 20, 20, 300, 150);
+
+    [webView evaluateJavaScript:@"document.body.removeChild(parentframe)" completionHandler:nil];
+    while ([webView _pdfHUDs].count)
+        TestWebKitAPI::Util::spinRunLoop();
+}
+
+// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
+UNIFIED_PDF_TEST(DISABLED_PDFHUDIFrame3DTransform)
+{
+    RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
+    [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
+        RetainPtr htmlResponse = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"text/html" expectedContentLength:0 textEncodingName:nil]);
+        if ([task.request.URL.path isEqualToString:@"/main.html"]) {
+            const char* html = "<iframe src='test.pdf' height=500 width=500 style='transform:rotateY(235deg);'></iframe>";
+            [task didReceiveResponse:htmlResponse.get()];
+            [task didReceiveData:[NSData dataWithBytes:html length:strlen(html)]];
+            [task didFinish];
+        } else {
+            EXPECT_WK_STREQ(task.request.URL.path, "/test.pdf");
+            RetainPtr data = testPDFData();
+            RetainPtr response = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"application/pdf" expectedContentLength:[data length] textEncodingName:nil]);
+            [task didReceiveResponse:response.get()];
+            [task didReceiveData:data.get()];
+            [task didFinish];
+        }
+    }];
+
+    RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
+    [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
+    EXPECT_EQ([webView _pdfHUDs].count, 0u);
+    [webView _test_waitForDidFinishNavigation];
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 403, 10, 500, 500);
+}
+
+// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
+UNIFIED_PDF_TEST(DISABLED_PDFHUDMultipleIFrames)
+{
+    RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
+    [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
+        RetainPtr htmlResponse = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"text/html" expectedContentLength:0 textEncodingName:nil]);
+        if ([task.request.URL.path isEqualToString:@"/main.html"]) {
+            const char* html = "<iframe src='test.pdf' height=100 width=150></iframe><iframe src='test.pdf' height=123 width=134></iframe>";
+            [task didReceiveResponse:htmlResponse.get()];
+            [task didReceiveData:[NSData dataWithBytes:html length:strlen(html)]];
+            [task didFinish];
+        } else {
+            EXPECT_WK_STREQ(task.request.URL.path, "/test.pdf");
+            RetainPtr data = testPDFData();
+            RetainPtr response = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"application/pdf" expectedContentLength:[data length] textEncodingName:nil]);
+            [task didReceiveResponse:response.get()];
+            [task didReceiveData:data.get()];
+            [task didFinish];
+        }
+    }];
+
+    RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
+    [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
+    EXPECT_EQ([webView _pdfHUDs].count, 0u);
+    [webView _test_waitForDidFinishNavigation];
+    EXPECT_EQ([webView _pdfHUDs].count, 2u);
+    bool hadLeftFrame = false;
+    bool hadRightFrame = false;
+    for (NSView *hud in [webView _pdfHUDs]) {
+        if (hud.frame.origin.x == 10) {
+            checkFrame(hud.frame, 10, 33, 150, 100);
+            hadLeftFrame = true;
+        } else {
+            checkFrame(hud.frame, 164, 10, 134, 123);
+            hadRightFrame = true;
+        }
+    }
+    EXPECT_TRUE(hadLeftFrame);
+    EXPECT_TRUE(hadRightFrame);
+}
+
+// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
+UNIFIED_PDF_TEST(DISABLED_PDFHUDLoadPDFTypeWithPluginsBlocked)
+{
+    RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
+    [configuration _setOverrideContentSecurityPolicy:@"object-src 'none'"];
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/testPath"]];
+    EXPECT_EQ([webView _pdfHUDs].count, 0u);
+    [webView _test_waitForDidFinishNavigation];
+    EXPECT_EQ([webView _pdfHUDs].count, 1u);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 0, 0, 800, 600);
 }
 
 #endif // PLATFORM(MAC)
@@ -506,12 +834,7 @@ UNIFIED_PDF_TEST(PrintPDFUsingPrintInteractionController)
     EXPECT_EQ([pdf pageCount], 16);
 }
 
-// FIXME: <webkit.org/b/288401> [ iOS Debug ] TestWebKitAPI.UnifiedPDF.ShouldNotRespectSetViewScale(api-test) is a constant timeout
-#if !defined(NDEBUG)
-UNIFIED_PDF_TEST(DISABLED_ShouldNotRespectSetViewScale)
-#else
 UNIFIED_PDF_TEST(ShouldNotRespectSetViewScale)
-#endif
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF().get()]);
 
@@ -662,6 +985,104 @@ UNIFIED_PDF_TEST(ScrollOffsetUnchangedWithZeroSizeViewportUpdate)
     EXPECT_EQ([webView scrollView].contentOffset, expectedScrollOffset);
 }
 
+UNIFIED_PDF_TEST(WebViewResizeShouldNotCrash)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:TestWebKitAPI::configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
+
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"]];
+    [webView loadRequest:request];
+    [webView _test_waitForDidFinishNavigation];
+
+    [webView setFrame:NSMakeRect(0, 0, 100, 100)];
+    webView = nil;
+
+    __block bool finishedDispatch = false;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        finishedDispatch = true;
+    });
+
+    TestWebKitAPI::Util::run(&finishedDispatch);
+}
+
+static BOOL sIsBackground;
+static BOOL isBackground(id self)
+{
+    return sIsBackground;
+}
+
+UNIFIED_PDF_TEST(WebViewLosesApplicationForegroundNotification)
+{
+    std::unique_ptr<InstanceMethodSwizzler> isInBackgroundSwizzler = makeUnique<InstanceMethodSwizzler>(NSClassFromString(@"WKApplicationStateTrackingView"), @selector(isBackground), reinterpret_cast<IMP>(isBackground));
+
+    RetainPtr configuration = TestWebKitAPI::configurationForWebViewTestingUnifiedPDF();
+    [configuration _setClientNavigationsRunAtForegroundPriority:YES];
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get() addToWindow:YES]);
+    [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/0"]];
+    [webView _test_waitForDidFinishNavigation];
+
+    sIsBackground = YES;
+    RetainPtr uiWindow = adoptNS([[UIWindow alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
+    [uiWindow addSubview:webView.get()];
+    [webView removeFromSuperview];
+
+    [webView loadHTMLString:@"<meta name='viewport' content='width=device-width'><h1>hello world</h1>" baseURL:[NSURL URLWithString:@"https://www.apple.com/1"]];
+    [webView _test_waitForDidFinishNavigationWithoutPresentationUpdate];
+
+    sIsBackground = NO;
+    [uiWindow addSubview:webView.get()];
+
+    __block bool finished = false;
+    // If the bug reproduces, no stable presentation update will ever come,
+    // so the test times out here.
+    [webView _doAfterNextPresentationUpdate:^{
+        finished = true;
+    }];
+
+    TestWebKitAPI::Util::run(&finished);
+}
+
+#if HAVE(UIFINDINTERACTION)
+
+UNIFIED_PDF_TEST(WebViewFindAction)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:TestWebKitAPI::configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
+
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"]];
+    [webView loadRequest:request];
+    [webView _test_waitForDidFinishNavigation];
+
+    EXPECT_FALSE([webView canPerformAction:@selector(find:) withSender:nil]);
+    EXPECT_FALSE([webView canPerformAction:@selector(findNext:) withSender:nil]);
+    EXPECT_FALSE([webView canPerformAction:@selector(findPrevious:) withSender:nil]);
+    EXPECT_FALSE([webView canPerformAction:@selector(findAndReplace:) withSender:nil]);
+
+    [webView setFindInteractionEnabled:YES];
+
+    EXPECT_TRUE([webView canPerformAction:@selector(find:) withSender:nil]);
+    EXPECT_TRUE([webView canPerformAction:@selector(findNext:) withSender:nil]);
+    EXPECT_TRUE([webView canPerformAction:@selector(findPrevious:) withSender:nil]);
+    EXPECT_FALSE([webView canPerformAction:@selector(findAndReplace:) withSender:nil]);
+}
+
+#endif
+
+UNIFIED_PDF_TEST(WebViewBackgroundColor)
+{
+    RetainPtr sRGBColorSpace = adoptCF(CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
+    RetainPtr redColor = adoptCF(CGColorCreate(sRGBColorSpace.get(), redColorComponents));
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:TestWebKitAPI::configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
+
+    [webView synchronouslyLoadRequest:[NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"red" withExtension:@"html"]]];
+    EXPECT_TRUE(CGColorEqualToColor([webView scrollView].backgroundColor.CGColor, redColor.get()));
+
+    [webView synchronouslyLoadRequest:[NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"]]];
+    EXPECT_FALSE(CGColorEqualToColor([webView scrollView].backgroundColor.CGColor, redColor.get()));
+
+    [webView synchronouslyGoBack];
+    EXPECT_TRUE(CGColorEqualToColor([webView scrollView].backgroundColor.CGColor, redColor.get()));
+}
+
 #endif // PLATFORM(IOS_FAMILY)
 
 #if HAVE(UIKIT_WITH_MOUSE_SUPPORT)
@@ -714,9 +1135,26 @@ UNIFIED_PDF_TEST(SelectionClearsOnAnchorLinkTap)
 
 #endif
 
+static HTTPServer pdfServerWithSandboxCSPDirective()
+{
+    RetainPtr pdfURL = [NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"];
+    HTTPResponse response { [NSData dataWithContentsOfURL:pdfURL.get()] };
+    response.headerFields.set("Content-Security-Policy"_s, "sandbox allow-scripts;"_s);
+    return { { { "/"_s, response } } };
+}
+
 UNIFIED_PDF_TEST(LoadPDFWithSandboxCSPDirective)
 {
-    runLoadPDFWithSandboxCSPDirectiveTest([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF().get()]);
+    RetainPtr webView = [[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF().get()];
+    HTTPServer server { pdfServerWithSandboxCSPDirective() };
+
+    [webView synchronouslyLoadRequest:[NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"]]];
+    auto colorsWithPlainResponse = [webView sampleColors];
+
+    [webView synchronouslyLoadRequest:server.request()];
+    auto colorsWithCSPResponse = [webView sampleColors];
+
+    EXPECT_EQ(colorsWithPlainResponse, colorsWithCSPResponse);
 }
 
 // FIXME: <https://webkit.org/b/287473> This test should be correct on iOS family, too.
@@ -812,6 +1250,19 @@ UNIFIED_PDF_TEST(MainFramePDFIsKeyboardScrollableAfterTap)
 #endif
 
 #endif
+
+UNIFIED_PDF_TEST(WebViewIsDisplayingPDF)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
+
+    [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/testPath"]];
+    [webView _test_waitForDidFinishNavigation];
+    EXPECT_TRUE([webView _isDisplayingPDF]);
+
+    [webView loadHTMLString:@"<meta name='viewport' content='width=device-width'><h1>hello world</h1>" baseURL:[NSURL URLWithString:@"https://www.apple.com/1"]];
+    [webView _test_waitForDidFinishNavigationWithoutPresentationUpdate];
+    EXPECT_FALSE([webView _isDisplayingPDF]);
+}
 
 } // namespace TestWebKitAPI
 

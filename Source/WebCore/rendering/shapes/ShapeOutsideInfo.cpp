@@ -73,9 +73,9 @@ FloatPoint ShapeOutsideInfo::shapeToRendererPoint(const FloatPoint& point) const
 
 static LayoutSize computeLogicalBoxSize(const RenderBox& renderer, bool isHorizontalWritingMode)
 {
-    auto& shapeValue = *renderer.style().shapeOutside();
+    auto& shapeOutside = renderer.style().shapeOutside();
     auto size = isHorizontalWritingMode ? renderer.size() : renderer.size().transposedSize();
-    switch (shapeValue.effectiveCSSBox()) {
+    switch (shapeOutside.effectiveCSSBox()) {
     case CSSBoxType::MarginBox:
         if (isHorizontalWritingMode)
             size.expand(renderer.horizontalMarginExtent(), renderer.verticalMarginExtent());
@@ -134,7 +134,7 @@ static inline LayoutUnit borderAndPaddingBeforeInWritingMode(const RenderBox& re
 
 static LayoutUnit logicalTopOffset(const RenderBox& renderer)
 {
-    switch (renderer.style().shapeOutside()->effectiveCSSBox()) {
+    switch (renderer.style().shapeOutside().effectiveCSSBox()) {
     case CSSBoxType::MarginBox:
         return -renderer.marginBefore(renderer.containingBlock()->writingMode());
     case CSSBoxType::BorderBox:
@@ -200,7 +200,7 @@ static LayoutUnit logicalLeftOffset(const RenderBox& renderer)
     if (renderer.isRenderFragmentContainer())
         return 0_lu;
     
-    switch (renderer.style().shapeOutside()->effectiveCSSBox()) {
+    switch (renderer.style().shapeOutside().effectiveCSSBox()) {
     case CSSBoxType::MarginBox:
         return -renderer.marginStart(renderer.containingBlock()->writingMode());
     case CSSBoxType::BorderBox:
@@ -250,62 +250,69 @@ Ref<const LayoutShape> makeShapeForShapeOutside(const RenderBox& renderer)
     auto& containingBlock = *renderer.containingBlock();
     auto writingMode = containingBlock.style().writingMode();
     bool isHorizontalWritingMode = containingBlock.isHorizontalWritingMode();
-    float shapeImageThreshold = style.shapeImageThreshold();
-    auto& shapeValue = *style.shapeOutside();
+    auto shapeImageThreshold = style.shapeImageThreshold();
+    auto& shapeOutside = style.shapeOutside();
 
     auto boxSize = computeLogicalBoxSize(renderer, isHorizontalWritingMode);
 
     auto logicalMargin = [&] {
-        auto shapeMargin = floatValueForLength(style.shapeMargin(), containingBlock.contentBoxLogicalWidth());
+        auto shapeMargin = Style::evaluate(style.shapeMargin(), containingBlock.contentBoxLogicalWidth()).toFloat();
         return isnan(shapeMargin) ? 0.0f : shapeMargin;
     }();
 
-    switch (shapeValue.type()) {
-    case ShapeValue::Type::Shape: {
-        ASSERT(shapeValue.shape());
-        auto offset = LayoutPoint { logicalLeftOffset(renderer), logicalTopOffset(renderer) };
-        return LayoutShape::createShape(*shapeValue.shape(), offset, boxSize, writingMode, logicalMargin);
-    }
-    case ShapeValue::Type::Image: {
-        ASSERT(shapeValue.isImageValid());
-        auto* styleImage = shapeValue.image();
-        auto logicalImageSize = renderer.calculateImageIntrinsicDimensions(styleImage, boxSize, RenderImage::ScaleByUsedZoom::Yes);
-        styleImage->setContainerContextForRenderer(renderer, logicalImageSize, style.usedZoom());
+    return WTF::switchOn(shapeOutside,
+        [&](const Style::ShapeOutside::Shape& shape) {
+            auto offset = LayoutPoint { logicalLeftOffset(renderer), logicalTopOffset(renderer) };
+            return LayoutShape::createShape(shape, offset, boxSize, writingMode, logicalMargin);
+        },
+        [&](const Style::ShapeOutside::ShapeAndShapeBox& shapeAndShapeBox) {
+            auto offset = LayoutPoint { logicalLeftOffset(renderer), logicalTopOffset(renderer) };
+            return LayoutShape::createShape(shapeAndShapeBox.shape, offset, boxSize, writingMode, logicalMargin);
+        },
+        [&](const Style::ShapeOutside::Image& shapeImage) {
+            ASSERT(shapeImage.isValid());
 
-        auto logicalMarginRect = shapeImageMarginRect(renderer, boxSize);
-        auto* renderImage = dynamicDowncast<RenderImage>(renderer);
-        auto logicalImageRect = renderImage ? renderImage->replacedContentRect() : LayoutRect { { }, logicalImageSize };
+            Ref styleImage = shapeImage.image.value;
+            auto logicalImageSize = renderer.calculateImageIntrinsicDimensions(styleImage.ptr(), boxSize, RenderImage::ScaleByUsedZoom::Yes);
+            styleImage->setContainerContextForRenderer(renderer, logicalImageSize, style.usedZoom());
 
-        ASSERT(!styleImage->isPending());
-        auto physicalImageSize = writingMode.isHorizontal() ? logicalImageSize : logicalImageSize.transposedSize();
-        RefPtr image = styleImage->image(const_cast<RenderBox*>(&renderer), physicalImageSize);
-        return LayoutShape::createRasterShape(image.get(), shapeImageThreshold, logicalImageRect, logicalMarginRect, writingMode, logicalMargin);
-    }
-    case ShapeValue::Type::Box: {
-        auto shapeRect = computeRoundedRectForBoxShape(shapeValue.effectiveCSSBox(), renderer);
-        auto flipForWritingAndInlineDirection = [&] {
-            // FIXME: We should consider this moving to LayoutRoundedRect::transposedRect.
-            if (!isHorizontalWritingMode) {
-                shapeRect = shapeRect.transposedRect();
-                auto radiiForBlockDirection = shapeRect.radii();
-                if (writingMode.isLineOverLeft()) // sideways-lr
-                    shapeRect.setRadii({ radiiForBlockDirection.bottomLeft(), radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomRight(), radiiForBlockDirection.topRight() });
-                else if (writingMode.isBlockLeftToRight()) // vertical-lr
-                    shapeRect.setRadii({ radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft(), radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight() });
-                else // vertical-rl, sideways-rl
-                    shapeRect.setRadii({ radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight(), radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft() });
-            }
-            if (writingMode.isBidiRTL()) {
-                auto radii = shapeRect.radii();
-                shapeRect.setRadii({ radii.topRight(), radii.topLeft(), radii.bottomRight(), radii.bottomLeft() });
-            }
-        };
-        flipForWritingAndInlineDirection();
-        return LayoutShape::createBoxShape(shapeRect, writingMode, logicalMargin);
-    }
-    }
-    ASSERT_NOT_REACHED();
-    return LayoutShape::createBoxShape(LayoutRoundedRect { { } }, writingMode, 0);
+            auto logicalMarginRect = shapeImageMarginRect(renderer, boxSize);
+            auto* renderImage = dynamicDowncast<RenderImage>(renderer);
+            auto logicalImageRect = renderImage ? renderImage->replacedContentRect() : LayoutRect { { }, logicalImageSize };
+
+            ASSERT(!styleImage->isPending());
+            auto physicalImageSize = writingMode.isHorizontal() ? logicalImageSize : logicalImageSize.transposedSize();
+
+            RefPtr image = styleImage->image(const_cast<RenderBox*>(&renderer), physicalImageSize);
+            return LayoutShape::createRasterShape(image.get(), shapeImageThreshold.value, logicalImageRect, logicalMarginRect, writingMode, logicalMargin);
+        },
+        [&](const Style::ShapeOutside::ShapeBox&) {
+            auto shapeRect = computeRoundedRectForBoxShape(shapeOutside.effectiveCSSBox(), renderer);
+            auto flipForWritingAndInlineDirection = [&] {
+                // FIXME: We should consider this moving to LayoutRoundedRect::transposedRect.
+                if (!isHorizontalWritingMode) {
+                    shapeRect = shapeRect.transposedRect();
+                    auto radiiForBlockDirection = shapeRect.radii();
+                    if (writingMode.isLineOverLeft()) // sideways-lr
+                        shapeRect.setRadii({ radiiForBlockDirection.bottomLeft(), radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomRight(), radiiForBlockDirection.topRight() });
+                    else if (writingMode.isBlockLeftToRight()) // vertical-lr
+                        shapeRect.setRadii({ radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft(), radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight() });
+                    else // vertical-rl, sideways-rl
+                        shapeRect.setRadii({ radiiForBlockDirection.topRight(), radiiForBlockDirection.bottomRight(), radiiForBlockDirection.topLeft(), radiiForBlockDirection.bottomLeft() });
+                }
+                if (writingMode.isBidiRTL()) {
+                    auto radii = shapeRect.radii();
+                    shapeRect.setRadii({ radii.topRight(), radii.topLeft(), radii.bottomRight(), radii.bottomLeft() });
+                }
+            };
+            flipForWritingAndInlineDirection();
+            return LayoutShape::createBoxShape(shapeRect, writingMode, logicalMargin);
+        },
+        [&](const CSS::Keyword::None&) {
+            ASSERT_NOT_REACHED();
+            return LayoutShape::createBoxShape(LayoutRoundedRect { { } }, writingMode, 0);
+        }
+    );
 }
 
 static inline bool checkShapeImageOrigin(Document& document, const StyleImage& styleImage)
@@ -335,18 +342,16 @@ const LayoutShape& ShapeOutsideInfo::computedShape() const
 
 bool ShapeOutsideInfo::isEnabledFor(const RenderBox& box)
 {
-    ShapeValue* shapeValue = box.style().shapeOutside();
-    if (!box.isFloating() || !shapeValue)
+    if (!box.isFloating())
         return false;
 
-    switch (shapeValue->type()) {
-    case ShapeValue::Type::Shape: return shapeValue->shape();
-    case ShapeValue::Type::Image: return shapeValue->isImageValid() && checkShapeImageOrigin(box.document(), *(shapeValue->image()));
-    case ShapeValue::Type::Box: return true;
-    }
-
-    ASSERT_NOT_REACHED();
-    return false;
+    return WTF::switchOn(box.style().shapeOutside(),
+        [](const CSS::Keyword::None&) { return false; },
+        [](const Style::ShapeOutside::Shape&) { return true; },
+        [](const Style::ShapeOutside::ShapeBox&) { return true; },
+        [](const Style::ShapeOutside::ShapeAndShapeBox&) { return true; },
+        [&](const Style::ShapeOutside::Image& image) { return image.isValid() && checkShapeImageOrigin(box.document(), image.image.value); }
+    );
 }
 
 ShapeOutsideDeltas ShapeOutsideInfo::computeDeltasForContainingBlockLine(const RenderBlockFlow& containingBlock, const FloatingObject& floatingObject, LayoutUnit lineTop, LayoutUnit lineHeight)

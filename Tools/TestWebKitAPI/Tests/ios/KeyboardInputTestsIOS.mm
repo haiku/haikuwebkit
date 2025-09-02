@@ -29,6 +29,7 @@
 
 #import "CGImagePixelReader.h"
 #import "ClassMethodSwizzler.h"
+#import "HTTPServer.h"
 #import "InstanceMethodSwizzler.h"
 #import "PlatformUtilities.h"
 #import "TestCocoa.h"
@@ -41,6 +42,7 @@
 #import "UserInterfaceSwizzler.h"
 #import "WKWebViewConfigurationExtras.h"
 #import <WebCore/Color.h>
+#import <WebKit/WKFrameInfoPrivate.h>
 #import <WebKit/WKProcessPoolPrivate.h>
 #import <WebKit/WKWebViewConfigurationPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
@@ -1522,6 +1524,39 @@ TEST(KeyboardInputTests, ImplementAllOptionalTextInputTraits)
     EXPECT_NULL(extendedTraits.selectionHandleColor);
     EXPECT_NULL(extendedTraits.selectionHighlightColor);
 #endif
+}
+
+TEST(KeyboardInputTests, TestFrameInfoServerTrustDuringStrongPasswordAssistance)
+{
+    HTTPServer server({
+        { "/"_s, { "<script>alert('done')</script><input type='password' id='input'>"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+
+    RetainPtr configuration = server.httpsProxyConfiguration();
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500) configuration:configuration.get()]);
+    [webView setNavigationDelegate:navigationDelegate.get()];
+
+    RetainPtr inputDelegate = adoptNS([[TestInputDelegate alloc] init]);
+
+    [inputDelegate setFocusStartsInputSessionPolicyHandler:^_WKFocusStartsInputSessionPolicy(WKWebView *, id<_WKFocusedElementInfo>) {
+        return _WKFocusStartsInputSessionPolicyAllow;
+    }];
+
+    [inputDelegate setFocusRequiresStrongPasswordAssistanceHandler:[&] (WKWebView *, id<_WKFocusedElementInfo> info, void(^completionHandler)(BOOL)) {
+        EXPECT_NOT_NULL(info.frame);
+        EXPECT_NOT_NULL(info.frame._serverTrust);
+        completionHandler(YES);
+    }];
+
+    [webView _setInputDelegate:inputDelegate.get()];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/"]]];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "done");
+
+    [webView evaluateJavaScriptAndWaitForInputSessionToChange:@"document.getElementById('input').focus()"];
 }
 
 } // namespace TestWebKitAPI

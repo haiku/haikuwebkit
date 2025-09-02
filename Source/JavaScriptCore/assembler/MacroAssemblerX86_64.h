@@ -27,8 +27,8 @@
 
 #if ENABLE(ASSEMBLER) && CPU(X86_64)
 
-#include "X86Assembler.h"
-#include "AbstractMacroAssembler.h"
+#include <JavaScriptCore/AbstractMacroAssembler.h>
+#include <JavaScriptCore/X86Assembler.h>
 #include <array>
 #include <wtf/TZoneMalloc.h>
 
@@ -1719,6 +1719,12 @@ public:
             m_assembler.vmovsd_rm(src, address.offset, address.base, address.index, address.scale);
         else
             m_assembler.movsd_rm(src, address.offset, address.base, address.index, address.scale);
+    }
+
+    void storeDouble(FPRegisterID src, TrustedImmPtr address)
+    {
+        move(address, scratchRegister());
+        storeDouble(src, Address(scratchRegister()));
     }
 
     void storeFloat(FPRegisterID src, Address address)

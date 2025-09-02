@@ -180,7 +180,7 @@ FlexLayout::LogicalFlexItems FlexFormattingContext::convertFlexItemsToLogicalSpa
             };
             setCrossAxisValues();
 
-            auto flexItemOrder = style->order();
+            auto flexItemOrder = style->order().value;
             flexItemsNeedReordering = flexItemsNeedReordering || flexItemOrder != previousLogicalOrder.value_or(0);
             previousLogicalOrder = flexItemOrder;
 

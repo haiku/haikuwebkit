@@ -291,7 +291,7 @@ struct _WebKitScriptMessageReply {
 
     void sendValue(JSCValue* value)
     {
-        if (auto result = JavaScriptEvaluationResult::extract(jscContextGetJSContext(API::SerializedScriptValue::sharedJSCContext()), jscValueGetJSValue(value)))
+        if (auto result = JavaScriptEvaluationResult::extract(API::SerializedScriptValue::deserializationContext().get(), jscValueGetJSValue(value)))
             return completionHandler(WTFMove(*result));
         completionHandler(makeUnexpected(String()));
     }
@@ -304,7 +304,7 @@ struct _WebKitScriptMessageReply {
     ~_WebKitScriptMessageReply()
     {
         if (completionHandler) {
-            auto value = adoptGRef(jsc_value_new_undefined(API::SerializedScriptValue::sharedJSCContext()));
+            auto value = adoptGRef(jsc_value_new_undefined(jscContextGetOrCreate(API::SerializedScriptValue::deserializationContext().get()).get()));
             sendValue(value.get());
         }
     }
@@ -409,10 +409,19 @@ public:
     {
     }
 
-    void didPostMessage(WebPageProxy&, FrameInfoData&&, API::ContentWorld&, JavaScriptEvaluationResult&& jsMessage) override
+    void didPostMessage(WebPageProxy&, FrameInfoData&&, API::ContentWorld&, JavaScriptEvaluationResult&& jsMessage, CompletionHandler<void(Expected<JavaScriptEvaluationResult, String>&&)>&& completionHandler) override
     {
         if (!m_manager) {
             g_critical("Script message %s received after the WebKitUserContentManager has been destroyed. You must unregister the message handler!", g_quark_to_string(m_handlerName));
+            return completionHandler(makeUnexpected(String()));
+        }
+
+        if (m_supportsAsyncReply) {
+            WebKitScriptMessageReply* message = webKitScriptMessageReplyCreate(WTFMove(completionHandler));
+            GRefPtr<JSCValue> value = jsMessage.toJSC();
+            gboolean returnValue;
+            g_signal_emit(m_manager.get(), signals[SCRIPT_MESSAGE_WITH_REPLY_RECEIVED], m_handlerName, value.get(), message, &returnValue);
+            webkit_script_message_reply_unref(message);
             return;
         }
 
@@ -424,25 +433,7 @@ public:
         g_signal_emit(m_manager.get(), signals[SCRIPT_MESSAGE_RECEIVED], m_handlerName, jsResult);
         webkit_javascript_result_unref(jsResult);
 #endif
-    }
-
-    bool supportsAsyncReply() override
-    {
-        return m_supportsAsyncReply;
-    }
-
-    void didPostMessageWithAsyncReply(WebPageProxy&, FrameInfoData&&, API::ContentWorld&, JavaScriptEvaluationResult&& jsMessage, WTF::Function<void(Expected<JavaScriptEvaluationResult, String>&&)>&& completionHandler) override
-    {
-        if (!m_manager) {
-            g_critical("Script message %s received after the WebKitUserContentManager has been destroyed. You must unregister the message handler!", g_quark_to_string(m_handlerName));
-            return;
-        }
-
-        WebKitScriptMessageReply* message = webKitScriptMessageReplyCreate(WTFMove(completionHandler));
-        GRefPtr<JSCValue> value = jsMessage.toJSC();
-        gboolean returnValue;
-        g_signal_emit(m_manager.get(), signals[SCRIPT_MESSAGE_WITH_REPLY_RECEIVED], m_handlerName, value.get(), message, &returnValue);
-        webkit_script_message_reply_unref(message);
+        completionHandler(makeUnexpected(String()));
     }
 
     virtual ~ScriptMessageClientGtk() { }
@@ -450,7 +441,7 @@ public:
 private:
     GQuark m_handlerName;
     GWeakPtr<WebKitUserContentManager> m_manager;
-    bool m_supportsAsyncReply;
+    const bool m_supportsAsyncReply { false };
 };
 
 #if !ENABLE(2022_GLIB_API)

@@ -29,6 +29,8 @@
 
 #include "Connection.h"
 #include "MessageReceiverMap.h"
+#include "SharedPreferencesForWebProcess.h"
+#include "WebProcess.h"
 #include <WebCore/ModelPlayerIdentifier.h>
 #include <wtf/AbstractThreadSafeRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RefCounted.h>
@@ -57,6 +59,9 @@ public:
 
     IPC::Connection& connection() { return m_connection.get(); }
     IPC::MessageReceiverMap& messageReceiverMap() { return m_messageReceiverMap; }
+
+    std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const { return WebProcess::singleton().sharedPreferencesForWebProcess(); }
+    const SharedPreferencesForWebProcess& sharedPreferencesForWebProcessValue() const { return WebProcess::singleton().sharedPreferencesForWebProcessValue(); }
 
 #if HAVE(AUDIT_TOKEN)
     std::optional<audit_token_t> auditToken();

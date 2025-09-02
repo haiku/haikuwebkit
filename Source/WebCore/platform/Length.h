@@ -155,6 +155,8 @@ public:
     std::optional<Percentage> tryPercentage() const { return isPercent() ? std::make_optional(Percentage { value() }) : std::nullopt; }
 
     LengthType type() const;
+    bool isFloat() const;
+
     WEBCORE_EXPORT IPCData ipcData() const;
 
     bool isFixed() const;
@@ -218,8 +220,6 @@ private:
 // Blend two lengths to produce a new length that is in between them. Used for animation.
 Length blend(const Length& from, const Length& to, const BlendingContext&);
 Length blend(const Length& from, const Length& to, const BlendingContext&, ValueRange);
-
-UniqueArray<Length> newLengthArray(const String&, int& length);
 
 inline Length::Length(LengthType type)
     : m_type(type)
@@ -420,6 +420,11 @@ inline float Length::percent() const
 inline LengthType Length::type() const
 {
     return static_cast<LengthType>(m_type);
+}
+
+inline bool Length::isFloat() const
+{
+    return m_isFloat;
 }
 
 inline bool Length::hasQuirk() const

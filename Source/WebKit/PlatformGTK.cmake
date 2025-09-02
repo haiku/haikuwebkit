@@ -59,7 +59,7 @@ list(APPEND WebKit_MESSAGES_IN_FILES
 
     WebProcess/WebPage/ViewGestureGeometryCollector
 
-    WebProcess/WebPage/dmabuf/AcceleratedSurfaceDMABuf
+    WebProcess/WebPage/CoordinatedGraphics/AcceleratedSurface
 
     WebProcess/glib/SystemSettingsManager
 )
@@ -309,7 +309,6 @@ list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/WebProcess/WebCoreSupport/soup"
     "${WEBKIT_DIR}/WebProcess/WebPage/CoordinatedGraphics"
     "${WEBKIT_DIR}/WebProcess/WebPage/gtk"
-    "${WEBKIT_DIR}/WebProcess/WebPage/dmabuf"
 )
 
 list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES

@@ -33,6 +33,14 @@
 #include <TargetConditionals.h>
 #endif
 
+#ifndef BASSERT_ENABLED
+#ifdef NDEBUG
+#define BASSERT_ENABLED 0
+#else
+#define BASSERT_ENABLED 1
+#endif
+#endif
+
 #define BPLATFORM(PLATFORM) (defined BPLATFORM_##PLATFORM && BPLATFORM_##PLATFORM)
 #define BOS(OS) (defined BOS_##OS && BOS_##OS)
 
@@ -388,5 +396,13 @@
 #define BUSE_TZONE 1
 #else
 #define BUSE_TZONE 0
+#endif
+#endif
+
+#if !defined(BUSE_DYNAMIC_TZONE_COMPACTION)
+#if BUSE(TZONE) && (BASAN_ENABLED || BASSERT_ENABLED)
+#define BUSE_DYNAMIC_TZONE_COMPACTION 1
+#else
+#define BUSE_DYNAMIC_TZONE_COMPACTION 0
 #endif
 #endif

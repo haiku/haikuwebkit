@@ -155,6 +155,7 @@ void InsertListCommand::doApply()
 
                 auto currentSelection = *endingSelection().firstRange();
                 VisiblePosition startOfCurrentParagraph = startOfSelection;
+                VisiblePosition oldPositionBeforeReplacedParagraph;
                 while (startOfCurrentParagraph.isNotNull() && !inSameParagraph(startOfCurrentParagraph, startOfLastParagraph, CanCrossEditingBoundary)) {
                     // doApply() may operate on and remove the last paragraph of the selection from the document
                     // if it's in the same list item as startOfCurrentParagraph. Return early to avoid an
@@ -192,11 +193,22 @@ void InsertListCommand::doApply()
                     if (startOfCurrentParagraph == startOfSelection)
                         startOfSelection = endingSelection().visibleStart();
 
-                    // Move to the start of the next paragraph. If this does not move forward, then return early to avoid an infinite loop.
+                    // Move to the start of the next paragraph.
                     VisiblePosition oldStartOfCurrentParagraph = startOfCurrentParagraph;
                     startOfCurrentParagraph = startOfNextParagraph(endingSelection().visibleStart());
-                    if (!oldStartOfCurrentParagraph.isOrphan() && startOfCurrentParagraph <= oldStartOfCurrentParagraph)
-                        return;
+                    if (!oldStartOfCurrentParagraph.isOrphan()) {
+                        // If we didn't move forward, return early to avoid an infinite loop.
+                        if (startOfCurrentParagraph <= oldStartOfCurrentParagraph)
+                            break;
+                        if (oldPositionBeforeReplacedParagraph.isNotNull())
+                            oldPositionBeforeReplacedParagraph = VisiblePosition();
+                    } else {
+                        // Handle the case when oldStartOfCurrentParagraph gets orphaned and startOfCurrentParagraph stays at startOfNextParagraph(oldPositionBeforeReplacedParagraph).
+                        if (oldPositionBeforeReplacedParagraph.isNull())
+                            oldPositionBeforeReplacedParagraph = endingSelection().visibleStart();
+                        else if (startOfCurrentParagraph <= startOfNextParagraph(oldPositionBeforeReplacedParagraph))
+                            break;
+                    }
                 }
                 setEndingSelection(endOfSelection);
                 doApplyForSingleParagraph(forceCreateList, listTag, currentSelection);
@@ -279,8 +291,11 @@ void InsertListCommand::doApplyForSingleParagraph(bool forceCreateList, const HT
             if (rangeEndIsInList && newList)
                 currentSelection.end = makeBoundaryPointAfterNodeContents(*newList);
 
-            setEndingSelection(VisibleSelection(makeContainerOffsetPosition(currentSelection.start),
-                makeContainerOffsetPosition(currentSelection.end)));
+            if ((rangeStartIsInList || rangeEndIsInList) && newList) {
+                setEndingSelection(VisibleSelection(makeContainerOffsetPosition(currentSelection.start),
+                    makeContainerOffsetPosition(currentSelection.end)));
+            } else
+                setEndingSelection(VisibleSelection(firstPositionInNode(newList.get())));
 
             return;
         }

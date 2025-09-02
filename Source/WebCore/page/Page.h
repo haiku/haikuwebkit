@@ -1742,6 +1742,7 @@ private:
     Color m_underPageBackgroundColorOverride;
     std::optional<Color> m_sampledPageTopColor;
     std::pair<UniqueRef<FixedContainerEdges>, WeakElementEdges> m_fixedContainerEdgesAndElements;
+    bool m_userHasInteractedSinceLastPageLoad { false };
 
     const bool m_httpsUpgradeEnabled { true };
     mutable Markable<MediaSessionGroupIdentifier> m_mediaSessionGroupIdentifier;

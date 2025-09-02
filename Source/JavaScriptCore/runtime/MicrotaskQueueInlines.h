@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CatchScope.h"
-#include "Debugger.h"
-#include "MicrotaskQueue.h"
+#include <JavaScriptCore/CatchScope.h>
+#include <JavaScriptCore/Debugger.h>
+#include <JavaScriptCore/MicrotaskQueue.h>
 
 namespace JSC {
 

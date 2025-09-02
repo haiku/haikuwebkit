@@ -61,9 +61,9 @@ static CFRunLoopRef currentRunLoop()
     // A race condition during WebView deallocation can lead to a crash if the layer sync run loop
     // observer is added to the main run loop <rdar://problem/9798550>. However, for responsiveness,
     // we still allow this, see <rdar://problem/7403328>. Since the race condition and subsequent
-    // crash are especially troublesome for iBooks, we never allow the observer to be added to the
-    // main run loop in iBooks.
-    if (WTF::CocoaApplication::isIBooks())
+    // crash are especially troublesome for Apple Books, we never allow the observer to be added to the
+    // main run loop in Apple Books.
+    if (WTF::CocoaApplication::isAppleBooks())
         return WebThreadRunLoop();
 #endif
     return CFRunLoopGetCurrent();

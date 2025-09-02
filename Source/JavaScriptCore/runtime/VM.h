@@ -32,39 +32,39 @@
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-#include "CalleeBits.h"
-#include "CodeSpecializationKind.h"
-#include "ConcurrentJSLock.h"
-#include "DFGDoesGCCheck.h"
-#include "DeleteAllCodeEffort.h"
-#include "ExceptionEventLocation.h"
-#include "FunctionHasExecutedCache.h"
-#include "Heap.h"
-#include "ImplementationVisibility.h"
-#include "IndexingType.h"
-#include "Integrity.h"
-#include "Interpreter.h"
-#include "Intrinsic.h"
-#include "JSCJSValue.h"
-#include "JSDateMath.h"
-#include "JSLock.h"
-#include "JSONAtomStringCache.h"
-#include "KeyAtomStringCache.h"
-#include "MicrotaskQueue.h"
-#include "NativeFunction.h"
-#include "NumericStrings.h"
-#include "SlotVisitorMacros.h"
-#include "SmallStrings.h"
-#include "SourceTaintedOrigin.h"
-#include "StringReplaceCache.h"
-#include "StringSplitCache.h"
-#include "Strong.h"
-#include "SubspaceAccess.h"
-#include "ThunkGenerator.h"
-#include "VMTraps.h"
-#include "WasmContext.h"
-#include "WeakGCMap.h"
-#include "WriteBarrier.h"
+#include <JavaScriptCore/CalleeBits.h>
+#include <JavaScriptCore/CodeSpecializationKind.h>
+#include <JavaScriptCore/ConcurrentJSLock.h>
+#include <JavaScriptCore/DFGDoesGCCheck.h>
+#include <JavaScriptCore/DeleteAllCodeEffort.h>
+#include <JavaScriptCore/ExceptionEventLocation.h>
+#include <JavaScriptCore/FunctionHasExecutedCache.h>
+#include <JavaScriptCore/Heap.h>
+#include <JavaScriptCore/ImplementationVisibility.h>
+#include <JavaScriptCore/IndexingType.h>
+#include <JavaScriptCore/Integrity.h>
+#include <JavaScriptCore/Interpreter.h>
+#include <JavaScriptCore/Intrinsic.h>
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/JSDateMath.h>
+#include <JavaScriptCore/JSLock.h>
+#include <JavaScriptCore/JSONAtomStringCache.h>
+#include <JavaScriptCore/KeyAtomStringCache.h>
+#include <JavaScriptCore/MicrotaskQueue.h>
+#include <JavaScriptCore/NativeFunction.h>
+#include <JavaScriptCore/NumericStrings.h>
+#include <JavaScriptCore/SlotVisitorMacros.h>
+#include <JavaScriptCore/SmallStrings.h>
+#include <JavaScriptCore/SourceTaintedOrigin.h>
+#include <JavaScriptCore/StringReplaceCache.h>
+#include <JavaScriptCore/StringSplitCache.h>
+#include <JavaScriptCore/Strong.h>
+#include <JavaScriptCore/SubspaceAccess.h>
+#include <JavaScriptCore/ThunkGenerator.h>
+#include <JavaScriptCore/VMTraps.h>
+#include <JavaScriptCore/WasmContext.h>
+#include <JavaScriptCore/WeakGCMap.h>
+#include <JavaScriptCore/WriteBarrier.h>
 #include <wtf/BumpPointerAllocator.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/DoublyLinkedList.h>
@@ -1009,7 +1009,7 @@ private:
         m_throwingThread = nullptr;
 #endif
         m_exception = nullptr;
-        traps().clearTrapBit(VMTraps::NeedExceptionHandling);
+        traps().clearTrap(VMTraps::NeedExceptionHandling);
     }
 
     JS_EXPORT_PRIVATE void setException(Exception*);

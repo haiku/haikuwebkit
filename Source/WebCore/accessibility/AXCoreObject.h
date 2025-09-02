@@ -822,8 +822,8 @@ enum class ListBoxInterpretation : uint8_t {
 class AXCoreObject : public RefCountedAndCanMakeWeakPtr<AXCoreObject> {
 public:
     virtual ~AXCoreObject() = default;
-    String dbg(bool verbose = false) const { return dbgInternal(verbose, { }); }
-    String dbg(OptionSet<AXDebugStringOption> options) const { return dbgInternal(false, options); }
+    String debugDescription(bool verbose = false) const { return debugDescriptionInternal(verbose); }
+    String debugDescription(OptionSet<AXDebugStringOption> options) const { return debugDescriptionInternal(false, { options }); }
 
     inline AXID objectID() const { return m_id; }
     virtual std::optional<AXID> treeID() const = 0;
@@ -841,7 +841,6 @@ public:
     virtual bool isAccessibilityObject() const = 0;
     virtual bool isAccessibilityRenderObject() const = 0;
     virtual bool isAccessibilityTableInstance() const = 0;
-    virtual bool isAccessibilityARIAGridCellInstance() const = 0;
     virtual bool isAXIsolatedObjectInstance() const = 0;
     virtual bool isAXRemoteFrame() const = 0;
 
@@ -921,6 +920,8 @@ public:
     virtual std::pair<unsigned, unsigned> columnIndexRange() const = 0;
     virtual std::optional<unsigned> axColumnIndex() const = 0;
     virtual std::optional<unsigned> axRowIndex() const = 0;
+    virtual String axColumnIndexText() const = 0;
+    virtual String axRowIndexText() const = 0;
 
     // Table column support.
     bool isTableColumn() const { return role() == AccessibilityRole::Column; }
@@ -1620,7 +1621,7 @@ protected:
     { }
 
 private:
-    virtual String dbgInternal(bool, OptionSet<AXDebugStringOption>) const = 0;
+    virtual String debugDescriptionInternal(bool, std::optional<OptionSet<AXDebugStringOption>> = std::nullopt) const = 0;
 
     // Detaches this object from the objects it references and it is referenced by.
     virtual void detachRemoteParts(AccessibilityDetachmentType) = 0;

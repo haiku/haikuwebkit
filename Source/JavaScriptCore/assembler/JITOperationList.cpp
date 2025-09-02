@@ -112,10 +112,6 @@ LLINT_DECLARE_ROUTINE_VALIDATE(llint_function_for_construct_arity_check);
 LLINT_DECLARE_ROUTINE_VALIDATE(llint_eval_prologue);
 LLINT_DECLARE_ROUTINE_VALIDATE(llint_program_prologue);
 LLINT_DECLARE_ROUTINE_VALIDATE(llint_module_program_prologue);
-LLINT_DECLARE_ROUTINE_VALIDATE(wasm_function_prologue_trampoline);
-LLINT_DECLARE_ROUTINE_VALIDATE(wasm_function_prologue);
-LLINT_DECLARE_ROUTINE_VALIDATE(wasm_function_prologue_simd_trampoline);
-LLINT_DECLARE_ROUTINE_VALIDATE(wasm_function_prologue_simd);
 LLINT_DECLARE_ROUTINE_VALIDATE(llint_throw_during_call_trampoline);
 LLINT_DECLARE_ROUTINE_VALIDATE(llint_handle_uncaught_exception);
 LLINT_DECLARE_ROUTINE_VALIDATE(checkpoint_osr_exit_trampoline);
@@ -123,7 +119,6 @@ LLINT_DECLARE_ROUTINE_VALIDATE(checkpoint_osr_exit_from_inlined_call_trampoline)
 LLINT_DECLARE_ROUTINE_VALIDATE(normal_osr_exit_trampoline);
 LLINT_DECLARE_ROUTINE_VALIDATE(fuzzer_return_early_from_loop_hint);
 LLINT_DECLARE_ROUTINE_VALIDATE(js_to_wasm_wrapper_entry);
-LLINT_DECLARE_ROUTINE_VALIDATE(wasm_to_wasm_wrapper_entry);
 LLINT_DECLARE_ROUTINE_VALIDATE(wasm_to_wasm_ipint_wrapper_entry);
 LLINT_DECLARE_ROUTINE_VALIDATE(wasm_to_js_wrapper_entry);
 LLINT_DECLARE_ROUTINE_VALIDATE(ipint_trampoline);
@@ -181,10 +176,6 @@ static LLIntOperations llintOperations()
             LLINT_ROUTINE(llint_eval_prologue)
             LLINT_ROUTINE(llint_program_prologue)
             LLINT_ROUTINE(llint_module_program_prologue)
-            LLINT_ROUTINE(wasm_function_prologue_trampoline)
-            LLINT_ROUTINE(wasm_function_prologue)
-            LLINT_ROUTINE(wasm_function_prologue_simd_trampoline)
-            LLINT_ROUTINE(wasm_function_prologue_simd)
             LLINT_ROUTINE(llint_throw_during_call_trampoline)
             LLINT_ROUTINE(llint_handle_uncaught_exception)
             LLINT_ROUTINE(checkpoint_osr_exit_trampoline)
@@ -192,7 +183,6 @@ static LLIntOperations llintOperations()
             LLINT_ROUTINE(normal_osr_exit_trampoline)
             LLINT_ROUTINE(fuzzer_return_early_from_loop_hint)
             LLINT_ROUTINE(js_to_wasm_wrapper_entry)
-            LLINT_ROUTINE(wasm_to_wasm_wrapper_entry)
             LLINT_ROUTINE(wasm_to_wasm_ipint_wrapper_entry)
             LLINT_ROUTINE(wasm_to_js_wrapper_entry)
             LLINT_ROUTINE(ipint_trampoline)
@@ -207,12 +197,6 @@ static LLIntOperations llintOperations()
             LLINT_ROUTINE(ipint_table_catch_allref_entry)
 
             LLINT_OP(op_catch)
-            LLINT_OP(wasm_catch)
-            LLINT_OP(wasm_catch_all)
-            LLINT_OP(wasm_try_table_catch)
-            LLINT_OP(wasm_try_table_catchref)
-            LLINT_OP(wasm_try_table_catchall)
-            LLINT_OP(wasm_try_table_catchallref)
             LLINT_OP(llint_generic_return_point)
 
             FOR_EACH_LLINT_OPCODE_WITH_RETURN(LLINT_RETURN_LOCATION)

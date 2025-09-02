@@ -27,6 +27,7 @@
 #include "StyleLineWidth.h"
 
 #include "CSSPrimitiveValue.h"
+#include "RenderStyleInlines.h"
 #include "StyleBuilderChecking.h"
 #include "StylePrimitiveNumericTypes+CSSValueConversion.h"
 

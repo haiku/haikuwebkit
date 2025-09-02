@@ -34,8 +34,8 @@
 
         colors = await UIHelper.fixedContainerEdgeColors();
         shouldBeNull("colors.top");
-        shouldBeNull("colors.left");
-        shouldBeNull("colors.right");
+        shouldBeEqualToString("colors.left", "rgb(238, 238, 238)");
+        shouldBeEqualToString("colors.right", "rgb(238, 238, 238)");
         shouldBeNull("colors.bottom");
 
         finishJSTest();

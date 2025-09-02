@@ -31,11 +31,11 @@
 namespace WebCore {
 
     class AccessibilityObject;
- 
+
     class AccessibilityObjectWrapper : public IUnknown {
     public:
         // IUnknown
-        virtual HRESULT STDMETHODCALLTYPE QueryInterface(_In_ REFIID riid, _COM_Outptr_ void** ppvObject) = 0;        
+        virtual HRESULT STDMETHODCALLTYPE QueryInterface(_In_ REFIID riid, _COM_Outptr_ void** ppvObject) = 0;
         virtual ULONG STDMETHODCALLTYPE AddRef() = 0;
         virtual ULONG STDMETHODCALLTYPE Release(void) = 0;
 

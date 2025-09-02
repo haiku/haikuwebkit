@@ -289,6 +289,11 @@ bool RTCRtpSFrameTransform::virtualHasPendingActivity() const
     return (m_isAttached || m_hasWritable) && hasEventListeners();
 }
 
+ScriptExecutionContext* RTCRtpSFrameTransform::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
+}
+
 } // namespace WebCore
 
 #endif // ENABLE(WEB_RTC)

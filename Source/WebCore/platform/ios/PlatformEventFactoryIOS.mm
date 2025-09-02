@@ -28,7 +28,7 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#import "IntPoint.h"
+#import "DoublePoint.h"
 #import "KeyEventCocoa.h"
 #import "KeyEventCodesIOS.h"
 #import "Logging.h"
@@ -58,12 +58,12 @@ static OptionSet<PlatformEvent::Modifier> modifiersForEvent(WebEvent *event)
     return modifiers;
 }
 
-static inline IntPoint pointForEvent(WebEvent *event)
+static inline DoublePoint pointForEvent(WebEvent *event)
 {
-    return IntPoint(event.locationInWindow);
+    return event.locationInWindow;
 }
 
-static inline IntPoint globalPointForEvent(WebEvent *event)
+static inline DoublePoint globalPointForEvent(WebEvent *event)
 {
     // iOS WebKit works as if it is full screen. Therefore Web coords are Global coords.
     return pointForEvent(event);
@@ -113,8 +113,8 @@ public:
         m_type = PlatformEvent::Type::Wheel;
         m_timestamp = WallTime::now();
 
-        m_position = pointForEvent(event);
-        m_globalPosition = globalPointForEvent(event);
+        m_position = IntPoint(pointForEvent(event));
+        m_globalPosition = IntPoint(globalPointForEvent(event));
         m_deltaX = event.deltaX;
         m_deltaY = event.deltaY;
         m_granularity = ScrollByPixelWheelEvent; // iOS only supports continuous (pixel-mode) scrolling.

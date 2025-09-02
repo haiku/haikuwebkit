@@ -315,6 +315,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/WebGPU/InternalAPI/WebGPUXRSubImage.h
     Modules/WebGPU/InternalAPI/WebGPUXRView.h
 
+    Modules/webxr/XRCanvasConfiguration.h
+
     Modules/airplay/PlaybackTargetClientContextIdentifier.h
 
     Modules/applepay/ApplePayLogoSystemImage.h
@@ -726,6 +728,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     accessibility/AXCoreObject.h
     accessibility/AXGeometryManager.h
     accessibility/AXLogger.h
+    accessibility/AXLoggerBase.h
     accessibility/AXObjectCache.h
     accessibility/AXSearchManager.h
     accessibility/AXTextMarker.h
@@ -886,7 +889,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     contentextensions/MutableRange.h
     contentextensions/MutableRangeList.h
     contentextensions/NFA.h
-    contentextensions/NFANode.h
     contentextensions/NFAToDFA.h
     contentextensions/SerializedNFA.h
     contentextensions/Term.h
@@ -2139,6 +2141,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/DisplayRefreshMonitorFactory.h
     platform/graphics/DisplayRefreshMonitorManager.h
     platform/graphics/DisplayUpdate.h
+    platform/graphics/DoublePoint.h
+    platform/graphics/DoubleRect.h
+    platform/graphics/DoubleSize.h
     platform/graphics/Float16ArrayPixelBuffer.h
     platform/graphics/FloatLine.h
     platform/graphics/FloatPoint.h
@@ -2683,7 +2688,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/GridSpan.h
     rendering/style/LineClampValue.h
     rendering/style/NameScope.h
-    rendering/style/NinePieceImage.h
     rendering/style/OutlineValue.h
     rendering/style/PositionArea.h
     rendering/style/PositionTryFallback.h
@@ -2694,7 +2698,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/RenderStyleSetters.h
     rendering/style/SVGRenderStyle.h
     rendering/style/SVGRenderStyleDefs.h
-    rendering/style/ShapeValue.h
     rendering/style/StyleBackgroundData.h
     rendering/style/StyleBoxData.h
     rendering/style/StyleContentAlignmentData.h
@@ -2758,6 +2761,12 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/anchor-position/StyleAnchorName.h
 
+    style/values/backgrounds/StyleBorderImage.h
+    style/values/backgrounds/StyleBorderImageOutset.h
+    style/values/backgrounds/StyleBorderImageRepeat.h
+    style/values/backgrounds/StyleBorderImageSlice.h
+    style/values/backgrounds/StyleBorderImageSource.h
+    style/values/backgrounds/StyleBorderImageWidth.h
     style/values/backgrounds/StyleLineWidth.h
 
     style/values/borders/StyleBorderRadius.h
@@ -2768,11 +2777,15 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/box/StyleMargin.h
     style/values/box/StylePadding.h
 
+    style/values/break/StyleOrphans.h
+    style/values/break/StyleWidows.h
+
     style/values/color/StyleColor.h
     style/values/color/StyleColorOptions.h
     style/values/color/StyleCurrentColor.h
     style/values/color/StyleDynamicRangeLimit.h
     style/values/color/StyleDynamicRangeLimitMix.h
+    style/values/color/StyleOpacity.h
     style/values/color/StyleResolvedColor.h
 
     style/values/color-adjust/StyleColorScheme.h
@@ -2784,9 +2797,16 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/counter-styles/StyleCounterStyle.h
 
+    style/values/css2/StyleZIndex.h
+
+    style/values/display/StyleOrder.h
+
+    style/values/fill-stroke/StyleStrokeMiterlimit.h
     style/values/fill-stroke/StyleStrokeWidth.h
 
     style/values/flexbox/StyleFlexBasis.h
+    style/values/flexbox/StyleFlexGrow.h
+    style/values/flexbox/StyleFlexShrink.h
 
     style/values/grid/StyleGridNamedAreaMap.h
     style/values/grid/StyleGridNamedLinesMap.h
@@ -2802,9 +2822,11 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/grid/StyleGridTrackSizingDirection.h
 
     style/values/images/StyleGradient.h
+    style/values/images/StyleImageWrapper.h
     style/values/images/StyleObjectPosition.h
 
     style/values/inline/StyleLineBoxContain.h
+    style/values/inline/StyleVerticalAlign.h
 
     style/values/line-grid/StyleWebKitLineGrid.h
 
@@ -2812,6 +2834,12 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/masking/StyleClip.h
     style/values/masking/StyleClipPath.h
+    style/values/masking/StyleMaskBorder.h
+    style/values/masking/StyleMaskBorderOutset.h
+    style/values/masking/StyleMaskBorderRepeat.h
+    style/values/masking/StyleMaskBorderSlice.h
+    style/values/masking/StyleMaskBorderSource.h
+    style/values/masking/StyleMaskBorderWidth.h
 
     style/values/motion/StyleOffsetDistance.h
     style/values/motion/StyleOffsetAnchor.h
@@ -2820,6 +2848,10 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/motion/StyleOffsetRotate.h
     style/values/motion/StyleRayFunction.h
 
+    style/values/multicol/StyleColumnCount.h
+    style/values/multicol/StyleColumnWidth.h
+
+    style/values/non-standard/StyleWebKitBorderSpacing.h
     style/values/non-standard/StyleWebKitOverflowScrolling.h
     style/values/non-standard/StyleWebKitTextStrokeWidth.h
     style/values/non-standard/StyleWebKitTouchCallout.h
@@ -2832,12 +2864,15 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/position/StyleInset.h
 
     style/values/primitives/StyleLengthWrapper.h
+    style/values/primitives/StyleLengthWrapperData.h
     style/values/primitives/StylePosition.h
     style/values/primitives/StylePrimitiveNumeric+Forward.h
     style/values/primitives/StylePrimitiveNumeric.h
     style/values/primitives/StylePrimitiveNumericAdaptors.h
     style/values/primitives/StylePrimitiveNumericConcepts.h
     style/values/primitives/StylePrimitiveNumericOrKeyword.h
+    style/values/primitives/StylePrimitiveNumericTypes+Calculation.h
+    style/values/primitives/StylePrimitiveNumericTypes+Evaluation.h
     style/values/primitives/StylePrimitiveNumericTypes+Platform.h
     style/values/primitives/StylePrimitiveNumericTypes.h
     style/values/primitives/StyleRatio.h
@@ -2868,6 +2903,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/shapes/StylePolygonFunction.h
     style/values/shapes/StyleRectFunction.h
     style/values/shapes/StyleShapeFunction.h
+    style/values/shapes/StyleShapeImageThreshold.h
+    style/values/shapes/StyleShapeMargin.h
+    style/values/shapes/StyleShapeOutside.h
     style/values/shapes/StyleWindRuleComputation.h
     style/values/shapes/StyleXywhFunction.h
 

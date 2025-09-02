@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "InspectorFrontendChannel.h"
-#include "JSExportMacros.h"
+#include <JavaScriptCore/InspectorFrontendChannel.h>
+#include <JavaScriptCore/JSExportMacros.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 

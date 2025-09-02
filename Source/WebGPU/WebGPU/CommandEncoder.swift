@@ -141,7 +141,7 @@ extension WebGPU.CommandEncoder {
 
         commandBuffer?.label = unsafe WebGPU_Internal.convertWTFStringToNSString(WebGPU.fromAPI(descriptor.label))
 
-    #if os(macOS) || targetEnvironment(macCatalyst)
+        #if arch(x86_64) && (os(macOS) || targetEnvironment(macCatalyst))
         if m_managedBuffers.count != 0 || m_managedTextures.count != 0 {
             let blitCommandEncoder = commandBuffer?.makeBlitCommandEncoder()
             for case let buffer as MTLBuffer in m_managedBuffers {
@@ -152,7 +152,7 @@ extension WebGPU.CommandEncoder {
             }
             blitCommandEncoder?.endEncoding()
         }
-    #endif
+        #endif
 
         let result = createCommandBuffer(commandBuffer, m_device.ptr(), m_sharedEvent, m_sharedEventSignalValue)
         m_sharedEvent = nil
@@ -835,7 +835,9 @@ extension WebGPU.CommandEncoder {
         let mtlDescriptor = MTLRenderPassDescriptor()
         var counterSampleBuffer: MTLCounterSampleBuffer? = nil
         if let wgpuTimestampWrites = unsafe descriptor.timestampWrites {
-            counterSampleBuffer = unsafe WebGPU.fromAPI(wgpuTimestampWrites.pointee.querySet).counterSampleBuffer()
+            let wgpuQuerySet = unsafe wgpuTimestampWrites.pointee.querySet
+            let querySet = unsafe WebGPU.fromAPI(wgpuQuerySet)
+            counterSampleBuffer = unsafe querySet.counterSampleBufferWithOffset().pointee.first
         }
 
         if (m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil) {
@@ -2065,7 +2067,7 @@ extension WebGPU.CommandEncoder {
         computePassDescriptor.dispatchType = MTLDispatchType.serial
         var counterSampleBuffer: MTLCounterSampleBuffer? = nil
         if let wgpuTimestampWrites = unsafe descriptor.timestampWrites {
-            counterSampleBuffer = unsafe WebGPU.fromAPI(wgpuTimestampWrites.pointee.querySet).counterSampleBuffer()
+            counterSampleBuffer = unsafe WebGPU.fromAPI(wgpuTimestampWrites.pointee.querySet).counterSampleBufferWithOffset().pointee.first
         }
 
         if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {

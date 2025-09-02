@@ -129,6 +129,13 @@ class PlatformMediaSessionInterface
 public:
     virtual ~PlatformMediaSessionInterface() = default;
 
+    USING_CAN_MAKE_WEAKPTR(CanMakeWeakPtr<PlatformMediaSessionInterface>);
+
+#if ENABLE(WIRELESS_PLAYBACK_TARGET)
+    void ref() const final { RefCountedAndCanMakeWeakPtr::ref(); }
+    void deref() const final { RefCountedAndCanMakeWeakPtr::deref(); }
+#endif
+
     virtual void setActive(bool) = 0;
 
     using MediaType = PlatformMediaSessionMediaType;

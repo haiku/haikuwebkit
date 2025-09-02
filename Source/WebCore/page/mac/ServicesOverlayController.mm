@@ -589,7 +589,7 @@ void ServicesOverlayController::determineActiveHighlight(bool& mouseIsOverActive
 
 bool ServicesOverlayController::mouseEvent(PageOverlay&, const PlatformMouseEvent& event)
 {
-    m_mousePosition = m_page->mainFrame().virtualView()->windowToContents(event.position());
+    m_mousePosition = m_page->mainFrame().virtualView()->windowToContents(flooredIntPoint(event.position()));
 
     bool mouseIsOverActiveHighlightButton = false;
     determineActiveHighlight(mouseIsOverActiveHighlightButton);

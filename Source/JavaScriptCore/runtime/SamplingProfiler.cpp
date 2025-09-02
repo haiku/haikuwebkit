@@ -1023,7 +1023,6 @@ struct Tiers {
     static constexpr ASCIILiteral ftl { "FTL"_s };
     static constexpr ASCIILiteral builtin { "js builtin"_s };
     static constexpr ASCIILiteral ipint { "IPInt"_s };
-    static constexpr ASCIILiteral wasmllint { "WasmLLInt"_s };
     static constexpr ASCIILiteral bbq { "BBQ"_s };
     static constexpr ASCIILiteral omg { "OMG"_s };
     static constexpr ASCIILiteral wasm { "Wasm"_s };
@@ -1056,8 +1055,6 @@ static String tierName(SamplingProfiler::StackFrame& frame)
     case SamplingProfiler::FrameType::Wasm:
         if (frame.wasmCompilationMode) {
             switch (frame.wasmCompilationMode.value()) {
-            case Wasm::CompilationMode::LLIntMode:
-                return Tiers::wasmllint;
             case Wasm::CompilationMode::IPIntMode:
                 return Tiers::ipint;
             case Wasm::CompilationMode::JSToWasmEntrypointMode:
@@ -1295,7 +1292,6 @@ void SamplingProfiler::reportTopBytecodes(PrintStream& out)
         func(Tiers::ftl);
         func(Tiers::builtin);
         func(Tiers::ipint);
-        func(Tiers::wasmllint);
         func(Tiers::bbq);
         func(Tiers::omg);
         func(Tiers::wasm);

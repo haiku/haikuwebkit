@@ -49,6 +49,7 @@ public:
     bool hasError() const final;
     std::optional<Error> takeError() final;
     bool wasCanceled() const final;
+    bool isInlineModule() const final { return false; }
 
     Document* document() { return m_weakDocument.get(); }
     CachedScript& cachedScript() { return *m_cachedScript; }

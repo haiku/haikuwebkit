@@ -1020,10 +1020,10 @@ IntPoint EventHandler::targetPositionInWindowForSelectionAutoscroll() const
 {
     RefPtr page = m_frame->page();
     if (!page)
-        return valueOrDefault(m_lastKnownMousePosition);
+        return flooredIntPoint(valueOrDefault(m_lastKnownMousePosition));
 
     auto frame = toUserSpaceForPrimaryScreen(screenRectForDisplay(page->chrome().displayID()));
-    return valueOrDefault(m_lastKnownMousePosition) + autoscrollAdjustmentFactorForScreenBoundaries(m_lastKnownMouseGlobalPosition, frame);
+    return flooredIntPoint(valueOrDefault(m_lastKnownMousePosition)) + autoscrollAdjustmentFactorForScreenBoundaries(flooredIntPoint(m_lastKnownMouseGlobalPosition), frame);
 }
 
 }

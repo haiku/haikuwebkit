@@ -23,15 +23,15 @@
 
 #pragma once
 
-#include "DeferredWorkTimer.h"
-#include "JSSegmentedVariableObject.h"
-#include "LazyClassStructure.h"
-#include "RegExpGlobalData.h"
-#include "RuntimeFlags.h"
-#include "SourceTaintedOrigin.h"
-#include "StructureCache.h"
-#include "Watchpoint.h"
-#include "WeakGCSet.h"
+#include <JavaScriptCore/DeferredWorkTimer.h>
+#include <JavaScriptCore/JSSegmentedVariableObject.h>
+#include <JavaScriptCore/LazyClassStructure.h>
+#include <JavaScriptCore/RegExpGlobalData.h>
+#include <JavaScriptCore/RuntimeFlags.h>
+#include <JavaScriptCore/SourceTaintedOrigin.h>
+#include <JavaScriptCore/StructureCache.h>
+#include <JavaScriptCore/Watchpoint.h>
+#include <JavaScriptCore/WeakGCSet.h>
 #include <wtf/FixedVector.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/WeakPtr.h>

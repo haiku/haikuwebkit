@@ -99,6 +99,8 @@ private:
     RefPtr<PendingActivity<RTCRtpScriptTransformer>> m_pendingActivity;
 
     Deque<Ref<DeferredPromise>> m_pendingKeyFramePromises;
+    bool m_isVideo { false };
+    bool m_isSender { false };
 
 #if !RELEASE_LOG_DISABLED
     bool m_enableAdditionalLogging { false };

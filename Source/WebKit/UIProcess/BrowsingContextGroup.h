@@ -33,6 +33,7 @@
 
 namespace API {
 class PageConfiguration;
+class WebsitePolicies;
 }
 
 namespace IPC {
@@ -57,7 +58,7 @@ public:
     static Ref<BrowsingContextGroup> create() { return adoptRef(*new BrowsingContextGroup()); }
     ~BrowsingContextGroup();
 
-    RefPtr<FrameProcess> sharedProcessForSite(WebsiteDataStore&, const WebPreferences&, const WebCore::Site&, WebProcessProxy::LockdownMode, API::PageConfiguration&, IsMainFrame);
+    RefPtr<FrameProcess> sharedProcessForSite(WebsiteDataStore&, API::WebsitePolicies*, const WebPreferences&, const WebCore::Site&, WebProcessProxy::LockdownMode, API::PageConfiguration&, IsMainFrame);
     Ref<FrameProcess> ensureProcessForSite(const WebCore::Site&, WebProcessProxy&, const WebPreferences&, InjectBrowsingContextIntoProcess = InjectBrowsingContextIntoProcess::Yes);
     FrameProcess* processForSite(const WebCore::Site&);
     void addFrameProcess(FrameProcess&);

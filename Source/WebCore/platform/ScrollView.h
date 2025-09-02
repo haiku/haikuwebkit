@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "DoublePoint.h"
 #include "FloatRect.h"
 #include "IntRect.h"
 #include "Scrollbar.h"
@@ -305,10 +306,12 @@ public:
     WEBCORE_EXPORT void setScrollbarsSuppressed(bool suppressed, bool repaintOnUnsuppress = false);
     bool scrollbarsSuppressed() const { return m_scrollbarsSuppressed; }
 
+    WEBCORE_EXPORT DoublePoint rootViewToContents(const DoublePoint&) const;
     WEBCORE_EXPORT FloatPoint rootViewToContents(const FloatPoint&) const;
     WEBCORE_EXPORT IntPoint rootViewToContents(const IntPoint&) const;
     WEBCORE_EXPORT IntPoint contentsToRootView(const IntPoint&) const;
     WEBCORE_EXPORT FloatPoint contentsToRootView(const FloatPoint&) const;
+    WEBCORE_EXPORT DoublePoint contentsToRootView(const DoublePoint&) const;
     WEBCORE_EXPORT IntRect rootViewToContents(const IntRect&) const;
     WEBCORE_EXPORT IntRect contentsToRootView(const IntRect&) const;
     WEBCORE_EXPORT FloatRect rootViewToContents(const FloatRect&) const;
@@ -321,6 +324,9 @@ public:
 
     FloatPoint viewToContents(const FloatPoint&) const;
     FloatPoint contentsToView(const FloatPoint&) const;
+
+    DoublePoint viewToContents(const DoublePoint&) const;
+    DoublePoint contentsToView(const DoublePoint&) const;
 
     IntRect viewToContents(IntRect) const;
     IntRect contentsToView(IntRect) const;
@@ -337,7 +343,8 @@ public:
     // the entire widget hierarchy. It is up to the platform to decide what the precise definition
     // of containing window is. (For example on Mac it is the containing NSWindow.)
     WEBCORE_EXPORT IntPoint windowToContents(IntPoint) const;
-    FloatPoint windowToContents(FloatPoint) const;
+    WEBCORE_EXPORT FloatPoint windowToContents(FloatPoint) const;
+    WEBCORE_EXPORT DoublePoint windowToContents(DoublePoint) const;
     WEBCORE_EXPORT IntRect windowToContents(const IntRect&) const;
     FloatRect windowToContents(const FloatRect&) const;
 
@@ -368,9 +375,11 @@ public:
 
     IntPoint convertChildToSelf(const Widget*, IntPoint) const;
     FloatPoint convertChildToSelf(const Widget*, FloatPoint) const;
+    DoublePoint convertChildToSelf(const Widget*, DoublePoint) const;
 
     IntPoint convertSelfToChild(const Widget*, IntPoint) const;
     FloatPoint convertSelfToChild(const Widget*, FloatPoint) const;
+    DoublePoint convertSelfToChild(const Widget*, DoublePoint) const;
 
     // Widget override. Handles painting of the contents of the view as well as the scrollbars.
     WEBCORE_EXPORT void paint(GraphicsContext&, const IntRect&, Widget::SecurityOriginPaintPolicy = SecurityOriginPaintPolicy::AnyOrigin, RegionContext* = nullptr) final;

@@ -758,7 +758,7 @@ public:
     {
         webkit_download_cancel(m_download.get());
         waitUntilDownloadFinished();
-        m_download = 0;
+        m_download = nullptr;
     }
 };
 

@@ -130,7 +130,7 @@ void AXObjectCache::frameLoadingEventPlatformNotification(AccessibilityObject* o
 {
     if (!obj)
         return;
-    
+
     Document* document = obj->document();
     if (!document)
         return;

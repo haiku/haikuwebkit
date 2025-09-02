@@ -697,8 +697,8 @@ void HTMLTextFormControlElement::setInnerTextValue(String&& value)
                     previousValue = renderText->textWithoutConvertingBackslashToYenSymbol();
             }
 #endif
-            if (AXObjectCache* cache = document().existingAXObjectCache())
-                cache->postNotification(this, AXNotification::ValueChanged, PostTarget::ObservableParent);
+            if (CheckedPtr cache = document().existingAXObjectCache())
+                cache->onEditableTextValueChanged(*this);
         }
 #endif
 

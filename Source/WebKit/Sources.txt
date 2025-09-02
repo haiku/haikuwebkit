@@ -492,6 +492,7 @@ UIProcess/API/APINodeInfo.cpp
 UIProcess/API/APIPageConfiguration.cpp
 UIProcess/API/APIProcessPoolConfiguration.cpp
 UIProcess/API/APIOpenPanelParameters.cpp
+UIProcess/API/APIScriptMessage.cpp
 UIProcess/API/APISerializedNode.cpp
 UIProcess/API/APISessionState.cpp
 UIProcess/API/APITargetedElementInfo.cpp
@@ -549,6 +550,7 @@ UIProcess/API/C/WKPageGroup.cpp
 UIProcess/API/C/WKPreferences.cpp
 UIProcess/API/C/WKProtectionSpace.cpp
 UIProcess/API/C/WKResourceCacheManager.cpp
+UIProcess/API/C/WKScriptMessageRef.cpp
 UIProcess/API/C/WKSessionStateRef.cpp
 UIProcess/API/C/WKSpeechRecognitionPermissionCallback.cpp
 UIProcess/API/C/WKTextChecker.cpp
@@ -556,6 +558,7 @@ UIProcess/API/C/WKUserContentControllerRef.cpp
 UIProcess/API/C/WKUserContentExtensionStoreRef.cpp
 UIProcess/API/C/WKUserMediaPermissionCheck.cpp
 UIProcess/API/C/WKUserMediaPermissionRequest.cpp
+UIProcess/API/C/WKUserScriptRef.cpp
 UIProcess/API/C/WKWebsiteDataStoreConfigurationRef.cpp
 UIProcess/API/C/WKWebsiteDataStoreRef.cpp
 UIProcess/API/C/WKWebsitePolicies.cpp

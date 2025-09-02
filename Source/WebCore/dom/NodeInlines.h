@@ -28,10 +28,30 @@
 #include "Node.h"
 #include "PseudoElement.h"
 #include "RenderBox.h"
+#include "ShadowRoot.h"
 #include "TreeScopeInlines.h"
 #include "WebCoreOpaqueRoot.h"
 
 namespace WebCore {
+
+inline bool Node::isUserAgentShadowRoot() const
+{
+    auto* shadowRoot = dynamicDowncast<ShadowRoot>(*this);
+    return shadowRoot && shadowRoot->mode() == ShadowRootMode::UserAgent;
+}
+
+inline ContainerNode* Node::parentOrShadowHostNode() const
+{
+    ASSERT(isMainThreadOrGCThread());
+    if (auto* shadowRoot = dynamicDowncast<ShadowRoot>(*this))
+        return shadowRoot->host();
+    return parentNode();
+}
+
+inline RefPtr<ContainerNode> Node::protectedParentOrShadowHostNode() const
+{
+    return parentOrShadowHostNode();
+}
 
 inline RefPtr<ScriptExecutionContext> Node::protectedScriptExecutionContext() const
 {

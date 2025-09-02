@@ -454,11 +454,11 @@ void Editor::insertMultiRepresentationHEIC(const std::span<const uint8_t>& data,
     Ref document = this->document();
 
     String primaryType = "image/x-apple-adaptive-glyph"_s;
-    auto primaryBuffer = FragmentedSharedBuffer::create(data);
+    Ref primaryBuffer = SharedBuffer::create(data);
 
     String fallbackType = "image/png"_s;
     auto fallbackData = encodeData(fallbackImageForMultiRepresentationHEIC(data).get(), fallbackType, std::nullopt);
-    auto fallbackBuffer = FragmentedSharedBuffer::create(WTFMove(fallbackData));
+    Ref fallbackBuffer = SharedBuffer::create(WTFMove(fallbackData));
 
     auto picture = HTMLPictureElement::create(HTMLNames::pictureTag, document);
 

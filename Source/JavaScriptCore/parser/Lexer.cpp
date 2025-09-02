@@ -1208,17 +1208,69 @@ template <bool shouldBuildStrings> ALWAYS_INLINE typename Lexer<T>::StringParseR
 
     const T* stringStart = currentSourcePtr();
 
+    using UnsignedType = std::make_unsigned_t<T>;
+    auto quoteMask = SIMD::splat<UnsignedType>(stringQuoteCharacter);
+    constexpr auto escapeMask = SIMD::splat<UnsignedType>('\\');
+    constexpr auto controlMask = SIMD::splat<UnsignedType>(0xE);
+    constexpr auto nonLatin1Mask = SIMD::splat<UnsignedType>(0xff);
+    auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
+        auto quotes = SIMD::equal(input, quoteMask);
+        auto escapes = SIMD::equal(input, escapeMask);
+        auto controls = SIMD::lessThan(input, controlMask);
+        if constexpr (std::is_same_v<T, LChar> || !shouldBuildStrings) {
+            auto mask = SIMD::bitOr(quotes, escapes, controls);
+            return SIMD::findFirstNonZeroIndex(mask);
+        } else {
+            auto nonLatin1 = SIMD::greaterThan(input, nonLatin1Mask);
+            auto mask = SIMD::bitOr(quotes, escapes, controls, nonLatin1);
+            return SIMD::findFirstNonZeroIndex(mask);
+        }
+    };
+
+    auto scalarMatch = [&](auto character) ALWAYS_INLINE_LAMBDA {
+        if (character == stringQuoteCharacter)
+            return true;
+        if (character == '\\')
+            return true;
+        if (character < 0xE)
+            return true;
+
+        if constexpr (std::is_same_v<T, LChar> || !shouldBuildStrings)
+            return false;
+        else
+            return !isLatin1(character);
+    };
+
+    const T* found = SIMD::find(std::span { stringStart, m_codeEnd }, vectorMatch, scalarMatch);
+    if (found == m_codeEnd) [[unlikely]] {
+        setOffset(startingOffset, startingLineStartOffset);
+        setLineNumber(startingLineNumber);
+        return parseStringSlowCase<shouldBuildStrings>(tokenData, strictMode);
+    }
+
+    m_code = found;
+    m_current = *found;
+    if (m_current == stringQuoteCharacter) [[likely]] {
+        if constexpr (shouldBuildStrings)
+            tokenData->ident = makeIdentifier(std::span { stringStart, found });
+        else
+            tokenData->ident = nullptr;
+        return StringParsedSuccessfully;
+    }
+
     while (m_current != stringQuoteCharacter) {
         if (m_current == '\\') [[unlikely]] {
-            if (stringStart != currentSourcePtr() && shouldBuildStrings)
-                append8({ stringStart, currentSourcePtr() });
+            if constexpr (shouldBuildStrings) {
+                if (stringStart != currentSourcePtr())
+                    append8({ stringStart, currentSourcePtr() });
+            }
             shift();
 
             LChar escape = singleEscape(m_current);
 
             // Most common escape sequences first.
             if (escape) {
-                if (shouldBuildStrings)
+                if constexpr (shouldBuildStrings)
                     record8(escape);
                 shift();
             } else if (isLineTerminator(m_current)) [[unlikely]]
@@ -1231,7 +1283,7 @@ template <bool shouldBuildStrings> ALWAYS_INLINE typename Lexer<T>::StringParseR
                 }
                 T prev = m_current;
                 shift();
-                if (shouldBuildStrings)
+                if constexpr (shouldBuildStrings)
                     record8(convertHex(prev, m_current));
                 shift();
             } else {
@@ -1254,9 +1306,9 @@ template <bool shouldBuildStrings> ALWAYS_INLINE typename Lexer<T>::StringParseR
         shift();
     }
 
-    if (currentSourcePtr() != stringStart && shouldBuildStrings)
-        append8({ stringStart, currentSourcePtr() });
-    if (shouldBuildStrings) {
+    if constexpr (shouldBuildStrings) {
+        if (currentSourcePtr() != stringStart)
+            append8({ stringStart, currentSourcePtr() });
         tokenData->ident = makeIdentifier(m_buffer8.span());
         m_buffer8.shrink(0);
     } else
@@ -1286,7 +1338,7 @@ template <bool shouldBuildStrings> ALWAYS_INLINE auto Lexer<T>::parseComplexEsca
 
         T prev = m_current;
         shift();
-        if (shouldBuildStrings)
+        if constexpr (shouldBuildStrings)
             record16(convertHex(prev, m_current));
         shift();
 
@@ -1298,7 +1350,7 @@ template <bool shouldBuildStrings> ALWAYS_INLINE auto Lexer<T>::parseComplexEsca
 
         auto character = parseUnicodeEscape();
         if (character.isValid()) {
-            if (shouldBuildStrings)
+            if constexpr (shouldBuildStrings)
                 recordUnicodeCodePoint(character.value());
             return StringParsedSuccessfully;
         }
@@ -1324,7 +1376,7 @@ template <bool shouldBuildStrings> ALWAYS_INLINE auto Lexer<T>::parseComplexEsca
                 m_lexErrorMessage = "The only valid numeric escape in strict mode is '\\0'"_s;
                 return atEnd() ? StringUnterminated : StringCannotBeParsed;
             }
-            if (shouldBuildStrings)
+            if constexpr (shouldBuildStrings)
                 record16(0);
             return StringParsedSuccessfully;
         }
@@ -1338,15 +1390,15 @@ template <bool shouldBuildStrings> ALWAYS_INLINE auto Lexer<T>::parseComplexEsca
                 T character2 = m_current;
                 shift();
                 if (character1 >= '0' && character1 <= '3' && isASCIIOctalDigit(m_current)) {
-                    if (shouldBuildStrings)
+                    if constexpr (shouldBuildStrings)
                         record16((character1 - '0') * 64 + (character2 - '0') * 8 + m_current - '0');
                     shift();
                 } else {
-                    if (shouldBuildStrings)
+                    if constexpr (shouldBuildStrings)
                         record16((character1 - '0') * 8 + character2 - '0');
                 }
             } else {
-                if (shouldBuildStrings)
+                if constexpr (shouldBuildStrings)
                     record16(character1 - '0');
             }
             return StringParsedSuccessfully;
@@ -1354,7 +1406,7 @@ template <bool shouldBuildStrings> ALWAYS_INLINE auto Lexer<T>::parseComplexEsca
     }
 
     if (!atEnd()) {
-        if (shouldBuildStrings)
+        if constexpr (shouldBuildStrings)
             record16(m_current);
         shift();
         return StringParsedSuccessfully;
@@ -1374,15 +1426,17 @@ template <bool shouldBuildStrings> auto Lexer<T>::parseStringSlowCase(JSTokenDat
 
     while (m_current != stringQuoteCharacter) {
         if (m_current == '\\') [[unlikely]] {
-            if (stringStart != currentSourcePtr() && shouldBuildStrings)
-                append16({ stringStart, currentSourcePtr() });
+            if constexpr (shouldBuildStrings) {
+                if (stringStart != currentSourcePtr())
+                    append16({ stringStart, currentSourcePtr() });
+            }
             shift();
 
             LChar escape = singleEscape(m_current);
 
             // Most common escape sequences first
             if (escape) {
-                if (shouldBuildStrings)
+                if constexpr (shouldBuildStrings)
                     record16(escape);
                 shift();
             } else if (isLineTerminator(m_current)) [[unlikely]]
@@ -1410,11 +1464,11 @@ template <bool shouldBuildStrings> auto Lexer<T>::parseStringSlowCase(JSTokenDat
         shift();
     }
 
-    if (currentSourcePtr() != stringStart && shouldBuildStrings)
-        append16({ stringStart, currentSourcePtr() });
-    if (shouldBuildStrings)
+    if constexpr (shouldBuildStrings) {
+        if (currentSourcePtr() != stringStart)
+            append16({ stringStart, currentSourcePtr() });
         tokenData->ident = makeIdentifier(m_buffer16.span());
-    else
+    } else
         tokenData->ident = nullptr;
 
     m_buffer16.shrink(0);
@@ -1855,16 +1909,57 @@ ALWAYS_INLINE void Lexer<T>::parseCommentDirective()
     }
 }
 
+ALWAYS_INLINE const LChar* parseCommentDirectiveValueSIMD(const LChar* start, const LChar* end)
+{
+    constexpr auto controlMinChar = SIMD::splat<LChar>(0x09); // '\t'
+    constexpr auto controlMaxChar = SIMD::splat<LChar>(0x0D); // '\r'
+    constexpr auto spaceChar = SIMD::splat<LChar>(0x20); // ' '
+    constexpr auto quoteChar = SIMD::splat<LChar>(0x22); // '"'
+    constexpr auto squoteChar = SIMD::splat<LChar>(0x27); // '\''
+    constexpr auto nbspChar = SIMD::splat<LChar>(0xA0); // non-breaking space
+
+    auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
+        auto controls = SIMD::bitAnd(
+            SIMD::greaterThanOrEqual(input, controlMinChar),
+            SIMD::lessThanOrEqual(input, controlMaxChar)
+        );
+        auto spaces = SIMD::equal(input, spaceChar);
+        auto quotes = SIMD::equal(input, quoteChar);
+        auto squotes = SIMD::equal(input, squoteChar);
+        auto nbsps = SIMD::equal(input, nbspChar);
+
+        auto mask = SIMD::bitOr(controls, spaces, quotes, squotes, nbsps);
+        return SIMD::findFirstNonZeroIndex(mask);
+    };
+
+    auto scalarMatch = [&](auto character) ALWAYS_INLINE_LAMBDA {
+        return Lexer<LChar>::isWhiteSpace(character)
+            || Lexer<LChar>::isLineTerminator(character)
+            || character == '"'
+            || character == '\'';
+    };
+
+    return SIMD::find(std::span { start, end }, vectorMatch, scalarMatch);
+}
+
 IGNORE_WARNINGS_BEGIN("unused-but-set-variable")
 template<typename CharacterType> ALWAYS_INLINE String Lexer<CharacterType>::parseCommentDirectiveValue()
 {
     skipWhitespace();
     char16_t mergedCharacterBits = 0;
     auto stringStart = currentSourcePtr();
-    while (!isWhiteSpace(m_current) && !isLineTerminator(m_current) && m_current != '"' && m_current != '\'' && !atEnd()) {
-        if constexpr (std::is_same_v<CharacterType, char16_t>)
-            mergedCharacterBits |= m_current;
-        shift();
+    if constexpr (std::is_same_v<CharacterType, LChar>) {
+        m_code = parseCommentDirectiveValueSIMD(stringStart, m_codeEnd);
+        if (m_code < m_codeEnd)
+            m_current = *m_code;
+        else
+            m_current = 0;
+    } else {
+        while (!isWhiteSpace(m_current) && !isLineTerminator(m_current) && m_current != '"' && m_current != '\'' && !atEnd()) {
+            if constexpr (std::is_same_v<CharacterType, char16_t>)
+                mergedCharacterBits |= m_current;
+            shift();
+        }
     }
     std::span commentDirective { stringStart, currentSourcePtr() };
 
@@ -1904,13 +1999,8 @@ bool Lexer<T>::nextTokenIsColon()
 }
 
 template <typename T>
-void Lexer<T>::fillTokenInfo(JSToken* tokenRecord, JSTokenType token, int lineNumber, int endOffset, int lineStartOffset, JSTextPosition endPosition)
+void Lexer<T>::fillTokenInfo(JSToken* tokenRecord, JSTokenType token, JSTextPosition endPosition)
 {
-    JSTokenLocation* tokenLocation = &tokenRecord->m_location;
-    tokenLocation->line = lineNumber;
-    tokenLocation->endOffset = endOffset;
-    tokenLocation->lineStartOffset = lineStartOffset;
-    ASSERT(tokenLocation->endOffset >= tokenLocation->lineStartOffset);
     tokenRecord->m_endPosition = endPosition;
     m_lastToken = token;
 }
@@ -1919,43 +2009,42 @@ template <typename T>
 JSTokenType Lexer<T>::lexWithoutClearingLineTerminator(JSToken* tokenRecord, OptionSet<LexerFlags> lexerFlags, bool strictMode)
 {
     JSTokenData* tokenData = &tokenRecord->m_data;
-    JSTokenLocation* tokenLocation = &tokenRecord->m_location;
-    m_lastTokenLocation = JSTokenLocation(tokenRecord->m_location);
-    
     ASSERT(!m_error);
+    m_lastTokenLocation = tokenRecord->location();
     ASSERT(m_buffer8.isEmpty());
     ASSERT(m_buffer16.isEmpty());
-
     JSTokenType token = ERRORTOK;
 
 start:
     skipWhitespace();
 
-    tokenLocation->startOffset = currentOffset();
     ASSERT(currentOffset() >= currentLineStartOffset());
     tokenRecord->m_startPosition = currentPosition();
+
+    LChar type = m_current;
 
     if (atEnd()) {
         token = EOFTOK;
         goto returnToken;
     }
 
-    CharacterType type;
-    if (isLatin1(m_current)) [[likely]]
-        type = static_cast<CharacterType>(typesOfLatin1Characters[m_current]);
-    else {
-        char32_t codePoint;
-        U16_GET(m_code, 0, 0, m_codeEnd - m_code, codePoint);
-        if (isNonLatin1IdentStart(codePoint))
-            type = CharacterNonLatin1IdentifierStart;
-        else if (isLineTerminator(m_current))
-            type = CharacterLineTerminator;
-        else
-            type = CharacterInvalid;
+    if constexpr (!std::is_same_v<T, LChar>) {
+        if (!isLatin1(m_current)) [[unlikely]] {
+            char32_t codePoint;
+            U16_GET(m_code, 0, 0, m_codeEnd - m_code, codePoint);
+            if (isNonLatin1IdentStart(codePoint)) {
+                // We are hijacking white space characters for non-latin1 identifier start in the following dispatch since we will never see
+                // these characters in the switch because of `skipWhitespace()` call.
+                type = ' ';
+            } else if (isLineTerminator(m_current))
+                type = '\n';
+            else
+                type = '\0';
+        }
     }
 
     switch (type) {
-    case CharacterGreater:
+    case  62 /* 62 = > CharacterGreater */: {
         shift();
         if (m_current == '>') {
             shift();
@@ -1984,7 +2073,9 @@ start:
         }
         token = GT;
         break;
-    case CharacterEqual: {
+    }
+
+    case  61 /* 61 = = CharacterEqual */: {
         if (peek(1) == '>') {
             token = ARROWFUNCTION;
             tokenData->line = lineNumber();
@@ -2010,7 +2101,8 @@ start:
         token = EQUAL;
         break;
     }
-    case CharacterLess:
+
+    case  60 /* 60 = < CharacterLess */: {
         shift();
         if (m_current == '!' && peek(1) == '-' && peek(2) == '-') {
             if (m_scriptMode == JSParserScriptMode::Classic) {
@@ -2035,7 +2127,9 @@ start:
         }
         token = LT;
         break;
-    case CharacterExclamationMark:
+    }
+
+    case  33 /* 33 = ! CharacterExclamationMark */: {
         shift();
         if (m_current == '=') {
             shift();
@@ -2049,7 +2143,9 @@ start:
         }
         token = EXCLAMATION;
         break;
-    case CharacterAdd:
+    }
+
+    case  43 /* 43 = + CharacterAdd */: {
         shift();
         if (m_current == '+') {
             shift();
@@ -2063,7 +2159,9 @@ start:
         }
         token = PLUS;
         break;
-    case CharacterSub:
+    }
+
+    case  45 /* 45 = - CharacterSub */: {
         shift();
         if (m_current == '-') {
             shift();
@@ -2083,7 +2181,9 @@ start:
         }
         token = MINUS;
         break;
-    case CharacterMultiply:
+    }
+
+    case  42 /* 42 = * CharacterMultiply */: {
         shift();
         if (m_current == '=') {
             shift();
@@ -2102,7 +2202,9 @@ start:
         }
         token = TIMES;
         break;
-    case CharacterSlash:
+    }
+
+    case  47 /* 47 = / CharacterSlash */: {
         shift();
         if (m_current == '/') {
             shift();
@@ -2110,14 +2212,12 @@ start:
         }
         if (m_current == '*') {
             shift();
-            auto startLineNumber = m_lineNumber;
-            auto startLineStartOffset = currentLineStartOffset();
             if (parseMultilineComment())
                 goto start;
             m_lexErrorMessage = "Multiline comment was not closed properly"_s;
             token = UNTERMINATED_MULTILINE_COMMENT_ERRORTOK;
             m_error = true;
-            fillTokenInfo(tokenRecord, token, startLineNumber, currentOffset(), startLineStartOffset, currentPosition());
+            fillTokenInfo(tokenRecord, token, currentPosition());
             return token;
         }
         if (m_current == '=') {
@@ -2127,7 +2227,9 @@ start:
         }
         token = DIVIDE;
         break;
-    case CharacterAnd:
+    }
+
+    case  38 /* 38 = & CharacterAnd */: {
         shift();
         if (m_current == '&') {
             shift();
@@ -2146,7 +2248,9 @@ start:
         }
         token = BITAND;
         break;
-    case CharacterXor:
+    }
+
+    case  94 /* 94 = ^ CharacterXor */: {
         shift();
         if (m_current == '=') {
             shift();
@@ -2155,7 +2259,9 @@ start:
         }
         token = BITXOR;
         break;
-    case CharacterModulo:
+    }
+
+    case  37 /* 37 = % CharacterModulo */: {
         shift();
         if (m_current == '=') {
             shift();
@@ -2164,7 +2270,9 @@ start:
         }
         token = MOD;
         break;
-    case CharacterOr:
+    }
+
+    case 124 /* 124 = | CharacterOr */: {
         shift();
         if (m_current == '=') {
             shift();
@@ -2183,34 +2291,48 @@ start:
         }
         token = BITOR;
         break;
-    case CharacterOpenParen:
+    }
+
+    case  40 /* 40 = ( CharacterOpenParen */: {
         token = OPENPAREN;
         tokenData->line = lineNumber();
         tokenData->offset = currentOffset();
         tokenData->lineStartOffset = currentLineStartOffset();
         shift();
         break;
-    case CharacterCloseParen:
+    }
+
+    case  41 /* 41 = ) CharacterCloseParen */: {
         token = CLOSEPAREN;
         shift();
         break;
-    case CharacterOpenBracket:
+    }
+
+    case  91 /* 91 = [ CharacterOpenBracket */: {
         token = OPENBRACKET;
         shift();
         break;
-    case CharacterCloseBracket:
+    }
+
+    case  93 /* 93 = ] CharacterCloseBracket */: {
         token = CLOSEBRACKET;
         shift();
         break;
-    case CharacterComma:
+    }
+
+    case  44 /* 44 = , CharacterComma */: {
         token = COMMA;
         shift();
         break;
-    case CharacterColon:
+    }
+
+    case  58 /* 58 = : CharacterColon */: {
         token = COLON;
         shift();
         break;
-    case CharacterQuestion:
+    }
+
+    case  63 /* 63 = ? CharacterQuestion */: {
         shift();
         if (m_current == '?') {
             shift();
@@ -2229,19 +2351,27 @@ start:
         }
         token = QUESTION;
         break;
-    case CharacterTilde:
+    }
+
+    case 126 /* 126 = ~ CharacterTilde */: {
         token = TILDE;
         shift();
         break;
-    case CharacterSemicolon:
+    }
+
+    case  59 /* 59 = ; CharacterSemicolon */: {
         shift();
         token = SEMICOLON;
         break;
-    case CharacterBackQuote:
+    }
+
+    case  96 /* 96 = ` CharacterBackQuote */: {
         shift();
         token = BACKQUOTE;
         break;
-    case CharacterOpenBrace:
+    }
+
+    case 123 /* 123 = { CharacterOpenBrace */: {
         tokenData->line = lineNumber();
         tokenData->offset = currentOffset();
         tokenData->lineStartOffset = currentLineStartOffset();
@@ -2249,7 +2379,9 @@ start:
         shift();
         token = OPENBRACE;
         break;
-    case CharacterCloseBrace:
+    }
+
+    case 125 /* 125 = } CharacterCloseBrace */: {
         tokenData->line = lineNumber();
         tokenData->offset = currentOffset();
         tokenData->lineStartOffset = currentLineStartOffset();
@@ -2257,7 +2389,9 @@ start:
         shift();
         token = CLOSEBRACE;
         break;
-    case CharacterDot:
+    }
+
+    case  46 /* 46 = . CharacterDot */: {
         shift();
         if (!isASCIIDigit(m_current)) {
             if ((m_current == '.') && (peek(1) == '.')) [[unlikely]] {
@@ -2297,7 +2431,9 @@ start:
         }
         m_buffer8.shrink(0);
         break;
-    case CharacterZero:
+    }
+
+    case  48 /* 48 = 0 CharacterZero */: {
         shift();
         if (isASCIIAlphaCaselessEqual(m_current, 'x')) {
             if (!isASCIIHexDigit(peek(1))) [[unlikely]] {
@@ -2438,7 +2574,17 @@ start:
             }
         }
         [[fallthrough]];
-    case CharacterNumber:
+    }
+
+    case  49 /* 49 = 1 CharacterNumber */:
+    case  50 /* 50 = 2 CharacterNumber */:
+    case  51 /* 51 = 3 CharacterNumber */:
+    case  52 /* 52 = 4 CharacterNumber */:
+    case  53 /* 53 = 5 CharacterNumber */:
+    case  54 /* 54 = 6 CharacterNumber */:
+    case  55 /* 55 = 7 CharacterNumber */:
+    case  56 /* 56 = 8 CharacterNumber */:
+    case  57 /* 57 = 9 CharacterNumber */: {
         if (token != INTEGER && token != DOUBLE) [[likely]] {
             auto parseNumberResult = parseDecimal();
             if (parseNumberResult) {
@@ -2486,9 +2632,10 @@ start:
         }
         m_buffer8.shrink(0);
         break;
-    case CharacterQuote: {
-        auto startLineNumber = m_lineNumber;
-        auto startLineStartOffset = currentLineStartOffset();
+    }
+
+    case  34 /* 34 = " CharacterQuote */:
+    case  39 /* 39 = ' CharacterQuote */: {
         StringParseResult result = StringCannotBeParsed;
         if (lexerFlags.contains(LexerFlags::DontBuildStrings))
             result = parseString<false>(tokenData, strictMode);
@@ -2498,16 +2645,135 @@ start:
         if (result != StringParsedSuccessfully) [[unlikely]] {
             token = result == StringUnterminated ? UNTERMINATED_STRING_LITERAL_ERRORTOK : INVALID_STRING_LITERAL_ERRORTOK;
             m_error = true;
-            fillTokenInfo(tokenRecord, token, startLineNumber, currentOffset(), startLineStartOffset, currentPosition());
+            fillTokenInfo(tokenRecord, token, currentPosition());
             return token;
         }
         shift();
         token = STRING;
         m_atLineStart = false;
-        fillTokenInfo(tokenRecord, token, startLineNumber, currentOffset(), startLineStartOffset, currentPosition());
+        fillTokenInfo(tokenRecord, token, currentPosition());
         return token;
     }
-    case CharacterLatin1IdentifierStart: {
+
+    case  36 /*  36 = $           CharacterLatin1IdentifierStart */:
+    case  65 /*  65 = A           CharacterLatin1IdentifierStart */:
+    case  66 /*  66 = B           CharacterLatin1IdentifierStart */:
+    case  67 /*  67 = C           CharacterLatin1IdentifierStart */:
+    case  68 /*  68 = D           CharacterLatin1IdentifierStart */:
+    case  69 /*  69 = E           CharacterLatin1IdentifierStart */:
+    case  70 /*  70 = F           CharacterLatin1IdentifierStart */:
+    case  71 /*  71 = G           CharacterLatin1IdentifierStart */:
+    case  72 /*  72 = H           CharacterLatin1IdentifierStart */:
+    case  73 /*  73 = I           CharacterLatin1IdentifierStart */:
+    case  74 /*  74 = J           CharacterLatin1IdentifierStart */:
+    case  75 /*  75 = K           CharacterLatin1IdentifierStart */:
+    case  76 /*  76 = L           CharacterLatin1IdentifierStart */:
+    case  77 /*  77 = M           CharacterLatin1IdentifierStart */:
+    case  78 /*  78 = N           CharacterLatin1IdentifierStart */:
+    case  79 /*  79 = O           CharacterLatin1IdentifierStart */:
+    case  80 /*  80 = P           CharacterLatin1IdentifierStart */:
+    case  81 /*  81 = Q           CharacterLatin1IdentifierStart */:
+    case  82 /*  82 = R           CharacterLatin1IdentifierStart */:
+    case  83 /*  83 = S           CharacterLatin1IdentifierStart */:
+    case  84 /*  84 = T           CharacterLatin1IdentifierStart */:
+    case  85 /*  85 = U           CharacterLatin1IdentifierStart */:
+    case  86 /*  86 = V           CharacterLatin1IdentifierStart */:
+    case  87 /*  87 = W           CharacterLatin1IdentifierStart */:
+    case  88 /*  88 = X           CharacterLatin1IdentifierStart */:
+    case  89 /*  89 = Y           CharacterLatin1IdentifierStart */:
+    case  90 /*  90 = Z           CharacterLatin1IdentifierStart */:
+    case  95 /*  95 = _           CharacterLatin1IdentifierStart */:
+    case  97 /*  97 = a           CharacterLatin1IdentifierStart */:
+    case  98 /*  98 = b           CharacterLatin1IdentifierStart */:
+    case  99 /*  99 = c           CharacterLatin1IdentifierStart */:
+    case 100 /* 100 = d           CharacterLatin1IdentifierStart */:
+    case 101 /* 101 = e           CharacterLatin1IdentifierStart */:
+    case 102 /* 102 = f           CharacterLatin1IdentifierStart */:
+    case 103 /* 103 = g           CharacterLatin1IdentifierStart */:
+    case 104 /* 104 = h           CharacterLatin1IdentifierStart */:
+    case 105 /* 105 = i           CharacterLatin1IdentifierStart */:
+    case 106 /* 106 = j           CharacterLatin1IdentifierStart */:
+    case 107 /* 107 = k           CharacterLatin1IdentifierStart */:
+    case 108 /* 108 = l           CharacterLatin1IdentifierStart */:
+    case 109 /* 109 = m           CharacterLatin1IdentifierStart */:
+    case 110 /* 110 = n           CharacterLatin1IdentifierStart */:
+    case 111 /* 111 = o           CharacterLatin1IdentifierStart */:
+    case 112 /* 112 = p           CharacterLatin1IdentifierStart */:
+    case 113 /* 113 = q           CharacterLatin1IdentifierStart */:
+    case 114 /* 114 = r           CharacterLatin1IdentifierStart */:
+    case 115 /* 115 = s           CharacterLatin1IdentifierStart */:
+    case 116 /* 116 = t           CharacterLatin1IdentifierStart */:
+    case 117 /* 117 = u           CharacterLatin1IdentifierStart */:
+    case 118 /* 118 = v           CharacterLatin1IdentifierStart */:
+    case 119 /* 119 = w           CharacterLatin1IdentifierStart */:
+    case 120 /* 120 = x           CharacterLatin1IdentifierStart */:
+    case 121 /* 121 = y           CharacterLatin1IdentifierStart */:
+    case 122 /* 122 = z           CharacterLatin1IdentifierStart */:
+    case 170 /* 170 = Ll category CharacterLatin1IdentifierStart */:
+    case 181 /* 181 = Ll category CharacterLatin1IdentifierStart */:
+    case 186 /* 186 = Ll category CharacterLatin1IdentifierStart */:
+    case 192 /* 192 = Lu category CharacterLatin1IdentifierStart */:
+    case 193 /* 193 = Lu category CharacterLatin1IdentifierStart */:
+    case 194 /* 194 = Lu category CharacterLatin1IdentifierStart */:
+    case 195 /* 195 = Lu category CharacterLatin1IdentifierStart */:
+    case 196 /* 196 = Lu category CharacterLatin1IdentifierStart */:
+    case 197 /* 197 = Lu category CharacterLatin1IdentifierStart */:
+    case 198 /* 198 = Lu category CharacterLatin1IdentifierStart */:
+    case 199 /* 199 = Lu category CharacterLatin1IdentifierStart */:
+    case 200 /* 200 = Lu category CharacterLatin1IdentifierStart */:
+    case 201 /* 201 = Lu category CharacterLatin1IdentifierStart */:
+    case 202 /* 202 = Lu category CharacterLatin1IdentifierStart */:
+    case 203 /* 203 = Lu category CharacterLatin1IdentifierStart */:
+    case 204 /* 204 = Lu category CharacterLatin1IdentifierStart */:
+    case 205 /* 205 = Lu category CharacterLatin1IdentifierStart */:
+    case 206 /* 206 = Lu category CharacterLatin1IdentifierStart */:
+    case 207 /* 207 = Lu category CharacterLatin1IdentifierStart */:
+    case 208 /* 208 = Lu category CharacterLatin1IdentifierStart */:
+    case 209 /* 209 = Lu category CharacterLatin1IdentifierStart */:
+    case 210 /* 210 = Lu category CharacterLatin1IdentifierStart */:
+    case 211 /* 211 = Lu category CharacterLatin1IdentifierStart */:
+    case 212 /* 212 = Lu category CharacterLatin1IdentifierStart */:
+    case 213 /* 213 = Lu category CharacterLatin1IdentifierStart */:
+    case 214 /* 214 = Lu category CharacterLatin1IdentifierStart */:
+    case 216 /* 216 = Lu category CharacterLatin1IdentifierStart */:
+    case 217 /* 217 = Lu category CharacterLatin1IdentifierStart */:
+    case 218 /* 218 = Lu category CharacterLatin1IdentifierStart */:
+    case 219 /* 219 = Lu category CharacterLatin1IdentifierStart */:
+    case 220 /* 220 = Lu category CharacterLatin1IdentifierStart */:
+    case 221 /* 221 = Lu category CharacterLatin1IdentifierStart */:
+    case 222 /* 222 = Lu category CharacterLatin1IdentifierStart */:
+    case 223 /* 223 = Ll category CharacterLatin1IdentifierStart */:
+    case 224 /* 224 = Ll category CharacterLatin1IdentifierStart */:
+    case 225 /* 225 = Ll category CharacterLatin1IdentifierStart */:
+    case 226 /* 226 = Ll category CharacterLatin1IdentifierStart */:
+    case 227 /* 227 = Ll category CharacterLatin1IdentifierStart */:
+    case 228 /* 228 = Ll category CharacterLatin1IdentifierStart */:
+    case 229 /* 229 = Ll category CharacterLatin1IdentifierStart */:
+    case 230 /* 230 = Ll category CharacterLatin1IdentifierStart */:
+    case 231 /* 231 = Ll category CharacterLatin1IdentifierStart */:
+    case 232 /* 232 = Ll category CharacterLatin1IdentifierStart */:
+    case 233 /* 233 = Ll category CharacterLatin1IdentifierStart */:
+    case 234 /* 234 = Ll category CharacterLatin1IdentifierStart */:
+    case 235 /* 235 = Ll category CharacterLatin1IdentifierStart */:
+    case 236 /* 236 = Ll category CharacterLatin1IdentifierStart */:
+    case 237 /* 237 = Ll category CharacterLatin1IdentifierStart */:
+    case 238 /* 238 = Ll category CharacterLatin1IdentifierStart */:
+    case 239 /* 239 = Ll category CharacterLatin1IdentifierStart */:
+    case 240 /* 240 = Ll category CharacterLatin1IdentifierStart */:
+    case 241 /* 241 = Ll category CharacterLatin1IdentifierStart */:
+    case 242 /* 242 = Ll category CharacterLatin1IdentifierStart */:
+    case 243 /* 243 = Ll category CharacterLatin1IdentifierStart */:
+    case 244 /* 244 = Ll category CharacterLatin1IdentifierStart */:
+    case 245 /* 245 = Ll category CharacterLatin1IdentifierStart */:
+    case 246 /* 246 = Ll category CharacterLatin1IdentifierStart */:
+    case 248 /* 248 = Ll category CharacterLatin1IdentifierStart */:
+    case 249 /* 249 = Ll category CharacterLatin1IdentifierStart */:
+    case 250 /* 250 = Ll category CharacterLatin1IdentifierStart */:
+    case 251 /* 251 = Ll category CharacterLatin1IdentifierStart */:
+    case 252 /* 252 = Ll category CharacterLatin1IdentifierStart */:
+    case 253 /* 253 = Ll category CharacterLatin1IdentifierStart */:
+    case 254 /* 254 = Ll category CharacterLatin1IdentifierStart */:
+    case 255 /* 255 = Ll category CharacterLatin1IdentifierStart */: {
         // We observe one character identifier very frequently because real world web pages are shipping minified JavaScript.
         // This path handles it in a fast path.
         auto nextCharacter = peek(1);
@@ -2526,7 +2792,15 @@ start:
         }
         [[fallthrough]];
     }
-    case CharacterNonLatin1IdentifierStart: {
+
+    // They are not used for whitespaces, but we are hijacking this for non-latin1 identifiers.
+    // When we are dispatching this switch, we will never see these characters since we already skipped them before reaching here.
+    // So it is safe to use these characters for the different purpose.
+    case   9 /*   9 = Horizontal Tab     CharacterWhiteSpace */:
+    case  11 /*  11 = Vertical Tab       CharacterWhiteSpace */:
+    case  12 /*  12 = Form Feed          CharacterWhiteSpace */:
+    case  32 /*  32 = Space              CharacterWhiteSpace */:
+    case 160 /* 160 = Zs category (nbsp) CharacterWhiteSpace */: {
         if constexpr (ASSERT_ENABLED) {
             char32_t codePoint;
             U16_GET(m_code, 0, 0, m_codeEnd - m_code, codePoint);
@@ -2534,20 +2808,26 @@ start:
         }
         [[fallthrough]];
     }
-    case CharacterBackSlash:
+
+    case  92 /* 92 = \ CharacterBackSlash */: {
         parseIdent:
         if (lexerFlags.contains(LexerFlags::DontBuildKeywords))
             token = parseIdentifier<false>(tokenData, lexerFlags, strictMode);
         else
             token = parseIdentifier<true>(tokenData, lexerFlags, strictMode);
         break;
-    case CharacterLineTerminator:
+    }
+
+    case  10 /* 10 = Line Feed       CharacterLineTerminator */:
+    case  13 /* 13 = Carriage Return CharacterLineTerminator */: {
         ASSERT(isLineTerminator(m_current));
         shiftLineTerminator();
         m_atLineStart = true;
         m_hasLineTerminatorBeforeToken = true;
         goto start;
-    case CharacterHash: {
+    }
+
+    case  35 /* 35 = # CharacterHash */: {
         // Hashbang is only permitted at the start of the source text.
         auto next = peek(1);
         if (next == '!' && !currentOffset()) {
@@ -2572,18 +2852,105 @@ start:
         }
         goto invalidCharacter;
     }
-    case CharacterPrivateIdentifierStart:
+
+    case  64 /* 64 = @ CharacterPrivateIdentifierStart */: {
         if (m_parsingBuiltinFunction)
             goto parseIdent;
         goto invalidCharacter;
-    case CharacterOtherIdentifierPart:
-    case CharacterInvalid:
+    }
+
+    case 183 /* 183 = Po category      CharacterOtherIdentifierPart */:
+    case   0 /*   0 = Null             CharacterInvalid */:
+    case   1 /*   1 = Start of Heading CharacterInvalid */:
+    case   2 /*   2 = Start of Text    CharacterInvalid */:
+    case   3 /*   3 = End of Text      CharacterInvalid */:
+    case   4 /*   4 = End of Transm.   CharacterInvalid */:
+    case   5 /*   5 = Enquiry          CharacterInvalid */:
+    case   6 /*   6 = Acknowledgment   CharacterInvalid */:
+    case   7 /*   7 = Bell             CharacterInvalid */:
+    case   8 /*   8 = Back Space       CharacterInvalid */:
+    case  14 /*  14 = Shift Out        CharacterInvalid */:
+    case  15 /*  15 = Shift In         CharacterInvalid */:
+    case  16 /*  16 = Data Line Escape CharacterInvalid */:
+    case  17 /*  17 = Device Control 1 CharacterInvalid */:
+    case  18 /*  18 = Device Control 2 CharacterInvalid */:
+    case  19 /*  19 = Device Control 3 CharacterInvalid */:
+    case  20 /*  20 = Device Control 4 CharacterInvalid */:
+    case  21 /*  21 = Negative Ack.    CharacterInvalid */:
+    case  22 /*  22 = Synchronous Idle CharacterInvalid */:
+    case  23 /*  23 = End of Transmit  CharacterInvalid */:
+    case  24 /*  24 = Cancel           CharacterInvalid */:
+    case  25 /*  25 = End of Medium    CharacterInvalid */:
+    case  26 /*  26 = Substitute       CharacterInvalid */:
+    case  27 /*  27 = Escape           CharacterInvalid */:
+    case  28 /*  28 = File Separator   CharacterInvalid */:
+    case  29 /*  29 = Group Separator  CharacterInvalid */:
+    case  30 /*  30 = Record Separator CharacterInvalid */:
+    case  31 /*  31 = Unit Separator   CharacterInvalid */:
+    case 127 /* 127 = Delete           CharacterInvalid */:
+    case 128 /* 128 = Cc category      CharacterInvalid */:
+    case 129 /* 129 = Cc category      CharacterInvalid */:
+    case 130 /* 130 = Cc category      CharacterInvalid */:
+    case 131 /* 131 = Cc category      CharacterInvalid */:
+    case 132 /* 132 = Cc category      CharacterInvalid */:
+    case 133 /* 133 = Cc category      CharacterInvalid */:
+    case 134 /* 134 = Cc category      CharacterInvalid */:
+    case 135 /* 135 = Cc category      CharacterInvalid */:
+    case 136 /* 136 = Cc category      CharacterInvalid */:
+    case 137 /* 137 = Cc category      CharacterInvalid */:
+    case 138 /* 138 = Cc category      CharacterInvalid */:
+    case 139 /* 139 = Cc category      CharacterInvalid */:
+    case 140 /* 140 = Cc category      CharacterInvalid */:
+    case 141 /* 141 = Cc category      CharacterInvalid */:
+    case 142 /* 142 = Cc category      CharacterInvalid */:
+    case 143 /* 143 = Cc category      CharacterInvalid */:
+    case 144 /* 144 = Cc category      CharacterInvalid */:
+    case 145 /* 145 = Cc category      CharacterInvalid */:
+    case 146 /* 146 = Cc category      CharacterInvalid */:
+    case 147 /* 147 = Cc category      CharacterInvalid */:
+    case 148 /* 148 = Cc category      CharacterInvalid */:
+    case 149 /* 149 = Cc category      CharacterInvalid */:
+    case 150 /* 150 = Cc category      CharacterInvalid */:
+    case 151 /* 151 = Cc category      CharacterInvalid */:
+    case 152 /* 152 = Cc category      CharacterInvalid */:
+    case 153 /* 153 = Cc category      CharacterInvalid */:
+    case 154 /* 154 = Cc category      CharacterInvalid */:
+    case 155 /* 155 = Cc category      CharacterInvalid */:
+    case 156 /* 156 = Cc category      CharacterInvalid */:
+    case 157 /* 157 = Cc category      CharacterInvalid */:
+    case 158 /* 158 = Cc category      CharacterInvalid */:
+    case 159 /* 159 = Cc category      CharacterInvalid */:
+    case 161 /* 161 = Po category      CharacterInvalid */:
+    case 162 /* 162 = Sc category      CharacterInvalid */:
+    case 163 /* 163 = Sc category      CharacterInvalid */:
+    case 164 /* 164 = Sc category      CharacterInvalid */:
+    case 165 /* 165 = Sc category      CharacterInvalid */:
+    case 166 /* 166 = So category      CharacterInvalid */:
+    case 167 /* 167 = So category      CharacterInvalid */:
+    case 168 /* 168 = Sk category      CharacterInvalid */:
+    case 169 /* 169 = So category      CharacterInvalid */:
+    case 171 /* 171 = Pi category      CharacterInvalid */:
+    case 172 /* 172 = Sm category      CharacterInvalid */:
+    case 173 /* 173 = Cf category      CharacterInvalid */:
+    case 174 /* 174 = So category      CharacterInvalid */:
+    case 175 /* 175 = Sk category      CharacterInvalid */:
+    case 176 /* 176 = So category      CharacterInvalid */:
+    case 177 /* 177 = Sm category      CharacterInvalid */:
+    case 178 /* 178 = No category      CharacterInvalid */:
+    case 179 /* 179 = No category      CharacterInvalid */:
+    case 180 /* 180 = Sk category      CharacterInvalid */:
+    case 182 /* 182 = So category      CharacterInvalid */:
+    case 184 /* 184 = Sk category      CharacterInvalid */:
+    case 185 /* 185 = No category      CharacterInvalid */:
+    case 187 /* 187 = Pf category      CharacterInvalid */:
+    case 188 /* 188 = No category      CharacterInvalid */:
+    case 189 /* 189 = No category      CharacterInvalid */:
+    case 190 /* 190 = No category      CharacterInvalid */:
+    case 191 /* 191 = Po category      CharacterInvalid */:
+    case 215 /* 215 = Sm category      CharacterInvalid */:
+    case 247 /* 247 = Sm category      CharacterInvalid */: {
         goto invalidCharacter;
-    default:
-        RELEASE_ASSERT_NOT_REACHED();
-        m_lexErrorMessage = "Internal Error"_s;
-        token = ERRORTOK;
-        goto returnError;
+    }
     }
 
     m_atLineStart = false;
@@ -2600,19 +2967,40 @@ inSingleLineCommentCheckForDirectives:
 
 inSingleLineComment:
     {
-        auto lineNumber = m_lineNumber;
-        auto endOffset = currentOffset();
-        auto lineStartOffset = currentLineStartOffset();
         auto endPosition = currentPosition();
 
-        while (!isLineTerminator(m_current)) {
-            if (atEnd()) {
-                token = EOFTOK;
-                fillTokenInfo(tokenRecord, token, lineNumber, endOffset, lineStartOffset, endPosition);
-                return token;
+        using UnsignedType = std::make_unsigned_t<T>;
+        constexpr auto lineFeedMask = SIMD::splat<UnsignedType>('\n');
+        constexpr auto carriageReturnMask = SIMD::splat<UnsignedType>('\r');
+        constexpr auto u2028Mask = SIMD::splat<UnsignedType>(static_cast<UnsignedType>(0x2028));
+        constexpr auto u2029Mask = SIMD::splat<UnsignedType>(static_cast<UnsignedType>(0x2029));
+        auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
+            auto lineFeed = SIMD::equal(input, lineFeedMask);
+            auto carriageReturn = SIMD::equal(input, carriageReturnMask);
+            if constexpr (std::is_same_v<T, LChar>) {
+                auto mask = SIMD::bitOr(lineFeed, carriageReturn);
+                return SIMD::findFirstNonZeroIndex(mask);
+            } else {
+                auto u2028 = SIMD::equal(input, u2028Mask);
+                auto u2029 = SIMD::equal(input, u2029Mask);
+                auto mask = SIMD::bitOr(lineFeed, carriageReturn, u2028, u2029);
+                return SIMD::findFirstNonZeroIndex(mask);
             }
-            shift();
+        };
+
+        auto scalarMatch = [&](auto character) ALWAYS_INLINE_LAMBDA {
+            return isLineTerminator(character);
+        };
+
+        m_code = SIMD::find(std::span { currentSourcePtr(), m_codeEnd }, vectorMatch, scalarMatch);
+        if (m_code == m_codeEnd) {
+            m_current = 0;
+            token = EOFTOK;
+            fillTokenInfo(tokenRecord, token, endPosition);
+            return token;
         }
+
+        m_current = *m_code;
         shiftLineTerminator();
         m_atLineStart = true;
         m_hasLineTerminatorBeforeToken = true;
@@ -2620,12 +3008,12 @@ inSingleLineComment:
             goto start;
 
         token = SEMICOLON;
-        fillTokenInfo(tokenRecord, token, lineNumber, endOffset, lineStartOffset, endPosition);
+        fillTokenInfo(tokenRecord, token, endPosition);
         return token;
     }
 
 returnToken:
-    fillTokenInfo(tokenRecord, token, m_lineNumber, currentOffset(), currentLineStartOffset(), currentPosition());
+    fillTokenInfo(tokenRecord, token, currentPosition());
     return token;
 
 invalidCharacter:
@@ -2635,7 +3023,7 @@ invalidCharacter:
 
 returnError:
     m_error = true;
-    fillTokenInfo(tokenRecord, token, m_lineNumber, currentOffset(), currentLineStartOffset(), currentPosition());
+    fillTokenInfo(tokenRecord, token, currentPosition());
     RELEASE_ASSERT(token & CanBeErrorTokenFlag);
     return token;
 }
@@ -2673,7 +3061,7 @@ JSTokenType Lexer<T>::scanRegExp(JSToken* tokenRecord, char16_t patternPrefix)
         if (isLineTerminator(m_current) || atEnd()) {
             m_buffer16.shrink(0);
             JSTokenType token = UNTERMINATED_REGEXP_LITERAL_ERRORTOK;
-            fillTokenInfo(tokenRecord, token, m_lineNumber, currentOffset(), currentLineStartOffset(), currentPosition());
+            fillTokenInfo(tokenRecord, token, currentPosition());
             m_error = true;
             m_lexErrorMessage = makeString("Unterminated regular expression literal '"_s, getToken(*tokenRecord), '\'');
             return token;
@@ -2722,7 +3110,7 @@ JSTokenType Lexer<T>::scanRegExp(JSToken* tokenRecord, char16_t patternPrefix)
     if (!isLatin1(m_current) && !isWhiteSpace(m_current) && !isLineTerminator(m_current)) [[unlikely]] {
         m_buffer8.shrink(0);
         JSTokenType token = INVALID_IDENTIFIER_UNICODE_ERRORTOK;
-        fillTokenInfo(tokenRecord, token, m_lineNumber, currentOffset(), currentLineStartOffset(), currentPosition());
+        fillTokenInfo(tokenRecord, token, currentPosition());
         m_error = true;
         String codePoint = String::fromCodePoint(currentCodePoint());
         if (!codePoint)
@@ -2738,7 +3126,7 @@ JSTokenType Lexer<T>::scanRegExp(JSToken* tokenRecord, char16_t patternPrefix)
     m_atLineStart = false;
 
     JSTokenType token = REGEXP;
-    fillTokenInfo(tokenRecord, token, m_lineNumber, currentOffset(), currentLineStartOffset(), currentPosition());
+    fillTokenInfo(tokenRecord, token, currentPosition());
     return token;
 }
 
@@ -2748,9 +3136,6 @@ JSTokenType Lexer<T>::scanTemplateString(JSToken* tokenRecord, RawStringsBuildMo
     JSTokenData* tokenData = &tokenRecord->m_data;
     ASSERT(!m_error);
     ASSERT(m_buffer16.isEmpty());
-
-    int startingLineStartOffset = currentLineStartOffset();
-    int startingLineNumber = lineNumber();
 
     // Leading backquote ` (for template head) or closing brace } (for template trailing) are already shifted in the previous token scan.
     // So in this re-scan phase, shift() is not needed here.
@@ -2764,7 +3149,7 @@ JSTokenType Lexer<T>::scanTemplateString(JSToken* tokenRecord, RawStringsBuildMo
 
     // Since TemplateString always ends with ` or }, m_atLineStart always becomes false.
     m_atLineStart = false;
-    fillTokenInfo(tokenRecord, token, startingLineNumber, currentOffset(), startingLineStartOffset, currentPosition());
+    fillTokenInfo(tokenRecord, token, currentPosition());
     return token;
 }
 

@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "HeapCellInlines.h"
-#include "JSGlobalObjectInlines.h"
-#include "JSString.h"
-#include "KeyAtomStringCacheInlines.h"
-#include "MarkedBlockInlines.h"
+#include <JavaScriptCore/HeapCellInlines.h>
+#include <JavaScriptCore/JSGlobalObjectInlines.h>
+#include <JavaScriptCore/JSString.h>
+#include <JavaScriptCore/KeyAtomStringCacheInlines.h>
+#include <JavaScriptCore/MarkedBlockInlines.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/ParsingUtilities.h>
 
@@ -180,10 +180,14 @@ inline JSValue jsMakeNontrivialString(JSGlobalObject* globalObject, StringType&&
 }
 
 template <typename CharacterType>
+    requires (std::same_as<CharacterType, LChar> || std::same_as<CharacterType, char16_t>)
 inline JSString* repeatCharacter(JSGlobalObject* globalObject, CharacterType character, unsigned repeatCount)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
+
+    if (!repeatCount)
+        return jsEmptyString(vm);
 
     std::span<CharacterType> buffer;
     auto impl = StringImpl::tryCreateUninitialized(repeatCount, buffer);
@@ -192,7 +196,13 @@ inline JSString* repeatCharacter(JSGlobalObject* globalObject, CharacterType cha
         return nullptr;
     }
 
-    std::fill_n(buffer.data(), repeatCount, character);
+    *buffer.data() = character;
+    unsigned copied = 1;
+    while (copied < repeatCount) {
+        unsigned copyLen = std::min(copied, repeatCount - copied);
+        memcpySpan(buffer.subspan(copied, copyLen), buffer.subspan(0, copyLen));
+        copied += copyLen;
+    }
 
     RELEASE_AND_RETURN(scope, jsString(vm, impl.releaseNonNull()));
 }
@@ -343,6 +353,12 @@ inline void JSRopeString::resolveToBuffer(JSString* fiber0, JSString* fiber1, JS
                     view0.substring(offset, rope0Length).getCharacters(buffer);
                 } else
                     resolveToBuffer(rope0->fiber0(), rope0->fiber1(), rope0->fiber2(), buffer.first(rope0Length), stackLimit);
+
+                // Both ropes are the same fibers! Then we can just copy the previously generated characters.
+                if (fiber0 == fiber1) {
+                    memcpySpan(buffer.subspan(rope0Length, rope0Length), buffer.first(rope0Length));
+                    return;
+                }
                 skip(buffer, rope0Length);
 
                 auto* rope1 = static_cast<const JSRopeString*>(fiber1);

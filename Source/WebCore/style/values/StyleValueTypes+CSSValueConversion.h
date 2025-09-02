@@ -67,6 +67,14 @@ template<> struct CSSValueConversion<CustomIdentifier> {
    }
 };
 
+// Specialization for `TupleLike` (wrapper).
+template<TupleLike StyleType> requires (std::tuple_size_v<StyleType> == 1) struct CSSValueConversion<StyleType> {
+   StyleType operator()(BuilderState& state, const CSSValue& value)
+   {
+        return { toStyleFromCSSValue<std::remove_cvref_t<std::tuple_element_t<0, StyleType>>>(state, value) };
+   }
+};
+
 // Specialization for `SpaceSeparatedFixedVector`.
 template<typename StyleType> struct CSSValueConversion<SpaceSeparatedFixedVector<StyleType>> {
    SpaceSeparatedFixedVector<StyleType> operator()(BuilderState& state, const CSSValue& value)

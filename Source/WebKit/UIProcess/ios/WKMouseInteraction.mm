@@ -236,8 +236,8 @@ inline static String pointerType(UITouchType type)
     }();
 
     auto currentTouch = self.mouseTouch;
-    WebCore::IntPoint point { [self locationInView:self.view] };
-    auto delta = point - WebCore::IntPoint { [currentTouch previousLocationInView:self.view] };
+    WebCore::DoublePoint point { [self locationInView:self.view] };
+    auto delta = point - WebCore::DoublePoint { [currentTouch previousLocationInView:self.view] };
     // UITouch's timestamp uses mach_absolute_time as its timebase, same as MonotonicTime.
     return WebKit::NativeWebMouseEvent {
         *type,

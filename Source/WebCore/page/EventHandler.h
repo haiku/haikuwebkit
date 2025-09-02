@@ -103,6 +103,7 @@ class Scrollbar;
 class TextEvent;
 class Touch;
 class TouchEvent;
+class VisiblePosition;
 class VisibleSelection;
 class WheelEvent;
 class Widget;
@@ -200,8 +201,8 @@ public:
     void resizeLayerDestroyed();
 
     // FIXME: Each Frame has an EventHandler, and not every event goes to all frames, so this position can be stale. It should probably be stored on Page.
-    IntPoint lastKnownMousePosition() const;
-    IntPoint lastKnownMouseGlobalPosition() const { return m_lastKnownMouseGlobalPosition; }
+    DoublePoint lastKnownMousePosition() const;
+    DoublePoint lastKnownMouseGlobalPosition() const { return m_lastKnownMouseGlobalPosition; }
     Cursor currentMouseCursor() const { return m_currentMouseCursor; }
 
     IntPoint targetPositionInWindowForSelectionAutoscroll() const;
@@ -235,7 +236,7 @@ public:
     void defaultWheelEventHandler(Node*, WheelEvent&);
     void wheelEventWasProcessedByMainThread(const PlatformWheelEvent&, OptionSet<EventHandling>);
 
-    WEBCORE_EXPORT void setLastKnownMousePosition(IntPoint position, IntPoint globalPosition);
+    WEBCORE_EXPORT void setLastKnownMousePosition(DoublePoint position, DoublePoint globalPosition);
 
     bool handlePasteGlobalSelection();
 
@@ -251,7 +252,7 @@ public:
 #if ENABLE(IOS_TOUCH_EVENTS)
     enum class InTouchEventHandling : bool { No, Yes };
     enum class InMotion : bool { No, Yes };
-    void updateTouchLastGlobalPositionAndDelta(PointerID, const IntPoint&, InTouchEventHandling, InMotion);
+    void updateTouchLastGlobalPositionAndDelta(PointerID, const DoublePoint&, InTouchEventHandling, InMotion);
     bool dispatchTouchEvent(const PlatformTouchEvent&, const AtomString&, const EventTargetTouchArrayMap&, float, float);
     WEBCORE_EXPORT bool dispatchSimulatedTouchEvent(IntPoint location);
     Frame* touchEventTargetSubframe() const { return m_touchEventTargetSubframe.get(); }
@@ -679,8 +680,8 @@ private:
     
     int m_clickCount { 0 };
 
-    std::optional<IntPoint> m_lastKnownMousePosition; // Same coordinates as PlatformMouseEvent::position().
-    IntPoint m_lastKnownMouseGlobalPosition;
+    std::optional<DoublePoint> m_lastKnownMousePosition; // Same coordinates as PlatformMouseEvent::position().
+    DoublePoint m_lastKnownMouseGlobalPosition;
     IntPoint m_mouseDownContentsPosition;
     WallTime m_mouseDownTimestamp;
     PlatformMouseEvent m_mouseDownEvent;
@@ -737,7 +738,7 @@ private:
 
     TouchArray m_touches;
     RefPtr<Frame> m_touchEventTargetSubframe;
-    HashMap<PointerID, std::pair<IntPoint, IntPoint>, WTF::IntHash<PointerID>, WTF::UnsignedWithZeroKeyHashTraits<PointerID>> m_touchLastGlobalPositionAndDeltaMap;
+    HashMap<PointerID, std::pair<DoublePoint, DoublePoint>, WTF::IntHash<PointerID>, WTF::UnsignedWithZeroKeyHashTraits<PointerID>> m_touchLastGlobalPositionAndDeltaMap;
 #endif
 
 #if PLATFORM(COCOA)

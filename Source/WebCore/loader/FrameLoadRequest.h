@@ -129,6 +129,9 @@ public:
     bool isHandledByAboutSchemeHandler() const { return m_isHandledByAboutSchemeHandler; }
     void setIsHandledByAboutSchemeHandler(bool isHandledByAboutSchemeHandler) { m_isHandledByAboutSchemeHandler = isHandledByAboutSchemeHandler; }
 
+    bool skipNavigateEvent() const { return m_skipNavigateEvent; }
+    void setSkipNavigateEvent(bool value) { m_skipNavigateEvent = value; }
+
 private:
     Ref<Document> m_requester;
     Ref<SecurityOrigin> m_requesterSecurityOrigin;
@@ -156,6 +159,7 @@ private:
     NavigationHistoryBehavior m_navigationHistoryBehavior { NavigationHistoryBehavior::Auto };
     bool m_isFromNavigationAPI { false };
     bool m_isHandledByAboutSchemeHandler { false };
+    bool m_skipNavigateEvent { false };
 };
 
 } // namespace WebCore

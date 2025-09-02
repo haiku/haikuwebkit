@@ -34,12 +34,12 @@
 #include "HTMLMapElement.h"
 
 namespace WebCore {
-    
+
 class AccessibilityImageMapLink final : public AccessibilityNodeObject {
 public:
     static Ref<AccessibilityImageMapLink> create(AXID, HTMLAreaElement&, AXObjectCache&);
     virtual ~AccessibilityImageMapLink();
-    
+
     AccessibilityRole determineAccessibilityRole() final;
     bool computeIsIgnored() const final;
     bool isEnabled() const final { return true; }
@@ -62,7 +62,7 @@ private:
     bool isImageMapLink() const final { return true; }
     bool supportsPath() const final { return true; }
 };
-    
+
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::AccessibilityImageMapLink)

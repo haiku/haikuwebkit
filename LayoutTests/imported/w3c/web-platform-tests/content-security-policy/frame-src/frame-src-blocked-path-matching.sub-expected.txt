@@ -1,0 +1,9 @@
+Blocked access to external URL https://www1.localhost:9443/content-security-policy/support/postmessage-pass.html
+
+
+Harness Error (TIMEOUT), message = null
+
+TIMEOUT Cross-origin frame with allowed path loads Test timed out
+PASS Cross-origin frame with other path is blocked
+PASS Cross-origin frame with other path is blocked even after replacing the already loaded URL
+

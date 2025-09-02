@@ -29,6 +29,7 @@
 #include <wtf/NeverDestroyed.h>
 #include <wtf/Ref.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/text/StringBuilder.h>
 #include <wtf/threads/BinarySemaphore.h>
 
 namespace WTF {
@@ -201,6 +202,41 @@ void RunLoop::threadWillExit()
         Locker locker { m_nextIterationLock };
         m_nextIteration.clear();
     }
+}
+
+void RunLoop::registerTimer(TimerBase& timer)
+{
+    Locker locker { m_registeredTimerLock };
+    m_registeredTimers.add(&timer);
+}
+
+void RunLoop::unregisterTimer(TimerBase& timer)
+{
+    Locker locker { m_registeredTimerLock };
+    m_registeredTimers.remove(&timer);
+}
+
+String RunLoop::listActiveTimersForLogging() const
+{
+    Vector<ASCIILiteral> timers;
+    {
+        Locker locker { m_registeredTimerLock };
+        for (auto* timer : m_registeredTimers)
+            timers.append(timer->description());
+    }
+
+    if (timers.isEmpty())
+        return "{ }"_s;
+
+    StringBuilder builder;
+    builder.append("{ "_s);
+    for (size_t i = 0; i < timers.size() - 1; ++i) {
+        builder.append(timers[i]);
+        builder.append(", "_s);
+    }
+    builder.append(timers.last());
+    builder.append(" }"_s);
+    return builder.toString();
 }
 
 } // namespace WTF

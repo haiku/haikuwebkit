@@ -113,7 +113,6 @@ UIProcess/API/C/glib/WKTextCheckerGLib.cpp
 UIProcess/API/C/gtk/WKView.cpp
 
 UIProcess/API/glib/APIContentRuleListStoreGLib.cpp @no-unify
-UIProcess/API/glib/APISerializedScriptValueGLib.cpp @no-unify
 UIProcess/API/glib/IconDatabase.cpp @no-unify
 UIProcess/API/glib/InputMethodFilter.cpp @no-unify
 UIProcess/API/glib/KeyAutoRepeatHandler.cpp @no-unify
@@ -330,16 +329,14 @@ WebProcess/WebCoreSupport/gtk/WebEditorClientGtk.cpp
 
 WebProcess/WebCoreSupport/soup/WebFrameNetworkingContext.cpp
 
-WebProcess/WebPage/AcceleratedSurface.cpp
 WebProcess/WebPage/ViewGestureGeometryCollector.cpp
 
+WebProcess/WebPage/CoordinatedGraphics/AcceleratedSurface.cpp @no-unify
 WebProcess/WebPage/CoordinatedGraphics/CompositingRunLoop.cpp
 WebProcess/WebPage/CoordinatedGraphics/CoordinatedSceneState.cpp
 WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 WebProcess/WebPage/CoordinatedGraphics/ThreadedCompositor.cpp
-
-WebProcess/WebPage/dmabuf/AcceleratedSurfaceDMABuf.cpp @no-unify
 
 WebProcess/WebPage/glib/WebPageGLib.cpp
 

@@ -193,7 +193,7 @@ SOFT_LINK_CONSTANT_MAY_FAIL(libAccessibility, kAXSReduceMotionAutoplayAnimatedIm
 
 #if PLATFORM(MAC)
 SOFT_LINK_LIBRARY_WITH_PATH(libFontRegistry, "/System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Versions/A/Resources/")
-SOFT_LINK(libFontRegistry, XTCopyPropertiesForAllFonts, CFArrayRef, (CFSetRef propertyKeys, XTScope scope), (propertyKeys, scope));
+SOFT_LINK(libFontRegistry, XTCopyPropertiesForAllFontsWithOptions, CFArrayRef, (CFSetRef propertyKeys, XTScope scope, XTOptions options), (propertyKeys, scope, options));
 #endif
 
 #define WEBPROCESSPOOL_RELEASE_LOG(channel, fmt, ...) RELEASE_LOG(channel, "%p - WebProcessPool::" fmt, this, ##__VA_ARGS__)
@@ -1395,32 +1395,8 @@ void WebProcessPool::suppressEDR(bool suppressEDR)
 ExtensionCapabilityGranter& WebProcessPool::extensionCapabilityGranter()
 {
     if (!m_extensionCapabilityGranter)
-        m_extensionCapabilityGranter = ExtensionCapabilityGranter::create(*this);
+        m_extensionCapabilityGranter = ExtensionCapabilityGranter::create();
     return *m_extensionCapabilityGranter;
-}
-
-RefPtr<GPUProcessProxy> WebProcessPool::gpuProcessForCapabilityGranter(const ExtensionCapabilityGranter& extensionCapabilityGranter)
-{
-    ASSERT_UNUSED(extensionCapabilityGranter, m_extensionCapabilityGranter.get() == &extensionCapabilityGranter);
-    return gpuProcess();
-}
-
-RefPtr<WebProcessProxy> WebProcessPool::webProcessForCapabilityGranter(const ExtensionCapabilityGranter& extensionCapabilityGranter, const String& environmentIdentifier)
-{
-    ASSERT_UNUSED(extensionCapabilityGranter, m_extensionCapabilityGranter.get() == &extensionCapabilityGranter);
-
-    auto index = processes().findIf([&](auto& process) {
-        return process->pages().containsIf([&](auto& page) {
-            if (RefPtr mediaCapability = page->mediaCapability())
-                return mediaCapability->environmentIdentifier() == environmentIdentifier;
-            return false;
-        });
-    });
-
-    if (index == notFound)
-        return nullptr;
-
-    return processes()[index].ptr();
 }
 #endif
 
@@ -1544,7 +1520,7 @@ void WebProcessPool::registerUserInstalledFonts(WebProcessProxy& process)
 
     RELEASE_LOG(Process, "WebProcessPool::registerUserInstalledFonts: start registering fonts");
     RetainPtr requestedProperties = [NSSet setWithArray:@[@"NSFontNameAttribute", @"NSFontFamilyAttribute", @"NSCTFontFileURLAttribute", @"NSCTFontUserInstalledAttribute"]];
-    RetainPtr fontProperties = adoptCF(XTCopyPropertiesForAllFonts(bridge_cast(requestedProperties.get()), kXTScopeAll));
+    RetainPtr fontProperties = adoptCF(XTCopyPropertiesForAllFontsWithOptions(bridge_cast(requestedProperties.get()), kXTScopeGlobal, kXTOptionsDoNotSortResults));
     if (!fontProperties)
         return;
     for (CFIndex i = 0; i < CFArrayGetCount(fontProperties.get()); ++i) {

@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -79,8 +80,22 @@ inline bool RenderTableCell::isBaselineAligned() const
     if (auto alignContent = style().alignContent(); !alignContent.isNormal())
         return alignContent.position() == ContentPosition::Baseline;
 
-    VerticalAlign va = style().verticalAlign();
-    return va == VerticalAlign::Baseline || va == VerticalAlign::TextBottom || va == VerticalAlign::TextTop || va == VerticalAlign::Super || va == VerticalAlign::Sub || va == VerticalAlign::Length;
+    auto& verticalAlign = style().verticalAlign();
+    return WTF::holdsAlternative<CSS::Keyword::Baseline>(verticalAlign)
+        || WTF::holdsAlternative<CSS::Keyword::TextBottom>(verticalAlign)
+        || WTF::holdsAlternative<CSS::Keyword::TextTop>(verticalAlign)
+        || WTF::holdsAlternative<CSS::Keyword::Super>(verticalAlign)
+        || WTF::holdsAlternative<CSS::Keyword::Sub>(verticalAlign)
+        || WTF::holdsAlternative<Style::VerticalAlign::Length>(verticalAlign);
+}
+
+inline bool RenderTableCell::isOrthogonal() const
+{
+    if (auto* row = this->row())
+        return writingMode().isOrthogonal(row->writingMode());
+
+    ASSERT_NOT_REACHED();
+    return false;
 }
 
 } // namespace WebCore

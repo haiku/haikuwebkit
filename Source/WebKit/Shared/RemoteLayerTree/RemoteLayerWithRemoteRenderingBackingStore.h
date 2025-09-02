@@ -56,7 +56,6 @@ public:
     void setNeedsDisplay() final;
 
     RemoteImageBufferSetProxy* bufferSet() { return m_bufferSet.get(); }
-    RefPtr<RemoteImageBufferSetProxy> protectedBufferSet() { return m_bufferSet; }
 
     std::unique_ptr<ThreadSafeImageBufferSetFlusher> createFlusher(ThreadSafeImageBufferSetFlusher::FlushType) final;
     std::optional<ImageBufferBackendHandle> frontBufferHandle() const final { return std::exchange(const_cast<RemoteLayerWithRemoteRenderingBackingStore*>(this)->m_backendHandle, std::nullopt); }
@@ -81,7 +80,7 @@ public:
 
     void dump(WTF::TextStream&) const final;
 private:
-    RefPtr<RemoteImageBufferSetProxy> m_bufferSet;
+    const RefPtr<RemoteImageBufferSetProxy> m_bufferSet;
     BufferIdentifierSet m_bufferCacheIdentifiers;
     std::optional<ImageBufferBackendHandle> m_backendHandle;
     bool m_cleared { true };

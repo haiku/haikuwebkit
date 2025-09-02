@@ -283,28 +283,66 @@ TEST_F(SampleMapTest, findSamplesBetweenDecodeKeys)
     DecodeOrderSampleMap::KeyType decodeKeyEnd(MediaTime(28, 1), MediaTime(25, 1));
 
     auto samplesWithHigherDecodeTimes = decodeMap.findSamplesBetweenDecodeKeys(decodeKeyStart, decodeKeyEnd);
-    EXPECT_FALSE(samplesWithHigherDecodeTimes.first == samplesWithHigherDecodeTimes.second);
-    EXPECT_EQ(MediaTime(0, 1), samplesWithHigherDecodeTimes.first->second->presentationTime());
-    EXPECT_EQ(MediaTime(25, 1), samplesWithHigherDecodeTimes.second->second->presentationTime());
+    EXPECT_FALSE(samplesWithHigherDecodeTimes.isEmpty());
+    // Check that all samples returned are actually in the map.
+    for (auto& keyPair : samplesWithHigherDecodeTimes) {
+        auto iterator = decodeMap.findSampleWithDecodeKey(keyPair.first);
+        EXPECT_NE(iterator, decodeMap.end());
+    }
+
+    EXPECT_EQ(MediaTime(0, 1), samplesWithHigherDecodeTimes.begin()->second->presentationTime());
+    EXPECT_EQ(MediaTime(26, 1), samplesWithHigherDecodeTimes.rbegin()->second->presentationTime());
+    auto lastKey = samplesWithHigherDecodeTimes.rbegin()->first;
+    auto iterator = decodeMap.findSampleWithDecodeKey(lastKey);
+    EXPECT_NE(iterator, decodeMap.end());
+    EXPECT_NE(++iterator, decodeMap.end());
+    EXPECT_EQ(MediaTime(25, 1), iterator->second->presentationTime());
+    EXPECT_EQ(MediaTime(28, 1), iterator->second->decodeTime());
 
     decodeKeyEnd = { MediaTime(25, 1), MediaTime(28, 1) };
     samplesWithHigherDecodeTimes = decodeMap.findSamplesBetweenDecodeKeys(decodeKeyStart, decodeKeyEnd);
-    EXPECT_FALSE(samplesWithHigherDecodeTimes.first == samplesWithHigherDecodeTimes.second);
-    EXPECT_EQ(MediaTime(28, 1), samplesWithHigherDecodeTimes.second->second->presentationTime());
+    EXPECT_FALSE(samplesWithHigherDecodeTimes.isEmpty());
+    // Check that all samples returned are actually in the map.
+    for (auto& keyPair : samplesWithHigherDecodeTimes) {
+        auto iterator = decodeMap.findSampleWithDecodeKey(keyPair.first);
+        EXPECT_NE(iterator, decodeMap.end());
+    }
+    lastKey = samplesWithHigherDecodeTimes.rbegin()->first;
+    iterator = decodeMap.findSampleWithDecodeKey(lastKey);
+    EXPECT_NE(iterator, decodeMap.end());
+    EXPECT_NE(++iterator, decodeMap.end());
+    EXPECT_EQ(MediaTime(28, 1), iterator->second->presentationTime());
 
+    // Correctly not include key with the same decode time but lesser presentation time.
     decodeKeyEnd = { MediaTime(28, 1), MediaTime(24, 1) };
     samplesWithHigherDecodeTimes = decodeMap.findSamplesBetweenDecodeKeys(decodeKeyStart, decodeKeyEnd);
-    EXPECT_EQ(MediaTime(25, 1), samplesWithHigherDecodeTimes.second->second->presentationTime());
+    // Check that all samples returned are actually in the map.
+    for (auto& keyPair : samplesWithHigherDecodeTimes) {
+        auto iterator = decodeMap.findSampleWithDecodeKey(keyPair.first);
+        EXPECT_NE(iterator, decodeMap.end());
+    }
+    lastKey = samplesWithHigherDecodeTimes.rbegin()->first;
+    iterator = decodeMap.findSampleWithDecodeKey(lastKey);
+    EXPECT_NE(iterator, decodeMap.end());
+    EXPECT_NE(++iterator, decodeMap.end());
+    EXPECT_EQ(MediaTime(25, 1), iterator->second->presentationTime());
+    EXPECT_EQ(MediaTime(28, 1), iterator->second->decodeTime());
 
+    // Correctly includes the last element if decodeKeyEnd was after the end of the map.
     decodeKeyEnd = { MediaTime(28, 1), MediaTime(28, 1) };
     samplesWithHigherDecodeTimes = decodeMap.findSamplesBetweenDecodeKeys(decodeKeyStart, decodeKeyEnd);
-    EXPECT_FALSE(samplesWithHigherDecodeTimes.first == samplesWithHigherDecodeTimes.second);
-    EXPECT_EQ(decodeMap.end(), samplesWithHigherDecodeTimes.second);
+    // Check that all samples returned are actually in the map.
+    for (auto& keyPair : samplesWithHigherDecodeTimes) {
+        auto iterator = decodeMap.findSampleWithDecodeKey(keyPair.first);
+        EXPECT_NE(iterator, decodeMap.end());
+    }
+    EXPECT_FALSE(samplesWithHigherDecodeTimes.isEmpty());
+    EXPECT_EQ(*decodeMap.rbegin(), *samplesWithHigherDecodeTimes.rbegin());
 
     decodeKeyEnd = { MediaTime(29, 1), MediaTime(30, 1) };
     samplesWithHigherDecodeTimes = decodeMap.findSamplesBetweenDecodeKeys(decodeKeyStart, decodeKeyEnd);
-    EXPECT_FALSE(samplesWithHigherDecodeTimes.first == samplesWithHigherDecodeTimes.second);
-    EXPECT_EQ(decodeMap.end(), samplesWithHigherDecodeTimes.second);
+    EXPECT_FALSE(samplesWithHigherDecodeTimes.isEmpty());
+    EXPECT_EQ(*decodeMap.rbegin(), *samplesWithHigherDecodeTimes.rbegin());
 }
 
 }

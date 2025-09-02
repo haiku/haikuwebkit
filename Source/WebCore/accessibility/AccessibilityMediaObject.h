@@ -33,15 +33,15 @@
 #include "AccessibilityRenderObject.h"
 
 namespace WebCore {
-    
+
 class AccessibilityMediaObject final : public AccessibilityRenderObject {
 public:
     static Ref<AccessibilityMediaObject> create(AXID, RenderObject&, AXObjectCache&);
     virtual ~AccessibilityMediaObject();
-    
+
     void enterFullscreen() const;
     void toggleMute();
-    
+
     String interactiveVideoDuration() const;
     bool isPlaying() const;
     bool isAutoplayEnabled() const;
@@ -54,14 +54,14 @@ private:
     enum class AXSeekDirection : bool { Backward, Forward };
     bool computeIsIgnored() const final;
     bool isMediaObject() const final { return true; }
-    
+
     String stringValue() const final;
     bool press() final;
     void increment() final;
     void decrement() final;
 
     HTMLMediaElement* mediaElement() const;
-    
+
     void mediaSeek(AXSeekDirection);
 };
 

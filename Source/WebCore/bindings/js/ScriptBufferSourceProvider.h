@@ -105,7 +105,7 @@ private:
             return emptyString();
 
         if (!m_contiguousBuffer && (!m_containsOnlyASCII || *m_containsOnlyASCII))
-            m_contiguousBuffer = m_scriptBuffer.buffer()->makeContiguous();
+            m_contiguousBuffer = m_scriptBuffer.protectedBuffer()->makeContiguous();
         if (!m_containsOnlyASCII) {
             m_containsOnlyASCII = charactersAreAllASCII(m_contiguousBuffer->span());
             if (*m_containsOnlyASCII)

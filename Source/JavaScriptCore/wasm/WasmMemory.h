@@ -27,10 +27,10 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "ArrayBuffer.h"
-#include "MemoryMode.h"
-#include "PageCount.h"
-#include "WeakGCSet.h"
+#include <JavaScriptCore/ArrayBuffer.h>
+#include <JavaScriptCore/MemoryMode.h>
+#include <JavaScriptCore/PageCount.h>
+#include <JavaScriptCore/WeakGCSet.h>
 
 #include <wtf/CagedPtr.h>
 #include <wtf/Expected.h>

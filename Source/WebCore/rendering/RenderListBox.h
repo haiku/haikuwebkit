@@ -75,6 +75,8 @@ public:
     bool scroll(ScrollDirection, ScrollGranularity, unsigned stepCount = 1, Element** stopElement = nullptr, RenderBox* startBox = nullptr, const IntPoint& wheelEventAbsolutePoint = IntPoint()) override;
     std::optional<FrameIdentifier> rootFrameID() const final;
 
+    void scrollDidEnd() final;
+
 private:
     bool isVisibleToHitTesting() const final;
 

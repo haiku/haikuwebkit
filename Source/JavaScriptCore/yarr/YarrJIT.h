@@ -28,11 +28,11 @@
 
 #if ENABLE(YARR_JIT)
 
-#include "MacroAssemblerCodeRef.h"
-#include "MatchResult.h"
-#include "VM.h"
-#include "Yarr.h"
-#include "YarrPattern.h"
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/MatchResult.h>
+#include <JavaScriptCore/VM.h>
+#include <JavaScriptCore/Yarr.h>
+#include <JavaScriptCore/YarrPattern.h>
 #include <wtf/Atomics.h>
 #include <wtf/BitSet.h>
 #include <wtf/FixedVector.h>

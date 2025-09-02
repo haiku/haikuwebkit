@@ -7073,10 +7073,11 @@ void WebViewImpl::updateScrollPocket()
 
     RetainPtr view = m_view.get();
     CGFloat topContentInset = obscuredContentInsets().top();
+    CGFloat additionalHeight = m_page->overflowHeightForTopScrollEdgeEffect();
     bool needsTopView = m_page->preferences().contentInsetBackgroundFillEnabled()
         && view
         && !view->_reasonsToHideTopScrollPocket
-        && topContentInset > 0;
+        && (topContentInset > 0 || additionalHeight > 0);
 
     RetainPtr topScrollPocketSelector = NSStringFromSelector(@selector(_topScrollPocket));
     if (!needsTopView) {
@@ -7113,7 +7114,7 @@ void WebViewImpl::updateScrollPocket()
     if (RetainPtr attachedInspectorView = [view _horizontallyAttachedInspectorWebView])
         bounds = NSUnionRect(bounds, [attachedInspectorView convertRect:[attachedInspectorView bounds] toView:view.get()]);
 
-    auto topInsetFrame = NSMakeRect(NSMinX(bounds), NSMinY(bounds), NSWidth(bounds), std::min<CGFloat>(topContentInset, NSHeight(bounds)));
+    auto topInsetFrame = NSMakeRect(NSMinX(bounds), NSMinY(bounds) - additionalHeight, NSWidth(bounds), additionalHeight + std::min<CGFloat>(topContentInset, NSHeight(bounds)));
 
     if ([m_view _usesAutomaticContentInsetBackgroundFill]) {
         for (NSView *pocketContainer in m_viewsAboveScrollPocket.get())

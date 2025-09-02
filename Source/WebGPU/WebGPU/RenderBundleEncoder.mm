@@ -339,12 +339,11 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
         [commandEncoder setDepthClipMode:m_depthClipMode];
         [commandEncoder setDepthBias:m_depthBias slopeScale:m_depthBiasSlopeScale clamp:m_depthBiasClamp];
 
-        for (auto& [groupIndex, weakBindGroup] : m_bindGroups) {
-            if (!weakBindGroup.get())
+        for (auto& [groupIndex, bindGroup] : m_bindGroups) {
+            if (!bindGroup)
                 continue;
 
-            auto& group = *weakBindGroup.get();
-            for (const auto& resource : group.resources()) {
+            for (const auto& resource : bindGroup->resources()) {
                 ASSERT(resource.mtlResources.size() == resource.resourceUsages.size());
                 for (size_t i = 0, resourceCount = resource.resourceUsages.size(); i < resourceCount; ++i) {
                     if (resource.renderStages && resource.mtlResources[i])

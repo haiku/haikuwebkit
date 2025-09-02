@@ -191,7 +191,7 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
 #endif
 
 #if USE(GBM)
-    parameters.renderDeviceFile = drmRenderNodeDevice();
+    parameters.renderDeviceFile = drmRenderNodeOrPrimaryDevice();
 #endif
 
 #if PLATFORM(GTK)

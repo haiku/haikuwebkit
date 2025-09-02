@@ -97,22 +97,24 @@ struct MatchRequest {
     bool matchingPartPseudoElementRules { false };
 };
 
-ElementRuleCollector::ElementRuleCollector(const Element& element, const ScopeRuleSets& ruleSets, SelectorMatchingState* selectorMatchingState)
+ElementRuleCollector::ElementRuleCollector(const Element& element, const ScopeRuleSets& ruleSets, SelectorMatchingState* selectorMatchingState, SelectorChecker::Mode mode)
     : m_element(element)
     , m_authorStyle(ruleSets.authorStyle())
     , m_userStyle(ruleSets.userStyle())
     , m_userAgentMediaQueryStyle(ruleSets.userAgentMediaQueryStyle())
     , m_dynamicViewTransitionsStyle(ruleSets.dynamicViewTransitionsStyle())
     , m_selectorMatchingState(selectorMatchingState)
+    , m_mode(mode)
     , m_result(MatchResult::create(element.isLink()))
 {
     ASSERT(!m_selectorMatchingState || m_selectorMatchingState->selectorFilter.parentStackIsConsistent(element.parentNode()));
 }
 
-ElementRuleCollector::ElementRuleCollector(const Element& element, const RuleSet& authorStyle, SelectorMatchingState* selectorMatchingState)
+ElementRuleCollector::ElementRuleCollector(const Element& element, const RuleSet& authorStyle, SelectorMatchingState* selectorMatchingState, SelectorChecker::Mode mode)
     : m_element(element)
     , m_authorStyle(authorStyle)
     , m_selectorMatchingState(selectorMatchingState)
+    , m_mode(mode)
     , m_result(MatchResult::create(element.isLink()))
 {
     ASSERT(!m_selectorMatchingState || m_selectorMatchingState->selectorFilter.parentStackIsConsistent(element.parentNode()));
@@ -161,7 +163,7 @@ inline void ElementRuleCollector::addElementStyleProperties(const StylePropertie
 
 bool ElementRuleCollector::isFirstMatchModeAndHasMatchedAnyRules() const
 {
-    return m_firstMatchMode && !m_matchedRules.isEmpty();
+    return m_mode == SelectorChecker::Mode::StyleInvalidation && !m_matchedRules.isEmpty();
 }
 
 void ElementRuleCollector::collectMatchingRules(CascadeLevel level)
@@ -212,7 +214,7 @@ void ElementRuleCollector::collectMatchingRules(CascadeLevel level)
 
 void ElementRuleCollector::collectMatchingRules(const MatchRequest& matchRequest)
 {
-    ASSERT_WITH_MESSAGE(!(m_mode == SelectorChecker::Mode::CollectingRulesIgnoringVirtualPseudoElements && m_pseudoElementRequest), "When in StyleInvalidation or SharingRules, SelectorChecker does not try to match the pseudo ID. While ElementRuleCollector supports matching a particular pseudoId in this case, this would indicate a error at the call site since matching a particular element should be unnecessary.");
+    ASSERT_WITH_MESSAGE(!(m_mode == SelectorChecker::Mode::StyleInvalidation && m_pseudoElementRequest), "When in StyleInvalidation or SharingRules, SelectorChecker does not try to match the pseudo ID. While ElementRuleCollector supports matching a particular pseudoId in this case, this would indicate a error at the call site since matching a particular element should be unnecessary.");
 
     auto& element = this->element();
     auto* shadowRoot = element.containingShadowRoot();
@@ -312,7 +314,6 @@ void ElementRuleCollector::matchAuthorRules()
 bool ElementRuleCollector::matchesAnyAuthorRules()
 {
     clearMatchedRules();
-    SetForScope scope { m_firstMatchMode, true };
 
     collectMatchingRules(CascadeLevel::Author);
 
@@ -654,7 +655,7 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
         return { true, { } };
 
     SelectorChecker checker(element().rootElement()->document());
-    SelectorChecker::CheckingContext context(SelectorChecker::Mode::CollectingRulesIgnoringVirtualPseudoElements);
+    SelectorChecker::CheckingContext context(m_mode);
     context.styleScopeOrdinal = matchRequest.styleScopeOrdinal;
 
     Vector<ScopingRootWithDistance> scopingRoots;
@@ -882,17 +883,6 @@ void ElementRuleCollector::addElementInlineStyleProperties(bool includeSMILPrope
         if (auto* svgElement = dynamicDowncast<SVGElement>(element()))
             addElementStyleProperties(svgElement->animatedSMILStyleProperties(), RuleSet::cascadeLayerPriorityForUnlayered, IsCacheable::No);
     }
-}
-
-bool ElementRuleCollector::matchesAnyRules(const RuleSet& ruleSet)
-{
-    clearMatchedRules();
-
-    SetForScope scope { m_firstMatchMode , true };
-    m_mode = SelectorChecker::Mode::CollectingRulesIgnoringVirtualPseudoElements;
-    collectMatchingRules(MatchRequest(ruleSet));
-
-    return !m_matchedRules.isEmpty();
 }
 
 void ElementRuleCollector::addMatchedProperties(MatchedProperties&& matchedProperties, DeclarationOrigin declarationOrigin)

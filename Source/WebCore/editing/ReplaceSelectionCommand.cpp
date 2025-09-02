@@ -41,6 +41,7 @@
 #include "DataTransfer.h"
 #include "Document.h"
 #include "DocumentFragment.h"
+#include "Editing.h"
 #include "EditingBehavior.h"
 #include "EditingInlines.h"
 #include "ElementIteratorInlines.h"
@@ -698,7 +699,7 @@ void ReplaceSelectionCommand::removeRedundantStylesAndKeepStyleSpanInline(Insert
                     node = replaceElementWithSpanPreservingChildrenAndAttributes(*htmlElement);
                     element = downcast<StyledElement>(node.get());
                     insertedNodes.didReplaceNode(htmlElement.get(), node.get());
-                } else if (newInlineStyle->extractConflictingImplicitStyleOfAttributes(*htmlElement, EditingStyle::PreserveWritingDirection, nullptr, attributes, EditingStyle::DoNotExtractMatchingStyle)) {
+                } else if (newInlineStyle->extractConflictingImplicitStyleOfAttributes(*htmlElement, EditingStyle::ShouldPreserveWritingDirection::Yes, nullptr, attributes, EditingStyle::ShouldExtractMatchingStyle::No)) {
                     // e.g. <font size="3" style="font-size: 20px;"> is converted to <font style="font-size: 20px;">
                     for (auto& attribute : attributes)
                         removeNodeAttribute(*element, attribute);
@@ -729,7 +730,7 @@ void ReplaceSelectionCommand::removeRedundantStylesAndKeepStyleSpanInline(Insert
                 continue;
             }
             removeNodeAttribute(*element, styleAttr);
-        } else if (newInlineStyle->style()->propertyCount() != inlineStyle->propertyCount())
+        } else if (newInlineStyle->style()->propertyCount() != inlineStyle->propertyCount()) // FIXME: It seems wrong to rely only on the difference of properties set, and not on which properties are set.
             setNodeAttribute(*element, styleAttr, newInlineStyle->style()->asTextAtom(CSS::defaultSerializationContext()));
 
         // FIXME: Tolerate differences in id, class, and style attributes.
@@ -1384,7 +1385,10 @@ void ReplaceSelectionCommand::doApply()
 
     if (insertedNodes.isEmpty())
         return;
-    removeUnrenderedTextNodesAtEnds(insertedNodes);
+
+    // removeUnrenderedTextNodesAtEnds can trigger layout, so for performance, only do it when the presence of richly-editable text requires us to.
+    if (isRichlyEditablePosition(insertionPos))
+        removeUnrenderedTextNodesAtEnds(insertedNodes);
 
     if (!handledStyleSpans)
         handleStyleSpans(insertedNodes);

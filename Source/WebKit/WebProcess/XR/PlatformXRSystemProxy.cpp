@@ -38,6 +38,7 @@
 #include <WebCore/Page.h>
 #include <WebCore/SecurityOrigin.h>
 #include <WebCore/Settings.h>
+#include <WebCore/XRCanvasConfiguration.h>
 #include <wtf/Vector.h>
 
 using namespace PlatformXR;
@@ -83,9 +84,15 @@ void PlatformXRSystemProxy::requestPermissionOnSessionFeatures(const WebCore::Se
     protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestPermissionOnSessionFeatures(securityOriginData, mode, granted, consentRequired, consentOptional, requiredFeaturesRequested, optionalFeaturesRequested), WTFMove(completionHandler));
 }
 
-void PlatformXRSystemProxy::initializeTrackingAndRendering()
+void PlatformXRSystemProxy::initializeTrackingAndRendering(std::optional<WebCore::XRCanvasConfiguration>&& optionalInit)
 {
-    protectedPage()->send(Messages::PlatformXRSystem::InitializeTrackingAndRendering());
+    std::optional<WebCore::WebGPU::TextureFormat> colorFormat;
+    std::optional<WebCore::WebGPU::TextureFormat> depthStencilFormat;
+    if (optionalInit) {
+        colorFormat = optionalInit->colorFormat;
+        depthStencilFormat = optionalInit->depthStencilFormat;
+    }
+    protectedPage()->send(Messages::PlatformXRSystem::InitializeTrackingAndRendering(WTFMove(colorFormat), WTFMove(depthStencilFormat)));
 }
 
 void PlatformXRSystemProxy::shutDownTrackingAndRendering()

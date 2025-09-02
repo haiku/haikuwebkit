@@ -140,6 +140,7 @@
 		2EC7034A26AF5E88002B2D37 /* KeyboardEventTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2EC7034926AF5E88002B2D37 /* KeyboardEventTests.mm */; };
 		318210CE2C59AEFF00C334B4 /* CSSTokenizerTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 318210CD2C59AEFF00C334B4 /* CSSTokenizerTests.cpp */; };
 		31E9BDA1247F4C62002E51A2 /* WebGLPrepareDisplayOnWebThread.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31E9BDA0247F4C62002E51A2 /* WebGLPrepareDisplayOnWebThread.mm */; };
+		332F97BB2E49E07300185626 /* element-targeting-13.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 332F97BA2E49E07300185626 /* element-targeting-13.html */; };
 		333A213E2DA71F3E0023C9C6 /* anchor-element-with-invalid-href.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 333A213D2DA71F3E0023C9C6 /* anchor-element-with-invalid-href.html */; };
 		33976D8324DC479B00812304 /* IndexSparseSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33976D8224DC479B00812304 /* IndexSparseSet.cpp */; };
 		33B767682CC066E400E4314F /* notEncrypted.pdf in Copy Resources */ = {isa = PBXBuildFile; fileRef = 33B767672CC066E400E4314F /* notEncrypted.pdf */; };
@@ -261,6 +262,9 @@
 		53FCDE6B229EFFB900598ECF /* IsoHeap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53FCDE6A229EFFB900598ECF /* IsoHeap.cpp */; };
 		5597F8361D9596C80066BC21 /* SynchronizedFixedQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5597F8341D9596C80066BC21 /* SynchronizedFixedQueue.cpp */; };
 		55F9D2E52205031800A9AB38 /* AdditionalSupportedImageTypes.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F9D2E42205031800A9AB38 /* AdditionalSupportedImageTypes.mm */; };
+		56EEE4782D8D6B85003D4FB1 /* coreipc.js in Copy Resources */ = {isa = PBXBuildFile; fileRef = 56EEE4772D8D6B85003D4FB1 /* coreipc.js */; };
+		56EEE4832D8D706F003D4FB1 /* RemoteObjectRegistry-BadReplyBlock.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 56EEE4822D8D706F003D4FB1 /* RemoteObjectRegistry-BadReplyBlock.html */; };
+		56EEE48F2D8DB402003D4FB1 /* coreipc-helpers.js in Copy Resources */ = {isa = PBXBuildFile; fileRef = 56EEE48E2D8DB402003D4FB1 /* coreipc-helpers.js */; };
 		57152B5E21CC2045000C37CA /* ApduTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57152B5D21CC2045000C37CA /* ApduTest.cpp */; };
 		57152B7821DD4E8D000C37CA /* U2fCommandConstructorTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 57D1D75E21DCB7A80093E86A /* U2fCommandConstructorTest.cpp */; };
 		572B403421769A88000AD43E /* CtapRequestTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 572B403321769A88000AD43E /* CtapRequestTest.cpp */; };
@@ -886,8 +890,8 @@
 		A17C46F62C98E54B0023F3C7 /* test-without-audio-track.mp4 in Copy Resources */ = {isa = PBXBuildFile; fileRef = C95984F61E36BCD7002C0D45 /* test-without-audio-track.mp4 */; };
 		A17C46F72C98E54B0023F3C7 /* test.mp4 in Copy Resources */ = {isa = PBXBuildFile; fileRef = 524BBCA019E30C63002F1AF1 /* test.mp4 */; };
 		A17C46F82C98E54B0023F3C7 /* test.pdf in Copy Resources */ = {isa = PBXBuildFile; fileRef = 7AE9E5081AE5AE8B00CF874B /* test.pdf */; };
-		A17C46F92C98E54B0023F3C8 /* test_form.pdf in Copy Resources */ = {isa = PBXBuildFile; fileRef = 7AE9E5091AE5AE8B00CF874C /* test_form.pdf */; };
 		A17C46F92C98E54B0023F3C7 /* test.xml in Copy Resources */ = {isa = PBXBuildFile; fileRef = 44D3F8422BE1DAD800BE0218 /* test.xml */; };
+		A17C46F92C98E54B0023F3C8 /* test_form.pdf in Copy Resources */ = {isa = PBXBuildFile; fileRef = 7AE9E5091AE5AE8B00CF874C /* test_form.pdf */; };
 		A17C46FA2C98E54B0023F3C7 /* UserInstalledAhem.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 1C51534B261596BD00FBC4FE /* UserInstalledAhem.html */; };
 		A17C46FB2C98E54B0023F3C7 /* video-with-play-button.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = C9C9A91C21DED79400FDE96E /* video-with-play-button.html */; };
 		A17C46FC2C98E54B0023F3C7 /* video.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 07CD32F72065B72A0064A4BE /* video.html */; };
@@ -1439,7 +1443,6 @@
 		F4BC0B142146C849002A0478 /* FocusPreservationTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4BC0B132146C849002A0478 /* FocusPreservationTests.mm */; };
 		F4BFA68E1E4AD08000154298 /* LegacyDragAndDropTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4BFA68C1E4AD08000154298 /* LegacyDragAndDropTests.mm */; };
 		F4C8797F2059D8D3009CD00B /* ScrollViewInsetTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4C8797E2059D8D3009CD00B /* ScrollViewInsetTests.mm */; };
-		F4CB8A7D2856462B0017ECD3 /* TestPDFHostViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4CB8A7C285644FB0017ECD3 /* TestPDFHostViewController.mm */; };
 		F4CDF3D227E97C7E00191928 /* SpellCheckerDocumentTag.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4CDF3D127E97C7E00191928 /* SpellCheckerDocumentTag.mm */; };
 		F4CF32802366552200D3AD07 /* EnterKeyHintTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4CF327F2366552200D3AD07 /* EnterKeyHintTests.mm */; };
 		F4D4F3B61E4E2BCB00BB2767 /* DragAndDropSimulatorIOS.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4D4F3B41E4E2BCB00BB2767 /* DragAndDropSimulatorIOS.mm */; };
@@ -1887,6 +1890,8 @@
 				A17C47342C98E5C20023F3C7 /* CookieMessage.html in Copy Resources */,
 				A17C47352C98E5C20023F3C7 /* copy-html.html in Copy Resources */,
 				A17C47362C98E5C20023F3C7 /* copy-url.html in Copy Resources */,
+				56EEE48F2D8DB402003D4FB1 /* coreipc-helpers.js in Copy Resources */,
+				56EEE4782D8D6B85003D4FB1 /* coreipc.js in Copy Resources */,
 				A17C466E2C98E4D20023F3C7 /* CrossPartitionFileSchemeAccess.html in Copy Resources */,
 				A17C47372C98E5C20023F3C7 /* csp-document-uri-report.html in Copy Resources */,
 				A17C47382C98E5C20023F3C7 /* CSSViewportUnits.html in Copy Resources */,
@@ -1931,6 +1936,7 @@
 				A17C47542C98E5C20023F3C7 /* element-targeting-10.html in Copy Resources */,
 				7AFEA3172CB83910007EFE75 /* element-targeting-11.html in Copy Resources */,
 				F48E516E2D2E0591006F6A84 /* element-targeting-12.html in Copy Resources */,
+				332F97BB2E49E07300185626 /* element-targeting-13.html in Copy Resources */,
 				A17C47552C98E5C20023F3C7 /* element-targeting-2.html in Copy Resources */,
 				A17C47562C98E5C20023F3C7 /* element-targeting-3.html in Copy Resources */,
 				A17C47572C98E5C20023F3C7 /* element-targeting-4.html in Copy Resources */,
@@ -2181,6 +2187,7 @@
 				A17C46E22C98E54B0023F3C7 /* push-state.html in Copy Resources */,
 				A17C46E32C98E54B0023F3C7 /* qr-code.png in Copy Resources */,
 				A17C46E42C98E54B0023F3C7 /* red.html in Copy Resources */,
+				56EEE4832D8D706F003D4FB1 /* RemoteObjectRegistry-BadReplyBlock.html in Copy Resources */,
 				A17C46E52C98E54B0023F3C7 /* remove-node-on-drop.html in Copy Resources */,
 				A17C47EF2C98E5C20023F3C7 /* rendered-image-excluding-overflow.html in Copy Resources */,
 				A17C47F02C98E5C20023F3C7 /* resourceLoadStatisticsMissingUniqueIndex.db in Copy Resources */,
@@ -2597,7 +2604,6 @@
 		29AB8AA3164C7A9300D49BEC /* TestBrowsingContextLoadDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestBrowsingContextLoadDelegate.h; sourceTree = "<group>"; };
 		29E06E5D266F3C0600F1A707 /* AccessibilityIncreaseContrast.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AccessibilityIncreaseContrast.mm; sourceTree = "<group>"; };
 		2B648DBA28C1C1F700791F2B /* WebKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = WebKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		2D00065D1C1F58940088E6A7 /* WKPDFView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WKPDFView.mm; sourceTree = "<group>"; };
 		2D01D06D23218FEE0039AA3A /* WKWebViewPrintFormatter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebViewPrintFormatter.mm; sourceTree = "<group>"; };
 		2D08E9362267D0F3002518DA /* ReparentWebViewTimeout.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ReparentWebViewTimeout.mm; sourceTree = "<group>"; };
 		2D09CEFF26A68296009C43C0 /* GraphicsContextCGTests.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = GraphicsContextCGTests.mm; path = cg/GraphicsContextCGTests.mm; sourceTree = "<group>"; };
@@ -2693,8 +2699,10 @@
 		3310E2FB2B599E93003692A8 /* WKWebExtensionAPIWebRequest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebExtensionAPIWebRequest.mm; sourceTree = "<group>"; };
 		331987702CEF456200BC283C /* MouseSupportUIDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MouseSupportUIDelegate.h; sourceTree = "<group>"; };
 		331987782CEF457300BC283C /* MouseSupportUIDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MouseSupportUIDelegate.mm; sourceTree = "<group>"; };
+		332F97BA2E49E07300185626 /* element-targeting-13.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "element-targeting-13.html"; sourceTree = "<group>"; };
 		333A213D2DA71F3E0023C9C6 /* anchor-element-with-invalid-href.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "anchor-element-with-invalid-href.html"; sourceTree = "<group>"; };
 		333B9CE11277F23100FEFCE3 /* PreventEmptyUserAgent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PreventEmptyUserAgent.cpp; sourceTree = "<group>"; };
+		335406B42E3BEA96008B3349 /* LegacyPDFPluginTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LegacyPDFPluginTests.mm; sourceTree = "<group>"; };
 		3378222C2947C095002106BB /* WKWebExtensionAPIWebNavigation.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebExtensionAPIWebNavigation.mm; sourceTree = "<group>"; };
 		33976D8224DC479B00812304 /* IndexSparseSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IndexSparseSet.cpp; sourceTree = "<group>"; };
 		33B6F9E32CCB29EA009AD8FE /* WKPrinting.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WKPrinting.h; sourceTree = "<group>"; };
@@ -2703,8 +2711,6 @@
 		33BE5AF8137B5AAE00705813 /* MouseMoveAfterCrash_Bundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MouseMoveAfterCrash_Bundle.cpp; sourceTree = "<group>"; };
 		33C2C9C02651F5B900E407F6 /* SmallSet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SmallSet.cpp; sourceTree = "<group>"; };
 		33C39CFF2B07D4B9008FA14B /* WKWebExtensionAPIDeclarativeNetRequest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebExtensionAPIDeclarativeNetRequest.mm; sourceTree = "<group>"; };
-		33D799652D0BBC3500B63ED5 /* ContentSecurityPolicyTestHelpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ContentSecurityPolicyTestHelpers.mm; sourceTree = "<group>"; };
-		33D799662D0BBC3500B63ED5 /* ContentSecurityPolicyTestHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ContentSecurityPolicyTestHelpers.h; sourceTree = "<group>"; };
 		33DB57422CFD46700045C37C /* metalSpecTOC.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = metalSpecTOC.pdf; sourceTree = "<group>"; };
 		33DB57442CFD9D100045C37C /* WKWebViewForTestingImmediateActions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WKWebViewForTestingImmediateActions.h; sourceTree = "<group>"; };
 		33DB57452CFD9D100045C37C /* WKWebViewForTestingImmediateActions.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebViewForTestingImmediateActions.mm; sourceTree = "<group>"; };
@@ -2714,8 +2720,8 @@
 		33E3CFEC2D5D949300FA96A5 /* anchorLink.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = anchorLink.pdf; sourceTree = "<group>"; };
 		33E79E05137B5FCE00E32D99 /* mouse-move-listener.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "mouse-move-listener.html"; sourceTree = "<group>"; };
 		33F734682D3B4ADB003B8704 /* multiple-pages-colored.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "multiple-pages-colored.pdf"; sourceTree = "<group>"; };
-		33FFFC3A2CB9CCFB00248AC3 /* UnifiedPDFTestHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UnifiedPDFTestHelpers.h; sourceTree = "<group>"; };
-		33FFFC442CBA079500248AC3 /* UnifiedPDFTestHelpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = UnifiedPDFTestHelpers.mm; sourceTree = "<group>"; };
+		33FFFC3A2CB9CCFB00248AC3 /* PDFTestHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PDFTestHelpers.h; sourceTree = "<group>"; };
+		33FFFC442CBA079500248AC3 /* PDFTestHelpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PDFTestHelpers.mm; sourceTree = "<group>"; };
 		3545E58827E2AD1200F1910E /* WritingModeTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WritingModeTests.cpp; sourceTree = "<group>"; };
 		370CE2291F57343400E7410B /* WKContentViewTargetForAction.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKContentViewTargetForAction.mm; sourceTree = "<group>"; };
 		371195AA1FE5797700A1FB92 /* WKWebViewAlwaysShowsScroller.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebViewAlwaysShowsScroller.mm; sourceTree = "<group>"; };
@@ -3024,6 +3030,9 @@
 		55A817FD218101DF0004A39A /* 400x400-green.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "400x400-green.png"; sourceTree = "<group>"; };
 		55A817FE218101DF0004A39A /* 100x100-red.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = "100x100-red.tga"; sourceTree = "<group>"; };
 		55F9D2E42205031800A9AB38 /* AdditionalSupportedImageTypes.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = AdditionalSupportedImageTypes.mm; sourceTree = "<group>"; };
+		56EEE4772D8D6B85003D4FB1 /* coreipc.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = coreipc.js; sourceTree = "<group>"; };
+		56EEE4822D8D706F003D4FB1 /* RemoteObjectRegistry-BadReplyBlock.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "RemoteObjectRegistry-BadReplyBlock.html"; sourceTree = "<group>"; };
+		56EEE48E2D8DB402003D4FB1 /* coreipc-helpers.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "coreipc-helpers.js"; sourceTree = "<group>"; };
 		5703BB8C2463F87200475FB2 /* web-authentication-make-credential-la-no-attestation.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "web-authentication-make-credential-la-no-attestation.html"; sourceTree = "<group>"; };
 		570D26F323C3CA5500D5CF67 /* web-authentication-make-credential-hid-pin-get-key-agreement-error.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "web-authentication-make-credential-hid-pin-get-key-agreement-error.html"; sourceTree = "<group>"; };
 		570D26F523C3D32700D5CF67 /* web-authentication-make-credential-hid-pin.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "web-authentication-make-credential-hid-pin.html"; sourceTree = "<group>"; };
@@ -4238,8 +4247,6 @@
 		F4C3F29A2C447EB50029A47D /* SimulateClickOverText.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SimulateClickOverText.mm; sourceTree = "<group>"; };
 		F4C3F2A32C44832B0029A47D /* click-targets.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "click-targets.html"; sourceTree = "<group>"; };
 		F4C8797E2059D8D3009CD00B /* ScrollViewInsetTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ScrollViewInsetTests.mm; sourceTree = "<group>"; };
-		F4CB8A7B2856447F0017ECD3 /* TestPDFHostViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestPDFHostViewController.h; sourceTree = "<group>"; };
-		F4CB8A7C285644FB0017ECD3 /* TestPDFHostViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = TestPDFHostViewController.mm; sourceTree = "<group>"; };
 		F4CC8F452C0A74BA00D7E76E /* element-targeting-9.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "element-targeting-9.html"; sourceTree = "<group>"; };
 		F4CD74C520FDACF500DE3794 /* text-with-async-script.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "text-with-async-script.html"; sourceTree = "<group>"; };
 		F4CD74C720FDB49600DE3794 /* TestURLSchemeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestURLSchemeHandler.h; sourceTree = "<group>"; };
@@ -4729,8 +4736,6 @@
 				A14FC5891B89927100D107EB /* ContentFilteringPlugIn.mm */,
 				5CA1DED81F74A87100E71BD3 /* ContentRuleListNotification.mm */,
 				CEBCA12E1E3A660100C73293 /* ContentSecurityPolicy.mm */,
-				33D799662D0BBC3500B63ED5 /* ContentSecurityPolicyTestHelpers.h */,
-				33D799652D0BBC3500B63ED5 /* ContentSecurityPolicyTestHelpers.mm */,
 				5C121E8C2410703200486F9B /* ContentWorldPlugIn.mm */,
 				5C3B1D2522A74EA400BCF4D0 /* ContextMenus.mm */,
 				5C2936911D5BF63E00DEAB1E /* CookieAcceptPolicy.mm */,
@@ -4816,6 +4821,7 @@
 				9B6D9FF8252EFDE500A51640 /* IPCTestingAPI.mm */,
 				5C69BDD41F82A7EB000F4F4B /* JavaScriptDuringNavigation.mm */,
 				5C0160C021A132320077FA32 /* JITEnabled.mm */,
+				335406B42E3BEA96008B3349 /* LegacyPDFPluginTests.mm */,
 				C25CCA051E51380B0026CB8A /* LineBreaking.mm */,
 				37D36ED61AF42ECD00BAF5D9 /* LoadAlternateHTMLString.mm */,
 				FA049D0F2BCF22210099C221 /* LoadAndDecodeImage.mm */,
@@ -4876,6 +4882,8 @@
 				9B2346411F943A2400DB1D23 /* PasteWebArchive.mm */,
 				51D8C18F2267B26700797E40 /* PDFLinkReferrer.mm */,
 				516281262325C19100BB7E42 /* PDFSnapshot.mm */,
+				33FFFC3A2CB9CCFB00248AC3 /* PDFTestHelpers.h */,
+				33FFFC442CBA079500248AC3 /* PDFTestHelpers.mm */,
 				41E9EE1A28B4DBF8006A2298 /* PermissionsAPI.mm */,
 				3FCC4FE41EC4E8520076E37C /* PictureInPictureDelegate.mm */,
 				DFB8FF312492F51A00F00B0D /* Preconnect.mm */,
@@ -4955,8 +4963,6 @@
 				F3CEF6B82808F2D3001E23A5 /* TimeZoneOverride.mm */,
 				5C73A81A2323059800DEA85A /* TLSDeprecation.mm */,
 				5CB40B4D1F4B98BE007DC7B9 /* UIDelegate.mm */,
-				33FFFC3A2CB9CCFB00248AC3 /* UnifiedPDFTestHelpers.h */,
-				33FFFC442CBA079500248AC3 /* UnifiedPDFTestHelpers.mm */,
 				F4D2C66A2BCF9D8400DADC86 /* UnifiedPDFTests.mm */,
 				5C3A77A922F20B8A003827FF /* UploadDirectory.mm */,
 				7CC3E1FA197E234100BE6252 /* UserContentController.mm */,
@@ -5004,7 +5010,6 @@
 				375E0E151D66674400EFEC2C /* WKNSNumber.mm */,
 				37B47E2E1D64E7CA005F4EFF /* WKObject.mm */,
 				5102ED872950538D0053243E /* WKPageHasMediaStreamingActivity.mm */,
-				2D00065D1C1F58940088E6A7 /* WKPDFView.mm */,
 				3AEA55B22CB0897200A9ECAA /* WKPreferences.mm */,
 				33B6F9E32CCB29EA009AD8FE /* WKPrinting.h */,
 				1CC4C74A288909F600A3B23D /* WKPrinting.mm */,
@@ -5091,8 +5096,6 @@
 				07F7696D2CA8BAC500FF004B /* IOSMouseEventTestHarness.mm */,
 				2E7765CC16C4D80A00BA2BB1 /* mainIOS.mm */,
 				F48D6C0F224B377000E3E2FB /* PreferredContentMode.mm */,
-				F4CB8A7B2856447F0017ECD3 /* TestPDFHostViewController.h */,
-				F4CB8A7C285644FB0017ECD3 /* TestPDFHostViewController.mm */,
 				F4D5C55627C6EBDC00ED1C23 /* TestUIMenuBuilder.h */,
 				F4D5C55727C6EBDC00ED1C23 /* TestUIMenuBuilder.mm */,
 				F4517B652054C49500C26721 /* TestWKWebViewController.h */,
@@ -5668,6 +5671,8 @@
 				5C2936941D5BFD1900DEAB1E /* CookieMessage.html */,
 				9B1056421F9047CC00D5583F /* copy-html.html */,
 				9B62630B1F8C2510007EE29B /* copy-url.html */,
+				56EEE48E2D8DB402003D4FB1 /* coreipc-helpers.js */,
+				56EEE4772D8D6B85003D4FB1 /* coreipc.js */,
 				4995A6EF25E876A300E5F0A9 /* csp-document-uri-report.html */,
 				952F7166270BD99700D00DCC /* CSSViewportUnits.html */,
 				952F7166270BD99700D00DCD /* CSSViewportUnits.svg */,
@@ -5700,6 +5705,7 @@
 				F4C127522C756B3A000BC609 /* element-targeting-10.html */,
 				7AFEA30F2CB838FF007EFE75 /* element-targeting-11.html */,
 				F48E51662D2E0570006F6A84 /* element-targeting-12.html */,
+				332F97BA2E49E07300185626 /* element-targeting-13.html */,
 				F4365E232BB1181A005E8C1A /* element-targeting-2.html */,
 				F41E44652BBCDC74002A856F /* element-targeting-3.html */,
 				F44A2A6E2BC202840044694E /* element-targeting-4.html */,
@@ -5859,6 +5865,7 @@
 				46FD40302A6B3E3500A1B210 /* postMessage-various-types.html */,
 				F41AB9941EF4692C0083FA08 /* prevent-operation.html */,
 				F41AB99A1EF4692C0083FA08 /* prevent-start.html */,
+				56EEE4822D8D706F003D4FB1 /* RemoteObjectRegistry-BadReplyBlock.html */,
 				A12DDBFF1E8373C100CF6CAE /* rendered-image-excluding-overflow.html */,
 				498D030926376B2C009CBFAD /* resourceLoadStatisticsMissingUniqueIndex.db */,
 				F46849BF1EEF5EDC00B937FE /* rich-and-plain-text.html */,
@@ -7929,7 +7936,6 @@
 				F45D3891215A7B4B002A2979 /* TestInspectorBar.mm in Sources */,
 				A17C48592C98FA3F0023F3C7 /* TestNSBundleExtras.m in Sources */,
 				075663822DF68BAB00E9A4E3 /* TestPDFDocument.swift in Sources */,
-				F4CB8A7D2856462B0017ECD3 /* TestPDFHostViewController.mm in Sources */,
 				7B774906267CCE72009873B4 /* TestRunnerTests.cpp in Sources */,
 				F4D5C55827C6FF4800ED1C23 /* TestUIMenuBuilder.mm in Sources */,
 				74DEF2252A946FD800E034A3 /* TestUTIRegistry.cpp in Sources */,

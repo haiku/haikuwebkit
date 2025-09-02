@@ -31,6 +31,7 @@
 #include <wtf/CompactPtr.h>
 #include <wtf/DebugHeap.h>
 #include <wtf/Expected.h>
+#include <wtf/FlipBytes.h>
 #include <wtf/MathExtras.h>
 #include <wtf/NoVirtualDestructorBase.h>
 #include <wtf/Packed.h>
@@ -778,6 +779,39 @@ template<typename CharacterType1, typename CharacterType2> inline std::strong_or
     auto* characters1Ptr = characters1.data();
     auto* characters2Ptr = characters2.data();
     size_t position = 0;
+
+#if CPU(REGISTER64) && !CPU(NEEDS_ALIGNED_ACCESS) && CPU(LITTLE_ENDIAN)
+    if constexpr (sizeof(CharacterType1) == sizeof(CharacterType2) && (sizeof(CharacterType1) == 1 || sizeof(CharacterType1) == 2)) {
+        using ChunkType = std::conditional_t<sizeof(CharacterType1) == 1, uint32_t, uint64_t>;
+        constexpr size_t stride = sizeof(ChunkType) / sizeof(CharacterType1);
+        for (; position + (stride - 1) < commonLength;) {
+            auto lhs = *std::bit_cast<const ChunkType*>(characters1Ptr);
+            auto rhs = *std::bit_cast<const ChunkType*>(characters2Ptr);
+            if (lhs != rhs) {
+                if constexpr (sizeof(CharacterType1) == 1)
+                    return (flipBytes(lhs) > flipBytes(rhs)) ? std::strong_ordering::greater : std::strong_ordering::less;
+
+#if CPU(ARM64)
+                if constexpr (sizeof(CharacterType1) == 2) {
+                    auto rev16 = [](uint64_t value) ALWAYS_INLINE_LAMBDA {
+                        uint64_t result;
+                        asm ("rev16 %x0, %x1" : "=r"(result) : "r"(value));
+                        return result;
+                    };
+                    return (rev16(flipBytes(lhs)) > rev16(flipBytes(rhs))) ? std::strong_ordering::greater : std::strong_ordering::less;
+                }
+#endif
+
+                break;
+            }
+
+            characters1Ptr += stride;
+            characters2Ptr += stride;
+            position += stride;
+        }
+    }
+#endif
+
     while (position < commonLength && *characters1Ptr == *characters2Ptr) {
         ++characters1Ptr;
         ++characters2Ptr;
@@ -1400,7 +1434,8 @@ inline Expected<std::invoke_result_t<Func, std::span<const char8_t>>, UTF8Conver
     //  * We could allocate a CStringBuffer with an appropriate size to
     //    have a good chance of being able to write the string into the
     //    buffer without reallocing (say, 1.5 x length).
-    if (characters.size() > MaxLength / 2)
+
+    if (productOverflows<size_t>(characters.size(), 2))
         return makeUnexpected(UTF8ConversionError::OutOfMemory);
 
 #if CPU(ARM64)
@@ -1428,7 +1463,7 @@ inline Expected<std::invoke_result_t<Func, std::span<const char8_t>>, UTF8Conver
     if (characters.empty())
         return function(nonNullEmptyUTF8Span());
 
-    if (characters.size() > MaxLength / 3)
+    if (productOverflows<size_t>(characters.size(), 3))
         return makeUnexpected(UTF8ConversionError::OutOfMemory);
 
     size_t bufferSize = characters.size() * 3;

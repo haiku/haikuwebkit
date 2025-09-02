@@ -42,5 +42,7 @@ void wpeDisplayMockSetUseExplicitSync(WPEDisplayMock*, gboolean);
 void wpeDisplayMockSetInitialInputDevices(WPEDisplayMock*, WPEAvailableInputDevices);
 void wpeDisplayMockAddInputDevice(WPEDisplayMock*, WPEAvailableInputDevices);
 void wpeDisplayMockRemoveInputDevice(WPEDisplayMock*, WPEAvailableInputDevices);
+void wpeDisplayMockAddSecondaryScreen(WPEDisplayMock*);
+void wpeDisplayMockRemoveSecondaryScreen(WPEDisplayMock*);
 
 G_END_DECLS

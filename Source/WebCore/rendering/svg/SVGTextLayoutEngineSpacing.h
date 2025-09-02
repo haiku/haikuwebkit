@@ -20,6 +20,7 @@
 #pragma once
 
 #include <unicode/uchar.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/Noncopyable.h>
 
 namespace WebCore {
@@ -37,7 +38,7 @@ public:
     float calculateCSSSpacing(const char16_t* currentCharacter);
 
 private:
-    const FontCascade& m_font;
+    const CheckedRef<const FontCascade> m_font;
     const char16_t* m_lastCharacter;
 };
 

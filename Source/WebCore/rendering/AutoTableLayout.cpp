@@ -77,8 +77,8 @@ void AutoTableLayout::recalcColumn(unsigned effCol)
                 columnLayout.maxLogicalWidth = std::max(columnLayout.maxLogicalWidth, 0.f);
 
                 if (cell->colSpan() == 1) {
-                    columnLayout.minLogicalWidth = std::max(cell->minPreferredLogicalWidth().ceilToFloat(), columnLayout.minLogicalWidth);
-                    float maxPreferredWidth = cell->maxPreferredLogicalWidth().ceilToFloat();
+                    columnLayout.minLogicalWidth = std::max(cell->minLogicalWidthForColumnSizing().ceilToFloat(), columnLayout.minLogicalWidth);
+                    float maxPreferredWidth = cell->maxLogicalWidthForColumnSizing().ceilToFloat();
                     if (maxPreferredWidth > columnLayout.maxLogicalWidth) {
                         columnLayout.maxLogicalWidth = maxPreferredWidth;
                         maxContributor = cell;
@@ -125,7 +125,7 @@ void AutoTableLayout::recalcColumn(unsigned effCol)
                     );
                 } else if (!effCol || section->primaryCellAt(i, effCol - 1) != cell) {
                     // If a cell originates in this spanning column ensure we have a min/max width of at least 1px for it.
-                    columnLayout.minLogicalWidth = std::max(columnLayout.minLogicalWidth, cell->maxPreferredLogicalWidth() ? 1.f : 0.f);
+                    columnLayout.minLogicalWidth = std::max(columnLayout.minLogicalWidth, cell->maxLogicalWidthForColumnSizing() ? 1.f : 0.f);
 
                     // This spanning cell originates in this column. Insert the cell into spanning cells list.
                     insertSpanCell(cell);
@@ -300,8 +300,8 @@ float AutoTableLayout::calcEffectiveLogicalWidth()
 
         unsigned effCol = m_table->colToEffCol(cell->col());
         size_t lastCol = effCol;
-        float cellMinLogicalWidth = cell->minPreferredLogicalWidth() + spacingInRowDirection;
-        float cellMaxLogicalWidth = cell->maxPreferredLogicalWidth() + spacingInRowDirection;
+        float cellMinLogicalWidth = cell->minLogicalWidthForColumnSizing() + spacingInRowDirection;
+        float cellMaxLogicalWidth = cell->maxLogicalWidthForColumnSizing() + spacingInRowDirection;
         float totalPercent = 0;
         float spanMinLogicalWidth = 0;
         float spanMaxLogicalWidth = 0;

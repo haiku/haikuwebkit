@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "FunctionRareData.h"
-#include "InternalFunction.h"
-#include "JSCallee.h"
-#include "JSScope.h"
+#include <JavaScriptCore/FunctionRareData.h>
+#include <JavaScriptCore/InternalFunction.h>
+#include <JavaScriptCore/JSCallee.h>
+#include <JavaScriptCore/JSScope.h>
 
 namespace JSC {
 
@@ -115,6 +115,8 @@ public:
 
     DECLARE_EXPORT_INFO;
 
+    DECLARE_VISIT_CHILDREN;
+
     inline static Structure* createStructure(VM&, JSGlobalObject*, JSValue);
 
     TaggedNativeFunction nativeFunction();
@@ -202,8 +204,6 @@ protected:
     static bool put(JSCell*, JSGlobalObject*, PropertyName, JSValue, PutPropertySlot&);
 
     static bool deleteProperty(JSCell*, JSGlobalObject*, PropertyName, DeletePropertySlot&);
-
-    DECLARE_VISIT_CHILDREN;
 
 private:
     static JSFunction* createImpl(VM& vm, FunctionExecutable* executable, JSScope* scope, Structure* structure)

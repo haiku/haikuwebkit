@@ -169,6 +169,7 @@ static MTCoreMaterialRecipe materialRecipeForAppleVisualEffect(AppleVisualEffect
         return PAL::get_CoreMaterial_MTCoreMaterialRecipeNone();
 #if HAVE(MATERIAL_HOSTING)
     case AppleVisualEffect::GlassMaterial:
+    case AppleVisualEffect::GlassClearMaterial:
     case AppleVisualEffect::GlassSubduedMaterial:
     case AppleVisualEffect::GlassMediaControlsMaterial:
     case AppleVisualEffect::GlassSubduedMediaControlsMaterial:
@@ -210,6 +211,7 @@ static MTCoreMaterialVisualStyle materialVisualStyleForAppleVisualEffect(AppleVi
     case AppleVisualEffect::BlurChromeMaterial:
 #if HAVE(MATERIAL_HOSTING)
     case AppleVisualEffect::GlassMaterial:
+    case AppleVisualEffect::GlassClearMaterial:
     case AppleVisualEffect::GlassSubduedMaterial:
     case AppleVisualEffect::GlassMediaControlsMaterial:
     case AppleVisualEffect::GlassSubduedMediaControlsMaterial:
@@ -240,6 +242,7 @@ static MTCoreMaterialVisualStyleCategory materialVisualStyleCategoryForAppleVisu
     case AppleVisualEffect::BlurChromeMaterial:
 #if HAVE(MATERIAL_HOSTING)
     case AppleVisualEffect::GlassMaterial:
+    case AppleVisualEffect::GlassClearMaterial:
     case AppleVisualEffect::GlassSubduedMaterial:
     case AppleVisualEffect::GlassMediaControlsMaterial:
     case AppleVisualEffect::GlassSubduedMediaControlsMaterial:
@@ -256,6 +259,8 @@ static WKHostedMaterialEffectType hostedMaterialEffectTypeForAppleVisualEffect(A
     switch (effect) {
     case AppleVisualEffect::GlassMaterial:
         return WKHostedMaterialEffectTypeGlass;
+    case AppleVisualEffect::GlassClearMaterial:
+        return WKHostedMaterialEffectTypeClearGlass;
     case AppleVisualEffect::GlassSubduedMaterial:
         return WKHostedMaterialEffectTypeSubduedGlass;
     case AppleVisualEffect::GlassMediaControlsMaterial:

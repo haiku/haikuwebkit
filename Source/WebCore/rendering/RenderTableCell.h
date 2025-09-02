@@ -62,6 +62,8 @@ public:
     unsigned rowIndex() const;
     inline Style::PreferredSize styleOrColLogicalWidth() const;
     inline LayoutUnit logicalHeightForRowSizing() const;
+    LayoutUnit minLogicalWidthForColumnSizing();
+    LayoutUnit maxLogicalWidthForColumnSizing();
 
     void setCellLogicalWidth(LayoutUnit constrainedLogicalWidth);
 
@@ -130,6 +132,8 @@ public:
 
     void invalidateHasEmptyCollapsedBorders();
     void setHasEmptyCollapsedBorder(CollapsedBorderSide, bool empty) const;
+
+    inline bool isOrthogonal() const;
 
 private:
     void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;

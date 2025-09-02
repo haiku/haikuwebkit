@@ -63,7 +63,7 @@ LegacyRenderSVGRoot::LegacyRenderSVGRoot(SVGSVGElement& element, RenderStyle&& s
     : RenderReplaced(Type::LegacySVGRoot, element, WTFMove(style), ReplacedFlag::UsesBoundaryCaching)
 {
     ASSERT(isLegacyRenderSVGRoot());
-    LayoutSize intrinsicSize(calculateIntrinsicSize());
+    LayoutSize intrinsicSize(computeIntrinsicSize());
     if (!intrinsicSize.width())
         intrinsicSize.setWidth(defaultWidth);
     if (!intrinsicSize.height())
@@ -88,27 +88,26 @@ bool LegacyRenderSVGRoot::hasIntrinsicAspectRatio() const
     return computeIntrinsicAspectRatio();
 }
 
-FloatSize LegacyRenderSVGRoot::calculateIntrinsicSize() const
+FloatSize LegacyRenderSVGRoot::computeIntrinsicSize() const
 {
+    ASSERT_IMPLIES(view().frameView().layoutContext().isInRenderTreeLayout(), !shouldApplySizeContainment());
     return FloatSize(floatValueForLength(svgSVGElement().intrinsicWidth(), 0), floatValueForLength(svgSVGElement().intrinsicHeight(), 0));
 }
 
-std::pair<FloatSize, FloatSize> LegacyRenderSVGRoot::computeIntrinsicSizeAndPreferredAspectRatio() const
+FloatSize LegacyRenderSVGRoot::preferredAspectRatio() const
 {
     ASSERT(!shouldApplySizeContainment());
 
-    // https://www.w3.org/TR/SVG/coords.html#IntrinsicSizing
-    auto intrinsicSize = calculateIntrinsicSize();
-
     if (style().aspectRatio().isRatio())
-        return { intrinsicSize, FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value) };
+        return FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
 
+    auto intrinsicSize = computeIntrinsicSize();
     std::optional<FloatSize> intrinsicRatioValue;
     FloatSize preferredAspectRatio;
     if (!intrinsicSize.isEmpty())
         preferredAspectRatio = { intrinsicSize.width(), intrinsicSize.height() };
     else {
-        FloatSize viewBoxSize = svgSVGElement().viewBox().size();
+        FloatSize viewBoxSize = svgSVGElement().currentViewBoxRect().size();
         if (!viewBoxSize.isEmpty()) {
             // The viewBox can only yield an intrinsic ratio, not an intrinsic size.
             intrinsicRatioValue = { viewBoxSize.width(), viewBoxSize.height() };
@@ -116,10 +115,11 @@ std::pair<FloatSize, FloatSize> LegacyRenderSVGRoot::computeIntrinsicSizeAndPref
     }
 
     if (intrinsicRatioValue)
-        preferredAspectRatio = *intrinsicRatioValue;
-    else if (style().aspectRatio().isAutoAndRatio())
-        preferredAspectRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
-    return { intrinsicSize, preferredAspectRatio };
+        return *intrinsicRatioValue;
+    if (style().aspectRatio().isAutoAndRatio())
+        return FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
+
+    return preferredAspectRatio;
 }
 
 bool LegacyRenderSVGRoot::isEmbeddedThroughSVGImage() const

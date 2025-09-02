@@ -562,7 +562,7 @@ WebExtensionAPIEvent& WebExtensionAPIRuntime::onMessageExternal()
     return *m_onMessageExternal;
 }
 
-NSDictionary *toWebAPI(const WebExtensionMessageSenderParameters& parameters, const URL& baseURL)
+NSDictionary *toWebAPI(const WebExtensionMessageSenderParameters& parameters)
 {
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
 
@@ -577,15 +577,8 @@ NSDictionary *toWebAPI(const WebExtensionMessageSenderParameters& parameters, co
         result[frameIdKey] = @(toWebAPI(parameters.frameIdentifier.value()));
 
     if (parameters.url.isValid()) {
-        auto securityOrigin = WebCore::SecurityOrigin::create(parameters.url)->toString();
-        auto baseURLOrigin = makeString(baseURL.protocol(), "://"_s, baseURL.host());
-
-        if (equalIgnoringASCIICase(securityOrigin, baseURLOrigin))
-            result[originKey] = baseURLOrigin.createNSString().get();
-        else
-            result[originKey] = securityOrigin.createNSString().get();
-
         result[urlKey] = parameters.url.string().createNSString().get();
+        result[originKey] = WebCore::SecurityOrigin::create(parameters.url)->toString().createNSString().get();
     }
 
     if (parameters.documentIdentifier.isValid())
@@ -629,7 +622,7 @@ void WebExtensionContextProxy::internalDispatchRuntimeMessageEvent(WebExtensionC
     }
 
     id message = parseJSON(messageJSON.createNSString().get(), JSONOptions::FragmentsAllowed);
-    auto *senderInfo = toWebAPI(senderParameters, baseURL());
+    auto *senderInfo = toWebAPI(senderParameters);
     auto sourceContentWorldType = senderParameters.contentWorldType;
 
     auto callbackAggregator = ReplyCallbackAggregator::create([completionHandler = WTFMove(completionHandler)](JSValue *replyMessage, IsDefaultReply defaultReply) mutable {

@@ -1,4 +1,6 @@
+CONSOLE MESSAGE: Origin null is not allowed by Access-Control-Allow-Origin. Status code: 200
 
 
-PASS navigation.back()/forward() in an opaque origin iframe
+Harness Error (TIMEOUT), message = null
+
 

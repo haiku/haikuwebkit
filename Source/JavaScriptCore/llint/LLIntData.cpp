@@ -39,16 +39,12 @@ namespace JSC {
 
 namespace LLInt {
 
-Opcode g_opcodeMap[numOpcodeIDs + numWasmOpcodeIDs] = { };
-Opcode g_opcodeMapWide16[numOpcodeIDs + numWasmOpcodeIDs] = { };
-Opcode g_opcodeMapWide32[numOpcodeIDs + numWasmOpcodeIDs] = { };
+Opcode g_opcodeMap[numOpcodeIDs] = { };
+Opcode g_opcodeMapWide16[numOpcodeIDs] = { };
+Opcode g_opcodeMapWide32[numOpcodeIDs] = { };
 
 #if !ENABLE(C_LOOP)
 extern "C" void SYSV_ABI llint_entry(void*, void*, void*);
-
-#if ENABLE(WEBASSEMBLY)
-extern "C" void SYSV_ABI wasm_entry(void*, void*, void*);
-#endif // ENABLE(WEBASSEMBLY)
 
 #endif // !ENABLE(C_LOOP)
 
@@ -83,7 +79,7 @@ static void neuterOpcodeMaps()
         entry = reinterpret_cast<Opcode>(llint_check_vm_entry_permission); \
     } while (false)
 #endif
-    for (unsigned i = 0; i < numOpcodeIDs + numWasmOpcodeIDs; ++i) {
+    for (unsigned i = 0; i < numOpcodeIDs; ++i) {
         SET_CRASH_TARGET(g_opcodeMap[i]);
         SET_CRASH_TARGET(g_opcodeMapWide16[i]);
         SET_CRASH_TARGET(g_opcodeMapWide32[i]);
@@ -103,18 +99,11 @@ void initialize()
         neuterOpcodeMaps();
     else {
         llint_entry(&g_opcodeMap, &g_opcodeMapWide16, &g_opcodeMapWide32);
-    
-#if ENABLE(WEBASSEMBLY)
-        wasm_entry(&g_opcodeMap[numOpcodeIDs], &g_opcodeMapWide16[numOpcodeIDs], &g_opcodeMapWide32[numOpcodeIDs]);
-#endif // ENABLE(WEBASSEMBLY)
     }
 
     static_assert(llint_throw_from_slow_path_trampoline < UINT8_MAX);
-    static_assert(wasm_throw_from_slow_path_trampoline < UINT8_MAX);
-    for (unsigned i = 0; i < maxBytecodeStructLength + 1; ++i) {
+    for (unsigned i = 0; i < maxBytecodeStructLength + 1; ++i)
         g_jscConfig.llint.exceptionInstructions[i] = llint_throw_from_slow_path_trampoline;
-        g_jscConfig.llint.wasmExceptionInstructions[i] = wasm_throw_from_slow_path_trampoline;
-    }
 
     JITOperationList::populatePointersInJavaScriptCoreForLLInt();
 

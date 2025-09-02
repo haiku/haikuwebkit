@@ -97,7 +97,7 @@ uint64_t JSWebAssemblyStruct::get(uint32_t fieldIndex) const
     case TypeKind::RefNull:
         return JSValue::encode(std::bit_cast<WriteBarrierBase<Unknown>*>(targetPointer)->get());
     case TypeKind::V128:
-        // V128 is not supported in LLInt.
+        // V128 is not supported in IPInt.
     default:
         ASSERT_NOT_REACHED();
         return 0;

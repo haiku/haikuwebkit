@@ -404,9 +404,10 @@ void HistoryController::goToItemForNavigationAPI(HistoryItem& targetItem, FrameL
             return;
 
         Vector<FrameToNavigate> framesToNavigate;
-        if (RefPtr fromItem = page->backForward().currentItem()) {
-            if (RefPtr localMainFrame = page->localMainFrame())
-                recursiveGatherFramesToNavigate(*localMainFrame, framesToNavigate, targetItem, fromItem.get());
+
+        if (auto targetItemFrameID = targetItem->frameID()) {
+            if (RefPtr fromItem = page->backForward().currentItem(*targetItemFrameID))
+                recursiveGatherFramesToNavigate(frame, framesToNavigate, targetItem, fromItem.get());
         }
 
         page->setIsInSwipeAnimation(isInSwipeAnimation);

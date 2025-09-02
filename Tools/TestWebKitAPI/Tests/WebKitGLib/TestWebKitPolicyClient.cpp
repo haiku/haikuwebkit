@@ -88,7 +88,7 @@ public:
     static gboolean respondToPolicyDecisionLater(PolicyClientTest* test)
     {
         respondToPolicyDecision(test, test->m_previousPolicyDecision.get());
-        test->m_previousPolicyDecision = 0;
+        test->m_previousPolicyDecision = nullptr;
         return FALSE;
     }
 

@@ -41,10 +41,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include "WasmBBQPlan.h"
 #include "WasmCallee.h"
 #include "WasmCallingConvention.h"
-#include "WasmFunctionCodeBlockGenerator.h"
 #include "WasmIPIntGenerator.h"
-#include "WasmLLIntBuiltin.h"
-#include "WasmLLIntGenerator.h"
 #include "WasmModuleInformation.h"
 #include "WasmOSREntryPlan.h"
 #include "WasmOperationsInlines.h"
@@ -459,11 +456,7 @@ WASM_IPINT_EXTERN_CPP_DECL(rethrow_exception, CallFrame* callFrame, IPIntStackEn
     JSWebAssemblyException* exception = std::bit_cast<JSWebAssemblyException*>(pl[callee->localSizeToAlloc() + tryDepth - 1].i32);
 #endif
     RELEASE_ASSERT(exception);
-    JSValue thrownValue = exception;
-    if (&exception->tag() == &Wasm::Tag::jsExceptionTag())
-        thrownValue = JSValue::decode(exception->payload().at(0));
-
-    throwException(globalObject, throwScope, thrownValue);
+    throwException(globalObject, throwScope, exception);
 
     genericUnwind(vm, callFrame);
     ASSERT(!!vm.callFrameForCatch);
@@ -481,10 +474,7 @@ WASM_IPINT_EXTERN_CPP_DECL(throw_ref, CallFrame* callFrame, EncodedJSValue exnre
 
     auto* exception = jsSecureCast<JSWebAssemblyException*>(JSValue::decode(exnref));
     RELEASE_ASSERT(exception);
-    JSValue thrownValue = exception;
-    if (&exception->tag() == &Wasm::Tag::jsExceptionTag())
-        thrownValue = JSValue::decode(exception->payload().at(0));
-    throwException(globalObject, throwScope, thrownValue);
+    throwException(globalObject, throwScope, exception);
 
     genericUnwind(vm, callFrame);
     ASSERT(!!vm.callFrameForCatch);
@@ -1075,6 +1065,42 @@ WASM_IPINT_EXTERN_CPP_DECL(memory_atomic_notify, unsigned base, unsigned offset,
 WASM_IPINT_EXTERN_CPP_DECL(ref_func, unsigned index)
 {
     IPINT_RETURN(Wasm::refFunc(instance, index));
+}
+
+extern "C" void SYSV_ABI wasm_log_crash(CallFrame*, JSWebAssemblyInstance* instance)
+{
+    dataLogLn("Reached IPInt code that should never have been executed.");
+    dataLogLn("Module internal function count: ", instance->module().moduleInformation().internalFunctionCount());
+    RELEASE_ASSERT_NOT_REACHED();
+}
+
+extern "C" UGPRPair SYSV_ABI slow_path_wasm_throw_exception(CallFrame* callFrame, JSWebAssemblyInstance* instance, Wasm::ExceptionType exceptionType)
+{
+    SlowPathFrameTracer tracer(instance->vm(), callFrame);
+#if ENABLE(WEBASSEMBLY_BBQJIT)
+    void* pc = instance->faultPC();
+    instance->setFaultPC(nullptr);
+    auto* callee = callFrame->callee().asNativeCallee();
+    ASSERT(callee->category() == NativeCallee::Category::Wasm);
+    auto& wasmCallee = static_cast<Wasm::Callee&>(*callee);
+    if (isAnyOMG(wasmCallee.compilationMode())) {
+        if (auto callSiteIndexFromPC = static_cast<Wasm::OptimizingJITCallee&>(wasmCallee).tryGetCallSiteIndex(pc))
+            callFrame->setCallSiteIndex(callSiteIndexFromPC.value());
+    }
+#endif
+    WASM_RETURN_TWO(Wasm::throwWasmToJSException(callFrame, exceptionType, instance), nullptr);
+}
+
+extern "C" UGPRPair SYSV_ABI slow_path_wasm_popcount(const void* pc, uint32_t x)
+{
+    void* result = std::bit_cast<void*>(static_cast<size_t>(std::popcount(x)));
+    WASM_RETURN_TWO(pc, result);
+}
+
+extern "C" UGPRPair SYSV_ABI slow_path_wasm_popcountll(const void* pc, uint64_t x)
+{
+    void* result = std::bit_cast<void*>(static_cast<size_t>(std::popcount(x)));
+    WASM_RETURN_TWO(pc, result);
 }
 
 } } // namespace JSC::IPInt

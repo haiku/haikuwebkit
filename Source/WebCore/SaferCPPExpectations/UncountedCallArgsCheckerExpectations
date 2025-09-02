@@ -121,7 +121,6 @@ Modules/websockets/WorkerThreadableWebSocketChannel.cpp
 Modules/webtransport/WebTransport.cpp
 StyleBuilderGenerated.cpp
 StyleExtractorGenerated.cpp
-accessibility/AXImage.cpp
 accessibility/AXLogger.cpp
 accessibility/AXObjectCache.cpp
 accessibility/AXObjectCache.h
@@ -303,7 +302,6 @@ css/CSSStyleProperties.cpp
 css/CSSStyleRule.cpp
 css/CSSStyleSheet.cpp
 css/CSSStyleSheetObservableArray.cpp
-css/CSSToStyleMap.cpp
 css/CSSValueList.cpp
 css/CSSViewValue.cpp
 css/CSSViewValue.h
@@ -964,7 +962,6 @@ style/StyleExtractorConverter.h
 style/StyleExtractorCustom.h
 style/StyleExtractorSerializer.h
 style/StyleInterpolation.cpp
-style/StyleInterpolationFunctions.h
 style/StyleInterpolationWrappers.h
 style/StyleInvalidator.cpp
 style/StylePendingResources.cpp
@@ -980,6 +977,7 @@ style/Styleable.cpp
 style/Styleable.h
 style/TransformOperationsBuilder.cpp
 style/UserAgentStyle.cpp
+style/values/primitives/StyleLengthWrapperData.cpp
 style/values/transforms/StyleRotate.cpp
 style/values/transforms/StyleScale.cpp
 style/values/transforms/StyleTranslate.cpp

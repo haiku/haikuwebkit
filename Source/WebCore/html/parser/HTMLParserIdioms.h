@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -91,6 +92,14 @@ struct HTMLDimension {
 };
 std::optional<HTMLDimension> parseHTMLDimension(StringView);
 std::optional<HTMLDimension> parseHTMLMultiLength(StringView);
+
+// https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#lists-of-dimensions
+struct HTMLDimensionsListValue {
+    enum class Unit : uint8_t { Percentage, Relative, Absolute };
+    double number;
+    Unit unit;
+};
+WEBCORE_EXPORT FixedVector<HTMLDimensionsListValue> parseHTMLDimensionsList(StringView);
 
 // Inline implementations of some of the functions declared above.
 

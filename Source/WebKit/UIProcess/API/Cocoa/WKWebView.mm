@@ -51,6 +51,7 @@
 #import "MediaPlaybackState.h"
 #import "MediaUtilities.h"
 #import "NavigationState.h"
+#import "NodeHitTestResult.h"
 #import "PDFPluginIdentifier.h"
 #import "PageClient.h"
 #import "PlatformWritingToolsUtilities.h"
@@ -68,6 +69,7 @@
 #import "ViewGestureController.h"
 #import "WKBackForwardListInternal.h"
 #import "WKBackForwardListItemInternal.h"
+#import "WKBrowsingContextController.h"
 #import "WKBrowsingContextHandleInternal.h"
 #import "WKColorExtensionView.h"
 #import "WKContentWorldInternal.h"
@@ -88,14 +90,12 @@
 #import "WKNavigationInternal.h"
 #import "WKPDFConfiguration.h"
 #import "WKPDFPageNumberIndicator.h"
-#import "WKPDFView.h"
 #import "WKPreferencesInternal.h"
 #import "WKProcessPoolInternal.h"
 #import "WKScrollGeometry.h"
 #import "WKSecurityOriginInternal.h"
 #import "WKSharedAPICast.h"
 #import "WKSnapshotConfigurationPrivate.h"
-#import "WKTextExtractionItem.h"
 #import "WKTextExtractionUtilities.h"
 #import "WKUIDelegate.h"
 #import "WKUIDelegateInternal.h"
@@ -134,12 +134,14 @@
 #import "_WKHitTestResultInternal.h"
 #import "_WKInputDelegate.h"
 #import "_WKInspectorInternal.h"
+#import "_WKNodeInfoInternal.h"
 #import "_WKPageLoadTimingInternal.h"
 #import "_WKRemoteObjectRegistryInternal.h"
 #import "_WKSessionStateInternal.h"
 #import "_WKSpatialBackdropSourceInternal.h"
 #import "_WKTargetedElementInfoInternal.h"
 #import "_WKTargetedElementRequestInternal.h"
+#import "_WKTextExtractionInternal.h"
 #import "_WKTextInputContextInternal.h"
 #import "_WKTextManipulationConfiguration.h"
 #import "_WKTextManipulationDelegate.h"
@@ -175,10 +177,12 @@
 #import <WebCore/SpatialBackdropSource.h>
 #import <WebCore/StringUtilities.h>
 #import <WebCore/TextAnimationTypes.h>
+#import <WebCore/TextExtractionTypes.h>
 #import <WebCore/TextManipulationController.h>
 #import <WebCore/TextManipulationItem.h>
 #import <WebCore/ViewportArguments.h>
 #import <WebCore/WebCoreObjCExtras.h>
+#import <WebCore/WebCorePersistentCoders.h>
 #import <WebCore/WebViewVisualIdentificationOverlay.h>
 #import <WebCore/WritingMode.h>
 #import <wtf/BlockPtr.h>
@@ -546,7 +550,14 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
 
 #if PLATFORM(IOS_FAMILY)
 
-static id browsingContextControllerMethodStub(id, SEL)
+static id browsingContextControllerMethodStubNonNil(id, SEL)
+{
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+    return adoptNS([WKBrowsingContextController new]).autorelease();
+ALLOW_DEPRECATED_DECLARATIONS_END
+}
+
+static id browsingContextControllerMethodStubNil(id, SEL)
 {
     return nil;
 }
@@ -558,8 +569,8 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
         if (linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::BrowsingContextControllerMethodStubRemoved))
             return;
 
-        for (auto wkClass : std::array { WKWebView.class, WKContentView.class })
-            class_addMethod(wkClass, NSSelectorFromString(@"browsingContextController"), reinterpret_cast<IMP>(browsingContextControllerMethodStub), "@@:");
+        class_addMethod(WKWebView.class, NSSelectorFromString(@"browsingContextController"), reinterpret_cast<IMP>(browsingContextControllerMethodStubNil), "@@:");
+        class_addMethod(WKContentView.class, NSSelectorFromString(@"browsingContextController"), reinterpret_cast<IMP>(browsingContextControllerMethodStubNonNil), "@@:");
     });
 }
 
@@ -1544,13 +1555,9 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
         handler(image.get(), nil);
     });
 #else
-    auto useIntrinsicDeviceScaleFactor = [[_customContentView class] web_requiresCustomSnapshotting];
 
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    // FIXME: <rdar://131638772> UIScreen.mainScreen is deprecated.
-    CGFloat deviceScale = useIntrinsicDeviceScaleFactor ? UIScreen.mainScreen.scale : _page->deviceScaleFactor();
-ALLOW_DEPRECATED_DECLARATIONS_END
-    CGFloat imageWidth = useIntrinsicDeviceScaleFactor ? snapshotWidth : snapshotWidth * deviceScale;
+    CGFloat deviceScale = _page->deviceScaleFactor();
+    CGFloat imageWidth = snapshotWidth * deviceScale;
     RetainPtr<WKWebView> strongSelf = self;
     BOOL afterScreenUpdates = snapshotConfiguration && snapshotConfiguration.afterScreenUpdates;
     auto callSnapshotRect = [strongSelf, afterScreenUpdates, rectInViewCoordinates, imageWidth, deviceScale, handler] {
@@ -2184,6 +2191,11 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
     });
 }
 
+static RetainPtr<NSError> unknownError()
+{
+    return adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
+}
+
 - (void)createWebArchiveDataWithCompletionHandler:(void (^)(NSData *, NSError *))completionHandler
 {
     THROW_IF_SUSPENDED;
@@ -2191,7 +2203,7 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
         if (data)
             completionHandler(wrapper(data), nil);
         else
-            completionHandler(nil, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]).get());
+            completionHandler(nil, unknownError().get());
     });
 }
 
@@ -2991,22 +3003,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 #endif // PLATFORM(VISION)
 #endif // ENABLE(GAMEPAD)
 
-- (_WKRectEdge)_fixedContainerEdges
-{
-    // FIXME: Remove once it's no longer required to maintain binary compatibility with internal clients.
-    _WKRectEdge edges = _WKRectEdgeNone;
-    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Bottom))
-        edges |= _WKRectEdgeBottom;
-    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Left))
-        edges |= _WKRectEdgeLeft;
-    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Right))
-        edges |= _WKRectEdgeRight;
-    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Top))
-        edges |= _WKRectEdgeTop;
-    return edges;
-}
-
-static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::FixedContainerEdges& edges, WebCore::BoxSide side)
+WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::FixedContainerEdges& edges, WebCore::BoxSide side)
 {
     if (!edges.hasFixedEdge(side))
         return nil;
@@ -3014,24 +3011,9 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
     return cocoaColorOrNil(edges.predominantColor(side)).autorelease();
 }
 
-- (WebCore::CocoaColor *)_sampledBottomFixedPositionContentColor
-{
-    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Bottom);
-}
-
-- (WebCore::CocoaColor *)_sampledLeftFixedPositionContentColor
-{
-    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Left);
-}
-
 - (WebCore::CocoaColor *)_sampledTopFixedPositionContentColor
 {
     return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Top);
-}
-
-- (WebCore::CocoaColor *)_sampledRightFixedPositionContentColor
-{
-    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Right);
 }
 
 - (void)_updateScrollGeometryWithContentOffset:(CGPoint)contentOffset contentSize:(CGSize)contentSize
@@ -3165,17 +3147,20 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
 #if PLATFORM(MAC)
     _impl->updateTopScrollPocketCaptureColor();
 #else
-    if (!_needsTopScrollPocketDueToVisibleContentInset) {
-        // On iOS, overriding the top scroll pocket capture color is only necessary when:
+    if (!_needsTopScrollPocketDueToVisibleContentInset && ![_scrollView _usesHardTopScrollEdgeEffect]) {
+        // When using a soft pocket (iPhone), overriding the top scroll pocket capture color is only
+        // necessary when:
         //   1. The top content inset area is visible.
         //   2. There's an element with a top fixed-position color.
         // If either condition is false, the scroll pocket is either not visible in the first place,
         // or it should match the scroll view background color anyways.
+        // When using a hard pocket (iPad), the top scroll pocket capture color must be set to ensure
+        // that glass elements overlaying the pocket adapt correctly.
         return;
     }
 
     if (RetainPtr color = [self _sampledTopFixedPositionContentColor] ?: [self underPageBackgroundColor])
-        [_scrollView _setPocketColor:color.get() forEdge:UIRectEdgeTop];
+        [_scrollView _setInternalTopPocketColor:color.get()];
 #endif
 }
 
@@ -3330,6 +3315,16 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
     }
 }
 
+- (void)_updatePrefersSolidColorHardPocket
+{
+#if PLATFORM(MAC)
+    _impl->updatePrefersSolidColorHardPocket();
+#else
+    BOOL useSolidColor = [_scrollView _usesHardTopScrollEdgeEffect] && [self _hasVisibleColorExtensionView:WebCore::BoxSide::Top];
+    [_scrollView _setPrefersSolidColorHardPocket:useSolidColor forEdge:UIRectEdgeTop];
+#endif
+}
+
 - (void)_updateHiddenScrollPocketEdges
 {
 #if PLATFORM(IOS_FAMILY)
@@ -3434,10 +3429,8 @@ static ASCIILiteral descriptionForReason(WebKit::HideScrollPocketReason reason)
 
 - (void)colorExtensionViewWillDisappear:(WKColorExtensionView *)view
 {
-#if PLATFORM(MAC)
     if (view == _fixedColorExtensionViews.at(WebCore::BoxSide::Top))
-        _impl->updatePrefersSolidColorHardPocket();
-#endif
+        [self _updatePrefersSolidColorHardPocket];
 
 #if PLATFORM(IOS_FAMILY)
     [self _updateHiddenScrollPocketEdges];
@@ -3446,10 +3439,8 @@ static ASCIILiteral descriptionForReason(WebKit::HideScrollPocketReason reason)
 
 - (void)colorExtensionViewDidAppear:(WKColorExtensionView *)view
 {
-#if PLATFORM(MAC)
     if (view == _fixedColorExtensionViews.at(WebCore::BoxSide::Top))
-        _impl->updatePrefersSolidColorHardPocket();
-#endif
+        [self _updatePrefersSolidColorHardPocket];
 
 #if PLATFORM(IOS_FAMILY)
     [self _updateHiddenScrollPocketEdges];
@@ -3517,7 +3508,7 @@ struct WKWebViewData {
 - (void)fetchDataOfTypes:(WKWebViewDataType)dataTypes completionHandler:(void (^)(NSData *, NSError *))completionHandler
 {
     Vector<WebKit::WebViewDataType> dataTypesToEncode;
-    if (dataTypes & _WKWebViewDataTypeSessionStorage)
+    if (dataTypes & WKWebViewDataTypeSessionStorage)
         dataTypesToEncode.append(WebKit::WebViewDataType::SessionStorage);
 
     auto data = Box<WKWebViewData>::create();
@@ -3548,7 +3539,7 @@ struct WKWebViewData {
         completionHandler(toNSData(encoder.span()).get(), nullptr);
     });
 
-    if (dataTypes & _WKWebViewDataTypeSessionStorage) {
+    if (dataTypes & WKWebViewDataTypeSessionStorage) {
         RefPtr page = [self _protectedPage];
         page->fetchSessionStorage([callbackAggregator, protectedPage = page, data](auto&& sessionStorage) {
             data->sessionStorage = WTFMove(sessionStorage);
@@ -4264,7 +4255,7 @@ static RetainPtr<NSArray> wkTextManipulationErrors(NSArray<_WKTextManipulationIt
         if (result)
             completionHandler(*result, nil);
         else
-            completionHandler({ }, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]).get());
+            completionHandler({ }, unknownError().get());
     });
 }
 
@@ -4277,7 +4268,19 @@ static RetainPtr<NSArray> wkTextManipulationErrors(NSArray<_WKTextManipulationIt
         if (result)
             completionHandler(*result, nil);
         else
-            completionHandler({ }, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]).get());
+            completionHandler({ }, unknownError().get());
+    });
+}
+
+- (void)_hitTestAtPoint:(CGPoint)point inFrameCoordinateSpace:(WKFrameInfo *)frame completionHandler:(void (^)(_WKNodeInfo *, WKFrameInfo *, NSError *))completionHandler
+{
+    RefPtr mainFrame = _page->mainFrame();
+    if (!frame && !mainFrame)
+        return completionHandler(nil, nil, unknownError().get());
+    _page->hitTestAtPoint(frame ? frame->_frameInfo->frameInfoData().frameID : mainFrame->frameID(), point, [completionHandler = makeBlockPtr(completionHandler), page = RefPtr { _page.get() }] (auto&& result) mutable {
+        if (!result)
+            return completionHandler(nil, nil, unknownError().get());
+        completionHandler(wrapper(API::NodeInfo::create(WTFMove(result->node))).get(), wrapper(API::FrameInfo::create(WTFMove(result->frame), WTFMove(page))).get(), nil);
     });
 }
 
@@ -5710,40 +5713,14 @@ static inline OptionSet<WebKit::FindOptions> toFindOptions(_WKFindOptions wkFind
 
 - (BOOL)_isDisplayingPDF
 {
-    auto mainFrameIsDisplayingPDFDocument = [page = WeakPtr { _page.get() }] {
-        if (!page)
-            return false;
-        if (RefPtr mainFrame = page->mainFrame())
-            return mainFrame->isDisplayingPDFDocument();
-        return false;
-    };
+    if (!_page)
+        return NO;
 
-    bool unifiedPDFEnabled = false;
-#if ENABLE(UNIFIED_PDF)
-    unifiedPDFEnabled = _page->protectedPreferences()->unifiedPDFEnabled();
-#endif
+    RefPtr mainFrame = _page->mainFrame();
+    if (!mainFrame)
+        return NO;
 
-    bool hasCustomContentViewForPDFType = false;
-#if ENABLE(WKPDFVIEW)
-    hasCustomContentViewForPDFType = [weakSelf = WeakObjCPtr<WKWebView>(self)] {
-        if (![WKPDFView platformSupportsPDFView])
-            return false;
-
-        RetainPtr strongSelf = weakSelf.get();
-        if (!strongSelf)
-            return false;
-
-        for (auto& type : WebCore::MIMETypeRegistry::pdfMIMETypes()) {
-            Class providerClass = [strongSelf->_contentProviderRegistry providerForMIMEType:@(type.characters())];
-            if ([strongSelf->_customContentView isKindOfClass:providerClass])
-                return true;
-        }
-
-        return false;
-    }();
-#endif
-
-    return static_cast<BOOL>(!unifiedPDFEnabled && hasCustomContentViewForPDFType ?: mainFrameIsDisplayingPDFDocument());
+    return static_cast<BOOL>(mainFrame->isDisplayingPDFDocument());
 }
 
 - (BOOL)_isDisplayingStandaloneImageDocument
@@ -6393,12 +6370,13 @@ static Vector<Ref<API::TargetedElementInfo>> elementsFromWKElements(NSArray<_WKT
 
 @implementation WKWebView (WKTextExtraction)
 
-- (void)_requestTextExtraction:(CGRect)rectInWebView completionHandler:(void(^)(WKTextExtractionItem *))completionHandler
+- (void)_requestTextExtraction:(_WKTextExtractionConfiguration *)configuration completionHandler:(void(^)(WKTextExtractionResult *))completionHandler
 {
 #if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
     if (!self._isValid || !_page->protectedPreferences()->textExtractionEnabled())
         return completionHandler(nil);
 
+    auto rectInWebView = configuration.targetRect;
     auto rectInRootView = [&]() -> std::optional<WebCore::FloatRect> {
         if (CGRectIsNull(rectInWebView))
             return std::nullopt;
@@ -6411,13 +6389,15 @@ static Vector<Ref<API::TargetedElementInfo>> elementsFromWKElements(NSArray<_WKT
     }();
 
     _page->requestTextExtraction(WTFMove(rectInRootView), [completionHandler = makeBlockPtr(completionHandler), weakSelf = WeakObjCPtr<WKWebView>(self)](auto&& item) {
-        completionHandler(WebKit::createItem(item, [strongSelf = weakSelf.get()](auto& rectInRootView) -> WebCore::FloatRect {
+        RetainPtr rootItem = WebKit::createItem(item, [strongSelf = weakSelf.get()](auto& rectInRootView) -> WebCore::FloatRect {
 #if PLATFORM(IOS_FAMILY)
             if (RetainPtr contentView = strongSelf ? strongSelf->_contentView : nil)
                 return { [strongSelf convertRect:rectInRootView fromView:contentView.get()] };
 #endif
             return rectInRootView;
-        }).get());
+        });
+        RetainPtr result = adoptNS([[WKTextExtractionResult alloc] initWithRootItem:rootItem.get() popupMenu:nil]);
+        completionHandler(result.get());
     });
 #endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 }

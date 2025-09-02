@@ -46,9 +46,6 @@ public:
     String referrerPolicyForBindings() const;
     ReferrerPolicy referrerPolicy() const final;
 
-    const AtomString& loading() const;
-    void setLoading(const AtomString&);
-
     String srcdoc() const;
     ExceptionOr<void> setSrcdoc(Variant<RefPtr<TrustedHTML>, String>&&, SubstituteData::SessionHistoryVisibility = SubstituteData::SessionHistoryVisibility::Visible);
     SubstituteData::SessionHistoryVisibility srcdocSessionHistoryVisibility() const { return m_srcdocSessionHistoryVisibility; };
@@ -56,6 +53,8 @@ public:
     LazyLoadFrameObserver& lazyLoadFrameObserver();
 
     void loadDeferredFrame();
+
+    enum LoadingValues { Lazy, Eager };
 
 #if ENABLE(FULLSCREEN_API)
     bool hasIFrameFullscreenFlag() const { return m_IFrameFullscreenFlag; }

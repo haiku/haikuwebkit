@@ -1302,7 +1302,7 @@ void LocalFrameView::didLayout(SingleThreadWeakPtr<RenderElement> layoutRoot, bo
 
 #if PLATFORM(COCOA) || PLATFORM(WIN) || PLATFORM(GTK)
     if (CheckedPtr cache = document->existingAXObjectCache())
-        cache->postNotification(layoutRoot.get(), AXNotification::LayoutComplete);
+        cache->onLayoutComplete(*layoutRoot.get());
 #else
     UNUSED_PARAM(layoutRoot);
 #endif
@@ -2187,6 +2187,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         RefPtr<Element> container;
         bool foundBackdropFilter { false };
         bool retryHonoringPointerEvents { false };
+        bool isViewportSized { false };
         bool isDimmingLayer { false };
         Color backgroundColor;
     };
@@ -2225,10 +2226,26 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         return { };
     };
 
-    auto isNearlyViewportSized = [&](BoxSide side, const RenderObject& renderer) {
-        static constexpr auto minimumRatio = 0.8;
+    enum class ViewportComparison : uint8_t {
+        Smaller,
+        Similar,
+        Larger,
+    };
+
+    auto compareWithViewportSize = [&](BoxSide side, const RenderObject& renderer) {
+        using enum ViewportComparison;
+        static constexpr auto minimumRatio = 0.9;
+        static constexpr auto maximumRatio = 1.05;
         auto elementRect = enclosingLayoutRect(renderer.absoluteBoundingBoxRect());
-        return lengthOnSide(side, elementRect) > minimumRatio * lengthOnSide(side, fixedRect);
+        auto containerLength = lengthOnSide(side, elementRect);
+        auto viewportLength = lengthOnSide(side, fixedRect);
+        if (containerLength < viewportLength * minimumRatio)
+            return Smaller;
+
+        if (containerLength < viewportLength * maximumRatio)
+            return Similar;
+
+        return Larger;
     };
 
     auto midpointOnSide = [&](BoxSide side, const LayoutRect& rect) -> LayoutPoint {
@@ -2278,7 +2295,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         if (!styleColor.isResolvedColor())
             return { };
 
-        if (!isNearlyViewportSized(side, renderer))
+        if (compareWithViewportSize(side, renderer) == ViewportComparison::Smaller)
             return { };
 
         return styleColor.resolvedColor();
@@ -2291,6 +2308,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         IsScrollable,
         TooSmall,
         TooLarge,
+        IsViewportSizedCandidate,
         IsDimmingLayer,
         IsCandidate,
     };
@@ -2303,8 +2321,8 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         if (!renderer.isFixedPositioned() && !renderer.isStickilyPositioned())
             return NotFixedOrSticky;
 
-        bool isNearlyViewportSizedOnSide = isNearlyViewportSized(side, renderer);
-        bool isNearlyViewportSizedOnAdjacentSide = isNearlyViewportSized(adjacentSideInClockwiseOrder(side), renderer);
+        auto lengthOnSide = compareWithViewportSize(side, renderer);
+        auto lengthOnAdjacentSide = compareWithViewportSize(adjacentSideInClockwiseOrder(side), renderer);
         bool isProbablyDimmingContainer = false;
         if (CheckedPtr box = dynamicDowncast<RenderBox>(renderer)) {
             if (isHiddenOrNearlyTransparent(*box))
@@ -2314,7 +2332,10 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
                 return IsScrollable;
 
             isProbablyDimmingContainer = [&] {
-                if (!isNearlyViewportSizedOnAdjacentSide || !isNearlyViewportSizedOnSide)
+                if (lengthOnSide == ViewportComparison::Smaller)
+                    return false;
+
+                if (lengthOnAdjacentSide == ViewportComparison::Smaller)
                     return false;
 
                 if (!box->hasBackground())
@@ -2331,13 +2352,19 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             }();
         }
 
-        if (!isNearlyViewportSizedOnSide)
+        if (lengthOnSide == ViewportComparison::Smaller)
             return TooSmall;
 
-        if (!isProbablyDimmingContainer && isNearlyViewportSizedOnAdjacentSide)
+        if (!isProbablyDimmingContainer && lengthOnAdjacentSide == ViewportComparison::Larger)
             return TooLarge;
 
-        return isProbablyDimmingContainer ? IsDimmingLayer : IsCandidate;
+        if (isProbablyDimmingContainer)
+            return IsDimmingLayer;
+
+        if (lengthOnSide == ViewportComparison::Similar && lengthOnAdjacentSide == ViewportComparison::Similar)
+            return IsViewportSizedCandidate;
+
+        return IsCandidate;
     };
 
     enum class IgnoreCSSPointerEvents : bool { No, Yes };
@@ -2391,12 +2418,14 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
                 hitInvisiblePointerEventsNoneContainer = ancestor->usedPointerEvents() == PointerEvents::None;
                 break;
             }
+            case IsViewportSizedCandidate:
             case IsDimmingLayer:
             case IsCandidate: {
                 return {
                     .container = { ancestor->element() },
                     .foundBackdropFilter = foundBackdropFilter,
                     .retryHonoringPointerEvents = false,
+                    .isViewportSized = candidateType == IsViewportSizedCandidate,
                     .isDimmingLayer = candidateType == IsDimmingLayer,
                     .backgroundColor = hasMultipleBackgroundColors ? Color { } : WTFMove(primaryBackgroundColor),
                 };
@@ -2408,6 +2437,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             .container = { },
             .foundBackdropFilter = foundBackdropFilter,
             .retryHonoringPointerEvents = hitInvisiblePointerEventsNoneContainer,
+            .isViewportSized = false,
             .isDimmingLayer = false,
             .backgroundColor = { },
         };
@@ -2440,7 +2470,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         if (!border->isVisible())
             return samplingRect;
 
-        auto borderWidth = border->width();
+        auto borderWidth = Style::evaluate(border->width());
         if (borderWidth > thinBorderWidth)
             return samplingRect;
 
@@ -2464,6 +2494,14 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         return samplingRect;
     };
 
+    auto pageBackgroundColor = page->pageExtendedBackgroundColor();
+    auto blendAgainstPageBackground = [pageBackgroundColor](const Color& color) {
+        if (color.isOpaque())
+            return color;
+
+        return blendSourceOver(pageBackgroundColor, color);
+    };
+
     for (auto sideFlag : sides) {
         auto side = boxSideFromFlag(sideFlag);
         auto result = findFixedContainer(side, IgnoreCSSPointerEvents::Yes);
@@ -2480,13 +2518,14 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             continue;
         }
 
-        if (result.isDimmingLayer && page->fixedContainerEdges().hasFixedEdge(side)) {
+        bool preferExistingColor = result.isDimmingLayer || result.isViewportSized;
+        if (preferExistingColor && page->fixedContainerEdges().hasFixedEdge(side)) {
             edges.colors.setAt(side, page->fixedContainerEdges().colors.at(side));
             continue;
         }
 
         if (result.backgroundColor.isVisible()) {
-            edges.colors.setAt(side, result.isDimmingLayer ? result.backgroundColor : result.backgroundColor.colorWithAlpha(1));
+            edges.colors.setAt(side, result.isDimmingLayer ? blendAgainstPageBackground(result.backgroundColor) : result.backgroundColor.colorWithAlpha(1));
             continue;
         }
 
@@ -2496,14 +2535,15 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         }
 
         edges.colors.setAt(side, [&] -> FixedContainerEdge {
-            auto color = PageColorSampler::predominantColor(*page, computeSamplingRect(result.container->renderStyle(), side));
+            auto samplingResult = PageColorSampler::predominantColor(*page, computeSamplingRect(result.container->renderStyle(), side));
+            if (!std::holds_alternative<Color>(samplingResult))
+                return samplingResult;
+
+            auto color = std::get<Color>(samplingResult);
             if (result.isDimmingLayer)
-                return color;
+                return blendAgainstPageBackground(color);
 
-            if (!std::holds_alternative<Color>(color))
-                return color;
-
-            return std::get<Color>(color).colorWithAlpha(1);
+            return color.colorWithAlpha(1);
         }());
     }
 
@@ -2700,7 +2740,7 @@ bool LocalFrameView::fixedElementsLayoutRelativeToFrame() const
 
 IntPoint LocalFrameView::lastKnownMousePositionInView() const
 {
-    return convertFromContainingWindow(m_frame->eventHandler().lastKnownMousePosition());
+    return flooredIntPoint(convertFromContainingWindow(m_frame->eventHandler().lastKnownMousePosition()));
 }
 
 bool LocalFrameView::isHandlingWheelEvent() const
@@ -4942,7 +4982,7 @@ float LocalFrameView::adjustVerticalPageScrollStepForFixedContent(float step)
     float bottomObscuredArea = 0;
     for (const auto& viewPositionedOutOfFlowBox : *viewPositionedOutOfFlowBoxes) {
         const RenderStyle& style = viewPositionedOutOfFlowBox.style();
-        if (style.position() != PositionType::Fixed || style.usedVisibility() == Visibility::Hidden || !style.opacity())
+        if (style.position() != PositionType::Fixed || style.usedVisibility() == Visibility::Hidden || style.opacity().isTransparent())
             continue;
 
         FloatQuad contentQuad = viewPositionedOutOfFlowBox.absoluteContentQuad();
@@ -5950,6 +5990,11 @@ FloatPoint LocalFrameView::absoluteToDocumentPoint(FloatPoint p, std::optional<f
     return p.scaled(absoluteToDocumentScaleFactor(usedZoom));
 }
 
+DoublePoint LocalFrameView::absoluteToDocumentPoint(DoublePoint p, std::optional<float> usedZoom) const
+{
+    return p.scaled(absoluteToDocumentScaleFactor(usedZoom));
+}
+
 FloatRect LocalFrameView::absoluteToClientRect(FloatRect rect, std::optional<float> usedZoom) const
 {
     return documentToClientRect(absoluteToDocumentRect(rect, usedZoom));
@@ -5970,6 +6015,12 @@ FloatRect LocalFrameView::documentToClientRect(FloatRect rect) const
 }
 
 FloatPoint LocalFrameView::documentToClientPoint(FloatPoint p) const
+{
+    p.move(documentToClientOffset());
+    return p;
+}
+
+DoublePoint LocalFrameView::documentToClientPoint(DoublePoint p) const
 {
     p.move(documentToClientOffset());
     return p;

@@ -3,6 +3,7 @@
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Simon Hausmann <hausmann@kde.org>
  * Copyright (C) 2004, 2006, 2009, 2010 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -24,9 +25,9 @@
 #pragma once
 
 #include "HTMLElement.h"
-#include "Length.h"
+#include "HTMLParserIdioms.h"
 #include "StylePrimitiveNumericTypes.h"
-#include <wtf/UniqueArray.h>
+#include <wtf/FixedVector.h>
 
 namespace WebCore {
 
@@ -41,17 +42,17 @@ public:
     bool hasFrameBorder() const { return m_frameborder; }
     bool noResize() const { return m_noresize; }
 
-    int totalRows() const { return m_totalRows; }
-    int totalCols() const { return m_totalCols; }
+    int totalRows() const { return m_rowDimensions.isEmpty() ? 1 : m_rowDimensions.size(); }
+    int totalCols() const { return m_colDimensions.isEmpty() ? 1 : m_colDimensions.size(); }
     int border() const { return hasFrameBorder() ? m_border : 0; }
 
     bool hasBorderColor() const { return m_borderColorSet; }
 
-    std::span<const Length> rowLengths() const { return m_rowLengths ? unsafeMakeSpan(m_rowLengths.get(), m_totalRows) : std::span<const Length> { }; }
-    std::span<const Length> colLengths() const { return m_colLengths ? unsafeMakeSpan(m_colLengths.get(), m_totalCols) : std::span<const Length> { }; }
+    std::span<const HTMLDimensionsListValue> rowDimensions() const { return m_rowDimensions.span(); }
+    std::span<const HTMLDimensionsListValue> colDimensions() const { return m_colDimensions.span(); }
 
     static RefPtr<HTMLFrameSetElement> findContaining(Element* descendant);
-    
+
     Vector<AtomString> supportedPropertyNames() const;
     WindowProxy* namedItem(const AtomString&);
     bool isSupportedPropertyName(const AtomString&);
@@ -73,15 +74,12 @@ private:
     InsertedIntoAncestorResult insertedIntoAncestor(InsertionType, ContainerNode&) final;
     void removedFromAncestor(RemovalType, ContainerNode&) final;
 
-    UniqueArray<Length> m_rowLengths;
-    UniqueArray<Length> m_colLengths;
+    FixedVector<HTMLDimensionsListValue> m_rowDimensions;
+    FixedVector<HTMLDimensionsListValue> m_colDimensions;
 
-    int m_totalRows;
-    int m_totalCols;
-    
     int m_border;
     bool m_borderSet;
-    
+
     bool m_borderColorSet;
 
     bool m_frameborder;

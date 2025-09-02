@@ -343,18 +343,16 @@ bool Scrollbar::mouseMoved(const PlatformMouseEvent& evt)
     if (m_pressedPart == ThumbPart) {
         if (theme().shouldSnapBackToDragOrigin(*this, evt))
             m_scrollableArea.scrollToOffsetWithoutAnimation(m_orientation, m_dragOrigin);
-        else {
-            moveThumb(m_orientation == ScrollbarOrientation::Horizontal ?
-                      convertFromContainingWindow(evt.position()).x() :
-                      convertFromContainingWindow(evt.position()).y(), theme().shouldDragDocumentInsteadOfThumb(*this, evt));
-        }
+        else
+            moveThumb(m_orientation == ScrollbarOrientation::Horizontal ? convertFromContainingWindow(evt.position()).x() : convertFromContainingWindow(evt.position()).y(), theme().shouldDragDocumentInsteadOfThumb(*this, evt));
+
         return true;
     }
 
     if (m_pressedPart != NoPart)
         m_pressedPos = (orientation() == ScrollbarOrientation::Horizontal ? convertFromContainingWindow(evt.position()).x() : convertFromContainingWindow(evt.position()).y());
 
-    ScrollbarPart part = theme().hitTest(*this, evt.position());
+    ScrollbarPart part = theme().hitTest(*this, flooredIntPoint(evt.position()));
     if (part != m_hoveredPart) {
         if (m_pressedPart != NoPart) {
             if (part == m_pressedPart) {
@@ -401,7 +399,7 @@ bool Scrollbar::mouseUp(const PlatformMouseEvent& mouseEvent)
 
     // m_hoveredPart won't be updated until the next mouseMoved or mouseDown, so we have to hit test
     // to really know if the mouse has exited the scrollbar on a mouseUp.
-    ScrollbarPart part = theme().hitTest(*this, mouseEvent.position());
+    ScrollbarPart part = theme().hitTest(*this, flooredIntPoint(mouseEvent.position()));
     if (part == NoPart)
         m_scrollableArea.mouseExitedScrollbar(this);
 
@@ -413,7 +411,7 @@ bool Scrollbar::mouseUp(const PlatformMouseEvent& mouseEvent)
 
 bool Scrollbar::mouseDown(const PlatformMouseEvent& evt)
 {
-    ScrollbarPart pressedPart = theme().hitTest(*this, evt.position());
+    ScrollbarPart pressedPart = theme().hitTest(*this, flooredIntPoint(evt.position()));
     auto action = theme().handleMousePressEvent(*this, evt, pressedPart);
     if (action == ScrollbarButtonPressAction::None)
         return true;

@@ -68,7 +68,6 @@ class Data;
 class Point;
 class Rect;
 class SecurityOrigin;
-class SerializedScriptValue;
 class Size;
 class UserContentURLPattern;
 class WebArchive;
@@ -102,7 +101,6 @@ WK_ADD_API_MAPPING(WKImageRef, WebImage)
 WK_ADD_API_MAPPING(WKPointRef, API::Point)
 WK_ADD_API_MAPPING(WKRectRef, API::Rect)
 WK_ADD_API_MAPPING(WKSecurityOriginRef, API::SecurityOrigin)
-WK_ADD_API_MAPPING(WKSerializedScriptValueRef, API::SerializedScriptValue)
 WK_ADD_API_MAPPING(WKSizeRef, API::Size)
 WK_ADD_API_MAPPING(WKStringRef, API::String)
 WK_ADD_API_MAPPING(WKTypeRef, API::Object)

@@ -35,7 +35,9 @@ public:
 private:
     explicit SourceAlpha(DestinationColorSpace);
 
+    OptionSet<FilterRenderingMode> supportedFilterRenderingModes() const override;
     std::unique_ptr<FilterEffectApplier> createSoftwareApplier() const override;
+    std::unique_ptr<FilterEffectApplier> createAcceleratedApplier() const override;
 
     WTF::TextStream& externalRepresentation(WTF::TextStream&, FilterRepresentation) const override;
 };

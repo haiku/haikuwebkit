@@ -191,7 +191,7 @@ static void writeSVGFillPaintingResource(TextStream& ts, const RenderElement& re
     writeSVGPaintingResource(ts, fillPaintingResource);
 
     const auto& svgStyle = renderer.style().svgStyle();
-    writeIfNotDefault(ts, "opacity"_s, svgStyle.fillOpacity(), 1.0f);
+    writeIfNotDefault(ts, "opacity"_s, svgStyle.fillOpacity().value.value, 1.0f);
     writeIfNotDefault(ts, "fill rule"_s, svgStyle.fillRule(), WindRule::NonZero);
     ts << "}]"_s;
 }
@@ -212,9 +212,9 @@ static void writeSVGStrokePaintingResource(TextStream& ts, const RenderElement& 
         return lengthContext.valueForLength(length);
     });
 
-    writeIfNotDefault(ts, "opacity"_s, svgStyle.strokeOpacity(), 1.0f);
+    writeIfNotDefault(ts, "opacity"_s, svgStyle.strokeOpacity().value.value, 1.0f);
     writeIfNotDefault(ts, "stroke width"_s, strokeWidth, 1.0);
-    writeIfNotDefault(ts, "miter limit"_s, style.strokeMiterLimit(), 4.0f);
+    writeIfNotDefault(ts, "miter limit"_s, style.strokeMiterLimit().value.value, 4.0f);
     writeIfNotDefault(ts, "line cap"_s, style.capStyle(), LineCap::Butt);
     writeIfNotDefault(ts, "line join"_s, style.joinStyle(), LineJoin::Miter);
     writeIfNotDefault(ts, "dash offset"_s, dashOffset, 0.0);
@@ -237,7 +237,7 @@ void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, Opt
     if (!renderer.localTransform().isIdentity())
         writeNameValuePair(ts, "transform"_s, renderer.localTransform());
     writeIfNotDefault(ts, "image rendering"_s, style.imageRendering(), RenderStyle::initialImageRendering());
-    writeIfNotDefault(ts, "opacity"_s, style.opacity(), RenderStyle::initialOpacity());
+    writeIfNotDefault(ts, "opacity"_s, style.opacity().value.value, 1.0f);
 
     if (auto* shape = dynamicDowncast<LegacyRenderSVGShape>(renderer)) {
         Color fallbackColor;

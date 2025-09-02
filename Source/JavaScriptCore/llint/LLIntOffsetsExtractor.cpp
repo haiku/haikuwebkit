@@ -72,7 +72,6 @@
 #include "VM.h"
 #include "ValueProfile.h"
 #include "WasmCallingConvention.h"
-#include "WasmFunctionCodeBlockGenerator.h"
 #include "WasmIPIntGenerator.h"
 #include "WasmIPIntSlowPaths.h"
 #include "Watchdog.h"
@@ -98,9 +97,6 @@ class LLIntOffsetsExtractor {
     using Int32FixedVector = FixedVector<int32_t>;
     using Int64FixedVector = FixedVector<uint64_t>;
     using VoidPointerFixedVector = FixedVector<void*>;
-#if ENABLE(WEBASSEMBLY)
-    using WasmJumpTableFixedVector = FixedVector<Wasm::JumpTable>;
-#endif
 
 public:
     static const int64_t* dummy();

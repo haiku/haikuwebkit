@@ -83,6 +83,8 @@ public:
 
     DECLARE_EXPORT_INFO;
 
+    DECLARE_VISIT_CHILDREN;
+
     void initializeImports(JSGlobalObject*, JSObject* importObject, Wasm::CreationMode);
     void finalizeCreation(VM&, JSGlobalObject*, Ref<Wasm::CalleeGroup>&&, Wasm::CreationMode);
     
@@ -304,7 +306,6 @@ private:
     JSWebAssemblyInstance(VM&, Structure*, JSWebAssemblyModule*, WebAssemblyModuleRecord*, RefPtr<SourceProvider>&&);
     ~JSWebAssemblyInstance();
     void finishCreation(VM&);
-    DECLARE_VISIT_CHILDREN;
 
     static size_t allocationSize(const Wasm::ModuleInformation&);
     bool evaluateConstantExpression(uint64_t, Wasm::Type, uint64_t&);

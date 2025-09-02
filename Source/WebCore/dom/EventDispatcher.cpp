@@ -45,6 +45,8 @@
 #include "ShadowRoot.h"
 #include "TextEvent.h"
 #include "TouchEvent.h"
+#include "page/LocalDOMWindow.h"
+#include <wtf/Scope.h>
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
@@ -175,6 +177,15 @@ void EventDispatcher::dispatchEvent(Node& node, Event& event)
 
     auto typeInfo = eventNames().typeInfoForEvent(event.type());
     bool shouldDispatchEventToScripts = hasRelevantEventListener(document, event);
+
+    RefPtr window = document->window();
+    std::optional<LocalDOMWindow::PerformanceEventTimingCandidate> pendingEventTiming;
+    if (typeInfo.isInCategory(EventCategory::EventTimingEligible) && window && document->settings().eventTimingEnabled() && event.isTrusted())
+        pendingEventTiming = window->initializeEventTimingEntry(event, typeInfo);
+    auto finalizeEntry(WTF::makeScopeExit([&, event = Ref(event)] {
+        if (pendingEventTiming)
+            window->finalizeEventTimingEntry(*pendingEventTiming, event);
+    }));
 
     bool targetOrRelatedTargetIsInShadowTree = node.isInShadowTree() || isInShadowTree(event.relatedTarget());
     // FIXME: We should also check touch target list.

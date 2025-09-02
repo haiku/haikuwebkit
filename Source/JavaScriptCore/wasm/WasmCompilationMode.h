@@ -30,7 +30,6 @@
 namespace JSC { namespace Wasm {
 
 enum class CompilationMode : uint8_t {
-    LLIntMode,
     IPIntMode,
     BBQMode,
     OMGMode,
@@ -43,7 +42,6 @@ enum class CompilationMode : uint8_t {
 constexpr inline bool isAnyInterpreter(CompilationMode compilationMode)
 {
     switch (compilationMode) {
-    case CompilationMode::LLIntMode:
     case CompilationMode::IPIntMode:
         return true;
     case CompilationMode::BBQMode:
@@ -63,7 +61,6 @@ constexpr inline bool isAnyBBQ(CompilationMode compilationMode)
     case CompilationMode::BBQMode:
         return true;
     case CompilationMode::OMGForOSREntryMode:
-    case CompilationMode::LLIntMode:
     case CompilationMode::IPIntMode:
     case CompilationMode::OMGMode:
     case CompilationMode::JSToWasmEntrypointMode:
@@ -81,7 +78,6 @@ constexpr inline bool isAnyOMG(CompilationMode compilationMode)
     case CompilationMode::OMGForOSREntryMode:
         return true;
     case CompilationMode::BBQMode:
-    case CompilationMode::LLIntMode:
     case CompilationMode::IPIntMode:
     case CompilationMode::JSToWasmEntrypointMode:
     case CompilationMode::JSToWasmICMode:
@@ -99,7 +95,6 @@ constexpr inline bool isAnyWasmToJS(CompilationMode compilationMode)
     case CompilationMode::OMGMode:
     case CompilationMode::OMGForOSREntryMode:
     case CompilationMode::BBQMode:
-    case CompilationMode::LLIntMode:
     case CompilationMode::IPIntMode:
     case CompilationMode::JSToWasmEntrypointMode:
     case CompilationMode::JSToWasmICMode:

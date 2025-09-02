@@ -493,7 +493,7 @@ public:
 
     void markProcessAsRecentlyUsed();
 
-#if PLATFORM(MAC) || PLATFORM(GTK) || PLATFORM(WPE)
+#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
     void platformSuspendProcess();
     void platformResumeProcess();
 #endif
@@ -618,7 +618,7 @@ private:
 #endif
 
 #if ENABLE(MODEL_PROCESS)
-    void createModelProcessConnection(IPC::Connection::Handle&&, ModelProcessConnectionParameters&&);
+    void createModelProcessConnection(IPC::Connection::Handle&&);
 #endif
 
     bool shouldAllowNonValidInjectedCode() const;
@@ -824,7 +824,7 @@ private:
     const std::unique_ptr<AudioSessionRoutingArbitratorProxy> m_routingArbitrator;
 #endif
     bool m_isConnectedToHardwareConsole { true };
-#if PLATFORM(MAC)
+#if PLATFORM(COCOA)
     bool m_platformSuspendDidReleaseNearSuspendedAssertion { false };
 #endif
     mutable String m_environmentIdentifier;

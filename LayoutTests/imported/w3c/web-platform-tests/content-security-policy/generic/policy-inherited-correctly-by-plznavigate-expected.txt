@@ -1,3 +1,4 @@
+CONSOLE MESSAGE: Refused to load http://localhost:8800/content-security-policy/support/fail.html because it does not appear in the frame-src directive of the Content Security Policy.
 
 
 PASS iframe still inherits correct CSP

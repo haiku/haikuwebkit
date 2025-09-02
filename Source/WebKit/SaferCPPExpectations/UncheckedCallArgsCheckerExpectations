@@ -1,12 +1,8 @@
 NetworkProcess/Classifier/ResourceLoadStatisticsStore.cpp
 NetworkProcess/DatabaseUtilities.cpp
 NetworkProcess/PrivateClickMeasurement/PrivateClickMeasurementDatabase.cpp
-NetworkProcess/SharedWorker/WebSharedWorkerServerConnection.cpp
-NetworkProcess/cocoa/WKURLSessionTaskDelegate.mm
-NetworkProcess/cocoa/WebSocketTaskCocoa.mm
 Platform/IPC/ArgumentCoders.h
 Platform/cocoa/_WKWebViewTextInputNotifications.mm
-Shared/RemoteLayerTree/RemoteLayerBackingStoreCollection.mm
 Shared/RemoteLayerTree/RemoteLayerTreeTransaction.mm
 Shared/WebWheelEventCoalescer.cpp
 UIProcess/API/Cocoa/WKWebView.mm
@@ -61,7 +57,6 @@ WebProcess/WebPage/mac/TiledCoreAnimationDrawingArea.mm
 WebProcess/WebPage/mac/WKAccessibilityWebPageObjectBase.mm
 WebProcess/WebPage/mac/WebPageMac.mm
 WebProcess/cocoa/PlaybackSessionManager.mm
-WebProcess/cocoa/RemoteRealtimeMediaSource.cpp
 WebProcess/cocoa/UserMediaCaptureManager.cpp
 WebProcess/cocoa/VideoPresentationManager.mm
 WebProcess/cocoa/WebProcessCocoa.mm

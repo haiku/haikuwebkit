@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "DeferGC.h"
-#include "Weak.h"
-#include "WeakGCHashTable.h"
+#include <JavaScriptCore/DeferGC.h>
+#include <JavaScriptCore/Weak.h>
+#include <JavaScriptCore/WeakGCHashTable.h>
 #include <wtf/HashMap.h>
 
 namespace JSC {

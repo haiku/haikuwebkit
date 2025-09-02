@@ -357,7 +357,7 @@ void MediaRecorder::fetchData(FetchDataCallback&& callback, TakePrivateRecorder 
         pendingActivity->object().m_isFetchingData = false;
         callback(pendingActivity->object(), WTFMove(buffer), mimeType, timeCode);
         for (auto& task : std::exchange(pendingActivity->object().m_pendingFetchDataTasks, { }))
-            task(pendingActivity->object(), FragmentedSharedBuffer::create(), mimeType, timeCode);
+            task(pendingActivity->object(), SharedBuffer::create(), mimeType, timeCode);
     });
 }
 

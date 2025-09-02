@@ -85,6 +85,11 @@ void LegacyInlineBox::invalidateParentChildList()
 
 #endif
 
+const RenderStyle& LegacyInlineBox::lineStyle() const
+{
+    return m_bitfields.firstLine() ? renderer().firstLineStyle() : renderer().style();
+}
+
 void LegacyInlineBox::removeFromParent()
 { 
     if (parent())

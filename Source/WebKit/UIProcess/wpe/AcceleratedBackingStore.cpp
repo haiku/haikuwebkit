@@ -28,7 +28,7 @@
 
 #if ENABLE(WPE_PLATFORM)
 #include "AcceleratedBackingStoreMessages.h"
-#include "AcceleratedSurfaceDMABufMessages.h"
+#include "AcceleratedSurfaceMessages.h"
 #include "WebPageProxy.h"
 #include "WebProcessProxy.h"
 #include <WebCore/ShareableBitmap.h>
@@ -146,8 +146,7 @@ void AcceleratedBackingStore::frame(uint64_t bufferID, Rects&& damageRects, WTF:
     m_pendingBuffer = buffer;
     m_pendingDamageRects = WTFMove(damageRects);
     if (wpe_display_use_explicit_sync(wpe_view_get_display(m_wpeView.get()))) {
-        if (WPE_IS_BUFFER_DMA_BUF(m_pendingBuffer.get()))
-            wpe_buffer_dma_buf_set_rendering_fence(WPE_BUFFER_DMA_BUF(m_pendingBuffer.get()), renderingFenceFD.release());
+        wpe_buffer_set_rendering_fence(m_pendingBuffer.get(), renderingFenceFD.release());
         renderPendingBuffer();
     } else
         m_fenceMonitor.addFileDescriptor(WTFMove(renderingFenceFD));
@@ -174,7 +173,7 @@ void AcceleratedBackingStore::renderPendingBuffer()
 void AcceleratedBackingStore::frameDone()
 {
     if (RefPtr legacyMainFrameProcess = m_legacyMainFrameProcess.get())
-        legacyMainFrameProcess->send(Messages::AcceleratedSurfaceDMABuf::FrameDone(), m_surfaceID);
+        legacyMainFrameProcess->send(Messages::AcceleratedSurface::FrameDone(), m_surfaceID);
 }
 
 void AcceleratedBackingStore::bufferRendered()
@@ -186,12 +185,10 @@ void AcceleratedBackingStore::bufferRendered()
 void AcceleratedBackingStore::bufferReleased(WPEBuffer* buffer)
 {
     if (auto id = m_bufferIDs.get(buffer)) {
-        UnixFileDescriptor releaseFence;
-        if (WPE_IS_BUFFER_DMA_BUF(buffer))
-            releaseFence = UnixFileDescriptor { wpe_buffer_dma_buf_take_release_fence(WPE_BUFFER_DMA_BUF(buffer)), UnixFileDescriptor::Adopt };
+        auto releaseFence = UnixFileDescriptor { wpe_buffer_take_release_fence(buffer), UnixFileDescriptor::Adopt };
 
         if (RefPtr legacyMainFrameProcess = m_legacyMainFrameProcess.get())
-            legacyMainFrameProcess->send(Messages::AcceleratedSurfaceDMABuf::ReleaseBuffer(id, WTFMove(releaseFence)), m_surfaceID);
+            legacyMainFrameProcess->send(Messages::AcceleratedSurface::ReleaseBuffer(id, WTFMove(releaseFence)), m_surfaceID);
     }
 }
 

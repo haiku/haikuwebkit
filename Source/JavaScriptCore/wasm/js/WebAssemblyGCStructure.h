@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Structure.h"
-#include "WasmTypeDefinition.h"
+#include <JavaScriptCore/Structure.h>
+#include <JavaScriptCore/WasmTypeDefinition.h>
 
 #if ENABLE(WEBASSEMBLY)
 

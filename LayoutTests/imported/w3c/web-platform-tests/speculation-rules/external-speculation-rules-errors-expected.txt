@@ -1,0 +1,7 @@
+
+Harness Error (TIMEOUT), message = null
+
+TIMEOUT Test that an external speculation rules script fires an error event Test timed out
+NOTRUN Test that an external speculation rules script fires an error event, regardless of attribute order
+NOTRUN Test that an external speculation rules script in markup fires an error event
+

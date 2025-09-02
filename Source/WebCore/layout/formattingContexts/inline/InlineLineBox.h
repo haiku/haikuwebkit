@@ -119,7 +119,7 @@ private:
     InlineRect m_logicalRect;
     OptionSet<InlineLevelBox::Type> m_boxTypes;
 
-    FontBaseline m_baselineType { AlphabeticBaseline };
+    FontBaseline m_baselineType { FontBaseline::Alphabetic };
     InlineLevelBox m_rootInlineBox;
     InlineLevelBoxList m_nonRootInlineLevelBoxList;
 

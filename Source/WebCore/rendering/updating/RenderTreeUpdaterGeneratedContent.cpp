@@ -121,7 +121,7 @@ static RenderPtr<RenderObject> createContentRenderer(const Style::Content::Text&
 
 static RenderPtr<RenderObject> createContentRenderer(const Style::Content::Image& value, const String& altText, Document& document, const RenderStyle& pseudoStyle)
 {
-    auto contentRenderer = createRenderer<RenderImage>(RenderObject::Type::Image, document, RenderStyle::createStyleInheritingFromPseudoStyle(pseudoStyle), const_cast<StyleImage*>(value.image.ptr()));
+    auto contentRenderer = createRenderer<RenderImage>(RenderObject::Type::Image, document, RenderStyle::createStyleInheritingFromPseudoStyle(pseudoStyle), value.image.value.ptr());
     contentRenderer->initializeStyle();
     contentRenderer->setAltText(altText);
     return contentRenderer;

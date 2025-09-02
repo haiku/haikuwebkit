@@ -76,6 +76,11 @@ void RecorderImpl::save(GraphicsContextState::Purpose purpose)
 
 void RecorderImpl::restore(GraphicsContextState::Purpose purpose)
 {
+    if (stateStack().size() <= 1) {
+        LOG_ERROR("ERROR void RecorderImpl::restore() stack is empty");
+        return;
+    }
+
     if (!updateStateForRestore(purpose))
         return;
     m_items.append(Restore());

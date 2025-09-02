@@ -39,6 +39,10 @@
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
 
+namespace WebCore {
+enum class UseLosslessCompression : bool;
+}
+
 namespace WebKit {
 
 class GraphicsLayerCARemote;
@@ -74,6 +78,8 @@ public:
     std::optional<WebCore::DestinationColorSpace> displayColorSpace() const;
 
     std::optional<DrawingAreaIdentifier> drawingAreaIdentifier() const;
+
+    WebCore::UseLosslessCompression useIOSurfaceLosslessCompression() const;
 
     void buildTransaction(RemoteLayerTreeTransaction&, WebCore::PlatformCALayer& rootLayer, WebCore::FrameIdentifier);
 

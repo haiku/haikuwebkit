@@ -112,27 +112,27 @@ private:
             if (!m_client.mouseDown)
                 return false;
 
-            return m_client.mouseDown(toAPI(&pageOverlay), WebKit::toAPI(event.position()), WebKit::toAPI(event.button()), m_client.base.clientInfo);
+            return m_client.mouseDown(toAPI(&pageOverlay), WebKit::toAPI(flooredIntPoint(event.position())), WebKit::toAPI(event.button()), m_client.base.clientInfo);
         }
         case WebCore::PlatformMouseEvent::Type::MouseReleased: {
             if (!m_client.mouseUp)
                 return false;
 
-            return m_client.mouseUp(toAPI(&pageOverlay), WebKit::toAPI(event.position()), WebKit::toAPI(event.button()), m_client.base.clientInfo);
+            return m_client.mouseUp(toAPI(&pageOverlay), WebKit::toAPI(flooredIntPoint(event.position())), WebKit::toAPI(event.button()), m_client.base.clientInfo);
         }
         case WebCore::PlatformMouseEvent::Type::MouseMoved: {
             if (event.button() == WebCore::MouseButton::None) {
                 if (!m_client.mouseMoved)
                     return false;
 
-                return m_client.mouseMoved(toAPI(&pageOverlay), WebKit::toAPI(event.position()), m_client.base.clientInfo);
+                return m_client.mouseMoved(toAPI(&pageOverlay), WebKit::toAPI(flooredIntPoint(event.position())), m_client.base.clientInfo);
             }
 
             // This is a MouseMove event with a mouse button pressed. Call mouseDragged.
             if (!m_client.mouseDragged)
                 return false;
 
-            return m_client.mouseDragged(toAPI(&pageOverlay), WebKit::toAPI(event.position()), WebKit::toAPI(event.button()), m_client.base.clientInfo);
+            return m_client.mouseDragged(toAPI(&pageOverlay), WebKit::toAPI(flooredIntPoint(event.position())), WebKit::toAPI(event.button()), m_client.base.clientInfo);
         }
 
         default:

@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "IndexingHeader.h"
-#include "IndexingType.h"
-#include "PropertyStorage.h"
+#include <JavaScriptCore/IndexingHeader.h>
+#include <JavaScriptCore/IndexingType.h>
+#include <JavaScriptCore/PropertyStorage.h>
 #include <wtf/Gigacage.h>
 #include <wtf/Noncopyable.h>
 

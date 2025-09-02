@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "YarrErrorCode.h"
-#include "YarrFlags.h"
-#include "YarrUnicodeProperties.h"
+#include <JavaScriptCore/YarrErrorCode.h>
+#include <JavaScriptCore/YarrFlags.h>
+#include <JavaScriptCore/YarrUnicodeProperties.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/HashMap.h>
 #include <wtf/OptionSet.h>

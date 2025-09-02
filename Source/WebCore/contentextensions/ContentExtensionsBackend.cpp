@@ -275,6 +275,9 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
         ContentRuleListResults::Result result;
         for (const auto& action : actionsFromContentRuleList.actions) {
             WTF::visit(WTF::makeVisitor([&](const BlockLoadAction&) {
+                if (results.summary.redirected)
+                    return;
+
                 results.summary.blockedLoad = true;
                 result.blockedLoad = true;
             }, [&](const BlockCookiesAction&) {
@@ -305,10 +308,11 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
                 }
             }, [&] (const RedirectAction& redirectAction) {
                 if (initiatingDocumentLoader.allowsActiveContentRuleListActionsForURL(contentRuleListIdentifier, url)) {
-                    if (!results.summary.blockedLoad)
-                        results.summary.redirectedPriorToBlock = true;
+                    if (results.summary.blockedLoad)
+                        return;
 
                     result.redirected = true;
+                    results.summary.redirected = true;
                     results.summary.redirectActions.append({ redirectAction, m_contentExtensions.get(contentRuleListIdentifier)->extensionBaseURL() });
                 }
             }), action.data());

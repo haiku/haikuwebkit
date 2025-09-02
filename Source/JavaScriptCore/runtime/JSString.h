@@ -22,17 +22,17 @@
 
 #pragma once
 
-#include "ArgList.h"
-#include "CallFrame.h"
-#include "CommonIdentifiers.h"
-#include "EnsureStillAliveHere.h"
-#include "GCOwnedDataScope.h"
-#include "GetVM.h"
-#include "Identifier.h"
-#include "PropertyDescriptor.h"
-#include "PropertySlot.h"
-#include "Structure.h"
-#include "ThrowScope.h"
+#include <JavaScriptCore/ArgList.h>
+#include <JavaScriptCore/CallFrame.h>
+#include <JavaScriptCore/CommonIdentifiers.h>
+#include <JavaScriptCore/EnsureStillAliveHere.h>
+#include <JavaScriptCore/GCOwnedDataScope.h>
+#include <JavaScriptCore/GetVM.h>
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/PropertyDescriptor.h>
+#include <JavaScriptCore/PropertySlot.h>
+#include <JavaScriptCore/Structure.h>
+#include <JavaScriptCore/ThrowScope.h>
 #include <array>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/ForbidHeapAllocation.h>

@@ -589,42 +589,6 @@ bool RTT::isStrictSubRTT(const RTT& parent) const
     return &parent == displayEntry(displaySize() - parent.displaySize() - 1);
 }
 
-const TypeDefinition& TypeInformation::signatureForLLIntBuiltin(LLIntBuiltin builtin)
-{
-    switch (builtin) {
-    case LLIntBuiltin::CurrentMemory:
-        return *singleton().m_I64_Void;
-    case LLIntBuiltin::MemoryFill:
-    case LLIntBuiltin::MemoryCopy:
-        return *singleton().m_Void_I32I32I32;
-    case LLIntBuiltin::MemoryInit:
-        return *singleton().m_Void_I32I32I32I32;
-    case LLIntBuiltin::TableSize:
-        return *singleton().m_I32_I32;
-    case LLIntBuiltin::TableCopy:
-        return *singleton().m_Void_I32I32I32I32I32;
-    case LLIntBuiltin::DataDrop:
-    case LLIntBuiltin::ElemDrop:
-        return *singleton().m_Void_I32;
-    case LLIntBuiltin::RefTest:
-        return *singleton().m_I32_RefI32I32I32;
-    case LLIntBuiltin::RefCast:
-        return *singleton().m_Ref_RefI32I32;
-    case LLIntBuiltin::ArrayNewData:
-    case LLIntBuiltin::ArrayNewElem:
-        return *singleton().m_Arrayref_I32I32I32I32;
-    case LLIntBuiltin::AnyConvertExtern:
-        return *singleton().m_Anyref_Externref;
-    case LLIntBuiltin::ArrayCopy:
-        return *singleton().m_Void_I32AnyrefI32I32AnyrefI32I32;
-    case LLIntBuiltin::ArrayInitElem:
-    case LLIntBuiltin::ArrayInitData:
-        return *singleton().m_Void_I32AnyrefI32I32I32I32;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-    return *singleton().m_I64_Void;
-}
-
 const TypeDefinition& TypeInformation::signatureForJSException()
 {
     return *singleton().m_Void_Externref;

@@ -788,7 +788,7 @@ static std::optional<DidRepaintAndMarkContainingBlock> repaintAndMarkContainingB
         auto shouldRepaint = [&] {
             if (!renderElement->everHadLayout())
                 return false;
-            if (!renderElement->style().opacity())
+            if (renderElement->style().opacity().isTransparent())
                 return false;
             if (renderElement->isOutOfFlowPositioned())
                 return destroyRootRenderer != renderElement->containingBlock() || !destroyRootRenderer->hasNonVisibleOverflow();

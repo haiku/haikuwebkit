@@ -144,6 +144,15 @@ bool defaultManagedMediaSourceEnabled()
     return false;
 #endif
 }
+
+bool defaultMediaSourcePrefersDecompressionSession()
+{
+#if CPU(X86_64) || CPU(X86)
+    return false;
+#else
+    return true;
+#endif
+}
 #endif
 
 #if ENABLE(MEDIA_SOURCE) && ENABLE(WIRELESS_PLAYBACK_TARGET)
@@ -408,6 +417,13 @@ bool defaultContentInsetBackgroundFillEnabled()
 
 #if !PLATFORM(COCOA)
 bool defaultTopContentInsetBackgroundCanChangeAfterScrolling()
+{
+    return false;
+}
+#endif
+
+#if !PLATFORM(COCOA)
+bool defaultIOSurfaceLosslessCompressionEnabled()
 {
     return false;
 }

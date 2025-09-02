@@ -27,9 +27,9 @@
 #include "CSSValue.h"
 #include "CSSValueAggregates.h"
 #include "CSSVariableData.h"
-#include "Length.h"
 #include "StyleColor.h"
-#include "StyleImage.h"
+#include "StyleImageWrapper.h"
+#include "StylePrimitiveNumeric.h"
 #include "StyleURL.h"
 #include "TransformOperation.h"
 #include <wtf/RefCounted.h>
@@ -50,21 +50,20 @@ public:
     // https://drafts.csswg.org/css-variables-2/#guaranteed-invalid
     struct GuaranteedInvalid { };
 
-    struct Numeric {
-        double value;
-        CSSUnitType unitType;
-        bool operator==(const Numeric&) const = default;
-    };
-
     struct Transform {
         Ref<TransformOperation> operation;
         bool operator==(const Transform& other) const { return arePointingToEqualData(operation, other.operation); }
     };
 
     using Value = Variant<
-        WebCore::Length,
-        Numeric,
-        RefPtr<StyleImage>,
+        LengthPercentage<>,
+        Length<>,
+        Number<>,
+        Percentage<>,
+        Angle<>,
+        Time<>,
+        Resolution<>,
+        ImageWrapper,
         Color,
         URL,
         CustomIdentifier,

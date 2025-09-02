@@ -34,6 +34,7 @@
 
 namespace WebCore {
 class HTMLImageElement;
+enum class PointerLockRequestResult : uint8_t;
 }
 
 @class WebView;

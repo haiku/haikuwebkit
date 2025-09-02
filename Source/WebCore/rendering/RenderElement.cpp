@@ -191,7 +191,7 @@ static RefPtr<StyleImage> minimallySupportedContentDataImage(const Style::Conten
     auto* image = std::get_if<Style::Content::Image>(&data->list[0]);
     if (!image)
         return nullptr;
-    return image->image.ptr();
+    return image->image.value.ptr();
 }
 
 bool RenderElement::isContentDataSupported(const Style::Content& content)
@@ -446,10 +446,10 @@ void RenderElement::updateImage(StyleImage* oldImage, StyleImage* newImage)
         newImage->addClient(*this);
 }
 
-void RenderElement::updateShapeImage(const ShapeValue* oldShapeValue, const ShapeValue* newShapeValue)
+void RenderElement::updateShapeImage(const Style::ShapeOutside* oldShapeValue, const Style::ShapeOutside* newShapeValue)
 {
     if (oldShapeValue || newShapeValue)
-        updateImage(oldShapeValue ? oldShapeValue->image() : nullptr, newShapeValue ? newShapeValue->protectedImage().get() : nullptr);
+        updateImage(oldShapeValue ? oldShapeValue->image().get() : nullptr, newShapeValue ? newShapeValue->image().get() : nullptr);
 }
 
 bool RenderElement::repaintBeforeStyleChange(StyleDifference diff, const RenderStyle& oldStyle, const RenderStyle& newStyle)
@@ -473,7 +473,6 @@ bool RenderElement::repaintBeforeStyleChange(StyleDifference diff, const RenderS
                 // Certain style changes require layer repaint, since the layer could end up being destroyed.
                 auto layerMayGetDestroyed = oldStyle.position() != newStyle.position()
                     || oldStyle.usedZIndex() != newStyle.usedZIndex()
-                    || oldStyle.hasAutoUsedZIndex() != newStyle.hasAutoUsedZIndex()
                     || oldStyle.clip() != newStyle.clip()
                     || oldStyle.hasClip() != newStyle.hasClip()
                     || oldStyle.hasOpacity() != newStyle.hasOpacity()
@@ -929,8 +928,7 @@ void RenderElement::styleWillChange(StyleDifference diff, const RenderStyle& new
         // If our z-index changes value or our visibility changes,
         // we need to dirty our stacking context's z-order list.
         bool visibilityChanged = m_style.usedVisibility() != newStyle.usedVisibility()
-            || m_style.usedZIndex() != newStyle.usedZIndex()
-            || m_style.hasAutoUsedZIndex() != newStyle.hasAutoUsedZIndex();
+            || m_style.usedZIndex() != newStyle.usedZIndex();
 
         if (visibilityChanged)
             protectedDocument()->invalidateRenderingDependentRegions();
@@ -987,6 +985,21 @@ void RenderElement::styleWillChange(StyleDifference diff, const RenderStyle& new
             // from the positioned objects list.
             downcast<RenderBox>(*this).removeFloatingOrOutOfFlowChildFromBlockLists();
         }
+
+        auto invalidateEnclosingFragmentedFlowInfoIfNeeded = [&] {
+            if (fragmentedFlowState() == FragmentedFlowState::NotInsideFlow)
+                return;
+            ASSERT(locateEnclosingFragmentedFlow());
+            if (oldStyle->position() == newStyle.position())
+                return;
+            auto* newContainingBlock = RenderObject::containingBlockForPositionType(newStyle.position(), *this);
+            ASSERT(containingBlock() && newContainingBlock);
+            if (containingBlock() == newContainingBlock || !newContainingBlock)
+                return;
+            if (CheckedPtr enclosingFragmentedFlow = locateEnclosingFragmentedFlow(); enclosingFragmentedFlow && !newContainingBlock->isDescendantOf(enclosingFragmentedFlow.get()))
+                enclosingFragmentedFlow->removeFlowChildInfo(*this);
+        };
+        invalidateEnclosingFragmentedFlowInfoIfNeeded();
 
         // reset style flags
         if (diff == StyleDifference::Layout || diff == StyleDifference::LayoutOutOfFlowMovementOnly) {
@@ -1047,9 +1060,9 @@ void RenderElement::styleDidChange(StyleDifference diff, const RenderStyle* oldS
             updateFillImages(oldStyle ? &oldStyle->protectedBackgroundLayers().get() : nullptr, style ? &style->protectedBackgroundLayers().get() : nullptr);
         if ((style && style->maskLayers().hasImage()) || (oldStyle && oldStyle->maskLayers().hasImage()))
             updateFillImages(oldStyle ? &oldStyle->protectedMaskLayers().get() : nullptr, style ? &style->protectedMaskLayers().get() : nullptr);
-        updateImage(oldStyle ? oldStyle->borderImage().protectedImage().get() : nullptr, style ? style->borderImage().protectedImage().get() : nullptr);
-        updateImage(oldStyle ? oldStyle->maskBorder().protectedImage().get() : nullptr, style ? style->maskBorder().protectedImage().get() : nullptr);
-        updateShapeImage(oldStyle ? oldStyle->protectedShapeOutside().get() : nullptr, style ? style->protectedShapeOutside().get() : nullptr);
+        updateImage(oldStyle ? oldStyle->borderImage().source().tryStyleImage().get() : nullptr, style ? style->borderImage().source().tryStyleImage().get() : nullptr);
+        updateImage(oldStyle ? oldStyle->maskBorder().source().tryStyleImage().get() : nullptr, style ? style->maskBorder().source().tryStyleImage().get() : nullptr);
+        updateShapeImage(oldStyle ? &oldStyle->shapeOutside() : nullptr, style ? &style->shapeOutside() : nullptr);
     };
 
     registerImages(&style(), oldStyle);
@@ -1198,10 +1211,9 @@ void RenderElement::willBeDestroyed()
             unregisterImage(backgroundLayer->protectedImage().get());
         for (auto* maskLayer = &style.maskLayers(); maskLayer; maskLayer = maskLayer->next())
             unregisterImage(maskLayer->protectedImage().get());
-        unregisterImage(style.borderImage().protectedImage().get());
-        unregisterImage(style.maskBorder().protectedImage().get());
-        if (auto shapeValue = style.shapeOutside())
-            unregisterImage(shapeValue->protectedImage().get());
+        unregisterImage(style.borderImage().source().tryStyleImage().get());
+        unregisterImage(style.maskBorder().source().tryStyleImage().get());
+        unregisterImage(style.shapeOutside().image().get());
     };
 
     if (hasInitializedStyle()) {
@@ -1574,7 +1586,7 @@ bool RenderElement::borderImageIsLoadedAndCanBeRendered() const
 {
     ASSERT(style().hasBorder());
 
-    RefPtr borderImage = style().borderImage().image();
+    RefPtr borderImage = style().borderImage().source().tryStyleImage();
     return borderImage && borderImage->canRender(this, style().usedZoom()) && borderImage->isLoaded(this);
 }
 

@@ -2062,7 +2062,7 @@ bool JSGlobalObject::canDeclareGlobalFunction(const Identifier& ident)
 
     PropertySlot slot(this, PropertySlot::InternalMethodType::GetOwnProperty);
     bool hasProperty = getOwnPropertySlot(this, this, ident, slot);
-    scope.assertNoExceptionExceptTermination();
+    RETURN_IF_EXCEPTION(scope, { });
     if (!hasProperty) [[likely]]
         return isStructureExtensible();
 
@@ -2083,7 +2083,7 @@ void JSGlobalObject::createGlobalFunctionBinding(const Identifier& ident)
 
     PropertySlot slot(this, PropertySlot::InternalMethodType::GetOwnProperty);
     bool hasProperty = getOwnPropertySlot(this, this, ident, slot);
-    scope.assertNoExceptionExceptTermination();
+    RETURN_IF_EXCEPTION(scope, void());
     if (hasProperty) [[unlikely]] {
         if (slot.attributes() & PropertyAttribute::DontDelete) {
             ASSERT(!(slot.attributes() & PropertyAttribute::ReadOnly));

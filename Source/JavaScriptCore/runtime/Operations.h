@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "CallFrame.h"
-#include "ExceptionHelpers.h"
-#include "JSBigInt.h"
-#include "JSGlobalObject.h"
-#include "JSString.h"
+#include <JavaScriptCore/CallFrame.h>
+#include <JavaScriptCore/ExceptionHelpers.h>
+#include <JavaScriptCore/JSBigInt.h>
+#include <JavaScriptCore/JSGlobalObject.h>
+#include <JavaScriptCore/JSString.h>
 #include <wtf/text/MakeString.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN

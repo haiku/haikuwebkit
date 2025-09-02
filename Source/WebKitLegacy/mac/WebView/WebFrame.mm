@@ -1323,7 +1323,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
 {
     WebCore::LocalFrame *frame = core(self);
     WebCore::RevealExtentOption revealExtentOption = revealExtent ? WebCore::RevealExtentOption::RevealExtent : WebCore::RevealExtentOption::DoNotRevealExtent;
-    frame->selection().revealSelection(WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignToEdgeIfNeeded, revealExtentOption);
+    frame->selection().revealSelection({ WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignToEdgeIfNeeded, revealExtentOption });
 }
 
 - (void)resetSelection

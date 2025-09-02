@@ -38,7 +38,7 @@
 #include "Widget.h"
 
 namespace WebCore {
-    
+
 AccessibilityScrollView::AccessibilityScrollView(AXID axID, ScrollView& view, AXObjectCache& cache)
     : AccessibilityObject(axID, cache)
     , m_childrenDirty(false)
@@ -73,6 +73,12 @@ String AccessibilityScrollView::ownerDebugDescription() const
     return makeString("owned by: "_s, renderer ? renderer->debugDescription() : m_frameOwnerElement->debugDescription());
 }
 
+String AccessibilityScrollView::extraDebugInfo() const
+{
+    Vector<String> debugStrings = { ownerDebugDescription(), AccessibilityObject::extraDebugInfo() };
+    return makeStringByJoining(debugStrings, ","_s);
+}
+
 void AccessibilityScrollView::detachRemoteParts(AccessibilityDetachmentType detachmentType)
 {
     AccessibilityObject::detachRemoteParts(detachmentType);
@@ -103,7 +109,7 @@ ScrollView* AccessibilityScrollView::currentScrollView() const
 AccessibilityObject* AccessibilityScrollView::scrollBar(AccessibilityOrientation orientation)
 {
     updateScrollbars();
-    
+
     switch (orientation) {
     // ARIA 1.1 Elements with the role scrollbar have an implicit aria-orientation value of vertical.
     case AccessibilityOrientation::Undefined:
@@ -112,7 +118,7 @@ AccessibilityObject* AccessibilityScrollView::scrollBar(AccessibilityOrientation
     case AccessibilityOrientation::Horizontal:
         return m_horizontalScrollbar ? m_horizontalScrollbar.get() : nullptr;
     }
-    
+
     return nullptr;
 }
 
@@ -138,7 +144,7 @@ bool AccessibilityScrollView::canSetFocusAttribute() const
     RefPtr webArea = webAreaObject();
     return webArea && webArea->canSetFocusAttribute();
 }
-    
+
 bool AccessibilityScrollView::isFocused() const
 {
     RefPtr webArea = webAreaObject();
@@ -192,7 +198,7 @@ void AccessibilityScrollView::updateScrollbars()
         m_verticalScrollbar = nullptr;
     }
 }
-    
+
 void AccessibilityScrollView::removeChildScrollbar(AccessibilityObject* scrollbar)
 {
     if (!scrollbar)
@@ -210,7 +216,7 @@ void AccessibilityScrollView::removeChildScrollbar(AccessibilityObject* scrollba
             cache->remove(scrollbar->objectID());
     }
 }
-    
+
 AccessibilityScrollbar* AccessibilityScrollView::addChildScrollbar(Scrollbar* scrollbar)
 {
     if (!scrollbar)
@@ -225,7 +231,7 @@ AccessibilityScrollbar* AccessibilityScrollView::addChildScrollbar(Scrollbar* sc
     addChild(scrollBarObject.get());
     return scrollBarObject.ptr();
 }
-        
+
 void AccessibilityScrollView::clearChildren()
 {
     AccessibilityObject::clearChildren();
@@ -313,12 +319,12 @@ AccessibilityObject* AccessibilityScrollView::accessibilityHitTest(const IntPoin
     RefPtr webArea = webAreaObject();
     if (!webArea)
         return nullptr;
-    
+
     if (m_horizontalScrollbar && m_horizontalScrollbar->elementRect().contains(point))
         return m_horizontalScrollbar.get();
     if (m_verticalScrollbar && m_verticalScrollbar->elementRect().contains(point))
         return m_verticalScrollbar.get();
-    
+
     return webArea->accessibilityHitTest(point);
 }
 
@@ -358,19 +364,19 @@ AccessibilityObject* AccessibilityScrollView::parentObject() const
     if (!cache)
         return nullptr;
 
-    Element* ancestorElement = m_frameOwnerElement.get();
+    RefPtr<Element> ancestorElement = m_frameOwnerElement.get();
     if (RefPtr localFrameView = dynamicDowncast<LocalFrameView>(m_scrollView.get()))
         ancestorElement = localFrameView->frame().ownerElement();
     else if (RefPtr remoteFrameView = dynamicDowncast<RemoteFrameView>(m_scrollView.get()))
         ancestorElement = remoteFrameView->frame().ownerElement();
 
-    AccessibilityObject* ancestorAccessibilityObject = nullptr;
+    RefPtr<AccessibilityObject> ancestorAccessibilityObject;
     while (ancestorElement && !ancestorAccessibilityObject) {
         if ((ancestorAccessibilityObject = cache->getOrCreate(*ancestorElement)))
             break;
         ancestorElement = ancestorElement->parentElementInComposedTree();
     }
-    return ancestorAccessibilityObject;
+    return ancestorAccessibilityObject.get();
 }
 
 void AccessibilityScrollView::scrollTo(const IntPoint& point) const
@@ -379,4 +385,4 @@ void AccessibilityScrollView::scrollTo(const IntPoint& point) const
         scrollView->setScrollPosition(point);
 }
 
-} // namespace WebCore    
+} // namespace WebCore

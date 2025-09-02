@@ -44,6 +44,7 @@ enum class AppleVisualEffect : uint8_t {
     BlurChromeMaterial,
 #if HAVE(MATERIAL_HOSTING)
     GlassMaterial,
+    GlassClearMaterial,
     GlassSubduedMaterial,
     GlassMediaControlsMaterial,
     GlassSubduedMediaControlsMaterial,

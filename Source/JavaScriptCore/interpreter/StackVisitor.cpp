@@ -211,6 +211,7 @@ void StackVisitor::readInlinableNativeCalleeFrame(CallFrame* callFrame)
         m_frame.m_wasmDistanceFromDeepestInlineFrame = 0;
 
         m_frame.m_wasmFunctionIndexOrName = wasmCallee.indexOrName();
+        m_frame.m_wasmFunctionIndex = wasmCallee.index();
 
 #if ENABLE(WEBASSEMBLY_OMGJIT)
         bool canInline = isAnyOMG(wasmCallee.compilationMode());
@@ -225,7 +226,8 @@ void StackVisitor::readInlinableNativeCalleeFrame(CallFrame* callFrame)
         auto callSiteIndexFromPC = omgCallee.tryGetCallSiteIndex(std::bit_cast<void*>(std::bit_cast<uintptr_t>(removeCodePtrTag<void*>(m_frame.m_returnPC)) - 1));
         CallSiteIndex callSiteIndex = callSiteIndexFromPC.value_or(callFrame->callSiteIndex());
 
-        auto origin = omgCallee.getOrigin(callSiteIndex.bits(), depth, isInlined);
+        auto codeOrigin = omgCallee.getCodeOrigin(callSiteIndex.bits(), depth, isInlined);
+        auto indexOrName = omgCallee.getIndexOrName(codeOrigin);
         if (!isInlined)
             return;
 
@@ -233,7 +235,8 @@ void StackVisitor::readInlinableNativeCalleeFrame(CallFrame* callFrame)
         // haven't reached the last frame yet.
         m_frame.m_callerFrame = callFrame;
         m_frame.m_wasmDistanceFromDeepestInlineFrame = depth + 1;
-        m_frame.m_wasmFunctionIndexOrName = origin;
+        m_frame.m_wasmFunctionIndexOrName = indexOrName;
+        m_frame.m_wasmFunctionIndex = codeOrigin->functionIndex;
 #else
         UNUSED_VARIABLE(depth);
 #endif
@@ -556,6 +559,13 @@ bool StackVisitor::Frame::isImplementationVisibilityPrivate() const
 
     ASSERT_NOT_REACHED();
     return false;
+}
+
+size_t StackVisitor::Frame::wasmFunctionIndex() const
+{
+    ASSERT(isNativeCalleeFrame());
+    ASSERT(m_isWasmFrame);
+    return m_wasmFunctionIndex;
 }
 
 void StackVisitor::Frame::dump(PrintStream& out, Indenter indent) const

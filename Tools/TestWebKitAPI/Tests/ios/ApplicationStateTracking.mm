@@ -28,9 +28,9 @@
 #if PLATFORM(IOS_FAMILY)
 
 #import "ClassMethodSwizzler.h"
+#import "PDFTestHelpers.h"
 #import "PlatformUtilities.h"
 #import "TestNavigationDelegate.h"
-#import "TestPDFHostViewController.h"
 #import "TestProtocol.h"
 #import "TestWKWebView.h"
 #import "WKWebViewConfigurationExtras.h"
@@ -69,11 +69,17 @@ TEST(ApplicationStateTracking, WindowDeallocDoesNotPermanentlyFreezeLayerTree)
 
 TEST(ApplicationStateTracking, NavigatingFromPDFDoesNotLeaveWebViewInactive)
 {
-    RetainPtr configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"WebProcessPlugInWithInternals" configureJSCForTesting:YES];
+    if constexpr (!unifiedPDFForTestingEnabled)
+        return;
 
-    auto pdfHostViewControllerSwizzler = createPDFHostViewControllerSwizzler();
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 568) configuration:configuration.get()]);
-    auto delegate = adoptNS([TestNavigationDelegate new]);
+#if ENABLE(UNIFIED_PDF)
+    RetainPtr configuration = configurationForWebViewTestingUnifiedPDF();
+#else
+    RetainPtr configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"WebProcessPlugInWithInternals" configureJSCForTesting:YES];
+#endif
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 568) configuration:configuration.get()]);
+    RetainPtr delegate = adoptNS([TestNavigationDelegate new]);
     [webView setNavigationDelegate:delegate.get()];
 
     [webView loadSimulatedRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://foo.com"]] responseHTMLString:@"<body>Hello world</body>"];
@@ -82,7 +88,7 @@ TEST(ApplicationStateTracking, NavigatingFromPDFDoesNotLeaveWebViewInactive)
 
     RetainPtr fakeURL = [NSURL URLWithString:@"https://bar.com"];
     RetainPtr pdfData = [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"]];
-    auto response = adoptNS([[NSURLResponse alloc] initWithURL:fakeURL.get() MIMEType:@"application/pdf" expectedContentLength:[pdfData length] textEncodingName:nil]);
+    RetainPtr response = adoptNS([[NSURLResponse alloc] initWithURL:fakeURL.get() MIMEType:@"application/pdf" expectedContentLength:[pdfData length] textEncodingName:nil]);
     [webView loadSimulatedRequest:[NSURLRequest requestWithURL:fakeURL.get()] response:response.get() responseData:pdfData.get()];
     [delegate waitForDidFinishNavigation];
 

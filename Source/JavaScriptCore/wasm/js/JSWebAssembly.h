@@ -27,8 +27,8 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "JSObject.h"
-#include "JSPromise.h"
+#include <JavaScriptCore/JSObject.h>
+#include <JavaScriptCore/JSPromise.h>
 
 namespace JSC {
 

@@ -184,6 +184,8 @@ public:
 
     RefPtr<NavigateEvent> protectedOngoingNavigateEvent() { return m_ongoingNavigateEvent; }
 
+    void updateNavigationEntry(Ref<HistoryItem>&&, ShouldCopyStateObjectFromCurrentEntry);
+
 private:
     explicit Navigation(LocalDOMWindow&);
 

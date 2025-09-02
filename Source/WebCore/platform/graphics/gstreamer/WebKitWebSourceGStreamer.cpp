@@ -609,6 +609,15 @@ static gboolean webKitWebSrcStart(GstBaseSrc* baseSrc)
     return TRUE;
 }
 
+// This is only to work around a bug in GST where the URI downloader is not taking the ownership of WebKitWebSrc.
+// See https://bugs.webkit.org/show_bug.cgi?id=144040.
+static GRefPtr<WebKitWebSrc> webKitWebSrcEnsureGRef(WebKitWebSrc* src)
+{
+    if (src && g_object_is_floating(src))
+        gst_object_ref_sink(GST_OBJECT(src));
+    return GRefPtr<WebKitWebSrc>(src);
+}
+
 static void webKitWebSrcMakeRequest(WebKitWebSrc* src, DataMutexLocker<WebKitWebSrcPrivate::StreamingMembers>& members)
 {
     WebKitWebSrcPrivate* priv = src->priv;
@@ -686,7 +695,7 @@ static void webKitWebSrcMakeRequest(WebKitWebSrc* src, DataMutexLocker<WebKitWeb
     request.setHTTPHeaderField(HTTPHeaderName::IcyMetadata, "1"_s);
 
     ASSERT(!isMainThread());
-    RunLoop::mainSingleton().dispatch([protector = WTF::ensureGRef(src), request = WTFMove(request), requestNumber = members->requestNumber] {
+    RunLoop::mainSingleton().dispatch([protector = webKitWebSrcEnsureGRef(src), request = WTFMove(request), requestNumber = members->requestNumber] {
         WebKitWebSrcPrivate* priv = protector->priv;
         DataMutexLocker members { priv->dataMutex };
         // Ignore this task (not making any HTTP request) if by now WebKitWebSrc streaming thread is already waiting

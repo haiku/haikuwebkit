@@ -79,6 +79,15 @@ ExtraMarginsFromSubgrids extraMarginForSubgridAncestors(Style::GridTrackSizingDi
 
 unsigned alignmentContextForBaselineAlignment(const GridSpan&, const ItemPosition& alignment);
 
+bool hasAutoMarginsInColumnAxis(const RenderBox&, WritingMode parentWritingMode);
+bool hasAutoMarginsInRowAxis(const RenderBox&, WritingMode parentWritingMode);
+
+bool hasAutoSizeInColumnAxis(const RenderBox&, WritingMode parentWritingMode);
+bool hasAutoSizeInRowAxis(const RenderBox&, WritingMode parentWritingMode);
+
+bool allowedToStretchGridItemAlongColumnAxis(const RenderBox&, ItemPosition, WritingMode);
+bool allowedToStretchGridItemAlongRowAxis(const RenderBox&, ItemPosition, WritingMode);
+
 } // namespace GridLayoutFunctions
 
 } // namespace WebCore

@@ -302,11 +302,6 @@ RenderBlock* RenderBoxModelObject::containingBlockForAutoHeightDetection(const S
 DecodingMode RenderBoxModelObject::decodingModeForImageDraw(const Image& image, const PaintInfo& paintInfo) const
 {
     // Some document types force synchronous decoding.
-#if PLATFORM(IOS_FAMILY)
-    if (WTF::IOSApplication::isIBooksStorytime())
-        return DecodingMode::Synchronous;
-#endif
-
     if (document().isImageDocument())
         return DecodingMode::Synchronous;
 
@@ -844,7 +839,7 @@ bool RenderBoxModelObject::borderObscuresBackground() const
         return false;
 
     // Bail if we have any border-image for now. We could look at the image alpha to improve this.
-    if (style().borderImage().image())
+    if (!style().borderImage().source().isNone())
         return false;
 
     auto edges = borderEdges(style(), document().deviceScaleFactor());

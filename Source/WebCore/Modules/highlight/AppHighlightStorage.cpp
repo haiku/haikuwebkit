@@ -252,7 +252,7 @@ void AppHighlightStorage::storeAppHighlight(Ref<StaticRange>&& range, Completion
     completionHandler(WTFMove(highlight));
 }
 
-void AppHighlightStorage::restoreAndScrollToAppHighlight(Ref<FragmentedSharedBuffer>&& buffer, ScrollToHighlight scroll)
+void AppHighlightStorage::restoreAndScrollToAppHighlight(Ref<SharedBuffer>&& buffer, ScrollToHighlight scroll)
 {
     auto appHighlightRangeData = AppHighlightRangeData::create(buffer);
     if (!appHighlightRangeData)

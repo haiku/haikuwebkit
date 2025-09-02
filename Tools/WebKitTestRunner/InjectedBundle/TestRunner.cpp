@@ -1566,6 +1566,14 @@ void TestRunner::setRequestStorageAccessThrowsExceptionUntilReload(bool enabled)
     postSynchronousPageMessage("SetRequestStorageAccessThrowsExceptionUntilReload", enabled);
 }
 
+void TestRunner::setStorageAccessPermission(JSContextRef context, bool granted, JSStringRef subFrameURL, JSValueRef callback)
+{
+    postMessageWithAsyncReply(context, "SetStorageAccessPermission", createWKDictionary({
+        { "Value", adoptWK(WKBooleanCreate(granted)) },
+        { "SubFrameURL", toWK(subFrameURL) },
+    }), callback);
+}
+
 void TestRunner::loadedSubresourceDomains(JSContextRef context, JSValueRef callback)
 {
     postMessageWithAsyncReply(context, "LoadedSubresourceDomains", callback);

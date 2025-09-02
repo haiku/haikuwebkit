@@ -27,9 +27,9 @@
 
 #pragma once
 
-#include "Yarr.h"
-#include "YarrPattern.h"
-#include "YarrUnicodeProperties.h"
+#include <JavaScriptCore/Yarr.h>
+#include <JavaScriptCore/YarrPattern.h>
+#include <JavaScriptCore/YarrUnicodeProperties.h>
 #include <wtf/ASCIICType.h>
 #include <wtf/HashSet.h>
 #include <wtf/text/StringBuilder.h>

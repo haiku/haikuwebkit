@@ -66,6 +66,7 @@ enum class MediaProducerMediaState : uint32_t;
 struct FontAttributes;
 struct WindowFeatures;
 struct OrganizationStorageAccessPromptQuirk;
+struct XRCanvasConfiguration;
 using MediaProducerMediaStateFlags = OptionSet<MediaProducerMediaState>;
 }
 
@@ -118,6 +119,7 @@ public:
 
     virtual void setStatusText(WebKit::WebPageProxy*, const WTF::String&) { }
     virtual void mouseDidMoveOverElement(WebKit::WebPageProxy&, const WebKit::WebHitTestResultData&, OptionSet<WebKit::WebEventModifier>, Object*) { }
+    virtual void tooltipDidChange(WebKit::WebPageProxy&, const WTF::String&) { }
 
     virtual void didNotHandleKeyEvent(WebKit::WebPageProxy*, const WebKit::NativeWebKeyboardEvent&) { }
     virtual void didNotHandleWheelEvent(WebKit::WebPageProxy*, const WebKit::NativeWebWheelEvent&) { }
@@ -236,7 +238,7 @@ public:
     virtual void supportedXRSessionFeatures(PlatformXR::Device::FeatureList& vrFeatures, PlatformXR::Device::FeatureList& arFeatures) { }
 
 #if PLATFORM(IOS_FAMILY)
-    virtual void startXRSession(WebKit::WebPageProxy&, const PlatformXR::Device::FeatureList&, CompletionHandler<void(RetainPtr<id>, PlatformViewController *)>&& completionHandler) { completionHandler(nil, nil); }
+    virtual void startXRSession(WebKit::WebPageProxy&, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&, CompletionHandler<void(RetainPtr<id>, PlatformViewController *)>&& completionHandler) { completionHandler(nil, nil); }
     virtual void endXRSession(WebKit::WebPageProxy&, WebKit::PlatformXRSessionEndReason) { }
 #endif
 #endif

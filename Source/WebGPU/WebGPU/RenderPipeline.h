@@ -89,7 +89,7 @@ public:
 
     Device& device() const { return m_device; }
     PipelineLayout& pipelineLayout() const { return m_pipelineLayout; }
-    bool colorDepthStencilTargetsMatch(const WGPURenderPassDescriptor&, const Vector<RefPtr<TextureView>>&, const RefPtr<TextureView>&) const;
+    NSString* errorValidatingColorDepthStencilTargets(const WGPURenderPassDescriptor&, const Vector<RefPtr<TextureView>>&, const RefPtr<TextureView>&) const;
     bool validateRenderBundle(const WGPURenderBundleEncoderDescriptor&) const;
     bool writesDepth() const;
     bool writesStencil() const;

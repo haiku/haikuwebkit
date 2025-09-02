@@ -81,7 +81,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/construct-stylesheets.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/contact-api.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/content-index.idl
-/LayoutTests/imported/w3c/web-platform-tests/interfaces/cookie-store.idl
+/LayoutTests/imported/w3c/web-platform-tests/interfaces/cookiestore.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/crash-reporting.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/credential-management.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/csp-embedded-enforcement.idl

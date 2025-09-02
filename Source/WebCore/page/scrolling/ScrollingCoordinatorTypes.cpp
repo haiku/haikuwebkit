@@ -254,7 +254,11 @@ TextStream& operator<<(TextStream& ts, const RequestedScrollData& requestedScrol
 
 TextStream& operator<<(TextStream& ts, const ScrollUpdate& update)
 {
-    ts << "updateType: " << update.updateType << " nodeID: " << update.nodeID << " scrollPosition: " << update.scrollPosition << " layoutViewportOrigin: " << update.layoutViewportOrigin << " updateLayerPositionAction: " << update.updateLayerPositionAction;
+    if (update.updateType == ScrollUpdateType::PositionUpdate)
+        ts << "updateType: " << update.updateType << " nodeID: " << update.nodeID << " scrollPosition: " << update.scrollPosition << " layoutViewportOrigin: " << update.layoutViewportOrigin << " updateLayerPositionAction: " << update.updateLayerPositionAction;
+    else
+        ts << "updateType: " << update.updateType << " nodeID: " << update.nodeID;
+
     return ts;
 }
 

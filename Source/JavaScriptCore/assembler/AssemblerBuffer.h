@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
@@ -29,10 +29,10 @@
 
 #if ENABLE(ASSEMBLER)
 
-#include "ExecutableAllocator.h"
-#include "JITCompilationEffort.h"
-#include "SecureARM64EHashPinsInlines.h"
-#include "stdint.h"
+#include <JavaScriptCore/ExecutableAllocator.h>
+#include <JavaScriptCore/JITCompilationEffort.h>
+#include <JavaScriptCore/SecureARM64EHashPinsInlines.h>
+#include <stdint.h>
 #include <string.h>
 #include <wtf/Assertions.h>
 #include <wtf/FastMalloc.h>

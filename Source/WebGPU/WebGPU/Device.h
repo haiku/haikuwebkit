@@ -40,6 +40,10 @@
 #import <wtf/CompletionHandler.h>
 #import <wtf/FastMalloc.h>
 #import <wtf/Function.h>
+#import <wtf/HashIterators.h>
+#import <wtf/HashMap.h>
+#import <wtf/HashTable.h>
+#import <wtf/KeyValuePair.h>
 #import <wtf/Ref.h>
 #import <wtf/RetainReleaseSwift.h>
 #import <wtf/TZoneMalloc.h>
@@ -258,6 +262,8 @@ public:
     }
     void removeBufferFromCache(uint64_t address) { m_bufferMap.remove(address); }
     uint32_t appleGPUFamily() const { return m_appleGPUFamily; }
+    id<MTLRasterizationRateMap> rasterizationMapForTexture(MTLResourceID, uint32_t) const;
+    void setRasterizationMapsForTexture(MTLResourceID, id<MTLRasterizationRateMap> left, id<MTLRasterizationRateMap> right);
 
 private:
     Device(id<MTLDevice>, id<MTLCommandQueue> defaultQueue, HardwareCapabilities&&, Adapter&);

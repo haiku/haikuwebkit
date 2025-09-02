@@ -43,6 +43,7 @@
 #include "WebXRSystem.h"
 #include "WebXRView.h"
 #include "XRFrameRequestCallback.h"
+#include "XRGPUProjectionLayerInit.h"
 #include "XRRenderStateInit.h"
 #include "XRSessionEvent.h"
 #include <wtf/RefPtr.h>
@@ -73,7 +74,8 @@ WebXRSession::WebXRSession(Document& document, WebXRSystem& system, XRSessionMod
     , m_views(device.views(mode))
 {
     device.setTrackingAndRenderingClient(*this);
-    device.initializeTrackingAndRendering(document.securityOrigin().data(), mode, m_requestedFeatures);
+    if (!m_requestedFeatures.contains(PlatformXR::SessionFeature::WebGPU))
+        device.initializeTrackingAndRendering(document.securityOrigin().data(), mode, m_requestedFeatures, std::nullopt);
 
     // https://immersive-web.github.io/webxr/#ref-for-dom-xrreferencespacetype-viewer%E2%91%A2
     // Every session MUST support viewer XRReferenceSpaces.
@@ -734,6 +736,14 @@ bool WebXRSession::isHandTrackingEnabled() const
     return m_requestedFeatures.contains(PlatformXR::SessionFeature::HandTracking);
 }
 #endif
+
+void WebXRSession::initializeTrackingAndRendering(std::optional<XRCanvasConfiguration>&& init)
+{
+    RefPtr document = downcast<Document>(scriptExecutionContext());
+    auto device = this->device();
+    if (document && device)
+        device->initializeTrackingAndRendering(document->securityOrigin().data(), m_mode, m_requestedFeatures, WTFMove(init));
+}
 
 WebCoreOpaqueRoot root(WebXRSession* session)
 {

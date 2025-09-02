@@ -1726,11 +1726,11 @@ bool RenderPipeline::validateDepthStencilState(bool depthReadOnly, bool stencilR
     return true;
 }
 
-bool RenderPipeline::colorDepthStencilTargetsMatch(const WGPURenderPassDescriptor& descriptor, const Vector<RefPtr<TextureView>>& colorAttachmentViews, const RefPtr<TextureView>& depthStencilView) const
+NSString* RenderPipeline::errorValidatingColorDepthStencilTargets(const WGPURenderPassDescriptor& descriptor, const Vector<RefPtr<TextureView>>& colorAttachmentViews, const RefPtr<TextureView>& depthStencilView) const
 {
     if (!m_descriptor.fragment) {
         if (descriptor.colorAttachmentCount)
-            return false;
+            return @"No fragment shader but render pass has color attachments";
     } else {
         for (size_t i = 0, maxCount = std::max<size_t>(m_descriptorTargets.size(), colorAttachmentViews.size()); i < maxCount; ++i) {
             RefPtr attachmentView = i < colorAttachmentViews.size() ? colorAttachmentViews[i] : nullptr;
@@ -1738,40 +1738,40 @@ bool RenderPipeline::colorDepthStencilTargetsMatch(const WGPURenderPassDescripto
             if (!attachmentView) {
                 if (descriptorTargetFormat == WGPUTextureFormat_Undefined)
                     continue;
-                return false;
+                return [NSString stringWithFormat:@"No attachment view but descriptorTargetFormat(%d)", descriptorTargetFormat];
             }
             if (descriptorTargetFormat != attachmentView->format())
-                return false;
+                return [NSString stringWithFormat:@"descriptorTargetFormat(%d) != attachmentView->format(%d)", descriptorTargetFormat, attachmentView->format()];
             if (attachmentView->sampleCount() != m_descriptor.multisample.count)
-                return false;
+                return [NSString stringWithFormat:@"attachmentView->sampleCount(%d) != m_descriptor.multisample.count(%d)", attachmentView->sampleCount(), m_descriptor.multisample.count];
         }
     }
 
     if (!m_descriptor.depthStencil) {
         if (!descriptor.depthStencilAttachment)
-            return true;
+            return nil;
 
-        return false;
+        return @"depthStencil is missing but render pass has a depth stencil attachment";
     }
 
     if (descriptor.depthStencilAttachment) {
         if (!depthStencilView)
-            return false;
+            return @"depthStencilAttachment exists but no depthStencilView";
         auto& texture = *depthStencilView.get();
         if (texture.format() != m_descriptor.depthStencil->format)
-            return false;
+            return [NSString stringWithFormat:@"texture.format(%d) != m_descriptor.depthStencil->format(%d)", texture.format(), m_descriptor.depthStencil->format];
         auto mtlPixelFormat = texture.texture().pixelFormat;
         auto descriptorFormat = m_descriptor.depthStencil->format;
         if (mtlPixelFormat == MTLPixelFormatX32_Stencil8 && descriptorFormat == WGPUTextureFormat_Stencil8)
-            return false;
+            return @"mtlPixelFormat == MTLPixelFormatX32_Stencil8 && descriptorFormat == WGPUTextureFormat_Stencil8";
         if (mtlPixelFormat == MTLPixelFormatDepth32Float_Stencil8 && (descriptorFormat == WGPUTextureFormat_Depth32Float || descriptorFormat == WGPUTextureFormat_Depth24Plus))
-            return false;
+            return @"mtlPixelFormat == MTLPixelFormatDepth32Float_Stencil8 && (descriptorFormat == WGPUTextureFormat_Depth32Float || descriptorFormat == WGPUTextureFormat_Depth24Plus)";
         if (texture.sampleCount() != m_descriptor.multisample.count)
-            return false;
+            return [NSString stringWithFormat:@"texture.sampleCount(%d) != m_descriptor.multisample.count(%d)", texture.sampleCount(), m_descriptor.multisample.count];
     } else if (m_descriptor.depthStencil->format != WGPUTextureFormat_Undefined)
-        return false;
+        return [NSString stringWithFormat:@"m_descriptor.depthStencil->format(%d) != WGPUTextureFormat_Undefined", m_descriptor.depthStencil->format];
 
-    return true;
+    return nil;
 }
 
 bool RenderPipeline::validateRenderBundle(const WGPURenderBundleEncoderDescriptor& descriptor) const

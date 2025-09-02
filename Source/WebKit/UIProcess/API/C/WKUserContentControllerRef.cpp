@@ -28,9 +28,14 @@
 
 #include "APIArray.h"
 #include "APIContentRuleList.h"
+#include "APIFrameInfo.h"
+#include "APIScriptMessage.h"
 #include "APIUserScript.h"
 #include "InjectUserScriptImmediately.h"
+#include "JavaScriptEvaluationResult.h"
 #include "WKAPICast.h"
+#include "WebPageProxy.h"
+#include "WebScriptMessageHandler.h"
 #include "WebUserContentControllerProxy.h"
 
 using namespace WebKit;
@@ -72,4 +77,40 @@ void WKUserContentControllerRemoveAllUserContentFilters(WKUserContentControllerR
 #if ENABLE(CONTENT_EXTENSIONS)
     toProtectedImpl(userContentControllerRef)->removeAllContentRuleLists();
 #endif
+}
+
+class WebScriptMessageClient : public WebScriptMessageHandler::Client {
+    WTF_MAKE_TZONE_ALLOCATED(WebScriptMessageClient);
+public:
+    WebScriptMessageClient(const String& name, WKScriptMessageHandlerCallback callback, const void* context)
+        : m_name(name)
+        , m_callback(callback)
+        , m_context(context) { }
+private:
+    void didPostMessage(WebPageProxy& page, FrameInfoData&& frameInfo, API::ContentWorld&, JavaScriptEvaluationResult&& result, CompletionHandler<void(Expected<JavaScriptEvaluationResult, String>&&)>&& completionHandler) override
+    {
+        Ref message = API::ScriptMessage::create(result.toWK(), page, API::FrameInfo::create(WTFMove(frameInfo), &page), m_name, API::ContentWorld::pageContentWorldSingleton());
+        // FIXME: Pass in a non-null WKCompletionListenerRef to handle the reply
+        m_callback(toAPI(message.ptr()), nullptr, m_context);
+        completionHandler(makeUnexpected(String()));
+    }
+
+    String m_name;
+    WKScriptMessageHandlerCallback m_callback;
+    const void* m_context;
+};
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebScriptMessageClient);
+
+void WKUserContentControllerAddScriptMessageHandler(WKUserContentControllerRef userContentController, WKStringRef wkName, WKScriptMessageHandlerCallback callback, const void* context)
+{
+    String name = toWTFString(wkName);
+
+    auto handler = WebKit::WebScriptMessageHandler::create(makeUnique<WebScriptMessageClient>(name, callback, context), name, API::ContentWorld::pageContentWorldSingleton());
+    toProtectedImpl(userContentController)->addUserScriptMessageHandler(handler);
+}
+
+void WKUserContentControllerRemoveAllUserMessageHandlers(WKUserContentControllerRef userContentController)
+{
+    toProtectedImpl(userContentController)->removeAllUserMessageHandlers();
 }

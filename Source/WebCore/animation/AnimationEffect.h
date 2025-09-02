@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "AnimationEffect.h"
 #include "AnimationEffectTiming.h"
 #include "BasicEffectTiming.h"
 #include "ComputedEffectTiming.h"

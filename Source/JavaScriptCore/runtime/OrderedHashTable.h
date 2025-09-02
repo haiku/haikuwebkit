@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "OrderedHashTableHelper.h"
+#include <JavaScriptCore/OrderedHashTableHelper.h>
 
 namespace JSC {
 

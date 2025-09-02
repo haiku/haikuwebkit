@@ -242,6 +242,7 @@ WK_EXPORT void WKPageSetPageStateClient(WKPageRef page, WKPageStateClientBase* c
 
 typedef void (*WKPageEvaluateJavaScriptFunction)(WKTypeRef, WKErrorRef, void*);
 WK_EXPORT void WKPageEvaluateJavaScriptInMainFrame(WKPageRef page, WKStringRef script, void* context, WKPageEvaluateJavaScriptFunction function);
+WK_EXPORT void WKPageEvaluateJavaScriptInFrame(WKPageRef page, WKFrameInfoRef frame, WKStringRef script, void* context, WKPageEvaluateJavaScriptFunction function);
 
 typedef void (*WKPageGetSourceForFrameFunction)(WKStringRef, WKErrorRef, void*);
 WK_EXPORT void WKPageGetSourceForFrame(WKPageRef page, WKFrameRef frame, void* context, WKPageGetSourceForFrameFunction function);

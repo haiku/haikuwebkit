@@ -1,7 +1,7 @@
-CONSOLE MESSAGE: SyntaxError: Unexpected identifier 'assert'. Expected a ';' following a targeted import declaration.
-CONSOLE MESSAGE: SyntaxError: Unexpected identifier 'assert'. Expected a ';' following a targeted import declaration.
-CONSOLE MESSAGE: SyntaxError: Unexpected identifier 'assert'. Expected a ';' following a targeted import declaration.
-CONSOLE MESSAGE: SyntaxError: Unexpected identifier 'assert'. Expected a ';' following a targeted import declaration.
+Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteNoReferrerPolicy
+Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteReferrerPolicyOrigin
+Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteReferrerPolicyNoReferrer
+Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteNoReferrerPolicyUnsafeUrl
 
 Harness Error (TIMEOUT), message = null
 

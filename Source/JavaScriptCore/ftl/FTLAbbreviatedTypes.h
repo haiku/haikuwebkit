@@ -27,7 +27,7 @@
 
 #if ENABLE(FTL_JIT)
 
-#include "DFGCommon.h"
+#include <JavaScriptCore/DFGCommon.h>
 
 namespace JSC { namespace B3 {
 class BasicBlock;

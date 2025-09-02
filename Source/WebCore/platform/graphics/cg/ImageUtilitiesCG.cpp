@@ -139,7 +139,7 @@ String descriptionString(ImageDecodingError error)
 
 Expected<std::pair<String, Vector<IntSize>>, ImageDecodingError> utiAndAvailableSizesFromImageData(std::span<const uint8_t> data)
 {
-    Ref buffer = FragmentedSharedBuffer::create(data);
+    Ref buffer = SharedBuffer::create(data);
     Ref imageDecoder = ImageDecoderCG::create(buffer.get(), AlphaOption::Premultiplied, GammaAndColorProfileOption::Applied);
     imageDecoder->setData(buffer.get(), true);
     if (imageDecoder->encodedDataStatus() == EncodedDataStatus::Error)
@@ -164,7 +164,7 @@ Expected<std::pair<String, Vector<IntSize>>, ImageDecodingError> utiAndAvailable
 
 static RefPtr<NativeImage> tryCreateNativeImageFromBitmapImageData(std::span<const uint8_t> data, std::optional<FloatSize> preferredSize)
 {
-    Ref buffer = FragmentedSharedBuffer::create(data);
+    Ref buffer = SharedBuffer::create(data);
     Ref imageDecoder = ImageDecoderCG::create(buffer.get(), AlphaOption::Premultiplied, GammaAndColorProfileOption::Applied);
     imageDecoder->setData(buffer.get(), true);
     if (imageDecoder->encodedDataStatus() == EncodedDataStatus::Error)

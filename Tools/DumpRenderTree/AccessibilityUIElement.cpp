@@ -596,7 +596,11 @@ static JSValueRef stringAttributeValueCallback(JSContextRef context, JSObjectRef
     if (argumentCount == 1)
         attribute = JSValueToStringCopy(context, arguments[0], exception);
     auto stringAttributeValue = toAXElement(thisObject)->stringAttributeValue(attribute);
-    JSValueRef result = JSValueMakeString(context, stringAttributeValue.get());
+    // FIXME: extract the `string ? JSValueMakeString : JSValueMakeNull` logic into e.g. `makeValue` function like in WKTR's JSBasics.cpp
+    // and investigate where else to use it instead of plain `JSValueMakeString` (WKTR's JSAccessibilityUIElement.cpp might be good reference for that,
+    // to ensure consistency of accessibility text expectation files and tests across WKRT and DRT)
+    // https://bugs.webkit.org/show_bug.cgi?id=296858
+    JSValueRef result = stringAttributeValue ? JSValueMakeString(context, stringAttributeValue.get()) : JSValueMakeNull(context);
     if (attribute)
         JSStringRelease(attribute);
     return result;

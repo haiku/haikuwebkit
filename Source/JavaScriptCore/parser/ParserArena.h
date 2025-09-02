@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CommonIdentifiers.h"
-#include "Identifier.h"
-#include "MathCommon.h"
+#include <JavaScriptCore/CommonIdentifiers.h>
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/MathCommon.h>
 #include <array>
 #include <type_traits>
 #include <wtf/SegmentedVector.h>

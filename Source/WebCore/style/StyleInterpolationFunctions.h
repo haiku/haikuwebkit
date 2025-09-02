@@ -52,12 +52,11 @@
 #include "ScopedName.h"
 #include "Settings.h"
 #include "StyleBoxShadow.h"
-#include "StyleCachedImage.h"
-#include "StyleCrossfadeImage.h"
 #include "StyleDynamicRangeLimit.h"
-#include "StyleFilterImage.h"
+#include "StyleImageWrapper.h"
 #include "StyleInterpolationClient.h"
 #include "StyleInterpolationContext.h"
+#include "StyleLengthWrapper+Blending.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StyleResolver.h"
 #include "StyleTextEdge.h"
@@ -164,27 +163,9 @@ inline Ref<TransformOperation> blendFunc(TransformOperation& from, TransformOper
     return to.blend(&from, context);
 }
 
-inline RefPtr<ShapeValue> blendFunc(ShapeValue* from, ShapeValue* to, const Context& context)
-{
-    if (context.isDiscrete) {
-        ASSERT(!context.progress || context.progress == 1);
-        return context.progress ? to : from;
-    }
-
-    ASSERT(from);
-    ASSERT(to);
-    return from->blend(*to, context);
-}
-
 inline FilterOperations blendFunc(const FilterOperations& from, const FilterOperations& to, const Context& context)
 {
     return from.blend(to, context);
-}
-
-inline RefPtr<StyleImage> blendFilter(RefPtr<StyleImage> inputImage, const FilterOperations& from, const FilterOperations& to, const Context& context)
-{
-    auto filterResult = from.blend(to, context);
-    return StyleFilterImage::create(WTFMove(inputImage), WTFMove(filterResult));
 }
 
 inline ContentVisibility blendFunc(ContentVisibility from, ContentVisibility to, const Context& context)
@@ -246,19 +227,6 @@ inline LengthBox blendFunc(const LengthBox& from, const LengthBox& to, const Con
     };
 }
 
-inline RefPtr<StyleImage> crossfadeBlend(StyleCachedImage& fromStyleImage, StyleCachedImage& toStyleImage, const Context& context)
-{
-    // If progress is at one of the extremes, we want getComputedStyle to show the image,
-    // not a completed cross-fade, so we hand back one of the existing images.
-    if (!context.progress)
-        return &fromStyleImage;
-    if (context.progress == 1)
-        return &toStyleImage;
-    if (!fromStyleImage.cachedImage() || !toStyleImage.cachedImage())
-        return &toStyleImage;
-    return StyleCrossfadeImage::create(&fromStyleImage, &toStyleImage, context.progress, false);
-}
-
 inline RefPtr<StyleImage> blendFunc(StyleImage* from, StyleImage* to, const Context& context)
 {
     if (!context.progress)
@@ -269,67 +237,7 @@ inline RefPtr<StyleImage> blendFunc(StyleImage* from, StyleImage* to, const Cont
 
     ASSERT(from);
     ASSERT(to);
-
-    from = from->selectedImage();
-    to = to->selectedImage();
-
-    if (!from || !to)
-        return to;
-
-    // Animation between two generated images. Cross fade for all other cases.
-    if (auto [fromFilter, toFilter] = std::tuple { dynamicDowncast<StyleFilterImage>(*from), dynamicDowncast<StyleFilterImage>(*to) }; fromFilter && toFilter) {
-        // Animation of generated images just possible if input images are equal.
-        // Otherwise fall back to cross fade animation.
-        if (fromFilter->equalInputImages(*toFilter) && is<StyleCachedImage>(fromFilter->inputImage()))
-            return blendFilter(fromFilter->inputImage(), fromFilter->filterOperations(), toFilter->filterOperations(), context);
-    } else if (auto [fromCrossfade, toCrossfade] = std::tuple { dynamicDowncast<StyleCrossfadeImage>(*from), dynamicDowncast<StyleCrossfadeImage>(*to) }; fromCrossfade && toCrossfade) {
-        if (fromCrossfade->equalInputImages(*toCrossfade)) {
-            if (auto crossfadeBlend = toCrossfade->blend(*fromCrossfade, context))
-                return crossfadeBlend;
-        }
-    } else if (auto [fromFilter, toCachedImage] = std::tuple { dynamicDowncast<StyleFilterImage>(*from), dynamicDowncast<StyleCachedImage>(*to) }; fromFilter && toCachedImage) {
-        RefPtr fromFilterInputImage = dynamicDowncast<StyleCachedImage>(fromFilter->inputImage());
-
-        if (fromFilterInputImage && toCachedImage->equals(*fromFilterInputImage))
-            return blendFilter(WTFMove(fromFilterInputImage), fromFilter->filterOperations(), FilterOperations(), context);
-    } else if (auto [fromCachedImage, toFilter] = std::tuple { dynamicDowncast<StyleCachedImage>(*from), dynamicDowncast<StyleFilterImage>(*to) }; fromCachedImage && toFilter) {
-        RefPtr toFilterInputImage = dynamicDowncast<StyleCachedImage>(toFilter->inputImage());
-
-        if (toFilterInputImage && fromCachedImage->equals(*toFilterInputImage))
-            return blendFilter(WTFMove(toFilterInputImage), FilterOperations(), toFilter->filterOperations(), context);
-    }
-
-    auto* fromCachedImage = dynamicDowncast<StyleCachedImage>(*from);
-    auto* toCachedImage = dynamicDowncast<StyleCachedImage>(*to);
-    if (fromCachedImage && toCachedImage)
-        return crossfadeBlend(*fromCachedImage, *toCachedImage, context);
-
-    // FIXME: Add support for animation between two *gradient() functions.
-    // https://bugs.webkit.org/show_bug.cgi?id=119956
-
-    // FIXME: Add support cross fade between cached and generated images.
-    // https://bugs.webkit.org/show_bug.cgi?id=78293
-
-    return to;
-}
-
-inline NinePieceImage blendFunc(const NinePieceImage& from, const NinePieceImage& to, const Context& context)
-{
-    if (!from.hasImage() || !to.hasImage())
-        return to;
-
-    // FIXME (74112): Support transitioning between NinePieceImages that differ by more than image content.
-
-    if (from.imageSlices() != to.imageSlices() || from.borderSlices() != to.borderSlices() || from.outset() != to.outset() || from.fill() != to.fill() || from.overridesBorderWidths() != to.overridesBorderWidths() || from.horizontalRule() != to.horizontalRule() || from.verticalRule() != to.verticalRule())
-        return to;
-
-    if (auto* renderer = context.client.renderer()) {
-        if (from.image()->imageSize(renderer, 1.0) != to.image()->imageSize(renderer, 1.0))
-            return to;
-    }
-
-    return NinePieceImage(blendFunc(from.image(), to.image(), context),
-        from.imageSlices(), from.fill(), from.borderSlices(), from.overridesBorderWidths(), from.outset(), from.horizontalRule(), from.verticalRule());
+    return blend(ImageWrapper { *from }, ImageWrapper { *to }, context).value.ptr();
 }
 
 #if ENABLE(VARIATION_FONTS)

@@ -47,7 +47,6 @@ public:
 
     double computeIntrinsicAspectRatio() const;
 
-    virtual std::pair<FloatSize, FloatSize> computeIntrinsicSizeAndPreferredAspectRatio() const;
 
     virtual bool paintsContent() const { return true; }
 
@@ -65,6 +64,9 @@ protected:
     bool isSelected() const;
 
     void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+
+    virtual FloatSize computeIntrinsicSize() const;
+    virtual FloatSize preferredAspectRatio() const;
 
     void setIntrinsicSize(const LayoutSize& intrinsicSize) { m_intrinsicSize = intrinsicSize; }
     virtual void intrinsicSizeChanged();
@@ -93,8 +95,8 @@ private:
 
     RepaintRects localRectsForRepaint(RepaintOutlineBounds) const override;
 
-    VisiblePosition positionForPoint(const LayoutPoint&, HitTestSource, const RenderFragmentContainer*) final;
-    
+    PositionWithAffinity positionForPoint(const LayoutPoint&, HitTestSource, const RenderFragmentContainer*) final;
+
     bool canBeSelectionLeaf() const override { return true; }
 
     LayoutRect selectionRectForRepaint(const RenderLayerModelObject* repaintContainer, bool clipToVisibleContent = true) final;

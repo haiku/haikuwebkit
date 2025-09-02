@@ -158,7 +158,7 @@ private:
     Markable<WebCore::LayerHostingContextIdentifier> m_remoteContextHostingIdentifier;
     Markable<WebCore::LayerHostingContextIdentifier> m_remoteContextHostedIdentifier;
 
-    RetainPtr<CALayer> m_layer;
+    const RetainPtr<CALayer> m_layer;
 
 #if ENABLE(GAZE_GLOW_FOR_INTERACTION_REGIONS) || HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
     Markable<WebCore::FloatRect> m_visibleRect;

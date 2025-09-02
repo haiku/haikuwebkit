@@ -30,6 +30,7 @@
 #include "FileSystemSyncAccessHandleInfo.h"
 #include "OriginStorageManager.h"
 #include "SharedPreferencesForWebProcess.h"
+#include "StorageAreaBase.h"
 #include "StorageAreaIdentifier.h"
 #include "StorageAreaImplIdentifier.h"
 #include "StorageAreaMapIdentifier.h"
@@ -156,6 +157,8 @@ private:
 
     RefPtr<NetworkProcess> protectedProcess() const;
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess(IPC::Connection&) const;
+    bool isStorageTypeEnabled(IPC::Connection&, WebCore::StorageType) const;
+    bool isStorageAreaTypeEnabled(IPC::Connection&, StorageAreaBase::StorageType) const;
 
     void writeOriginToFileIfNecessary(const WebCore::ClientOrigin&, StorageAreaBase* = nullptr);
     enum class ShouldWriteOriginFile : bool { No, Yes };

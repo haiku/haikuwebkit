@@ -296,7 +296,7 @@ public:
             return false;
 #if PLATFORM(COCOA)
         // We make an exception for Books because some already available books when converted to EPUBS might contain object replacement character that should not be visible to the user.
-        return WTF::CocoaApplication::isIBooks();
+        return WTF::CocoaApplication::isAppleBooks();
 #else
         return false;
 #endif

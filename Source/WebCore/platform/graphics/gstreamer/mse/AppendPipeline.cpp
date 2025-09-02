@@ -358,6 +358,7 @@ GstPadProbeReturn AppendPipeline::appsrcEndOfAppendCheckerProbe(GstPadProbeInfo*
     }
 
     GST_TRACE_OBJECT(pipeline(), "Posting end-of-append task to the main thread");
+    GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN(m_pipeline.get()), GST_DEBUG_GRAPH_SHOW_ALL, "end-of-append");
     m_taskQueue.enqueueTask([this]() {
         handleEndOfAppend();
     });
@@ -424,7 +425,7 @@ std::tuple<GRefPtr<GstCaps>, StreamType, FloatSize> AppendPipeline::parseDemuxer
 
     auto originalMediaType = capsMediaType(demuxerSrcPadCaps);
     auto& gstRegistryScanner = GStreamerRegistryScannerMSE::singleton();
-    if (doCapsHaveType(demuxerSrcPadCaps, GST_TEXT_CAPS_TYPE_PREFIX) || originalMediaType == "application/x-subtitle-vtt"_s) {
+    if (doCapsHaveType(demuxerSrcPadCaps, GST_TEXT_CAPS_TYPE_PREFIX) || originalMediaType == "application/x-subtitle-vtt"_s || originalMediaType == "closedcaption/x-cea-608") {
         streamType = StreamType::Text;
     } else if (!gstRegistryScanner.isCodecSupported(GStreamerRegistryScanner::Configuration::Decoding, originalMediaType.toString())) {
         streamType = StreamType::Invalid;
@@ -456,7 +457,7 @@ void AppendPipeline::appsinkCapsChanged(Track& track)
     // has a different codec or type (e.g. if we were previously demuxing an audio stream and
     // someone appends a video stream).
     auto currentMediaTypeView = capsMediaType(caps.get());
-    auto trackMediaTypeView = capsMediaType(track.caps.get());
+    auto trackMediaTypeView = capsMediaType(track.finalCaps.get());
     if (track.finalCaps && currentMediaTypeView != trackMediaTypeView) {
 #ifndef GST_DISABLE_GST_DEBUG
         auto currentMediaType = currentMediaTypeView.utf8();
@@ -894,6 +895,10 @@ GRefPtr<GstElement> createOptionalParserForFormat([[maybe_unused]] GstBin* bin, 
         // Necessary for: metadata filling.
         // Without this parser the codec string set on the corresponding video track will be incomplete.
         elementClass = "vp9parse"_s;
+    } else if (mediaType == "closedcaption/x-cea-608") {
+        // Used in converting cea-608 to WebVTT.
+        // qtdemux pushes captions in format: s334-1a, while cea608tott expects format: raw.
+        elementClass = "ccconverter"_s;
     }
 
     GST_DEBUG_OBJECT(bin, "Creating %s parser for stream with caps %" GST_PTR_FORMAT, elementClass.characters(), caps);
@@ -918,6 +923,8 @@ GRefPtr<GstElement> createOptionalEncoderForFormat([[maybe_unused]] GstBin* bin,
     //   - SouceBuffer timestampOffset   (Media Source Extensions, 5.1 Attributes)
     if (mediaType == "text/x-raw"_s)
         elementClass = "webvttenc"_s;
+    else if (mediaType == "closedcaption/x-cea-608")
+        elementClass = "cea608tott"_s;
 
     GST_DEBUG_OBJECT(bin, "Creating %s encoder for stream with caps %" GST_PTR_FORMAT, elementClass.characters(), caps);
     GRefPtr<GstElement> result(makeGStreamerElement(elementClass, encoderName));
@@ -1022,8 +1029,7 @@ bool AppendPipeline::recycleTrackForPad(GstPad* demuxerSrcPad)
             if (type.endsWith("webm"_s))
                 gst_pad_add_probe(demuxerSrcPad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, matroskademuxForceSegmentStartToEqualZero, nullptr, nullptr);
 
-            matchingTrack->emplaceOptionalEncoderForFormat(GST_BIN_CAST(m_pipeline.get()), parsedCaps);
-            matchingTrack->emplaceOptionalParserForFormat(GST_BIN_CAST(m_pipeline.get()), parsedCaps);
+            matchingTrack->emplaceOptionalElementsForFormat(GST_BIN_CAST(m_pipeline.get()), parsedCaps);
             linkPadWithTrack(demuxerSrcPad, *matchingTrack);
             matchingTrack->caps = WTFMove(parsedCaps);
             matchingTrack->presentationSize = presentationSize;
@@ -1082,7 +1088,7 @@ Ref<WebCore::TrackPrivateBase> AppendPipeline::makeWebKitTrack(Track& appendPipe
     return track.releaseNonNull();
 }
 
-void AppendPipeline::Track::emplaceOptionalParserForFormat(GstBin* bin, const GRefPtr<GstCaps>& newCaps)
+void AppendPipeline::Track::emplaceOptionalElementsForFormat(GstBin* bin, const GRefPtr<GstCaps>& newCaps)
 {
     // Some audio files unhelpfully omit the duration of frames in the container. We need to parse
     // the contained audio streams in order to know the duration of the frames.
@@ -1091,39 +1097,43 @@ void AppendPipeline::Track::emplaceOptionalParserForFormat(GstBin* bin, const GR
 
     if (parser) {
         ASSERT(caps);
+        ASSERT(encoder);
         // When switching from encrypted to unencrypted content the caps can change and we need to replace the parser.
         if (gstStructureGetName(gst_caps_get_structure(caps.get(), 0)) == gstStructureGetName(gst_caps_get_structure(newCaps.get(), 0))) {
             GST_TRACE_OBJECT(bin, "caps are compatible, bailing out");
             return;
         }
 
-        GST_TRACE_OBJECT(bin, "caps are not compatible, replacing parser");
+        GST_TRACE_OBJECT(bin, "caps are not compatible, replacing parser and encoder");
         auto locker = GstStateLocker(bin);
-        gst_element_unlink(parser.get(), encoder.get());
+        gst_element_unlink_many(parser.get(), encoder.get(), appsink.get(), nullptr);
         gst_element_set_state(parser.get(), GST_STATE_NULL);
-        gst_bin_remove(bin, parser.get());
+        gst_element_set_state(encoder.get(), GST_STATE_NULL);
+        gst_bin_remove_many(bin, parser.get(), encoder.get(), nullptr);
     }
 
     auto parserName = makeString("parser_"_s, unsafeSpan8(streamTypeToStringLower(streamType)), "_"_s, trackId);
-    parser = createOptionalParserForFormat(bin, parserName, newCaps.get());
-    gst_bin_add(bin, parser.get());
-    gst_element_link(parser.get(), encoder.get());
-    ASSERT(GST_PAD_IS_LINKED(encoderPad.get()));
-    gst_element_sync_state_with_parent(parser.get());
-    entryPad = adoptGRef(gst_element_get_static_pad(parser.get(), "sink"));
-}
-
-void AppendPipeline::Track::emplaceOptionalEncoderForFormat(GstBin* bin, const GRefPtr<GstCaps>& newCaps)
-{
-    if (encoder)
-        return;
     auto encoderName = makeString("encoder_"_s, unsafeSpan8(streamTypeToStringLower(streamType)), "_"_s, trackId);
+    parser = createOptionalParserForFormat(bin, parserName, newCaps.get());
     encoder = createOptionalEncoderForFormat(bin, encoderName, newCaps.get());
-    gst_bin_add(bin, encoder.get());
-    gst_element_link(encoder.get(), appsink.get());
-    ASSERT(GST_PAD_IS_LINKED(appsinkPad.get()));
+
+    ASSERT(encoder);
+
+    gst_bin_add_many(bin, parser.get(), encoder.get(), nullptr);
+    GST_INFO_OBJECT(bin, "linking elements...");
+    auto linkingOk = gst_element_link_many(parser.get(), encoder.get(), appsink.get(), nullptr);
+    if (!linkingOk)
+        GST_ERROR_OBJECT(bin, "linking elements failed!");
+
     gst_element_sync_state_with_parent(encoder.get());
+    gst_element_sync_state_with_parent(parser.get());
+
     encoderPad = adoptGRef(gst_element_get_static_pad(encoder.get(), "sink"));
+    entryPad = adoptGRef(gst_element_get_static_pad(parser.get(), "sink"));
+
+    ASSERT(encoderPad);
+    ASSERT(GST_PAD_IS_LINKED(appsinkPad.get()));
+    ASSERT(GST_PAD_IS_LINKED(encoderPad.get()));
 
     if (streamType == StreamType::Text)
         finalCaps = adoptGRef(gst_caps_new_empty_simple("application/x-subtitle-vtt"));
@@ -1158,8 +1168,7 @@ void AppendPipeline::Track::initializeElements(AppendPipeline* appendPipeline, G
     appsinkPadEventProbeInformation.probeId = gst_pad_add_probe(appsinkPad.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, reinterpret_cast<GstPadProbeCallback>(appendPipelineAppsinkPadEventProbe), &appsinkPadEventProbeInformation, nullptr);
 #endif
 
-    emplaceOptionalEncoderForFormat(bin, caps);
-    emplaceOptionalParserForFormat(bin, caps);
+    emplaceOptionalElementsForFormat(bin, caps);
 }
 
 void AppendPipeline::hookTrackEvents(Track& track)

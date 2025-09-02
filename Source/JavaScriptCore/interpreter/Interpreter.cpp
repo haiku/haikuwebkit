@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2008 Cameron Zwarich <cwzwarich@uwaterloo.ca>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -523,7 +523,7 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
             auto* nativeCallee = visitor->callee().asNativeCallee();
             switch (nativeCallee->category()) {
             case NativeCallee::Category::Wasm: {
-                results.append(StackFrame(visitor->wasmFunctionIndexOrName()));
+                results.append(StackFrame(visitor->wasmFunctionIndexOrName(), visitor->wasmFunctionIndex()));
                 break;
             }
             case NativeCallee::Category::InlineCache: {
@@ -627,10 +627,8 @@ CatchInfo::CatchInfo(const Wasm::HandlerInfo* handler, const Wasm::Callee* calle
         m_nativeCode = handler->m_nativeCode;
         m_nativeCodeForDispatchAndCatch = nullptr;
 #endif
-        m_catchPCForInterpreter = { static_cast<WasmInstruction*>(nullptr) };
-        if (callee->compilationMode() == Wasm::CompilationMode::LLIntMode)
-            m_catchPCForInterpreter = { static_cast<const Wasm::LLIntCallee*>(callee)->instructions().at(handler->m_target).ptr() };
-        else if (callee->compilationMode() == Wasm::CompilationMode::IPIntMode) {
+        m_catchPCForInterpreter = { static_cast<JSInstruction*>(nullptr) };
+        if (callee->compilationMode() == Wasm::CompilationMode::IPIntMode) {
             m_catchPCForInterpreter = handler->m_target;
             m_catchMetadataPCForInterpreter = handler->m_targetMetadata;
             m_tryDepthForThrow = handler->m_tryDepth;
@@ -660,6 +658,8 @@ public:
             if (JSWebAssemblyException* wasmException = jsDynamicCast<JSWebAssemblyException*>(thrownValue)) {
                 m_catchableFromWasm = true;
                 m_wasmTag = &wasmException->tag();
+                if (m_wasmTag == &Wasm::Tag::jsExceptionTag())
+                    m_exception->tryUnwrapValueForJSTag(m_vm);
             } else if (ErrorInstance* error = jsDynamicCast<ErrorInstance*>(thrownValue))
                 m_catchableFromWasm = error->isCatchableFromWasm();
             else
@@ -1119,11 +1119,6 @@ failedJSONP:
     if (error) [[unlikely]]
         return throwException(globalObject, throwScope, error);
 
-    if (vm.traps().needHandling(VMTraps::NonDebuggerAsyncEvents)) [[unlikely]] {
-        if (vm.hasExceptionsAfterHandlingTraps())
-            return throwScope.exception();
-    }
-
     if (scope->structure()->isUncacheableDictionary())
         scope->flattenDictionaryObject(vm);
 
@@ -1217,11 +1212,6 @@ ALWAYS_INLINE JSValue Interpreter::executeCallImpl(VM& vm, JSObject* function, c
     if (vm.disallowVMEntryCount) [[unlikely]]
         return checkVMEntryPermission();
 
-    if (vm.traps().needHandling(VMTraps::NonDebuggerAsyncEvents)) [[unlikely]] {
-        if (vm.hasExceptionsAfterHandlingTraps())
-            return scope.exception();
-    }
-
     RefPtr<JSC::JITCode> jitCode;
     ProtoCallFrame protoCallFrame;
     {
@@ -1267,7 +1257,7 @@ JSValue Interpreter::executeCall(JSObject* function, const CallData& callData, J
 
     // Only one-level unwrap is enough! We already made JSBoundFunction's nest smaller.
     auto* boundFunction = jsCast<JSBoundFunction*>(function);
-    if (boundFunction->m_isTainted)
+    if (boundFunction->isTainted())
         vm.setMightBeExecutingTaintedCode();
     if (!boundFunction->boundArgsLength()) {
         // This is the simplest path, just replacing |this|. We do not need to go to executeBoundCall.
@@ -1316,11 +1306,6 @@ JSObject* Interpreter::executeConstruct(JSObject* constructor, const CallData& c
     if (vm.disallowVMEntryCount) [[unlikely]] {
         checkVMEntryPermission();
         return globalObject->globalThis();
-    }
-
-    if (vm.traps().needHandling(VMTraps::NonDebuggerAsyncEvents)) [[unlikely]] {
-        if (vm.hasExceptionsAfterHandlingTraps())
-            return nullptr;
     }
 
     RefPtr<JSC::JITCode> jitCode;
@@ -1396,11 +1381,6 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
     if (!vm.isSafeToRecurseSoft()) [[unlikely]]
         return throwStackOverflowError(globalObject, throwScope);
 
-    if (vm.traps().needHandling(VMTraps::NonDebuggerAsyncEvents)) [[unlikely]] {
-        if (vm.hasExceptionsAfterHandlingTraps())
-            return throwScope.exception();
-    }
-
     auto topLevelFunctionDecls = eval->topLevelFunctionDecls();
     auto variables = eval->variables();
     auto functionHoistingCandidates = eval->functionHoistingCandidates();
@@ -1465,7 +1445,7 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
             for (auto& slot : functionDecls) {
                 FunctionExecutable* function = slot.get();
                 bool canDeclare = jsCast<JSGlobalObject*>(variableObject)->canDeclareGlobalFunction(function->name());
-                throwScope.assertNoExceptionExceptTermination();
+                RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
                 if (!canDeclare)
                     return throwException(globalObject, throwScope, createErrorForInvalidGlobalFunctionDeclaration(globalObject, function->name()));
             }
@@ -1473,7 +1453,7 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
             if (!variableObject->isStructureExtensible()) {
                 for (auto& ident : variables) {
                     bool canDeclare = jsCast<JSGlobalObject*>(variableObject)->canDeclareGlobalVar(ident);
-                    throwScope.assertNoExceptionExceptTermination();
+                    RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
                     if (!canDeclare)
                         return throwException(globalObject, throwScope, createErrorForInvalidGlobalVarDeclaration(globalObject, ident));
                 }
@@ -1482,12 +1462,12 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
 
         auto ensureBindingExists = [&](const Identifier& ident) {
             bool hasProperty = variableObject->hasOwnProperty(globalObject, ident);
-            throwScope.assertNoExceptionExceptTermination();
+            RETURN_IF_EXCEPTION(throwScope, void());
             if (!hasProperty) {
                 bool shouldThrow = true;
                 PutPropertySlot slot(variableObject, shouldThrow);
                 variableObject->methodTable()->put(variableObject, globalObject, ident, jsUndefined(), slot);
-                throwScope.assertNoExceptionExceptTermination();
+                RETURN_IF_EXCEPTION(throwScope, void());
             }
         };
 
@@ -1498,13 +1478,15 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
                 if (!resolvedScope.isUndefined()) {
                     if (isGlobalVariableEnvironment) {
                         bool canDeclare = jsCast<JSGlobalObject*>(variableObject)->canDeclareGlobalVar(ident);
-                        throwScope.assertNoExceptionExceptTermination();
+                        RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
                         if (canDeclare) {
                             jsCast<JSGlobalObject*>(variableObject)->createGlobalVarBinding<BindingCreationContext::Eval>(ident);
-                            throwScope.assertNoExceptionExceptTermination();
+                            RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
                         }
-                    } else
+                    } else {
                         ensureBindingExists(ident);
+                        RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
+                    }
                 }
             }
         }
@@ -1513,17 +1495,21 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
             FunctionExecutable* function = slot.get();
             if (isGlobalVariableEnvironment) {
                 jsCast<JSGlobalObject*>(variableObject)->createGlobalFunctionBinding<BindingCreationContext::Eval>(function->name());
-                throwScope.assertNoExceptionExceptTermination();
-            } else
+                RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
+            } else {
                 ensureBindingExists(function->name());
+                RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
+            }
         }
 
         for (auto& ident : variables) {
             if (isGlobalVariableEnvironment) {
                 jsCast<JSGlobalObject*>(variableObject)->createGlobalVarBinding<BindingCreationContext::Eval>(ident);
-                throwScope.assertNoExceptionExceptTermination();
-            } else
+                RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
+            } else {
                 ensureBindingExists(ident);
+                RETURN_IF_EXCEPTION(throwScope, throwScope.exception());
+            }
         }
 
         ensureStillAliveHere(codeBlock);
@@ -1606,11 +1592,6 @@ JSValue Interpreter::executeModuleProgram(JSModuleRecord* record, ModuleProgramE
 
     if (vm.disallowVMEntryCount) [[unlikely]]
         return checkVMEntryPermission();
-
-    if (vm.traps().needHandling(VMTraps::NonDebuggerAsyncEvents)) [[unlikely]] {
-        if (vm.hasExceptionsAfterHandlingTraps())
-            return throwScope.exception();
-    }
 
     if (scope->structure()->isUncacheableDictionary())
         scope->flattenDictionaryObject(vm);

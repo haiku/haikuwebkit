@@ -26,13 +26,8 @@
 namespace WebCore {
 
 class Animation;
-class CSSBorderImageSliceValue;
-class CSSBorderImageWidthValue;
 class CSSValue;
 class FillLayer;
-class LengthBox;
-class NinePieceImage;
-class Quad;
 class RenderStyle;
 class StyleImage;
 
@@ -75,18 +70,8 @@ public:
     void mapAnimationRangeStart(Animation&, const CSSValue&);
     void mapAnimationRangeEnd(Animation&, const CSSValue&);
 
-    void mapNinePieceImage(const CSSValue*, NinePieceImage&);
-    void mapNinePieceImageSlice(const CSSValue&, NinePieceImage&);
-    void mapNinePieceImageSlice(const CSSBorderImageSliceValue&, NinePieceImage&);
-    void mapNinePieceImageWidth(const CSSValue&, NinePieceImage&);
-    void mapNinePieceImageWidth(const CSSBorderImageWidthValue&, NinePieceImage&);
-    LengthBox mapNinePieceImageQuad(const CSSValue&);
-    static void mapNinePieceImageRepeat(const CSSValue&, NinePieceImage&);
-
 private:
     RefPtr<StyleImage> styleImage(const CSSValue&);
-    LengthBox mapNinePieceImageQuad(const Quad&);
-    Length mapNinePieceImageSide(const CSSValue&);
 
     Style::BuilderState& m_builderState;
 };

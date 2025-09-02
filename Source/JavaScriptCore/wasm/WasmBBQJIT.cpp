@@ -3176,7 +3176,7 @@ MacroAssembler::Label BBQJIT::addLoopOSREntrypoint()
     m_jit.move(wasmScratchGPR, MacroAssembler::stackPointerRegister);
 #endif
 
-    // The loop_osr slow path should have already checked that we have enough space. We have already destroyed the llint stack, and unwind will see the BBQ catch
+    // The loop_osr slow path should have already checked that we have enough space. We have already destroyed the ipint stack, and unwind will see the BBQ catch
     // since we already replaced callee. So, we just assert that this case doesn't happen to avoid reading a corrupted frame from the bbq catch handler.
     MacroAssembler::JumpList overflow;
 #if !CPU(ADDRESS64)
@@ -3865,7 +3865,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addEndToUnreachable(ControlEntry& entry
         // normal execution: jump past the handlers
         entryData.flushAndSingleExit(*this, entryData, entry.enclosedExpressionStack, false, true, unreachable);
         entryData.addBranch(m_jit.jump());
-        // similar to LLInt, we make a handler section to avoid jumping into random parts of code and not having
+        // similar to IPInt, we make a handler section to avoid jumping into random parts of code and not having
         // a real landing pad
         // FIXME: should we generate this all at the end of the code? this might help icache performance since
         // exceptions are rare

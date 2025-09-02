@@ -1410,7 +1410,7 @@ static void webkitWebViewBaseButtonPressed(WebKitWebViewBase* webViewBase, int c
     if (button == GDK_BUTTON_SECONDARY)
         priv->contextMenuEvent = event;
 
-    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(event, { clampToInteger(x), clampToInteger(y) }, clickCount, std::nullopt));
+    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(event, DoublePoint(x, y), clickCount, std::nullopt));
 }
 
 static void webkitWebViewBaseButtonReleased(WebKitWebViewBase* webViewBase, int clickCount, double x, double y, GtkGesture* gesture)
@@ -1426,7 +1426,7 @@ static void webkitWebViewBaseButtonReleased(WebKitWebViewBase* webViewBase, int 
     auto* sequence = gtk_gesture_single_get_current_sequence(GTK_GESTURE_SINGLE(gesture));
     gtk_gesture_set_sequence_state(gesture, sequence, GTK_EVENT_SEQUENCE_CLAIMED);
 
-    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(gtk_gesture_get_last_event(gesture, sequence), { clampToInteger(x), clampToInteger(y) }, clickCount, std::nullopt));
+    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(gtk_gesture_get_last_event(gesture, sequence), DoublePoint(x, y), clickCount, std::nullopt));
 }
 #endif
 
@@ -1735,7 +1735,7 @@ static void webkitWebViewBaseEnter(WebKitWebViewBase* webViewBase, double x, dou
         return;
 #endif
 
-    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent({ clampToInteger(x), clampToInteger(y) }));
+    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(DoublePoint(x, y)));
 }
 
 static gboolean webkitWebViewBaseMotion(WebKitWebViewBase* webViewBase, double x, double y, GtkEventController* controller)
@@ -1756,7 +1756,7 @@ static gboolean webkitWebViewBaseMotion(WebKitWebViewBase* webViewBase, double x
         movementDelta = motionEvent.position - priv->lastMotionEvent->position;
     priv->lastMotionEvent = WTFMove(motionEvent);
 
-    webViewBase->priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(event, { clampToInteger(x), clampToInteger(y) }, 0, movementDelta));
+    webViewBase->priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(event, DoublePoint(x, y), 0, movementDelta));
 
     return GDK_EVENT_PROPAGATE;
 }
@@ -1793,16 +1793,16 @@ static void webkitWebViewBaseLeave(WebKitWebViewBase* webViewBase, GdkCrossingMo
     int yDistanceFromBottomEdge = height - previousY;
 
     if (previousX <= xDistanceFromRightEdge && previousX <= previousY && previousX <= yDistanceFromBottomEdge)
-        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent({ -1, previousY }));
+        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(DoublePoint(-1, previousY)));
     else if (xDistanceFromRightEdge <= previousX && xDistanceFromRightEdge <= previousY && xDistanceFromRightEdge <= yDistanceFromBottomEdge)
-        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent({ width, previousY }));
+        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(DoublePoint(width, previousY)));
     else if (previousY <= previousX && previousY <= xDistanceFromRightEdge && previousY <= yDistanceFromBottomEdge)
-        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent({ previousX, -1 }));
+        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(DoublePoint(previousX, -1)));
     else {
         ASSERT(yDistanceFromBottomEdge <= previousX);
         ASSERT(yDistanceFromBottomEdge <= previousY);
         ASSERT(yDistanceFromBottomEdge <= xDistanceFromRightEdge);
-        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent({ previousX, height }));
+        priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(DoublePoint(previousX, height)));
     }
 }
 #endif
@@ -3236,7 +3236,7 @@ void webkitWebViewBaseSynthesizeMouseEvent(WebKitWebViewBase* webViewBase, Mouse
         break;
     }
 
-    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(webEventType, webEventButton, webEventButtons, { x, y },
+    priv->pageProxy->handleMouseEvent(NativeWebMouseEvent(webEventType, webEventButton, webEventButtons, DoublePoint(x, y),
         widgetRootCoords(GTK_WIDGET(webViewBase), x, y), clickCount, toWebKitModifiers(modifiers), movementDelta,
         primaryPointerForType(pointerType), pointerType.isNull() ? mousePointerEventType() : pointerType, isTouchEvent));
 }

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "ArrayBuffer.h"
-#include "TypedArrayType.h"
+#include <JavaScriptCore/ArrayBuffer.h>
+#include <JavaScriptCore/TypedArrayType.h>
 #include <algorithm>
 #include <limits.h>
 #include <wtf/CheckedArithmetic.h>

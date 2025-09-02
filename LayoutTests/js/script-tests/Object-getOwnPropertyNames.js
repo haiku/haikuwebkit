@@ -74,11 +74,11 @@ var expectedPropertyNamesSet = {
     "Symbol": "['asyncIterator','for', 'hasInstance', 'isConcatSpreadable', 'iterator', 'keyFor', 'length', 'match', 'matchAll', 'name', 'prototype', 'replace', 'search', 'species', 'split', 'toPrimitive', 'toStringTag', 'unscopables']",
     "Symbol.prototype": "['constructor', 'description', 'toString', 'valueOf']",
     "Map": "['groupBy', 'length', 'name', 'prototype']",
-    "Map.prototype": "['clear', 'constructor', 'delete', 'entries', 'forEach', 'get', 'has', 'keys', 'set', 'size', 'values']",
+    "Map.prototype": "['clear', 'constructor', 'delete', 'entries', 'forEach', 'get', 'getOrInsert', 'getOrInsertComputed', 'has', 'keys', 'set', 'size', 'values']",
     "Set": "['length', 'name', 'prototype']",
     "Set.prototype": "['add', 'clear', 'constructor', 'delete', 'difference', 'entries', 'forEach', 'has', 'intersection', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf', 'keys', 'size', 'symmetricDifference', 'union', 'values']",
     "WeakMap": "['length', 'name', 'prototype']",
-    "WeakMap.prototype": "['constructor', 'delete', 'get', 'has', 'set']",
+    "WeakMap.prototype": "['constructor', 'delete', 'get', 'getOrInsert', 'getOrInsertComputed', 'has', 'set']",
     "WeakSet": "['length', 'name', 'prototype']",
     "WeakSet.prototype": "['add', 'constructor', 'delete', 'has']"
 };

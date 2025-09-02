@@ -54,6 +54,7 @@ class WebCoreOpaqueRoot;
 class WebXRSystem;
 class WebXRView;
 class WebXRViewerSpace;
+struct XRCanvasConfiguration;
 struct XRRenderStateInit;
 
 class WebXRSession final : public RefCounted<WebXRSession>, public EventTarget, public ActiveDOMObject, public PlatformXR::TrackingAndRenderingClient {
@@ -113,6 +114,8 @@ public:
 #if ENABLE(WEBXR_HANDS)
     bool isHandTrackingEnabled() const;
 #endif
+
+    void initializeTrackingAndRendering(std::optional<XRCanvasConfiguration>&&);
 
 private:
     WebXRSession(Document&, WebXRSystem&, XRSessionMode, PlatformXR::Device&, FeatureList&&);

@@ -133,6 +133,19 @@ public:
 
     static bool isCapturing(MediaStateFlags state) { return state.containsAny(ActiveCaptureMask) || state.containsAny(MutedCaptureMask); }
 
+#if ENABLE(EXTENSION_CAPABILITIES)
+    static bool needsMediaCapability(MediaStateFlags state)
+    {
+        if (state.contains(MediaProducerMediaState::IsPlayingAudio))
+            return true;
+
+        if (state.contains(MediaProducerMediaState::IsPlayingVideo))
+            return true;
+
+        return MediaProducer::isCapturing(state);
+    }
+#endif
+
     virtual MediaStateFlags mediaState() const = 0;
 
     static constexpr MutedStateFlags AudioAndVideoCaptureIsMuted = { MutedState::AudioCaptureIsMuted, MutedState::VideoCaptureIsMuted };

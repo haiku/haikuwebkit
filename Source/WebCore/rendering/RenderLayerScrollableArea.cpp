@@ -1874,7 +1874,7 @@ static inline IntSize adjustedScrollDelta(const IntSize& delta)
 
 void RenderLayerScrollableArea::panScrollFromPoint(const IntPoint& sourcePoint)
 {
-    IntPoint lastKnownMousePosition = m_layer.renderer().frame().eventHandler().lastKnownMousePosition();
+    IntPoint lastKnownMousePosition = flooredIntPoint(m_layer.renderer().frame().eventHandler().lastKnownMousePosition());
 
     // We need to check if the last known mouse position is out of the window. When the mouse is out of the window, the position is incoherent
     static IntPoint previousMousePosition;

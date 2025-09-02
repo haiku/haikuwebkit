@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "JSCJSValue.h"
-#include "Weak.h"
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/Weak.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Options.h"
-#include "SpeculatedType.h"
+#include <JavaScriptCore/Options.h>
+#include <JavaScriptCore/SpeculatedType.h>
 #include <wtf/LockAlgorithm.h>
 #include <wtf/StdLibExtras.h>
 

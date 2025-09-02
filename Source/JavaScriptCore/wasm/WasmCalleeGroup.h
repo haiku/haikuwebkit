@@ -27,10 +27,10 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "MacroAssemblerCodeRef.h"
-#include "MemoryMode.h"
-#include "WasmCallee.h"
-#include "WasmJS.h"
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/MemoryMode.h>
+#include <JavaScriptCore/WasmCallee.h>
+#include <JavaScriptCore/WasmJS.h>
 #include <wtf/CrossThreadCopier.h>
 #include <wtf/FixedBitVector.h>
 #include <wtf/FixedVector.h>
@@ -54,7 +54,6 @@ class CalleeGroup final : public ThreadSafeRefCounted<CalleeGroup> {
 public:
     typedef void CallbackType(Ref<CalleeGroup>&&, bool);
     using AsyncCompilationCallback = RefPtr<WTF::SharedTask<CallbackType>>;
-    static Ref<CalleeGroup> createFromLLInt(VM&, MemoryMode, ModuleInformation&, RefPtr<LLIntCallees>);
     static Ref<CalleeGroup> createFromIPInt(VM&, MemoryMode, ModuleInformation&, RefPtr<IPIntCallees>);
     static Ref<CalleeGroup> createFromExisting(MemoryMode, const CalleeGroup&);
 
@@ -128,9 +127,7 @@ public:
         if (RefPtr replacement = this->replacement(locker, functionIndexSpace))
             return replacement.releaseNonNull();
         unsigned calleeIndex = functionIndexSpace - functionImportCount();
-        if (Options::useWasmIPInt())
-            return m_ipintCallees->at(calleeIndex).get();
-        return m_llintCallees->at(calleeIndex).get();
+        return m_ipintCallees->at(calleeIndex).get();
     }
 
 
@@ -182,8 +179,7 @@ public:
         return &m_wasmIndirectCallEntryPoints[calleeIndex];
     }
 
-    // This is the callee used by LLInt/IPInt, not by the JS->Wasm entrypoint
-    RefPtr<Wasm::Callee> wasmCalleeFromFunctionIndexSpace(FunctionSpaceIndex functionIndexSpace)
+    RefPtr<Wasm::IPIntCallee> wasmCalleeFromFunctionIndexSpace(FunctionSpaceIndex functionIndexSpace)
     {
         RELEASE_ASSERT(functionIndexSpace >= functionImportCount());
         unsigned calleeIndex = functionIndexSpace - functionImportCount();
@@ -218,7 +214,6 @@ private:
     friend class OSREntryPlan;
 #endif
 
-    CalleeGroup(VM&, MemoryMode, ModuleInformation&, RefPtr<LLIntCallees>);
     CalleeGroup(VM&, MemoryMode, ModuleInformation&, RefPtr<IPIntCallees>);
     CalleeGroup(MemoryMode, const CalleeGroup&);
     void setCompilationFinished();
@@ -232,7 +227,6 @@ private:
     FixedVector<ThreadSafeWeakOrStrongPtr<BBQCallee>> m_bbqCallees WTF_GUARDED_BY_LOCK(m_lock);
 #endif
     RefPtr<IPIntCallees> m_ipintCallees WTF_GUARDED_BY_LOCK(m_lock);
-    RefPtr<LLIntCallees> m_llintCallees WTF_GUARDED_BY_LOCK(m_lock);
     UncheckedKeyHashMap<uint32_t, RefPtr<JSEntrypointCallee>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_jsEntrypointCallees;
 #if ENABLE(WEBASSEMBLY_BBQJIT) || ENABLE(WEBASSEMBLY_OMGJIT)
     // FIXME: We should probably find some way to prune dead entries periodically.
@@ -247,7 +241,7 @@ private:
     using DenseCallers = BitVector;
     FixedVector<Variant<SparseCallers, DenseCallers>> m_callers WTF_GUARDED_BY_LOCK(m_lock);
     FixedVector<CodePtr<WasmEntryPtrTag>> m_wasmIndirectCallEntryPoints;
-    FixedVector<RefPtr<Wasm::Callee>> m_wasmIndirectCallWasmCallees;
+    FixedVector<RefPtr<Wasm::IPIntCallee>> m_wasmIndirectCallWasmCallees;
     FixedVector<MacroAssemblerCodeRef<WasmEntryPtrTag>> m_wasmToWasmExitStubs;
     RefPtr<EntryPlan> m_plan;
     std::atomic<bool> m_compilationFinished { false };

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "WasmName.h"
+#include <JavaScriptCore/WasmName.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/text/CString.h>
 #include <wtf/ThreadSafeRefCounted.h>

@@ -424,7 +424,7 @@ static void imageBytesForSource(WebGPU::Queue& backing, const auto& sourceDescri
     }, [&](const RefPtr<ImageData> imageData) -> ResultType {
         if (!imageData)
             return callback({ }, 0, 0);
-        callback(imageData->pixelBuffer()->bytes(), imageData->width(), imageData->height());
+        callback(imageData->byteArrayPixelBuffer()->bytes(), imageData->width(), imageData->height());
     }, [&](const RefPtr<HTMLImageElement> imageElement) -> ResultType {
 #if PLATFORM(COCOA)
         if (!imageElement)

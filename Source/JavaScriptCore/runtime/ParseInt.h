@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "JSCJSValue.h"
-#include "Lexer.h"
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/Lexer.h>
 #include <wtf/dtoa.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN

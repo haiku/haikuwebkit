@@ -108,6 +108,11 @@ AccessibilityUIElement AccessibilityController::accessibleElementById(JSStringRe
     return nullptr;
 }
 
+void AccessibilityController::printTrees()
+{
+    [[mainFrame accessibilityRoot] accessibilityPerformAction:@"AXLogTrees"];
+}
+
 void AccessibilityController::setLogFocusEvents(bool)
 {
 }

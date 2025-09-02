@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "DoubleSize.h"
 #include "IntPoint.h"
 #include <wtf/JSONValues.h>
 #include <wtf/MathExtras.h>
@@ -143,6 +144,16 @@ public:
         return FloatSize(m_height, m_width);
     }
 
+    FloatSize scaledBy(float scale) const
+    {
+        return scaledBy(scale, scale);
+    }
+
+    FloatSize scaledBy(float scaleX, float scaleY) const
+    {
+        return FloatSize(m_width * scaleX, m_height * scaleY);
+    }
+
 #if PLATFORM(HAIKU)
     FloatSize(const BSize&);
     operator BSize() const;
@@ -158,6 +169,8 @@ public:
 
     WEBCORE_EXPORT String toJSONString() const;
     WEBCORE_EXPORT Ref<JSON::Object> toJSONObject() const;
+
+    operator DoubleSize() const { return { m_width, m_height }; }
 
     friend bool operator==(const FloatSize&, const FloatSize&) = default;
 

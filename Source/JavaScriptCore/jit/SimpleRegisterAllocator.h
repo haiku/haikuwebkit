@@ -25,8 +25,10 @@
 
 #pragma once
 
-#include "RegisterSet.h"
+#include <JavaScriptCore/RegisterSet.h>
 #include <array>
+
+#if ENABLE(JIT)
 
 namespace JSC {
 
@@ -244,3 +246,5 @@ private:
 };
 
 } // namespace JSC
+
+#endif // ENABLE(JIT)

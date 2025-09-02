@@ -1,5 +1,6 @@
+CONSOLE MESSAGE: Unhandled Promise Rejection: Error: boo
 
-Harness Error (TIMEOUT), message = null
+Harness Error (FAIL), message = Unhandled rejection: boo
 
-TIMEOUT event and promise ordering for same-document navigation.back() intercepted by passing a rejected promise to intercept() Test timed out
+FAIL event and promise ordering for same-document navigation.back() intercepted by passing a rejected promise to intercept() assert_equals: event 2 (handler run): location.hash value expected "" but got "#1"
 

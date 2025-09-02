@@ -464,6 +464,8 @@ public:
     void setUseWorkQueue(bool useWorkQueue) { m_useWorkQueue = useWorkQueue; }
     bool useWorkQueue() const { return m_useWorkQueue; }
 
+    void listenForTooltipChanges(WKFrameInfoRef, WKStringRef);
+
 private:
     WKRetainPtr<WKPageConfigurationRef> generatePageConfiguration(const TestOptions&);
     WKRetainPtr<WKContextConfigurationRef> generateContextConfiguration(const TestOptions&) const;
@@ -506,6 +508,7 @@ private:
     WKContextRef platformContext();
     void initializeInjectedBundlePath();
     void initializeTestPluginDirectory();
+    void installUserScript(const TestInvocation&);
 
     void ensureViewSupportsOptionsForTest(const TestInvocation&);
     TestOptions testOptionsForTest(const TestCommand&) const;
@@ -634,6 +637,9 @@ private:
 
     static void didUpdateHistoryTitle(WKContextRef, WKPageRef, WKStringRef title, WKURLRef, WKFrameRef, const void*);
     void didUpdateHistoryTitle(WKStringRef title, WKURLRef, WKFrameRef);
+
+    static void tooltipDidChange(WKPageRef, WKStringRef tooltip, const void*);
+    void tooltipDidChange(WKStringRef tooltip);
 
     static WKPageRef createOtherPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void*);
     WKPageRef createOtherPage(PlatformWebView* parentView, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef);
@@ -792,6 +798,12 @@ private:
     };
     HashMap<String, AbandonedDocumentInfo> m_abandonedDocumentInfo;
     CompletionHandler<void()> m_finishExitFullscreenHandler;
+
+    struct TooltipChangeCallbackInfo {
+        WKRetainPtr<WKFrameInfoRef> frame;
+        String callbackName;
+    };
+    Vector<TooltipChangeCallbackInfo> m_framesListeningForTooltipChange;
 
     uint64_t m_serverTrustEvaluationCallbackCallsCount { 0 };
     bool m_shouldDismissJavaScriptAlertsAsynchronously { false };

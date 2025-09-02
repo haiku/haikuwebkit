@@ -48,6 +48,7 @@
 #include <wtf/CheckedPtr.h>
 #include <wtf/Deque.h>
 #include <wtf/HashSet.h>
+#include <wtf/LazyUniqueRef.h>
 #include <wtf/Ref.h>
 #include <wtf/Seconds.h>
 #include <wtf/TZoneMalloc.h>
@@ -225,8 +226,8 @@ public:
     void resumeBackgroundFetch(const String&, CompletionHandler<void()>&&);
     void clickBackgroundFetch(const String&, CompletionHandler<void()>&&);
 
-    WebSharedWorkerServer* sharedWorkerServer() { return m_sharedWorkerServer.get(); }
-    WebSharedWorkerServer& ensureSharedWorkerServer();
+    WebSharedWorkerServer* sharedWorkerServer() { return const_cast<WebSharedWorkerServer*>(m_sharedWorkerServer.getIfExists()); }
+    WebSharedWorkerServer& ensureSharedWorkerServer() { return const_cast<WebSharedWorkerServer&>(m_sharedWorkerServer.get(*this)); }
 
     NetworkStorageManager& storageManager() { return m_storageManager.get(); }
     void clearCacheEngine();
@@ -386,7 +387,7 @@ protected:
     RefPtr<WebCore::SWServer> m_swServer;
     const RefPtr<BackgroundFetchStoreImpl> m_backgroundFetchStore;
     bool m_inspectionForServiceWorkersAllowed { true };
-    const std::unique_ptr<WebSharedWorkerServer> m_sharedWorkerServer;
+    const LazyUniqueRef<NetworkSession, WebSharedWorkerServer> m_sharedWorkerServer;
 
     struct RecentHTTPSConnectionTiming {
         static constexpr unsigned maxEntries { 25 };

@@ -31,6 +31,7 @@
 #import "WebGPUExt.h"
 #import <Metal/Metal.h>
 #import <utility>
+#import <wtf/Compiler.h>
 #import <wtf/CompletionHandler.h>
 #import <wtf/FastMalloc.h>
 #import <wtf/HashMap.h>

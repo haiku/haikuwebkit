@@ -29,19 +29,19 @@
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-#include "CatchScope.h"
-#include "Error.h"
-#include "ExceptionHelpers.h"
-#include "Identifier.h"
-#include "InternalFunction.h"
-#include "JSBigInt.h"
-#include "JSCJSValue.h"
-#include "JSCellInlines.h"
-#include "JSFunction.h"
-#include "JSGlobalProxy.h"
-#include "JSObject.h"
-#include "JSStringInlines.h"
-#include "MathCommon.h"
+#include <JavaScriptCore/CatchScope.h>
+#include <JavaScriptCore/Error.h>
+#include <JavaScriptCore/ExceptionHelpers.h>
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/InternalFunction.h>
+#include <JavaScriptCore/JSBigInt.h>
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/JSCellInlines.h>
+#include <JavaScriptCore/JSFunction.h>
+#include <JavaScriptCore/JSGlobalProxy.h>
+#include <JavaScriptCore/JSObject.h>
+#include <JavaScriptCore/JSStringInlines.h>
+#include <JavaScriptCore/MathCommon.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringImpl.h>
 

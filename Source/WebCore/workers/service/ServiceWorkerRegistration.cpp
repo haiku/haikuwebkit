@@ -319,7 +319,7 @@ void ServiceWorkerRegistration::showNotification(ScriptExecutionContext& context
         if (RefPtr declarativePushEvent = serviceWorkerGlobalScope->declarativePushEvent()) {
             auto notification = notificationResult.releaseReturnValue();
             if (!notification->navigate().isValid()) {
-                promise->reject(Exception { ExceptionCode::TypeError, "Call to showNotification() while handling a `pushnotification` event did not include NotificationOptions that specify a valid defaultAction url"_s });
+                promise->reject(Exception { ExceptionCode::TypeError, "Call to showNotification() while handling a `push` event did not include NotificationOptions that specify a valid defaultAction url"_s });
                 return;
             }
 

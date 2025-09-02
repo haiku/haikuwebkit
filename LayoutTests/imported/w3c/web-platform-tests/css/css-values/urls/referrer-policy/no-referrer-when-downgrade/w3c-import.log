@@ -14,7 +14,7 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrerpolicy-cross-origin.sub-expected.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrerpolicy-cross-origin.sub.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrerpolicy-same-origin.sub-expected.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrerpolicy-same-origin.sub.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrer-policy-cross-origin.sub-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrer-policy-cross-origin.sub.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrer-policy-same-origin.sub-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/referrer-policy/no-referrer-when-downgrade/url-image-referrer-policy-same-origin.sub.html

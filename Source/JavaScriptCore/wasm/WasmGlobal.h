@@ -53,7 +53,7 @@ public:
         WriteBarrierBase<Unknown> m_externref;
         Value* m_pointer;
     };
-    static_assert(sizeof(Value) == 16, "Update LLInt if this changes");
+    static_assert(sizeof(Value) == 16, "Update IPInt if this changes");
 
     static Ref<Global> create(Wasm::Type type, Wasm::Mutability mutability, uint64_t initialValue = 0)
     {

@@ -243,8 +243,17 @@ SetNonVolatileResult ImageBufferIOSurfaceBackend::setNonVolatile()
 {
     if (m_volatilityState == VolatilityState::Volatile) {
         setVolatilityState(VolatilityState::NonVolatile);
-        return m_surface->setVolatile(false);
+
+        auto previousState = m_surface->setVolatile(false);
+        if (previousState == SetNonVolatileResult::Empty) {
+            RetainPtr context = ensurePlatformContext();
+            ASSERT(CGAffineTransformIsIdentity(CGContextGetCTM(context.get())));
+            CGContextClearRect(context.get(), FloatRect({ }, size()));
+        }
+
+        return previousState;
     }
+
     ASSERT(!m_surface->isVolatile());
     return SetNonVolatileResult::Valid;
 }

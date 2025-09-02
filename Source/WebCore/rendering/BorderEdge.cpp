@@ -49,9 +49,10 @@ BorderEdge::BorderEdge(float edgeWidth, Color edgeColor, BorderStyle edgeStyle, 
 
 BorderEdges borderEdges(const RenderStyle& style, float deviceScaleFactor, RectEdges<bool> closedEdges, LayoutSize inflation, bool setColorsToBlack)
 {
-    auto constructBorderEdge = [&](float width, float inflation, CSSPropertyID borderColorProperty, BorderStyle borderStyle, bool isTransparent, bool isPresent) {
+    auto constructBorderEdge = [&](Style::LineWidth width, float inflation, CSSPropertyID borderColorProperty, BorderStyle borderStyle, bool isTransparent, bool isPresent) {
         auto color = setColorsToBlack ? Color::black : style.visitedDependentColorWithColorFilter(borderColorProperty);
-        auto inflatedWidth = width ? width + inflation : width;
+        auto evaluatedWidth = Style::evaluate(width);
+        auto inflatedWidth = evaluatedWidth ? evaluatedWidth + inflation : evaluatedWidth;
         return BorderEdge(inflatedWidth, color, borderStyle, !setColorsToBlack && isTransparent, isPresent, deviceScaleFactor);
     };
 

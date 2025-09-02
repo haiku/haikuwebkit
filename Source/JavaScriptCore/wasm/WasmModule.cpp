@@ -29,7 +29,6 @@
 #if ENABLE(WEBASSEMBLY)
 
 #include "WasmIPIntPlan.h"
-#include "WasmLLIntPlan.h"
 #include "WasmModuleInformation.h"
 #include "WasmWorklist.h"
 
@@ -37,17 +36,8 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC { namespace Wasm {
 
-Module::Module(LLIntPlan& plan)
-    : m_moduleInformation(plan.takeModuleInformation())
-    , m_llintCallees(LLIntCallees::createFromVector(plan.takeCallees()))
-    , m_ipintCallees(IPIntCallees::create(0))
-    , m_wasmToJSExitStubs(plan.takeWasmToJSExitStubs())
-{
-}
-
 Module::Module(IPIntPlan& plan)
     : m_moduleInformation(plan.takeModuleInformation())
-    , m_llintCallees(LLIntCallees::create(0))
     , m_ipintCallees(IPIntCallees::createFromVector(plan.takeCallees()))
     , m_wasmToJSExitStubs(plan.takeWasmToJSExitStubs())
 {
@@ -58,14 +48,6 @@ Module::~Module() = default;
 Wasm::TypeIndex Module::typeIndexFromFunctionIndexSpace(FunctionSpaceIndex functionIndexSpace) const
 {
     return m_moduleInformation->typeIndexFromFunctionIndexSpace(functionIndexSpace);
-}
-
-static Module::ValidationResult makeValidationResult(LLIntPlan& plan)
-{
-    ASSERT(!plan.hasWork());
-    if (plan.failed())
-        return Unexpected<String>(plan.errorMessage());
-    return Module::ValidationResult(Module::create(plan));
 }
 
 static Module::ValidationResult makeValidationResult(IPIntPlan& plan)
@@ -80,22 +62,13 @@ static Plan::CompletionTask makeValidationCallback(Module::AsyncValidationCallba
 {
     return createSharedTask<Plan::CallbackType>([callback = WTFMove(callback)] (Plan& plan) {
         ASSERT(!plan.hasWork());
-        if (Options::useWasmIPInt())
-            callback->run(makeValidationResult(static_cast<IPIntPlan&>(plan)));
-        else
-            callback->run(makeValidationResult(static_cast<LLIntPlan&>(plan)));
+        callback->run(makeValidationResult(static_cast<IPIntPlan&>(plan)));
     });
 }
 
 Module::ValidationResult Module::validateSync(VM& vm, Vector<uint8_t>&& source)
 {
-    if (Options::useWasmIPInt()) {
-        Ref<IPIntPlan> plan = adoptRef(*new IPIntPlan(vm, WTFMove(source), CompilerMode::Validation, Plan::dontFinalize()));
-        Wasm::ensureWorklist().enqueue(plan.get());
-        plan->waitForCompletion();
-        return makeValidationResult(plan.get());
-    }
-    Ref<LLIntPlan> plan = adoptRef(*new LLIntPlan(vm, WTFMove(source), CompilerMode::Validation, Plan::dontFinalize()));
+    Ref<IPIntPlan> plan = adoptRef(*new IPIntPlan(vm, WTFMove(source), CompilerMode::Validation, Plan::dontFinalize()));
     Wasm::ensureWorklist().enqueue(plan.get());
     plan->waitForCompletion();
     return makeValidationResult(plan.get());
@@ -103,13 +76,8 @@ Module::ValidationResult Module::validateSync(VM& vm, Vector<uint8_t>&& source)
 
 void Module::validateAsync(VM& vm, Vector<uint8_t>&& source, Module::AsyncValidationCallback&& callback)
 {
-    if (Options::useWasmIPInt()) {
-        Ref<Plan> plan = adoptRef(*new IPIntPlan(vm, WTFMove(source), CompilerMode::Validation, makeValidationCallback(WTFMove(callback))));
-        Wasm::ensureWorklist().enqueue(WTFMove(plan));
-    } else {
-        Ref<Plan> plan = adoptRef(*new LLIntPlan(vm, WTFMove(source), CompilerMode::Validation, makeValidationCallback(WTFMove(callback))));
-        Wasm::ensureWorklist().enqueue(WTFMove(plan));
-    }
+    Ref<Plan> plan = adoptRef(*new IPIntPlan(vm, WTFMove(source), CompilerMode::Validation, makeValidationCallback(WTFMove(callback))));
+    Wasm::ensureWorklist().enqueue(WTFMove(plan));
 }
 
 Ref<CalleeGroup> Module::getOrCreateCalleeGroup(VM& vm, MemoryMode mode)
@@ -123,10 +91,7 @@ Ref<CalleeGroup> Module::getOrCreateCalleeGroup(VM& vm, MemoryMode mode)
     // FIXME: We might want to back off retrying at some point:
     // https://bugs.webkit.org/show_bug.cgi?id=170607
     if (!calleeGroup || (calleeGroup->compilationFinished() && !calleeGroup->runnable())) {
-        if (Options::useWasmIPInt())
-            m_calleeGroups[static_cast<uint8_t>(mode)] = calleeGroup = CalleeGroup::createFromIPInt(vm, mode, const_cast<ModuleInformation&>(moduleInformation()), m_ipintCallees.copyRef());
-        else
-            m_calleeGroups[static_cast<uint8_t>(mode)] = calleeGroup = CalleeGroup::createFromLLInt(vm, mode, const_cast<ModuleInformation&>(moduleInformation()), m_llintCallees.copyRef());
+        m_calleeGroups[static_cast<uint8_t>(mode)] = calleeGroup = CalleeGroup::createFromIPInt(vm, mode, const_cast<ModuleInformation&>(moduleInformation()), m_ipintCallees.copyRef());
     }
     return calleeGroup.releaseNonNull();
 }

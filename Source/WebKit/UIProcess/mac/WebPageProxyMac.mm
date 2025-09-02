@@ -435,6 +435,16 @@ void WebPageProxy::updateContentInsetsIfAutomatic()
     scheduleSetObscuredContentInsetsDispatch();
 }
 
+void WebPageProxy::setOverflowHeightForTopScrollEdgeEffect(double value)
+{
+    if (m_overflowHeightForTopScrollEdgeEffect == value)
+        return;
+
+    m_overflowHeightForTopScrollEdgeEffect = value;
+
+    protectedLegacyMainFrameProcess()->send(Messages::WebPage::SetOverflowHeightForTopScrollEdgeEffect(value), webPageIDInMainFrameProcess());
+}
+
 void WebPageProxy::setObscuredContentInsetsAsync(const FloatBoxExtent& obscuredContentInsets)
 {
     m_internals->pendingObscuredContentInsets = obscuredContentInsets;
@@ -898,7 +908,7 @@ void WebPageProxy::handleContextMenuLookUpImage()
     if (!imageBitmap)
         return;
 
-    showImageInQuickLookPreviewPanel(*imageBitmap, result.toolTipText, URL { result.absoluteImageURL }, QuickLookPreviewActivity::VisualSearch);
+    showImageInQuickLookPreviewPanel(*imageBitmap, result.tooltipText, URL { result.absoluteImageURL }, QuickLookPreviewActivity::VisualSearch);
 }
 
 void WebPageProxy::showImageInQuickLookPreviewPanel(ShareableBitmap& imageBitmap, const String& tooltip, const URL& imageURL, QuickLookPreviewActivity activity)

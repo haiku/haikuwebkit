@@ -35,6 +35,7 @@
 #include "AccessibilityTableRow.h"
 #include "DocumentInlines.h"
 #include "FrameSelection.h"
+#include "HTMLNames.h"
 #include "LocalFrameView.h"
 #include "Page.h"
 #include <wtf/MonotonicTime.h>
@@ -44,6 +45,8 @@
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
+
+using namespace HTMLNames;
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(AXIsolatedTree);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(AXIsolatedTree);
@@ -634,6 +637,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
                 properties.append({ AXProperty::AXColumnIndex, *columnIndex });
             break;
         }
+        case AXProperty::AXColumnIndexText:
+            properties.append({ AXProperty::AXColumnIndexText, axObject.axColumnIndexText().isolatedCopy() });
+            break;
         case AXProperty::CanSetFocusAttribute:
             properties.append({ AXProperty::CanSetFocusAttribute, axObject.canSetFocusAttribute() });
             break;
@@ -757,6 +763,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
                 properties.append({ AXProperty::AXRowIndex, *rowIndex });
             break;
         }
+        case AXProperty::AXRowIndexText:
+            properties.append({ AXProperty::AXRowIndexText, axObject.axRowIndexText().isolatedCopy() });
+            break;
         case AXProperty::CellScope:
             properties.append({ AXProperty::CellScope, axObject.cellScope().isolatedCopy() });
             break;
@@ -1512,7 +1521,7 @@ AXTreePtr findAXTree(Function<bool(AXTreePtr)>&& match)
 
 void AXIsolatedTree::queueNodeUpdate(AXID objectID, const NodeUpdateOptions& options)
 {
-    ASSERT(isMainThread());
+    AX_DEBUG_ASSERT(isMainThread());
 
     if (!options.shouldUpdateNode && options.properties.size()) {
         // If we're going to recompute all properties for the node (i.e., the node is in m_needsUpdateNode),
@@ -1597,9 +1606,9 @@ void AXIsolatedTree::processQueuedNodeUpdates()
         updateRelations(cache->relations());
 
     if (m_mostRecentlyPaintedTextIsDirty) {
+        m_mostRecentlyPaintedTextIsDirty = false;
         Locker lock { m_changeLogLock };
         m_pendingMostRecentlyPaintedText = cache->mostRecentlyPaintedText();
-        m_mostRecentlyPaintedTextIsDirty = false;
     }
 
     queueRemovalsAndUnresolvedChanges();
@@ -1983,6 +1992,8 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
                 setProperty(AXProperty::AXColumnIndex, *columnIndex);
             if (std::optional rowIndex = object.axRowIndex())
                 setProperty(AXProperty::AXRowIndex, *rowIndex);
+            setProperty(AXProperty::AXColumnIndexText, object.axColumnIndexText().isolatedCopy());
+            setProperty(AXProperty::AXRowIndexText, object.axRowIndexText().isolatedCopy());
             setProperty(AXProperty::IsColumnHeader, object.isColumnHeader());
             setProperty(AXProperty::IsRowHeader, object.isRowHeader());
             setProperty(AXProperty::CellScope, object.cellScope().isolatedCopy());
@@ -1999,7 +2010,7 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
             setProperty(AXProperty::IsARIATreeGridRow, true);
             setObjectVectorProperty(AXProperty::DisclosedRows, object.disclosedRows());
             setObjectProperty(AXProperty::DisclosedByRow, object.disclosedByRow());
-        } else if (object.isAccessibilityARIAGridRowInstance())
+        } else if (object.isARIAGridRow())
             setProperty(AXProperty::IsARIAGridRow, true);
 
         bool isTreeItem = object.isTreeItem();

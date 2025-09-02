@@ -160,8 +160,7 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
 
                 m_currentEntryIndex = getEntryIndexOfHistoryItem(m_entries, *currentItem);
 
-                if (navigationType) // Unset in the case of forms/POST requests.
-                    m_activation = NavigationActivation::create(*navigationType, *currentEntry(), WTFMove(previousEntry));
+                m_activation = NavigationActivation::create(*navigationType, *currentEntry(), WTFMove(previousEntry));
 
                 return;
             }
@@ -629,6 +628,35 @@ void Navigation::notifyCommittedToEntry(NavigationAPIMethodTracker* apiMethodTra
         Ref { apiMethodTracker->committedPromise }->resolve<IDLInterface<NavigationHistoryEntry>>(*entry);
 }
 
+void Navigation::updateNavigationEntry(Ref<HistoryItem>&& item, ShouldCopyStateObjectFromCurrentEntry shouldCopyStateObjectFromCurrentEntry)
+{
+    if (!m_currentEntryIndex)
+        return;
+
+    m_entries[*m_currentEntryIndex] = NavigationHistoryEntry::create(*this, item.copyRef());
+
+    if (!frame())
+        return;
+
+    RefPtr firstChild = frame()->tree().firstChild();
+    if (!firstChild)
+        return;
+
+    for (RefPtr child = firstChild.get(); child; child = child->tree().nextSibling()) {
+        RefPtr localChild = dynamicDowncast<LocalFrame>(child.get());
+        if (!localChild)
+            continue;
+
+        if (RefPtr childItem = item->childItemWithFrameID(localChild->frameID())) {
+            RefPtr window = localChild->window();
+            if (!window)
+                continue;
+
+            window->protectedNavigation()->updateNavigationEntry(childItem.releaseNonNull(), shouldCopyStateObjectFromCurrentEntry);
+        }
+    }
+}
+
 // https://html.spec.whatwg.org/multipage/nav-history-apis.html#update-the-navigation-api-entries-for-a-same-document-navigation
 void Navigation::updateForNavigation(Ref<HistoryItem>&& item, NavigationNavigationType navigationType, ShouldCopyStateObjectFromCurrentEntry shouldCopyStateObjectFromCurrentEntry)
 {
@@ -661,7 +689,7 @@ void Navigation::updateForNavigation(Ref<HistoryItem>&& item, NavigationNavigati
     }
 
     if (navigationType == NavigationNavigationType::Push || navigationType == NavigationNavigationType::Replace) {
-        m_entries[*m_currentEntryIndex] = NavigationHistoryEntry::create(*this, WTFMove(item));
+        updateNavigationEntry(WTFMove(item), shouldCopyStateObjectFromCurrentEntry);
         if (shouldCopyStateObjectFromCurrentEntry == ShouldCopyStateObjectFromCurrentEntry::Yes)
             Ref { m_entries[*m_currentEntryIndex] }->setState(oldCurrentEntry->state());
     }
@@ -1051,8 +1079,6 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
                         errorMessage = makeString("Uncaught "_s, errorInformation.errorTypeString, ": "_s, errorInformation.message);
                     }
                 }
-                auto exception = Exception(ExceptionCode::UnknownError, errorMessage);
-                auto domException = createDOMException(*protectedThis->protectedScriptExecutionContext()->globalObject(), exception.isolatedCopy());
 
                 protectedThis->dispatchEvent(ErrorEvent::create(eventNames().navigateerrorEvent, errorMessage, errorInformation.sourceURL, errorInformation.line, errorInformation.column, { protectedThis->protectedScriptExecutionContext()->globalObject()->vm(), result }));
 
@@ -1060,7 +1086,7 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
                     Ref { apiMethodTracker->finishedPromise }->reject<IDLAny>(result, RejectAsHandled::Yes);
 
                 if (RefPtr transition = std::exchange(protectedThis->m_transition, nullptr))
-                    transition->rejectPromise(exception, domException);
+                    transition->rejectPromise(result);
             });
         });
 

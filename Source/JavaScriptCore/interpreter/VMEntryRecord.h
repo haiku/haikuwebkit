@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "GPRInfo.h"
+#include <JavaScriptCore/GPRInfo.h>
 
 namespace JSC {
 

@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "JSCJSValue.h"
-#include "MarkStack.h"
-#include "RootMarkReason.h"
-#include "VisitRaceKey.h"
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/MarkStack.h>
+#include <JavaScriptCore/RootMarkReason.h>
+#include <JavaScriptCore/VisitRaceKey.h>
 #include <wtf/ConcurrentPtrHashSet.h>
 #include <wtf/SharedTask.h>
 #include <wtf/TZoneMalloc.h>

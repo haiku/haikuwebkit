@@ -71,7 +71,11 @@ class SelectorChecker {
 
 public:
     enum class Mode : unsigned char {
-        ResolvingStyle = 0, CollectingRules, CollectingRulesIgnoringVirtualPseudoElements, QueryingRules
+        ResolvingStyle = 0,
+        CollectingRules,
+        StyleInvalidation,
+        // This is used for querySelector() API
+        QueryingRules
     };
 
     SelectorChecker(Document&);

@@ -2372,7 +2372,7 @@ RenderStyle HTMLInputElement::createInnerTextStyle(const RenderStyle& style)
         textBlockStyle.setTextOverflow(TextOverflow::Clip);
         textBlockStyle.setMaskImage(autoFillStrongPasswordMaskImage());
         // A stacking context is needed for the mask.
-        if (textBlockStyle.hasAutoUsedZIndex())
+        if (textBlockStyle.usedZIndex().isAuto())
             textBlockStyle.setUsedZIndex(0);
     }
 

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "SourceProviderCacheItem.h"
+#include <JavaScriptCore/SourceProviderCacheItem.h>
 #include <wtf/HashMap.h>
 #include <wtf/RefCounted.h>
 

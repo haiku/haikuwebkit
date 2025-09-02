@@ -38,7 +38,7 @@
 
 
 namespace WebCore {
-    
+
 using namespace HTMLNames;
 
 AccessibilityMediaObject::AccessibilityMediaObject(AXID axID, RenderObject& renderer, AXObjectCache& cache)
@@ -76,13 +76,13 @@ String AccessibilityMediaObject::interactiveVideoDuration() const
         return localizedMediaTimeDescription(element->duration());
     return String();
 }
-    
+
 void AccessibilityMediaObject::mediaSeek(AXSeekDirection direction)
 {
     HTMLMediaElement* element = mediaElement();
     if (!element)
         return;
-    
+
     // Step 5% each time.
     const double seekStep = .05;
     double current = element->currentTime();
@@ -98,7 +98,7 @@ void AccessibilityMediaObject::toggleMute()
     HTMLMediaElement* element = mediaElement();
     if (!element)
         return;
-    
+
     element->setMuted(!element->muted());
 }
 
@@ -117,7 +117,7 @@ bool AccessibilityMediaObject::press()
     HTMLMediaElement* element = mediaElement();
     if (!element)
         return false;
-    
+
     // We can safely call the internal togglePlayState method, which doesn't check restrictions,
     // because this method is only called from user interaction.
     element->togglePlayState();
@@ -129,7 +129,7 @@ bool AccessibilityMediaObject::isPlaying() const
     HTMLMediaElement* element = mediaElement();
     if (!element)
         return false;
-    
+
     return element->isPlaying();
 }
 
@@ -138,7 +138,7 @@ bool AccessibilityMediaObject::isMuted() const
     HTMLMediaElement* element = mediaElement();
     if (!element)
         return false;
-    
+
     return element->muted();
 }
 
@@ -147,7 +147,7 @@ bool AccessibilityMediaObject::isAutoplayEnabled() const
     HTMLMediaElement* element = mediaElement();
     if (!element)
         return false;
-    
+
     return element->autoplay();
 }
 
@@ -156,7 +156,7 @@ bool AccessibilityMediaObject::isPlayingInline() const
     HTMLMediaElement* element = mediaElement();
     if (!element)
         return false;
-    
+
     return !element->mediaSession().requiresFullscreenForVideoPlayback();
 }
 

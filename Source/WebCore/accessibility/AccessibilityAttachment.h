@@ -31,16 +31,16 @@
 #include "AccessibilityRenderObject.h"
 
 namespace WebCore {
-    
+
 class HTMLAttachmentElement;
 class RenderAttachment;
-    
+
 class AccessibilityAttachment final : public AccessibilityRenderObject {
 public:
     static Ref<AccessibilityAttachment> create(AXID, RenderAttachment&, AXObjectCache&);
     HTMLAttachmentElement* attachmentElement() const;
     bool hasProgress(float* progress = nullptr) const;
-    
+
 private:
     explicit AccessibilityAttachment(AXID, RenderAttachment&, AXObjectCache&);
 
@@ -52,7 +52,7 @@ private:
     bool computeIsIgnored() const final;
     void accessibilityText(Vector<AccessibilityText>&) const final;
 };
-    
+
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::AccessibilityAttachment) \

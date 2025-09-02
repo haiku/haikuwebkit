@@ -26,6 +26,7 @@
 #include "config.h"
 #include "WPEToplevelWayland.h"
 
+#include "GRefPtrWPE.h"
 #include "WPEBufferDMABufFormats.h"
 #include "WPEDisplayWaylandPrivate.h"
 #include "WPEToplevelWaylandPrivate.h"
@@ -155,12 +156,12 @@ struct DMABufFeedback {
     }
 #endif
 
-    CString drmDevice() const
+    const dev_t* device() const
     {
 #if USE(LIBDRM)
-        return drmDeviceForUsage(&mainDevice, false);
+        return &mainDevice;
 #else
-        return { };
+        return nullptr;
 #endif
     }
 
@@ -185,12 +186,12 @@ struct DMABufFeedback {
 #endif
         }
 
-        CString drmDevice() const
+        const dev_t* device() const
         {
 #if USE(LIBDRM)
-            return drmDeviceForUsage(&targetDevice, flags & ZWP_LINUX_DMABUF_FEEDBACK_V1_TRANCHE_FLAGS_SCANOUT);
+            return &targetDevice;
 #else
-            return { };
+            return nullptr;
 #endif
         }
 
@@ -675,6 +676,28 @@ static gboolean wpeToplevelWaylandSetMinimized(WPEToplevel* toplevel)
     return TRUE;
 }
 
+static GRefPtr<WPEDRMDevice> wpeToplevelWaylandGetDRMDevice(WPEToplevel* toplevel, const dev_t* device)
+{
+#if USE(LIBDRM)
+    auto* display = wpe_toplevel_get_display(toplevel);
+    auto* displayDevice = display ? wpe_display_get_drm_device(display) : nullptr;
+    drmDevicePtr drmDevice;
+    if (drmGetDeviceFromDevId(*device, 0, &drmDevice))
+        return nullptr;
+
+    if (!(drmDevice->available_nodes & (1 << DRM_NODE_PRIMARY)))
+        return nullptr;
+
+    if (displayDevice && !g_strcmp0(drmDevice->nodes[DRM_NODE_PRIMARY], wpe_drm_device_get_primary_node(displayDevice)))
+        return displayDevice;
+
+    return adoptGRef(wpe_drm_device_new(drmDevice->nodes[DRM_NODE_PRIMARY],
+        drmDevice->available_nodes & (1 << DRM_NODE_RENDER) ? drmDevice->nodes[DRM_NODE_RENDER] : nullptr));
+#else
+    return nullptr;
+#endif
+}
+
 static WPEBufferDMABufFormats* wpeToplevelWaylandGetPreferredDMABufFormats(WPEToplevel* toplevel)
 {
     auto* priv = WPE_TOPLEVEL_WAYLAND(toplevel)->priv;
@@ -684,12 +707,12 @@ static WPEBufferDMABufFormats* wpeToplevelWaylandGetPreferredDMABufFormats(WPETo
     if (!priv->committedDMABufFeedback)
         return nullptr;
 
-    auto mainDevice = priv->committedDMABufFeedback->drmDevice();
-    auto* builder = wpe_buffer_dma_buf_formats_builder_new(mainDevice.data());
+    auto mainDevice = wpeToplevelWaylandGetDRMDevice(toplevel, priv->committedDMABufFeedback->device());
+    auto* builder = wpe_buffer_dma_buf_formats_builder_new(mainDevice.get());
     for (const auto& tranche : priv->committedDMABufFeedback->tranches) {
         WPEBufferDMABufFormatUsage usage = tranche.flags & ZWP_LINUX_DMABUF_FEEDBACK_V1_TRANCHE_FLAGS_SCANOUT ? WPE_BUFFER_DMA_BUF_FORMAT_USAGE_SCANOUT : WPE_BUFFER_DMA_BUF_FORMAT_USAGE_RENDERING;
-        auto targetDevice = tranche.drmDevice();
-        wpe_buffer_dma_buf_formats_builder_append_group(builder, targetDevice.data(), usage);
+        auto targetDevice = wpeToplevelWaylandGetDRMDevice(toplevel, tranche.device());
+        wpe_buffer_dma_buf_formats_builder_append_group(builder, targetDevice.get(), usage);
 
         for (const auto& format : tranche.formats) {
             auto [fourcc, modifier] = priv->committedDMABufFeedback->format(format);

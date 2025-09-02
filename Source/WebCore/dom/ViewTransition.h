@@ -199,7 +199,7 @@ public:
     ViewTransitionPhase phase() const { return m_phase; }
     const OrderedNamedElementsMap& namedElements() const { return m_namedElements; };
 
-    Document* document() const { return downcast<Document>(scriptExecutionContext()); }
+    Document* document() const;
     RefPtr<Document> protectedDocument() const { return document(); }
 
     bool documentElementIsCaptured() const;

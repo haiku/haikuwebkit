@@ -71,20 +71,11 @@ Ref<CSSValue> CustomProperty::propertyValue(CSSValuePool& pool, const RenderStyl
 {
     auto convertValue = [&](const Value& value) {
         return WTF::switchOn(value,
-            [&](const WebCore::Length& value) -> Ref<CSSValue> {
-                return CSSPrimitiveValue::create(value, style);
-            },
-            [&](const Numeric& value) -> Ref<CSSValue> {
-                return CSSPrimitiveValue::create(value.value, value.unitType);
-            },
-            [&](const RefPtr<StyleImage>& value) -> Ref<CSSValue> {
-                return value->computedStyleValue(style);
+            [&](const Transform& value) -> Ref<CSSValue> {
+                return ExtractorConverter::convertTransformOperation(style, value.operation);
             },
             [&](const auto& value) -> Ref<CSSValue> {
                 return createCSSValue(pool, style, value);
-            },
-            [&](const Transform& value) -> Ref<CSSValue> {
-                return ExtractorConverter::convertTransformOperation(style, value.operation);
             }
         );
     };
@@ -127,20 +118,6 @@ void CustomProperty::propertyValueSerialization(StringBuilder& builder, const CS
 {
     auto serializeValue = [&](StringBuilder& builder, const Value& value) {
         WTF::switchOn(value,
-            [&](const WebCore::Length& value) {
-                if (value.type() == LengthType::Calculated) {
-                    // FIXME: Implement serialization for CalculationValue directly.
-                    builder.append(CSSCalcValue::create(value.protectedCalculationValue(), style)->cssText(context));
-                    return;
-                }
-                builder.append(CSSPrimitiveValue::create(value, style)->cssText(context));
-            },
-            [&](const Numeric& value) {
-                builder.append(CSSPrimitiveValue::create(value.value, value.unitType)->cssText(context));
-            },
-            [&](const RefPtr<StyleImage>& value) {
-                builder.append(value->computedStyleValue(style)->cssText(context));
-            },
             [&](const Transform& value) {
                 ExtractorSerializer::serializeTransformOperation(style, builder, context, value.operation);
             },
@@ -187,20 +164,6 @@ void CustomProperty::propertyValueSerializationForTokenization(StringBuilder& bu
 
     auto serializeValue = [&](StringBuilder& builder, const Value& value) {
         WTF::switchOn(value,
-            [&](const WebCore::Length& value) {
-                if (value.type() == LengthType::Calculated) {
-                    // FIXME: Implement serialization for CalculationValue directly.
-                    builder.append(CSSCalcValue::create(value.protectedCalculationValue(), style)->cssText(context));
-                    return;
-                }
-                builder.append(CSSPrimitiveValue::create(value, style)->cssText(context));
-            },
-            [&](const Numeric& value) {
-                builder.append(CSSPrimitiveValue::create(value.value, value.unitType)->cssText(context));
-            },
-            [&](const RefPtr<StyleImage>& value) {
-                builder.append(value->computedStyleValue(style)->cssText(context));
-            },
             [&](const Transform& value) {
                 ExtractorSerializer::serializeTransformOperation(style, builder, context, value.operation);
             },

@@ -127,6 +127,8 @@ void pas_root_construct(pas_root* root)
     root->tiny_large_map_second_level_hashtable_in_flux_stash_instance =
         &pas_tiny_large_map_second_level_hashtable_in_flux_stash_instance;
 
+    root->probabilistic_guard_malloc_has_been_used = &pas_probabilistic_guard_malloc_has_been_used;
+
     root->pas_pgm_hash_map_instance = &pas_pgm_hash_map;
     root->pas_pgm_hash_map_instance_in_flux_stash = &pas_pgm_hash_map_in_flux_stash;
 

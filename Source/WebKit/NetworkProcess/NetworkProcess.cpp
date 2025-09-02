@@ -1372,6 +1372,16 @@ void NetworkProcess::grantStorageAccessForTesting(PAL::SessionID sessionID, Vect
     completionHandler();
 }
 
+void NetworkProcess::setStorageAccessPermissionForTesting(PAL::SessionID sessionID, bool granted, WebPageProxyIdentifier webPageProxyID, RegistrableDomain&& topFrameDomain, RegistrableDomain&& subFrameDomain, CompletionHandler<void()>&& completionHandler)
+{
+    if (CheckedPtr session = networkSession(sessionID)) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
+            return resourceLoadStatistics->setStorageAccessPermissionForTesting(granted, webPageProxyID, WTFMove(topFrameDomain), WTFMove(subFrameDomain), WTFMove(completionHandler));
+    } else
+        ASSERT_NOT_REACHED();
+    completionHandler();
+}
+
 void NetworkProcess::hasIsolatedSession(PAL::SessionID sessionID, const WebCore::RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler) const
 {
     bool result = false;
@@ -3119,7 +3129,7 @@ RTCDataChannelRemoteManagerProxy& NetworkProcess::rtcDataChannelProxy()
 {
     ASSERT(isMainRunLoop());
     if (!m_rtcDataChannelProxy)
-        m_rtcDataChannelProxy = RTCDataChannelRemoteManagerProxy::create();
+        m_rtcDataChannelProxy = RTCDataChannelRemoteManagerProxy::create(*this);
     return *m_rtcDataChannelProxy;
 }
 
@@ -3144,8 +3154,10 @@ void NetworkProcess::removeWebPageNetworkParameters(PAL::SessionID sessionID, We
     session->removeWebPageNetworkParameters(pageID);
     session->storageManager().clearStorageForWebPage(pageID);
 
-    if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
+    if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
         resourceLoadStatistics->clearFrameLoadRecordsForStorageAccess(pageID);
+        resourceLoadStatistics->wasRevokedStorageAccessPermissionInPage(pageID);
+    }
 
     m_pagesWithRelaxedThirdPartyCookieBlocking.remove(pageID);
 }

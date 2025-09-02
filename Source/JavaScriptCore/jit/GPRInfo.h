@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "MacroAssembler.h"
+#include <JavaScriptCore/MacroAssembler.h>
 #include <array>
 #include <wtf/FunctionTraits.h>
 #include <wtf/MathExtras.h>

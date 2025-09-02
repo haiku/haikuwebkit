@@ -98,9 +98,11 @@ TextStream& operator<<(TextStream& ts, const URL& value)
 {
     ts << "url(\""_s << value.resolved << "\"";
 
-    if (value.modifiers.crossorigin) {
-        ts << " crossorigin("_s;
-        WTF::switchOn(value.modifiers.crossorigin->parameters, [&](const auto& alternative) { ts << alternative; });
+    if (value.modifiers.crossOrigin) {
+        ts << " cross-origin("_s;
+        WTF::switchOn(value.modifiers.crossOrigin->parameters, [&](const auto& alternative) {
+            ts << alternative;
+        });
         ts << ")"_s;
     }
     if (value.modifiers.integrity) {
@@ -108,9 +110,11 @@ TextStream& operator<<(TextStream& ts, const URL& value)
         ts << *value.modifiers.integrity;
         ts << ")"_s;
     }
-    if (value.modifiers.referrerpolicy) {
-        ts << " referrerpolicy("_s;
-        WTF::switchOn(value.modifiers.referrerpolicy->parameters, [&](const auto& alternative) { ts << alternative; });
+    if (value.modifiers.referrerPolicy) {
+        ts << " referrer-policy("_s;
+        WTF::switchOn(value.modifiers.referrerPolicy->parameters, [&](const auto& alternative) {
+            ts << alternative;
+        });
         ts << ")"_s;
     }
 

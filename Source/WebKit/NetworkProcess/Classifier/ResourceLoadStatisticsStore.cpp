@@ -1761,6 +1761,34 @@ void ResourceLoadStatisticsStore::requestStorageAccessUnderOpener(DomainInNeedOf
     grantStorageAccessInternal(WTFMove(domainInNeedOfStorageAccess), WTFMove(openerDomain), std::nullopt, openerPageID, StorageAccessPromptWasShown::No, StorageAccessScope::PerPage, canRequestStorageAccessWithoutUserInteraction, [](StorageAccessWasGranted) { });
 }
 
+auto ResourceLoadStatisticsStore::grantStorageAccessPermission(const RegistrableDomain& topFrameDomain, const RegistrableDomain& subFrameDomain) -> std::pair<AddedRecord, std::optional<unsigned>>
+{
+    ASSERT(!RunLoop::isMain());
+
+    auto subFrameStatus = ensureResourceStatisticsForRegistrableDomain(subFrameDomain, "grantStorageAccessPermission"_s);
+    if (!subFrameStatus.second)
+        return subFrameStatus;
+
+    insertDomainRelationshipList(storageAccessUnderTopFrameDomainsQuery, { topFrameDomain }, *subFrameStatus.second);
+    return subFrameStatus;
+}
+
+void ResourceLoadStatisticsStore::revokeStorageAccessPermission(const RegistrableDomain& domain)
+{
+    ASSERT(!RunLoop::isMain());
+
+    auto targetResult = ensureResourceStatisticsForRegistrableDomain(domain, "revokeStorageAccessPermission"_s);
+    if (!targetResult.second)
+        return;
+
+    auto removeStorageAccess = m_database.prepareStatement("DELETE FROM StorageAccessUnderTopFrameDomains WHERE domainID = ?"_s);
+    if (!removeStorageAccess
+        || removeStorageAccess->bindInt(1, *targetResult.second) != SQLITE_OK
+        || removeStorageAccess->step() != SQLITE_DONE) {
+        ITP_RELEASE_LOG_DATABASE_ERROR("revokeStorageAccessPermission: failed to step statement");
+    }
+}
+
 void ResourceLoadStatisticsStore::grantStorageAccess(SubFrameDomain&& subFrameDomain, TopFrameDomain&& topFrameDomain, FrameIdentifier frameID, PageIdentifier pageID, StorageAccessPromptWasShown promptWasShown, StorageAccessScope scope, CompletionHandler<void(StorageAccessWasGranted)>&& completionHandler)
 {
     ASSERT(!RunLoop::isMain());
@@ -1774,7 +1802,7 @@ void ResourceLoadStatisticsStore::grantStorageAccess(SubFrameDomain&& subFrameDo
             return completionHandler(StorageAccessWasGranted::No);
 
         if (promptWasShown == StorageAccessPromptWasShown::Yes) {
-            auto subFrameStatus = protectedThis->ensureResourceStatisticsForRegistrableDomain(subFrameDomain, "grantStorageAccess"_s);
+            auto subFrameStatus = protectedThis->grantStorageAccessPermission(topFrameDomain, subFrameDomain);
             if (!subFrameStatus.second)
                 return completionHandler(StorageAccessWasGranted::No);
 
@@ -1783,7 +1811,6 @@ void ResourceLoadStatisticsStore::grantStorageAccess(SubFrameDomain&& subFrameDo
             if (canRequestStorageAccessWithoutUserInteraction == CanRequestStorageAccessWithoutUserInteraction::No)
                 ASSERT(protectedThis->hasHadUserInteraction(subFrameDomain, OperatingDatesWindow::Long));
 #endif
-            protectedThis->insertDomainRelationshipList(storageAccessUnderTopFrameDomainsQuery, HashSet<RegistrableDomain>({ topFrameDomain }), *subFrameStatus.second);
         }
 
         protectedThis->grantStorageAccessInternal(WTFMove(subFrameDomain), WTFMove(topFrameDomain), frameID, pageID, promptWasShown, scope, canRequestStorageAccessWithoutUserInteraction, WTFMove(completionHandler));
@@ -2045,19 +2072,9 @@ void ResourceLoadStatisticsStore::clearUserInteraction(const RegistrableDomain& 
 
     auto transactionScope = beginTransactionIfNecessary();
 
-    auto targetResult = ensureResourceStatisticsForRegistrableDomain(domain, "clearUserInteraction"_s);
-    if (!targetResult.second)
-        return completionHandler();
-
     setUserInteraction(domain, false, { });
 
-    auto removeStorageAccess = m_database.prepareStatement("DELETE FROM StorageAccessUnderTopFrameDomains WHERE domainID = ?"_s);
-    if (!removeStorageAccess
-        || removeStorageAccess->bindInt(1, *targetResult.second) != SQLITE_OK
-        || removeStorageAccess->step() != SQLITE_DONE) {
-        ITP_RELEASE_LOG_DATABASE_ERROR("clearUserInteraction: failed to step statement");
-        return completionHandler();
-    }
+    revokeStorageAccessPermission(domain);
 
     // Update cookie blocking unconditionally since a call to hasHadUserInteraction()
     // to check the previous user interaction status could call clearUserInteraction(),

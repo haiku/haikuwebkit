@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "JSCPtrTag.h"
-#include "JSExportMacros.h"
+#include <JavaScriptCore/JSCPtrTag.h>
+#include <JavaScriptCore/JSExportMacros.h>
 #include <functional>
 #include <wtf/CodePtr.h>
 #include <wtf/PrintStream.h>

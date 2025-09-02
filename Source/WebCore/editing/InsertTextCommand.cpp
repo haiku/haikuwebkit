@@ -243,7 +243,7 @@ void InsertTextCommand::doApply()
 #endif
 
     if (typingStyle) {
-        typingStyle->prepareToApplyAt(endPosition, EditingStyle::PreserveWritingDirection);
+        typingStyle->prepareToApplyAt(endPosition, EditingStyle::ShouldPreserveWritingDirection::Yes);
         if (!typingStyle->isEmpty())
             applyStyle(typingStyle.get());
     }

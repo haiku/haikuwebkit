@@ -54,7 +54,7 @@ static constexpr bool fullGPUProcessEnabledValue = false;
 #endif
 
 #if ENABLE(UNIFIED_PDF)
-#if ENABLE(UNIFIED_PDF_FOR_TESTING)
+#if ENABLE(UNIFIED_PDF_BY_DEFAULT)
 static constexpr bool unifiedPDFEnabledValue = true;
 #else
 static constexpr bool unifiedPDFEnabledValue = false;
@@ -184,6 +184,7 @@ const TestFeatures& TestOptions::defaults()
             { "ignoreSynchronousMessagingTimeouts", false },
             { "ignoresViewportScaleLimits", false },
             { "ignoreWebProcessTermination", false },
+            { "injectTestRunner", true },
             { "isAppBoundWebView", false },
             { "isAppInitiated", true },
             { "advancedPrivacyProtectionsEnabled", false },
@@ -262,6 +263,7 @@ const std::unordered_map<std::string, TestHeaderKeyType>& TestOptions::keyTypeMa
         { "ignoreSynchronousMessagingTimeouts", TestHeaderKeyType::BoolTestRunner },
         { "ignoresViewportScaleLimits", TestHeaderKeyType::BoolTestRunner },
         { "ignoreWebProcessTermination", TestHeaderKeyType::BoolTestRunner },
+        { "injectTestRunner", TestHeaderKeyType::BoolTestRunner },
         { "isAppBoundWebView", TestHeaderKeyType::BoolTestRunner },
         { "isAppInitiated", TestHeaderKeyType::BoolTestRunner },
         { "advancedPrivacyProtectionsEnabled", TestHeaderKeyType::BoolTestRunner },

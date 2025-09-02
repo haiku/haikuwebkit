@@ -31,7 +31,7 @@
 #include "AccessibilityRenderObject.h"
 
 namespace WebCore {
-    
+
 class AccessibilityTreeItem final : public AccessibilityRenderObject {
 public:
     static Ref<AccessibilityTreeItem> create(AXID, RenderObject&, AXObjectCache&);
@@ -47,7 +47,7 @@ private:
     AccessibilityRole determineAccessibilityRole() final;
     bool m_isTreeItemValid;
 };
-    
+
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_ACCESSIBILITY(AccessibilityTreeItem, isTreeItem())

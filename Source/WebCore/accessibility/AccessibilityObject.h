@@ -67,7 +67,7 @@ public:
     virtual ~AccessibilityObject();
 
     std::optional<AXID> treeID() const final;
-    String dbgInternal(bool, OptionSet<AXDebugStringOption>) const final;
+    String debugDescriptionInternal(bool, std::optional<OptionSet<AXDebugStringOption>> = std::nullopt) const final;
     virtual String extraDebugInfo() const { return emptyString(); }
 
     // After constructing an AccessibilityObject, it must be given a
@@ -105,10 +105,9 @@ public:
     bool isAXRemoteFrame() const override { return false; }
     virtual bool isAccessibilityScrollViewInstance() const { return false; }
     virtual bool isAccessibilitySVGRoot() const { return false; }
+    virtual bool isAccessibilitySVGObjectInstance() const { return false; }
     bool isAccessibilityTableInstance() const override { return false; }
     virtual bool isAccessibilityTableColumnInstance() const { return false; }
-    virtual bool isAccessibilityARIAGridRowInstance() const { return false; }
-    bool isAccessibilityARIAGridCellInstance() const override { return false; }
     virtual bool isAccessibilityLabelInstance() const { return false; }
     virtual bool isAccessibilityListBoxInstance() const { return false; }
     virtual bool isAccessibilityListBoxOptionInstance() const { return false; }
@@ -159,6 +158,9 @@ public:
     std::pair<unsigned, unsigned> columnIndexRange() const override { return { 0, 1 }; }
     std::optional<unsigned> axColumnIndex() const override { return std::nullopt; }
     std::optional<unsigned> axRowIndex() const override { return std::nullopt; }
+    String axColumnIndexText() const override { return { }; }
+    String axRowIndexText() const override { return { }; }
+
 
     // Table column support.
     unsigned columnIndex() const override { return 0; }
@@ -171,8 +173,10 @@ public:
     // ARIA tree/grid row support.
     bool isARIAGridRow() const override { return false; }
     bool isARIATreeGridRow() const override { return false; }
-    AccessibilityChildrenVector disclosedRows() override; // ARIATreeItem implementation. AccessibilityARIAGridRow overrides this method.
+    AccessibilityChildrenVector disclosedRows() override; // ARIATreeItem implementation. AccessibilityTableRow overrides this method for grid rows.
     AccessibilityObject* disclosedByRow() const override { return nullptr; }
+
+    void postMenuClosedNotificationIfNecessary() const;
 
     bool isFieldset() const override { return false; }
     virtual bool isImageMapLink() const { return false; }
@@ -881,6 +885,11 @@ protected:
 
     void detachRemoteParts(AccessibilityDetachmentType) override;
     void detachPlatformWrapper(AccessibilityDetachmentType) final;
+#if PLATFORM(IOS_FAMILY)
+    void markPlatformWrapperIgnoredStateDirty() const;
+#else
+    void markPlatformWrapperIgnoredStateDirty() const { };
+#endif
 
     void setIsIgnoredFromParentData(AccessibilityIsIgnoredFromParentData& data) { m_isIgnoredFromParentData = data; }
     bool ignoredFromPresentationalRole() const;

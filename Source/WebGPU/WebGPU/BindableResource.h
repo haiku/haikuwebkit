@@ -26,9 +26,14 @@
 #pragma once
 
 #import <Metal/Metal.h>
+#import <limits>
+#import <type_traits>
+#import <utility>
+#import <wtf/HashFunctions.h>
 #import <wtf/HashMap.h>
 #import <wtf/OptionSet.h>
 #import <wtf/RefPtr.h>
+#import <wtf/Variant.h>
 #import <wtf/Vector.h>
 #import <wtf/WeakPtr.h>
 

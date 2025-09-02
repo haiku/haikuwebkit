@@ -899,6 +899,8 @@ DOMAudioSessionType Page::audioSessionType() const
 
 void Page::setUserDidInteractWithPage(bool didInteract)
 {
+    m_userHasInteractedSinceLastPageLoad = didInteract;
+
     if (m_topDocumentSyncData->userDidInteractWithPage == didInteract)
         return;
 
@@ -1844,6 +1846,7 @@ void Page::didCommitLoad()
 #endif
 
     m_hasEverSetVisibilityAdjustment = false;
+    m_userHasInteractedSinceLastPageLoad = false;
 
     m_mainFrameURLFragment = { };
 
@@ -2331,6 +2334,10 @@ void Page::doAfterUpdateRendering()
 
     forEachRenderableDocument([] (Document& document) {
         document.enqueuePaintTimingEntryIfNeeded();
+    });
+
+    forEachRenderableDocument([] (Document& document) {
+        document.enqueueEventTimingEntriesIfNeeded();
     });
 
     forEachRenderableDocument([] (Document& document) {
@@ -4857,7 +4864,7 @@ void Page::revealCurrentSelection()
     RefPtr focusedOrMainFrame = focusController().focusedOrMainFrame();
     if (!focusedOrMainFrame)
         return;
-    focusedOrMainFrame->checkedSelection()->revealSelection(SelectionRevealMode::Reveal, ScrollAlignment::alignCenterIfNeeded);
+    focusedOrMainFrame->checkedSelection()->revealSelection({ SelectionRevealMode::Reveal, ScrollAlignment::alignCenterIfNeeded });
 }
 
 void Page::injectUserStyleSheet(UserStyleSheet& userStyleSheet)
@@ -5366,7 +5373,7 @@ void Page::updateFixedContainerEdges(BoxSideSet sides)
         auto maximumOffset = frameView->maximumScrollOffset();
 
         bool canSampleTopEdge = settings().topContentInsetBackgroundCanChangeAfterScrolling()
-            || !frameView->wasEverScrolledExplicitlyByUser()
+            || (!frameView->wasEverScrolledExplicitlyByUser() && !m_userHasInteractedSinceLastPageLoad)
             || document->parsing();
 
         if (scrollOffset.y() < minimumOffset.y() || !canSampleTopEdge)

@@ -27,9 +27,9 @@
 
 #if ENABLE(WPE_PLATFORM)
 
-#include "GRefPtrWPE.h"
 #include "RendererBufferDescription.h"
 #include "WPEWebView.h"
+#include <wpe/GRefPtrWPE.h>
 #include <wpe/wpe-platform.h>
 #include <wtf/HashMap.h>
 #include <wtf/Vector.h>

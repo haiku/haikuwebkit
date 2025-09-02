@@ -72,6 +72,7 @@
 #include "RenderTreeBuilder.h"
 #include "RenderView.h"
 #include "Settings.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "TextAutoSizing.h"
 #include "TextBoxTrimmer.h"
 #include "TextUtil.h"
@@ -280,20 +281,19 @@ void RenderBlockFlow::rebuildFloatingObjectSetFromIntrudingFloats()
 
 void RenderBlockFlow::adjustIntrinsicLogicalWidthsForColumns(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const
 {
-    if (!style().hasAutoColumnCount() || !style().hasAutoColumnWidth()) {
+    if (!style().columnCount().isAuto() || !style().columnWidth().isAuto()) {
         // The min/max intrinsic widths calculated really tell how much space elements need when
         // laid out inside the columns. In order to eventually end up with the desired column width,
         // we need to convert them to values pertaining to the multicol container.
-        int columnCount = style().hasAutoColumnCount() ? 1 : style().columnCount();
+        int columnCount = style().columnCount().tryValue().value_or(1).value;
         LayoutUnit columnWidth;
         LayoutUnit colGap = columnGap();
         LayoutUnit gapExtra = (columnCount - 1) * colGap;
-        if (style().hasAutoColumnWidth())
-            minLogicalWidth = minLogicalWidth * columnCount + gapExtra;
-        else {
-            columnWidth = style().columnWidth();
+        if (auto columnWidthLength = style().columnWidth().tryLength()) {
+            columnWidth = Style::evaluate(*columnWidthLength);
             minLogicalWidth = std::min(minLogicalWidth, columnWidth);
-        }
+        } else
+            minLogicalWidth = minLogicalWidth * columnCount + gapExtra;
         // FIXME: If column-count is auto here, we should resolve it to calculate the maximum
         // intrinsic width, instead of pretending that it's 1. The only way to do that is by
         // performing a layout pass, but this is not an appropriate time or place for layout. The
@@ -365,20 +365,20 @@ void RenderBlockFlow::computeColumnCountAndWidth()
     LayoutUnit desiredColumnWidth = contentBoxLogicalWidth();
 
     // For now, we don't support multi-column layouts when printing, since we have to do a lot of work for proper pagination.
-    if (document().paginated() || (style().hasAutoColumnCount() && style().hasAutoColumnWidth()) || !style().hasInlineColumnAxis()) {
+    if (document().paginated() || (style().columnCount().isAuto() && style().columnWidth().isAuto()) || !style().hasInlineColumnAxis()) {
         setComputedColumnCountAndWidth(desiredColumnCount, desiredColumnWidth);
         return;
     }
 
     LayoutUnit availWidth = desiredColumnWidth;
     LayoutUnit colGap = columnGap();
-    LayoutUnit colWidth = std::max(1_lu, LayoutUnit(style().columnWidth()));
-    unsigned colCount = std::max<unsigned>(1, style().columnCount());
+    LayoutUnit colWidth = std::max(1_lu, LayoutUnit(Style::evaluate(style().columnWidth().tryLength().value_or(0_css_px))));
+    unsigned colCount = std::max<unsigned>(1, style().columnCount().tryValue().value_or(1).value);
 
-    if (style().hasAutoColumnWidth() && !style().hasAutoColumnCount()) {
+    if (style().columnWidth().isAuto() && !style().columnCount().isAuto()) {
         desiredColumnCount = colCount;
         desiredColumnWidth = std::max<LayoutUnit>(0, (availWidth - ((desiredColumnCount - 1) * colGap)) / desiredColumnCount);
-    } else if (!style().hasAutoColumnWidth() && style().hasAutoColumnCount()) {
+    } else if (!style().columnWidth().isAuto() && style().columnCount().isAuto()) {
         desiredColumnCount = std::max<unsigned>(1, ((availWidth + colGap) / (colWidth + colGap)).toUnsigned());
         desiredColumnWidth = ((availWidth + colGap) / desiredColumnCount) - colGap;
     } else {
@@ -420,15 +420,15 @@ bool RenderBlockFlow::willCreateColumns(std::optional<unsigned> desiredColumnCou
         return true;
 
     // Non-auto column-width always initiates MultiColumnFlow.
-    if (!style().hasAutoColumnWidth())
+    if (!style().columnWidth().isAuto())
         return true;
 
     if (desiredColumnCount)
         return desiredColumnCount.value() > 1;
 
     // column-count > 1 always initiates MultiColumnFlow.
-    if (!style().hasAutoColumnCount())
-        return style().columnCount() > 1;
+    if (auto columnCount = style().columnCount().tryValue())
+        return columnCount->value > 1;
 
     ASSERT_NOT_REACHED();
     return false;
@@ -1212,8 +1212,9 @@ void RenderBlockFlow::determineLogicalLeftPositionForChild(RenderBox& child, App
 {
     LayoutUnit startPosition = borderAndPaddingStart();
     LayoutUnit initialStartPosition = startPosition;
+    auto verticalScrollbarWidthClampedToContentBox = std::min<LayoutUnit>(verticalScrollbarWidth(), std::max(0_lu, logicalWidth() - borderAndPaddingLogicalWidth()));
     if ((shouldPlaceVerticalScrollbarOnLeft() || style().scrollbarGutter().isStableBothEdges()) && isHorizontalWritingMode())
-        startPosition += (writingMode().isLogicalLeftInlineStart() ? 1 : -1) * verticalScrollbarWidth();
+        startPosition += (writingMode().isLogicalLeftInlineStart() ? 1 : -1) * verticalScrollbarWidthClampedToContentBox;
     if (style().scrollbarGutter().isStableBothEdges() && !isHorizontalWritingMode())
         startPosition += (writingMode().isLogicalLeftInlineStart() ? 1 : -1) * horizontalScrollbarHeight();
     LayoutUnit totalAvailableLogicalWidth = borderAndPaddingLogicalWidth() + contentBoxLogicalWidth();
@@ -1968,7 +1969,7 @@ static inline LayoutUnit calculateMinimumPageHeight(const RenderStyle& renderSty
 {
     // We may require a certain minimum number of lines per page in order to satisfy
     // orphans and widows, and that may affect the minimum page height.
-    unsigned lineCount = std::max<unsigned>(renderStyle.hasAutoOrphans() ? 1 : renderStyle.orphans(), renderStyle.hasAutoWidows() ? 1 : renderStyle.widows());
+    unsigned lineCount = std::max<unsigned>(renderStyle.orphans().tryValue().value_or(1).value, renderStyle.widows().tryValue().value_or(1).value);
     if (lineCount > 1) {
         auto line = lastLine;
         for (unsigned i = 1; i < lineCount && line->previous(); i++)
@@ -2103,7 +2104,8 @@ RenderBlockFlow::LinePaginationAdjustment RenderBlockFlow::computeLineAdjustment
         setPageBreak(logicalOffset, lineHeight - remainingLogicalHeight);
 
         bool avoidFirstLinePageBreak = lineBox->isFirst() && totalLogicalHeight < pageLogicalHeightAtNewOffset && !floatMinimumBottom;
-        bool affectedByOrphans = !style().hasAutoOrphans() && style().orphans() >= lineNumber;
+        auto orphansValue = style().orphans().tryValue();
+        bool affectedByOrphans = orphansValue && orphansValue->value >= lineNumber;
 
         if ((avoidFirstLinePageBreak || affectedByOrphans) && !isOutOfFlowPositioned() && !isRenderTableCell()) {
             if (needsAppleMailPaginationQuirk(*this))
@@ -3263,7 +3265,7 @@ std::optional<LayoutUnit> RenderBlockFlow::firstLineBaseline() const
     }
 
     if (auto* lineLayout = this->inlineLayout())
-        return LayoutUnit { floorToInt(lineLayout->firstLinePhysicalBaseline()) };
+        return LayoutUnit { floorToInt(lineLayout->firstLineBaseline()) };
 
     ASSERT_NOT_REACHED();
     return { };
@@ -3289,7 +3291,7 @@ std::optional<LayoutUnit> RenderBlockFlow::lastLineBaseline() const
     }
 
     if (auto* lineLayout = inlineLayout())
-        return LayoutUnit { floorToInt(lineLayout->lastLinePhysicalBaseline()) };
+        return LayoutUnit { floorToInt(lineLayout->lastLineBaseline()) };
 
     ASSERT_NOT_REACHED();
     return { };
@@ -3624,14 +3626,14 @@ RenderText* RenderBlockFlow::findClosestTextAtAbsolutePoint(const FloatPoint& po
     return nullptr;
 }
 
-VisiblePosition RenderBlockFlow::positionForPointWithInlineChildren(const LayoutPoint& pointInLogicalContents, HitTestSource source)
+PositionWithAffinity RenderBlockFlow::positionForPointWithInlineChildren(const LayoutPoint& pointInLogicalContents, HitTestSource source)
 {
     ASSERT(childrenInline());
 
     auto firstLineBox = InlineIterator::firstLineBoxFor(*this);
 
     if (!firstLineBox)
-        return createVisiblePosition(0, Affinity::Downstream);
+        return createPositionWithAffinity(0, Affinity::Downstream);
 
     bool linesAreFlipped = writingMode().isLineInverted();
     bool blocksAreFlipped = writingMode().isBlockFlipped();
@@ -3712,15 +3714,15 @@ VisiblePosition RenderBlockFlow::positionForPointWithInlineChildren(const Layout
     // Can't reach this. We have a root line box, but it has no kids.
     // FIXME: This should ASSERT_NOT_REACHED(), but clicking on placeholder text
     // seems to hit this code path.
-    return createVisiblePosition(0, Affinity::Downstream);
+    return createPositionWithAffinity(0, Affinity::Downstream);
 }
 
 Position RenderBlockFlow::positionForPoint(const LayoutPoint& point, HitTestSource source)
 {
-    return positionForPoint(point, source, nullptr).deepEquivalent();
+    return positionForPoint(point, source, nullptr).position();
 }
 
-VisiblePosition RenderBlockFlow::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer*)
+PositionWithAffinity RenderBlockFlow::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer*)
 {
     return RenderBlock::positionForPoint(point, source, nullptr);
 }

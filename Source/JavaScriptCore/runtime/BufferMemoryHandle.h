@@ -25,12 +25,11 @@
 
 #pragma once
 
+#include <JavaScriptCore/MemoryMode.h>
+#include <JavaScriptCore/Options.h>
+#include <JavaScriptCore/PageCount.h>
+
 #include <atomic>
-
-#include "MemoryMode.h"
-#include "Options.h"
-#include "PageCount.h"
-
 #include <set>
 
 #include <wtf/CagedPtr.h>

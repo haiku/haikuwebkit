@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "JSCJSValue.h"
-#include "Microtask.h"
-#include "SlotVisitorMacros.h"
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/Microtask.h>
+#include <JavaScriptCore/SlotVisitorMacros.h>
 #include <wtf/Deque.h>
 #include <wtf/SentinelLinkedList.h>
 

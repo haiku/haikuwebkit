@@ -120,7 +120,7 @@ public:
 #endif
 };
 
-NSDictionary *toWebAPI(const WebExtensionMessageSenderParameters&, const URL& baseURL);
+NSDictionary *toWebAPI(const WebExtensionMessageSenderParameters&);
 
 } // namespace WebKit
 

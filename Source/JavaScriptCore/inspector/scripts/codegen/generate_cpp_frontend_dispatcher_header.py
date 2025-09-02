@@ -71,7 +71,7 @@ class CppFrontendDispatcherHeaderGenerator(CppGenerator):
 
     def _generate_secondary_header_includes(self):
         header_includes = [
-            (["JavaScriptCore", "WebKit", "WebDriverBidi"], (self.model().framework.name, "%sProtocolObjects.h" % self.protocol_name())),
+            (["JavaScriptCore", "WebKit", "WebDriverBidi"], (self.model().framework.name, "%sProtocolObjects.h" % self.protocol_name(), True)),
             (["JavaScriptCore", "WebKit", "WebDriverBidi"], ("WTF", "wtf/JSONValues.h")),
             (["JavaScriptCore", "WebKit", "WebDriverBidi"], ("WTF", "wtf/text/WTFString.h")),
         ]

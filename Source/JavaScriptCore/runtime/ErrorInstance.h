@@ -20,10 +20,10 @@
 
 #pragma once
 
-#include "ErrorType.h"
-#include "JSObject.h"
-#include "RuntimeType.h"
-#include "StackFrame.h"
+#include <JavaScriptCore/ErrorType.h>
+#include <JavaScriptCore/JSObject.h>
+#include <JavaScriptCore/RuntimeType.h>
+#include <JavaScriptCore/StackFrame.h>
 
 namespace JSC {
 

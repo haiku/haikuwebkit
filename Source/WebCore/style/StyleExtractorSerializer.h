@@ -81,12 +81,10 @@ public:
 
     // MARK: Shared serializations
 
-    static void serializeOpacity(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, float);
     static void serializeImageOrNone(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleImage*);
     static void serializeGlyphOrientation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, GlyphOrientation);
     static void serializeGlyphOrientationOrAuto(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, GlyphOrientation);
     static void serializeMarginTrim(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<MarginTrimType>);
-    static void serializeShapeValue(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const ShapeValue*);
     static void serializeDPath(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StylePathData*);
     static void serializeStrokeDashArray(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FixedVector<WebCore::Length>&);
     static void serializeFilterOperations(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FilterOperations&);
@@ -153,13 +151,6 @@ public:
     static void serializeFontWidth(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FontSelectionValue);
     static void serializeFontFeatureSettings(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontFeatureSettings&);
     static void serializeFontVariationSettings(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontVariationSettings&);
-
-    // MARK: NinePieceImage serializations
-
-    static void serializeNinePieceImageQuad(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const LengthBox&);
-    static void serializeNinePieceImageSlices(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const NinePieceImage&);
-    static void serializeNinePieceImageRepeat(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const NinePieceImage&);
-    static void serializeNinePieceImage(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const NinePieceImage&);
 
     // MARK: Animation/Transition serializations
 
@@ -569,11 +560,6 @@ inline void ExtractorSerializer::serializeTransformOperation(const RenderStyle& 
 
 // MARK: - Shared serializations
 
-inline void ExtractorSerializer::serializeOpacity(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, float opacity)
-{
-    serialize(state, builder, context, opacity);
-}
-
 inline void ExtractorSerializer::serializeImageOrNone(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const StyleImage* image)
 {
     if (!image) {
@@ -667,34 +653,6 @@ inline void ExtractorSerializer::serializeMarginTrim(ExtractorState& state, Stri
     appendOption(MarginTrimType::InlineStart, CSSValueInlineStart);
     appendOption(MarginTrimType::BlockEnd, CSSValueBlockEnd);
     appendOption(MarginTrimType::InlineEnd, CSSValueInlineEnd);
-}
-
-inline void ExtractorSerializer::serializeShapeValue(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const ShapeValue* shapeValue)
-{
-    if (!shapeValue) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
-        return;
-    }
-
-    if (shapeValue->type() == ShapeValue::Type::Box) {
-        serializationForCSS(builder, context, state.style, shapeValue->cssBox());
-        return;
-    }
-
-    if (shapeValue->type() == ShapeValue::Type::Image) {
-        serializeImageOrNone(state, builder, context, shapeValue->image());
-        return;
-    }
-
-    ASSERT(shapeValue->type() == ShapeValue::Type::Shape);
-    if (shapeValue->cssBox() == CSSBoxType::BoxMissing) {
-        serializationForCSS(builder, context, state.style, *shapeValue->shape());
-        return;
-    }
-
-    serializationForCSS(builder, context, state.style, *shapeValue->shape());
-    builder.append(' ');
-    serializationForCSS(builder, context, state.style, shapeValue->cssBox());
 }
 
 inline void ExtractorSerializer::serializeDPath(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const StylePathData* path)
@@ -876,12 +834,9 @@ inline void ExtractorSerializer::serializeReflection(ExtractorState& state, Stri
 
     auto mask = [&] -> RefPtr<CSSValue> {
         auto& reflectionMask = reflection->mask();
-        RefPtr reflectionMaskImageSource = reflectionMask.image();
-        if (!reflectionMaskImageSource)
+        if (reflectionMask.source().isNone())
             return CSSPrimitiveValue::create(CSSValueNone);
-        if (reflectionMask.overridesBorderWidths())
-            return nullptr;
-        return ExtractorConverter::convertNinePieceImage(state, reflectionMask);
+        return createCSSValue(state.pool, state.style, reflectionMask);
     }();
 
     builder.append(CSSReflectValue::create(
@@ -1705,137 +1660,6 @@ inline void ExtractorSerializer::serializeFontVariationSettings(ExtractorState& 
     for (auto& feature : fontVariationSettings)
         list.append(CSSFontVariationValue::create(feature.tag(), ExtractorConverter::convert(state, feature.value())));
     builder.append(CSSValueList::createCommaSeparated(WTFMove(list))->cssText(context));
-}
-
-// MARK: - NinePieceImage serializations
-
-inline void ExtractorSerializer::serializeNinePieceImageQuad(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const LengthBox& box)
-{
-    // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-
-    RefPtr<CSSPrimitiveValue> top;
-    RefPtr<CSSPrimitiveValue> right;
-    RefPtr<CSSPrimitiveValue> bottom;
-    RefPtr<CSSPrimitiveValue> left;
-
-    if (box.top().isRelative())
-        top = CSSPrimitiveValue::create(box.top().value());
-    else
-        top = CSSPrimitiveValue::create(box.top(), state.style);
-
-    if (box.right() == box.top() && box.bottom() == box.top() && box.left() == box.top()) {
-        right = top;
-        bottom = top;
-        left = top;
-    } else {
-        if (box.right().isRelative())
-            right = CSSPrimitiveValue::create(box.right().value());
-        else
-            right = CSSPrimitiveValue::create(box.right(), state.style);
-
-        if (box.bottom() == box.top() && box.right() == box.left()) {
-            bottom = top;
-            left = right;
-        } else {
-            if (box.bottom().isRelative())
-                bottom = CSSPrimitiveValue::create(box.bottom().value());
-            else
-                bottom = CSSPrimitiveValue::create(box.bottom(), state.style);
-
-            if (box.left() == box.right())
-                left = right;
-            else {
-                if (box.left().isRelative())
-                    left = CSSPrimitiveValue::create(box.left().value());
-                else
-                    left = CSSPrimitiveValue::create(box.left(), state.style);
-            }
-        }
-    }
-
-    builder.append(CSSQuadValue::create({
-        top.releaseNonNull(),
-        right.releaseNonNull(),
-        bottom.releaseNonNull(),
-        left.releaseNonNull()
-    })->cssText(context));
-}
-
-inline void ExtractorSerializer::serializeNinePieceImageSlices(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext& context, const NinePieceImage& image)
-{
-    // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-
-    auto sliceSide = [](const WebCore::Length& length) -> Ref<CSSPrimitiveValue> {
-        // These values can be percentages or numbers.
-        if (length.isPercent())
-            return CSSPrimitiveValue::create(length.percent(), CSSUnitType::CSS_PERCENTAGE);
-        ASSERT(length.isFixed());
-        return CSSPrimitiveValue::create(length.value());
-    };
-
-    auto& slices = image.imageSlices();
-
-    RefPtr<CSSPrimitiveValue> top = sliceSide(slices.top());
-    RefPtr<CSSPrimitiveValue> right;
-    RefPtr<CSSPrimitiveValue> bottom;
-    RefPtr<CSSPrimitiveValue> left;
-    if (slices.right() == slices.top() && slices.bottom() == slices.top() && slices.left() == slices.top()) {
-        right = top;
-        bottom = top;
-        left = top;
-    } else {
-        right = sliceSide(slices.right());
-        if (slices.bottom() == slices.top() && slices.right() == slices.left()) {
-            bottom = top;
-            left = right;
-        } else {
-            bottom = sliceSide(slices.bottom());
-            if (slices.left() == slices.right())
-                left = right;
-            else
-                left = sliceSide(slices.left());
-        }
-    }
-
-    builder.append(CSSBorderImageSliceValue::create({
-        top.releaseNonNull(),
-        right.releaseNonNull(),
-        bottom.releaseNonNull(),
-        left.releaseNonNull()
-    }, image.fill())->cssText(context));
-}
-
-inline void ExtractorSerializer::serializeNinePieceImageRepeat(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, const NinePieceImage& image)
-{
-    auto valueID = [](NinePieceImageRule rule) -> CSSValueID {
-        switch (rule) {
-        case NinePieceImageRule::Repeat:
-            return CSSValueRepeat;
-        case NinePieceImageRule::Round:
-            return CSSValueRound;
-        case NinePieceImageRule::Space:
-            return CSSValueSpace;
-        default:
-            return CSSValueStretch;
-        }
-    };
-
-    if (image.horizontalRule() == image.verticalRule())
-        builder.append(nameLiteralForSerialization(valueID(image.horizontalRule())));
-    else
-        builder.append(nameLiteralForSerialization(valueID(image.horizontalRule())), ' ', nameLiteralForSerialization(valueID(image.verticalRule())));
-}
-
-inline void ExtractorSerializer::serializeNinePieceImage(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const NinePieceImage& image)
-{
-    // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-    builder.append(createBorderImageValue({
-        .source = image.image()->computedStyleValue(state.style),
-        .slice = ExtractorConverter::convertNinePieceImageSlices(state, image),
-        .width = ExtractorConverter::convertNinePieceImageQuad(state, image.borderSlices()),
-        .outset = ExtractorConverter::convertNinePieceImageQuad(state, image.outset()),
-        .repeat = ExtractorConverter::convertNinePieceImageRepeat(state, image),
-    })->customCSSText(context));
 }
 
 // MARK: - Animation/Transition serializations

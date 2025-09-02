@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "BytecodeIndex.h"
-#include "Heap.h"
-#include "LineColumn.h"
-#include "SlotVisitorMacros.h"
-#include "VM.h"
-#include "WasmIndexOrName.h"
-#include "WriteBarrier.h"
+#include <JavaScriptCore/BytecodeIndex.h>
+#include <JavaScriptCore/Heap.h>
+#include <JavaScriptCore/LineColumn.h>
+#include <JavaScriptCore/SlotVisitorMacros.h>
+#include <JavaScriptCore/VM.h>
+#include <JavaScriptCore/WasmIndexOrName.h>
+#include <JavaScriptCore/WriteBarrier.h>
 #include <limits.h>
 
 namespace JSC {
@@ -45,6 +45,7 @@ public:
     StackFrame(VM&, JSCell* owner, JSCell* callee, CodeBlock*, BytecodeIndex);
     StackFrame(VM&, JSCell* owner, CodeBlock*, BytecodeIndex);
     StackFrame(Wasm::IndexOrName);
+    StackFrame(Wasm::IndexOrName, size_t functionIndex);
     StackFrame() = default;
 
     bool hasLineAndColumnInfo() const { return !!m_codeBlock; }
@@ -79,6 +80,7 @@ private:
     WriteBarrier<JSCell> m_callee { };
     WriteBarrier<CodeBlock> m_codeBlock { };
     Wasm::IndexOrName m_wasmFunctionIndexOrName;
+    size_t m_wasmFunctionIndex { 0 };
     BytecodeIndex m_bytecodeIndex;
     bool m_isWasmFrame { false };
 };

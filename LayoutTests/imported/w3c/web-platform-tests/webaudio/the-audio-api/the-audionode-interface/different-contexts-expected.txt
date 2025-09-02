@@ -28,7 +28,7 @@ PASS < [Test 3] All assertions passed. (total 3 assertions)
 PASS > [Test 4] Disconnect AudioParam between contexts
 PASS   Test 4: g1 = new GainNode(c1) did not throw an exception.
 PASS   Test 4: g2 = new GainNode(c2) did not throw an exception.
-PASS   Test 4: g2.connect(g1.gain) threw InvalidAccessError: "The given destination is not connected".
+PASS   Test 4: g2.disconnect(g1.gain) threw InvalidAccessError: "The given destination is not connected".
 PASS < [Test 4] All assertions passed. (total 3 assertions)
 PASS # AUDIT TASK RUNNER FINISHED: 5 tasks ran successfully.
 

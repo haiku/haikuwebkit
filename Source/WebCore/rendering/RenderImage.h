@@ -91,7 +91,8 @@ protected:
 
     bool shouldInvalidatePreferredWidths() const final;
     RenderBox* embeddedContentBox() const final;
-    std::pair<FloatSize, FloatSize> computeIntrinsicSizeAndPreferredAspectRatio() const final;
+    FloatSize computeIntrinsicSize() const final;
+    FloatSize preferredAspectRatio() const final;
     bool foregroundIsKnownToBeOpaqueInRect(const LayoutRect& localRect, unsigned maxDepthToTest) const override;
 
     void styleWillChange(StyleDifference, const RenderStyle& newStyle) override;

@@ -108,7 +108,7 @@ void ARKitCoordinator::requestPermissionOnSessionFeatures(WebPageProxy& page, co
     });
 }
 
-void ARKitCoordinator::startSession(WebPageProxy& page, WeakPtr<SessionEventClient>&& sessionEventClient, const WebCore::SecurityOriginData&, PlatformXR::SessionMode mode, const PlatformXR::Device::FeatureList&)
+void ARKitCoordinator::startSession(WebPageProxy& page, WeakPtr<SessionEventClient>&& sessionEventClient, const WebCore::SecurityOriginData&, PlatformXR::SessionMode mode, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&)
 {
     RELEASE_LOG(XR, "ARKitCoordinator::startSession");
     ASSERT(RunLoop::isMain());

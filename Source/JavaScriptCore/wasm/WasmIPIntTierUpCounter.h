@@ -27,9 +27,9 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "ExecutionCounter.h"
-#include "MemoryMode.h"
-#include "Options.h"
+#include <JavaScriptCore/ExecutionCounter.h>
+#include <JavaScriptCore/MemoryMode.h>
+#include <JavaScriptCore/Options.h>
 #include <wtf/FixedVector.h>
 #include <wtf/HashMap.h>
 

@@ -415,7 +415,7 @@ void WebPrintOperationGtk::endPrint()
     }
     document->close();
 
-    printDone(WebCore::FragmentedSharedBuffer::create(memoryBuffer.detachAsData()), { });
+    printDone(WebCore::SharedBuffer::create(memoryBuffer.detachAsData()), { });
 
     m_pages.clear();
 }

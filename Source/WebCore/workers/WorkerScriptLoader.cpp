@@ -60,8 +60,9 @@ static void accessWorkerScriptLoaderMap(CompletionHandler<void(HashMap<ScriptExe
     callback(map.get());
 }
 
-WorkerScriptLoader::WorkerScriptLoader()
+WorkerScriptLoader::WorkerScriptLoader(AlwaysUseUTF8 alwaysUseUTF8)
     : m_script(ScriptBuffer::empty())
+    , m_alwaysUseUTF8(alwaysUseUTF8 == AlwaysUseUTF8::Yes)
 {
 }
 
@@ -290,8 +291,13 @@ void WorkerScriptLoader::didReceiveData(const SharedBuffer& buffer)
     }
 #endif
 
-    if (!m_decoder)
-        lazyInitialize(m_decoder, TextResourceDecoder::create("text/javascript"_s, "UTF-8"_s));
+    if (!m_decoder) {
+        // FIXME: Share more code with CachedScript / CachedScriptSourceProvider.
+        Ref decoder = TextResourceDecoder::create("text/javascript"_s, "UTF-8"_s);
+        if (m_alwaysUseUTF8)
+            decoder->setAlwaysUseUTF8();
+        lazyInitialize(m_decoder, WTFMove(decoder));
+    }
 
     if (buffer.isEmpty())
         return;

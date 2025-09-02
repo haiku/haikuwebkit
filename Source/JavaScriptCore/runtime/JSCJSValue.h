@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "Concurrency.h"
-#include "ECMAMode.h"
-#include "JSExportMacros.h"
-#include "PureNaN.h"
+#include <JavaScriptCore/Concurrency.h>
+#include <JavaScriptCore/ECMAMode.h>
+#include <JavaScriptCore/JSExportMacros.h>
+#include <JavaScriptCore/PureNaN.h>
 #include <functional>
 #include <math.h>
 #include <stddef.h>

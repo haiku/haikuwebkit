@@ -489,7 +489,7 @@ VisiblePosition closestEditablePositionInElementForAbsolutePoint(const Element& 
     auto absoluteBoundingBox = renderer->absoluteBoundingBoxRect();
     auto constrainedAbsolutePoint = point.constrainedBetween(absoluteBoundingBox.minXMinYCorner(), absoluteBoundingBox.maxXMaxYCorner());
     auto localPoint = renderer->absoluteToLocal(constrainedAbsolutePoint, UseTransforms);
-    auto visiblePosition = renderer->positionForPoint(flooredLayoutPoint(localPoint), HitTestSource::User, nullptr);
+    auto visiblePosition = renderer->visiblePositionForPoint(flooredLayoutPoint(localPoint), HitTestSource::User);
     return isEditablePosition(visiblePosition.deepEquivalent()) ? visiblePosition : VisiblePosition { };
 }
 

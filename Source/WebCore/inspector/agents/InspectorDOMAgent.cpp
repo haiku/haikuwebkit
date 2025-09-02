@@ -97,6 +97,7 @@
 #include "LocalFrameView.h"
 #include "MutationEvent.h"
 #include "Node.h"
+#include "NodeInlines.h"
 #include "NodeList.h"
 #include "Page.h"
 #include "Pasteboard.h"

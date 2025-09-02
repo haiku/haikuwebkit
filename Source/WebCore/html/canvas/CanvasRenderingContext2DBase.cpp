@@ -2674,7 +2674,7 @@ void CanvasRenderingContext2DBase::putImageData(ImageData& data, int dx, int dy,
         if (pixelBuffer)
             options.add(DidDrawOption::PreserveCachedContents);
         else
-            pixelBuffer = data.pixelBuffer();
+            pixelBuffer = data.byteArrayPixelBuffer();
         buffer->putPixelBuffer(*pixelBuffer, sourceRect, destOffset);
     }
 

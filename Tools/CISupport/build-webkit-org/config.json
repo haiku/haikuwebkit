@@ -35,6 +35,8 @@
                   { "name": "bot258", "platform": "*" },
                   { "name": "bot260", "platform": "*" },
 
+                  { "name": "bot2000", "platform": "mac-sequoia" },
+                  { "name": "bot2001", "platform": "mac-sequoia" },                 
                   { "name": "bot130", "platform": "mac-sequoia" },
                   { "name": "bot131", "platform": "mac-sequoia" },
                   { "name": "bot132", "platform": "mac-sequoia" },
@@ -219,7 +221,7 @@
                   { "name": "Apple-Sequoia-Release-WK2-Site-Isolation-Tree-Tests", "factory": "TestLayoutFactory",
                   "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures", "--site-isolation", "--load-in-cross-origin-iframe"],
-                  "workernames": ["bot303"]
+                  "workernames": ["bot2000", "bot2001", "bot303"]
                   },
                   { "name": "Apple-Sequoia-Debug-Build", "factory": "BuildFactory",
                   "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],

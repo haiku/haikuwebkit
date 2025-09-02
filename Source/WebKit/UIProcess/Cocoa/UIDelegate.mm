@@ -71,6 +71,7 @@
 #import <WebCore/DataDetection.h>
 #import <WebCore/FontAttributes.h>
 #import <WebCore/SecurityOrigin.h>
+#import <WebCore/XRGPUProjectionLayerInit.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/TZoneMallocInlines.h>
 #import <wtf/URL.h>
@@ -237,7 +238,7 @@ void UIDelegate::setDelegate(id<WKUIDelegate> delegate)
     m_delegateMethods.webViewSupportedXRSessionFeatures = [delegate respondsToSelector:@selector(_webView:supportedXRSessionFeatures:arFeatures:)];
 
 #if PLATFORM(IOS_FAMILY)
-    if ([delegate respondsToSelector:@selector(_webView:startXRSessionWithFeatures:completionHandler:)])
+    if ([delegate respondsToSelector:@selector(_webView:startXRSessionWithFeatures:colorFormat:depthFormat:completionHandler:)])
         m_delegateMethods.webViewStartXRSessionWithCompletionHandler = true;
     else
 #endif
@@ -2107,6 +2108,8 @@ static _WKXRSessionFeatureFlags toWKXRSessionFeatureFlags(PlatformXR::SessionFea
     case PlatformXR::SessionFeature::HandTracking:
         return _WKXRSessionFeatureFlagsHandTracking;
 #endif
+    case PlatformXR::SessionFeature::WebGPU:
+        return _WKXRSessionFeatureFlagsWebGPU;
     }
 }
 
@@ -2138,6 +2141,8 @@ static std::optional<PlatformXR::Device::FeatureList> toPlatformXRFeatures(_WKXR
     if (featureFlags & _WKXRSessionFeatureFlagsHandTracking)
         features.append(PlatformXR::SessionFeature::HandTracking);
 #endif
+    if (featureFlags & _WKXRSessionFeatureFlagsWebGPU)
+        features.append(PlatformXR::SessionFeature::WebGPU);
     return features;
 }
 
@@ -2198,7 +2203,33 @@ void UIDelegate::UIClient::supportedXRSessionFeatures(PlatformXR::Device::Featur
 }
 
 #if PLATFORM(IOS_FAMILY)
-void UIDelegate::UIClient::startXRSession(WebPageProxy&, const PlatformXR::Device::FeatureList& sessionFeatures, CompletionHandler<void(RetainPtr<id>, PlatformViewController *)>&& completionHandler)
+static MTLPixelFormat toMetalFormat(WebCore::WebGPU::TextureFormat format)
+{
+    using namespace WebCore;
+    switch (format) {
+    case WebCore::WebGPU::TextureFormat::Bgra8unorm:
+        return MTLPixelFormatBGRA8Unorm_sRGB;
+    case WebCore::WebGPU::TextureFormat::Rgba8unorm:
+        return MTLPixelFormatRGBA8Unorm_sRGB;
+    case WebCore::WebGPU::TextureFormat::Rgba16float:
+        return MTLPixelFormatRGBA16Float;
+    case WebCore::WebGPU::TextureFormat::Depth32float:
+    case WebCore::WebGPU::TextureFormat::Depth24plus:
+        return MTLPixelFormatDepth32Float;
+    case WebCore::WebGPU::TextureFormat::Depth32floatStencil8:
+    case WebCore::WebGPU::TextureFormat::Depth24plusStencil8:
+        return MTLPixelFormatDepth32Float_Stencil8;
+    default:
+        return MTLPixelFormatInvalid;
+    }
+}
+
+static MTLPixelFormat toMetalFormat(std::optional<WebCore::WebGPU::TextureFormat> optionalFormat)
+{
+    return optionalFormat ? toMetalFormat(*optionalFormat) : MTLPixelFormatInvalid;
+}
+
+void UIDelegate::UIClient::startXRSession(WebPageProxy&, const PlatformXR::Device::FeatureList& sessionFeatures, std::optional<WebCore::XRCanvasConfiguration>&& init, CompletionHandler<void(RetainPtr<id>, PlatformViewController *)>&& completionHandler)
 {
     RefPtr uiDelegate = m_uiDelegate.get();
     if (!uiDelegate || !uiDelegate->m_delegateMethods.webViewStartXRSessionWithCompletionHandler) {
@@ -2212,9 +2243,9 @@ void UIDelegate::UIClient::startXRSession(WebPageProxy&, const PlatformXR::Devic
         return;
     }
 
-    if ([delegate respondsToSelector:@selector(_webView:startXRSessionWithFeatures:completionHandler:)]) {
-        auto checker = CompletionHandlerCallChecker::create(delegate.get(), @selector(_webView:startXRSessionWithFeatures:completionHandler:));
-        [delegate _webView:uiDelegate->m_webView.get().get() startXRSessionWithFeatures:toWKXRSessionFeatureFlags(sessionFeatures) completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler), checker = WTFMove(checker)] (id result, UIViewController *viewController) mutable {
+    if ([delegate respondsToSelector:@selector(_webView:startXRSessionWithFeatures:colorFormat:depthFormat:completionHandler:)]) {
+        auto checker = CompletionHandlerCallChecker::create(delegate.get(), @selector(_webView:startXRSessionWithFeatures:colorFormat:depthFormat:completionHandler:));
+        [delegate _webView:uiDelegate->m_webView.get().get() startXRSessionWithFeatures:toWKXRSessionFeatureFlags(sessionFeatures) colorFormat:(init ? toMetalFormat(init->colorFormat) : MTLPixelFormatInvalid) depthFormat:(init ? toMetalFormat(init->depthStencilFormat) : MTLPixelFormatInvalid) completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler), checker = WTFMove(checker)] (id result, UIViewController *viewController) mutable {
             if (checker->completionHandlerHasBeenCalled())
                 return;
             checker->didCallCompletionHandler();

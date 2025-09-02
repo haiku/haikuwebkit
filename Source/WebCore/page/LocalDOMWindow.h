@@ -27,7 +27,9 @@
 #pragma once
 
 #include "ContextDestructionObserverInlines.h"
+#include "DOMHighResTimeStamp.h"
 #include "DOMWindow.h"
+#include "EventNames.h"
 #include "EventTargetInterfaces.h"
 #include "PushSubscriptionOwner.h"
 #include "Supplementable.h"
@@ -283,6 +285,19 @@ public:
 
     void finishedLoading();
 
+    // EventTiming API
+    struct PerformanceEventTimingCandidate {
+        EventTypeInfo typeInfo;
+        bool cancelable { false };
+        DOMHighResTimeStamp startTime { 0 };
+        DOMHighResTimeStamp processingStart { 0 };
+        DOMHighResTimeStamp processingEnd { 0 };
+        RefPtr<EventTarget> target { nullptr };
+    };
+    PerformanceEventTimingCandidate initializeEventTimingEntry(const Event&, EventTypeInfo);
+    void finalizeEventTimingEntry(const PerformanceEventTimingCandidate&, const Event&);
+    void dispatchPendingEventTimingEntries();
+
     // HTML 5 key/value storage
     ExceptionOr<Storage*> sessionStorage();
     ExceptionOr<Storage*> localStorage();
@@ -441,6 +456,9 @@ private:
     mutable RefPtr<VisualViewport> m_visualViewport;
     mutable RefPtr<Navigation> m_navigation;
     mutable RefPtr<CloseWatcherManager> m_closeWatcherManager;
+
+    // Equivalent to the list of PerformanceEventTiming objects mentioned in https://www.w3.org/TR/event-timing/#sec-modifications-HTML :
+    Vector<PerformanceEventTimingCandidate, 6> m_performanceEventTimingCandidates;
 
     String m_status;
 

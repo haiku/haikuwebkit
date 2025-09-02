@@ -34,7 +34,9 @@
 #include "PlatformXRSystemProxyMessages.h"
 #include "WebPageProxy.h"
 #include "WebProcessProxy.h"
+#include <WebCore/GPUTextureFormat.h>
 #include <WebCore/SecurityOriginData.h>
+#include <WebCore/XRCanvasConfiguration.h>
 #include <wtf/TZoneMallocInlines.h>
 
 #define MESSAGE_CHECK(assertion, connection) MESSAGE_CHECK_BASE(assertion, connection)
@@ -64,10 +66,9 @@ std::optional<SharedPreferencesForWebProcess> PlatformXRSystem::sharedPreference
     return WebProcessProxy::fromConnection(connection)->sharedPreferencesForWebProcess();
 }
 
-void PlatformXRSystem::invalidate()
+void PlatformXRSystem::invalidate(InvalidationReason reason)
 {
     ASSERT(RunLoop::isMain());
-
     RefPtr page = m_page.get();
     if (!page)
         return;
@@ -78,7 +79,7 @@ void PlatformXRSystem::invalidate()
     if (xrCoordinator())
         xrCoordinator()->endSessionIfExists(*page);
 
-    invalidateImmersiveSessionState();
+    invalidateImmersiveSessionState(reason == InvalidationReason::Client ? ImmersiveSessionState::SessionEndingFromSystem : ImmersiveSessionState::Idle);
 }
 
 void PlatformXRSystem::ensureImmersiveSessionActivity()
@@ -178,7 +179,7 @@ void PlatformXRSystem::requestPermissionOnSessionFeatures(IPC::Connection& conne
     });
 }
 
-void PlatformXRSystem::initializeTrackingAndRendering(IPC::Connection& connection)
+void PlatformXRSystem::initializeTrackingAndRendering(IPC::Connection& connection, std::optional<WebCore::WebGPU::TextureFormat> colorFormat, std::optional<WebCore::WebGPU::TextureFormat> depthStencilFormat)
 {
     ASSERT(RunLoop::isMain());
     MESSAGE_CHECK(m_immersiveSessionMode, connection);
@@ -199,7 +200,13 @@ void PlatformXRSystem::initializeTrackingAndRendering(IPC::Connection& connectio
     ensureImmersiveSessionActivity();
 
     WeakPtr weakThis { *this };
-    xrCoordinator->startSession(*page, weakThis, *m_immersiveSessionSecurityOriginData, *m_immersiveSessionMode, *m_immersiveSessionGrantedFeatures);
+    std::optional<WebCore::XRCanvasConfiguration> init;
+    if (colorFormat) {
+        init = WebCore::XRCanvasConfiguration();
+        init->colorFormat = colorFormat;
+        init->depthStencilFormat = depthStencilFormat;
+    }
+    xrCoordinator->startSession(*page, weakThis, *m_immersiveSessionSecurityOriginData, *m_immersiveSessionMode, *m_immersiveSessionGrantedFeatures, WTFMove(init));
 }
 
 void PlatformXRSystem::shutDownTrackingAndRendering(IPC::Connection& connection)

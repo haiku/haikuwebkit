@@ -45,8 +45,6 @@ private:
     void graphicsElement() const = delete;
 
     ASCIILiteral renderName() const override { return "RenderSVGTextPath"_s; }
-
-    Path m_layoutPath;
 };
 
 } // namespace WebCore

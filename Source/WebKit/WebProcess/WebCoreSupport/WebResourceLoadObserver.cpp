@@ -74,6 +74,10 @@ WebResourceLoadObserver::~WebResourceLoadObserver()
 
 void WebResourceLoadObserver::requestStorageAccessUnderOpener(const RegistrableDomain& domainInNeedOfStorageAccess, WebPage& openerPage, Document& openerDocument)
 {
+    RefPtr page = openerDocument.page();
+    if (!page || !page->settings().storageAccessAPIEnabled())
+        return;
+
     auto openerUrl = openerDocument.url();
     RegistrableDomain openerDomain { openerUrl };
     if (domainInNeedOfStorageAccess != openerDomain

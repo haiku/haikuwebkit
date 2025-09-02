@@ -99,6 +99,7 @@ set(WebKit_PUBLIC_FRAMEWORK_HEADERS
     UIProcess/API/C/WKProtectionSpaceTypes.h
     UIProcess/API/C/WKQueryPermissionResultCallback.h
     UIProcess/API/C/WKResourceCacheManager.h
+    UIProcess/API/C/WKScriptMessageRef.h
     UIProcess/API/C/WKSessionStateRef.h
     UIProcess/API/C/WKSpeechRecognitionPermissionCallback.h
     UIProcess/API/C/WKTestingSupport.h

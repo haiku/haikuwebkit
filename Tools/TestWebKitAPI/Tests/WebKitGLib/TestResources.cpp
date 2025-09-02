@@ -303,7 +303,7 @@ public:
 
     void waitUntilResourceLoadFinished()
     {
-        m_resource = 0;
+        m_resource = nullptr;
         m_resourcesLoaded = 0;
         g_main_loop_run(m_mainLoop);
     }

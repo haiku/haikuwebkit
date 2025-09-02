@@ -87,21 +87,21 @@ void RenderScrollbarPart::layoutVerticalPart()
 static int calcScrollbarThicknessUsing(const Style::PreferredSize& preferredSize)
 {
     if (!preferredSize.isPercentOrCalculated() && !preferredSize.isIntrinsicOrLegacyIntrinsicOrAuto())
-        return Style::evaluateMinimum(preferredSize, { });
+        return Style::evaluateMinimum(preferredSize, 0_lu);
     return ScrollbarTheme::theme().scrollbarThickness();
 }
 
 static int calcScrollbarThicknessUsing(const Style::MinimumSize& minimumSize)
 {
     if ((!minimumSize.isPercentOrCalculated() && !minimumSize.isIntrinsicOrLegacyIntrinsicOrAuto()) || minimumSize.isAuto())
-        return Style::evaluateMinimum(minimumSize, { });
+        return Style::evaluateMinimum(minimumSize, 0_lu);
     return ScrollbarTheme::theme().scrollbarThickness();
 }
 
 static int calcScrollbarThicknessUsing(const Style::MaximumSize& maximumSize)
 {
     if (!maximumSize.isPercentOrCalculated() && !maximumSize.isIntrinsic() && !maximumSize.isLegacyIntrinsic())
-        return Style::evaluateMinimum(maximumSize, { });
+        return Style::evaluateMinimum(maximumSize, 0_lu);
     return ScrollbarTheme::theme().scrollbarThickness();
 }
 
@@ -165,16 +165,16 @@ void RenderScrollbarPart::paintIntoRect(GraphicsContext& graphicsContext, const 
     setWidth(rect.width());
     setHeight(rect.height());
 
-    if (graphicsContext.paintingDisabled() || !style().opacity())
+    if (graphicsContext.paintingDisabled() || style().opacity().isTransparent())
         return;
 
     // We don't use RenderLayers for scrollbar parts, so we need to handle opacity here.
     // Opacity for ScrollbarBGPart is handled by RenderScrollbarTheme::willPaintScrollbar().
-    bool needsTransparencyLayer = m_part != ScrollbarBGPart && style().opacity() < 1;
+    bool needsTransparencyLayer = m_part != ScrollbarBGPart && !style().opacity().isOpaque();
     if (needsTransparencyLayer) {
         graphicsContext.save();
         graphicsContext.clip(rect);
-        graphicsContext.beginTransparencyLayer(style().opacity());
+        graphicsContext.beginTransparencyLayer(style().opacity().value.value);
     }
     
     // Now do the paint.

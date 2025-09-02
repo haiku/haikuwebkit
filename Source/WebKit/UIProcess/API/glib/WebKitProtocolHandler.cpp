@@ -195,7 +195,7 @@ static String dmabufRendererWithSupportedBuffers()
     auto mode = AcceleratedBackingStore::rendererBufferTransportMode();
 #else
     OptionSet<RendererBufferTransportMode> mode;
-    if (wpe_display_get_drm_render_node(wpe_display_get_primary()))
+    if (wpe_display_get_drm_device(wpe_display_get_primary()))
         mode.add(RendererBufferTransportMode::Hardware);
     mode.add(RendererBufferTransportMode::SharedMemory);
 #endif
@@ -634,7 +634,10 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request)
 #if USE(GBM)
         UnixFileDescriptor fd;
         struct gbm_device* device = nullptr;
-        if (const char* node = wpe_display_get_drm_render_node(wpe_display_get_primary())) {
+        if (auto* drmDevice = wpe_display_get_drm_device(wpe_display_get_primary())) {
+            const char* node = wpe_drm_device_get_render_node(drmDevice);
+            if (!node)
+                node = wpe_drm_device_get_primary_node(drmDevice);
             fd = UnixFileDescriptor { open(node, O_RDWR | O_CLOEXEC), UnixFileDescriptor::Adopt };
             if (fd) {
                 device = gbm_create_device(fd.value());

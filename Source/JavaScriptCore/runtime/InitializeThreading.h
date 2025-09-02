@@ -28,7 +28,7 @@
  
 #pragma once
 
-#include "JSExportMacros.h"
+#include <JavaScriptCore/JSExportMacros.h>
 
 namespace JSC {
 

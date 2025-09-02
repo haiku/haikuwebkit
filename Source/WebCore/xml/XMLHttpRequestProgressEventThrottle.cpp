@@ -162,4 +162,9 @@ void XMLHttpRequestProgressEventThrottle::resume()
     });
 }
 
+Ref<XMLHttpRequest> XMLHttpRequestProgressEventThrottle::protectedTarget()
+{
+    return m_target.get();
+}
+
 } // namespace WebCore

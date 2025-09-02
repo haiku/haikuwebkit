@@ -28,6 +28,7 @@
 #include "Font.h"
 
 #include "Color.h"
+#include "DoublePoint.h"
 #include "FloatRect.h"
 #include "FontCache.h"
 #include "FontCascade.h"
@@ -647,7 +648,7 @@ GlyphBufferAdvance Font::applyTransforms(GlyphBuffer& glyphBuffer, unsigned begi
         auto origins = glyphBuffer.origins(beginningGlyphIndex);
         stream << "Origins:";
         for (auto& origin : origins)
-            stream << " " << origin;
+            stream << " " << FloatPoint(origin);
         stream << "\n";
         auto offsets = glyphBuffer.offsetsInString(beginningGlyphIndex);
         stream << "Offsets:";
@@ -687,7 +688,7 @@ GlyphBufferAdvance Font::applyTransforms(GlyphBuffer& glyphBuffer, unsigned begi
         auto origins = glyphBuffer.origins(beginningGlyphIndex);
         stream << "Origins:";
         for (auto& origin : origins)
-            stream << " " << origin;
+            stream << " " << FloatPoint(origin);
         stream << "\n";
         auto offsets = glyphBuffer.offsetsInString(beginningGlyphIndex);
         stream << "Offsets:";

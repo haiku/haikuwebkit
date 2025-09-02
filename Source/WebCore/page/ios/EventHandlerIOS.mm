@@ -731,7 +731,7 @@ std::optional<NodeIdentifier> EventHandler::requestInteractiveModelElementAtPoin
     PlatformMouseEvent syntheticMousePressEvent(adjustedClientPosition, adjustedGlobalPosition, MouseButton::Left, PlatformEvent::Type::MousePressed, 1, { }, WallTime::now(), 0, SyntheticClickType::NoTap);
     constexpr OptionSet<HitTestRequest::Type> hitType { HitTestRequest::Type::Active, HitTestRequest::Type::DisallowUserAgentShadowContent };
     auto documentPoint = frameView->windowToContents(syntheticMousePressEvent.position());
-    auto hitTestedMouseEvent = document->prepareMouseEvent(hitType, documentPoint, syntheticMousePressEvent);
+    auto hitTestedMouseEvent = document->prepareMouseEvent(hitType, LayoutPoint { documentPoint }, syntheticMousePressEvent);
 
     if (RefPtr subframe = dynamicDowncast<LocalFrame>(subframeForHitTestResult(hitTestedMouseEvent))) {
         if (std::optional<NodeIdentifier> nodeID = subframe->eventHandler().requestInteractiveModelElementAtPoint(adjustedClientPosition))
@@ -823,7 +823,7 @@ void EventHandler::tryToBeginDragAtPoint(const IntPoint& clientPosition, const I
     constexpr OptionSet<HitTestRequest::Type> hitType { HitTestRequest::Type::Active, HitTestRequest::Type::DisallowUserAgentShadowContent };
     RefPtr frameView = frame->view();
     auto documentPoint = frameView ? frameView->windowToContents(syntheticMouseMoveEvent.position()) : syntheticMouseMoveEvent.position();
-    auto hitTestedMouseEvent = document->prepareMouseEvent(hitType, documentPoint, syntheticMouseMoveEvent);
+    auto hitTestedMouseEvent = document->prepareMouseEvent(hitType, LayoutPoint(documentPoint), syntheticMouseMoveEvent);
 
     if (RefPtr subframe = subframeForHitTestResult(hitTestedMouseEvent)) {
         if (RefPtr localSubframe = dynamicDowncast<LocalFrame>(subframe.get()))

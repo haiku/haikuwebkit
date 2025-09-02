@@ -202,7 +202,7 @@ static Ref<JSON::Object> toJSONObject(GVariant* variant)
 JSObjectRef UIScriptControllerGtk::contentsOfUserInterfaceItem(JSStringRef interfaceItem) const
 {
     auto* webView = TestController::singleton().mainWebView()->platformView();
-    GRefPtr<GVariant> contentDictionary = adoptGRef(WKViewContentsOfUserInterfaceItem(webView, toWTFString(interfaceItem).utf8().data()));
+    GRefPtr<GVariant> contentDictionary = WKViewContentsOfUserInterfaceItem(webView, toWTFString(interfaceItem).utf8().data());
     auto jsonObject = toJSONObject(contentDictionary.get());
 
     return JSValueToObject(m_context->jsContext(), contentDictionary ? JSValueMakeFromJSONString(m_context->jsContext(), createJSString(jsonObject->toJSONString().utf8().data()).get()) : JSValueMakeUndefined(m_context->jsContext()), nullptr);

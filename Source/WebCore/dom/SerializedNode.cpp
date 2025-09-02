@@ -29,16 +29,38 @@
 #include "Attr.h"
 #include "CDATASection.h"
 #include "Comment.h"
+#include "Document.h"
 #include "DocumentType.h"
+#include "HTMLAttachmentElement.h"
+#include "HTMLScriptElement.h"
+#include "HTMLTemplateElement.h"
 #include "JSNode.h"
 #include "ProcessingInstruction.h"
+#include "QualifiedName.h"
+#include "SVGScriptElement.h"
 #include "SecurityOriginPolicy.h"
 #include "Text.h"
+#include "WebVTTElement.h"
 
 namespace WebCore {
 
-JSC::JSValue SerializedNode::deserialize(SerializedNode&& serializedNode, JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* domGlobalObject, WebCore::Document& document)
+WTF_MAKE_STRUCT_TZONE_ALLOCATED_IMPL(SerializedNode);
+
+static void setAttributes(Element& element, Vector<SerializedNode::Element::Attribute>&& attributes)
 {
+    element.parserSetAttributes(WTF::map(WTFMove(attributes), [] (auto&& attribute) {
+        return Attribute(WTFMove(attribute.name).qualifiedName(), AtomString(WTFMove(attribute.value)));
+    }).span());
+}
+
+RefPtr<Node> SerializedNode::deserialize(SerializedNode&& serializedNode, WebCore::Document& document)
+{
+    auto serializedChildren = WTF::switchOn(serializedNode.data, [&] (SerializedNode::ContainerNode& containerNode) {
+        return std::exchange(containerNode.children, { });
+    }, []<typename T>(const T&) requires (!std::derived_from<T, SerializedNode::ContainerNode>) {
+        return Vector<SerializedNode> { };
+    });
+
     // FIXME: Support other kinds of nodes and change RefPtr to Ref.
     RefPtr node = WTF::switchOn(WTFMove(serializedNode.data), [&] (SerializedNode::Text&& text) -> RefPtr<Node> {
         return WebCore::Text::create(document, WTFMove(text.data));
@@ -51,8 +73,7 @@ JSC::JSValue SerializedNode::deserialize(SerializedNode&& serializedNode, JSC::J
     }, [&] (SerializedNode::CDATASection&& section) -> RefPtr<Node> {
         return WebCore::CDATASection::create(document, WTFMove(section.data));
     }, [&] (SerializedNode::Attr&& attr) -> RefPtr<Node> {
-        QualifiedName name(AtomString(WTFMove(attr.prefix)), AtomString(WTFMove(attr.localName)), AtomString(WTFMove(attr.namespaceURI)));
-        return WebCore::Attr::create(document, name, AtomString(WTFMove(attr.value)));
+        return WebCore::Attr::create(document, WTFMove(attr.name).qualifiedName(), AtomString(WTFMove(attr.value)));
     }, [&] (SerializedNode::Document&& serializedDocument) -> RefPtr<Node> {
         return WebCore::Document::createCloned(
             serializedDocument.type,
@@ -67,10 +88,52 @@ JSC::JSValue SerializedNode::deserialize(SerializedNode&& serializedNode, JSC::J
             serializedDocument.contentType,
             document.protectedDecoder().get()
         );
+    }, [&] (SerializedNode::Element&& element) -> RefPtr<Node> {
+        constexpr bool createdByParser { false };
+        Ref result = document.createElement(WTFMove(element.name).qualifiedName(), createdByParser);
+        setAttributes(result, WTFMove(element.attributes));
+        return result;
+    }, [&] (SerializedNode::HTMLTemplateElement&& element) -> RefPtr<Node> {
+        Ref result = WebCore::HTMLTemplateElement::create(WTFMove(element.name).qualifiedName(), document);
+        setAttributes(result, WTFMove(element.attributes));
+        return result;
     }, [] (auto&&) -> RefPtr<Node> {
         return nullptr;
     });
-    return toJSNewlyCreated(lexicalGlobalObject, domGlobalObject, WTFMove(node));
+
+    RefPtr containerNode = dynamicDowncast<WebCore::ContainerNode>(node);
+    for (auto&& child : WTFMove(serializedChildren)) {
+        if (RefPtr childNode = deserialize(WTFMove(child), document)) {
+            childNode->setTreeScopeRecursively(containerNode->protectedTreeScope());
+            containerNode->appendChildCommon(*childNode);
+        }
+    }
+
+    return node;
+}
+
+JSC::JSValue SerializedNode::deserialize(SerializedNode&& serializedNode, JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* domGlobalObject, WebCore::Document& document)
+{
+    return toJSNewlyCreated(lexicalGlobalObject, domGlobalObject, deserialize(WTFMove(serializedNode), document));
+}
+
+SerializedNode::QualifiedName::QualifiedName(const WebCore::QualifiedName& name)
+    : prefix(name.prefix())
+    , localName(name.localName())
+    , namespaceURI(name.namespaceURI())
+{
+}
+
+SerializedNode::QualifiedName::QualifiedName(String&& prefix, String&& localName, String&& namespaceURI)
+    : prefix(WTFMove(prefix))
+    , localName(WTFMove(localName))
+    , namespaceURI(WTFMove(namespaceURI))
+{
+}
+
+QualifiedName SerializedNode::QualifiedName::qualifiedName() &&
+{
+    return WebCore::QualifiedName(AtomString(WTFMove(prefix)), AtomString(WTFMove(localName)), AtomString(WTFMove(namespaceURI)));
 }
 
 }

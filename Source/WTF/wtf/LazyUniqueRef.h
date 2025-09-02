@@ -125,7 +125,7 @@ private:
         return std::bit_cast<T*>(ref.m_pointer);
     }
 
-    uintptr_t m_pointer { 0 };
+    mutable uintptr_t m_pointer { 0 };
 };
 
 } // namespace WTF

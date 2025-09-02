@@ -1399,6 +1399,10 @@ void WebLocalFrameLoaderClient::loadStorageAccessQuirksIfNeeded()
     if (!webPage || !m_frame->isMainFrame() || !m_localFrame->document())
         return;
 
+    RefPtr corePage = webPage->corePage();
+    if (!corePage || !corePage->settings().storageAccessAPIEnabled())
+        return;
+
     RefPtr document = m_localFrame->document();
     URL documentURLWithoutFragmentOrQueries { document->url().viewWithoutQueryOrFragmentIdentifier().toStringWithoutCopying() };
     if (!WebProcess::singleton().haveStorageAccessQuirksForDomain(RegistrableDomain { documentURLWithoutFragmentOrQueries }))

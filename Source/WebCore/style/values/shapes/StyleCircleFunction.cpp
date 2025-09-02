@@ -28,6 +28,7 @@
 #include "FloatRect.h"
 #include "GeometryUtilities.h"
 #include "Path.h"
+#include "StyleLengthWrapper+Blending.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include <numbers>

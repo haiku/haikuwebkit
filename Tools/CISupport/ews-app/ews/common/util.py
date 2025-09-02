@@ -82,4 +82,7 @@ def get_custom_suffix():
 
 
 def get_cibuilds_for_queue(change, queue):
-    return [build for build in change.cibuild_set.all() if build.builder_display_name == queue]
+    builds = [build for build in change.cibuild_set.all() if build.builder_display_name == queue]
+    if builds:
+        builds.sort(key=lambda build: build.created, reverse=True)
+    return builds

@@ -34,7 +34,7 @@ PASS horizontal-tb ltr inside vertical-lr rtl - Pixels resolve as-is when overco
 PASS horizontal-tb ltr inside vertical-lr rtl - Percentages absolutize the computed value when overconstrained
 FAIL horizontal-tb ltr inside vertical-lr rtl - If start side is 'auto' and end side is not, 'auto' resolves to used value assert_equals: 'top' expected "297px" but got "425px"
 FAIL horizontal-tb ltr inside vertical-lr rtl - If end side is 'auto' and start side is not, 'auto' resolves to used value assert_equals: 'bottom' expected "299px" but got "171px"
-FAIL horizontal-tb ltr inside vertical-lr rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "355px"
+FAIL horizontal-tb ltr inside vertical-lr rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "301px"
 PASS horizontal-tb ltr inside vertical-rl ltr - Pixels resolve as-is
 PASS horizontal-tb ltr inside vertical-rl ltr - Relative lengths are absolutized into pixels
 PASS horizontal-tb ltr inside vertical-rl ltr - Percentages are absolutized into pixels
@@ -52,7 +52,7 @@ PASS horizontal-tb ltr inside vertical-rl rtl - Pixels resolve as-is when overco
 PASS horizontal-tb ltr inside vertical-rl rtl - Percentages absolutize the computed value when overconstrained
 FAIL horizontal-tb ltr inside vertical-rl rtl - If start side is 'auto' and end side is not, 'auto' resolves to used value assert_equals: 'top' expected "297px" but got "425px"
 FAIL horizontal-tb ltr inside vertical-rl rtl - If end side is 'auto' and start side is not, 'auto' resolves to used value assert_equals: 'bottom' expected "299px" but got "171px"
-FAIL horizontal-tb ltr inside vertical-rl rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "355px"
+FAIL horizontal-tb ltr inside vertical-rl rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "301px"
 PASS horizontal-tb rtl inside horizontal-tb ltr - Pixels resolve as-is
 PASS horizontal-tb rtl inside horizontal-tb ltr - Relative lengths are absolutized into pixels
 PASS horizontal-tb rtl inside horizontal-tb ltr - Percentages are absolutized into pixels
@@ -88,7 +88,7 @@ PASS horizontal-tb rtl inside vertical-lr rtl - Pixels resolve as-is when overco
 PASS horizontal-tb rtl inside vertical-lr rtl - Percentages absolutize the computed value when overconstrained
 FAIL horizontal-tb rtl inside vertical-lr rtl - If start side is 'auto' and end side is not, 'auto' resolves to used value assert_equals: 'top' expected "297px" but got "425px"
 FAIL horizontal-tb rtl inside vertical-lr rtl - If end side is 'auto' and start side is not, 'auto' resolves to used value assert_equals: 'bottom' expected "299px" but got "171px"
-FAIL horizontal-tb rtl inside vertical-lr rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "355px"
+FAIL horizontal-tb rtl inside vertical-lr rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "301px"
 PASS horizontal-tb rtl inside vertical-rl ltr - Pixels resolve as-is
 PASS horizontal-tb rtl inside vertical-rl ltr - Relative lengths are absolutized into pixels
 PASS horizontal-tb rtl inside vertical-rl ltr - Percentages are absolutized into pixels
@@ -106,7 +106,7 @@ PASS horizontal-tb rtl inside vertical-rl rtl - Pixels resolve as-is when overco
 PASS horizontal-tb rtl inside vertical-rl rtl - Percentages absolutize the computed value when overconstrained
 FAIL horizontal-tb rtl inside vertical-rl rtl - If start side is 'auto' and end side is not, 'auto' resolves to used value assert_equals: 'top' expected "297px" but got "425px"
 FAIL horizontal-tb rtl inside vertical-rl rtl - If end side is 'auto' and start side is not, 'auto' resolves to used value assert_equals: 'bottom' expected "299px" but got "171px"
-FAIL horizontal-tb rtl inside vertical-rl rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "355px"
+FAIL horizontal-tb rtl inside vertical-rl rtl - If opposite sides are 'auto', they resolve to used value assert_equals: 'top' expected "173px" but got "301px"
 PASS vertical-lr ltr inside horizontal-tb ltr - Pixels resolve as-is
 PASS vertical-lr ltr inside horizontal-tb ltr - Relative lengths are absolutized into pixels
 PASS vertical-lr ltr inside horizontal-tb ltr - Percentages are absolutized into pixels

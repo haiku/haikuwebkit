@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CommonIdentifiers.h"
-#include "GenericArgumentsImpl.h"
-#include "JSLexicalEnvironment.h"
-#include "Watchpoint.h"
+#include <JavaScriptCore/CommonIdentifiers.h>
+#include <JavaScriptCore/GenericArgumentsImpl.h>
+#include <JavaScriptCore/JSLexicalEnvironment.h>
+#include <JavaScriptCore/Watchpoint.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

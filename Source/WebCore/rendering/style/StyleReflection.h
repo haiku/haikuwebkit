@@ -4,6 +4,7 @@
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
  * Copyright (C) 2003, 2005, 2006, 2007, 2008 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -25,8 +26,8 @@
 #pragma once
 
 #include "Length.h"
-#include "NinePieceImage.h"
 #include "RenderStyleConstants.h"
+#include "StyleMaskBorder.h"
 #include <wtf/RefCounted.h>
 
 namespace WebCore {
@@ -45,23 +46,21 @@ public:
 
     ReflectionDirection direction() const { return m_direction; }
     const Length& offset() const { return m_offset; }
-    const NinePieceImage& mask() const { return m_mask; }
+    const Style::MaskBorder& mask() const { return m_mask; }
 
     void setDirection(ReflectionDirection dir) { m_direction = dir; }
-    void setOffset(Length offset) { m_offset = WTFMove(offset); }
-    void setMask(const NinePieceImage& image) { m_mask = image; }
+    void setOffset(Length&& offset) { m_offset = WTFMove(offset); }
+    void setMask(Style::MaskBorder&& mask) { m_mask = WTFMove(mask); }
 
 private:
     StyleReflection()
         : m_offset(0, LengthType::Fixed)
-        , m_mask(NinePieceImage::Type::Mask)
     {
-        m_mask.setFill(true);
     }
     
     ReflectionDirection m_direction { ReflectionDirection::Below };
     Length m_offset;
-    NinePieceImage m_mask;
+    Style::MaskBorder m_mask;
 };
 
 } // namespace WebCore

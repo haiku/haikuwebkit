@@ -52,6 +52,13 @@ webkit.org/b/296368 editing/async-clipboard/clipboard-read-text-same-origin.html
 webkit.org/b/296368 editing/async-clipboard/clipboard-write-items-twice.html [ Skip ]
 webkit.org/b/296368 editing/async-clipboard/clipboard-write-text.html [ Skip ]
 
+webkit.org/b/296614 editing/inserting/insert-paste-bidi-control.html [ Failure ]
+webkit.org/b/296614 editing/selection/5057506.html [ Failure ]
+
+webkit.org/b/173419 fast/events/mouseover-button.html [ Failure ]
+
+webkit.org/b/296677 fast/media/mq-resolution.html [ Skip ]
+
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End of Triaged Expectations
 #//////////////////////////////////////////////////////////////////////////////////////////

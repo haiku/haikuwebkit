@@ -27,13 +27,12 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "JITCompilation.h"
-#include "SIMDInfo.h"
-#include "WasmLLIntBuiltin.h"
-#include "WasmOps.h"
-#include "WasmSIMDOpcodes.h"
-#include "Width.h"
-#include "WriteBarrier.h"
+#include <JavaScriptCore/JITCompilation.h>
+#include <JavaScriptCore/SIMDInfo.h>
+#include <JavaScriptCore/WasmOps.h>
+#include <JavaScriptCore/WasmSIMDOpcodes.h>
+#include <JavaScriptCore/Width.h>
+#include <JavaScriptCore/WriteBarrier.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/FixedVector.h>
 #include <wtf/HashMap.h>
@@ -46,7 +45,7 @@
 #include <wtf/Vector.h>
 
 #if ENABLE(WEBASSEMBLY_OMGJIT) || ENABLE(WEBASSEMBLY_BBQJIT)
-#include "B3Type.h"
+#include <JavaScriptCore/B3Type.h>
 #endif
 
 #if HAVE(36BIT_ADDRESS)
@@ -941,7 +940,6 @@ class TypeInformation {
 public:
     static TypeInformation& singleton();
 
-    static const TypeDefinition& signatureForLLIntBuiltin(LLIntBuiltin);
     static const TypeDefinition& signatureForJSException();
 
     static RefPtr<TypeDefinition> typeDefinitionForFunction(const Vector<Type, 16>& returnTypes, const Vector<Type, 16>& argumentTypes);

@@ -1005,7 +1005,7 @@ VisiblePosition previousLinePosition(const VisiblePosition& visiblePosition, Lay
             return positionInParentBeforeNode(node.get());
         // FIXME: The HitTestSource state should be propagated down from calls into JavaScript bindings.
         // For the time being, just err on the side of passing in `Bindings`.
-        return const_cast<RenderObject&>(renderer.get()).positionForPoint(pointInLine, HitTestSource::Script, nullptr);
+        return const_cast<RenderObject&>(renderer.get()).visiblePositionForPoint(pointInLine, HitTestSource::Script);
     }
     
     // Could not find a previous line. This means we must already be on the first line.
@@ -1065,7 +1065,7 @@ VisiblePosition nextLinePosition(const VisiblePosition& visiblePosition, LayoutU
             return positionInParentBeforeNode(node.get());
         // FIXME: The HitTestSource state should be propagated down from calls into JavaScript bindings.
         // For the time being, just err on the side of passing in `Bindings`.
-        return const_cast<RenderObject&>(renderer.get()).positionForPoint(pointInLine, HitTestSource::Script, nullptr);
+        return const_cast<RenderObject&>(renderer.get()).visiblePositionForPoint(pointInLine, HitTestSource::Script);
     }
 
     // Could not find a next line. This means we must already be on the last line.

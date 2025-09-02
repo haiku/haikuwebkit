@@ -103,6 +103,8 @@ TextureMapperLayer& CoordinatedPlatformLayer::ensureTarget()
         m_target = makeUnique<TextureMapperLayer>();
 #if ENABLE(DAMAGE_TRACKING)
         m_target->setDamagePropagationEnabled(m_damagePropagationEnabled);
+        if (m_damagePropagationEnabled)
+            m_target->setDamageInGlobalCoordinateSpace(m_damageInGlobalCoordinateSpace);
 #endif
     }
     return *m_target;

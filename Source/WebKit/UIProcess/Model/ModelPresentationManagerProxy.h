@@ -56,6 +56,7 @@ public:
     void doneWithCurrentDragSession();
     void invalidateModel(const WebCore::PlatformLayerIdentifier&);
     void invalidateAllModels();
+    void pageScaleDidChange(CGFloat);
 
 private:
     explicit ModelPresentationManagerProxy(WebPageProxy&);

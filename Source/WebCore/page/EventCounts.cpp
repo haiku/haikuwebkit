@@ -26,13 +26,30 @@
 #include "config.h"
 #include "EventCounts.h"
 
+#include "IDLTypes.h"
 #include "JSDOMMapLike.h"
+#include <algorithm>
 
 namespace WebCore {
 
-void EventCounts::initializeMapLike(DOMMapAdapter&)
+EventCounts::EventCounts(Performance* performance)
+    : m_performance(*performance)
+{ }
+
+void EventCounts::add(EventType type)
 {
-    return;
+    size_t index = std::ranges::lower_bound(EventNames::timedEvents, type) - EventNames::timedEvents.begin();
+    ASSERT(index < m_counts.size());
+    ++m_counts[index];
+}
+
+void EventCounts::initializeMapLike(DOMMapAdapter& map)
+{
+    auto& eventNamesObject = eventNames();
+    for (size_t index = 0; index < EventNames::timedEvents.size(); ++index) {
+        auto type = EventNames::timedEvents[index];
+        map.set<IDLDOMString, IDLUnsignedLongLong>(eventNamesObject.eventNameFromEventType(type), m_counts[index]);
+    }
 }
 
 } // namespace WebCore

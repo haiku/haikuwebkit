@@ -448,19 +448,10 @@ int Navigator::maxTouchPoints() const
     return 0;
 }
 
-void Navigator::initializeNavigatorUAData() const
-{
-    if (m_navigatorUAData)
-        return;
-
-    // FIXME(296489): populate the data structure
-    return;
-}
-
 NavigatorUAData& Navigator::userAgentData() const
 {
     if (!m_navigatorUAData)
-        initializeNavigatorUAData();
+        m_navigatorUAData = NavigatorUAData::create();
 
     return *m_navigatorUAData;
 };

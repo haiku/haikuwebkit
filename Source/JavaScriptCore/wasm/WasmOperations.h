@@ -47,6 +47,9 @@ class Context;
 } // namespace JSC::Probe
 namespace Wasm {
 
+enum class UseDefaultValue : bool { No, Yes };
+enum class ArrayGetKind : unsigned { New, NewDefault, NewFixed };
+
 class TypeDefinition;
 class JSEntrypointCallee;
 

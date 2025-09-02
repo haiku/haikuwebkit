@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "Butterfly.h"
-#include "IndexingHeader.h"
-#include "JSCJSValueInlines.h"
-#include "JSCell.h"
-#include "ResourceExhaustion.h"
-#include "Structure.h"
-#include "VirtualRegister.h"
+#include <JavaScriptCore/Butterfly.h>
+#include <JavaScriptCore/IndexingHeader.h>
+#include <JavaScriptCore/JSCJSValueInlines.h>
+#include <JavaScriptCore/JSCell.h>
+#include <JavaScriptCore/ResourceExhaustion.h>
+#include <JavaScriptCore/Structure.h>
+#include <JavaScriptCore/VirtualRegister.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

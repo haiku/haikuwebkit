@@ -22,13 +22,13 @@
 
 #pragma once
 
-#include "ErrorInstance.h"
-#include "ErrorType.h"
-#include "Exception.h"
-#include "InternalFunction.h"
-#include "JSObject.h"
-#include "LineColumn.h"
-#include "ThrowScope.h"
+#include <JavaScriptCore/ErrorInstance.h>
+#include <JavaScriptCore/ErrorType.h>
+#include <JavaScriptCore/Exception.h>
+#include <JavaScriptCore/InternalFunction.h>
+#include <JavaScriptCore/JSObject.h>
+#include <JavaScriptCore/LineColumn.h>
+#include <JavaScriptCore/ThrowScope.h>
 #include <stdint.h>
 
 

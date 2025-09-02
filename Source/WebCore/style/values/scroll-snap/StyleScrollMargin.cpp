@@ -26,75 +26,26 @@
 #include "StyleScrollMargin.h"
 
 #include "LayoutRect.h"
-#include "StyleBuilderConverter.h"
 #include "StyleBuilderState.h"
-#include "StyleExtractorConverter.h"
+#include "StylePrimitiveNumericTypes+CSSValueConversion.h"
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
 namespace Style {
 
-LayoutUnit Evaluation<ScrollMarginEdge>::operator()(const ScrollMarginEdge& edge, LayoutUnit referenceLength)
+LayoutUnit Evaluation<ScrollMarginEdge>::operator()(const ScrollMarginEdge& edge, LayoutUnit)
 {
-    switch (edge.m_value.type()) {
-    case LengthType::Fixed:
-        return LayoutUnit(edge.m_value.value());
-
-    case LengthType::Percent:
-        return LayoutUnit(static_cast<float>(referenceLength * edge.m_value.percent() / 100.0f));
-
-    case LengthType::Calculated:
-        return LayoutUnit(edge.m_value.nonNanCalculatedValue(referenceLength));
-
-    case LengthType::FillAvailable:
-    case LengthType::Auto:
-    case LengthType::Normal:
-    case LengthType::Content:
-    case LengthType::Relative:
-    case LengthType::Intrinsic:
-    case LengthType::MinIntrinsic:
-    case LengthType::MinContent:
-    case LengthType::MaxContent:
-    case LengthType::FitContent:
-    case LengthType::Undefined:
-        break;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-    return 0_lu;
+    return LayoutUnit(edge.m_value.value);
 }
 
-float Evaluation<ScrollMarginEdge>::operator()(const ScrollMarginEdge& edge, float referenceLength)
+float Evaluation<ScrollMarginEdge>::operator()(const ScrollMarginEdge& edge, float)
 {
-    switch (edge.m_value.type()) {
-    case LengthType::Fixed:
-        return edge.m_value.value();
-
-    case LengthType::Percent:
-        return referenceLength * edge.m_value.percent() / 100.0f;
-
-    case LengthType::Calculated:
-        return edge.m_value.nonNanCalculatedValue(referenceLength);
-
-    case LengthType::FillAvailable:
-    case LengthType::Auto:
-    case LengthType::Normal:
-    case LengthType::Content:
-    case LengthType::Relative:
-    case LengthType::Intrinsic:
-    case LengthType::MinIntrinsic:
-    case LengthType::MinContent:
-    case LengthType::MaxContent:
-    case LengthType::FitContent:
-    case LengthType::Undefined:
-        break;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-    return 0.0f;
+    return edge.m_value.value;
 }
 
 auto CSSValueConversion<ScrollMarginEdge>::operator()(BuilderState& state, const CSSValue& value) -> ScrollMarginEdge
 {
-    return ScrollMarginEdge { BuilderConverter::convertLength(state, value) };
+    return ScrollMarginEdge { toStyleFromCSSValue<Length<>>(state, value) };
 }
 
 LayoutBoxExtent extentForRect(const ScrollMarginBox& margin, const LayoutRect& rect)
@@ -105,11 +56,6 @@ LayoutBoxExtent extentForRect(const ScrollMarginBox& margin, const LayoutRect& r
         Style::evaluate(margin.bottom(), rect.height()),
         Style::evaluate(margin.left(), rect.width()),
     };
-}
-
-WTF::TextStream& operator<<(WTF::TextStream& ts, const ScrollMarginEdge& value)
-{
-    return ts << value.m_value;
 }
 
 } // namespace Style

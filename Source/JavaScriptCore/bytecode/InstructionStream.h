@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "BytecodeIndex.h"
-#include "Instruction.h"
+#include <JavaScriptCore/BytecodeIndex.h>
+#include <JavaScriptCore/Instruction.h>
 #include <wtf/Vector.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
@@ -363,7 +363,6 @@ private:
 
 using JSInstructionStream = InstructionStream<JSInstruction>;
 using JSInstructionStreamWriter = InstructionStreamWriter<JSInstruction>;
-using WasmInstructionStream = InstructionStream<WasmInstruction>;
 
 } // namespace JSC
 

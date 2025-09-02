@@ -82,6 +82,9 @@ struct IDWriteFontCollection;
 #if USE(SKIA)
 #include "SkiaHarfBuzzFontCache.h"
 #include <skia/core/SkFontMgr.h>
+#if !OS(ANDROID) && !PLATFORM(WIN)
+#include "SkiaSystemFallbackFontCache.h"
+#endif
 #endif
 
 namespace WebCore {
@@ -281,6 +284,9 @@ private:
 #if USE(SKIA)
     mutable sk_sp<SkFontMgr> m_fontManager;
     SkiaHarfBuzzFontCache m_harfBuzzFontCache;
+#if !OS(ANDROID) && !PLATFORM(WIN)
+    SkiaSystemFallbackFontCache m_skiaSystemFallbackFontCache;
+#endif
 #endif
 
 #if PLATFORM(WIN) && USE(SKIA)

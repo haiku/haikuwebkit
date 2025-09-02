@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "BlockDirectory.h"
-#include "JSCast.h"
-#include "MarkedBlock.h"
-#include "MarkedSpace.h"
-#include "Scribble.h"
-#include "SuperSampler.h"
-#include "VM.h"
+#include <JavaScriptCore/BlockDirectory.h>
+#include <JavaScriptCore/JSCast.h>
+#include <JavaScriptCore/MarkedBlock.h>
+#include <JavaScriptCore/MarkedSpace.h>
+#include <JavaScriptCore/Scribble.h>
+#include <JavaScriptCore/SuperSampler.h>
+#include <JavaScriptCore/VM.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

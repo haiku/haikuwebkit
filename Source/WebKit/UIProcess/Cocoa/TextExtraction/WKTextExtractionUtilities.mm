@@ -28,7 +28,7 @@
 
 #if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
-#import "WKTextExtractionItem.h"
+#import "_WKTextExtractionInternal.h"
 #import <WebCore/TextExtraction.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
@@ -59,56 +59,114 @@ inline static WKTextExtractionContainer containerType(TextExtraction::ContainerT
     }
 }
 
-inline static RetainPtr<WKTextExtractionTextItem> createWKTextItem(const TextExtraction::TextItemData& data, CGRect rectInWebView, NSArray<WKTextExtractionItem *> *children)
+static WKTextExtractionEventListenerTypes eventListenerTypes(OptionSet<TextExtraction::EventListenerCategory> eventListeners)
 {
-    RetainPtr<WKTextExtractionEditable> editable;
-    if (data.editable) {
-        editable = adoptNS([[WKTextExtractionEditable alloc]
-            initWithLabel:data.editable->label.createNSString().get()
-            placeholder:data.editable->placeholder.createNSString().get()
-            isSecure:static_cast<BOOL>(data.editable->isSecure)
-            isFocused:static_cast<BOOL>(data.editable->isFocused)]);
-    }
+    WKTextExtractionEventListenerTypes result = WKTextExtractionEventListenerTypeNone;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Click))
+        result |= WKTextExtractionEventListenerTypeClick;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Hover))
+        result |= WKTextExtractionEventListenerTypeHover;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Touch))
+        result |= WKTextExtractionEventListenerTypeTouch;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Wheel))
+        result |= WKTextExtractionEventListenerTypeWheel;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Gesture))
+        result |= WKTextExtractionEventListenerTypeGesture;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Pointer))
+        result |= WKTextExtractionEventListenerTypePointer;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Keyboard))
+        result |= WKTextExtractionEventListenerTypeKeyboard;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Focus))
+        result |= WKTextExtractionEventListenerTypeFocus;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Form))
+        result |= WKTextExtractionEventListenerTypeForm;
+    if (eventListeners.contains(TextExtraction::EventListenerCategory::Media))
+        result |= WKTextExtractionEventListenerTypeMedia;
+    return result;
+}
 
-    auto selectedRange = NSMakeRange(NSNotFound, 0);
-    if (auto range = data.selectedRange) {
-        if (range->location + range->length <= data.content.length()) [[likely]]
-            selectedRange = NSMakeRange(range->location, range->length);
-    }
-
-    auto links = createNSArray(data.links, [&](auto& linkAndRange) -> RetainPtr<WKTextExtractionLink> {
-        auto& [url, range] = linkAndRange;
-        if (range.location + range.length > data.content.length()) [[unlikely]]
-            return { };
-
-        RetainPtr nsURL = url.createNSURL();
-        if (!nsURL)
-            return { };
-
-        return adoptNS([[WKTextExtractionLink alloc] initWithURL:nsURL.get() range:NSMakeRange(range.location, range.length)]);
-    });
-
-    return adoptNS([[WKTextExtractionTextItem alloc]
-        initWithContent:data.content.createNSString().get()
-        selectedRange:selectedRange
-        links:links.get()
-        editable:editable.get()
-        rectInWebView:rectInWebView
-        children:children]);
+static RetainPtr<WKTextExtractionEditable> createWKEditable(const TextExtraction::Editable& editable)
+{
+    return adoptNS([[WKTextExtractionEditable alloc]
+        initWithLabel:editable.label.createNSString().get()
+        placeholder:editable.placeholder.createNSString().get()
+        isSecure:static_cast<BOOL>(editable.isSecure)
+        isFocused:static_cast<BOOL>(editable.isFocused)]);
 }
 
 inline static RetainPtr<WKTextExtractionItem> createItemWithChildren(const TextExtraction::Item& item, const RootViewToWebViewConverter& converter, NSArray<WKTextExtractionItem *> *children)
 {
     auto rectInWebView = converter(item.rectInRootView);
+
+    // FIXME: Finish plumbing for event listeners, node identifiers, and various other attributes.
+    auto eventListeners = eventListenerTypes({ });
+    RetainPtr nodeIdentifier = @"";
+    RetainPtr accessibilityRole = @"";
+    RetainPtr ariaAttributes = adoptNS([[NSMutableDictionary alloc] init]);
+
     return WTF::switchOn(item.data,
         [&](const TextExtraction::TextItemData& data) -> RetainPtr<WKTextExtractionItem> {
-            return createWKTextItem(data, rectInWebView, children);
+            RetainPtr<WKTextExtractionEditable> editable;
+            if (data.editable)
+                editable = createWKEditable(*data.editable);
+
+            auto selectedRange = NSMakeRange(NSNotFound, 0);
+            if (auto range = data.selectedRange) {
+                if (range->location + range->length <= data.content.length()) [[likely]]
+                    selectedRange = NSMakeRange(range->location, range->length);
+            }
+
+            auto links = createNSArray(data.links, [&](auto& linkAndRange) -> RetainPtr<WKTextExtractionLink> {
+                auto& [url, range] = linkAndRange;
+                if (range.location + range.length > data.content.length()) [[unlikely]]
+                    return { };
+
+                RetainPtr nsURL = url.createNSURL();
+                if (!nsURL)
+                    return { };
+
+                return adoptNS([[WKTextExtractionLink alloc] initWithURL:nsURL.get() range:NSMakeRange(range.location, range.length)]);
+            });
+
+            return adoptNS([[WKTextExtractionTextItem alloc]
+                initWithContent:data.content.createNSString().get()
+                selectedRange:selectedRange
+                links:links.get()
+                editable:editable.get()
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
         }, [&](const TextExtraction::ScrollableItemData& data) -> RetainPtr<WKTextExtractionItem> {
-            return adoptNS([[WKTextExtractionScrollableItem alloc] initWithContentSize:data.contentSize rectInWebView:rectInWebView children:children]);
+            return adoptNS([[WKTextExtractionScrollableItem alloc]
+                initWithContentSize:data.contentSize
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
         }, [&](const TextExtraction::ImageItemData& data) -> RetainPtr<WKTextExtractionItem> {
-            return adoptNS([[WKTextExtractionImageItem alloc] initWithName:data.name.createNSString().get() altText:data.altText.createNSString().get() rectInWebView:rectInWebView children:children]);
+            return adoptNS([[WKTextExtractionImageItem alloc]
+                initWithName:data.name.createNSString().get()
+                altText:data.altText.createNSString().get()
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
         }, [&](TextExtraction::ContainerType type) -> RetainPtr<WKTextExtractionItem> {
-            return adoptNS([[WKTextExtractionContainerItem alloc] initWithContainer:containerType(type) rectInWebView:rectInWebView children:children]);
+            return adoptNS([[WKTextExtractionContainerItem alloc]
+                initWithContainer:containerType(type)
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
         }
     );
 }

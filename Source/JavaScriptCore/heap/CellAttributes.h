@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "DestructionMode.h"
-#include "HeapCell.h"
+#include <JavaScriptCore/DestructionMode.h>
+#include <JavaScriptCore/HeapCell.h>
 #include <wtf/PrintStream.h>
 
 namespace JSC {

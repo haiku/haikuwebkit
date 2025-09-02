@@ -27,9 +27,11 @@
 # * Clipboard API
 # * Compositing
 # * CSS
+# * DOM
 # * Editing
 # * Events
 # * Fonts
+# * Forms
 # * GStreamer
 # * Media-controls-related
 # * HiDPI
@@ -40,12 +42,14 @@
 # * OffscreenCanvas
 # * PageOverlay
 # * Perf
+# * ResourceLoadStatistics
 # * ResourceTiming API
 # * Scrolling
 # * Security
 # * Skia
 # * SOUP
 # * Media
+# * Repaint
 # * Streams
 # * SVG
 # * Text
@@ -167,8 +171,10 @@ fast/images/image-size-unsigned-overflow.html [ Skip ]
 
 # Some Apple ports don't support RTL scrollbars.
 fast/scrolling/rtl-scrollbars-alternate-body-dir-attr-does-not-update-scrollbar-placement-2.html [ Pass ]
+fast/scrolling/rtl-scrollbars-alternate-body-dir-attr-does-not-update-scrollbar-placement.html [ Pass ]
 fast/scrolling/rtl-scrollbars-elementFromPoint-static.html [ Pass ]
 fast/scrolling/rtl-scrollbars-iframe-offset.html [ Pass ]
+fast/scrolling/rtl-scrollbars-iframe-scrolled.html [ Pass ]
 fast/scrolling/rtl-scrollbars-listbox-select-left.html [ Pass ]
 fast/scrolling/rtl-scrollbars-listbox-select-right.html [ Pass ]
 fast/scrolling/rtl-scrollbars-listbox-simple.html [ Pass ]
@@ -177,15 +183,20 @@ fast/scrolling/rtl-scrollbars-overflow-elementFromPoint.html [ Pass ]
 fast/scrolling/rtl-scrollbars-overflow-padding.html [ Pass ]
 fast/scrolling/rtl-scrollbars-overflow-position-absolute.html [ Pass ]
 fast/scrolling/rtl-scrollbars-overflow-simple.html [ Pass ]
+fast/scrolling/rtl-scrollbars-overflow-text-selection-scrolled.html  [ Pass ]
 fast/scrolling/rtl-scrollbars-overflow.html [ Pass ]
+fast/scrolling/rtl-scrollbars-position-absolute.html  [ Pass ]
+fast/scrolling/rtl-scrollbars-position-fixed.html [ Pass ]
 fast/scrolling/rtl-scrollbars-positioned-intersect-scrollbars.html [ Pass ]
 fast/scrolling/rtl-scrollbars-positioning.html [ Pass ]
 fast/scrolling/rtl-scrollbars-simple.html [ Pass ]
+fast/scrolling/rtl-scrollbars-text-selection-scrolled.html [ Pass ]
+fast/scrolling/rtl-scrollbars-text-selection.html [ Pass ]
 fast/scrolling/rtl-scrollbars.html [ Pass ]
 
 http/tests/storageAccess/ [ Pass ]
 http/tests/storageAccess/deny-with-prompt-does-not-preserve-gesture.html [ Skip ]
-webkit.org/b/208400 http/tests/storageAccess/has-storage-access-true-if-third-party-has-cookies-ephemeral.https.html [ Crash ]
+webkit.org/b/208400 http/tests/storageAccess/has-storage-access-true-if-third-party-has-cookies-ephemeral.https.html [ Skip ]
 http/tests/storageAccess/grant-with-prompt-under-general-third-party-cookie-blocking-with-partitioned-cookies.https.html [ Skip ]
 http/tests/resourceLoadStatistics/only-partitioned-third-party-cookies.https.html [ Skip ]
 http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect.https.html [ Skip ]
@@ -499,6 +510,10 @@ fast/css/accent-color/text.html [ Pass ]
 # Support for VP9 encoded videos with transparency is only available on ports that use GStreamer.
 # Currently failing due to a different issue below.
 # media/video-with-alpha.html [ Pass ]
+
+# MSE text track support for formats other than WebVTT
+media/media-source/media-source-mp4ttsimple.html [ Pass ]
+media/media-source/media-source-inband-cea608-track.html [ Pass ]
 
 # Only GStreamer is honoring the CodecDelay field
 webkit.org/b/254222 media/media-source/media-webm-opus-codecdelay.html [ Pass ]
@@ -875,6 +890,12 @@ accessibility/datetime [ Skip ]
 # Requires AccessibilityUIElement::dismiss to return whether or not it was handled.
 accessibility/dismiss-action-returns-whether-keyevent-handled.html [ Skip ]
 
+# Different roles
+accessibility/contenteditable-values.html [ Skip ]
+
+# Exposing aria-{row,col}indextext needs to be implemented on glib platforms.
+accessibility/aria-table-indextext.html [ Skip ]
+
 # Added in r263823. Both tests are timing out.
 webkit.org/b/213874 accessibility/keyevents-for-increment-actions-with-node-removal.html [ Skip ]
 webkit.org/b/213874 accessibility/keyevents-posted-for-increment-actions.html [ Skip ]
@@ -971,6 +992,9 @@ accessibility/full-size-kana-untransformed.html [ Skip ]
 # Static text are not exposed as accessibility elements on glib appointments.
 accessibility/element-outside-modal-with-zindex.html [ Skip ]
 
+# Skipping because different hierarchy.
+accessibility/youtube-embed-accessibility-hierarchy.html [ Skip ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Accessibility-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
@@ -1041,7 +1065,6 @@ webkit.org/b/221308 [ Debug ] fast/selectors/matches-backtracking.html [ Timeout
 webkit.org/b/221308 [ Debug ] fast/selectors/is-backtracking.html [ Timeout ]
 
 fast/forms/vertical-writing-mode/meter.html [ ImageOnlyFailure ]
-fast/forms/vertical-writing-mode/progress.html [ ImageOnlyFailure ]
 webkit.org/b/264558 fast/forms/vertical-writing-mode/listbox-horizontal-scrollbar.html [ ImageOnlyFailure ]
 
 imported/w3c/web-platform-tests/css/CSS2/floats/line-pushed-by-floats-crash.html [ Skip ]
@@ -1207,6 +1230,20 @@ imported/w3c/web-platform-tests/focus/activeelement-after-nested-loses-focus.htm
 #////////////////////////////////////////////////////////////////////////////////////////
 
 #////////////////////////////////////////////////////////////////////////////////////////
+# DOM-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
+
+webkit.org/b/219530 fast/dom/HTMLAnchorElement/anchor-download-user-triggered-synthetic-click.html [ Failure ]
+webkit.org/b/219530 fast/dom/HTMLAnchorElement/anchor-download.html [ Failure ]
+webkit.org/b/219530 fast/dom/HTMLAnchorElement/anchor-nodownload-set.html [ Failure ]
+
+webkit.org/b/185913 fast/dom/HTMLAnchorElement/anchor-file-blob-download-then-revoke.html [ Failure ]
+
+#////////////////////////////////////////////////////////////////////////////////////////
+# End of DOM-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
+
+#////////////////////////////////////////////////////////////////////////////////////////
 # Editing-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1237,6 +1274,14 @@ webkit.org/b/160120 editing/deleting/delete-emoji-9.html [ Skip ]
 webkit.org/b/178441 editing/deleting/delete-ligature-001.html [ Failure ]
 webkit.org/b/178441 editing/deleting/delete-ligature-002.html [ Failure ]
 webkit.org/b/178441 editing/deleting/delete-ligature-003.html [ Failure ]
+
+webkit.org/b/239345 editing/execCommand/insert-ordered-list-and-delete.html [ Failure Pass ]
+
+webkit.org/b/179605 editing/execCommand/underline-selection-containing-image.html [ Failure ]
+
+webkit.org/b/286128 editing/inserting/insert-list-user-select-none-crash.html [ Crash ]
+
+webkit.org/b/179261 editing/selection/drag-to-contenteditable-iframe.html [ Timeout ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Editing-related bugs
@@ -1303,6 +1348,8 @@ webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrolle
 webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=subframe-inline-end-block-end-behavior-auto [ Skip ]
 webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-for-scrollIntoView.html?include=subframe-inline-start-block-start-behavior-smooth [ Skip ]
 webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-for-user-scroll.html [ Skip ]
+
+webkit.org/b/219248 imported/w3c/web-platform-tests/uievents/mouse/mouseevent_move_button.html [ Failure ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Events-related bugs
@@ -1376,6 +1423,48 @@ webkit.org/b/177294 fast/text/fitzpatrick-combination.html [ ImageOnlyFailure ]
 #////////////////////////////////////////////////////////////////////////////////////////
 
 #////////////////////////////////////////////////////////////////////////////////////////
+# Forms-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
+
+webkit.org/b/218349 fast/forms/focus2.html [ Failure ]
+
+webkit.org/b/143703 fast/forms/listbox-visible-size.html [ Failure ]
+
+# This tests were moved on r188159 from platform/mac/fast/forms/
+webkit.org/b/152247 fast/forms/focus-option-control-on-page.html [ Skip ]
+webkit.org/b/152247 fast/forms/indeterminate-progress-inline-height.html [ Skip ]
+webkit.org/b/152247 fast/forms/listbox-scrollbar-hit-test.html [ Skip ]
+
+webkit.org/b/209403 fast/forms/placeholder-content-center-line-height-greater-than-content-height.html [ ImageOnlyFailure ]
+
+# This test assumes that color on sliders is not reversed for RTL, so failing is good.
+fast/forms/range/input-appearance-range-rtl.html [ ImageOnlyFailure ]
+
+webkit.org/b/209727 fast/forms/single-text-line-content-clipping.html [ ImageOnlyFailure ]
+
+fast/forms/listbox-typeahead-cyrillic.html [ Failure ]
+fast/forms/listbox-typeahead-greek.html [ Failure ]
+fast/forms/select-type-ahead-non-latin.html [ Failure ]
+
+# Some input type=range tests fail because of the size of the slider thumb in Adwaita theme.
+fast/forms/range/slider-mouse-events.html [ Failure ]
+
+# Needs textInputController.setComposition
+webkit.org/b/89845 fast/forms/input-set-composition-scroll.html [ Failure ]
+
+webkit.org/b/144673 fast/forms/button-line-height.html [ ImageOnlyFailure ]
+
+webkit.org/b/181662 fast/forms/auto-fill-button/input-strong-password-viewable-baseline-alignment.html [ ImageOnlyFailure ]
+
+webkit.org/b/182103 fast/forms/focus-selection-textarea.html [ Failure ]
+
+webkit.org/b/286129 fast/forms/textarea-node-removed-from-document-crash.html [ Crash ]
+
+#////////////////////////////////////////////////////////////////////////////////////////
+# End of Forms-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
+
+#////////////////////////////////////////////////////////////////////////////////////////
 # GStreamer-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1390,7 +1479,7 @@ webkit.org/b/254525 http/tests/media/video-throttled-load-metadata.html [ Pass F
 media/video-seek-to-current-time.html [ Pass Failure ]
 webkit.org/b/285595 media/video-seek-after-end-play.html [ Skip ]
 
-webkit.org/b/213699 http/wpt/mediarecorder/mute-tracks.html [ Timeout Pass ]
+webkit.org/b/296928 http/wpt/mediarecorder/mute-tracks.html [ Timeout Failure Pass ]
 webkit.org/b/213699 imported/w3c/web-platform-tests/mediacapture-record/MediaRecorder-no-sink.https.html [ Failure ]
 webkit.org/b/213699 imported/w3c/web-platform-tests/mediacapture-record/MediaRecorder-peerconnection.https.html [ Failure ]
 webkit.org/b/213699 http/wpt/mediarecorder/set-srcObject-MediaStream-Blob.html [ Pass Failure ]
@@ -1565,7 +1654,7 @@ media/now-playing-status-for-video-conference-web-page.html [ Pass Timeout ]
 
 webkit.org/b/212893 [ Release ] http/tests/navigation/page-cache-video.html [ Failure Pass ]
 
-webkit.org/b/187804 imported/w3c/web-platform-tests/media-source/mediasource-seek-beyond-duration.html [ Failure Crash ]
+webkit.org/b/187804 imported/w3c/web-platform-tests/media-source/mediasource-seek-beyond-duration.html [ Timeout Crash ]
 
 # Lack of AudioSession category
 http/wpt/mediasession/setCaptureState-audio-category.html [ Skip ]
@@ -1610,6 +1699,16 @@ media/modern-media-controls/scrubber-support/scrubber-support-drag.html [ Pass T
 #////////////////////////////////////////////////////////////////////////////////////////
 
 webkit.org/b/213293 fast/images/hidpi-image-position-on-device-pixels-with-border-radius.html [ ImageOnlyFailure ]
+
+# HighDPI support is not enabled
+webkit.org/b/131347 fast/hidpi/hidpi-3x-device-pixel-ratio.html [ Failure ]
+webkit.org/b/131347 fast/repaint/hidpi-absolute-positioned-element-wrong-cliprect-after-move.html [ Failure ]
+webkit.org/b/131347 fast/repaint/hidpi-box-with-subpixel-height-inflates.html [ Failure ]
+webkit.org/b/131347 fast/repaint/hidpi-content-inside-iframe-leaves-trails.html [ Failure ]
+webkit.org/b/131347 fast/repaint/hidpi-device-pixel-based-repaint-rect-tracking.html [ Failure ]
+webkit.org/b/131347 fast/repaint/hidpi-transform-on-subpixel-repaintrect.html [ Failure ]
+webkit.org/b/131347 fast/repaint/hidpi-wrong-repaint-rect-when-parent-has-noncompositing-transform.html [ Failure ]
+webkit.org/b/131347 svg/custom/hidpi-masking-clipping.svg [ ImageOnlyFailure ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of HiDPI-related bugs
@@ -1679,6 +1778,8 @@ webkit.org/b/243614 imported/w3c/web-platform-tests/IndexedDB/nested-cloning-lar
 #////////////////////////////////////////////////////////////////////////////////////////
 
 webkit.org/b/212080 imported/w3c/web-platform-tests/mathml/presentation-markup/tables/table-002.html [ Failure ]
+imported/w3c/web-platform-tests/mathml/relations/css-styling/lengths-1.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/mathml/relations/css-styling/lengths-2.html [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of MathML-related bugs
@@ -1765,6 +1866,33 @@ webkit.org/b/119040 perf/nested-combined-selectors.html [ Failure Pass ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Perf-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
+
+
+#////////////////////////////////////////////////////////////////////////////////////////
+# ResourceLoadStatistics-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
+
+webkit.org/b/210487 http/tests/resourceLoadStatistics/switch-session-on-navigation-to-prevalent-with-interaction.py [ Failure ]
+
+webkit.org/b/210796 http/tests/resourceLoadStatistics/standalone-web-application-exempt-from-website-data-deletion.html [ Failure ]
+
+http/tests/resourceLoadStatistics/omit-document-referrer-nested-third-party-iframe-ephemeral.html [ Skip ]
+http/tests/resourceLoadStatistics/omit-document-referrer-third-party-iframe-ephemeral.html [ Skip ]
+http/tests/resourceLoadStatistics/omit-referrer-for-navigation-ephemeral.html [ Skip ]
+
+http/tests/resourceLoadStatistics/cname-cloaking-top-cname-sub-3p-cname.https.html [ Failure ]
+http/tests/resourceLoadStatistics/cname-cloaking-top-no-cname-sub-3p-cname.https.html [ Failure ]
+
+webkit.org/b/296786 http/tests/resourceLoadStatistics/do-not-switch-session-on-navigation-to-prevalent-without-interaction.py [ Timeout Crash Pass ]
+
+webkit.org/b/296787 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-link-decoration-js-cookie-checking.html [ Failure ]
+webkit.org/b/296787 http/tests/resourceLoadStatistics/website-data-removal-for-site-without-user-interaction-js-cookie-checking.html [ Failure ]
+
+webkit.org/b/296789 http/tests/resourceLoadStatistics/log-cross-site-load-with-link-decoration.html [ Failure Pass ]
+
+#////////////////////////////////////////////////////////////////////////////////////////
+# End of ResourceLoadStatistics-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1882,7 +2010,6 @@ imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visib
 webkit.org/b/273396 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-basic-img-horiz-001.xhtml [ Pass ImageOnlyFailure ]
 webkit.org/b/273396 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-basic-img-vert-001.xhtml [  Pass ImageOnlyFailure ]
 webkit.org/b/273396 imported/w3c/web-platform-tests/css/css-fonts/variations/font-slant-2a.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-highlight-api/painting/css-target-text-decoration-001.html [ Pass ]
 imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-below-target-text.html [ Pass ]
 imported/w3c/web-platform-tests/css/css-images/conic-gradient-angle-negative.html [ Pass ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-decreasing-hue-hsl.html [ ImageOnlyFailure ]
@@ -1943,6 +2070,8 @@ imported/w3c/web-platform-tests/html/semantics/embedded-content/the-canvas-eleme
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/adopt-from-image-document.html [ Pass ImageOnlyFailure ]
 
 fast/mediastream/camera-powerEfficient-track.html [ Failure ]
+
+webkit.org/b/208182 fast/repaint/backgroundSizeRepaint.html [ ImageOnlyFailure Pass ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Skia-related bugs
@@ -2028,6 +2157,7 @@ webkit.org/b/201981 imported/w3c/web-platform-tests/service-workers/service-work
 webkit.org/b/286484 imported/w3c/web-platform-tests/service-workers/service-worker/navigation-headers.https.html [ Pass Crash ]
 http/wpt/service-workers/fetch-service-worker-preload-use-download-and-clone.https.html [ Failure ]
 http/wpt/service-workers/fetch-service-worker-preload-use-download.https.html [ Failure ]
+http/wpt/service-workers/media-range-request.html [ DumpJSConsoleLogInStdErr ]
 
 webkit.org/b/296469 imported/w3c/web-platform-tests/service-workers/service-worker/windowclient-navigate.https.html [ Failure ]
 
@@ -2052,10 +2182,6 @@ webkit.org/b/258547 imported/w3c/web-platform-tests/html/browsers/browsing-the-w
 
 webkit.org/b/263629 http/tests/multipart/win-boundary-crash.html [ Skip ] # Crash
 
-webkit.org/b/264804 http/tests/resourceLoadStatistics/blocking-in-web-worker-script-import.https.html [ Failure ]
-webkit.org/b/264804 http/tests/resourceLoadStatistics/no-third-party-cookie-blocking-when-itp-is-off.html [ Failure ]
-webkit.org/b/264804 http/tests/resourceLoadStatistics/ping-to-prevalent-resource.html [ Failure ]
-webkit.org/b/264804 http/tests/resourceLoadStatistics/third-party-cookie-blocking-on-sites-without-user-interaction.html [ Failure ]
 webkit.org/b/264804 http/tests/resourceLoadStatistics/operating-dates-all-but-cookies-not-removed-with-user-interaction-6-days-ago.html [ Pass Timeout ]
 
 webkit.org/b/264805 imported/w3c/web-platform-tests/websockets/basic-auth.any.html?wss [ Failure ]
@@ -2079,6 +2205,27 @@ webkit.org/b/292839 media/media-fullscreen-not-in-document.html [ Timeout ]
 # End of Media-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
 
+#////////////////////////////////////////////////////////////////////////////////////////
+# Repaint-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
+
+webkit.org/b/188218 fast/repaint/canvas-object-fit.html [ Failure ]
+
+webkit.org/b/170337 fast/repaint/obscured-background-no-repaint.html [ Pass Failure ]
+
+# Makes subsequent tests randomly fail
+webkit.org/b/296727 fast/repaint/fixed-in-page-scale.html [ Skip ]
+webkit.org/b/296727 fast/repaint/fixed-right-bottom-in-page-scale.html [ Skip ]
+webkit.org/b/296727 fast/repaint/fixed-right-in-page-scale.html [ Skip ]
+
+webkit.org/b/160119 fast/repaint/selection-gap-fixed-child.html [ Failure ]
+webkit.org/b/160119 fast/repaint/selection-gap-flipped-fixed-child.html [ Failure ]
+
+webkit.org/b/296730 fast/repaint/no-animation-outside-viewport-subframe.html [ Failure Pass ]
+
+#////////////////////////////////////////////////////////////////////////////////////////
+# End of Repaint-related bugs
+#////////////////////////////////////////////////////////////////////////////////////////
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # Streams-related bugs
@@ -2190,8 +2337,6 @@ webkit.org/b/132995 transitions/cancel-transition.html [ Failure Pass ]
 webkit.org/b/211948 webanimations/accelerated-animation-playback-rate.html [ ImageOnlyFailure ]
 webkit.org/b/212020 webanimations/accelerated-animation-single-keyframe.html [ Skip ]
 
-webkit.org/b/215945 webanimations/accelerated-css-animation-with-easing.html [ ImageOnlyFailure ]
-
 webkit.org/b/216539 webanimations/accelerated-animation-easing-and-direction-update.html [ ImageOnlyFailure ]
 
 webkit.org/b/221021 webanimations/accelerated-animation-immediate-prevetion-direction-reverse.html [ Skip ]
@@ -2263,13 +2408,13 @@ webgl/webgl-draft-extensions-flag-default.html [ Skip ]
 webgl/webgl-draft-extensions-flag-on.html [ Skip ]
 
 # WEBGL2 flakies
-webkit.org/b/251106 webgl/1.0.x/conformance/offscreencanvas/context-lost-restored-worker.html [ Pass Timeout ]
-webkit.org/b/251106 webgl/1.0.x/conformance/offscreencanvas/context-lost-worker.html [ Pass Timeout ]
+webkit.org/b/251106 webgl/1.0.x/conformance/offscreencanvas/context-lost-restored-worker.html [ Failure  ]
+webkit.org/b/251106 webgl/1.0.x/conformance/offscreencanvas/context-lost-worker.html [ Failure ]
 webkit.org/b/251106 webgl/1.0.x/conformance/offscreencanvas/methods-worker.html [ Failure Pass ]
 webkit.org/b/251106 webgl/1.0.x/conformance/offscreencanvas/offscreencanvas-timer-query.html [ Pass Timeout ]
 webkit.org/b/251106 webgl/2.0.y/conformance2/offscreencanvas/offscreencanvas-query.html [ Failure Pass Timeout ]
-webkit.org/b/251106 webgl/2.0.y/conformance/offscreencanvas/context-lost-restored-worker.html [ Pass Timeout ]
-webkit.org/b/251106 webgl/2.0.y/conformance/offscreencanvas/context-lost-worker.html [ Pass Timeout ]
+webkit.org/b/251106 webgl/2.0.y/conformance/offscreencanvas/context-lost-restored-worker.html [ Failure ]
+webkit.org/b/251106 webgl/2.0.y/conformance/offscreencanvas/context-lost-worker.html [ Failure ]
 webkit.org/b/251106 webgl/2.0.y/conformance/offscreencanvas/methods-worker.html [ Failure Pass ]
 webkit.org/b/251107 webgl/2.0.y/conformance/textures/image_bitmap_from_canvas/tex-2d-luminance-luminance-unsigned_byte.html [ Failure Pass ]
 webkit.org/b/251107 webgl/2.0.y/conformance/textures/image_bitmap_from_canvas/tex-2d-luminance_alpha-luminance_alpha-unsigned_byte.html [ Failure Pass ]
@@ -2652,9 +2797,13 @@ webkit.org/b/215912 http/tests/websocket/tests/hybi/handshake-fail-by-no-cr.html
 #////////////////////////////////////////////////////////////////////////////////////////
 
 webkit.org/b/208988 http/tests/webxr/webxr-third-party-iframe-requestsession-denied-by-insufficient-feature-policy.html [ Timeout ]
-webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/webGLCanvasContext_create_xrcompatible.https.html [ Failure ]
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrViewport_valid.https.html [ Failure ]
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrWebGLLayer_viewports.https.html [ Failure ]
+
+# WebXROpaqueFramebuffer is not able to properly setup gfx resources
+webkit.org/b/296681 imported/w3c/web-platform-tests/webxr [ Skip ]
+
+webkit.org/b/208988 http/wpt/webxr [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of WebXR-related bugs
@@ -2687,6 +2836,21 @@ webkit.org/b/203240 imported/w3c/web-platform-tests/css/css-shapes/shape-outside
 
 webkit.org/b/207623 imported/w3c/web-platform-tests/content-security-policy/reporting/report-same-origin-with-cookies.html [ Pass Failure ]
 
+# newly imported CSP tests failing on GTK and/or WPE.
+imported/w3c/web-platform-tests/content-security-policy/default-src/default-src-sri_hash.sub.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/form-action/form-action-src-blocked.sub.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/frame-ancestors/frame-ancestors-nested-cross-in-same-self-block.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/frame-src/frame-src-blocked-path-matching.sub.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/generic/image-document-ignores-csp.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/generic/policy-inherited-correctly-by-plznavigate.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.sharedworker.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.worker.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/generic/wildcard-host-part.sub.window.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/img-src/img-src-port-wildcard-allowed.sub.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/reporting/report-original-url-on-mixed-content-frame.https.sub.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/worker-src/service-worker-src-child-fallback.https.sub.html [ Failure ]
+
 # Failing since deferred async loading enabled until document is loaded enabled.
 webkit.org/b/208104 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/execution-timing/085.html [ Failure Pass ]
 
@@ -2701,8 +2865,6 @@ webkit.org/b/212806 imported/w3c/web-platform-tests/fetch/h1-parsing/resources-w
 webkit.org/b/212807 imported/w3c/web-platform-tests/fetch/api/basic/header-value-null-byte.any.html [ Failure ]
 webkit.org/b/212807 imported/w3c/web-platform-tests/fetch/api/basic/header-value-null-byte.any.worker.html [ Failure ]
 webkit.org/b/212807 imported/w3c/web-platform-tests/xhr/headers-normalize-response.htm [ Failure ]
-
-webkit.org/b/212741 imported/w3c/web-platform-tests/content-security-policy/navigation/javascript-url-navigation-inherits-csp.html [ Failure ]
 
 # As of r263626, the imported baseline based on Mojave fails for glib. Added custom baseline for it.
 webkit.org/b/213709 imported/w3c/web-platform-tests/cors/credentials-flag.htm [ Crash Pass ]
@@ -2796,11 +2958,13 @@ webkit.org/b/205112 media/modern-media-controls/airplay-support [ Skip ]
 webkit.org/b/205112 media/modern-media-controls/placard-support/placard-support-airplay.html [ Skip ]
 webkit.org/b/158923 media/airplay-autoplay.html [ Skip ]
 webkit.org/b/158923 media/airplay-allows-buffering.html [ Skip ]
+webkit.org/b/158923 media/airplay-target-availability-disableremoteplayback.html [ Skip ]
 webkit.org/b/158923 media/modern-media-controls/placard-support/placard-support-airplay-fullscreen-no-controls.html [ Skip ]
 webkit.org/b/158923 media/modern-media-controls/placard-support/placard-support-airplay-fullscreen.html [ Skip ]
 webkit.org/b/206528 imported/w3c/web-platform-tests/remote-playback [ Skip ]
 media/media-source/media-managedmse-airplay.html [ Skip ]
 media/media-source/media-managedmse-airplay-withsrc.html [ Skip ]
+media/adopt-node-after-showing-picker-crash.html [ Skip ]
 
 # LEGACY_ENCRYPTED_MEDIA is deprecated
 fast/events/webkit-media-key-events-constructor.html [ Skip ]
@@ -2909,6 +3073,8 @@ imported/w3c/web-platform-tests/html/interaction/focus/sequential-focus-navigati
 webkit.org/b/264596 imported/w3c/web-platform-tests/xhr/ [ Skip ]
 # webkit.org/b/189343 imported/w3c/web-platform-tests/xhr/sync-no-timeout.any.html [ Failure ]
 
+webkit.org/b/189994 fast/files/xhr-response-blob.html [ Failure ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of XHR-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
@@ -3016,6 +3182,7 @@ fast/zooming/ios [ Skip ]
 
 # Needs site isolation drawing implementation
 http/tests/site-isolation [ Skip ]
+http/tests/contentextensions/cross-origin-content-rules.html [ Skip ]
 
 # Tests behavior specific to MediaSessionManagerCocoa
 media/audio-session-category.html [ Skip ]
@@ -3260,9 +3427,6 @@ webkit.org/b/279434 fast/text/glyph-display-lists/glyph-display-list-gpu-process
 # testRunner.webHistoryItemCount implementation is not implemented in WTR
 webkit.org/b/100238 fast/history/window-open.html [ Skip ]
 
-# WebXR is not fully supported yet
-webkit.org/b/208988 http/wpt/webxr [ Skip ]
-
 # Lockdown Mode does not apply
 dom/xsl/lockdown-mode [ Skip ]
 http/tests/lockdown-mode [ Skip ]
@@ -3275,14 +3439,6 @@ js/dom/lockdown-mode [ Skip ]
 #////////////////////////////////////////////////////////////////////////////////////////
 # NEEDS TRIAGING. If unsure, put it in this section.
 #////////////////////////////////////////////////////////////////////////////////////////
-
-http/tests/websocket/tests/hybi/inspector/before-load.html [ Failure ]
-http/tests/websocket/tests/hybi/inspector/binary.html [ Failure ]
-http/tests/websocket/tests/hybi/inspector/client-close.html [ Failure ]
-http/tests/websocket/tests/hybi/inspector/resolveWebSocket.html [ Failure ]
-http/tests/websocket/tests/hybi/inspector/send-and-receive.html [ Failure ]
-http/tests/websocket/tests/hybi/inspector/send-and-recieve-debugger.html [ Failure ]
-http/tests/websocket/tests/hybi/inspector/server-close.html [ Failure ]
 
 webkit.org/b/264933 fast/mediastream/image-capture-take-photo.html [ Pass Failure Crash ]
 
@@ -3525,7 +3681,6 @@ webkit.org/b/169917 webgl/1.0.x/conformance/glsl/bugs/temp-expressions-should-no
 webkit.org/b/169917 webgl/1.0.x/conformance/rendering/many-draw-calls.html [ Slow ]
 webkit.org/b/169917 webgl/1.0.x/conformance/uniforms/gl-uniform-arrays.html [ Slow ]
 webkit.org/b/169917 webgl/1.0.x/conformance/uniforms/out-of-bounds-uniform-array-access.html [ Slow ]
-webkit.org/b/171726 media/media-source/media-source-init-segment-duration.html [ Failure ]
 webkit.org/b/172270 fast/text/web-font-load-invisible-during-loading.html [ Failure ]
 webkit.org/b/172271 fast/text/emoji-overlap.html [ ImageOnlyFailure ]
 webkit.org/b/172271 fast/text/system-font-fallback-emoji.html [ Failure ]
@@ -3536,6 +3691,8 @@ webkit.org/b/175134 fast/text/line-height-minimumFontSize.html [ Failure ]
 webkit.org/b/175134 fast/text/line-height-minimumFontSize-text-zoom.html [ ImageOnlyFailure ]
 webkit.org/b/175134 fast/text/line-height-minimumFontSize-visual.html [ ImageOnlyFailure ]
 webkit.org/b/175134 fast/text/line-height-minimumFontSize-zoom.html [ ImageOnlyFailure ]
+webkit.org/b/297177 media/media-source/media-source-init-segment-duration.html [ Failure ]
+webkit.org/b/297178 media/media-source/media-source-paint-stereo-to-canvas.html [ Failure ]
 
 # Flaky failure
 webkit.org/b/175419 imported/w3c/web-platform-tests/fetch/api/abort/serviceworker-intercepted.https.html [ Pass Failure ]
@@ -3582,9 +3739,11 @@ webkit.org/b/195275 imported/w3c/web-platform-tests/css/css-text/boundary-shapin
 webkit.org/b/195670 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/loading-the-media-resource/load-events-networkState.html [ Failure ]
 webkit.org/b/196201 fast/text/ja-sans-serif.html [ ImageOnlyFailure ]
 webkit.org/b/197708 http/wpt/beacon/cors/cors-preflight-cookie.html [ Failure ]
-webkit.org/b/199001 accessibility/set-selected-text-range-after-newline.html [ Failure ]
 webkit.org/b/199004 fast/events/fire-mousedown-while-pressing-mouse-button.html [ Failure ]
 webkit.org/b/199009 fast/text/variations/optical-sizing-units.html [ ImageOnlyFailure ]
+
+# Timeout since https://commits.webkit.org/295725@main.
+webkit.org/b/199001 accessibility/set-selected-text-range-after-newline.html [ Skip ]
 
 # Issues with WebSockets, many due to macOS/iOS and "glib" dealing with console messages differently
 webkit.org/b/252878 imported/w3c/web-platform-tests/websockets/Close-1005.any.worker.html?wss [ Failure Pass ]
@@ -4012,7 +4171,6 @@ imported/w3c/web-platform-tests/preload/preload-type-match.html [ DumpJSConsoleL
 
 # Tests crashing in Debug only.
 [ Debug ] editing/pasteboard/copy-paste-across-shadow-boundaries-with-style-2.html [ Crash ]
-[ Debug ] fast/forms/textarea-node-removed-from-document-crash.html [ Crash ]
 [ Debug ] http/tests/loading/sizes/preload-image-sizes-2x.html [ Crash ]
 [ Debug ] imported/blink/fast/hidpi/border-background-align.html [ ImageOnlyFailure Pass ]
 [ Debug ] imported/blink/svg/zoom/text/lowdpi-zoom-text.html [ Crash ]
@@ -4218,7 +4376,7 @@ imported/w3c/web-platform-tests/css/css-view-transitions/window-resize-aborts-tr
 imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-on-top-of-viewport-partially-onscreen-old.html [ Pass ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/modify-style-via-cssom.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/no-painting-while-render-blocked.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/input-targets-root-while-render-blocked.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/input-targets-root-while-render-blocked.html [ Failure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/column-span-during-transition-doesnt-skip.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/paint-holding-in-iframe.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/content-with-clip-root.html [ ImageOnlyFailure ]
@@ -4414,7 +4572,7 @@ webkit.org/b/278719 fast/events/touch/gesture/touch-gesture-scroll-iframe-editab
 webkit.org/b/278719 fast/events/touch/gesture/touch-gesture-scroll-page-not-propagated.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/gesture/touch-gesture-scroll-page-propagated.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/gesture/touch-gesture-scroll-sideways.html [ Failure ]
-webkit.org/b/278719 fast/events/touch/multi-touch-grouped-targets.html [ Timeout ]
+webkit.org/b/278719 fast/events/touch/multi-touch-grouped-targets.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/multi-touch-inside-nested-iframes.html [ Timeout ]
 webkit.org/b/278719 fast/events/touch/multi-touch-some-without-handlers.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/ontouchstart-active-selector.html [ Failure ]
@@ -4423,7 +4581,6 @@ webkit.org/b/278719 fast/events/touch/prevent-default-touchmove-prevents-scrolli
 webkit.org/b/278719 fast/events/touch/scroll-without-mouse-lacks-mousemove-events.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/send-oncancel-event.html [ Timeout ]
 webkit.org/b/278719 fast/events/touch/touch-constructor.html [ Failure ]
-webkit.org/b/278719 fast/events/touch/touch-event-pageXY.html [ Timeout ]
 webkit.org/b/278719 fast/events/touch/touch-input-element-change-documents.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/touch-scaled-scrolled.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/touch-target.html [ Timeout ]
@@ -4677,6 +4834,32 @@ imported/w3c/web-platform-tests/visual-viewport/scroll-event-order.html [ Skip ]
 fast/canvas/webgl/tex-image-and-sub-image-2d-with-video-rgb565.html [ Failure Pass ]
 
 webkit.org/b/131934 fast/dom/Window/mozilla-focus-blur.html [ Failure Pass ]
+
+# These WPT cookiestore/ tests need some investigation
+imported/w3c/web-platform-tests/cookiestore/cookieListItem_attributes.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/cookieListItem_attributes.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/cookieStore_delete_arguments.https.any.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/cookieStore_delete_arguments.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/change_eventhandler_for_no_name_multiple_values.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/change_eventhandler_for_no_name_equals_in_value.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/change_eventhandler_for_no_name_and_no_value.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/change_eventhandler_for_no_change.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/change_eventhandler_for_http_cookie_and_set_cookie_headers.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/change_eventhandler_for_document_cookie.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/encoding.https.any.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/encoding.https.any.serviceworker.html [ Skip ]
+imported/w3c/web-platform-tests/cookiestore/httponly_cookies.https.window.html [ Skip ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=296820 REGRESSION(298121@main): [ iOS, macOS wk2 ] 4x imported/w3c/web-platform-tests/navigation-api/ (layout-tests) tests are constant text failures
+imported/w3c/web-platform-tests/navigation-api/navigate-event/navigation-traverseTo-in-iframe-same-document-preventDefault.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/navigation-methods/back-forward-multiple-frames.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/navigation-methods/traverseTo-navigates-multiple-iframes.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/per-entry-events/dispose-for-navigation-in-child.html [ Failure ]
+
+fast/text/emphasis-overlap.html [ Failure ]
+imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/json-module/invalid-content-type.any.sharedworker.html [ Failure ]
+
+imported/w3c/web-platform-tests/css/selectors/invalidation/media-pseudo-classes-in-has.html [ Failure ]
 
 # End: Common failures between GTK and WPE.
 

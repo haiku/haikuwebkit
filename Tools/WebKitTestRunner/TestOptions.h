@@ -74,6 +74,7 @@ public:
     bool shouldShowWindow() const { return boolTestRunnerFeatureValue("shouldShowWindow"); }
     bool textInteractionEnabled() const { return boolTestRunnerFeatureValue("textInteractionEnabled"); }
     bool useCharacterSelectionGranularity() const { return boolTestRunnerFeatureValue("useCharacterSelectionGranularity"); }
+    bool shouldInjectTestRunner() const { return boolTestRunnerFeatureValue("injectTestRunner"); }
     bool useDataDetection() const { return boolTestRunnerFeatureValue("useDataDetection"); }
     bool useEphemeralSession() const { return boolTestRunnerFeatureValue("useEphemeralSession"); }
     bool useFlexibleViewport() const { return boolTestRunnerFeatureValue("useFlexibleViewport"); }

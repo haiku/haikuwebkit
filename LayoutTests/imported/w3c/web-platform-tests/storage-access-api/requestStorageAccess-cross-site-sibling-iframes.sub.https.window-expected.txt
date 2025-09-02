@@ -1,7 +1,7 @@
-CONSOLE MESSAGE: Unhandled Promise Rejection: Error: Unsupported permission name "storage-access".
+Blocked access to external URL https://www.localhost:9443/storage-access-api/resources/script-with-cookie-header.py?script=embedded_responder.js
 
 Harness Error (TIMEOUT), message = null
 
-TIMEOUT Grants have per-frame scope Test timed out
-NOTRUN Cross-site sibling iframes should not be able to take advantage of the existing permission grant requested by others.
+FAIL Grants have per-frame scope assert_false: frame1 should not have storage access initially. expected false got true
+TIMEOUT Cross-site sibling iframes should not be able to take advantage of the existing permission grant requested by others. Test timed out
 

@@ -93,6 +93,7 @@ public:
 
     WEBCORE_EXPORT IntPoint convertFromContainingViewToRenderer(const RenderElement*, IntPoint) const;
     WEBCORE_EXPORT FloatPoint convertFromContainingViewToRenderer(const RenderElement*, FloatPoint) const;
+    WEBCORE_EXPORT DoublePoint convertFromContainingViewToRenderer(const RenderElement*, DoublePoint) const;
     WEBCORE_EXPORT IntRect convertFromContainingViewToRenderer(const RenderElement*, const IntRect&) const;
     WEBCORE_EXPORT FloatRect convertFromContainingViewToRenderer(const RenderElement*, const FloatRect&) const;
 
@@ -104,6 +105,7 @@ public:
 
     IntPoint convertFromContainingView(IntPoint) const final;
     FloatPoint convertFromContainingView(FloatPoint) const final;
+    DoublePoint convertFromContainingView(DoublePoint) const final;
     IntRect convertFromContainingView(const IntRect&) const final;
     FloatRect convertFromContainingView(const FloatRect&) const final;
 

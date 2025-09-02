@@ -146,7 +146,7 @@ std::optional<DetectedItem> DataDetection::detectItemAroundHitTestResult(const H
     std::optional<SimpleRange> contextRange;
 
     if (!is<HTMLTextFormControlElement>(*node)) {
-        position = renderer->positionForPoint(hitTestResult.localPoint(), HitTestSource::User, nullptr);
+        position = renderer->visiblePositionForPoint(hitTestResult.localPoint(), HitTestSource::User);
         if (position.isNull())
             position = firstPositionInOrBeforeNode(node);
 

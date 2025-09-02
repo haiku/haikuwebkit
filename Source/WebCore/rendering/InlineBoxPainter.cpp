@@ -119,7 +119,8 @@ void InlineBoxPainter::paint()
     paintDecorations();
 }
 
-static LayoutRect clipRectForNinePieceImageStrip(const InlineIterator::InlineBox& box, const NinePieceImage& image, const LayoutRect& paintRect)
+template<typename T>
+static LayoutRect clipRectForNinePieceImageStrip(const InlineIterator::InlineBox& box, const T& image, const LayoutRect& paintRect)
 {
     LayoutRect clipRect(paintRect);
     auto& style = box.renderer().style();
@@ -156,8 +157,8 @@ void InlineBoxPainter::paintMask()
     auto localRect = LayoutRect { m_inlineBox.visualRect() };
     LayoutPoint adjustedPaintOffset = m_paintOffset + localRect.location();
 
-    const NinePieceImage& maskNinePieceImage = renderer().style().maskBorder();
-    StyleImage* maskBorder = renderer().style().maskBorder().image();
+    auto& maskBorder = renderer().style().maskBorder();
+    auto maskBorderSource = maskBorder.source().tryStyleImage();
 
     // Figure out if we need to push a transparency layer to render our mask.
     bool pushTransparencyLayer = false;
@@ -165,7 +166,7 @@ void InlineBoxPainter::paintMask()
     bool flattenCompositingLayers = renderer().view().frameView().paintBehavior().contains(PaintBehavior::FlattenCompositingLayers);
     CompositeOperator compositeOp = CompositeOperator::SourceOver;
     if (!compositedMask || flattenCompositingLayers) {
-        if ((maskBorder && renderer().style().maskLayers().hasImage()) || renderer().style().maskLayers().next())
+        if ((maskBorderSource && renderer().style().maskLayers().hasImage()) || renderer().style().maskLayers().next())
             pushTransparencyLayer = true;
 
         compositeOp = CompositeOperator::DestinationIn;
@@ -180,8 +181,8 @@ void InlineBoxPainter::paintMask()
 
     paintFillLayers(Color(), renderer().style().maskLayers(), paintRect, compositeOp);
 
-    bool hasBoxImage = maskBorder && maskBorder->canRender(&renderer(), renderer().style().usedZoom());
-    if (!hasBoxImage || !maskBorder->isLoaded(&renderer())) {
+    bool hasBoxImage = maskBorderSource && maskBorderSource->canRender(&renderer(), renderer().style().usedZoom());
+    if (!hasBoxImage || !maskBorderSource->isLoaded(&renderer())) {
         if (pushTransparencyLayer)
             m_paintInfo.context().endTransparencyLayer();
         return; // Don't paint anything while we wait for the image to load.
@@ -190,7 +191,7 @@ void InlineBoxPainter::paintMask()
     BorderPainter borderPainter { renderer(), m_paintInfo };
 
     if (!m_inlineBox.isSplit())
-        borderPainter.paintNinePieceImage(LayoutRect(adjustedPaintOffset, localRect.size()), renderer().style(), maskNinePieceImage, compositeOp);
+        borderPainter.paintNinePieceImage(LayoutRect(adjustedPaintOffset, localRect.size()), renderer().style(), maskBorder, compositeOp);
     else {
         // We have a mask image that spans multiple lines.
         // We need to adjust _tx and _ty by the width of all previous lines.
@@ -205,10 +206,10 @@ void InlineBoxPainter::paintMask()
         LayoutUnit stripWidth = isHorizontal() ? totalLogicalWidth : localRect.width();
         LayoutUnit stripHeight = isHorizontal() ? localRect.height() : totalLogicalWidth;
 
-        LayoutRect clipRect = clipRectForNinePieceImageStrip(m_inlineBox, maskNinePieceImage, paintRect);
+        LayoutRect clipRect = clipRectForNinePieceImageStrip(m_inlineBox, maskBorder, paintRect);
         GraphicsContextStateSaver stateSaver(m_paintInfo.context());
         m_paintInfo.context().clip(clipRect);
-        borderPainter.paintNinePieceImage(LayoutRect(stripX, stripY, stripWidth, stripHeight), renderer().style(), maskNinePieceImage, compositeOp);
+        borderPainter.paintNinePieceImage(LayoutRect(stripX, stripY, stripWidth, stripHeight), renderer().style(), maskBorder, compositeOp);
     }
 
     if (pushTransparencyLayer)
@@ -251,8 +252,8 @@ void InlineBoxPainter::paintDecorations()
     if (m_isRootInlineBox || !renderer().style().hasVisibleBorderDecoration())
         return;
 
-    const NinePieceImage& borderImage = renderer().style().borderImage();
-    StyleImage* borderImageSource = borderImage.image();
+    auto& borderImage = renderer().style().borderImage();
+    auto borderImageSource = borderImage.source().tryStyleImage();
     bool hasBorderImage = borderImageSource && borderImageSource->canRender(&renderer(), style.usedZoom());
     if (hasBorderImage && !borderImageSource->isLoaded(&renderer()))
         return; // Don't paint anything while we wait for the image to load.

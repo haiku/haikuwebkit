@@ -38,6 +38,7 @@ class PlatformDisplay;
 namespace WebKit {
 
 class OpenXRLayer;
+class OpenXRSwapchain;
 
 class OpenXRCoordinator final : public PlatformXRCoordinator {
     WTF_MAKE_TZONE_ALLOCATED(OpenXRCoordinator);
@@ -51,7 +52,7 @@ public:
 
     void createLayerProjection(uint32_t, uint32_t, bool) override;
 
-    void startSession(WebPageProxy&, WeakPtr<PlatformXRCoordinatorSessionEventClient>&&, const WebCore::SecurityOriginData&, PlatformXR::SessionMode, const PlatformXR::Device::FeatureList&) override;
+    void startSession(WebPageProxy&, WeakPtr<PlatformXRCoordinatorSessionEventClient>&&, const WebCore::SecurityOriginData&, PlatformXR::SessionMode, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&) override;
     void endSessionIfExists(WebPageProxy&) override;
 
     void scheduleAnimationFrame(WebPageProxy&, std::optional<PlatformXR::RequestData>&&, PlatformXR::Device::RequestFrameCallback&& onFrameUpdateCallback) override;
@@ -60,12 +61,14 @@ public:
 private:
     void createInstance();
     void createSessionIfNeeded();
+    std::unique_ptr<OpenXRSwapchain> createSwapchain(uint32_t width, uint32_t height, bool alpha);
     void cleanupSessionAndAssociatedResources();
     void initializeDevice();
     void initializeSystem();
     void initializeBlendModes();
     void tryInitializeGraphicsBinding();
     void collectViewConfigurations();
+    bool collectSwapchainFormatsIfNeeded();
 
     struct Idle {
     };
@@ -103,6 +106,7 @@ private:
         m_extensions;
     bool m_isSessionRunning { false };
     HashMap<PlatformXR::LayerHandle, std::unique_ptr<OpenXRLayer>> m_layers;
+    Vector<int64_t> m_supportedSwapchainFormats;
 
     std::unique_ptr<WebCore::PlatformDisplay> m_platformDisplay;
     std::unique_ptr<WebCore::GLContext> m_glContext;

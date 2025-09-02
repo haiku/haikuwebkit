@@ -182,13 +182,13 @@ auto LegacyRenderSVGResourcePattern::applyResource(RenderElement& renderer, cons
     Ref svgStyle = style.svgStyle();
 
     if (resourceMode.contains(RenderSVGResourceMode::ApplyToFill)) {
-        context->setAlpha(svgStyle->fillOpacity());
+        context->setAlpha(svgStyle->fillOpacity().value.value);
         context->setFillPattern(*patternData->pattern);
         context->setFillRule(svgStyle->fillRule());
     } else if (resourceMode.contains(RenderSVGResourceMode::ApplyToStroke)) {
         if (svgStyle->vectorEffect() == VectorEffect::NonScalingStroke)
             patternData->pattern->setPatternSpaceTransform(transformOnNonScalingStroke(&renderer, patternData->transform));
-        context->setAlpha(svgStyle->strokeOpacity());
+        context->setAlpha(svgStyle->strokeOpacity().value.value);
         context->setStrokePattern(*patternData->pattern);
         SVGRenderSupport::applyStrokeStyleToContext(*context, style, renderer);
     }

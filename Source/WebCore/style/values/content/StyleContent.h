@@ -27,7 +27,7 @@
 
 #include "RenderStyleConstants.h"
 #include "StyleCounterStyle.h"
-#include "StyleImage.h"
+#include "StyleImageWrapper.h"
 #include "StyleValueTypes.h"
 
 namespace WebCore {
@@ -59,7 +59,7 @@ struct Content {
         bool operator==(const Text&) const = default;
     };
     struct Image {
-        Ref<StyleImage> image;
+        ImageWrapper image;
 
         bool operator==(const Image&) const = default;
     };
@@ -160,18 +160,6 @@ template<> struct CSSValueConversion<Content> { auto operator()(BuilderState&, c
 
 // `Content::Counter` is special-cased to return a `CSSCounterValue`.
 template<> struct CSSValueCreation<Content::Counter> { Ref<CSSValue> operator()(CSSValuePool&, const RenderStyle&, const Content::Counter&); };
-
-// `Content::Image` is special-cased to return a `CSSImageValue`.
-template<> struct CSSValueCreation<Content::Image> { Ref<CSSValue> operator()(CSSValuePool&, const RenderStyle&, const Content::Image&); };
-
-// MARK: - Serialization
-
-// `Content::Image` needs serialization to account for non-style type `Ref<StyleImage>` member.
-template<> struct Serialize<Content::Image> { void operator()(StringBuilder&, const CSS::SerializationContext&, const RenderStyle&, const Content::Image&); };
-
-// MARK: - Logging
-
-WTF::TextStream& operator<<(WTF::TextStream&, const Content::Image&);
 
 } // namespace Style
 } // namespace WebCore

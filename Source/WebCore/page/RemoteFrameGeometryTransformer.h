@@ -45,6 +45,7 @@ public:
 
     WEBCORE_EXPORT IntPoint transformToRemoteFrameCoordinates(IntPoint pointInContents) const;
     WEBCORE_EXPORT FloatPoint transformToRemoteFrameCoordinates(FloatPoint pointInContents) const;
+    WEBCORE_EXPORT DoublePoint transformToRemoteFrameCoordinates(DoublePoint pointInContents) const;
     FrameIdentifier remoteFrameID() const { return m_remoteFrameID; }
 
 private:

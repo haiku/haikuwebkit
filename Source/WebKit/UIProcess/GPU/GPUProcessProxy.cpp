@@ -80,6 +80,7 @@
 
 #if ENABLE(EXTENSION_CAPABILITIES)
 #include "ExtensionCapabilityGrant.h"
+#include "ExtensionCapabilityGranter.h"
 #include "MediaCapability.h"
 #endif
 
@@ -199,7 +200,7 @@ GPUProcessProxy::GPUProcessProxy()
 #endif
 
 #if USE(GBM)
-    parameters.renderDeviceFile = drmRenderNodeDevice();
+    parameters.renderDeviceFile = drmRenderNodeOrPrimaryDevice();
 #endif
 
 #if PLATFORM(COCOA)
@@ -577,12 +578,7 @@ void GPUProcessProxy::gpuProcessExited(ProcessTerminationReason reason)
     }
 
 #if ENABLE(EXTENSION_CAPABILITIES)
-    // FIXME: Any ExtensionCapabilityGranter can invalidate the GPUProcessProxy grants, so we pick the first one. In the future ExtensionCapabilityGranter should be made a singleton.
-    for (auto& processPool : WebProcessPool::allProcessPools()) {
-        processPool->extensionCapabilityGranter().invalidateGrants(moveToVector(std::exchange(extensionCapabilityGrants(), { }).values()));
-        break;
-    }
-
+    ExtensionCapabilityGranter::invalidateGrants(moveToVector(std::exchange(extensionCapabilityGrants(), { }).values()));
 #endif
 
     if (keptAliveGPUProcessProxy() == this)

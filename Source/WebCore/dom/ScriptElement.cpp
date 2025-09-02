@@ -385,7 +385,7 @@ bool ScriptElement::requestModuleScript(const String& sourceText, const TextPosi
         AtomString integrity = element->attributeWithoutSynchronization(HTMLNames::integrityAttr);
         if (integrity.isNull())
             integrity = AtomString { document->globalObject()->importMap().integrityForURL(moduleScriptRootURL) };
-        Ref script = LoadableModuleScript::create(nonce, integrity, referrerPolicy(), fetchPriority(), crossOriginMode,
+        Ref script = LoadableModuleScript::create(LoadableModuleScript::IsInline::No, nonce, integrity, referrerPolicy(), fetchPriority(), crossOriginMode,
             scriptCharset(), element->localName(), element->isInUserAgentShadowTree());
         m_loadableScript = script.copyRef();
         if (RefPtr frame = element->document().frame())
@@ -393,7 +393,7 @@ bool ScriptElement::requestModuleScript(const String& sourceText, const TextPosi
         return true;
     }
 
-    Ref script = LoadableModuleScript::create(nonce, emptyAtom(), referrerPolicy(), fetchPriority(), crossOriginMode, scriptCharset(), element->localName(), element->isInUserAgentShadowTree());
+    Ref script = LoadableModuleScript::create(LoadableModuleScript::IsInline::Yes, nonce, emptyAtom(), referrerPolicy(), fetchPriority(), crossOriginMode, scriptCharset(), element->localName(), element->isInUserAgentShadowTree());
 
     TextPosition position = document->isInDocumentWrite() ? TextPosition() : scriptStartPosition;
     ScriptSourceCode sourceCode(sourceText, m_taintedOrigin, URL(document->url()), position, JSC::SourceProviderSourceType::Module, script.copyRef());
@@ -538,7 +538,8 @@ void ScriptElement::executeScriptAndDispatchEvent(LoadableScript& loadableScript
         case LoadableScript::ErrorType::Resolve: {
             if (RefPtr frame = element().document().frame())
                 frame->checkedScript()->reportExceptionFromScriptError(error.value(), loadableScript.isModuleScript());
-            dispatchLoadEventRespectingUserGestureIndicator();
+            if (!loadableScript.isInlineModule())
+                dispatchLoadEventRespectingUserGestureIndicator();
             break;
         }
 
@@ -555,7 +556,8 @@ void ScriptElement::executeScriptAndDispatchEvent(LoadableScript& loadableScript
         }
     } else if (!loadableScript.wasCanceled()) {
         loadableScript.execute(*this);
-        dispatchLoadEventRespectingUserGestureIndicator();
+        if (!loadableScript.isInlineModule())
+            dispatchLoadEventRespectingUserGestureIndicator();
     }
 }
 

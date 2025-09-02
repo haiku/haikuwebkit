@@ -29,12 +29,12 @@
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-#include "ArrayBufferSharingMode.h"
-#include "BufferMemoryHandle.h"
-#include "GCIncomingRefCounted.h"
-#include "Watchpoint.h"
-#include "Weak.h"
-#include "WeakImpl.h"
+#include <JavaScriptCore/ArrayBufferSharingMode.h>
+#include <JavaScriptCore/BufferMemoryHandle.h>
+#include <JavaScriptCore/GCIncomingRefCounted.h>
+#include <JavaScriptCore/Watchpoint.h>
+#include <JavaScriptCore/Weak.h>
+#include <JavaScriptCore/WeakImpl.h>
 #include <wtf/CagedPtr.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/PackedRefPtr.h>

@@ -56,7 +56,7 @@ struct WebKit::WebHitTestResultData {
     std::optional<WebKit::FrameInfoData> frameInfo;
     std::optional<WebCore::RemoteUserInputEventData> remoteUserInputEventData;
     String lookupText;
-    String toolTipText;
+    String tooltipText;
     String imageText;
     std::optional<WebCore::SharedMemoryHandle> getImageSharedMemoryHandle();
     RefPtr<WebCore::ShareableBitmap> imageBitmap;

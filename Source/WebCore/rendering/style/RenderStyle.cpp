@@ -51,6 +51,7 @@
 #include "StyleExtractor.h"
 #include "StyleImage.h"
 #include "StyleInheritedData.h"
+#include "StyleLengthWrapper+Platform.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StyleResolver.h"
 #include "StyleScrollSnapPoints.h"
@@ -563,8 +564,8 @@ unsigned RenderStyle::hashForTextAutosizing() const
     hash ^= m_rareInheritedData->lineBreak;
     hash ^= WTF::FloatHash<float>::hash(m_inheritedData->specifiedLineHeight.value());
     hash ^= computeFontHash(m_inheritedData->fontData->fontCascade);
-    hash ^= WTF::FloatHash<float>::hash(m_inheritedData->horizontalBorderSpacing);
-    hash ^= WTF::FloatHash<float>::hash(m_inheritedData->verticalBorderSpacing);
+    hash ^= WTF::FloatHash<float>::hash(Style::evaluate(m_inheritedData->borderHorizontalSpacing));
+    hash ^= WTF::FloatHash<float>::hash(Style::evaluate(m_inheritedData->borderVerticalSpacing));
     hash ^= m_inheritedFlags.boxDirection;
     hash ^= m_inheritedFlags.rtlOrdering;
     hash ^= m_nonInheritedFlags.position;
@@ -585,8 +586,8 @@ bool RenderStyle::equalForTextAutosizing(const RenderStyle& other) const
         && m_rareInheritedData->textSecurity == other.m_rareInheritedData->textSecurity
         && m_inheritedData->specifiedLineHeight == other.m_inheritedData->specifiedLineHeight
         && m_inheritedData->fontData->fontCascade.equalForTextAutoSizing(other.m_inheritedData->fontData->fontCascade)
-        && m_inheritedData->horizontalBorderSpacing == other.m_inheritedData->horizontalBorderSpacing
-        && m_inheritedData->verticalBorderSpacing == other.m_inheritedData->verticalBorderSpacing
+        && m_inheritedData->borderHorizontalSpacing == other.m_inheritedData->borderHorizontalSpacing
+        && m_inheritedData->borderVerticalSpacing == other.m_inheritedData->borderVerticalSpacing
         && m_inheritedFlags.boxDirection == other.m_inheritedFlags.boxDirection
         && m_inheritedFlags.rtlOrdering == other.m_inheritedFlags.rtlOrdering
         && m_nonInheritedFlags.position == other.m_nonInheritedFlags.position
@@ -800,7 +801,7 @@ static bool miscDataChangeRequiresLayout(const StyleMiscNonInheritedData& first,
         }
     }
 
-    if (first.hasOpacity() != second.hasOpacity()) {
+    if (first.opacity.isOpaque() != second.opacity.isOpaque()) {
         // FIXME: We would like to use SimplifiedLayout here, but we can't quite do that yet.
         // We need to make sure SimplifiedLayout can operate correctly on RenderInlines (we will need
         // to add a selfNeedsSimplifiedLayout bit in order to not get confused and taint every line).
@@ -997,14 +998,13 @@ bool RenderStyle::changeRequiresLayout(const RenderStyle& other, OptionSet<Style
                 || m_nonInheritedData->boxData->maxHeight() != other.m_nonInheritedData->boxData->maxHeight())
                 return true;
 
-            if (m_nonInheritedData->boxData->verticalAlign() != other.m_nonInheritedData->boxData->verticalAlign()
-                || m_nonInheritedData->boxData->verticalAlignLength() != other.m_nonInheritedData->boxData->verticalAlignLength())
+            if (m_nonInheritedData->boxData->verticalAlign() != other.m_nonInheritedData->boxData->verticalAlign())
                 return true;
 
             if (m_nonInheritedData->boxData->boxSizing() != other.m_nonInheritedData->boxData->boxSizing())
                 return true;
 
-            if (m_nonInheritedData->boxData->hasAutoUsedZIndex() != other.m_nonInheritedData->boxData->hasAutoUsedZIndex())
+            if (m_nonInheritedData->boxData->usedZIndex().isAuto() != other.m_nonInheritedData->boxData->usedZIndex().isAuto())
                 return true;
         }
 
@@ -1061,8 +1061,8 @@ bool RenderStyle::changeRequiresLayout(const RenderStyle& other, OptionSet<Style
 #if ENABLE(TEXT_AUTOSIZING)
             || m_inheritedData->specifiedLineHeight != other.m_inheritedData->specifiedLineHeight
 #endif
-            || m_inheritedData->horizontalBorderSpacing != other.m_inheritedData->horizontalBorderSpacing
-            || m_inheritedData->verticalBorderSpacing != other.m_inheritedData->verticalBorderSpacing)
+            || m_inheritedData->borderHorizontalSpacing != other.m_inheritedData->borderHorizontalSpacing
+            || m_inheritedData->borderVerticalSpacing != other.m_inheritedData->borderVerticalSpacing)
             return true;
 
         if (m_inheritedData->fontData != other.m_inheritedData->fontData)
@@ -1192,7 +1192,7 @@ bool RenderStyle::changeRequiresLayerRepaint(const RenderStyle& other, OptionSet
 
     if (m_nonInheritedData.ptr() != other.m_nonInheritedData.ptr()) {
         if (m_nonInheritedData->boxData.ptr() != other.m_nonInheritedData->boxData.ptr()) {
-            if (m_nonInheritedData->boxData->usedZIndex() != other.m_nonInheritedData->boxData->usedZIndex() || m_nonInheritedData->boxData->hasAutoUsedZIndex() != other.m_nonInheritedData->boxData->hasAutoUsedZIndex())
+            if (m_nonInheritedData->boxData->usedZIndex() != other.m_nonInheritedData->boxData->usedZIndex())
                 return true;
         }
 
@@ -1239,7 +1239,7 @@ static bool requiresPainting(const RenderStyle& style)
 {
     if (style.usedVisibility() == Visibility::Hidden)
         return false;
-    if (!style.opacity())
+    if (style.opacity().isTransparent())
         return false;
     return true;
 }
@@ -1280,7 +1280,7 @@ static bool rareInheritedDataChangeRequiresRepaint(const StyleRareInheritedData&
         || first.imageRendering != second.imageRendering
         || first.accentColor != second.accentColor
         || first.insideDefaultButton != second.insideDefaultButton
-        || first.insideDisabledSubmitButton != second.insideDisabledSubmitButton
+        || first.insideSubmitButton != second.insideSubmitButton
 #if ENABLE(DARK_MODE_CSS)
         || first.colorScheme != second.colorScheme
 #endif
@@ -1637,9 +1637,9 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyMinHeight);
         if (first.maxHeight() != second.maxHeight())
             changingProperties.m_properties.set(CSSPropertyMaxHeight);
-        if (first.verticalAlign() != second.verticalAlign() || first.verticalAlignLength() != second.verticalAlignLength())
+        if (first.verticalAlign() != second.verticalAlign())
             changingProperties.m_properties.set(CSSPropertyVerticalAlign);
-        if (first.specifiedZIndex() != second.specifiedZIndex() || first.hasAutoSpecifiedZIndex() != second.hasAutoSpecifiedZIndex())
+        if (first.specifiedZIndex() != second.specifiedZIndex())
             changingProperties.m_properties.set(CSSPropertyZIndex);
         if (first.boxSizing() != second.boxSizing())
             changingProperties.m_properties.set(CSSPropertyBoxSizing);
@@ -1908,7 +1908,7 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyMaskBorderRepeat);
             changingProperties.m_properties.set(CSSPropertyWebkitMaskBoxImage);
         }
-        if (!arePointingToEqualData(first.shapeOutside, second.shapeOutside))
+        if (first.shapeOutside != second.shapeOutside)
             changingProperties.m_properties.set(CSSPropertyShapeOutside);
         if (first.shapeMargin != second.shapeMargin)
             changingProperties.m_properties.set(CSSPropertyShapeMargin);
@@ -2070,10 +2070,10 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyFontVariantEmoji);
         }
 
-        if (first.horizontalBorderSpacing != second.horizontalBorderSpacing)
+        if (first.borderHorizontalSpacing != second.borderHorizontalSpacing)
             changingProperties.m_properties.set(CSSPropertyWebkitBorderHorizontalSpacing);
 
-        if (first.verticalBorderSpacing != second.verticalBorderSpacing)
+        if (first.borderVerticalSpacing != second.borderVerticalSpacing)
             changingProperties.m_properties.set(CSSPropertyWebkitBorderVerticalSpacing);
 
         if (first.color != second.color || first.visitedLinkColor != second.visitedLinkColor)
@@ -2101,9 +2101,9 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyWordSpacing);
         if (first.miterLimit != second.miterLimit)
             changingProperties.m_properties.set(CSSPropertyStrokeMiterlimit);
-        if (first.widows != second.widows || first.hasAutoWidows != second.hasAutoWidows)
+        if (first.widows != second.widows)
             changingProperties.m_properties.set(CSSPropertyWidows);
-        if (first.orphans != second.orphans || first.hasAutoOrphans != second.hasAutoOrphans)
+        if (first.orphans != second.orphans)
             changingProperties.m_properties.set(CSSPropertyOrphans);
         if (first.wordBreak != second.wordBreak)
             changingProperties.m_properties.set(CSSPropertyWordBreak);
@@ -2405,26 +2405,6 @@ void RenderStyle::setColor(Color&& v)
 void RenderStyle::setVisitedLinkColor(Color&& v)
 {
     SET_VAR(m_inheritedData, visitedLinkColor, WTFMove(v));
-}
-
-float RenderStyle::horizontalBorderSpacing() const
-{
-    return m_inheritedData->horizontalBorderSpacing;
-}
-
-float RenderStyle::verticalBorderSpacing() const
-{
-    return m_inheritedData->verticalBorderSpacing;
-}
-
-void RenderStyle::setHorizontalBorderSpacing(float v)
-{
-    SET_VAR(m_inheritedData, horizontalBorderSpacing, v);
-}
-
-void RenderStyle::setVerticalBorderSpacing(float v)
-{
-    SET_VAR(m_inheritedData, verticalBorderSpacing, v);
 }
 
 bool RenderStyle::hasEntirelyFixedBackground() const
@@ -2990,7 +2970,7 @@ const BorderValue& RenderStyle::borderEnd(const WritingMode writingMode) const
     return writingMode.isInlineTopToBottom() ? borderBottom() : borderTop();
 }
 
-float RenderStyle::borderBeforeWidth(const WritingMode writingMode) const
+Style::LineWidth RenderStyle::borderBeforeWidth(const WritingMode writingMode) const
 {
     switch (writingMode.blockDirection()) {
     case FlowDirection::TopToBottom:
@@ -3006,7 +2986,7 @@ float RenderStyle::borderBeforeWidth(const WritingMode writingMode) const
     return borderTopWidth();
 }
 
-float RenderStyle::borderAfterWidth(const WritingMode writingMode) const
+Style::LineWidth RenderStyle::borderAfterWidth(const WritingMode writingMode) const
 {
     switch (writingMode.blockDirection()) {
     case FlowDirection::TopToBottom:
@@ -3022,14 +3002,14 @@ float RenderStyle::borderAfterWidth(const WritingMode writingMode) const
     return borderBottomWidth();
 }
 
-float RenderStyle::borderStartWidth(const WritingMode writingMode) const
+Style::LineWidth RenderStyle::borderStartWidth(const WritingMode writingMode) const
 {
     if (writingMode.isHorizontal())
         return writingMode.isInlineLeftToRight() ? borderLeftWidth() : borderRightWidth();
     return writingMode.isInlineTopToBottom() ? borderTopWidth() : borderBottomWidth();
 }
 
-float RenderStyle::borderEndWidth(const WritingMode writingMode) const
+Style::LineWidth RenderStyle::borderEndWidth(const WritingMode writingMode) const
 {
     if (writingMode.isHorizontal())
         return writingMode.isInlineLeftToRight() ? borderRightWidth() : borderLeftWidth();
@@ -3168,13 +3148,36 @@ String RenderStyle::altFromContent() const
     return { };
 }
 
-LayoutBoxExtent RenderStyle::imageOutsets(const NinePieceImage& image) const
+template<typename OutsetValue>
+static LayoutUnit computeOutset(const OutsetValue& outsetValue, LayoutUnit borderWidth)
+{
+    return WTF::switchOn(outsetValue,
+        [&](const typename OutsetValue::Number& number) {
+            return LayoutUnit(number.value * borderWidth);
+        },
+        [&](const typename OutsetValue::Length& length) {
+            return LayoutUnit(length.value);
+        }
+    );
+}
+
+LayoutBoxExtent RenderStyle::imageOutsets(const Style::BorderImage& image) const
 {
     return {
-        NinePieceImage::computeOutset(image.outset().top(), LayoutUnit(borderTopWidth())),
-        NinePieceImage::computeOutset(image.outset().right(), LayoutUnit(borderRightWidth())),
-        NinePieceImage::computeOutset(image.outset().bottom(), LayoutUnit(borderBottomWidth())),
-        NinePieceImage::computeOutset(image.outset().left(), LayoutUnit(borderLeftWidth()))
+        computeOutset(image.outset().values.top(), LayoutUnit(Style::evaluate(borderTopWidth()))),
+        computeOutset(image.outset().values.right(), LayoutUnit(Style::evaluate(borderRightWidth()))),
+        computeOutset(image.outset().values.bottom(), LayoutUnit(Style::evaluate(borderBottomWidth()))),
+        computeOutset(image.outset().values.left(), LayoutUnit(Style::evaluate(borderLeftWidth())))
+    };
+}
+
+LayoutBoxExtent RenderStyle::imageOutsets(const Style::MaskBorder& image) const
+{
+    return {
+        computeOutset(image.outset().values.top(), LayoutUnit(Style::evaluate(borderTopWidth()))),
+        computeOutset(image.outset().values.right(), LayoutUnit(Style::evaluate(borderRightWidth()))),
+        computeOutset(image.outset().values.bottom(), LayoutUnit(Style::evaluate(borderBottomWidth()))),
+        computeOutset(image.outset().values.left(), LayoutUnit(Style::evaluate(borderLeftWidth())))
     };
 }
 
@@ -3196,109 +3199,74 @@ std::pair<FontOrientation, NonCJKGlyphOrientation> RenderStyle::fontAndGlyphOrie
     }
 }
 
-void RenderStyle::setBorderImageSource(RefPtr<StyleImage>&& image)
+void RenderStyle::setBorderImageSource(Style::BorderImageSource&& source)
 {
-    if (m_nonInheritedData->surroundData->border.m_image.image() == image.get())
+    if (m_nonInheritedData->surroundData->border.m_image.source() == source)
         return;
-    m_nonInheritedData.access().surroundData.access().border.m_image.setImage(WTFMove(image));
+    m_nonInheritedData.access().surroundData.access().border.m_image.setSource(WTFMove(source));
 }
 
-void RenderStyle::setBorderImageSliceFill(bool fill)
+void RenderStyle::setBorderImageSlice(Style::BorderImageSlice&& slice)
 {
-    if (m_nonInheritedData->surroundData->border.m_image.fill() == fill)
+    if (m_nonInheritedData->surroundData->border.m_image.slice() == slice)
         return;
-    m_nonInheritedData.access().surroundData.access().border.m_image.setFill(fill);
+    m_nonInheritedData.access().surroundData.access().border.m_image.setSlice(WTFMove(slice));
 }
 
-void RenderStyle::setBorderImageSlice(LengthBox&& slices)
+void RenderStyle::setBorderImageWidth(Style::BorderImageWidth&& width)
 {
-    if (m_nonInheritedData->surroundData->border.m_image.imageSlices() == slices)
+    if (m_nonInheritedData->surroundData->border.m_image.width() == width)
         return;
-    m_nonInheritedData.access().surroundData.access().border.m_image.setImageSlices(WTFMove(slices));
+    m_nonInheritedData.access().surroundData.access().border.m_image.setWidth(WTFMove(width));
 }
 
-void RenderStyle::setBorderImageWidth(LengthBox&& slices)
-{
-    if (m_nonInheritedData->surroundData->border.m_image.borderSlices() == slices)
-        return;
-    m_nonInheritedData.access().surroundData.access().border.m_image.setBorderSlices(WTFMove(slices));
-}
-
-void RenderStyle::setBorderImageWidthOverridesBorderWidths(bool overridesBorderWidths)
-{
-    if (m_nonInheritedData->surroundData->border.m_image.overridesBorderWidths() == overridesBorderWidths)
-        return;
-    m_nonInheritedData.access().surroundData.access().border.m_image.setOverridesBorderWidths(overridesBorderWidths);
-}
-
-void RenderStyle::setBorderImageOutset(LengthBox&& outset)
+void RenderStyle::setBorderImageOutset(Style::BorderImageOutset&& outset)
 {
     if (m_nonInheritedData->surroundData->border.m_image.outset() == outset)
         return;
     m_nonInheritedData.access().surroundData.access().border.m_image.setOutset(WTFMove(outset));
 }
 
-void RenderStyle::setBorderImageHorizontalRule(NinePieceImageRule rule)
+void RenderStyle::setBorderImageRepeat(Style::BorderImageRepeat&& repeat)
 {
-    if (m_nonInheritedData->surroundData->border.m_image.horizontalRule() == rule)
+    if (m_nonInheritedData->surroundData->border.m_image.repeat() == repeat)
         return;
-    m_nonInheritedData.access().surroundData.access().border.m_image.setHorizontalRule(rule);
+    m_nonInheritedData.access().surroundData.access().border.m_image.setRepeat(WTFMove(repeat));
 }
 
-void RenderStyle::setBorderImageVerticalRule(NinePieceImageRule rule)
+void RenderStyle::setMaskBorderSource(Style::MaskBorderSource&& source)
 {
-    if (m_nonInheritedData->surroundData->border.m_image.verticalRule() == rule)
+    if (m_nonInheritedData.access().rareData.access().maskBorder.source() == source)
         return;
-    m_nonInheritedData.access().surroundData.access().border.m_image.setVerticalRule(rule);
+    m_nonInheritedData.access().rareData.access().maskBorder.setSource(WTFMove(source));
 }
 
-void RenderStyle::setMaskBorderSource(RefPtr<StyleImage>&& image)
+void RenderStyle::setMaskBorderSlice(Style::MaskBorderSlice&& slice)
 {
-    if (m_nonInheritedData.access().rareData.access().maskBorder.image() == image.get())
+    if (m_nonInheritedData->rareData->maskBorder.slice() == slice)
         return;
-    m_nonInheritedData.access().rareData.access().maskBorder.setImage(WTFMove(image));
+    m_nonInheritedData.access().rareData.access().maskBorder.setSlice(WTFMove(slice));
 }
 
-void RenderStyle::setMaskBorderSliceFill(bool fill)
+void RenderStyle::setMaskBorderWidth(Style::MaskBorderWidth&& width)
 {
-    if (m_nonInheritedData->rareData->maskBorder.fill() == fill)
+    if (m_nonInheritedData->rareData->maskBorder.width() == width)
         return;
-    m_nonInheritedData.access().rareData.access().maskBorder.setFill(fill);
+    m_nonInheritedData.access().rareData.access().maskBorder.setWidth(WTFMove(width));
 }
 
-void RenderStyle::setMaskBorderSlice(LengthBox&& slices)
-{
-    if (m_nonInheritedData->rareData->maskBorder.imageSlices() == slices)
-        return;
-    m_nonInheritedData.access().rareData.access().maskBorder.setImageSlices(WTFMove(slices));
-}
-
-void RenderStyle::setMaskBorderWidth(LengthBox&& slices)
-{
-    if (m_nonInheritedData->rareData->maskBorder.borderSlices() == slices)
-        return;
-    m_nonInheritedData.access().rareData.access().maskBorder.setBorderSlices(WTFMove(slices));
-}
-
-void RenderStyle::setMaskBorderOutset(LengthBox&& outset)
+void RenderStyle::setMaskBorderOutset(Style::MaskBorderOutset&& outset)
 {
     if (m_nonInheritedData->rareData->maskBorder.outset() == outset)
         return;
     m_nonInheritedData.access().rareData.access().maskBorder.setOutset(WTFMove(outset));
 }
 
-void RenderStyle::setMaskBorderHorizontalRule(NinePieceImageRule rule)
+void RenderStyle::setMaskBorderRepeat(Style::MaskBorderRepeat&& repeat)
 {
-    if (m_nonInheritedData->rareData->maskBorder.horizontalRule() == rule)
+    if (m_nonInheritedData->rareData->maskBorder.repeat() == repeat)
         return;
-    m_nonInheritedData.access().rareData.access().maskBorder.setHorizontalRule(rule);
-}
-
-void RenderStyle::setMaskBorderVerticalRule(NinePieceImageRule rule)
-{
-    if (m_nonInheritedData->rareData->maskBorder.verticalRule() == rule)
-        return;
-    m_nonInheritedData.access().rareData.access().maskBorder.setVerticalRule(rule);
+    m_nonInheritedData.access().rareData.access().maskBorder.setRepeat(WTFMove(repeat));
 }
 
 void RenderStyle::setColumnStylesFromPaginationMode(PaginationMode paginationMode)

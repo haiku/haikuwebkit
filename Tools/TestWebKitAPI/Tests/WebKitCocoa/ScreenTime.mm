@@ -96,6 +96,10 @@ static void testSuppressUsageRecordingWithDataStore(RetainPtr<WKWebsiteDataStore
 @property (setter=setURLIsBlocked:) BOOL URLIsBlocked;
 @end
 
+@interface STWebHistory ()
+@property (readonly, copy) STWebHistoryProfileIdentifier profileIdentifier;
+@end
+
 @interface WKWebView (Internal)
 - (STWebpageController *)_screenTimeWebpageController;
 #if PLATFORM(MAC)
@@ -366,9 +370,40 @@ TEST(ScreenTime, IdentifierString)
 
     TestWebKitAPI::Util::run(&done);
 
-    RetainPtr uuidString = [uuid UUIDString];
+    EXPECT_WK_STREQ(identifier.get(), [uuid UUIDString]);
+}
 
-    EXPECT_WK_STREQ(identifier.get(), uuidString.get());
+TEST(ScreenTime, IdentifierStringWithRemoveData)
+{
+    __block bool done = false;
+    __block RetainPtr identifier = @"";
+
+    RetainPtr dataTypeScreenTime = adoptNS([[NSSet alloc] initWithArray:@[ WKWebsiteDataTypeScreenTime ]]);
+
+    InstanceMethodSwizzler swizzler {
+        PAL::getSTWebHistoryClass(),
+        @selector(deleteHistoryDuringInterval:),
+        imp_implementationWithBlock(^(STWebHistory *object, NSDateInterval *) {
+            identifier = object.profileIdentifier;
+        })
+    };
+
+    RetainPtr uuid = [NSUUID UUID];
+    RetainPtr websiteDataStore = [WKWebsiteDataStore dataStoreForIdentifier:uuid.get()];
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    [configuration setWebsiteDataStore:websiteDataStore.get()];
+    RetainPtr webView = webViewForScreenTimeTests(configuration.get());
+
+    RetainPtr request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://icloud.com"]];
+    [webView synchronouslyLoadSimulatedRequest:request.get() responseHTMLString:@""];
+
+    [websiteDataStore removeDataOfTypes:dataTypeScreenTime.get() modifiedSince:[NSDate distantPast] completionHandler:^() {
+        done = true;
+    }];
+
+    TestWebKitAPI::Util::run(&done);
+
+    EXPECT_WK_STREQ(identifier.get(), [uuid UUIDString]);
 }
 
 TEST(ScreenTime, PersistentSession)

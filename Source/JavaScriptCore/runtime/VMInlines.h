@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "Debugger.h"
-#include "EntryFrame.h"
-#include "FuzzerAgent.h"
-#include "ProfilerDatabase.h"
-#include "SideDataRepository.h"
-#include "VM.h"
-#include "Watchdog.h"
+#include <JavaScriptCore/Debugger.h>
+#include <JavaScriptCore/EntryFrame.h>
+#include <JavaScriptCore/FuzzerAgent.h>
+#include <JavaScriptCore/ProfilerDatabase.h>
+#include <JavaScriptCore/SideDataRepository.h>
+#include <JavaScriptCore/VM.h>
+#include <JavaScriptCore/Watchdog.h>
 
 namespace JSC {
 

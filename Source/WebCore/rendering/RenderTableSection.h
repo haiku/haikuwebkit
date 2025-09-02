@@ -218,6 +218,8 @@ private:
 
     void setLogicalPositionForCell(RenderTableCell*, unsigned effectiveColumn) const;
 
+    LayoutUnit cellLogicalWidthInTableDirectionIncludingColumnSpan(const RenderTableCell&, size_t startColumn, size_t numberOfColumns) const;
+
     void firstChild() const = delete;
     void lastChild() const = delete;
 

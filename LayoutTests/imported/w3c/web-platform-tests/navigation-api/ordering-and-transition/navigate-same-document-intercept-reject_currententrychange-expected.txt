@@ -1,5 +1,6 @@
+CONSOLE MESSAGE: Unhandled Promise Rejection: Error: boo
 
-Harness Error (TIMEOUT), message = null
+Harness Error (FAIL), message = Unhandled rejection: boo
 
-TIMEOUT event and promise ordering for same-document navigation.navigate() intercepted by passing a rejected promise to intercept() Test timed out
+PASS event and promise ordering for same-document navigation.navigate() intercepted by passing a rejected promise to intercept()
 

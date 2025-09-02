@@ -83,6 +83,7 @@ UIProcess/API/Cocoa/_WKResourceLoadStatisticsThirdParty.h
 UIProcess/API/Cocoa/_WKSessionState.h
 UIProcess/API/Cocoa/_WKSpatialBackdropSource.h
 UIProcess/API/Cocoa/_WKTargetedElementInfo.h
+UIProcess/API/Cocoa/_WKTextExtractionInternal.h
 UIProcess/API/Cocoa/_WKTextManipulationExclusionRule.h
 UIProcess/API/Cocoa/_WKTextManipulationItem.h
 UIProcess/API/Cocoa/_WKTextManipulationToken.h
@@ -102,7 +103,6 @@ UIProcess/API/Cocoa/_WKWebPushMessage.h
 UIProcess/API/Cocoa/_WKWebPushSubscriptionData.h
 UIProcess/API/Cocoa/_WKWebsiteDataStoreConfiguration.h
 UIProcess/API/mac/WKViewInternal.h
-UIProcess/Cocoa/TextExtraction/WKTextExtractionItem.h
 UIProcess/Inspector/mac/WKInspectorViewController.h
 UIProcess/Inspector/mac/WebInspectorUIProxyMac.mm
 UIProcess/WebAuthentication/Cocoa/AuthenticationServicesForwardDeclarations.h

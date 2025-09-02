@@ -48,7 +48,7 @@ SpeculativeLoad::SpeculativeLoad(Cache& cache, const GlobalFrameID& globalFrameI
     : m_cache(cache)
     , m_completionHandler(WTFMove(completionHandler))
     , m_originalRequest(request)
-    , m_bufferedDataForCache(FragmentedSharedBuffer::create())
+    , m_bufferedDataForCache(SharedBuffer::create())
     , m_cacheEntry(WTFMove(cacheEntryForValidation))
 {
     ASSERT(!m_cacheEntry || m_cacheEntry->needsValidation());

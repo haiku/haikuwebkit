@@ -656,6 +656,9 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
     if (webCorePolicy.contains(WebCore::AdvancedPrivacyProtections::FailClosedForAllHosts))
         policy |= _WKWebsiteNetworkConnectionIntegrityPolicyFailClosedForAllHosts;
 
+    if (webCorePolicy.contains(WebCore::AdvancedPrivacyProtections::StrictFailClosed))
+        policy |= _WKWebsiteNetworkConnectionIntegrityPolicyStrictFailClosed;
+
     if (webCorePolicy.contains(WebCore::AdvancedPrivacyProtections::WebSearchContent))
         policy |= _WKWebsiteNetworkConnectionIntegrityPolicyWebSearchContent;
 
@@ -692,6 +695,9 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
 
     if (advancedPrivacyProtections & _WKWebsiteNetworkConnectionIntegrityPolicyFailClosedForAllHosts)
         webCorePolicy.add(WebCore::AdvancedPrivacyProtections::FailClosedForAllHosts);
+
+    if (advancedPrivacyProtections & _WKWebsiteNetworkConnectionIntegrityPolicyStrictFailClosed)
+        webCorePolicy.add(WebCore::AdvancedPrivacyProtections::StrictFailClosed);
 
     if (advancedPrivacyProtections & _WKWebsiteNetworkConnectionIntegrityPolicyWebSearchContent)
         webCorePolicy.add(WebCore::AdvancedPrivacyProtections::WebSearchContent);
@@ -764,6 +770,16 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
             [selectors addObject:selector.createNSString().get()];
     }
     return selectors.autorelease();
+}
+
+- (BOOL)_allowSharedProcess
+{
+    return _websitePolicies->allowSharedProcess();
+}
+
+- (void)_setAllowSharedProcess:(BOOL)allowSharedProcess
+{
+    _websitePolicies->setAllowSharedProcess(allowSharedProcess);
 }
 
 - (BOOL)_pushAndNotificationAPIEnabled

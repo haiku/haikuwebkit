@@ -46,6 +46,11 @@ WebCodecsBase::WebCodecsBase(ScriptExecutionContext& context)
 
 WebCodecsBase::~WebCodecsBase() = default;
 
+ScriptExecutionContext* WebCodecsBase::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void WebCodecsBase::queueControlMessageAndProcess(WebCodecsControlMessage&& message)
 {
     if (m_isMessageQueueBlocked) {

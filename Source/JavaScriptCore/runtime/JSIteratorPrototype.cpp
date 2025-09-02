@@ -86,6 +86,8 @@ void JSIteratorPrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
     if (Options::useIteratorChunking()) {
         // https://tc39.es/proposal-iterator-chunking/#sec-iterator.prototype.chunks
         JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION("chunks"_s, jsIteratorPrototypeChunksCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
+        // https://tc39.es/proposal-iterator-chunking/#sec-iterator.prototype.sliding
+        JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION("sliding"_s, jsIteratorPrototypeSlidingCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
         // https://tc39.es/proposal-iterator-chunking/#sec-iterator.prototype.windows
         JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION("windows"_s, jsIteratorPrototypeWindowsCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
     }

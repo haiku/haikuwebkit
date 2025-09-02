@@ -195,6 +195,29 @@ RefPtr<const Font> FontCascade::fontForCombiningCharacterSequence(StringView str
 
     if (!triedBaseCharacterFont && baseCharacterGlyphData.font && baseCharacterGlyphData.font->canRenderCombiningCharacterSequence(stringView))
         return baseCharacterGlyphData.font.get();
+
+    bool clusterContainsOtherNonDefaultIgnorableCodePoints = [&] -> bool {
+        if (isOnlySingleCodePoint)
+            return false;
+
+        do {
+            if (!isDefaultIgnorableCodePoint(*codePointsIterator))
+                return true;
+            ++codePointsIterator;
+        } while (codePointsIterator != codePoints.end());
+
+        return false;
+    }();
+
+    // Try a system fallback for the whole cluster if needed.
+    if (clusterContainsOtherNonDefaultIgnorableCodePoints) {
+        auto preferColoredFont = emojiPolicy == ResolvedEmojiPolicy::RequireEmoji ? FontCache::PreferColoredFont::Yes : FontCache::PreferColoredFont::No;
+        if (auto systemFallback = FontCache::forCurrentThread()->systemFallbackForCharacterCluster(m_fontDescription, fallbackRangesAt(0).fontForFirstRange(), IsForPlatformFont::No, preferColoredFont, stringView)) {
+            if (systemFallback->canRenderCombiningCharacterSequence(stringView))
+                return systemFallback.get();
+        }
+    }
+
     return nullptr;
 }
 

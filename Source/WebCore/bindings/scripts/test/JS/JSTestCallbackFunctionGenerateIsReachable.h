@@ -35,7 +35,7 @@ public:
         return adoptRef(*new JSTestCallbackFunctionGenerateIsReachable(callback, globalObject));
     }
 
-    ScriptExecutionContext* scriptExecutionContext() const { return ContextDestructionObserver::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const;
 
     ~JSTestCallbackFunctionGenerateIsReachable() final;
     JSCallbackData* callbackData() { return m_data; }

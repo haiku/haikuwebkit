@@ -27,8 +27,8 @@
 
 #if ENABLE(WEBASSEMBLY) && ENABLE(JIT)
 
-#include "MacroAssemblerCodeRef.h"
-#include "WasmJS.h"
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/WasmJS.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace JSC { namespace Wasm {

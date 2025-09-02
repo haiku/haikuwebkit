@@ -319,6 +319,7 @@ void PlaybackSessionInterfaceLMK::currentTimeChanged(double currentTime, double)
 void PlaybackSessionInterfaceLMK::rateChanged(OptionSet<WebCore::PlaybackSessionModel::PlaybackState> playbackState, double playbackRate, double)
 {
     [m_player setSelectedPlaybackRate:playbackRate];
+    [m_player setIsLoading:playbackState.contains(WebCore::PlaybackSessionModel::PlaybackState::Stalled)];
     if (!playbackState.contains(WebCore::PlaybackSessionModel::PlaybackState::Stalled))
         [m_player setPlaybackRate:playbackState.contains(WebCore::PlaybackSessionModel::PlaybackState::Playing) ? playbackRate : 0];
 }

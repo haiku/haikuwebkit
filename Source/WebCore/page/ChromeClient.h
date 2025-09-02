@@ -170,6 +170,7 @@ enum class ModalContainerControlType : uint8_t;
 enum class ModalContainerDecision : uint8_t;
 enum class PlatformEventModifier : uint8_t;
 enum class PluginUnavailabilityReason : uint8_t;
+enum class PointerLockRequestResult : uint8_t;
 enum class RouteSharingPolicy : uint8_t;
 enum class ScriptTrackingPrivacyCategory : uint8_t;
 enum class TextAnimationRunMode : uint8_t;
@@ -197,12 +198,6 @@ namespace WebGPU {
 class GPU;
 }
 #endif
-
-enum class PointerLockRequestResult : uint8_t {
-    Success,
-    Failure,
-    Unsupported
-};
 
 class ChromeClient {
 public:
@@ -587,7 +582,7 @@ public:
     virtual bool isSVGImageChromeClient() const { return false; }
 
 #if ENABLE(POINTER_LOCK)
-    virtual void requestPointerLock(CompletionHandler<void(PointerLockRequestResult)>&& completionHandler) { completionHandler(PointerLockRequestResult::Unsupported); }
+    virtual void requestPointerLock(CompletionHandler<void(PointerLockRequestResult)>&&);
     virtual void requestPointerUnlock(CompletionHandler<void(bool)>&& completionHandler) { completionHandler(false); }
 #endif
 
@@ -658,7 +653,7 @@ public:
     virtual RefPtr<Icon> createIconForFiles(const Vector<String>& /* filenames */) = 0;
 
     virtual void hasStorageAccess(RegistrableDomain&& /*subFrameDomain*/, RegistrableDomain&& /*topFrameDomain*/, LocalFrame&, CompletionHandler<void(bool)>&& completionHandler) { completionHandler(false); }
-    virtual void requestStorageAccess(RegistrableDomain&& subFrameDomain, RegistrableDomain&& topFrameDomain, LocalFrame&, StorageAccessScope scope, CompletionHandler<void(RequestStorageAccessResult)>&& completionHandler) { completionHandler({ StorageAccessWasGranted::No, StorageAccessPromptWasShown::No, scope, WTFMove(topFrameDomain), WTFMove(subFrameDomain) }); }
+    virtual void requestStorageAccess(RegistrableDomain&& subFrameDomain, RegistrableDomain&& topFrameDomain, LocalFrame&, StorageAccessScope scope, HasOrShouldIgnoreUserGesture, CompletionHandler<void(RequestStorageAccessResult)>&& completionHandler) { completionHandler({ StorageAccessWasGranted::No, StorageAccessPromptWasShown::No, scope, WTFMove(topFrameDomain), WTFMove(subFrameDomain) }); }
     virtual bool hasPageLevelStorageAccess(const RegistrableDomain& /*topLevelDomain*/, const RegistrableDomain& /*resourceDomain*/) const { return false; }
 
     virtual void setLoginStatus(RegistrableDomain&&, IsLoggedIn, CompletionHandler<void()>&&) { }

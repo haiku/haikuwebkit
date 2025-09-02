@@ -32,17 +32,11 @@
 #include "WasmBBQPlan.h"
 #include "WasmCallee.h"
 #include "WasmIPIntPlan.h"
-#include "WasmLLIntPlan.h"
 #include "WasmMachineThreads.h"
 #include "WasmWorklist.h"
 #include <wtf/text/MakeString.h>
 
 namespace JSC { namespace Wasm {
-
-Ref<CalleeGroup> CalleeGroup::createFromLLInt(VM& vm, MemoryMode mode, ModuleInformation& moduleInformation, RefPtr<LLIntCallees> llintCallees)
-{
-    return adoptRef(*new CalleeGroup(vm, mode, moduleInformation, llintCallees));
-}
 
 Ref<CalleeGroup> CalleeGroup::createFromIPInt(VM& vm, MemoryMode mode, ModuleInformation& moduleInformation, RefPtr<IPIntCallees> ipintCallees)
 {
@@ -58,7 +52,6 @@ CalleeGroup::CalleeGroup(MemoryMode mode, const CalleeGroup& other)
     : m_calleeCount(other.m_calleeCount)
     , m_mode(mode)
     , m_ipintCallees(other.m_ipintCallees)
-    , m_llintCallees(other.m_llintCallees)
     , m_jsEntrypointCallees(other.m_jsEntrypointCallees)
     , m_callers(m_calleeCount)
     , m_wasmIndirectCallEntryPoints(other.m_wasmIndirectCallEntryPoints)
@@ -67,51 +60,6 @@ CalleeGroup::CalleeGroup(MemoryMode mode, const CalleeGroup& other)
 {
     Locker locker { m_lock };
     setCompilationFinished();
-}
-
-CalleeGroup::CalleeGroup(VM& vm, MemoryMode mode, ModuleInformation& moduleInformation, RefPtr<LLIntCallees> llintCallees)
-    : m_calleeCount(moduleInformation.internalFunctionCount())
-    , m_mode(mode)
-    , m_llintCallees(llintCallees)
-    , m_callers(m_calleeCount)
-{
-    RefPtr<CalleeGroup> protectedThis = this;
-    m_plan = adoptRef(*new LLIntPlan(vm, moduleInformation, m_llintCallees->span().data(), createSharedTask<Plan::CallbackType>([this, protectedThis = WTFMove(protectedThis)] (Plan&) {
-        if (!m_plan) {
-            m_errorMessage = makeString("Out of memory while creating LLInt CalleeGroup"_s);
-            setCompilationFinished();
-            return;
-        }
-        Locker locker { m_lock };
-        if (m_plan->failed()) {
-            m_errorMessage = m_plan->errorMessage();
-            setCompilationFinished();
-            return;
-        }
-
-        m_wasmIndirectCallEntryPoints = FixedVector<CodePtr<WasmEntryPtrTag>>(m_calleeCount);
-        m_wasmIndirectCallWasmCallees = FixedVector<RefPtr<Wasm::Callee>>(m_calleeCount);
-
-        for (unsigned i = 0; i < m_calleeCount; ++i) {
-            m_wasmIndirectCallEntryPoints[i] = m_llintCallees->at(i)->entrypoint();
-            m_wasmIndirectCallWasmCallees[i] = m_llintCallees->at(i).ptr();
-        }
-
-        m_wasmToWasmExitStubs = m_plan->takeWasmToWasmExitStubs();
-        m_jsEntrypointCallees = static_cast<LLIntPlan*>(m_plan.get())->takeJSCallees();
-
-        setCompilationFinished();
-    })));
-    m_plan->setMode(mode);
-    {
-        Ref plan { *m_plan };
-        if (plan->completeSyncIfPossible())
-            return;
-    }
-
-    auto& worklist = Wasm::ensureWorklist();
-    // Note, immediately after we enqueue the plan, there is a chance the above callback will be called.
-    worklist.enqueue(*m_plan.get());
 }
 
 CalleeGroup::CalleeGroup(VM& vm, MemoryMode mode, ModuleInformation& moduleInformation, RefPtr<IPIntCallees> ipintCallees)
@@ -130,7 +78,7 @@ CalleeGroup::CalleeGroup(VM& vm, MemoryMode mode, ModuleInformation& moduleInfor
         }
 
         m_wasmIndirectCallEntryPoints = FixedVector<CodePtr<WasmEntryPtrTag>>(m_calleeCount);
-        m_wasmIndirectCallWasmCallees = FixedVector<RefPtr<Wasm::Callee>>(m_calleeCount);
+        m_wasmIndirectCallWasmCallees = FixedVector<RefPtr<Wasm::IPIntCallee>>(m_calleeCount);
 
         for (unsigned i = 0; i < m_calleeCount; ++i) {
             m_wasmIndirectCallEntryPoints[i] = m_ipintCallees->at(i)->entrypoint();
@@ -218,13 +166,11 @@ void CalleeGroup::releaseBBQCallee(const AbstractLocker&, FunctionCodeIndex func
     if (!Options::freeRetiredWasmCode())
         return;
 
-    // It's possible there are still a LLInt/IPIntCallee around even when the BBQCallee
+    // It's possible there are still a IPIntCallee around even when the BBQCallee
     // is destroyed. Since this function was clearly hot enough to get to OMG we should
     // tier it up soon.
     if (m_ipintCallees)
         m_ipintCallees->at(functionIndex)->tierUpCounter().resetAndOptimizeSoon(m_mode);
-    else if (m_llintCallees)
-        m_llintCallees->at(functionIndex)->tierUpCounter().resetAndOptimizeSoon(m_mode);
 
     // We could have triggered a tier up from a BBQCallee has MemoryMode::BoundsChecking
     // but is currently running a MemoryMode::Signaling memory. In that case there may
@@ -361,7 +307,6 @@ void CalleeGroup::reportCallees(const AbstractLocker&, JITCallee* caller, const 
 TriState CalleeGroup::calleeIsReferenced(const AbstractLocker&, Wasm::Callee* callee) const
 {
     switch (callee->compilationMode()) {
-    case CompilationMode::LLIntMode:
     case CompilationMode::IPIntMode:
         return TriState::True;
 #if ENABLE(WEBASSEMBLY_BBQJIT)

@@ -1341,17 +1341,13 @@ list(APPEND webrtc_SOURCES
     Source/webrtc/video/report_block_stats.cc
     Source/webrtc/video/rtp_streams_synchronizer2.cc
     Source/webrtc/video/rtp_video_stream_receiver2.cc
-    Source/webrtc/video/screenshare_loopback.cc
     Source/webrtc/video/send_delay_stats.cc
     Source/webrtc/video/send_statistics_proxy.cc
     Source/webrtc/video/stats_counter.cc
     Source/webrtc/video/stream_synchronization.cc
-    Source/webrtc/video/sv_loopback.cc
     Source/webrtc/video/task_queue_frame_decode_scheduler.cc
     Source/webrtc/video/transport_adapter.cc
     Source/webrtc/video/unique_timestamp_counter.cc
-    Source/webrtc/video/video_analyzer.cc
-    Source/webrtc/video/video_loopback.cc
     Source/webrtc/video/video_loopback_main.cc
     Source/webrtc/video/video_quality_observer2.cc
     Source/webrtc/video/video_receive_stream2.cc

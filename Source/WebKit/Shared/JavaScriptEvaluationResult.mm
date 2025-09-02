@@ -35,7 +35,7 @@ namespace WebKit {
 
 RetainPtr<id> JavaScriptEvaluationResult::toID(Value&& root)
 {
-    return WTF::switchOn(WTFMove(root.value), [] (EmptyType type) -> RetainPtr<id> {
+    return WTF::switchOn(WTFMove(root), [] (EmptyType type) -> RetainPtr<id> {
         switch (type) {
         case EmptyType::Null:
             return NSNull.null;
@@ -61,15 +61,15 @@ RetainPtr<id> JavaScriptEvaluationResult::toID(Value&& root)
         return dictionary;
     }, [] (NodeInfo&& nodeInfo) -> RetainPtr<id> {
         return wrapper(API::NodeInfo::create(WTFMove(nodeInfo)).get());
-    }, [] (WebCore::SerializedNode&& serializedNode) -> RetainPtr<id> {
-        return wrapper(API::SerializedNode::create(WTFMove(serializedNode)).get());
+    }, [] (UniqueRef<WebCore::SerializedNode>&& serializedNode) -> RetainPtr<id> {
+        return wrapper(API::SerializedNode::create(WTFMove(serializedNode.get())).get());
     });
 }
 
 RetainPtr<id> JavaScriptEvaluationResult::toID()
 {
     for (auto&& [identifier, value] : std::exchange(m_map, { }))
-        m_instantiatedNSObjects.add(identifier, toID(WTFMove(value.get())));
+        m_instantiatedNSObjects.add(identifier, toID(WTFMove(value)));
     for (auto [vector, array] : std::exchange(m_nsArrays, { })) {
         for (auto identifier : vector) {
             if (RetainPtr element = m_instantiatedNSObjects.get(identifier))
@@ -95,32 +95,32 @@ RetainPtr<id> JavaScriptEvaluationResult::toID()
 auto JavaScriptEvaluationResult::toValue(id object) -> Value
 {
     if (!object)
-        return { EmptyType::Undefined };
+        return EmptyType::Undefined;
 
     if ([object isKindOfClass:NSNull.class])
-        return { EmptyType::Null };
+        return EmptyType::Null;
 
     if ([object isKindOfClass:NSNumber.class]) {
         if (CFNumberGetType((CFNumberRef)object) == kCFNumberCharType) {
             if ([object isEqual:@YES])
-                return { true };
+                return true;
             if ([object isEqual:@NO])
-                return { false };
+                return false;
         }
-        return { [(NSNumber *)object doubleValue] };
+        return [(NSNumber *)object doubleValue];
     }
 
     if (auto* nsString = dynamic_objc_cast<NSString>(object))
-        return { String(nsString) };
+        return String(nsString);
 
     if ([object isKindOfClass:NSDate.class])
-        return { Seconds([(NSDate *)object timeIntervalSince1970]) };
+        return Seconds([(NSDate *)object timeIntervalSince1970]);
 
     if ([object isKindOfClass:NSArray.class]) {
         Vector<JSObjectID> vector;
         for (id element : (NSArray *)object)
             vector.append(addObjectToMap(element));
-        return { { WTFMove(vector) } };
+        return { WTFMove(vector) };
     }
 
     if ([object isKindOfClass:NSDictionary.class]) {
@@ -128,15 +128,18 @@ auto JavaScriptEvaluationResult::toValue(id object) -> Value
         [(NSDictionary *)object enumerateKeysAndObjectsUsingBlock:[&](id key, id value, BOOL *) {
             map.add(addObjectToMap(key), addObjectToMap(value));
         }];
-        return { { WTFMove(map) } };
+        return { WTFMove(map) };
     }
 
     if ([object isKindOfClass:_WKSerializedNode.class])
-        return { WebCore::SerializedNode { ((_WKSerializedNode *)object)->_node->coreSerializedNode() } };
+        return makeUniqueRef<WebCore::SerializedNode>(((_WKSerializedNode *)object)->_node->coreSerializedNode());
+
+    if ([object isKindOfClass:_WKNodeInfo.class])
+        return NodeInfo { ((_WKNodeInfo *)object)->_info->info() };
 
     // This object has been null checked and went through isSerializable which only supports these types.
     ASSERT_NOT_REACHED();
-    return { EmptyType::Undefined };
+    return EmptyType::Undefined;
 }
 
 JSObjectID JavaScriptEvaluationResult::addObjectToMap(id object)
@@ -144,7 +147,7 @@ JSObjectID JavaScriptEvaluationResult::addObjectToMap(id object)
     if (!object) {
         if (!m_nullObjectID) {
             m_nullObjectID = JSObjectID::generate();
-            m_map.add(*m_nullObjectID, makeUniqueRef<Value>(Value { { EmptyType::Undefined } }));
+            m_map.add(*m_nullObjectID, EmptyType::Undefined);
         }
         return *m_nullObjectID;
     }
@@ -155,7 +158,7 @@ JSObjectID JavaScriptEvaluationResult::addObjectToMap(id object)
 
     auto identifier = JSObjectID::generate();
     m_objectsInMap.set(object, identifier);
-    m_map.add(identifier, makeUniqueRef<Value>(toValue(object)));
+    m_map.add(identifier, toValue(object));
     return identifier;
 }
 
@@ -168,6 +171,7 @@ static bool isSerializable(id argument)
         || [argument isKindOfClass:NSNumber.class]
         || [argument isKindOfClass:NSDate.class]
         || [argument isKindOfClass:NSNull.class]
+        || [argument isKindOfClass:_WKNodeInfo.class]
         || [argument isKindOfClass:_WKSerializedNode.class])
         return true;
 

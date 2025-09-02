@@ -194,8 +194,7 @@ static bool elementMatchesHoverRules(Element& element)
 
         for (auto& invalidationRuleSet : *invalidationRuleSets) {
             element.document().userActionElements().setHovered(element, invalidationRuleSet.isNegation == Style::IsNegation::No);
-            Style::ElementRuleCollector ruleCollector(element, *invalidationRuleSet.ruleSet, nullptr);
-            ruleCollector.setMode(SelectorChecker::Mode::CollectingRulesIgnoringVirtualPseudoElements);
+            Style::ElementRuleCollector ruleCollector(element, *invalidationRuleSet.ruleSet, nullptr, SelectorChecker::Mode::StyleInvalidation);
             if (ruleCollector.matchesAnyAuthorRules()) {
                 foundHoverRules = true;
                 break;
@@ -242,7 +241,7 @@ static bool shouldGetOcclusion(const RenderElement& renderer)
             return false;
     }
 
-    if (renderer.style().specifiedZIndex() > 0)
+    if (auto specifiedZIndexValue = renderer.style().specifiedZIndex().tryValue(); specifiedZIndexValue && *specifiedZIndexValue > 0)
         return true;
 
     if (renderer.isFixedPositioned())

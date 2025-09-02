@@ -257,6 +257,24 @@ struct PositionRange {
 
 std::optional<SimpleRange> makeSimpleRange(const PositionRange&);
 
+class PositionWithAffinity {
+public:
+    PositionWithAffinity() = default;
+
+    PositionWithAffinity(const Position& position, Affinity affinity = Affinity::Downstream)
+        : m_position(position)
+        , m_affinity(affinity)
+    {
+    }
+
+    const Position& position() const { return m_position; }
+    Affinity affinity() const { return m_affinity; }
+
+private:
+    Position m_position;
+    Affinity m_affinity { Affinity::Downstream };
+};
+
 // inlines
 
 inline Position makeContainerOffsetPosition(RefPtr<Node>&& node, unsigned offset)

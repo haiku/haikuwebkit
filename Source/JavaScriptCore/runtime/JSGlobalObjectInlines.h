@@ -25,21 +25,21 @@
 
 #pragma once
 
-#include "ArrayAllocationProfile.h"
-#include "ArrayConstructor.h"
-#include "ArrayPrototype.h"
-#include "JSClassRef.h"
-#include "JSCustomGetterFunction.h"
-#include "JSCustomSetterFunction.h"
-#include "JSFunction.h"
-#include "JSGlobalLexicalEnvironment.h"
-#include "JSGlobalObject.h"
-#include "JSWeakObjectMapRefInternal.h"
-#include "LinkTimeConstant.h"
-#include "ObjectPrototype.h"
-#include "ParserModes.h"
-#include "StrongInlines.h"
-#include "StructureInlines.h"
+#include <JavaScriptCore/ArrayAllocationProfile.h>
+#include <JavaScriptCore/ArrayConstructor.h>
+#include <JavaScriptCore/ArrayPrototype.h>
+#include <JavaScriptCore/JSClassRef.h>
+#include <JavaScriptCore/JSCustomGetterFunction.h>
+#include <JavaScriptCore/JSCustomSetterFunction.h>
+#include <JavaScriptCore/JSFunction.h>
+#include <JavaScriptCore/JSGlobalLexicalEnvironment.h>
+#include <JavaScriptCore/JSGlobalObject.h>
+#include <JavaScriptCore/JSWeakObjectMapRefInternal.h>
+#include <JavaScriptCore/LinkTimeConstant.h>
+#include <JavaScriptCore/ObjectPrototype.h>
+#include <JavaScriptCore/ParserModes.h>
+#include <JavaScriptCore/StrongInlines.h>
+#include <JavaScriptCore/StructureInlines.h>
 #include <wtf/Hasher.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
@@ -562,7 +562,7 @@ inline void JSGlobalObject::createGlobalVarBinding(const Identifier& ident)
 
     PropertySlot slot(this, PropertySlot::InternalMethodType::GetOwnProperty);
     bool hasProperty = getOwnPropertySlot(this, this, ident, slot);
-    scope.assertNoExceptionExceptTermination();
+    RETURN_IF_EXCEPTION(scope, void());
     if (hasProperty) [[unlikely]]
         return;
 

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "LLIntCommon.h"
-#include "StructureID.h"
+#include <JavaScriptCore/LLIntCommon.h>
+#include <JavaScriptCore/StructureID.h>
 #include <wtf/Assertions.h>
 #include <wtf/Gigacage.h>
 

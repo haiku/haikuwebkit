@@ -1,5 +1,5 @@
 CONSOLE MESSAGE: Unhandled Promise Rejection: Error
-CONSOLE MESSAGE: Unhandled Promise Rejection: UnknownError: Uncaught Error:
+CONSOLE MESSAGE: Unhandled Promise Rejection: Error
 
 Harness Error (FAIL), message = Unhandled rejection
 

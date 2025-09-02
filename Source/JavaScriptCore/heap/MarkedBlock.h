@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "CellAttributes.h"
-#include "DestructionMode.h"
-#include "HeapCell.h"
-#include "WeakSet.h"
+#include <JavaScriptCore/CellAttributes.h>
+#include <JavaScriptCore/DestructionMode.h>
+#include <JavaScriptCore/HeapCell.h>
+#include <JavaScriptCore/WeakSet.h>
 #include <algorithm>
 #include <type_traits>
 #include <wtf/Atomics.h>

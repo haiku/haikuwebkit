@@ -57,10 +57,10 @@ class XRProjectionLayer;
 class XRQuadLayer;
 class XRGPUSubImage;
 
+struct XRCanvasConfiguration;
 struct XRCubeLayerInit;
 struct XRCylinderLayerInit;
 struct XREquirectLayerInit;
-struct XRGPUProjectionLayerInit;
 struct XRProjectionLayerInit;
 struct XRQuadLayerInit;
 
@@ -70,7 +70,7 @@ template<typename> class ExceptionOr;
 class XRGPUBinding : public RefCounted<XRGPUBinding> {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(XRGPUBinding);
 public:
-    static Ref<XRGPUBinding> create(const WebXRSession& session, GPUDevice& device)
+    static Ref<XRGPUBinding> create(WebXRSession& session, GPUDevice& device)
     {
         return adoptRef(*new XRGPUBinding(session, device));
     }
@@ -90,10 +90,10 @@ public:
     // XREquirectLayer createEquirectLayer(optional XRGPUEquirectLayerInit init);
     // XRCubeLayer createCubeLayer(optional XRGPUCubeLayerInit init);
 private:
-    XRGPUBinding(const WebXRSession&, GPUDevice&);
+    XRGPUBinding(WebXRSession&, GPUDevice&);
 
     RefPtr<WebGPU::XRBinding> m_backing;
-    RefPtr<const WebXRSession> m_session;
+    RefPtr<WebXRSession> m_session;
     std::optional<XRGPUProjectionLayerInit> m_init;
     const Ref<GPUDevice> m_device;
 };

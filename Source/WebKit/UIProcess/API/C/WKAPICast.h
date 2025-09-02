@@ -65,6 +65,7 @@ class NavigationResponse;
 class OpenPanelParameters;
 class PageConfiguration;
 class ProcessPoolConfiguration;
+class ScriptMessage;
 class SessionState;
 class UserScript;
 class WebsitePolicies;
@@ -155,6 +156,7 @@ WK_ADD_API_MAPPING(WKPageRef, WebPageProxy)
 WK_ADD_API_MAPPING(WKPreferencesRef, WebPreferences)
 WK_ADD_API_MAPPING(WKProtectionSpaceRef, WebProtectionSpace)
 WK_ADD_API_MAPPING(WKResourceLoadStatisticsManagerRef, WebResourceLoadStatisticsManager)
+WK_ADD_API_MAPPING(WKScriptMessageRef, API::ScriptMessage)
 WK_ADD_API_MAPPING(WKSessionStateRef, API::SessionState)
 WK_ADD_API_MAPPING(WKSpeechRecognitionPermissionCallbackRef, SpeechRecognitionPermissionCallback)
 WK_ADD_API_MAPPING(WKTextCheckerRef, WebTextChecker)

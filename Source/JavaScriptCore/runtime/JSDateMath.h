@@ -43,7 +43,7 @@
 
 #pragma once
 
-#include "DateInstanceCache.h"
+#include <JavaScriptCore/DateInstanceCache.h>
 #include <wtf/DateMath.h>
 #include <wtf/GregorianDateTime.h>
 #include <wtf/SaturatedArithmetic.h>

@@ -31,7 +31,7 @@
 #include "AccessibilityRenderObject.h"
 
 namespace WebCore {
-    
+
 class AccessibilityList final : public AccessibilityRenderObject {
 public:
     static Ref<AccessibilityList> create(AXID, RenderObject&, AXObjectCache&);

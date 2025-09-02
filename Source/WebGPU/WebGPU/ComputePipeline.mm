@@ -33,6 +33,7 @@
 #import "Pipeline.h"
 #import "PipelineLayout.h"
 #import "ShaderModule.h"
+#import "WGSL.h"
 
 namespace WebGPU {
 

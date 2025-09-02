@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "CPU.h"
-#include "CalleeBits.h"
-#include "MacroAssemblerCodeRef.h"
-#include "Register.h"
-#include "StackVisitor.h"
-#include "VM.h"
+#include <JavaScriptCore/CPU.h>
+#include <JavaScriptCore/CalleeBits.h>
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/Register.h>
+#include <JavaScriptCore/StackVisitor.h>
+#include <JavaScriptCore/VM.h>
 #include <wtf/EnumClassOperatorOverloads.h>
 
 #if OS(WINDOWS)

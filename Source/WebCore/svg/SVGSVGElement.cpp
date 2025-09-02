@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2004, 2005, 2006, 2019 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2010 Rob Buis <buis@kde.org>
- * Copyright (C) 2007-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2007-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2015-2022 Google Inc. All rights reserved.
  * Copyright (C) 2014 Adobe Systems Incorporated. All rights reserved.
  *
@@ -38,6 +38,7 @@
 #include "NodeName.h"
 #include "RenderBoxInlines.h"
 #include "RenderObjectInlines.h"
+#include "RenderReplaced.h"
 #include "RenderSVGRoot.h"
 #include "RenderSVGViewportContainer.h"
 #include "RenderView.h"
@@ -269,6 +270,7 @@ void SVGSVGElement::svgAttributeChanged(const QualifiedName& attrName)
             if (CheckedPtr svgRoot = dynamicDowncast<RenderSVGRoot>(renderer())) {
                 ASSERT(svgRoot->viewportContainer());
                 svgRoot->checkedViewportContainer()->updateHasSVGTransformFlags();
+                svgRoot->setNeedsLayoutIfNeededAfterIntrinsicSizeChange();
             } else if (CheckedPtr viewportContainer = dynamicDowncast<RenderSVGViewportContainer>(renderer()))
                 viewportContainer->updateHasSVGTransformFlags();
 
@@ -277,8 +279,11 @@ void SVGSVGElement::svgAttributeChanged(const QualifiedName& attrName)
             return;
         }
 
-        if (CheckedPtr renderer = this->renderer())
+        if (CheckedPtr renderer = this->renderer()) {
             renderer->setNeedsTransformUpdate();
+            if (CheckedPtr svgRoot = dynamicDowncast<LegacyRenderSVGRoot>(*renderer))
+                svgRoot->setNeedsLayoutIfNeededAfterIntrinsicSizeChange();
+        }
 
         invalidateResourceImageBuffersIfNeeded();
         updateSVGRendererForElementChange();

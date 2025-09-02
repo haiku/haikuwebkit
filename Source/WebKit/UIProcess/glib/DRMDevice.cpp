@@ -172,7 +172,10 @@ const String& drmPrimaryDevice()
     std::call_once(once, [] {
 #if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
         if (WKWPE::isUsingWPEPlatformAPI()) {
-            primaryDevice.construct(String::fromUTF8(wpe_display_get_drm_device(wpe_display_get_primary())));
+            if (auto* drmDevice = wpe_display_get_drm_device(wpe_display_get_primary()))
+                primaryDevice.construct(String::fromUTF8(wpe_drm_device_get_primary_node(drmDevice)));
+            else
+                primaryDevice.construct();
             return;
         }
 #endif
@@ -195,7 +198,10 @@ const String& drmRenderNodeDevice()
     std::call_once(once, [] {
 #if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
         if (WKWPE::isUsingWPEPlatformAPI()) {
-            renderNodeDevice.construct(String::fromUTF8(wpe_display_get_drm_render_node(wpe_display_get_primary())));
+            if (auto* drmDevice = wpe_display_get_drm_device(wpe_display_get_primary()))
+                renderNodeDevice.construct(String::fromUTF8(wpe_drm_device_get_render_node(drmDevice)));
+            else
+                renderNodeDevice.construct();
             return;
         }
 #endif
@@ -215,6 +221,14 @@ const String& drmRenderNodeDevice()
         renderNodeDevice.construct();
     });
     return renderNodeDevice.get();
+}
+
+const String& drmRenderNodeOrPrimaryDevice()
+{
+    const auto& node = drmRenderNodeDevice();
+    if (!node.isEmpty())
+        return node;
+    return drmPrimaryDevice();
 }
 
 } // namespace WebKit

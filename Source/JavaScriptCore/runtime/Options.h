@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CPU.h"
-#include "JSCConfig.h"
-#include "JSExportMacros.h"
+#include <JavaScriptCore/CPU.h>
+#include <JavaScriptCore/JSCConfig.h>
+#include <JavaScriptCore/JSExportMacros.h>
 #include <stdint.h>
 #include <wtf/ForbidHeapAllocation.h>
 #include <wtf/Noncopyable.h>

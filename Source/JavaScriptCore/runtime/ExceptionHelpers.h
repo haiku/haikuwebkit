@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include "DeferTermination.h"
-#include "ErrorInstance.h"
-#include "Exception.h"
-#include "JSObject.h"
-#include "ThrowScope.h"
+#include <JavaScriptCore/DeferTermination.h>
+#include <JavaScriptCore/ErrorInstance.h>
+#include <JavaScriptCore/Exception.h>
+#include <JavaScriptCore/JSObject.h>
+#include <JavaScriptCore/ThrowScope.h>
 
 namespace JSC {
 

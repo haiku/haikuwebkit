@@ -39,6 +39,7 @@
 #include "ReducedResolutionSeconds.h"
 #include "ScriptExecutionContext.h"
 #include "Timer.h"
+#include <memory>
 #include <wtf/ContinuousTime.h>
 #include <wtf/ListHashSet.h>
 
@@ -66,6 +67,7 @@ class PerformanceTiming;
 class ResourceResponse;
 class ResourceTiming;
 class ScriptExecutionContext;
+enum class EventType : uint16_t;
 struct PerformanceMarkOptions;
 struct PerformanceMeasureOptions;
 template<typename> class ExceptionOr;
@@ -82,7 +84,7 @@ public:
 
     PerformanceNavigation* navigation();
     PerformanceTiming* timing();
-    EventCounts* eventCounts() { return nullptr; }
+    EventCounts* eventCounts();
 
     unsigned interactionCount() { return 0; }
 
@@ -90,6 +92,8 @@ public:
     Vector<Ref<PerformanceEntry>> getEntriesByType(const String& entryType) const;
     Vector<Ref<PerformanceEntry>> getEntriesByName(const String& name, const String& entryType) const;
     void appendBufferedEntriesByType(const String& entryType, Vector<Ref<PerformanceEntry>>&, PerformanceObserver&) const;
+
+    void countEvent(EventType);
 
     void clearResourceTimings();
     void setResourceTimingBufferSize(unsigned);
@@ -143,6 +147,7 @@ private:
     void queueEntry(PerformanceEntry&);
     void scheduleTaskIfNeeded();
 
+    const std::unique_ptr<EventCounts> m_eventCounts;
     mutable RefPtr<PerformanceNavigation> m_navigation;
     mutable RefPtr<PerformanceTiming> m_timing;
 

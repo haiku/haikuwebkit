@@ -2,7 +2,6 @@ GPUProcess/mac/GPUProcessMac.mm
 GPUProcess/webrtc/RemoteSampleBufferDisplayLayer.mm
 GeneratedWebKitSecureCoding.mm
 NetworkProcess/Authentication/cocoa/AuthenticationManagerCocoa.mm
-NetworkProcess/Downloads/cocoa/WKDownloadProgress.mm
 NetworkProcess/Notifications/Cocoa/WebPushDaemonConnectionCocoa.mm
 NetworkProcess/PrivateClickMeasurement/cocoa/PrivateClickMeasurementConnectionCocoa.mm
 NetworkProcess/PrivateClickMeasurement/cocoa/PrivateClickMeasurementNetworkLoaderCocoa.mm
@@ -10,7 +9,6 @@ NetworkProcess/cache/NetworkCacheDataCocoa.mm
 NetworkProcess/cache/NetworkCacheIOChannelCocoa.mm
 NetworkProcess/cocoa/LaunchServicesDatabaseObserver.mm
 NetworkProcess/cocoa/NetworkProcessCocoa.mm
-NetworkProcess/cocoa/WKURLSessionTaskDelegate.mm
 NetworkProcess/mac/NetworkProcessMac.mm
 NetworkProcess/webrtc/NetworkRTCTCPSocketCocoa.mm
 NetworkProcess/webrtc/NetworkRTCUDPSocketCocoa.mm
@@ -83,7 +81,6 @@ UIProcess/API/Cocoa/WKProcessPool.mm
 UIProcess/API/Cocoa/WKSecurityOrigin.mm
 UIProcess/API/Cocoa/WKSnapshotConfiguration.mm
 UIProcess/API/Cocoa/WKURLSchemeTask.mm
-UIProcess/API/Cocoa/WKUserContentController.mm
 UIProcess/API/Cocoa/WKUserScript.mm
 UIProcess/API/Cocoa/WKWebView.mm
 UIProcess/API/Cocoa/WKWebViewConfiguration.mm

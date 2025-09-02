@@ -25,14 +25,14 @@
 
 #pragma once
 
+#include <JavaScriptCore/AssemblerCommon.h>
+#include <JavaScriptCore/ExecutableMemoryHandle.h>
+#include <JavaScriptCore/FastJITPermissions.h>
+#include <JavaScriptCore/JITCompilationEffort.h>
+#include <JavaScriptCore/JSCConfig.h>
+#include <JavaScriptCore/JSCPtrTag.h>
+#include <JavaScriptCore/Options.h>
 #include <bit>
-#include "AssemblerCommon.h"
-#include "ExecutableMemoryHandle.h"
-#include "FastJITPermissions.h"
-#include "JITCompilationEffort.h"
-#include "JSCConfig.h"
-#include "JSCPtrTag.h"
-#include "Options.h"
 #include <limits>
 #include <wtf/Assertions.h>
 #include <wtf/ForbidHeapAllocation.h>

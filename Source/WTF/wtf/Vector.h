@@ -1008,7 +1008,7 @@ private:
     template<FailureAction, typename U> bool append(U&&);
     template<FailureAction, typename U, size_t Extent> bool append(std::span<const U, Extent>);
 
-    template<typename MapFunction, typename DestinationVectorType, typename SourceType, typename Enable> friend struct Mapper;
+    template<typename MapFunction, typename DestinationVectorType, typename SourceType> friend struct Mapper;
     template<typename MapFunction, typename DestinationVectorType, typename SourceType, typename Enable> friend struct CompactMapper;
     template<typename DestinationItemType, typename Collection> friend Vector<DestinationItemType> copyToVectorOf(const Collection&);
     template<typename Collection> friend Vector<typename CopyOrMoveToVectorResult<Collection>::Type> copyToVector(const Collection&);
@@ -1915,23 +1915,13 @@ struct CollectionInspector {
     using SourceItemType = typename std::iterator_traits<IteratorType>::value_type;
 };
 
-template<typename MapFunction, typename DestinationVectorType, typename SourceType, typename Enable = void>
-struct Mapper {
-    static void map(DestinationVectorType& result, const SourceType& source, const MapFunction& mapFunction)
-    {
-        result.reserveInitialCapacity(containerSize(source));
-        for (auto&& item : source)
-            result.unsafeAppendWithoutCapacityCheck(mapFunction(item));
-    }
-};
-
 template<typename MapFunction, typename DestinationVectorType, typename SourceType>
-struct Mapper<MapFunction, DestinationVectorType, SourceType, typename std::enable_if<std::is_rvalue_reference<SourceType&&>::value>::type> {
+struct Mapper {
     static void map(DestinationVectorType& result, SourceType&& source, const MapFunction& mapFunction)
     {
         result.reserveInitialCapacity(containerSize(source));
-        for (auto&& item : source)
-            result.unsafeAppendWithoutCapacityCheck(mapFunction(WTFMove(item)));
+        for (auto&& item : std::forward<SourceType>(source))
+            result.unsafeAppendWithoutCapacityCheck(mapFunction(WTF::forward_like_preserving_const<SourceType>(item)));
     }
 };
 
@@ -2087,8 +2077,7 @@ template<typename DestinationVector, typename Collection>
 inline auto copyToVectorSpecialization(const Collection& collection) -> DestinationVector
 {
     DestinationVector result;
-    // FIXME: Use std::size when available on all compilers.
-    result.reserveInitialCapacity(collection.size());
+    result.reserveInitialCapacity(std::size(collection));
     for (auto&& item : collection)
         result.unsafeAppendWithoutCapacityCheck(item);
     return result;

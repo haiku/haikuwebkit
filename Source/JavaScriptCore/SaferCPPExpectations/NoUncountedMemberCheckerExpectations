@@ -43,7 +43,6 @@ wasm/WasmEntryPlan.cpp
 wasm/WasmFormat.h
 wasm/WasmFunctionParser.h
 wasm/WasmIPIntGenerator.cpp
-wasm/WasmLLIntGenerator.cpp
 wasm/WasmNameSectionParser.h
 wasm/WasmOMGIRGenerator.cpp
 wasm/WasmStreamingCompiler.h

@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "JSCJSValue.h"
+#include <JavaScriptCore/JSCJSValue.h>
 #include <unicode/uchar.h>
 
 namespace JSC {

@@ -136,7 +136,7 @@ if (DEVELOPER_MODE AND DEVELOPER_MODE_FATAL_WARNINGS)
     endif ()
 endif ()
 
-if (DEVELOPER_MODE)
+if (DEVELOPER_MODE OR ARM)
     # This lets us get good backtraces, in particular when using JSC_useGdbJITInfo=1.
     WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-fno-omit-frame-pointer)
 endif ()

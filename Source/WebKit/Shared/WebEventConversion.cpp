@@ -252,7 +252,7 @@ public:
         m_buttons = webEvent.buttons();
 
         m_position = webEvent.position();
-        m_movementDelta = WebCore::IntPoint(webEvent.deltaX(), webEvent.deltaY());
+        m_movementDelta = WebCore::DoublePoint(webEvent.deltaX(), webEvent.deltaY());
         m_unadjustedMovementDelta = webEvent.unadjustedMovementDelta();
         m_globalPosition = webEvent.globalPosition();
         m_clickCount = webEvent.clickCount();
@@ -406,7 +406,7 @@ static WebCore::PlatformTouchPoint::TouchType webPlatformTouchTypeToPlatform(con
 class WebKit2PlatformTouchPoint : public WebCore::PlatformTouchPoint {
 public:
 WebKit2PlatformTouchPoint(const WebPlatformTouchPoint& webTouchPoint)
-    : PlatformTouchPoint(webTouchPoint.identifier(), webTouchPoint.locationInRootView(), webTouchPoint.locationInViewport(), touchEventType(webTouchPoint)
+    : PlatformTouchPoint(webTouchPoint.identifier(), DoublePoint(webTouchPoint.locationInRootView()), DoublePoint(webTouchPoint.locationInViewport()), touchEventType(webTouchPoint)
 #if ENABLE(IOS_TOUCH_EVENTS)
         , webTouchPoint.radiusX(), webTouchPoint.radiusY(), webTouchPoint.rotationAngle(), webTouchPoint.force(), webTouchPoint.altitudeAngle(), webTouchPoint.azimuthAngle(), webPlatformTouchTypeToPlatform(webTouchPoint.touchType())
 #endif
@@ -445,8 +445,7 @@ public:
 
         m_screenPos = webTouchPoint.screenPosition();
         m_pos = webTouchPoint.position();
-        m_radiusX = webTouchPoint.radius().width();
-        m_radiusY = webTouchPoint.radius().height();
+        m_radius = webTouchPoint.radius();
         m_force = webTouchPoint.force();
         m_rotationAngle = webTouchPoint.rotationAngle();
     }

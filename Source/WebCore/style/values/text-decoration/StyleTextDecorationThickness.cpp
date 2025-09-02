@@ -31,6 +31,7 @@
 #include "FontMetrics.h"
 #include "RenderStyleInlines.h"
 #include "StyleBuilderChecking.h"
+#include "StyleLengthWrapper+Blending.h"
 #include "StyleLengthWrapper+CSSValueConversion.h"
 
 namespace WebCore {

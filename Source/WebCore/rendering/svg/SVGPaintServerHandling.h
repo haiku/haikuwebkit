@@ -129,7 +129,7 @@ private:
             m_context.setAlpha(1);
             m_context.setFillRule(svgStyle->clipRule());
         } else {
-            m_context.setAlpha(svgStyle->fillOpacity());
+            m_context.setAlpha(svgStyle->fillOpacity().value.value);
             m_context.setFillRule(svgStyle->fillRule());
         }
 
@@ -138,7 +138,7 @@ private:
 
     inline void prepareStrokeOperation(const RenderLayerModelObject& renderer, const RenderStyle& style, const Color& strokeColor) const
     {
-        m_context.setAlpha(style.svgStyle().strokeOpacity());
+        m_context.setAlpha(style.svgStyle().strokeOpacity().value.value);
         m_context.setStrokeColor(style.colorByApplyingColorFilter(strokeColor));
         SVGRenderSupport::applyStrokeStyleToContext(m_context, style, renderer);
     }

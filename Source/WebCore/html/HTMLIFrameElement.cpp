@@ -180,11 +180,6 @@ ReferrerPolicy HTMLIFrameElement::referrerPolicy() const
     return referrerPolicyFromAttribute();
 }
 
-const AtomString& HTMLIFrameElement::loading() const
-{
-    return equalLettersIgnoringASCIICase(attributeWithoutSynchronization(HTMLNames::loadingAttr), "lazy"_s) ? lazyAtom() : eagerAtom();
-}
-
 String HTMLIFrameElement::srcdoc() const
 {
     return attributeWithoutSynchronization(srcdocAttr);

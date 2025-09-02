@@ -28,6 +28,7 @@
 #include "Length.h"
 #include "StyleColor.h"
 #include "StyleFontData.h"
+#include "StyleWebKitBorderSpacing.h"
 #include <wtf/DataRef.h>
 
 namespace WTF {
@@ -53,8 +54,8 @@ public:
     bool nonFastPathInheritedEqual(const StyleInheritedData&) const;
     void fastPathInheritFrom(const StyleInheritedData&);
 
-    float horizontalBorderSpacing;
-    float verticalBorderSpacing;
+    Style::WebkitBorderSpacing borderHorizontalSpacing;
+    Style::WebkitBorderSpacing borderVerticalSpacing;
 
     Length lineHeight;
 #if ENABLE(TEXT_AUTOSIZING)

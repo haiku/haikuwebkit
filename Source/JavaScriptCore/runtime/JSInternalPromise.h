@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "JSPromise.h"
+#include <JavaScriptCore/JSPromise.h>
 
 namespace JSC {
 

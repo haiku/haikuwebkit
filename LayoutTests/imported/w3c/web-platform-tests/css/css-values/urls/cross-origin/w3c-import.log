@@ -14,11 +14,11 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-anonymous-negative.sub-expected.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-anonymous-negative.sub.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-anonymous.sub-expected.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-anonymous.sub.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-use-credentials-negative.sub-expected.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-use-credentials-negative.sub.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-use-credentials.sub-expected.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-crossorigin-use-credentials.sub.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-anonymous-negative.sub-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-anonymous-negative.sub.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-anonymous.sub-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-anonymous.sub.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-use-credentials-negative.sub-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-use-credentials-negative.sub.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-use-credentials.sub-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/cross-origin/url-image-cross-origin-use-credentials.sub.html

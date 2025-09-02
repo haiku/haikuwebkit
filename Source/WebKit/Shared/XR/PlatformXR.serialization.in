@@ -36,6 +36,7 @@ enum class PlatformXR::SessionFeature : uint8_t {
 #if ENABLE(WEBXR_HANDS)
     HandTracking,
 #endif
+    WebGPU,
 };
 
 enum class PlatformXR::SessionMode : uint8_t {
@@ -110,8 +111,8 @@ header: <WebCore/PlatformXR.h>
     Vector<WebCore::FloatPoint> bounds;
 };
 
-#if PLATFORM(COCOA)
-[Nested] struct PlatformXR::FrameData::RateMapDescription {
+header: <WebCore/PlatformXR.h>
+[CustomHeader] struct PlatformXR::RateMapDescription {
     WebCore::IntSize screenSize;
     Vector<float> horizontalSamplesLeft;
     Vector<float> horizontalSamplesRight;
@@ -121,13 +122,24 @@ header: <WebCore/PlatformXR.h>
 [Nested, RValue] struct PlatformXR::FrameData::LayerSetupData {
     std::array<std::array<uint16_t, 2>, 2> physicalSize;
     std::array<WebCore::IntRect, 2> viewports;
-    PlatformXR::FrameData::RateMapDescription foveationRateMapDesc;
+    PlatformXR::RateMapDescription foveationRateMapDesc;
+#if PLATFORM(COCOA)
     MachSendRight completionSyncEvent;
+#endif
 };
 
 [Nested, RValue] struct PlatformXR::FrameData::ExternalTexture {
+#if PLATFORM(COCOA)
     MachSendRight handle;
     bool isSharedTexture;
+#endif
+#if !PLATFORM(COCOA)
+    Vector<WTF::UnixFileDescriptor> fds;
+    Vector<uint32_t> strides;
+    Vector<uint32_t> offsets;
+    uint32_t fourcc;
+    uint64_t modifier;
+#endif
 };
 
 [Nested, RValue] struct PlatformXR::FrameData::ExternalTextureData {
@@ -135,18 +147,12 @@ header: <WebCore/PlatformXR.h>
     PlatformXR::FrameData::ExternalTexture colorTexture;
     PlatformXR::FrameData::ExternalTexture depthStencilBuffer;
 };
-#endif
 
 [Nested, RValue] struct PlatformXR::FrameData::LayerData {
-#if PLATFORM(COCOA)
     std::optional<PlatformXR::FrameData::LayerSetupData> layerSetup;
     uint64_t renderingFrameIndex;
     std::optional<PlatformXR::FrameData::ExternalTextureData> textureData;
     bool requestDepth;
-#else
-    WebCore::IntSize framebufferSize;
-    PlatformGLObject opaqueTexture;
-#endif
 };
 
 [Nested] struct PlatformXR::FrameData::InputSourceButton {

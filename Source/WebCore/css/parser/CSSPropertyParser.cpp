@@ -66,6 +66,7 @@
 #include "StyleBuilder.h"
 #include "StyleBuilderConverter.h"
 #include "StyleCustomProperty.h"
+#include "StylePrimitiveNumericTypes+CSSValueConversion.h"
 #include "StylePropertyShorthand.h"
 #include "StylePropertyShorthandFunctions.h"
 #include "StyleRuleType.h"
@@ -530,51 +531,40 @@ std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> consume
     auto resolveSyntaxValue = [&, syntaxType = syntaxType](const CSSValue& value) -> std::optional<Style::CustomProperty::Value> {
         switch (syntaxType) {
         case CSSCustomPropertySyntax::Type::LengthPercentage:
-        case CSSCustomPropertySyntax::Type::Length: {
-            auto length = Style::BuilderConverter::convertLength(builderState, downcast<CSSPrimitiveValue>(value));
-            return { WTFMove(length) };
-        }
+            return Style::toStyleFromCSSValue<Style::LengthPercentage<>>(builderState, downcast<CSSPrimitiveValue>(value));
+        case CSSCustomPropertySyntax::Type::Length:
+            return Style::toStyleFromCSSValue<Style::Length<>>(builderState, downcast<CSSPrimitiveValue>(value));
         case CSSCustomPropertySyntax::Type::Integer:
-        case CSSCustomPropertySyntax::Type::Number: {
-            auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsNumber(builderState.cssToLengthConversionData());
-            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_NUMBER } };
-        }
-        case CSSCustomPropertySyntax::Type::Percentage: {
-            auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsPercentage(builderState.cssToLengthConversionData());
-            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_PERCENTAGE } };
-        }
-        case CSSCustomPropertySyntax::Type::Angle: {
-            auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsAngle(builderState.cssToLengthConversionData());
-            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_DEG } };
-        }
-        case CSSCustomPropertySyntax::Type::Time: {
-            auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsTime(builderState.cssToLengthConversionData());
-            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_S } };
-        }
-        case CSSCustomPropertySyntax::Type::Resolution: {
-            auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsResolution(builderState.cssToLengthConversionData());
-            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_DPPX } };
-        }
+        case CSSCustomPropertySyntax::Type::Number:
+            return Style::toStyleFromCSSValue<Style::Number<>>(builderState, downcast<CSSPrimitiveValue>(value));
+        case CSSCustomPropertySyntax::Type::Percentage:
+            return Style::toStyleFromCSSValue<Style::Percentage<>>(builderState, downcast<CSSPrimitiveValue>(value));
+        case CSSCustomPropertySyntax::Type::Angle:
+            return Style::toStyleFromCSSValue<Style::Angle<>>(builderState, downcast<CSSPrimitiveValue>(value));
+        case CSSCustomPropertySyntax::Type::Time:
+            return Style::toStyleFromCSSValue<Style::Time<>>(builderState, downcast<CSSPrimitiveValue>(value));
+        case CSSCustomPropertySyntax::Type::Resolution:
+            return Style::toStyleFromCSSValue<Style::Resolution<>>(builderState, downcast<CSSPrimitiveValue>(value));
         case CSSCustomPropertySyntax::Type::Color:
-            return { Style::toStyleFromCSSValue<Style::Color>(builderState, value, Style::ForVisitedLink::No) };
+            return Style::toStyleFromCSSValue<Style::Color>(builderState, value, Style::ForVisitedLink::No);
         case CSSCustomPropertySyntax::Type::Image: {
             auto styleImage = builderState.createStyleImage(value);
             if (!styleImage)
                 return { };
-            return { WTFMove(styleImage) };
+            return Style::ImageWrapper { styleImage.releaseNonNull() };
         }
         case CSSCustomPropertySyntax::Type::URL:
-            return { Style::toStyle(downcast<CSSURLValue>(value).url(), builderState) };
+            return Style::toStyle(downcast<CSSURLValue>(value).url(), builderState);
         case CSSCustomPropertySyntax::Type::CustomIdent:
-            return { CustomIdentifier { AtomString { downcast<CSSPrimitiveValue>(value).stringValue() } } };
+            return CustomIdentifier { AtomString { downcast<CSSPrimitiveValue>(value).stringValue() } };
         case CSSCustomPropertySyntax::Type::String:
-            return { downcast<CSSPrimitiveValue>(value).stringValue() };
+            return downcast<CSSPrimitiveValue>(value).stringValue();
         case CSSCustomPropertySyntax::Type::TransformFunction:
         case CSSCustomPropertySyntax::Type::TransformList: {
             auto operation = Style::createTransformOperation(value, builderState);
             if (!operation)
                 return { };
-            return { Style::CustomProperty::Transform { *operation } };
+            return Style::CustomProperty::Transform { operation.releaseNonNull() };
         }
         case CSSCustomPropertySyntax::Type::Unknown:
             return { };

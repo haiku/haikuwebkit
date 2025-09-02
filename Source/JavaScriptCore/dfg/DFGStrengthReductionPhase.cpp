@@ -642,6 +642,15 @@ private:
                     break;
                 }
             }
+            if (m_node->arrayMode().type() == Array::String) {
+                bool changed = false;
+                while (m_node->child1()->op() == ResolveRope) {
+                    m_node->child1() = m_node->child1()->child1();
+                    changed = true;
+                }
+                m_changed = changed;
+                break;
+            }
             break;
         }
 

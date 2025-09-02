@@ -720,7 +720,7 @@ ExceptionOr<UncachedString> HTMLCanvasElement::toDataURL(const String& mimeType,
 #if USE(CG)
     // Try to get ImageData first, as that may avoid lossy conversions.
     if (auto imageData = getImageData())
-        return UncachedString { dataURL(imageData->pixelBuffer(), encodingMIMEType, quality) };
+        return UncachedString { dataURL(imageData->byteArrayPixelBuffer(), encodingMIMEType, quality) };
 #endif
 
     if (auto url = document->quirks().advancedPrivacyProtectionSubstituteDataURLForScriptWithFeatures(lastFillText(), width(), height()); !url.isNull()) {
@@ -770,7 +770,7 @@ ExceptionOr<void> HTMLCanvasElement::toBlob(Ref<BlobCallback>&& callback, const 
 
 #if USE(CG)
     if (auto imageData = getImageData()) {
-        scheduleCallbackWithBlobData(WTFMove(callback), encodeData(imageData->pixelBuffer(), encodingMIMEType, quality));
+        scheduleCallbackWithBlobData(WTFMove(callback), encodeData(imageData->byteArrayPixelBuffer(), encodingMIMEType, quality));
         return { };
     }
 #endif

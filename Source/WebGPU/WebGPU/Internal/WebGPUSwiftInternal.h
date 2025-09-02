@@ -40,10 +40,13 @@
 #include "Texture.h"
 #include "TextureView.h"
 #include "WebGPU.h"
+#include <algorithm>
 #include <cstdint>
+#include <os/log.h>
 #include <span>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/HashSet.h>
+#include <wtf/MathExtras.h>
 #include <wtf/Ref.h>
 #include <wtf/StdLibExtras.h>
 

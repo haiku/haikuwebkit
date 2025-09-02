@@ -40,6 +40,7 @@ namespace WebGPU {
 class CommandEncoder;
 class Device;
 class Texture;
+class XRProjectionLayer;
 
 class XRSubImage : public RefCountedAndCanMakeWeakPtr<XRSubImage>, public WGPUXRSubImageImpl {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(XRSubImage);
@@ -58,7 +59,7 @@ public:
     void setLabel(String&&);
 
     bool isValid() const;
-    void update(id<MTLTexture> colorTexture, id<MTLTexture> depthTexture, size_t currentTextureIndex, const std::pair<id<MTLSharedEvent>, uint64_t>&);
+    void update(const XRProjectionLayer&);
     Texture* colorTexture();
     Texture* depthTexture();
 

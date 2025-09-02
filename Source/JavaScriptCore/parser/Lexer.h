@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include "Lookup.h"
-#include "ParserArena.h"
-#include "ParserModes.h"
-#include "ParserTokens.h"
-#include "SourceCode.h"
+#include <JavaScriptCore/Lookup.h>
+#include <JavaScriptCore/ParserArena.h>
+#include <JavaScriptCore/ParserModes.h>
+#include <JavaScriptCore/ParserTokens.h>
+#include <JavaScriptCore/SourceCode.h>
 #include <wtf/ASCIICType.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
@@ -131,8 +131,8 @@ public:
     ALWAYS_INLINE StringView getToken(const JSToken& token)
     {
         SourceProvider* sourceProvider = m_source->provider();
-        ASSERT_WITH_MESSAGE(token.m_location.startOffset <= token.m_location.endOffset, "Calling this function with the baked token.");
-        return sourceProvider->getRange(token.m_location.startOffset, token.m_location.endOffset);
+        ASSERT_WITH_MESSAGE(token.m_startPosition.offset <= token.m_endPosition.offset, "Calling this function with the baked token.");
+        return sourceProvider->getRange(token.m_startPosition.offset, token.m_endPosition.offset);
     }
 
     size_t codeLength() { return m_codeEnd - m_codeStart; }
@@ -207,7 +207,7 @@ private:
     template <unsigned length>
     ALWAYS_INLINE bool consume(const char (&input)[length]);
 
-    void fillTokenInfo(JSToken*, JSTokenType, int lineNumber, int endOffset, int lineStartOffset, JSTextPosition endPosition);
+    void fillTokenInfo(JSToken*, JSTokenType, JSTextPosition endPosition);
 
     static constexpr size_t initialReadBufferCapacity = 32;
 
@@ -356,7 +356,6 @@ template <typename T>
 ALWAYS_INLINE JSTokenType Lexer<T>::lexExpectIdentifier(JSToken* tokenRecord, OptionSet<LexerFlags> lexerFlags, bool strictMode)
 {
     JSTokenData* tokenData = &tokenRecord->m_data;
-    JSTokenLocation* tokenLocation = &tokenRecord->m_location;
     ASSERT(lexerFlags.contains(LexerFlags::IgnoreReservedWords));
     const T* start = m_code;
     const T* ptr = start;
@@ -396,11 +395,6 @@ ALWAYS_INLINE JSTokenType Lexer<T>::lexExpectIdentifier(JSToken* tokenRecord, Op
     else
         tokenData->ident = makeLCharIdentifier({ start, ptr });
 
-    tokenLocation->line = m_lineNumber;
-    tokenLocation->lineStartOffset = currentLineStartOffset();
-    tokenLocation->startOffset = offsetFromSourcePtr(start);
-    tokenLocation->endOffset = currentOffset();
-    ASSERT(tokenLocation->startOffset >= tokenLocation->lineStartOffset);
     tokenRecord->m_startPosition = startPosition;
     tokenRecord->m_endPosition = currentPosition();
 #if ASSERT_ENABLED

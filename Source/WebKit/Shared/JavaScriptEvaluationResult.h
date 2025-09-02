@@ -61,12 +61,9 @@ using JSObjectID = ObjectIdentifier<JSObjectIDType>;
 class JavaScriptEvaluationResult {
 public:
     enum class EmptyType : bool { Undefined, Null };
-    struct Value {
-        WTF_MAKE_STRUCT_TZONE_ALLOCATED(Value);
-        Variant<EmptyType, bool, double, String, Seconds, Vector<JSObjectID>, HashMap<JSObjectID, JSObjectID>, NodeInfo, WebCore::SerializedNode> value;
-    };
+    using Value = Variant<EmptyType, bool, double, String, Seconds, Vector<JSObjectID>, HashMap<JSObjectID, JSObjectID>, NodeInfo, UniqueRef<WebCore::SerializedNode>>;
 
-    JavaScriptEvaluationResult(JSObjectID, HashMap<JSObjectID, UniqueRef<Value>>&&);
+    JavaScriptEvaluationResult(JSObjectID, HashMap<JSObjectID, Value>&&);
     static std::optional<JavaScriptEvaluationResult> extract(JSGlobalContextRef, JSValueRef);
 
     JavaScriptEvaluationResult(JavaScriptEvaluationResult&&);
@@ -74,7 +71,7 @@ public:
     ~JavaScriptEvaluationResult();
 
     JSObjectID root() const { return m_root; }
-    const HashMap<JSObjectID, UniqueRef<Value>>& map() const { return m_map; }
+    const HashMap<JSObjectID, Value>& map() const { return m_map; }
 
     String toString() const;
 
@@ -139,7 +136,7 @@ private:
     Vector<std::pair<Vector<JSObjectID>, Protected<JSValueRef>>> m_jsArrays;
 
     // IPC representation
-    HashMap<JSObjectID, UniqueRef<Value>> m_map;
+    HashMap<JSObjectID, Value> m_map;
     JSObjectID m_root;
 };
 

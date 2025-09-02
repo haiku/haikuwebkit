@@ -116,25 +116,8 @@ struct WebKitMediaSrcPadClass {
 
 namespace WTF {
 
-template<> GRefPtr<WebKitMediaSrcPad> adoptGRef(WebKitMediaSrcPad* ptr)
-{
-    ASSERT(!ptr || !g_object_is_floating(ptr));
-    return GRefPtr<WebKitMediaSrcPad>(ptr, GRefPtrAdopt);
-}
-
-template<> WebKitMediaSrcPad* refGPtr<WebKitMediaSrcPad>(WebKitMediaSrcPad* ptr)
-{
-    if (ptr)
-        gst_object_ref_sink(GST_OBJECT(ptr));
-
-    return ptr;
-}
-
-template<> void derefGPtr<WebKitMediaSrcPad>(WebKitMediaSrcPad* ptr)
-{
-    if (ptr)
-        gst_object_unref(ptr);
-}
+WTF_DEFINE_GREF_TRAITS(WebKitMediaSrc, gst_object_ref_sink, gst_object_unref, g_object_is_floating)
+WTF_DEFINE_GREF_TRAITS_INLINE(WebKitMediaSrcPad, gst_object_ref_sink, gst_object_unref, g_object_is_floating)
 
 } // namespace WTF
 
@@ -905,27 +888,5 @@ static void webKitMediaSrcUriHandlerInit(void* gIface, void*)
     iface->get_uri = webKitMediaSrcGetUri;
     iface->set_uri = webKitMediaSrcSetUri;
 }
-
-namespace WTF {
-template <> GRefPtr<WebKitMediaSrc> adoptGRef(WebKitMediaSrc* ptr)
-{
-    ASSERT(!ptr || !g_object_is_floating(G_OBJECT(ptr)));
-    return GRefPtr<WebKitMediaSrc>(ptr, GRefPtrAdopt);
-}
-
-template <> WebKitMediaSrc* refGPtr<WebKitMediaSrc>(WebKitMediaSrc* ptr)
-{
-    if (ptr)
-        gst_object_ref_sink(GST_OBJECT(ptr));
-
-    return ptr;
-}
-
-template <> void derefGPtr<WebKitMediaSrc>(WebKitMediaSrc* ptr)
-{
-    if (ptr)
-        gst_object_unref(ptr);
-}
-} // namespace WTF
 
 #endif // USE(GSTREAMER)

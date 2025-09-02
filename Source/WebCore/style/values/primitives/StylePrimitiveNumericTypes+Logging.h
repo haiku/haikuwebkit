@@ -60,20 +60,5 @@ template<auto nR, auto pR, typename V> WTF::TextStream& operator<<(WTF::TextStre
     return ts << value.value;
 }
 
-template<typename T> WTF::TextStream& operator<<(WTF::TextStream& ts, const SpaceSeparatedPoint<T>& value)
-{
-    return ts << value.x() << ' ' << value.y();
-}
-
-template<typename T> WTF::TextStream& operator<<(WTF::TextStream& ts, const SpaceSeparatedSize<T>& value)
-{
-    return ts << value.width() << ' ' << value.height();
-}
-
-template<typename T> WTF::TextStream& operator<<(WTF::TextStream& ts, const MinimallySerializingSpaceSeparatedSize<T>& value)
-{
-    return ts << value.width() << ' ' << value.height();
-}
-
 } // namespace Style
 } // namespace WebCore

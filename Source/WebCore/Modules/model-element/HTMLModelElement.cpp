@@ -39,6 +39,7 @@
 #include "ElementInlines.h"
 #include "EventHandler.h"
 #include "EventNames.h"
+#include "Exception.h"
 #include "FloatPoint3D.h"
 #include "GraphicsLayer.h"
 #include "GraphicsLayerCA.h"

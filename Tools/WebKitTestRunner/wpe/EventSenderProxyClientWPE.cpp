@@ -344,60 +344,59 @@ void EventSenderProxyClientWPE::clearTouchPoints()
     m_touchPoints.clear();
 }
 
+struct EventSenderProxyClientWPE::TouchPointContext {
+    const TouchPoint::State targetState;
+    const std::optional<TouchPoint::State> newState;
+    const WPEEventType eventType;
+    const double time;
+    const WPEModifiers modifiers;
+    WPEView* view;
+};
+
+std::function<bool(EventSenderProxyClientWPE::TouchPoint&)> EventSenderProxyClientWPE::pointProcessor(const TouchPointContext& context)
+{
+    return [context](TouchPoint& point) -> bool {
+        if (point.state != context.targetState)
+            return false;
+
+        if (context.newState)
+            point.state = *context.newState;
+
+        auto* event = wpe_event_touch_new(context.eventType, context.view, WPE_INPUT_SOURCE_TOUCHSCREEN, secToMsTimestamp(context.time), context.modifiers, point.id, point.x, point.y);
+        wpe_view_event(context.view, event);
+        wpe_event_unref(event);
+        return true;
+    };
+}
+
 void EventSenderProxyClientWPE::touchStart(double time)
 {
     auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
-    for (auto& point : m_touchPoints) {
-        if (point.state != TouchPoint::State::Down)
-            continue;
-
-        point.state = TouchPoint::State::Stationary;
-        auto* event = wpe_event_touch_new(WPE_EVENT_TOUCH_DOWN, view, WPE_INPUT_SOURCE_TOUCHSCREEN, secToMsTimestamp(time), static_cast<WPEModifiers>(m_touchModifiers), point.id, point.x, point.y);
-        wpe_view_event(view, event);
-        wpe_event_unref(event);
-    }
+    auto downPointProcessor = pointProcessor(TouchPointContext { TouchPoint::State::Down, TouchPoint::State::Stationary, WPE_EVENT_TOUCH_DOWN, time, static_cast<WPEModifiers>(m_touchModifiers), view });
+    for (auto& point : m_touchPoints)
+        downPointProcessor(point);
 }
 
 void EventSenderProxyClientWPE::touchMove(double time)
 {
     auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
-    for (auto& point : m_touchPoints) {
-        if (point.state != TouchPoint::State::Move)
-            continue;
-
-        point.state = TouchPoint::State::Stationary;
-        auto* event = wpe_event_touch_new(WPE_EVENT_TOUCH_MOVE, view, WPE_INPUT_SOURCE_TOUCHSCREEN, secToMsTimestamp(time), static_cast<WPEModifiers>(m_touchModifiers), point.id, point.x, point.y);
-        wpe_view_event(view, event);
-        wpe_event_unref(event);
-    }
+    auto movePointProcessor = pointProcessor(TouchPointContext { TouchPoint::State::Move, TouchPoint::State::Stationary, WPE_EVENT_TOUCH_MOVE, time, static_cast<WPEModifiers>(m_touchModifiers), view });
+    for (auto& point : m_touchPoints)
+        movePointProcessor(point);
 }
 
 void EventSenderProxyClientWPE::touchEnd(double time)
 {
     auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
-    m_touchPoints.removeAllMatching([&](const auto& point) {
-        if (point.state != TouchPoint::State::Up)
-            return false;
-
-        auto* event = wpe_event_touch_new(WPE_EVENT_TOUCH_UP, view, WPE_INPUT_SOURCE_TOUCHSCREEN, secToMsTimestamp(time), static_cast<WPEModifiers>(0), point.id, point.x, point.y);
-        wpe_view_event(view, event);
-        wpe_event_unref(event);
-        return true;
-    });
+    auto upPointProcessor = pointProcessor(TouchPointContext { TouchPoint::State::Up, std::nullopt, WPE_EVENT_TOUCH_UP, time, static_cast<WPEModifiers>(0), view });
+    m_touchPoints.removeAllMatching(upPointProcessor);
 }
 
 void EventSenderProxyClientWPE::touchCancel(double time)
 {
     auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
-    m_touchPoints.removeAllMatching([&](const auto& point) {
-        if (point.state != TouchPoint::State::Cancel)
-            return false;
-
-        auto* event = wpe_event_touch_new(WPE_EVENT_TOUCH_CANCEL, view, WPE_INPUT_SOURCE_TOUCHSCREEN, secToMsTimestamp(time), static_cast<WPEModifiers>(0), point.id, point.x, point.y);
-        wpe_view_event(view, event);
-        wpe_event_unref(event);
-        return true;
-    });
+    auto cancelPointProcessor = pointProcessor(TouchPointContext { TouchPoint::State::Cancel, std::nullopt, WPE_EVENT_TOUCH_CANCEL, time, static_cast<WPEModifiers>(0), view });
+    m_touchPoints.removeAllMatching(cancelPointProcessor);
 }
 
 void EventSenderProxyClientWPE::setTouchModifier(WKEventModifiers wkModifiers, bool enable)

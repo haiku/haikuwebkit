@@ -355,6 +355,21 @@ enum AV1ConfigurationRange {
 [
     ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
     JSGenerateToJSObject,
+    JSGenerateToNativeObject
+] dictionary WebDriverCookieData {
+    DOMString name;
+    DOMString value;
+    DOMString path;
+    DOMString domain;
+    boolean secure;
+    boolean httpOnly;
+    double? expiry;
+    DOMString sameSite;
+};
+
+[
+    ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
+    JSGenerateToJSObject,
 ] dictionary TextIndicatorInfo {
     DOMRectReadOnly textBoundingRectInRootViewCoordinates;
     DOMRectList textRectsInBoundingRectCoordinates;
@@ -1313,6 +1328,7 @@ enum ContentsFormat {
 
     undefined setCookie(CookieData cookieData);
     sequence<CookieData> getCookies();
+    sequence<WebDriverCookieData> webDriverGetCookies(Document document);
 
     undefined setAlwaysAllowLocalWebarchive(boolean alwaysAllowLocalWebarchive);
 

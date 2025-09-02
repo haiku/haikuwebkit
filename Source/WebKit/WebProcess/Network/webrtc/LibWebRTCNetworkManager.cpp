@@ -37,6 +37,7 @@
 #include <WebCore/Document.h>
 #include <WebCore/LibWebRTCUtils.h>
 #include <WebCore/Page.h>
+#include <WebCore/Settings.h>
 #include <algorithm>
 #include <wtf/EnumTraits.h>
 #include <wtf/TZoneMalloc.h>
@@ -50,6 +51,10 @@ RefPtr<LibWebRTCNetworkManager> LibWebRTCNetworkManager::getOrCreate(WebCore::Sc
 {
     RefPtr document = Document::allDocumentsMap().get(identifier);
     if (!document)
+        return nullptr;
+
+    // Check if PeerConnection is enabled to prevent IPC crashes
+    if (!document->settings().peerConnectionEnabled())
         return nullptr;
 
     RefPtr networkManager = downcast<LibWebRTCNetworkManager>(document->rtcNetworkManager());

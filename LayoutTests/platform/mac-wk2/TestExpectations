@@ -833,6 +833,7 @@ imported/w3c/web-platform-tests/storage-access-api/requestStorageAccess-cross-or
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.BlobURLDedicatedWorker.sub.https.tentative.window.html [ Skip ]
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.BlobURLSharedWorker.sub.https.tentative.window.html [ Skip ]
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.thirdPartyBlobStorage.sub.https.window.html [ Skip ]
+imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.blobStorage.sub.https.window.html [ DumpJSConsoleLogInStdErr ]
 #http/tests/storageAccess/request-and-grant-access-then-navigate-cross-site-should-not-have-access.html [ Pass Timeout ]
 http/tests/storageAccess/deny-with-prompt-does-not-preserve-gesture.html [ Skip ]
 
@@ -1283,7 +1284,7 @@ webkit.org/b/228087 media/video-seek-with-negative-playback.html [ Pass Failure 
 
 webkit.org/b/228248 fast/selectors/selection-window-inactive.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/228256 [ Debug ] inspector/canvas/create-context-webgl.html [ Pass Failure ]
+webkit.org/b/228256 inspector/canvas/create-context-webgl.html [ Pass Failure ]
 
 webkit.org/b/229043 inspector/canvas/recording-webgl-snapshots.html [ Pass Failure ]
 webkit.org/b/229043 inspector/canvas/recording-offscreen-webgl-snapshots.html [ Pass Failure ]
@@ -2298,17 +2299,116 @@ webkit.org/b/296326 imported/w3c/web-platform-tests/mixed-content/gen/sharedwork
 webkit.org/b/296326 imported/w3c/web-platform-tests/mixed-content/gen/sharedworker-module-data.meta/unset/websocket.https.html [ Failure ]
 webkit.org/b/296326 imported/w3c/web-platform-tests/mixed-content/gen/sharedworker-module-data.meta/unset/xhr.https.html [ Failure ]
 
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/script-src-self/sharedworker-import.http.html [ Failure ]
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/script-src-wildcard/sharedworker-import.http.html [ Failure ]
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/worker-src-self/sharedworker-import.http.html [ Failure ]
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/worker-src-wildcard/sharedworker-import.http.html [ Failure ]
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/script-src-self/sharedworker-import.http.html [ Failure ]
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/script-src-wildcard/sharedworker-import.http.html [ Failure ]
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/worker-src-self/sharedworker-import.http.html [ Failure ]
-webkit.org/b/296330 imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/worker-src-wildcard/sharedworker-import.http.html [ Failure ]
-
 webkit.org/b/296344 imported/w3c/web-platform-tests/webrtc/RTCRtpSender-replaceTrack.https.html [ Pass Failure ]
 
 webkit.org/b/296348 [ Sequoia ] http/tests/cache/disk-cache/shattered-deduplication.html [ Pass Failure ] 
 
 webkit.org/b/296571 [ Sequoia Debug arm64 ] http/tests/webgpu/webgpu/shader/execution/expression/binary/f32_matrix_vector_multiplication.html [ Timeout ]
+
+webkit.org/b/295746 webanimations/no-scheduling-while-filling-accelerated.html [ Pass Failure ]
+
+webkit.org/b/296584 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-snap.html [ Pass Failure ]
+
+# webkit.org/b/296631 4x imported/w3c/web-platform-tests/webcodecs/ tests (layout-tests) is a constant text failure and flakey text failure 
+imported/w3c/web-platform-tests/webcodecs/video-encoder-h26x-annexb.https.any.worker.html?h265_annexb_software [ Pass Failure ]
+imported/w3c/web-platform-tests/webcodecs/video-encoder-h26x-annexb.https.any.worker.html?h265_annexb_hardware [ Pass Failure ]
+imported/w3c/web-platform-tests/webcodecs/video-encoder-h26x-annexb.https.any.html?h265_annexb_software [ Pass Failure ]
+imported/w3c/web-platform-tests/webcodecs/video-encoder-h26x-annexb.https.any.html?h265_annexb_hardware [ Pass Failure ]
+
+# rdar://156956464 29x tests (layout-tests) are timeouts
+accessibility/text-marker/character-offset-visible-position-conversion-hang.html [ Slow ]
+accessibility/mac/text-operation/text-operation-lowercase.html [ Slow ]
+accessibility/mac/text-operation/text-operation-capitalize.html [ Slow ]
+accessibility/datetime/input-date-field-labels-and-value-changes.html [ Slow ]
+accessibility/list/list-active-element-selected-children.html [ Slow ]
+accessibility/display-contents/aria-hidden.html [ Slow ]
+accessibility/display-contents/aria-grid.html [ Slow ]
+animations/CSSKeyframesRule-name-null.html [ Slow ]
+animations/CSSKeyframesRule-parameters.html [ Slow ]
+apple-visual-effects/apple-visual-effect-automatic-vibrancy.html [ Slow ]
+applicationmanifest/developer-warnings.html [ Slow ]
+compositing/animation/animated-composited-inside-hidden.html [ Slow ]
+compositing/backface-visibility/backface-visibility-3d.html [ Slow ]
+fast/events/popup-allowed-from-gesture-initiated-event.html [ Pass Timeout ]
+fast/events/popup-blocked-from-fake-user-gesture.html [ Pass Timeout ]
+fast/events/popup-blocking-timers1.html [ Pass Timeout ]
+fast/history/history_reload.html [ Pass Timeout ]
+fast/mediacapturefromelement/CanvasCaptureMediaStream-offscreencanvas.html [ Pass Timeout Failure ]
+http/tests/privateClickMeasurement/attribution-conversion-through-image-redirect-in-new-window.html [ Timeout ]
+http/tests/security/isolatedWorld/userGestureEvents.html [ Pass Timeout ]
+imported/w3c/web-platform-tests/digital-credentials/create.disabled-by-permissions-policy.https.sub.html [ Slow ]
+loader/navigation-policy/should-open-external-urls/user-gesture-target-blank-with-flag.html [ Timeout ]
+loader/navigation-policy/should-open-external-urls/user-gesture-target-blank-without-flag.html [ Timeout ]
+loader/navigation-policy/should-open-external-urls/user-gesture-window-open-with-flag.html [ Timeout ]
+loader/navigation-policy/should-open-external-urls/user-gesture-window-open-without-flag.html [ Timeout ]
+media/crash-closing-page-with-media-as-plugin-fallback.html [ Pass Timeout ]
+webgl/2.0.y/conformance2/sync/sync-webgl-specific.html [ Slow ]
+
+webkit.org/b/296647 [ arm64 ] http/wpt/background-fetch/background-fetch-pause-resume.window.html [ Pass Failure ]
+
+webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-filtered-link-decoration-after-long-deletion.html [ Failure ]
+webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-filtered-link-decoration-after-short-deletion.html [ Failure Slow ]
+webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-filtered-link-decoration-before-short-deletion.html [ Failure ]
+webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-link-decoration-js-cookie-checking.html [ Failure ]
+webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-unfiltered-link-decoration-after-short-deletion.html [ Failure ]
+webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-without-link-decoration.html [ Failure ]
+
+webkit.org/b/294152 http/tests/misc/timer-vs-loading.html [ Pass Timeout ]
+
+webkit.org/b/296755 [ Debug ] imported/w3c/web-platform-tests/content-security-policy/worker-src/service-worker-src-child-fallback.https.sub.html [ Pass Failure ]
+
+webkit.org/b/296754 [ Debug arm64 ] imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-connectionState.https.html [ Pass Failure ]
+
+webkit.org/b/296816 [ Release ] imported/w3c/web-platform-tests/css/css-shapes/spec-examples/shape-outside-012.html [ Pass Failure ]
+
+webkit.org/b/296814 [ arm64 ] imported/w3c/web-platform-tests/css/css-view-transitions/rotated-cat-off-top-edge.html [ Pass ImageOnlyFailure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=296820 REGRESSION(298121@main): [ iOS, macOS wk2 ] 4x imported/w3c/web-platform-tests/navigation-api/ (layout-tests) tests are constant text failures
+imported/w3c/web-platform-tests/navigation-api/navigate-event/navigation-traverseTo-in-iframe-same-document-preventDefault.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/navigation-methods/back-forward-multiple-frames.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/navigation-methods/traverseTo-navigates-multiple-iframes.html [ Failure ]
+imported/w3c/web-platform-tests/navigation-api/per-entry-events/dispose-for-navigation-in-child.html [ Failure ]
+
+webkit.org/b/293808 [ Sequoia Debug arm64 ] http/tests/webgpu/webgpu/shader/validation/expression/call/builtin/atan2.html [ Failure ]
+webkit.org/b/293808 [ Sequoia Debug arm64 ] http/tests/webgpu/webgpu/shader/execution/expression/call/builtin/bitcast.html [ Timeout ]
+
+webkit.org/b/296885 [ Debug arm64 ] fast/scrolling/mac/scrollend-event-user-scroll-basic.html [ Pass Failure ]
+
+webkit.org/b/296890 [ Debug x86_64 ] fast/webgpu/nocrash/fuzz-282097.html [ Pass Failure ]
+
+webkit.org/b/296893 imported/w3c/web-platform-tests/css/css-view-transitions/column-span-during-transition-doesnt-skip.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/296898 [ Debug arm64 ] fast/block/transparent-outline-with-and-without-border-radius.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/296901 [ Sonoma x86_64 ] imported/w3c/web-platform-tests/css/filter-effects/filters-drop-shadow-002.html [ ImageOnlyFailure ]
+
+webkit.org/b/296911 [ Sequoia Debug arm64 ] http/tests/security/referrer-policy-header.html [ Timeout ]
+webkit.org/b/296911 [ Sequoia Debug arm64 ] http/tests/security/referrer-policy-header-multipart.html [ Timeout ]
+
+# webkit.org/b/296941 REGRESSION(298070@main): [macOS]: Multiple tests in imported/w3c/web-platform-tests/content-security-policy are failing
+imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/script-src-self/sharedworker-import.http.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/worker-src-self/sharedworker-import.http.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/script-src-wildcard/sharedworker-import.http.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/worker-src-wildcard/sharedworker-import.http.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/script-src-self/sharedworker-import.http.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/script-src-wildcard/sharedworker-import.http.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/worker-src-self/sharedworker-import.http.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/gen/top.meta/worker-src-wildcard/sharedworker-import.http.html [ Failure ]
+
+webkit.org/b/296952 imported/w3c/web-platform-tests/mixed-content/gen/top.http-rp/opt-in/sharedworker-import-data.https.html [ Failure ]
+webkit.org/b/296952 imported/w3c/web-platform-tests/mixed-content/gen/top.meta/opt-in/sharedworker-import-data.https.html [ Failure ]
+webkit.org/b/296952 imported/w3c/web-platform-tests/mixed-content/gen/top.meta/unset/sharedworker-import-data.https.html [ Failure ]
+
+webkit.org/b/296954 imported/w3c/web-platform-tests/event-timing/event-click-counts.html [ Pass Failure ]
+
+webkit.org/b/296964 imported/w3c/web-platform-tests/webrtc/RTCDataChannel-GC.html [ Pass Failure ]
+
+webkit.org/b/297007 media/webaudio-background-playback.html [ Pass Failure ]
+
+webkit.org/b/292402 http/tests/site-isolation/draw-after-cross-origin-navigation-between-two-remote-frames.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/297063 [ arm64 ] http/tests/xmlhttprequest/chunked-progress-event-expectedLength.html [ Pass Failure ]
+
+webkit.org/b/297078 [ Debug arm64 ] fast/parser/entity-comment-in-style.html [ Pass Timeout ]
+
+webkit.org/b/297121 fast/page-color-sampling/color-sampling-fixed-ancestor-with-relative-container.html [ Failure ]

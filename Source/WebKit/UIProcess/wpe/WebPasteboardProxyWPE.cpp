@@ -37,8 +37,8 @@
 #include <wtf/glib/GUniquePtr.h>
 
 #if ENABLE(WPE_PLATFORM)
-#include "GRefPtrWPE.h"
 #include "WPEUtilities.h"
+#include <wpe/GRefPtrWPE.h>
 #include <wpe/wpe-platform.h>
 #endif
 
@@ -98,7 +98,7 @@ void WebPasteboardProxy::readBuffer(IPC::Connection&, const String&, const Strin
     if (WKWPE::isUsingWPEPlatformAPI()) {
         auto* clipboard = wpe_display_get_clipboard(wpe_display_get_primary());
         if (GRefPtr<GBytes> bytes = adoptGRef(wpe_clipboard_read_bytes(clipboard, pasteboardType.utf8().data()))) {
-            completionHandler(FragmentedSharedBuffer::create(bytes.get())->makeContiguous());
+            completionHandler(SharedBuffer::create(bytes.get()));
             return;
         }
     }
@@ -157,7 +157,7 @@ void WebPasteboardProxy::typesSafeForDOMToReadAndWrite(IPC::Connection&, const S
         auto* clipboard = wpe_display_get_clipboard(wpe_display_get_primary());
         if (GRefPtr<GBytes> bytes = adoptGRef(wpe_clipboard_read_bytes(clipboard, PasteboardCustomData::wpeType().characters()))) {
             ListHashSet<String> domTypes;
-            auto buffer = FragmentedSharedBuffer::create(bytes.get())->makeContiguous();
+            Ref buffer = SharedBuffer::create(bytes.get());
             auto customData = PasteboardCustomData::fromSharedBuffer(buffer.get());
             if (customData.origin() == origin) {
                 for (auto& type : customData.orderedTypes())
@@ -299,7 +299,7 @@ void WebPasteboardProxy::readURLFromPasteboard(IPC::Connection& connection, uint
 
         auto* clipboard = wpe_display_get_clipboard(wpe_display_get_primary());
         if (GRefPtr<GBytes> bytes = adoptGRef(wpe_clipboard_read_bytes(clipboard, "text/uri-list"))) {
-            auto buffer = FragmentedSharedBuffer::create(bytes.get())->makeContiguous();
+            auto buffer = SharedBuffer::create(bytes.get());
             completionHandler(String(buffer->span()), { });
             return;
         }
@@ -320,7 +320,7 @@ void WebPasteboardProxy::readBufferFromPasteboard(IPC::Connection& connection, s
 
         auto* clipboard = wpe_display_get_clipboard(wpe_display_get_primary());
         if (GRefPtr<GBytes> bytes = adoptGRef(wpe_clipboard_read_bytes(clipboard, pasteboardType.utf8().data()))) {
-            completionHandler(FragmentedSharedBuffer::create(bytes.get())->makeContiguous());
+            completionHandler(SharedBuffer::create(bytes.get()));
             return;
         }
     }

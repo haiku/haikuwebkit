@@ -67,39 +67,6 @@ function getSetSizeAsInt(other)
     return sizeInt;
 }
 
-function union(other)
-{
-    "use strict";
-
-    if (!@isSet(this))
-        @throwTypeError("Set operation called on non-Set object");
-
-    // Get Set Record
-    var size = @getSetSizeAsInt(other); // unused but @getSetSizeAsInt call is observable
-
-    var has = other.has;
-    if (!@isCallable(has))
-        @throwTypeError("Set.prototype.union expects other.has to be callable");
-
-    var keys = other.keys;
-    if (!@isCallable(keys))
-        @throwTypeError("Set.prototype.union expects other.keys to be callable");
-
-    var iterator = keys.@call(other);
-    var iteratorNextMethod = iterator.next;
-    var wrapper = {
-        @@iterator: function () {
-           return { next: function () { return iteratorNextMethod.@call(iterator); } };
-        }
-    };
-
-    var result = @setClone(this);
-    for (var key of wrapper)
-        result.@add(key);
-
-    return result;
-}
-
 function difference(other)
 {
     "use strict";

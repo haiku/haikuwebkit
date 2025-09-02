@@ -32,6 +32,7 @@
 #include "JavaScriptEvaluationResult.h"
 #include "NotificationService.h"
 #include "PageLoadState.h"
+#include "PlatformXRSystem.h"
 #include "ProcessTerminationReason.h"
 #include "ProvisionalPageProxy.h"
 #include "RunJavaScriptParameters.h"
@@ -713,7 +714,7 @@ static void gotFaviconCallback(GObject* object, GAsyncResult* result, gpointer u
 
     WebKitWebView* webView = WEBKIT_WEB_VIEW(userData);
     webkitWebViewUpdateFavicon(webView, favicon.get());
-    webView->priv->faviconCancellable = 0;
+    webView->priv->faviconCancellable = nullptr;
 }
 
 static WebKitFaviconDatabase* webkitWebViewGetFaviconDatabase(WebKitWebView* webView)
@@ -4208,7 +4209,7 @@ JSGlobalContextRef webkit_web_view_get_javascript_global_context(WebKitWebView* 
     // We keep a reference to the js context in the view only when this method is called
     // for backwards compatibility.
     if (!webView->priv->jsContext)
-        webView->priv->jsContext = API::SerializedScriptValue::sharedJSCContext();
+        webView->priv->jsContext = jscContextGetOrCreate(API::SerializedScriptValue::deserializationContext().get()).get();
     return jscContextGetJSContext(webView->priv->jsContext.get());
 }
 #endif
@@ -5842,4 +5843,27 @@ webkit_web_view_get_default_content_security_policy(WebKitWebView* webView)
         return nullptr;
 
     return webView->priv->defaultContentSecurityPolicy.data();
+}
+
+/**
+ * webkit_web_view_end_immersive_session:
+ * @web_view: a #WebKitWebView
+ *
+ * Requests the immersive session associated to this #WebKitWebView to end.
+ *
+ * Since: 2.50
+ */
+void
+webkit_web_view_end_immersive_session(WebKitWebView* webView)
+{
+    g_return_if_fail(WEBKIT_IS_WEB_VIEW(webView));
+
+#if ENABLE(WEBXR)
+    Ref page = getPage(webView);
+    if (auto xrSystem = page->xrSystem()) {
+        // This asks the xr coordinator to end the session for the page it's invoked on,
+        // going through the sessionDidEnd message
+        xrSystem->invalidate(PlatformXRSystem::InvalidationReason::Client);
+    }
+#endif
 }

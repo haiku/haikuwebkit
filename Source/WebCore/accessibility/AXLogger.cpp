@@ -638,11 +638,17 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
     case AXProperty::AXColumnIndex:
         stream << "AXColumnIndex";
         break;
+    case AXProperty::AXColumnIndexText:
+        stream << "AXColumnIndexText";
+        break;
     case AXProperty::AXRowCount:
         stream << "AXRowCount";
         break;
     case AXProperty::AXRowIndex:
         stream << "AXRowIndex";
+        break;
+    case AXProperty::AXRowIndexText:
+        stream << "AXRowIndexText";
         break;
     case AXProperty::AccessKey:
         stream << "AccessKey";

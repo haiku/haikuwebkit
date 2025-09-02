@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "JSImmutableButterfly.h"
-#include "JSPropertyNameEnumerator.h"
-#include "JSString.h"
-#include "StructureChain.h"
-#include "StructureRareData.h"
-#include "VM.h"
+#include <JavaScriptCore/JSImmutableButterfly.h>
+#include <JavaScriptCore/JSPropertyNameEnumerator.h>
+#include <JavaScriptCore/JSString.h>
+#include <JavaScriptCore/StructureChain.h>
+#include <JavaScriptCore/StructureRareData.h>
+#include <JavaScriptCore/VM.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

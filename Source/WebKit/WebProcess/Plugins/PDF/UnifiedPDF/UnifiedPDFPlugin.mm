@@ -2018,7 +2018,7 @@ bool UnifiedPDFPlugin::handleMouseEvent(const WebMouseEvent& event)
             auto pdfElementTypes = pdfElementTypesForPluginPoint(lastKnownMousePositionInView());
             notifyCursorChanged(toWebCoreCursorType(pdfElementTypes, altKeyIsActive));
 
-            RetainPtr annotationUnderMouse = annotationForRootViewPoint(event.position());
+            RetainPtr annotationUnderMouse = annotationForRootViewPoint(flooredIntPoint(event.position()));
             if (RetainPtr currentTrackedAnnotation = m_annotationTrackingState.trackedAnnotation(); (currentTrackedAnnotation && currentTrackedAnnotation.get() != annotationUnderMouse) || (currentTrackedAnnotation.get() && !m_annotationTrackingState.isBeingHovered()))
                 finishTrackingAnnotation(annotationUnderMouse.get(), mouseEventType, mouseEventButton, RepaintRequirement::HoverOverlay);
 
@@ -2029,7 +2029,7 @@ bool UnifiedPDFPlugin::handleMouseEvent(const WebMouseEvent& event)
         }
         case WebMouseEventButton::Left: {
             if (RetainPtr trackedAnnotation = m_annotationTrackingState.trackedAnnotation()) {
-                RetainPtr annotationUnderMouse = annotationForRootViewPoint(event.position());
+                RetainPtr annotationUnderMouse = annotationForRootViewPoint(flooredIntPoint(event.position()));
                 updateTrackedAnnotation(annotationUnderMouse.get());
                 return true;
             }
@@ -2045,7 +2045,7 @@ bool UnifiedPDFPlugin::handleMouseEvent(const WebMouseEvent& event)
     case WebEventType::MouseDown:
         switch (mouseEventButton) {
         case WebMouseEventButton::Left: {
-            if (RetainPtr<PDFAnnotation> annotation = annotationForRootViewPoint(event.position())) {
+            if (RetainPtr<PDFAnnotation> annotation = annotationForRootViewPoint(flooredIntPoint(event.position()))) {
                 if ([annotation isReadOnly]
                     && annotationIsWidgetOfType(annotation.get(), { WidgetType::Button, WidgetType::Text, WidgetType::Choice }))
                     return true;
@@ -2076,7 +2076,7 @@ bool UnifiedPDFPlugin::handleMouseEvent(const WebMouseEvent& event)
         switch (mouseEventButton) {
         case WebMouseEventButton::Left:
             if (RetainPtr trackedAnnotation = m_annotationTrackingState.trackedAnnotation(); trackedAnnotation && !annotationIsWidgetOfType(trackedAnnotation.get(), WidgetType::Text)) {
-                RetainPtr annotationUnderMouse = annotationForRootViewPoint(event.position());
+                RetainPtr annotationUnderMouse = annotationForRootViewPoint(flooredIntPoint(event.position()));
                 finishTrackingAnnotation(annotationUnderMouse.get(), mouseEventType, mouseEventButton);
 
                 bool shouldFollowLinkAnnotation = [frame = m_frame] {
@@ -2171,7 +2171,7 @@ bool UnifiedPDFPlugin::handleContextMenuEvent(const WebMouseEvent& event)
         if (!protectedThis)
             return;
         if (selectedItemTag)
-            protectedThis->performContextMenuAction(toContextMenuItemTag(selectedItemTag.value()), eventPosition);
+            protectedThis->performContextMenuAction(toContextMenuItemTag(selectedItemTag.value()), flooredIntPoint(eventPosition));
         protectedThis->stopTrackingSelection();
     });
 
@@ -2478,7 +2478,7 @@ std::optional<PDFContextMenu> UnifiedPDFPlugin::createContextMenu(const WebMouse
     if (!frameView)
         return std::nullopt;
 
-    auto contextMenuEventRootViewPoint = contextMenuEvent.position();
+    auto contextMenuEventRootViewPoint = flooredIntPoint(contextMenuEvent.position());
 
     Vector<PDFContextMenuItem> menuItems;
 
@@ -4382,7 +4382,7 @@ void UnifiedPDFPlugin::handleSyntheticClick(PlatformMouseEvent&& event)
 {
 #if HAVE(PDFDOCUMENT_SELECTION_WITH_GRANULARITY)
     auto pointInRootView = event.position();
-    if (RetainPtr annotation = annotationForRootViewPoint(pointInRootView)) {
+    if (RetainPtr annotation = annotationForRootViewPoint(IntPoint(pointInRootView))) {
         if (annotationIsLinkWithDestination(annotation.get()))
             followLinkAnnotation(annotation.get(), { WTFMove(event) });
         clearSelection();
@@ -4391,7 +4391,7 @@ void UnifiedPDFPlugin::handleSyntheticClick(PlatformMouseEvent&& event)
 
     RetainPtr selection = m_currentSelection;
     if (selection && event.shiftKey()) {
-        auto [page, pointInPage] = rootViewToPage(pointInRootView);
+        auto [page, pointInPage] = rootViewToPage(FloatPoint(pointInRootView));
         if (!page)
             return;
 

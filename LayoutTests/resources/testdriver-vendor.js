@@ -545,6 +545,9 @@ window.test_driver_internal.set_permission = async function(permission_params)
     case "screen-wake-lock":
         testRunner.setScreenWakeLockPermission(permission_params.state == "granted");
         break;
+    case "storage-access":
+        await testRunner.setStorageAccessPermission(permission_params.state === "granted", location.href);
+        break;
     default:
         throw new Error(`Unsupported permission name "${permission_params.descriptor.name}".`);
     }
@@ -560,6 +563,36 @@ window.test_driver_internal.delete_all_cookies = async function(context=null)
     context = context ?? window;
 
     return new Promise(r => context.testRunner.removeAllCookies(r));
+}
+
+/**
+ *
+ * @param {Window?} context
+ * @returns Promise<sequence<WebDriverCookieData>>
+ */
+window.test_driver_internal.get_all_cookies = async function(context=null)
+{
+    context = context ?? window;
+
+    return internals.webDriverGetCookies(context.document);
+}
+
+/**
+ *
+ * @param DOMString name
+ * @param {Window?} context
+ * @returns Promise<WebDriverCookieData?>
+ */
+window.test_driver_internal.get_named_cookie = async function(name, context=null)
+{
+    context = context ?? window;
+
+    const cookies = internals.webDriverGetCookies(context.document);
+    for (const cookie of cookies) {
+        if (cookie.name == name)
+            return cookie;
+    }
+    return null;
 }
 
 window.test_driver_internal.generate_test_report = async function(message, context=null)

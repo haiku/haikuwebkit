@@ -769,6 +769,10 @@ JSC::JSValue toJS(TestCallbackInterface& impl)
     return static_cast<JSTestCallbackInterface&>(impl).callbackData()->callback();
 }
 
+ScriptExecutionContext* JSTestCallbackInterface::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
+}
 } // namespace WebCore
 
 #endif // ENABLE(TEST_CONDITIONAL)

@@ -475,6 +475,11 @@ bool MediaDevices::virtualHasPendingActivity() const
     return hasEventListeners(m_eventNames.devicechangeEvent);
 }
 
+ScriptExecutionContext* MediaDevices::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void MediaDevices::listenForDeviceChanges()
 {
     RefPtr document = this->document();

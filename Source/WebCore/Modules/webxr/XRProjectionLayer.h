@@ -27,6 +27,7 @@
 
 #if ENABLE(WEBXR_LAYERS)
 
+#include "PlatformXR.h"
 #include "WebGPUXRProjectionLayer.h"
 #include "WebXRRigidTransform.h"
 #include "XRCompositionLayer.h"
@@ -65,10 +66,13 @@ public:
     PlatformXR::Device::Layer endFrame() final;
 
     WebCore::WebGPU::XRProjectionLayer& backing();
+    std::optional<PlatformXR::FrameData::LayerData> layerData() const;
+
 private:
     XRProjectionLayer(ScriptExecutionContext&, Ref<WebCore::WebGPU::XRProjectionLayer>&&);
 
     const Ref<WebCore::WebGPU::XRProjectionLayer> m_backing;
+    std::optional<PlatformXR::FrameData::LayerData> m_layerData;
 };
 
 } // namespace WebCore

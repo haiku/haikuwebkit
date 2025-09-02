@@ -141,12 +141,10 @@ tools/VMInspector.cpp
 wasm/WasmCalleeGroup.cpp
 wasm/WasmFaultSignalHandler.cpp
 wasm/WasmIPIntSlowPaths.cpp
-wasm/WasmLLIntGenerator.cpp
 wasm/WasmModule.cpp
 wasm/WasmOMGIRGenerator.cpp
 wasm/WasmOSREntryPlan.cpp
 wasm/WasmOperations.cpp
-wasm/WasmSlowPaths.cpp
 wasm/WasmStreamingCompiler.cpp
 wasm/js/JSWebAssemblyException.cpp
 wasm/js/JSWebAssemblyGlobal.cpp

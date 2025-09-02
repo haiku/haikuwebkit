@@ -657,8 +657,7 @@ Vector<RefPtr<const StyleRule>> Resolver::pseudoStyleRulesForElement(const Eleme
 
     auto state = State(*element, nullptr, nullptr, nullptr);
 
-    ElementRuleCollector collector(*element, m_ruleSets, nullptr);
-    collector.setMode(SelectorChecker::Mode::CollectingRules);
+    ElementRuleCollector collector(*element, m_ruleSets, nullptr, SelectorChecker::Mode::CollectingRules);
     if (pseudoElementIdentifier)
         collector.setPseudoElementRequest(*pseudoElementIdentifier);
     collector.setMedium(m_mediaQueryEvaluator);

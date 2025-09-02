@@ -27,21 +27,19 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "JITCompilation.h"
-#include "NativeCallee.h"
-#include "PCToCodeOriginMap.h"
-#include "RegisterAtOffsetList.h"
-#include "StackAlignment.h"
-#include "WasmCompilationMode.h"
-#include "WasmFormat.h"
-#include "WasmFunctionCodeBlockGenerator.h"
-#include "WasmFunctionIPIntMetadataGenerator.h"
-#include "WasmHandlerInfo.h"
-#include "WasmIPIntGenerator.h"
-#include "WasmIPIntTierUpCounter.h"
-#include "WasmIndexOrName.h"
-#include "WasmLLIntTierUpCounter.h"
-#include "WasmTierUpCount.h"
+#include <JavaScriptCore/JITCompilation.h>
+#include <JavaScriptCore/NativeCallee.h>
+#include <JavaScriptCore/PCToCodeOriginMap.h>
+#include <JavaScriptCore/RegisterAtOffsetList.h>
+#include <JavaScriptCore/StackAlignment.h>
+#include <JavaScriptCore/WasmCompilationMode.h>
+#include <JavaScriptCore/WasmFormat.h>
+#include <JavaScriptCore/WasmFunctionIPIntMetadataGenerator.h>
+#include <JavaScriptCore/WasmHandlerInfo.h>
+#include <JavaScriptCore/WasmIPIntGenerator.h>
+#include <JavaScriptCore/WasmIPIntTierUpCounter.h>
+#include <JavaScriptCore/WasmIndexOrName.h>
+#include <JavaScriptCore/WasmTierUpCount.h>
 #include <wtf/EmbeddedFixedVector.h>
 #include <wtf/FixedVector.h>
 #include <wtf/RefCountedFixedVector.h>
@@ -255,7 +253,9 @@ public:
     const StackMap& stackmap(CallSiteIndex) const;
 
     void addCodeOrigin(unsigned firstInlineCSI, unsigned lastInlineCSI, const Wasm::ModuleInformation&, uint32_t functionIndex);
+    const WasmCodeOrigin* getCodeOrigin(unsigned csi, unsigned depth, bool& isInlined) const;
     IndexOrName getOrigin(unsigned csi, unsigned depth, bool& isInlined) const;
+    IndexOrName getIndexOrName(const WasmCodeOrigin*) const;
     std::optional<CallSiteIndex> tryGetCallSiteIndex(const void*) const;
 
     Box<PCToCodeOriginMap> materializePCToOriginMap(B3::PCToOriginMap&&, LinkBuffer&);
@@ -457,7 +457,7 @@ public:
 
     IPIntTierUpCounter& tierUpCounter() { return m_tierUpCounter; }
 
-    using OutOfLineJumpTargets = UncheckedKeyHashMap<WasmInstructionStream::Offset, int>;
+    using OutOfLineJumpTargets = UncheckedKeyHashMap<unsigned, int>;
 
 private:
     IPIntCallee(FunctionIPIntMetadataGenerator&, FunctionSpaceIndex index, std::pair<const Name*, RefPtr<NameSection>>&&);
@@ -490,90 +490,6 @@ private:
     IPIntTierUpCounter m_tierUpCounter;
 };
 
-class LLIntCallee final : public Callee {
-    WTF_MAKE_COMPACT_TZONE_ALLOCATED(LLIntCallee);
-    friend JSC::LLIntOffsetsExtractor;
-    friend class Callee;
-public:
-    static Ref<LLIntCallee> create(FunctionCodeBlockGenerator& generator, FunctionSpaceIndex index, std::pair<const Name*, RefPtr<NameSection>>&& name)
-    {
-        return adoptRef(*new LLIntCallee(generator, index, WTFMove(name)));
-    }
-
-    void setEntrypoint(CodePtr<WasmEntryPtrTag>);
-
-    FunctionCodeIndex functionIndex() const { return m_functionIndex; }
-    unsigned numVars() const { return m_numVars; }
-    unsigned numCalleeLocals() const { return m_numCalleeLocals; }
-    uint32_t numArguments() const { return m_numArguments; }
-    const FixedVector<Type>& constantTypes() const { return m_constantTypes; }
-    const FixedVector<uint64_t>& constants() const { return m_constants; }
-    const WasmInstructionStream& instructions() const { return *m_instructions; }
-
-    ALWAYS_INLINE uint64_t getConstant(VirtualRegister reg) const { return m_constants[reg.toConstantIndex()]; }
-    ALWAYS_INLINE Type getConstantType(VirtualRegister reg) const
-    {
-        ASSERT(Options::dumpGeneratedWasmBytecodes());
-        return m_constantTypes[reg.toConstantIndex()];
-    }
-
-    WasmInstructionStream::Offset numberOfJumpTargets() { return m_jumpTargets.size(); }
-    WasmInstructionStream::Offset lastJumpTarget() { return m_jumpTargets.last(); }
-
-    const WasmInstruction* outOfLineJumpTarget(const WasmInstruction*);
-    WasmInstructionStream::Offset outOfLineJumpOffset(WasmInstructionStream::Offset);
-    WasmInstructionStream::Offset outOfLineJumpOffset(const WasmInstructionStream::Ref& instruction)
-    {
-        return outOfLineJumpOffset(instruction.offset());
-    }
-
-    inline WasmInstructionStream::Offset bytecodeOffset(const WasmInstruction* returnAddress)
-    {
-        const auto* instructionsBegin = m_instructions->at(0).ptr();
-        const auto* instructionsEnd = reinterpret_cast<const WasmInstruction*>(reinterpret_cast<uintptr_t>(instructionsBegin) + m_instructions->size());
-        RELEASE_ASSERT(returnAddress >= instructionsBegin && returnAddress < instructionsEnd);
-        return returnAddress - instructionsBegin;
-    }
-
-    LLIntTierUpCounter& tierUpCounter() { return m_tierUpCounter; }
-
-    const TypeDefinition& signature(unsigned index) const
-    {
-        return *m_signatures[index];
-    }
-
-    const JumpTable& jumpTable(unsigned tableIndex) const;
-    unsigned numberOfJumpTables() const;
-
-    using OutOfLineJumpTargets = UncheckedKeyHashMap<WasmInstructionStream::Offset, int>;
-
-private:
-    LLIntCallee(FunctionCodeBlockGenerator&, FunctionSpaceIndex index, std::pair<const Name*, RefPtr<NameSection>>&&);
-
-    CodePtr<WasmEntryPtrTag> entrypointImpl() const { return m_entrypoint; }
-    std::tuple<void*, void*> rangeImpl() const { return { nullptr, nullptr }; };
-    JS_EXPORT_PRIVATE RegisterAtOffsetList* calleeSaveRegistersImpl();
-
-    FunctionCodeIndex m_functionIndex;
-
-    // Used for the number of WebAssembly locals, as in https://webassembly.github.io/spec/core/syntax/modules.html#syntax-local
-    unsigned m_numVars { 0 };
-    // Number of VirtualRegister. The naming is unfortunate, but has to match UnlinkedCodeBlock
-    unsigned m_numCalleeLocals { 0 };
-    uint32_t m_numArguments { 0 };
-    FixedVector<Type> m_constantTypes;
-    FixedVector<uint64_t> m_constants;
-    std::unique_ptr<WasmInstructionStream> m_instructions;
-    const void* m_instructionsRawPointer { nullptr };
-    FixedVector<WasmInstructionStream::Offset> m_jumpTargets;
-    FixedVector<const TypeDefinition*> m_signatures;
-    OutOfLineJumpTargets m_outOfLineJumpTargets;
-    LLIntTierUpCounter m_tierUpCounter;
-    FixedVector<JumpTable> m_jumpTables;
-    CodePtr<WasmEntryPtrTag> m_entrypoint;
-};
-
-using LLIntCallees = ThreadSafeRefCountedFixedVector<Ref<LLIntCallee>>;
 using IPIntCallees = ThreadSafeRefCountedFixedVector<Ref<IPIntCallee>>;
 
 } } // namespace JSC::Wasm

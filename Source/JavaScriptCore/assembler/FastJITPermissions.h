@@ -59,7 +59,7 @@ static ALWAYS_INLINE void threadSelfRestrict()
 #else // Not defined(OS_THREAD_SELF_RESTRICT) && defined(OS_THREAD_SELF_RESTRICT_SUPPORTED)
 #if OS(DARWIN) && CPU(ARM64)
 
-#include "JSCConfig.h"
+#include <JavaScriptCore/JSCConfig.h>
 
 #include <wtf/Platform.h>
 

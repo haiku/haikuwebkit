@@ -103,7 +103,7 @@ class WebKit::WebTouchEvent : WebKit::WebEvent {
     Vector<WebKit::WebTouchEvent> coalescedEvents();
     Vector<WebKit::WebTouchEvent> predictedEvents();
 #if PLATFORM(IOS_FAMILY)
-    WebCore::IntPoint position();
+    WebCore::DoublePoint position();
     bool isPotentialTap();
     bool isGesture();
     float gestureScale();
@@ -123,8 +123,8 @@ class WebKit::WebTouchEvent : WebKit::WebEvent {
 [CustomHeader] class WebKit::WebPlatformTouchPoint {
 #if PLATFORM(IOS_FAMILY)
     unsigned identifier()
-    WebCore::IntPoint locationInRootView()
-    WebCore::IntPoint locationInViewport()
+    WebCore::DoublePoint locationInRootView()
+    WebCore::DoublePoint locationInViewport()
     WebKit::WebPlatformTouchPoint::State phase()
 #endif
 #if PLATFORM(IOS_FAMILY) && ENABLE(IOS_TOUCH_EVENTS)
@@ -139,9 +139,9 @@ class WebKit::WebTouchEvent : WebKit::WebEvent {
 #if !PLATFORM(IOS_FAMILY)
     uint32_t id()
     WebKit::WebPlatformTouchPoint::State state()
-    WebCore::IntPoint screenPosition()
-    WebCore::IntPoint position()
-    WebCore::IntSize radius()
+    WebCore::DoublePoint screenPosition()
+    WebCore::DoublePoint position()
+    WebCore::DoubleSize radius()
     float rotationAngle()
     float force()
 #endif
@@ -166,8 +166,8 @@ enum class WebKit::GestureWasCancelled : bool;
 class WebKit::WebMouseEvent : WebKit::WebEvent {
     WebKit::WebMouseEventButton button();
     unsigned short buttons();
-    WebCore::IntPoint position();
-    WebCore::IntPoint globalPosition();
+    WebCore::DoublePoint position();
+    WebCore::DoublePoint globalPosition();
     float deltaX();
     float deltaY();
     float deltaZ();
@@ -186,7 +186,7 @@ class WebKit::WebMouseEvent : WebKit::WebEvent {
     String pointerType();
 #endif
     WebKit::GestureWasCancelled gestureWasCancelled();
-    WebCore::IntPoint unadjustedMovementDelta();
+    WebCore::DoublePoint unadjustedMovementDelta();
     Vector<WebKit::WebMouseEvent> coalescedEvents();
 };
 

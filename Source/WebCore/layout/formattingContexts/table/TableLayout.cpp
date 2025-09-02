@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -418,7 +419,7 @@ TableFormattingContext::TableLayout::DistributedSpaces TableFormattingContext::T
             auto& cell = slot.cell();
             auto& cellBox = cell.box();
             auto height = formattingContext().geometryForBox(cellBox).borderBoxHeight();
-            if (cellBox.style().verticalAlign() == VerticalAlign::Baseline) {
+            if (WTF::holdsAlternative<CSS::Keyword::Baseline>(cellBox.style().verticalAlign())) {
                 maximumColumnAscent = std::max(maximumColumnAscent, cell.baseline());
                 maximumColumnDescent = std::max(maximumColumnDescent, height - cell.baseline());
                 rowHeight[rowIndex] = std::max(rowHeight[rowIndex], LayoutUnit { maximumColumnAscent + maximumColumnDescent });

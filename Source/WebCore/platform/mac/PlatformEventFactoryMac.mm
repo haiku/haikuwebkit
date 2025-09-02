@@ -72,7 +72,7 @@ NSPoint globalPointForEvent(NSEvent *event)
     }
 }
 
-IntPoint pointForEvent(NSEvent *event, NSView *windowView)
+DoublePoint pointForEvent(NSEvent *event, NSView *windowView)
 {
     switch ([event type]) {
     case NSEventTypePressure:
@@ -94,10 +94,10 @@ IntPoint pointForEvent(NSEvent *event, NSView *windowView)
         NSPoint location = [event locationInWindow];
         if (windowView)
             location = [windowView convertPoint:location fromView:nil];
-        return IntPoint(location);
+        return location;
     }
     default:
-        return IntPoint();
+        return DoublePoint();
     }
 }
 
@@ -723,12 +723,12 @@ UInt8 keyCharForEvent(NSEvent *event)
     return keyChar;
 }
 
-IntPoint unadjustedMovementForEvent(NSEvent *event)
+DoublePoint unadjustedMovementForEvent(NSEvent *event)
 {
     CGEventRef cgEvent = [event CGEvent];
-    auto dx = CGEventGetIntegerValueField(cgEvent, kCGEventUnacceleratedPointerMovementX);
-    auto dy = CGEventGetIntegerValueField(cgEvent, kCGEventUnacceleratedPointerMovementY);
-    return IntPoint(dx, dy);
+    auto dx = CGEventGetDoubleValueField(cgEvent, kCGEventUnacceleratedPointerMovementX);
+    auto dy = CGEventGetDoubleValueField(cgEvent, kCGEventUnacceleratedPointerMovementY);
+    return DoublePoint(dx, dy);
 }
 
 class PlatformMouseEventBuilder : public PlatformMouseEvent {
@@ -759,7 +759,7 @@ public:
         m_button = mouseButtonForEvent(event);
         m_buttons = currentlyPressedMouseButtons();
         m_clickCount = clickCountForEvent(event);
-        m_movementDelta = IntPoint(event.deltaX, event.deltaY);
+        m_movementDelta = DoublePoint(event.deltaX, event.deltaY);
         m_unadjustedMovementDelta = unadjustedMovementForEvent(event);
 
         if (!isCoalesced)
@@ -793,7 +793,7 @@ public:
         m_timestamp = eventTimeStampSince1970(event.timestamp);
 
         // PlatformWheelEvent
-        m_position = pointForEvent(event, windowView);
+        m_position = IntPoint(pointForEvent(event, windowView));
         m_globalPosition = IntPoint(globalPointForEvent(event));
         m_granularity = ScrollByPixelWheelEvent;
 

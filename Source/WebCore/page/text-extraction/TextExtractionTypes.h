@@ -34,6 +34,19 @@
 namespace WebCore {
 namespace TextExtraction {
 
+enum class EventListenerCategory : uint16_t {
+    Click       = 1 << 0,
+    Hover       = 1 << 1,
+    Touch       = 1 << 2,
+    Wheel       = 1 << 3,
+    Gesture     = 1 << 4,
+    Pointer     = 1 << 5,
+    Keyboard    = 1 << 6,
+    Focus       = 1 << 7,
+    Form        = 1 << 8,
+    Media       = 1 << 9,
+};
+
 struct Editable {
     String label;
     String placeholder;

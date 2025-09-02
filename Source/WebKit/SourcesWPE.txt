@@ -91,7 +91,6 @@ Shared/soup/WebErrorsSoup.cpp
 
 Shared/unix/AuxiliaryProcessMain.cpp
 
-Shared/wpe/GRefPtrWPE.cpp @no-unify
 Shared/wpe/NativeWebKeyboardEventWPE.cpp
 Shared/wpe/NativeWebMouseEventWPE.cpp
 Shared/wpe/NativeWebTouchEventWPE.cpp
@@ -117,7 +116,6 @@ UIProcess/API/C/wpe/WKPagePrivateWPE.cpp
 Shared/API/c/wpe/WKEventWPE.cpp
 
 UIProcess/API/glib/APIContentRuleListStoreGLib.cpp @no-unify
-UIProcess/API/glib/APISerializedScriptValueGLib.cpp @no-unify
 UIProcess/API/glib/InputMethodFilter.cpp @no-unify
 UIProcess/API/glib/KeyAutoRepeatHandler.cpp @no-unify
 UIProcess/API/glib/WebKitApplicationInfo.cpp @no-unify
@@ -295,21 +293,17 @@ WebProcess/WebCoreSupport/glib/WebEditorClientGLib.cpp
 
 WebProcess/WebCoreSupport/soup/WebFrameNetworkingContext.cpp
 
+WebProcess/WebCoreSupport/wpe/WebDragClientWPE.cpp
 WebProcess/WebCoreSupport/wpe/WebEditorClientWPE.cpp
 
-WebProcess/WebPage/AcceleratedSurface.cpp
-
+WebProcess/WebPage/CoordinatedGraphics/AcceleratedSurface.cpp
 WebProcess/WebPage/CoordinatedGraphics/CoordinatedSceneState.cpp
 WebProcess/WebPage/CoordinatedGraphics/CompositingRunLoop.cpp
 WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 WebProcess/WebPage/CoordinatedGraphics/ThreadedCompositor.cpp
 
-WebProcess/WebPage/dmabuf/AcceleratedSurfaceDMABuf.cpp @no-unify
-
 WebProcess/WebPage/glib/WebPageGLib.cpp
-
-WebProcess/WebPage/libwpe/AcceleratedSurfaceLibWPE.cpp @no-unify
 
 WebProcess/WebPage/soup/WebCookieCacheSoup.cpp
 

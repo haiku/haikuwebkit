@@ -136,7 +136,7 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
         return { };
 
     Vector<RendererBufferFormat> bufferFormats;
-    const char* mainDevice = wpe_buffer_dma_buf_formats_get_device(formats);
+    WPEDRMDevice* mainDevice = wpe_buffer_dma_buf_formats_get_device(formats);
     auto groupCount = wpe_buffer_dma_buf_formats_get_n_groups(formats);
     for (unsigned i = 0; i < groupCount; ++i) {
         RendererBufferFormat bufferFormat;
@@ -151,8 +151,17 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
             bufferFormat.usage = RendererBufferFormat::Usage::Scanout;
             break;
         }
-        const char* targetDevice = wpe_buffer_dma_buf_formats_get_group_device(formats, i);
-        bufferFormat.drmDevice = targetDevice ? targetDevice : mainDevice;
+
+        WPEDRMDevice* targetDevice = wpe_buffer_dma_buf_formats_get_group_device(formats, i);
+        if (!targetDevice)
+            targetDevice = mainDevice;
+        if (targetDevice) {
+            if (bufferFormat.usage == RendererBufferFormat::Usage::Scanout || !wpe_drm_device_get_render_node(targetDevice))
+                bufferFormat.drmDevice = wpe_drm_device_get_primary_node(targetDevice);
+            else
+                bufferFormat.drmDevice = wpe_drm_device_get_render_node(targetDevice);
+        }
+
         auto formatsCount = wpe_buffer_dma_buf_formats_get_group_n_formats(formats, i);
         bufferFormat.formats.reserveInitialCapacity(formatsCount);
         for (unsigned j = 0; j < formatsCount; ++j) {

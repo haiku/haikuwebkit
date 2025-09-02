@@ -48,7 +48,7 @@ private:
     AccessibilityRole determineAccessibilityRole() final;
     bool isTreeValid() const;
 };
-    
+
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_ACCESSIBILITY(AccessibilityTree, isTree())

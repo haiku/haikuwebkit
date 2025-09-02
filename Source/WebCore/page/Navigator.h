@@ -86,7 +86,6 @@ private:
     explicit Navigator(ScriptExecutionContext*, LocalDOMWindow&);
 
     void initializePluginAndMimeTypeArrays();
-    void initializeNavigatorUAData() const;
 
     mutable RefPtr<ShareDataReader> m_loader;
     mutable bool m_hasPendingShare { false };

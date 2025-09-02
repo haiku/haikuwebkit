@@ -232,6 +232,7 @@ MacroAssemblerCodeRef<JITThunkPtrTag> createJSToWasmJITShared()
 
         CCallHelpers::JumpList exceptionChecks;
         CCallHelpers::JumpList stackOverflow;
+        CCallHelpers::JumpList buildEntryFrameThrew;
 
         auto calleeSaves = Wasm::JSEntrypointCallee::calleeSaveRegistersImpl();
         jit.emitFunctionPrologue();
@@ -264,7 +265,7 @@ MacroAssemblerCodeRef<JITThunkPtrTag> createJSToWasmJITShared()
         jit.callOperation<OperationPtrTag>(operationJSToWasmEntryWrapperBuildFrame);
         static_assert(CCallHelpers::operationExceptionRegister<operationJSToWasmEntryWrapperBuildFrame>() != InvalidGPRReg, "We don't have a VM readily available so we rely on exception being returned");
         JIT_COMMENT(jit, "Exception check: ", CCallHelpers::operationExceptionRegister<operationJSToWasmEntryWrapperBuildFrame>());
-        exceptionChecks.append(jit.branchTestPtr(CCallHelpers::NonZero, CCallHelpers::operationExceptionRegister<operationJSToWasmEntryWrapperBuildFrame>()));
+        buildEntryFrameThrew.append(jit.branchTestPtr(CCallHelpers::NonZero, CCallHelpers::operationExceptionRegister<operationJSToWasmEntryWrapperBuildFrame>()));
         jit.move(GPRInfo::returnValueGPR, GPRInfo::regWS0);
 
 #if CPU(ARM64)
@@ -325,8 +326,7 @@ MacroAssemblerCodeRef<JITThunkPtrTag> createJSToWasmJITShared()
         jit.loadPtr(CCallHelpers::addressFor(CallFrameSlot::callee), GPRInfo::regWS1);
 
         JIT_COMMENT(jit, "Replace the WebAssemblyFunction Callee with our JSToWasm NativeCallee");
-        jit.loadPtr(CCallHelpers::Address(GPRInfo::regWS1, WebAssemblyFunction::offsetOfBoxedJSToWasmCallee()), GPRInfo::regWS0);
-        jit.storePtr(GPRInfo::regWS0, CCallHelpers::addressFor(CallFrameSlot::callee));
+        jit.transferPtr(CCallHelpers::Address(GPRInfo::regWS1, WebAssemblyFunction::offsetOfBoxedJSToWasmCallee()), CCallHelpers::addressFor(CallFrameSlot::callee));
         if constexpr (is32Bit())
             jit.store32(CCallHelpers::TrustedImm32(JSValue::NativeCalleeTag), CCallHelpers::tagFor(CallFrameSlot::callee));
         jit.storePtr(GPRInfo::wasmContextInstancePointer, CCallHelpers::addressFor(CallFrameSlot::codeBlock));
@@ -427,8 +427,27 @@ MacroAssemblerCodeRef<JITThunkPtrTag> createJSToWasmJITShared()
         jit.ret();
 
         stackOverflow.link(&jit);
-        jit.emitRestoreCalleeSavesFor(calleeSaves);
-        jit.jumpThunk(CodeLocationLabel<JITThunkPtrTag>(Thunks::singleton().stub(throwStackOverflowFromWasmThunkGenerator).code()));
+        {
+            JIT_COMMENT(jit, "Re-load WebAssemblyFunction Callee");
+            jit.loadPtr(CCallHelpers::addressFor(CallFrameSlot::callee), GPRInfo::regWS1);
+
+            JIT_COMMENT(jit, "Replace the WebAssemblyFunction Callee with our JSToWasm NativeCallee");
+            jit.transferPtr(CCallHelpers::Address(GPRInfo::regWS1, WebAssemblyFunction::offsetOfBoxedJSToWasmCallee()), CCallHelpers::addressFor(CallFrameSlot::callee));
+            if constexpr (is32Bit())
+                jit.store32(CCallHelpers::TrustedImm32(JSValue::NativeCalleeTag), CCallHelpers::tagFor(CallFrameSlot::callee));
+            jit.storePtr(GPRInfo::wasmContextInstancePointer, CCallHelpers::addressFor(CallFrameSlot::codeBlock));
+            jit.jumpThunk(CodeLocationLabel<JITThunkPtrTag>(Thunks::singleton().stub(throwStackOverflowFromWasmThunkGenerator).code()));
+        }
+
+        buildEntryFrameThrew.link(&jit);
+        JIT_COMMENT(jit, "Re-load WebAssemblyFunction Callee");
+        jit.loadPtr(CCallHelpers::addressFor(CallFrameSlot::callee), GPRInfo::regWS1);
+
+        JIT_COMMENT(jit, "Replace the WebAssemblyFunction Callee with our JSToWasm NativeCallee");
+        jit.transferPtr(CCallHelpers::Address(GPRInfo::regWS1, WebAssemblyFunction::offsetOfBoxedJSToWasmCallee()), CCallHelpers::addressFor(CallFrameSlot::callee));
+        if constexpr (is32Bit())
+            jit.store32(CCallHelpers::TrustedImm32(JSValue::NativeCalleeTag), CCallHelpers::tagFor(CallFrameSlot::callee));
+        jit.storePtr(GPRInfo::wasmContextInstancePointer, CCallHelpers::addressFor(CallFrameSlot::codeBlock));
 
         exceptionChecks.link(&jit);
         jit.move(GPRInfo::wasmContextInstancePointer, GPRInfo::argumentGPR0);
@@ -465,7 +484,7 @@ static size_t trampolineReservedStackSize()
 
 static RegisterAtOffsetList usedCalleeSaveRegisters(const Wasm::FunctionSignature& signature)
 {
-    // Pessimistically save callee saves in BoundsChecking mode since the LLInt always bounds checks
+    // Pessimistically save callee saves in BoundsChecking mode since the IPInt always bounds checks
     RegisterSetBuilder calleeSaves = RegisterSetBuilder::wasmPinnedRegisters();
     // FIXME: Is it really worth considering functions that have void() signature? Are those actually common?
     if (signature.argumentCount() || !signature.returnsVoid()) {

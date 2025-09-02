@@ -37,8 +37,10 @@
 #include "StyleHyphenateLimitEdge.h"
 #include "StyleHyphenateLimitLines.h"
 #include "StyleListStyleType.h"
+#include "StyleOrphans.h"
 #include "StyleQuotes.h"
 #include "StyleScrollbarColor.h"
+#include "StyleStrokeMiterlimit.h"
 #include "StyleStrokeWidth.h"
 #include "StyleTextEdge.h"
 #include "StyleTextEmphasisStyle.h"
@@ -49,6 +51,7 @@
 #include "StyleWebKitOverflowScrolling.h"
 #include "StyleWebKitTextStrokeWidth.h"
 #include "StyleWebKitTouchCallout.h"
+#include "StyleWidows.h"
 #include "TabSize.h"
 #include "TouchAction.h"
 #include <wtf/DataRef.h>
@@ -134,14 +137,12 @@ public:
     TextEdge lineFitEdge;
     
     Length wordSpacing;
-    float miterLimit;
+    Style::StrokeMiterlimit miterLimit;
 
     DataRef<Style::CustomPropertyData> customProperties;
 
-    unsigned short widows;
-    unsigned short orphans;
-    PREFERRED_TYPE(bool) unsigned hasAutoWidows : 1;
-    PREFERRED_TYPE(bool) unsigned hasAutoOrphans : 1;
+    Style::Widows widows;
+    Style::Orphans orphans;
 
     PREFERRED_TYPE(TextSecurity) unsigned textSecurity : 2;
     PREFERRED_TYPE(UserModify) unsigned userModify : 2;
@@ -190,7 +191,7 @@ public:
     PREFERRED_TYPE(ContentVisibility) unsigned usedContentVisibility : 2;
     PREFERRED_TYPE(bool) unsigned autoRevealsWhenFound : 1;
     PREFERRED_TYPE(bool) unsigned insideDefaultButton : 1;
-    PREFERRED_TYPE(bool) unsigned insideDisabledSubmitButton : 1;
+    PREFERRED_TYPE(bool) unsigned insideSubmitButton : 1;
 #if HAVE(CORE_MATERIAL)
     PREFERRED_TYPE(AppleVisualEffect) unsigned usedAppleVisualEffectForSubtree : 4;
 #endif

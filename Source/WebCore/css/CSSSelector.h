@@ -66,7 +66,10 @@ public:
     std::array<uint8_t, 3> computeSpecificityTuple() const;
     unsigned specificityForPage() const;
 
-    bool visitAllSimpleSelectors(auto& apply) const;
+    enum class VisitFunctionalPseudoClasses { No, Yes };
+    enum class VisitOnlySubject { No, Yes };
+    using VisitFunctor = WTF::Function<bool(CSSSelector&)>;
+    bool visitSimpleSelectors(VisitFunctor&&, VisitFunctionalPseudoClasses = VisitFunctionalPseudoClasses::No, VisitOnlySubject = VisitOnlySubject::No) const;
 
     bool hasExplicitNestingParent() const;
     bool hasExplicitPseudoClassScope() const;

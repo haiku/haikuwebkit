@@ -27,8 +27,8 @@
 
 #if ENABLE(ASSEMBLER)
 
-#include "RegisterAtOffset.h"
-#include "RegisterSet.h"
+#include <JavaScriptCore/RegisterAtOffset.h>
+#include <JavaScriptCore/RegisterSet.h>
 #include <wtf/FixedVector.h>
 
 namespace JSC {

@@ -106,6 +106,7 @@
 #include "NavigationActionData.h"
 #include "NetworkProcessMessages.h"
 #include "NetworkProcessProxy.h"
+#include "NodeHitTestResult.h"
 #include "NotificationManagerMessageHandlerMessages.h"
 #include "NotificationPermissionRequest.h"
 #include "NotificationPermissionRequestManager.h"
@@ -1929,13 +1930,13 @@ void WebPageProxy::maybeInitializeSandboxExtensionHandle(WebProcessProxy& proces
 #endif
 
     auto createSandboxExtension = [protectedProcess = Ref { process }] (const String& path) {
-#if HAVE(AUDIT_TOKEN)
-        auto token = protectedProcess->protectedConnection()->getAuditToken();
-        ASSERT(token);
-        if (token)
-            return SandboxExtension::createHandleForReadByAuditToken(path, *token);
-#endif
-        return SandboxExtension::createHandle(path, SandboxExtension::Type::ReadOnly);
+        Ref processPool = protectedProcess->processPool();
+        if (auto handle = processPool->sandboxExtensionForFile(path))
+            return handle;
+        auto handle = SandboxExtension::createHandle(path, SandboxExtension::Type::ReadOnly);
+        if (handle)
+            processPool->addSandboxExtensionForFile(path, *handle);
+        return handle;
     };
 
     if (!resourceDirectoryURL.isEmpty()) {
@@ -2097,7 +2098,9 @@ void WebPageProxy::loadRequestWithNavigationShared(Ref<WebProcessProxy>&& proces
             RefPtr protectedThis = weakThis.get();
             if (!protectedThis)
                 return;
-            protectedThis->m_navigationClient->didFailProvisionalNavigationWithError(*protectedThis, legacyEmptyFrameInfo(WTFMove(request)), navigation.ptr(), request.url(), cannotShowURLError(request), nullptr);
+            auto requestURL = request.url();
+            auto error = cannotShowURLError(request);
+            protectedThis->m_navigationClient->didFailProvisionalNavigationWithError(*protectedThis, legacyEmptyFrameInfo(WTFMove(request)), navigation.ptr(), requestURL, error, nullptr);
         });
         return;
     }
@@ -3834,13 +3837,15 @@ void WebPageProxy::didPerformDragControllerAction(std::optional<WebCore::DragOpe
         pageClient->didPerformDragControllerAction();
 }
 
-#if PLATFORM(GTK)
+#if PLATFORM(GTK) || PLATFORM(WPE)
 void WebPageProxy::startDrag(SelectionData&& selectionData, OptionSet<WebCore::DragOperation> dragOperationMask, std::optional<ShareableBitmap::Handle>&& dragImageHandle, IntPoint&& dragImageHotspot)
 {
+#if PLATFORM(GTK)
     if (RefPtr pageClient = this->pageClient()) {
         RefPtr dragImage = dragImageHandle ? ShareableBitmap::create(WTFMove(*dragImageHandle)) : nullptr;
         pageClient->startDrag(WTFMove(selectionData), dragOperationMask, WTFMove(dragImage), WTFMove(dragImageHotspot));
     }
+#endif
     didStartDrag();
 }
 #endif
@@ -4404,7 +4409,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
                 trackingType = mergeTrackingTypes(trackingType, trackingTypeForLocation);
             }
 #else
-            auto trackingTypeForLocation = m_scrollingCoordinatorProxy->eventTrackingTypeForPoint(eventType, location);
+            auto trackingTypeForLocation = m_scrollingCoordinatorProxy->eventTrackingTypeForPoint(eventType, roundedIntPoint(location));
             trackingType = mergeTrackingTypes(trackingType, trackingTypeForLocation);
 #endif
         };
@@ -4838,8 +4843,9 @@ void WebPageProxy::receivedNavigationActionPolicyDecision(WebProcessProxy& proce
     WEBPAGEPROXY_RELEASE_LOG(Loading, "receivedNavigationActionPolicyDecision: frameID=%" PRIu64 ", isMainFrame=%d, navigationID=%" PRIu64 ", policyAction=%" PUBLIC_LOG_STRING, frame.frameID().toUInt64(), frame.isMainFrame(), navigation ? navigation->navigationID().toUInt64() : 0, toString(policyAction).characters());
 
     Ref websiteDataStore = m_websiteDataStore;
+    RefPtr policies = navigation->websitePolicies();
     bool isPolicyDataStore { false };
-    if (RefPtr policies = navigation->websitePolicies()) {
+    if (policies) {
         if (policies->websiteDataStore() && policies->websiteDataStore() != websiteDataStore.ptr()) {
             websiteDataStore = *policies->websiteDataStore();
             processSwapRequestedByClient = ProcessSwapRequestedByClient::Yes;
@@ -4918,6 +4924,15 @@ void WebPageProxy::receivedNavigationActionPolicyDecision(WebProcessProxy& proce
         bool isSubstituteWebArchive = navigation->substituteData() && MIMETypeRegistry::isWebArchiveMIMEType(navigation->substituteData()->MIMEType);
         auto webarchiveURL = isSubstituteWebArchive ? URL { navigation->substituteData()->baseURL } : navigation->currentRequest().url();
         if (isSubstituteWebArchive || (webarchiveURL.protocolIsFile() && webarchiveURL.fileSystemPath().endsWith(".webarchive"_s))) {
+#if PLATFORM(MAC)
+            if (!isSubstituteWebArchive && isQuarantinedAndNotUserApproved(webarchiveURL.fileSystemPath())) {
+                WEBPAGEPROXY_RELEASE_LOG(Loading, "receivedNavigationActionPolicyDecision: file cannot be opened because it is from an unidentified developer.");
+                auto error = WebKit::cancelledError(URL { navigation->currentRequest().url() });
+                error.setType(WebCore::ResourceError::Type::Cancellation);
+                m_navigationClient->didFailProvisionalNavigationWithError(*this, FrameInfoData { frameInfo }, navigation, requestURL, error, nullptr);
+                return;
+            }
+#endif
             WEBPAGEPROXY_RELEASE_LOG(Loading, "receivedNavigationActionPolicyDecision: Swapping in non-persistent websiteDataStore for web archive.");
             if (navigation->targetItem() && navigation->targetItem()->dataStoreForWebArchive())
                 websiteDataStore = *navigation->targetItem()->dataStoreForWebArchive();
@@ -5050,7 +5065,7 @@ void WebPageProxy::receivedNavigationActionPolicyDecision(WebProcessProxy& proce
 
     Ref browsingContextGroup = m_browsingContextGroup;
     Site site { navigation->currentRequest().url() };
-    if (RefPtr process = browsingContextGroup->sharedProcessForSite(websiteDataStore, preferences, site, lockdownMode, Ref { m_configuration }, frame.isMainFrame() ? IsMainFrame::Yes : IsMainFrame::No)) {
+    if (RefPtr process = browsingContextGroup->sharedProcessForSite(websiteDataStore, policies.get(), preferences, site, lockdownMode, Ref { m_configuration }, frame.isMainFrame() ? IsMainFrame::Yes : IsMainFrame::No)) {
         continueWithProcessForNavigation(process->process(), nullptr, "Uses shared Web process"_s);
         return;
     }
@@ -8674,6 +8689,9 @@ void WebPageProxy::createNewPage(IPC::Connection& connection, WindowFeatures&& w
             return;
         }
 
+        if (RefPtr pageClient = this->pageClient())
+            pageClient->dismissAnyOpenPicker();
+
         newPage->setOpenedByDOM();
 
         if (openerAppInitiatedState)
@@ -8998,8 +9016,9 @@ void WebPageProxy::mouseDidMoveOverElement(WebHitTestResultData&& hitTestResultD
 #if PLATFORM(MAC)
     m_lastMouseMoveHitTestResult = API::HitTestResult::create(hitTestResultData, this);
 #endif
+
     m_uiClient->mouseDidMoveOverElement(*this, hitTestResultData, modifiers, protectedLegacyMainFrameProcess()->transformHandlesToObjects(userData.protectedObject().get()).get());
-    setToolTip(hitTestResultData.toolTipText);
+    setToolTip(hitTestResultData.tooltipText);
 }
 
 void WebPageProxy::setToolbarsAreVisible(bool toolbarsAreVisible)
@@ -10858,6 +10877,7 @@ void WebPageProxy::setToolTip(const String& toolTip)
     m_toolTip = toolTip;
     if (RefPtr pageClient = this->pageClient())
         pageClient->toolTipChanged(oldToolTip, m_toolTip);
+    m_uiClient->tooltipDidChange(*this, m_toolTip);
 }
 
 void WebPageProxy::setCursor(const WebCore::Cursor& cursor)
@@ -11879,6 +11899,7 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
     parameters.footerBannerHeight = footerBannerHeight();
     if (m_viewWindowCoordinates)
         parameters.viewWindowCoordinates = *m_viewWindowCoordinates;
+    parameters.overflowHeightForTopScrollEdgeEffect = m_overflowHeightForTopScrollEdgeEffect;
 #endif
 
 #if ENABLE(META_VIEWPORT)
@@ -13130,6 +13151,22 @@ Awaitable<std::optional<WebCore::FloatRect>> WebPageProxy::convertRectToMainFram
     co_return co_await AwaitableFromCompletionHandler<std::optional<WebCore::FloatRect>> { [protectedThis = Ref { *this }, rect, frameID] (auto completionHandler) {
         protectedThis->convertRectToMainFrameCoordinates(rect, frameID, WTFMove(completionHandler));
     } };
+}
+
+void WebPageProxy::hitTestAtPoint(WebCore::FrameIdentifier frameID, WebCore::FloatPoint point, CompletionHandler<void(std::optional<NodeAndFrameInfo>&&)>&& completionHandler)
+{
+    sendWithAsyncReplyToProcessContainingFrame(frameID, Messages::WebPage::HitTestAtPoint(frameID, point), [weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] (auto&& result) mutable {
+        WTF::switchOn(WTFMove(result.variant), [&] (std::monostate) {
+            completionHandler(std::nullopt);
+        }, [&] (WebKit::NodeHitTestResult::RemoteFrameInfo&& info) {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis)
+                return completionHandler(std::nullopt);
+            protectedThis->hitTestAtPoint(info.remoteFrameIdentifier, info.transformedPoint, WTFMove(completionHandler));
+        }, [&] (NodeAndFrameInfo&& nodeAndFrame) {
+            completionHandler(WTFMove(nodeAndFrame));
+        });
+    });
 }
 
 void WebPageProxy::didFinishLoadingDataForCustomContentProvider(String&& suggestedFilename, std::span<const uint8_t> dataReference)
@@ -14438,6 +14475,13 @@ void WebPageProxy::requestPointerLock(IPC::Connection& connection, CompletionHan
         didDenyPointerLock(WTFMove(completionHandler));
         return;
     }
+
+#if HAVE(MOUSE_DEVICE_OBSERVATION)
+    if (!hasMouseDevice()) {
+        didDenyPointerLock(WTFMove(completionHandler));
+        return;
+    }
+#endif
 
     Ref webContentProcess = WebProcessProxy::fromConnection(connection);
 

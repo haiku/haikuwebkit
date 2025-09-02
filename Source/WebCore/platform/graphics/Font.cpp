@@ -703,7 +703,7 @@ WTF::TextStream& operator<<(WTF::TextStream& ts, const GlyphBuffer& glyphBuffer)
         ts << ", font: " <<  &font;
         ts << ", advance: width:" <<  width(advance) << " height:" << height(advance);
         ts << ", string index: "  << glyphBuffer.uncheckedStringOffsetAt(index);
-        ts << ", origin: " << glyphBuffer.originAt(index);
+        ts << ", origin: " << DoublePoint(glyphBuffer.originAt(index));
         ts << ", glyph bounds: " << bounds;
     }
     return ts;

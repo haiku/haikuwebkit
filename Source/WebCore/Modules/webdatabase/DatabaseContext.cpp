@@ -200,6 +200,11 @@ void DatabaseContext::databaseExceededQuota(const String& name, DatabaseDetails 
     ASSERT(context->isWorkerGlobalScope());
 }
 
+Document* DatabaseContext::document() const
+{
+    return downcast<Document>(ActiveDOMObject::scriptExecutionContext());
+}
+
 const SecurityOriginData& DatabaseContext::securityOrigin() const
 {
     return scriptExecutionContext()->securityOrigin()->data();

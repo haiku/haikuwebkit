@@ -39,14 +39,14 @@ template<auto R, typename V> struct CSSValueConversion<Integer<R, V>> {
     auto operator()(BuilderState& builderState, const CSSPrimitiveValue& value) -> Integer<R, V>
     {
         Ref protectedValue = value;
-        return { protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData())) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Integer<R, V>
     {
         RefPtr protectedValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!protectedValue)
             return 0_css_integer;
-        return { protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData())) };
     }
 };
 
@@ -54,14 +54,14 @@ template<auto R, typename V> struct CSSValueConversion<Number<R, V>> {
     auto operator()(BuilderState& builderState, const CSSPrimitiveValue& value) -> Number<R, V>
     {
         Ref protectedValue = value;
-        return { protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData())) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Number<R, V>
     {
         RefPtr protectedValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!protectedValue)
-            return 0_css_px;
-        return { protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData()) };
+            return 0_css_number;
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsNumber<V>(builderState.cssToLengthConversionData())) };
     }
 };
 
@@ -69,14 +69,14 @@ template<auto R, typename V> struct CSSValueConversion<Percentage<R, V>> {
     auto operator()(BuilderState& builderState, const CSSPrimitiveValue& value) -> Percentage<R, V>
     {
         Ref protectedValue = value;
-        return { protectedValue->resolveAsPercentage<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsPercentage<V>(builderState.cssToLengthConversionData())) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Percentage<R, V>
     {
         RefPtr protectedValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!protectedValue)
-            return 0_css_px;
-        return { protectedValue->resolveAsPercentage<V>(builderState.cssToLengthConversionData()) };
+            return 0_css_percentage;
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsPercentage<V>(builderState.cssToLengthConversionData())) };
     }
 };
 
@@ -84,14 +84,14 @@ template<auto R, typename V> struct CSSValueConversion<Angle<R, V>> {
     auto operator()(BuilderState& builderState, const CSSPrimitiveValue& value) -> Angle<R, V>
     {
         Ref protectedValue = value;
-        return { protectedValue->resolveAsAngle<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsAngle<V>(builderState.cssToLengthConversionData())) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Angle<R, V>
     {
         RefPtr protectedValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!protectedValue)
-            return 0_css_px;
-        return { protectedValue->resolveAsAngle<V>(builderState.cssToLengthConversionData()) };
+            return 0_css_deg;
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsAngle<V>(builderState.cssToLengthConversionData())) };
     }
 };
 
@@ -102,7 +102,7 @@ template<auto R, typename V> struct CSSValueConversion<Length<R, V>> {
         auto conversionData = builderState.useSVGZoomRulesForLength()
             ? builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
             : builderState.cssToLengthConversionData();
-        return { protectedValue->resolveAsLength<V>(conversionData) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsLength<V>(conversionData)) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Length<R, V>
     {
@@ -112,7 +112,7 @@ template<auto R, typename V> struct CSSValueConversion<Length<R, V>> {
         auto conversionData = builderState.useSVGZoomRulesForLength()
             ? builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
             : builderState.cssToLengthConversionData();
-        return { protectedValue->resolveAsLength<V>(conversionData) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsLength<V>(conversionData)) };
     }
 };
 
@@ -120,14 +120,14 @@ template<auto R, typename V> struct CSSValueConversion<Time<R, V>> {
     auto operator()(BuilderState& builderState, const CSSPrimitiveValue& value) -> Time<R, V>
     {
         Ref protectedValue = value;
-        return { protectedValue->resolveAsTime<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsTime<V>(builderState.cssToLengthConversionData())) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Time<R, V>
     {
         RefPtr protectedValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!protectedValue)
-            return 0_css_px;
-        return { protectedValue->resolveAsTime<V>(builderState.cssToLengthConversionData()) };
+            return 0_css_s;
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsTime<V>(builderState.cssToLengthConversionData())) };
     }
 };
 
@@ -135,14 +135,14 @@ template<auto R, typename V> struct CSSValueConversion<Resolution<R, V>> {
     auto operator()(BuilderState& builderState, const CSSPrimitiveValue& value) -> Resolution<R, V>
     {
         Ref protectedValue = value;
-        return { protectedValue->resolveAsResolution<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsResolution<V>(builderState.cssToLengthConversionData())) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Resolution<R, V>
     {
         RefPtr protectedValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!protectedValue)
-            return 0_css_px;
-        return { protectedValue->resolveAsResolution<V>(builderState.cssToLengthConversionData()) };
+            return 0_css_dppx;
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsResolution<V>(builderState.cssToLengthConversionData())) };
     }
 };
 
@@ -150,14 +150,14 @@ template<auto R, typename V> struct CSSValueConversion<Flex<R, V>> {
     auto operator()(BuilderState& builderState, const CSSPrimitiveValue& value) -> Flex<R, V>
     {
         Ref protectedValue = value;
-        return { protectedValue->resolveAsFlex<V>(builderState.cssToLengthConversionData()) };
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsFlex<V>(builderState.cssToLengthConversionData())) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> Flex<R, V>
     {
         RefPtr protectedValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!protectedValue)
-            return 0_css_px;
-        return { protectedValue->resolveAsFlex<V>(builderState.cssToLengthConversionData()) };
+            return 0_css_fr;
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsFlex<V>(builderState.cssToLengthConversionData())) };
     }
 };
 
@@ -169,10 +169,10 @@ template<auto R, typename V> struct CSSValueConversion<LengthPercentage<R, V>> {
             ? builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
             : builderState.cssToLengthConversionData();
         if (protectedValue->isPercentage())
-            return typename LengthPercentage<R, V>::Percentage { protectedValue->resolveAsPercentage<V>(conversionData) };
+            return typename LengthPercentage<R, V>::Percentage { CSS::clampToRange<R, V>(protectedValue->resolveAsPercentage<V>(conversionData)) };
         if (protectedValue->isCalculatedPercentageWithLength())
             return typename LengthPercentage<R, V>::Calc { protectedValue->protectedCssCalcValue()->createCalculationValue(conversionData, CSSCalcSymbolTable { }) };
-        return typename LengthPercentage<R, V>::Dimension { protectedValue->resolveAsLength<V>(conversionData) };
+        return typename LengthPercentage<R, V>::Dimension { CSS::clampToRange<R, V>(protectedValue->resolveAsLength<V>(conversionData)) };
     }
     auto operator()(BuilderState& builderState, const CSSValue& value) -> LengthPercentage<R, V>
     {
@@ -183,10 +183,10 @@ template<auto R, typename V> struct CSSValueConversion<LengthPercentage<R, V>> {
             ? builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
             : builderState.cssToLengthConversionData();
         if (protectedValue->isPercentage())
-            return typename LengthPercentage<R, V>::Percentage { protectedValue->resolveAsPercentage<V>(conversionData) };
+            return typename LengthPercentage<R, V>::Percentage { CSS::clampToRange<R, V>(protectedValue->resolveAsPercentage<V>(conversionData)) };
         if (protectedValue->isCalculatedPercentageWithLength())
             return typename LengthPercentage<R, V>::Calc { protectedValue->protectedCssCalcValue()->createCalculationValue(conversionData, CSSCalcSymbolTable { }) };
-        return typename LengthPercentage<R, V>::Dimension { protectedValue->resolveAsLength<V>(conversionData) };
+        return typename LengthPercentage<R, V>::Dimension { CSS::clampToRange<R, V>(protectedValue->resolveAsLength<V>(conversionData)) };
     }
 };
 

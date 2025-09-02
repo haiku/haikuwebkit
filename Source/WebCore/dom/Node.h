@@ -106,7 +106,7 @@ const int initialNodeVectorSize = 11; // Covers 99.5%. See webkit.org/b/80706
 typedef Vector<Ref<Node>, initialNodeVectorSize> NodeVector;
 
 class Node : public EventTarget, public CanMakeCheckedPtr<Node> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(Node);
+    WTF_MAKE_PREFERABLY_COMPACT_TZONE_OR_ISO_ALLOCATED(Node);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(Node);
 
     friend class Document;
@@ -263,7 +263,7 @@ public:
     bool isTreeScope() const { return isDocumentNode() || isShadowRoot(); }
     bool isDocumentFragment() const { return nodeType() == DOCUMENT_FRAGMENT_NODE; }
     bool isShadowRoot() const { return isDocumentFragment() && hasTypeFlag(TypeFlag::IsShadowRootOrFormControlElement); }
-    bool isUserAgentShadowRoot() const; // Defined in ShadowRoot.h
+    inline bool isUserAgentShadowRoot() const; // Defined in NodeInlines.h
 
     bool hasCustomStyleResolveCallbacks() const { return hasTypeFlag(TypeFlag::HasCustomStyleResolveCallbacks); }
 
@@ -317,8 +317,8 @@ public:
     Node* nonBoundaryShadowTreeRootNode();
 
     // Node's parent or shadow tree host.
-    inline ContainerNode* parentOrShadowHostNode() const; // Defined in ShadowRoot.h
-    inline RefPtr<ContainerNode> protectedParentOrShadowHostNode() const; // Defined in ShadowRoot.h
+    inline ContainerNode* parentOrShadowHostNode() const; // Defined in NodeInlines.h
+    inline RefPtr<ContainerNode> protectedParentOrShadowHostNode() const; // Defined in NodeInlines.h
     ContainerNode* parentInComposedTree() const;
     WEBCORE_EXPORT Element* parentElementInComposedTree() const;
     Element* parentOrShadowHostElement() const;

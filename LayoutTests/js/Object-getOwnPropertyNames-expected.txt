@@ -65,11 +65,11 @@ PASS getSortedOwnPropertyNames(JSON) is ['isRawJSON', 'parse', 'rawJSON', 'strin
 PASS getSortedOwnPropertyNames(Symbol) is ['asyncIterator','for', 'hasInstance', 'isConcatSpreadable', 'iterator', 'keyFor', 'length', 'match', 'matchAll', 'name', 'prototype', 'replace', 'search', 'species', 'split', 'toPrimitive', 'toStringTag', 'unscopables']
 PASS getSortedOwnPropertyNames(Symbol.prototype) is ['constructor', 'description', 'toString', 'valueOf']
 PASS getSortedOwnPropertyNames(Map) is ['groupBy', 'length', 'name', 'prototype']
-PASS getSortedOwnPropertyNames(Map.prototype) is ['clear', 'constructor', 'delete', 'entries', 'forEach', 'get', 'has', 'keys', 'set', 'size', 'values']
+PASS getSortedOwnPropertyNames(Map.prototype) is ['clear', 'constructor', 'delete', 'entries', 'forEach', 'get', 'getOrInsert', 'getOrInsertComputed', 'has', 'keys', 'set', 'size', 'values']
 PASS getSortedOwnPropertyNames(Set) is ['length', 'name', 'prototype']
 PASS getSortedOwnPropertyNames(Set.prototype) is ['add', 'clear', 'constructor', 'delete', 'difference', 'entries', 'forEach', 'has', 'intersection', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf', 'keys', 'size', 'symmetricDifference', 'union', 'values']
 PASS getSortedOwnPropertyNames(WeakMap) is ['length', 'name', 'prototype']
-PASS getSortedOwnPropertyNames(WeakMap.prototype) is ['constructor', 'delete', 'get', 'has', 'set']
+PASS getSortedOwnPropertyNames(WeakMap.prototype) is ['constructor', 'delete', 'get', 'getOrInsert', 'getOrInsertComputed', 'has', 'set']
 PASS getSortedOwnPropertyNames(WeakSet) is ['length', 'name', 'prototype']
 PASS getSortedOwnPropertyNames(WeakSet.prototype) is ['add', 'constructor', 'delete', 'has']
 PASS globalPropertyNames.indexOf('NaN') != -1 is true

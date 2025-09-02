@@ -85,6 +85,8 @@ void AutomationClient::requestAutomationSession(const String& sessionIdentifier,
         [configuration setSuppressesICECandidateFiltering:sessionCapabilities.suppressICECandidateFiltering.value()];
     if (sessionCapabilities.alwaysAllowAutoplay)
         [configuration setAlwaysAllowAutoplay:sessionCapabilities.alwaysAllowAutoplay.value()];
+    if (sessionCapabilities.siteIsolationEnabled)
+        [configuration setSiteIsolationEnabled:sessionCapabilities.siteIsolationEnabled.value()];
 
     // Force clients to create and register a session asynchronously. Otherwise,
     // RemoteInspector will try to acquire its lock to register the new session and

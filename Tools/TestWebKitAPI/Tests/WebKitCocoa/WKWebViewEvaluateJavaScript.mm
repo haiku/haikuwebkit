@@ -1107,7 +1107,7 @@ TEST(EvaluateJavaScript, ReturnTypes)
     }];
 
     constexpr NSUInteger depth { 100000 };
-    NSString *deeplyNestedArray = [[@"" stringByPaddingToLength:depth withString: @"[" startingAtIndex:0] stringByAppendingString:[@"" stringByPaddingToLength:depth withString: @"[" startingAtIndex:0]];
+    NSString *deeplyNestedArray = [[@"" stringByPaddingToLength:depth withString: @"{" startingAtIndex:0] stringByAppendingString:[@"" stringByPaddingToLength:depth withString: @"{" startingAtIndex:0]];
     [webView evaluateJavaScript:deeplyNestedArray completionHandler:^(id value, NSError *error) {
         EXPECT_WK_STREQ(error.domain, WKErrorDomain);
         EXPECT_EQ(error.code, WKErrorJavaScriptExceptionOccurred);

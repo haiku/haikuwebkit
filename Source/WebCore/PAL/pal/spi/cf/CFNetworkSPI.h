@@ -597,6 +597,12 @@ WTF_EXTERN_C_END
 @property (setter=_setPrivacyProxyFailClosedForUnreachableNonMainHosts:) BOOL _privacyProxyFailClosedForUnreachableNonMainHosts;
 @end
 
+@interface NSMutableURLRequest (Staging_151313184)
+#if HAVE(STRICT_FAIL_CLOSED)
+@property (setter=_setPrivacyProxyStrictFailClosed:) BOOL _privacyProxyStrictFailClosed;
+#endif
+@end
+
 @interface NSURLSessionConfiguration (Staging_102778152)
 @property (nonatomic) BOOL _skipsStackTraceCapture;
 @end

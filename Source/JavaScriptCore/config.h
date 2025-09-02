@@ -31,7 +31,7 @@
 #define JSC_MAC_VERSION_TBA 0
 #define JSC_IOS_VERSION_TBA 0
 
-#include "JSExportMacros.h"
+#include <JavaScriptCore/JSExportMacros.h>
 
 #ifdef __cplusplus
 #undef new

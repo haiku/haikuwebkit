@@ -318,9 +318,9 @@ void RenderFileUploadControl::computePreferredLogicalWidths()
     clearNeedsPreferredWidthsUpdate();
 }
 
-VisiblePosition RenderFileUploadControl::positionForPoint(const LayoutPoint&, HitTestSource, const RenderFragmentContainer*)
+PositionWithAffinity RenderFileUploadControl::positionForPoint(const LayoutPoint&, HitTestSource, const RenderFragmentContainer*)
 {
-    return VisiblePosition();
+    return PositionWithAffinity();
 }
 
 HTMLInputElement* RenderFileUploadControl::uploadButton() const

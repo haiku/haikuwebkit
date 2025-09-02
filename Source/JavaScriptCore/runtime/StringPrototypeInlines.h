@@ -1243,14 +1243,21 @@ ALWAYS_INLINE JSString* replaceOneWithStringUsingRegExpSearch(VM& vm, JSGlobalOb
     auto after = StringView { source }.substring(result.end, source.length() - result.end);
 
     size_t dollarPos = replacementString.find('$');
-    if (dollarPos == WTF::notFound) [[likely]]
-        RELEASE_AND_RETURN(scope, jsString(vm, makeString(before, StringView { replacementString }, after)));
+    if (dollarPos == WTF::notFound) [[likely]] {
+        auto concatenated = tryMakeString(before, StringView { replacementString }, after);
+        if (!concatenated) [[unlikely]]
+            OUT_OF_MEMORY(globalObject, scope);
+        RELEASE_AND_RETURN(scope, jsString(vm, WTFMove(concatenated)));
+    }
 
     StringBuilder replacement(OverflowPolicy::RecordOverflow);
     substituteBackreferencesSlow(replacement, replacementString, source, ovector, regExp, dollarPos);
     if (replacement.hasOverflowed()) [[unlikely]]
         OUT_OF_MEMORY(globalObject, scope);
-    RELEASE_AND_RETURN(scope, jsString(vm, makeString(before, StringView { replacement }, after)));
+    auto concatenated = tryMakeString(before, StringView { replacement }, after);
+    if (!concatenated) [[unlikely]]
+        OUT_OF_MEMORY(globalObject, scope);
+    RELEASE_AND_RETURN(scope, jsString(vm, WTFMove(concatenated)));
 }
 
 ALWAYS_INLINE JSString* replaceUsingRegExpSearch(VM& vm, JSGlobalObject* globalObject, JSString* string, JSValue searchValue, const CallData& callData, const String& replacementString, JSValue replaceValue)

@@ -28,9 +28,9 @@
  
 #pragma once
 
-#include "CodeBlock.h"
-#include "JSSymbolTableObject.h"
-#include "SymbolTable.h"
+#include <JavaScriptCore/CodeBlock.h>
+#include <JavaScriptCore/JSSymbolTableObject.h>
+#include <JavaScriptCore/SymbolTable.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
@@ -116,6 +116,8 @@ public:
 
     DECLARE_INFO;
 
+    DECLARE_VISIT_CHILDREN;
+
     inline static Structure* createStructure(VM&, JSGlobalObject*);
 
 protected:
@@ -123,7 +125,6 @@ protected:
 
     DECLARE_DEFAULT_FINISH_CREATION;
 
-    DECLARE_VISIT_CHILDREN;
     static void analyzeHeap(JSCell*, HeapAnalyzer&);
 };
 

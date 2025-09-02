@@ -31,7 +31,7 @@
 namespace WebCore {
 
 // Modes for some of the line-related functions.
-enum LineDirectionMode { HorizontalLine, VerticalLine };
+enum class LineDirection : bool { Horizontal, Vertical };
 
 enum class BleedAvoidance : uint8_t {
     None,

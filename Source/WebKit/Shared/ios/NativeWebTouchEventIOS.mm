@@ -82,9 +82,9 @@ static WebPlatformTouchPoint::TouchType convertTouchType(WKTouchPointType touchT
     }
 }
 
-static inline WebCore::IntPoint positionForCGPoint(CGPoint position)
+static inline WebCore::DoublePoint positionForCGPoint(CGPoint position)
 {
-    return WebCore::IntPoint(position);
+    return WebCore::DoublePoint(position);
 }
 
 static CGFloat radiusForTouchPoint(const WKTouchPoint& touchPoint)

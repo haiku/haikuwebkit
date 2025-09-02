@@ -539,6 +539,282 @@ template<> ASCIILiteral expectedEnumerationValues<TestObj::Confidence>()
     return "\"high\", \"kinda-low\""_s;
 }
 
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefault enumerationValue)
+{
+    static const std::array<NeverDestroyed<String>, 4> values {
+        MAKE_STATIC_STRING_IMPL("value1"),
+        MAKE_STATIC_STRING_IMPL("value2"),
+        MAKE_STATIC_STRING_IMPL("value3"),
+        emptyString(),
+    };
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefault::Value1) == 0, "TestObj::EnumWithMissingValueDefault::Value1 is not 0 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefault::Value2) == 1, "TestObj::EnumWithMissingValueDefault::Value2 is not 1 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefault::Value3) == 2, "TestObj::EnumWithMissingValueDefault::Value3 is not 2 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefault::EmptyString) == 3, "TestObj::EnumWithMissingValueDefault::EmptyString is not 3 as expected");
+    ASSERT(static_cast<size_t>(enumerationValue) < std::size(values));
+    return values[static_cast<size_t>(enumerationValue)];
+}
+
+template<> JSString* convertEnumerationToJS(VM& vm, TestObj::EnumWithMissingValueDefault enumerationValue)
+{
+    return jsStringWithCache(vm, convertEnumerationToString(enumerationValue));
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefault> parseEnumerationFromString<TestObj::EnumWithMissingValueDefault>(const String& stringValue)
+{
+    if (stringValue.isEmpty())
+        return TestObj::EnumWithMissingValueDefault::EmptyString;
+    static constexpr std::array<std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefault>, 3> mappings {
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefault> { "value1"_s, TestObj::EnumWithMissingValueDefault::Value1 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefault> { "value2"_s, TestObj::EnumWithMissingValueDefault::Value2 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefault> { "value3"_s, TestObj::EnumWithMissingValueDefault::Value3 },
+    };
+    static constexpr SortedArrayMap enumerationMapping { mappings };
+    if (auto* enumerationValue = enumerationMapping.tryGet(stringValue); enumerationValue) [[likely]]
+        return *enumerationValue;
+    return std::nullopt;
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefault> parseEnumeration<TestObj::EnumWithMissingValueDefault>(JSGlobalObject& lexicalGlobalObject, JSValue value)
+{
+    return parseEnumerationFromString<TestObj::EnumWithMissingValueDefault>(value.toWTFString(&lexicalGlobalObject));
+}
+
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefault>()
+{
+    return "\"value1\", \"value2\", \"value3\", \"\""_s;
+}
+
+String convertEnumerationToString(TestObj::EnumWithInvalidValueDefault enumerationValue)
+{
+    static const std::array<NeverDestroyed<String>, 4> values {
+        MAKE_STATIC_STRING_IMPL("value1"),
+        MAKE_STATIC_STRING_IMPL("value2"),
+        MAKE_STATIC_STRING_IMPL("value3"),
+        emptyString(),
+    };
+    static_assert(static_cast<size_t>(TestObj::EnumWithInvalidValueDefault::Value1) == 0, "TestObj::EnumWithInvalidValueDefault::Value1 is not 0 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithInvalidValueDefault::Value2) == 1, "TestObj::EnumWithInvalidValueDefault::Value2 is not 1 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithInvalidValueDefault::Value3) == 2, "TestObj::EnumWithInvalidValueDefault::Value3 is not 2 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithInvalidValueDefault::EmptyString) == 3, "TestObj::EnumWithInvalidValueDefault::EmptyString is not 3 as expected");
+    ASSERT(static_cast<size_t>(enumerationValue) < std::size(values));
+    return values[static_cast<size_t>(enumerationValue)];
+}
+
+template<> JSString* convertEnumerationToJS(VM& vm, TestObj::EnumWithInvalidValueDefault enumerationValue)
+{
+    return jsStringWithCache(vm, convertEnumerationToString(enumerationValue));
+}
+
+template<> std::optional<TestObj::EnumWithInvalidValueDefault> parseEnumerationFromString<TestObj::EnumWithInvalidValueDefault>(const String& stringValue)
+{
+    if (stringValue.isEmpty())
+        return TestObj::EnumWithInvalidValueDefault::EmptyString;
+    static constexpr std::array<std::pair<ComparableASCIILiteral, TestObj::EnumWithInvalidValueDefault>, 3> mappings {
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithInvalidValueDefault> { "value1"_s, TestObj::EnumWithInvalidValueDefault::Value1 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithInvalidValueDefault> { "value2"_s, TestObj::EnumWithInvalidValueDefault::Value2 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithInvalidValueDefault> { "value3"_s, TestObj::EnumWithInvalidValueDefault::Value3 },
+    };
+    static constexpr SortedArrayMap enumerationMapping { mappings };
+    if (auto* enumerationValue = enumerationMapping.tryGet(stringValue); enumerationValue) [[likely]]
+        return *enumerationValue;
+    return std::nullopt;
+}
+
+template<> std::optional<TestObj::EnumWithInvalidValueDefault> parseEnumeration<TestObj::EnumWithInvalidValueDefault>(JSGlobalObject& lexicalGlobalObject, JSValue value)
+{
+    return parseEnumerationFromString<TestObj::EnumWithInvalidValueDefault>(value.toWTFString(&lexicalGlobalObject));
+}
+
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithInvalidValueDefault>()
+{
+    return "\"value1\", \"value2\", \"value3\", \"\""_s;
+}
+
+String convertEnumerationToString(TestObj::EnumWithMissingAndInvalidValueDefault enumerationValue)
+{
+    static const std::array<NeverDestroyed<String>, 4> values {
+        MAKE_STATIC_STRING_IMPL("value1"),
+        MAKE_STATIC_STRING_IMPL("value2"),
+        MAKE_STATIC_STRING_IMPL("value3"),
+        emptyString(),
+    };
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingAndInvalidValueDefault::Value1) == 0, "TestObj::EnumWithMissingAndInvalidValueDefault::Value1 is not 0 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingAndInvalidValueDefault::Value2) == 1, "TestObj::EnumWithMissingAndInvalidValueDefault::Value2 is not 1 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingAndInvalidValueDefault::Value3) == 2, "TestObj::EnumWithMissingAndInvalidValueDefault::Value3 is not 2 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingAndInvalidValueDefault::EmptyString) == 3, "TestObj::EnumWithMissingAndInvalidValueDefault::EmptyString is not 3 as expected");
+    ASSERT(static_cast<size_t>(enumerationValue) < std::size(values));
+    return values[static_cast<size_t>(enumerationValue)];
+}
+
+template<> JSString* convertEnumerationToJS(VM& vm, TestObj::EnumWithMissingAndInvalidValueDefault enumerationValue)
+{
+    return jsStringWithCache(vm, convertEnumerationToString(enumerationValue));
+}
+
+template<> std::optional<TestObj::EnumWithMissingAndInvalidValueDefault> parseEnumerationFromString<TestObj::EnumWithMissingAndInvalidValueDefault>(const String& stringValue)
+{
+    if (stringValue.isEmpty())
+        return TestObj::EnumWithMissingAndInvalidValueDefault::EmptyString;
+    static constexpr std::array<std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingAndInvalidValueDefault>, 3> mappings {
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingAndInvalidValueDefault> { "value1"_s, TestObj::EnumWithMissingAndInvalidValueDefault::Value1 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingAndInvalidValueDefault> { "value2"_s, TestObj::EnumWithMissingAndInvalidValueDefault::Value2 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingAndInvalidValueDefault> { "value3"_s, TestObj::EnumWithMissingAndInvalidValueDefault::Value3 },
+    };
+    static constexpr SortedArrayMap enumerationMapping { mappings };
+    if (auto* enumerationValue = enumerationMapping.tryGet(stringValue); enumerationValue) [[likely]]
+        return *enumerationValue;
+    return std::nullopt;
+}
+
+template<> std::optional<TestObj::EnumWithMissingAndInvalidValueDefault> parseEnumeration<TestObj::EnumWithMissingAndInvalidValueDefault>(JSGlobalObject& lexicalGlobalObject, JSValue value)
+{
+    return parseEnumerationFromString<TestObj::EnumWithMissingAndInvalidValueDefault>(value.toWTFString(&lexicalGlobalObject));
+}
+
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingAndInvalidValueDefault>()
+{
+    return "\"value1\", \"value2\", \"value3\", \"\""_s;
+}
+
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefaultNoQuotes enumerationValue)
+{
+    static const std::array<NeverDestroyed<String>, 4> values {
+        MAKE_STATIC_STRING_IMPL("value1"),
+        MAKE_STATIC_STRING_IMPL("value2"),
+        MAKE_STATIC_STRING_IMPL("value3"),
+        emptyString(),
+    };
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNoQuotes::Value1) == 0, "TestObj::EnumWithMissingValueDefaultNoQuotes::Value1 is not 0 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNoQuotes::Value2) == 1, "TestObj::EnumWithMissingValueDefaultNoQuotes::Value2 is not 1 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNoQuotes::Value3) == 2, "TestObj::EnumWithMissingValueDefaultNoQuotes::Value3 is not 2 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNoQuotes::EmptyString) == 3, "TestObj::EnumWithMissingValueDefaultNoQuotes::EmptyString is not 3 as expected");
+    ASSERT(static_cast<size_t>(enumerationValue) < std::size(values));
+    return values[static_cast<size_t>(enumerationValue)];
+}
+
+template<> JSString* convertEnumerationToJS(VM& vm, TestObj::EnumWithMissingValueDefaultNoQuotes enumerationValue)
+{
+    return jsStringWithCache(vm, convertEnumerationToString(enumerationValue));
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNoQuotes> parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNoQuotes>(const String& stringValue)
+{
+    if (stringValue.isEmpty())
+        return TestObj::EnumWithMissingValueDefaultNoQuotes::EmptyString;
+    static constexpr std::array<std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNoQuotes>, 3> mappings {
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNoQuotes> { "value1"_s, TestObj::EnumWithMissingValueDefaultNoQuotes::Value1 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNoQuotes> { "value2"_s, TestObj::EnumWithMissingValueDefaultNoQuotes::Value2 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNoQuotes> { "value3"_s, TestObj::EnumWithMissingValueDefaultNoQuotes::Value3 },
+    };
+    static constexpr SortedArrayMap enumerationMapping { mappings };
+    if (auto* enumerationValue = enumerationMapping.tryGet(stringValue); enumerationValue) [[likely]]
+        return *enumerationValue;
+    return std::nullopt;
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNoQuotes> parseEnumeration<TestObj::EnumWithMissingValueDefaultNoQuotes>(JSGlobalObject& lexicalGlobalObject, JSValue value)
+{
+    return parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNoQuotes>(value.toWTFString(&lexicalGlobalObject));
+}
+
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefaultNoQuotes>()
+{
+    return "\"value1\", \"value2\", \"value3\", \"\""_s;
+}
+
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefaultAsEmptyValue enumerationValue)
+{
+    static const std::array<NeverDestroyed<String>, 4> values {
+        MAKE_STATIC_STRING_IMPL("value1"),
+        MAKE_STATIC_STRING_IMPL("value2"),
+        MAKE_STATIC_STRING_IMPL("value3"),
+        emptyString(),
+    };
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value1) == 0, "TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value1 is not 0 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value2) == 1, "TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value2 is not 1 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value3) == 2, "TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value3 is not 2 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultAsEmptyValue::EmptyString) == 3, "TestObj::EnumWithMissingValueDefaultAsEmptyValue::EmptyString is not 3 as expected");
+    ASSERT(static_cast<size_t>(enumerationValue) < std::size(values));
+    return values[static_cast<size_t>(enumerationValue)];
+}
+
+template<> JSString* convertEnumerationToJS(VM& vm, TestObj::EnumWithMissingValueDefaultAsEmptyValue enumerationValue)
+{
+    return jsStringWithCache(vm, convertEnumerationToString(enumerationValue));
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultAsEmptyValue> parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultAsEmptyValue>(const String& stringValue)
+{
+    if (stringValue.isEmpty())
+        return TestObj::EnumWithMissingValueDefaultAsEmptyValue::EmptyString;
+    static constexpr std::array<std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultAsEmptyValue>, 3> mappings {
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultAsEmptyValue> { "value1"_s, TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value1 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultAsEmptyValue> { "value2"_s, TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value2 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultAsEmptyValue> { "value3"_s, TestObj::EnumWithMissingValueDefaultAsEmptyValue::Value3 },
+    };
+    static constexpr SortedArrayMap enumerationMapping { mappings };
+    if (auto* enumerationValue = enumerationMapping.tryGet(stringValue); enumerationValue) [[likely]]
+        return *enumerationValue;
+    return std::nullopt;
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultAsEmptyValue> parseEnumeration<TestObj::EnumWithMissingValueDefaultAsEmptyValue>(JSGlobalObject& lexicalGlobalObject, JSValue value)
+{
+    return parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultAsEmptyValue>(value.toWTFString(&lexicalGlobalObject));
+}
+
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefaultAsEmptyValue>()
+{
+    return "\"value1\", \"value2\", \"value3\", \"\""_s;
+}
+
+String convertEnumerationToString(TestObj::EnumWithMissingValueDefaultNotInEnumValues enumerationValue)
+{
+    static const std::array<NeverDestroyed<String>, 4> values {
+        MAKE_STATIC_STRING_IMPL("value1"),
+        MAKE_STATIC_STRING_IMPL("value2"),
+        MAKE_STATIC_STRING_IMPL("value3"),
+        emptyString(),
+    };
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value1) == 0, "TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value1 is not 0 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value2) == 1, "TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value2 is not 1 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value3) == 2, "TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value3 is not 2 as expected");
+    static_assert(static_cast<size_t>(TestObj::EnumWithMissingValueDefaultNotInEnumValues::EmptyString) == 3, "TestObj::EnumWithMissingValueDefaultNotInEnumValues::EmptyString is not 3 as expected");
+    ASSERT(static_cast<size_t>(enumerationValue) < std::size(values));
+    return values[static_cast<size_t>(enumerationValue)];
+}
+
+template<> JSString* convertEnumerationToJS(VM& vm, TestObj::EnumWithMissingValueDefaultNotInEnumValues enumerationValue)
+{
+    return jsStringWithCache(vm, convertEnumerationToString(enumerationValue));
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNotInEnumValues> parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNotInEnumValues>(const String& stringValue)
+{
+    if (stringValue.isEmpty())
+        return TestObj::EnumWithMissingValueDefaultNotInEnumValues::EmptyString;
+    static constexpr std::array<std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNotInEnumValues>, 3> mappings {
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNotInEnumValues> { "value1"_s, TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value1 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNotInEnumValues> { "value2"_s, TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value2 },
+        std::pair<ComparableASCIILiteral, TestObj::EnumWithMissingValueDefaultNotInEnumValues> { "value3"_s, TestObj::EnumWithMissingValueDefaultNotInEnumValues::Value3 },
+    };
+    static constexpr SortedArrayMap enumerationMapping { mappings };
+    if (auto* enumerationValue = enumerationMapping.tryGet(stringValue); enumerationValue) [[likely]]
+        return *enumerationValue;
+    return std::nullopt;
+}
+
+template<> std::optional<TestObj::EnumWithMissingValueDefaultNotInEnumValues> parseEnumeration<TestObj::EnumWithMissingValueDefaultNotInEnumValues>(JSGlobalObject& lexicalGlobalObject, JSValue value)
+{
+    return parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNotInEnumValues>(value.toWTFString(&lexicalGlobalObject));
+}
+
+template<> ASCIILiteral expectedEnumerationValues<TestObj::EnumWithMissingValueDefaultNotInEnumValues>()
+{
+    return "\"value1\", \"value2\", \"value3\", \"\""_s;
+}
+
 template<> ConversionResult<IDLDictionary<TestObj::Dictionary>> convertDictionary<TestObj::Dictionary>(JSGlobalObject& lexicalGlobalObject, JSValue value)
 {
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
@@ -1977,6 +2253,24 @@ static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_create);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_create);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedStringAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithInvalidValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithInvalidValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithNoEnumerationSpecified);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithNoEnumerationSpecified);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithInvalidEnumSpecified);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithInvalidEnumSpecified);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValue);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValue);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValues);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValues);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_fauxEnumReflectedStringMissingReflectAttribute);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_fauxEnumReflectedStringMissingReflectAttribute);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedUSVStringAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedUSVStringAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedIntegralAttr);
@@ -2001,6 +2295,20 @@ static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedCustomBooleanAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedCustomBooleanAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedCustomURLAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedCustomURLAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedNullableStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedNullableStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterStringAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterStringAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterUSVStringAttr);
@@ -2015,18 +2323,12 @@ static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterElementAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterElementAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterElementsArrayAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterElementsArrayAttr);
-static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterURLAttr);
-static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterURLAttr);
-static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterUSVURLAttr);
-static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUSVURLAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterStringAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterStringAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomIntegralAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomIntegralAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomBooleanAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomBooleanAttr);
-static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomURLAttr);
-static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomURLAttr);
 #if ENABLE(TEST_FEATURE)
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_enabledAtRuntimeAttribute);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_enabledAtRuntimeAttribute);
@@ -2346,7 +2648,7 @@ template<> void JSTestObjDOMConstructor::initializeProperties(VM& vm, JSDOMGloba
 
 /* Hash table for prototype */
 
-static const std::array<HashTableValue, 285> JSTestObjPrototypeTableValues {
+static const std::array<HashTableValue, 298> JSTestObjPrototypeTableValues {
     HashTableValue { "constructor"_s, static_cast<unsigned>(PropertyAttribute::DontEnum), NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObjConstructor, 0 } },
     HashTableValue { "readOnlyLongAttr"_s, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_readOnlyLongAttr, 0 } },
     HashTableValue { "readOnlyStringAttr"_s, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_readOnlyStringAttr, 0 } },
@@ -2386,6 +2688,15 @@ static const std::array<HashTableValue, 285> JSTestObjPrototypeTableValues {
     HashTableValue { "XMLObjAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_XMLObjAttr, setJSTestObj_XMLObjAttr } },
     HashTableValue { "create"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_create, setJSTestObj_create } },
     HashTableValue { "reflectedStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedStringAttr, setJSTestObj_reflectedStringAttr } },
+    HashTableValue { "reflectedEnumWithMissingValueDefaultStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithMissingValueDefaultStringAttr, setJSTestObj_reflectedEnumWithMissingValueDefaultStringAttr } },
+    HashTableValue { "reflectedEnumWithInvalidValueDefaultStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithInvalidValueDefaultStringAttr, setJSTestObj_reflectedEnumWithInvalidValueDefaultStringAttr } },
+    HashTableValue { "reflectedEnumWithInvalidAndMissingValueDefaultStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttr, setJSTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttr } },
+    HashTableValue { "reflectedEnumWithMissingValueDefaultNoQuotesStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttr, setJSTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttr } },
+    HashTableValue { "reflectedEnumWithNoEnumerationSpecified"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithNoEnumerationSpecified, setJSTestObj_reflectedEnumWithNoEnumerationSpecified } },
+    HashTableValue { "reflectedEnumWithInvalidEnumSpecified"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithInvalidEnumSpecified, setJSTestObj_reflectedEnumWithInvalidEnumSpecified } },
+    HashTableValue { "reflectedEnumWithMissingValueDefaultAsEmptyValue"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValue, setJSTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValue } },
+    HashTableValue { "reflectedEnumWithMissingValueDefaultNotInEnumValues"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValues, setJSTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValues } },
+    HashTableValue { "fauxEnumReflectedStringMissingReflectAttribute"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_fauxEnumReflectedStringMissingReflectAttribute, setJSTestObj_fauxEnumReflectedStringMissingReflectAttribute } },
     HashTableValue { "reflectedUSVStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedUSVStringAttr, setJSTestObj_reflectedUSVStringAttr } },
     HashTableValue { "reflectedIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedIntegralAttr, setJSTestObj_reflectedIntegralAttr } },
     HashTableValue { "reflectedUnsignedIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedUnsignedIntegralAttr, setJSTestObj_reflectedUnsignedIntegralAttr } },
@@ -2398,6 +2709,13 @@ static const std::array<HashTableValue, 285> JSTestObjPrototypeTableValues {
     HashTableValue { "reflectedCustomIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedCustomIntegralAttr, setJSTestObj_reflectedCustomIntegralAttr } },
     HashTableValue { "reflectedCustomBooleanAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedCustomBooleanAttr, setJSTestObj_reflectedCustomBooleanAttr } },
     HashTableValue { "reflectedCustomURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedCustomURLAttr, setJSTestObj_reflectedCustomURLAttr } },
+    HashTableValue { "reflectedNullableStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedNullableStringAttr, setJSTestObj_reflectedNullableStringAttr } },
+    HashTableValue { "reflectedNullableEnumWithMissingValueDefaultStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttr, setJSTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttr } },
+    HashTableValue { "reflectedNullableEnumWithInvalidValueDefaultStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttr, setJSTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttr } },
+    HashTableValue { "reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttr, setJSTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttr } },
+    HashTableValue { "reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttr, setJSTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttr } },
+    HashTableValue { "reflectedNullableStringAttrIsSpecifiedWithQuotesAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttr, setJSTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttr } },
+    HashTableValue { "reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttr, setJSTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttr } },
     HashTableValue { "reflectedSetterStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterStringAttr, setJSTestObj_reflectedSetterStringAttr } },
     HashTableValue { "reflectedSetterUSVStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterUSVStringAttr, setJSTestObj_reflectedSetterUSVStringAttr } },
     HashTableValue { "reflectedSetterIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterIntegralAttr, setJSTestObj_reflectedSetterIntegralAttr } },
@@ -2405,12 +2723,9 @@ static const std::array<HashTableValue, 285> JSTestObjPrototypeTableValues {
     HashTableValue { "reflectedSetterBooleanAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterBooleanAttr, setJSTestObj_reflectedSetterBooleanAttr } },
     HashTableValue { "reflectedSetterElementAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterElementAttr, setJSTestObj_reflectedSetterElementAttr } },
     HashTableValue { "reflectedSetterElementsArrayAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterElementsArrayAttr, setJSTestObj_reflectedSetterElementsArrayAttr } },
-    HashTableValue { "reflectedSetterURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterURLAttr, setJSTestObj_reflectedSetterURLAttr } },
-    HashTableValue { "reflectedSetterUSVURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterUSVURLAttr, setJSTestObj_reflectedSetterUSVURLAttr } },
     HashTableValue { "reflectedSetterStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterStringAttr, setJSTestObj_reflectedSetterStringAttr } },
     HashTableValue { "reflectedSetterCustomIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterCustomIntegralAttr, setJSTestObj_reflectedSetterCustomIntegralAttr } },
     HashTableValue { "reflectedSetterCustomBooleanAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterCustomBooleanAttr, setJSTestObj_reflectedSetterCustomBooleanAttr } },
-    HashTableValue { "reflectedSetterCustomURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterCustomURLAttr, setJSTestObj_reflectedSetterCustomURLAttr } },
 #if ENABLE(TEST_FEATURE)
     HashTableValue { "enabledAtRuntimeAttribute"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_enabledAtRuntimeAttribute, setJSTestObj_enabledAtRuntimeAttribute } },
 #else
@@ -4261,6 +4576,351 @@ JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedStringAttr, (JSGlobalObject* lexi
     return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
 }
 
+static inline JSValue jsTestObj_reflectedEnumWithMissingValueDefaultStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedEnumWithMissingValueDefaultStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        { }
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithMissingValueDefaultStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithMissingValueDefaultStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithmissingvaluedefaultstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithMissingValueDefaultStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedEnumWithInvalidValueDefaultStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedEnumWithInvalidValueDefaultStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        { }
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithInvalidValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        result = AtomString("value2"_s);
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithInvalidValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithInvalidValueDefaultStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithInvalidValueDefaultStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithinvalidvaluedefaultstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithInvalidValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithInvalidValueDefaultStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedEnumWithInvalidAndMissingValueDefaultStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingAndInvalidValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        result = AtomString("value2"_s);
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithinvalidandmissingvaluedefaultstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithInvalidAndMissingValueDefaultStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedEnumWithMissingValueDefaultNoQuotesStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNoQuotes>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        { }
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithmissingvaluedefaultnoquotesstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithMissingValueDefaultNoQuotesStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedEnumWithNoEnumerationSpecifiedGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithnoenumerationspecifiedAttr))));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithNoEnumerationSpecified, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithNoEnumerationSpecifiedGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithNoEnumerationSpecifiedSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithnoenumerationspecifiedAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithNoEnumerationSpecified, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithNoEnumerationSpecifiedSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedEnumWithInvalidEnumSpecifiedGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithinvalidenumspecifiedAttr))));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithInvalidEnumSpecified, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithInvalidEnumSpecifiedGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithInvalidEnumSpecifiedSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithinvalidenumspecifiedAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithInvalidEnumSpecified, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithInvalidEnumSpecifiedSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValueGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedEnumWithMissingValueDefaultAsEmptyValueAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        { }
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultAsEmptyValue>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        { }
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValue, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValueGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValueSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithmissingvaluedefaultasemptyvalueAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValue, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithMissingValueDefaultAsEmptyValueSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValuesGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedEnumWithMissingValueDefaultNotInEnumValuesAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("foo"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNotInEnumValues>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        { }
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValues, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValuesGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValuesSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedenumwithmissingvaluedefaultnotinenumvaluesAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValues, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedEnumWithMissingValueDefaultNotInEnumValuesSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_fauxEnumReflectedStringMissingReflectAttributeGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLDOMString>(lexicalGlobalObject, throwScope, impl.fauxEnumReflectedStringMissingReflectAttribute())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_fauxEnumReflectedStringMissingReflectAttribute, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_fauxEnumReflectedStringMissingReflectAttributeGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_fauxEnumReflectedStringMissingReflectAttributeSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLDOMString>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setFauxEnumReflectedStringMissingReflectAttribute(nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_fauxEnumReflectedStringMissingReflectAttribute, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_fauxEnumReflectedStringMissingReflectAttributeSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
 static inline JSValue jsTestObj_reflectedUSVStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
 {
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
@@ -4530,7 +5190,7 @@ static inline JSValue jsTestObj_reflectedStringAttrGetter(JSGlobalObject& lexica
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, impl.attributeWithoutSynchronization(WebCore::HTMLNames::customContentStringAttrAttr))));
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, impl.attributeWithoutSynchronization(WebCore::HTMLNames::custom_content_stringAttr))));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -4548,7 +5208,7 @@ static inline bool setJSTestObj_reflectedStringAttrSetter(JSGlobalObject& lexica
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::customContentStringAttrAttr, nativeValueConversionResult.releaseReturnValue());
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::custom_content_stringAttr, nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -4563,7 +5223,7 @@ static inline JSValue jsTestObj_reflectedCustomIntegralAttrGetter(JSGlobalObject
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.integralAttribute(WebCore::HTMLNames::customContentIntegralAttrAttr))));
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.integralAttribute(WebCore::HTMLNames::custom_content_integralAttr))));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedCustomIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -4581,7 +5241,7 @@ static inline bool setJSTestObj_reflectedCustomIntegralAttrSetter(JSGlobalObject
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setIntegralAttribute(WebCore::HTMLNames::customContentIntegralAttrAttr, nativeValueConversionResult.releaseReturnValue());
+        return impl.setIntegralAttribute(WebCore::HTMLNames::custom_content_integralAttr, nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -4596,7 +5256,7 @@ static inline JSValue jsTestObj_reflectedCustomBooleanAttrGetter(JSGlobalObject&
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLBoolean>(lexicalGlobalObject, throwScope, impl.hasAttributeWithoutSynchronization(WebCore::HTMLNames::customContentBooleanAttrAttr))));
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLBoolean>(lexicalGlobalObject, throwScope, impl.hasAttributeWithoutSynchronization(WebCore::HTMLNames::custom_content_booleanAttr))));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedCustomBooleanAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -4614,7 +5274,7 @@ static inline bool setJSTestObj_reflectedCustomBooleanAttrSetter(JSGlobalObject&
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setBooleanAttribute(WebCore::HTMLNames::customContentBooleanAttrAttr, nativeValueConversionResult.releaseReturnValue());
+        return impl.setBooleanAttribute(WebCore::HTMLNames::custom_content_booleanAttr, nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -4629,7 +5289,7 @@ static inline JSValue jsTestObj_reflectedCustomURLAttrGetter(JSGlobalObject& lex
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, impl.getURLAttributeForBindings(WebCore::HTMLNames::customContentURLAttrAttr))));
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLAtomStringAdaptor<IDLDOMString>>(lexicalGlobalObject, throwScope, impl.getURLAttributeForBindings(WebCore::HTMLNames::custom_content_urlAttr))));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedCustomURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -4647,7 +5307,7 @@ static inline bool setJSTestObj_reflectedCustomURLAttrSetter(JSGlobalObject& lex
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::customContentURLAttrAttr, nativeValueConversionResult.releaseReturnValue());
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::custom_content_urlAttr, nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -4655,6 +5315,285 @@ static inline bool setJSTestObj_reflectedCustomURLAttrSetter(JSGlobalObject& lex
 JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedCustomURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
 {
     return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedCustomURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedNullableStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, throwScope, impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectednullablestringattrAttr))));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedNullableStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedNullableStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedNullableStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectednullablestringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedNullableStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedNullableStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedNullableEnumWithMissingValueDefaultStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        { }
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectednullableenumwithmissingvaluedefaultstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedNullableEnumWithMissingValueDefaultStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedNullableEnumWithInvalidValueDefaultStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        { }
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithInvalidValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        result = AtomString("value2"_s);
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectednullableenumwithinvalidvaluedefaultstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedNullableEnumWithInvalidValueDefaultStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingAndInvalidValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        result = AtomString("value2"_s);
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectednullableenumwithinvalidandmissingvaluedefaultstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedNullableEnumWithInvalidAndMissingValueDefaultStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttrAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingValueDefaultNoQuotes>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        { }
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectednullableenumwithmissingvaluedefaultnoquotesstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedNullableEnumWithMissingValueDefaultNoQuotesStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::contentattributeAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingAndInvalidValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        result = AtomString("value2"_s);
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::contentattributeAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedNullableStringAttrIsSpecifiedWithQuotesAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    const AtomString& contentAttributeValue = impl.attributeWithoutSynchronization(WebCore::HTMLNames::content_attributeAttr);
+    AtomString result;
+    if (contentAttributeValue.isNull())
+        result = AtomString("value1"_s);
+    else if (auto value = parseEnumerationFromString<TestObj::EnumWithMissingAndInvalidValueDefault>(contentAttributeValue.convertToASCIILowercase()); value) [[likely]]
+        result = AtomString(convertEnumerationToString(*value));
+    else
+        result = AtomString("value2"_s);
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, throwScope, result)));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLNullable<IDLAtomStringAdaptor<IDLDOMString>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::content_attributeAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedNullableStringHyphenatedAttrIsSpecifiedWithQuotesAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
 }
 
 static inline JSValue jsTestObj_reflectedSetterStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
@@ -4888,72 +5827,6 @@ JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterElementsArrayAttr, (JSGloba
     return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterElementsArrayAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
 }
 
-static inline JSValue jsTestObj_reflectedSetterURLAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
-{
-    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
-    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLDOMString>(lexicalGlobalObject, throwScope, impl.reflectedSetterURLAttr())));
-}
-
-JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
-{
-    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterURLAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
-}
-
-static inline bool setJSTestObj_reflectedSetterURLAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
-{
-    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
-    UNUSED_PARAM(vm);
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
-    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    auto nativeValueConversionResult = convert<IDLDOMString>(lexicalGlobalObject, value);
-    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
-        return false;
-    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedsetterurlattrAttr, nativeValueConversionResult.releaseReturnValue());
-    });
-    return true;
-}
-
-JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
-{
-    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
-}
-
-static inline JSValue jsTestObj_reflectedSetterUSVURLAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
-{
-    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
-    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLUSVString>(lexicalGlobalObject, throwScope, impl.reflectedSetterUSVURLAttr())));
-}
-
-JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterUSVURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
-{
-    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterUSVURLAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
-}
-
-static inline bool setJSTestObj_reflectedSetterUSVURLAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
-{
-    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
-    UNUSED_PARAM(vm);
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
-    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    auto nativeValueConversionResult = convert<IDLUSVString>(lexicalGlobalObject, value);
-    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
-        return false;
-    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedsetterusvurlattrAttr, nativeValueConversionResult.releaseReturnValue());
-    });
-    return true;
-}
-
-JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUSVURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
-{
-    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterUSVURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
-}
-
 static inline JSValue jsTestObj_reflectedSetterStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
 {
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
@@ -4977,7 +5850,7 @@ static inline bool setJSTestObj_reflectedSetterStringAttrSetter(JSGlobalObject& 
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::customContentStringAttrAttr, nativeValueConversionResult.releaseReturnValue());
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::custom_content_stringAttr, nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -5010,7 +5883,7 @@ static inline bool setJSTestObj_reflectedSetterCustomIntegralAttrSetter(JSGlobal
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setIntegralAttribute(WebCore::HTMLNames::customContentIntegralAttrAttr, nativeValueConversionResult.releaseReturnValue());
+        return impl.setIntegralAttribute(WebCore::HTMLNames::custom_content_integralAttr, nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -5043,7 +5916,7 @@ static inline bool setJSTestObj_reflectedSetterCustomBooleanAttrSetter(JSGlobalO
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setBooleanAttribute(WebCore::HTMLNames::customContentBooleanAttrAttr, nativeValueConversionResult.releaseReturnValue());
+        return impl.setBooleanAttribute(WebCore::HTMLNames::custom_content_booleanAttr, nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -5051,39 +5924,6 @@ static inline bool setJSTestObj_reflectedSetterCustomBooleanAttrSetter(JSGlobalO
 JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomBooleanAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
 {
     return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterCustomBooleanAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
-}
-
-static inline JSValue jsTestObj_reflectedSetterCustomURLAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
-{
-    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
-    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLDOMString>(lexicalGlobalObject, throwScope, impl.reflectedSetterCustomURLAttr())));
-}
-
-JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
-{
-    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterCustomURLAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
-}
-
-static inline bool setJSTestObj_reflectedSetterCustomURLAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
-{
-    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
-    UNUSED_PARAM(vm);
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
-    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    auto nativeValueConversionResult = convert<IDLDOMString>(lexicalGlobalObject, value);
-    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
-        return false;
-    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::customContentURLAttrAttr, nativeValueConversionResult.releaseReturnValue());
-    });
-    return true;
-}
-
-JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
-{
-    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterCustomURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
 }
 
 #if ENABLE(TEST_FEATURE)

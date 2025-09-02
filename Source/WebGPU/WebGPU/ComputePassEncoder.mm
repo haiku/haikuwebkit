@@ -91,20 +91,7 @@ struct BindGroupId {
 };
 static bool addTextureToActiveResources(const void* resourceAddress, id<MTLResource> mtlResource, OptionSet<BindGroupEntryUsage> initialUsage, TextureEntryMapContainer& usagesForResource, BindGroupId bindGroup, uint32_t baseMipLevel, uint32_t baseArrayLayer, WGPUTextureAspect aspect)
 {
-    if (isTextureBindGroupEntryUsage(initialUsage)) {
-        ASSERT([mtlResource conformsToProtocol:@protocol(MTLTexture)]);
-        id<MTLTexture> textureView = (id<MTLTexture>)mtlResource;
-        if (id<MTLTexture> parentTexture = textureView.parentTexture) {
-            mtlResource = parentTexture;
-            ASSERT(textureView.parentRelativeLevel <= std::numeric_limits<uint32_t>::max() && textureView.parentRelativeSlice <= std::numeric_limits<uint32_t>::max());
-            if (baseMipLevel || baseArrayLayer) {
-                ASSERT(textureView.parentRelativeLevel == baseMipLevel);
-                ASSERT(textureView.parentRelativeSlice == baseArrayLayer);
-            }
-            baseMipLevel = static_cast<uint32_t>(textureView.parentRelativeLevel);
-            baseArrayLayer = static_cast<uint32_t>(textureView.parentRelativeSlice);
-        }
-    }
+    UNUSED_PARAM(mtlResource);
 
     auto mapKey = BindGroup::makeEntryMapKey(baseMipLevel, baseArrayLayer, aspect);
     EntryUsage resourceUsage = initialUsage;

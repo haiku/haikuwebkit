@@ -85,7 +85,7 @@ auto CSSValueConversion<Content>::operator()(BuilderState& state, const CSSValue
         return Content::List::map(*contentList, [&](const CSSValue& item) -> Content::ListItem {
             if (item.isImage()) {
                 if (RefPtr image = state.createStyleImage(item))
-                    return Content::Image { image.releaseNonNull() };
+                    return Content::Image { ImageWrapper { image.releaseNonNull() } };
 
                 state.setCurrentPropertyInvalidAtComputedValueTime();
                 return Content::Text { emptyString() };
@@ -145,32 +145,6 @@ auto CSSValueConversion<Content>::operator()(BuilderState& state, const CSSValue
 Ref<CSSValue> CSSValueCreation<Content::Counter>::operator()(CSSValuePool& pool, const RenderStyle& style, const Content::Counter& value)
 {
     return CSSCounterValue::create(value.identifier, value.separator, createCSSValue(pool, style, value.style));
-}
-
-Ref<CSSValue> CSSValueCreation<Content::Image>::operator()(CSSValuePool&, const RenderStyle& style, const Content::Image& value)
-{
-    Ref image = value.image;
-    return image->computedStyleValue(style);
-}
-
-// MARK: - Serialization
-
-void Serialize<Content::Image>::operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const Content::Image& value)
-{
-    Ref image = value.image;
-    builder.append(image->computedStyleValue(style)->cssText(context));
-}
-
-// MARK: - Logging
-
-TextStream& operator<<(TextStream& ts, const Content::Image& value)
-{
-    Ref image = value.image;
-
-    ts << "image"_s;
-    if (!image->url().resolved.isEmpty())
-        ts << '(' << image->url().resolved << ')';
-    return ts;
 }
 
 } // namespace Style

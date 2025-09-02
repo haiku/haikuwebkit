@@ -331,6 +331,7 @@ public:
         completionHandler(makeUnexpected(WebCore::ExceptionData { WebCore::ExceptionCode::NotSupportedError, "Digital credentials are not supported."_s }));
     }
     virtual void dismissDigitalCredentialsPicker(WTF::CompletionHandler<void(bool)>&& completionHandler) { completionHandler(true); }
+    virtual void dismissAnyOpenPicker() { }
 
     virtual void didChangeContentSize(const WebCore::IntSize&) = 0;
 
@@ -720,7 +721,7 @@ public:
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(DRAG_SUPPORT)
     virtual void willReceiveEditDragSnapshot() = 0;
-    virtual void didReceiveEditDragSnapshot(std::optional<WebCore::TextIndicatorData>) = 0;
+    virtual void didReceiveEditDragSnapshot(RefPtr<WebCore::TextIndicator>&&) = 0;
 #endif
 
 #if ENABLE(MODEL_PROCESS)

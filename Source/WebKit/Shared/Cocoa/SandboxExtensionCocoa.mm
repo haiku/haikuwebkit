@@ -127,6 +127,11 @@ SandboxExtensionHandle::SandboxExtensionHandle()
 {
 }
 
+SandboxExtensionHandle::SandboxExtensionHandle(const SandboxExtensionHandle& handle)
+{
+    m_sandboxExtension = WTF::makeUnique<SandboxExtensionImpl>(handle.m_sandboxExtension->getSerializedFormat());
+}
+
 SandboxExtensionHandle::SandboxExtensionHandle(SandboxExtensionHandle&&) = default;
 SandboxExtensionHandle& SandboxExtensionHandle::operator=(SandboxExtensionHandle&&) = default;
 

@@ -944,6 +944,18 @@
    },
    {
       "emails" : [
+         "a_tarbinian@apple.com",
+         "a.tarbinian@apple.com",
+         "atar137h@gmail.com"
+      ],
+      "github" : "atar13",
+      "name" : "Anthony Tarbinian",
+      "nicks" : [
+         "atar"
+      ]
+   },
+   {
+      "emails" : [
          "piman@chromium.org"
       ],
       "name" : "Antoine Labour",
@@ -8269,8 +8281,10 @@
       "emails" : [
          "v_bykov@apple.com"
       ],
+      "expertise" : "JavaScriptCore",
       "github" : "ast-hugger",
-      "name" : "Vassili Bykov"
+      "name" : "Vassili Bykov",
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -8748,6 +8762,13 @@
          "yurys"
       ],
       "status" : "committer"
+   },
+   {
+      "emails" : [
+         "yura.yaroshevich@gmail.com"
+      ],
+      "github" : "mstyura",
+      "name" : "Yury Yarashevich"
    },
    {
       "emails" : [

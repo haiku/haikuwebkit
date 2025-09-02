@@ -74,6 +74,7 @@
 #import "WKPreviewActionItemInternal.h"
 #import "WKPreviewElementInfoInternal.h"
 #import "WKQuickboardViewControllerDelegate.h"
+#import "WKScrollView.h"
 #import "WKSelectMenuListViewController.h"
 #import "WKSyntheticFlagsChangedWebEvent.h"
 #import "WKTapHighlightView.h"
@@ -2257,7 +2258,7 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
     for (const auto& touchPoint : touchEvent.touchPoints()) {
         auto phase = touchPoint.phase();
         if (phase == WebKit::WebPlatformTouchPoint::State::Pressed) {
-            auto touchActions = WebKit::touchActionsForPoint(self, touchPoint.locationInRootView());
+            auto touchActions = WebKit::touchActionsForPoint(self, WebCore::roundedIntPoint(touchPoint.locationInRootView()));
             LOG_WITH_STREAM(UIHitTesting, stream << "touchActionsForPoint " << touchPoint.locationInRootView() << " found " << touchActions);
             if (!touchActions || touchActions.contains(WebCore::TouchAction::Auto))
                 continue;
@@ -8466,7 +8467,7 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
         [self becomeFirstResponder];
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    if (_focusedElementInformation.shouldHideSoftTopScrollEdgeEffect && ![[_webView scrollView] _wk_usesHardTopScrollEdgeEffect])
+    if (_focusedElementInformation.shouldHideSoftTopScrollEdgeEffect && ![[_webView _wkScrollView] _usesHardTopScrollEdgeEffect])
         [_webView _addReasonToHideTopScrollPocket:WebKit::HideScrollPocketReason::SiteSpecificQuirk];
     else
         [_webView _removeReasonToHideTopScrollPocket:WebKit::HideScrollPocketReason::SiteSpecificQuirk];
@@ -10727,29 +10728,29 @@ static NSArray<NSItemProvider *> *extractItemProvidersFromDropSession(id <UIDrop
     _waitingForEditDragSnapshot = YES;
 }
 
-- (void)_didReceiveEditDragSnapshot:(std::optional<WebCore::TextIndicatorData>)data
+- (void)_didReceiveEditDragSnapshot:(RefPtr<WebCore::TextIndicator>&&)textIndicator
 {
     _waitingForEditDragSnapshot = NO;
 
-    [self _deliverDelayedDropPreviewIfPossible:data];
+    [self _deliverDelayedDropPreviewIfPossible:WTFMove(textIndicator)];
     [self cleanUpDragSourceSessionState];
 
     if (auto action = WTFMove(_actionToPerformAfterReceivingEditDragSnapshot))
         action();
 }
 
-- (void)_deliverDelayedDropPreviewIfPossible:(std::optional<WebCore::TextIndicatorData>)data
+- (void)_deliverDelayedDropPreviewIfPossible:(RefPtr<WebCore::TextIndicator>&&)textIndicator
 {
     if (!_visibleContentViewSnapshot)
         return;
 
-    if (!data)
+    if (!textIndicator)
         return;
 
-    if (!data->contentImage)
+    if (!textIndicator->contentImage())
         return;
 
-    auto snapshotWithoutSelection = data->contentImageWithoutSelection;
+    auto snapshotWithoutSelection = textIndicator->contentImageWithoutSelection();
     if (!snapshotWithoutSelection)
         return;
 
@@ -10762,10 +10763,10 @@ static NSArray<NSItemProvider *> *extractItemProvidersFromDropSession(id <UIDrop
 
     auto unselectedContentImageForEditDrag = adoptNS([[UIImage alloc] initWithCGImage:unselectedSnapshotImage->platformImage().get() scale:_page->deviceScaleFactor() orientation:UIImageOrientationUp]);
     _unselectedContentSnapshot = adoptNS([[UIImageView alloc] initWithImage:unselectedContentImageForEditDrag.get()]);
-    [_unselectedContentSnapshot setFrame:data->contentImageWithoutSelectionRectInRootViewCoordinates];
+    [_unselectedContentSnapshot setFrame:textIndicator->contentImageWithoutSelectionRectInRootViewCoordinates()];
 
     [self insertSubview:_unselectedContentSnapshot.get() belowSubview:_visibleContentViewSnapshot.get()];
-    _dragDropInteractionState.deliverDelayedDropPreview(self, self.containerForDropPreviews, data.value());
+    _dragDropInteractionState.deliverDelayedDropPreview(self, self.containerForDropPreviews, WTFMove(textIndicator));
 }
 
 - (void)_didPerformDragOperation:(BOOL)handled
@@ -11134,7 +11135,7 @@ static Vector<WebCore::IntSize> sizesOfPlaceholderElementsToInsertWhenDroppingIt
         if (overriddenPreview)
             return overriddenPreview;
     }
-    return _dragDropInteractionState.previewForLifting(item, self, self.containerForDragPreviews, std::exchange(_positionInformationLinkIndicator, { }));
+    return _dragDropInteractionState.previewForLifting(item, self, self.containerForDragPreviews, WTFMove(_positionInformationLinkIndicator));
 }
 
 - (void)dragInteraction:(UIDragInteraction *)interaction willAnimateLiftWithAnimator:(id<UIDragAnimating>)animator session:(id<UIDragSession>)session
@@ -11703,7 +11704,7 @@ static RetainPtr<UITargetedPreview> createFallbackTargetedPreview(UIView *rootVi
 
     if (_positionInformation.isLink && _positionInformation.textIndicator && _positionInformation.textIndicator->contentImage()) {
         RefPtr textIndicator = _positionInformation.textIndicator;
-        _positionInformationLinkIndicator = textIndicator ? std::optional { textIndicator->data() } : std::nullopt;
+        _positionInformationLinkIndicator = textIndicator;
 
         targetedPreview = [self _createTargetedPreviewFromTextIndicator:WTFMove(textIndicator) previewContainer:self.containerForContextMenuHintPreviews];
     } else if ((_positionInformation.isAttachment || _positionInformation.isImage) && _positionInformation.image) {

@@ -871,7 +871,7 @@ bool LineLayout::hasInkOverflow() const
     return m_inlineContent && m_inlineContent->hasInkOverflow();
 }
 
-LayoutUnit LineLayout::firstLinePhysicalBaseline() const
+LayoutUnit LineLayout::firstLineBaseline() const
 {
     if (!m_inlineContent || m_inlineContent->displayContent().boxes.isEmpty()) {
         ASSERT_NOT_REACHED();
@@ -879,56 +879,32 @@ LayoutUnit LineLayout::firstLinePhysicalBaseline() const
     }
 
     auto& firstLine = m_inlineContent->displayContent().lines.first();
-    return physicalBaselineForLine(firstLine);
+    return baselineForLine(firstLine);
 }
 
-LayoutUnit LineLayout::lastLinePhysicalBaseline() const
+LayoutUnit LineLayout::lastLineBaseline() const
 {
     if (!m_inlineContent || m_inlineContent->displayContent().lines.isEmpty()) {
         ASSERT_NOT_REACHED();
         return { };
     }
-    return physicalBaselineForLine(lastLineWithInlineContent(m_inlineContent->displayContent().lines));
+    return baselineForLine(lastLineWithInlineContent(m_inlineContent->displayContent().lines));
 }
 
-LayoutUnit LineLayout::physicalBaselineForLine(const InlineDisplay::Line& line) const
+LayoutUnit LineLayout::baselineForLine(const InlineDisplay::Line& line) const
 {
-    switch (rootLayoutBox().writingMode().blockDirection()) {
+    auto rootWritingMode = rootLayoutBox().writingMode();
+    auto baseline = line.baseline();
+    if (rootWritingMode.isLineInverted())
+        baseline = line.lineBoxLogicalRect().height() - baseline;
+
+    switch (rootWritingMode.blockDirection()) {
     case FlowDirection::TopToBottom:
     case FlowDirection::BottomToTop:
-        return LayoutUnit { line.lineBoxTop() + line.baseline() };
+        return LayoutUnit { line.lineBoxTop() + baseline };
     case FlowDirection::LeftToRight:
-        return LayoutUnit { line.lineBoxLeft() + (line.lineBoxWidth() - line.baseline()) };
     case FlowDirection::RightToLeft:
-        return LayoutUnit { line.lineBoxLeft() + line.baseline() };
-    default:
-        ASSERT_NOT_REACHED();
-        return { };
-    }
-}
-
-LayoutUnit LineLayout::lastLineLogicalBaseline() const
-{
-    if (!m_inlineContent || m_inlineContent->displayContent().lines.isEmpty()) {
-        ASSERT_NOT_REACHED();
-        return { };
-    }
-
-    auto& lastLine = lastLineWithInlineContent(m_inlineContent->displayContent().lines);
-    switch (rootLayoutBox().writingMode().blockDirection()) {
-    case FlowDirection::TopToBottom:
-    case FlowDirection::BottomToTop:
-        return LayoutUnit { lastLine.lineBoxTop() + lastLine.baseline() };
-    case FlowDirection::LeftToRight: {
-        // FIXME: We should set the computed height on the root's box geometry (in RenderBlockFlow) so that
-        // we could call m_layoutState.geometryForRootBox().borderBoxHeight() instead.
-
-        // Line is always visual coordinates while logicalHeight is not (i.e. this translate to "box visual width" - "line visual right")
-        auto lineLogicalTop = flow().logicalHeight() - lastLine.lineBoxRight();
-        return LayoutUnit { lineLogicalTop + lastLine.baseline() };
-    }
-    case FlowDirection::RightToLeft:
-        return LayoutUnit { lastLine.lineBoxLeft() + lastLine.baseline() };
+        return LayoutUnit { line.lineBoxLeft() + baseline };
     default:
         ASSERT_NOT_REACHED();
         return { };

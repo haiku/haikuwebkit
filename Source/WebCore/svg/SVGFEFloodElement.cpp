@@ -56,7 +56,7 @@ bool SVGFEFloodElement::setFilterEffectAttribute(FilterEffect& effect, const Qua
     if (attrName == SVGNames::flood_colorAttr)
         return feFlood.setFloodColor(style.colorResolvingCurrentColor(style.svgStyle().floodColor()));
     if (attrName == SVGNames::flood_opacityAttr)
-        return feFlood.setFloodOpacity(style.svgStyle().floodOpacity());
+        return feFlood.setFloodOpacity(style.svgStyle().floodOpacity().value.value);
 
     ASSERT_NOT_REACHED();
     return false;
@@ -72,7 +72,7 @@ RefPtr<FilterEffect> SVGFEFloodElement::createFilterEffect(const FilterEffectVec
     auto& svgStyle = style.svgStyle();
 
     auto color = style.colorWithColorFilter(svgStyle.floodColor());
-    float opacity = svgStyle.floodOpacity();
+    float opacity = svgStyle.floodOpacity().value.value;
 
     return FEFlood::create(color, opacity);
 }

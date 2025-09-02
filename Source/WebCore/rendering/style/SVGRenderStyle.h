@@ -77,15 +77,15 @@ public:
     static TextAnchor initialTextAnchor() { return TextAnchor::Start; }
     static GlyphOrientation initialGlyphOrientationHorizontal() { return GlyphOrientation::Degrees0; }
     static GlyphOrientation initialGlyphOrientationVertical() { return GlyphOrientation::Auto; }
-    static float initialFillOpacity() { return 1; }
+    static constexpr Style::Opacity initialFillOpacity();
     static Style::SVGPaint initialFill() { return Style::SVGPaint { Style::SVGPaintType::RGBColor, Style::URL::none(), Color::black }; }
-    static float initialStrokeOpacity() { return 1; }
+    static constexpr Style::Opacity initialStrokeOpacity();
     static Style::SVGPaint initialStroke() { return Style::SVGPaint { Style::SVGPaintType::None, Style::URL::none(), Color { } }; }
     static inline Style::SVGStrokeDasharray initialStrokeDashArray();
     static inline Style::SVGStrokeDashoffset initialStrokeDashOffset();
-    static float initialStopOpacity() { return 1; }
+    static constexpr Style::Opacity initialStopOpacity();
     static Style::Color initialStopColor() { return Color::black; }
-    static float initialFloodOpacity() { return 1; }
+    static constexpr Style::Opacity initialFloodOpacity();
     static Style::Color initialFloodColor() { return Color::black; }
     static Style::Color initialLightingColor() { return Color::white; }
     static Style::URL initialMarkerStartResource() { return Style::URL::none(); }
@@ -116,18 +116,18 @@ public:
     void setX(Style::SVGCoordinateComponent&&);
     void setY(Style::SVGCoordinateComponent&&);
     void setD(RefPtr<StylePathData>&&);
-    void setFillOpacity(float);
+    void setFillOpacity(Style::Opacity);
     void setFill(Style::SVGPaint&&);
     void setVisitedLinkFill(Style::SVGPaint&&);
-    void setStrokeOpacity(float);
+    void setStrokeOpacity(Style::Opacity);
     void setStroke(Style::SVGPaint&&);
     void setVisitedLinkStroke(Style::SVGPaint&&);
 
     void setStrokeDashArray(Style::SVGStrokeDasharray&&);
     void setStrokeDashOffset(Style::SVGStrokeDashoffset&&);
-    void setStopOpacity(float);
+    void setStopOpacity(Style::Opacity);
     void setStopColor(Style::Color&&);
-    void setFloodOpacity(float);
+    void setFloodOpacity(Style::Opacity);
     void setFloodColor(Style::Color&&);
     void setLightingColor(Style::Color&&);
     void setBaselineShift(Style::SVGBaselineShift&&);
@@ -151,14 +151,14 @@ public:
     GlyphOrientation glyphOrientationHorizontal() const { return static_cast<GlyphOrientation>(m_inheritedFlags.glyphOrientationHorizontal); }
     GlyphOrientation glyphOrientationVertical() const { return static_cast<GlyphOrientation>(m_inheritedFlags.glyphOrientationVertical); }
     const Style::SVGPaint& fill() const { return m_fillData->paint; }
-    float fillOpacity() const { return m_fillData->opacity; }
+    Style::Opacity fillOpacity() const { return m_fillData->opacity; }
     const Style::SVGPaint& stroke() const { return m_strokeData->paint; }
-    float strokeOpacity() const { return m_strokeData->opacity; }
+    Style::Opacity strokeOpacity() const { return m_strokeData->opacity; }
     const Style::SVGStrokeDasharray& strokeDashArray() const { return m_strokeData->dashArray; }
     const Style::SVGStrokeDashoffset& strokeDashOffset() const { return m_strokeData->dashOffset; }
-    float stopOpacity() const { return m_stopData->opacity; }
+    Style::Opacity stopOpacity() const { return m_stopData->opacity; }
     const Style::Color& stopColor() const { return m_stopData->color; }
-    float floodOpacity() const { return m_miscData->floodOpacity; }
+    Style::Opacity floodOpacity() const { return m_miscData->floodOpacity; }
     const Style::Color& floodColor() const { return m_miscData->floodColor; }
     const Style::Color& lightingColor() const { return m_miscData->lightingColor; }
     const Style::SVGBaselineShift& baselineShift() const { return m_miscData->baselineShift; }
@@ -250,11 +250,11 @@ inline const Style::SVGBaselineShift& RenderStyle::baselineShift() const { retur
 inline const Style::SVGCenterCoordinateComponent& RenderStyle::cx() const { return svgStyle().cx(); }
 inline const Style::SVGCenterCoordinateComponent& RenderStyle::cy() const { return svgStyle().cy(); }
 inline StylePathData* RenderStyle::d() const { return svgStyle().d(); }
-inline float RenderStyle::fillOpacity() const { return svgStyle().fillOpacity(); }
+inline Style::Opacity RenderStyle::fillOpacity() const { return svgStyle().fillOpacity(); }
 inline const Style::SVGPaint& RenderStyle::fill() const { return svgStyle().fill(); }
 inline const Style::SVGPaint& RenderStyle::visitedLinkFill() const { return svgStyle().visitedLinkFill(); }
 inline const Style::Color& RenderStyle::floodColor() const { return svgStyle().floodColor(); }
-inline float RenderStyle::floodOpacity() const { return svgStyle().floodOpacity(); }
+inline Style::Opacity RenderStyle::floodOpacity() const { return svgStyle().floodOpacity(); }
 inline bool RenderStyle::hasExplicitlySetStrokeWidth() const { return m_rareInheritedData->hasSetStrokeWidth; }
 inline bool RenderStyle::hasVisibleStroke() const { return svgStyle().hasStroke() && !strokeWidth().isZero(); }
 inline const Style::Color& RenderStyle::lightingColor() const { return svgStyle().lightingColor(); }
@@ -265,29 +265,29 @@ inline void RenderStyle::setBaselineShift(Style::SVGBaselineShift&& baselineShif
 inline void RenderStyle::setCx(Style::SVGCenterCoordinateComponent&& cx) { accessSVGStyle().setCx(WTFMove(cx)); }
 inline void RenderStyle::setCy(Style::SVGCenterCoordinateComponent&& cy) { accessSVGStyle().setCy(WTFMove(cy)); }
 inline void RenderStyle::setD(RefPtr<StylePathData>&& d) { accessSVGStyle().setD(WTFMove(d)); }
-inline void RenderStyle::setFillOpacity(float f) { accessSVGStyle().setFillOpacity(f); }
+inline void RenderStyle::setFillOpacity(Style::Opacity opacity) { accessSVGStyle().setFillOpacity(opacity); }
 inline void RenderStyle::setFill(Style::SVGPaint&& paint) { accessSVGStyle().setFill(WTFMove(paint)); }
 inline void RenderStyle::setVisitedLinkFill(Style::SVGPaint&& paint) { accessSVGStyle().setVisitedLinkFill(WTFMove(paint)); }
 inline void RenderStyle::setFloodColor(Style::Color&& c) { accessSVGStyle().setFloodColor(WTFMove(c)); }
-inline void RenderStyle::setFloodOpacity(float f) { accessSVGStyle().setFloodOpacity(f); }
+inline void RenderStyle::setFloodOpacity(Style::Opacity opacity) { accessSVGStyle().setFloodOpacity(opacity); }
 inline void RenderStyle::setLightingColor(Style::Color&& c) { accessSVGStyle().setLightingColor(WTFMove(c)); }
 inline void RenderStyle::setR(Style::SVGRadius&& r) { accessSVGStyle().setR(WTFMove(r)); }
 inline void RenderStyle::setRx(Style::SVGRadiusComponent&& rx) { accessSVGStyle().setRx(WTFMove(rx)); }
 inline void RenderStyle::setRy(Style::SVGRadiusComponent&& ry) { accessSVGStyle().setRy(WTFMove(ry)); }
 inline void RenderStyle::setStopColor(Style::Color&& c) { accessSVGStyle().setStopColor(WTFMove(c)); }
-inline void RenderStyle::setStopOpacity(float f) { accessSVGStyle().setStopOpacity(f); }
+inline void RenderStyle::setStopOpacity(Style::Opacity opacity) { accessSVGStyle().setStopOpacity(opacity); }
 inline void RenderStyle::setStrokeDashArray(Style::SVGStrokeDasharray&& array) { accessSVGStyle().setStrokeDashArray(WTFMove(array)); }
 inline void RenderStyle::setStrokeDashOffset(Style::SVGStrokeDashoffset&& offset) { accessSVGStyle().setStrokeDashOffset(WTFMove(offset)); }
-inline void RenderStyle::setStrokeOpacity(float f) { accessSVGStyle().setStrokeOpacity(f); }
+inline void RenderStyle::setStrokeOpacity(Style::Opacity opacity) { accessSVGStyle().setStrokeOpacity(opacity); }
 inline void RenderStyle::setStroke(Style::SVGPaint&& paint) { accessSVGStyle().setStroke(WTFMove(paint)); }
 inline void RenderStyle::setVisitedLinkStroke(Style::SVGPaint&& paint) { accessSVGStyle().setVisitedLinkStroke(WTFMove(paint)); }
 inline void RenderStyle::setX(Style::SVGCoordinateComponent&& x) { accessSVGStyle().setX(WTFMove(x)); }
 inline void RenderStyle::setY(Style::SVGCoordinateComponent&& y) { accessSVGStyle().setY(WTFMove(y)); }
 inline const Style::Color& RenderStyle::stopColor() const { return svgStyle().stopColor(); }
-inline float RenderStyle::stopOpacity() const { return svgStyle().stopOpacity(); }
+inline Style::Opacity RenderStyle::stopOpacity() const { return svgStyle().stopOpacity(); }
 inline const Style::SVGStrokeDasharray& RenderStyle::strokeDashArray() const { return svgStyle().strokeDashArray(); }
 inline const Style::SVGStrokeDashoffset& RenderStyle::strokeDashOffset() const { return svgStyle().strokeDashOffset(); }
-inline float RenderStyle::strokeOpacity() const { return svgStyle().strokeOpacity(); }
+inline Style::Opacity RenderStyle::strokeOpacity() const { return svgStyle().strokeOpacity(); }
 inline const Style::SVGPaint& RenderStyle::stroke() const { return svgStyle().stroke(); }
 inline const Style::SVGPaint& RenderStyle::visitedLinkStroke() const { return svgStyle().visitedLinkStroke(); }
 inline const Style::StrokeWidth& RenderStyle::strokeWidth() const { return m_rareInheritedData->strokeWidth; }
@@ -303,9 +303,17 @@ inline Style::SVGCoordinateComponent RenderStyle::initialX() { return 0_css_px; 
 inline Style::SVGCoordinateComponent RenderStyle::initialY() { return 0_css_px; }
 inline Style::SVGStrokeDasharray RenderStyle::initialStrokeDashArray() { return CSS::Keyword::None { }; }
 inline Style::SVGStrokeDashoffset RenderStyle::initialStrokeDashOffset() { return 0_css_px; }
+constexpr Style::Opacity RenderStyle::initialFillOpacity() { return 1_css_number; }
+constexpr Style::Opacity RenderStyle::initialStrokeOpacity() { return 1_css_number; }
+constexpr Style::Opacity RenderStyle::initialStopOpacity() { return 1_css_number; }
+constexpr Style::Opacity RenderStyle::initialFloodOpacity() { return 1_css_number; }
 
 inline Style::SVGStrokeDasharray SVGRenderStyle::initialStrokeDashArray() { return RenderStyle::initialStrokeDashArray(); }
 inline Style::SVGStrokeDashoffset SVGRenderStyle::initialStrokeDashOffset() { return RenderStyle::initialStrokeDashOffset(); }
+constexpr Style::Opacity SVGRenderStyle::initialFillOpacity() { return RenderStyle::initialFillOpacity(); }
+constexpr Style::Opacity SVGRenderStyle::initialStrokeOpacity() { return RenderStyle::initialStrokeOpacity(); }
+constexpr Style::Opacity SVGRenderStyle::initialStopOpacity() { return RenderStyle::initialStopOpacity(); }
+constexpr Style::Opacity SVGRenderStyle::initialFloodOpacity() { return RenderStyle::initialFloodOpacity(); }
 
 inline void SVGRenderStyle::setCx(Style::SVGCenterCoordinateComponent&& length)
 {
@@ -355,11 +363,10 @@ inline void SVGRenderStyle::setD(RefPtr<StylePathData>&& d)
         m_layoutData.access().d = WTFMove(d);
 }
 
-inline void SVGRenderStyle::setFillOpacity(float opacity)
+inline void SVGRenderStyle::setFillOpacity(Style::Opacity opacity)
 {
-    auto clampedOpacity = clampTo<float>(opacity, 0.f, 1.f);
-    if (!(m_fillData->opacity == clampedOpacity))
-        m_fillData.access().opacity = clampedOpacity;
+    if (!(m_fillData->opacity == opacity))
+        m_fillData.access().opacity = opacity;
 }
 
 inline void SVGRenderStyle::setFill(Style::SVGPaint&& paint)
@@ -374,11 +381,10 @@ inline void SVGRenderStyle::setVisitedLinkFill(Style::SVGPaint&& paint)
         m_fillData.access().visitedLinkPaint = WTFMove(paint);
 }
 
-inline void SVGRenderStyle::setStrokeOpacity(float opacity)
+inline void SVGRenderStyle::setStrokeOpacity(Style::Opacity opacity)
 {
-    auto clampedOpacity = clampTo<float>(opacity, 0.f, 1.f);
-    if (!(m_strokeData->opacity == clampedOpacity))
-        m_strokeData.access().opacity = clampedOpacity;
+    if (!(m_strokeData->opacity == opacity))
+        m_strokeData.access().opacity = opacity;
 }
 
 inline void SVGRenderStyle::setStroke(Style::SVGPaint&& paint)
@@ -405,11 +411,10 @@ inline void SVGRenderStyle::setStrokeDashOffset(Style::SVGStrokeDashoffset&& off
         m_strokeData.access().dashOffset = WTFMove(offset);
 }
 
-inline void SVGRenderStyle::setStopOpacity(float opacity)
+inline void SVGRenderStyle::setStopOpacity(Style::Opacity opacity)
 {
-    auto clampedOpacity = clampTo<float>(opacity, 0.f, 1.f);
-    if (!(m_stopData->opacity == clampedOpacity))
-        m_stopData.access().opacity = clampedOpacity;
+    if (!(m_stopData->opacity == opacity))
+        m_stopData.access().opacity = opacity;
 }
 
 inline void SVGRenderStyle::setStopColor(Style::Color&& color)
@@ -418,11 +423,10 @@ inline void SVGRenderStyle::setStopColor(Style::Color&& color)
         m_stopData.access().color = WTFMove(color);
 }
 
-inline void SVGRenderStyle::setFloodOpacity(float opacity)
+inline void SVGRenderStyle::setFloodOpacity(Style::Opacity opacity)
 {
-    auto clampedOpacity = clampTo<float>(opacity, 0.f, 1.f);
-    if (!(m_miscData->floodOpacity == clampedOpacity))
-        m_miscData.access().floodOpacity = clampedOpacity;
+    if (!(m_miscData->floodOpacity == opacity))
+        m_miscData.access().floodOpacity = opacity;
 }
 
 inline void SVGRenderStyle::setFloodColor(Style::Color&& color)

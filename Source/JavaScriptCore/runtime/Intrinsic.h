@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "IterationKind.h"
+#include <JavaScriptCore/IterationKind.h>
 #include <optional>
 #include <wtf/text/ASCIILiteral.h>
 

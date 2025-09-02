@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -936,7 +936,7 @@ void VM::setException(Exception* exception)
     m_exception = exception;
     m_lastException = exception;
     if (exception)
-        traps().setTrapBit(VMTraps::NeedExceptionHandling);
+        traps().fireTrap(VMTraps::NeedExceptionHandling);
 }
 
 void VM::throwTerminationException()
@@ -1758,6 +1758,11 @@ void VM::performOpportunisticallyScheduledTasks(MonotonicTime deadline, OptionSe
                 dataLogLnIf(verbose, "[OPPORTUNISTIC TASK] EDEN: ", timeSinceFinishingLastFullGC, " ", timeSinceLastGC, " ", heap.m_shouldDoOpportunisticFullCollection, " ", heap.m_totalBytesVisitedAfterLastFullCollect, " ", heap.totalBytesAllocatedThisCycle(), " ", heap.m_bytesAllocatedBeforeLastEdenCollect, " ", heap.m_lastGCEndTime, " ", heap.m_currentGCStartTime, " ", (heap.lastFullGCLength() * heap.m_totalBytesVisited) / heap.m_totalBytesVisitedAfterLastFullCollect, " ", remainingTime, " ", (heap.lastEdenGCLength() * heap.totalBytesAllocatedThisCycle()) / heap.m_bytesAllocatedBeforeLastEdenCollect, " signpost:(", JSC::activeJSGlobalObjectSignpostIntervalCount.load(), ")");
                 heap.collectSync(CollectionScope::Eden);
                 return;
+            } else if (estimatedGCDuration < 2 * remainingTime) {
+                if (heap.totalBytesAllocatedThisCycle() * 2 > heap.m_minBytesPerCycle) {
+                    heap.collectAsync(CollectionScope::Eden);
+                    return;
+                }
             }
         }
 

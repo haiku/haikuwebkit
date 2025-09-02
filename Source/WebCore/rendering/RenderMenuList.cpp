@@ -53,6 +53,7 @@
 #include "RenderTheme.h"
 #include "RenderTreeBuilder.h"
 #include "RenderView.h"
+#include "StyleLengthWrapper+Platform.h"
 #include "StyleResolver.h"
 #include "TextRun.h"
 #include <math.h>
@@ -452,9 +453,7 @@ void RenderMenuList::didUpdateActiveOption(int optionIndex)
     if (listIndex < 0 || listIndex >= static_cast<int>(selectElement().listItems().size()))
         return;
 
-    auto* axObject = axCache->get(this);
-    if (RefPtr menuList = dynamicDowncast<AccessibilityMenuList>(axObject))
-        menuList->didUpdateActiveOption(optionIndex);
+    axCache->onSelectedOptionChanged(*this, optionIndex);
 }
 
 String RenderMenuList::itemText(unsigned listIndex) const

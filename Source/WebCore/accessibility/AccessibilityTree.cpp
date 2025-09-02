@@ -39,7 +39,7 @@
 namespace WebCore {
 
 using namespace HTMLNames;
-    
+
 AccessibilityTree::AccessibilityTree(AXID axID, RenderObject& renderer, AXObjectCache& cache)
     : AccessibilityRenderObject(axID, renderer, cache)
 {
@@ -51,7 +51,7 @@ AccessibilityTree::AccessibilityTree(AXID axID, Node& node, AXObjectCache& cache
 }
 
 AccessibilityTree::~AccessibilityTree() = default;
-    
+
 Ref<AccessibilityTree> AccessibilityTree::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
     return adoptRef(*new AccessibilityTree(axID, renderer, cache));
@@ -82,7 +82,7 @@ bool AccessibilityTree::isTreeValid() const
     RefPtr node = this->node();
     if (!node)
         return false;
-    
+
     Deque<Ref<Node>> queue;
     for (RefPtr child = node->firstChild(); child; child = queue.last()->nextSibling())
         queue.append(child.releaseNonNull());

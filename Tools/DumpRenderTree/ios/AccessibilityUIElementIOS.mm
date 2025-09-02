@@ -77,6 +77,8 @@ typedef void (*AXPostedNotificationCallback)(id element, NSString* notification,
 - (NSUInteger)accessibilityARIAColumnCount;
 - (NSUInteger)accessibilityARIARowIndex;
 - (NSUInteger)accessibilityARIAColumnIndex;
+- (NSString *)accessibilityRowIndexDescription;
+- (NSString *)accessibilityColumnIndexDescription;
 - (BOOL)accessibilityARIAIsBusy;
 - (BOOL)accessibilityARIALiveRegionIsAtomic;
 - (NSString *)accessibilityARIALiveRegionStatus;
@@ -754,6 +756,12 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::stringAttributeValue(JSStringRe
     if (JSStringIsEqualToUTF8CString(attribute, "AXTextualContext"))
         return [[m_element accessibilityTextualContext] createJSStringRef];
     
+    if (JSStringIsEqualToUTF8CString(attribute, "AXRowIndexDescription"))
+        return [[m_element accessibilityRowIndexDescription] createJSStringRef];
+
+    if (JSStringIsEqualToUTF8CString(attribute, "AXColumnIndexDescription"))
+        return [[m_element accessibilityColumnIndexDescription] createJSStringRef];
+
     return WTR::createJSString();
 }
 

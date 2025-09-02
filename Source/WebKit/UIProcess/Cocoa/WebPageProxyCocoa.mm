@@ -36,6 +36,7 @@
 #import "Connection.h"
 #import "CoreTelephonyUtilities.h"
 #import "DataDetectionResult.h"
+#import "ExtensionCapabilityGranter.h"
 #import "InsertTextOptions.h"
 #import "LoadParameters.h"
 #import "MessageSenderInlines.h"
@@ -1187,7 +1188,7 @@ void WebPageProxy::deactivateMediaCapability(MediaCapability& capability)
     WEBPAGEPROXY_RELEASE_LOG(ProcessCapabilities, "deactivateMediaCapability: deactivating (envID=%{public}s) for URL '%{sensitive}s'", capability.environmentIdentifier().utf8().data(), capability.webPageURL().string().utf8().data());
     Ref processPool { protectedLegacyMainFrameProcess()->protectedProcessPool() };
     processPool->extensionCapabilityGranter().setMediaCapabilityActive(capability, false);
-    processPool->extensionCapabilityGranter().revoke(capability);
+    processPool->extensionCapabilityGranter().revoke(capability, *this);
 }
 
 void WebPageProxy::resetMediaCapability()
@@ -1224,7 +1225,7 @@ void WebPageProxy::updateMediaCapability()
         processPool->extensionCapabilityGranter().setMediaCapabilityActive(*mediaCapability, true);
 
     if (mediaCapability->isActivatingOrActive())
-        processPool->extensionCapabilityGranter().grant(*mediaCapability);
+        processPool->extensionCapabilityGranter().grant(*mediaCapability, *this);
 }
 
 bool WebPageProxy::shouldActivateMediaCapability() const
@@ -1232,13 +1233,7 @@ bool WebPageProxy::shouldActivateMediaCapability() const
     if (!isViewVisible())
         return false;
 
-    if (internals().mediaState.contains(MediaProducerMediaState::IsPlayingAudio))
-        return true;
-
-    if (internals().mediaState.contains(MediaProducerMediaState::IsPlayingVideo))
-        return true;
-
-    return MediaProducer::isCapturing(internals().mediaState);
+    return MediaProducer::needsMediaCapability(internals().mediaState);
 }
 
 bool WebPageProxy::shouldDeactivateMediaCapability() const

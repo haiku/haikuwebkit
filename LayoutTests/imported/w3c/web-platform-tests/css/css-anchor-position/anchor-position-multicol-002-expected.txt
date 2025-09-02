@@ -1,18 +1,12 @@
-The green box should be a union of blue boxes, and the purple box should be at the right-bottom of the green box.
+The dashed aqua rectangle should encompass both yellow fragments, and the teal box should be at the bottom-right of the aqua box.
+
+The fuchsia rectangle should match the edge of the yellow box except where it's split across columns, and the purple box should be at the bottom-right of the fuchsia rectangle.
 
 
-FAIL .target 1 assert_equals:
-<div class="target target1" data-offset-x="18" data-offset-y="65" data-expected-width="160" data-expected-height="100"></div>
-width expected 160 but got 50
-FAIL .target 2 assert_equals:
-<div class="target target1-rb" data-offset-x="168" data-offset-y="155"></div>
-offsetLeft expected 168 but got 58
-FAIL .target 3 assert_equals:
-<div class="target fixed target1" data-offset-x="26" data-offset-y="70" data-expected-width="160" data-expected-height="100"></div>
-width expected 160 but got 50
-FAIL .target 4 assert_equals:
-<div class="target fixed target1-rb" data-offset-x="176" data-offset-y="160"></div>
-offsetLeft expected 176 but got 66
+PASS .target 1
+PASS .target 2
+PASS .target 3
+PASS .target 4
 PASS .target 5
 PASS .target 6
 PASS .target 7

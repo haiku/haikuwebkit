@@ -349,6 +349,11 @@ Ref<RTCDataChannel> RTCDataChannel::create(ScriptExecutionContext& context, RTCD
     return channel;
 }
 
+ScriptExecutionContext* RTCDataChannel::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 } // namespace WebCore
 
 #endif // ENABLE(WEB_RTC)

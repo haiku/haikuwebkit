@@ -36,7 +36,7 @@ inline bool RenderLayer::hasPerspective() const { return renderer().style().hasP
 inline bool RenderLayer::isTransparent() const { return renderer().isTransparent() || renderer().hasMask(); }
 inline bool RenderLayer::overlapBoundsIncludeChildren() const { return hasFilter() && renderer().style().filter().hasFilterThatMovesPixels(); }
 inline bool RenderLayer::preserves3D() const { return renderer().style().preserves3D(); }
-inline int RenderLayer::zIndex() const { return renderer().style().usedZIndex(); }
+inline int RenderLayer::zIndex() const { return renderer().style().usedZIndex().tryValue().value_or(0).value; }
 inline Page& RenderLayer::page() const { return renderer().page(); }
 inline Ref<Page> RenderLayer::protectedPage() const { return renderer().page(); }
 

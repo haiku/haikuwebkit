@@ -854,6 +854,11 @@ void RemoteInspector::receivedAutomationSessionRequestMessage(NSDictionary *user
             sessionCapabilities.alwaysAllowAutoplay = value.boolValue;
     }
 
+    if (NSNumber *value = forwardedCapabilities[WIRSiteIsolationEnabled]) {
+        if ([value isKindOfClass:NSNumber.class])
+            sessionCapabilities.siteIsolationEnabled = value.boolValue;
+    }
+
     if (!m_client)
         return;
 

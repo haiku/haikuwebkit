@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CallFrame.h"
-#include "Identifier.h"
-#include "Symbol.h"
-#include "VM.h"
+#include <JavaScriptCore/CallFrame.h>
+#include <JavaScriptCore/Identifier.h>
+#include <JavaScriptCore/Symbol.h>
+#include <JavaScriptCore/VM.h>
 
 namespace JSC  {
 

@@ -45,6 +45,7 @@
 #include "PlatformCAFilters.h"
 #include "PlatformCALayer.h"
 #include "PlatformCALayerCocoa.h"
+#include "PlatformLayer.h"
 #include "PlatformScreen.h"
 #include "Region.h"
 #include "RotateTransformOperation.h"
@@ -1456,7 +1457,7 @@ void GraphicsLayerCA::setContentsToVideoElement(HTMLVideoElement& videoElement, 
         return;
     }
 #endif
-    setContentsToPlatformLayer(videoElement.platformLayer(), purpose);
+    SUPPRESS_FORWARD_DECL_ARG setContentsToPlatformLayer(videoElement.platformLayer(), purpose);
 }
 
 void GraphicsLayerCA::setContentsDisplayDelegate(RefPtr<GraphicsLayerContentsDisplayDelegate>&& delegate, ContentsLayerPurpose purpose)

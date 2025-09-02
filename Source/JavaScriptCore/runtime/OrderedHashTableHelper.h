@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "HashMapHelper.h"
-#include "JSImmutableButterfly.h"
-#include "JSObject.h"
+#include <JavaScriptCore/HashMapHelper.h>
+#include <JavaScriptCore/JSImmutableButterfly.h>
+#include <JavaScriptCore/JSObject.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

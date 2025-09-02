@@ -873,10 +873,10 @@ void RenderImage::layout()
         layoutShadowContent(oldSize);
 }
 
-std::pair<FloatSize, FloatSize> RenderImage::computeIntrinsicSizeAndPreferredAspectRatio() const
+FloatSize RenderImage::computeIntrinsicSize() const
 {
     ASSERT(!shouldApplySizeContainment());
-    auto [intrinsicSize, preferredAspectRatio] = RenderReplaced::computeIntrinsicSizeAndPreferredAspectRatio();
+    auto intrinsicSize = RenderReplaced::computeIntrinsicSize();
 
     // Our intrinsicSize is empty if we're rendering generated images with relative width/height. Figure out the right intrinsic size to use.
     if (intrinsicSize.isEmpty() && (imageResource().imageHasRelativeWidth() || imageResource().imageHasRelativeHeight())) {
@@ -887,14 +887,21 @@ std::pair<FloatSize, FloatSize> RenderImage::computeIntrinsicSizeAndPreferredAsp
         }
     }
 
+    return intrinsicSize;
+}
+
+FloatSize RenderImage::preferredAspectRatio() const
+{
+    ASSERT(!shouldApplySizeContainment());
+
     // Don't compute an intrinsic ratio to preserve historical WebKit behavior if we're painting alt text and/or a broken image.
     if (shouldDisplayBrokenImageIcon()) {
         if (style().aspectRatio().isAutoAndRatio() && !isShowingAltText())
-            return { intrinsicSize, FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value) };
-        return { intrinsicSize, { 1.0, 1.0 } };
+            return FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
+        return { 1.0, 1.0 };
     }
 
-    return { intrinsicSize, preferredAspectRatio };
+    return RenderReplaced::preferredAspectRatio();
 }
 
 bool RenderImage::shouldInvalidatePreferredWidths() const

@@ -2996,6 +2996,22 @@ bool Document::updateStyleIfNeeded()
     return true;
 }
 
+bool Document::updateStyleIfNeededIgnoringPendingStylesheets()
+{
+    bool oldIgnore = m_ignorePendingStylesheets;
+    m_ignorePendingStylesheets = true;
+    // FIXME: This should just invalidate elements with missing styles.
+    if (m_hasNodesWithMissingStyle)
+        scheduleFullStyleRebuild();
+
+    updateRelevancyOfContentVisibilityElements();
+
+    bool result = updateStyleIfNeeded();
+
+    m_ignorePendingStylesheets = oldIgnore;
+    return result;
+}
+
 auto Document::updateLayoutIgnorePendingStylesheets(OptionSet<LayoutOptions> layoutOptions, const Element* context) -> UpdateLayoutResult
 {
     layoutOptions.add(LayoutOptions::IgnorePendingStylesheets);
@@ -3629,9 +3645,11 @@ void Document::willBeRemovedFromFrame()
         mediaQueryMatcher->documentDestroyed();
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
-    if (!m_clientToIDMap.isEmpty() && page()) {
-        for (auto* client : copyToVector(m_clientToIDMap.keys()))
-            removePlaybackTargetPickerClient(*client);
+    if (!m_idToClientMap.isEmpty() && page()) {
+        for (WeakPtr weakClient : copyToVector(m_idToClientMap.values())) {
+            if (RefPtr client = weakClient.get())
+                removePlaybackTargetPickerClient(*client);
+        }
     }
 #endif
 
@@ -3758,14 +3776,18 @@ void Document::clearAXObjectCache()
     // are made to access it during destruction.
     if (RefPtr page = this->page())
         page->clearAXObjectCache();
+    m_topAXObjectCache = nullptr;
 }
 
 AXObjectCache* Document::existingAXObjectCacheSlow() const
 {
     ASSERT(hasEverCreatedAnAXObjectCache);
+    if (m_topAXObjectCache)
+        return m_topAXObjectCache.get();
+
     if (RefPtr page = this->page())
-        return page->existingAXObjectCache();
-    return nullptr;
+        m_topAXObjectCache = page->existingAXObjectCache();
+    return m_topAXObjectCache.get();
 }
 
 AXObjectCache* Document::axObjectCache() const
@@ -3773,10 +3795,14 @@ AXObjectCache* Document::axObjectCache() const
     if (!AXObjectCache::accessibilityEnabled())
         return nullptr;
 
+    if (m_topAXObjectCache)
+        return m_topAXObjectCache.get();
+
     RefPtr page = this->page();
     if (!page)
         return nullptr;
-    return page->axObjectCache();
+    m_topAXObjectCache = page->axObjectCache();
+    return m_topAXObjectCache.get();
 }
 
 void Document::setVisuallyOrdered()
@@ -4266,13 +4292,10 @@ void Document::implicitClose()
         // This notification is now called AXNewDocumentLoadComplete because there are other handlers that will
         // catch new AND page history loads, and that uses AXLoadComplete
 
-        axObjectCache()->getOrCreate(renderView());
         if (isTopDocument())
-            axObjectCache()->postNotification(renderView(), AXNotification::NewDocumentLoadComplete);
+            axObjectCache()->onTopDocumentLoaded(*renderView());
         else {
-            // AXLoadComplete can only be posted on the top document, so if it's a document
-            // in an iframe that just finished loading, post AXLayoutComplete instead.
-            axObjectCache()->postNotification(renderView(), AXNotification::LayoutComplete);
+            axObjectCache()->onNonTopDocumentLoaded(*renderView());
         }
     }
 #endif
@@ -4343,6 +4366,14 @@ void Document::enqueuePaintTimingEntryIfNeeded()
 
     protectedWindow()->performance().reportFirstContentfulPaint();
     m_didEnqueueFirstContentfulPaint = true;
+}
+
+void Document::enqueueEventTimingEntriesIfNeeded()
+{
+    if (!window())
+        return;
+
+    protectedWindow()->dispatchPendingEventTimingEntries();
 }
 
 ExceptionOr<void> Document::write(Document* entryDocument, SegmentedString&& text)
@@ -9880,24 +9911,26 @@ void Document::addPlaybackTargetPickerClient(MediaPlaybackTargetClient& client)
         return;
 
     // FIXME: change this back to an ASSERT once https://webkit.org/b/144970 is fixed.
-    if (m_clientToIDMap.contains(&client))
+    m_clientToIDMap.removeNullReferences();
+    if (m_clientToIDMap.contains(client))
         return;
 
     auto contextId = PlaybackTargetClientContextIdentifier::generate();
-    m_clientToIDMap.add(&client, contextId);
+    m_clientToIDMap.add(client, contextId);
     m_idToClientMap.add(contextId, &client);
     page->addPlaybackTargetPickerClient(contextId);
 }
 
 void Document::removePlaybackTargetPickerClient(MediaPlaybackTargetClient& client)
 {
-    auto it = m_clientToIDMap.find(&client);
+    m_clientToIDMap.removeNullReferences();
+    auto it = m_clientToIDMap.find(client);
     if (it == m_clientToIDMap.end())
         return;
 
     auto clientId = it->value;
     m_idToClientMap.remove(clientId);
-    m_clientToIDMap.remove(it);
+    m_clientToIDMap.remove(client);
 
     // Unable to ref the page as it may have started destruction.
     if (WeakPtr page = this->page())
@@ -9913,12 +9946,13 @@ void Document::showPlaybackTargetPicker(MediaPlaybackTargetClient& client, bool 
     if (!frame())
         return;
 
-    auto it = m_clientToIDMap.find(&client);
+    m_clientToIDMap.removeNullReferences();
+    auto it = m_clientToIDMap.find(client);
     if (it == m_clientToIDMap.end())
         return;
 
     // FIXME: This is probably wrong for subframes.
-    auto position = frame()->eventHandler().lastKnownMousePosition();
+    auto position = flooredIntPoint(frame()->eventHandler().lastKnownMousePosition());
     page->showPlaybackTargetPicker(it->value, position, isVideo, routeSharingPolicy, routingContextUID);
 }
 
@@ -9928,7 +9962,8 @@ void Document::playbackTargetPickerClientStateDidChange(MediaPlaybackTargetClien
     if (!page)
         return;
 
-    auto it = m_clientToIDMap.find(&client);
+    m_clientToIDMap.removeNullReferences();
+    auto it = m_clientToIDMap.find(client);
     if (it == m_clientToIDMap.end())
         return;
 
@@ -9941,7 +9976,8 @@ void Document::playbackTargetAvailabilityDidChange(PlaybackTargetClientContextId
     if (it == m_idToClientMap.end())
         return;
 
-    it->value->externalOutputDeviceAvailableDidChange(available);
+    if (RefPtr client = it->value.get())
+        client->externalOutputDeviceAvailableDidChange(available);
 }
 
 void Document::setPlaybackTarget(PlaybackTargetClientContextIdentifier contextId, Ref<MediaPlaybackTarget>&& target)
@@ -9950,7 +9986,8 @@ void Document::setPlaybackTarget(PlaybackTargetClientContextIdentifier contextId
     if (it == m_idToClientMap.end())
         return;
 
-    it->value->setPlaybackTarget(target.copyRef());
+    if (RefPtr client = it->value.get())
+        client->setPlaybackTarget(target.copyRef());
 }
 
 void Document::setShouldPlayToPlaybackTarget(PlaybackTargetClientContextIdentifier contextId, bool shouldPlay)
@@ -9959,7 +9996,8 @@ void Document::setShouldPlayToPlaybackTarget(PlaybackTargetClientContextIdentifi
     if (it == m_idToClientMap.end())
         return;
 
-    it->value->setShouldPlayToPlaybackTarget(shouldPlay);
+    if (RefPtr client = it->value.get())
+        client->setShouldPlayToPlaybackTarget(shouldPlay);
 }
 
 void Document::playbackTargetPickerWasDismissed(PlaybackTargetClientContextIdentifier contextId)
@@ -9968,7 +10006,8 @@ void Document::playbackTargetPickerWasDismissed(PlaybackTargetClientContextIdent
     if (it == m_idToClientMap.end())
         return;
 
-    it->value->playbackTargetPickerWasDismissed();
+    if (RefPtr client = it->value.get())
+        client->playbackTargetPickerWasDismissed();
 }
 
 #endif // ENABLE(WIRELESS_PLAYBACK_TARGET)

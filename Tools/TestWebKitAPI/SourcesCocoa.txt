@@ -93,7 +93,6 @@ Tests/WebKitCocoa/ConsoleMessageWithDetails.mm
 Tests/WebKitCocoa/ContentFiltering.mm
 Tests/WebKitCocoa/ContentRuleListNotification.mm
 Tests/WebKitCocoa/ContentSecurityPolicy.mm
-Tests/WebKitCocoa/ContentSecurityPolicyTestHelpers.mm
 Tests/WebKitCocoa/ContextMenus.mm
 Tests/WebKitCocoa/CookieAcceptPolicy.mm
 Tests/WebKitCocoa/CookiePrivateBrowsing.mm
@@ -172,6 +171,7 @@ Tests/WebKitCocoa/InsertTextAlternatives.mm
 Tests/WebKitCocoa/InteractionDeadlockAfterCrash.mm
 Tests/WebKitCocoa/JITEnabled.mm
 Tests/WebKitCocoa/JavaScriptDuringNavigation.mm
+Tests/WebKitCocoa/LegacyPDFPluginTests.mm
 Tests/WebKitCocoa/LoadAlternateHTMLString.mm
 Tests/WebKitCocoa/LoadAndDecodeImage.mm
 Tests/WebKitCocoa/LoadDataWithNilMIMEType.mm
@@ -287,7 +287,7 @@ Tests/WebKitCocoa/TextSize.mm
 Tests/WebKitCocoa/TextWidth.mm
 Tests/WebKitCocoa/TimeZoneOverride.mm
 Tests/WebKitCocoa/UIDelegate.mm
-Tests/WebKitCocoa/UnifiedPDFTestHelpers.mm
+Tests/WebKitCocoa/PDFTestHelpers.mm
 Tests/WebKitCocoa/UnifiedPDFTests.mm
 Tests/WebKitCocoa/UploadDirectory.mm
 Tests/WebKitCocoa/UseSelectionAsFindString.mm
@@ -320,7 +320,6 @@ Tests/WebKitCocoa/WKNSNumber.mm
 Tests/WebKitCocoa/WKNavigationResponse.mm
 Tests/WebKitCocoa/WKObject.mm
 Tests/WebKitCocoa/WKPageHasMediaStreamingActivity.mm
-Tests/WebKitCocoa/WKPDFView.mm
 Tests/WebKitCocoa/WKPreferences.mm
 Tests/WebKitCocoa/WKPrinting.mm
 Tests/WebKitCocoa/WKProcessPoolConfiguration.mm

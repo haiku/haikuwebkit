@@ -920,6 +920,9 @@ webkit_web_view_get_theme_color                      (WebKitWebView             
                                                       GdkRGBA                   *rgba);
 #endif
 
+WEBKIT_API void
+webkit_web_view_end_immersive_session                (WebKitWebView             *web_view);
+
 #if USE(GI_FINISH_FUNC_ANNOTATION)
 /**
  * webkit_web_view_run_async_javascript_function_in_world: (finish-func webkit_web_view_run_javascript_in_world_finish)

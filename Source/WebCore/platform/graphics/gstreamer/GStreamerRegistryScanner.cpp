@@ -165,6 +165,8 @@ GStreamerRegistryScanner::ElementFactories::ElementFactories(OptionSet<ElementFa
         rtpDepayloaderFactories = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DEPAYLOADER, GST_RANK_MARGINAL);
     if (types.contains(Type::Decryptor))
         decryptorFactories = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DECRYPTOR, GST_RANK_MARGINAL);
+    if (types.contains(Type::CaptionEncoder))
+        captionEncoderFactories = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_ENCODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_SUBTITLE, GST_RANK_MARGINAL);
 }
 
 GStreamerRegistryScanner::ElementFactories::~ElementFactories()
@@ -180,6 +182,7 @@ GStreamerRegistryScanner::ElementFactories::~ElementFactories()
     gst_plugin_feature_list_free(rtpPayloaderFactories);
     gst_plugin_feature_list_free(rtpDepayloaderFactories);
     gst_plugin_feature_list_free(decryptorFactories);
+    gst_plugin_feature_list_free(captionEncoderFactories);
 }
 
 const char* GStreamerRegistryScanner::ElementFactories::elementFactoryTypeToString(GStreamerRegistryScanner::ElementFactories::Type factoryType)
@@ -207,6 +210,8 @@ const char* GStreamerRegistryScanner::ElementFactories::elementFactoryTypeToStri
         return "RTP depayloader";
     case Type::Decryptor:
         return "Decryptor";
+    case Type::CaptionEncoder:
+        return "caption encoder";
     case Type::All:
         break;
     }
@@ -239,6 +244,8 @@ GList* GStreamerRegistryScanner::ElementFactories::factory(GStreamerRegistryScan
         return rtpDepayloaderFactories;
     case GStreamerRegistryScanner::ElementFactories::Type::Decryptor:
         return decryptorFactories;
+    case GStreamerRegistryScanner::ElementFactories::Type::CaptionEncoder:
+        return captionEncoderFactories;
     case GStreamerRegistryScanner::ElementFactories::Type::All:
         break;
     }
@@ -294,7 +301,7 @@ GStreamerRegistryScanner::RegistryLookupResult GStreamerRegistryScanner::Element
     RELEASE_ASSERT(!gst_caps_is_any(caps.get()));
 
     GstPadDirection padDirection = GST_PAD_SINK;
-    if (factoryType == Type::AudioEncoder || factoryType == Type::VideoEncoder || factoryType == Type::Muxer || factoryType == Type::RtpDepayloader)
+    if (factoryType == Type::AudioEncoder || factoryType == Type::VideoEncoder || factoryType == Type::Muxer || factoryType == Type::RtpDepayloader || factoryType == Type::CaptionEncoder)
         padDirection = GST_PAD_SRC;
 
     // We can't use gst_element_factory_list_filter here because it would allow-list elements with
@@ -519,10 +526,19 @@ void GStreamerRegistryScanner::initializeDecoders(const GStreamerRegistryScanner
     fillMimeTypeSetFromCapsMapping(factories, mseCompatibleMapping);
 
     if (m_isMediaSource) {
-        // This ensures WebVTT will always be supported in MSE, since it's decoded directly by WebKit,
-        // so we don't actually push any WebVTT to the playback pipeline.
-        RegistryLookupResult webvttDecoderAvailable = { true, false, nullptr };
-        m_decoderCodecMap.add("wvtt"_s, webvttDecoderAvailable);
+        // WebVTT will always be supported in MSE, since it's decoded directly by WebKit.
+        RegistryLookupResult wvttAvailable = { true, false, nullptr };
+        m_decoderCodecMap.add("wvtt"_s, wvttAvailable);
+
+        // In this case, we will need to encode plain timed text to WebVTT.
+        RegistryLookupResult wvttEncoderAvailable = factories.hasElementForMediaType(ElementFactories::Type::CaptionEncoder, "application/x-subtitle-vtt"_s, ElementFactories::CheckHardwareClassifier::No);
+        m_decoderCodecMap.add("tx3g"_s, wvttEncoderAvailable);
+
+        // For CEA-608, we just transcode to WebVTT directly.
+        if (GRefPtr<GstElementFactory> cea608tottFactory = adoptGRef(gst_element_factory_find("cea608tott"))) {
+            RegistryLookupResult cea608tottAvailable = { true, false, cea608tottFactory };
+            m_decoderCodecMap.add("x-cea-608"_s, cea608tottAvailable);
+        }
         return;
     }
 
@@ -824,12 +840,12 @@ MediaPlayerEnums::SupportsType GStreamerRegistryScanner::isContentTypeSupported(
     if (!ok)
         height = 0;
 
-    if (videoDecodingLimits && (width > videoDecodingLimits->mediaMaxWidth || height > videoDecodingLimits->mediaMaxHeight))
-        return SupportsType::IsNotSupported;
-
     float frameRate = contentType.parameter("framerate"_s).toFloat(&ok);
-    // Limit frameRate only in case of highest supported resolution.
-    if (ok && videoDecodingLimits && width == videoDecodingLimits->mediaMaxWidth && height == videoDecodingLimits->mediaMaxHeight && frameRate > videoDecodingLimits->mediaMaxFrameRate)
+    if (!ok)
+        frameRate = 0;
+
+    if (videoDecodingLimits && (width > videoDecodingLimits->mediaMaxWidth || height > videoDecodingLimits->mediaMaxHeight
+        || frameRate > videoDecodingLimits->mediaMaxFrameRate))
         return SupportsType::IsNotSupported;
 
     const auto& codecs = contentType.codecs();

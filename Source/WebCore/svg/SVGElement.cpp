@@ -41,6 +41,7 @@
 #include "HTMLParserIdioms.h"
 #include "JSEventListener.h"
 #include "LegacyRenderSVGResourceContainer.h"
+#include "NodeInlines.h"
 #include "NodeName.h"
 #include "RenderAncestorIterator.h"
 #include "RenderSVGResourceContainer.h"

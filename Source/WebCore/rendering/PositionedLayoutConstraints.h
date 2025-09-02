@@ -86,7 +86,7 @@ public:
     LayoutUnit resolveAlignmentShift(const LayoutUnit unusedSpace, const LayoutUnit itemSize) const;
 
     void fixupLogicalLeftPosition(RenderBox::LogicalExtentComputedValues&) const;
-    void fixupLogicalTopPosition(RenderBox::LogicalExtentComputedValues&) const;
+    void adjustLogicalTopWithLogicalHeightIfNeeded(RenderBox::LogicalExtentComputedValues&) const;
 
 private:
     bool containingCoordsAreFlipped() const;
@@ -125,6 +125,9 @@ private:
     Style::InsetEdge m_insetBefore;
     Style::InsetEdge m_insetAfter;
     bool m_useStaticPosition { false };
+#if ASSERT_ENABLED
+    mutable bool m_isEligibleForStaticRangeAlignment { false };
+#endif
 };
 
 inline bool PositionedLayoutConstraints::isOpposing() const

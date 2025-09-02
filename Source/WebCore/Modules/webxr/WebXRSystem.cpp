@@ -271,6 +271,8 @@ bool WebXRSystem::isFeaturePermitted(PlatformXR::SessionFeature feature) const
     switch (feature) {
     case PlatformXR::SessionFeature::ReferenceSpaceTypeViewer:
         return true;
+    case PlatformXR::SessionFeature::WebGPU:
+        return true;
     case PlatformXR::SessionFeature::ReferenceSpaceTypeLocal:
     case PlatformXR::SessionFeature::ReferenceSpaceTypeLocalFloor:
     case PlatformXR::SessionFeature::ReferenceSpaceTypeBoundedFloor:

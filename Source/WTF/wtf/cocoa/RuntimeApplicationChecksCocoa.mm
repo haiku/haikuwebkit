@@ -352,10 +352,10 @@ static bool applicationBundleIsEqualTo(const String& bundleIdentifierString)
     return applicationBundleIdentifier() == bundleIdentifierString;
 }
 
-bool CocoaApplication::isIBooks()
+bool CocoaApplication::isAppleBooks()
 {
-    static bool isIBooks = applicationBundleIsEqualTo("com.apple.iBooksX"_s) || applicationBundleIsEqualTo("com.apple.iBooks"_s);
-    return isIBooks;
+    static bool isAppleBooks = applicationBundleIsEqualTo("com.apple.iBooksX"_s) || applicationBundleIsEqualTo("com.apple.iBooks"_s);
+    return isAppleBooks;
 }
 
 bool CocoaApplication::isWebkitTestRunner()
@@ -492,12 +492,6 @@ bool IOSApplication::isMobileStore()
 bool IOSApplication::isWebProcess()
 {
     return isInWebProcess();
-}
-
-bool IOSApplication::isIBooksStorytime()
-{
-    static bool isIBooksStorytime = applicationBundleIsEqualTo("com.apple.TVBooks"_s);
-    return isIBooksStorytime;
 }
 
 bool IOSApplication::isHoYoLAB()

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "JITOperationValidation.h"
-#include "ThrowScope.h"
+#include <JavaScriptCore/JITOperationValidation.h>
+#include <JavaScriptCore/ThrowScope.h>
 
 #include <type_traits>
 #include <wtf/FunctionTraits.h>

@@ -194,10 +194,10 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(const GdkEvent* event, int cu
     double xRoot, yRoot;
     gdk_event_get_root_coords(event, &xRoot, &yRoot);
 
-    return createWebMouseEvent(event, { clampToInteger(x), clampToInteger(y) }, { clampToInteger(xRoot), clampToInteger(yRoot) }, currentClickCount, delta);
+    return createWebMouseEvent(event, DoublePoint(x, y), DoublePoint(xRoot, yRoot), currentClickCount, delta);
 }
 
-WebMouseEvent WebEventFactory::createWebMouseEvent(const GdkEvent* event, const IntPoint& position, const IntPoint& globalPosition, int currentClickCount, std::optional<FloatSize> delta)
+WebMouseEvent WebEventFactory::createWebMouseEvent(const GdkEvent* event, const DoublePoint& position, const DoublePoint& globalPosition, int currentClickCount, std::optional<FloatSize> delta)
 {
 #if USE(GTK4)
     // This can happen when a NativeWebMouseEvent representing a crossing event is copied.
@@ -255,7 +255,7 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(const GdkEvent* event, const 
         );
 }
 
-WebMouseEvent WebEventFactory::createWebMouseEvent(const IntPoint& position)
+WebMouseEvent WebEventFactory::createWebMouseEvent(const DoublePoint& position)
 {
     // Mouse events without GdkEvent are crossing events, handled as a mouse move.
     return WebMouseEvent({ WebEventType::MouseMove, { }, WallTime::now() }, WebMouseEventButton::None, 0, position, position, 0, 0, 0, 0);

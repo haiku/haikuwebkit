@@ -348,6 +348,35 @@ TEST(ObscuredContentInsets, AdjustedColorForTopContentInsetColor)
     EXPECT_TRUE(Util::compareColors([[webView _topScrollPocket] captureColor], blueColor.get()));
 }
 
+TEST(ObscuredContentInsets, OverflowHeightForTopScrollEdgeEffect)
+{
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+
+    [webView setFrame:NSMakeRect(0, 0, 600, 400)];
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(50, 0, 0, 0)];
+    [webView waitForNextPresentationUpdate];
+
+    [webView synchronouslyLoadTestPageNamed:@"top-fixed-element"];
+    [webView waitForNextPresentationUpdate];
+
+    auto checkScrollPocket = [webView] {
+        RetainPtr pocket = [webView _topScrollPocket];
+        auto color = WebCore::serializationForCSS(WebCore::colorFromCocoaColor([pocket captureColor]));
+        auto rect = [pocket convertRect:[pocket bounds] toView:nil];
+        EXPECT_EQ(rect, NSMakeRect(0, 350, 600, 50));
+        EXPECT_WK_STREQ(color, "rgb(255, 99, 71)"_s);
+    };
+
+    checkScrollPocket();
+
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(0, 0, 0, 0)];
+    [webView setFrame:NSMakeRect(0, 0, 600, 350)];
+    [webView _setOverflowHeightForTopScrollEdgeEffect:50];
+    [webView waitForNextPresentationUpdate];
+
+    checkScrollPocket();
+}
+
 #endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
 } // namespace TestWebKitAPI

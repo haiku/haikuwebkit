@@ -401,6 +401,11 @@ Ref<MediaStreamPrivate> MediaStream::protectedPrivateStream()
     return m_private;
 }
 
+ScriptExecutionContext* MediaStream::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
+}
+
 #if !RELEASE_LOG_DISABLED
 WTFLogChannel& MediaStream::logChannel() const
 {

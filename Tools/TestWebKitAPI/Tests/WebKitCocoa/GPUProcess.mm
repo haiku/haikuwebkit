@@ -685,7 +685,12 @@ TEST(GPUProcess, ExitsUnderMemoryPressureCanvasCase)
     });
 }
 
+// FIXME when rdar://154212960 is resolved.
+#if PLATFORM(IOS)
+TEST(GPUProcess, DISABLED_ExitsUnderMemoryPressureVideoCase)
+#else
 TEST(GPUProcess, ExitsUnderMemoryPressureVideoCase)
+#endif
 {
     runMemoryPressureExitTest([](WKWebView *webView) {
         [webView synchronouslyLoadTestPageNamed:@"large-videos-with-audio"];
@@ -785,7 +790,12 @@ TEST(GPUProcess, ExitsUnderMemoryPressureWebRTCCase)
 }
 #endif // ENABLE(MEDIA_STREAM)
 
+// FIXME when rdar://155548126 is resolved.
+#if PLATFORM(IOS)
+TEST(GPUProcess, DISABLED_ExitsUnderMemoryPressureWebAudioCase)
+#else
 TEST(GPUProcess, ExitsUnderMemoryPressureWebAudioCase)
+#endif
 {
     runMemoryPressureExitTest([](WKWebView *webView) {
         [webView synchronouslyLoadTestPageNamed:@"audio-context-playing"];

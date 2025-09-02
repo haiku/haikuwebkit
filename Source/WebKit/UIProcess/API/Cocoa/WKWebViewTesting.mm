@@ -27,6 +27,7 @@
 #import "WKWebViewPrivateForTesting.h"
 
 #import "AudioSessionRoutingArbitratorProxy.h"
+#import "EditingRange.h"
 #import "GPUProcessProxy.h"
 #import "LogStream.h"
 #import "MediaSessionCoordinatorProxyPrivate.h"
@@ -88,6 +89,36 @@
 #endif
 
 @implementation WKWebView (WKTesting)
+
+- (_WKRectEdge)_fixedContainerEdges
+{
+    // FIXME: Remove once it's no longer required to maintain binary compatibility with internal clients.
+    _WKRectEdge edges = _WKRectEdgeNone;
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Bottom))
+        edges |= _WKRectEdgeBottom;
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Left))
+        edges |= _WKRectEdgeLeft;
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Right))
+        edges |= _WKRectEdgeRight;
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Top))
+        edges |= _WKRectEdgeTop;
+    return edges;
+}
+
+- (WebCore::CocoaColor *)_sampledBottomFixedPositionContentColor
+{
+    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Bottom);
+}
+
+- (WebCore::CocoaColor *)_sampledLeftFixedPositionContentColor
+{
+    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Left);
+}
+
+- (WebCore::CocoaColor *)_sampledRightFixedPositionContentColor
+{
+    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Right);
+}
 
 - (NSString *)_caLayerTreeAsText
 {

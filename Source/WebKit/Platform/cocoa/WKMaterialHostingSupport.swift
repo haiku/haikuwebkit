@@ -93,6 +93,8 @@ private struct MaterialHostingView<P: MaterialHostingProvider>: View {
             return nil
         case .glass:
             return ._glass(.regular)
+        case .clearGlass:
+            return ._glass(.clear)
         case .subduedGlass:
             return ._glass(.regular.forceSubdued())
         case .mediaControlsGlass:

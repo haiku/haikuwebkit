@@ -99,7 +99,7 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityListBox::visibleChildren(
 
     if (!childrenInitialized())
         addChildren();
-    
+
     const auto& children = const_cast<AccessibilityListBox*>(this)->unignoredChildren();
     AccessibilityChildrenVector result;
     size_t size = children.size();
@@ -125,12 +125,12 @@ AccessibilityObject* AccessibilityListBox::elementAccessibilityHitTest(const Int
     // ignore optgroup elements.
     if (!m_renderer)
         return nullptr;
-    
+
     if (!m_renderer->node())
         return nullptr;
-    
+
     LayoutRect parentRect = boundingBoxRect();
-    
+
     RefPtr<AccessibilityObject> listBoxOption;
     const auto& children = const_cast<AccessibilityListBox*>(this)->unignoredChildren();
     unsigned length = children.size();
@@ -143,10 +143,10 @@ AccessibilityObject* AccessibilityListBox::elementAccessibilityHitTest(const Int
             break;
         }
     }
-    
+
     if (listBoxOption && !listBoxOption->isIgnored())
         return listBoxOption.get();
-    
+
     return axObjectCache()->getOrCreate(renderer());
 }
 

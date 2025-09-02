@@ -66,7 +66,7 @@ void ChildChangeInvalidation::invalidateForChangedElement(Element& changedElemen
 
     auto hasMatchingInvalidationSelector = [&](auto& invalidationRuleSet) {
         SelectorChecker selectorChecker(changedElement.document());
-        SelectorChecker::CheckingContext checkingContext(SelectorChecker::Mode::CollectingRulesIgnoringVirtualPseudoElements);
+        SelectorChecker::CheckingContext checkingContext(SelectorChecker::Mode::StyleInvalidation);
         checkingContext.matchesAllHasScopes = true;
 
         for (auto& selector : invalidationRuleSet.invalidationSelectors) {

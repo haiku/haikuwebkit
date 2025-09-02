@@ -33,9 +33,9 @@
 #include "HTMLNames.h"
 
 namespace WebCore {
-    
+
 using namespace HTMLNames;
-    
+
 AccessibilityTreeItem::AccessibilityTreeItem(AXID axID, RenderObject& renderer, AXObjectCache& cache)
     : AccessibilityRenderObject(axID, renderer, cache)
 {
@@ -47,7 +47,7 @@ AccessibilityTreeItem::AccessibilityTreeItem(AXID axID, Node& node, AXObjectCach
 }
 
 AccessibilityTreeItem::~AccessibilityTreeItem() = default;
-    
+
 Ref<AccessibilityTreeItem> AccessibilityTreeItem::create(AXID axID, RenderObject& renderer, AXObjectCache& cache)
 {
     return adoptRef(*new AccessibilityTreeItem(axID, renderer, cache));
@@ -73,5 +73,5 @@ AccessibilityRole AccessibilityTreeItem::determineAccessibilityRole()
 
     return AccessibilityRenderObject::determineAccessibilityRole();
 }
-    
+
 } // namespace WebCore

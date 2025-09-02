@@ -61,6 +61,17 @@ public:
     {
     }
 
+    template<typename U, typename Mapper>
+    static RectEdges<T> map(RectEdges<U>&& other, NOESCAPE Mapper&& mapper)
+    {
+        return RectEdges<T> {
+            mapper(other.top()),
+            mapper(other.right()),
+            mapper(other.bottom()),
+            mapper(other.left()),
+        };
+    }
+
     T& at(BoxSide side) { return m_sides[static_cast<size_t>(side)]; }
     T& operator[](BoxSide side) { return m_sides[static_cast<size_t>(side)]; }
     T& top() { return at(BoxSide::Top); }

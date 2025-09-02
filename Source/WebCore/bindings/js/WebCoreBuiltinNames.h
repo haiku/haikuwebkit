@@ -643,6 +643,7 @@ namespace WebCore {
     macro(isSecureContext) \
     macro(kind) \
     macro(language) \
+    macro(localStorage) \
     macro(localStreams) \
     macro(location) \
     macro(makeDOMException) \
@@ -711,6 +712,7 @@ namespace WebCore {
     macro(responseCacheIsValid) \
     macro(retrieveResponse) \
     macro(self) \
+    macro(sessionStorage) \
     macro(setBody) \
     macro(setBodyFromInputRequest) \
     macro(setStatus) \

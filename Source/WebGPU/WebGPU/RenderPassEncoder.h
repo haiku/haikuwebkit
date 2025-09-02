@@ -95,7 +95,7 @@ public:
     Device& device() const { return m_device; }
 
     bool isValid() const { return m_renderCommandEncoder; }
-    bool colorDepthStencilTargetsMatch(const RenderPipeline&) const;
+    NSString* errorValidatingColorDepthStencilTargets(const RenderPipeline&) const;
     id<MTLRenderCommandEncoder> renderCommandEncoder() const;
     void makeInvalid(NSString* = nil);
     CommandEncoder& parentEncoder() const { return m_parentEncoder; }
@@ -205,8 +205,10 @@ private:
     float m_depthClearValue { 0 };
     uint64_t m_drawCount { 0 };
     const uint64_t m_maxDrawCount { 0 };
+    id<MTLRasterizationRateMap> m_rasterizationRateMap { nil };
     uint32_t m_stencilClearValue { 0 };
     std::optional<MTLViewport> m_viewport;
+    MTLDepthClipMode m_overrideDepthClipMode { MTLDepthClipModeClip };
     bool m_clearDepthAttachment { false };
     bool m_clearStencilAttachment { false };
     bool m_occlusionQueryActive { false };

@@ -30,9 +30,9 @@
 
 #if ENABLE(ASSEMBLER) && CPU(ARM_THUMB2)
 
-#include "AssemblerBuffer.h"
-#include "AssemblerCommon.h"
-#include "RegisterInfo.h"
+#include <JavaScriptCore/AssemblerBuffer.h>
+#include <JavaScriptCore/AssemblerCommon.h>
+#include <JavaScriptCore/RegisterInfo.h>
 #include <limits.h>
 #include <wtf/Assertions.h>
 #include <wtf/Vector.h>

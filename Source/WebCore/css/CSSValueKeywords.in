@@ -1434,6 +1434,7 @@ apple-invert-lightness
 -apple-system-blur-material-thick enable-if=HAVE_CORE_MATERIAL
 -apple-system-blur-material-chrome enable-if=HAVE_CORE_MATERIAL
 -apple-system-glass-material enable-if=HAVE_MATERIAL_HOSTING
+-apple-system-glass-material-clear enable-if=HAVE_MATERIAL_HOSTING
 -apple-system-glass-material-subdued enable-if=HAVE_MATERIAL_HOSTING
 -apple-system-glass-material-media-controls enable-if=HAVE_MATERIAL_HOSTING
 -apple-system-glass-material-media-controls-subdued enable-if=HAVE_MATERIAL_HOSTING
@@ -1907,11 +1908,11 @@ match-element
 // url
 
 // <url-modifier>
-crossorigin
+cross-origin
 anonymous
 use-credentials
 integrity
-referrerpolicy
+referrer-policy
 no-referrer
 no-referrer-when-downgrade
 same-origin

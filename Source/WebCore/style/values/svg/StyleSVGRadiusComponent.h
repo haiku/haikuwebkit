@@ -34,6 +34,8 @@ namespace Style {
 // https://svgwg.org/svg2-draft/geometry.html#RY
 struct SVGRadiusComponent : LengthWrapperBase<LengthPercentage<CSS::Nonnegative>, CSS::Keyword::Auto> {
     using Base::Base;
+
+    ALWAYS_INLINE bool isAuto() const { return holdsAlternative<CSS::Keyword::Auto>(); }
 };
 
 } // namespace Style

@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "ArrayStorageInlines.h"
-#include "Butterfly.h"
-#include "JSObject.h"
-#include "Structure.h"
-#include "VM.h"
+#include <JavaScriptCore/ArrayStorageInlines.h>
+#include <JavaScriptCore/Butterfly.h>
+#include <JavaScriptCore/JSObject.h>
+#include <JavaScriptCore/Structure.h>
+#include <JavaScriptCore/VM.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

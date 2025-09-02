@@ -2144,7 +2144,7 @@ static inline bool isEditingBoundary(RenderElement* ancestor, RenderBox& child)
 // FIXME: This function should go on RenderObject as an instance method. Then
 // all cases in which positionForPoint recurs could call this instead to
 // prevent crossing editable boundaries. This would require many tests.
-VisiblePosition positionForPointRespectingEditingBoundaries(RenderBlock& parent, RenderBox& child, const LayoutPoint& pointInParentCoordinates, HitTestSource source)
+PositionWithAffinity positionForPointRespectingEditingBoundaries(RenderBlock& parent, RenderBox& child, const LayoutPoint& pointInParentCoordinates, HitTestSource source)
 {
     LayoutPoint childLocation = child.location();
     if (child.isInFlowPositioned())
@@ -2172,14 +2172,14 @@ VisiblePosition positionForPointRespectingEditingBoundaries(RenderBlock& parent,
     LayoutUnit childMiddle = parent.logicalWidthForChild(child) / 2;
     LayoutUnit logicalLeft = parent.isHorizontalWritingMode() ? pointInChildCoordinates.x() : pointInChildCoordinates.y();
     if (logicalLeft < childMiddle)
-        return ancestor->createVisiblePosition(childElement->computeNodeIndex(), Affinity::Downstream);
-    return ancestor->createVisiblePosition(childElement->computeNodeIndex() + 1, Affinity::Upstream);
+        return ancestor->createPositionWithAffinity(childElement->computeNodeIndex(), Affinity::Downstream);
+    return ancestor->createPositionWithAffinity(childElement->computeNodeIndex() + 1, Affinity::Upstream);
 }
 
-VisiblePosition RenderBlock::positionForPointWithInlineChildren(const LayoutPoint&, HitTestSource)
+PositionWithAffinity RenderBlock::positionForPointWithInlineChildren(const LayoutPoint&, HitTestSource)
 {
     ASSERT_NOT_REACHED();
-    return VisiblePosition();
+    return PositionWithAffinity();
 }
 
 static inline bool isChildHitTestCandidate(const RenderBox& box, HitTestSource source)
@@ -2203,7 +2203,7 @@ static inline bool isChildHitTestCandidate(const RenderBox& box, const RenderFra
     return block.fragmentAtBlockOffset(point.y()) == fragment;
 }
 
-VisiblePosition RenderBlock::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer* fragment)
+PositionWithAffinity RenderBlock::positionForPoint(const LayoutPoint& point, HitTestSource source, const RenderFragmentContainer* fragment)
 {
     if (isRenderTable())
         return RenderBox::positionForPoint(point, source, fragment);
@@ -2214,13 +2214,13 @@ VisiblePosition RenderBlock::positionForPoint(const LayoutPoint& point, HitTestS
         LayoutUnit pointLogicalTop = isHorizontalWritingMode() ? point.y() : point.x();
 
         if (pointLogicalTop < 0)
-            return createVisiblePosition(caretMinOffset(), Affinity::Downstream);
+            return createPositionWithAffinity(caretMinOffset(), Affinity::Downstream);
         if (pointLogicalLeft >= logicalWidth())
-            return createVisiblePosition(caretMaxOffset(), Affinity::Downstream);
+            return createPositionWithAffinity(caretMaxOffset(), Affinity::Downstream);
         if (pointLogicalTop < 0)
-            return createVisiblePosition(caretMinOffset(), Affinity::Downstream);
+            return createPositionWithAffinity(caretMinOffset(), Affinity::Downstream);
         if (pointLogicalTop >= logicalHeight())
-            return createVisiblePosition(caretMaxOffset(), Affinity::Downstream);
+            return createPositionWithAffinity(caretMaxOffset(), Affinity::Downstream);
     }
     if (isFlexibleBoxIncludingDeprecated() || isRenderGrid())
         return RenderBox::positionForPoint(point, source, fragment);
@@ -2617,9 +2617,13 @@ void RenderBlock::setCachedEnclosingFragmentedFlowNeedsUpdate()
 
 RenderFragmentedFlow* RenderBlock::updateCachedEnclosingFragmentedFlow(RenderFragmentedFlow* fragmentedFlow) const
 {
-    RenderBlockRareData& rareData = const_cast<RenderBlock&>(*this).ensureBlockRareData();
-    rareData.m_enclosingFragmentedFlow = fragmentedFlow;
+    if (!fragmentedFlow) {
+        if (auto* rareData = const_cast<RenderBlock&>(*this).blockRareData())
+            rareData->m_enclosingFragmentedFlow = { };
+        return { };
+    }
 
+    const_cast<RenderBlock&>(*this).ensureBlockRareData().m_enclosingFragmentedFlow = fragmentedFlow;
     return fragmentedFlow;
 }
 

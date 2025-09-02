@@ -31,6 +31,7 @@
 #include "BarcodeFormatInterface.h"
 #include "FaceDetectorInterface.h"
 #include "FaceDetectorOptionsInterface.h"
+#include "PointerLockController.h"
 #include "ScrollbarsController.h"
 #include "ScrollingCoordinator.h"
 #include "TextDetectorInterface.h"
@@ -108,6 +109,13 @@ void ChromeClient::enterFullScreenForElement(Element&, HTMLMediaElementEnums::Vi
 {
     willEnterFullscreen({ });
     didEnterFullscreen(false);
+}
+#endif
+
+#if ENABLE(POINTER_LOCK)
+void ChromeClient::requestPointerLock(CompletionHandler<void(PointerLockRequestResult)>&& completionHandler)
+{
+    completionHandler(PointerLockRequestResult::Unsupported);
 }
 #endif
 

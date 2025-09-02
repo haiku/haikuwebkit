@@ -111,13 +111,13 @@ float FixedTableLayout::calcWidthArray()
             if (currentEffectiveColumn >= nEffCols) {
                 m_table->appendColumn(span);
                 nEffCols++;
-                m_width.append(Length());
+                m_width.append(CSS::Keyword::Auto { });
                 spanInCurrentEffectiveColumn = span;
             } else {
                 if (span < m_table->spanOfEffCol(currentEffectiveColumn)) {
                     m_table->splitColumn(currentEffectiveColumn, span);
                     nEffCols++;
-                    m_width.append(Length());
+                    m_width.append(CSS::Keyword::Auto { });
                 }
                 spanInCurrentEffectiveColumn = m_table->spanOfEffCol(currentEffectiveColumn);
             }

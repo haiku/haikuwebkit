@@ -31,8 +31,8 @@
 namespace WebCore {
 
 struct MouseEventInit : MouseRelatedEventInit {
-    int clientX { 0 };
-    int clientY { 0 };
+    double clientX { 0 };
+    double clientY { 0 };
     int16_t button { 0 };
     unsigned short buttons { 0 };
     RefPtr<EventTarget> relatedTarget;

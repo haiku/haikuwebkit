@@ -55,6 +55,10 @@
 #include <WebCore/UserGestureIndicator.h>
 #include <wtf/LoggerHelper.h>
 
+#if PLATFORM(IOS_FAMILY)
+#include <pal/system/ios/UserInterfaceIdiom.h>
+#endif
+
 #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
 #include "PlaybackSessionManager.h"
 #include "VideoPresentationManager.h"
@@ -179,7 +183,7 @@ bool WebFullScreenManager::supportsFullScreenForElement(const WebCore::Element& 
         return false;
 
 #if PLATFORM(IOS_FAMILY)
-    return !withKeyboard;
+    return PAL::currentUserInterfaceIdiomIsDesktop() || !withKeyboard;
 #else
     return true;
 #endif

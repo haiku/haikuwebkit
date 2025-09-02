@@ -1,6 +1,4 @@
-CONSOLE MESSAGE: TypeError: 'application/json' is not a valid JavaScript MIME type.
+CONSOLE MESSAGE: SyntaxError: JSON Parse error: Expected '}'
 
-Harness Error (TIMEOUT), message = null
-
-TIMEOUT JSON modules: parse error Test timed out
+PASS JSON modules: parse error
 

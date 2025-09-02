@@ -1259,7 +1259,7 @@ InlineBoxAndOffset Position::inlineBoxAndOffset(Affinity affinity, TextDirection
             if (renderBlockFlow && hasRenderedNonAnonymousDescendantsWithHeight(*renderBlockFlow)) {
                 // Try a visually equivalent position with possibly opposite editability. This helps in case |this| is in
                 // an editable block but surrounded by non-editable positions. It acts to negate the logic at the beginning
-                // of RenderObject::createVisiblePosition().
+                // of RenderObject::createPositionWithAffinity().
                 Position equivalent = downstreamIgnoringEditingBoundaries(*this);
                 if (equivalent == *this) {
                     equivalent = upstreamIgnoringEditingBoundaries(*this);

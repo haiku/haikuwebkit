@@ -29,6 +29,7 @@
 #include "config.h"
 #include "AccessibilityTableColumn.h"
 
+#include "AXObjectCache.h"
 #include "AccessibilityTable.h"
 
 namespace WebCore {
@@ -48,10 +49,10 @@ Ref<AccessibilityTableColumn> AccessibilityTableColumn::create(AXID axID, AXObje
 void AccessibilityTableColumn::setParent(AccessibilityObject* parent)
 {
     AccessibilityMockObject::setParent(parent);
-    
+
     clearChildren();
 }
-    
+
 LayoutRect AccessibilityTableColumn::elementRect() const
 {
     // This used to be cached during the call to addChildren(), but calling elementRect()
@@ -81,13 +82,13 @@ bool AccessibilityTableColumn::computeIsIgnored() const
 #if PLATFORM(IOS_FAMILY) || USE(ATSPI)
     return true;
 #endif
-    
+
     return !m_parent || m_parent->isIgnored();
 }
-    
+
 void AccessibilityTableColumn::addChildren()
 {
-    ASSERT(!m_childrenInitialized); 
+    ASSERT(!m_childrenInitialized);
     m_childrenInitialized = true;
 
     RefPtr parentTable = dynamicDowncast<AccessibilityTable>(m_parent.get());
@@ -111,5 +112,5 @@ void AccessibilityTableColumn::addChildren()
     verifyChildrenIndexInParent();
 #endif
 }
-    
+
 } // namespace WebCore

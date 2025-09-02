@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "SecurityOriginData.h"
+#include <wtf/URL.h>
 #include <wtf/text/WTFString.h>
 
 namespace JSC {
@@ -36,15 +36,29 @@ class JSValue;
 namespace WebCore {
 
 class Document;
+class Node;
+class QualifiedName;
 class JSDOMGlobalObject;
 
 enum class ClonedDocumentType : uint8_t;
 
 struct SerializedNode {
-    struct Attr {
+    WTF_MAKE_STRUCT_TZONE_ALLOCATED_EXPORT(SerializedNode, WEBCORE_EXPORT);
+    struct QualifiedName {
         String prefix;
         String localName;
         String namespaceURI;
+
+        QualifiedName(const WebCore::QualifiedName&);
+        WEBCORE_EXPORT QualifiedName(String&&, String&&, String&&);
+        QualifiedName(const QualifiedName&) = default;
+        QualifiedName(QualifiedName&&) = default;
+        QualifiedName& operator=(const QualifiedName&) = default;
+        QualifiedName& operator=(QualifiedName&&) = default;
+        WebCore::QualifiedName qualifiedName() &&;
+    };
+    struct Attr {
+        QualifiedName name;
         String value;
     };
     struct ContainerNode {
@@ -67,13 +81,18 @@ struct SerializedNode {
         String systemId;
     };
     struct Element : public ContainerNode {
-        // FIXME: Implement.
+        struct Attribute {
+            QualifiedName name;
+            String value;
+        };
+        QualifiedName name;
+        Vector<Attribute> attributes;
     };
     struct ShadowRoot : public DocumentFragment {
         // FIXME: Implement.
     };
     struct HTMLTemplateElement : public Element {
-        // FIXME: Implement.
+        // FIXME: Implement serialization of its content.
     };
     struct CharacterData {
         String data;
@@ -88,6 +107,7 @@ struct SerializedNode {
     Variant<Attr, CDATASection, Comment, Document, DocumentFragment, DocumentType, Element, ProcessingInstruction, ShadowRoot, Text, HTMLTemplateElement> data;
 
     WEBCORE_EXPORT static JSC::JSValue deserialize(SerializedNode&&, JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject*, WebCore::Document&);
+    static RefPtr<WebCore::Node> deserialize(SerializedNode&&, WebCore::Document&);
 };
 
 }

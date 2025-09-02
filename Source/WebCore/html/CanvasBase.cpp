@@ -264,9 +264,10 @@ RefPtr<ImageBuffer> CanvasBase::setImageBuffer(RefPtr<ImageBuffer>&& buffer) con
     }
     m_imageBufferMemoryCost.store(newMemoryCost, std::memory_order_relaxed);
     if (newMemoryCost) {
-        RefPtr scriptExecutionContext = this->scriptExecutionContext();
-        JSC::JSLockHolder lock(scriptExecutionContext->vm());
-        scriptExecutionContext->vm().heap.reportExtraMemoryAllocated(static_cast<JSCell*>(nullptr), newMemoryCost);
+        if (RefPtr scriptExecutionContext = this->scriptExecutionContext()) {
+            JSC::JSLockHolder lock(scriptExecutionContext->vm());
+            scriptExecutionContext->vm().heap.reportExtraMemoryAllocated(static_cast<JSCell*>(nullptr), newMemoryCost);
+        }
     }
     if (auto* context = renderingContext()) {
         if (oldSize != m_size)

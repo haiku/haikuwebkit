@@ -29,11 +29,11 @@
 
 #if ENABLE(ASSEMBLER) && CPU(X86_64)
 
-#include "AssemblerBuffer.h"
-#include "AssemblerCommon.h"
-#include "JITCompilationEffort.h"
-#include "RegisterInfo.h"
-#include "SIMDInfo.h"
+#include <JavaScriptCore/AssemblerBuffer.h>
+#include <JavaScriptCore/AssemblerCommon.h>
+#include <JavaScriptCore/JITCompilationEffort.h>
+#include <JavaScriptCore/RegisterInfo.h>
+#include <JavaScriptCore/SIMDInfo.h>
 #include <limits.h>
 #include <stdint.h>
 #include <wtf/Assertions.h>

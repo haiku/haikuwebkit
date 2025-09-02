@@ -1500,8 +1500,10 @@ namespace detail {
 template<typename T, typename U> using copy_const = std::conditional_t<std::is_const_v<T>, const U, U>;
 template<typename T, typename U> using override_ref = std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<U>&&, U&>;
 template<typename T, typename U> using forward_like_impl = override_ref<T&&, copy_const<std::remove_reference_t<T>, std::remove_reference_t<U>>>;
+template<typename T, typename U> using forward_like_preserving_const_impl = override_ref<T&&, std::remove_reference_t<U>>;
 } // namespace detail
 template<typename T, typename U> constexpr auto forward_like(U&& value) -> detail::forward_like_impl<T, U> { return static_cast<detail::forward_like_impl<T, U>>(value); }
+template<typename T, typename U> constexpr auto forward_like_preserving_const(U&& value) -> detail::forward_like_preserving_const_impl<T, U> { return static_cast<detail::forward_like_preserving_const_impl<T, U>>(value); }
 } // namespace WTF
 
 using WTF::GB;

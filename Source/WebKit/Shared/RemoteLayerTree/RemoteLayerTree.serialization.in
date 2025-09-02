@@ -146,6 +146,7 @@ header: "RemoteLayerBackingStore.h"
     double m_maximumScaleFactor;
     double m_initialScaleFactor;
     double m_viewportMetaTagWidth;
+    WebCore::InteractiveWidget m_viewportMetaTagInteractiveWidget;
     uint64_t m_renderTreeSize;
     WebKit::TransactionID m_transactionID;
     WebKit::ActivityStateChangeID m_activityStateChangeID;

@@ -125,7 +125,10 @@ class WebPlatformTestExporter(object):
     @property
     @memoized
     def _branch_name(self):
-        return self._ensure_new_branch_name()
+        if not self._bug_id:
+            commit = self._repository.find(self._options.git_commit)
+            commit_hash = commit.hash[:7] if commit else '0'
+        return f"wpt-export-for-webkit-{(str(self._bug_id) if self._bug_id else commit_hash)}"
 
     @property
     @memoized
@@ -220,17 +223,6 @@ class WebPlatformTestExporter(object):
         self._linter = self._linter(self._options.repository_directory, self._host.filesystem)
         return True
 
-    def _ensure_new_branch_name(self):
-        branch_name_prefix = "wpt-export-for-webkit-" + (str(self._bug_id) if self._bug_id else "0")
-        branch_name = branch_name_prefix
-        counter = 0
-        branches_for = self._wpt_repo.branches_for()
-        while branch_name in branches_for:
-            # FIXME: If the branch exists, we should give the option to overwrite or rebase - https://bugs.webkit.org/show_bug.cgi?id=295350
-            branch_name = (f'{branch_name_prefix}-{counter!s}')
-            counter = counter + 1
-        return branch_name
-
     def clean(self):
         _log.info('Cleaning web-platform-tests master branch')
         self._run_wpt_git(['checkout', self._wpt_repo.default_branch])
@@ -308,6 +300,7 @@ class WebPlatformTestExporter(object):
     def create_wpt_pull_request(self, remote_branch_name, title, body):
         _log.info(f"\nCreating pull-request for '{remote_branch_name}'...")
 
+        # FIXME: If the pull request/branch exists, we should give the option to overwrite or rebase - https://bugs.webkit.org/show_bug.cgi?id=295350
         pr = self._remote.pull_requests.create(
             title=title,
             body=body,

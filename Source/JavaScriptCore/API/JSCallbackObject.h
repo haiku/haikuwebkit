@@ -191,6 +191,8 @@ public:
     static EncodedJSValue constructImpl(JSGlobalObject*, CallFrame*);
     static EncodedJSValue staticFunctionGetterImpl(JSGlobalObject*, EncodedJSValue, PropertyName);
     static EncodedJSValue callbackGetterImpl(JSGlobalObject*, EncodedJSValue, PropertyName);
+
+    DECLARE_VISIT_CHILDREN;
    
 private:
     JSCallbackObject(JSGlobalObject*, Structure*, JSClassRef, void* data);
@@ -217,8 +219,6 @@ private:
 
     static CallData getConstructData(JSCell*);
     static CallData getCallData(JSCell*);
-
-    DECLARE_VISIT_CHILDREN;
 
     void init(JSGlobalObject*);
  

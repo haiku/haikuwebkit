@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CallFrame.h"
-#include "JSCalleeInlines.h"
-#include "RegisterInlines.h"
+#include <JavaScriptCore/CallFrame.h>
+#include <JavaScriptCore/JSCalleeInlines.h>
+#include <JavaScriptCore/RegisterInlines.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 

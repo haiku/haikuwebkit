@@ -2039,7 +2039,7 @@ std::optional<InspectorOverlay::Highlight::FlexHighlightOverlay> InspectorOverla
 
                 renderChildrenInDOMOrder.append(renderer);
 
-                if (renderer->style().order())
+                if (!renderer->style().order().isZero())
                     hasCustomOrder = true;
             }
         }
@@ -2062,11 +2062,8 @@ std::optional<InspectorOverlay::Highlight::FlexHighlightOverlay> InspectorOverla
                 if (auto index = renderChildrenInDOMOrder.find(renderChild); index != notFound)
                     orderNumbers.append("Item #"_s, index + 1);
 
-                if (auto order = renderChild->style().order(); order || hasCustomOrder) {
-                    if (!orderNumbers.isEmpty())
-                        orderNumbers.append('\n');
-                    orderNumbers.append("order: "_s, order);
-                }
+                if (auto order = renderChild->style().order(); !order.isZero() || hasCustomOrder)
+                    orderNumbers.append(orderNumbers.isEmpty() ? ""_s : "\n"_s, "order: "_s, order.value);
 
                 if (!orderNumbers.isEmpty())
                     flexHighlightOverlay.labels.append({ orderNumbers.toString(), itemBounds.center(), Color::white.colorWithAlphaByte(230), { InspectorOverlayLabel::Arrow::Direction::None, InspectorOverlayLabel::Arrow::Alignment::None } });

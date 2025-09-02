@@ -162,6 +162,7 @@ protected:
     HTMLCollection* cachedHTMLCollection(CollectionType);
 
 private:
+    friend struct SerializedNode;
     void executePreparedChildrenRemoval();
     enum class DeferChildrenChanged : bool { No, Yes };
     enum class DidRemoveElements : bool { No, Yes };

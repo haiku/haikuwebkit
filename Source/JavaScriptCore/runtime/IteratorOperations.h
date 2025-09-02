@@ -26,11 +26,11 @@
 
 #pragma once
 
-#include "IterationModeMetadata.h"
-#include "JSArrayIterator.h"
-#include "JSCJSValue.h"
-#include "JSObjectInlines.h"
-#include "ThrowScope.h"
+#include <JavaScriptCore/IterationModeMetadata.h>
+#include <JavaScriptCore/JSArrayIterator.h>
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/JSObjectInlines.h>
+#include <JavaScriptCore/ThrowScope.h>
 
 namespace JSC {
 

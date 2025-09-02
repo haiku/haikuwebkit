@@ -30,12 +30,12 @@
 #include "ScrollView.h"
 
 namespace WebCore {
-    
+
 class AXRemoteFrame;
 class AccessibilityScrollbar;
 class Scrollbar;
 class ScrollView;
-    
+
 class AccessibilityScrollView final : public AccessibilityObject {
 public:
     static Ref<AccessibilityScrollView> create(AXID, ScrollView&, AXObjectCache&);
@@ -50,7 +50,7 @@ public:
     RefPtr<AXRemoteFrame> remoteFrame() const { return m_remoteFrame; }
 
     String ownerDebugDescription() const;
-    String extraDebugInfo() const final { return ownerDebugDescription(); }
+    String extraDebugInfo() const final;
 
 private:
     explicit AccessibilityScrollView(AXID, ScrollView&, AXObjectCache&);
@@ -97,7 +97,7 @@ private:
     RefPtr<AccessibilityObject> m_verticalScrollbar;
     RefPtr<AXRemoteFrame> m_remoteFrame;
 };
-    
+
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::AccessibilityScrollView) \

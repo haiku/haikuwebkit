@@ -764,6 +764,19 @@ void WebProcess::updateIsWebTransportEnabled()
     m_isWebTransportEnabled = false;
 }
 
+void WebProcess::updateIsBroadcastChannelEnabled()
+{
+    if (m_isBroadcastChannelEnabled)
+        return;
+
+    for (auto& page : m_pageMap.values()) {
+        if (page->corePage()->settings().broadcastChannelEnabled()) {
+            m_isBroadcastChannelEnabled = true;
+            return;
+        }
+    }
+}
+
 void WebProcess::setHasSuspendedPageProxy(bool hasSuspendedPageProxy)
 {
     ASSERT(m_hasSuspendedPageProxy != hasSuspendedPageProxy);
@@ -973,6 +986,8 @@ void WebProcess::createWebPage(PageIdentifier pageID, WebPageCreationParameters&
         disableTermination();
         updateCPULimit();
         updateIsWebTransportEnabled();
+        updateIsBroadcastChannelEnabled();
+
 #if OS(LINUX)
         RealTimeThreads::singleton().setEnabled(hasVisibleWebPage());
 #endif
@@ -998,6 +1013,8 @@ void WebProcess::removeWebPage(PageIdentifier pageID)
     enableTermination();
     updateCPULimit();
     updateIsWebTransportEnabled();
+    updateIsBroadcastChannelEnabled();
+
 #if OS(LINUX)
     RealTimeThreads::singleton().setEnabled(hasVisibleWebPage());
 #endif

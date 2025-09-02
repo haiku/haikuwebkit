@@ -27,8 +27,8 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "WasmBranchHints.h"
-#include "WasmFormat.h"
+#include <JavaScriptCore/WasmBranchHints.h>
+#include <JavaScriptCore/WasmFormat.h>
 
 #include <wtf/FixedBitVector.h>
 #include <wtf/HashMap.h>
@@ -134,8 +134,7 @@ struct ModuleInformation final : public ThreadSafeRefCounted<ModuleInformation> 
             return false;
         if (Options::forceAllFunctionsToUseSIMD())
             return true;
-        // The LLInt discovers this value.
-        ASSERT(Options::useWasmLLInt() || Options::useWasmIPInt());
+        ASSERT(Options::useWasmIPInt());
 
         return functions[index].usesSIMD;
     }

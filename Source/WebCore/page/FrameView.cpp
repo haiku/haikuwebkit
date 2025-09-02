@@ -242,6 +242,15 @@ FloatPoint FrameView::convertFromContainingViewToRenderer(const RenderElement* r
     return renderer->absoluteToLocal(point, UseTransforms);
 }
 
+DoublePoint FrameView::convertFromContainingViewToRenderer(const RenderElement* renderer, DoublePoint viewPoint) const
+{
+    // Convert from FrameView coords into page ("absolute") coordinates.
+    if (!delegatesScrollingToNativeView())
+        viewPoint = viewToContents(viewPoint);
+
+    return renderer->absoluteToLocal(viewPoint, UseTransforms);
+}
+
 IntRect FrameView::convertFromContainingViewToRenderer(const RenderElement* renderer, const IntRect& viewRect) const
 {
     auto rect = viewToContents(viewRect);
@@ -364,6 +373,25 @@ FloatPoint FrameView::convertFromContainingView(FloatPoint parentPoint) const
 
             auto point = parentView->convertFromContainingViewToRenderer(renderer, parentPoint);
             point.moveBy(-renderer->contentBoxLocation());
+            return point;
+        }
+        return Widget::convertFromContainingView(parentPoint);
+    }
+    return parentPoint;
+}
+
+DoublePoint FrameView::convertFromContainingView(DoublePoint parentPoint) const
+{
+    if (RefPtr parentScrollView = parent()) {
+        if (RefPtr parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
+            // Get our renderer in the parent view
+            RefPtr renderer = frame().ownerRenderer();
+            if (!renderer)
+                return parentPoint;
+
+            auto point = parentView->convertFromContainingViewToRenderer(renderer.get(), parentPoint);
+            auto contentBoxLocation = renderer->contentBoxLocation();
+            point.move(-contentBoxLocation.x(), -contentBoxLocation.y());
             return point;
         }
         return Widget::convertFromContainingView(parentPoint);

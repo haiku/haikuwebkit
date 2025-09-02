@@ -150,7 +150,7 @@ AccessibilityObjectInclusion AccessibilityObject::accessibilityPlatformIncludesO
     // Special case is when the unknown object is actually an attachment.
     if (role() == AccessibilityRole::Unknown && !isAttachment())
         return AccessibilityObjectInclusion::IgnoreObject;
-    
+
     if (role() == AccessibilityRole::Inline && !isStyleFormatGroup())
         return AccessibilityObjectInclusion::IgnoreObject;
 
@@ -162,10 +162,10 @@ AccessibilityObjectInclusion AccessibilityObject::accessibilityPlatformIncludesO
                 return AccessibilityObjectInclusion::IgnoreObject;
         }
     }
-    
+
     return AccessibilityObjectInclusion::DefaultBehavior;
 }
-    
+
 bool AccessibilityObject::caretBrowsingEnabled() const
 {
     RefPtr frame = this->frame();

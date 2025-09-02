@@ -243,6 +243,11 @@ void BackgroundFetchRegistration::updateInformation(const BackgroundFetchInforma
     dispatchEvent(Event::create(eventNames().progressEvent, Event::CanBubble::No, Event::IsCancelable::No));
 }
 
+ScriptExecutionContext* BackgroundFetchRegistration::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void BackgroundFetchRegistration::stop()
 {
 }

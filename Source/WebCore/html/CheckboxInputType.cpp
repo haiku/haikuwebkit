@@ -124,7 +124,7 @@ void CheckboxInputType::handleMouseDownEvent(MouseEvent& event)
     Ref element = *this->element();
     if (element->isDisabledFormControl() || !element->renderer())
         return;
-    startSwitchPointerTracking(event.absoluteLocation());
+    startSwitchPointerTracking(LayoutPoint(event.absoluteLocation()));
 }
 
 void CheckboxInputType::handleMouseMoveEvent(MouseEvent& event)
@@ -140,7 +140,7 @@ void CheckboxInputType::handleMouseMoveEvent(MouseEvent& event)
         return;
     }
 
-    updateIsSwitchVisuallyOnFromAbsoluteLocation(event.absoluteLocation());
+    updateIsSwitchVisuallyOnFromAbsoluteLocation(LayoutPoint(event.absoluteLocation()));
 }
 
 #if ENABLE(IOS_TOUCH_EVENTS)
@@ -191,7 +191,7 @@ void CheckboxInputType::handleTouchEvent(TouchEvent& event)
             m_switchHeldTimer = makeUnique<Timer>([protectedThis = Ref { *this }, touch] {
                 if (!protectedThis->isSwitch() || !protectedThis->element() || !protectedThis->element()->renderer())
                     return;
-                protectedThis->startSwitchPointerTracking({ touch->pageX(), touch->pageY() });
+                protectedThis->startSwitchPointerTracking({ static_cast<float>(touch->pageX()), static_cast<float>(touch->pageY()) });
                 protectedThis->setIsSwitchHeld(true);
             });
         }

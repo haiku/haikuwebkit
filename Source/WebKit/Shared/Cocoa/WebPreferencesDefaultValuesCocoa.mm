@@ -31,6 +31,7 @@
 #import "ImageAnalysisUtilities.h"
 #import <Foundation/NSBundle.h>
 #import <pal/spi/cocoa/FeatureFlagsSPI.h>
+#import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <pal/system/ios/UserInterfaceIdiom.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
@@ -139,6 +140,28 @@ bool defaultContentInsetBackgroundFillEnabled()
 bool defaultHostedBlurMaterialInMediaControlsEnabled()
 {
     return isLiquidGlassEnabled();
+}
+#endif
+
+bool defaultIOSurfaceLosslessCompressionEnabled()
+{
+#if HAVE(COREVIDEO_COMPRESSED_PIXEL_FORMAT_TYPES) && HAVE(LOSSLESS_COMPRESSED_IOSURFACE_CG_SUPPORT) && PLATFORM(IOS)
+#define WK_CA_FEATURE_CG_COMPRESSED_IOSURFACES 15
+    return CASupportsFeature(WK_CA_FEATURE_CG_COMPRESSED_IOSURFACES);
+#undef WK_CA_FEATURE_CG_COMPRESSED_IOSURFACES
+#else
+    return false;
+#endif
+}
+
+#if ENABLE(UNIFIED_PDF)
+bool defaultUnifiedPDFEnabled()
+{
+#if ENABLE(UNIFIED_PDF_BY_DEFAULT)
+    return true;
+#else
+    return false;
+#endif
 }
 #endif
 

@@ -832,6 +832,17 @@ TextStream& operator<<(TextStream& ts, NBSPMode mode)
     return ts;
 }
 
+TextStream& operator<<(TextStream& ts, NinePieceImageRule rule)
+{
+    switch (rule) {
+    case NinePieceImageRule::Stretch: ts << "stretch"_s; break;
+    case NinePieceImageRule::Round: ts << "round"_s; break;
+    case NinePieceImageRule::Space: ts << "space"_s; break;
+    case NinePieceImageRule::Repeat: ts << "repeat"_s; break;
+    }
+    return ts;
+}
+
 TextStream& operator<<(TextStream& ts, ObjectFit objectFit)
 {
     switch (objectFit) {
@@ -1415,23 +1426,6 @@ TextStream& operator<<(TextStream& ts, UserSelect userSelect)
     case UserSelect::None: ts << "none"_s; break;
     case UserSelect::Text: ts << "text"_s; break;
     case UserSelect::All: ts << "all"_s; break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, VerticalAlign verticalAlign)
-{
-    switch (verticalAlign) {
-    case VerticalAlign::Baseline: ts << "baseline"_s; break;
-    case VerticalAlign::Middle: ts << "middle"_s; break;
-    case VerticalAlign::Sub: ts << "sub"_s; break;
-    case VerticalAlign::Super: ts << "super"_s; break;
-    case VerticalAlign::TextTop: ts << "text-top"_s; break;
-    case VerticalAlign::TextBottom: ts << "text-bottom"_s; break;
-    case VerticalAlign::Top: ts << "top"_s; break;
-    case VerticalAlign::Bottom: ts << "bottom"_s; break;
-    case VerticalAlign::BaselineMiddle: ts << "baseline-middle"_s; break;
-    case VerticalAlign::Length: ts << "length"_s; break;
     }
     return ts;
 }

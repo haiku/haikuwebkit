@@ -116,6 +116,8 @@ void NetworkProcess::platformInitializeNetworkProcessCocoa(const NetworkProcessC
         [NEFilterSource setDelegation:&auditToken.value()];
 #endif
     m_enableModernDownloadProgress = parameters.enableModernDownloadProgress;
+
+    increaseFileDescriptorLimit();
 }
 
 RetainPtr<CFDataRef> NetworkProcess::sourceApplicationAuditData() const

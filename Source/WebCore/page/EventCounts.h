@@ -26,21 +26,27 @@
 
 #pragma once
 
-#include <wtf/RefCounted.h>
+#include "EventNames.h"
+#include "Performance.h"
+#include <wtf/WeakRef.h>
 
 namespace WebCore {
 
 class DOMMapAdapter;
 
-class EventCounts final: public RefCounted<EventCounts> {
+class EventCounts final {
+WTF_DEPRECATED_MAKE_FAST_ALLOCATED(EventCounts);
 public:
-
-    static Ref<EventCounts> create() { return adoptRef(*new EventCounts()); }
+    EventCounts(Performance*);
+    void ref() { m_performance->ref(); }
+    void deref() { m_performance->deref(); }
 
     void initializeMapLike(DOMMapAdapter&);
+    void add(EventType);
 
 private:
-    EventCounts();
+    WeakRef<Performance, Performance::WeakPtrImplType> m_performance;
+    std::array<unsigned, EventNames::timedEvents.size()> m_counts { };
 };
 
 } // namespace WebCore

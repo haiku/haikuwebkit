@@ -167,6 +167,9 @@ NetworkSession::NetworkSession(NetworkProcess& networkProcess, const NetworkSess
     , m_shouldRunServiceWorkersOnMainThreadForTesting(parameters.shouldRunServiceWorkersOnMainThreadForTesting)
     , m_overrideServiceWorkerRegistrationCountTestingValue(parameters.overrideServiceWorkerRegistrationCountTestingValue)
     , m_inspectionForServiceWorkersAllowed(parameters.inspectionForServiceWorkersAllowed)
+    , m_sharedWorkerServer([](NetworkSession& session, auto& ref) {
+        ref.set(makeUniqueRef<WebSharedWorkerServer>(session));
+    })
     , m_storageManager(createNetworkStorageManager(networkProcess, parameters))
 #if ENABLE(WEB_PUSH_NOTIFICATIONS)
     , m_notificationManager(NetworkNotificationManager::create(parameters.sessionID.isEphemeral() ? String { } : parameters.webPushMachServiceName, configurationWithHostAuditToken(networkProcess, parameters.webPushDaemonConnectionConfiguration), networkProcess))
@@ -742,13 +745,6 @@ bool NetworkSession::hasServiceWorkerDatabasePath() const
 void NetworkSession::requestBackgroundFetchPermission(const ClientOrigin& origin, CompletionHandler<void(bool)>&& callback)
 {
     m_networkProcess->requestBackgroundFetchPermission(m_sessionID, origin, WTFMove(callback));
-}
-
-WebSharedWorkerServer& NetworkSession::ensureSharedWorkerServer()
-{
-    if (!m_sharedWorkerServer)
-        lazyInitialize(m_sharedWorkerServer, makeUnique<WebSharedWorkerServer>(*this));
-    return *m_sharedWorkerServer;
 }
 
 #if ENABLE(INSPECTOR_NETWORK_THROTTLING)

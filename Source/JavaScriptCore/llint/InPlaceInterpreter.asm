@@ -354,7 +354,7 @@ end
 macro ipintPrologueOSR(increment)
 if JIT and not ARMv7
     loadp UnboxedWasmCalleeStackSlot[cfr], ws0
-    baddis increment, Wasm::IPIntCallee::m_tierUpCounter + Wasm::LLIntTierUpCounter::m_counter[ws0], .continue
+    baddis increment, Wasm::IPIntCallee::m_tierUpCounter + Wasm::IPIntTierUpCounter::m_counter[ws0], .continue
 
     subq (NumberOfWasmArgumentJSRs + NumberOfWasmArgumentFPRs) * 8, sp
 if ARM64 or ARM64E
@@ -435,7 +435,7 @@ end
 macro ipintLoopOSR(increment)
 if JIT and not ARMv7
     loadp UnboxedWasmCalleeStackSlot[cfr], ws0
-    baddis increment, Wasm::IPIntCallee::m_tierUpCounter + Wasm::LLIntTierUpCounter::m_counter[ws0], .continue
+    baddis increment, Wasm::IPIntCallee::m_tierUpCounter + Wasm::IPIntTierUpCounter::m_counter[ws0], .continue
 
     move cfr, a1
     move PC, a2
@@ -465,7 +465,7 @@ end
 macro ipintEpilogueOSR(increment)
 if JIT and not ARMv7
     loadp UnboxedWasmCalleeStackSlot[cfr], ws0
-    baddis increment, Wasm::IPIntCallee::m_tierUpCounter + Wasm::LLIntTierUpCounter::m_counter[ws0], .continue
+    baddis increment, Wasm::IPIntCallee::m_tierUpCounter + Wasm::IPIntTierUpCounter::m_counter[ws0], .continue
 
     move cfr, a1
     operationCall(macro() cCall2(_ipint_extern_epilogue_osr) end)

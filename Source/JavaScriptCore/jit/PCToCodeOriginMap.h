@@ -27,16 +27,16 @@
 
 #if ENABLE(JIT)
 
-#include "CallFrame.h"
-#include "CodeOrigin.h"
-#include "MacroAssembler.h"
-#include "VM.h"
+#include <JavaScriptCore/CallFrame.h>
+#include <JavaScriptCore/CodeOrigin.h>
+#include <JavaScriptCore/MacroAssembler.h>
+#include <JavaScriptCore/VM.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/ValidatedReinterpretCast.h>
 #include <wtf/Vector.h>
 
 #if ENABLE(WEBASSEMBLY_OMGJIT)
-#include "WasmOpcodeOrigin.h"
+#include <JavaScriptCore/WasmOpcodeOrigin.h>
 #endif
 
 namespace JSC {
@@ -48,6 +48,7 @@ class PCToOriginMap;
 #endif
 
 #if ENABLE(WEBASSEMBLY_OMGJIT)
+
 namespace Wasm {
 class OMGOrigin {
     MAKE_VALIDATED_REINTERPRET_CAST

@@ -121,14 +121,7 @@ Ref<Node> Attr::cloneNodeInternal(Document& document, CloningOperation, CustomEl
 
 SerializedNode Attr::serializeNode(CloningOperation) const
 {
-    return {
-        SerializedNode::Attr {
-            prefix(),
-            localName(),
-            namespaceURI(),
-            value()
-        }
-    };
+    return { SerializedNode::Attr { { m_name }, value() } };
 }
 
 CSSStyleProperties* Attr::style()

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "CodeSpecializationKind.h"
+#include <JavaScriptCore/CodeSpecializationKind.h>
 #include <wtf/PrintStream.h>
 #include <wtf/SixCharacterHash.h>
 #include <wtf/text/StringImpl.h>

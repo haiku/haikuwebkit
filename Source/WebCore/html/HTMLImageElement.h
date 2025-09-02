@@ -139,7 +139,7 @@ public:
 
     bool usesSrcsetOrPicture() const;
 
-    const AtomString& loadingForBindings() const;
+    enum LoadingValues { Lazy, Eager };
 
     bool isLazyLoadable() const;
     static bool hasLazyLoadableAttributeValue(StringView);

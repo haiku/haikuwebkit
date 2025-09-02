@@ -33,6 +33,7 @@
 #include "SVGLengthValue.h"
 #include "StyleBoxShadow.h"
 #include "StyleColor.h"
+#include "StyleOpacity.h"
 #include "StylePathData.h"
 #include "StyleSVGBaselineShift.h"
 #include "StyleSVGCenterCoordinateComponent.h"
@@ -148,7 +149,7 @@ public:
     void dumpDifferences(TextStream&, const StyleFillData&) const;
 #endif
 
-    float opacity;
+    Style::Opacity opacity;
     Style::SVGPaint paint;
     Style::SVGPaint visitedLinkPaint;
 
@@ -170,7 +171,7 @@ public:
     void dumpDifferences(TextStream&, const StyleStrokeData&) const;
 #endif
 
-    float opacity;
+    Style::Opacity opacity;
     Style::SVGPaint paint;
     Style::SVGPaint visitedLinkPaint;
     Style::SVGStrokeDashoffset dashOffset;
@@ -194,7 +195,7 @@ public:
     void dumpDifferences(TextStream&, const StyleStopData&) const;
 #endif
 
-    float opacity;
+    Style::Opacity opacity;
     Style::Color color;
 
 private:
@@ -216,7 +217,7 @@ public:
     void dumpDifferences(TextStream&, const StyleMiscData&) const;
 #endif
 
-    float floodOpacity;
+    Style::Opacity floodOpacity;
     Style::Color floodColor;
     Style::Color lightingColor;
 

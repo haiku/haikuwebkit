@@ -37,6 +37,8 @@
 namespace WebCore {
 namespace Style {
 
+using namespace CSS::Literals;
+
 // MARK: - Conversion
 
 Color toStyleColor(const CSS::ColorMix& unresolved, ColorResolutionState& state)

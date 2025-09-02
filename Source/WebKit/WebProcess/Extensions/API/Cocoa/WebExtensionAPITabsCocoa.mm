@@ -155,8 +155,8 @@ NSDictionary *toWebAPI(const WebExtensionTabParameters& parameters)
 
     if (parameters.size) {
         auto size = parameters.size.value();
-        result[widthKey] = @(size.width);
-        result[heightKey] = @(size.height);
+        result[widthKey] = @(size.width());
+        result[heightKey] = @(size.height());
     }
 
     if (parameters.parentTabIdentifier)

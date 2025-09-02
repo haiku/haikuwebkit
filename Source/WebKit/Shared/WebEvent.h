@@ -29,7 +29,6 @@
 // FIXME: We should probably move to making the WebCore/PlatformFooEvents trivial classes so that
 // we can use them as the event type.
 
-#include "WebEvent.h"
 #include "WebEventModifier.h"
 #include "WebEventType.h"
 #include <wtf/CheckedPtr.h>

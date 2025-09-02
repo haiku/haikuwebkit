@@ -26,6 +26,7 @@
 #include "config.h"
 #include "WPEViewWayland.h"
 
+#include "GRefPtrWPE.h"
 #include "WPEBufferDMABufFormats.h"
 #include "WPEDisplayWaylandPrivate.h"
 #include "WPEToplevelWaylandPrivate.h"
@@ -319,7 +320,7 @@ static struct wl_buffer* createWaylandBufferFromDMABuf(WPEView* view, WPEBuffer*
     }
 
     auto* toplevel = wpe_view_get_toplevel(WPE_VIEW(view));
-    if (!wpeToplevelWaylandGetSurfaceSync(WPE_TOPLEVEL_WAYLAND(toplevel)) || wpe_buffer_dma_buf_get_rendering_fence(bufferDMABuf) == -1)
+    if (!wpeToplevelWaylandGetSurfaceSync(WPE_TOPLEVEL_WAYLAND(toplevel)) || wpe_buffer_get_rendering_fence(buffer) == -1)
         wl_buffer_add_listener(dmaBufBuffer->wlBuffer(), &bufferListener, buffer);
 
     wpe_buffer_set_user_data(buffer, dmaBufBuffer, reinterpret_cast<GDestroyNotify>(waylandBufferDestroy));
@@ -535,7 +536,7 @@ const struct zwp_linux_buffer_release_v1_listener bufferReleaseListener = {
     [](void* userData, struct zwp_linux_buffer_release_v1*, int32_t fence)
     {
         auto* buffer = WPE_BUFFER(userData);
-        wpe_buffer_dma_buf_set_release_fence(WPE_BUFFER_DMA_BUF(buffer), fence);
+        wpe_buffer_set_release_fence(buffer, fence);
         dmaBufBufferReleased(buffer);
     },
     // immediate_release
@@ -571,17 +572,15 @@ static gboolean wpeViewWaylandRenderBuffer(WPEView* view, WPEBuffer* buffer, con
     auto* wlSurface = wpe_view_wayland_get_wl_surface(WPE_VIEW_WAYLAND(view));
     wl_surface_attach(wlSurface, wlBuffer, 0, 0);
 
-    if (WPE_IS_BUFFER_DMA_BUF(buffer)) {
-        auto renderingFence = UnixFileDescriptor { wpe_buffer_dma_buf_take_rendering_fence(WPE_BUFFER_DMA_BUF(buffer)), UnixFileDescriptor::Adopt };
-        if (renderingFence) {
-            auto* surfaceSync = wpeToplevelWaylandGetSurfaceSync(WPE_TOPLEVEL_WAYLAND(wpe_view_get_toplevel(view)));
-            zwp_linux_surface_synchronization_v1_set_acquire_fence(surfaceSync, renderingFence.value());
+    auto renderingFence = UnixFileDescriptor { wpe_buffer_take_rendering_fence(buffer), UnixFileDescriptor::Adopt };
+    if (renderingFence) {
+        auto* surfaceSync = wpeToplevelWaylandGetSurfaceSync(WPE_TOPLEVEL_WAYLAND(wpe_view_get_toplevel(view)));
+        zwp_linux_surface_synchronization_v1_set_acquire_fence(surfaceSync, renderingFence.value());
 
-            auto* release = zwp_linux_surface_synchronization_v1_get_release(surfaceSync);
-            zwp_linux_buffer_release_v1_add_listener(release, &bufferReleaseListener, buffer);
-            auto* dmaBufBuffer = static_cast<DMABufBuffer*>(wpe_buffer_get_user_data(buffer));
-            dmaBufBuffer->setRelease(release);
-        }
+        auto* release = zwp_linux_surface_synchronization_v1_get_release(surfaceSync);
+        zwp_linux_buffer_release_v1_add_listener(release, &bufferReleaseListener, buffer);
+        auto* dmaBufBuffer = static_cast<DMABufBuffer*>(wpe_buffer_get_user_data(buffer));
+        dmaBufBuffer->setRelease(release);
     }
 
     auto* display = WPE_DISPLAY_WAYLAND(wpe_view_get_display(view));
@@ -598,7 +597,7 @@ static gboolean wpeViewWaylandRenderBuffer(WPEView* view, WPEBuffer* buffer, con
     wl_callback_add_listener(priv->frameCallback, &frameListener, view);
 
 #if USE(SYSPROF_CAPTURE)
-    if (auto* annotator = SysprofAnnotator::singletonIfCreated()) {
+    if (SysprofAnnotator::singletonIfCreated()) {
         if (auto* presentation = wpeDisplayWaylandGetPresentation(display)) {
             if (!priv->presentationFeedbackStatistics)
                 priv->presentationFeedbackStatistics = makeUnique<PresentationFeedbackStatistics>(kFrameHistorySize);
@@ -636,9 +635,8 @@ static const struct zwp_relative_pointer_v1_listener relativePointerListener = {
         double dX = wl_fixed_to_double(deltaX);
         double dY = wl_fixed_to_double(deltaY);
 
-        auto* event = wpe_event_pointer_move_new(WPE_EVENT_POINTER_MOVE, view, WPE_INPUT_SOURCE_MOUSE, 0, static_cast<WPEModifiers>(pointerModifiers), x, y, dX, dY);
-        wpe_view_event(view, event);
-        wpe_event_unref(event);
+        GRefPtr<WPEEvent> event = adoptGRef(wpe_event_pointer_move_new(WPE_EVENT_POINTER_MOVE, view, WPE_INPUT_SOURCE_MOUSE, 0, static_cast<WPEModifiers>(pointerModifiers), x, y, dX, dY));
+        wpe_view_event(view, event.get());
     }
 };
 

@@ -19,6 +19,6 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/1x1-red.png
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/empty-urls.css
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/fragment-only-urls.css
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/image-referrerpolicy.py
-/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/image-referrerpolicy.sub.js
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/image-referrer-policy.py
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/image-referrer-policy.sub.js
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/urls/support/relative-urls.css

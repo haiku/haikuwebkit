@@ -29,9 +29,9 @@
 
 #if ENABLE(ASSEMBLER) && CPU(ARM64)
 
-#include "ARM64Assembler.h"
-#include "AbstractMacroAssembler.h"
-#include "JITOperationValidation.h"
+#include <JavaScriptCore/ARM64Assembler.h>
+#include <JavaScriptCore/AbstractMacroAssembler.h>
+#include <JavaScriptCore/JITOperationValidation.h>
 #include <wtf/MathExtras.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMalloc.h>

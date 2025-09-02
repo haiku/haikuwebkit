@@ -46,6 +46,11 @@ TrackListBase::TrackListBase(ScriptExecutionContext* context, Type type)
 
 TrackListBase::~TrackListBase() = default;
 
+ScriptExecutionContext* TrackListBase::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
+}
+
 void TrackListBase::didMoveToNewDocument(Document& newDocument)
 {
     ActiveDOMObject::didMoveToNewDocument(newDocument);

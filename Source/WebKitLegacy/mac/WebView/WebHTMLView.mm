@@ -2855,7 +2855,7 @@ WEBCORE_COMMAND(toggleUnderline)
     COMMAND_PROLOGUE
 
     if (auto* coreFrame = core([self _frame]))
-        coreFrame->selection().revealSelection(WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignCenterAlways);
+        coreFrame->selection().revealSelection({ WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignCenterAlways });
 }
 
 #if PLATFORM(MAC)
@@ -5063,7 +5063,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     COMMAND_PROLOGUE
 
     if (auto* coreFrame = core([self _frame]))
-        coreFrame->selection().revealSelection(WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignCenterAlways);
+        coreFrame->selection().revealSelection({ WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignCenterAlways });
 }
 
 #if PLATFORM(MAC)

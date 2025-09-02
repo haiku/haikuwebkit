@@ -35,6 +35,7 @@
 #include "RenderElementInlines.h"
 #include "RenderLayerModelObject.h"
 #include "RenderStyleInlines.h"
+#include "StyleLengthWrapper+Platform.h"
 #include "StyleOffsetAnchor.h"
 #include "StyleOffsetDistance.h"
 #include "StyleOffsetPath.h"
@@ -114,7 +115,7 @@ template<typename T> static RefPtr<TransformOperation> resolveCalculateValuesFor
 
 AcceleratedEffectValues::AcceleratedEffectValues(const RenderStyle& style, const IntRect& borderBoxRect, const RenderLayerModelObject* renderer)
 {
-    opacity = style.opacity();
+    opacity = style.opacity().value.value;
 
     auto borderBoxSize = borderBoxRect.size();
 

@@ -54,6 +54,17 @@ static OptionSet<WebEventModifier> modifiersForEventModifiers(unsigned eventModi
     return modifiers;
 }
 
+static WebMouseEventButton mouseButtonForEventModifiers(unsigned eventModifiers)
+{
+    if (eventModifiers & wpe_input_pointer_modifier_button1)
+        return WebMouseEventButton::Left;
+    if (eventModifiers & wpe_input_pointer_modifier_button2)
+        return WebMouseEventButton::Middle;
+    if (eventModifiers & wpe_input_pointer_modifier_button3)
+        return WebMouseEventButton::Right;
+    return WebMouseEventButton::None;
+}
+
 static OptionSet<WebEventModifier> modifiersForKeyboardEvent(struct wpe_input_keyboard_event* event)
 {
     OptionSet<WebEventModifier> modifiers = modifiersForEventModifiers(event->modifiers);
@@ -175,6 +186,8 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(struct wpe_input_pointer_even
     WebMouseEventButton button = WebMouseEventButton::None;
     switch (event->type) {
     case wpe_input_pointer_event_type_motion:
+        button = mouseButtonForEventModifiers(event->modifiers);
+        break;
     case wpe_input_pointer_event_type_button:
         if (event->button == 1)
             button = WebMouseEventButton::Left;

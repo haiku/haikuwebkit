@@ -154,6 +154,18 @@ public:
         return 0;
     }
 
+    // The collapsing border model dissallows paddings on table, which is why we
+    // override those functions.
+    // See http://www.w3.org/TR/CSS2/tables.html#collapsing-borders
+    inline LayoutUnit paddingTop() const override;
+    inline LayoutUnit paddingBottom() const override;
+    inline LayoutUnit paddingLeft() const override;
+    inline LayoutUnit paddingRight() const override;
+    inline LayoutUnit paddingAfter() const override;
+    inline LayoutUnit paddingBefore() const override;
+    inline LayoutUnit paddingStart() const override;
+    inline LayoutUnit paddingEnd() const override;
+
     inline LayoutUnit bordersPaddingAndSpacingInRowDirection() const;
 
     // Return the first column or column-group.

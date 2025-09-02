@@ -27,16 +27,16 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "AllowMacroScratchRegisterUsage.h"
-#include "CallFrame.h"
-#include "LinkBuffer.h"
-#include "RegisterAtOffsetList.h"
-#include "RegisterSet.h"
-#include "StackAlignment.h"
-#include "WasmFormat.h"
-#include "WasmTypeDefinition.h"
-#include "WasmTypeDefinitionInlines.h"
-#include "WasmValueLocation.h"
+#include <JavaScriptCore/AllowMacroScratchRegisterUsage.h>
+#include <JavaScriptCore/CallFrame.h>
+#include <JavaScriptCore/LinkBuffer.h>
+#include <JavaScriptCore/RegisterAtOffsetList.h>
+#include <JavaScriptCore/RegisterSet.h>
+#include <JavaScriptCore/StackAlignment.h>
+#include <JavaScriptCore/WasmFormat.h>
+#include <JavaScriptCore/WasmTypeDefinition.h>
+#include <JavaScriptCore/WasmTypeDefinitionInlines.h>
+#include <JavaScriptCore/WasmValueLocation.h>
 
 namespace JSC { namespace Wasm {
 
