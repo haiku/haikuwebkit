@@ -31,6 +31,10 @@
 #include <wtf/text/TextStream.h>
 #include <wtf/text/WTFString.h>
 
+#if USE(HAIKU)
+#include <Point.h>
+#endif
+
 namespace WebCore {
 
 DoublePoint::DoublePoint(const IntPoint& p)
@@ -55,6 +59,15 @@ DoublePoint::operator CGPoint() const
 #if PLATFORM(WIN)
 
 DoublePoint::DoublePoint(const POINT& p)
+    : m_x(p.x), m_y(p.y)
+{
+}
+
+#endif
+
+#if PLATFORM(HAIKU)
+
+DoublePoint::DoublePoint(const BPoint& p)
     : m_x(p.x), m_y(p.y)
 {
 }

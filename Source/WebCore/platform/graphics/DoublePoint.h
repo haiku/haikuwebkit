@@ -105,6 +105,10 @@ public:
     WEBCORE_EXPORT DoublePoint(const POINT&);
 #endif
 
+#if PLATFORM(HAIKU)
+    WEBCORE_EXPORT DoublePoint(const BPoint&);
+#endif
+
     WEBCORE_EXPORT String toJSONString() const;
     WEBCORE_EXPORT Ref<JSON::Object> toJSONObject() const;
 
