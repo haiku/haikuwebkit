@@ -30,6 +30,8 @@
 
 #include <WebCore/ContextMenuClient.h>
 
+#include <wtf/IsoMalloc.h>
+
 class BWebPage;
 
 namespace WebCore {
@@ -37,7 +39,7 @@ namespace WebCore {
 class ContextMenu;
 
 class ContextMenuClientHaiku : public ContextMenuClient {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_ISO_ALLOCATED(ContextMenuClientHaiku);
 
 public:
     ContextMenuClientHaiku(BWebPage*);

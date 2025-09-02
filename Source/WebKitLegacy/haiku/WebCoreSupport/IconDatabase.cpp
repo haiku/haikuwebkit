@@ -86,7 +86,7 @@ static String urlForLogging(const String& url)
 #endif
 
 class DefaultIconDatabaseClient final : public IconDatabaseClient {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_ISO_ALLOCATED(DefaultIconDatabaseClient);
 public:
     void didImportIconURLForPageURL(const String&) override { }
     void didImportIconDataForPageURL(const String&) override { }
@@ -736,7 +736,7 @@ void IconDatabase::checkIntegrityBeforeOpening()
 }
 
 IconDatabase::IconDatabase()
-    : m_syncTimer(RunLoop::main(), this, &IconDatabase::syncTimerFired)
+    : m_syncTimer(RunLoop::mainSingleton(), "IconDB Sync", this, &IconDatabase::syncTimerFired)
     , m_client(defaultClient())
 {
     LOG(IconDatabase, "Creating IconDatabase %p", this);

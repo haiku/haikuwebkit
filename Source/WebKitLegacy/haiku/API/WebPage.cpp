@@ -173,6 +173,17 @@ enum {
 
 using namespace WebCore;
 
+namespace BPrivate {
+class WebPagePrivate {
+	public:
+		WebPagePrivate(WTF::Ref<WebCore::Page, WTF::RawPtrTraits<WebCore::Page>, WTF::DefaultRefDerefTraits<WebCore::Page>> page)
+			: fPage(page)
+		{
+		}
+			WTF::Ref<WebCore::Page, WTF::RawPtrTraits<WebCore::Page>, WTF::DefaultRefDerefTraits<WebCore::Page>>	fPage;
+};
+};
+
 class EmptyPluginInfoProvider final : public PluginInfoProvider {
     void refreshPlugins() final { };
     Vector<PluginInfo> pluginInfo(Page&, std::optional<Vector<SupportedPluginIdentifier>>&) final { return { }; }
@@ -327,28 +338,28 @@ BWebPage::BWebPage(BWebView* webView, BPrivate::Network::BUrlContext* context)
     pageClients.visitedLinkStore = &viewGroup->visitedLinkStore();
     // webGLStateTracker *
 
-    fPage = std::make_unique<WTF::Ref<Page>>(Page::create(WTFMove(pageClients)));
-    storageProvider->setPage(fPage->get());
+    fPagePrivate = std::make_unique<BPrivate::WebPagePrivate>(WebCore::Page::create(WTFMove(pageClients)));
+    storageProvider->setPage(*page());
 
 #if ENABLE(GEOLOCATION)
-    WebCore::provideGeolocationTo(*fPage, new GeolocationClientMock());
+    WebCore::provideGeolocationTo(*page(), new GeolocationClientMock());
 #endif
 #if ENABLE(NOTIFICATIONS) || ENABLE(LEGACY_NOTIFICATIONS)
-    WebCore::provideNotification(fPage->ptr(), new NotificationClientHaiku(this));
+    WebCore::provideNotification(page(), new NotificationClientHaiku(this));
 #endif
 #if ENABLE(DEVICE_ORIENTATION)
     // No actual support, we only want to get the html5test points...
-    WebCore::provideDeviceOrientationTo(*fPage, new DeviceOrientationClientMock());
+    WebCore::provideDeviceOrientationTo(*page(), new DeviceOrientationClientMock());
 #endif
 #if ENABLE(MEDIA_STREAM)
-    WebCore::provideUserMediaTo(*fPage, new WebUserMediaClient(this));
+    WebCore::provideUserMediaTo(*page(), new WebUserMediaClient(this));
 #endif
 #if ENABLE(NAVIGATOR_CONTENT_UTILS)
-    WebCore::provideNavigatorContentUtilsTo(*fPage,
+    WebCore::provideNavigatorContentUtilsTo(*page(),
         std::make_unique<WebKit::WebNavigatorContentUtilsClient>());
 #endif
 
-    fSettings = new BWebSettings(&fPage->get().settings());
+    fSettings = new BWebSettings(&page()->settings());
 }
 
 BWebPage::~BWebPage()
@@ -372,7 +383,7 @@ BWebPage::~BWebPage()
 
 void BWebPage::Init()
 {
-	WebFramePrivate* data = new WebFramePrivate(fPage->ptr());
+	WebFramePrivate* data = new WebFramePrivate(page());
 	fMainFrame = new BWebFrame(this, 0, data);
 }
 
@@ -385,7 +396,7 @@ void BWebPage::SetListener(const BMessenger& listener)
 {
 	fListener = listener;
 	fMainFrame->SetListener(listener);
-	static_cast<ProgressTrackerClientHaiku&>(fPage->get().progress().client()).setDispatchTarget(listener);
+	static_cast<ProgressTrackerClientHaiku&>(page()->progress().client()).setDispatchTarget(listener);
 }
 
 void BWebPage::SetDownloadListener(const BMessenger& listener)
@@ -525,7 +536,7 @@ status_t BWebPage::GetContentsAsMHTML(BDataIO& output)
             size = -1;
     };
 
-    RefPtr<FragmentedSharedBuffer> buffer = MHTMLArchive::generateMHTMLData(fPage->ptr());
+    RefPtr<FragmentedSharedBuffer> buffer = MHTMLArchive::generateMHTMLData(page());
     buffer->forEachSegment(write);
     if (size > 0)
         return B_OK;
@@ -634,7 +645,7 @@ void BWebPage::standardShortcut(const BMessage* message)
 
 WebCore::Page* BWebPage::page() const
 {
-    return fPage->ptr();
+    return fPagePrivate->fPage.ptr();
 }
 
 WebCore::Page* BWebPage::createNewPage(BRect frame, bool modalDialog,
@@ -1095,7 +1106,7 @@ void BWebPage::MessageReceived(BMessage* message)
             // file panel
             entry_ref panelDirectory;
             panel->GetPanelDirectory(&panelDirectory);
-            static_cast<ChromeClientHaiku&>(fPage->get().chrome().client())
+            static_cast<ChromeClientHaiku&>(page()->chrome().client())
                 .setPanelDirectory(panelDirectory);
 
             // Delete the panel, it can't be reused because we can switch
@@ -1150,12 +1161,12 @@ void BWebPage::handleReload(const BMessage*)
 
 void BWebPage::handleGoBack(const BMessage*)
 {
-    fPage->get().backForward().goBack();
+    page()->backForward().goBack();
 }
 
 void BWebPage::handleGoForward(const BMessage*)
 {
-    fPage->get().backForward().goForward();
+    page()->backForward().goForward();
 }
 
 void BWebPage::handleStop(const BMessage*)
@@ -1192,7 +1203,7 @@ void BWebPage::handleFocused(const BMessage* message)
     bool focused;
     message->FindBool("focused", &focused);
 
-    FocusController& focusController = fPage->get().focusController();
+    FocusController& focusController = page()->focusController();
     focusController.setFocused(focused);
     if (focused && !focusController.focusedFrame())
         focusController.setFocusedFrame(fMainFrame->Frame());
@@ -1203,7 +1214,7 @@ void BWebPage::handleActivated(const BMessage* message)
     bool activated;
     message->FindBool("activated", &activated);
 
-    FocusController& focusController = fPage->get().focusController();
+    FocusController& focusController = page()->focusController();
     focusController.setActive(activated);
 }
 
@@ -1259,9 +1270,9 @@ void BWebPage::handleMouseEvent(const BMessage* message)
 
         // Handle context menus, if necessary.
         if (event.button() == MouseButton::Right) {
-            fPage->get().contextMenuController().clearContextMenu();
+            page()->contextMenuController().clearContextMenu();
 
-            WebCore::LocalFrame* focusedFrame = fPage->get().focusController().focusedOrMainFrame();
+            WebCore::LocalFrame* focusedFrame = page()->focusController().focusedOrMainFrame();
             if (!focusedFrame->eventHandler().sendContextMenuEvent(event)) {
                 // event is swallowed.
                 return;
@@ -1269,7 +1280,7 @@ void BWebPage::handleMouseEvent(const BMessage* message)
             // If the web page implements it's own context menu handling, then
             // the contextMenu() pointer will be zero. In this case, we should
             // also swallow the event.
-            ContextMenu* contextMenu = fPage->get().contextMenuController().contextMenu();
+            ContextMenu* contextMenu = page()->contextMenuController().contextMenu();
             if (contextMenu) {
                 BPopUpMenu* platformMenu = createPlatformContextMenu(*contextMenu);
                 if (platformMenu) {
@@ -1281,7 +1292,7 @@ void BWebPage::handleMouseEvent(const BMessage* message)
                         BMessage* message = item->Message();
                         ContextMenuItem* itemHandle;
                         message->FindPointer("ContextMenuItem", (void**)&itemHandle);
-                        fPage->get().contextMenuController().contextMenuItemSelected(
+                        page()->contextMenuController().contextMenuItemSelected(
                             itemHandle->action(), itemHandle->title());
                     }
                 }
@@ -1347,7 +1358,7 @@ void BWebPage::handleMouseWheelChanged(BMessage* message)
 
 void BWebPage::handleKeyEvent(BMessage* message)
 {
-    WebCore::LocalFrame* frame = fPage->get().focusController().focusedOrMainFrame();
+    WebCore::LocalFrame* frame = page()->focusController().focusedOrMainFrame();
     if (!frame || !frame->view() || !frame->document())
         return;
 
@@ -1454,8 +1465,8 @@ void BWebPage::handleResendNotifications(BMessage*)
 {
     // Prepare navigation capabilities notification
     BMessage message(UPDATE_NAVIGATION_INTERFACE);
-    message.AddBool("can go backward", fPage->get().backForward().canGoBackOrForward(-1));
-    message.AddBool("can go forward", fPage->get().backForward().canGoBackOrForward(1));
+    message.AddBool("can go backward", page()->backForward().canGoBackOrForward(-1));
+    message.AddBool("can go forward", page()->backForward().canGoBackOrForward(1));
     WebCore::FrameLoader& loader = fMainFrame->Frame()->loader();
     message.AddBool("can stop", loader.isLoading());
     dispatchMessage(message);
@@ -1471,7 +1482,7 @@ void BWebPage::handleSendEditingCapabilities(BMessage*)
     bool canCopy = false;
     bool canPaste = false;
 
-    WebCore::LocalFrame* frame = fPage->get().focusController().focusedOrMainFrame();
+    WebCore::LocalFrame* frame = page()->focusController().focusedOrMainFrame();
     WebCore::Editor& editor = frame->editor();
 
     canCut = editor.canCut() || editor.canDHTMLCut();

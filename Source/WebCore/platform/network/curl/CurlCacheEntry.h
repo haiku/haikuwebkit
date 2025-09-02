@@ -41,7 +41,7 @@
 namespace WebCore {
 
 class CurlCacheEntry {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_ISO_ALLOCATED(CurlCacheEntry);
 public:
     CurlCacheEntry(const String& url, ResourceHandle* job, const String& cacheDir);
     ~CurlCacheEntry();

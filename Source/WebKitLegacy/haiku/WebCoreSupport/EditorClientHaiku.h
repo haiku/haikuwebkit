@@ -36,10 +36,13 @@
 #include "WebCore/DOMPasteAccess.h"
 #include "WebCore/Page.h"
 #include "WebCore/TextCheckerClient.h"
-#include <wtf/RefCounted.h>
+
 #include <wtf/Deque.h>
 #include <wtf/Forward.h>
-#include "wtf/text/StringView.h"
+#include <wtf/IsoMalloc.h>
+#include <wtf/RefCounted.h>
+#include <wtf/text/StringView.h>
+
 #include <String.h>
 
 class BMessage;
@@ -49,7 +52,7 @@ namespace WebCore {
 class PlatformKeyboardEvent;
 
 class EditorClientHaiku : public EditorClient, public TextCheckerClient {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_ISO_ALLOCATED(EditorClientHaiku);
 public:
     EditorClientHaiku(BWebPage* page);
 

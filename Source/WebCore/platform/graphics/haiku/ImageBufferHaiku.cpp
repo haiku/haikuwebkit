@@ -38,6 +38,7 @@
 
 #include <wtf/text/Base64.h>
 #include <wtf/text/CString.h>
+#include <wtf/FastMalloc.h>
 #include <BitmapStream.h>
 #include <Picture.h>
 #include <String.h>

@@ -34,6 +34,7 @@
 #include <wtf/HashCountedSet.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
+#include <wtf/IsoMalloc.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RunLoop.h>
 #include <wtf/glib/RunLoopSourcePriority.h>
@@ -57,7 +58,7 @@ public:
 };
 
 class IconDatabase: public RefCounted<IconDatabase> {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_ISO_ALLOCATED(IconDatabase);
 
 private:
     class IconSnapshot {
@@ -138,7 +139,7 @@ private:
     };
 
     class PageURLRecord {
-        WTF_MAKE_NONCOPYABLE(PageURLRecord); WTF_MAKE_FAST_ALLOCATED;
+        WTF_MAKE_NONCOPYABLE(PageURLRecord); WTF_MAKE_ISO_ALLOCATED(PageURLRecord);
     public:
         PageURLRecord(const String& pageURL);
         ~PageURLRecord();
@@ -177,7 +178,7 @@ private:
     class MainThreadNotifier: public RefCounted<MainThreadNotifier> {
     public:
         MainThreadNotifier()
-            : m_timer(RunLoop::main(), this, &MainThreadNotifier::timerFired)
+            : m_timer(RunLoop::mainSingleton(), "IconDB Notifier", this, &MainThreadNotifier::timerFired)
         {
             //m_timer.setPriority(RunLoopSourcePriority::MainThreadDispatcherTimer);
         }

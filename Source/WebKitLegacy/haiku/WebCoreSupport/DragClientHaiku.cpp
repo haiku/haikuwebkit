@@ -58,7 +58,7 @@ void DragClientHaiku::willPerformDragSourceAction(DragSourceAction, const IntPoi
     notImplemented();
 }
 
-void DragClientHaiku::startDrag(DragItem, DataTransfer&, Frame&, const std::optional<ElementIdentifier>&)
+void DragClientHaiku::startDrag(DragItem, DataTransfer&, Frame&, const std::optional<NodeIdentifier>&)
 {
     notImplemented();
 }

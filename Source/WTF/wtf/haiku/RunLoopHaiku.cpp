@@ -116,7 +116,7 @@ void RunLoop::wakeUp()
     m_handler->Looper()->PostMessage('loop', m_handler);
 }
 
-RunLoop::TimerBase::TimerBase(WTF::Ref<RunLoop>&& runLoop)
+RunLoop::TimerBase::TimerBase(WTF::Ref<RunLoop>&& runLoop, WTF::ASCIILiteral)
     : m_runLoop(runLoop)
 {
     m_messageRunner = NULL;
@@ -146,16 +146,16 @@ void RunLoop::TimerBase::timerFired()
 
 void RunLoop::TimerBase::start(Seconds nextFireInterval, bool repeat)
 {
-	if (m_messageRunner) {
-		delete m_messageRunner;
-		m_messageRunner = nullptr;
-	}
+    if (m_messageRunner) {
+        delete m_messageRunner;
+        m_messageRunner = nullptr;
+    }
 
-	BMessage* message = new BMessage('tmrf');
-	message->AddPointer("timer", this);
+    BMessage* message = new BMessage('tmrf');
+    message->AddPointer("timer", this);
 
-   	m_messageRunner = new BMessageRunner(m_runLoop->m_handler,
-       	message, nextFireInterval.microseconds(), repeat ? -1 : 1);
+    m_messageRunner = new BMessageRunner(m_runLoop->m_handler,
+        message, nextFireInterval.microseconds(), repeat ? -1 : 1);
 }
 
 bool RunLoop::TimerBase::isActive() const

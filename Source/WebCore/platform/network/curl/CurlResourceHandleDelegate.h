@@ -45,7 +45,7 @@ class CurlResourceHandleDelegate final
     : public CurlRequestClient
     , public RefCounted<CurlResourceHandleDelegate>
 {
-    WTF_MAKE_NONCOPYABLE(CurlResourceHandleDelegate); WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_NONCOPYABLE(CurlResourceHandleDelegate);
 public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }

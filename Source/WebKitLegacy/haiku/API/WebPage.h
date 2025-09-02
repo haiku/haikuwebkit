@@ -45,15 +45,8 @@ class BWebFrame;
 class BWebSettings;
 class BWebView;
 
-namespace WTF {
-	// In this header we do not want to include any of webkit headers (to not needs them as part of
-	// the public API). So all things must be only forward declared.
-
-	template<typename T, typename PtrTraits, typename> class Ref;
-	template<typename T> struct RawPtrTraits;
-	template<typename T> struct DefaultRefDerefTraits;
-};
-
+// In this header we do not want to include any of webkit headers (to not need them as part of
+// the public API). So all things must be only forward declared.
 namespace WebCore {
 class ChromeClientHaiku;
 class ContextMenuClientHaiku;
@@ -72,6 +65,7 @@ class ResourceResponse;
 
 namespace BPrivate {
 class WebDownloadPrivate;
+class WebPagePrivate;
 };
 
 enum {
@@ -243,17 +237,17 @@ private:
 			BWebView*						fWebView;
 			BWebFrame*						fMainFrame;
 			BWebSettings*					fSettings;
-            BPrivate::Network::BUrlContext*	fContext;
-			std::unique_ptr<WTF::Ref<WebCore::Page, WTF::RawPtrTraits<WebCore::Page>, WTF::DefaultRefDerefTraits<WebCore::Page>>>	fPage;
+			BPrivate::Network::BUrlContext*	fContext;
+			std::unique_ptr<BPrivate::WebPagePrivate>	fPagePrivate;
             WebCore::DumpRenderTreeClient*	fDumpRenderTree;
 
 			float							fLoadingProgress;
 			BString							fStatusMessage;
 			BString							fDisplayedStatusMessage;
 
-		    bool							fPageVisible;
-		    bool							fPageDirty;
-		    bool							fLayoutingView;
+			bool							fPageVisible;
+			bool							fPageDirty;
+			bool							fLayoutingView;
 
 			bool							fToolbarsVisible;
 			bool							fStatusbarVisible;

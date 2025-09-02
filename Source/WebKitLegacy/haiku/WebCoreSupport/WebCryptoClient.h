@@ -26,11 +26,13 @@
 #pragma once
 
 #import "WebView.h"
-#import <WebCore/CryptoClient.h>
 
+#include <WebCore/CryptoClient.h>
+
+#include <wtf/IsoMalloc.h>
 
 class WebCryptoClient:  public WebCore::CryptoClient {
-    WTF_MAKE_FAST_ALLOCATED;
+    WTF_MAKE_ISO_ALLOCATED(WebCryptoClient);
 public:
     WebCryptoClient() = default;
     ~WebCryptoClient() = default;
