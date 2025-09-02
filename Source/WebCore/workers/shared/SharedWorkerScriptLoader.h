@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "MessagePortIdentifier.h"
-#include "ResourceLoaderIdentifier.h"
-#include "ResourceResponse.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "WorkerOptions.h"
-#include "WorkerScriptLoaderClient.h"
+#include <WebCore/MessagePortIdentifier.h>
+#include <WebCore/ResourceLoaderIdentifier.h>
+#include <WebCore/ResourceResponse.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/WorkerOptions.h>
+#include <WebCore/WorkerScriptLoaderClient.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>

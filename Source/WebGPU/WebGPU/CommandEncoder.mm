@@ -575,6 +575,7 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
     uint32_t textureWidth = 0, textureHeight = 0, sampleCount = 0;
     using SliceSet = HashSet<uint64_t, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>>;
     HashMap<void*, SliceSet> depthSlices;
+    NSUInteger compositorTextureSlice = 0;
     for (auto [ i, attachment ] : indexedRange(descriptor.colorAttachmentsSpan())) {
         if (!attachment.view)
             continue;
@@ -655,11 +656,11 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
         if (mtlAttachment.loadAction == MTLLoadActionLoad && !texture->previouslyCleared())
             textureToClear = mtlAttachment.texture;
 
-        if (id<MTLRasterizationRateMap> rateMap = texture->apiParentTexture().rasterizationMapForSlice(texture->parentRelativeSlice()))
-            mtlDescriptor.rasterizationRateMap = rateMap;
-
+        auto compositorTexture = texture;
         if (attachment.resolveTarget) {
             Ref resolveTarget = fromAPI(attachment.resolveTarget);
+            compositorTexture = resolveTarget;
+
             if (!isValidToUseWith(resolveTarget, *this))
                 return RenderPassEncoder::createInvalid(*this, m_device, @"resolve target created from different device");
             resolveTarget->setCommandEncoder(*this);
@@ -667,8 +668,6 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
             if (mtlTexture.sampleCount == 1 || resolveTexture.sampleCount != 1 || isMultisampleTexture(resolveTexture) || !isMultisampleTexture(mtlTexture) || !isRenderableTextureView(resolveTarget) || mtlTexture.pixelFormat != resolveTexture.pixelFormat || !Texture::supportsResolve(resolveTarget->format(), m_device))
                 return RenderPassEncoder::createInvalid(*this, m_device, @"resolve target is invalid");
 
-            if (id<MTLRasterizationRateMap> rateMap = resolveTarget->apiParentTexture().rasterizationMapForSlice(resolveTarget->parentRelativeSlice()))
-                mtlDescriptor.rasterizationRateMap = rateMap;
             mtlAttachment.resolveTexture = resolveTexture;
             mtlAttachment.resolveLevel = 0;
             mtlAttachment.resolveSlice = 0;
@@ -676,6 +675,12 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
             if (resolveTarget->width() != texture->width() || resolveTarget->height() != texture->height())
                 return RenderPassEncoder::createInvalid(*this, m_device, [NSString stringWithFormat:@"resolve target dimensions (%u x %u) don't match expected dimensions (%u x %u)", resolveTarget->width(), resolveTarget->height(), texture->width(), texture->height()]);
         }
+
+        if (id<MTLRasterizationRateMap> rateMap = compositorTexture->apiParentTexture().rasterizationMapForSlice(compositorTexture->parentRelativeSlice())) {
+            mtlDescriptor.rasterizationRateMap = rateMap;
+            compositorTextureSlice = compositorTexture->parentRelativeSlice();
+        }
+
         if (textureToClear) {
             TextureAndClearColor *textureWithResolve = [[TextureAndClearColor alloc] initWithTexture:textureToClear];
             [attachmentsToClear setObject:textureWithResolve forKey:@(i)];
@@ -718,6 +723,16 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
             mtlAttachment.level = 0;
             mtlAttachment.loadAction = loadAction(attachment->depthLoadOp);
             mtlAttachment.storeAction = storeAction(attachment->depthStoreOp);
+
+            if (mtlDescriptor.rasterizationRateMap && metalDepthStencilTexture.sampleCount > 1) {
+                if (auto xrSubImage = m_device->getXRViewSubImage()) {
+                    if (RefPtr depthTexture = xrSubImage->depthTexture()) {
+                        mtlAttachment.resolveTexture = depthTexture->texture();
+                        mtlAttachment.storeAction = storeAction(attachment->depthStoreOp, true);
+                        mtlAttachment.resolveSlice = compositorTextureSlice;
+                    }
+                }
+            }
 
             if (mtlAttachment.loadAction == MTLLoadActionLoad && mtlAttachment.storeAction == MTLStoreActionDontCare && !textureView->previouslyCleared()) {
                 depthStencilAttachmentToClear = mtlAttachment.texture;

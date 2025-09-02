@@ -1,6 +1,3 @@
-CONSOLE MESSAGE: Unhandled Promise Rejection: Error: boo
-
-Harness Error (FAIL), message = Unhandled rejection: boo
 
 PASS event and promise ordering for location.href setter intercepted by passing a rejected promise to intercept()
 

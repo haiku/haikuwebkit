@@ -80,4 +80,9 @@ void ScrollbarsController::updateScrollbarsThickness()
         horizontalScrollbar->updateScrollbarThickness();
 }
 
+void ScrollbarsController::scrollbarColorChanged(std::optional<ScrollbarColor>)
+{
+
+}
+
 } // namespace WebCore

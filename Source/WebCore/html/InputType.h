@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include "HTMLInputElement.h"
-#include "HTMLTextFormControlElement.h"
-#include "RenderPtr.h"
+#include <WebCore/HTMLInputElement.h>
+#include <WebCore/HTMLTextFormControlElement.h>
+#include <WebCore/RenderPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/OptionSet.h>
 #include <wtf/RefCounted.h>

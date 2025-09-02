@@ -5493,7 +5493,8 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         makeHeapTopForNode(node);
         break;
 
-    case CallWasm: {
+    case CallWasm:
+    case TailCallInlinedCallerWasm: {
 #if ENABLE(WEBASSEMBLY)
         clobberWorld();
 

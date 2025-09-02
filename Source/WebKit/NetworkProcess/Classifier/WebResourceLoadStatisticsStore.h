@@ -61,6 +61,7 @@ enum class ThirdPartyCookieBlockingMode : uint8_t;
 namespace WebKit {
 
 class NetworkSession;
+class StorageAccessPermissionChangeObserver;
 class ResourceLoadStatisticsStore;
 class WebFrameProxy;
 class WebProcessProxy;
@@ -148,6 +149,7 @@ public:
     void hasStorageAccess(SubFrameDomain&&, TopFrameDomain&&, std::optional<WebCore::FrameIdentifier>, WebCore::PageIdentifier, CompletionHandler<void(bool)>&&);
     bool hasStorageAccessForFrame(const SubFrameDomain&, const TopFrameDomain&, WebCore::FrameIdentifier, WebCore::PageIdentifier);
     void requestStorageAccess(SubFrameDomain&&, TopFrameDomain&&, WebCore::FrameIdentifier, WebCore::PageIdentifier, WebPageProxyIdentifier, StorageAccessScope, WebCore::HasOrShouldIgnoreUserGesture, CompletionHandler<void(RequestStorageAccessResult)>&&);
+    void queryStorageAccessPermission(SubFrameDomain&&, TopFrameDomain&&, CompletionHandler<void(WebCore::PermissionState)>&&);
     void setLoginStatus(RegistrableDomain&&, IsLoggedIn, std::optional<LoginStatus>&&, CompletionHandler<void()>&&);
     void isLoggedIn(RegistrableDomain&&, CompletionHandler<void(bool)>&&);
     void setLastSeen(RegistrableDomain&&, Seconds, CompletionHandler<void()>&&);
@@ -232,6 +234,10 @@ public:
     void setStorageAccessPermissionForTesting(bool, WebPageProxyIdentifier, RegistrableDomain&& topFrameDomain, RegistrableDomain&& subFrameDomain, CompletionHandler<void()>&&);
     void wasRevokedStorageAccessPermissionInPage(WebPageProxyIdentifier);
 
+    void startListeningForStorageAccessPermissionChanges(StorageAccessPermissionChangeObserver&, TopFrameDomain&&, SubFrameDomain&&);
+    void stopListeningForStorageAccessPermissionChanges(StorageAccessPermissionChangeObserver&, TopFrameDomain&&, SubFrameDomain&&);
+    void stopListeningForStorageAccessPermissionChanges(StorageAccessPermissionChangeObserver&);
+
 private:
     explicit WebResourceLoadStatisticsStore(NetworkSession&, const String&, ShouldIncludeLocalhost, WebCore::ResourceLoadStatistics::IsEphemeral);
 
@@ -280,6 +286,7 @@ private:
     };
     using StorageAccessRequestRecordKey = std::pair<WebCore::FrameIdentifier, RegistrableDomain>;
     HashMap<StorageAccessRequestRecordKey, StorageAccessRequestRecordValue> m_storageAccessRequestRecords;
+    HashMap<std::pair<RegistrableDomain, RegistrableDomain>, WeakHashSet<StorageAccessPermissionChangeObserver>> m_storageAccessPermissionChangeObservers;
 };
 
 } // namespace WebKit

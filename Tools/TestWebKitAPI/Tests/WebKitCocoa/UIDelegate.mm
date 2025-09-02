@@ -47,6 +47,19 @@
 #import <WebKit/WKUIDelegatePrivate.h>
 #import <WebKit/WKWebViewConfiguration.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
+
+#if ENABLE(POINTER_LOCK)
+#import <GameController/GameController.h>
+
+@interface GCMouse ()
+- (instancetype)initWithName:(NSString *)name additionalButtons:(uint32_t)additionalButtons;
+@end
+
+@interface GCMouseInput ()
+- (void)handleMouseMovementEventWithDelta:(CGPoint)delta;
+@end
+#endif
+
 #import <WebKit/_WKFeature.h>
 #import <WebKit/_WKHitTestResult.h>
 #import <wtf/BlockPtr.h>
@@ -1434,21 +1447,37 @@ TEST(WebKit, DidNotHandleWheelEvent)
 
 #if ENABLE(POINTER_LOCK)
 
-@interface PointerLockDelegate : NSObject <WKUIDelegatePrivate>
+@interface PointerLockDelegate : NSObject <WKUIDelegatePrivate, WKScriptMessageHandler>
 @property (nonatomic, readonly) bool didEngagePointerLock;
+@property (nonatomic, readonly) NSArray<NSValue *> *mouseMoveEvents;
 - (void)resetState;
 - (void)waitForPointerLockEngaged;
 - (void)waitForPointerLockLost;
+- (void)waitForMouseMoveEvents;
 @end
 
 @implementation PointerLockDelegate {
     bool _didLosePointerLock;
+    RetainPtr<NSMutableArray<NSValue *>> _mouseMoveEvents;
+}
+
+- (instancetype)init
+{
+    if (self = [super init])
+        _mouseMoveEvents = adoptNS([[NSMutableArray alloc] init]);
+    return self;
+}
+
+- (NSArray<NSValue *> *)mouseMoveEvents
+{
+    return _mouseMoveEvents.get();
 }
 
 - (void)resetState
 {
     _didEngagePointerLock = false;
     _didLosePointerLock = false;
+    [_mouseMoveEvents removeAllObjects];
 }
 
 - (void)waitForPointerLockEngaged
@@ -1461,6 +1490,13 @@ TEST(WebKit, DidNotHandleWheelEvent)
     TestWebKitAPI::Util::run(&_didLosePointerLock);
 }
 
+- (void)waitForMouseMoveEvents
+{
+    TestWebKitAPI::Util::waitFor([&] {
+        return [_mouseMoveEvents count];
+    });
+}
+
 - (void)_webViewDidRequestPointerLock:(WKWebView *)webView completionHandler:(void (^)(BOOL))completionHandler
 {
     completionHandler(YES);
@@ -1470,6 +1506,17 @@ TEST(WebKit, DidNotHandleWheelEvent)
 - (void)_webViewDidLosePointerLock:(WKWebView *)webView
 {
     _didLosePointerLock = true;
+}
+
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
+{
+#if PLATFORM(IOS_FAMILY)
+    if ([message.name isEqualToString:@"testHandler"]) {
+        NSDictionary *moveData = message.body;
+        CGPoint delta = CGPointMake([moveData[@"deltaX"] floatValue], [moveData[@"deltaY"] floatValue]);
+        [_mouseMoveEvents addObject:[NSValue valueWithCGPoint:delta]];
+    }
+#endif
 }
 
 @end
@@ -1494,13 +1541,35 @@ public:
 #endif
         setHasMouseDeviceForTesting(true);
 
+#if HAVE(MOUSE_DEVICE_OBSERVATION)
+        m_fakeMouse = adoptNS([[GCMouse.class alloc] initWithName:@"TestMouse" additionalButtons:0]);
+        m_currentMouseSwizzler = makeUnique<ClassMethodSwizzler>(GCMouse.class, @selector(current),
+            imp_implementationWithBlock(^GCMouse *() {
+                return m_fakeMouse.get();
+            })
+        );
+        m_miceSwizzler = makeUnique<ClassMethodSwizzler>(GCMouse.class, @selector(mice),
+            imp_implementationWithBlock(^NSArray<GCMouse *> *() {
+                return @[ m_fakeMouse.get() ];
+            })
+        );
+#endif
+
         m_webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configurationForWebViewTestingPointerLock().get()]);
         m_delegate = adoptNS([[PointerLockDelegate alloc] init]);
         [m_webView setUIDelegate:m_delegate.get()];
+        [[m_webView configuration].userContentController addScriptMessageHandler:m_delegate.get() name:@"testHandler"];
         [m_webView synchronouslyLoadHTMLString:
             @"<canvas width='800' height='600'></canvas><script>"
             @"var canvas = document.querySelector('canvas');"
+            @"var mouseMoveEvents = [];"
             @"canvas.onclick = () => canvas.requestPointerLock();"
+            @"document.addEventListener('pointermove', (e) => {"
+            @"    if (document.pointerLockElement) {"
+            @"        mouseMoveEvents.push({deltaX: e.movementX, deltaY: e.movementY, timeStamp: e.timeStamp});"
+            @"        window.webkit.messageHandlers.testHandler.postMessage({deltaX: e.movementX, deltaY: e.movementY});"
+            @"    }"
+            @"});"
             @"</script>"
         ];
 
@@ -1543,6 +1612,8 @@ public:
 
     RetainPtr<TestWKWebView> webView() const { return m_webView.get(); }
     RetainPtr<PointerLockDelegate> pointerLockDelegate() const { return m_delegate.get(); }
+    RetainPtr<GCMouse> fakeMouse() const { return m_fakeMouse.get(); }
+
 private:
 #if HAVE(MOUSE_DEVICE_OBSERVATION)
     static WKMouseDeviceObserver *sharedMouseDeviceObserver()
@@ -1565,6 +1636,9 @@ private:
 
     RetainPtr<TestWKWebView> m_webView;
     RetainPtr<PointerLockDelegate> m_delegate;
+    RetainPtr<GCMouse> m_fakeMouse;
+    std::unique_ptr<ClassMethodSwizzler> m_currentMouseSwizzler;
+    std::unique_ptr<ClassMethodSwizzler> m_miceSwizzler;
 };
 
 TEST_F(PointerLockTests, Simple)
@@ -1612,6 +1686,33 @@ TEST_F(PointerLockTests, DeniedWithoutMouseDevice)
     }];
 
     TestWebKitAPI::Util::run(&done);
+}
+
+TEST_F(PointerLockTests, MouseDeviceMove)
+{
+    click(200, 200);
+    [pointerLockDelegate() waitForPointerLockEngaged];
+
+    float deltaX = 10.0f;
+    float deltaY = 5.0f;
+    RetainPtr mouseInput = [fakeMouse() mouseInput];
+    [mouseInput handleMouseMovementEventWithDelta:CGPointMake(deltaX, deltaY)];
+
+    [pointerLockDelegate() waitForMouseMoveEvents];
+    CGPoint capturedDelta = [[pointerLockDelegate() mouseMoveEvents].firstObject CGPointValue];
+    EXPECT_EQ(deltaX, capturedDelta.x);
+    EXPECT_EQ(deltaY, capturedDelta.y);
+}
+
+TEST_F(PointerLockTests, MouseDeviceDisconnect)
+{
+    click(200, 200);
+
+    RetainPtr delegate = pointerLockDelegate();
+    [delegate waitForPointerLockEngaged];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:GCMouseDidStopBeingCurrentNotification object:fakeMouse().get() userInfo:nil];
+    [delegate waitForPointerLockLost];
 }
 
 #endif

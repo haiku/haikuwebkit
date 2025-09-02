@@ -27,8 +27,8 @@
 
 #if ENABLE(WEB_AUTHN)
 
-#include "IDLTypes.h"
-#include "PublicKeyCredential.h"
+#include <WebCore/IDLTypes.h>
+#include <WebCore/PublicKeyCredential.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>

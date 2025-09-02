@@ -25,20 +25,20 @@
 
 #pragma once
 
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "IDBActiveDOMObject.h"
-#include "IDBError.h"
-#include "IDBGetAllRecordsData.h"
-#include "IDBGetRecordData.h"
-#include "IDBIndexIdentifier.h"
-#include "IDBKeyRangeData.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "IDBOpenDBRequest.h"
-#include "IDBTransactionInfo.h"
-#include "IDBTransactionMode.h"
-#include "IndexedDB.h"
-#include "Timer.h"
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/IDBActiveDOMObject.h>
+#include <WebCore/IDBError.h>
+#include <WebCore/IDBGetAllRecordsData.h>
+#include <WebCore/IDBGetRecordData.h>
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBKeyRangeData.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/IDBOpenDBRequest.h>
+#include <WebCore/IDBTransactionInfo.h>
+#include <WebCore/IDBTransactionMode.h>
+#include <WebCore/IndexedDB.h>
+#include <WebCore/Timer.h>
 #include <wtf/Deque.h>
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>

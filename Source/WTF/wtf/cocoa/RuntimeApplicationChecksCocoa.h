@@ -114,7 +114,6 @@ enum class SDKAlignedBehavior {
     ThrowIfCanDeclareGlobalFunctionFails,
     ThrowOnKVCInstanceVariableAccess,
     LaxCookieSameSiteAttribute,
-    BlockOptionallyBlockableMixedContent,
     UseCFNetworkNetworkLoader,
     AutoLayoutInWKWebView,
     BlockCrossOriginRedirectDownloads,
@@ -126,6 +125,7 @@ enum class SDKAlignedBehavior {
     BlobFileAccessEnforcement,
     SupportGameControllerEventInteractionAPI,
     DidFailProvisionalNavigationWithErrorForFileURLNavigation,
+    CrashWhenPreconnectingFromBackgroundThread,
 
     NumberOfBehaviors
 };

@@ -141,6 +141,7 @@ accessibility/cocoa/AXCoreObjectCocoa.mm
 accessibility/cocoa/AXTextMarkerCocoa.mm
 accessibility/cocoa/AccessibilityObjectCocoa.mm
 accessibility/ios/AXObjectCacheIOS.mm
+accessibility/ios/AXRemoteTokenIOS.mm
 accessibility/ios/AccessibilityObjectIOS.mm
 accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
 accessibility/isolatedtree/mac/AXIsolatedObjectMac.mm

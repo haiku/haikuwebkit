@@ -27,11 +27,11 @@
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET) && !PLATFORM(IOS_FAMILY)
 
-#include "MediaPlaybackTargetContext.h"
-#include "MediaPlaybackTargetPicker.h"
-#include "MediaPlaybackTargetPickerMock.h"
-#include "MediaProducer.h"
-#include "PlaybackTargetClientContextIdentifier.h"
+#include <WebCore/MediaPlaybackTargetContext.h>
+#include <WebCore/MediaPlaybackTargetPicker.h>
+#include <WebCore/MediaPlaybackTargetPickerMock.h>
+#include <WebCore/MediaProducer.h>
+#include <WebCore/PlaybackTargetClientContextIdentifier.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Ref.h>
 #include <wtf/RefPtr.h>

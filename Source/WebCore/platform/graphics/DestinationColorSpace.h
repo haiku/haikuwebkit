@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PlatformColorSpace.h"
+#include <WebCore/PlatformColorSpace.h>
 #include <optional>
 #include <wtf/Forward.h>
 

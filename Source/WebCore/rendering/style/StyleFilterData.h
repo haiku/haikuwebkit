@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FilterOperations.h"
+#include <WebCore/FilterOperations.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 

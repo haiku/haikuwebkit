@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "AnimationEffectPhase.h"
-#include "BasicEffectTiming.h"
-#include "FillMode.h"
-#include "PlaybackDirection.h"
-#include "TimingFunction.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/AnimationEffectPhase.h>
+#include <WebCore/BasicEffectTiming.h>
+#include <WebCore/FillMode.h>
+#include <WebCore/PlaybackDirection.h>
+#include <WebCore/TimingFunction.h>
+#include <WebCore/WebAnimationTypes.h>
 #include <wtf/RefPtr.h>
 #include <wtf/Seconds.h>
 

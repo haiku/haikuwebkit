@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "HTMLElement.h"
-#include "HTMLParserIdioms.h"
-#include "StylePrimitiveNumericTypes.h"
+#include <WebCore/HTMLElement.h>
+#include <WebCore/HTMLParserIdioms.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
 #include <wtf/FixedVector.h>
 
 namespace WebCore {

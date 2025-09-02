@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "DoubleSize.h"
-#include "IntPoint.h"
+#include <WebCore/DoubleSize.h>
+#include <WebCore/IntPoint.h>
 #include <wtf/JSONValues.h>
 #include <wtf/MathExtras.h>
 #include <wtf/text/WTFString.h>

@@ -119,6 +119,7 @@ public:
     bool hasScrollableOrZoomedMainFrame() const;
 
     WebCore::ScrollbarWidth mainFrameScrollbarWidth() const;
+    std::optional<WebCore::ScrollbarColor> mainFrameScrollbarColor() const;
 
     WebCore::OverscrollBehavior mainFrameHorizontalOverscrollBehavior() const;
     WebCore::OverscrollBehavior mainFrameVerticalOverscrollBehavior() const;

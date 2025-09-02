@@ -5916,6 +5916,22 @@
                 "url": "https://drafts.fxtf.org/css-masking-1/#propdef-mask-type"
             }
         },
+        "math-shift": {
+            "animation-type": "not animatable",
+            "inherited": true,
+            "initial": "normal",
+            "values": [
+                "normal",
+                "compact"
+            ],
+            "codegen-properties": {
+                "parser-grammar": "<<values>>"
+            },
+            "specification": {
+                "category": "mathml-core",
+                "url": "https://w3c.github.io/mathml-core/#propdef-math-shift"
+            }
+        },
         "math-style": {
             "animation-type": "not animatable",
             "inherited": true,
@@ -10761,6 +10777,10 @@
                 {
                     "value": "blink",
                     "comment": "The value is parsed and computed but ignored for rendering."
+                },
+                {
+                    "value": "spelling-error",
+                    "settings-flag": "cssTextDecorationLineErrorValues"
                 }
             ],
             "codegen-properties": {
@@ -10768,7 +10788,7 @@
                 "aliases": [
                     "-webkit-text-decoration-line"
                 ],
-                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt)",
+                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt) | spelling-error@(settings-flag=cssTextDecorationLineErrorValues)",
                 "parser-exported": true
             },
             "specification": {
@@ -10911,7 +10931,7 @@
                 "skip-style-builder": true,
                 "style-extractor-converter": "TextDecorationLine",
                 "render-style-name-for-methods": "TextDecorationLineInEffect",
-                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt)",
+                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt) | spelling-error@(settings-flag=cssTextDecorationLineErrorValues)",
                 "comment": "FIXME: Should this be an alias of text-decoration-line?"
             },
             "status": "non-standard"
@@ -12244,7 +12264,7 @@
                 "no-overflow"
             ],
             "codegen-properties": {
-                "settings-flag": "cssAnchorPositioningPositionVisibilityEnabled",
+                "settings-flag": "cssAnchorPositioningEnabled",
                 "style-converter": "PositionVisibility",
                 "parser-grammar": "always | [ anchors-valid || anchors-visible || no-overflow ]@(no-single-item-opt)"
             },

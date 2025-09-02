@@ -27,8 +27,8 @@
 
 #if ENABLE(APPLE_PAY)
 
-#include "ApplePayErrorCode.h"
-#include "ApplePayErrorContactField.h"
+#include <WebCore/ApplePayErrorCode.h>
+#include <WebCore/ApplePayErrorContactField.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>

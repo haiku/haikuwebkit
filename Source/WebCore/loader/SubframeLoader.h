@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "FrameLoader.h"
+#include <WebCore/FrameLoader.h>
 #include <wtf/WeakRef.h>
 
 namespace WebCore {

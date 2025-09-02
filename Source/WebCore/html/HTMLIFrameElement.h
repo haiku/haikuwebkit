@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "HTMLFrameElementBase.h"
-#include "PermissionsPolicy.h"
-#include "SubstituteData.h"
+#include <WebCore/HTMLFrameElementBase.h>
+#include <WebCore/PermissionsPolicy.h>
+#include <WebCore/SubstituteData.h>
 
 namespace WebCore {
 

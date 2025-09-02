@@ -41,6 +41,7 @@
 #include "JSDOMPromiseDeferred.h"
 #include "OffscreenCanvas.h"
 #include "PixelBuffer.h"
+#include "SVGImage.h"
 #include "SecurityOrigin.h"
 #include "VideoFrame.h"
 #include "WebCodecsVideoFrame.h"
@@ -410,7 +411,7 @@ static void getImageBytesFromVideoFrame(WebGPU::Queue& backing, const RefPtr<Vid
 }
 #endif
 
-static void imageBytesForSource(WebGPU::Queue& backing, const auto& sourceDescriptor, const auto& destination, bool& needsYFlip, bool& needsPremultipliedAlpha, NOESCAPE const ImageDataCallback& callback)
+static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExternalImage& sourceDescriptor, const GPUImageCopyTextureTagged& destination, bool& needsYFlip, bool& needsPremultipliedAlpha, NOESCAPE const ImageDataCallback& callback)
 {
     UNUSED_PARAM(needsYFlip);
     UNUSED_PARAM(needsPremultipliedAlpha);
@@ -433,9 +434,19 @@ static void imageBytesForSource(WebGPU::Queue& backing, const auto& sourceDescri
         if (!cachedImage)
             return callback({ }, 0, 0);
         RefPtr image = dynamicDowncast<BitmapImage>(cachedImage->image());
-        if (!image)
-            return callback({ }, 0, 0);
-        RefPtr nativeImage = image->nativeImage();
+        RefPtr<NativeImage> nativeImage;
+        bool isSVG = false;
+        if (image)
+            nativeImage = image->nativeImage();
+        else {
+            RefPtr svgImage = dynamicDowncast<SVGImage>(cachedImage->image());
+            RefPtr texturePtr = destination.texture.get();
+            if (texturePtr) {
+                nativeImage = svgImage->nativeImage(FloatSize(texturePtr->width(), texturePtr->height()));
+                isSVG = true;
+            }
+        }
+
         if (!nativeImage)
             return callback({ }, 0, 0);
         RetainPtr platformImage = nativeImage->platformImage();
@@ -456,23 +467,30 @@ static void imageBytesForSource(WebGPU::Queue& backing, const auto& sourceDescri
         auto alphaInfo = CGImageGetAlphaInfo(platformImage.get());
         bool channelLayoutIsRGB = false;
         bool isBGRA = toPixelFormat(destination.texture->format()) == PixelFormat::BGRA8;
+        static constexpr std::array channelsSVG1 { 0, 1, 2, 3 };
+        static constexpr std::array channelsSVG2 { 2, 1, 0, 3 };
         static constexpr std::array channelsRGBX { 0, 1, 2, 3 };
         static constexpr std::array channelsBGRX { 2, 1, 0, 3 };
         static constexpr std::array channelsXRGB { 3, 0, 1, 2 };
         static constexpr std::array channelsXBGR { 3, 2, 1, 0 };
         auto& channels = [&] -> const std::array<int, 4>& {
+            if (isSVG)
+                return isBGRA ? channelsSVG1 : channelsSVG2;
+
             switch (alphaInfo) {
             case kCGImageAlphaNone:               /* For example, RGB. */
             case kCGImageAlphaPremultipliedLast:  /* For example, premultiplied RGBA */
             case kCGImageAlphaLast:               /* For example, non-premultiplied RGBA */
-            case kCGImageAlphaNoneSkipLast:       /* For example, RGBX. */
+            case kCGImageAlphaNoneSkipLast: {     /* For example, RGBX. */
                 channelLayoutIsRGB = true;
                 return isBGRA ? channelsBGRX : channelsRGBX;
+            }
             case kCGImageAlphaPremultipliedFirst: /* For example, premultiplied ARGB */
             case kCGImageAlphaFirst:              /* For example, non-premultiplied ARGB */
             case kCGImageAlphaNoneSkipFirst:      /* For example, XRGB. */
-            case kCGImageAlphaOnly:                /* No color data, alpha data only */
+            case kCGImageAlphaOnly: {             /* No color data, alpha data only */
                 return isBGRA ? channelsXBGR : channelsXRGB;
+            }
             }
         }();
 

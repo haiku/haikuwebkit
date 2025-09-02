@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "CSSPrimitiveValue.h"
-#include "CSSValue.h"
+#include <WebCore/CSSPrimitiveValue.h>
+#include <WebCore/CSSValue.h>
 #include <wtf/Function.h>
 
 namespace WebCore {

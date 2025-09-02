@@ -30,9 +30,9 @@
 
 #pragma once
 
-#include "DoublePoint.h"
-#include "FloatPoint.h"
-#include "LayoutSize.h"
+#include <WebCore/DoublePoint.h>
+#include <WebCore/FloatPoint.h>
+#include <WebCore/LayoutSize.h>
 
 namespace WebCore {
 
@@ -230,6 +230,14 @@ inline FloatSize snapSizeToDevicePixel(const LayoutSize& size, const LayoutPoint
 }
 
 WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, const LayoutPoint&);
+
+struct LayoutPointLimits {
+    LayoutPoint m_min;
+    LayoutPoint m_max;
+    LayoutPoint clamp(const LayoutPoint& point) { return point.constrainedBetween(m_min, m_max); }
+    bool fits(const LayoutPoint& point) { return point == clamp(point); }
+    LayoutSize distance(const LayoutPoint& point) { return point - clamp(point); }
+};
 
 } // namespace WebCore
 

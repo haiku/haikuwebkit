@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "ScrollTypes.h"
-#include "Timer.h"
-#include "Widget.h"
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/Timer.h>
+#include <WebCore/Widget.h>
 
 namespace WebCore {
 

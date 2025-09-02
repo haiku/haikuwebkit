@@ -27,9 +27,9 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "PlatformKeyboardEvent.h"
-#include "PlatformMouseEvent.h"
-#include "PlatformWheelEvent.h"
+#include <WebCore/PlatformKeyboardEvent.h>
+#include <WebCore/PlatformMouseEvent.h>
+#include <WebCore/PlatformWheelEvent.h>
 
 #if USE(APPLE_INTERNAL_SDK)
 #include <WebKitAdditions/PlatformTouchEventIOS.h>

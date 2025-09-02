@@ -365,8 +365,8 @@ void RemoteDisplayListRecorderProxy::beginTransparencyLayer(CompositeOperator co
 
 void RemoteDisplayListRecorderProxy::endTransparencyLayer()
 {
-    updateStateForEndTransparencyLayer();
-    send(Messages::RemoteDisplayListRecorder::EndTransparencyLayer());
+    if (updateStateForEndTransparencyLayer())
+        send(Messages::RemoteDisplayListRecorder::EndTransparencyLayer());
 }
 
 void RemoteDisplayListRecorderProxy::drawRect(const FloatRect& rect, float width)

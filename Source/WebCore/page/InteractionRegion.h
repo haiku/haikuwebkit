@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "NodeIdentifier.h"
-#include "Path.h"
-#include "Region.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/NodeIdentifier.h>
+#include <WebCore/Path.h>
+#include <WebCore/Region.h>
 
 namespace IPC {
 class Decoder;

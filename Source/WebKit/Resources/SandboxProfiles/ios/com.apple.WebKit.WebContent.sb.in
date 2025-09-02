@@ -116,7 +116,7 @@
     ;; <rdar://problem/10809394>
     (deny file-write-create
         (home-prefix "/Library/Preferences/com.apple.Accessibility.plist")
-        (with no-report))
+        NO_REPORT)
 )
 
 (define-once (media-accessibility-support)
@@ -221,7 +221,7 @@
            (literal "/dev/random")
            (literal "/dev/urandom"))
     ;; <rdar://problem/14215718>
-    (deny file-write-data (with no-report)
+    (deny file-write-data NO_REPORT
           (literal "/dev/random")
           (literal "/dev/urandom"))
 
@@ -303,7 +303,7 @@
     ;; <rdar://problem/13796537>
     (deny file-write-create
         (home-prefix "/Library/Preferences/com.apple.UIKit.plist")
-        (with no-report))
+        NO_REPORT)
 )
 
 (define-once (dictionary-support)
@@ -434,7 +434,7 @@
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
 #if ENABLE(REMOVE_XPC_AND_MACH_SANDBOX_EXTENSIONS_IN_WEBCONTENT)
 (with-filter (logd-blocking)
-    (deny mach-lookup (with no-report) (log-services)))
+    (deny mach-lookup NO_REPORT (log-services)))
 (with-filter (require-not (logd-blocking))
     (allow mach-lookup (log-services)))
 #else
@@ -445,10 +445,10 @@
 (allow mach-lookup (log-services))
 #endif
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (global-name "com.apple.distributed_notifications@1v3"))
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (global-name "com.apple.lsd.mapdb")) 
 
 ;; <rdar://problem/12413942>
@@ -458,13 +458,13 @@
 (allow iokit-get-properties
        (iokit-property "IORegistryEntryPropertyKeys"))
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (global-name "com.apple.runningboard"))
 
 (allow system-sched
        (require-entitlement "com.apple.private.kernel.override-cpumon"))
 
-(deny sysctl-read (with no-report)
+(deny sysctl-read NO_REPORT
       (sysctl-name
           "hw.cpufrequency_compat"
           "hw.tbfrequency_compat" ;; <rdar://71740719>
@@ -485,7 +485,7 @@
     (allow mach-lookup (global-name "com.apple.system.notification_center")
         (apply-message-filter
             (deny mach-message-send)
-            (deny mach-message-send (with no-report) (message-number 1023))
+            (deny mach-message-send NO_REPORT (message-number 1023))
             (allow mach-message-send (notifyd-message-numbers)))))
 
 #if ENABLE(NOTIFY_BLOCKING)
@@ -497,7 +497,7 @@
 
 (managed-configuration-read-public)
 
-(deny system-info (with no-report)
+(deny system-info NO_REPORT
     (info-type "net.link.addr"))
 
 (allow file-read*
@@ -557,7 +557,7 @@
 
 ;; Silently deny unnecessary accesses caused by MessageUI framework.
 ;; This can be removed once <rdar://problem/47038102> is resolved.
-(deny file-read* (with no-report)
+(deny file-read* NO_REPORT
     (home-literal "/Library/Preferences/com.apple.mobilemail.plist"))
 
 ;; <rdar://problem/12985925> Need read access to /var/mobile/Library/Fonts to all apps
@@ -586,7 +586,7 @@
 (allow file-read*
     (home-literal "/Library/Caches/DateFormats.plist"))
 ; Silently deny writes when CFData attempts to write to the cache directory.
-(deny file-write* (with no-report)
+(deny file-write* NO_REPORT
     (home-literal "/Library/Caches/DateFormats.plist"))
 
 (framebuffer-access)
@@ -598,7 +598,7 @@
 ; which will attempt to create the plist if it doesn't exist -- from any application.  Only SpringBoard is
 ; allowed to write its plist; ignore all others, they don't know what they are doing.
 ; See <rdar://problem/9375027> for sample backtraces.
-(deny file-write* (with no-report)
+(deny file-write* NO_REPORT
     (home-prefix "/Library/Preferences/com.apple.springboard.plist"))
 
 ;; <rdar://problem/34986314>
@@ -606,7 +606,7 @@
 
 (mobile-preferences-read "com.apple.AdLib.plist")
 
-(deny file-read* (with no-report)
+(deny file-read* NO_REPORT
     (home-literal
         "/Library/Preferences/com.apple.WebKit.WebContent.plist"
         "/Library/Preferences/com.apple.CFNetwork.plist"
@@ -670,7 +670,7 @@
     (sysctl-name-prefix "hw.perflevel") ;; <rdar://problem/76782530>
 )
 
-(deny sysctl-read (with no-report)
+(deny sysctl-read NO_REPORT
     (sysctl-name "vm.task_no_footprint_for_debug"))
 
 (with-filter (require-not (webcontent-process-launched))
@@ -776,7 +776,7 @@
 
 (media-accessibility-support)
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (global-name
         "com.apple.SystemConfiguration.configd"
         "com.apple.aggregated"
@@ -802,10 +802,10 @@
 )
 
 ;; <rdar://problem/60983812>
-(deny file-write* (with no-report)
+(deny file-write* NO_REPORT
     (home-subpath "/Library/Preferences/"))
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (global-name
         "com.apple.containermanagerd"
         "com.apple.containermanagerd.system"))
@@ -820,7 +820,7 @@
             (extension "com.apple.webkit.extension.mach")
             (global-name "com.apple.mobilegestalt.xpc"))))
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (xpc-service-name "com.apple.audio.toolbox.reporting.service"))
 
 #if !ENABLE(WEBCONTENT_GPU_SANDBOX_EXTENSIONS_BLOCKING)
@@ -840,11 +840,11 @@
         (iokit-user-client-class "IOSurfaceAcceleratorClient")))
 #endif
 
-(deny iokit-open-user-client (with no-report)
+(deny iokit-open-user-client NO_REPORT
     (iokit-user-client-class "AppleJPEGDriverUserClient"))
 
 #if ENABLE(WEBCONTENT_GPU_SANDBOX_EXTENSIONS_BLOCKING)
-(deny iokit-open-service (with no-report))
+(deny iokit-open-service NO_REPORT)
 #else
 (with-filter (state-flag "BlockIOKitInWebContentSandbox")
     (deny iokit-open-service)
@@ -883,7 +883,7 @@
             (global-name "com.apple.webinspector"))))
 
 ;; Silence warnings about these connections if we have decided not to extend access to them:
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (require-all
         (require-not (extension "com.apple.webkit.extension.mach"))
         (global-name "com.apple.audio.AudioComponentRegistrar")))
@@ -1081,7 +1081,7 @@
         (syscall-quicklook)))
 #endif
 
-(deny syscall-unix (with no-report)
+(deny syscall-unix NO_REPORT
     (syscall-unix-blocked-without-report))
 
 (when (defined? 'SYS_map_with_linking_np)
@@ -1143,7 +1143,7 @@
     (allow process-codesigning-entitlements-blob-get) ;; WK reading entitlments via SecTaskCopyValueForEntitlement and _getSelfParsedEntitlements (accessibility)
     (allow process-codesigning-status-get) ;; _xpc_get_entitlements
     (allow process-codesigning-status-set (target self))
-    (deny process-info-codesignature (with no-report)) ;; SecTaskCopyValueForEntitlement - granting this grants all the process-codesign-* checks
+    (deny process-info-codesignature NO_REPORT) ;; SecTaskCopyValueForEntitlement - granting this grants all the process-codesign-* checks
 )
 
 (when (not (defined? 'process-codesigning*))
@@ -1168,7 +1168,7 @@
 
 (allow mach-bootstrap
     (apply-message-filter
-        (deny mach-message-send (with no-report))
+        (deny mach-message-send NO_REPORT)
 #if PLATFORM(IOS) || PLATFORM(VISION)
         (with-filter (extension "com.apple.webkit.mach-bootstrap")
             (allow mach-message-send (mach-bootstrap-message-numbers-post-launch)))
@@ -1363,7 +1363,7 @@
         (with message "kernel mig routine used after launch")
         (kernel-mig-routine-only-in-use-during-launch)))
 #if ENABLE(WEBCONTENT_GPU_SANDBOX_EXTENSIONS_BLOCKING)
-(deny syscall-mig (with no-report) (kernel-mig-routines-iokit-service))
+(deny syscall-mig NO_REPORT (kernel-mig-routines-iokit-service))
 #else
 (with-filter (require-not (state-flag "BlockIOKitInWebContentSandbox"))
     (allow syscall-mig (kernel-mig-routines-iokit-service)))
@@ -1390,7 +1390,7 @@
 (when (defined? 'mach_port_is_connection_for_service)
     (allow syscall-mig (kernel-mig-routine mach_port_is_connection_for_service)))
 
-(deny darwin-notification-post (with no-report))
+(deny darwin-notification-post NO_REPORT)
 (allow darwin-notification-post
     (notification-name
 #if ENABLE(NOTIFY_BLOCKING)

@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "StyleScopeOrdinal.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StyleScopeOrdinal.h>
+#include <WebCore/StyleValueTypes.h>
 #include <wtf/text/AtomString.h>
 
 namespace WebCore {

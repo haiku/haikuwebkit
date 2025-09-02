@@ -83,6 +83,10 @@ struct ClientOrigin;
 struct NotificationData;
 struct NotificationPayload;
 struct OrganizationStorageAccessPromptQuirk;
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+struct ParentalControlsURLFilterParameters;
+#endif
 }
 
 namespace WebKit {
@@ -349,6 +353,10 @@ public:
 #endif
 
     void setDefaultRequestTimeoutInterval(double);
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+    void allowEvaluatedURL(const WebCore::ParentalControlsURLFilterParameters&, CompletionHandler<void(bool)>&&);
+#endif
 
 private:
     explicit NetworkProcessProxy();

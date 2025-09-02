@@ -30,7 +30,7 @@ from .allow import AllowList, AllowedSPI, PermanentlyAllowedReason
 Toml = b'''
 [key1."rdar://123456789"]
 symbols = ["_TemporarilyAllowedSymbol"]
-selectors = ["_initWithTemporarilyAllowedData:"]
+selectors = [{ name = "_initWithTemporarilyAllowedData:", class = "?" }]
 classes = ["NSTemporarilyAllowed"]
 
 [key2.not-web-essential]
@@ -40,7 +40,7 @@ requires = ["ENABLE_FOO", "!ENABLE_BAR"]
 
 A1 = AllowedSPI(key='key1', bug='rdar://123456789',
                 symbols=['_TemporarilyAllowedSymbol'],
-                selectors=['_initWithTemporarilyAllowedData:'],
+                selectors=[AllowedSPI.Selector('_initWithTemporarilyAllowedData:', None)],
                 classes=['NSTemporarilyAllowed'])
 A2 = AllowedSPI(key='key2', bug=PermanentlyAllowedReason.NOT_WEB_ESSENTIAL,
                 symbols=['_Permanent1', '_Permanent2'],

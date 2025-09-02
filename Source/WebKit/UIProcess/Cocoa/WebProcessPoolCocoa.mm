@@ -1486,26 +1486,6 @@ static Vector<SandboxExtension::Handle> sandboxExtensionsForFonts(const Collecti
     return handles;
 }
 
-void WebProcessPool::registerFontsForGPUProcessIfNeeded()
-{
-    RefPtr gpuProcess = m_gpuProcess;
-    if (!gpuProcess)
-        return;
-
-    Vector<SandboxExtension::Handle> handles;
-    if (m_userInstalledFontURLs)
-        handles.appendVector(sandboxExtensionsForFonts(m_userInstalledFontURLs->values(), std::nullopt));
-
-    if (m_sandboxExtensionURLs)
-        handles.appendVector(sandboxExtensionsForFonts(*m_sandboxExtensionURLs, std::nullopt));
-
-    if (m_assetFontURLs)
-        handles.appendVector(sandboxExtensionsForFonts(*m_assetFontURLs, std::nullopt));
-
-    if (!handles.isEmpty())
-        gpuProcess->send(Messages::GPUProcess::RegisterFonts(WTFMove(handles)), 0);
-}
-
 #if PLATFORM(MAC)
 void WebProcessPool::registerUserInstalledFonts(WebProcessProxy& process)
 {
@@ -1563,8 +1543,6 @@ void WebProcessPool::registerUserInstalledFonts(WebProcessProxy& process)
     m_userInstalledFontURLs = WTFMove(fontURLs);
     m_userInstalledFontFamilyMap = WTFMove(fontFamilyMap);
     m_sandboxExtensionURLs = WTFMove(sandboxExtensionURLs);
-
-    registerFontsForGPUProcessIfNeeded();
 }
 
 void WebProcessPool::registerAdditionalFonts(NSArray *fontNames)
@@ -1595,8 +1573,6 @@ void WebProcessPool::registerAdditionalFonts(NSArray *fontNames)
             continue;
         process->send(Messages::WebProcess::RegisterFontMap(*m_userInstalledFontURLs, *m_userInstalledFontFamilyMap, sandboxExtensionsForFonts(*m_sandboxExtensionURLs, process->auditToken())), 0);
     }
-
-    registerFontsForGPUProcessIfNeeded();
 }
 #endif // PLATFORM(MAC)
 
@@ -1645,8 +1621,6 @@ void WebProcessPool::registerAssetFonts(WebProcessProxy& process)
             }
             if (weakProcess)
                 weakProcess->send(Messages::WebProcess::RegisterAdditionalFonts(AdditionalFonts::additionalFonts({ *protectedThis->m_assetFontURLs }, weakProcess->auditToken())), 0);
-
-            protectedThis->registerFontsForGPUProcessIfNeeded();
         });
         return true;
     });

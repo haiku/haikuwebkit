@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
-#include "StyleColor.h"
-#include "StyleLineWidth.h"
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StyleLineWidth.h>
 
 namespace WebCore {
 

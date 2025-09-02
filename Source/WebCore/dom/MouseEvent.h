@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "EventTarget.h"
-#include "MouseEventInit.h"
-#include "MouseEventTypes.h"
-#include "MouseRelatedEvent.h"
+#include <WebCore/EventTarget.h>
+#include <WebCore/MouseEventInit.h>
+#include <WebCore/MouseEventTypes.h>
+#include <WebCore/MouseRelatedEvent.h>
 
 #if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
 #include "PlatformTouchEventIOS.h"

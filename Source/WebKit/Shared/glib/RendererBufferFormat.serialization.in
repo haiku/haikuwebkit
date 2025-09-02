@@ -24,7 +24,9 @@
 
 struct WebKit::RendererBufferFormat {
     WebKit::RendererBufferFormat::Usage usage;
-    CString drmDevice;
+#if USE(GBM)
+    WebCore::DRMDevice drmDevice;
+#endif
     Vector<WebKit::RendererBufferFormat::Format> formats;
 }
 

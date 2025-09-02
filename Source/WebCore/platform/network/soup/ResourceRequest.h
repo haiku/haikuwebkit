@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "PageIdentifier.h"
-#include "ResourceRequestBase.h"
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/ResourceRequestBase.h>
 #include "URLSoup.h"
 #include <wtf/glib/GRefPtr.h>
 

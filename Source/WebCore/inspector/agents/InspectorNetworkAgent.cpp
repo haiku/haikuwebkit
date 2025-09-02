@@ -1459,6 +1459,7 @@ bool InspectorNetworkAgent::cachedResourceContent(CachedResource& resource, Stri
         *result = downcast<CachedCSSStyleSheet>(resource).sheetText();
         // The above can return a null String if the MIME type is invalid.
         return !result->isNull();
+    case CachedResource::Type::JSON:
     case CachedResource::Type::Script:
         *base64Encoded = false;
         *result = downcast<CachedScript>(resource).script().toString();

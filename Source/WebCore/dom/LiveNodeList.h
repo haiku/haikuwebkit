@@ -23,12 +23,12 @@
 
 #pragma once
 
-#include "CollectionIndexCache.h"
-#include "CollectionTraversal.h"
-#include "Document.h"
-#include "HTMLNames.h"
-#include "NodeInlines.h"
-#include "NodeList.h"
+#include <WebCore/CollectionIndexCache.h>
+#include <WebCore/CollectionTraversal.h>
+#include <WebCore/Document.h>
+#include <WebCore/HTMLNames.h>
+#include <WebCore/NodeInlines.h>
+#include <WebCore/NodeList.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
 

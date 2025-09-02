@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "Supplementable.h"
+#include <WebCore/Supplementable.h>
 #include "Worklet.h"
 
 #include <wtf/RefCounted.h>

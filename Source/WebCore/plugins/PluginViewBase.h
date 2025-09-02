@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "PlatformLayer.h"
-#include "ScrollTypes.h"
-#include "Widget.h"
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/Widget.h>
 
 #if PLATFORM(COCOA)
 typedef struct objc_object* id;

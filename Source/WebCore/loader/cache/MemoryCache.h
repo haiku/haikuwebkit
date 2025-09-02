@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "LoaderMalloc.h"
-#include "SecurityOriginHash.h"
-#include "Timer.h"
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/SecurityOriginHash.h>
+#include <WebCore/Timer.h>
 #include <pal/SessionID.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>

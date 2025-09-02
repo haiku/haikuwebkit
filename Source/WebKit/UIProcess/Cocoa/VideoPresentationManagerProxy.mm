@@ -1433,7 +1433,9 @@ void VideoPresentationManagerProxy::didExitFullscreen(PlaybackSessionContextIden
         page->didExitStandby(contextId);
     else
 #endif
+#if ENABLE(VIDEO_PRESENTATION_MODE)
     page->didExitFullscreen(contextId);
+#endif
 
     callCloseCompletionHandlers();
 }
@@ -1455,7 +1457,9 @@ void VideoPresentationManagerProxy::didEnterFullscreen(PlaybackSessionContextIde
         page->didEnterStandby(contextId);
     else
 #endif
+#if ENABLE(VIDEO_PRESENTATION_MODE)
     page->didEnterFullscreen(contextId);
+#endif
 }
 
 void VideoPresentationManagerProxy::failedToEnterFullscreen(PlaybackSessionContextIdentifier contextId)

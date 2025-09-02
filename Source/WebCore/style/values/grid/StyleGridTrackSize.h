@@ -32,8 +32,8 @@
 
 #pragma once
 
-#include "StyleGridTrackBreadth.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StyleGridTrackBreadth.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

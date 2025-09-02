@@ -32,6 +32,7 @@
     jsTestIsAsync = true;
 
     addEventListener("load", async () => {
+        await UIHelper.setObscuredInsets(100, 0, 0, 0);
         await UIHelper.ensurePresentationUpdate();
         edgeColors = await UIHelper.fixedContainerEdgeColors();
         shouldBeEqualToString("edgeColors.top", "rgb(212, 214, 185)");

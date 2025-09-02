@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "FontCascade.h"
-#include "Length.h"
-#include "StyleColor.h"
-#include "StyleFontData.h"
-#include "StyleWebKitBorderSpacing.h"
+#include <WebCore/FontCascade.h>
+#include <WebCore/Length.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StyleFontData.h>
+#include <WebCore/StyleWebKitBorderSpacing.h>
 #include <wtf/DataRef.h>
 
 namespace WTF {

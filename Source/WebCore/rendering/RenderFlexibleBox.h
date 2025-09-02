@@ -30,9 +30,9 @@
 
 #pragma once
 
-#include "OrderIterator.h"
-#include "RenderBlock.h"
-#include "RenderStyleInlines.h"
+#include <WebCore/OrderIterator.h>
+#include <WebCore/RenderBlock.h>
+#include <WebCore/RenderStyleInlines.h>
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {
@@ -103,6 +103,9 @@ public:
     bool hasModernLayout() const { return m_hasFlexFormattingContextLayout && *m_hasFlexFormattingContextLayout; }
 
     bool shouldResetFlexItemLogicalHeightBeforeLayout() const { return m_shouldResetFlexItemLogicalHeightBeforeLayout; }
+
+    bool isColumnOrRowReverse() const;
+    bool isWrapReverse() const;
 
 protected:
     void computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const override;
@@ -176,7 +179,6 @@ private:
 
     bool mainAxisIsFlexItemInlineAxis(const RenderBox&) const;
     bool isColumnFlow() const;
-    bool isColumnOrRowReverse() const;
     bool isLeftToRightFlow() const;
     bool isMultiline() const;
     Style::FlexBasis flexBasisForFlexItem(const RenderBox& flexItem) const;
@@ -213,6 +215,7 @@ private:
     LayoutUnit crossAxisMarginExtentForFlexItem(const RenderBox& flexItem) const;
     LayoutUnit mainAxisMarginExtentForFlexItem(const RenderBox& flexItem) const;
     LayoutUnit crossAxisScrollbarExtent() const;
+    LayoutUnit mainAxisScrollbarExtent() const;
     LayoutUnit crossAxisScrollbarExtentForFlexItem(const RenderBox& flexItem) const;
     LayoutPoint flowAwareLocationForFlexItem(const RenderBox& flexItem) const;
 

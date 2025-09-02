@@ -340,7 +340,6 @@ AccessibilityRole AccessibilitySVGObject::determineAccessibilityRole()
 
 AccessibilityObject* AccessibilitySVGObject::parentObject() const
 {
-
     if (m_parent) {
         // If a parent was set because this is a remote SVG resource, use that.
         ASSERT(m_isSVGRoot);

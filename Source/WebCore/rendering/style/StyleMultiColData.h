@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "BorderValue.h"
-#include "RenderStyleConstants.h"
-#include "StyleColumnCount.h"
-#include "StyleColumnWidth.h"
+#include <WebCore/BorderValue.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleColumnCount.h>
+#include <WebCore/StyleColumnWidth.h>
 #include <wtf/RefCounted.h>
 
 namespace WTF {

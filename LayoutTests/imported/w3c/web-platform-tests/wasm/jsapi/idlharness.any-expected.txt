@@ -46,11 +46,15 @@ PASS Memory interface: existence and properties of interface prototype object
 PASS Memory interface: existence and properties of interface prototype object's "constructor" property
 PASS Memory interface: existence and properties of interface prototype object's @@unscopables property
 PASS Memory interface: operation grow(unsigned long)
+FAIL Memory interface: operation toFixedLengthBuffer() assert_own_property: interface prototype object missing non-static operation expected property "toFixedLengthBuffer" missing
+FAIL Memory interface: operation toResizableBuffer() assert_own_property: interface prototype object missing non-static operation expected property "toResizableBuffer" missing
 PASS Memory interface: attribute buffer
 PASS Memory must be primary interface of [object WebAssembly.Memory]
 PASS Stringification of [object WebAssembly.Memory]
 PASS Memory interface: [object WebAssembly.Memory] must inherit property "grow(unsigned long)" with the proper type
 PASS Memory interface: calling grow(unsigned long) on [object WebAssembly.Memory] with too few arguments must throw TypeError
+FAIL Memory interface: [object WebAssembly.Memory] must inherit property "toFixedLengthBuffer()" with the proper type assert_inherits: property "toFixedLengthBuffer" not found in prototype chain
+FAIL Memory interface: [object WebAssembly.Memory] must inherit property "toResizableBuffer()" with the proper type assert_inherits: property "toResizableBuffer" not found in prototype chain
 PASS Memory interface: [object WebAssembly.Memory] must inherit property "buffer" with the proper type
 PASS Table interface: existence and properties of interface object
 PASS Table interface object length

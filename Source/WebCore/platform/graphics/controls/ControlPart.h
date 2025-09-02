@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "Color.h"
-#include "ControlFactory.h"
-#include "PlatformControl.h"
-#include "StyleAppearance.h"
+#include <WebCore/Color.h>
+#include <WebCore/ControlFactory.h>
+#include <WebCore/PlatformControl.h>
+#include <WebCore/StyleAppearance.h>
 #include <wtf/ThreadSafeRefCounted.h>
 
 namespace WebCore {

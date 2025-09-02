@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "ClientOrigin.h"
-#include "LoaderMalloc.h"
-#include "StoredCredentialsPolicy.h"
+#include <WebCore/ClientOrigin.h>
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/StoredCredentialsPolicy.h>
 #include <pal/SessionID.h>
 #include <wtf/Expected.h>
 #include <wtf/HashMap.h>

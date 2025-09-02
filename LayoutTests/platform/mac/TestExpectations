@@ -286,6 +286,8 @@ fast/events/wheel/platform-wheelevent-paging-y-in-scrolling-page.html [ Skip ]
 # Pointer Lock can only check some of the API at the moment.
 pointer-lock/bug90391-move-then-window-open-crash.html
 pointer-lock/locked-element-iframe-removed-from-dom.html
+
+# webkit.org/b/297360 3 pointer-lock tests are failing because of missing TestRunner support
 pointer-lock/pointerlockchange-event-on-lock-lost.html
 pointer-lock/pointerlockchange-pointerlockerror-events.html
 pointer-lock/pointerlockelement-null-when-pending.html
@@ -950,8 +952,6 @@ webkit.org/b/187103 js/error-should-not-strong-reference-global-object.html [ Pa
 webkit.org/b/155505 http/tests/security/contentSecurityPolicy/userAgentShadowDOM/allow-audio.html [ Skip ]
 webkit.org/b/155505 http/tests/security/contentSecurityPolicy/userAgentShadowDOM/allow-video.html [ Skip ]
 
-webkit.org/b/154688 inspector/controller/runtime-controller.html [ Pass Timeout ]
-
 webkit.org/b/156351 storage/indexeddb/modern/autoincrement-abort-private.html [ Pass Timeout ]
 
 webkit.org/b/156983 media/video-fullscreen-restriction-removed.html [ Pass Failure ]
@@ -1231,8 +1231,6 @@ webkit.org/b/177388 inspector/canvas/shaderProgram-add-remove-webgl.html [ Pass 
 
 webkit.org/b/177826 inspector/dom/csp-big5-hash.html [ Pass Timeout ]
 
-webkit.org/b/175998 http/tests/security/mixedContent/insecure-css-with-secure-cookies.html [ Pass Failure ]
-
 # User-installed font infrastructure is ony present on certain OSes.
 webkit.org/b/180062 fast/text/user-installed-fonts/shadow-postscript.html [ ImageOnlyFailure ]
 webkit.org/b/180062 fast/text/user-installed-fonts/shadow.html [ ImageOnlyFailure ]
@@ -1281,6 +1279,8 @@ http/tests/cookies/same-site [ Pass ]
 
 # FIXME: Mark as Pass once <rdar://problem/47165939> is fixed.
 http/tests/cookies/only-accept-first-party-cookies.html [ Skip ]
+
+http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect-fetch.https.html [ Skip ]
 
 # FIXME: Mark as Pass once the fix for <rdar://problem/42255251> is shipped.
 http/tests/cookies/same-site/set-first-party-cross-site-cookies.py [ Skip ]
@@ -1904,8 +1904,6 @@ imported/w3c/web-platform-tests/webcodecs/videoFrame-drawImage.any.worker.html [
 [ x86_64 ] imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.html?mp3 [ Failure ]
 [ x86_64 ] imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.worker.html?mp3 [ Failure ]
 
-webkit.org/b/229521 pointer-lock/lock-already-locked.html [ Pass Failure ]
-
 webkit.org/b/230327 imported/w3c/web-platform-tests/css/css-transforms/crashtests/transform-marquee-resize-div-image-001.html [ Pass Failure ]
 
 webkit.org/b/170629  memory/memory-pressure-simulation.html [ Pass Failure Crash ]
@@ -2476,16 +2474,6 @@ imported/w3c/web-platform-tests/css/css-view-transitions/new-content-transform-p
 # rdar://154889639 (REGRESSION(Liquid Glass): [ OS 26 ] fast/forms/datalist/datalist-fallback-content.html is a constant ImageOnlyFailure)
 fast/forms/datalist/datalist-fallback-content.html [ ImageOnlyFailure ]
 
-# rdar://154990654 (REGRESSION(Liquid Glass): [ Tahoe ] 4X fast/forms/switch/zoom-approximates-transform (layout-tests) are constant ImageOnlyFailures)
-fast/forms/switch/zoom-approximates-transform-rtl.html [ ImageOnlyFailure ]
-fast/forms/switch/zoom-approximates-transform-vertical-lr.html [ ImageOnlyFailure ] 
-fast/forms/switch/zoom-approximates-transform-vertical-rl.html [ ImageOnlyFailure ] 
-fast/forms/switch/zoom-approximates-transform.html [ ImageOnlyFailure ] 
-
-# rdar://154997421 (REGRESSION(Liquid Glass): [ Tahoe ] 5X fast/forms/range (layout-tests) are constant failures
-fast/forms/range/input-appearance-range-rtl.html [ ImageOnlyFailure ]
-fast/forms/range/slider-in-multi-column.html [ Failure ]
-
 # Tests which pass only with form control refresh enabled
 fast/forms/appearance-default-button.html  [ Pass ]
 fast/forms/form-control-refresh [ Pass ]
@@ -2503,8 +2491,6 @@ webkit.org/b/296138 compositing/transforms/transformed-replaced-with-shadow-chil
 # Test seems to pass on WPT dashboard but fails on macOS
 imported/w3c/web-platform-tests/css/css-tables/paint/table-border-paint-caption-change.html [ Skip ]
 
-webkit.org/b/296017 [ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-022.html [ Pass ImageOnlyFailure ]
-
 [ x86_64 ] imported/w3c/web-platform-tests/svg/text/reftests/dominant-baseline-central-large-font-size.svg [ Skip ]
 
 webkit.org/b/296944 [ Release ] imported/w3c/web-platform-tests/html/dom/idlharness.worker.html [ Pass Failure ]
@@ -2513,6 +2499,21 @@ webkit.org/b/296976 [ x86_64 ] imported/w3c/web-platform-tests/webaudio/the-audi
 
 webkit.org/b/297067 fast/forms/state-restore-form-associated-custom-elements.html [ Pass Timeout Failure ]
 
-webkit.org/b/296017 [ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-007.html [ Pass ImageOnlyFailure ]
-
 webkit.org/b/297131 imported/w3c/web-platform-tests/web-locks/storage-buckets.tentative.https.any.worker.html [ Pass Failure ]
+
+# webkit.org/b/296017 5x imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image (layout-tests) are flakey image failures
+[ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-006.html [ Pass ImageOnlyFailure ]
+[ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-022.html [ Pass ImageOnlyFailure ]
+[ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-021.html [ Pass ImageOnlyFailure ]
+[ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-007.html [ Pass ImageOnlyFailure ]
+[ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-026.html [ Pass ImageOnlyFailure ]
+
+# webkit.org/b/297276 4x New Test(292044@main): [ macOS ] 4x imported/w3c/web-platform-tests/css/css-text-decor/ (layout-tests) tests are constant image failures
+imported/w3c/web-platform-tests/css/css-text-decor/text-emphasis-position-over-left-001.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-text-decor/text-emphasis-position-over-right-001.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-text-decor/text-emphasis-position-under-left-001.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-text-decor/text-emphasis-position-under-right-001.xht [ ImageOnlyFailure ]
+
+webkit.org/b/297346 workers/message-port-gc.html [ Pass Crash ]
+
+webkit.org/b/297434 imported/w3c/web-platform-tests/event-timing/retrievability.html [ Pass Failure ]

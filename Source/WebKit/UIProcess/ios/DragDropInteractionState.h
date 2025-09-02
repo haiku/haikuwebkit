@@ -40,7 +40,6 @@
 
 namespace WebCore {
 struct DragItem;
-struct TextIndicatorData;
 struct NodeIdentifierType;
 using NodeIdentifier = ObjectIdentifier<NodeIdentifierType>;
 }
@@ -52,7 +51,7 @@ struct DragSourceState {
     CGRect dragPreviewFrameInRootViewCoordinates { CGRectZero };
     using DragPreviewContentType = Variant<RetainPtr<UIImage>, RetainPtr<UIView>>;
     DragPreviewContentType dragPreviewContent;
-    std::optional<WebCore::TextIndicatorData> indicatorData;
+    RefPtr<WebCore::TextIndicator> textIndicator;
     std::optional<WebCore::Path> visiblePath;
     String linkTitle;
     URL linkURL;

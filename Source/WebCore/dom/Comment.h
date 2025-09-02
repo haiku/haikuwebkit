@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "CharacterData.h"
+#include <WebCore/CharacterData.h>
 
 namespace WebCore {
 

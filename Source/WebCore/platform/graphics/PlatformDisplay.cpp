@@ -84,11 +84,9 @@ static HashSet<PlatformDisplay*>& eglDisplays()
     return displays;
 }
 
-PlatformDisplay::PlatformDisplay(std::unique_ptr<GLDisplay>&& glDisplay)
+PlatformDisplay::PlatformDisplay(Ref<GLDisplay>&& glDisplay)
     : m_eglDisplay(WTFMove(glDisplay))
 {
-    RELEASE_ASSERT(m_eglDisplay);
-
     eglDisplays().add(this);
 
 #if !PLATFORM(WIN)

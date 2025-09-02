@@ -27,7 +27,7 @@
 
 #if ENABLE(CONTENT_EXTENSIONS)
 
-#include "ContentExtensionStringSerialization.h"
+#include <WebCore/ContentExtensionStringSerialization.h>
 #include <wtf/JSONValues.h>
 #include <wtf/Hasher.h>
 

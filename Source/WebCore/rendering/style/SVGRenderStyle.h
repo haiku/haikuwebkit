@@ -23,13 +23,13 @@
 
 #pragma once
 
-#include "RenderStyle.h"
-#include "RenderStyleConstants.h"
-#include "SVGRenderStyleDefs.h"
-#include "StyleRareInheritedData.h"
+#include <WebCore/RenderStyle.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/SVGRenderStyleDefs.h>
+#include <WebCore/StyleRareInheritedData.h>
 #include "StyleSVGPaint.h"
-#include "StyleURL.h"
-#include "WindRule.h"
+#include <WebCore/StyleURL.h>
+#include <WebCore/WindRule.h>
 
 namespace WTF {
 class TextStream;

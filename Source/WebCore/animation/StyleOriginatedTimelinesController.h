@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CSSAnimation.h"
-#include "NameScope.h"
-#include "ScrollAxis.h"
-#include "Styleable.h"
+#include <WebCore/CSSAnimation.h>
+#include <WebCore/NameScope.h>
+#include <WebCore/ScrollAxis.h>
+#include <WebCore/Styleable.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/text/AtomStringHash.h>

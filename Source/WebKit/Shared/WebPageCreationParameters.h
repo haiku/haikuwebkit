@@ -184,6 +184,7 @@ struct WebPageCreationParameters {
 
     bool useDarkAppearance { false };
     bool useElevatedUserInterfaceLevel { false };
+    bool allowJSHandleInPageContentWorld { false };
 
 #if PLATFORM(MAC)
     std::optional<WebCore::DestinationColorSpace> colorSpace { };

@@ -49,6 +49,7 @@
 namespace JSC {
 
 class LLIntOffsetsExtractor;
+class WebAssemblyBuiltin;
 
 namespace B3 {
 class PCToOriginMap;
@@ -491,6 +492,39 @@ private:
 };
 
 using IPIntCallees = ThreadSafeRefCountedFixedVector<Ref<IPIntCallee>>;
+
+/// A helper deleter to ensure that the pro forma unique_ptr to a builtin in WasmBuiltinCallee
+/// never tries to actually destroy the builtin.
+struct MustNotBeDestroyed {
+    NO_RETURN_DUE_TO_ASSERT void operator()(const WebAssemblyBuiltin*) const
+    {
+        ASSERT_NOT_REACHED();
+    }
+};
+
+class WasmBuiltinCallee final : public Callee {
+    WTF_MAKE_COMPACT_TZONE_ALLOCATED(WasmBuiltinCallee);
+    friend class Callee;
+    friend class JSC::LLIntOffsetsExtractor;
+public:
+    WasmBuiltinCallee(const WebAssemblyBuiltin*, FunctionSpaceIndex, std::pair<const Name*, RefPtr<NameSection>>&&);
+
+    const WebAssemblyBuiltin* builtin() { return m_builtin.get(); }
+    CodePtr<WasmEntryPtrTag> entrypointImpl() const;
+
+protected:
+    std::tuple<void*, void*> rangeImpl() const { return { nullptr, nullptr }; }
+    RegisterAtOffsetList* calleeSaveRegistersImpl() { return nullptr; }
+
+private:
+    // The C++ function implementing the builtin, fetched as 'builtin->implementation()'
+    // and retagged and cached here for ease of access by the trampoline.
+    CodePtr<WasmEntryPtrTag> m_hostFunction;
+    // Safer CPP checks do not allow a simple 'const WebAssemblyBuiltin *' because it's forward-declared.
+    // We hold the pointer as a pro forma unique_ptr. It is never actually destroyed because
+    // the builtin and this callee are part of a singleton structure expected to live forever.
+    std::unique_ptr<const WebAssemblyBuiltin, MustNotBeDestroyed> m_builtin;
+};
 
 } } // namespace JSC::Wasm
 

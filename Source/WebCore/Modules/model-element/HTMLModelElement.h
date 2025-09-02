@@ -27,25 +27,25 @@
 
 #if ENABLE(MODEL_ELEMENT)
 
-#include "ActiveDOMObject.h"
-#include "CachedRawResource.h"
-#include "CachedRawResourceClient.h"
-#include "CachedResourceHandle.h"
-#include "EventLoop.h"
-#include "HTMLElement.h"
-#include "HTMLModelElementCamera.h"
-#include "IDLTypes.h"
-#include "LayerHostingContextIdentifier.h"
-#include "ModelPlayer.h"
-#include "ModelPlayerClient.h"
-#include "PlatformLayer.h"
-#include "PlatformLayerIdentifier.h"
-#include "SharedBuffer.h"
-#include "VisibilityChangeClient.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/CachedRawResource.h>
+#include <WebCore/CachedRawResourceClient.h>
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/EventLoop.h>
+#include <WebCore/HTMLElement.h>
+#include <WebCore/HTMLModelElementCamera.h>
+#include <WebCore/IDLTypes.h>
+#include <WebCore/LayerHostingContextIdentifier.h>
+#include <WebCore/ModelPlayer.h>
+#include <WebCore/ModelPlayerClient.h>
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/PlatformLayerIdentifier.h>
+#include <WebCore/SharedBuffer.h>
+#include <WebCore/VisibilityChangeClient.h>
 #include <wtf/UniqueRef.h>
 
 #if ENABLE(MODEL_PROCESS)
-#include "StageModeOperations.h"
+#include <WebCore/StageModeOperations.h>
 #endif
 
 namespace WebCore {

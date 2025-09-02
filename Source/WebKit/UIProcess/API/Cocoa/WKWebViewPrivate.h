@@ -133,7 +133,7 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @class _WKFrameTreeNode;
 @class _WKHitTestResult;
 @class _WKInspector;
-@class _WKNodeInfo;
+@class _WKJSHandle;
 @class _WKRemoteObjectRegistry;
 @class _WKSafeBrowsingWarning;
 @class _WKSessionState;
@@ -142,6 +142,7 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @class _WKTargetedElementRequest;
 @class _WKTextInputContext;
 @class _WKTextExtractionConfiguration;
+@class _WKTextExtractionInteraction;
 @class WKTextExtractionResult;
 @class _WKTextManipulationConfiguration;
 @class _WKTextManipulationItem;
@@ -167,7 +168,6 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @protocol _WKIconLoadingDelegate;
 @protocol _WKInputDelegate;
 @protocol _WKResourceLoadDelegate;
-@protocol _WKTextExtractionInteraction;
 @protocol _WKTextManipulationDelegate;
 
 @interface WKWebView (WKPrivate)
@@ -441,7 +441,7 @@ for this property.
 // If frame is non-nil, not only will frame's coordinate space be used, but frame's subtree will be searched,
 // so a node from a parent node won't be returned, even if point is outside frame's rect.
 // The result frame info is the frame that contains the hit node.
-- (void)_hitTestAtPoint:(CGPoint)point inFrameCoordinateSpace:(WKFrameInfo *)frame completionHandler:(void (^)(_WKNodeInfo *, WKFrameInfo *, NSError *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+- (void)_hitTestAtPoint:(CGPoint)point inFrameCoordinateSpace:(WKFrameInfo *)frame completionHandler:(void (^)(_WKJSHandle *, WKFrameInfo *, NSError *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
 + (NSString *)_userVisibleStringForURL:(NSURL *)url WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
@@ -635,6 +635,9 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 - (NSUInteger)accessibilityRemoteChildTokenHash;
 - (NSUInteger)accessibilityUIProcessLocalTokenHash;
 #endif
+
+- (void)_debugTextWithConfiguration:(_WKTextExtractionConfiguration *)configuration completionHandler:(WK_SWIFT_UI_ACTOR void(^)(NSString *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA)) NS_SWIFT_NAME(_debugText(with:completionHandler:));
+- (void)_performInteraction:(_WKTextExtractionInteraction *)interaction completionHandler:(WK_SWIFT_UI_ACTOR void(^)(BOOL success))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA)) NS_SWIFT_NAME(_performInteraction(_:completionHandler:));
 
 @end
 

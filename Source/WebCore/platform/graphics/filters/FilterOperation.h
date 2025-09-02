@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Color.h"
-#include "LayoutSize.h"
-#include "LengthBox.h"
+#include <WebCore/Color.h>
+#include <WebCore/LayoutSize.h>
+#include <WebCore/LengthBox.h>
 #include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/TypeCasts.h>
 #include <wtf/text/WTFString.h>

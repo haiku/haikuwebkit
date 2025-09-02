@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
-#include "StyleGridNamedLinesMap.h"
-#include "StyleGridOrderedNamedLinesMap.h"
-#include "StyleGridTrackSize.h"
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleGridNamedLinesMap.h>
+#include <WebCore/StyleGridOrderedNamedLinesMap.h>
+#include <WebCore/StyleGridTrackSize.h>
 #include <wtf/Variant.h>
 #include <wtf/Vector.h>
 

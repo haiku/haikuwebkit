@@ -30,10 +30,10 @@
 
 #pragma once
 
-#include "BlobResourceHandle.h"
-#include "ExceptionCode.h"
-#include "ThreadableLoaderClient.h"
-#include "URLKeepingBlobAlive.h"
+#include <WebCore/BlobResourceHandle.h>
+#include <WebCore/ExceptionCode.h>
+#include <WebCore/ThreadableLoaderClient.h>
+#include <WebCore/URLKeepingBlobAlive.h>
 #include <pal/text/TextEncoding.h>
 #include <wtf/Forward.h>
 #include <wtf/URL.h>

@@ -27,11 +27,11 @@
 
 #pragma once
 
-#include "Color.h"
-#include "DistantLightSource.h"
-#include "FilterEffect.h"
-#include "PointLightSource.h"
-#include "SpotLightSource.h"
+#include <WebCore/Color.h>
+#include <WebCore/DistantLightSource.h>
+#include <WebCore/FilterEffect.h>
+#include <WebCore/PointLightSource.h>
+#include <WebCore/SpotLightSource.h>
 
 namespace WebCore {
 

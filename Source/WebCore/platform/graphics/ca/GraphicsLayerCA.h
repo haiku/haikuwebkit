@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "GraphicsLayer.h"
-#include "GraphicsLayerContentsDisplayDelegate.h"
-#include "PlatformCAAnimation.h"
-#include "PlatformCALayer.h"
-#include "PlatformCALayerClient.h"
+#include <WebCore/GraphicsLayer.h>
+#include <WebCore/GraphicsLayerContentsDisplayDelegate.h>
+#include <WebCore/PlatformCAAnimation.h>
+#include <WebCore/PlatformCALayer.h>
+#include <WebCore/PlatformCALayerClient.h>
 #include <wtf/HashMap.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>

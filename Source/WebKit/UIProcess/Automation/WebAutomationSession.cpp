@@ -951,6 +951,18 @@ void WebAutomationSession::didCreatePage(WebPageProxy& page)
 {
     m_bidiProcessor->browserAgent().didCreatePage(page);
 }
+
+void WebAutomationSession::navigationStartedForFrame(const WebFrameProxy& frame, const String& url, std::optional<WebCore::NavigationIdentifier> navigationID, double timestamp)
+{
+    String browsingContextHandle = handleForWebFrameProxy(frame);
+    String navigationIDString = nullString();
+    if (navigationID) {
+        uint64_t id = navigationID->toUInt64();
+        auto uuid = WTF::UUID(id, id);
+        navigationIDString = uuid.toString();
+    }
+    m_bidiProcessor->browsingContextDomainNotifier().navigationStarted(browsingContextHandle, navigationIDString, timestamp, url);
+}
 #endif
 
 void WebAutomationSession::willClosePage(const WebPageProxy& page)

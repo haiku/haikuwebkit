@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "CSSPrimitiveKeywordList.h"
-#include "StyleLengthWrapperData.h"
-#include "StylePrimitiveNumericTypes.h"
+#include <WebCore/CSSPrimitiveKeywordList.h>
+#include <WebCore/StyleLengthWrapperData.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {

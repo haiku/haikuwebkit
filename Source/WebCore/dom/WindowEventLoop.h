@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "EventLoop.h"
-#include "GCReachableRef.h"
-#include "Timer.h"
+#include <WebCore/EventLoop.h>
+#include <WebCore/GCReachableRef.h>
+#include <WebCore/Timer.h>
 #include <wtf/HashSet.h>
 #include <wtf/WeakHashMap.h>
 #include <wtf/text/WTFString.h>

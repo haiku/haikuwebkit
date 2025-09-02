@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Length.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/Length.h>
+#include <WebCore/WebAnimationTypes.h>
 
 namespace WebCore {
 

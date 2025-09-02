@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "AlphaPremultiplication.h"
-#include "ColorTypes.h"
+#include <WebCore/AlphaPremultiplication.h>
+#include <WebCore/ColorTypes.h>
 #include <optional>
 #include <wtf/Hasher.h>
 

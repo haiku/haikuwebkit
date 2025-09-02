@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "LoaderMalloc.h"
-#include "ThreadGlobalData.h"
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/ThreadGlobalData.h>
 #include <wtf/text/AtomString.h>
 
 namespace WebCore {

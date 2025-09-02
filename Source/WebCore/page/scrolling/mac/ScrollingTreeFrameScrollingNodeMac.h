@@ -27,10 +27,10 @@
 
 #if ENABLE(ASYNC_SCROLLING) && PLATFORM(MAC)
 
-#include "ScrollbarThemeMac.h"
-#include "ScrollingStateFrameScrollingNode.h"
-#include "ScrollingTreeFrameScrollingNode.h"
-#include "ScrollingTreeScrollingNodeDelegateMac.h"
+#include <WebCore/ScrollbarThemeMac.h>
+#include <WebCore/ScrollingStateFrameScrollingNode.h>
+#include <WebCore/ScrollingTreeFrameScrollingNode.h>
+#include <WebCore/ScrollingTreeScrollingNodeDelegateMac.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>
 

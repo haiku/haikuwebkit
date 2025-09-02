@@ -96,9 +96,6 @@ StyleSheetContents* UserAgentStyle::imageControlsStyleSheet;
 #if ENABLE(ATTACHMENT_ELEMENT)
 StyleSheetContents* UserAgentStyle::attachmentStyleSheet;
 #endif
-#if ENABLE(FORM_CONTROL_REFRESH)
-StyleSheetContents* UserAgentStyle::vectorControlsStyleSheet;
-#endif
 
 static const MQ::MediaQueryEvaluator& screenEval()
 {
@@ -246,13 +243,6 @@ void UserAgentStyle::ensureDefaultStyleSheetsForElement(const Element& element)
         addToDefaultStyle(*viewTransitionsStyleSheet);
         addUserAgentKeyframes(*viewTransitionsStyleSheet);
     }
-#if ENABLE(FORM_CONTROL_REFRESH)
-    auto needsVectorControlStyles = element.document().settings().formControlRefreshEnabled();
-    if (needsVectorControlStyles && !vectorControlsStyleSheet) {
-        vectorControlsStyleSheet = parseUASheet(StringImpl::createWithoutCopying(vectorControlsUserAgentStyleSheet));
-        addToDefaultStyle(*vectorControlsStyleSheet);
-    }
-#endif
 
     ASSERT(defaultStyle->features().idsInRules.isEmpty());
 }

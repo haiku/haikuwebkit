@@ -37,7 +37,7 @@ OBJC_CLASS VKCImageAnalysis;
 OBJC_CLASS DDScannerResult;
 #endif
 
-#include "FloatQuad.h"
+#include <WebCore/FloatQuad.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/text/WTFString.h>
 

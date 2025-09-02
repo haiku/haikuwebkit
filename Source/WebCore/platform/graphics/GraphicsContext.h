@@ -26,21 +26,21 @@
 
 #pragma once
 
-#include "ControlPart.h"
-#include "DashArray.h"
-#include "DestinationColorSpace.h"
-#include "FloatRect.h"
-#include "FloatSegment.h"
-#include "FontCascade.h"
-#include "GraphicsContextState.h"
-#include "Image.h"
-#include "ImageBufferFormat.h"
-#include "ImageOrientation.h"
-#include "ImagePaintingOptions.h"
-#include "IntRect.h"
-#include "Pattern.h"
-#include "PlatformGraphicsContext.h"
-#include "RenderingMode.h"
+#include <WebCore/ControlPart.h>
+#include <WebCore/DashArray.h>
+#include <WebCore/DestinationColorSpace.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/FloatSegment.h>
+#include <WebCore/FontCascade.h>
+#include <WebCore/GraphicsContextState.h>
+#include <WebCore/Image.h>
+#include <WebCore/ImageBufferFormat.h>
+#include <WebCore/ImageOrientation.h>
+#include <WebCore/ImagePaintingOptions.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/Pattern.h>
+#include <WebCore/PlatformGraphicsContext.h>
+#include <WebCore/RenderingMode.h>
 #include <wtf/Function.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/OptionSet.h>
@@ -420,4 +420,4 @@ private:
 
 } // namespace WebCore
 
-#include "GraphicsContextStateSaver.h"
+#include <WebCore/GraphicsContextStateSaver.h>

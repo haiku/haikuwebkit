@@ -397,6 +397,8 @@ public:
     void setPageScaleFactor(double scaleFactor, long x, long y);
     static JSValueRef alwaysResolvePromise(JSContextRef);
 
+    void setHasMouseDeviceForTesting(bool);
+
 private:
     TestRunner(const std::string& testURL, const std::string& expectedPixelHash);
 

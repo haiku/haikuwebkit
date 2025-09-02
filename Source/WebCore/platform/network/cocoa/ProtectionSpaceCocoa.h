@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ProtectionSpaceBase.h"
+#include <WebCore/ProtectionSpaceBase.h>
 #include <wtf/RetainPtr.h>
 
 OBJC_CLASS NSURLProtectionSpace;

@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "FormattingConstraints.h"
-#include "InlineContentBreaker.h"
-#include "InlineLayoutState.h"
-#include "InlineLine.h"
-#include "InlineLineTypes.h"
-#include "LineLayoutResult.h"
+#include <WebCore/FormattingConstraints.h>
+#include <WebCore/InlineContentBreaker.h>
+#include <WebCore/InlineLayoutState.h>
+#include <WebCore/InlineLine.h>
+#include <WebCore/InlineLineTypes.h>
+#include <WebCore/LineLayoutResult.h>
 
 namespace WebCore {
 namespace Layout {

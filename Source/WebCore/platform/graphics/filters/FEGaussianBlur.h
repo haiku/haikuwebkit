@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "FEConvolveMatrix.h"
-#include "FilterEffect.h"
+#include <WebCore/FEConvolveMatrix.h>
+#include <WebCore/FilterEffect.h>
 
 namespace WebCore {
 

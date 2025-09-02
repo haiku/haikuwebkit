@@ -129,3 +129,13 @@ void WKPageConfigurationSetPortsForUpgradingInsecureSchemeForTesting(WKPageConfi
 {
     toProtectedImpl(configuration)->setPortsForUpgradingInsecureSchemeForTesting(upgradeFromInsecurePort, upgradeToSecurePort);
 }
+
+void WKPageConfigurationSetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration, bool allow)
+{
+    toProtectedImpl(configuration)->setAllowJSHandleInPageContentWorld(allow);
+}
+
+bool WKPageConfigurationGetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration)
+{
+    return toProtectedImpl(configuration)->allowJSHandleInPageContentWorld();
+}

@@ -1064,6 +1064,20 @@ ScrollbarWidth RenderLayerScrollableArea::scrollbarWidthStyle()  const
     return ScrollbarWidth::Auto;
 }
 
+std::optional<ScrollbarColor> RenderLayerScrollableArea::scrollbarColorStyle() const
+{
+    if (m_layer.renderBox()) {
+        if (auto value = m_layer.renderer().style().scrollbarColor().tryValue()) {
+            return ScrollbarColor {
+                .thumbColor = m_layer.renderer().style().colorResolvingCurrentColor(value->thumb),
+                .trackColor = m_layer.renderer().style().colorResolvingCurrentColor(value->track)
+            };
+        }
+    }
+
+    return { };
+}
+
 bool RenderLayerScrollableArea::hasOverflowControls() const
 {
     return m_hBar || m_vBar || m_scrollCorner || m_layer.renderer().style().resize() != Resize::None;
@@ -2047,7 +2061,7 @@ void RenderLayerScrollableArea::invalidateScrollAnchoringElement()
 
 void RenderLayerScrollableArea::updateAnchorPositionedAfterScroll()
 {
-    Style::AnchorPositionEvaluator::updatePositionsAfterScroll(m_layer.renderer().document());
+    Style::AnchorPositionEvaluator::updateScrollAdjustments(m_layer.renderer().view());
 }
 
 std::optional<FrameIdentifier> RenderLayerScrollableArea::rootFrameID() const

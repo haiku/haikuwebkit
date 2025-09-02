@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CachedResourceHandle.h"
-#include "CachedSVGDocumentClient.h"
-#include "LoaderMalloc.h"
-#include "StyleURL.h"
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/CachedSVGDocumentClient.h>
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/StyleURL.h>
 
 namespace WebCore {
 

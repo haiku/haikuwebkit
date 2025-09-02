@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "CachedResource.h"
-#include "Image.h"
-#include "ImageObserver.h"
-#include "IntRect.h"
-#include "LayoutSize.h"
-#include "SVGImageCache.h"
+#include <WebCore/CachedResource.h>
+#include <WebCore/Image.h>
+#include <WebCore/ImageObserver.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/LayoutSize.h>
+#include <WebCore/SVGImageCache.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/WeakRef.h>

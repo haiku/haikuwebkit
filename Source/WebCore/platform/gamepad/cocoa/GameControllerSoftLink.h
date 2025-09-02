@@ -29,6 +29,7 @@
 
 #import "GameControllerSPI.h"
 #import <wtf/SoftLinking.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 
 SOFT_LINK_FRAMEWORK_FOR_HEADER(WebCore, GameController)
 SOFT_LINK_CLASS_FOR_HEADER(WebCore, GCController)
@@ -83,6 +84,13 @@ SOFT_LINK_FUNCTION_FOR_HEADER(WebCore, GameController, ControllerClassForService
 #import <GameController/GCEventInteraction.h>
 
 SOFT_LINK_CLASS_FOR_HEADER(WebCore, GCEventInteraction)
+#endif
+
+#if HAVE(UIKIT_WITH_MOUSE_SUPPORT) && ENABLE(POINTER_LOCK)
+SOFT_LINK_CLASS_FOR_HEADER(WebCore, GCMouse)
+SOFT_LINK_CONSTANT_FOR_HEADER(WebCore, GameController, GCMouseDidStopBeingCurrentNotification, NSString *)
+
+SPECIALIZE_OBJC_TYPE_TRAITS(GCMouse, WebCore::getGCMouseClass())
 #endif
 
 #if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/GameControllerSoftLinkAdditions.h>)

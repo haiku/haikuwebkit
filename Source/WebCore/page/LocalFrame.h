@@ -27,9 +27,9 @@
 
 #pragma once
 
-#include "DOMPasteAccess.h"
-#include "Frame.h"
-#include "ScrollbarMode.h"
+#include <WebCore/DOMPasteAccess.h>
+#include <WebCore/Frame.h>
+#include <WebCore/ScrollbarMode.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/HashSet.h>
 #include <wtf/UniqueRef.h>

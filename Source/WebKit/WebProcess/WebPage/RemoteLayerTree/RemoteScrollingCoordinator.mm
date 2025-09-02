@@ -37,6 +37,7 @@
 #import "RemoteScrollingUIState.h"
 #import "WebPage.h"
 #import "WebProcess.h"
+#import <WebCore/AXObjectCache.h>
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/LocalFrame.h>
 #import <WebCore/LocalFrameView.h>

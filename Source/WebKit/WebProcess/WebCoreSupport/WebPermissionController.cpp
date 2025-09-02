@@ -27,6 +27,7 @@
 #include "WebPermissionController.h"
 
 #include "MessageSenderInlines.h"
+#include "NetworkConnectionToWebProcessMessages.h"
 #include "WebPage.h"
 #include "WebPageProxyMessages.h"
 #include "WebPermissionControllerMessages.h"
@@ -39,6 +40,7 @@
 #include <WebCore/PermissionQuerySource.h>
 #include <WebCore/PermissionState.h>
 #include <WebCore/Permissions.h>
+#include <WebCore/RegistrableDomain.h>
 #include <WebCore/SecurityOriginData.h>
 #include <optional>
 
@@ -86,6 +88,12 @@ void WebPermissionController::query(WebCore::ClientOrigin&& origin, WebCore::Per
     }
 #endif
 
+    if (descriptor.name == WebCore::PermissionName::StorageAccess) {
+        Ref networkProcess = WebProcess::singleton().ensureNetworkProcessConnection().connection();
+        networkProcess->sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::QueryStorageAccessPermission(WebCore::RegistrableDomain { origin.clientOrigin }, WebCore::RegistrableDomain { origin.topOrigin }), WTFMove(completionHandler));
+        return;
+    }
+
     std::optional<WebPageProxyIdentifier> proxyIdentifier;
     if (source == WebCore::PermissionQuerySource::Window || source == WebCore::PermissionQuerySource::DedicatedWorker) {
         ASSERT(page);
@@ -105,22 +113,57 @@ void WebPermissionController::removeObserver(WebCore::PermissionObserver& observ
     m_observers.remove(observer);
 }
 
-void WebPermissionController::permissionChanged(WebCore::PermissionName permissionName, const WebCore::SecurityOriginData& topOrigin)
+template<typename ObserverFilter>
+void WebPermissionController::notifyObserversIfNeeded(WebCore::PermissionName permissionName, ObserverFilter&& filter)
 {
     ASSERT(isMainRunLoop());
 
     for (auto& observer : m_observers) {
-        if (observer.descriptor().name != permissionName || observer.origin().topOrigin != topOrigin)
-            return;
+        if (!filter(observer))
+            continue;
 
         auto source = observer.source();
         if (!observer.page() && (source == WebCore::PermissionQuerySource::Window || source == WebCore::PermissionQuerySource::DedicatedWorker))
-            return;
+            continue;
 
         query(WebCore::ClientOrigin { observer.origin() }, WebCore::PermissionDescriptor { permissionName }, observer.page(), source, [observer = WeakPtr { observer }](auto newState) {
             if (observer && newState != observer->currentState())
                 observer->stateChanged(*newState);
         });
+    }
+}
+
+void WebPermissionController::storageAccessPermissionChanged(const WebCore::RegistrableDomain& topFrameDomain, const WebCore::RegistrableDomain& subFrameDomain)
+{
+    notifyObserversIfNeeded(WebCore::PermissionName::StorageAccess, [&](const WebCore::PermissionObserver& observer) {
+        return observer.descriptor().name == WebCore::PermissionName::StorageAccess
+            && WebCore::RegistrableDomain(observer.origin().topOrigin) == topFrameDomain
+            && WebCore::RegistrableDomain(observer.origin().clientOrigin) == subFrameDomain;
+    });
+}
+
+void WebPermissionController::permissionChanged(WebCore::PermissionName permissionName, const WebCore::SecurityOriginData& topOrigin)
+{
+    notifyObserversIfNeeded(permissionName, [&](const WebCore::PermissionObserver& observer) {
+        return permissionName != WebCore::PermissionName::StorageAccess
+            && observer.descriptor().name == permissionName
+            && observer.origin().topOrigin == topOrigin;
+    });
+}
+
+void WebPermissionController::addChangeListener(WebCore::PermissionName permissionName, const WebCore::RegistrableDomain& topFrameDomain, const WebCore::RegistrableDomain& subFrameDomain)
+{
+    if (permissionName == WebCore::PermissionName::StorageAccess) {
+        Ref networkProcess = WebProcess::singleton().ensureNetworkProcessConnection().connection();
+        networkProcess->send(Messages::NetworkConnectionToWebProcess::SubscribeToStorageAccessPermissionChanges(topFrameDomain, subFrameDomain), 0);
+    }
+}
+
+void WebPermissionController::removeChangeListener(WebCore::PermissionName permissionName, const WebCore::RegistrableDomain& topFrameDomain, const WebCore::RegistrableDomain& subFrameDomain)
+{
+    if (permissionName == WebCore::PermissionName::StorageAccess) {
+        Ref networkProcess = WebProcess::singleton().ensureNetworkProcessConnection().connection();
+        networkProcess->send(Messages::NetworkConnectionToWebProcess::UnsubscribeFromStorageAccessPermissionChanges(topFrameDomain, subFrameDomain), 0);
     }
 }
 

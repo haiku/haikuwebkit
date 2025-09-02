@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "JSDOMGlobalObject.h"
+#include <WebCore/JSDOMGlobalObject.h>
 #include <wtf/Compiler.h>
 #include <wtf/Forward.h>
 #include <wtf/WeakPtr.h>

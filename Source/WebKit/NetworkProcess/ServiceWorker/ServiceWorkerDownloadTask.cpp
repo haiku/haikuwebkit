@@ -57,6 +57,7 @@ ServiceWorkerDownloadTask::ServiceWorkerDownloadTask(NetworkSession& session, Ne
     , m_fetchIdentifier(fetchIdentifier)
     , m_downloadID(downloadID)
     , m_networkProcess(*serviceWorkerConnection.networkProcess())
+    , m_sharedPreferences(serviceWorkerConnection.sharedPreferencesForWebProcess())
 {
     auto expectedContentLength = response.expectedContentLength();
     if (expectedContentLength != -1)
@@ -271,6 +272,11 @@ void ServiceWorkerDownloadTask::didFailDownload(std::optional<ResourceError>&& e
         if (RefPtr client = m_client.get())
             client->didCompleteWithError(resourceError);
     });
+}
+
+std::optional<SharedPreferencesForWebProcess> ServiceWorkerDownloadTask::sharedPreferencesForWebProcess(const IPC::Connection& connection) const
+{
+    return m_sharedPreferences;
 }
 
 } // namespace WebKit

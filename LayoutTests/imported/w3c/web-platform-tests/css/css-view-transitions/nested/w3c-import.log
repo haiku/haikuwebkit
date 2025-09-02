@@ -38,9 +38,13 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/contain-on-self.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/custom-ident-implies-contain-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/custom-ident-implies-contain.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-animations.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-with-border-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-with-border-props-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-with-border-props-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-with-border-props.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-with-border-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-with-border.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing.html

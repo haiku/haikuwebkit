@@ -35,6 +35,8 @@
 #import "GPUProcessProxy.h"
 #import "MediaCapability.h"
 #import "RemotePageProxy.h"
+#import "WebFrameProxy.h"
+#import "WebPageProxy.h"
 #import "WebProcessPool.h"
 #import "WebProcessProxy.h"
 #import <BrowserEngineKit/BrowserEngineKit.h>

@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "CSSValueConcepts.h"
-#include "CSSValueKeywords.h"
-#include "RectCorners.h"
-#include "RectEdges.h"
+#include <WebCore/CSSValueConcepts.h>
+#include <WebCore/CSSValueKeywords.h>
+#include <WebCore/RectCorners.h>
+#include <WebCore/RectEdges.h>
 #include <optional>
 #include <tuple>
 #include <utility>

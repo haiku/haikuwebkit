@@ -27,9 +27,9 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "AudioSession.h"
-#include "MediaSessionHelperIOS.h"
-#include "MediaSessionManagerCocoa.h"
+#include <WebCore/AudioSession.h>
+#include <WebCore/MediaSessionHelperIOS.h>
+#include <WebCore/MediaSessionManagerCocoa.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>
 

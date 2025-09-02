@@ -90,6 +90,8 @@ private:
     void setSpellCheckerResults(JSValueRef) final;
 
     void requestTextExtraction(JSValueRef callback, TextExtractionOptions*) final;
+    void requestDebugText(JSValueRef callback) final;
+    void performTextExtractionInteraction(JSStringRef action, TextExtractionInteractionOptions*, JSValueRef callback) final;
 
     void requestRenderedTextForFrontmostTarget(int x, int y, JSValueRef callback) final;
     void adjustVisibilityForFrontmostTarget(int x, int y, JSValueRef callback) final;

@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "ActiveDOMObject.h"
-#include "BroadcastChannelIdentifier.h"
-#include "ClientOrigin.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/BroadcastChannelIdentifier.h>
+#include <WebCore/ClientOrigin.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 

@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
-#include "StyleGridTemplateAreas.h"
-#include "StyleGridTemplateList.h"
-#include "StyleGridTrackSizes.h"
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleGridTemplateAreas.h>
+#include <WebCore/StyleGridTemplateList.h>
+#include <WebCore/StyleGridTrackSizes.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>

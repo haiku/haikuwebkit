@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include <WebCore/ReportBody.h>
 #include <wtf/JSONValues.h>
-#include "ReportBody.h"
 #include <wtf/RefCounted.h>
 #include <wtf/text/WTFString.h>
 

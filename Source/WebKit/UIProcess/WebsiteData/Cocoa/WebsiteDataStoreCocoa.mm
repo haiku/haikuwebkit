@@ -34,6 +34,7 @@
 #import "SandboxUtilities.h"
 #import "UnifiedOriginStorageLevel.h"
 #import "WebFramePolicyListenerProxy.h"
+#import "WebPageProxy.h"
 #import "WebPreferencesDefaultValues.h"
 #import "WebPreferencesKeys.h"
 #import "WebProcessProxy.h"
@@ -133,6 +134,9 @@ WebCore::ThirdPartyCookieBlockingMode WebsiteDataStore::thirdPartyCookieBlocking
         else
             m_thirdPartyCookieBlockingMode = WebCore::ThirdPartyCookieBlockingMode::All;
     }
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES) && (!defined(CFN_COOKIE_ACCEPTS_POLICY_PARTITION) || !CFN_COOKIE_ACCEPTS_POLICY_PARTITION)
+    RELEASE_ASSERT(m_thirdPartyCookieBlockingMode != WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned);
+#endif
     return *m_thirdPartyCookieBlockingMode;
 }
 
@@ -257,6 +261,21 @@ std::optional<bool> WebsiteDataStore::useNetworkLoader()
 
 #endif // NETWORK_LOADER
 }
+
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
+bool WebsiteDataStore::isOptInCookiePartitioningEnabled() const
+{
+#if defined(CFN_COOKIE_ACCEPTS_POLICY_PARTITION) && CFN_COOKIE_ACCEPTS_POLICY_PARTITION
+    return std::ranges::any_of(m_processes, [](auto& process) {
+        return std::ranges::any_of(process.pages(), [](auto& page) {
+            return page->preferences().optInPartitionedCookiesEnabled();
+        });
+    });
+#else
+    return false;
+#endif
+}
+#endif
 
 void WebsiteDataStore::platformInitialize()
 {

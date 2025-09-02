@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "DecodingOptions.h"
-#include "ImageOrientation.h"
-#include "ImageTypes.h"
-#include "IntPoint.h"
-#include "IntSize.h"
-#include "PlatformImage.h"
+#include <WebCore/DecodingOptions.h>
+#include <WebCore/ImageOrientation.h>
+#include <WebCore/ImageTypes.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/IntSize.h>
+#include <WebCore/PlatformImage.h>
 #include <wtf/Seconds.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeWeakPtr.h>

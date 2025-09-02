@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "WebGPUTextureFormat.h"
-#include "WebGPUTextureUsage.h"
-#include "WebGPUXREye.h"
-#include "WebGPUXRSubImage.h"
+#include <WebCore/WebGPUTextureFormat.h>
+#include <WebCore/WebGPUTextureUsage.h>
+#include <WebCore/WebGPUXREye.h>
+#include <WebCore/WebGPUXRSubImage.h>
 
 #include <wtf/Ref.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>

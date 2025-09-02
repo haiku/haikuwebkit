@@ -64,6 +64,7 @@
 #if PLATFORM(COCOA)
 #include "DefaultWebBrowserChecks.h"
 #include "NetworkSessionCocoa.h"
+#include "WebPrivacyHelpers.h"
 #endif
 #if USE(SOUP)
 #include "NetworkSessionSoup.h"
@@ -215,7 +216,7 @@ NetworkSession::NetworkSession(NetworkProcess& networkProcess, const NetworkSess
     setTrackingPreventionEnabled(parameters.resourceLoadStatisticsParameters.enabled);
 
     setShouldSendPrivateTokenIPCForTesting(parameters.shouldSendPrivateTokenIPCForTesting);
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     setOptInCookiePartitioningEnabled(parameters.isOptInCookiePartitioningEnabled);
 #endif
 
@@ -318,6 +319,22 @@ void NetworkSession::forwardResourceLoadStatisticsSettings()
 bool NetworkSession::isTrackingPreventionEnabled() const
 {
     return !!m_resourceLoadStatistics;
+}
+
+IsKnownCrossSiteTracker NetworkSession::isRequestToKnownCrossSiteTracker(const ResourceRequest& request)
+{
+#if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
+    return WebKit::isRequestToKnownCrossSiteTracker(request);
+#else
+    return IsKnownCrossSiteTracker::No;
+#endif
+}
+
+IsKnownCrossSiteTracker NetworkSession::isResourceFromKnownCrossSiteTracker(const URL& firstParty, const URL& resource)
+{
+    ResourceRequest request { URL { resource } };
+    request.setFirstPartyForCookies(firstParty);
+    return isRequestToKnownCrossSiteTracker(request);
 }
 
 void NetworkSession::deleteAndRestrictWebsiteDataForRegistrableDomains(OptionSet<WebsiteDataType> dataTypes, RegistrableDomainsToDeleteOrRestrictWebsiteDataFor&& domains, CompletionHandler<void(HashSet<RegistrableDomain>&&)>&& completionHandler)
@@ -543,7 +560,7 @@ void NetworkSession::setShouldSendPrivateTokenIPCForTesting(bool enabled)
     m_shouldSendPrivateTokenIPCForTesting = enabled;
 }
 
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
 void NetworkSession::setOptInCookiePartitioningEnabled(bool enabled)
 {
     if (!m_resourceLoadStatistics)

@@ -26,18 +26,18 @@
 
 #pragma once
 
-#include "CacheStorageConnection.h"
-#include "ClientOrigin.h"
-#include "ImageBitmap.h"
-#include "ReportingClient.h"
-#include "ScriptExecutionContext.h"
-#include "Settings.h"
-#include "Supplementable.h"
-#include "WindowOrWorkerGlobalScope.h"
-#include "WorkerOrWorkletGlobalScope.h"
-#include "WorkerOrWorkletScriptController.h"
-#include "WorkerType.h"
 #include <JavaScriptCore/ConsoleMessage.h>
+#include <WebCore/CacheStorageConnection.h>
+#include <WebCore/ClientOrigin.h>
+#include <WebCore/ImageBitmap.h>
+#include <WebCore/ReportingClient.h>
+#include <WebCore/ScriptExecutionContext.h>
+#include <WebCore/Settings.h>
+#include <WebCore/Supplementable.h>
+#include <WebCore/WindowOrWorkerGlobalScope.h>
+#include <WebCore/WorkerOrWorkletGlobalScope.h>
+#include <WebCore/WorkerOrWorkletScriptController.h>
+#include <WebCore/WorkerType.h>
 #include <memory>
 #include <wtf/FixedVector.h>
 #include <wtf/MemoryPressureHandler.h>

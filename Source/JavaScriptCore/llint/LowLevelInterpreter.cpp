@@ -170,6 +170,7 @@ public:
     operator Register*() { return std::bit_cast<Register*>(m_value); }
     operator VM*() { return std::bit_cast<VM*>(m_value); }
     operator CallLinkInfo*() { return std::bit_cast<CallLinkInfo*>(m_value); }
+    operator void*() { return reinterpret_cast<void*>(m_value); }
 
     template<typename T, typename = std::enable_if_t<sizeof(T) == sizeof(uintptr_t)>>
     ALWAYS_INLINE void operator=(T value) { m_value = std::bit_cast<uintptr_t>(value); }
@@ -359,7 +360,7 @@ JSValue CLoop::execute(OpcodeID entryOpcodeID, void* executableAddress, VM* vm, 
         void* m_originalStackPointer;
     };
 
-    CLoopStack& cloopStack = vm->interpreter.cloopStack();
+    CLoopStack& cloopStack = vm->cloopStack();
     StackPointerScope stackPointerScope(cloopStack);
 
     lr = getOpcode(llint_return_to_host);

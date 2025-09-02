@@ -1012,7 +1012,7 @@ RenderLayerCompositor& RenderLayer::compositor() const
     return renderer().view().compositor();
 }
 
-void RenderLayer::contentChanged(ContentChangeType changeType)
+void RenderLayer::contentChanged(ContentChangeType changeType, const std::optional<FloatRect>& dirtyRect)
 {
     if (changeType == ContentChangeType::Canvas || changeType == ContentChangeType::Video || changeType == ContentChangeType::FullScreen || changeType == ContentChangeType::Model || changeType == ContentChangeType::HDRImage) {
         setNeedsPostLayoutCompositingUpdate();
@@ -1020,7 +1020,7 @@ void RenderLayer::contentChanged(ContentChangeType changeType)
     }
 
     if (auto* backing = this->backing())
-        backing->contentChanged(changeType);
+        backing->contentChanged(changeType, dirtyRect);
 }
 
 bool RenderLayer::canRender3DTransforms() const
@@ -1710,8 +1710,8 @@ void RenderLayer::updateTransformFromStyle(TransformationMatrix& transform, cons
     // > After layout has been performed for abspos, it is additionally shifted by
     // > the default scroll shift, as if affected by a transform
     // > ** (before any other transforms). **
-    if (m_snapshottedScrollOffsetForAnchorPositioning)
-        transform.translate(m_snapshottedScrollOffsetForAnchorPositioning->width(), m_snapshottedScrollOffsetForAnchorPositioning->height());
+    if (m_anchorScrollAdjustment)
+        transform.translate(m_anchorScrollAdjustment->width(), m_anchorScrollAdjustment->height());
 
     auto referenceBoxRect = snapRectToDevicePixelsIfNeeded(renderer().transformReferenceBoxRect(style), renderer());
     renderer().applyTransform(transform, style, referenceBoxRect, options);
@@ -4676,25 +4676,27 @@ bool RenderLayer::participatesInPreserve3D() const
     return ancestorLayerIsDOMParent(parent()) && parent()->preserves3D() && (transform() || renderer().style().backfaceVisibility() == BackfaceVisibility::Hidden || preserves3D());
 }
 
-void RenderLayer::setSnapshottedScrollOffsetForAnchorPositioning(LayoutSize offset)
+bool RenderLayer::setAnchorScrollAdjustment(LayoutSize offset)
 {
-    if (m_snapshottedScrollOffsetForAnchorPositioning == offset)
-        return;
+    if (m_anchorScrollAdjustment == offset)
+        return false;
 
     // FIXME: Scroll offset should be adjusted in the scrolling tree so layers stay exactly in sync.
-    m_snapshottedScrollOffsetForAnchorPositioning = offset;
+    m_anchorScrollAdjustment = offset;
     updateTransform();
 
     if (isComposited())
         setNeedsCompositingGeometryUpdate();
+
+    return true;
 }
 
-void RenderLayer::clearSnapshottedScrollOffsetForAnchorPositioning()
+void RenderLayer::clearAnchorScrollAdjustment()
 {
-    if (!m_snapshottedScrollOffsetForAnchorPositioning)
+    if (!m_anchorScrollAdjustment)
         return;
 
-    m_snapshottedScrollOffsetForAnchorPositioning = { };
+    m_anchorScrollAdjustment = { };
     updateTransform();
 
     if (isComposited())
@@ -5994,8 +5996,8 @@ static bool rendererHasHDRContent(const RenderElement& renderer)
                 return true;
         }
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
-    } else if (CheckedPtr canavsRenderer = dynamicDowncast<RenderHTMLCanvas>(renderer)) {
-        if (auto* renderingContext = canavsRenderer->canvasElement().renderingContext()) {
+    } else if (CheckedPtr canvasRenderer = dynamicDowncast<RenderHTMLCanvas>(renderer)) {
+        if (auto* renderingContext = canvasRenderer->canvasElement().renderingContext()) {
             if (renderingContext->isHDR())
                 return true;
         }

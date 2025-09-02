@@ -865,6 +865,9 @@ imported/w3c/web-platform-tests/fetch/content-encoding/gzip-body.any.sharedworke
 imported/w3c/web-platform-tests/fetch/content-encoding/gzip-body.any.worker.html [ Skip ]
 imported/w3c/web-platform-tests/webtransport/ [ Skip ]
 
+# Event timing: times out, missing automation
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/contextmenu.html [ Skip ]
+
 # WebKitLegacy doesn't support https-based WPT
 webkit.org/b/246719 imported/w3c/web-platform-tests/reporting/generateTestReport-honors-endpoint.https.sub.html [ Failure ]
 webkit.org/b/246719 imported/w3c/web-platform-tests/reporting/cross-origin-report-no-credentials.https.sub.html [ Failure ]
@@ -988,6 +991,8 @@ accessibility/mac/bounds-for-range-centered.html [ Skip ]
 # Skipping because different hierarchy on WK1
 accessibility/youtube-embed-accessibility-hierarchy.html [ Skip ]
 
+accessibility/mac/iframe-hit-testing.html [ Skip ]
+
 # DOM paste access requests are not implemented in WebKit1.
 editing/async-clipboard/clipboard-change-data-while-reading.html [ Skip ]
 editing/async-clipboard/clipboard-do-not-read-text-from-platform-if-text-changes.html [ Skip ]
@@ -1097,7 +1102,6 @@ imported/w3c/web-platform-tests/mixed-content/gen/top.meta/unset/beacon.https.ht
 http/tests/security/contentSecurityPolicy/connect-src-beacon-allowed.html [ Skip ]
 http/tests/security/contentSecurityPolicy/connect-src-beacon-blocked.html [ Skip ]
 http/tests/security/contentSecurityPolicy/report-only-connect-src-beacon-redirect-blocked.py [ Skip ]
-http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-beacon-in-iframe.html [ Skip ]
 
 # testRunner.setStatisticsShouldDowngradeReferrer() is not supported on WK1
 http/tests/referrer-policy-script/ [ Skip ]
@@ -1107,19 +1111,12 @@ http/tests/security/referrer-policy-header.html [ Skip ]
 http/tests/security/referrer-policy-header-multipart.html [ Skip ]
 http/tests/navigation/ping-attribute/area-cross-origin.html [ Skip ]
 http/tests/navigation/ping-attribute/anchor-cross-origin.html [ Skip ]
-http/tests/navigation/ping-attribute/secure-anchor-cross-origin.html [ Skip ]
 http/tests/referrer-policy/no-referrer-when-downgrade/ [ Skip ]
 http/tests/referrer-policy/unsafe-url/cross-origin-http-http.html [ Skip ]
-http/tests/referrer-policy/unsafe-url/cross-origin-http.https.html [ Skip ]
-http/tests/referrer-policy/unsafe-url/cross-origin-http-UpgradeMixedContent.https.html [ Skip ]
 http/tests/referrer-policy-img/no-referrer-when-downgrade/ [ Skip ]
 http/tests/referrer-policy-img/unsafe-url/cross-origin-http-http.html [ Skip ]
-http/tests/referrer-policy-img/unsafe-url/cross-origin-http.https.html [ Skip ]
 http/tests/referrer-policy-img/unsafe-url/cross-origin-http-UpgradeMixedContent.https.html [ Skip ]
 http/tests/ipc/ipc-fetch-task-message-crash.html [ Skip ]
-
-# Cross origin HTTPS loads require certificate validation, which are not supported for WK1 ping loads.
-http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-ping-in-iframe.https.html [ Failure ]
 
 # Cross-Origin requests receive a didReceiveAuthenticationChallenge callback on the first iteration
 http/tests/referrer-policy-img/no-referrer/cross-origin-http-UpgradeMixedContent.https.html [ Pass Failure ]
@@ -2069,11 +2066,6 @@ webkit.org/b/184569 [ Debug ] animations/missing-from-to.html [ Skip ]
 
 webkit.org/b/184458 media/remote-control-command-is-user-gesture.html [ Pass Timeout ]
 
-webkit.org/b/185404 http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-iframe-in-main-frame.html [ Pass Failure ]
-http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-css-in-iframe.html [ Failure Pass ]
-http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-image-in-xslt-document-in-iframe-with-inherited-policy.html [ Failure Pass ]
-http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-image-in-iframe-with-enforced-and-report-policies.html [ Pass Failure ]
-
 webkit.org/b/186581 [ Debug ] fast/parser/xml-error-adopted.xml [ Timeout Pass ]
 
 webkit.org/b/187711 [ Debug ] svg/custom/linking-uri-01-b.svg [ Pass Failure ]
@@ -2650,12 +2642,8 @@ webkit.org/b/246653 [ Debug ] media/modern-media-controls/media-documents/click-
 http/tests/security/basic-auth-subresource.html [ Failure Pass ]
 http/tests/security/contentSecurityPolicy/image-with-https-url-allowed-by-csp-img-src-star.html [ DumpJSConsoleLogInStdErr ]
 http/tests/security/contentSecurityPolicy/video-with-https-url-allowed-by-csp-media-src-star.html [ Failure Pass ]
-http/tests/security/mixedContent/websocket/insecure-websocket-in-iframe.html [ Pass Failure ]
 http/tests/security/contentSecurityPolicy/script-src-parsing-implicit-and-explicit-port-number.html [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/webmessaging/broadcastchannel/cross-partition.https.tentative.html [ DumpJSConsoleLogInStdErr ]
-http/tests/security/mixedContent/insecure-image-redirects-to-basic-auth-secure-image.html [ DumpJSConsoleLogInStdErr ]
-http/tests/security/mixedContent/secure-redirect-to-insecure-redirect-to-basic-auth-secure-image.https.html [ DumpJSConsoleLogInStdErr ]
-http/tests/security/mixedContent/secure-redirect-to-secure-redirect-to-basic-auth-insecure-image.https.html [ DumpJSConsoleLogInStdErr ]
 http/tests/security/mixedContent/secure-redirect-to-secure-redirect-to-basic-auth-secure-image.https.html [ DumpJSConsoleLogInStdErr ]
 
 # These tests have been flaky on WK1 since their import.

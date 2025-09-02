@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "LayoutUnit.h"
-#include "RectEdges.h"
+#include <WebCore/LayoutUnit.h>
+#include <WebCore/RectEdges.h>
 
 namespace WebCore {
 

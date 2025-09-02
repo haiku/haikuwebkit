@@ -26,12 +26,12 @@
 
 #pragma once
 
-#include "DOMCacheIdentifier.h"
-#include "FetchHeaders.h"
-#include "FetchOptions.h"
-#include "ResourceRequest.h"
-#include "ResourceResponse.h"
-#include "SharedBuffer.h"
+#include <WebCore/DOMCacheIdentifier.h>
+#include <WebCore/FetchHeaders.h>
+#include <WebCore/FetchOptions.h>
+#include <WebCore/ResourceRequest.h>
+#include <WebCore/ResourceResponse.h>
+#include <WebCore/SharedBuffer.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/CrossThreadCopier.h>
 

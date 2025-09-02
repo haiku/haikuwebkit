@@ -69,6 +69,7 @@
 #import <WebCore/UserAgent.h>
 #import <WebCore/ValidationBubble.h>
 #import <mach-o/dyld.h>
+#import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <pal/spi/cocoa/WritingToolsSPI.h>
 #import <pal/spi/mac/NSApplicationSPI.h>
 #import <pal/spi/mac/NSMenuSPI.h>
@@ -1066,6 +1067,22 @@ WebContentMode WebPageProxy::effectiveContentModeAfterAdjustingPolicies(API::Web
 
     return WebContentMode::Recommended;
 }
+
+#if ENABLE(POINTER_LOCK)
+
+void WebPageProxy::platformLockPointer()
+{
+    CGDisplayHideCursor(CGMainDisplayID());
+    CGAssociateMouseAndMouseCursorPosition(false);
+}
+
+void WebPageProxy::platformUnlockPointer()
+{
+    CGAssociateMouseAndMouseCursorPosition(true);
+    CGDisplayShowCursor(CGMainDisplayID());
+}
+
+#endif
 
 } // namespace WebKit
 

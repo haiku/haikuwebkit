@@ -27,7 +27,7 @@
 
 #if PLATFORM(COCOA)
 
-#include "Image.h"
+#include <WebCore/Image.h>
 #include <wtf/RefPtr.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>

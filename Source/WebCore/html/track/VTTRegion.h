@@ -33,10 +33,10 @@
 
 #if ENABLE(VIDEO)
 
-#include "ContextDestructionObserver.h"
-#include "FloatPoint.h"
-#include "TextTrack.h"
-#include "Timer.h"
+#include <WebCore/ContextDestructionObserver.h>
+#include <WebCore/FloatPoint.h>
+#include <WebCore/TextTrack.h>
+#include <WebCore/Timer.h>
 
 namespace WebCore {
 

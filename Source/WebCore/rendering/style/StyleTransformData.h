@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
-#include "StyleTransformOrigin.h"
-#include "TransformOperations.h"
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleTransformOrigin.h>
+#include <WebCore/TransformOperations.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 

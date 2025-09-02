@@ -287,11 +287,10 @@ inline bool isSubtypeIndex(TypeIndex sub, TypeIndex parent)
     if (sub == parent)
         return true;
 
-    auto subRTT = TypeInformation::tryGetCanonicalRTT(sub);
-    auto parentRTT = TypeInformation::tryGetCanonicalRTT(parent);
-    ASSERT(subRTT.has_value() && parentRTT.has_value());
+    auto subRTT = TypeInformation::getCanonicalRTT(sub);
+    auto parentRTT = TypeInformation::getCanonicalRTT(parent);
 
-    return subRTT.value()->isStrictSubRTT(*parentRTT.value());
+    return subRTT->isStrictSubRTT(parentRTT.get());
 }
 
 bool isSubtype(Type, Type);

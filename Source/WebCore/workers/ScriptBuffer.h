@@ -30,8 +30,8 @@
 
 #pragma once
 
-#include "ShareableResource.h"
-#include "SharedBuffer.h"
+#include <WebCore/ShareableResource.h>
+#include <WebCore/SharedBuffer.h>
 
 namespace WebCore {
 

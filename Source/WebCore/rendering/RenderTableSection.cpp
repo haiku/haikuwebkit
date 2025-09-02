@@ -74,7 +74,7 @@ static inline void updateLogicalHeightForCell(RenderTableSection::RowStruct& row
     if (cell->rowSpan() != 1)
         return;
 
-    auto& logicalHeight = cell->style().logicalHeight();
+    auto& logicalHeight = !cell->isOrthogonal() ? cell->style().logicalHeight() : cell->style().logicalWidth();
     if (logicalHeight.isPositive()) {
         if (auto percentageLogicalHeight = logicalHeight.tryPercentage()) {
             if (auto percentageRowLogicalHeight = row.logicalHeight.tryPercentage(); !percentageRowLogicalHeight || percentageRowLogicalHeight->value < percentageLogicalHeight->value)
@@ -292,7 +292,7 @@ LayoutUnit RenderTableSection::calcRowLogicalHeight()
                 // For row spanning cells, |r| is the last row in the span.
                 unsigned cellStartRow = cell->rowIndex();
 
-                if (cell->overridingBorderBoxLogicalHeight()) {
+                if (cell->overridingBorderBoxLogicalHeight() && !cell->isOrthogonal()) {
                     cell->clearIntrinsicPadding();
                     cell->clearOverridingSize();
                     cell->setChildNeedsLayout(MarkOnlyThis);
@@ -329,8 +329,18 @@ LayoutUnit RenderTableSection::calcRowLogicalHeight()
         m_rowPos[r + 1] = std::max(m_rowPos[r + 1], m_rowPos[r]);
     }
 
-    ASSERT(!needsLayout());
+    for (size_t rowIndex = 0; rowIndex < totalRows; ++rowIndex) {
+        if (m_grid[rowIndex].rowRenderer && m_grid[rowIndex].rowRenderer->style().visibility() == Visibility::Collapse) {
+            auto delta = m_rowPos[rowIndex + 1] - m_rowPos[rowIndex];
+            if (delta > 0_lu) {
+                // Reduce height of collapsed row to 0 without affecting other rows
+                for (size_t adjustedRowIndex = rowIndex + 1; adjustedRowIndex <= totalRows; ++adjustedRowIndex)
+                    m_rowPos[adjustedRowIndex] -= delta;
+            }
+        }
+    }
 
+    ASSERT(!needsLayout());
     return m_rowPos[m_grid.size()];
 }
 
@@ -541,7 +551,7 @@ void RenderTableSection::relayoutCellIfFlexed(RenderTableCell& cell, int rowInde
         return;
 
     cell.setChildNeedsLayout(MarkOnlyThis);
-        // Alignment within a cell is based off the calculated
+    // Alignment within a cell is based off the calculated
     // height, which becomes irrelevant once the cell has
     // been resized based off its percentage.
     cell.setOverridingLogicalHeightFromRowHeight(rowHeight);
@@ -615,6 +625,10 @@ void RenderTableSection::layoutRows()
             if (!cell->needsLayout() && layoutState->pageLogicalHeight() && layoutState->pageLogicalOffset(cell, cell->logicalTop()) != cell->pageLogicalOffset())
                 cell->setChildNeedsLayout(MarkOnlyThis);
 
+            if (cell->isOrthogonal()) {
+                cell->setNeedsLayout(MarkOnlyThis);
+                cell->setOverridingBorderBoxLogicalWidth(rowHeight);
+            }
             cell->layoutIfNeeded();
 
             // FIXME: Make pagination work with vertical tables.
@@ -684,7 +698,7 @@ void RenderTableSection::computeOverflowFromCells(unsigned totalRows, unsigned n
                 continue;
             if (r < totalRows - 1 && cell == primaryCellAt(r + 1, c))
                 continue;
-            addOverflowFromChild(*cell);
+            addOverflowFromInFlowChildOrAbsolutePositionedDescendant(*cell);
 #if ASSERT_ENABLED
             hasOverflowingCell |= cell->hasVisualOverflow();
 #endif

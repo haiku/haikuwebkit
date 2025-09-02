@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ServiceWorkerDebuggable.h"
+#include <WebCore/ServiceWorkerDebuggable.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>

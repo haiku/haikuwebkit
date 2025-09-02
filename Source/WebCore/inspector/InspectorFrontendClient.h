@@ -31,12 +31,12 @@
 
 #pragma once
 
-#include "CertificateInfo.h"
-#include "Color.h"
-#include "DiagnosticLoggingClient.h"
-#include "FrameIdentifier.h"
-#include "InspectorDebuggableType.h"
-#include "UserInterfaceLayoutDirection.h"
+#include <WebCore/CertificateInfo.h>
+#include <WebCore/Color.h>
+#include <WebCore/DiagnosticLoggingClient.h>
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/InspectorDebuggableType.h>
+#include <WebCore/UserInterfaceLayoutDirection.h>
 #include <wtf/Forward.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>

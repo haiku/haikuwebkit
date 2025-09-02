@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "CSSValue.h"
+#include <WebCore/CSSValue.h>
 #include <array>
 #include <unicode/umachine.h>
 #include <wtf/MallocSpan.h>

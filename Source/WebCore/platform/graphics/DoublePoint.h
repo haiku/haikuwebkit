@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "DoubleSize.h"
-#include "IntPoint.h"
+#include <WebCore/DoubleSize.h>
+#include <WebCore/IntPoint.h>
 #include <wtf/TZoneMalloc.h>
 
 #if USE(CG)

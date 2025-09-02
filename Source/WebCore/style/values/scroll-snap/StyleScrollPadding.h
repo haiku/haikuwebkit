@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "BoxExtents.h"
-#include "StyleLengthWrapper.h"
+#include <WebCore/BoxExtents.h>
+#include <WebCore/StyleLengthWrapper.h>
 
 namespace WebCore {
 

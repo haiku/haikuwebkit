@@ -32,9 +32,16 @@
 
 namespace WebCore::ContentExtensions {
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+ContentExtensionRule::ContentExtensionRule(Trigger&& trigger, Action&& action, uint32_t identifier)
+#else
 ContentExtensionRule::ContentExtensionRule(Trigger&& trigger, Action&& action)
+#endif
     : m_trigger(WTFMove(trigger))
     , m_action(WTFMove(action))
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    , m_identifier(identifier)
+#endif
 {
     ASSERT(!m_trigger.urlFilter.isEmpty());
 }
@@ -87,7 +94,17 @@ DeserializedAction DeserializedAction::deserialize(std::span<const uint8_t> seri
 {
     auto serializedActionSize = serializedActions.size();
     RELEASE_ASSERT(location < serializedActionSize, location, serializedActionSize);
-    return { location, VariantDeserializer<ActionData>::deserialize(serializedActions.subspan(location + 1), serializedActions[location]) };
+
+    uint32_t identifier = location;
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    // FIXME: <rdar://157879177> We shouldn't unconditionally deserialize an identifier here, as all rule lists do not serialize identifiers.
+    size_t identifierLocation = location + serializedLength(serializedActions, location);
+    RELEASE_ASSERT(identifierLocation < serializedActionSize);
+
+    identifier = reinterpretCastSpanStartTo<uint32_t>(serializedActions.subspan(identifierLocation));
+#endif
+
+    return { identifier, VariantDeserializer<ActionData>::deserialize(serializedActions.subspan(location + 1), serializedActions[location]) };
 }
 
 size_t DeserializedAction::serializedLength(std::span<const uint8_t> serializedActions, uint32_t location)

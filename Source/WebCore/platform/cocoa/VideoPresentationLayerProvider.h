@@ -27,7 +27,7 @@
 
 #if ENABLE(VIDEO)
 
-#include "CocoaView.h"
+#include <WebCore/CocoaView.h>
 
 OBJC_CLASS WebAVPlayerLayer;
 OBJC_CLASS WebAVPlayerLayerView;

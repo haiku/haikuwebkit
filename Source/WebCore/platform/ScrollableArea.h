@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "KeyboardScroll.h"
-#include "RectEdges.h"
-#include "ScrollAlignment.h"
-#include "ScrollAnchoringController.h"
-#include "ScrollSnapOffsetsInfo.h"
-#include "ScrollTypes.h"
-#include "Scrollbar.h"
+#include <WebCore/KeyboardScroll.h>
+#include <WebCore/RectEdges.h>
+#include <WebCore/ScrollAlignment.h>
+#include <WebCore/ScrollAnchoringController.h>
+#include <WebCore/ScrollSnapOffsetsInfo.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/Scrollbar.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
@@ -159,6 +159,7 @@ public:
     WEBCORE_EXPORT virtual Color scrollbarTrackColorStyle() const;
     WEBCORE_EXPORT virtual Style::ScrollbarGutter scrollbarGutterStyle() const;
     virtual ScrollbarWidth scrollbarWidthStyle() const { return ScrollbarWidth::Auto; }
+    virtual std::optional<ScrollbarColor> scrollbarColorStyle() const { return { }; }
 
     WEBCORE_EXPORT bool allowsHorizontalScrolling() const;
     WEBCORE_EXPORT bool allowsVerticalScrolling() const;
@@ -170,6 +171,7 @@ public:
     WEBCORE_EXPORT virtual void willStartLiveResize();
     WEBCORE_EXPORT virtual void willEndLiveResize();
 
+    WEBCORE_EXPORT void scrollbarColorDidChange(std::optional<ScrollbarColor>);
     WEBCORE_EXPORT void contentAreaWillPaint() const;
     WEBCORE_EXPORT void mouseEnteredContentArea() const;
     WEBCORE_EXPORT void mouseExitedContentArea() const;

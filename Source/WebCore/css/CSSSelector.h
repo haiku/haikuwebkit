@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "CSSSelectorEnums.h"
-#include "QualifiedName.h"
-#include "RenderStyleConstants.h"
+#include <WebCore/CSSSelectorEnums.h>
+#include <WebCore/QualifiedName.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <wtf/EnumTraits.h>
 #include <wtf/FixedVector.h>
 #include <wtf/TZoneMalloc.h>

@@ -27,9 +27,9 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "Exception.h"
-#include "Page.h"
-#include "UserMediaClient.h"
+#include <WebCore/Exception.h>
+#include <WebCore/Page.h>
+#include <WebCore/UserMediaClient.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakHashSet.h>

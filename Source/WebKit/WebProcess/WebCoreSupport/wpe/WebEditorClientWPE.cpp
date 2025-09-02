@@ -105,7 +105,6 @@ static const KeyDownEntry keyDownEntries[] = {
     { 'B',         CtrlKey,          "ToggleBold"                              },
     { 'I',         CtrlKey,          "ToggleItalic"                            },
     { 'U',         CtrlKey,          "ToggleUnderline"                         },
-    { VK_ESCAPE, 0,                  "Cancel"                                  },
     { VK_OEM_PERIOD, CtrlKey,        "Cancel"                                  },
     { VK_TAB,    0,                  "InsertTab"                               },
     { VK_TAB,    ShiftKey,           "InsertBacktab"                           },

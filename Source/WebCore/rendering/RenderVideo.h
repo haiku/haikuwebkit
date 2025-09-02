@@ -27,8 +27,8 @@
 
 #if ENABLE(VIDEO)
 
-#include "HTMLVideoElement.h"
-#include "RenderMedia.h"
+#include <WebCore/HTMLVideoElement.h>
+#include <WebCore/RenderMedia.h>
 
 namespace WebCore {
 

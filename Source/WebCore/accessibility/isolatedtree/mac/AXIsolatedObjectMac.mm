@@ -24,6 +24,7 @@
  */
 
 #import "config.h"
+#import "AXGeometryManager.h"
 #import "AXIsolatedObject.h"
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE) && PLATFORM(MAC)
@@ -181,7 +182,7 @@ bool AXIsolatedObject::isDetached() const
 
 void AXIsolatedObject::attachPlatformWrapper(AccessibilityObjectWrapper* wrapper)
 {
-    [wrapper attachIsolatedObject:this];
+    [wrapper attachIsolatedObject:*this];
     setWrapper(wrapper);
 }
 
@@ -566,6 +567,6 @@ String AXIsolatedObject::computedRoleString() const
 }
 // End purposely un-cached properties block.
 
-} // WebCore
+} // namespace WebCore
 
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE) && PLATFORM(MAC)

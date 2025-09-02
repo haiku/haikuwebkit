@@ -47,7 +47,6 @@ public:
     Element* anchorElement() const final;
     Element* actionElement() const final;
     URL url() const final;
-    String title() const final;
     String description() const final;
     AccessibilityObject* parentObject() const final;
 

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Attribute.h"
-#include "SpaceSplitString.h"
+#include <WebCore/Attribute.h>
+#include <WebCore/SpaceSplitString.h>
 #include <wtf/IndexedRange.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TypeCasts.h>

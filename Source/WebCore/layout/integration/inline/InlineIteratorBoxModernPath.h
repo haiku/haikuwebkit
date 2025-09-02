@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "FontCascade.h"
-#include "InlineIteratorBoxLegacyPath.h"
-#include "LayoutElementBox.h"
-#include "LayoutIntegrationInlineContent.h"
-#include "TextBoxSelectableRange.h"
+#include <WebCore/FontCascade.h>
+#include <WebCore/InlineIteratorBoxLegacyPath.h>
+#include <WebCore/LayoutElementBox.h>
+#include <WebCore/LayoutIntegrationInlineContent.h>
+#include <WebCore/TextBoxSelectableRange.h>
 
 namespace WebCore {
 namespace InlineIterator {

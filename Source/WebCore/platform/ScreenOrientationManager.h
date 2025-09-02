@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "ScreenOrientationLockType.h"
-#include "ScreenOrientationType.h"
+#include <WebCore/ScreenOrientationLockType.h>
+#include <WebCore/ScreenOrientationType.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/RefCounted.h>
 #include <wtf/WeakPtr.h>

@@ -27,8 +27,8 @@
 
 #if PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE)
 
-#include "HTMLMediaElementEnums.h"
-#include "PlaybackSessionModel.h"
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/PlaybackSessionModel.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>

@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "FormState.h"
-#include "FormSubmission.h"
-#include "HTMLElement.h"
-#include "RadioButtonGroups.h"
+#include <WebCore/FormState.h>
+#include <WebCore/FormSubmission.h>
+#include <WebCore/HTMLElement.h>
+#include <WebCore/RadioButtonGroups.h>
 #include <memory>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakHashSet.h>

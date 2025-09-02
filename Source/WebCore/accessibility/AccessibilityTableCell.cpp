@@ -30,6 +30,7 @@
 #include "AccessibilityTableCell.h"
 
 #include "AXObjectCache.h"
+#include "AXUtilities.h"
 #include "AccessibilityTable.h"
 #include "AccessibilityTableRow.h"
 #include "HTMLParserIdioms.h"
@@ -259,16 +260,6 @@ bool AccessibilityTableCell::isRowHeader() const
             return false;
     }
     return false;
-}
-
-String AccessibilityTableCell::expandedTextValue() const
-{
-    return getAttribute(abbrAttr);
-}
-
-bool AccessibilityTableCell::supportsExpandedTextValue() const
-{
-    return isTableHeaderCell() && hasAttribute(abbrAttr);
 }
 
 AXCoreObject::AccessibilityChildrenVector AccessibilityTableCell::rowHeaders()

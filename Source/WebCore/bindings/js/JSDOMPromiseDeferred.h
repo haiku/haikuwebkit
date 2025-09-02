@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "ExceptionOr.h"
-#include "JSDOMConvert.h"
-#include "JSDOMGuardedObject.h"
-#include "ScriptExecutionContext.h"
 #include <JavaScriptCore/CatchScope.h>
 #include <JavaScriptCore/JSPromise.h>
+#include <WebCore/ExceptionOr.h>
+#include <WebCore/JSDOMConvert.h>
+#include <WebCore/JSDOMGuardedObject.h>
+#include <WebCore/ScriptExecutionContext.h>
 
 namespace WebCore {
 

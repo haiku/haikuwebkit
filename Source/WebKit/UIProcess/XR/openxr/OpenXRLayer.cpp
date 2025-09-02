@@ -28,6 +28,7 @@
 
 #include "XRDeviceLayer.h"
 #include <WebCore/GLContext.h>
+#include <WebCore/GLDisplay.h>
 #include <WebCore/PlatformDisplay.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -57,12 +58,13 @@ std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRT
     auto* glContext = WebCore::GLContext::current();
     ASSERT(glContext);
 
-    auto& display = glContext->display();
-    auto image = display.createEGLImage(glContext->platformContext(), EGL_GL_TEXTURE_2D, (EGLClientBuffer)(uint64_t)openxrTexture, { });
+    auto display = glContext->display();
+    ASSERT(display);
+    auto image = display->createImage(glContext->platformContext(), EGL_GL_TEXTURE_2D, (EGLClientBuffer)(uint64_t)openxrTexture, { });
 
     auto releaseTextureOnError = makeScopeExit([&] {
         if (image)
-            display.destroyEGLImage(image);
+            display->destroyImage(image);
         m_swapchain->releaseImage();
     });
 
@@ -73,7 +75,7 @@ std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRT
 
     int fourcc, planeCount;
     uint64_t modifier;
-    if (!eglExportDMABUFImageQueryMESA(display.eglDisplay(), image, &fourcc, &planeCount, &modifier)) {
+    if (!eglExportDMABUFImageQueryMESA(display->eglDisplay(), image, &fourcc, &planeCount, &modifier)) {
         RELEASE_LOG(XR, "eglExportDMABUFImageQueryMESA failed");
         return std::nullopt;
     }
@@ -81,12 +83,12 @@ std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRT
     Vector<int> fdsOut(planeCount);
     Vector<int> stridesOut(planeCount);
     Vector<int> offsetsOut(planeCount);
-    if (!eglExportDMABUFImageMESA(display.eglDisplay(), image, fdsOut.mutableSpan().data(), stridesOut.mutableSpan().data(), offsetsOut.mutableSpan().data())) {
+    if (!eglExportDMABUFImageMESA(display->eglDisplay(), image, fdsOut.mutableSpan().data(), stridesOut.mutableSpan().data(), offsetsOut.mutableSpan().data())) {
         RELEASE_LOG(XR, "eglExportDMABUFImageMESA failed");
         return std::nullopt;
     }
 
-    display.destroyEGLImage(image);
+    display->destroyImage(image);
 
     releaseTextureOnError.release();
 

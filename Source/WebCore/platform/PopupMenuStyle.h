@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Color.h"
-#include "FontCascade.h"
-#include "Length.h"
+#include <WebCore/Color.h>
+#include <WebCore/FontCascade.h>
+#include <WebCore/Length.h>
 
 namespace WebCore {
 

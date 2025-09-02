@@ -25,15 +25,15 @@
 
 #pragma once
 
-#include "BoxExtents.h"
-#include "FloatRect.h"
-#include "IntRect.h"
-#include "LengthBox.h"
-#include "PlatformCALayer.h"
-#include "PlatformCALayerClient.h"
-#include "TiledBacking.h"
-#include "Timer.h"
-#include "VelocityData.h"
+#include <WebCore/BoxExtents.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/LengthBox.h>
+#include <WebCore/PlatformCALayer.h>
+#include <WebCore/PlatformCALayerClient.h>
+#include <WebCore/TiledBacking.h>
+#include <WebCore/Timer.h>
+#include <WebCore/VelocityData.h>
 #include <wtf/Deque.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RetainPtr.h>
@@ -41,7 +41,7 @@
 #include <wtf/TZoneMalloc.h>
 
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
-#include "DynamicContentScalingDisplayList.h"
+#include <WebCore/DynamicContentScalingDisplayList.h>
 #endif
 
 namespace WebCore {

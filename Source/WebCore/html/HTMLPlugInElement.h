@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "HTMLFrameOwnerElement.h"
-#include "Image.h"
-#include "JSValueInWrappedObject.h"
-#include "RenderEmbeddedObject.h"
+#include <WebCore/HTMLFrameOwnerElement.h>
+#include <WebCore/Image.h>
+#include <WebCore/JSValueInWrappedObject.h>
+#include <WebCore/RenderEmbeddedObject.h>
 
 namespace JSC {
 namespace Bindings {

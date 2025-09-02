@@ -39,6 +39,7 @@
 #include "LocalFrameLoaderClient.h"
 #include "LocalFrameView.h"
 #include "Navigation.h"
+#include "NavigationNavigationType.h"
 #include "Node.h"
 #include "Page.h"
 #include "PageTransitionEvent.h"
@@ -142,7 +143,6 @@ void CachedPage::restore(Page& page)
     m_cachedMainFrame->open();
 
     // Restore the focus appearance for the focused element.
-    // FIXME: Right now we don't support pages w/ frames in the b/f cache.  This may need to be tweaked when we add support for that.
     RefPtr focusedOrMainFrame = page.focusController().focusedOrMainFrame();
     if (!focusedOrMainFrame)
         return;
@@ -186,13 +186,36 @@ void CachedPage::restore(Page& page)
             frameView->updateContentsSize();
     }
 
-    if (CheckedRef backForwardController = page.backForward(); page.settings().navigationAPIEnabled() && focusedDocument->window() && backForwardController->currentItem()) {
-        Ref currentItem = *backForwardController->currentItem();
-        auto allItems = backForwardController->allItems();
-        focusedDocument->window()->navigation().updateForReactivation(allItems, currentItem);
-    }
-
     firePageShowEvent(page);
+
+    // Update Navigation API after pageshow events to ensure correct event ordering.
+    if (CheckedRef backForwardController = page.backForward(); page.settings().navigationAPIEnabled() && focusedDocument->window() && backForwardController->currentItem()) {
+        auto allItems = backForwardController->allItems();
+        Ref currentItem = *backForwardController->currentItem();
+        RefPtr previousItem = backForwardController->forwardItem();
+        focusedDocument->window()->navigation().updateForReactivation(WTFMove(allItems), currentItem, previousItem.get());
+
+        // Update Navigation API for all child frames.
+        Vector<Ref<LocalFrame>> childFrames;
+        for (RefPtr child = localMainFrame->tree().traverseNext(localMainFrame.get()); child; child = child->tree().traverseNext(localMainFrame.get())) {
+            if (RefPtr localChild = dynamicDowncast<LocalFrame>(child))
+                childFrames.append(localChild.releaseNonNull());
+        }
+
+        for (Ref child : childFrames) {
+            RefPtr document = child->document();
+            if (!document || !document->window())
+                continue;
+            // For iframes, get only the reachable history items from the current session.
+            auto reachableFrameItems = backForwardController->reachableItemsForFrame(child->frameID());
+
+            if (!reachableFrameItems.isEmpty() && child->loader().history().currentItem()) {
+                Ref currentItem = *child->loader().history().currentItem();
+                RefPtr previousItem = backForwardController->forwardItem();
+                document->window()->navigation().updateForReactivation(WTFMove(reachableFrameItems), currentItem, previousItem.get());
+            }
+        }
+    }
 
     for (auto& domain : m_loadedSubresourceDomains) {
         if (localMainFrame)

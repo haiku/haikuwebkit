@@ -1000,6 +1000,17 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
         [_scrollView setShowsVerticalScrollIndicator:(_page->scrollingCoordinatorProxy()->mainFrameScrollbarWidth() != WebCore::ScrollbarWidth::None)];
     }
 
+#if HAVE(UIKIT_SCROLLBAR_COLOR_SPI)
+    auto scrollbarColor = _page->scrollingCoordinatorProxy()->mainFrameScrollbarColor();
+    if (scrollbarColor) {
+        RetainPtr thumbColor = cocoaColor(scrollbarColor->thumbColor);
+        [_scrollView _setHorizontalScrollIndicatorColor:thumbColor.get()];
+        [_scrollView _setVerticalScrollIndicatorColor:thumbColor.get()];
+    } else {
+        [_scrollView _setHorizontalScrollIndicatorColor:nil];
+        [_scrollView _setVerticalScrollIndicatorColor:nil];
+    }
+#endif
     auto horizontalOverscrollBehavior = _page->scrollingCoordinatorProxy()->mainFrameHorizontalOverscrollBehavior();
     auto verticalOverscrollBehavior = _page->scrollingCoordinatorProxy()->mainFrameVerticalOverscrollBehavior();
     
@@ -1730,6 +1741,8 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
             contentOffsetInScrollViewCoordinates.y = scrollViewContentOffset.y;
 
         [_scrollView setContentOffset:contentOffsetInScrollViewCoordinates animated:animated];
+        if (!animated)
+            [self _didFinishScrolling:_scrollView.get()];
     } else if (!_perProcessState.didDeferUpdateVisibleContentRectsForAnyReason) {
         // If we haven't changed anything, and are not deferring updates, there would not be any VisibleContentRect update sent to the content.
         // The WebProcess would keep the invalid contentOffset as its scroll position.

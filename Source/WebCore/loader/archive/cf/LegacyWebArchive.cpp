@@ -766,7 +766,7 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::createInternal(const String& markupSt
             if (options.shouldSaveScriptsFromMemoryCache == ShouldSaveScriptsFromMemoryCache::Yes && responseURL.protocolIsInHTTPFamily()) {
                 RegistrableDomain domain { responseURL };
                 MemoryCache::singleton().forEachSessionResource(frame.page()->sessionID(), [&](auto& resource) {
-                    if (domain.matches(resource.url()) && resource.hasClients() && resource.type() == CachedResource::Type::Script)
+                    if (domain.matches(resource.url()) && resource.hasClients() && (resource.type() == CachedResource::Type::Script || resource.type() == CachedResource::Type::JSON))
                         subresourceURLs.add(resource.url());
                 });
             }

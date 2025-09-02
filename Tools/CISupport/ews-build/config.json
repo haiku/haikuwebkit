@@ -155,6 +155,8 @@
     { "name": "ews197", "platform": "ios-simulator-18" },
     { "name": "ews198", "platform": "ios-simulator-18" },
     { "name": "ews200", "platform": "mac-sonoma" },
+    { "name": "ews205", "platform": "mac-sonoma" },
+    { "name": "ews206", "platform": "mac-sonoma" },
     { "name": "ews201", "platform": "mac-sonoma" },
     { "name": "ews202", "platform": "mac-sonoma" },
     { "name": "ews203", "platform": "mac-sonoma" },
@@ -202,6 +204,7 @@
     { "name": "ews264", "platform": "mac-sequoia" },
     { "name": "ews265", "platform": "mac-sonoma" },
     { "name": "ews266", "platform": "mac-sonoma" },
+    { "name": "ews2000", "platform": "mac-sequoia" },
     { "name": "webkit-cq-01", "platform": "mac-sonoma" },
     { "name": "webkit-cq-02", "platform": "mac-sonoma" },
     { "name": "webkit-cq-03", "platform": "mac-sonoma" },
@@ -212,7 +215,7 @@
     {
       "name": "Style-EWS", "shortname": "style", "icon": "testOnly",
       "factory": "StyleFactory", "platform": "*",
-      "workernames": ["ews151", "ews253", "webkit-misc"]
+      "workernames": ["ews2000", "ews151", "ews253", "webkit-misc"]
     },
     {
       "name": "Apply-WatchList-EWS", "shortname": "watchlist",
@@ -407,7 +410,7 @@
       "name": "JSC-Tests-EWS", "shortname": "jsc", "icon": "buildAndTest",
       "factory": "JSCBuildAndTestsFactory", "platform": "mac-sonoma",
       "configuration": "release", "runTests": "true",
-      "workernames": ["ews127", "ews128", "ews251", "ews252"]
+      "workernames": ["ews127", "ews128", "ews205", "ews206", "ews251", "ews252"]
     },
     {
       "name": "JSC-Tests-arm64-EWS", "shortname": "jsc-arm64", "icon": "buildAndTest",
@@ -431,17 +434,17 @@
     {
       "name": "Bindings-Tests-EWS", "shortname": "bindings", "icon": "testOnly",
       "factory": "BindingsFactory", "platform": "*",
-      "workernames": ["ews151", "ews253", "webkit-misc"]
+      "workernames": ["ews2000", "ews151", "ews253", "webkit-misc"]
     },
     {
       "name": "WebKitPy-Tests-EWS", "shortname": "webkitpy", "icon": "testOnly",
       "factory": "WebKitPyFactory", "platform": "*",
-      "workernames": ["ews151", "ews253", "webkit-misc"]
+      "workernames": ["ews2000", "ews151", "ews253", "webkit-misc"]
     },
     {
       "name": "WebKitPerl-Tests-EWS", "shortname": "webkitperl", "icon": "testOnly",
       "factory": "WebKitPerlFactory", "platform": "*",
-      "workernames": ["ews151", "ews253", "webkit-misc"]
+      "workernames": ["ews2000", "ews151", "ews253", "webkit-misc"]
     },
     {
       "name": "API-Tests-iOS-Simulator-EWS", "shortname": "api-ios", "icon": "testOnly",
@@ -472,7 +475,7 @@
     {
       "name": "Services-EWS", "shortname": "services", "icon": "testOnly",
       "factory": "ServicesFactory", "platform": "*",
-      "workernames": ["ews151", "ews253", "webkit-misc"]
+      "workernames": ["ews2000", "ews151", "ews253", "webkit-misc"]
     },
     {
       "name": "Commit-Queue", "shortname": "commit", "icon": "buildAndTest",

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Color.h"
-#include "LengthBox.h"
+#include <WebCore/Color.h>
+#include <WebCore/LengthBox.h>
 
 namespace WTF {
 class TextStream;

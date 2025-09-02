@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "ResourceLoaderIdentifier.h"
-#include "ScriptExecutionContextIdentifier.h"
+#include <WebCore/ResourceLoaderIdentifier.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 
 namespace WebCore {
 class WorkerScriptLoaderClient;

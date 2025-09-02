@@ -25,21 +25,21 @@
 
 #pragma once
 
-#include "AXTextRun.h"
-#include "CharacterRange.h"
-#include "Color.h"
-#include "ColorConversion.h"
-#include "HTMLTextFormControlElement.h"
-#include "InputType.h"
-#include "LayoutRect.h"
-#include "LocalFrameLoaderClient.h"
-#include "LocalizedStrings.h"
-#include "NodeName.h"
-#include "SimpleRange.h"
-#include "TextChecking.h"
-#include "TextIteratorBehavior.h"
-#include "VisibleSelection.h"
-#include "Widget.h"
+#include <WebCore/AXTextRun.h>
+#include <WebCore/CharacterRange.h>
+#include <WebCore/Color.h>
+#include <WebCore/ColorConversion.h>
+#include <WebCore/HTMLTextFormControlElement.h>
+#include <WebCore/InputType.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/LocalFrameLoaderClient.h>
+#include <WebCore/LocalizedStrings.h>
+#include <WebCore/NodeName.h>
+#include <WebCore/SimpleRange.h>
+#include <WebCore/TextChecking.h>
+#include <WebCore/TextIteratorBehavior.h>
+#include <WebCore/VisibleSelection.h>
+#include <WebCore/Widget.h>
 #include <wtf/HashSet.h>
 #include <wtf/ObjectIdentifier.h>
 #include <wtf/ProcessID.h>
@@ -1063,6 +1063,9 @@ public:
     virtual float valueForRange() const = 0;
     virtual float maxValueForRange() const = 0;
     virtual float minValueForRange() const = 0;
+#if ENABLE(ATTACHMENT_ELEMENT)
+    virtual bool hasProgress() const { return false; }
+#endif
     AXCoreObject* selectedRadioButton();
     AXCoreObject* selectedTabItem();
     virtual int layoutCount() const = 0;
@@ -1185,7 +1188,22 @@ public:
     // A programmatic way to set a name on an AccessibleObject.
     virtual void setAccessibleName(const AtomString&) = 0;
 
-    virtual String title() const = 0;
+    bool fileUploadButtonReturnsValueInTitle() const
+    {
+#if PLATFORM(MAC)
+        return true;
+#else
+        return false;
+#endif
+    }
+    // This should be the visible text that's actually on the screen if possible.
+    // If there's alternative text (e.g. provided by description()), that can override the title.
+    virtual String title() const;
+    // This is the value of the title HTML / SVG attribute, differing from the above function which refers to
+    // the notion of "title" accessibility text, a composite of many different attributes and page text.
+    virtual String titleAttribute() const = 0;
+    virtual String webAreaTitle() const { return emptyString(); }
+
     virtual String description() const = 0;
 
     virtual std::optional<String> textContent() const = 0;
@@ -1219,8 +1237,9 @@ public:
     virtual const String placeholderValue() const = 0;
 
     // Abbreviations
-    virtual String expandedTextValue() const = 0;
-    virtual bool supportsExpandedTextValue() const = 0;
+    virtual String abbreviation() const = 0;
+    String expandedTextValue() const;
+    bool supportsExpandedTextValue() const;
 
     // Only if isColorWell()
     virtual SRGBA<uint8_t> colorValue() const = 0;
@@ -1560,14 +1579,8 @@ public:
     virtual void setPreventKeyboardDOMEventDispatch(bool) = 0;
     virtual OptionSet<SpeakAs> speakAs() const = 0;
     String speechHint() const;
-    virtual bool fileUploadButtonReturnsValueInTitle() const = 0;
     String descriptionAttributeValue() const;
-    bool shouldComputeDescriptionAttributeValue() const;
     String helpTextAttributeValue() const;
-    // This should be the visible text that's actually on the screen if possible.
-    // If there's alternative text, that can override the title.
-    virtual String titleAttributeValue() const;
-    bool shouldComputeTitleAttributeValue() const;
 
     virtual bool hasApplePDFAnnotationAttribute() const = 0;
 #endif
@@ -1681,20 +1694,6 @@ void attributedStringSetExpandedText(NSMutableAttributedString *, const AXCoreOb
 void attributedStringSetNeedsSpellCheck(NSMutableAttributedString *, const AXCoreObject&);
 void attributedStringSetElement(NSMutableAttributedString *, NSString *attribute, const AXCoreObject&, const NSRange&);
 #endif // PLATFORM(MAC)
-
-#if PLATFORM(COCOA)
-inline bool AXCoreObject::shouldComputeDescriptionAttributeValue() const
-{
-    // Static text objects shouldn't return a description. Their content is communicated via AXValue.
-    return role() != AccessibilityRole::StaticText;
-}
-
-inline bool AXCoreObject::shouldComputeTitleAttributeValue() const
-{
-    // Static text objects shouldn't return a title. Their content is communicated via AXValue.
-    return role() != AccessibilityRole::StaticText;
-}
-#endif // PLATFORM(COCOA)
 
 inline const String AXCoreObject::defaultLiveRegionStatusForRole(AccessibilityRole role)
 {

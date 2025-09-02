@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "FrameDestructionObserver.h"
+#include <WebCore/FrameDestructionObserver.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 

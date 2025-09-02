@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
+#include <WebCore/RenderStyleConstants.h>
 
 namespace WebCore {
     

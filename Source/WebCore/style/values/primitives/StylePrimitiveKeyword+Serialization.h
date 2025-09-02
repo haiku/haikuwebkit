@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "CSSPrimitiveValueMappings.h"
-#include "StyleValueTypes.h"
+#include <WebCore/CSSPrimitiveValueMappings.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "FontPlatformData.h"
-#include "RenderingResourceIdentifier.h"
+#include <WebCore/FontPlatformData.h>
+#include <WebCore/RenderingResourceIdentifier.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMallocInlines.h>

@@ -1470,6 +1470,11 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
     if (WKStringIsEqualToUTF8CString(messageName, "ShouldDumpAllFrameScrollPositions"))
         return adoptWK(WKBooleanCreate(m_shouldDumpAllFrameScrollPositions));
 
+    if (WKStringIsEqualToUTF8CString(messageName, "SetHasMouseDeviceForTesting")) {
+        TestController::singleton().setHasMouseDeviceForTesting((booleanValue(messageBody)));
+        return nullptr;
+    }
+
     ASSERT_NOT_REACHED();
     return nullptr;
 }

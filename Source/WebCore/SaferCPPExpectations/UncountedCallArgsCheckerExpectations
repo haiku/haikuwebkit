@@ -638,10 +638,8 @@ page/ElementTargetingController.cpp
 page/EventHandler.cpp
 page/EventSource.cpp
 page/FocusController.cpp
-page/Frame.cpp
 page/FrameDestructionObserver.cpp
 page/FrameSnapshotting.cpp
-page/FrameTree.cpp
 page/ImageAnalysisQueue.cpp
 page/ImageOverlayController.cpp
 page/InteractionRegion.cpp
@@ -985,6 +983,7 @@ svg/SVGAElement.cpp
 svg/SVGAElement.h
 svg/SVGAltGlyphElement.cpp
 svg/SVGCircleElement.h
+svg/SVGCircleElement.cpp
 svg/SVGClipPathElement.cpp
 svg/SVGClipPathElement.h
 svg/SVGComponentTransferFunctionElement.cpp

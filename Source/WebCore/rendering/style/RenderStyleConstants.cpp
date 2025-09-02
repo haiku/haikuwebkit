@@ -1194,6 +1194,7 @@ TextStream& operator<<(TextStream& ts, TextDecorationLine line)
     case TextDecorationLine::Overline: ts << "overline"_s; break;
     case TextDecorationLine::LineThrough: ts << "line-through"_s; break;
     case TextDecorationLine::Blink: ts << "blink"_s; break;
+    case TextDecorationLine::SpellingError: ts << "spelling-error"_s; break;
     }
     return ts;
 }
@@ -1473,6 +1474,15 @@ TextStream& operator<<(TextStream& ts, WordBreak wordBreak)
     case WordBreak::KeepAll: ts << "keep-all"_s; break;
     case WordBreak::BreakWord: ts << "break-word"_s; break;
     case WordBreak::AutoPhrase: ts << "auto-phrase"_s; break;
+    }
+    return ts;
+}
+
+TextStream& operator<<(TextStream& ts, MathShift mathShift)
+{
+    switch (mathShift) {
+    case MathShift::Normal: ts << "normal"_s; break;
+    case MathShift::Compact: ts << "compact"_s; break;
     }
     return ts;
 }

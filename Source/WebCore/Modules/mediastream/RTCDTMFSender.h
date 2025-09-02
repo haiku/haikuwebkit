@@ -27,11 +27,11 @@
 
 #if ENABLE(WEB_RTC)
 
-#include "ActiveDOMObject.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "ScriptWrappable.h"
-#include "Timer.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/ScriptWrappable.h>
+#include <WebCore/Timer.h>
 
 namespace WebCore {
 

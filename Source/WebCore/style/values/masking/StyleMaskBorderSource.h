@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "StyleImageWrapper.h"
+#include <WebCore/StyleImageWrapper.h>
 #include <wtf/PointerComparison.h>
 
 namespace WebCore {

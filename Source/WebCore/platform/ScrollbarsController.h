@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "FloatSize.h"
-#include "UserInterfaceLayoutDirection.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/UserInterfaceLayoutDirection.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/text/WTFString.h>
@@ -38,6 +38,8 @@ class Scrollbar;
 class ScrollableArea;
 enum class ScrollbarOrientation : uint8_t;
 enum class ScrollbarWidth : uint8_t;
+
+struct ScrollbarColor;
 
 class ScrollbarsController {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(ScrollbarsController, WEBCORE_EXPORT);
@@ -107,6 +109,7 @@ public:
     WEBCORE_EXPORT virtual void setScrollbarMinimumThumbLength(WebCore::ScrollbarOrientation, int) { }
     WEBCORE_EXPORT virtual int minimumThumbLength(WebCore::ScrollbarOrientation) { return 0; }
     WEBCORE_EXPORT virtual void scrollbarLayoutDirectionChanged(UserInterfaceLayoutDirection) { }
+    WEBCORE_EXPORT virtual void scrollbarColorChanged(std::optional<ScrollbarColor>);
 
     WEBCORE_EXPORT virtual void updateScrollerStyle() { }
 

@@ -136,6 +136,8 @@ void VideoPresentationInterfaceLMK::presentFullscreen(bool animated, Function<vo
         if (auto* playbackSessionModel = this->playbackSessionModel()) {
             playbackSessionModel->setSpatialTrackingLabel(m_spatialTrackingLabel);
             playbackSessionModel->setSoundStageSize(WebCore::AudioSessionSoundStageSize::Large);
+
+            playableViewController().prefersAutoDimming = playbackSessionModel->prefersAutoDimming();
         }
         completionHandler(success, error);
     }).get()];
@@ -148,6 +150,8 @@ void VideoPresentationInterfaceLMK::dismissFullscreen(bool animated, Function<vo
         if (auto* playbackSessionModel = this->playbackSessionModel()) {
             playbackSessionModel->setSpatialTrackingLabel(nullString());
             playbackSessionModel->setSoundStageSize(WebCore::AudioSessionSoundStageSize::Automatic);
+
+            playbackSessionModel->setPrefersAutoDimming(playableViewController().prefersAutoDimming);
         }
         completionHandler(success, error);
     }).get()];
@@ -319,6 +323,9 @@ void VideoPresentationInterfaceLMK::ensurePlayableViewController()
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
     m_playerViewController = [linearMediaPlayer() makeViewController];
     [m_playerViewController viewController].view.alpha = 0;
+
+    if (auto* playbackSessionModel = playbackSessionInterface().playbackSessionModel())
+        [m_playerViewController setPrefersAutoDimming:playbackSessionModel->prefersAutoDimming()];
 }
 
 void VideoPresentationInterfaceLMK::swapFullscreenModesWith(VideoPresentationInterfaceIOS& otherInterfaceIOS)

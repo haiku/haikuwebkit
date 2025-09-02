@@ -24,15 +24,15 @@
 
 #pragma once
 
-#include "FloatConversion.h"
-#include "FloatPoint.h"
-#include "FloatSize.h"
-#include "LayoutPoint.h"
-#include "LayoutSize.h"
-#include "LayoutUnit.h"
-#include "StylePrimitiveNumericTypes+Calculation.h"
-#include "StylePrimitiveNumericTypes.h"
-#include "StyleValueTypes.h"
+#include <WebCore/FloatConversion.h>
+#include <WebCore/FloatPoint.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/LayoutSize.h>
+#include <WebCore/LayoutUnit.h>
+#include <WebCore/StylePrimitiveNumericTypes+Calculation.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "CalculationOperator.h"
+#include <WebCore/CalculationOperator.h>
 #include <optional>
 #include <tuple>
 #include <wtf/Ref.h>

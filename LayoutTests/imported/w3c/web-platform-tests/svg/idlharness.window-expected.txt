@@ -9,9 +9,10 @@ PASS Partial interface SVGSVGElement: original interface defined
 PASS Partial interface SVGSVGElement: member names are unique
 PASS Partial interface Document[2]: member names are unique
 PASS Partial interface Document[3]: member names are unique
+PASS Partial interface Element: member names are unique
+PASS Partial interface ShadowRoot: member names are unique
 PASS Partial interface Document[4]: member names are unique
 PASS SVGElement includes GlobalEventHandlers: member names are unique
-PASS SVGElement includes DocumentAndElementEventHandlers: member names are unique
 PASS SVGElement includes SVGElementInstance: member names are unique
 PASS SVGElement includes HTMLOrSVGElement: member names are unique
 PASS SVGGraphicsElement includes SVGTests: member names are unique
@@ -36,9 +37,10 @@ PASS SVGMPathElement includes SVGURIReference: member names are unique
 PASS SVGElement includes ElementCSSInlineStyle: member names are unique
 PASS Element includes Animatable: member names are unique
 PASS Document includes GlobalEventHandlers: member names are unique
-PASS Document includes DocumentAndElementEventHandlers: member names are unique
 PASS Document includes NonElementParentNode: member names are unique
 PASS DocumentFragment includes NonElementParentNode: member names are unique
+PASS Document includes DocumentOrShadowRoot: member names are unique
+PASS ShadowRoot includes DocumentOrShadowRoot: member names are unique
 PASS Document includes ParentNode: member names are unique
 PASS DocumentFragment includes ParentNode: member names are unique
 PASS Element includes ParentNode: member names are unique
@@ -841,34 +843,6 @@ PASS SVGAnimatedPreserveAspectRatio must be primary interface of objects.image.p
 PASS Stringification of objects.image.preserveAspectRatio
 PASS SVGAnimatedPreserveAspectRatio interface: objects.image.preserveAspectRatio must inherit property "baseVal" with the proper type
 PASS SVGAnimatedPreserveAspectRatio interface: objects.image.preserveAspectRatio must inherit property "animVal" with the proper type
-PASS SVGPathElement interface: existence and properties of interface object
-PASS SVGPathElement interface object length
-PASS SVGPathElement interface object name
-PASS SVGPathElement interface: existence and properties of interface prototype object
-PASS SVGPathElement interface: existence and properties of interface prototype object's "constructor" property
-PASS SVGPathElement interface: existence and properties of interface prototype object's @@unscopables property
-PASS SVGPathElement must be primary interface of objects.path
-PASS Stringification of objects.path
-PASS SVGGeometryElement interface: objects.path must inherit property "pathLength" with the proper type
-PASS SVGGeometryElement interface: objects.path must inherit property "isPointInFill(optional DOMPointInit)" with the proper type
-PASS SVGGeometryElement interface: calling isPointInFill(optional DOMPointInit) on objects.path with too few arguments must throw TypeError
-PASS SVGGeometryElement interface: objects.path must inherit property "isPointInStroke(optional DOMPointInit)" with the proper type
-PASS SVGGeometryElement interface: calling isPointInStroke(optional DOMPointInit) on objects.path with too few arguments must throw TypeError
-PASS SVGGeometryElement interface: objects.path must inherit property "getTotalLength()" with the proper type
-PASS SVGGeometryElement interface: objects.path must inherit property "getPointAtLength(float)" with the proper type
-PASS SVGGeometryElement interface: calling getPointAtLength(float) on objects.path with too few arguments must throw TypeError
-PASS SVGGraphicsElement interface: objects.path must inherit property "transform" with the proper type
-PASS SVGGraphicsElement interface: objects.path must inherit property "getBBox(optional SVGBoundingBoxOptions)" with the proper type
-PASS SVGGraphicsElement interface: calling getBBox(optional SVGBoundingBoxOptions) on objects.path with too few arguments must throw TypeError
-PASS SVGGraphicsElement interface: objects.path must inherit property "getCTM()" with the proper type
-PASS SVGGraphicsElement interface: objects.path must inherit property "getScreenCTM()" with the proper type
-PASS SVGGraphicsElement interface: objects.path must inherit property "requiredExtensions" with the proper type
-PASS SVGGraphicsElement interface: objects.path must inherit property "systemLanguage" with the proper type
-PASS SVGElement interface: objects.path must inherit property "className" with the proper type
-PASS SVGElement interface: objects.path must inherit property "ownerSVGElement" with the proper type
-PASS SVGElement interface: objects.path must inherit property "viewportElement" with the proper type
-FAIL SVGElement interface: objects.path must inherit property "correspondingElement" with the proper type assert_inherits: property "correspondingElement" not found in prototype chain
-FAIL SVGElement interface: objects.path must inherit property "correspondingUseElement" with the proper type assert_inherits: property "correspondingUseElement" not found in prototype chain
 PASS SVGRectElement interface: existence and properties of interface object
 PASS SVGRectElement interface object length
 PASS SVGRectElement interface object name
@@ -1664,7 +1638,7 @@ PASS SVGAnimationElement interface: existence and properties of interface protot
 PASS SVGAnimationElement interface: attribute targetElement
 FAIL SVGAnimationElement interface: attribute onbegin assert_true: The prototype object must have a property "onbegin" expected true got false
 FAIL SVGAnimationElement interface: attribute onend assert_true: The prototype object must have a property "onend" expected true got false
-FAIL SVGAnimationElement interface: attribute onrepeat assert_true: The prototype object must have a property "onrepeat" expected true got false
+PASS SVGAnimationElement interface: attribute onrepeat
 PASS SVGAnimationElement interface: operation getStartTime()
 PASS SVGAnimationElement interface: operation getCurrentTime()
 PASS SVGAnimationElement interface: operation getSimpleDuration()
@@ -1685,7 +1659,7 @@ PASS Stringification of objects.animate
 PASS SVGAnimationElement interface: objects.animate must inherit property "targetElement" with the proper type
 FAIL SVGAnimationElement interface: objects.animate must inherit property "onbegin" with the proper type assert_inherits: property "onbegin" not found in prototype chain
 FAIL SVGAnimationElement interface: objects.animate must inherit property "onend" with the proper type assert_inherits: property "onend" not found in prototype chain
-FAIL SVGAnimationElement interface: objects.animate must inherit property "onrepeat" with the proper type assert_inherits: property "onrepeat" not found in prototype chain
+PASS SVGAnimationElement interface: objects.animate must inherit property "onrepeat" with the proper type
 PASS SVGAnimationElement interface: objects.animate must inherit property "getStartTime()" with the proper type
 PASS SVGAnimationElement interface: objects.animate must inherit property "getCurrentTime()" with the proper type
 PASS SVGAnimationElement interface: objects.animate must inherit property "getSimpleDuration()" with the proper type
@@ -1713,7 +1687,7 @@ PASS Stringification of objects.set
 PASS SVGAnimationElement interface: objects.set must inherit property "targetElement" with the proper type
 FAIL SVGAnimationElement interface: objects.set must inherit property "onbegin" with the proper type assert_inherits: property "onbegin" not found in prototype chain
 FAIL SVGAnimationElement interface: objects.set must inherit property "onend" with the proper type assert_inherits: property "onend" not found in prototype chain
-FAIL SVGAnimationElement interface: objects.set must inherit property "onrepeat" with the proper type assert_inherits: property "onrepeat" not found in prototype chain
+PASS SVGAnimationElement interface: objects.set must inherit property "onrepeat" with the proper type
 PASS SVGAnimationElement interface: objects.set must inherit property "getStartTime()" with the proper type
 PASS SVGAnimationElement interface: objects.set must inherit property "getCurrentTime()" with the proper type
 PASS SVGAnimationElement interface: objects.set must inherit property "getSimpleDuration()" with the proper type
@@ -1741,7 +1715,7 @@ PASS Stringification of objects.animateMotion
 PASS SVGAnimationElement interface: objects.animateMotion must inherit property "targetElement" with the proper type
 FAIL SVGAnimationElement interface: objects.animateMotion must inherit property "onbegin" with the proper type assert_inherits: property "onbegin" not found in prototype chain
 FAIL SVGAnimationElement interface: objects.animateMotion must inherit property "onend" with the proper type assert_inherits: property "onend" not found in prototype chain
-FAIL SVGAnimationElement interface: objects.animateMotion must inherit property "onrepeat" with the proper type assert_inherits: property "onrepeat" not found in prototype chain
+PASS SVGAnimationElement interface: objects.animateMotion must inherit property "onrepeat" with the proper type
 PASS SVGAnimationElement interface: objects.animateMotion must inherit property "getStartTime()" with the proper type
 PASS SVGAnimationElement interface: objects.animateMotion must inherit property "getCurrentTime()" with the proper type
 PASS SVGAnimationElement interface: objects.animateMotion must inherit property "getSimpleDuration()" with the proper type
@@ -1784,7 +1758,7 @@ PASS Stringification of objects.animateTransform
 PASS SVGAnimationElement interface: objects.animateTransform must inherit property "targetElement" with the proper type
 FAIL SVGAnimationElement interface: objects.animateTransform must inherit property "onbegin" with the proper type assert_inherits: property "onbegin" not found in prototype chain
 FAIL SVGAnimationElement interface: objects.animateTransform must inherit property "onend" with the proper type assert_inherits: property "onend" not found in prototype chain
-FAIL SVGAnimationElement interface: objects.animateTransform must inherit property "onrepeat" with the proper type assert_inherits: property "onrepeat" not found in prototype chain
+PASS SVGAnimationElement interface: objects.animateTransform must inherit property "onrepeat" with the proper type
 PASS SVGAnimationElement interface: objects.animateTransform must inherit property "getStartTime()" with the proper type
 PASS SVGAnimationElement interface: objects.animateTransform must inherit property "getCurrentTime()" with the proper type
 PASS SVGAnimationElement interface: objects.animateTransform must inherit property "getSimpleDuration()" with the proper type

@@ -25,14 +25,14 @@
 
 #pragma once
 
-#include "FilterEffectGeometry.h"
-#include "FilterImage.h"
-#include "FilterImageVector.h"
-#include "FilterRenderingMode.h"
-#include "FilterStyle.h"
-#include "FloatRect.h"
-#include "LengthBox.h"
-#include "RenderingResource.h"
+#include <WebCore/FilterEffectGeometry.h>
+#include <WebCore/FilterImage.h>
+#include <WebCore/FilterImageVector.h>
+#include <WebCore/FilterRenderingMode.h>
+#include <WebCore/FilterStyle.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/LengthBox.h>
+#include <WebCore/RenderingResource.h>
 #include <wtf/text/AtomString.h>
 
 namespace WTF {

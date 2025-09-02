@@ -29,8 +29,8 @@
 #ifndef AudioDestination_h
 #define AudioDestination_h
 
-#include "AudioBus.h"
-#include "AudioIOCallback.h"
+#include <WebCore/AudioBus.h>
+#include <WebCore/AudioIOCallback.h>
 #include <memory>
 #include <wtf/AbstractRefCounted.h>
 #include <wtf/CompletionHandler.h>

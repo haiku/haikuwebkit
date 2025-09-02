@@ -97,7 +97,7 @@ static Expected<CoreAudioSharedUnit::StoredAudioUnit, OSStatus> createAudioUnit(
     if (name) {
         String ioUnitName = name;
         CFRelease(name);
-        RELEASE_LOG(WebRTC, "CoreAudioSharedInternalUnit created \"%{private}s\" component", ioUnitName.utf8().data());
+        RELEASE_LOG(WebRTC, "CoreAudioSharedInternalUnit created \"%" PRIVATE_LOG_STRING "\" component", ioUnitName.utf8().data());
     }
 #endif
 

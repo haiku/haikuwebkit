@@ -213,7 +213,8 @@ void RemoteLayerTreeNode::repositionInteractionRegionsContainerIfNeeded()
         if (auto *subnode = forCALayer(subview.layer)) {
             if (subnode->hasInteractionRegions())
                 break;
-        }
+        } else
+            break; // Don't go above views we don't own.
 
         insertionPoint++;
     }

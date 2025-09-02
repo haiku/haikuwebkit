@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "RenderBoxModelObject.h"
-#include "RenderStyleInlines.h"
+#include <WebCore/RenderBoxModelObject.h>
+#include <WebCore/RenderStyleInlines.h>
 
 namespace WebCore {
 

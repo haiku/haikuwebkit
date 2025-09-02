@@ -47,6 +47,7 @@ static NSString * const indexKey = @"index";
 static NSString * const parentIdKey = @"parentId";
 static NSString * const dateAddedKey = @"dateAdded";
 static NSString * const typeKey = @"type";
+static NSString * const queryKey = @"query";
 static NSString * const childrenKey = @"children";
 static NSString * const bookmarkKey = @"bookmark";
 static NSString * const folderKey = @"folder";
@@ -275,7 +276,44 @@ void WebExtensionAPIBookmarks::get(NSObject *idOrIdList, Ref<WebExtensionCallbac
 
 void WebExtensionAPIBookmarks::move(NSString *bookmarkIdentifier, NSDictionary *destination, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)
 {
-    callback->reportError(@"unimplemented");
+    std::optional<WTF::String> ipcParentId;
+    std::optional<uint64_t> ipcIndex;
+
+    if (![destination isKindOfClass:[NSDictionary class]]) {
+        if (outExceptionString)
+            *outExceptionString = toErrorString(nullString(), @"destination", @"property must be an object.").createNSString().autorelease();
+        return;
+    }
+
+    static NSDictionary<NSString *, id> *types = @{
+        indexKey: NSNumber.class,
+        parentIdKey: NSString.class,
+    };
+
+    if (!validateDictionary(destination, @"destination", nil, types, outExceptionString))
+        return;
+
+    id parentIdObj = destination[@"parentId"];
+    if (parentIdObj)
+        ipcParentId = dynamic_objc_cast<NSString>(parentIdObj);
+
+    id indexObj = destination[@"index"];
+    if (indexObj)
+        ipcIndex = dynamic_objc_cast<NSNumber>(indexObj).unsignedLongLongValue;
+
+    WebProcess::singleton().sendWithAsyncReply(
+        Messages::WebExtensionContext::BookmarksMove(bookmarkIdentifier, ipcParentId, ipcIndex),
+        [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<WebExtensionBookmarksParameters, WebExtensionError>&& result) {
+            if (!result) {
+                callback->reportError(result.error().createNSString().get());
+                return;
+            }
+
+            NSDictionary *movedNodeDictionary = toAPI(result.value());
+            callback->call(movedNodeDictionary);
+        },
+        extensionContext().identifier()
+    );
 }
 
 void WebExtensionAPIBookmarks::remove(NSString *bookmarkIdentifier, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)
@@ -310,12 +348,113 @@ void WebExtensionAPIBookmarks::removeTree(NSString *bookmarkIdentifier, Ref<WebE
 
 void WebExtensionAPIBookmarks::search(NSObject *query, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)
 {
-    callback->reportError(@"unimplemented");
+    std::optional<WTF::String> ipcQueryTerms;
+    std::optional<WTF::String> ipcTitle;
+    std::optional<WTF::String> ipcURL;
+
+    if ([query isKindOfClass:NSString.class])
+        ipcQueryTerms = dynamic_objc_cast<NSString>(query);
+    else if ([query isKindOfClass:NSDictionary.class]) {
+        NSDictionary *queryDict = dynamic_objc_cast<NSDictionary>(query);
+
+        static NSDictionary<NSString *, id> *types = @{
+            urlKey: NSString.class,
+            titleKey: NSString.class,
+            queryKey: NSString.class
+        };
+
+        if (!validateDictionary(queryDict, @"query", nil, types, outExceptionString))
+            return;
+
+        id queryTermsObj = queryDict[@"query"];
+        if (queryTermsObj)
+            ipcQueryTerms = dynamic_objc_cast<NSString>(queryTermsObj);
+
+        id titleObj = queryDict[@"title"];
+        if (titleObj)
+            ipcTitle = dynamic_objc_cast<NSString>(titleObj);
+
+        id urlObj = queryDict[@"url"];
+        if (urlObj)
+            ipcURL = dynamic_objc_cast<NSString>(urlObj);
+
+    } else {
+        if (outExceptionString)
+            *outExceptionString = toErrorString(nullString(), @"query", @"property must be a string or object.").createNSString().autorelease();
+        return;
+    }
+
+    WebProcess::singleton().sendWithAsyncReply(
+        Messages::WebExtensionContext::BookmarksSearch(ipcQueryTerms, ipcURL, ipcTitle),
+        [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<Vector<WebExtensionBookmarksParameters>, WebExtensionError>&& result) {
+            if (!result) {
+                callback->reportError(result.error().createNSString().get());
+                return;
+            }
+
+            const Vector<WebExtensionBookmarksParameters>& resultVector = result.value();
+            NSMutableArray *resultArray = [NSMutableArray arrayWithCapacity:resultVector.size()];
+            for (const auto& node : resultVector)
+                [resultArray addObject:toAPI(node)];
+
+            callback->call(resultArray);
+        },
+        extensionContext().identifier()
+    );
 }
 
 void WebExtensionAPIBookmarks::update(NSString *bookmarkIdentifier, NSDictionary *changes, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)
 {
-    callback->reportError(@"unimplemented");
+    if (!bookmarkIdentifier || ![bookmarkIdentifier isKindOfClass:[NSString class]] || !bookmarkIdentifier.length) {
+        if (outExceptionString)
+            *outExceptionString = toErrorString(nullString(), @"bookmarkID", @"property must be a non-empty string.").createNSString().autorelease();
+        return;
+    }
+
+    if (!changes || ![changes isKindOfClass:[NSDictionary class]]) {
+        if (outExceptionString)
+            *outExceptionString = toErrorString(nullString(), @"changes", @"property must be an object (dictionary).").createNSString().autorelease();
+        return;
+    }
+
+    static NSDictionary<NSString *, id> *types = @{
+        urlKey: NSString.class,
+        titleKey: NSString.class
+    };
+
+    if (!validateDictionary(changes, @"changes", nil, types, outExceptionString))
+        return;
+
+    std::optional<WTF::String> newTitle;
+    std::optional<WTF::String> newURL;
+
+    id titleObj = changes[@"title"];
+    if (titleObj)
+        newTitle = dynamic_objc_cast<NSString>(titleObj);
+
+    id urlStringObj = changes[@"url"];
+    if (urlStringObj)
+        newURL = dynamic_objc_cast<NSString>(urlStringObj);
+
+    if (!newTitle.has_value() && !newURL.has_value()) {
+        if (outExceptionString)
+            *outExceptionString = toErrorString(nullString(), @"title or url", @"must be specified.").createNSString().autorelease();
+        return;
+    }
+
+    WebProcess::singleton().sendWithAsyncReply(
+        Messages::WebExtensionContext::BookmarksUpdate(bookmarkIdentifier, newURL, newTitle),
+        [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<WebExtensionBookmarksParameters, WebExtensionError>&& result) {
+            if (!result) {
+                callback->reportError(result.error().createNSString().get());
+                return;
+            }
+
+            NSDictionary* updatedNodeDictionary = toAPI(result.value());
+            callback->call(updatedNodeDictionary);
+        },
+        extensionContext().identifier()
+    );
 }
 } // namespace WebKit
 

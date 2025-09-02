@@ -408,6 +408,13 @@ static gboolean wpeDisplayDRMSetup(WPEDisplayDRM* displayDRM, const char* device
 
     displayDRM->priv->primaryPlane = WTFMove(primaryPlane);
     displayDRM->priv->seat = WTFMove(seat);
+    wpe_display_set_available_input_devices(WPE_DISPLAY(displayDRM), displayDRM->priv->seat->availableInputDevices());
+    displayDRM->priv->seat->setAvailableInputDevicesChangedCallback([weakDisplay = GWeakPtr { displayDRM }](WPEAvailableInputDevices devices) {
+        if (!weakDisplay)
+            return;
+
+        wpe_display_set_available_input_devices(WPE_DISPLAY(weakDisplay.get()), devices);
+    });
     if (cursorPlane)
         displayDRM->priv->cursor = makeUnique<WPE::DRM::Cursor>(WTFMove(cursorPlane), device, displayDRM->priv->cursorWidth, displayDRM->priv->cursorHeight);
 

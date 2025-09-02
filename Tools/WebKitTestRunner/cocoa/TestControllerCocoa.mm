@@ -152,51 +152,10 @@ NSURL *swizzledAppStoreURL(NSURL *url, SEL)
 
 namespace WTR {
 
-static RetainPtr<WKWebViewConfiguration>& globalWebViewConfiguration()
-{
-    static NeverDestroyed<RetainPtr<WKWebViewConfiguration>> globalWebViewConfiguration;
-    return globalWebViewConfiguration;
-}
-
 static RetainPtr<TestWebsiteDataStoreDelegate>& globalWebsiteDataStoreDelegateClient()
 {
-    static NeverDestroyed<RetainPtr<TestWebsiteDataStoreDelegate>> globalWebsiteDataStoreDelegateClient;
+    static MainThreadNeverDestroyed<RetainPtr<TestWebsiteDataStoreDelegate>> globalWebsiteDataStoreDelegateClient { adoptNS([TestWebsiteDataStoreDelegate new]) };
     return globalWebsiteDataStoreDelegateClient;
-}
-
-void initializeWebViewConfiguration(const char* libraryPath, WKStringRef injectedBundlePath, WKContextRef context, WKContextConfigurationRef contextConfiguration)
-{
-    globalWebViewConfiguration() = [&] {
-        auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
-
-        [configuration setProcessPool:(__bridge WKProcessPool *)context];
-        [configuration setWebsiteDataStore:(__bridge WKWebsiteDataStore *)TestController::defaultWebsiteDataStore()];
-        [configuration _setAllowUniversalAccessFromFileURLs:YES];
-        [configuration _setAllowTopNavigationToDataURLs:YES];
-        [configuration _setApplePayEnabled:YES];
-
-#if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
-        [configuration _setCSSTransformStyleSeparatedEnabled:YES];
-#endif
-
-        globalWebsiteDataStoreDelegateClient() = adoptNS([[TestWebsiteDataStoreDelegate alloc] init]);
-        [[configuration websiteDataStore] set_delegate:globalWebsiteDataStoreDelegateClient().get()];
-
-#if PLATFORM(IOS_FAMILY)
-        [configuration setAllowsInlineMediaPlayback:YES];
-        [configuration _setInlineMediaPlaybackRequiresPlaysInlineAttribute:NO];
-        [configuration _setInvisibleAutoplayNotPermitted:NO];
-        [configuration _setMediaDataLoadsAutomatically:YES];
-        [configuration setRequiresUserActionForMediaPlayback:NO];
-#endif
-        [configuration setMediaTypesRequiringUserActionForPlayback:WKAudiovisualMediaTypeNone];
-        WKPageConfigurationSetShouldSendConsoleLogsToUIProcessForTesting((__bridge WKPageConfigurationRef)configuration.get(), true);
-
-#if USE(SYSTEM_PREVIEW)
-        [configuration _setSystemPreviewEnabled:YES];
-#endif
-        return configuration;
-    }();
 }
 
 void TestController::cocoaPlatformInitialize(const Options& options)
@@ -232,6 +191,11 @@ void TestController::cocoaPlatformInitialize(const Options& options)
 #if ENABLE(DATA_DETECTION)
     m_appStoreURLSwizzler = makeUnique<InstanceMethodSwizzler>(NSURL.class, @selector(iTunesStoreURL), reinterpret_cast<IMP>(swizzledAppStoreURL));
 #endif
+
+    String resourceMonitorContentRuleListStoreFolder = makeString(String::fromUTF8(dumpRenderTreeTemp), "/ResourceMonitorContentRuleList/"_s, getpid());
+    RetainPtr<NSURL> url = [NSURL fileURLWithPath:resourceMonitorContentRuleListStoreFolder.createNSString().get()];
+
+    [WKContentRuleListStore _setContentRuleListStoreForResourceMonitorURLsControllerForTesting:[WKContentRuleListStore storeWithURL:url.get()]];
 }
 
 #if ENABLE(IMAGE_ANALYSIS)
@@ -252,11 +216,6 @@ bool TestController::shouldUseFakeMachineReadableCodeResultsForImageAnalysis() c
 }
 
 #endif // ENABLE(IMAGE_ANALYSIS)
-
-WKContextRef TestController::platformContext()
-{
-    return (__bridge WKContextRef)[globalWebViewConfiguration() processPool];
-}
 
 TestFeatures TestController::platformSpecificFeatureOverridesDefaultsForTest(const TestCommand&) const
 {
@@ -286,7 +245,7 @@ void TestController::platformInitializeDataStore(WKPageConfigurationRef, const T
         m_websiteDataStore = (__bridge WKWebsiteDataStoreRef)store.get();
         [store set_delegate:globalWebsiteDataStoreDelegateClient().get()];
     } else
-        m_websiteDataStore = (__bridge WKWebsiteDataStoreRef)[globalWebViewConfiguration() websiteDataStore];
+        m_websiteDataStore = (__bridge WKWebsiteDataStoreRef)TestController::defaultWebsiteDataStore();
 }
 
 static bool currentGPUProcessConfigurationCompatibleWithOptions(const TestOptions& options)
@@ -309,60 +268,82 @@ void TestController::platformEnsureGPUProcessConfiguredForOptions(const TestOpti
         terminateGPUProcess();
 }
 
-void TestController::platformCreateWebView(WKPageConfigurationRef, const TestOptions& options)
+void TestController::platformCreateWebView(WKPageConfigurationRef configuration, const TestOptions& options)
 {
-    auto copiedConfiguration = adoptNS([globalWebViewConfiguration() copy]);
+    WKWebViewConfiguration *cocoaConfiguration = (__bridge WKWebViewConfiguration *)configuration;
+
+    [cocoaConfiguration _setAllowUniversalAccessFromFileURLs:YES];
+    [cocoaConfiguration _setAllowTopNavigationToDataURLs:YES];
+    [cocoaConfiguration _setApplePayEnabled:YES];
+#if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
+    [cocoaConfiguration _setCSSTransformStyleSeparatedEnabled:YES];
+#endif
+    [(__bridge WKWebsiteDataStore *)websiteDataStore() set_delegate:globalWebsiteDataStoreDelegateClient().get()];
+
+#if PLATFORM(IOS_FAMILY)
+    [cocoaConfiguration setAllowsInlineMediaPlayback:YES];
+    [cocoaConfiguration _setInlineMediaPlaybackRequiresPlaysInlineAttribute:NO];
+    [cocoaConfiguration _setInvisibleAutoplayNotPermitted:NO];
+    [cocoaConfiguration _setMediaDataLoadsAutomatically:YES];
+    [cocoaConfiguration setRequiresUserActionForMediaPlayback:NO];
+#endif
+    [cocoaConfiguration setMediaTypesRequiringUserActionForPlayback:WKAudiovisualMediaTypeNone];
+    WKPageConfigurationSetShouldSendConsoleLogsToUIProcessForTesting(configuration, true);
+
+#if USE(SYSTEM_PREVIEW)
+    [cocoaConfiguration _setSystemPreviewEnabled:YES];
+#endif
 
 #if PLATFORM(IOS_FAMILY)
     if (options.useDataDetection())
-        [copiedConfiguration setDataDetectorTypes:WKDataDetectorTypeAll];
+        [cocoaConfiguration setDataDetectorTypes:WKDataDetectorTypeAll];
     if (options.ignoresViewportScaleLimits())
-        [copiedConfiguration setIgnoresViewportScaleLimits:YES];
+        [cocoaConfiguration setIgnoresViewportScaleLimits:YES];
     if (options.useCharacterSelectionGranularity())
-        [copiedConfiguration setSelectionGranularity:WKSelectionGranularityCharacter];
+        [cocoaConfiguration setSelectionGranularity:WKSelectionGranularityCharacter];
     if (options.isAppBoundWebView())
-        [copiedConfiguration setLimitsNavigationsToAppBoundDomains:YES];
+        [cocoaConfiguration setLimitsNavigationsToAppBoundDomains:YES];
 
-    [copiedConfiguration _setAppInitiatedOverrideValueForTesting:options.isAppInitiated() ? _WKAttributionOverrideTestingAppInitiated : _WKAttributionOverrideTestingUserInitiated];
-    [copiedConfiguration _setLongPressActionsEnabled:options.longPressActionsEnabled()];
+    [cocoaConfiguration _setAppInitiatedOverrideValueForTesting:options.isAppInitiated() ? _WKAttributionOverrideTestingAppInitiated : _WKAttributionOverrideTestingUserInitiated];
+    [cocoaConfiguration _setLongPressActionsEnabled:options.longPressActionsEnabled()];
 #endif
 
     if (options.enableAttachmentElement())
-        [copiedConfiguration _setAttachmentElementEnabled:YES];
+        [cocoaConfiguration _setAttachmentElementEnabled:YES];
     if (options.enableAttachmentWideLayout())
-        [copiedConfiguration _setAttachmentWideLayoutEnabled:YES];
+        [cocoaConfiguration _setAttachmentWideLayoutEnabled:YES];
 
-    [copiedConfiguration setWebsiteDataStore:(WKWebsiteDataStore *)websiteDataStore()];
-    [copiedConfiguration _setAllowTopNavigationToDataURLs:options.allowTopNavigationToDataURLs()];
-    [copiedConfiguration _setAppHighlightsEnabled:options.appHighlightsEnabled()];
+    [cocoaConfiguration setWebsiteDataStore:(WKWebsiteDataStore *)websiteDataStore()];
+    [cocoaConfiguration _setAllowTopNavigationToDataURLs:options.allowTopNavigationToDataURLs()];
+    [cocoaConfiguration _setAppHighlightsEnabled:options.appHighlightsEnabled()];
 
     if (!options.contentSecurityPolicyExtensionMode().empty()) {
         if (options.contentSecurityPolicyExtensionMode() == "v2")
-            [copiedConfiguration _setContentSecurityPolicyModeForExtension:_WKContentSecurityPolicyModeForExtensionManifestV2];
+            [cocoaConfiguration _setContentSecurityPolicyModeForExtension:_WKContentSecurityPolicyModeForExtensionManifestV2];
         if (options.contentSecurityPolicyExtensionMode() == "v3")
-            [copiedConfiguration _setContentSecurityPolicyModeForExtension:_WKContentSecurityPolicyModeForExtensionManifestV3];
+            [cocoaConfiguration _setContentSecurityPolicyModeForExtension:_WKContentSecurityPolicyModeForExtensionManifestV3];
     }
 
     static constexpr auto sampledPageTopColorMaxDifference = 30;
     static constexpr auto sampledPageTopColorMinHeight = 5;
-    [copiedConfiguration _setSampledPageTopColorMaxDifference:options.pageTopColorSamplingEnabled() ? sampledPageTopColorMaxDifference : 0];
-    [copiedConfiguration _setSampledPageTopColorMinHeight:options.pageTopColorSamplingEnabled() ? sampledPageTopColorMinHeight : 0];
+    [cocoaConfiguration _setSampledPageTopColorMaxDifference:options.pageTopColorSamplingEnabled() ? sampledPageTopColorMaxDifference : 0];
+    [cocoaConfiguration _setSampledPageTopColorMinHeight:options.pageTopColorSamplingEnabled() ? sampledPageTopColorMinHeight : 0];
 #if HAVE(INLINE_PREDICTIONS)
-    [copiedConfiguration setAllowsInlinePredictions:options.allowsInlinePredictions()];
+    [cocoaConfiguration setAllowsInlinePredictions:options.allowsInlinePredictions()];
 #endif
 
-    configureWebpagePreferences(copiedConfiguration.get(), options);
+    configureWebpagePreferences(cocoaConfiguration, options);
 
     auto applicationManifest = options.applicationManifest();
     if (applicationManifest.length()) {
         auto manifestPath = [NSString stringWithUTF8String:applicationManifest.c_str()];
         NSString *text = [NSString stringWithContentsOfFile:manifestPath usedEncoding:nullptr error:nullptr];
-        [copiedConfiguration _setApplicationManifest:[_WKApplicationManifest applicationManifestFromJSON:text manifestURL:nil documentURL:nil]];
+        [cocoaConfiguration _setApplicationManifest:[_WKApplicationManifest applicationManifestFromJSON:text manifestURL:nil documentURL:nil]];
     }
     
-    [copiedConfiguration _setPortsForUpgradingInsecureSchemeForTesting:@[@(options.insecureUpgradePort()), @(options.secureUpgradePort())]];
+    [cocoaConfiguration _setPortsForUpgradingInsecureSchemeForTesting:@[@(options.insecureUpgradePort()), @(options.secureUpgradePort())]];
 
-    m_mainWebView = makeUnique<PlatformWebView>((__bridge WKPageConfigurationRef)copiedConfiguration.get(), options);
+    m_mainWebView = makeUnique<PlatformWebView>(configuration, options);
     finishCreatingPlatformWebView(m_mainWebView.get(), options);
 
     if (options.punchOutWhiteBackgroundsInDarkMode())
@@ -391,13 +372,6 @@ void TestController::finishCreatingPlatformWebView(PlatformWebView* view, const 
     else
         [view->platformWindow() orderBack:nil];
 #endif
-}
-
-WKContextRef TestController::platformAdjustContext(WKContextRef context, WKContextConfigurationRef contextConfiguration)
-{
-    initializeWebViewConfiguration(libraryPathForTesting(), injectedBundlePath(), context, contextConfiguration);
-    m_preferences = (__bridge WKPreferencesRef)[globalWebViewConfiguration() preferences];
-    return (__bridge WKContextRef)[globalWebViewConfiguration() processPool];
 }
 
 void TestController::platformRunUntil(bool& done, WTF::Seconds timeout)
@@ -543,7 +517,7 @@ unsigned TestController::imageCountInGeneralPasteboard() const
 void TestController::removeAllSessionCredentials(CompletionHandler<void(WKTypeRef)>&& completionHandler)
 {
     auto types = adoptNS([[NSSet alloc] initWithObjects:_WKWebsiteDataTypeCredentials, nil]);
-    [[globalWebViewConfiguration() websiteDataStore] removeDataOfTypes:types.get() modifiedSince:[NSDate distantPast] completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)] () mutable {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() removeDataOfTypes:types.get() modifiedSince:[NSDate distantPast] completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)] () mutable {
         completionHandler(nullptr);
     }).get()];
 }
@@ -595,9 +569,10 @@ void TestController::clearAppPrivacyReportTestingData()
 
 void TestController::injectUserScript(WKStringRef script)
 {
-    auto userScript = adoptNS([[WKUserScript alloc] initWithSource: toWTFString(script).createNSString().get() injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO]);
-
-    [[globalWebViewConfiguration() userContentController] addUserScript: userScript.get()];
+    constexpr bool forMainFrameOnly { false };
+    WKRetainPtr wkScript = adoptWK(WKUserScriptCreateWithSource(script, kWKInjectAtDocumentStart, forMainFrameOnly));
+    WKRetainPtr configuration = adoptWK(WKPageCopyPageConfiguration(m_mainWebView->page()));
+    WKUserContentControllerAddUserScript(WKPageConfigurationGetUserContentController(configuration.get()), wkScript.get());
 }
 
 void TestController::addTestKeyToKeychain(const String& privateKeyBase64, const String& attrLabel, const String& applicationTagBase64)
@@ -759,7 +734,7 @@ WKRetainPtr<WKStringRef> TestController::getBackgroundFetchIdentifier()
 {
     __block String result;
     __block bool isDone = false;
-    [globalWebViewConfiguration().get().websiteDataStore _getAllBackgroundFetchIdentifiers:^(NSArray<NSString *> *identifiers) {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() _getAllBackgroundFetchIdentifiers:^(NSArray<NSString *> *identifiers) {
         if ([identifiers count])
             result = identifiers[0];
         isDone = true;
@@ -772,7 +747,7 @@ WKRetainPtr<WKStringRef> TestController::getBackgroundFetchIdentifier()
 void TestController::abortBackgroundFetch(WKStringRef identifier)
 {
     __block bool isDone = false;
-    [globalWebViewConfiguration().get().websiteDataStore _abortBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() _abortBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
         isDone = true;
     }];
     platformRunUntil(isDone, noTimeout);
@@ -781,7 +756,7 @@ void TestController::abortBackgroundFetch(WKStringRef identifier)
 void TestController::pauseBackgroundFetch(WKStringRef identifier)
 {
     __block bool isDone = false;
-    [globalWebViewConfiguration().get().websiteDataStore _pauseBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() _pauseBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
         isDone = true;
     }];
     platformRunUntil(isDone, noTimeout);
@@ -790,7 +765,7 @@ void TestController::pauseBackgroundFetch(WKStringRef identifier)
 void TestController::resumeBackgroundFetch(WKStringRef identifier)
 {
     __block bool isDone = false;
-    [globalWebViewConfiguration().get().websiteDataStore _resumeBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() _resumeBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
         isDone = true;
     }];
     platformRunUntil(isDone, noTimeout);
@@ -799,7 +774,7 @@ void TestController::resumeBackgroundFetch(WKStringRef identifier)
 void TestController::simulateClickBackgroundFetch(WKStringRef identifier)
 {
     __block bool isDone = false;
-    [globalWebViewConfiguration().get().websiteDataStore _clickBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() _clickBackgroundFetch:toWTFString(identifier).createNSString().get() completionHandler:^() {
         isDone = true;
     }];
     platformRunUntil(isDone, noTimeout);
@@ -829,7 +804,7 @@ WKRetainPtr<WKStringRef> TestController::backgroundFetchState(WKStringRef identi
 {
     __block bool isDone = false;
     __block String backgroundFetchState;
-    [globalWebViewConfiguration().get().websiteDataStore _getBackgroundFetchState:toWTFString(identifier).createNSString().get() completionHandler:^(NSDictionary *state) {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() _getBackgroundFetchState:toWTFString(identifier).createNSString().get() completionHandler:^(NSDictionary *state) {
         backgroundFetchState = makeString("{ "_s,
             "\"downloaded\":"_s, [[state valueForKey:@"Downloaded"] unsignedIntegerValue], ',',
             "\"isPaused\":"_s, [[state valueForKey:@"IsPaused"] boolValue] ? "true"_s : "false"_s,

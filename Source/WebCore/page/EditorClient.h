@@ -26,12 +26,12 @@
 
 #pragma once
 
-#include "EditorInsertAction.h"
-#include "FrameIdentifier.h"
-#include "SerializedAttachmentData.h"
-#include "TextAffinity.h"
-#include "TextChecking.h"
-#include "UndoStep.h"
+#include <WebCore/EditorInsertAction.h>
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/SerializedAttachmentData.h>
+#include <WebCore/TextAffinity.h>
+#include <WebCore/TextChecking.h>
+#include <WebCore/UndoStep.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMallocInlines.h>

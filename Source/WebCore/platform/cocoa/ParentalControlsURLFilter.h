@@ -35,6 +35,8 @@ class WorkQueue;
 
 namespace WebCore {
 
+struct ParentalControlsURLFilterParameters;
+
 class ParentalControlsURLFilter {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(ParentalControlsURLFilter);
 public:
@@ -43,6 +45,7 @@ public:
 #else
     static ParentalControlsURLFilter& singleton();
 #endif
+    WEBCORE_EXPORT static void allowURL(const ParentalControlsURLFilterParameters&, CompletionHandler<void(bool)>&&);
 
     void resetIsEnabled();
     bool isEnabled() const;

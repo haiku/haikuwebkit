@@ -3484,6 +3484,7 @@ private:
         case TailCallForwardVarargs:
         case TailCallForwardVarargsInlinedCaller:
         case CallWasm:
+        case TailCallInlinedCallerWasm:
         case ProfileControlFlow:
         case NewObject:
         case NewGenerator:

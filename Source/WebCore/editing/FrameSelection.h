@@ -25,15 +25,15 @@
 
 #pragma once
 
-#include "AXTextStateChangeIntent.h"
-#include "CaretAnimator.h"
-#include "Color.h"
-#include "IntRect.h"
-#include "LayoutRect.h"
-#include "ScrollAlignment.h"
-#include "ScrollBehavior.h"
-#include "ScrollTypes.h"
-#include "VisibleSelection.h"
+#include <WebCore/AXTextStateChangeIntent.h>
+#include <WebCore/CaretAnimator.h>
+#include <WebCore/Color.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/ScrollAlignment.h>
+#include <WebCore/ScrollBehavior.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/VisibleSelection.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>

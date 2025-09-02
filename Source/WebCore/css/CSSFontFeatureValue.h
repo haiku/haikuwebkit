@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "CSSPrimitiveValue.h"
-#include "FontTaggedSettings.h"
+#include <WebCore/CSSPrimitiveValue.h>
+#include <WebCore/FontTaggedSettings.h>
 
 namespace WebCore {
 

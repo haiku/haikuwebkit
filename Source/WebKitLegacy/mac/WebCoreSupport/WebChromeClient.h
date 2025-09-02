@@ -157,6 +157,7 @@ private:
 
     WebCore::KeyboardUIMode keyboardUIMode() final;
 
+    bool hasAccessoryMousePointingDevice() const override { return true; }
     bool hoverSupportedByPrimaryPointingDevice() const override { return true; }
     bool hoverSupportedByAnyAvailablePointingDevice() const override { return true; }
     std::optional<WebCore::PointerCharacteristics> pointerCharacteristicsOfPrimaryPointingDevice() const override { return WebCore::PointerCharacteristics::Fine; }

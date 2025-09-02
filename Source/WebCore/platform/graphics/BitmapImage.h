@@ -27,8 +27,8 @@
 
 #pragma once
 
-#include "Image.h"
-#include "ImageSource.h"
+#include <WebCore/Image.h>
+#include <WebCore/ImageSource.h>
 #include <wtf/Function.h>
 
 namespace WebCore {

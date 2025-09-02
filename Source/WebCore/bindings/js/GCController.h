@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Timer.h"
 #include <JavaScriptCore/DeleteAllCodeEffort.h>
+#include <WebCore/Timer.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>

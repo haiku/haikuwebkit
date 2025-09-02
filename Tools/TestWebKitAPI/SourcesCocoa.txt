@@ -170,6 +170,7 @@ Tests/WebKitCocoa/InjectedBundleNodeHandleIsTextField.mm
 Tests/WebKitCocoa/InsertTextAlternatives.mm
 Tests/WebKitCocoa/InteractionDeadlockAfterCrash.mm
 Tests/WebKitCocoa/JITEnabled.mm
+Tests/WebKitCocoa/JSHandle.mm
 Tests/WebKitCocoa/JavaScriptDuringNavigation.mm
 Tests/WebKitCocoa/LegacyPDFPluginTests.mm
 Tests/WebKitCocoa/LoadAlternateHTMLString.mm
@@ -203,7 +204,6 @@ Tests/WebKitCocoa/NetworkProcess.mm
 Tests/WebKitCocoa/NetworkProcessCrashNonPersistentDataStore.mm
 Tests/WebKitCocoa/NoPauseWhenSwitchingTabs.mm
 Tests/WebKitCocoa/NoResumeSoundPlayedToTheEndAfterThePageBecomesVisible.mm
-Tests/WebKitCocoa/NodeInfo.mm
 Tests/WebKitCocoa/NotificationAPI.mm
 Tests/WebKitCocoa/NowPlaying.mm
 Tests/WebKitCocoa/NowPlayingControlsTests.mm
@@ -258,6 +258,7 @@ Tests/WebKitCocoa/SafeBrowsing.mm
 Tests/WebKitCocoa/SampledPageTopColor.mm
 Tests/WebKitCocoa/SchemeRegistry.mm
 Tests/WebKitCocoa/ScreenTime.mm
+Tests/WebKitCocoa/SerializedNode.mm
 Tests/WebKitCocoa/ScriptTrackingPrivacyTests.mm
 Tests/WebKitCocoa/ServiceWorkerBasic.mm
 Tests/WebKitCocoa/SessionStorage.mm

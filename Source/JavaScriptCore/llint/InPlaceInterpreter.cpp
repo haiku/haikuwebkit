@@ -30,7 +30,7 @@
 
 #include "ArithProfile.h"
 #include "CodeBlock.h"
-#include "JSCConfig.h"
+#include "LLIntData.h"
 #include "LLIntPCRanges.h"
 #include "LLIntSlowPaths.h"
 #include "LLIntThunks.h"
@@ -59,14 +59,22 @@ do { \
 #define VALIDATE_IPINT_MINT_RETURN_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_mint_r0_validate, 64, opcode, name)
 #define VALIDATE_IPINT_UINT_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_uint_r0_validate, 64, opcode, name)
 
+#define FOR_EACH_IPINT_BASE_POINTER(v) \
+    v(ipint_dispatch_base, ipint_unreachable_validate) \
+    v(ipint_gc_dispatch_base, ipint_struct_new_validate) \
+    v(ipint_conversion_dispatch_base, ipint_i32_trunc_sat_f32_s_validate) \
+    v(ipint_simd_dispatch_base, ipint_simd_v128_load_mem_validate) \
+    v(ipint_atomic_dispatch_base, ipint_memory_atomic_notify_validate) \
+
+
 void initialize()
 {
 #if !ENABLE(C_LOOP) && ((CPU(ADDRESS64) && (CPU(ARM64) || CPU(X86_64))) || (CPU(ADDRESS32) && CPU(ARM_THUMB2)))
-    g_jscConfig.ipint_dispatch_base = CodePtr<CFunctionPtrTag>::fromTaggedPtr(reinterpret_cast<void*>(ipint_unreachable_validate)).template untaggedPtr<>();
-    g_jscConfig.ipint_gc_dispatch_base = CodePtr<CFunctionPtrTag>::fromTaggedPtr(reinterpret_cast<void*>(ipint_struct_new_validate)).template untaggedPtr<>();
-    g_jscConfig.ipint_conversion_dispatch_base = CodePtr<CFunctionPtrTag>::fromTaggedPtr(reinterpret_cast<void*>(ipint_i32_trunc_sat_f32_s_validate)).template untaggedPtr<>();
-    g_jscConfig.ipint_simd_dispatch_base = CodePtr<CFunctionPtrTag>::fromTaggedPtr(reinterpret_cast<void*>(ipint_simd_v128_load_mem_validate)).template untaggedPtr<>();
-    g_jscConfig.ipint_atomic_dispatch_base = CodePtr<CFunctionPtrTag>::fromTaggedPtr(reinterpret_cast<void*>(ipint_memory_atomic_notify_validate)).template untaggedPtr<>();
+
+#define INIT_IPINT_BASE_POINTER(basePointerName, targetAddress) \
+    g_opcodeConfig.basePointerName = removeCodePtrTag(reinterpret_cast<void*>(targetAddress));
+    FOR_EACH_IPINT_BASE_POINTER(INIT_IPINT_BASE_POINTER)
+#undef INIT_IPINT_BASE_POINTER
 
     FOR_EACH_IPINT_OPCODE(VALIDATE_IPINT_OPCODE);
     FOR_EACH_IPINT_GC_OPCODE(VALIDATE_IPINT_GC_OPCODE);
@@ -84,6 +92,18 @@ void initialize()
 #endif
 }
 
-} }
+void verifyInitialization()
+{
+#if !ENABLE(C_LOOP) && ((CPU(ADDRESS64) && (CPU(ARM64) || CPU(X86_64))) || (CPU(ADDRESS32) && CPU(ARM_THUMB2)))
+
+#define VERIFY_IPINT_BASE_POINTER(basePointerName, targetAddress) \
+    RELEASE_ASSERT(g_opcodeConfig.basePointerName == removeCodePtrTag(reinterpret_cast<void*>(targetAddress)));
+    FOR_EACH_IPINT_BASE_POINTER(VERIFY_IPINT_BASE_POINTER)
+#undef VERIFY_IPINT_BASE_POINTER
+
+#endif
+}
+
+} } // namespace JSC::IPInt
 
 #endif // ENABLE(WEBASSEMBLY)

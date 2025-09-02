@@ -27,8 +27,8 @@
 
 #if ENABLE(GAMEPAD)
 
-#include "GamepadProvider.h"
-#include "MockGamepad.h"
+#include <WebCore/GamepadProvider.h>
+#include <WebCore/MockGamepad.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/text/WTFString.h>

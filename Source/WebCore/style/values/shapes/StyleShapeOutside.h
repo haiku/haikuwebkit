@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
-#include "StyleBasicShape.h"
-#include "StyleImageWrapper.h"
-#include "StyleValueTypes.h"
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleBasicShape.h>
+#include <WebCore/StyleImageWrapper.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

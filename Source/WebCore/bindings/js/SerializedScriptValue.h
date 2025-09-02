@@ -26,33 +26,33 @@
 
 #pragma once
 
-#include "Blob.h"
-#include "DetachedRTCDataChannel.h"
 #include <JavaScriptCore/ArrayBuffer.h>
 #include <JavaScriptCore/JSCJSValue.h>
 #include <JavaScriptCore/Strong.h>
+#include <WebCore/Blob.h>
+#include <WebCore/DetachedRTCDataChannel.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/Gigacage.h>
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(MEDIA_STREAM)
-#include "MediaStreamTrackDataHolder.h"
+#include <WebCore/MediaStreamTrackDataHolder.h>
 #endif
 #if ENABLE(MEDIA_SOURCE_IN_WORKERS)
-#include "MediaSourceHandle.h"
+#include <WebCore/MediaSourceHandle.h>
 #endif
 
 #if ENABLE(WEB_CODECS)
-#include "WebCodecsAudioData.h"
-#include "WebCodecsAudioInternalData.h"
-#include "WebCodecsEncodedAudioChunk.h"
-#include "WebCodecsEncodedVideoChunk.h"
-#include "WebCodecsVideoFrame.h"
+#include <WebCore/WebCodecsAudioData.h>
+#include <WebCore/WebCodecsAudioInternalData.h>
+#include <WebCore/WebCodecsEncodedAudioChunk.h>
+#include <WebCore/WebCodecsEncodedVideoChunk.h>
+#include <WebCore/WebCodecsVideoFrame.h>
 #endif
 
 #if ENABLE(WEB_RTC)
-#include "RTCRtpTransformableFrame.h"
+#include <WebCore/RTCRtpTransformableFrame.h>
 #endif
 
 typedef const struct OpaqueJSContext* JSContextRef;

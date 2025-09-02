@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "ResourceLoaderIdentifier.h"
+#include <WebCore/ResourceLoaderIdentifier.h>
 #include <optional>
 #include <wtf/Noncopyable.h>
 #include <wtf/WeakRef.h>

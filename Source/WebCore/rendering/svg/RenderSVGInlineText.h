@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "FontCascade.h"
-#include "RenderObjectInlines.h"
-#include "RenderText.h"
-#include "SVGTextLayoutAttributes.h"
-#include "Text.h"
+#include <WebCore/FontCascade.h>
+#include <WebCore/RenderObjectInlines.h>
+#include <WebCore/RenderText.h>
+#include <WebCore/SVGTextLayoutAttributes.h>
+#include <WebCore/Text.h>
 
 namespace WebCore {
 

@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "InlineDisplayBox.h"
-#include "InlineItem.h"
-#include "InlineTextItem.h"
-#include "RenderStyleInlines.h"
+#include <WebCore/InlineDisplayBox.h>
+#include <WebCore/InlineItem.h>
+#include <WebCore/InlineTextItem.h>
+#include <WebCore/RenderStyleInlines.h>
 #include <unicode/ubidi.h>
 #include <wtf/Range.h>
 

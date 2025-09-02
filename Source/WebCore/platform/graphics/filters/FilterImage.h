@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "ImageBuffer.h"
-#include "IntRect.h"
-#include "PixelBuffer.h"
-#include "RenderingMode.h"
 #include <JavaScriptCore/Forward.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/ImageBuffer.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/PixelBuffer.h>
+#include <WebCore/RenderingMode.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
 

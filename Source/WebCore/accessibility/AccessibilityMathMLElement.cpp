@@ -31,6 +31,7 @@
 #include "AccessibilityMathMLElement.h"
 
 #include "AXObjectCache.h"
+#include "AXUtilities.h"
 #include "MathMLNames.h"
 #include "NodeInlines.h"
 #include "RenderStyleInlines.h"

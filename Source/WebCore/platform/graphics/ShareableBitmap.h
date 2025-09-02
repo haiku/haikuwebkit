@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "CopyImageOptions.h"
-#include "DestinationColorSpace.h"
-#include "ImageTypes.h"
-#include "IntRect.h"
-#include "PlatformImage.h"
-#include "SharedMemory.h"
+#include <WebCore/CopyImageOptions.h>
+#include <WebCore/DestinationColorSpace.h>
+#include <WebCore/ImageTypes.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/PlatformImage.h>
+#include <WebCore/SharedMemory.h>
 #include <wtf/ArgumentCoder.h>
 #include <wtf/DebugHeap.h>
 #include <wtf/ExportMacros.h>

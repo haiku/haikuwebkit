@@ -40,7 +40,7 @@
     // XREquirectLayer createEquirectLayer(optional XRGPUEquirectLayerInit init);
     // XRCubeLayer createCubeLayer(optional XRGPUCubeLayerInit init);
 
-    XRGPUSubImage getSubImage(XRCompositionLayer layer, WebXRFrame frame, optional XREye eye = "none");
+    XRGPUSubImage getSubImage(XRProjectionLayer layer, WebXRFrame frame, optional XREye eye = "none");
     XRGPUSubImage getViewSubImage(XRProjectionLayer layer, WebXRView view);
 
     GPUTextureFormat getPreferredColorFormat();

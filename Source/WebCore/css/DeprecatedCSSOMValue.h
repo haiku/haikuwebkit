@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CSSStyleDeclaration.h"
-#include "CSSValue.h"
-#include "ExceptionOr.h"
+#include <WebCore/CSSStyleDeclaration.h>
+#include <WebCore/CSSValue.h>
+#include <WebCore/ExceptionOr.h>
 #include <wtf/NoVirtualDestructorBase.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/WeakPtr.h>

@@ -98,13 +98,7 @@ double XRGPUBinding::nativeProjectionScaleFactor() const
     return m_init ? m_init->scaleFactor : 1.0;
 }
 
-RefPtr<XRGPUSubImage> XRGPUBinding::getSubImage(XRCompositionLayer&, WebXRFrame&, std::optional<XREye>/* = "none"*/)
-{
-    RELEASE_ASSERT_NOT_REACHED();
-    return nullptr;
-}
-
-ExceptionOr<Ref<XRGPUSubImage>> XRGPUBinding::getViewSubImage(XRProjectionLayer& projectionLayer, WebXRView& xrView)
+ExceptionOr<Ref<XRGPUSubImage>> XRGPUBinding::getSubImage(XRProjectionLayer& projectionLayer, XREye eye)
 {
     if (!m_backing)
         return Exception { ExceptionCode::AbortError };
@@ -118,7 +112,7 @@ ExceptionOr<Ref<XRGPUSubImage>> XRGPUBinding::getViewSubImage(XRProjectionLayer&
     if (!setupData || !textureData)
         return Exception { ExceptionCode::AbortError, "Layer setup or texture data is missing"_s };
 
-    unsigned eyeIndex = xrView.eye() == XREye::Right ? 1 : 0;
+    unsigned eyeIndex = eye == XREye::Right ? 1 : 0;
     auto physicalSize = setupData->physicalSize[eyeIndex];
     if (!physicalSize[0] || !physicalSize[1])
         physicalSize = setupData->physicalSize[0];
@@ -126,7 +120,17 @@ ExceptionOr<Ref<XRGPUSubImage>> XRGPUBinding::getViewSubImage(XRProjectionLayer&
     if (eyeIndex)
         viewport.move(-setupData->viewports[0].width(), 0);
     RefPtr subImage = m_backing->getViewSubImage(projectionLayer.backing());
-    return XRGPUSubImage::create(subImage.releaseNonNull(), convertToBacking(xrView.eye()), WTFMove(physicalSize), WTFMove(viewport), m_device);
+    return XRGPUSubImage::create(subImage.releaseNonNull(), convertToBacking(eye), WTFMove(physicalSize), WTFMove(viewport), m_device);
+}
+
+ExceptionOr<Ref<XRGPUSubImage>> XRGPUBinding::getSubImage(XRProjectionLayer& projectionLayer, WebXRFrame&, std::optional<XREye> eye)
+{
+    return getSubImage(projectionLayer, eye.value_or(XREye::Left));
+}
+
+ExceptionOr<Ref<XRGPUSubImage>> XRGPUBinding::getViewSubImage(XRProjectionLayer& projectionLayer, WebXRView& xrView)
+{
+    return getSubImage(projectionLayer, xrView.eye());
 }
 
 GPUTextureFormat XRGPUBinding::getPreferredColorFormat()

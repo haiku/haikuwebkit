@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "CSSBoxShadow.h"
-#include "CSSPrimitiveNumeric.h"
-#include "StyleColor.h"
-#include "StylePrimitiveNumericTypes.h"
-#include "StyleShadow.h"
+#include <WebCore/CSSBoxShadow.h>
+#include <WebCore/CSSPrimitiveNumeric.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
+#include <WebCore/StyleShadow.h>
 
 namespace WebCore {
 namespace Style {

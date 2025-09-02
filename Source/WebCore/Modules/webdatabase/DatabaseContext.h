@@ -27,8 +27,8 @@
 
 #pragma once
 
-#include "ActiveDOMObject.h"
-#include "Document.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/Document.h>
 #include <wtf/RefPtr.h>
 #include <wtf/ThreadSafeRefCounted.h>
 

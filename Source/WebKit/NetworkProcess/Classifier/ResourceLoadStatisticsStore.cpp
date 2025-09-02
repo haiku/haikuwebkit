@@ -42,6 +42,7 @@
 #include <WebCore/KeyedCoding.h>
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/OrganizationStorageAccessPromptQuirk.h>
+#include <WebCore/PermissionState.h>
 #include <WebCore/ResourceLoadStatistics.h>
 #include <WebCore/SQLiteDatabase.h>
 #include <WebCore/SQLiteStatement.h>
@@ -1745,6 +1746,20 @@ void ResourceLoadStatisticsStore::requestStorageAccess(SubFrameDomain&& subFrame
     });
 }
 
+void ResourceLoadStatisticsStore::queryStorageAccessPermission(const SubFrameDomain& subFrameDomain, const TopFrameDomain& topFrameDomain, CompletionHandler<void(PermissionState)>&& completionHandler)
+{
+    ASSERT(!RunLoop::isMain());
+
+    auto subFrameDomainID = domainID(subFrameDomain);
+    if (!subFrameDomainID)
+        return completionHandler(PermissionState::Prompt);
+
+    if (hasUserGrantedStorageAccessThroughPrompt(*subFrameDomainID, topFrameDomain) == StorageAccessPromptWasShown::No)
+        return completionHandler(PermissionState::Prompt);
+
+    completionHandler(PermissionState::Granted);
+}
+
 void ResourceLoadStatisticsStore::requestStorageAccessUnderOpener(DomainInNeedOfStorageAccess&& domainInNeedOfStorageAccess, PageIdentifier openerPageID, OpenerDomain&& openerDomain, CanRequestStorageAccessWithoutUserInteraction canRequestStorageAccessWithoutUserInteraction)
 {
     ASSERT(domainInNeedOfStorageAccess != openerDomain);
@@ -2562,7 +2577,7 @@ void ResourceLoadStatisticsStore::clear(CompletionHandler<void()>&& completionHa
 
 bool ResourceLoadStatisticsStore::areAllUnpartitionedThirdPartyCookiesBlockedUnder(const TopFrameDomain& topFrameDomain)
 {
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     if (thirdPartyCookieBlockingMode() == ThirdPartyCookieBlockingMode::All || thirdPartyCookieBlockingMode() == ThirdPartyCookieBlockingMode::AllExceptPartitioned)
 #else
     if (thirdPartyCookieBlockingMode() == ThirdPartyCookieBlockingMode::All)

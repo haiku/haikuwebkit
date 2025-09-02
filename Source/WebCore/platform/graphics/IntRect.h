@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "IntPoint.h"
-#include "LayoutUnit.h"
+#include <WebCore/IntPoint.h>
+#include <WebCore/LayoutUnit.h>
 #include <wtf/TZoneMalloc.h>
 
 #if USE(CG)

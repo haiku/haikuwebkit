@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "IntPoint.h"
-#include "PlatformEvent.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/PlatformEvent.h>
 #include <wtf/WindowsExtras.h>
 
 namespace WTF {

@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "LayoutRepainter.h"
-#include "PaintInfo.h"
-#include "RenderObject.h"
+#include <WebCore/LayoutRepainter.h>
+#include <WebCore/PaintInfo.h>
+#include <WebCore/RenderObject.h>
 
 namespace WebCore {
 

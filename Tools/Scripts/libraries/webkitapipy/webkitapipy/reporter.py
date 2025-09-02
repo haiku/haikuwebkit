@@ -28,6 +28,9 @@ class Reporter:
     def format_diagnostic(self, diag: Diagnostic) -> str:
         raise NotImplementedError
 
+    def has_errors(self) -> bool:
+        return bool(self.issues)
+
     def finished(self):
         pass
 
@@ -86,7 +89,7 @@ class BuildToolReporter(Reporter):
         return entry
 
     def finished(self):
-        if self.issues:
+        if any(d for d in self.issues if isinstance(d, MissingName)):
             if self.suggested_allowlists:
                 allowlists = '│ \n    '.join(map(str, self.suggested_allowlists))
                 allowlist_entry = self.allowlist_entry().replace('\n', '\n│     ')

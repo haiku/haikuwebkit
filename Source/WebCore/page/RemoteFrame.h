@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Frame.h"
-#include "LayerHostingContextIdentifier.h"
+#include <WebCore/Frame.h>
+#include <WebCore/LayerHostingContextIdentifier.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TypeCasts.h>
 #include <wtf/UniqueRef.h>
@@ -81,6 +81,7 @@ public:
     AutoplayPolicy autoplayPolicy() const final;
 
     void updateScrollingMode() final;
+    const SecurityOrigin& frameDocumentSecurityOriginOrOpaque() const;
 
 private:
     WEBCORE_EXPORT explicit RemoteFrame(Page&, ClientCreator&&, FrameIdentifier, HTMLFrameOwnerElement*, Frame* parent, Markable<LayerHostingContextIdentifier>, Frame* opener, Ref<FrameTreeSyncData>&&, AddToFrameTree = AddToFrameTree::Yes);

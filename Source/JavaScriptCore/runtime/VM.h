@@ -359,7 +359,6 @@ public:
     // Keep super frequently accessed fields top in VM.
     unsigned disallowVMEntryCount { 0 };
 private:
-    void* m_softStackLimit { nullptr };
     Exception* m_exception { nullptr };
     Exception* m_terminationException { nullptr };
     Exception* m_lastException { nullptr };
@@ -415,7 +414,6 @@ public:
     ALWAYS_INLINE CompleteSubspace& immutableButterflyAuxiliarySpace() { return heap.immutableButterflyAuxiliarySpace; }
     ALWAYS_INLINE CompleteSubspace& gigacageAuxiliarySpace(Gigacage::Kind kind) { return heap.gigacageAuxiliarySpace(kind); }
     ALWAYS_INLINE CompleteSubspace& cellSpace() { return heap.cellSpace; }
-    ALWAYS_INLINE CompleteSubspace& variableSizedCellSpace() { return heap.variableSizedCellSpace; }
     ALWAYS_INLINE CompleteSubspace& destructibleObjectSpace() { return heap.destructibleObjectSpace; }
 #if ENABLE(WEBASSEMBLY)
     template<SubspaceAccess mode>
@@ -666,14 +664,19 @@ public:
         return OBJECT_OFFSETOF(VM, heap) + OBJECT_OFFSETOF(Heap, m_mutatorShouldBeFenced);
     }
 
+    static constexpr ptrdiff_t offsetOfTraps()
+    {
+        return OBJECT_OFFSETOF(VM, m_traps);
+    }
+
     static constexpr ptrdiff_t offsetOfTrapsBits()
     {
-        return OBJECT_OFFSETOF(VM, m_traps) + VMTraps::offsetOfTrapsBits();
+        return offsetOfTraps() + VMTraps::offsetOfTrapsBits();
     }
 
     static constexpr ptrdiff_t offsetOfSoftStackLimit()
     {
-        return OBJECT_OFFSETOF(VM, m_softStackLimit);
+        return offsetOfTraps() + VMTraps::offsetOfSoftStackLimit();
     }
 
     void clearLastException() { m_lastException = nullptr; }
@@ -704,16 +707,11 @@ public:
     size_t updateSoftReservedZoneSize(size_t softReservedZoneSize);
     
     static size_t committedStackByteCount();
-    inline bool ensureStackCapacityFor(Register* newTopOfStack);
+    inline bool ensureJSStackCapacityFor(Register* newTopOfStack);
 
     void* stackLimit() { return m_stackLimit; }
-    void* softStackLimit() { return m_softStackLimit; }
-    void** addressOfSoftStackLimit() { return &m_softStackLimit; }
-#if ENABLE(C_LOOP)
-    void* cloopStackLimit() { return m_cloopStackLimit; }
-    void setCLoopStackLimit(void* limit) { m_cloopStackLimit = limit; }
-    JS_EXPORT_PRIVATE void* currentCLoopStackPointer() const;
-#endif
+    ALWAYS_INLINE void* softStackLimit() const { return m_traps.softStackLimit(); }
+    ALWAYS_INLINE void** addressOfSoftStackLimit() { return m_traps.addressOfSoftStackLimit(); }
 
     inline bool isSafeToRecurseSoft() const;
     bool isSafeToRecurse() const
@@ -724,6 +722,13 @@ public:
     void* lastStackTop() { return m_lastStackTop; }
     void setLastStackTop(const Thread&);
     
+#if ENABLE(C_LOOP)
+    ALWAYS_INLINE CLoopStack& cloopStack() { return m_traps.cloopStack(); }
+    ALWAYS_INLINE const CLoopStack& cloopStack() const { return m_traps.cloopStack(); }
+    ALWAYS_INLINE void* cloopStackLimit() { return m_traps.cloopStackLimit(); }
+    ALWAYS_INLINE void* currentCLoopStackPointer() const { return m_traps.currentCLoopStackPointer(); }
+#endif
+
     EncodedJSValue encodedHostCallReturnValue { };
     CallFrame* newCallFrameReturnValue;
     CallFrame* callFrameForCatch { nullptr };
@@ -1014,11 +1019,6 @@ private:
 
     JS_EXPORT_PRIVATE void setException(Exception*);
 
-#if ENABLE(C_LOOP)
-    bool ensureStackCapacityForCLoop(Register* newTopOfStack);
-    bool isSafeToRecurseSoftCLoop() const;
-#endif // ENABLE(C_LOOP)
-
     JS_EXPORT_PRIVATE Exception* throwException(JSGlobalObject*, Exception*);
     JS_EXPORT_PRIVATE Exception* throwException(JSGlobalObject*, JSValue);
     JS_EXPORT_PRIVATE Exception* throwException(JSGlobalObject*, JSObject*);
@@ -1040,9 +1040,6 @@ private:
     void* m_stackPointerAtVMEntry { nullptr };
     size_t m_currentSoftReservedZoneSize;
     void* m_stackLimit { nullptr };
-#if ENABLE(C_LOOP)
-    void* m_cloopStackLimit { nullptr };
-#endif
     void* m_lastStackTop { nullptr };
 
 #if ENABLE(EXCEPTION_SCOPE_VERIFICATION)

@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "LayoutPoint.h"
-#include "LayoutUnit.h"
-#include "Length.h"
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/LayoutUnit.h>
+#include <WebCore/Length.h>
 
 namespace WebCore {
 

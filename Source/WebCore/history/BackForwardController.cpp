@@ -197,6 +197,18 @@ Vector<Ref<HistoryItem>> BackForwardController::itemsForFrame(FrameIdentifier fr
     return historyItems;
 }
 
+Vector<Ref<HistoryItem>> BackForwardController::reachableItemsForFrame(FrameIdentifier frameID)
+{
+    // Returns only the frame items that correspond to the currently reachable session history.
+    // This is different from itemsForFrame() which returns all frame items across the frame's lifetime.
+    Vector<Ref<HistoryItem>> reachableFrameItems;
+    for (auto& item : allItems()) {
+        if (RefPtr childItem = item->childItemWithFrameID(frameID))
+            reachableFrameItems.append(childItem.releaseNonNull());
+    }
+    return reachableFrameItems;
+}
+
 void BackForwardController::close()
 {
     m_client->close();

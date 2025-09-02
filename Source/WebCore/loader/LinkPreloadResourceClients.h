@@ -29,13 +29,13 @@
 #include "CachedCSSStyleSheet.h"
 #include "CachedFont.h"
 #include "CachedFontClient.h"
-#include "CachedImage.h"
-#include "CachedImageClient.h"
-#include "CachedRawResource.h"
-#include "CachedRawResourceClient.h"
-#include "CachedResourceHandle.h"
+#include <WebCore/CachedImage.h>
+#include <WebCore/CachedImageClient.h>
+#include <WebCore/CachedRawResource.h>
+#include <WebCore/CachedRawResourceClient.h>
+#include <WebCore/CachedResourceHandle.h>
 #include "CachedScript.h"
-#include "CachedStyleSheetClient.h"
+#include <WebCore/CachedStyleSheetClient.h>
 #include "CachedTextTrack.h"
 #include <wtf/WeakPtr.h>
 

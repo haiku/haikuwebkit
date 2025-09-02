@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "CachedImageClient.h"
-#include "LayoutRect.h"
-#include "PlatformLayerIdentifier.h"
-#include "RenderObjectEnums.h"
-#include "RenderStyleConstants.h"
+#include <WebCore/CachedImageClient.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/PlatformLayerIdentifier.h>
+#include <WebCore/RenderObjectEnums.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -723,7 +723,7 @@ public:
 
     inline RenderView& view() const; // Defined in RenderObjectInlines.h
     CheckedRef<RenderView> checkedView() const;
-    inline const LocalFrameViewLayoutContext& layoutContext() const;
+    inline LocalFrameViewLayoutContext& layoutContext() const;
 
     HostWindow* hostWindow() const;
 

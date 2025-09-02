@@ -27,10 +27,10 @@
 
 #if ENABLE(MEDIA_STREAM) && PLATFORM(COCOA)
 
-#include "CaptureDevice.h"
-#include "RealtimeMediaSource.h"
-#include "RealtimeMediaSourceSettings.h"
-#include "UserActivity.h"
+#include <WebCore/CaptureDevice.h>
+#include <WebCore/RealtimeMediaSource.h>
+#include <WebCore/RealtimeMediaSourceSettings.h>
+#include <WebCore/UserActivity.h>
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/Observer.h>
 #include <wtf/RefPtr.h>

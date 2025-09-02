@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "StyleCounterStyle.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StyleCounterStyle.h>
+#include <WebCore/StyleValueTypes.h>
 #include <wtf/Variant.h>
 #include <wtf/text/AtomString.h>
 

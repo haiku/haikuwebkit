@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "CSSGroupingRule.h"
+#include <WebCore/CSSGroupingRule.h>
 
 namespace WebCore {
 

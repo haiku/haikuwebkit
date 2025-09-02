@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "IDBDatabaseIdentifier.h"
-#include "IDBRequest.h"
+#include <WebCore/IDBDatabaseIdentifier.h>
+#include <WebCore/IDBRequest.h>
 
 namespace WebCore {
 

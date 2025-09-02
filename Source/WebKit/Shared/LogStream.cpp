@@ -43,22 +43,20 @@ namespace WebKit {
 
 static std::atomic<unsigned> globalLogCountForTesting { 0 };
 
-LogStream::LogStream(int32_t pid, LogStreamIdentifier logStreamIdentifier)
-    : m_logStreamIdentifier(logStreamIdentifier)
+LogStream::LogStream(Ref<ConnectionType>&& connection, ProcessID pid, LogStreamIdentifier identifier)
+    : m_connection(WTFMove(connection))
+    , m_identifier(identifier)
     , m_pid(pid)
 {
 }
 
-LogStream::~LogStream()
-{
-}
+LogStream::~LogStream() = default;
 
 void LogStream::stopListeningForIPC()
 {
     assertIsMainRunLoop();
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-    if (RefPtr logStreamConnection = m_logStreamConnection)
-        logStreamConnection->stopReceivingMessages(Messages::LogStream::messageReceiverName(), m_logStreamIdentifier.toUInt64());
+    m_connection->stopReceivingMessages(Messages::LogStream::messageReceiverName(), m_identifier.toUInt64());
 #endif
 }
 
@@ -67,23 +65,17 @@ void LogStream::logOnBehalfOfWebContent(std::span<const uint8_t> logSubsystem, s
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
     ASSERT(!isMainRunLoop());
 #endif
-
     auto isNullTerminated = [](std::span<const uint8_t> view) {
         return view.data() && !view.empty() && view.back() == '\0';
     };
 
     bool isValidLogType = logType == OS_LOG_TYPE_DEFAULT || logType == OS_LOG_TYPE_INFO || logType == OS_LOG_TYPE_DEBUG || logType == OS_LOG_TYPE_ERROR || logType == OS_LOG_TYPE_FAULT;
 
-#if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-    RefPtr logConnection = &m_logStreamConnection->connection();
-#else
-    RefPtr logConnection = m_logConnection.get();
-#endif
-
-    MESSAGE_CHECK(isNullTerminated(nullTerminatedLogString) && isValidLogType, logConnection);
-    MESSAGE_CHECK(logSubsystem.size() <= logSubsystemMaxSize, logConnection);
-    MESSAGE_CHECK(logCategory.size() <= logCategoryMaxSize, logConnection);
-    MESSAGE_CHECK(nullTerminatedLogString.size() <= logStringMaxSize, logConnection);
+    RefPtr connection = m_connection.get();
+    MESSAGE_CHECK(isNullTerminated(nullTerminatedLogString) && isValidLogType, connection);
+    MESSAGE_CHECK(logSubsystem.size() <= logSubsystemMaxSize, connection);
+    MESSAGE_CHECK(logCategory.size() <= logCategoryMaxSize, connection);
+    MESSAGE_CHECK(nullTerminatedLogString.size() <= logStringMaxSize, connection);
 
     // os_log_hook on sender side sends a null category and subsystem when logging to OS_LOG_DEFAULT.
     auto osLog = OSObjectPtr<os_log_t>();
@@ -108,23 +100,28 @@ void LogStream::logOnBehalfOfWebContent(std::span<const uint8_t> logSubsystem, s
 }
 
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-void LogStream::setup(IPC::StreamServerConnectionHandle&& serverConnection, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&& completionHandler)
-{
-    m_logStreamConnection = IPC::StreamServerConnection::tryCreate(WTFMove(serverConnection), { });
 
+RefPtr<LogStream> LogStream::create(IPC::StreamServerConnectionHandle&& serverConnection, ProcessID pid, LogStreamIdentifier identifier, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&& completionHandler)
+{
+    RefPtr connection = IPC::StreamServerConnection::tryCreate(WTFMove(serverConnection), { });
+    if (!connection)
+        return nullptr;
     static NeverDestroyed<Ref<IPC::StreamConnectionWorkQueue>> logQueue = IPC::StreamConnectionWorkQueue::create("Log work queue"_s);
 
-    if (RefPtr logStreamConnection = m_logStreamConnection) {
-        logStreamConnection->open(logQueue.get());
-        logStreamConnection->startReceivingMessages(*this, Messages::LogStream::messageReceiverName(), m_logStreamIdentifier.toUInt64());
-        completionHandler(logQueue.get()->wakeUpSemaphore(), logStreamConnection->clientWaitSemaphore());
-    }
+    Ref instance = adoptRef(*new LogStream(connection.releaseNonNull(), pid, identifier));
+    instance->m_connection->open(logQueue.get());
+    instance->m_connection->startReceivingMessages(instance, Messages::LogStream::messageReceiverName(), identifier.toUInt64());
+    completionHandler(logQueue.get()->wakeUpSemaphore(), instance->m_connection->clientWaitSemaphore());
+    return instance;
 }
+
 #else
-void LogStream::setup(IPC::Connection& connection)
+
+Ref<LogStream> LogStream::create(Ref<IPC::Connection>&& connection, ProcessID pid, LogStreamIdentifier identifier)
 {
-    m_logConnection = connection;
+    return adoptRef(*new LogStream(WTFMove(connection), pid, identifier));
 }
+
 #endif
 
 unsigned LogStream::logCountForTesting()

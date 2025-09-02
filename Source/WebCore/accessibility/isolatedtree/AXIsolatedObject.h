@@ -27,14 +27,14 @@
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
-#include "AXCoreObject.h"
-#include "AXIsolatedTree.h"
-#include "AXObjectCache.h"
-#include "IntPoint.h"
-#include "LayoutRect.h"
-#include "NodeName.h"
-#include "Path.h"
-#include "RenderStyleConstants.h"
+#include <WebCore/AXCoreObject.h>
+#include <WebCore/AXIsolatedTree.h>
+#include <WebCore/AXObjectCache.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/NodeName.h>
+#include <WebCore/Path.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <wtf/Forward.h>
 #include <wtf/HashMap.h>
 #include <wtf/RefPtr.h>
@@ -324,8 +324,7 @@ private:
     AccessibilityChildrenVector radioButtonGroup() const final { return tree()->objectsForIDs(vectorAttributeValue<AXID>(AXProperty::RadioButtonGroup)); }
     AXIsolatedObject* scrollBar(AccessibilityOrientation) final;
     const String placeholderValue() const final { return stringAttributeValue(AXProperty::PlaceholderValue); }
-    String expandedTextValue() const final { return stringAttributeValue(AXProperty::ExpandedTextValue); }
-    bool supportsExpandedTextValue() const final { return boolAttributeValue(AXProperty::SupportsExpandedTextValue); }
+    String abbreviation() const final { return stringAttributeValue(AXProperty::Abbreviation); }
     SRGBA<uint8_t> colorValue() const final;
     String subrolePlatformString() const final { return stringAttributeValue(AXProperty::SubrolePlatformString); }
     String ariaRoleDescription() const final { return stringAttributeValue(AXProperty::ARIARoleDescription); };
@@ -376,7 +375,6 @@ private:
 #if PLATFORM(COCOA)
     OptionSet<SpeakAs> speakAs() const final { return optionSetAttributeValue<SpeakAs>(AXProperty::SpeakAs); }
 #endif
-    bool fileUploadButtonReturnsValueInTitle() const final;
 #if PLATFORM(MAC)
     bool caretBrowsingEnabled() const final { return boolAttributeValue(AXProperty::CaretBrowsingEnabled); }
     AccessibilityChildrenVector allSortedLiveRegions() const final;
@@ -530,8 +528,8 @@ private:
     void setAccessibleName(const AtomString&) final;
 
     String textContentPrefixFromListMarker() const final;
-    String titleAttributeValue() const final;
-    String title() const final { return stringAttributeValue(AXProperty::Title); }
+    String webAreaTitle() const final { return stringAttributeValue(AXProperty::WebAreaTitle); }
+    String titleAttribute() const final { return stringAttributeValue(AXProperty::TitleAttribute); }
     String description() const final { return stringAttributeValue(AXProperty::Description); }
 
     std::optional<String> textContent() const final;

@@ -152,4 +152,3 @@ NSDictionary *searchPredicateForSearchCriteria(JSContextRef context, Accessibili
 }
 
 } // namespace WTR
-

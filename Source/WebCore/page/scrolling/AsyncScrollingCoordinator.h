@@ -28,10 +28,10 @@
 #include "pal/HysteresisActivity.h"
 #if ENABLE(ASYNC_SCROLLING)
 
-#include "ScrollingCoordinator.h"
-#include "ScrollingStateNode.h"
-#include "ScrollingTree.h"
-#include "Timer.h"
+#include <WebCore/ScrollingCoordinator.h>
+#include <WebCore/ScrollingStateNode.h>
+#include <WebCore/ScrollingTree.h>
+#include <WebCore/Timer.h>
 #include <wtf/RefPtr.h>
 #include <wtf/SmallMap.h>
 #include <wtf/TZoneMalloc.h>
@@ -59,7 +59,7 @@ public:
 
     void applyPendingScrollUpdates();
 
-    WEBCORE_EXPORT void applyScrollUpdate(ScrollUpdate&&, ScrollType = ScrollType::User);
+    WEBCORE_EXPORT void applyScrollUpdate(ScrollUpdate&&, ScrollType = ScrollType::User) override;
 
 #if PLATFORM(COCOA)
     WEBCORE_EXPORT void handleWheelEventPhase(ScrollingNodeID, PlatformWheelEventPhase) final;
@@ -76,7 +76,8 @@ public:
     bool scrollAnimatorEnabled() const;
 
     virtual void hasNodeWithAnimatedScrollChanged(bool) { };
-    
+
+    WEBCORE_EXPORT void setScrollbarColor(ScrollableArea&, std::optional<ScrollbarColor>) override;
     WEBCORE_EXPORT void setScrollbarLayoutDirection(ScrollableArea&, UserInterfaceLayoutDirection) override;
     WEBCORE_EXPORT void setMouseIsOverContentArea(ScrollableArea&, bool) override;
     WEBCORE_EXPORT void setMouseMovedInContentArea(ScrollableArea&) override;

@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "DocumentMarker.h"
-#include "Timer.h"
+#include <WebCore/DocumentMarker.h>
+#include <WebCore/Timer.h>
 #include <memory>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>

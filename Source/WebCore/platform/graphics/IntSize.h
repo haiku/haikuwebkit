@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PlatformExportMacros.h"
+#include <WebCore/PlatformExportMacros.h>
 #include <algorithm>
 #include <cmath>
 #include <wtf/CheckedArithmetic.h>

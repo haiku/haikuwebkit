@@ -27,7 +27,7 @@
 
 #if PLATFORM(MAC)
 
-#include "WheelEventDeltaFilter.h"
+#include <WebCore/WheelEventDeltaFilter.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>

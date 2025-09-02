@@ -57,9 +57,9 @@ public:
 
     bool ignoreDepthValues() const;
     std::optional<float> fixedFoveation() const;
-    [[noreturn]] void setFixedFoveation(std::optional<float>);
+    void setFixedFoveation(std::optional<float>);
     WebXRRigidTransform* deltaPose() const;
-    [[noreturn]] void setDeltaPose(WebXRRigidTransform*);
+    void setDeltaPose(WebXRRigidTransform*);
 
     // WebXRLayer
     void startFrame(PlatformXR::FrameData&) final;
@@ -73,6 +73,7 @@ private:
 
     const Ref<WebCore::WebGPU::XRProjectionLayer> m_backing;
     std::optional<PlatformXR::FrameData::LayerData> m_layerData;
+    RefPtr<WebXRRigidTransform> m_transform;
 };
 
 } // namespace WebCore

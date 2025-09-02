@@ -27,12 +27,12 @@
 
 #pragma once
 
-#include "DocumentFragment.h"
-#include "Element.h"
-#include "StyleScopeOrdinal.h"
-#include "ShadowRootMode.h"
-#include "SlotAssignmentMode.h"
-#include "TreeScope.h"
+#include <WebCore/DocumentFragment.h>
+#include <WebCore/Element.h>
+#include <WebCore/ShadowRootMode.h>
+#include <WebCore/SlotAssignmentMode.h>
+#include <WebCore/StyleScopeOrdinal.h>
+#include <WebCore/TreeScope.h>
 #include <wtf/HashMap.h>
 
 namespace WebCore {

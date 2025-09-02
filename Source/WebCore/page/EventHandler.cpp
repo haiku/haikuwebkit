@@ -29,6 +29,7 @@
 #include "config.h"
 #include "EventHandler.h"
 
+#include "AXObjectCache.h"
 #include "AutoscrollController.h"
 #include "BackForwardController.h"
 #include "CachedImage.h"
@@ -124,6 +125,7 @@
 #include "ShadowRoot.h"
 #include "StaticPasteboard.h"
 #include "StyleCachedImage.h"
+#include "Styleable.h"
 #include "TextEvent.h"
 #include "TextIterator.h"
 #include "TextRecognitionOptions.h"
@@ -1647,6 +1649,10 @@ std::optional<Cursor> EventHandler::selectCursor(const HitTestResult& result, bo
         return std::nullopt;
 
     auto renderer = node->renderer();
+    if (auto element = dynamicDowncast<Element>(*node); element && result.pseudoElementIdentifier()) {
+        auto* pseudoElementRenderer = Styleable(*element, result.pseudoElementIdentifier()).renderer();
+        renderer = pseudoElementRenderer ? pseudoElementRenderer : renderer;
+    }
     auto* style = renderer ? &renderer->style() : nullptr;
     bool horizontalText = !style || style->writingMode().isHorizontal();
     const Cursor& iBeam = horizontalText ? iBeamCursor() : verticalTextCursor();

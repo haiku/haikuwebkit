@@ -25,16 +25,16 @@
 
 #pragma once
 
-#include "AnimationEffectTiming.h"
-#include "BasicEffectTiming.h"
-#include "ComputedEffectTiming.h"
-#include "FillMode.h"
-#include "KeyframeEffectOptions.h"
-#include "OptionalEffectTiming.h"
-#include "PlaybackDirection.h"
-#include "TimingFunction.h"
-#include "WebAnimation.h"
-#include "WebAnimationUtilities.h"
+#include <WebCore/AnimationEffectTiming.h>
+#include <WebCore/BasicEffectTiming.h>
+#include <WebCore/ComputedEffectTiming.h>
+#include <WebCore/FillMode.h>
+#include <WebCore/KeyframeEffectOptions.h>
+#include <WebCore/OptionalEffectTiming.h>
+#include <WebCore/PlaybackDirection.h>
+#include <WebCore/TimingFunction.h>
+#include <WebCore/WebAnimation.h>
+#include <WebCore/WebAnimationUtilities.h>
 #include <wtf/Forward.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>

@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "LocalFrameView.h"
-#include "Region.h"
-#include "RenderBlockFlow.h"
-#include "RenderSelection.h"
-#include "RenderWidget.h"
+#include <WebCore/LocalFrameView.h>
+#include <WebCore/Region.h>
+#include <WebCore/RenderBlockFlow.h>
+#include <WebCore/RenderSelection.h>
+#include <WebCore/RenderWidget.h>
 #include <memory>
 #include <wtf/HashSet.h>
 #include <wtf/ListHashSet.h>

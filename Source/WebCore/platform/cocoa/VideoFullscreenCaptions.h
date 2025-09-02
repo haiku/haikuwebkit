@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PlatformImage.h"
+#include <WebCore/PlatformImage.h>
 
 OBJC_CLASS CALayer;
 

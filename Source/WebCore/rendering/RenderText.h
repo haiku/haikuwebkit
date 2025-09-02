@@ -23,11 +23,11 @@
 
 #pragma once
 
-#include "Color.h"
-#include "FontCascade.h"
-#include "RenderElement.h"
-#include "RenderTextLineBoxes.h"
-#include "Text.h"
+#include <WebCore/Color.h>
+#include <WebCore/FontCascade.h>
+#include <WebCore/RenderElement.h>
+#include <WebCore/RenderTextLineBoxes.h>
+#include <WebCore/Text.h>
 #include <wtf/Forward.h>
 #include <wtf/Markable.h>
 #include <wtf/text/TextBreakIterator.h>

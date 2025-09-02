@@ -25,19 +25,19 @@
 
 #pragma once
 
-#include "ActiveDOMObject.h"
-#include "AnimationFrameRate.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/AnimationFrameRate.h>
 #include "AnimationFrameRatePreset.h"
-#include "CSSKeywordValue.h"
-#include "CSSNumericValue.h"
-#include "ContextDestructionObserverInlines.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "ExceptionOr.h"
-#include "IDLTypes.h"
-#include "Styleable.h"
-#include "TimelineRange.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/CSSKeywordValue.h>
+#include <WebCore/CSSNumericValue.h>
+#include <WebCore/ContextDestructionObserverInlines.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/ExceptionOr.h>
+#include <WebCore/IDLTypes.h>
+#include <WebCore/Styleable.h>
+#include <WebCore/TimelineRange.h>
+#include <WebCore/WebAnimationTypes.h>
 #include <wtf/Forward.h>
 #include <wtf/Markable.h>
 #include <wtf/RefCounted.h>

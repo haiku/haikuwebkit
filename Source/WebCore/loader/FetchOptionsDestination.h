@@ -27,6 +27,31 @@
 
 namespace WebCore {
     
-enum class FetchOptionsDestination : uint8_t { EmptyString, Audio, Audioworklet, Document, Embed, Environmentmap, Font, Image, Iframe, Manifest, Model, Object, Paintworklet, Report, Script, Serviceworker, Sharedworker, Style, Track, Video, Worker, Xslt };
+enum class FetchOptionsDestination : uint8_t {
+    EmptyString,
+    Audio,
+    Audioworklet,
+    Document,
+    Embed,
+    Environmentmap,
+    Font,
+    // FIXME: Add Frame
+    Iframe,
+    Image,
+    Json,
+    Manifest,
+    Model,
+    Object,
+    Paintworklet,
+    Report,
+    Script,
+    Serviceworker,
+    Sharedworker,
+    Style,
+    Track,
+    Video,
+    Worker,
+    Xslt
+};
     
 } // namespace WebCore

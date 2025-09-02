@@ -1386,8 +1386,10 @@ static bool isDescriptiveText(AccessibilityTextSource textSource)
 
 String AXCoreObject::descriptionAttributeValue() const
 {
-    if (!shouldComputeDescriptionAttributeValue())
+    if (isStaticText()) {
+        // Static text objects shouldn't return a description. Their content is communicated via AXValue.
         return { };
+    }
 
     Vector<AccessibilityText> textOrder;
     accessibilityText(textOrder);
@@ -1433,39 +1435,6 @@ String AXCoreObject::descriptionAttributeValue() const
     return returnText.toString();
 }
 
-String AXCoreObject::titleAttributeValue() const
-{
-    // Meter elements should communicate their content via AXValueDescription.
-    if (!shouldComputeTitleAttributeValue() || isMeter())
-        return { };
-
-    // A file upload button presents a challenge because it has button text and a value, but the
-    // API doesn't support this paradigm.
-    // The compromise is to return the button type in the role description and the value of the file path in the title
-    if (isFileUploadButton() && fileUploadButtonReturnsValueInTitle())
-        return stringValue();
-
-    Vector<AccessibilityText> textOrder;
-    accessibilityText(textOrder);
-
-    for (const auto& text : textOrder) {
-        // If we have alternative text, then we should not expose a title.
-        if (text.textSource == AccessibilityTextSource::Alternative || text.textSource == AccessibilityTextSource::Heading)
-            break;
-
-        // Once we encounter visible text, or the text from our children that should be used foremost.
-        if (text.textSource == AccessibilityTextSource::Visible || text.textSource == AccessibilityTextSource::Children)
-            return text.text;
-
-        // If there's an element that labels this object and it's not exposed, then we should use
-        // that text as our title.
-        if (text.textSource == AccessibilityTextSource::LabelByElement)
-            return text.text;
-    }
-
-    return { };
-}
-
 String AXCoreObject::helpTextAttributeValue() const
 {
     Vector<AccessibilityText> textOrder;
@@ -1494,6 +1463,56 @@ String AXCoreObject::helpTextAttributeValue() const
 }
 #endif // PLATFORM(COCOA)
 
+String AXCoreObject::title() const
+{
+    if (isWebArea()) {
+        String title = webAreaTitle();
+        if (!title.isEmpty())
+            return title;
+    }
+
+    // Static text should communicate its content through AXValue.
+    // Meter elements should communicate their content via AXValueDescription.
+    if (isStaticText() || isMeter())
+        return { };
+
+    // A file upload button presents a challenge because it has button text and a value, but the
+    // API doesn't support this paradigm.
+    // The compromise is to return the button type in the role description and the value of the file path in the title
+    if (isFileUploadButton() && fileUploadButtonReturnsValueInTitle())
+        return stringValue();
+
+    Vector<AccessibilityText> textOrder;
+    accessibilityText(textOrder);
+
+    if (elementName() == ElementName::HTML_area && isLink()) {
+        String summaryText;
+        for (auto& text : textOrder) {
+            if (text.textSource == AccessibilityTextSource::TitleTag)
+                return text.text;
+            if (text.textSource == AccessibilityTextSource::Summary)
+                summaryText = WTFMove(text.text);
+        }
+        return summaryText;
+    }
+
+    for (const auto& text : textOrder) {
+        // If we have alternative text, then we should not expose a title.
+        if (text.textSource == AccessibilityTextSource::Alternative || text.textSource == AccessibilityTextSource::Heading)
+            break;
+
+        // Once we encounter visible text, or the text from our children that should be used foremost.
+        if (text.textSource == AccessibilityTextSource::Visible || text.textSource == AccessibilityTextSource::Children)
+            return text.text;
+
+        // If there's an element that labels this object and it's not exposed, then we should use
+        // that text as our title.
+        if (text.textSource == AccessibilityTextSource::LabelByElement)
+            return text.text;
+    }
+    return { };
+}
+
 AXCoreObject* AXCoreObject::titleUIElement() const
 {
     auto labels = relatedObjects(AXRelation::LabeledBy);
@@ -1504,6 +1523,29 @@ AXCoreObject* AXCoreObject::titleUIElement() const
 #else
     return labels.size() ? labels.first().ptr() : nullptr;
 #endif
+}
+
+String AXCoreObject::expandedTextValue() const
+{
+    if (isStaticText()) {
+        if (RefPtr parent = parentObject()) {
+            auto parentName = parent->elementName();
+            if (parentName == ElementName::HTML_abbr || parentName == ElementName::HTML_acronym)
+                return parent->titleAttribute();
+        }
+    }
+    return hasCellRole() ? abbreviation() : String();
+}
+
+bool AXCoreObject::supportsExpandedTextValue() const
+{
+    if (isStaticText()) {
+        if (RefPtr parent = parentObject()) {
+            auto parentName = parent->elementName();
+            return parentName == ElementName::HTML_abbr || parentName == ElementName::HTML_acronym;
+        }
+    }
+    return hasCellRole() && !abbreviation().isEmpty();
 }
 
 AXCoreObject::AccessibilityChildrenVector AXCoreObject::linkedObjects() const

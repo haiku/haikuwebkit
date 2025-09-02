@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ScopedName.h"
+#include <WebCore/ScopedName.h>
 #include <wtf/text/AtomString.h>
 #include <wtf/text/TextStream.h>
 

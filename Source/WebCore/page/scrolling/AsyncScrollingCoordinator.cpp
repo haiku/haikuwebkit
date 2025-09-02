@@ -458,6 +458,17 @@ void AsyncScrollingCoordinator::setScrollbarLayoutDirection(ScrollableArea& scro
     stateNode->setScrollbarLayoutDirection(scrollbarLayoutDirection);
 }
 
+void AsyncScrollingCoordinator::setScrollbarColor(ScrollableArea& scrollableArea, std::optional<ScrollbarColor> scrollbarColor)
+{
+    ASSERT(isMainThread());
+    ASSERT(page());
+    RefPtr stateNode = dynamicDowncast<ScrollingStateScrollingNode>(stateNodeForScrollableArea(scrollableArea));
+    if (!stateNode)
+        return;
+
+    stateNode->setScrollbarColor(scrollbarColor);
+}
+
 void AsyncScrollingCoordinator::setMouseIsOverScrollbar(Scrollbar* scrollbar, bool isOverScrollbar)
 {
     ASSERT(isMainThread());
@@ -1040,6 +1051,7 @@ void AsyncScrollingCoordinator::setFrameScrollingNodeState(ScrollingNodeID nodeI
     frameScrollingNode->setScrollingPerformanceTestingEnabled(settings.scrollingPerformanceTestingEnabled());
     frameScrollingNode->setOverlayScrollbarsEnabled(ScrollbarTheme::theme().usesOverlayScrollbars());
     frameScrollingNode->setScrollbarWidth(frameView.scrollbarWidthStyle());
+    frameScrollingNode->setScrollbarColor(frameView.scrollbarColorStyle());
     frameScrollingNode->setWheelEventGesturesBecomeNonBlocking(settings.wheelEventGesturesBecomeNonBlocking());
 
     frameScrollingNode->setMinLayoutViewportOrigin(frameView.minStableLayoutViewportOrigin());
@@ -1074,6 +1086,7 @@ void AsyncScrollingCoordinator::setScrollingNodeScrollableAreaGeometry(std::opti
     if (verticalScrollbar)
         scrollingNode->setScrollbarEnabledState(ScrollbarOrientation::Vertical, verticalScrollbar->enabled());
     scrollingNode->setScrollbarWidth(scrollableArea.scrollbarWidthStyle());
+    scrollingNode->setScrollbarColor(scrollableArea.scrollbarColorStyle());
 
     scrollingNode->setScrollOrigin(scrollableArea.scrollOrigin());
     scrollingNode->setScrollPosition(scrollableArea.scrollPosition());
@@ -1095,6 +1108,7 @@ void AsyncScrollingCoordinator::setScrollingNodeScrollableAreaGeometry(std::opti
     scrollParameters.horizontalNativeScrollbarVisibility = scrollableArea.horizontalNativeScrollbarVisibility();
     scrollParameters.verticalNativeScrollbarVisibility = scrollableArea.verticalNativeScrollbarVisibility();
     scrollParameters.scrollbarWidthStyle = scrollableArea.scrollbarWidthStyle();
+    scrollParameters.scrollbarColorStyle = scrollableArea.scrollbarColorStyle();
 
     scrollingNode->setScrollableAreaParameters(scrollParameters);
 

@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "CSSProperty.h"
-#include "CSSPropertyNames.h"
-#include "CSSStyleDeclaration.h"
-#include "StyleRuleType.h"
-#include "StyledElement.h"
+#include <WebCore/CSSProperty.h>
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CSSStyleDeclaration.h>
+#include <WebCore/StyleRuleType.h>
+#include <WebCore/StyledElement.h>
 #include <wtf/HashMap.h>
 #include <wtf/OptionalOrReference.h>
 #include <wtf/RefCounted.h>

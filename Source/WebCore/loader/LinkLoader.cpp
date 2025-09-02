@@ -167,6 +167,8 @@ std::optional<CachedResource::Type> LinkLoader::resourceTypeFromAsAttribute(cons
         return CachedResource::Type::ImageResource;
     case FetchRequestDestination::Iframe:
         return std::nullopt;
+    case FetchRequestDestination::Json:
+        return CachedResource::Type::JSON;
     case FetchRequestDestination::Manifest:
         return std::nullopt;
     case FetchRequestDestination::Model:
@@ -208,6 +210,7 @@ static std::unique_ptr<LinkPreloadResourceClient> createLinkPreloadResourceClien
     switch (resource.type()) {
     case CachedResource::Type::ImageResource:
         return makeUnique<LinkPreloadImageResourceClient>(loader, downcast<CachedImage>(resource));
+    case CachedResource::Type::JSON:
     case CachedResource::Type::Script:
         return makeUnique<LinkPreloadDefaultResourceClient>(loader, downcast<CachedScript>(resource));
     case CachedResource::Type::CSSStyleSheet:
@@ -253,6 +256,8 @@ bool LinkLoader::isSupportedType(CachedResource::Type resourceType, const String
     switch (resourceType) {
     case CachedResource::Type::ImageResource:
         return MIMETypeRegistry::isSupportedImageVideoOrSVGMIMEType(mimeType);
+    case CachedResource::Type::JSON:
+        return MIMETypeRegistry::isSupportedJSONMIMEType(mimeType);
     case CachedResource::Type::Script:
         return MIMETypeRegistry::isSupportedJavaScriptMIMEType(mimeType);
     case CachedResource::Type::CSSStyleSheet:
@@ -327,7 +332,7 @@ std::unique_ptr<LinkPreloadResourceClient> LinkLoader::preloadIfNeeded(const Lin
         type = LinkLoader::resourceTypeFromAsAttribute(params.as, document, ShouldLog::No);
         if (!type)
             type = CachedResource::Type::Script;
-        if (type && type != CachedResource::Type::Script) {
+        if (type && type != CachedResource::Type::Script && type != CachedResource::Type::JSON) {
             if (loader)
                 loader->triggerError();
             return nullptr;

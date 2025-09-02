@@ -37,7 +37,7 @@
 #include "RTCRtpSender.h"
 #include "RTCRtpTransceiverBackend.h"
 #include "RTCRtpTransceiverDirection.h"
-#include "ScriptWrappable.h"
+#include <WebCore/ScriptWrappable.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>
 #include <wtf/text/WTFString.h>

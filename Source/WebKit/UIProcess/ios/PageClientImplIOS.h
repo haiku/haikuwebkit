@@ -348,8 +348,8 @@ private:
     bool hasResizableWindows() const final;
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
-    void didEnterFullscreen() final { };
-    void didExitFullscreen() final { };
+    void didEnterFullscreen() final;
+    void didExitFullscreen() final;
     void didCleanupFullscreen() final;
 #endif
 
@@ -373,6 +373,11 @@ private:
 #endif
 
     void scheduleVisibleContentRectUpdate() final;
+
+#if ENABLE(POINTER_LOCK)
+    void beginPointerLockMouseTracking() final;
+    void endPointerLockMouseTracking() final;
+#endif
 
     RetainPtr<WKContentView> contentView() const { return m_contentView.get(); }
 

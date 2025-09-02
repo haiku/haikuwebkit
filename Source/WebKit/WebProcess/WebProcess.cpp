@@ -144,6 +144,7 @@
 #include <WebCore/SharedWorkerContextManager.h>
 #include <WebCore/SharedWorkerThreadProxy.h>
 #include <WebCore/UserGestureIndicator.h>
+#include <WebCore/WebKitJSHandle.h>
 #include <algorithm>
 #include <pal/Logging.h>
 #include <wtf/CallbackAggregator.h>
@@ -739,7 +740,7 @@ void WebProcess::setWebsiteDataStoreParameters(WebProcessDataStoreParameters&& p
     
     ensureNetworkProcessConnection();
 
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     setOptInCookiePartitioningEnabled(parameters.isOptInCookiePartitioningEnabled);
 #endif
 }
@@ -1876,6 +1877,11 @@ void WebProcess::sendPrewarmInformation(const URL& url)
     protectedParentProcessConnection()->send(Messages::WebProcessProxy::DidCollectPrewarmInformation(registrableDomain, WebCore::ProcessWarming::collectPrewarmInformation()), 0);
 }
 
+void WebProcess::jSHandleDestroyed(WebCore::JSHandleIdentifier identifier)
+{
+    WebCore::WebKitJSHandle::jsHandleDestroyed(identifier);
+}
+
 void WebProcess::pageDidEnterWindow(PageIdentifier pageID)
 {
     m_pagesInWindows.add(pageID);
@@ -2001,8 +2007,10 @@ void WebProcess::clearResourceLoadStatistics()
 {
     if (auto* observer = ResourceLoadObserver::sharedIfExists())
         observer->clearState();
-    for (auto& page : m_pageMap.values())
+    for (auto& page : m_pageMap.values()) {
         page->clearPageLevelStorageAccess();
+        page->revokeFrameSpecificStorageAccess();
+    }
 }
 
 void WebProcess::flushResourceLoadStatistics()
@@ -2103,7 +2111,7 @@ void WebProcess::setEnabledServices(bool hasImageServices, bool hasSelectionServ
 }
 #endif
 
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
 void WebProcess::setOptInCookiePartitioningEnabled(bool enabled)
 {
     m_cookieJar->setOptInCookiePartitioningEnabled(enabled);

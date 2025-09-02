@@ -94,7 +94,6 @@ Ref<Document> XSLTProcessor::createDocumentFromSource(const String& sourceString
             result->setCookieURL(oldDocument->cookieURL());
             result->setFirstPartyForCookies(oldDocument->firstPartyForCookies());
             result->setSiteForCookies(oldDocument->siteForCookies());
-            result->setStrictMixedContentMode(oldDocument->isStrictMixedContentMode());
             CheckedRef resultCSP = *result->contentSecurityPolicy();
             CheckedRef oldDocumentCSP = *oldDocument->contentSecurityPolicy();
             resultCSP->copyStateFrom(oldDocumentCSP.ptr());

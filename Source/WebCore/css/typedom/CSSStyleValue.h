@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
-#include "CSSValue.h"
-#include "ScriptWrappable.h"
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CSSValue.h>
+#include <WebCore/ScriptWrappable.h>
 #include <wtf/OptionSet.h>
 #include <wtf/RefCounted.h>
 #include <wtf/text/WTFString.h>

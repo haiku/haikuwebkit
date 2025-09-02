@@ -30,6 +30,7 @@
 
 #include "AudioTrackPrivateGStreamer.h"
 #include "GStreamerAudioMixer.h"
+#include "GStreamerCaptureDeviceManager.h"
 #include "GStreamerCommon.h"
 #include "GStreamerQuirks.h"
 #include "GStreamerRegistryScanner.h"
@@ -4581,17 +4582,32 @@ void MediaPlayerPrivateGStreamer::checkPlayingConsistency()
     }
 }
 
-static void applyAudioSinkDevice(GstElement* audioSinkBin, const String& deviceId)
+bool MediaPlayerPrivateGStreamer::applyAudioSinkDevice(GstElement* audioSink, GstDevice* device)
 {
-    for (auto* element : GstIteratorAdaptor<GstElement>(gst_bin_iterate_sinks(GST_BIN_CAST(audioSinkBin)))) {
-        // pulsesink and alsasink have a "device" property, whilst pipewiresink has "target-object"
-        if (gstElementMatchesFactoryAndHasProperty(element, "pulsesink"_s, "device"_s) || gstElementMatchesFactoryAndHasProperty(element, "alsasink"_s, "device"_s))
-            g_object_set(element, "device", deviceId.utf8().data(), nullptr);
-        else if (gstElementMatchesFactoryAndHasProperty(element, "pipewiresink"_s, "target-object"_s))
-            g_object_set(element, "target-object", deviceId.utf8().data(), nullptr);
-        else if (GST_IS_BIN(element))
-            applyAudioSinkDevice(element, deviceId);
+    bool changed = false;
+
+    if (GST_IS_BIN(audioSink)) {
+        for (auto* element : GstIteratorAdaptor<GstElement>(gst_bin_iterate_sinks(GST_BIN_CAST(audioSink)))) {
+            if (applyAudioSinkDevice(element, device))
+                changed = true;
+        }
+        return changed;
     }
+
+    if (gstElementFactoryEquals(audioSink, "fakeaudiosink"_s) || gstElementFactoryEquals(audioSink, "fakesink"_s)) {
+#if ENABLE(DEVELOPER_MODE)
+        // Testing bots have fakeaudiosink upranked to run layout tests, so in that case consider the change done.
+        GST_DEBUG_OBJECT(pipeline(), "Found fake sink, considering the change done for testing.");
+        return true;
+#else
+        GST_WARNING_OBJECT(pipeline(), "Skipped unexpected fake sink, your audio configuration may have issues.");
+        return changed;
+#endif
+    }
+
+    changed = !!gst_device_reconfigure_element(device, audioSink);
+    GST_DEBUG_OBJECT(pipeline(), "%s element '%s' with device %s<%p>", changed ? "Reconfigured" : "Skipped", GST_ELEMENT_NAME(audioSink), GST_OBJECT_NAME(device), device);
+    return changed;
 }
 
 void MediaPlayerPrivateGStreamer::audioOutputDeviceChanged()
@@ -4600,8 +4616,24 @@ void MediaPlayerPrivateGStreamer::audioOutputDeviceChanged()
     if (!player)
         return;
 
+    auto* sink = audioSink();
+    if (!sink) {
+        GST_DEBUG_OBJECT(pipeline(), "No audio sink, skipping audio output device change");
+        return;
+    }
+
+    bool changed = false;
     auto deviceId = player->audioOutputDeviceId();
-    applyAudioSinkDevice(m_audioSink.get(), deviceId);
+
+    if (auto captureDevice = GStreamerAudioCaptureDeviceManager::singleton().gstreamerDeviceWithUID(deviceId)) {
+        auto* device = captureDevice->device();
+        GUniquePtr<char> deviceName(gst_device_get_display_name(device));
+        GST_DEBUG_OBJECT(pipeline(), "Switching to %s<%p>, output '%s'", GST_OBJECT_NAME(device), device, deviceName.get());
+        changed = applyAudioSinkDevice(sink, device);
+    } else
+        GST_WARNING_OBJECT(pipeline(), "Could not obtain GstDevice for identifier '%s'", deviceId.utf8().data());
+
+    GST_DEBUG_OBJECT(pipeline(), "%s to audio output device '%s'", changed ? "Changed" : "Could not change", deviceId.utf8().data());
 }
 
 String MediaPlayerPrivateGStreamer::codecForStreamId(TrackID streamId)

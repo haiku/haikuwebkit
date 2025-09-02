@@ -843,7 +843,7 @@ TEST(AdvancedPrivacyProtections, DoNotBlockThirdPartyPartitionedCookiesFromSameS
     EXPECT_WK_STREQ(@"test=value", result);
 }
 
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
 TEST(AdvancedPrivacyProtections, DoNotBlockThirdPartyPartitionedCookies)
 {
     auto webView = setUpWebViewForTestingTrackerDomainBlocking("<!DOCTYPE html>"

@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "StyleValueTypes.h"
+#include <WebCore/StyleValueTypes.h>
 #include <wtf/text/AtomString.h>
 
 namespace WebCore {

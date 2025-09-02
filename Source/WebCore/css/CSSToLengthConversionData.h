@@ -30,8 +30,8 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
-#include "Element.h"
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/Element.h>
 #include <optional>
 #include <wtf/Assertions.h>
 

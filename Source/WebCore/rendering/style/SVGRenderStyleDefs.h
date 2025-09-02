@@ -29,21 +29,21 @@
 
 #pragma once
 
-#include "Length.h"
-#include "SVGLengthValue.h"
-#include "StyleBoxShadow.h"
-#include "StyleColor.h"
-#include "StyleOpacity.h"
-#include "StylePathData.h"
-#include "StyleSVGBaselineShift.h"
-#include "StyleSVGCenterCoordinateComponent.h"
-#include "StyleSVGCoordinateComponent.h"
+#include <WebCore/Length.h>
+#include <WebCore/SVGLengthValue.h>
+#include <WebCore/StyleBoxShadow.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StyleOpacity.h>
+#include <WebCore/StylePathData.h>
+#include <WebCore/StyleSVGBaselineShift.h>
+#include <WebCore/StyleSVGCenterCoordinateComponent.h>
+#include <WebCore/StyleSVGCoordinateComponent.h>
 #include "StyleSVGPaint.h"
-#include "StyleSVGRadius.h"
-#include "StyleSVGRadiusComponent.h"
-#include "StyleSVGStrokeDasharray.h"
-#include "StyleSVGStrokeDashoffset.h"
-#include "StyleURL.h"
+#include <WebCore/StyleSVGRadius.h>
+#include <WebCore/StyleSVGRadiusComponent.h>
+#include <WebCore/StyleSVGStrokeDasharray.h>
+#include <WebCore/StyleSVGStrokeDashoffset.h>
+#include <WebCore/StyleURL.h>
 #include <wtf/FixedVector.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>

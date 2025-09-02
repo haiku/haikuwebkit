@@ -34,11 +34,11 @@
 
 #if ENABLE(VIDEO)
 
-#include "BufferedLineReader.h"
-#include "DocumentFragment.h"
-#include "HTMLNames.h"
-#include "TextResourceDecoder.h"
-#include "VTTRegion.h"
+#include <WebCore/BufferedLineReader.h>
+#include <WebCore/DocumentFragment.h>
+#include <WebCore/HTMLNames.h>
+#include <WebCore/TextResourceDecoder.h>
+#include <WebCore/VTTRegion.h>
 #include <memory>
 #include <wtf/MediaTime.h>
 #include <wtf/TZoneMalloc.h>

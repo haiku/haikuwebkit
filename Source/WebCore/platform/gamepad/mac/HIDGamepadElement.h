@@ -27,8 +27,8 @@
 
 #if ENABLE(GAMEPAD) && PLATFORM(MAC)
 
-#include "HIDElement.h"
-#include "SharedGamepadValue.h"
+#include <WebCore/HIDElement.h>
+#include <WebCore/SharedGamepadValue.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

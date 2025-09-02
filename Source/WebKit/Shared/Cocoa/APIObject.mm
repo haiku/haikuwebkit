@@ -84,7 +84,7 @@
 #import "_WKInspectorConfigurationInternal.h"
 #import "_WKInspectorDebuggableInfoInternal.h"
 #import "_WKInspectorInternal.h"
-#import "_WKNodeInfoInternal.h"
+#import "_WKJSHandleInternal.h"
 #import "_WKProcessPoolConfigurationInternal.h"
 #import "_WKResourceLoadInfoInternal.h"
 #import "_WKResourceLoadStatisticsFirstPartyInternal.h"
@@ -523,16 +523,16 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         wrapper = [WKWebProcessPlugInScriptWorld alloc];
         break;
 
-    case Type::NodeInfo:
-        wrapper = [_WKNodeInfo alloc];
-        break;
-
     case Type::ScriptMessage:
         wrapper = [WKScriptMessage alloc];
         break;
 
     case Type::SerializedNode:
         wrapper = [_WKSerializedNode alloc];
+        break;
+
+    case Type::JSHandle:
+        wrapper = [_WKJSHandle alloc];
         break;
 
     default:

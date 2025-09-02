@@ -27,8 +27,8 @@
 
 #if ENABLE(CONTENT_EXTENSIONS)
 
-#include "ContentExtensionsDebugging.h"
-#include "NFA.h"
+#include <WebCore/ContentExtensionsDebugging.h>
+#include <WebCore/NFA.h>
 #include <unicode/utypes.h>
 #include <wtf/ASCIICType.h>
 #include <wtf/Hasher.h>

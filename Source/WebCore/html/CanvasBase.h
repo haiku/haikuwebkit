@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "CSSParserContext.h"
-#include "CanvasNoiseInjection.h"
-#include "FloatRect.h"
-#include "IntSize.h"
-#include "PixelBuffer.h"
-#include "TaskSource.h"
+#include <WebCore/CSSParserContext.h>
+#include <WebCore/CanvasNoiseInjection.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/IntSize.h>
+#include <WebCore/PixelBuffer.h>
+#include <WebCore/TaskSource.h>
 #include <atomic>
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/HashSet.h>

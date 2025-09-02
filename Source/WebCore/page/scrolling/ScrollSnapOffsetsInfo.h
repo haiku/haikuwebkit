@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "LayoutRect.h"
-#include "LayoutUnit.h"
-#include "NodeIdentifier.h"
-#include "ScrollTypes.h"
-#include "StyleScrollSnapPoints.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/LayoutUnit.h>
+#include <WebCore/NodeIdentifier.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/StyleScrollSnapPoints.h>
 #include <utility>
 #include <wtf/Vector.h>
 

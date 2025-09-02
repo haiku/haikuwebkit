@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FormattingContext.h"
+#include <WebCore/FormattingContext.h>
 
 namespace WebCore {
 namespace Layout {

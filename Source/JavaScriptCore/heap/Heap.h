@@ -734,7 +734,6 @@ private:
     void prepareForMarking();
     
     void gatherStackRoots(ConservativeRoots&);
-    void gatherJSStackRoots(ConservativeRoots&);
     void gatherScratchBufferRoots(ConservativeRoots&);
     void beginMarking();
     void visitCompilerWorklistWeakReferences();
@@ -1092,7 +1091,6 @@ public:
     
     // Whenever possible, use subspaceFor<CellType>(vm) to get one of these subspaces.
     CompleteSubspace cellSpace;
-    CompleteSubspace variableSizedCellSpace;
     CompleteSubspace destructibleObjectSpace;
 
 #define DECLARE_ISO_SUBSPACE(name, heapCellType, type) \

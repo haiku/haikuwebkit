@@ -27,8 +27,8 @@
 
 #import "AXObjectCache.h"
 #import "AccessibilityObject.h"
-#import "WebAccessibilityObjectWrapperBase.h"
 #import "WAKView.h"
+#import "WebAccessibilityObjectWrapperBase.h"
 
 namespace WebCore {
 class VisiblePosition;

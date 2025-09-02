@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "FetchOptions.h"
-#include "ServiceWorkerTypes.h"
+#include <WebCore/FetchOptions.h>
+#include <WebCore/ServiceWorkerTypes.h>
 
 namespace WebCore {
 

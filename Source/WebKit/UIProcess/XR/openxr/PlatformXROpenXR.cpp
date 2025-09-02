@@ -27,6 +27,7 @@
 #include "OpenXRLayer.h"
 #include "OpenXRUtils.h"
 #include "WebPageProxy.h"
+#include "WebProcessProxy.h"
 #if USE(LIBEPOXY)
 #define __GBM__ 1
 #include <epoxy/egl.h>
@@ -208,6 +209,7 @@ void OpenXRCoordinator::startSession(WebPageProxy& page, WeakPtr<PlatformXRCoord
                 .renderState = renderState,
                 .renderThread = Thread::create("OpenXR render thread"_s, [this, renderState] { renderLoop(renderState); }),
             };
+            page.uiClient().didStartXRSession(page);
         },
         [&](Active&) {
             RELEASE_LOG_ERROR(XR, "OpenXRCoordinator: an existing immersive session is active");
@@ -252,6 +254,8 @@ void OpenXRCoordinator::endSessionIfExists(std::optional<WebCore::PageIdentifier
             }
 
             m_state = Idle { };
+            if (RefPtr page = WebProcessProxy::webPage(active.pageIdentifier))
+                page->uiClient().didEndXRSession(*page);
         });
 }
 

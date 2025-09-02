@@ -104,6 +104,7 @@ HitTestResult::HitTestResult(const HitTestResult& other)
     , m_innerURLElement(other.URLElement())
     , m_scrollbar(other.scrollbar())
     , m_isOverWidget(other.isOverWidget())
+    , m_pseudoElementIdentifier(other.pseudoElementIdentifier())
 {
     // Only copy the NodeSet in case of list hit test.
     if (other.m_listBasedTestResult) {
@@ -124,6 +125,7 @@ HitTestResult& HitTestResult::operator=(const HitTestResult& other)
     m_innerURLElement = other.URLElement();
     m_scrollbar = other.scrollbar();
     m_isOverWidget = other.isOverWidget();
+    m_pseudoElementIdentifier = other.pseudoElementIdentifier();
 
     // Only copy the NodeSet in case of list hit test.
     if (other.m_listBasedTestResult) {
@@ -186,6 +188,16 @@ LocalFrame* HitTestResult::innerNodeFrame() const
     if (m_innerNode)
         return m_innerNode->document().frame();
     return 0;
+}
+
+std::optional<Style::PseudoElementIdentifier> HitTestResult::pseudoElementIdentifier() const
+{
+    return m_pseudoElementIdentifier;
+}
+
+void HitTestResult::setPseudoElementIdentifier(std::optional<Style::PseudoElementIdentifier> pseudoElementIdentifier)
+{
+    m_pseudoElementIdentifier = pseudoElementIdentifier;
 }
 
 LocalFrame* HitTestResult::frame() const

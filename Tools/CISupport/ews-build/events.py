@@ -46,7 +46,7 @@ custom_suffix = get_custom_suffix()
 
 class Events(service.BuildbotService):
 
-    EVENT_SERVER_ENDPOINT = f'https://ews.webkit{custom_suffix}.org/results/'
+    EVENT_SERVER_ENDPOINT = load_password('EVENT_SERVER_ENDPOINT', default=f'https://ews.webkit{custom_suffix}.org/results/')
     MAX_GITHUB_DESCRIPTION = 140
     STEPS_TO_REPORT = [
         'analyze-api-tests-results', 'analyze-compile-webkit-results', 'analyze-jsc-tests-results',

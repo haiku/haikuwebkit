@@ -29,13 +29,13 @@
 
 #pragma once
 
-#include "FrameLoaderClient.h"
-#include "IntPoint.h"
-#include "LayoutMilestone.h"
-#include "LinkIcon.h"
-#include "LoaderMalloc.h"
-#include "RegistrableDomain.h"
-#include "ResourceLoaderIdentifier.h"
+#include <WebCore/FrameLoaderClient.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/LayoutMilestone.h>
+#include <WebCore/LinkIcon.h>
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/RegistrableDomain.h>
+#include <WebCore/ResourceLoaderIdentifier.h>
 #include <wtf/Expected.h>
 #include <wtf/Forward.h>
 #include <wtf/WallTime.h>
@@ -43,11 +43,11 @@
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(APPLICATION_MANIFEST)
-#include "ApplicationManifest.h"
+#include <WebCore/ApplicationManifest.h>
 #endif
 
 #if ENABLE(CONTENT_FILTERING)
-#include "ContentFilterUnblockHandler.h"
+#include <WebCore/ContentFilterUnblockHandler.h>
 #endif
 
 #if PLATFORM(COCOA)
@@ -227,15 +227,6 @@ public:
     virtual bool supportsAsyncShouldGoToHistoryItem() const = 0;
     virtual void shouldGoToHistoryItemAsync(HistoryItem&, CompletionHandler<void(ShouldGoToHistoryItem)>&&) const = 0;
 
-    // This frame has displayed inactive content (such as an image) from an
-    // insecure source.  Inactive content cannot spread to other frames.
-    virtual void didDisplayInsecureContent() = 0;
-
-    // The indicated security origin has run active content (such as a
-    // script) from an insecure source.  Note that the insecure content can
-    // spread to other frames in the same origin.
-    virtual void didRunInsecureContent(SecurityOrigin&) = 0;
-
     virtual bool shouldFallBack(const ResourceError&) const = 0;
 
     virtual void loadStorageAccessQuirksIfNeeded() = 0;
@@ -351,6 +342,7 @@ public:
 #endif
 
     virtual bool hasFrameSpecificStorageAccess() { return false; }
+    virtual void revokeFrameSpecificStorageAccess() { }
     virtual void didLoadFromRegistrableDomain(RegistrableDomain&&) { }
     virtual Vector<RegistrableDomain> loadedSubresourceDomains() const { return { }; }
 

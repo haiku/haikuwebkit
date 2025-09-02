@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "ContainerNode.h"
-#include "ParserContentPolicy.h"
+#include <WebCore/ContainerNode.h>
+#include <WebCore/ParserContentPolicy.h>
 
 namespace WebCore {
 

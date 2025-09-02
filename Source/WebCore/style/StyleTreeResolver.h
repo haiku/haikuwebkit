@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "AnchorPositionEvaluator.h"
+#include <WebCore/AnchorPositionEvaluator.h>
 #include "PropertyCascade.h"
 #include "SelectorChecker.h"
 #include "SelectorMatchingState.h"
-#include "StyleChange.h"
-#include "StyleUpdate.h"
-#include "Styleable.h"
+#include <WebCore/StyleChange.h>
+#include <WebCore/StyleUpdate.h>
+#include <WebCore/Styleable.h>
 #include "TreeResolutionState.h"
 #include <wtf/Function.h>
 #include <wtf/Ref.h>
@@ -99,7 +99,7 @@ private:
 
     HashSet<AnimatableCSSProperty> applyCascadeAfterAnimation(RenderStyle&, const HashSet<AnimatableCSSProperty>&, bool isTransition, const MatchResult&, const Element&, const ResolutionContext&);
 
-    std::optional<ElementUpdate> resolvePseudoElement(Element&, const PseudoElementIdentifier&, const ElementUpdate&, IsInDisplayNoneTree);
+    std::optional<ElementUpdate> resolvePseudoElement(Element&, const PseudoElementIdentifier&, const ElementUpdate&, IsInDisplayNoneTree, const RenderStyle*);
     std::optional<ElementUpdate> resolveAncestorPseudoElement(Element&, const PseudoElementIdentifier&, const ElementUpdate&);
     std::optional<ResolvedStyle> resolveAncestorFirstLinePseudoElement(Element&, const ElementUpdate&);
     std::optional<ResolvedStyle> resolveAncestorFirstLetterPseudoElement(Element&, const ElementUpdate&, ResolutionContext&);
@@ -172,7 +172,7 @@ private:
     std::unique_ptr<RenderStyle> generatePositionOption(const PositionTryFallback&, const ResolvedStyle&, const Styleable&, const ResolutionContext&);
     struct PositionOptions;
     void sortPositionOptionsIfNeeded(PositionOptions&, const Styleable&);
-    std::optional<ResolvedStyle> tryChoosePositionOption(const Styleable&, const RenderStyle* existingStyle);
+    std::optional<ResolvedStyle> tryChoosePositionOption(const Styleable&);
 
     void updateForPositionVisibility(RenderStyle&, const Styleable&);
 
@@ -212,14 +212,24 @@ private:
     TreeResolutionState m_treeResolutionState;
     HashMap<Ref<const Element>, std::unique_ptr<RenderStyle>> m_savedBeforeResolutionStylesForInterleaving;
 
+    struct PositionOption {
+        std::unique_ptr<RenderStyle> style;
+        // Index of the option in the position-try-fallbacks list.
+        std::optional<size_t> fallbackIndex;
+    };
+
     struct PositionOptions {
-        std::unique_ptr<RenderStyle> originalStyle;
-        Vector<std::unique_ptr<RenderStyle>> optionStyles { };
+        // Array of option styles. By convention, the original style is at index 0.
+        Vector<PositionOption> optionStyles { };
         size_t index { 0 };
         bool sorted { false };
         bool chosen { false };
+        bool isFirstTry { true };
+
+        const RenderStyle& originalStyle() const;
+        std::unique_ptr<RenderStyle> currentOption() const;
     };
-    HashMap<Ref<Element>, PositionOptions> m_positionOptions;
+    HashMap<AnchorPositionedKey, PositionOptions> m_positionOptions;
 
     HashSet<AtomString> m_changedAnchorNames;
     bool m_allAnchorNamesInvalid { false };
@@ -230,6 +240,17 @@ private:
 // Integrate with the HTML5 event loop instead, see EventLoop.cpp and consumers.
 void deprecatedQueuePostResolutionCallback(Function<void()>&&);
 bool postResolutionCallbacksAreSuspended();
+
+inline bool supportsFirstLineAndLetterPseudoElement(const RenderStyle& style)
+{
+    auto display = style.display();
+    return display == DisplayType::Block
+        || display == DisplayType::ListItem
+        || display == DisplayType::InlineBlock
+        || display == DisplayType::TableCell
+        || display == DisplayType::TableCaption
+        || display == DisplayType::FlowRoot;
+}
 
 class PostResolutionCallbackDisabler {
 public:

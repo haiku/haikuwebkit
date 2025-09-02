@@ -27,10 +27,10 @@
 
 #if USE(LIBWEBRTC)
 
-#include "LibWebRTCMacros.h"
-#include "LibWebRTCRefWrappers.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "WebRTCProvider.h"
+#include <WebCore/LibWebRTCMacros.h>
+#include <WebCore/LibWebRTCRefWrappers.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/WebRTCProvider.h>
 #include <wtf/Compiler.h>
 #include <wtf/TZoneMalloc.h>
 

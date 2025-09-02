@@ -28,8 +28,8 @@
 
 #if ENABLE(GEOLOCATION)
 
-#include "PositionOptions.h"
-#include "Timer.h"
+#include <WebCore/PositionOptions.h>
+#include <WebCore/Timer.h>
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>

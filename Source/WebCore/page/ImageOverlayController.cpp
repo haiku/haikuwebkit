@@ -31,6 +31,7 @@
 #include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "Editor.h"
+#include "FloatQuad.h"
 #include "FrameSelection.h"
 #include "GraphicsContext.h"
 #include "HTMLElement.h"

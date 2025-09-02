@@ -26,7 +26,7 @@
 
 #if ENABLE(MEDIA_RECORDER)
 
-#include "MediaRecorderPrivateWriter.h"
+#include <WebCore/MediaRecorderPrivateWriter.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>
 

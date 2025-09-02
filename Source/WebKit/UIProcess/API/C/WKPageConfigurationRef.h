@@ -63,6 +63,9 @@ WK_EXPORT void WKPageConfigurationSetShouldSendConsoleLogsToUIProcessForTesting(
 
 WK_EXPORT void WKPageConfigurationSetPortsForUpgradingInsecureSchemeForTesting(WKPageConfigurationRef configuration, uint16_t upgradeFromInsecurePort, uint16_t upgradeToSecurePort);
 
+WK_EXPORT void WKPageConfigurationSetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration, bool allow);
+WK_EXPORT bool WKPageConfigurationGetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration);
+
 #ifdef __cplusplus
 }
 #endif

@@ -27,7 +27,7 @@
 
 #if ENABLE(GAMEPAD)
 
-#include "PlatformGamepad.h"
+#include <WebCore/PlatformGamepad.h>
 
 namespace WebCore {
 

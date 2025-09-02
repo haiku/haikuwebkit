@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "LayerHostingContextIdentifier.h"
-#include "PlatformLayerIdentifier.h"
-#include "TransformationMatrix.h"
+#include <WebCore/LayerHostingContextIdentifier.h>
+#include <WebCore/PlatformLayerIdentifier.h>
+#include <WebCore/TransformationMatrix.h>
 #include <wtf/Forward.h>
 #include <wtf/WeakPtr.h>
 

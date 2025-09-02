@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "HTMLDivElement.h"
+#include <WebCore/HTMLDivElement.h>
 
 namespace WebCore {
 

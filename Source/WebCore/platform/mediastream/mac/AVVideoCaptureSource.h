@@ -27,10 +27,10 @@
 
 #if ENABLE(MEDIA_STREAM) && HAVE(AVCAPTUREDEVICE)
 
-#include "IntSize.h"
-#include "OrientationNotifier.h"
-#include "RealtimeVideoCaptureSource.h"
-#include "Timer.h"
+#include <WebCore/IntSize.h>
+#include <WebCore/OrientationNotifier.h>
+#include <WebCore/RealtimeVideoCaptureSource.h>
+#include <WebCore/Timer.h>
 #include <wtf/Lock.h>
 #include <wtf/text/StringHash.h>
 

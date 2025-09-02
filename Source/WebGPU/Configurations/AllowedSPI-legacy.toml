@@ -3,6 +3,6 @@
 
 [graphics.legacy]
 selectors = [
-    "newSharedEventWithMachPort:",
-    "setSampleMask:",
+    { name = "newSharedEventWithMachPort:", class = "?" },
+    { name = "setSampleMask:", class = "?" },
 ]

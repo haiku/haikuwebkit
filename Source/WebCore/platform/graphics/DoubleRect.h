@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "DoublePoint.h"
-#include "DoubleSize.h"
+#include <WebCore/DoublePoint.h>
+#include <WebCore/DoubleSize.h>
 
 #if USE(CG)
 typedef struct CGRect CGRect;

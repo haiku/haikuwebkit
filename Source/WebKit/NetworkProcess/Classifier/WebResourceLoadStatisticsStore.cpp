@@ -35,6 +35,7 @@
 #include "PrivateClickMeasurementManager.h"
 #include "ResourceLoadStatisticsStore.h"
 #include "ShouldGrandfatherStatistics.h"
+#include "StorageAccessPermissionChangeObserver.h"
 #include "StorageAccessStatus.h"
 #include "WebFrameProxy.h"
 #include "WebPageProxy.h"
@@ -48,6 +49,7 @@
 #include <WebCore/IsLoggedIn.h>
 #include <WebCore/LoginStatus.h>
 #include <WebCore/NetworkStorageSession.h>
+#include <WebCore/PermissionState.h>
 #include <WebCore/ResourceLoadStatistics.h>
 #include <WebCore/SQLiteDatabase.h>
 #include <WebCore/SQLiteFileSystem.h>
@@ -454,6 +456,47 @@ void WebResourceLoadStatisticsStore::requestStorageAccess(RegistrableDomain&& su
                 statusHandler(status);
             });
         });
+    });
+}
+
+void WebResourceLoadStatisticsStore::queryStorageAccessPermission(SubFrameDomain&& subFrameDomain, TopFrameDomain&& topFrameDomain, CompletionHandler<void(PermissionState)>&& completionHandler)
+{
+    ASSERT(RunLoop::isMain());
+
+    postTask([subFrameDomain = WTFMove(subFrameDomain).isolatedCopy(), topFrameDomain = WTFMove(topFrameDomain).isolatedCopy(), completionHandler = WTFMove(completionHandler)](auto& store) mutable {
+        RefPtr statisticsStore = store.m_statisticsStore;
+        if (!statisticsStore) {
+            return postTaskReply([completionHandler = WTFMove(completionHandler)] mutable {
+                completionHandler(PermissionState::Denied);
+            });
+        }
+
+        statisticsStore->queryStorageAccessPermission(WTFMove(subFrameDomain), WTFMove(topFrameDomain), [completionHandler = WTFMove(completionHandler)](PermissionState permissionState) mutable {
+            postTaskReply([completionHandler = WTFMove(completionHandler), permissionState] mutable {
+                completionHandler(permissionState);
+            });
+        });
+    });
+}
+
+void WebResourceLoadStatisticsStore::startListeningForStorageAccessPermissionChanges(StorageAccessPermissionChangeObserver& observer, TopFrameDomain&& topFrameDomain, SubFrameDomain&& subFrameDomain)
+{
+    m_storageAccessPermissionChangeObservers.ensure({ WTFMove(topFrameDomain), WTFMove(subFrameDomain) }, [] {
+        return WeakHashSet<StorageAccessPermissionChangeObserver> { };
+    }).iterator->value.add(observer);
+}
+
+void WebResourceLoadStatisticsStore::stopListeningForStorageAccessPermissionChanges(StorageAccessPermissionChangeObserver& observer, TopFrameDomain&& topFrameDomain, SubFrameDomain&& subFrameDomain)
+{
+    if (auto it = m_storageAccessPermissionChangeObservers.find({ WTFMove(topFrameDomain), WTFMove(subFrameDomain) }); it != m_storageAccessPermissionChangeObservers.end())
+        it->value.remove(observer);
+}
+
+void WebResourceLoadStatisticsStore::stopListeningForStorageAccessPermissionChanges(StorageAccessPermissionChangeObserver& observer)
+{
+    m_storageAccessPermissionChangeObservers.removeIf([&](auto& entry) {
+        entry.value.remove(observer);
+        return entry.value.isEmptyIgnoringNullReferences();
     });
 }
 
@@ -1638,19 +1681,32 @@ void WebResourceLoadStatisticsStore::setStorageAccessPermissionForTesting(bool g
         if (!statisticsStore)
             return postTaskReply(WTFMove(completionHandler));
 
-        if (granted)
+        Ref callbackAggregator = CallbackAggregator::create([completionHandler = WTFMove(completionHandler)] mutable {
+            postTaskReply(WTFMove(completionHandler));
+        });
+
+        if (granted) {
+            statisticsStore->logUserInteraction(subFrameDomain, [callbackAggregator] { });
             statisticsStore->grantStorageAccessPermission(topFrameDomain, subFrameDomain);
-        else
+        } else {
+            statisticsStore->clearUserInteraction(subFrameDomain, [callbackAggregator] { });
             statisticsStore->revokeStorageAccessPermission(subFrameDomain);
-        postTaskReply(WTFMove(completionHandler));
+        }
     });
 }
 
 void WebResourceLoadStatisticsStore::wasGrantedStorageAccessPermissionInPage(WebPageProxyIdentifier webPageProxyID, const RegistrableDomain& topFrameDomain, const RegistrableDomain& subFrameDomain)
 {
-    m_domainsGrantedStorageAccessPermissionInPage.ensure(webPageProxyID, [] {
+    auto result = m_domainsGrantedStorageAccessPermissionInPage.ensure(webPageProxyID, [] {
         return HashSet<std::pair<TopFrameDomain, SubFrameDomain>>();
     }).iterator->value.add({ topFrameDomain, subFrameDomain });
+
+    if (result.isNewEntry) {
+        if (auto it = m_storageAccessPermissionChangeObservers.find({ topFrameDomain, subFrameDomain }); it != m_storageAccessPermissionChangeObservers.end()) {
+            for (Ref observer : it->value)
+                observer->storageAccessPermissionChanged(topFrameDomain, subFrameDomain);
+        }
+    }
 }
 
 void WebResourceLoadStatisticsStore::wasRevokedStorageAccessPermissionInPage(WebPageProxyIdentifier webPageProxyID)

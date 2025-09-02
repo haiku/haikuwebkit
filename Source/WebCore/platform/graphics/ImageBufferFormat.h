@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "ImageBufferPixelFormat.h"
-#include "PixelFormat.h"
+#include <WebCore/ImageBufferPixelFormat.h>
+#include <WebCore/PixelFormat.h>
 
 #include <wtf/Forward.h>
 

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "StyleScopeIdentifier.h"
+#include <WebCore/StyleScopeIdentifier.h>
 #include <wtf/Forward.h>
 #include <wtf/text/AtomString.h>
 

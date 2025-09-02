@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include "HitTestRequest.h"
-#include "LengthFunctions.h"
-#include "RenderObject.h"
-#include "RenderPtr.h"
-#include "RenderStyle.h"
+#include <WebCore/HitTestRequest.h>
+#include <WebCore/LengthFunctions.h>
+#include <WebCore/RenderObject.h>
+#include <WebCore/RenderPtr.h>
+#include <WebCore/RenderStyle.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/Packed.h>

@@ -29,6 +29,7 @@
 #pragma once
 
 #include "AccessibilityNodeObject.h"
+#include "HTMLMediaElement.h"
 #include "LayoutRect.h"
 #include "PluginViewBase.h"
 #include "RenderObject.h"
@@ -44,6 +45,7 @@ class HTMLAreaElement;
 class HTMLElement;
 class HTMLLabelElement;
 class HTMLMapElement;
+class HTMLMediaElement;
 class IntPoint;
 class IntSize;
 class LocalFrameView;
@@ -71,6 +73,9 @@ public:
     bool isNonLayerSVGObject() const final;
 
     bool isAttachment() const final;
+#if ENABLE(ATTACHMENT_ELEMENT)
+    bool isAttachmentElement() const final;
+#endif
     bool isDetached() const final { return !m_renderer && AccessibilityNodeObject::isDetached(); }
     bool isOffScreen() const final;
     bool hasBoldFont() const final;
@@ -107,7 +112,6 @@ public:
     CharacterRange selectedTextRange() const final;
     int insertionPointLineNumber() const final;
     String stringValue() const override;
-    String helpText() const override;
     String textUnderElement(TextUnderElementMode = TextUnderElementMode()) const override;
     String selectedText() const final;
 #if ENABLE(AX_THREAD_TEXT_APIS)
@@ -123,8 +127,20 @@ public:
     LocalFrameView* documentFrameView() const final;
     bool isPlugin() const final { return is<PluginViewBase>(widget()); }
 
+#if PLATFORM(IOS_FAMILY)
+    void enterFullscreen() const;
+    void toggleMute();
+
+    String interactiveVideoDuration() const;
+    bool isPlaying() const;
+    bool isAutoplayEnabled() const;
+    bool isMuted() const;
+    bool isMediaObject() const override { return is<HTMLMediaElement>(node()); }
+#endif
+
     void setSelectedTextRange(CharacterRange&&) final;
     bool setValue(const String&) override;
+    bool press() override;
 
     void addChildren() override;
 
@@ -200,8 +216,6 @@ private:
 #if PLATFORM(MAC)
     void updateAttachmentViewParents();
 #endif
-    String expandedTextValue() const override;
-    bool supportsExpandedTextValue() const override;
     virtual void updateRoleAfterChildrenCreation();
 
     bool inheritsPresentationalRole() const override;

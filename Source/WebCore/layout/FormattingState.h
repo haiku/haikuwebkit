@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "FormattingContext.h"
-#include "LayoutState.h"
+#include <WebCore/FormattingContext.h>
+#include <WebCore/LayoutState.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

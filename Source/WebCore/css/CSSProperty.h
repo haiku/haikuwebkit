@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
-#include "CSSValue.h"
-#include "IsImportant.h"
-#include "WritingMode.h"
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CSSValue.h>
+#include <WebCore/IsImportant.h>
+#include <WebCore/WritingMode.h>
 #include <wtf/BitSet.h>
 #include <wtf/RefPtr.h>
 

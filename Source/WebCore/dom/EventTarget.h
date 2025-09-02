@@ -30,9 +30,9 @@
 
 #pragma once
 
-#include "EventListenerMap.h"
-#include "EventListenerOptions.h"
-#include "ScriptWrappable.h"
+#include <WebCore/EventListenerMap.h>
+#include <WebCore/EventListenerOptions.h>
+#include <WebCore/ScriptWrappable.h>
 #include <memory>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Forward.h>

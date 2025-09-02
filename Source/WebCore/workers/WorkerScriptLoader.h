@@ -26,19 +26,19 @@
 
 #pragma once
 
-#include "AdvancedPrivacyProtections.h"
-#include "CertificateInfo.h"
-#include "ContentSecurityPolicyResponseHeaders.h"
-#include "CrossOriginEmbedderPolicy.h"
-#include "FetchOptions.h"
-#include "ResourceError.h"
-#include "ResourceRequest.h"
-#include "ResourceResponse.h"
-#include "ScriptBuffer.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "ServiceWorkerRegistrationData.h"
-#include "ThreadableLoader.h"
-#include "ThreadableLoaderClient.h"
+#include <WebCore/AdvancedPrivacyProtections.h>
+#include <WebCore/CertificateInfo.h>
+#include <WebCore/ContentSecurityPolicyResponseHeaders.h>
+#include <WebCore/CrossOriginEmbedderPolicy.h>
+#include <WebCore/FetchOptions.h>
+#include <WebCore/ResourceError.h>
+#include <WebCore/ResourceRequest.h>
+#include <WebCore/ResourceResponse.h>
+#include <WebCore/ScriptBuffer.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/ServiceWorkerRegistrationData.h>
+#include <WebCore/ThreadableLoader.h>
+#include <WebCore/ThreadableLoaderClient.h>
 #include <memory>
 #include <wtf/OptionSet.h>
 #include <wtf/RefCounted.h>

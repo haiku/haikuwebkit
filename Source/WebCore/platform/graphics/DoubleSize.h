@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "IntSize.h"
+#include <WebCore/IntSize.h>
 #include <wtf/MathExtras.h>
 
 #if USE(CG)

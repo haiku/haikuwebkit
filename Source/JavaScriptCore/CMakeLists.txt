@@ -1325,6 +1325,8 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/StableSort.h
     runtime/StackAlignment.h
     runtime/StackFrame.h
+    runtime/StackManager.h
+    runtime/StackManagerInlines.h
     runtime/StringIteratorPrototype.h
     runtime/StringObject.h
     runtime/StringPrototype.h

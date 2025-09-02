@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "LayoutRect.h"
-#include "WritingMode.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/WritingMode.h>
 #include <wtf/FixedVector.h>
 
 namespace WebCore {

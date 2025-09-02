@@ -21,15 +21,15 @@
 
 #pragma once
 
-#include "CSSSelector.h"
-#include "CSSSelectorList.h"
-#include "CSSVariableData.h"
-#include "CompiledSelector.h"
-#include "ContainerQuery.h"
-#include "FontFeatureValues.h"
-#include "FontPaletteValues.h"
-#include "MediaQuery.h"
-#include "StyleRuleType.h"
+#include <WebCore/CSSSelector.h>
+#include <WebCore/CSSSelectorList.h>
+#include <WebCore/CSSVariableData.h>
+#include <WebCore/CompiledSelector.h>
+#include <WebCore/ContainerQuery.h>
+#include <WebCore/FontFeatureValues.h>
+#include <WebCore/FontPaletteValues.h>
+#include <WebCore/MediaQuery.h>
+#include <WebCore/StyleRuleType.h>
 #include <map>
 #include <wtf/NoVirtualDestructorBase.h>
 #include <wtf/Ref.h>

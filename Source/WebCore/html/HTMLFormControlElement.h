@@ -23,12 +23,12 @@
 
 #pragma once
 
-#include "Autofill.h"
-#include "HTMLElement.h"
-#include "ValidatedFormListedElement.h"
+#include <WebCore/Autofill.h>
+#include <WebCore/HTMLElement.h>
+#include <WebCore/ValidatedFormListedElement.h>
 
 #if ENABLE(AUTOCAPITALIZE)
-#include "Autocapitalize.h"
+#include <WebCore/Autocapitalize.h>
 #endif
 
 namespace WebCore {

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "AccessibilityObject.h"
+#include <WebCore/AccessibilityObject.h>
 #include <wtf/StdLibExtras.h>
 
 #define TEXT_MARKER_ASSERT(assertion) do { \

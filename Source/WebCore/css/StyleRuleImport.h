@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "CachedResourceHandle.h"
-#include "CachedStyleSheetClient.h"
-#include "MediaQuery.h"
-#include "StyleRule.h"
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/CachedStyleSheetClient.h>
+#include <WebCore/MediaQuery.h>
+#include <WebCore/StyleRule.h>
 #include <wtf/TypeCasts.h>
 
 namespace WebCore {

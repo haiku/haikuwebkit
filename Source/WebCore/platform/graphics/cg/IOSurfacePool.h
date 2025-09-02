@@ -27,10 +27,10 @@
 
 #if HAVE(IOSURFACE)
 
-#include "IOSurface.h"
-#include "IntSize.h"
-#include "IntSizeHash.h"
-#include "Timer.h"
+#include <WebCore/IOSurface.h>
+#include <WebCore/IntSize.h>
+#include <WebCore/IntSizeHash.h>
+#include <WebCore/Timer.h>
 #include <wtf/Deque.h>
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>

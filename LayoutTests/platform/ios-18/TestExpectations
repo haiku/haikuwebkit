@@ -103,6 +103,10 @@ fast/forms/form-control-refresh [ Skip ]
 imported/w3c/web-platform-tests/css/css-ui/button-author-level-padding-applies.html [ Skip ]
 imported/w3c/web-platform-tests/css/css-ui/select-author-level-padding-applies.html [ Skip ]
 
+# Test only passes with UIKit support for scrollbar color, added in iOS 26
+fast/scrolling/ios/scrollbar-color-body.html [ Skip ]
+fast/scrolling/ios/scrollbar-color.html [ Skip ]
+
 # -- The above has different, expected behavior on iOS 26 than iOS 18 --
 # -- New failure expectations below this point only!! --
 

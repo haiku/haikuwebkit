@@ -1542,7 +1542,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addI31GetS(ExpressionType value, Expres
 
     LOG_INSTRUCTION("I31GetS", value, RESULT(result));
 
-    m_jit.move(initialValue.asGPR(), resultLocation.asGPR());
+    m_jit.zeroExtend32ToWord(initialValue.asGPR(), resultLocation.asGPR());
 
     return { };
 }

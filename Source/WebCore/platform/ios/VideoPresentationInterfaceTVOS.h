@@ -27,7 +27,7 @@
 
 #if PLATFORM(APPLETV)
 
-#include "VideoPresentationInterfaceIOS.h"
+#include <WebCore/VideoPresentationInterfaceIOS.h>
 
 namespace WebCore {
 

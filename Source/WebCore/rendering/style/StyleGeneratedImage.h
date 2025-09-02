@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "FloatSize.h"
-#include "FloatSizeHash.h"
-#include "StyleImage.h"
+#include <WebCore/FloatSize.h>
+#include <WebCore/FloatSizeHash.h>
+#include <WebCore/StyleImage.h>
 #include <wtf/HashMap.h>
 #include <wtf/WeakHashCountedSet.h>
 

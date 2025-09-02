@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "LocalDOMWindowProperty.h"
-#include "NavigatorBase.h"
-#include "ScriptWrappable.h"
-#include "ShareData.h"
-#include "Supplementable.h"
+#include <WebCore/LocalDOMWindowProperty.h>
+#include <WebCore/NavigatorBase.h>
+#include <WebCore/ScriptWrappable.h>
+#include <WebCore/ShareData.h>
+#include <WebCore/Supplementable.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/TZoneMalloc.h>
 

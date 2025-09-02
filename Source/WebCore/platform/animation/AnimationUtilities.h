@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "Color.h"
-#include "CompositeOperation.h"
-#include "IntPoint.h"
-#include "IterationCompositeOperation.h"
-#include "LayoutPoint.h"
+#include <WebCore/Color.h>
+#include <WebCore/CompositeOperation.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/IterationCompositeOperation.h>
+#include <WebCore/LayoutPoint.h>
 
 namespace WebCore {
 

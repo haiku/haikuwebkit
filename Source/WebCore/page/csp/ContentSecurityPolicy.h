@@ -26,11 +26,11 @@
 
 #pragma once
 
-#include "ContentSecurityPolicyHash.h"
-#include "ContentSecurityPolicyResponseHeaders.h"
-#include "SecurityContext.h"
-#include "SecurityOrigin.h"
-#include "SecurityOriginHash.h"
+#include <WebCore/ContentSecurityPolicyHash.h>
+#include <WebCore/ContentSecurityPolicyResponseHeaders.h>
+#include <WebCore/SecurityContext.h>
+#include <WebCore/SecurityOrigin.h>
+#include <WebCore/SecurityOriginHash.h>
 #include <functional>
 #include <wtf/CheckedPtr.h>
 #include <wtf/FixedVector.h>
@@ -169,8 +169,6 @@ public:
     void setOverrideAllowInlineStyle(bool);
 
     void gatherReportURIs(DOMStringList&) const;
-
-    bool allowRunningOrDisplayingInsecureContent(const URL&);
 
     // The following functions are used by internal data structures to call back into this object when parsing, validating,
     // and applying a Content Security Policy.

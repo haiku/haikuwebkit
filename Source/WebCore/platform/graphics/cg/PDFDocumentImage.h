@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CachedSubimage.h"
-#include "FloatRect.h"
-#include "GraphicsTypes.h"
-#include "Image.h"
+#include <WebCore/CachedSubimage.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/Image.h>
 #include <wtf/RuntimeApplicationChecks.h>
 
 #if USE(CG)

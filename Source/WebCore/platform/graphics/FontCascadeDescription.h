@@ -24,12 +24,12 @@
 
 #pragma once
 
-#include "CSSValueKeywords.h"
-#include "FontDescription.h"
+#include <WebCore/CSSValueKeywords.h>
+#include <WebCore/FontDescription.h>
 #include <wtf/RefCountedFixedVector.h>
 
 #if PLATFORM(COCOA)
-#include "FontFamilySpecificationCoreText.h"
+#include <WebCore/FontFamilySpecificationCoreText.h>
 #else
 #include "FontFamilySpecificationNull.h"
 #endif

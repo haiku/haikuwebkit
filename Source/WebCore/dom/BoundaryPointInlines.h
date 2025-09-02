@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "BoundaryPoint.h"
-#include "NodeInlines.h"
+#include <WebCore/BoundaryPoint.h>
+#include <WebCore/NodeInlines.h>
 
 namespace WebCore {
 

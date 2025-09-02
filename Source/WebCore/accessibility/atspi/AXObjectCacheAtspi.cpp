@@ -21,6 +21,7 @@
 #include "AXObjectCache.h"
 
 #if USE(ATSPI)
+#include "AXNotifications.h"
 #include "AXTextStateChangeIntent.h"
 #include "AccessibilityObject.h"
 #include "AccessibilityObjectAtspi.h"

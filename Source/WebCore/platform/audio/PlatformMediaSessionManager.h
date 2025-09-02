@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "MediaSessionManagerInterface.h"
-#include "PageIdentifier.h"
-#include "Timer.h"
+#include <WebCore/MediaSessionManagerInterface.h>
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/Timer.h>
 #include <wtf/AggregateLogger.h>
 #include <wtf/CancellableTask.h>
 #include <wtf/TZoneMalloc.h>

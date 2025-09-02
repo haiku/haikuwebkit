@@ -407,7 +407,7 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
     if (is<RenderButton>(renderBox)) {
         // We cannot rely on RenderFlexibleBox::baselinePosition() because of flexboxes have some special behavior
         // regarding baselines that shouldn't apply to buttons.
-        return renderBox.firstLineBaseline().value_or(contentBoxBottom);
+        return renderBox.lastLineBaseline().value_or(contentBoxBottom);
     }
 
     if (is<RenderListBox>(renderBox)) {

@@ -825,7 +825,7 @@ std::optional<LayoutUnit> GridTrackSizingAlgorithm::estimatedGridAreaBreadthForG
         // or are running the track sizing algorithm in the opposite direction and haven't run it in the desired direction yet.
         const auto& trackSize = wasSetup() ? calculateGridTrackSize(direction, trackPosition) : rawGridTrackSize(direction, trackPosition);
         auto& maxTrackSize = trackSize.maxTrackBreadth();
-        if (maxTrackSize.isContentSized() || maxTrackSize.isFlex() || isRelativeGridTrackBreadthAsAuto(maxTrackSize, direction))
+        if (maxTrackSize.isContentSized() || maxTrackSize.isFlex() || GridLayoutFunctions::isRelativeGridTrackBreadthAsAuto(maxTrackSize, availableSpace(direction)))
             gridAreaIsIndefinite = true;
         else
             gridAreaSize += Style::evaluate(maxTrackSize.length(), availableSize.value_or(0_lu));
@@ -881,16 +881,6 @@ std::optional<LayoutUnit> GridTrackSizingAlgorithm::gridAreaBreadthForGridItem(c
     return computeGridSpanSize(tracks(direction), span, addContentAlignmentOffset ? std::make_optional(m_renderGrid->gridItemOffset(direction)) : std::nullopt, m_renderGrid->guttersSize(direction, span.startLine(), span.integerSpan(), availableSpace(direction)));
 }
 
-bool GridTrackSizingAlgorithm::isRelativeGridTrackBreadthAsAuto(const Style::GridTrackFitContentLength& length, Style::GridTrackSizingDirection direction) const
-{
-    return length.isPercentOrCalculated() && !availableSpace(direction);
-}
-
-bool GridTrackSizingAlgorithm::isRelativeGridTrackBreadthAsAuto(const Style::GridTrackBreadth& length, Style::GridTrackSizingDirection direction) const
-{
-    return length.isPercentOrCalculated() && !availableSpace(direction);
-}
-
 bool GridTrackSizingAlgorithm::isIntrinsicSizedGridArea(const RenderBox& gridItem, Style::GridTrackSizingDirection gridAreaDirection) const
 {
     ASSERT(wasSetup());
@@ -920,7 +910,7 @@ Style::GridTrackSize GridTrackSizingAlgorithm::calculateGridTrackSize(Style::Gri
 
     auto& trackSize = rawGridTrackSize(direction, translatedIndex);
     if (trackSize.isFitContent()) {
-        if (isRelativeGridTrackBreadthAsAuto(trackSize.fitContentTrackLength(), direction))
+        if (GridLayoutFunctions::isRelativeGridTrackBreadthAsAuto(trackSize.fitContentTrackLength(), availableSpace(direction)))
             return Style::GridTrackSize::MinMax { CSS::Keyword::Auto { }, CSS::Keyword::MaxContent { } };
         return trackSize;
     }
@@ -929,9 +919,9 @@ Style::GridTrackSize GridTrackSizingAlgorithm::calculateGridTrackSize(Style::Gri
     auto maxTrackBreadth = trackSize.maxTrackBreadth();
     // If the logical width/height of the grid container is indefinite, percentage
     // values are treated as <auto>.
-    if (isRelativeGridTrackBreadthAsAuto(trackSize.minTrackBreadth(), direction))
+    if (GridLayoutFunctions::isRelativeGridTrackBreadthAsAuto(trackSize.minTrackBreadth(), availableSpace(direction)))
         minTrackBreadth = CSS::Keyword::Auto { };
-    if (isRelativeGridTrackBreadthAsAuto(trackSize.maxTrackBreadth(), direction))
+    if (GridLayoutFunctions::isRelativeGridTrackBreadthAsAuto(trackSize.maxTrackBreadth(), availableSpace(direction)))
         maxTrackBreadth = CSS::Keyword::Auto { };
 
     // Flex sizes are invalid as a min sizing function. However we still can have a flexible |minTrackBreadth|
@@ -1178,11 +1168,16 @@ LayoutUnit GridTrackSizingAlgorithmStrategy::minContributionForGridItem(RenderBo
         return minContentContributionForGridItem(gridItem, gridLayoutState);
 
     auto& gridItemMinSize = isRowAxis ? gridItem.style().logicalMinWidth() : gridItem.style().logicalMinHeight();
-    bool overflowIsVisible = isRowAxis ? gridItem.effectiveOverflowInlineDirection() == Overflow::Visible : gridItem.effectiveOverflowBlockDirection() == Overflow::Visible;
+
+    auto computedOverflowIsNotScrollable = [&gridItem, isRowAxis]() {
+        auto overflow = isRowAxis ? gridItem.effectiveOverflowInlineDirection() : gridItem.effectiveOverflowBlockDirection();
+        return overflow == Overflow::Visible || overflow == Overflow::Clip;
+    };
+
     LayoutUnit baselineShim = m_algorithm.baselineOffsetForGridItem(gridItem, direction());
 
     if (gridItemMinSize.isAuto()) {
-        if (!overflowIsVisible)
+        if (!computedOverflowIsNotScrollable())
             return { };
 
         auto minSize = minContentContributionForGridItem(gridItem, gridLayoutState);

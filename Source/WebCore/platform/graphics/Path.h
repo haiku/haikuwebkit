@@ -27,11 +27,11 @@
 
 #pragma once
 
-#include "PathElement.h"
-#include "PathImpl.h"
-#include "PathSegment.h"
-#include "PlatformPath.h"
-#include "WindRule.h"
+#include <WebCore/PathElement.h>
+#include <WebCore/PathImpl.h>
+#include <WebCore/PathSegment.h>
+#include <WebCore/PlatformPath.h>
+#include <WebCore/WindRule.h>
 #include <wtf/DataRef.h>
 #include <wtf/TZoneMalloc.h>
 

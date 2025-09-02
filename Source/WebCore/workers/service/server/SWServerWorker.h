@@ -25,20 +25,20 @@
 
 #pragma once
 
-#include "ClientOrigin.h"
-#include "ContentSecurityPolicyResponseHeaders.h"
-#include "CrossOriginEmbedderPolicy.h"
-#include "ExceptionData.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "ServiceWorkerClientData.h"
-#include "ServiceWorkerContextData.h"
-#include "ServiceWorkerData.h"
-#include "ServiceWorkerIdentifier.h"
-#include "ServiceWorkerRegistrationKey.h"
-#include "ServiceWorkerRoute.h"
-#include "ServiceWorkerTypes.h"
-#include "Site.h"
-#include "Timer.h"
+#include <WebCore/ClientOrigin.h>
+#include <WebCore/ContentSecurityPolicyResponseHeaders.h>
+#include <WebCore/CrossOriginEmbedderPolicy.h>
+#include <WebCore/ExceptionData.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/ServiceWorkerClientData.h>
+#include <WebCore/ServiceWorkerContextData.h>
+#include <WebCore/ServiceWorkerData.h>
+#include <WebCore/ServiceWorkerIdentifier.h>
+#include <WebCore/ServiceWorkerRegistrationKey.h>
+#include <WebCore/ServiceWorkerRoute.h>
+#include <WebCore/ServiceWorkerTypes.h>
+#include <WebCore/Site.h>
+#include <WebCore/Timer.h>
 #include <wtf/ApproximateTime.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>

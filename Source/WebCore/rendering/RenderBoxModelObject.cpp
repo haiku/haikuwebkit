@@ -168,12 +168,12 @@ void RenderBoxModelObject::setSelectionState(HighlightState state)
         containingBlock->setSelectionState(state);
 }
 
-void RenderBoxModelObject::contentChanged(ContentChangeType changeType)
+void RenderBoxModelObject::contentChanged(ContentChangeType changeType, const std::optional<FloatRect>& dirtyRect)
 {
     if (!hasLayer())
         return;
 
-    layer()->contentChanged(changeType);
+    layer()->contentChanged(changeType, dirtyRect);
 }
 
 bool RenderBoxModelObject::hasAcceleratedCompositing() const

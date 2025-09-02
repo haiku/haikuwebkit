@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "AbortSignal.h"
-#include "ActiveDOMObject.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
+#include <WebCore/AbortSignal.h>
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
 #include <wtf/ListHashSet.h>
 #include <wtf/RefCounted.h>
 #include <wtf/WeakPtr.h>

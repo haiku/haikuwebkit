@@ -29,13 +29,13 @@
 
 #pragma once
 
-#include "CSSParserContext.h"
-#include "CSSParserEnum.h"
-#include "CSSParserTokenRange.h"
-#include "CSSSelectorList.h"
-#include "CSSSelectorParserContext.h"
-#include "MutableCSSSelector.h"
-#include "StyleSheetContents.h"
+#include <WebCore/CSSParserContext.h>
+#include <WebCore/CSSParserEnum.h>
+#include <WebCore/CSSParserTokenRange.h>
+#include <WebCore/CSSSelectorList.h>
+#include <WebCore/CSSSelectorParserContext.h>
+#include <WebCore/MutableCSSSelector.h>
+#include <WebCore/StyleSheetContents.h>
 
 namespace WebCore {
 

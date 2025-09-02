@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "PlatformKeyboardEvent.h"
-#include "PlatformMouseEvent.h"
-#include "PlatformWheelEvent.h"
+#include <WebCore/PlatformKeyboardEvent.h>
+#include <WebCore/PlatformMouseEvent.h>
+#include <WebCore/PlatformWheelEvent.h>
 
 #if PLATFORM(MAC)
 

@@ -27,8 +27,8 @@
 
 #if PLATFORM(COCOA)
 
-#include "HTMLMediaElementEnums.h"
-#include "PlaybackSessionModel.h"
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/PlaybackSessionModel.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/TZoneMallocInlines.h>
 

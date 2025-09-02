@@ -27,12 +27,12 @@
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 
-#include "AcceleratedEffectValues.h"
-#include "AnimationEffectTiming.h"
-#include "CompositeOperation.h"
-#include "KeyframeInterpolation.h"
-#include "TimingFunction.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/AcceleratedEffectValues.h>
+#include <WebCore/AnimationEffectTiming.h>
+#include <WebCore/CompositeOperation.h>
+#include <WebCore/KeyframeInterpolation.h>
+#include <WebCore/TimingFunction.h>
+#include <WebCore/WebAnimationTypes.h>
 #include <wtf/OptionSet.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/TZoneMalloc.h>

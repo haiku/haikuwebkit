@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "CompositeOperation.h"
-#include "Length.h"
+#include <WebCore/CompositeOperation.h>
+#include <WebCore/Length.h>
 
 namespace WebCore {
 

@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "FloatPoint3D.h"
-#include "GraphicsLayer.h"
-#include "GraphicsLayerClient.h"
-#include "RenderLayer.h"
-#include "RenderLayerCompositor.h"
-#include "ScrollingCoordinator.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/FloatPoint3D.h>
+#include <WebCore/GraphicsLayer.h>
+#include <WebCore/GraphicsLayerClient.h>
+#include <WebCore/RenderLayer.h>
+#include <WebCore/RenderLayerCompositor.h>
+#include <WebCore/ScrollingCoordinator.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakListHashSet.h>
 
@@ -174,7 +174,7 @@ public:
     void setContentsNeedDisplayInRect(const LayoutRect&, GraphicsLayer::ShouldClipToLayer = GraphicsLayer::ClipToLayer);
 
     // Notification from the renderer that its content changed.
-    void contentChanged(ContentChangeType);
+    void contentChanged(ContentChangeType, const std::optional<FloatRect>&);
 
     // Interface to start, finish, suspend and resume animations
     bool startAnimation(double timeOffset, const Animation&, const BlendingKeyframes&);

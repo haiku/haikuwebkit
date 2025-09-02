@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "GraphicsLayer.h"
+#include <WebCore/GraphicsLayer.h>
 
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
 #include  "DynamicContentScalingDisplayList.h"

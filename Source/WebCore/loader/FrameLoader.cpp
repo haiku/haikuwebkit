@@ -2415,6 +2415,16 @@ void FrameLoader::commitProvisionalLoad()
         RefPtr page = frame->page();
         cachedPage->restore(*page);
 
+        // Dispatch any pending navigate event after BFCache restoration is complete.
+        if (RefPtr item = std::exchange(m_pendingNavigationAPIItem, nullptr)) {
+            // Ensure we use the restored document context, not the previous one
+            if (m_frame->document() && m_frame->document()->window()) {
+                RefPtr navigation = m_frame->document()->protectedWindow()->navigation();
+                if (navigation && navigation->frame())
+                    navigation->dispatchTraversalNavigateEvent(*item);
+            }
+        }
+
 #if PLATFORM(IOS_FAMILY)
         page->chrome().setDispatchViewportDataDidChangeSuppressed(false);
 #endif
@@ -4017,21 +4027,26 @@ void FrameLoader::continueLoadAfterNavigationPolicy(const ResourceRequest& reque
     bool navigateEventAborted = false;
     bool shouldCloseResult = true;
 
-    if (m_navigationAPITraversalInProgress && m_pendingNavigationAPIItem) {
+    if (m_pendingNavigationAPIItem) {
+        // Check if this will be a BFCache load - if so, defer navigate event until after restoration
+        bool willLoadFromBFCache = false;
+        if (RefPtr provisionalItem = history().provisionalItem(); provisionalItem && provisionalItem->isInBackForwardCache())
+            willLoadFromBFCache = true;
+
         // Only call shouldClose() early for Navigation API traversals
         shouldCloseResult = shouldClose();
 
-        if (shouldCloseResult && frame->document() && frame->document()->settings().navigationAPIEnabled()) {
+        if (shouldCloseResult && !willLoadFromBFCache) {
+            // For non-BFCache traversals, dispatch navigate event now
             if (RefPtr window = frame->document()->window()) {
                 if (RefPtr navigation = window->navigation(); navigation->frame()) {
                     if (navigation->dispatchTraversalNavigateEvent(Ref { *m_pendingNavigationAPIItem }) == Navigation::DispatchResult::Aborted)
                         navigateEventAborted = true;
                 }
             }
-        }
 
-        m_pendingNavigationAPIItem = nullptr;
-        m_navigationAPITraversalInProgress = false;
+            m_pendingNavigationAPIItem = nullptr;
+        }
     } else {
         // For non-Navigation API traversals, use original behavior with short-circuit evaluation
         shouldCloseResult = (navigationPolicyDecision == NavigationPolicyDecision::ContinueLoad && !urlIsDisallowed) ? shouldClose() : false;
@@ -4537,6 +4552,16 @@ void FrameLoader::loadDifferentDocumentItem(HistoryItem& item, HistoryItem* from
     loadWithNavigationAction(WTFMove(request), WTFMove(action), loadType, { }, AllowNavigationToInvalidURL::Yes, shouldTreatAsContinuingLoad);
 }
 
+bool FrameLoader::shouldDispatchNavigateEventForHistoryTraversal(const HistoryItem& item, const HistoryItem* fromItem)
+{
+    // Only dispatch navigate event if this history item belongs to the current frame
+    // and the navigation is same-origin. This prevents:
+    // 1. Joint session history bug where main frame incorrectly handles iframe history
+    // 2. Cross-origin navigations from firing navigate events
+    // Related spec: https://html.spec.whatwg.org/multipage/nav-history-apis.html#has-entries-and-events-disabled
+    return fromItem && item.frameID() == frame().frameID() && SecurityOrigin::create(item.url())->isSameOriginAs(SecurityOrigin::create(fromItem->url()));
+}
+
 // Loads content into this frame, as specified by history item
 void FrameLoader::loadItem(HistoryItem& item, HistoryItem* fromItem, FrameLoadType loadType, ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad)
 {
@@ -4548,10 +4573,11 @@ void FrameLoader::loadItem(HistoryItem& item, HistoryItem* fromItem, FrameLoadTy
     // If we're continuing this history navigation in a new process, then doing a same document navigation never makes sense.
     ASSERT(!sameDocumentNavigation || shouldTreatAsContinuingLoad == ShouldTreatAsContinuingLoad::No);
 
-    // For Navigation API navigation, handle navigate event
-    if (frame().document() && frame().document()->settings().navigationAPIEnabled() && fromItem && SecurityOrigin::create(item.url())->isSameOriginAs(SecurityOrigin::create(fromItem->url()))) {
+    // Check if Navigation API should handle this traversal
+    if (frame().document() && frame().document()->settings().navigationAPIEnabled() && shouldDispatchNavigateEventForHistoryTraversal(item, fromItem)) {
         if (sameDocumentNavigation) {
             // For same-document navigation, dispatch navigate event immediately.
+            // https://html.spec.whatwg.org/multipage/nav-history-apis.html#fire-a-traverse-navigate-event
             if (RefPtr window = frame().document()->window()) {
                 if (RefPtr navigation = window->navigation(); navigation->frame()) {
                     if (navigation->dispatchTraversalNavigateEvent(item) == Navigation::DispatchResult::Aborted)
@@ -4565,7 +4591,6 @@ void FrameLoader::loadItem(HistoryItem& item, HistoryItem* fromItem, FrameLoadTy
             // For cross-document navigation, save the item for later dispatch.
             // Navigate event will be dispatched after beforeunload.
             m_pendingNavigationAPIItem = &item;
-            m_navigationAPITraversalInProgress = true;
         }
     }
 

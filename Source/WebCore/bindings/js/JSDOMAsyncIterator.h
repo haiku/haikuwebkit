@@ -25,14 +25,14 @@
 
 #pragma once
 
-#include "JSDOMConvert.h"
-#include "JSDOMIterator.h"
-#include "JSDOMPromise.h"
-#include "JSDOMPromiseDeferred.h"
 #include <JavaScriptCore/AsyncIteratorPrototype.h>
 #include <JavaScriptCore/IteratorOperations.h>
 #include <JavaScriptCore/JSBoundFunction.h>
 #include <JavaScriptCore/PropertySlot.h>
+#include <WebCore/JSDOMConvert.h>
+#include <WebCore/JSDOMIterator.h>
+#include <WebCore/JSDOMPromise.h>
+#include <WebCore/JSDOMPromiseDeferred.h>
 #include <type_traits>
 #include <wtf/CompletionHandler.h>
 

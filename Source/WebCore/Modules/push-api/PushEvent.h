@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "ExtendableEvent.h"
-#include "Notification.h"
-#include "NotificationData.h"
-#include "PushEventInit.h"
+#include <WebCore/ExtendableEvent.h>
+#include <WebCore/Notification.h>
+#include <WebCore/NotificationData.h>
+#include <WebCore/PushEventInit.h>
 
 namespace WebCore {
 

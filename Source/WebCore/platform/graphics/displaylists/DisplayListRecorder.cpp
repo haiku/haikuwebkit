@@ -124,12 +124,12 @@ void Recorder::updateStateForSave(GraphicsContextState::Purpose purpose)
 
 bool Recorder::updateStateForRestore(GraphicsContextState::Purpose purpose)
 {
+    if (m_stateStack.size() <= 1)
+        return false;
+
     ASSERT(purpose == GraphicsContextState::Purpose::SaveRestore);
     appendStateChangeItemIfNecessary();
     GraphicsContext::restore(purpose);
-
-    if (!m_stateStack.size())
-        return false;
 
     m_stateStack.removeLast();
     return true;
@@ -194,12 +194,15 @@ void Recorder::updateStateForBeginTransparencyLayer(CompositeOperator compositeO
     m_stateStack.append(m_stateStack.last().cloneForTransparencyLayer());
 }
 
-void Recorder::updateStateForEndTransparencyLayer()
+bool Recorder::updateStateForEndTransparencyLayer()
 {
+    if (stateStack().size() <= 1)
+        return false;
     GraphicsContext::endTransparencyLayer();
     appendStateChangeItemIfNecessary();
     m_stateStack.removeLast();
     GraphicsContext::restore(GraphicsContextState::Purpose::TransparencyLayer);
+    return true;
 }
 
 void Recorder::updateStateForResetClip()

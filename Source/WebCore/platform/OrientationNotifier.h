@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "IntDegrees.h"
+#include <WebCore/IntDegrees.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Vector.h>
 

@@ -58,6 +58,7 @@ static JSC_DECLARE_HOST_FUNCTION(moduleLoaderResolve);
 static JSC_DECLARE_HOST_FUNCTION(moduleLoaderFetch);
 static JSC_DECLARE_HOST_FUNCTION(moduleLoaderGetModuleNamespaceObject);
 static JSC_DECLARE_HOST_FUNCTION(moduleLoaderTypeFromParameters);
+static JSC_DECLARE_HOST_FUNCTION(moduleLoaderCreateTypeErrorCopy);
 
 }
 
@@ -88,6 +89,7 @@ void JSModuleLoader::finishCreation(JSGlobalObject* globalObject, VM& vm)
     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("moduleDeclarationInstantiation"_s, moduleLoaderModuleDeclarationInstantiation, static_cast<unsigned>(PropertyAttribute::DontEnum), 2, ImplementationVisibility::Private);
     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("evaluate"_s, moduleLoaderEvaluate, static_cast<unsigned>(PropertyAttribute::DontEnum), 3, ImplementationVisibility::Private);
     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("typeFromParameters"_s, moduleLoaderTypeFromParameters, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Private);
+    JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("createTypeErrorCopy"_s, moduleLoaderCreateTypeErrorCopy, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Private);
 
     JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().ensureRegisteredPublicName(), moduleLoaderEnsureRegisteredCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
     JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().requestFetchPublicName(), moduleLoaderRequestFetchCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
@@ -468,6 +470,21 @@ JSC_DEFINE_HOST_FUNCTION(moduleLoaderTypeFromParameters, (JSGlobalObject* global
     if (!parameters)
         return JSValue::encode(jsUndefined());
     return JSValue::encode(stringFromScriptFetchParametersType(vm, parameters->parameters()));
+}
+
+JSC_DEFINE_HOST_FUNCTION(moduleLoaderCreateTypeErrorCopy, (JSGlobalObject* globalObject, CallFrame* callFrame))
+{
+    VM& vm = globalObject->vm();
+    JSValue original = callFrame->argument(0);
+    JSObject* copy = createTypeErrorCopy(globalObject, original);
+    // moduleFetchFailureKind needs to be copied to trigger failure notifications.
+    // See ScriptController::setupModuleScriptHandlers.
+    if (original.isObject()) {
+        JSObject* originalObject = asObject(original.asCell());
+        if (JSValue failureKindValue = originalObject->getDirect(vm, vm.propertyNames->builtinNames().moduleFetchFailureKindPrivateName()))
+            copy->putDirect(vm, vm.propertyNames->builtinNames().moduleFetchFailureKindPrivateName(), failureKindValue);
+    }
+    return JSValue::encode(copy);
 }
 
 // ------------------------------ Hook Functions ---------------------------

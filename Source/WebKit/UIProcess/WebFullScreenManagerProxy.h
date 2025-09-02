@@ -87,6 +87,8 @@ public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 
+    WebFullScreenManagerProxyClient* client() { return m_client.get(); }
+
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess(const IPC::Connection&) const;
 
     bool isFullScreen();

@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "BoxSides.h"
-#include "LayoutRange.h"
-#include "RenderBox.h"
-#include "StyleInset.h"
-#include "StyleMargin.h"
-#include "StyleSelfAlignmentData.h"
+#include <WebCore/BoxSides.h>
+#include <WebCore/LayoutRange.h>
+#include <WebCore/RenderBox.h>
+#include <WebCore/StyleInset.h>
+#include <WebCore/StyleMargin.h>
+#include <WebCore/StyleSelfAlignmentData.h>
 
 namespace WebCore {
 
@@ -46,6 +46,7 @@ public:
     LayoutUnit containingSize() const { return m_containingRange.size(); }
     LayoutUnit containingInlineSize() const { return m_containingInlineSize; }
     LayoutRange containingRange() const { return m_containingRange; }
+    LayoutRange originalContainingRange() const { return m_originalContainingRange; }
     LayoutRange extractRange(LayoutRect);
 
     BoxAxis physicalAxis() const { return m_physicalAxis; }
@@ -80,6 +81,7 @@ public:
     LayoutUnit insetAfterValue() const { return Style::evaluateMinimum(m_insetAfter, containingSize()); }
 
     LayoutUnit insetModifiedContainingSize() const { return m_insetModifiedContainingRange.size(); }
+    LayoutRange insetModifiedContainingRange() const { return m_insetModifiedContainingRange; }
     LayoutUnit availableContentSpace() const { return insetModifiedContainingSize() - marginBeforeValue() - bordersPlusPadding() - marginAfterValue(); } // This may be negative.
 
     void resolvePosition(RenderBox::LogicalExtentComputedValues&) const;

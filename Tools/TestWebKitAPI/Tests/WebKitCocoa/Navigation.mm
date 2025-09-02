@@ -4492,3 +4492,121 @@ TEST(WKNavigation, FrameNavigationWithPrivateTokenPermissionAndAllowOriginsAndWi
     didReceiveAllowPrivateToken = false;
 }
 #endif
+
+@interface NSURLSessionTask ()
+@property (nonatomic, copy) NSArray<NSHTTPCookie*>* (^_cookieTransformCallback)(NSArray<NSHTTPCookie*>* cookies);
+@end
+
+
+@interface NSURLSessionConfiguration ()
+@property BOOL _usesNWLoader;
+@end
+
+@interface SessionDelegate : NSObject <NSURLSessionDelegate>
+@end
+
+@implementation SessionDelegate
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler
+{
+    completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
+}
+@end
+
+TEST(Navigation, CookieTransformOnRedirect)
+{
+    using namespace TestWebKitAPI;
+    HTTPServer httpsServer({
+        { "/page1"_s, { 302, {{ "Location"_s, "https://site.example/page2"_s }, { "Set-Cookie"_s, "Test_Redirect=1;"_s }}, "redirecting..."_s } },
+        { "/page2"_s, { 200, {{ "Set-Cookie"_s, "Test=1;"_s }}, "body"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+    HTTPServer httpServer({
+        { "http://site.example/page1"_s, { 302, {{ "Location"_s, "http://site.example/page2"_s }, { "Set-Cookie"_s, "Test_Redirect=1;"_s }}, "redirecting..."_s } },
+        { "http://site.example/page2"_s, { 200, {{ "Set-Cookie"_s, "Test=1;"_s }}, "body"_s } },
+        { "http://site.example/page3"_s, { 302, {{ "Location"_s, "https://site.example/page2"_s }, { "Set-Cookie"_s, "Test_Redirect=1;"_s }}, "redirecting..."_s } }
+    }, HTTPServer::Protocol::Http);
+
+    // Partially copied from SessionSet::initializeEphemeralStatelessSessionIfNeeded.
+    RetainPtr configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    configuration.get().HTTPCookieAcceptPolicy = NSHTTPCookieAcceptPolicyAlways;
+    configuration.get().URLCredentialStorage = nil;
+    configuration.get().URLCache = nil;
+    configuration.get().connectionProxyDictionary = @{
+        (NSString *)kCFStreamPropertyHTTPProxyHost: @"127.0.0.1",
+        (NSString *)kCFStreamPropertyHTTPProxyPort: @(httpServer.port()),
+        (NSString *)kCFStreamPropertyHTTPSProxyHost: @"127.0.0.1",
+        (NSString *)kCFStreamPropertyHTTPSProxyPort: @(httpsServer.port())
+    };
+    configuration.get()._usesNWLoader = YES;
+
+    RetainPtr delegate = adoptNS([SessionDelegate new]);
+    RetainPtr session = [NSURLSession sessionWithConfiguration:configuration.get() delegate:delegate.get() delegateQueue:[NSOperationQueue mainQueue]];
+
+    __block unsigned transformCallbackCount = 0;
+    __block bool done = false;
+    RetainPtr task = [session dataTaskWithURL:[NSURL URLWithString:@"https://site.example/page1"] completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_NOT_NULL(data);
+        EXPECT_NOT_NULL(response);
+        done = true;
+    }];
+    task.get()._cookieTransformCallback = ^(NSArray<NSHTTPCookie*> *cookiesSetInResponse) {
+        EXPECT_EQ(cookiesSetInResponse.count, 1u);
+        if (!transformCallbackCount)
+            EXPECT_WK_STREQ(cookiesSetInResponse[0].name, @"Test_Redirect");
+        else
+            EXPECT_WK_STREQ(cookiesSetInResponse[0].name, @"Test");
+        transformCallbackCount++;
+        return cookiesSetInResponse;
+    };
+    [task resume];
+
+    TestWebKitAPI::Util::run(&done);
+    EXPECT_EQ(transformCallbackCount, 2u);
+
+    done = false;
+    transformCallbackCount = 0;
+
+    task = [session dataTaskWithURL:[NSURL URLWithString:@"http://site.example/page1"] completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_NOT_NULL(data);
+        EXPECT_NOT_NULL(response);
+        done = true;
+    }];
+    task.get()._cookieTransformCallback = ^(NSArray<NSHTTPCookie*> *cookiesSetInResponse) {
+        EXPECT_EQ(cookiesSetInResponse.count, 1u);
+        if (!transformCallbackCount)
+            EXPECT_WK_STREQ(cookiesSetInResponse[0].name, @"Test_Redirect");
+        else
+            EXPECT_WK_STREQ(cookiesSetInResponse[0].name, @"Test");
+        transformCallbackCount++;
+        return cookiesSetInResponse;
+    };
+    [task resume];
+
+    TestWebKitAPI::Util::run(&done);
+    EXPECT_EQ(transformCallbackCount, 2u);
+
+    done = false;
+    transformCallbackCount = 0;
+
+    task = [session dataTaskWithURL:[NSURL URLWithString:@"http://site.example/page3"] completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_NOT_NULL(data);
+        EXPECT_NOT_NULL(response);
+        done = true;
+    }];
+    task.get()._cookieTransformCallback = ^(NSArray<NSHTTPCookie*> *cookiesSetInResponse) {
+        EXPECT_EQ(cookiesSetInResponse.count, 1u);
+        if (!transformCallbackCount)
+            EXPECT_WK_STREQ(cookiesSetInResponse[0].name, @"Test_Redirect");
+        else
+            EXPECT_WK_STREQ(cookiesSetInResponse[0].name, @"Test");
+        transformCallbackCount++;
+        return cookiesSetInResponse;
+    };
+    [task resume];
+
+    TestWebKitAPI::Util::run(&done);
+    EXPECT_EQ(transformCallbackCount, 2u);
+}

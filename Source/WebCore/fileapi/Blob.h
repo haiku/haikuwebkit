@@ -31,15 +31,15 @@
 
 #pragma once
 
-#include "ActiveDOMObject.h"
-#include "BlobPropertyBag.h"
-#include "BlobURL.h"
-#include "FileReaderLoader.h"
-#include "ScriptExecutionContext.h"
-#include "ScriptWrappable.h"
-#include "SecurityOriginData.h"
-#include "URLKeepingBlobAlive.h"
-#include "URLRegistry.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/BlobPropertyBag.h>
+#include <WebCore/BlobURL.h>
+#include <WebCore/FileReaderLoader.h>
+#include <WebCore/ScriptExecutionContext.h>
+#include <WebCore/ScriptWrappable.h>
+#include <WebCore/SecurityOriginData.h>
+#include <WebCore/URLKeepingBlobAlive.h>
+#include <WebCore/URLRegistry.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/URL.h>
 

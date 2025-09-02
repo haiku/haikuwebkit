@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "TextGranularity.h"
-#include "VisiblePosition.h"
+#include <WebCore/TextGranularity.h>
+#include <WebCore/VisiblePosition.h>
 
 namespace WebCore {
 

@@ -1,6 +1,14 @@
+# SPI used by WebCore, either for temporary use (denoted by a bug URL) or
+# permanent use.
+#
+# More info: https://github.com/WebKit/WebKit/wiki/Using-SPI-on-Apple-platforms
 
 [accessibility."rdar://141698311"]
 classes = ["AXRemoteElement"]
+selectors = [
+    { name = "setOnClientSide:", class = "?" },
+    { name = "initWithUUID:andRemotePid:andContextId:", class = "?" },
+]
 
 [materials.not-web-essential]
 classes = ["MTMaterialLayer"]

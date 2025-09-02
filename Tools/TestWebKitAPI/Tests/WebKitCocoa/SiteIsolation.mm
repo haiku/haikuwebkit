@@ -389,6 +389,109 @@ TEST(SiteIsolation, LoadingCallbacksAndPostMessage)
     });
 }
 
+TEST(SiteIsolation, CancelNavigationResponseCleansUpProvisionalFrame)
+{
+    HTTPServer server({
+        { "/main"_s, { "hi"_s } },
+        { "/iframe1"_s, { "<script>alert('loaded iframe1')</script>"_s } },
+        { "/iframe2"_s, { "shouldn't actually load"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    webView.get().navigationDelegate = navigationDelegate.get();
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/main"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    [webView evaluateJavaScript:
+        @"var iframe1 = document.createElement('iframe');"
+        "document.body.appendChild(iframe1);"
+        "iframe1.src = 'https://apple.com/iframe1';"
+    completionHandler:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "loaded iframe1");
+
+    __block uint32_t failureCount = 0;
+    navigationDelegate.get().didFailProvisionalLoadInSubframeWithError = ^(WKWebView* webView, WKFrameInfo* frame, NSError* error) {
+        EXPECT_WK_STREQ(error.domain, WebKitErrorDomain);
+        EXPECT_EQ(error.code, WebKitErrorFrameLoadInterruptedByPolicyChange);
+        failureCount++;
+    };
+
+    navigationDelegate.get().decidePolicyForNavigationResponse = ^(WKNavigationResponse* navigationResponse, void (^completionHandler)(WKNavigationResponsePolicy)) {
+        completionHandler(WKNavigationResponsePolicyCancel);
+    };
+
+    [webView evaluateJavaScript:
+        @"var iframe2 = document.createElement('iframe');"
+        "document.body.appendChild(iframe2);"
+        "iframe2.src = 'https://apple.com/iframe2';"
+    completionHandler:nil];
+
+    EXPECT_TRUE(TestWebKitAPI::Util::waitFor(
+        ^{ return failureCount == 1; }
+    ));
+
+    // Make sure second navigation doesn't assert in WebFrame::createProvisionalFrame()
+    [webView evaluateJavaScript:@"iframe2.src = 'https://apple.com/iframe2';" completionHandler:nil];
+
+    EXPECT_TRUE(TestWebKitAPI::Util::waitFor(
+        ^{ return failureCount == 2; }
+    ));
+}
+
+TEST(SiteIsolation, CancelNavigationActionCleansUpProvisionalFrame)
+{
+    HTTPServer server({
+        { "/main"_s, { "hi"_s } },
+        { "/iframe1"_s, { "<script>alert('loaded iframe1')</script>"_s } },
+        { "/iframe2"_s, { 302, { { "Location"_s, "https://example.org/redirected"_s } }, "redirecting..."_s } },
+        { "/redirected"_s, { "this should not be loaded"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+
+    webView.get().navigationDelegate = navigationDelegate.get();
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/main"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    [webView evaluateJavaScript:
+        @"var iframe1 = document.createElement('iframe');"
+        "document.body.appendChild(iframe1);"
+        "iframe1.src = 'https://apple.com/iframe1';"
+    completionHandler:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "loaded iframe1");
+
+    __block uint32_t failureCount = 0;
+    navigationDelegate.get().didFailProvisionalLoadInSubframeWithError = ^(WKWebView* webView, WKFrameInfo* frame, NSError* error) {
+        EXPECT_WK_STREQ(error.domain, WebKitErrorDomain);
+        EXPECT_EQ(error.code, WebKitErrorFrameLoadInterruptedByPolicyChange);
+        failureCount++;
+    };
+
+    navigationDelegate.get().decidePolicyForNavigationAction = ^(WKNavigationAction* action, void (^completionHandler)(WKNavigationActionPolicy)) {
+        if ([action.request.URL.absoluteString containsString:@"/redirected"])
+            completionHandler(WKNavigationActionPolicyCancel);
+        else
+            completionHandler(WKNavigationActionPolicyAllow);
+    };
+
+    [webView evaluateJavaScript:
+        @"var iframe2 = document.createElement('iframe');"
+        "document.body.appendChild(iframe2);"
+        "iframe2.src = 'https://apple.com/iframe2';"
+    completionHandler:nil];
+
+    EXPECT_TRUE(TestWebKitAPI::Util::waitFor(
+        ^{ return failureCount == 1; }
+    ));
+
+    // Make sure second navigation doesn't assert in WebFrame::createProvisionalFrame()
+    [webView evaluateJavaScript:@"iframe2.src = 'https://apple.com/iframe2';" completionHandler:nil];
+
+    EXPECT_TRUE(TestWebKitAPI::Util::waitFor(
+        ^{ return failureCount == 2; }
+    ));
+}
+
 TEST(SiteIsolation, BasicPostMessageWindowOpen)
 {
     auto exampleHTML = "<script>"
@@ -5238,6 +5341,7 @@ TEST(SiteIsolation, HitTesting)
 
     HTTPServer server({
         { "/example"_s, { makeString(
+            "<meta name='viewport' content='width=device-width,initial-scale=1'>"
             "<iframe id=iframeid1 src='https://webkit.org/webkitframe'></iframe>"
             "<iframe id=iframeid2 src='/exampleframe'></iframe>"
             "<div id=mainframediv>"_s, text, text, "</div>"_s
@@ -5246,10 +5350,10 @@ TEST(SiteIsolation, HitTesting)
         { "/exampleframe"_s, { makeString("<div id=exampleiframediv>"_s, text, text, "</div>"_s) } },
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto hitTestResult = [] (RetainPtr<WKWebView> webView, CGPoint point, WKFrameInfo *coordinateFrame = nil) -> std::optional<std::pair<RetainPtr<_WKNodeInfo>, RetainPtr<WKFrameInfo>>> {
+    auto hitTestResult = [] (RetainPtr<WKWebView> webView, CGPoint point, WKFrameInfo *coordinateFrame = nil) -> std::optional<std::pair<RetainPtr<_WKJSHandle>, RetainPtr<WKFrameInfo>>> {
         __block bool done { false };
-        __block std::optional<std::pair<RetainPtr<_WKNodeInfo>, RetainPtr<WKFrameInfo>>> result;
-        [webView _hitTestAtPoint:point inFrameCoordinateSpace:coordinateFrame completionHandler:^(_WKNodeInfo *node, WKFrameInfo *frame, NSError *error) {
+        __block std::optional<std::pair<RetainPtr<_WKJSHandle>, RetainPtr<WKFrameInfo>>> result;
+        [webView _hitTestAtPoint:point inFrameCoordinateSpace:coordinateFrame completionHandler:^(_WKJSHandle *node, WKFrameInfo *frame, NSError *error) {
             done = true;
             if (error)
                 return;
@@ -5291,13 +5395,7 @@ TEST(SiteIsolation, HitTesting)
         hitTestPointInMainFrame(340, 40, "[object Text] undefined, child of exampleiframediv");
         hitTestPointInMainFrame(40, 240, "[object Text] undefined, child of mainframediv");
         hitTestPointInMainFrame(300, 240, "[object Text] undefined, child of mainframediv");
-        hitTestPointInMainFrame(340, 300,
-#if PLATFORM(MAC)
-            "[object Text] undefined, child of mainframediv"
-#else
-            "[object HTMLDivElement] mainframediv, child of "
-#endif
-        );
+        hitTestPointInMainFrame(340, 300, "[object Text] undefined, child of mainframediv");
 
         RetainPtr iframe = [webView firstChildFrame];
         auto hitTestPointInIFrame = [=] (size_t x, size_t y, const char* expected) {

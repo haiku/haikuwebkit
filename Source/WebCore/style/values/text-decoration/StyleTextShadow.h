@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "CSSTextShadow.h"
-#include "StyleColor.h"
-#include "StylePrimitiveNumericTypes.h"
-#include "StyleShadow.h"
+#include <WebCore/CSSTextShadow.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
+#include <WebCore/StyleShadow.h>
 
 namespace WebCore {
 namespace Style {

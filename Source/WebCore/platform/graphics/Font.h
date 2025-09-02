@@ -21,13 +21,13 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "FontMetrics.h"
-#include "FontPlatformData.h"
-#include "GlyphBuffer.h"
-#include "GlyphMetricsMap.h"
-#include "GlyphPage.h"
-#include "RenderingResourceIdentifier.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/FontMetrics.h>
+#include <WebCore/FontPlatformData.h>
+#include <WebCore/GlyphBuffer.h>
+#include <WebCore/GlyphMetricsMap.h>
+#include <WebCore/GlyphPage.h>
+#include <WebCore/RenderingResourceIdentifier.h>
 #include <wtf/BitVector.h>
 #include <wtf/Hasher.h>
 #include <wtf/WeakPtr.h>
@@ -40,7 +40,7 @@
 #endif
 
 #if ENABLE(MATHML)
-#include "OpenTypeMathData.h"
+#include <WebCore/OpenTypeMathData.h>
 #endif
 
 #if ENABLE(OPENTYPE_VERTICAL)

@@ -156,18 +156,11 @@ void PositionedLayoutConstraints::captureGridArea()
         return;
 
     if (LogicalBoxAxis::Inline == m_containingAxis) {
-        auto range = gridContainer->gridAreaColumnRangeForOutOfFlow(m_renderer);
-        if (!range)
-            return;
-        m_containingRange = *range;
-        m_containingInlineSize = range->size();
+        m_containingRange = gridContainer->gridAreaRangeForOutOfFlow(m_renderer, Style::GridTrackSizingDirection::Columns);
+        m_containingInlineSize = m_containingRange.size();
     } else {
-        auto range = gridContainer->gridAreaRowRangeForOutOfFlow(m_renderer);
-        if (range)
-            m_containingRange = *range;
-        auto columnRange = gridContainer->gridAreaColumnRangeForOutOfFlow(m_renderer);
-        if (columnRange)
-            m_containingInlineSize = columnRange->size();
+        m_containingRange = gridContainer->gridAreaRangeForOutOfFlow(m_renderer, Style::GridTrackSizingDirection::Rows);
+        m_containingInlineSize = gridContainer->gridAreaRangeForOutOfFlow(m_renderer, Style::GridTrackSizingDirection::Columns).size();
     }
 
     if (!startIsBefore()) {
@@ -198,7 +191,7 @@ void PositionedLayoutConstraints::captureAnchorGeometry()
         return;
 
     // Store the anchor geometry.
-    LayoutRect anchorRect = Style::AnchorPositionEvaluator::computeAnchorRectRelativeToContainingBlock(*m_defaultAnchorBox, *m_container);
+    LayoutRect anchorRect = Style::AnchorPositionEvaluator::computeAnchorRectRelativeToContainingBlock(*m_defaultAnchorBox, *m_container, m_renderer.get());
     m_anchorArea = extractRange(anchorRect);
 
     // Adjust containing block for position-area.
@@ -494,7 +487,10 @@ ItemPosition PositionedLayoutConstraints::resolveAlignmentValue() const
     }();
 
     if (m_style.positionArea() && ItemPosition::Normal == alignmentPosition)
-        return m_style.positionArea()->defaultAlignmentForAxis(m_physicalAxis, m_containingWritingMode, m_writingMode);
+        alignmentPosition = m_style.positionArea()->defaultAlignmentForAxis(m_physicalAxis, m_containingWritingMode, m_writingMode);
+
+    if (!m_defaultAnchorBox && alignmentPosition == ItemPosition::AnchorCenter)
+        return ItemPosition::Center;
     return alignmentPosition;
 }
 

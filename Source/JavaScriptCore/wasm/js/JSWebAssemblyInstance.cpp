@@ -68,7 +68,6 @@ JSWebAssemblyInstance::JSWebAssemblyInstance(VM& vm, Structure* structure, JSWeb
     , m_jsModule(module, WriteBarrierEarlyInit)
     , m_moduleRecord(moduleRecord, WriteBarrierEarlyInit)
     , m_tables(module->module().moduleInformation().tableCount())
-    , m_softStackLimit(vm.softStackLimit())
     , m_module(module->module())
     , m_sourceProvider(sourceProvider)
     , m_globalsToMark(m_module.get().moduleInformation().globalCount())
@@ -131,18 +130,21 @@ void JSWebAssemblyInstance::finishCreation(VM& vm)
     auto& moduleInformation = m_module->moduleInformation();
     JSGlobalObject* globalObject = this->globalObject();
     for (unsigned i = 0; i < moduleInformation.typeCount(); ++i) {
-        RefPtr rtt = moduleInformation.rtts[i];
+        Ref rtt = moduleInformation.rtts[i];
         if (rtt->kind() == RTTKind::Array)
-            gcObjectStructure(i).setWithoutWriteBarrier(JSWebAssemblyArray::createStructure(vm, globalObject, moduleInformation.typeSignatures[i]->expand(), rtt.releaseNonNull()));
+            gcObjectStructure(i).setWithoutWriteBarrier(JSWebAssemblyArray::createStructure(vm, globalObject, moduleInformation.typeSignatures[i]->expand(), WTFMove(rtt)));
         else if (rtt->kind() == RTTKind::Struct)
-            gcObjectStructure(i).setWithoutWriteBarrier(JSWebAssemblyStruct::createStructure(vm, globalObject, moduleInformation.typeSignatures[i]->expand(), rtt.releaseNonNull()));
+            gcObjectStructure(i).setWithoutWriteBarrier(JSWebAssemblyStruct::createStructure(vm, globalObject, moduleInformation.typeSignatures[i]->expand(), WTFMove(rtt)));
     }
     if (moduleInformation.typeCount())
         vm.writeBarrier(this);
+
+    m_vm->traps().registerMirror(m_stackMirror);
 }
 
 JSWebAssemblyInstance::~JSWebAssemblyInstance()
 {
+    m_vm->traps().unregisterMirror(m_stackMirror);
     clearJSCallICs(*m_vm);
     for (unsigned i = 0; i < m_numImportFunctions; ++i)
         importFunctionInfo(i)->~WasmOrJSImportableFunctionCallLinkInfo();
@@ -230,6 +232,7 @@ void JSWebAssemblyInstance::finalizeCreation(VM& vm, JSGlobalObject* globalObjec
         auto functionSpaceIndex = FunctionSpaceIndex(importFunctionNum);
         auto* info = importFunctionInfo(importFunctionNum);
         if (!info->targetInstance) {
+            // the import is a JS function
             info->importFunctionStub = module().importFunctionStub(functionSpaceIndex);
             importCallees.append(adoptRef(*new WasmToJSCallee(functionSpaceIndex, { nullptr, nullptr })));
             ASSERT(*info->boxedWasmCalleeLoadLocation == CalleeBits::nullCallee());
@@ -242,8 +245,16 @@ void JSWebAssemblyInstance::finalizeCreation(VM& vm, JSGlobalObject* globalObjec
             info->callLinkInfo = WTFMove(callLinkInfo);
             vm.writeBarrier(this); // Materialized CallLinkInfo and we need rescan of JSWebAssemblyInstance.
         } else {
-            info->importFunctionStub = wasmCalleeGroup->wasmToWasmExitStub(functionSpaceIndex);
-            ASSERT(info->boxedWasmCalleeLoadLocation && *info->boxedWasmCalleeLoadLocation);
+            // the import is a Wasm function or a builtin
+            auto calleeBits = *info->boxedWasmCalleeLoadLocation;
+            if (calleeBits.isNativeCallee()) {
+                auto* callee = std::bit_cast<Callee*>(calleeBits.asNativeCallee());
+                // if the callee is a builtin, info->importFunctionStub has already been set
+                if (callee->compilationMode() != CompilationMode::WasmBuiltinMode) {
+                    info->importFunctionStub = wasmCalleeGroup->wasmToWasmExitStub(functionSpaceIndex);
+                    ASSERT(info->boxedWasmCalleeLoadLocation && *info->boxedWasmCalleeLoadLocation);
+                }
+            }
         }
     }
 

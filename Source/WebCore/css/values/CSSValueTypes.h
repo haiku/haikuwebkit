@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "CSSValue.h"
-#include "CSSValueAggregates.h"
-#include "ComputedStyleDependencies.h"
+#include <WebCore/CSSValue.h>
+#include <WebCore/CSSValueAggregates.h>
+#include <WebCore/ComputedStyleDependencies.h>
 #include <wtf/text/StringBuilder.h>
 
 namespace WebCore {

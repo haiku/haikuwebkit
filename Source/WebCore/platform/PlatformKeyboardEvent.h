@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "CompositionUnderline.h"
-#include "KeypressCommand.h"
-#include "PlatformEvent.h"
+#include <WebCore/CompositionUnderline.h>
+#include <WebCore/KeypressCommand.h>
+#include <WebCore/PlatformEvent.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WindowsExtras.h>
 #include <wtf/text/WTFString.h>

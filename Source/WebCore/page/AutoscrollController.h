@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "IntPoint.h"
-#include "Timer.h"
+#include <WebCore/IntPoint.h>
+#include <WebCore/Timer.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WallTime.h>

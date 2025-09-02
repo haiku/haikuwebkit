@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "CSSStyleSheet.h"
-#include "CachedStyleSheetClient.h"
-#include "CachedResourceHandle.h"
-#include "DOMTokenList.h"
-#include "HTMLElement.h"
-#include "LinkLoader.h"
-#include "LinkLoaderClient.h"
-#include "LinkRelAttribute.h"
+#include <WebCore/CSSStyleSheet.h>
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/CachedStyleSheetClient.h>
+#include <WebCore/DOMTokenList.h>
+#include <WebCore/HTMLElement.h>
+#include <WebCore/LinkLoader.h>
+#include <WebCore/LinkLoaderClient.h>
+#include <WebCore/LinkRelAttribute.h>
 
 namespace WebCore {
 

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "RenderElement.h"
-#include "RenderObjectInlines.h"
+#include <WebCore/RenderElement.h>
+#include <WebCore/RenderObjectInlines.h>
 
 namespace WebCore {
 

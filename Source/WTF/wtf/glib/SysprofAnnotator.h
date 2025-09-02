@@ -42,6 +42,11 @@ public:
         return s_annotator;
     }
 
+    static int64_t currentContinuousTime(Seconds timeDelta)
+    {
+        return SYSPROF_CAPTURE_CURRENT_TIME + timeDelta.microsecondsAs<int64_t>();
+    }
+
     void instantMark(std::span<const char> name, const char* description, ...) WTF_ATTRIBUTE_PRINTF(3, 4)
     {
         va_list args;
@@ -50,11 +55,11 @@ public:
         va_end(args);
     }
 
-    void mark(Seconds timeDelta, std::span<const char> name, const char* description, ...) WTF_ATTRIBUTE_PRINTF(4, 5)
+    void mark(int64_t time, std::span<const char> name, const char* description, ...) WTF_ATTRIBUTE_PRINTF(4, 5)
     {
         va_list args;
         va_start(args, description);
-        sysprof_collector_mark_vprintf(SYSPROF_CAPTURE_CURRENT_TIME, timeDelta.microsecondsAs<int64_t>(), m_processName, name.data(), description, args);
+        sysprof_collector_mark_vprintf(time, 0, m_processName, name.data(), description, args);
         va_end(args);
     }
 

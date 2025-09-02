@@ -607,7 +607,7 @@ void WTFInitializeLogChannelStatesFromString(WTFLogChannel* channels[], size_t c
 #if USE(OS_LOG) && !RELEASE_LOG_DISABLED
     for (size_t i = 0; i < count; ++i) {
         WTFLogChannel* channel = channels[i];
-        channel->osLogChannel = os_log_create(channel->subsystem, channel->name);
+        channel->osLogChannel = os_log_create(LOG_CHANNEL_WEBKIT_SUBSYSTEM, channel->name);
     }
 #endif
 

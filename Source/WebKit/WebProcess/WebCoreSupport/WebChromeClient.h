@@ -40,6 +40,9 @@ enum class IsLoggedIn : uint8_t;
 enum class PointerLockRequestResult : uint8_t;
 enum class StorageAccessPromptWasShown : bool;
 enum class StorageAccessWasGranted : uint8_t;
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+struct ContentRuleListMatchedRule;
+#endif
 struct SystemPreviewInfo;
 struct TextRecognitionOptions;
 }
@@ -126,6 +129,7 @@ private:
 
     WebCore::KeyboardUIMode keyboardUIMode() final;
 
+    bool hasAccessoryMousePointingDevice() const final;
     bool hoverSupportedByPrimaryPointingDevice() const final;
     bool hoverSupportedByAnyAvailablePointingDevice() const final;
     std::optional<WebCore::PointerCharacteristics> pointerCharacteristicsOfPrimaryPointingDevice() const final;
@@ -228,7 +232,7 @@ private:
     void requestPointerUnlock(CompletionHandler<void(bool)>&&) final;
 #endif
 
-    void didAssociateFormControls(const Vector<RefPtr<WebCore::Element>>&, WebCore::LocalFrame&) final;
+    void didAssociateFormControls(const Vector<Ref<WebCore::Element>>&, WebCore::LocalFrame&) final;
     bool shouldNotifyOnFormChanges() final;
 
     bool selectItemWritingDirectionIsNatural() final;
@@ -248,6 +252,10 @@ private:
     void registerBlobPathForTesting(const String& path, CompletionHandler<void()>&&) final;
 
     void contentRuleListNotification(const URL&, const WebCore::ContentRuleListResults&) final;
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    void contentRuleListMatchedRule(const WebCore::ContentRuleListMatchedRule&) final;
+#endif
 
     bool testProcessIncomingSyncMessagesWhenWaitingForSyncReply() final;
 

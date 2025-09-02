@@ -27,34 +27,34 @@
 
 #pragma once
 
-#include "AsyncNodeDeletionQueue.h"
-#include "Color.h"
-#include "ContainerNode.h"
-#include "ContextDestructionObserver.h"
-#include "DocumentClasses.h"
-#include "DocumentEnums.h"
-#include "DocumentEventTiming.h"
-#include "FontSelectorClient.h"
-#include "FrameDestructionObserver.h"
-#include "FrameIdentifier.h"
-#include "HitTestSource.h"
-#include "PageIdentifier.h"
-#include "PlaybackTargetClientContextIdentifier.h"
-#include "PseudoElementIdentifier.h"
-#include "QualifiedName.h"
-#include "RegistrableDomain.h"
-#include "RenderPtr.h"
-#include "ReportingClient.h"
-#include "ScriptExecutionContext.h"
-#include "SpatialBackdropSource.h"
-#include "StringWithDirection.h"
-#include "Supplementable.h"
-#include "Timer.h"
-#include "TreeScope.h"
-#include "TrustedHTML.h"
-#include "URLKeepingBlobAlive.h"
-#include "UserActionElementSet.h"
-#include "ViewportArguments.h"
+#include <WebCore/AsyncNodeDeletionQueue.h>
+#include <WebCore/Color.h>
+#include <WebCore/ContainerNode.h>
+#include <WebCore/ContextDestructionObserver.h>
+#include <WebCore/DocumentClasses.h>
+#include <WebCore/DocumentEnums.h>
+#include <WebCore/DocumentEventTiming.h>
+#include <WebCore/FontSelectorClient.h>
+#include <WebCore/FrameDestructionObserver.h>
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/HitTestSource.h>
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/PlaybackTargetClientContextIdentifier.h>
+#include <WebCore/PseudoElementIdentifier.h>
+#include <WebCore/QualifiedName.h>
+#include <WebCore/RegistrableDomain.h>
+#include <WebCore/RenderPtr.h>
+#include <WebCore/ReportingClient.h>
+#include <WebCore/ScriptExecutionContext.h>
+#include <WebCore/SpatialBackdropSource.h>
+#include <WebCore/StringWithDirection.h>
+#include <WebCore/Supplementable.h>
+#include <WebCore/Timer.h>
+#include <WebCore/TreeScope.h>
+#include <WebCore/TrustedHTML.h>
+#include <WebCore/URLKeepingBlobAlive.h>
+#include <WebCore/UserActionElementSet.h>
+#include <WebCore/ViewportArguments.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Deque.h>
 #include <wtf/FixedVector.h>
@@ -74,7 +74,7 @@
 #include <wtf/text/AtomStringHash.h>
 
 #if ENABLE(IOS_TOUCH_EVENTS)
-#include "IntRect.h"
+#include <WebCore/IntRect.h>
 #include <wtf/ThreadingPrimitives.h>
 #endif
 

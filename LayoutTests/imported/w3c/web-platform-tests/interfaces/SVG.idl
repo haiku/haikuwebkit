@@ -13,7 +13,6 @@ interface SVGElement : Element {
 };
 
 SVGElement includes GlobalEventHandlers;
-SVGElement includes DocumentAndElementEventHandlers;
 SVGElement includes SVGElementInstance;
 SVGElement includes HTMLOrSVGElement;
 
@@ -417,10 +416,6 @@ interface SVGPreserveAspectRatio {
 interface SVGAnimatedPreserveAspectRatio {
   [SameObject] readonly attribute SVGPreserveAspectRatio baseVal;
   [SameObject] readonly attribute SVGPreserveAspectRatio animVal;
-};
-
-[Exposed=Window]
-interface SVGPathElement : SVGGeometryElement {
 };
 
 [Exposed=Window]

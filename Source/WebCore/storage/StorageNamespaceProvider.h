@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "SecurityOriginHash.h"
+#include <WebCore/SecurityOriginHash.h>
 #include <wtf/HashMap.h>
 #include <wtf/RefCounted.h>
 

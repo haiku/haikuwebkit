@@ -29,6 +29,7 @@
 #if HAVE(WEBCONTENTRESTRICTIONS)
 
 #import "Logging.h"
+#import "ParentalControlsURLFilterParameters.h"
 #import <wtf/CompletionHandler.h>
 #import <wtf/MainThread.h>
 #import <wtf/URL.h>
@@ -155,8 +156,19 @@ void ParentalControlsURLFilter::allowURL(const URL& url, CompletionHandler<void(
 
     [wcrBrowserEngineClient allowURL:url.createNSURL().get() withCompletion:makeBlockPtr([completionHandler = WTFMove(completionHandler)](BOOL didAllow, NSError *) mutable {
         ASSERT(isMainThread());
+        RELEASE_LOG(ContentFiltering, "ParentalControlsURLFilter::allowURL result %d.\n", didAllow);
         completionHandler(didAllow);
     }).get()];
+}
+
+void ParentalControlsURLFilter::allowURL(const ParentalControlsURLFilterParameters& parameters, CompletionHandler<void(bool)>&& completionHandler)
+{
+#if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
+    auto& filter = WebCore::ParentalControlsURLFilter::filterWithConfigurationPath(parameters.configurationPath);
+#else
+    auto& filter = WebCore::ParentalControlsURLFilter::singleton();
+#endif
+    filter.allowURL(parameters.urlToAllow, WTFMove(completionHandler));
 }
 
 WCRBrowserEngineClient* ParentalControlsURLFilter::effectiveWCRBrowserEngineClient()

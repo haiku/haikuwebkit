@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "RegisteredEventListener.h"
+#include <WebCore/RegisteredEventListener.h>
 #include <atomic>
 #include <memory>
 #include <wtf/Forward.h>
@@ -41,7 +41,7 @@
 #include <wtf/text/AtomString.h>
 
 #if PLATFORM(IOS_FAMILY)
-#include "WebCoreThread.h"
+#include <WebCore/WebCoreThread.h>
 #endif
 
 namespace WebCore {

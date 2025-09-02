@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "PublicSuffixStore.h"
-#include "SecurityOriginData.h"
+#include <WebCore/PublicSuffixStore.h>
+#include <WebCore/SecurityOriginData.h>
 #include <wtf/HashTraits.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/URL.h>

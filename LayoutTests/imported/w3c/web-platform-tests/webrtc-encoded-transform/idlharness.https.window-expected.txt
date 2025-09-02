@@ -13,6 +13,7 @@ PASS Partial interface RTCRtpSender[3]: member names are unique
 PASS SFrameTransform includes GenericTransformStream: member names are unique
 PASS WorkerGlobalScope includes WindowOrWorkerGlobalScope: member names are unique
 PASS DedicatedWorkerGlobalScope includes AnimationFrameProvider: member names are unique
+PASS DedicatedWorkerGlobalScope includes MessageEventTarget: member names are unique
 PASS SFrameTransform interface: existence and properties of interface object
 PASS SFrameTransform interface object length
 PASS SFrameTransform interface object name

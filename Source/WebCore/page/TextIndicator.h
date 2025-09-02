@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "Image.h"
-#include "PlatformLayerIdentifier.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/Image.h>
+#include <WebCore/PlatformLayerIdentifier.h>
 #include <wtf/OptionSet.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Seconds.h>

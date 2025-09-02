@@ -25,17 +25,17 @@
 
 #pragma once
 
-#include "BackgroundFetchInformation.h"
-#include "NotificationClient.h"
-#include "NotificationEventType.h"
-#include "PushSubscriptionData.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "ServiceWorkerContextData.h"
-#include "ServiceWorkerFetch.h"
-#include "ServiceWorkerIdentifier.h"
-#include "Settings.h"
-#include "Timer.h"
-#include "WorkerThread.h"
+#include <WebCore/BackgroundFetchInformation.h>
+#include <WebCore/NotificationClient.h>
+#include <WebCore/NotificationEventType.h>
+#include <WebCore/PushSubscriptionData.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/ServiceWorkerContextData.h>
+#include <WebCore/ServiceWorkerFetch.h>
+#include <WebCore/ServiceWorkerIdentifier.h>
+#include <WebCore/Settings.h>
+#include <WebCore/Timer.h>
+#include <WebCore/WorkerThread.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/OptionSet.h>
 

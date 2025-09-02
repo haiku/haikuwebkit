@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Length.h"
-#include "LengthFunctions.h"
-#include "TransformOperation.h"
+#include <WebCore/Length.h>
+#include <WebCore/LengthFunctions.h>
+#include <WebCore/TransformOperation.h>
 #include <optional>
 #include <wtf/Ref.h>
 

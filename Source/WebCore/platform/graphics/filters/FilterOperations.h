@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "CompositeOperation.h"
-#include "FilterOperation.h"
+#include <WebCore/CompositeOperation.h>
+#include <WebCore/FilterOperation.h>
 #include <algorithm>
 #include <wtf/ArgumentCoder.h>
 #include <wtf/Ref.h>

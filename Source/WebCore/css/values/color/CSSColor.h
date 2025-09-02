@@ -26,11 +26,11 @@
 
 #pragma once
 
-#include "CSSColorDescriptors.h"
-#include "CSSHexColor.h"
-#include "CSSKeywordColor.h"
-#include "CSSResolvedColor.h"
-#include "CSSValueTypes.h"
+#include <WebCore/CSSColorDescriptors.h>
+#include <WebCore/CSSHexColor.h>
+#include <WebCore/CSSKeywordColor.h>
+#include <WebCore/CSSResolvedColor.h>
+#include <WebCore/CSSValueTypes.h>
 #include <wtf/Markable.h>
 
 namespace WebCore {

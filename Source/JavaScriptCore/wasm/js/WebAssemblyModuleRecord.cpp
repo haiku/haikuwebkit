@@ -42,6 +42,7 @@
 #include "WasmConstExprGenerator.h"
 #include "WasmOperationsInlines.h"
 #include "WasmTypeDefinitionInlines.h"
+#include "WebAssemblyBuiltin.h"
 #include "WebAssemblyFunction.h"
 #include <wtf/text/MakeString.h>
 
@@ -118,7 +119,36 @@ Synchronousness WebAssemblyModuleRecord::link(JSGlobalObject* globalObject, JSVa
     return Synchronousness::Sync;
 }
 
-// https://webassembly.github.io/spec/js-api/#read-the-imports
+static const WebAssemblyBuiltinSet* findEnabledBuiltinSet(const String& qualifiedName, const Wasm::ModuleInformation& moduleInformation)
+{
+    if (!moduleInformation.builtinSetsInclude(qualifiedName))
+        return nullptr;
+    return WebAssemblyBuiltinRegistry::singleton().findByQualifiedName(qualifiedName);
+}
+
+static void defineImportedStringConstant(VM& vm, WriteBarrier<JSWebAssemblyInstance>& instance, const Wasm::Import& import)
+{
+    String text = makeString(import.field);
+    JSValue string = jsString(vm, WTFMove(text));
+    instance->setGlobal(import.kindIndex, string);
+}
+
+static void initializeBuiltinImport(VM& vm, WriteBarrier<JSWebAssemblyInstance>& instance, const Wasm::Import& import, const WebAssemblyBuiltin* builtin)
+{
+    auto* info = instance->importFunctionInfo(import.kindIndex);
+    info->boxedCallee = builtin->callee(); // boxed by operator=
+    instance->setBuiltinCalleeBits(builtin->id(), info->boxedCallee);
+    info->boxedWasmCalleeLoadLocation = &info->boxedCallee;
+    info->importFunctionStub = CodePtr<CFunctionPtrTag>::fromTaggedPtr((void*) builtin->implementation()).retagged<WasmEntryPtrTag>();
+    info->entrypointLoadLocation = &info->importFunctionStub;
+    info->targetInstance.set(vm, instance.get(), instance.get());
+    info->typeIndex = instance->moduleInformation().importFunctionTypeIndices[import.kindIndex];
+}
+
+/**
+ * Original spec: https://webassembly.github.io/spec/js-api/#read-the-imports
+ * JS-string proposal version: https://webassembly.github.io/js-string-builtins/js-api/#read-the-imports
+ */
 void WebAssemblyModuleRecord::initializeImports(JSGlobalObject* globalObject, JSObject* importObject, Wasm::CreationMode creationMode)
 {
     VM& vm = globalObject->vm();
@@ -138,7 +168,27 @@ void WebAssemblyModuleRecord::initializeImports(JSGlobalObject* globalObject, JS
     };
 
     for (const auto& import : moduleInformation.imports) {
-        Identifier moduleName = Identifier::fromString(vm, makeAtomString(import.module));
+        AtomString moduleNameString = makeAtomString(import.module);
+        Identifier moduleName = Identifier::fromString(vm, moduleNameString);
+        // Do not create a fieldName identifier at this point.
+        // If it's an importedStringConstant, it's a waste to make it an atom string.
+
+        // Imports related to builtins or importedStringConstants are special and bypass
+        // the normal procedure of looking up a value in importObject.
+        if (moduleInformation.importedStringConstantsEquals(moduleNameString)) {
+            defineImportedStringConstant(vm, m_instance, import);
+            continue;
+        }
+        const WebAssemblyBuiltinSet* builtinSet = findEnabledBuiltinSet(moduleNameString, moduleInformation);
+        if (builtinSet) {
+            String fieldName = makeString(import.field);
+            auto* builtin = builtinSet->findBuiltin(fieldName);
+            if (!builtin)
+                return exception(createTypeError(globalObject, importFailMessage(import, "import"_s, "is not a valid builtin reference"_s)));
+            initializeBuiltinImport(vm, m_instance, import, builtin);
+            continue;
+        }
+
         Identifier fieldName = Identifier::fromString(vm, makeAtomString(import.field));
         JSValue value;
         if (creationMode == Wasm::CreationMode::FromJS) {
@@ -506,7 +556,15 @@ void WebAssemblyModuleRecord::initializeExports(JSGlobalObject* globalObject)
         //   ii. (Note: At most one wrapper is created for any closure, so func is unique, even if there are multiple occurrances in the list. Moreover, if the item was an import that is already an Exported Function Exotic Object, then the original function object will be found. For imports that are regular JS functions, a new wrapper will be created.)
         if (functionIndexSpace < functionImportCount) {
             JSObject* functionImport = m_instance->importFunction(functionIndexSpace).get();
-            if (isWebAssemblyHostFunction(functionImport))
+            if (!functionImport) {
+                // No function import means the import is a wasm builtin.
+                // The boxed callee in callLinkInfo is a WasmBuiltinCallee with a pointer to the builtin.
+                auto* callLinkInfo = m_instance->importFunctionInfo(functionIndexSpace);
+                auto* callee = std::bit_cast<Wasm::WasmBuiltinCallee*>(callLinkInfo->boxedCallee.asNativeCallee());
+                ASSERT(callee->compilationMode() == Wasm::CompilationMode::WasmBuiltinMode);
+                const WebAssemblyBuiltin* builtin = callee->builtin();
+                wrapper = builtin->jsWrapper(globalObject);
+            } else if (isWebAssemblyHostFunction(functionImport))
                 wrapper = functionImport;
             else {
                 Wasm::TypeIndex typeIndex = module->typeIndexFromFunctionIndexSpace(functionIndexSpace);

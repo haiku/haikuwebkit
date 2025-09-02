@@ -231,8 +231,8 @@ InjectedBundlePage::InjectedBundlePage(WKBundlePageRef page)
         0, // didFirstLayoutForFrame
         0, // didFirstVisuallyNonEmptyLayoutForFrame
         0, // didRemoveFrameFromHierarchy
-        didDisplayInsecureContentForFrame,
-        didRunInsecureContentForFrame,
+        0, // didDisplayInsecureContentForFrame
+        0, // didRunInsecureContentForFrame
         didClearWindowForFrame,
         didCancelClientRedirectForFrame,
         willPerformClientRedirectForFrame,
@@ -455,16 +455,6 @@ void InjectedBundlePage::didSameDocumentNavigationForFrame(WKBundlePageRef page,
 void InjectedBundlePage::didHandleOnloadEventsForFrame(WKBundlePageRef page, WKBundleFrameRef frame, const void* clientInfo)
 {
     static_cast<InjectedBundlePage*>(const_cast<void*>(clientInfo))->didHandleOnloadEventsForFrame(frame);
-}
-
-void InjectedBundlePage::didDisplayInsecureContentForFrame(WKBundlePageRef page, WKBundleFrameRef frame, WKTypeRef*, const void* clientInfo)
-{
-    static_cast<InjectedBundlePage*>(const_cast<void*>(clientInfo))->didDisplayInsecureContentForFrame(frame);
-}
-
-void InjectedBundlePage::didRunInsecureContentForFrame(WKBundlePageRef page, WKBundleFrameRef frame, WKTypeRef*, const void* clientInfo)
-{
-    static_cast<InjectedBundlePage*>(const_cast<void*>(clientInfo))->didRunInsecureContentForFrame(frame);
 }
 
 void InjectedBundlePage::didInitiateLoadForResource(WKBundlePageRef page, WKBundleFrameRef frame, uint64_t identifier, WKURLRequestRef request, bool pageLoadIsProvisional, const void* clientInfo)
@@ -862,27 +852,6 @@ void InjectedBundlePage::didHandleOnloadEventsForFrame(WKBundleFrameRef frame)
 
     if (testRunner->shouldDumpFrameLoadCallbacks())
         dumpLoadEvent(frame, "didHandleOnloadEventsForFrame"_s);
-}
-
-void InjectedBundlePage::didDisplayInsecureContentForFrame(WKBundleFrameRef)
-{
-    auto& injectedBundle = InjectedBundle::singleton();
-    RefPtr testRunner = injectedBundle.testRunner();
-    if (!testRunner)
-        return;
-    if (testRunner->shouldDumpFrameLoadCallbacks())
-        injectedBundle.outputText("didDisplayInsecureContent\n"_s);
-}
-
-void InjectedBundlePage::didRunInsecureContentForFrame(WKBundleFrameRef)
-{
-    auto& injectedBundle = InjectedBundle::singleton();
-    RefPtr testRunner = injectedBundle.testRunner();
-    if (!testRunner)
-        return;
-
-    if (testRunner->shouldDumpFrameLoadCallbacks())
-        injectedBundle.outputText("didRunInsecureContent\n"_s);
 }
 
 void InjectedBundlePage::didInitiateLoadForResource(WKBundlePageRef page, WKBundleFrameRef, uint64_t identifier, WKURLRequestRef request, bool)

@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "ActivityState.h"
-#include "FocusOptions.h"
-#include "LayoutRect.h"
-#include "LocalFrame.h"
-#include "Timer.h"
+#include <WebCore/ActivityState.h>
+#include <WebCore/FocusOptions.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/LocalFrame.h>
+#include <WebCore/Timer.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/RefPtr.h>

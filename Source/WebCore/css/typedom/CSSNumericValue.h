@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "CSSNumericType.h"
-#include "CSSStyleValue.h"
+#include <WebCore/CSSNumericType.h>
+#include <WebCore/CSSStyleValue.h>
 #include <wtf/HashMap.h>
 
 namespace WebCore {

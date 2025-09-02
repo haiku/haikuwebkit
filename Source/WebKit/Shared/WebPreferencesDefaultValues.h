@@ -198,4 +198,6 @@ bool defaultIOSurfaceLosslessCompressionEnabled();
 bool defaultUnifiedPDFEnabled();
 #endif
 
+bool defaultScrollbarColorEnabled();
+
 } // namespace WebKit

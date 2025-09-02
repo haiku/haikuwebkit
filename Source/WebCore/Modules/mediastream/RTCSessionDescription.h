@@ -34,7 +34,7 @@
 #if ENABLE(WEB_RTC)
 
 #include "RTCSdpType.h"
-#include "ScriptWrappable.h"
+#include <WebCore/ScriptWrappable.h>
 
 namespace WebCore {
 

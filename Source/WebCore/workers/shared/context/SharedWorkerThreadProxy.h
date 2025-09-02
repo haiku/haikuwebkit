@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "ClientOrigin.h"
-#include "SharedWorkerIdentifier.h"
-#include "WorkerBadgeProxy.h"
-#include "WorkerDebuggerProxy.h"
-#include "WorkerLoaderProxy.h"
-#include "WorkerObjectProxy.h"
-#include "WorkerOptions.h"
+#include <WebCore/ClientOrigin.h>
+#include <WebCore/SharedWorkerIdentifier.h>
+#include <WebCore/WorkerBadgeProxy.h>
+#include <WebCore/WorkerDebuggerProxy.h>
+#include <WebCore/WorkerLoaderProxy.h>
+#include <WebCore/WorkerObjectProxy.h>
+#include <WebCore/WorkerOptions.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 

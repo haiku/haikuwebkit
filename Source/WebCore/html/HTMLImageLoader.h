@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "ImageLoader.h"
+#include <WebCore/ImageLoader.h>
 
 namespace WebCore {
 

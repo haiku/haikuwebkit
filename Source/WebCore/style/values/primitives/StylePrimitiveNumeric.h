@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "CSSPrimitiveNumeric.h"
-#include "StylePrimitiveNumeric+Forward.h"
-#include "StylePrimitiveNumericConcepts.h"
-#include "StyleUnevaluatedCalculation.h"
-#include "StyleValueTypes.h"
+#include <WebCore/CSSPrimitiveNumeric.h>
+#include <WebCore/StylePrimitiveNumeric+Forward.h>
+#include <WebCore/StylePrimitiveNumericConcepts.h>
+#include <WebCore/StyleUnevaluatedCalculation.h>
+#include <WebCore/StyleValueTypes.h>
 #include <algorithm>
 #include <wtf/CompactVariant.h>
 #include <wtf/Forward.h>

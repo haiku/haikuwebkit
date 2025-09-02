@@ -27,10 +27,10 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "AudioSampleDataSource.h"
-#include "BaseAudioSharedUnit.h"
-#include "CAAudioStreamDescription.h"
-#include "Timer.h"
+#include <WebCore/AudioSampleDataSource.h>
+#include <WebCore/BaseAudioSharedUnit.h>
+#include <WebCore/CAAudioStreamDescription.h>
+#include <WebCore/Timer.h>
 
 OBJC_CLASS WebCoreAudioInputMuteChangeListener;
 

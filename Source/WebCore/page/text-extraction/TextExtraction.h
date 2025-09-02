@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "TextExtractionTypes.h"
+#include <WebCore/TextExtractionTypes.h>
 #include <wtf/Expected.h>
 
 namespace WebCore {
@@ -38,8 +38,10 @@ enum class ExceptionCode : uint8_t;
 
 namespace TextExtraction {
 
-WEBCORE_EXPORT Item extractItem(std::optional<WebCore::FloatRect>&& collectionRectInRootView, Page&);
+WEBCORE_EXPORT Item extractItem(Request&&, Page&);
 WEBCORE_EXPORT Vector<std::pair<String, FloatRect>> extractAllTextAndRects(Page&);
+
+WEBCORE_EXPORT void handleInteraction(Interaction&&, Page&, CompletionHandler<void(bool)>&&);
 
 struct RenderedText {
     String textWithReplacedContent;

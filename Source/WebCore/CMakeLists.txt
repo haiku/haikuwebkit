@@ -11,6 +11,7 @@ list(APPEND WebCore_UNIFIED_SOURCE_LIST_FILES
 
 set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${CMAKE_BINARY_DIR}"
+    "${WebCore_PRIVATE_FRAMEWORK_HEADERS_DIR}"
     "${WebCore_DERIVED_SOURCES_DIR}"
     "${WEBCORE_DIR}"
     "${WEBCORE_DIR}/Modules/ShapeDetection"
@@ -1563,7 +1564,7 @@ set(WebCore_NON_SVG_IDL_FILES
     page/UndoItem.idl
     page/UndoManager.idl
     page/VisualViewport.idl
-    page/WebKitNodeInfo.idl
+    page/WebKitJSHandle.idl
     page/WebKitPoint.idl
     page/WebKitSerializedNode.idl
     page/WindowEventHandlers.idl
@@ -2857,7 +2858,7 @@ GENERATE_BINDINGS(WebCoreBindings
         --workletGlobalScopeConstructorsFile ${WORKLETGLOBALSCOPE_CONSTRUCTORS_FILE}
         --paintWorkletGlobalScopeConstructorsFile ${PAINTWORKLETGLOBALSCOPE_CONSTRUCTORS_FILE}
         --audioWorkletGlobalScopeConstructorsFile ${AUDIOWORKLETGLOBALSCOPE_CONSTRUCTORS_FILE})
-list(APPEND WebCore_DEPENDENCIES WebCoreBindings)
+list(APPEND WebCore_DEPENDENCIES WebCoreBindings WebCore_CopyPrivateHeaders)
 
 if (ENABLE_WEBINSPECTORUI)
     list(APPEND WebCore_DEPENDENCIES WebInspectorUI)
@@ -3039,20 +3040,13 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/network/ProtectionSpaceBase.serialization.in
 )
 
-WEBKIT_COPY_FILES(WebCore_CopyPrivateHeaders
+WEBKIT_SYMLINK_FILES(WebCore_CopyPrivateHeaders
     DESTINATION ${WebCore_PRIVATE_FRAMEWORK_HEADERS_DIR}/WebCore
     FILES ${WebCore_PRIVATE_FRAMEWORK_HEADERS}
     FLATTENED
 )
 list(APPEND WebCore_INTERFACE_DEPENDENCIES WebCore_CopyPrivateHeaders)
 list(APPEND WebCoreTestSupport_INTERFACE_DEPENDENCIES WebCore_CopyPrivateHeaders)
-# WebCore_CopyPrivateHeaders needs to have a direct or indirect
-# dependency of WebCore target for CMake Visual Studio generator to
-# eliminate duplicated custom commands. Otherwise, CSSPropertyNames.h
-# will be generated in both projects.
-if (NOT INTERNAL_BUILD)
-    add_dependencies(WebCore_CopyPrivateHeaders WebCore)
-endif ()
 
 WEBKIT_FRAMEWORK(WebCore)
 

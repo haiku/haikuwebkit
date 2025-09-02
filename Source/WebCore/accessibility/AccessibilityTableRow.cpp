@@ -141,8 +141,7 @@ void AccessibilityTableRow::addChildren()
             addChild(downcast<AccessibilityObject>(object.get()), DescendIfIgnored::No);
         m_childrenInitialized = true;
         m_subtreeDirty = false;
-    }
-    else
+    } else
         AccessibilityRenderObject::addChildren();
 
     // "ARIA 1.1, If the set of columns which is present in the DOM is contiguous, and if there are no cells which span more than one row or

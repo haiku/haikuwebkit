@@ -32,8 +32,8 @@
 
 #if ENABLE(MEDIA_SOURCE)
 
-#include "MediaPlayer.h"
-#include "PlatformTimeRanges.h"
+#include <WebCore/MediaPlayer.h>
+#include <WebCore/PlatformTimeRanges.h>
 #include <wtf/Forward.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/Vector.h>

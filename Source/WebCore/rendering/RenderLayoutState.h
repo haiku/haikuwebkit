@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "LayoutRect.h"
-#include "LocalFrameViewLayoutContext.h"
-#include "StyleTextEdge.h"
+#include <WebCore/LayoutRect.h>
+#include <WebCore/LocalFrameViewLayoutContext.h>
+#include <WebCore/StyleTextEdge.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>

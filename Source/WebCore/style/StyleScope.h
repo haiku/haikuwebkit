@@ -27,12 +27,12 @@
 
 #pragma once
 
-#include "AnchorPositionEvaluator.h"
-#include "LayoutRect.h"
-#include "LayoutSize.h"
-#include "StyleScopeIdentifier.h"
-#include "StyleScopeOrdinal.h"
-#include "Timer.h"
+#include <WebCore/AnchorPositionEvaluator.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/LayoutSize.h>
+#include <WebCore/StyleScopeIdentifier.h>
+#include <WebCore/StyleScopeOrdinal.h>
+#include <WebCore/Timer.h>
 #include <memory>
 #include <wtf/CheckedPtr.h>
 #include <wtf/HashMap.h>

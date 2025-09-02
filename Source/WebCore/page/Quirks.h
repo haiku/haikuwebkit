@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Event.h"
-#include "QuirksData.h"
-#include "RegistrableDomain.h"
+#include <WebCore/Event.h>
+#include <WebCore/QuirksData.h>
+#include <WebCore/RegistrableDomain.h>
 #include <optional>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>

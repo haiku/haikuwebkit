@@ -21,6 +21,7 @@
 #include "GLDisplay.h"
 
 #include "GLContext.h"
+#include <wtf/MainThread.h>
 #include <wtf/text/StringView.h>
 
 #if USE(LIBEPOXY)
@@ -47,15 +48,16 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLDESTROYIMAGEKHRPROC) (EGLDisplay, EGLImag
 
 namespace WebCore {
 
-std::unique_ptr<GLDisplay> GLDisplay::create(EGLDisplay eglDisplay)
+RefPtr<GLDisplay> GLDisplay::create(EGLDisplay eglDisplay)
 {
+    ASSERT(isMainThread());
     if (eglDisplay == EGL_NO_DISPLAY)
         return nullptr;
 
     if (eglInitialize(eglDisplay, nullptr, nullptr) == EGL_FALSE)
         return nullptr;
 
-    return makeUnique<GLDisplay>(eglDisplay);
+    return adoptRef(new GLDisplay(eglDisplay));
 }
 
 GLDisplay::GLDisplay(EGLDisplay eglDisplay)

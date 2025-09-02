@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
+#include <WebCore/RenderStyleConstants.h>
 #include <wtf/EnumTraits.h>
 
 namespace WTF {

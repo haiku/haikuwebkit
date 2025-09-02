@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "LayoutIntegrationBoxTreeUpdater.h"
-#include "LayoutPoint.h"
-#include "LayoutRect.h"
+#include <WebCore/LayoutIntegrationBoxTreeUpdater.h>
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/LayoutRect.h>
 #include <wtf/WeakListHashSet.h>
 
 namespace WebCore {

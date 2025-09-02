@@ -56,8 +56,6 @@ public:
     unsigned columnCount() final;
     unsigned rowCount() final;
 
-    String title() const final;
-
     // all the cells in the table
     AccessibilityChildrenVector cells() final;
     AccessibilityObject* cellForColumnAndRow(unsigned column, unsigned row) final;

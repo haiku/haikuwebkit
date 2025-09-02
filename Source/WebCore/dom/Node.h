@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "EventTarget.h"
-#include "NodeIdentifier.h"
-#include "RenderStyleConstants.h"
-#include "StyleValidity.h"
+#include <WebCore/EventTarget.h>
+#include <WebCore/NodeIdentifier.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleValidity.h>
 #include <compare>
 #include <wtf/CompactPointerTuple.h>
 #include <wtf/CompactUniquePtrTuple.h>

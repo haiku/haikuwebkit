@@ -30,8 +30,8 @@
 
 #pragma once
 
-#include "StylePathFunction.h"
-#include "WindRule.h"
+#include <WebCore/StylePathFunction.h>
+#include <WebCore/WindRule.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>

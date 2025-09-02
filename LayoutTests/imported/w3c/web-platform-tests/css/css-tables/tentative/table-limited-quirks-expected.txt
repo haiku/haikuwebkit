@@ -10,16 +10,12 @@ decoration
 The collapsing table quirk does NOT apply to limited-quirks mode
 The table cell width calculation quirk does NOT apply to limited-quirks mode
 
-The "let cell grows downward be false" quirk does NOT apply to limited-quirks mode
-208 height
 
 PASS decoration propagates into table
-PASS rowspan can be zero
 PASS table 1
 PASS table 2
 PASS table 3
 PASS table 4
 PASS table 5
 PASS table 6
-PASS table 7
 

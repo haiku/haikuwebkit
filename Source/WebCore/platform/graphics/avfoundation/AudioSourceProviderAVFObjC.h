@@ -27,7 +27,7 @@
 
 #if ENABLE(WEB_AUDIO) && USE(MEDIATOOLBOX)
 
-#include "AudioSourceProvider.h"
+#include <WebCore/AudioSourceProvider.h>
 #include <wtf/MediaTime.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/ThreadSafeRefCounted.h>

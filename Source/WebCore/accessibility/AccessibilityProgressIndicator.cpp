@@ -170,4 +170,3 @@ String AccessibilityProgressIndicator::gaugeRegionValueDescription() const
 }
 
 } // namespace WebCore
-

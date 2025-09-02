@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "SharedWorkerIdentifier.h"
-#include "WorkerThread.h"
+#include <WebCore/SharedWorkerIdentifier.h>
+#include <WebCore/WorkerThread.h>
 
 namespace WebCore {
 

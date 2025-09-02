@@ -27,9 +27,9 @@
 
 #if ENABLE(CONTEXT_MENUS)
 
-#include "ContextMenuContext.h"
-#include "ContextMenuItem.h"
-#include "HitTestRequest.h"
+#include <WebCore/ContextMenuContext.h>
+#include <WebCore/ContextMenuItem.h>
+#include <WebCore/HitTestRequest.h>
 #include <wtf/OptionSet.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>

@@ -28,16 +28,16 @@
 
 #pragma once
 
-#include "BackForwardItemIdentifier.h"
-#include "CrossOriginOpenerPolicy.h"
-#include "FrameLoaderTypes.h"
-#include "GlobalFrameIdentifier.h"
-#include "LayoutPoint.h"
-#include "NavigationRequester.h"
-#include "PrivateClickMeasurement.h"
-#include "ResourceRequest.h"
-#include "SecurityOrigin.h"
-#include "UserGestureIndicator.h"
+#include <WebCore/BackForwardItemIdentifier.h>
+#include <WebCore/CrossOriginOpenerPolicy.h>
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/GlobalFrameIdentifier.h>
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/NavigationRequester.h>
+#include <WebCore/PrivateClickMeasurement.h>
+#include <WebCore/ResourceRequest.h>
+#include <WebCore/SecurityOrigin.h>
+#include <WebCore/UserGestureIndicator.h>
 #include <wtf/Forward.h>
 
 namespace WebCore {

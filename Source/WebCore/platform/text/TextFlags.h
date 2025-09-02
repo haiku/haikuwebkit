@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FontTaggedSettings.h"
+#include <WebCore/FontTaggedSettings.h>
 #include <optional>
 #include <vector>
 #include <wtf/Hasher.h>

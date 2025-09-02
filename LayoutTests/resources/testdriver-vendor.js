@@ -703,3 +703,23 @@ window.test_driver_internal.get_computed_role = async function (element, context
 
     return context.internals.getComputedRole(element);
 }
+
+/**
+ *
+ * @param {string} origin
+ * @param {string} embedding_origin
+ * @param {boolean} blocked
+ * @returns {Promise<void>}
+ */
+window.test_driver_internal.set_storage_access = async function (origin, embedding_origin, blocked, context=null) {
+    // FIXME: This function should support setting storage access for specific origins.
+    if (origin != "*" || embedding_origin != "*")
+        throw new Error("Unsupported value for origin or embedding_origin");
+
+    context = context ?? window;
+    return new Promise((resolve) => {
+        context.testRunner.setStatisticsShouldBlockThirdPartyCookies(blocked, () => {
+            blocked ? context.testRunner.statisticsClearInMemoryAndPersistentStore(resolve) : resolve();
+        });
+    });
+}

@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CollectionTraversal.h"
-#include "HTMLCollection.h"
-#include "HTMLElement.h"
+#include <WebCore/CollectionTraversal.h>
+#include <WebCore/HTMLCollection.h>
+#include <WebCore/HTMLElement.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

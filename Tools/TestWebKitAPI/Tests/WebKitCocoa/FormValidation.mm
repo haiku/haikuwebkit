@@ -25,8 +25,14 @@
 
 #import "config.h"
 
+#import "TestUIDelegate.h"
 #import "TestWKWebView.h"
-#include "Utilities.h"
+#import "Utilities.h"
+#import <WebKit/WKContentWorldPrivate.h>
+#import <WebKit/WebKit.h>
+#import <WebKit/_WKContentWorldConfiguration.h>
+
+namespace TestWebKitAPI {
 
 TEST(FormValidation, PresentingFormValidationUIWithoutViewControllerDoesNotCrash)
 {
@@ -54,9 +60,30 @@ TEST(FormValidation, FormValidationOnUnparentedWindowDoesNotCrash)
     [webView evaluateJavaScript:@"document.querySelector('input[type=submit]').click()" completionHandler:^(id result, NSError *error) {
         ranScript = true;
     }];
-    TestWebKitAPI::Util::runFor(10_ms);
+    Util::runFor(10_ms);
     // Remove the view from the window before it has a chance to display the form validation bubble.
     [webView removeFromTestWindow];
-    TestWebKitAPI::Util::run(&ranScript);
-    TestWebKitAPI::Util::runFor(100_ms);
+    Util::run(&ranScript);
+    Util::runFor(100_ms);
+}
+
+TEST(WebKit, DidAssociateFormControls)
+{
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+    RetainPtr configuration = adoptNS([_WKContentWorldConfiguration new]);
+    configuration.get().allowAutofill = YES;
+    RetainPtr autofillWorld = [WKContentWorld _worldWithConfiguration:configuration.get()];
+    NSString *pageWorldJS = @"window.addEventListener('webkitassociateformcontrols', () => alert('fail') )";
+    NSString *autofillWorldJS = @"window.addEventListener('webkitassociateformcontrols', (e) => { setTimeout(() => alert('pass ' + e.target), 50)})";
+    RetainPtr pageWorldScript = adoptNS([[WKUserScript alloc] initWithSource:pageWorldJS injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES]);
+    RetainPtr autofillWorldScript = adoptNS([[WKUserScript alloc] initWithSource:autofillWorldJS injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES inContentWorld:autofillWorld.get()]);
+    RetainPtr<WKUserContentController> userContentController = [webView configuration].userContentController;
+    [userContentController addUserScript:pageWorldScript.get()];
+    [userContentController addUserScript:autofillWorldScript.get()];
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"associate-form-controls" withExtension:@"html"]]];
+    [webView _test_waitForDidFinishNavigation];
+    [webView evaluateJavaScript:@"addPasswordFieldToForm()" completionHandler:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "pass [object HTMLFormElement]");
+}
+
 }

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "StylePrimitiveNumericConcepts.h"
+#include <WebCore/StylePrimitiveNumericConcepts.h>
 #include <wtf/Forward.h>
 #include <wtf/Ref.h>
 

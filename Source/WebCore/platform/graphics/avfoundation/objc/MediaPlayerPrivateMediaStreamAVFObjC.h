@@ -27,9 +27,9 @@
 
 #if ENABLE(MEDIA_STREAM) && USE(AVFOUNDATION)
 
-#include "MediaPlayerPrivate.h"
-#include "MediaStreamPrivate.h"
-#include "SampleBufferDisplayLayer.h"
+#include <WebCore/MediaPlayerPrivate.h>
+#include <WebCore/MediaStreamPrivate.h>
+#include <WebCore/SampleBufferDisplayLayer.h>
 #include <wtf/Deque.h>
 #include <wtf/Forward.h>
 #include <wtf/Lock.h>

@@ -26,12 +26,12 @@
 #pragma once
 
 #include "IDBCursorDirection.h"
-#include "IDBCursorInfo.h"
-#include "IDBKeyPath.h"
-#include "IDBRequest.h"
-#include "IDBValue.h"
-#include "JSValueInWrappedObject.h"
 #include <JavaScriptCore/Strong.h>
+#include <WebCore/IDBCursorInfo.h>
+#include <WebCore/IDBKeyPath.h>
+#include <WebCore/IDBRequest.h>
+#include <WebCore/IDBValue.h>
+#include <WebCore/JSValueInWrappedObject.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {

@@ -448,7 +448,6 @@ http/tests/navigation/ping-attribute/area-cross-origin.html [ Skip ]
 http/tests/navigation/ping-attribute/anchor-cross-origin.html [ Skip ]
 http/tests/referrer-policy/no-referrer-when-downgrade/ [ Skip ]
 http/tests/referrer-policy/unsafe-url/cross-origin-http-http.html [ Skip ]
-http/tests/referrer-policy/unsafe-url/cross-origin-http.https.html [ Skip ]
 
 # testRunner.dontForceRepaint
 compositing/repaint/copy-forward-dirty-region-purged-backbuffer.html [ Skip ]
@@ -818,6 +817,10 @@ http/tests/resourceLoadStatistics/website-data-removal-for-site-without-user-int
 
 http/tests/resourceLoadStatistics/only-partitioned-third-party-cookies.https.html [ Skip ]
 http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect.https.html [ Skip ]
+http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect-fetch.https.html [ Skip ]
+
+http/tests/cookies/multiple-cookies-iframes.https.html [ Skip ]
+http/tests/cookies/multiple-cookies.https.html [ Skip ]
 
 http/tests/security/XFrameOptions/x-frame-options-deny.html [ Skip ] # Failure
 http/tests/security/XFrameOptions/x-frame-options-multiple-headers-conflict.html [ Skip ] # Failure
@@ -875,10 +878,7 @@ http/tests/security/contentSecurityPolicy/xsl-redirect-blocked.html [ Skip ] # F
 http/tests/security/contentSecurityPolicy/audioworklet-script-src-allowed.html [ Skip ] # Timeout
 http/tests/security/contentSecurityPolicy/audioworklet-script-src-blocked.html [ Skip ] # Timeout
 
-http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-iframe-in-main-frame.html [ Failure Pass ]
-
 webkit.org/b/291024 http/tests/security/contentSecurityPolicy/upgrade-insecure-requests/proper-open-window-upgrades-UpgradeMixedContent.html [ Skip ] # Failure Pass
-webkit.org/b/291024 http/tests/security/contentSecurityPolicy/upgrade-insecure-requests/proper-open-window-upgrades.html [ Skip ] # Failure Pass
 
 http/tests/security/cookie-module-import-propagate.html [ Skip ] # Failure
 http/tests/security/cookie-module-import.html [ Skip ] # Failure
@@ -1035,8 +1035,6 @@ http/wpt/service-workers/service-worker-spinning-install.https.html [ Failure Pa
 
 http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html [ Failure ]
 http/wpt/push-api [ Skip ]
-
-webkit.org/b/282475 http/wpt/navigation-api/transition-promises.html [ Failure Pass ]
 
 http/tests/misc/slow-loading-animated-image.html [ ImageOnlyFailure ]
 
@@ -4444,6 +4442,7 @@ storage/indexeddb/connection-leak.html [ Failure Pass ]
 fast/text/font-load-data-partitioned-alphabet.html [ Failure ]
 
 imported/w3c/web-platform-tests/navigation-api [ Skip ]
+webkit.org/b/282475 http/wpt/navigation-api [ Skip ]
 
 http/tests/navigation/keyboard-events-during-provisional-subframe-navigation.html [ Failure ]
 

@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "LayoutUnits.h"
-#include "RenderStyle.h"
-#include "RenderStyleConstants.h"
+#include <WebCore/LayoutUnits.h>
+#include <WebCore/RenderStyle.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/TZoneMalloc.h>
 

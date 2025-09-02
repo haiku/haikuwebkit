@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "RegistrableDomain.h"
-#include "Supplementable.h"
+#include <WebCore/RegistrableDomain.h>
+#include <WebCore/Supplementable.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>
 

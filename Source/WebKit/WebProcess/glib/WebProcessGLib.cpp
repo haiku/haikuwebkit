@@ -56,6 +56,7 @@
 
 #if USE(GBM)
 #include <WebCore/DRMDeviceManager.h>
+#include <WebCore/GBMDevice.h>
 #endif
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
@@ -145,8 +146,8 @@ void WebProcess::initializePlatformDisplayIfNeeded() const
         disabled = disableGBM && strcmp(disableGBM, "0");
 #endif
         if (!disabled) {
-            if (auto* device = DRMDeviceManager::singleton().mainGBMDeviceNode(DRMDeviceManager::NodeType::Render)) {
-                PlatformDisplay::setSharedDisplay(PlatformDisplayGBM::create(device));
+            if (auto device = DRMDeviceManager::singleton().mainGBMDevice(DRMDeviceManager::NodeType::Render)) {
+                PlatformDisplay::setSharedDisplay(PlatformDisplayGBM::create(device->device()));
                 return;
             }
         }
@@ -182,7 +183,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 #endif
 
 #if USE(GBM)
-    DRMDeviceManager::singleton().initializeMainDevice(parameters.renderDeviceFile);
+    DRMDeviceManager::singleton().initializeMainDevice(WTFMove(parameters.drmDevice));
 #endif
 
     m_rendererBufferTransportMode = parameters.rendererBufferTransportMode;

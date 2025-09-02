@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include "RenderStyleConstants.h"
-#include "StyleFlexBasis.h"
-#include "StyleFlexGrow.h"
-#include "StyleFlexShrink.h"
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleFlexBasis.h>
+#include <WebCore/StyleFlexGrow.h>
+#include <WebCore/StyleFlexShrink.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 

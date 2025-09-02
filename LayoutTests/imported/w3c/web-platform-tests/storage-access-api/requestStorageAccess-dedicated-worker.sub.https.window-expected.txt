@@ -1,4 +1,4 @@
 
-FAIL Workers don't inherit storage access assert_true: frame has access to cookies after request. expected true got false
-FAIL Workers don't observe parent's storage access assert_false: frame lacks storage access before request. expected false got true
+FAIL Workers don't inherit storage access assert_false: Worker's fetch is uncredentialed. expected false got true
+FAIL Workers don't observe parent's storage access assert_false: Worker's second fetch is uncredentialed. expected false got true
 

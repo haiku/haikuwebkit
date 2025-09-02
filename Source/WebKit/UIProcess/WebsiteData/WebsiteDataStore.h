@@ -654,7 +654,9 @@ private:
 
     bool m_inspectionForServiceWorkersAllowed { true };
     bool m_isBlobRegistryPartitioningEnabled { false };
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     bool m_isOptInCookiePartitioningEnabled { false };
+#endif
 
     HashMap<WebCore::RegistrableDomain, RestrictedOpenerType> m_restrictedOpenerTypesForTesting;
 

@@ -27,11 +27,11 @@
 
 #if HAVE(IOSURFACE)
 
-#include "DestinationColorSpace.h"
-#include "IntSize.h"
-#include "PixelFormat.h"
-#include "ProcessIdentity.h"
 #include <CoreGraphics/CoreGraphics.h>
+#include <WebCore/DestinationColorSpace.h>
+#include <WebCore/IntSize.h>
+#include <WebCore/PixelFormat.h>
+#include <WebCore/ProcessIdentity.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/spi/cocoa/IOSurfaceSPI.h>
 

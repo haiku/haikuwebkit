@@ -1007,7 +1007,7 @@ bool Scope::invalidateForAnchorDependencies(LayoutDependencyUpdateContext& conte
 
     auto makeAnchorPosition = [&](const RenderBoxModelObject& anchorRenderer) {
         AnchorPosition result;
-        result.absoluteRect = anchorRenderer.absoluteBoundingBoxRect();
+        result.absoluteRect = anchorRenderer.absoluteBoundingBoxRectIgnoringTransforms();
         // Include containing block sizes as anchor function insets may be computed against any side and if they change
         // we need to invalidate.
         for (auto* containingBlock = anchorRenderer.containingBlock(); containingBlock; containingBlock = containingBlock->containingBlock()) {
@@ -1104,7 +1104,8 @@ Element* hostForScopeOrdinal(const Element& element, ScopeOrdinal scopeOrdinal)
 
 void Scope::updateAnchorPositioningStateAfterStyleResolution()
 {
-    AnchorPositionEvaluator::updateSnapshottedScrollOffsets(m_document);
+    if (CheckedPtr renderView = m_document->renderView())
+        AnchorPositionEvaluator::updateScrollAdjustments(*renderView); // Is this necessary? Or will the combination of layout and scroll invalidation handle it sufficiently?
 
     m_anchorPositionedToAnchorMap.removeIf([](auto& elementAndState) {
         return elementAndState.value.anchors.isEmpty();

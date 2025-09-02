@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "FloatRoundedRect.h"
-#include "GraphicsLayer.h"
+#include <WebCore/FloatRoundedRect.h>
+#include <WebCore/GraphicsLayer.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/TypeCasts.h>

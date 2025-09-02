@@ -27,7 +27,7 @@
 
 #if ENABLE(IMAGE_ANALYSIS)
 
-#include "Timer.h"
+#include <WebCore/Timer.h>
 #include <wtf/PriorityQueue.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/URL.h>

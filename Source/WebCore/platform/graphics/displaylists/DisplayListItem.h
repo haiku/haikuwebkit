@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "RenderingResourceIdentifier.h"
+#include <WebCore/RenderingResourceIdentifier.h>
 #include <wtf/OptionSet.h>
 
 namespace WTF {

@@ -27,8 +27,8 @@
 
 #if ENABLE(ENCRYPTED_MEDIA)
 
-#include "CDMPrivate.h"
-#include "ContextDestructionObserver.h"
+#include <WebCore/CDMPrivate.h>
+#include <WebCore/ContextDestructionObserver.h>
 #include "MediaKeySessionType.h"
 #include "MediaKeySystemConfiguration.h"
 #include "MediaKeySystemMediaCapability.h"

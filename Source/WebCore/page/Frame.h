@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "FrameIdentifier.h"
-#include "FrameTree.h"
-#include "FrameTreeSyncData.h"
-#include "PageIdentifier.h"
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/FrameTree.h>
+#include <WebCore/FrameTreeSyncData.h>
+#include <WebCore/PageIdentifier.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>

@@ -21,24 +21,24 @@
 
 #pragma once
 
-#include "AutoplayEvent.h"
-#include "ContactInfo.h"
-#include "DatabaseDetails.h"
-#include "DeviceOrientationOrMotionPermissionState.h"
-#include "DisabledAdaptations.h"
-#include "DocumentStorageAccess.h"
-#include "ExceptionData.h"
-#include "ExceptionOr.h"
-#include "FocusDirection.h"
-#include "HTMLMediaElementEnums.h"
-#include "HighlightVisibility.h"
-#include "ImageBuffer.h"
-#include "ImageBufferResourceLimits.h"
-#include "InputMode.h"
-#include "MediaControlsContextMenuItem.h"
-#include "PointerCharacteristics.h"
-#include "SyntheticClickResult.h"
-#include "WebCoreKeyboardUIMode.h"
+#include <WebCore/AutoplayEvent.h>
+#include <WebCore/ContactInfo.h>
+#include <WebCore/DatabaseDetails.h>
+#include <WebCore/DeviceOrientationOrMotionPermissionState.h>
+#include <WebCore/DisabledAdaptations.h>
+#include <WebCore/DocumentStorageAccess.h>
+#include <WebCore/ExceptionData.h>
+#include <WebCore/ExceptionOr.h>
+#include <WebCore/FocusDirection.h>
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/HighlightVisibility.h>
+#include <WebCore/ImageBuffer.h>
+#include <WebCore/ImageBufferResourceLimits.h>
+#include <WebCore/InputMode.h>
+#include <WebCore/MediaControlsContextMenuItem.h>
+#include <WebCore/PointerCharacteristics.h>
+#include <WebCore/SyntheticClickResult.h>
+#include <WebCore/WebCoreKeyboardUIMode.h>
 #include <wtf/Assertions.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
@@ -48,12 +48,12 @@
 #include <wtf/Vector.h>
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
-#include "MediaPlaybackTargetContext.h"
+#include <WebCore/MediaPlaybackTargetContext.h>
 #endif
 
 #if PLATFORM(IOS_FAMILY)
-#include "PlatformLayer.h"
-#include "WKContentObservation.h"
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/WKContentObservation.h>
 #define NSResponder WAKResponder
 #ifndef __OBJC__
 class WAKResponder;
@@ -64,8 +64,8 @@ OBJC_CLASS NSData;
 #endif
 
 #if ENABLE(MEDIA_USAGE)
-#include "MediaSessionIdentifier.h"
-#include "MediaUsageInfo.h"
+#include <WebCore/MediaSessionIdentifier.h>
+#include <WebCore/MediaUsageInfo.h>
 #endif
 
 #if ENABLE(ARKIT_INLINE_PREVIEW)
@@ -73,15 +73,15 @@ class HTMLModelElement;
 #endif
 
 #if ENABLE(WEBXR)
-#include "PlatformXR.h"
+#include <WebCore/PlatformXR.h>
 #endif
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
-#include "DigitalCredentialsProtocols.h"
-#include "DigitalCredentialsRequestData.h"
-#include "DigitalCredentialsResponseData.h"
-#include "UnvalidatedDigitalCredentialRequest.h"
-#include "ValidatedMobileDocumentRequest.h"
+#include <WebCore/DigitalCredentialsProtocols.h>
+#include <WebCore/DigitalCredentialsRequestData.h>
+#include <WebCore/DigitalCredentialsResponseData.h>
+#include <WebCore/UnvalidatedDigitalCredentialRequest.h>
+#include <WebCore/ValidatedMobileDocumentRequest.h>
 #endif
 
 OBJC_CLASS NSResponder;
@@ -145,6 +145,9 @@ struct AppHighlight;
 struct ApplePayAMSUIRequest;
 struct CharacterRange;
 struct ContactsRequestData;
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+struct ContentRuleListMatchedRule;
+#endif
 struct ContentRuleListResults;
 struct DataDetectorElementInfo;
 struct DateTimeChooserParameters;
@@ -160,7 +163,7 @@ struct WindowFeatures;
 
 enum class ActivityStateForCPUSampling : uint8_t;
 enum class AXLoadingEvent : uint8_t;
-enum class AXNotification;
+enum class AXNotification : uint8_t;
 enum class AXTextChange : uint8_t;
 enum class CookieConsentDecisionResult : uint8_t;
 enum class DidFilterLinkDecoration : bool { No, Yes };
@@ -258,6 +261,7 @@ public:
     virtual bool runJavaScriptPrompt(LocalFrame&, const String& message, const String& defaultValue, String& result) = 0;
     virtual KeyboardUIMode keyboardUIMode() = 0;
 
+    virtual bool hasAccessoryMousePointingDevice() const = 0;
     virtual bool hoverSupportedByPrimaryPointingDevice() const = 0;
     virtual bool hoverSupportedByAnyAvailablePointingDevice() const = 0;
     virtual std::optional<PointerCharacteristics> pointerCharacteristicsOfPrimaryPointingDevice() const = 0;
@@ -555,6 +559,10 @@ public:
 
     virtual void contentRuleListNotification(const URL&, const ContentRuleListResults&) { };
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    virtual void contentRuleListMatchedRule(const ContentRuleListMatchedRule&) { };
+#endif
+
 #if PLATFORM(WIN)
     virtual void AXStartFrameLoad() = 0;
     virtual void AXFinishFrameLoad() = 0;
@@ -590,7 +598,7 @@ public:
 
     virtual bool isEmptyChromeClient() const { return false; }
 
-    virtual void didAssociateFormControls(const Vector<RefPtr<Element>>&, LocalFrame&) { };
+    virtual void didAssociateFormControls(const Vector<Ref<Element>>&, LocalFrame&) { };
     virtual bool shouldNotifyOnFormChanges() { return false; };
 
     virtual void didAddHeaderLayer(GraphicsLayer&) { }

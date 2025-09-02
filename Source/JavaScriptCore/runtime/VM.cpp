@@ -146,10 +146,6 @@
 #include <wtf/text/AtomStringTable.h>
 #include <wtf/text/StringToIntegerConversion.h>
 
-#if ENABLE(C_LOOP)
-#include "CLoopStackInlines.h"
-#endif
-
 #if ENABLE(DFG_JIT)
 #include "ConservativeRoots.h"
 #endif
@@ -1009,7 +1005,7 @@ size_t VM::updateSoftReservedZoneSize(size_t softReservedZoneSize)
     size_t oldSoftReservedZoneSize = m_currentSoftReservedZoneSize;
     m_currentSoftReservedZoneSize = softReservedZoneSize;
 #if ENABLE(C_LOOP)
-    interpreter.cloopStack().setSoftReservedZoneSize(softReservedZoneSize);
+    cloopStack().setSoftReservedZoneSize(softReservedZoneSize);
 #endif
 
     updateStackLimits();
@@ -1044,7 +1040,7 @@ static void preCommitStackMemory(void* stackLimit)
 
 void VM::updateStackLimits()
 {
-    void* lastSoftStackLimit = m_softStackLimit;
+    void* lastSoftStackLimit = m_traps.softStackLimit();
 
     const StackBounds& stack = Thread::currentSingleton().stack();
     size_t reservedZoneSize = Options::reservedZoneSize();
@@ -1054,35 +1050,28 @@ void VM::updateStackLimits()
     // that the value is sane.
     RELEASE_ASSERT(reservedZoneSize >= minimumReservedZoneSize);
 
+    void* newSoftStackLimit = 0;
     if (m_stackPointerAtVMEntry) {
         char* startOfStack = reinterpret_cast<char*>(m_stackPointerAtVMEntry);
-        m_softStackLimit = stack.recursionLimit(startOfStack, Options::maxPerThreadStackUsage(), m_currentSoftReservedZoneSize);
+        newSoftStackLimit = stack.recursionLimit(startOfStack, Options::maxPerThreadStackUsage(), m_currentSoftReservedZoneSize);
         m_stackLimit = stack.recursionLimit(startOfStack, Options::maxPerThreadStackUsage(), reservedZoneSize);
     } else {
-        m_softStackLimit = stack.recursionLimit(m_currentSoftReservedZoneSize);
+        newSoftStackLimit = stack.recursionLimit(m_currentSoftReservedZoneSize);
         m_stackLimit = stack.recursionLimit(reservedZoneSize);
     }
 
-    if (lastSoftStackLimit != m_softStackLimit) {
+    if (lastSoftStackLimit != newSoftStackLimit) {
+        m_traps.setStackSoftLimit(newSoftStackLimit);
 #if OS(WINDOWS)
-        // We only need to precommit stack memory dictated by the VM::m_softStackLimit limit.
-        // This is because VM::m_softStackLimit applies to stack usage by LLINT asm or JIT
+        // We only need to precommit stack memory dictated by the VM::softStackLimit() limit.
+        // This is because VM::softStackLimit() applies to stack usage by LLINT asm or JIT
         // generated code which can allocate stack space that the C++ compiler does not know
         // about. As such, we have to precommit that stack memory manually.
         //
         // In contrast, we do not need to worry about VM::m_stackLimit because that limit is
         // used exclusively by C++ code, and the C++ compiler will automatically commit the
         // needed stack pages.
-        preCommitStackMemory(m_softStackLimit);
-#endif
-#if ENABLE(WEBASSEMBLY)
-        // PreciseAllocations are always eagerly swept so we don't have to worry about handling instances pending destruction thus need a HeapIterationScope
-        if (heap.m_webAssemblyInstanceSpace) {
-            heap.m_webAssemblyInstanceSpace->forEachLiveCell([&] (HeapCell* cell, HeapCell::Kind kind) {
-                ASSERT_UNUSED(kind, kind == HeapCell::JSCell);
-                SUPPRESS_MEMORY_UNSAFE_CAST static_cast<JSWebAssemblyInstance*>(cell)->updateSoftStackLimit(m_softStackLimit);
-            });
-        }
+        preCommitStackMemory(newSoftStackLimit);
 #endif
     }
 }
@@ -1388,7 +1377,7 @@ void sanitizeStackForVM(VM& vm)
 
     RELEASE_ASSERT(stack.contains(vm.lastStackTop()), 0xaa10, vm.lastStackTop(), stack.origin(), stack.end());
 #if ENABLE(C_LOOP)
-    vm.interpreter.cloopStack().sanitizeStack();
+    vm.cloopStack().sanitizeStack();
 #else
     sanitizeStackForVMImpl(&vm);
 #endif
@@ -1407,23 +1396,6 @@ size_t VM::committedStackByteCount()
     return CLoopStack::committedByteCount();
 #endif
 }
-
-#if ENABLE(C_LOOP)
-bool VM::ensureStackCapacityForCLoop(Register* newTopOfStack)
-{
-    return interpreter.cloopStack().ensureCapacityFor(newTopOfStack);
-}
-
-bool VM::isSafeToRecurseSoftCLoop() const
-{
-    return interpreter.cloopStack().isSafeToRecurse();
-}
-
-void* VM::currentCLoopStackPointer() const
-{
-    return interpreter.cloopStack().currentStackPointer();
-}
-#endif // ENABLE(C_LOOP)
 
 #if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
 void VM::verifyExceptionCheckNeedIsSatisfied(unsigned recursionDepth, ExceptionEventLocation& location)

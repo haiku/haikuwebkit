@@ -25,14 +25,14 @@
 
 #pragma once
 
-#include "ResourceLoaderIdentifier.h"
-#include "ResourceResponse.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "ServiceWorkerJobClient.h"
-#include "ServiceWorkerJobData.h"
-#include "ServiceWorkerTypes.h"
-#include "WorkerScriptLoader.h"
-#include "WorkerScriptLoaderClient.h"
+#include <WebCore/ResourceLoaderIdentifier.h>
+#include <WebCore/ResourceResponse.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/ServiceWorkerJobClient.h>
+#include <WebCore/ServiceWorkerJobData.h>
+#include <WebCore/ServiceWorkerTypes.h>
+#include <WebCore/WorkerScriptLoader.h>
+#include <WebCore/WorkerScriptLoaderClient.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/RefPtr.h>
 #include <wtf/RunLoop.h>

@@ -1859,6 +1859,11 @@ framework module WebKit_Private [system] {
     export *
   }
 
+  explicit module _WKJSHandle {
+    header "_WKJSHandle.h"
+    export *
+  }
+
   explicit module _WKLinkIconParameters {
     header "_WKLinkIconParameters.h"
     export *
@@ -1881,11 +1886,6 @@ framework module WebKit_Private [system] {
 
   explicit module _WKNotificationData {
     header "_WKNotificationData.h"
-    export *
-  }
-
-  explicit module _WKNodeInfo {
-    header "_WKNodeInfo.h"
     export *
   }
 

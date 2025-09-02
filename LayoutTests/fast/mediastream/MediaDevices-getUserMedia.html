@@ -55,6 +55,8 @@
             }
 
             function gotStreamWithConstraints3(s) {
+                if (stream)
+                    stream.getTracks().forEach(track => track.stop());
                 stream = s;
                 testPassed("Stream 7 generated.");
 
@@ -78,6 +80,8 @@
             }
 
             function gotStreamWithConstraints2(s) {
+                if (stream)
+                    stream.getTracks().forEach(track => track.stop());
                 stream = s;
                 testPassed("Stream 6 generated.");
 
@@ -96,6 +100,8 @@
             }
 
             function gotStreamWithConstraints1(s) {
+                if (stream)
+                    stream.getTracks().forEach(track => track.stop());
                 stream = s;
                 testPassed("Stream 5 generated.");
 
@@ -120,6 +126,8 @@
             }
 
             function gotStream4(s) {
+                if (stream)
+                    stream.getTracks().forEach(track => track.stop());
                 stream = s;
                 testPassed("Stream 4 generated.");
                 shouldBe("stream.getAudioTracks().length", "1");
@@ -141,6 +149,8 @@
             }
 
             function gotStream3(s) {
+                if (stream)
+                    stream.getTracks().forEach(track => track.stop());
                 stream = s;
                 testPassed("Stream 3 generated.");
                 shouldBe("stream.getAudioTracks().length", "1");
@@ -153,6 +163,8 @@
             }
 
             function gotStream2(s) {
+                if (stream)
+                    stream.getTracks().forEach(track => track.stop());
                 stream = s;
                 testPassed("Stream 2 generated.");
                 shouldBe("stream.getAudioTracks().length", "0");
@@ -165,6 +177,8 @@
             }
 
             function gotStream1(s) {
+                if (stream)
+                    stream.getTracks().forEach(track => track.stop());
                 stream = s;
                 testPassed("Stream 1 generated.");
                 shouldBe("stream.getAudioTracks().length", "1");

@@ -119,6 +119,9 @@ TAPI_USE_SRCROOT = $(TAPI_USE_SRCROOT$(WK_XCODE_15));
 TAPI_USE_SRCROOT_XCODE_SINCE_15 = YES;
 TAPI_VERIFY_MODE = Pedantic;
 
+WK_AUDIT_SPI_ALLOWLISTS = $(SRCROOT)/mac/Configurations/AllowedSPI.toml $(SRCROOT)/mac/Configurations/AllowedSPI-legacy.toml $(WK_AUDIT_SPI_ALLOWLISTS_$(USE_INTERNAL_SDK));
+WK_AUDIT_SPI_ALLOWLISTS_YES = $(WK_WEBKITADDITIONS_HEADERS_FOLDER_PATH)/AllowedSPI/AllowedSPI-WebKitLegacy.toml;
+
 // FIXME: Replace -extra-*-header and -exclude-*-header flags with build setting equivalents once rdar://99885053 is completed in all needed toolchains.
 OTHER_TAPI_FLAGS = $(inherited) $(WK_CFLAGS_BUILD_FOR_TESTING_$(WK_BUILD_FOR_TESTING)) -DRELEASE_WITHOUT_OPTIMIZATIONS -extra-private-header $(SOURCE_ROOT)/mac/TestingFunctions.h -extra-private-header $(SOURCE_ROOT)/mac/ExtraPrivateSymbolsForTAPI.h $(OTHER_TAPI_FLAGS_SRCROOT_$(TAPI_USE_SRCROOT));
 // Include WebKitPrefix.h to work around rdar://104248994.

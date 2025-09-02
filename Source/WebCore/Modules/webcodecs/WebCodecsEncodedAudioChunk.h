@@ -28,8 +28,8 @@
 
 #if ENABLE(WEB_CODECS)
 
-#include "BufferSource.h"
-#include "WebCodecsEncodedAudioChunkData.h"
+#include <WebCore/BufferSource.h>
+#include <WebCore/WebCodecsEncodedAudioChunkData.h>
 #include <wtf/ThreadSafeRefCounted.h>
 
 namespace WebCore {

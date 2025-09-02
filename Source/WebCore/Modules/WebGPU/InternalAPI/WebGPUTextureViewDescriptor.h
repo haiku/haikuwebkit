@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "WebGPUIntegralTypes.h"
-#include "WebGPUObjectDescriptorBase.h"
-#include "WebGPUTextureAspect.h"
-#include "WebGPUTextureFormat.h"
-#include "WebGPUTextureViewDimension.h"
+#include <WebCore/WebGPUIntegralTypes.h>
+#include <WebCore/WebGPUObjectDescriptorBase.h>
+#include <WebCore/WebGPUTextureAspect.h>
+#include <WebCore/WebGPUTextureFormat.h>
+#include <WebCore/WebGPUTextureViewDimension.h>
 #include <optional>
 
 namespace WebCore::WebGPU {

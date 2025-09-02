@@ -442,6 +442,7 @@ Vector<ASCIILiteral> serializedIdentifiers()
         "WebCore::UserGestureTokenIdentifierID"_s,
         "WebCore::UserMediaRequestIdentifier"_s,
         "WebCore::WebLockIdentifierID"_s,
+        "WebCore::WebProcessJSHandleIdentifier"_s,
         "WebCore::WebSocketIdentifier"_s,
         "WebCore::WebTransportStreamIdentifier"_s,
         "WebCore::WindowIdentifier"_s,

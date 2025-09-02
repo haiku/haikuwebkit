@@ -137,6 +137,20 @@ bool RemoteScrollingTree::scrollingTreeNodeRequestsKeyboardScroll(ScrollingNodeI
     return scrollingCoordinatorProxy->scrollingTreeNodeRequestsKeyboardScroll(nodeID, request);
 }
 
+void RemoteScrollingTree::scrollingTreeNodeDidStopProgrammaticScroll(WebCore::ScrollingTreeScrollingNode& node)
+{
+    ASSERT(isMainRunLoop());
+
+    CheckedPtr scrollingCoordinatorProxy = m_scrollingCoordinatorProxy.get();
+    if (!scrollingCoordinatorProxy)
+        return;
+
+    auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), { }, { }, ScrollUpdateType::ProgrammaticScrollDidEnd };
+    addPendingScrollUpdate(WTFMove(scrollUpdate));
+
+    scrollingCoordinatorProxy->scrollingThreadAddedPendingUpdate();
+}
+
 void RemoteScrollingTree::scrollingTreeNodeWillStartScroll(ScrollingNodeID nodeID)
 {
     if (CheckedPtr scrollingCoordinatorProxy = m_scrollingCoordinatorProxy.get())

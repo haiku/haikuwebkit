@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "CachedResourceHandle.h"
-#include "StyleImage.h"
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/StyleImage.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

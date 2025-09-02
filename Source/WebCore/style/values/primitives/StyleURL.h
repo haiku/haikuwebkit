@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "CSSURL.h"
-#include "StyleValueTypes.h"
+#include <WebCore/CSSURL.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 

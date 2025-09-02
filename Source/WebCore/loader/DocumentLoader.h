@@ -29,35 +29,35 @@
 
 #pragma once
 
-#include "AdvancedPrivacyProtections.h"
-#include "AutoplayPolicy.h"
-#include "CachedRawResourceClient.h"
-#include "CachedResourceHandle.h"
-#include "ContentFilterClient.h"
-#include "ContentSecurityPolicyClient.h"
-#include "CrossOriginOpenerPolicy.h"
-#include "DeviceOrientationOrMotionPermissionState.h"
-#include "DocumentLoadTiming.h"
-#include "DocumentWriter.h"
-#include "ElementTargetingTypes.h"
-#include "FrameDestructionObserver.h"
-#include "FrameLoaderTypes.h"
-#include "HTTPSByDefaultMode.h"
-#include "LinkIcon.h"
-#include "NavigationAction.h"
-#include "NavigationIdentifier.h"
-#include "ResourceError.h"
-#include "ResourceLoaderIdentifier.h"
-#include "ResourceLoaderOptions.h"
-#include "ResourceRequest.h"
-#include "ResourceResponse.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "SecurityPolicyViolationEvent.h"
-#include "ServiceWorkerRegistrationData.h"
-#include "StringWithDirection.h"
-#include "StyleSheetContents.h"
-#include "SubstituteData.h"
-#include "Timer.h"
+#include <WebCore/AdvancedPrivacyProtections.h>
+#include <WebCore/AutoplayPolicy.h>
+#include <WebCore/CachedRawResourceClient.h>
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/ContentFilterClient.h>
+#include <WebCore/ContentSecurityPolicyClient.h>
+#include <WebCore/CrossOriginOpenerPolicy.h>
+#include <WebCore/DeviceOrientationOrMotionPermissionState.h>
+#include <WebCore/DocumentLoadTiming.h>
+#include <WebCore/DocumentWriter.h>
+#include <WebCore/ElementTargetingTypes.h>
+#include <WebCore/FrameDestructionObserver.h>
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/HTTPSByDefaultMode.h>
+#include <WebCore/LinkIcon.h>
+#include <WebCore/NavigationAction.h>
+#include <WebCore/NavigationIdentifier.h>
+#include <WebCore/ResourceError.h>
+#include <WebCore/ResourceLoaderIdentifier.h>
+#include <WebCore/ResourceLoaderOptions.h>
+#include <WebCore/ResourceRequest.h>
+#include <WebCore/ResourceResponse.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/SecurityPolicyViolationEvent.h>
+#include <WebCore/ServiceWorkerRegistrationData.h>
+#include <WebCore/StringWithDirection.h>
+#include <WebCore/StyleSheetContents.h>
+#include <WebCore/SubstituteData.h>
+#include <WebCore/Timer.h>
 #include <wtf/HashSet.h>
 #include <wtf/OptionSet.h>
 #include <wtf/RefPtr.h>
@@ -66,7 +66,7 @@
 #include <wtf/Vector.h>
 
 #if ENABLE(APPLICATION_MANIFEST)
-#include "ApplicationManifest.h"
+#include <WebCore/ApplicationManifest.h>
 #endif
 
 #if PLATFORM(COCOA)

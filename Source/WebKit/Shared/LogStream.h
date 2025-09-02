@@ -26,10 +26,17 @@
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
 
 #include "LogStreamIdentifier.h"
-#include "StreamConnectionWorkQueue.h"
-#include "StreamMessageReceiver.h"
-
+#include <wtf/ProcessID.h>
+#include <wtf/Ref.h>
 #include <wtf/RefPtr.h>
+
+#if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
+#include "IPCSemaphore.h"
+#include "StreamMessageReceiver.h"
+#else
+#include "MessageReceiver.h"
+#include <wtf/RefCounted.h>
+#endif
 
 namespace IPC {
 class StreamServerConnection;
@@ -42,33 +49,42 @@ constexpr size_t logCategoryMaxSize = 32;
 constexpr size_t logSubsystemMaxSize = 32;
 constexpr size_t logStringMaxSize = 256;
 
-class LogStream final
+// Type which receives log messages from another process and invokes the platform logging.
+// The messages are found from generated LogStream.messages.in in build directory,
+// DerivedSources/WebKit/LogStream.messages.in.
+class LogStream final :
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-: public IPC::StreamMessageReceiver {
+    public IPC::StreamMessageReceiver
 #else
-: public RefCounted<LogStream>
-, public IPC::MessageReceiver {
+    public RefCounted<LogStream>, public IPC::MessageReceiver
 #endif
+{
 public:
-    static Ref<LogStream> create(int32_t pid, LogStreamIdentifier identifier) { return adoptRef(*new LogStream(pid, identifier)); }
+#if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
+    static RefPtr<LogStream> create(IPC::StreamServerConnectionHandle&&, ProcessID, LogStreamIdentifier, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&&);
+#else
+    static Ref<LogStream> create(Ref<IPC::Connection>&&, ProcessID, LogStreamIdentifier);
+#endif
     ~LogStream();
 
     void stopListeningForIPC();
 
-#if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-    void setup(IPC::StreamServerConnectionHandle&&, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&&);
-#else
-    void setup(IPC::Connection&);
+#if !ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 #endif
 
-    LogStreamIdentifier identifier() const { return m_logStreamIdentifier; }
+    LogStreamIdentifier identifier() const { return m_identifier; }
 
     static unsigned logCountForTesting();
 
 private:
-    LogStream(int32_t pid, LogStreamIdentifier);
+#if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
+    using ConnectionType = IPC::StreamServerConnection;
+#else
+    using ConnectionType = IPC::Connection;
+#endif
+    LogStream(Ref<ConnectionType>&&, ProcessID, LogStreamIdentifier);
 
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
     void didReceiveStreamMessage(IPC::StreamServerConnection&, IPC::Decoder&) final;
@@ -83,12 +99,12 @@ private:
 #endif
 
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-    RefPtr<IPC::StreamServerConnection> m_logStreamConnection;
+    const Ref<IPC::StreamServerConnection> m_connection;
 #else
-    ThreadSafeWeakPtr<IPC::Connection> m_logConnection;
+    ThreadSafeWeakPtr<IPC::Connection> m_connection;
 #endif
-    LogStreamIdentifier m_logStreamIdentifier;
-    int32_t m_pid { 0 };
+    const LogStreamIdentifier m_identifier;
+    const ProcessID m_pid;
 };
 
 } // namespace WebKit

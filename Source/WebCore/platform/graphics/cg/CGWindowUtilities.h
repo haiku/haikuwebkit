@@ -27,10 +27,10 @@
 
 #if USE(CG) && PLATFORM(MAC)
 
-#include "FloatRect.h"
-#include "GraphicsTypes.h"
-#include "IntRect.h"
 #include <CoreGraphics/CoreGraphics.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/IntRect.h>
 #include <math.h>
 #include <wtf/RetainPtr.h>
 

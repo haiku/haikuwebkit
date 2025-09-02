@@ -3258,7 +3258,6 @@ JSC_DEFINE_JIT_OPERATION(operationStringProtoFuncReplaceRegExpEmptyStr, JSCell*,
         // ES5.1 15.5.4.10 step 8.a.
         searchValue->setLastIndex(globalObject, 0);
         OPERATION_RETURN_IF_EXCEPTION(scope, nullptr);
-        OPERATION_RETURN_IF_EXCEPTION(scope, nullptr);
         OPERATION_RETURN(scope, removeAllUsingRegExpSearch(vm, globalObject, thisValue, source, regExp));
     }
 

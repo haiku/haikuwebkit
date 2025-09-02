@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Image.h"
-#include "IntPoint.h"
+#include <WebCore/Image.h>
+#include <WebCore/IntPoint.h>
 #include <wtf/Assertions.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>

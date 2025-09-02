@@ -53,7 +53,11 @@
 #include "ShareData.h"
 #include "ShareDataReader.h"
 #include "SharedBuffer.h"
+#include "UserAgentStringData.h"
+#include "UserAgentStringParser.h"
+#include "inspector/InspectorInstrumentation.h"
 #include <JavaScriptCore/ConsoleTypes.h>
+#include <optional>
 #include <wtf/Language.h>
 #include <wtf/RunLoop.h>
 #include <wtf/StdLibExtras.h>
@@ -93,7 +97,7 @@ const String& Navigator::userAgent() const
         m_userAgent = frame->loader().userAgent(frame->document()->url());
     return m_userAgent;
 }
-    
+
 String Navigator::platform() const
 {
     RefPtr frame = this->frame();
@@ -102,7 +106,7 @@ String Navigator::platform() const
 
     if (m_platform.isNull())
         m_platform = frame->loader().navigatorPlatform();
-    
+
     if (m_platform.isNull())
         m_platform = NavigatorBase::platform();
     return m_platform;
@@ -189,7 +193,7 @@ void Navigator::share(Document& document, const ShareData& data, Ref<DeferredPro
         if (m_loader)
             m_loader->cancel();
 
-        m_loader = ShareDataReader::create([this, promise = WTFMove(promise)] (ExceptionOr<ShareDataWithParsedURL&> readData) mutable {
+        m_loader = ShareDataReader::create([this, promise = WTFMove(promise)](ExceptionOr<ShareDataWithParsedURL&> readData) mutable {
             showShareData(readData, WTFMove(promise));
         });
         m_loader->start(&document, WTFMove(shareData));
@@ -204,7 +208,7 @@ void Navigator::showShareData(ExceptionOr<ShareDataWithParsedURL&> readData, Ref
         promise->reject(readData.releaseException());
         return;
     }
-    
+
     RefPtr frame = this->frame();
     if (!frame || !frame->page())
         return;
@@ -219,10 +223,10 @@ void Navigator::showShareData(ExceptionOr<ShareDataWithParsedURL&> readData, Ref
         });
         return;
     }
-    
+
     auto shareData = readData.returnValue();
-    
-    frame->page()->chrome().showShareSheet(WTFMove(shareData), [promise = WTFMove(promise), weakThis = WeakPtr { *this }] (bool completed) {
+
+    frame->page()->chrome().showShareSheet(WTFMove(shareData), [promise = WTFMove(promise), weakThis = WeakPtr { *this }](bool completed) {
         if (weakThis)
             weakThis->m_hasPendingShare = false;
         if (completed) {
@@ -288,7 +292,7 @@ void Navigator::initializePluginAndMimeTypeArrays()
         pdfPluginInfo.name = currentDummyName;
         pdfPluginInfo.desc = navigatorPDFDescription;
         domPlugins.append(DOMPlugin::create(*this, pdfPluginInfo));
-        
+
         // Register the copy of the PluginInfo using the generic 'PDF Viewer' name
         // as the handler for PDF MIME type to match the specification.
         if (currentDummyName == genericPDFViewerName)
@@ -450,9 +454,21 @@ int Navigator::maxTouchPoints() const
 
 NavigatorUAData& Navigator::userAgentData() const
 {
-    if (!m_navigatorUAData)
-        m_navigatorUAData = NavigatorUAData::create();
+    RefPtr frame = this->frame();
+    if (frame && frame->page()) {
+        RefPtr client = frame->loader().client();
+        if (client->hasCustomUserAgent()) {
+            auto userAgentString = frame->loader().userAgent({ });
+            Ref parser = UserAgentStringParser::create(userAgentString);
+            std::optional userAgentStringData = parser->parse();
+            if (userAgentStringData) {
+                m_navigatorUAData = NavigatorUAData::create(WTFMove(*userAgentStringData));
+                return *m_navigatorUAData;
+            }
+        }
+    }
 
+    m_navigatorUAData = NavigatorUAData::create();
     return *m_navigatorUAData;
 };
 

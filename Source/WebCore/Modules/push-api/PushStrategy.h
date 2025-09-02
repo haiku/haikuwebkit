@@ -26,9 +26,9 @@
 #pragma once
 #if ENABLE(DECLARATIVE_WEB_PUSH)
 
-#include "PushPermissionState.h"
-#include "PushSubscriptionData.h"
-#include "PushSubscriptionIdentifier.h"
+#include <WebCore/PushPermissionState.h>
+#include <WebCore/PushSubscriptionData.h>
+#include <WebCore/PushSubscriptionIdentifier.h>
 
 namespace WebCore {
 

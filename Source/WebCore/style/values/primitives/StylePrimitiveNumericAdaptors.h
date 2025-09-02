@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "Length.h"
-#include "StylePrimitiveNumericTypes.h"
+#include <WebCore/Length.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
 
 namespace WebCore {
 namespace Style {

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "Text.h"
+#include <WebCore/Text.h>
 
 namespace WebCore {
 

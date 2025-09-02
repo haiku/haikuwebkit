@@ -25,16 +25,16 @@
 
 #pragma once
 
-#include "DisplayList.h"
-#include "DisplayListItems.h"
-#include "GraphicsContext.h"
-#include "Image.h" // For Image::TileRule.
-#include "TextFlags.h"
+#include <WebCore/DisplayList.h>
+#include <WebCore/DisplayListItems.h>
+#include <WebCore/GraphicsContext.h>
+#include <WebCore/Image.h> // For Image::TileRule.
+#include <WebCore/TextFlags.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>
 
 #if USE(CORE_TEXT)
-#include "DrawGlyphsRecorder.h"
+#include <WebCore/DrawGlyphsRecorder.h>
 #endif
 
 namespace WebCore {
@@ -112,7 +112,7 @@ protected:
     WEBCORE_EXPORT void updateStateForSetCTM(const AffineTransform&);
     WEBCORE_EXPORT void updateStateForBeginTransparencyLayer(float opacity);
     WEBCORE_EXPORT void updateStateForBeginTransparencyLayer(CompositeOperator, BlendMode);
-    WEBCORE_EXPORT void updateStateForEndTransparencyLayer();
+    [[nodiscard]] WEBCORE_EXPORT bool updateStateForEndTransparencyLayer();
     WEBCORE_EXPORT void updateStateForResetClip();
     WEBCORE_EXPORT void updateStateForClip(const FloatRect&);
     WEBCORE_EXPORT void updateStateForClipRoundedRect(const FloatRoundedRect&);

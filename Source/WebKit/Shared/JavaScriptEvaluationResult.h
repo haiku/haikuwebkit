@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "NodeInfo.h"
+#include "JSHandleInfo.h"
 #include "Protected.h"
 #include "WKRetainPtr.h"
 #include <JavaScriptCore/APICast.h>
@@ -61,7 +61,7 @@ using JSObjectID = ObjectIdentifier<JSObjectIDType>;
 class JavaScriptEvaluationResult {
 public:
     enum class EmptyType : bool { Undefined, Null };
-    using Value = Variant<EmptyType, bool, double, String, Seconds, Vector<JSObjectID>, HashMap<JSObjectID, JSObjectID>, NodeInfo, UniqueRef<WebCore::SerializedNode>>;
+    using Value = Variant<EmptyType, bool, double, String, Seconds, Vector<JSObjectID>, HashMap<JSObjectID, JSObjectID>, JSHandleInfo, UniqueRef<WebCore::SerializedNode>>;
 
     JavaScriptEvaluationResult(JSObjectID, HashMap<JSObjectID, Value>&&);
     static std::optional<JavaScriptEvaluationResult> extract(JSGlobalContextRef, JSValueRef);
@@ -85,6 +85,8 @@ public:
     GRefPtr<JSCValue> toJSC();
 #endif
 
+    static std::optional<JavaScriptEvaluationResult> extract(API::Object*);
+
     WKRetainPtr<WKTypeRef> toWK();
     RefPtr<API::Object> toAPI();
 
@@ -92,6 +94,10 @@ public:
 
 private:
     JavaScriptEvaluationResult(JSGlobalContextRef, JSValueRef);
+    JavaScriptEvaluationResult(API::Object*);
+
+    JSObjectID addObjectToMap(API::Object*);
+    Value toValue(API::Object*);
 
 #if USE(GLIB)
     explicit JavaScriptEvaluationResult(GVariant*);
@@ -128,6 +134,7 @@ private:
 
     // Used for serializing to IPC
     HashMap<Protected<JSValueRef>, JSObjectID> m_jsObjectsInMap;
+    HashMap<RefPtr<API::Object>, JSObjectID> m_apiObjectsInMap;
     std::optional<JSObjectID> m_nullObjectID;
 
     // Used for deserializing from IPC to JS

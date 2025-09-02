@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "CompositeOperation.h"
-#include "FloatSize.h"
-#include "TransformationMatrix.h"
+#include <WebCore/CompositeOperation.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/TransformationMatrix.h>
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TypeCasts.h>

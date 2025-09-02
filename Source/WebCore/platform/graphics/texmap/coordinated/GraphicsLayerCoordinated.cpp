@@ -46,6 +46,8 @@
 
 namespace WebCore {
 
+static constexpr uint32_t s_maxDamageRectanglesForHighResolutionDamage = 32;
+
 Ref<GraphicsLayer> GraphicsLayer::create(GraphicsLayerFactory* factory, GraphicsLayerClient& client, Type layerType)
 {
     if (factory)
@@ -112,7 +114,7 @@ void GraphicsLayerCoordinated::setNeedsDisplayInRect(const FloatRect& initialRec
     addRepaintRect(rect);
 
     if (!m_dirtyRegion)
-        m_dirtyRegion = Damage(m_size, Damage::Mode::Rectangles, 32);
+        m_dirtyRegion = Damage(m_size, Damage::Mode::Rectangles, s_maxDamageRectanglesForHighResolutionDamage);
 
     if (m_dirtyRegion->add(rect))
         noteLayerPropertyChanged(Change::DirtyRegion, ScheduleFlush::Yes);
@@ -331,6 +333,24 @@ void GraphicsLayerCoordinated::setContentsNeedsDisplay()
 {
     if (m_contentsDisplayDelegate)
         noteLayerPropertyChanged(Change::ContentsBufferNeedsDisplay, ScheduleFlush::Yes);
+}
+
+void GraphicsLayerCoordinated::setContentsNeedsDisplayInRect(const FloatRect& rect)
+{
+    if (!m_contentsDisplayDelegate)
+        return;
+
+#if ENABLE(DAMAGE_TRACKING)
+    if (!rect.isEmpty() && m_contentsVisible && !m_size.isEmpty()) {
+        if (!m_contentsDirtyRegion)
+            m_contentsDirtyRegion = Damage(m_size, Damage::Mode::Rectangles, s_maxDamageRectanglesForHighResolutionDamage);
+
+        m_contentsDirtyRegion->add(rect);
+    }
+#else
+    UNUSED_PARAM(rect);
+#endif
+    noteLayerPropertyChanged(Change::ContentsBufferNeedsDisplay, ScheduleFlush::Yes);
 }
 
 void GraphicsLayerCoordinated::setContentsToPlatformLayer(PlatformLayer* contentsLayer, ContentsLayerPurpose)
@@ -980,7 +1000,7 @@ void GraphicsLayerCoordinated::commitLayerChanges(CommitState& commitState, floa
     bool contentsBufferNeedsDisplay = false;
     if (m_pendingChanges.contains(Change::ContentsBufferNeedsDisplay)) {
         if (m_contentsDisplayDelegate) {
-            if (!m_contentsDisplayDelegate->display(m_platformLayer.get()))
+            if (!m_contentsDisplayDelegate->display(m_platformLayer.get(), std::exchange(m_contentsDirtyRegion, std::nullopt)))
                 contentsBufferNeedsDisplay = true;
         } else if (m_contentsBufferProxy)
             m_contentsBufferProxy->consumePendingBufferIfNeeded();

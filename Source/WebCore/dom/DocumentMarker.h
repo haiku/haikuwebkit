@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "DictationContext.h"
-#include "SimpleRange.h"
+#include <WebCore/DictationContext.h>
+#include <WebCore/SimpleRange.h>
 #include <wtf/Forward.h>
 #include <wtf/OptionSet.h>
 #include <wtf/UUID.h>

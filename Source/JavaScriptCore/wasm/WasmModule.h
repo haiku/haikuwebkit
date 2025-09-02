@@ -44,6 +44,7 @@ namespace JSC {
 
 class VM;
 class JSWebAssemblyInstance;
+class WebAssemblyCompileOptions;
 
 namespace Wasm {
 
@@ -67,6 +68,8 @@ public:
 
     Wasm::TypeIndex typeIndexFromFunctionIndexSpace(FunctionSpaceIndex functionIndexSpace) const;
     const Wasm::ModuleInformation& moduleInformation() const { return m_moduleInformation.get(); }
+
+    void applyCompileOptions(const WebAssemblyCompileOptions&);
 
     Ref<CalleeGroup> compileSync(VM&, MemoryMode);
     void compileAsync(VM&, MemoryMode, CalleeGroup::AsyncCompilationCallback&&);

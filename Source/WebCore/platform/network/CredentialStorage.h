@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Credential.h"
-#include "ProtectionSpaceHash.h"
-#include "SecurityOriginData.h"
+#include <WebCore/Credential.h>
+#include <WebCore/ProtectionSpaceHash.h>
+#include <WebCore/SecurityOriginData.h>
 #include <wtf/HashMap.h>
 #include <wtf/RobinHoodHashSet.h>
 #include <wtf/text/StringHash.h>

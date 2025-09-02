@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "CSSCalcSymbolTable.h"
-#include "CSSNoConversionDataRequiredToken.h"
-#include "CSSValueTypes.h"
+#include <WebCore/CSSCalcSymbolTable.h>
+#include <WebCore/CSSNoConversionDataRequiredToken.h>
+#include <WebCore/CSSValueTypes.h>
 #include <optional>
 #include <tuple>
 #include <utility>

@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include "DatabaseDetails.h"
-#include "DatabaseManagerClient.h"
-#include "SQLiteDatabase.h"
-#include "SecurityOriginData.h"
-#include "SecurityOriginHash.h"
+#include <WebCore/DatabaseDetails.h>
+#include <WebCore/DatabaseManagerClient.h>
+#include <WebCore/SQLiteDatabase.h>
+#include <WebCore/SecurityOriginData.h>
+#include <WebCore/SecurityOriginHash.h>
 #include <wtf/HashCountedSet.h>
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>

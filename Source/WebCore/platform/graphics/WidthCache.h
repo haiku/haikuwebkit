@@ -26,8 +26,8 @@
 #ifndef WidthCache_h
 #define WidthCache_h
 
-#include "TextRun.h"
-#include "TextSpacing.h"
+#include <WebCore/TextRun.h>
+#include <WebCore/TextSpacing.h>
 #include <wtf/Forward.h>
 #include <wtf/HashFunctions.h>
 #include <wtf/HashSet.h>

@@ -28,6 +28,7 @@
 #include "RenderObject.h"
 
 #include "AXObjectCache.h"
+#include "AXUtilities.h"
 #include "BoundaryPointInlines.h"
 #include "ContainerNodeInlines.h"
 #include "DocumentInlines.h"
@@ -1558,7 +1559,7 @@ bool RenderObject::shouldUseTransformFromContainer(const RenderElement* containe
 {
     if (isTransformed())
         return true;
-    if (hasLayer() && downcast<RenderLayerModelObject>(*this).layer()->snapshottedScrollOffsetForAnchorPositioning())
+    if (hasLayer() && downcast<RenderLayerModelObject>(*this).layer()->anchorScrollAdjustment())
         return true;
     if (containerObject && containerObject->style().hasPerspective())
         return containerObject == parent();
@@ -1913,6 +1914,7 @@ void RenderObject::updateHitTestResult(HitTestResult& result, const LayoutPoint&
         if (!result.innerNonSharedNode())
             result.setInnerNonSharedNode(node.get());
         result.setLocalPoint(point);
+        result.setPseudoElementIdentifier(style().pseudoElementIdentifier());
     }
 }
 

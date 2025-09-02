@@ -30,9 +30,9 @@
 
 #pragma once
 
-#include "FormState.h"
-#include "FrameLoaderTypes.h"
-#include "ReferrerPolicy.h"
+#include <WebCore/FormState.h>
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/ReferrerPolicy.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/URL.h>
 #include <wtf/WeakPtr.h>

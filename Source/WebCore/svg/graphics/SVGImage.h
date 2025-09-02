@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "Image.h"
-#include "Timer.h"
+#include <WebCore/Image.h>
+#include <WebCore/Timer.h>
 #include <wtf/URL.h>
 
 namespace WebCore {

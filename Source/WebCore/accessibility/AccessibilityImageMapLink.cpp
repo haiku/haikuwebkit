@@ -117,18 +117,6 @@ String AccessibilityImageMapLink::description() const
     return altTextFromAttributeOrStyle();
 }
 
-String AccessibilityImageMapLink::title() const
-{
-    const AtomString& title = getAttribute(titleAttr);
-    if (!title.isEmpty())
-        return title;
-    const AtomString& summary = getAttribute(summaryAttr);
-    if (!summary.isEmpty())
-        return summary;
-
-    return String();
-}
-
 RenderElement* AccessibilityImageMapLink::imageMapLinkRenderer() const
 {
     RefPtr node = this->node();

@@ -30,6 +30,7 @@
 #include "ImageBuffer.h"
 #include "LengthFunctions.h"
 #include "NativeImage.h"
+#include "PlatformDisplay.h"
 #include "TextureMapper.h"
 #include "TextureMapperFlags.h"
 #include "TextureMapperShaderProgram.h"

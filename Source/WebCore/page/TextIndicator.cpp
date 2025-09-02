@@ -106,6 +106,10 @@ RefPtr<TextIndicator> TextIndicator::createWithRange(const SimpleRange& range, O
 #endif
     TemporarySelectionChange selectionChange(*document, { rangeToUse }, temporarySelectionOptions);
 
+    // If the selection couldn't be set (usually due to user-select), we can't do a selection-only paint, so changed to painting everything.
+    if (rangeToUse != document->selection().selection().toNormalizedRange())
+        options |= TextIndicatorOption::PaintAllContent;
+
     TextIndicatorData data;
 
     data.presentationTransition = presentationTransition;
@@ -231,9 +235,9 @@ static bool takeSnapshots(TextIndicatorData& data, LocalFrame& frame, IntRect sn
             snapshotOptions.flags.add(SnapshotFlags::PaintWith3xBaseScale);
 
         float snapshotScaleFactor;
-        auto snapshotRect = frame.protectedView()->visibleContentRect();
-        data.contentImageWithoutSelection = takeSnapshot(frame, snapshotRect, WTFMove(snapshotOptions), snapshotScaleFactor, { });
-        data.contentImageWithoutSelectionRectInRootViewCoordinates = frame.protectedView()->contentsToRootView(snapshotRect);
+        auto visibleContentRect = frame.protectedView()->visibleContentRect();
+        data.contentImageWithoutSelection = takeSnapshot(frame, visibleContentRect, WTFMove(snapshotOptions), snapshotScaleFactor, { });
+        data.contentImageWithoutSelectionRectInRootViewCoordinates = frame.protectedView()->contentsToRootView(visibleContentRect);
     }
     
     return true;

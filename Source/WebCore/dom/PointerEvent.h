@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "EventNames.h"
-#include "MouseEvent.h"
-#include "Node.h"
-#include "PointerEventTypeNames.h"
-#include "PointerID.h"
+#include <WebCore/EventNames.h>
+#include <WebCore/MouseEvent.h>
+#include <WebCore/Node.h>
+#include <WebCore/PointerEventTypeNames.h>
+#include <WebCore/PointerID.h>
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)

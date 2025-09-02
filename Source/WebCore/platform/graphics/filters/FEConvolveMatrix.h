@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "FilterEffect.h"
-#include "FloatPoint.h"
+#include <WebCore/FilterEffect.h>
+#include <WebCore/FloatPoint.h>
 #include <wtf/Vector.h>
 
 namespace WebCore {

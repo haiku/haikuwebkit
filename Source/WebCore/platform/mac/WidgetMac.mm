@@ -44,6 +44,7 @@
 #import <wtf/Ref.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 
 @interface NSWindow (WebWindowDetails)
 - (BOOL)_needsToResetDragMargins;

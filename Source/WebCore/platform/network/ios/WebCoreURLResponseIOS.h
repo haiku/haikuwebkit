@@ -30,8 +30,8 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "MIMETypeRegistry.h"
-#include "WebCoreURLResponse.h"
+#include <WebCore/MIMETypeRegistry.h>
+#include <WebCore/WebCoreURLResponse.h>
 #include <wtf/text/WTFString.h>
 
 #if USE(QUICK_LOOK)

@@ -26,7 +26,7 @@
 #pragma once
 
 #include "InlineLineBuilder.h"
-#include "InlineLineTypes.h"
+#include <WebCore/InlineLineTypes.h>
 
 namespace WebCore {
 namespace Layout {

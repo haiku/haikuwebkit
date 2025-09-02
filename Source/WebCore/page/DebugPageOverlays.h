@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "DebugOverlayRegions.h"
-#include "LocalFrame.h"
+#include <WebCore/DebugOverlayRegions.h>
+#include <WebCore/LocalFrame.h>
 #include <wtf/HashMap.h>
 #include <wtf/OptionSet.h>
 #include <wtf/Vector.h>

@@ -27,8 +27,8 @@
 
 #pragma once
 
-#include "PlatformImage.h"
-#include "RenderingResource.h"
+#include <WebCore/PlatformImage.h>
+#include <WebCore/RenderingResource.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>
 

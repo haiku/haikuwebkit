@@ -26,7 +26,7 @@
 #ifndef Region_h
 #define Region_h
 
-#include "IntRect.h"
+#include <WebCore/IntRect.h>
 #include <wtf/ArgumentCoder.h>
 #include <wtf/PointerComparison.h>
 #include <wtf/TZoneMalloc.h>

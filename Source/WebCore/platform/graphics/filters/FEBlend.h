@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "FilterEffect.h"
-#include "GraphicsTypes.h"
+#include <WebCore/FilterEffect.h>
+#include <WebCore/GraphicsTypes.h>
 
 namespace WebCore {
 

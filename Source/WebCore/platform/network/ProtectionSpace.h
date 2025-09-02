@@ -26,12 +26,12 @@
 #pragma once
 
 #if PLATFORM(COCOA)
-#include "ProtectionSpaceCocoa.h"
+#include <WebCore/ProtectionSpaceCocoa.h>
 #elif USE(CURL)
 #include "ProtectionSpaceCurl.h"
 #else
 
-#include "ProtectionSpaceBase.h"
+#include <WebCore/ProtectionSpaceBase.h>
 
 namespace WebCore {
 

@@ -27,15 +27,15 @@
 
 #if ENABLE(WEBGL)
 
-#include "DestinationColorSpace.h"
-#include "GraphicsContextGLActiveInfo.h"
-#include "GraphicsContextGLAttributes.h"
-#include "GraphicsContextGLEnums.h"
-#include "GraphicsLayerContentsDisplayDelegate.h"
-#include "GraphicsTypesGL.h"
-#include "Image.h"
-#include "IntRect.h"
-#include "IntSize.h"
+#include <WebCore/DestinationColorSpace.h>
+#include <WebCore/GraphicsContextGLActiveInfo.h>
+#include <WebCore/GraphicsContextGLAttributes.h>
+#include <WebCore/GraphicsContextGLEnums.h>
+#include <WebCore/GraphicsLayerContentsDisplayDelegate.h>
+#include <WebCore/GraphicsTypesGL.h>
+#include <WebCore/Image.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/IntSize.h>
 #include <span>
 #include <wtf/FunctionDispatcher.h>
 #include <wtf/HashSet.h>
@@ -1565,8 +1565,8 @@ public:
     using ExternalSyncSource = GraphicsContextGLExternalSyncSource;
 #if ENABLE(WEBXR)
     virtual GCGLExternalSync createExternalSync(ExternalSyncSource&&) = 0;
-#endif
     virtual void deleteExternalSync(GCGLExternalSync) = 0;
+#endif
 
     // ========== Extension related entry points.
 

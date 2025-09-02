@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "FloatSize.h"
-#include "FourCC.h"
-#include "HdrMetadataType.h"
-#include "PlatformVideoColorSpace.h"
-#include "SharedBuffer.h"
+#include <WebCore/FloatSize.h>
+#include <WebCore/FourCC.h>
+#include <WebCore/HdrMetadataType.h>
+#include <WebCore/PlatformVideoColorSpace.h>
+#include <WebCore/SharedBuffer.h>
 #include <functional>
 #include <wtf/MediaTime.h>
 #include <wtf/PrintStream.h>

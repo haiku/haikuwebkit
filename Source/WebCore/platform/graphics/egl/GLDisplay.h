@@ -22,6 +22,7 @@
 #include <optional>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
 
@@ -34,12 +35,10 @@ typedef unsigned EGLenum;
 
 namespace WebCore {
 
-class GLDisplay {
+class GLDisplay final : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<GLDisplay, WTF::DestructionThread::MainRunLoop> {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(GLDisplay);
-    WTF_MAKE_NONCOPYABLE(GLDisplay);
 public:
-    static std::unique_ptr<GLDisplay> create(EGLDisplay);
-    explicit GLDisplay(EGLDisplay);
+    static RefPtr<GLDisplay> create(EGLDisplay);
     ~GLDisplay() = default;
 
     EGLDisplay eglDisplay() const { return m_display; }
@@ -74,6 +73,8 @@ public:
 #endif
 
 private:
+    explicit GLDisplay(EGLDisplay);
+
     EGLDisplay m_display { nullptr };
     struct {
         int major { 0 };

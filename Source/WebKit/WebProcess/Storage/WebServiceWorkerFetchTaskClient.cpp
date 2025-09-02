@@ -151,7 +151,7 @@ void WebServiceWorkerFetchTaskClient::didReceiveFormDataAndFinishInternal(Ref<Fo
         }
 
         m_blobLoader = makeUnique<BlobLoader>(*this);
-        auto loader = serviceWorkerThreadProxy->createBlobLoader(*m_blobLoader, blobURL);
+        auto loader = serviceWorkerThreadProxy->createBlobLoader(CheckedRef { *m_blobLoader }, blobURL);
         if (!loader) {
             m_blobLoader = nullptr;
             didFail(internalError(blobURL));

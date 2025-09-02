@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Length.h"
-#include "RenderStyleConstants.h"
-#include "StyleMaskBorder.h"
+#include <WebCore/Length.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleMaskBorder.h>
 #include <wtf/RefCounted.h>
 
 namespace WebCore {

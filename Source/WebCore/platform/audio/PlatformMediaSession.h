@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PlatformMediaSessionInterface.h"
+#include <WebCore/PlatformMediaSessionInterface.h>
 
 namespace WebCore {
 

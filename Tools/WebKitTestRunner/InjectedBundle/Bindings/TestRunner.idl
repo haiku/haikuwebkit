@@ -152,7 +152,6 @@ interface TestRunner {
     attribute double databaseMaxQuota;
 
     // Text search testing.
-    Promise<boolean> findString(DOMString target, object optionsArray);
     undefined findStringMatchesInPage(DOMString target, object optionsArray);
     undefined indicateFindMatch(unsigned long matchIndex);
     undefined replaceFindMatchesAtIndices(object matchIndicesArray, DOMString replacementText, boolean selectionOnly);
@@ -472,4 +471,6 @@ interface TestRunner {
     // ResourceMonitor
     readonly attribute boolean canModifyResourceMonitorList;
     Promise<undefined> setResourceMonitorList(DOMString rulesText);
+
+    undefined setHasMouseDeviceForTesting(boolean hasMouseDevice);
 };

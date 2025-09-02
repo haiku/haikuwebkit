@@ -34,15 +34,27 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  Whether to merge adjacent runs of text into paragraphs.
  This also combines links and editable containers into a single text item.
- Defaults to `false`.
+ Defaults to `NO`.
  */
 @property (nonatomic) BOOL mergeParagraphs;
 
 /*!
  Ignores transparent (or nearly-transparent) subtrees.
- Defaults to `false`.
+ Defaults to `NO`.
  */
-@property (nonatomic) BOOL ignoreTransparency;
+@property (nonatomic) BOOL skipNearlyTransparentContent;
+
+/*!
+ Whether to include unique identifiers, for each interactive element.
+ Defaults to `YES`.
+ */
+@property (nonatomic) BOOL canIncludeIdentifiers;
+
+@end
+
+@interface _WKTextExtractionInteraction ()
+
+@property (nonatomic, readonly) BOOL hasSetLocation;
 
 @end
 
@@ -65,12 +77,7 @@ typedef NS_OPTIONS(NSUInteger, WKTextExtractionEventListenerTypes) {
     WKTextExtractionEventListenerTypeHover     = 1 << 1,
     WKTextExtractionEventListenerTypeTouch     = 1 << 2,
     WKTextExtractionEventListenerTypeWheel     = 1 << 3,
-    WKTextExtractionEventListenerTypeGesture   = 1 << 4,
-    WKTextExtractionEventListenerTypePointer   = 1 << 5,
-    WKTextExtractionEventListenerTypeKeyboard  = 1 << 6,
-    WKTextExtractionEventListenerTypeFocus     = 1 << 7,
-    WKTextExtractionEventListenerTypeForm      = 1 << 8,
-    WKTextExtractionEventListenerTypeMedia     = 1 << 9,
+    WKTextExtractionEventListenerTypeKeyboard  = 1 << 4,
 };
 
 typedef NS_ENUM(NSInteger, WKTextExtractionEditableType) {
@@ -165,6 +172,7 @@ typedef NS_ENUM(NSInteger, WKTextExtractionEditableType) {
 - (instancetype)initWithRootItem:(WKTextExtractionItem *)rootItem popupMenu:(nullable WKTextExtractionPopupMenu *)popupMenu;
 @property (nonatomic, readonly) WKTextExtractionItem *rootItem;
 @property (nonatomic, readonly, nullable) WKTextExtractionPopupMenu *popupMenu;
+@property (nonatomic, readonly) NSString *textRepresentation;
 @end
 
 NS_ASSUME_NONNULL_END

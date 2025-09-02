@@ -33,20 +33,20 @@
 
 #if ENABLE(NOTIFICATIONS)
 
-#include "ActiveDOMObject.h"
-#include "ContextDestructionObserverInlines.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "NotificationDirection.h"
-#include "NotificationPayload.h"
-#include "NotificationPermission.h"
-#include "NotificationResources.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "SerializedScriptValue.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/ContextDestructionObserverInlines.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/NotificationDirection.h>
+#include <WebCore/NotificationPayload.h>
+#include <WebCore/NotificationPermission.h>
+#include <WebCore/NotificationResources.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/SerializedScriptValue.h>
+#include <WebCore/WritingMode.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/URL.h>
 #include <wtf/UUID.h>
-#include "WritingMode.h"
 
 namespace WebCore {
 

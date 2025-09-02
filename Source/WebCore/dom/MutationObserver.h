@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "GCReachableRef.h"
+#include <WebCore/GCReachableRef.h>
 #include <wtf/Forward.h>
 #include <wtf/HashSet.h>
 #include <wtf/OptionSet.h>

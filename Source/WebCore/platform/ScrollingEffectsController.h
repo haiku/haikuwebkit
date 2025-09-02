@@ -25,16 +25,16 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "FloatSize.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/FloatSize.h>
 
-#include "KeyboardScroll.h"
-#include "RectEdges.h"
-#include "ScrollAnimation.h"
-#include "ScrollSnapAnimatorState.h"
-#include "ScrollSnapOffsetsInfo.h"
-#include "ScrollTypes.h"
-#include "WheelEventTestMonitor.h"
+#include <WebCore/KeyboardScroll.h>
+#include <WebCore/RectEdges.h>
+#include <WebCore/ScrollAnimation.h>
+#include <WebCore/ScrollSnapAnimatorState.h>
+#include <WebCore/ScrollSnapOffsetsInfo.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/WheelEventTestMonitor.h>
 #include <wtf/Deque.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RunLoop.h>
@@ -208,6 +208,8 @@ private:
     bool shouldOverrideMomentumScrolling() const;
     void discreteSnapTransitionTimerFired();
     void scheduleDiscreteScrollSnap(const FloatSize& delta);
+    void scrollendTimerFired();
+    void scheduleScrollendTimer();
 
     bool modifyScrollDeltaForStretching(const PlatformWheelEvent&, FloatSize&, bool isHorizontallyStretched, bool isVerticallyStretched);
     bool applyScrollDeltaWithStretching(const PlatformWheelEvent&, FloatSize, bool isHorizontallyStretched, bool isVerticallyStretched);
@@ -283,6 +285,7 @@ private:
 
     Deque<FloatSize> m_recentDiscreteWheelDeltas;
     std::unique_ptr<ScrollingEffectsControllerTimer> m_discreteSnapTransitionTimer;
+    std::unique_ptr<ScrollingEffectsControllerTimer> m_discreteScrollendTimer;
 
 #if HAVE(RUBBER_BANDING)
     RectEdges<bool> m_rubberBandingEdges;

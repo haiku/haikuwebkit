@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "CSSStyleProperties.h"
-#include "PseudoElementIdentifier.h"
-#include "RenderStyleConstants.h"
+#include <WebCore/CSSStyleProperties.h>
+#include <WebCore/PseudoElementIdentifier.h>
+#include <WebCore/RenderStyleConstants.h>
 #include "StyleExtractor.h"
 #include <wtf/FixedVector.h>
 #include <wtf/RefPtr.h>

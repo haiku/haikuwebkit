@@ -683,6 +683,12 @@ ScrollbarWidth ScrollingTree::mainFrameScrollbarWidth() const
     return m_rootNode ? m_rootNode->scrollbarWidthStyle() : ScrollbarWidth::Auto;
 }
 
+std::optional<ScrollbarColor> ScrollingTree::mainFrameScrollbarColor() const
+{
+    Locker locker { m_treeLock };
+    return m_rootNode ? m_rootNode->scrollbarColorStyle() : std::nullopt;
+}
+
 OverscrollBehavior ScrollingTree::mainFrameVerticalOverscrollBehavior() const
 {
     Locker locker { m_treeLock };

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "HTMLPlugInElement.h"
+#include <WebCore/HTMLPlugInElement.h>
 
 namespace WebCore {
 

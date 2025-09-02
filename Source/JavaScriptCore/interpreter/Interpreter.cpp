@@ -286,7 +286,7 @@ unsigned sizeFrameForForwardArguments(JSGlobalObject* globalObject, CallFrame* c
 
     unsigned length = callFrame->argumentCount();
     CallFrame* calleeFrame = calleeFrameForVarargs(callFrame, numUsedStackSlots, length + 1);
-    if (!vm.ensureStackCapacityFor(calleeFrame->registers())) [[unlikely]]
+    if (!vm.ensureJSStackCapacityFor(calleeFrame->registers())) [[unlikely]]
         throwStackOverflowError(globalObject, scope);
 
     return length;
@@ -300,7 +300,7 @@ unsigned sizeFrameForVarargs(JSGlobalObject* globalObject, CallFrame* callFrame,
     RETURN_IF_EXCEPTION(scope, 0);
 
     CallFrame* calleeFrame = calleeFrameForVarargs(callFrame, numUsedStackSlots, length + 1);
-    if (length > maxArguments || !vm.ensureStackCapacityFor(calleeFrame->registers())) [[unlikely]] {
+    if (length > maxArguments || !vm.ensureJSStackCapacityFor(calleeFrame->registers())) [[unlikely]] {
         throwStackOverflowError(globalObject, scope);
         return 0;
     }
@@ -396,9 +396,6 @@ void setupForwardArgumentsFrameAndSetThis(JSGlobalObject* globalObject, CallFram
 }
 
 Interpreter::Interpreter()
-#if ENABLE(C_LOOP)
-    : m_cloopStack(vm())
-#endif
 {
 #if ASSERT_ENABLED
     static std::once_flag assertOnceKey;

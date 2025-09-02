@@ -26,14 +26,14 @@
 
 #pragma once
 
-#include "AffineTransform.h"
-#include "Color.h"
-#include "Gradient.h"
-#include "GraphicsContext.h"
-#include "Pattern.h"
-#include "TextFlags.h"
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreText/CoreText.h>
+#include <WebCore/AffineTransform.h>
+#include <WebCore/Color.h>
+#include <WebCore/Gradient.h>
+#include <WebCore/GraphicsContext.h>
+#include <WebCore/Pattern.h>
+#include <WebCore/TextFlags.h>
 #include <pal/spi/cf/CoreTextSPI.h>
 #include <pal/spi/cg/CoreGraphicsSPI.h>
 #include <wtf/TZoneMalloc.h>

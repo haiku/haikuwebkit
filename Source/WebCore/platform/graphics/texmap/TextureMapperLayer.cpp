@@ -490,7 +490,7 @@ void TextureMapperLayer::collectDamageSelf(TextureMapperPaintOptions& options, D
         return;
     }
 
-    if (m_contentsLayer) {
+    if (m_contentsLayer && (!m_damageInLayerCoordinateSpace || m_damageInLayerCoordinateSpace->isEmpty())) {
         // Layers with content layer are fully damaged for now.
         // FIXME: Remove that special case.
         damageWholeLayer();

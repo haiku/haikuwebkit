@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "StylePrimitiveNumeric.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StylePrimitiveNumeric.h>
+#include <WebCore/StyleValueTypes.h>
 #include <wtf/Markable.h>
 
 namespace WebCore {

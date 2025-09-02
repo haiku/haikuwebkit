@@ -70,6 +70,10 @@
 #include <WebCore/PaymentSession.h>
 #endif
 
+#if HAVE(WEBCONTENTRESTRICTIONS)
+#include <WebCore/ParentalControlsURLFilterParameters.h>
+#endif
+
 #define MESSAGE_CHECK(assertion) MESSAGE_CHECK_BASE(assertion, process().connection())
 
 namespace WebKit {
@@ -407,6 +411,24 @@ bool WebFrameProxy::didHandleContentFilterUnblockNavigation(const ResourceReques
 
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
     m_contentFilterUnblockHandler.setConfigurationPath(page->protectedWebsiteDataStore()->configuration().webContentRestrictionsConfigurationFile());
+#endif
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+    if (m_contentFilterUnblockHandler.needsNetworkProcess()) {
+        if (auto evaluatedURL = m_contentFilterUnblockHandler.evaluatedURL()) {
+            WebCore::ParentalControlsURLFilterParameters parameters {
+                *evaluatedURL,
+#if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
+                m_contentFilterUnblockHandler.configurationPath()
+#endif
+            };
+            page->protectedWebsiteDataStore()->protectedNetworkProcess()->allowEvaluatedURL(parameters, [page](bool unblocked) {
+                if (unblocked)
+                    page->reload({ });
+            });
+            return true;
+        }
+    }
 #endif
 
     m_contentFilterUnblockHandler.requestUnblockAsync([page](bool unblocked) {

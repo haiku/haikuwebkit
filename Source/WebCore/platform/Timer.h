@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ThreadTimers.h"
+#include <WebCore/ThreadTimers.h>
 #include <functional>
 #include <wtf/CheckedRef.h>
 #include <wtf/CompactRefPtrTuple.h>
@@ -41,7 +41,7 @@
 #include <wtf/WeakPtr.h>
 
 #if PLATFORM(IOS_FAMILY)
-#include "WebCoreThread.h"
+#include <WebCore/WebCoreThread.h>
 #endif
 
 namespace WebCore {

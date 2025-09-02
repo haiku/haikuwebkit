@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "RenderBlockFlow.h"
-#include "RenderFlexibleBox.h"
+#include <WebCore/RenderBlockFlow.h>
+#include <WebCore/RenderFlexibleBox.h>
 
 namespace WebCore {
 

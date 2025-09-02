@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "GraphicsContext.h"
+#include <WebCore/GraphicsContext.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>
 

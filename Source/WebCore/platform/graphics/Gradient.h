@@ -27,12 +27,12 @@
 
 #pragma once
 
-#include "Color.h"
-#include "ColorInterpolationMethod.h"
-#include "FloatPoint.h"
-#include "GradientColorStops.h"
-#include "GraphicsTypes.h"
-#include "RenderingResource.h"
+#include <WebCore/Color.h>
+#include <WebCore/ColorInterpolationMethod.h>
+#include <WebCore/FloatPoint.h>
+#include <WebCore/GradientColorStops.h>
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/RenderingResource.h>
 #include <wtf/Vector.h>
 
 #if USE(SKIA)
@@ -40,7 +40,7 @@
 #endif
 
 #if USE(CG)
-#include "GradientRendererCG.h"
+#include <WebCore/GradientRendererCG.h>
 #endif
 
 #if USE(CG)

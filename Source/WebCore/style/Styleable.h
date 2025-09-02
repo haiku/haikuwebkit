@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "Element.h"
-#include "NodeInlines.h"
-#include "PseudoElement.h"
-#include "PseudoElementIdentifier.h"
-#include "RenderStyleConstants.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/Element.h>
+#include <WebCore/NodeInlines.h>
+#include <WebCore/PseudoElement.h>
+#include <WebCore/PseudoElementIdentifier.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/WebAnimationTypes.h>
 
 namespace WebCore {
 

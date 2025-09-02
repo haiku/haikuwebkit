@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "ColorComponents.h"
-#include "FilterEffect.h"
+#include <WebCore/ColorComponents.h>
+#include <WebCore/FilterEffect.h>
 
 namespace WebCore {
 

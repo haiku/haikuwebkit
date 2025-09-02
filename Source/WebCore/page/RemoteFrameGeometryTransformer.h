@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FrameIdentifier.h"
+#include <WebCore/FrameIdentifier.h>
 
 namespace WebCore {
 

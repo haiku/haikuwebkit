@@ -32,9 +32,9 @@
 #endif
 #endif
 
-#include "DoublePoint.h"
-#include "IntRect.h"
-#include "PlatformScreen.h"
+#include <WebCore/DoublePoint.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/PlatformScreen.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "TaskSource.h"
+#include <WebCore/TaskSource.h>
 #include <optional>
 #include <wtf/ApproximateTime.h>
 #include <wtf/CheckedRef.h>

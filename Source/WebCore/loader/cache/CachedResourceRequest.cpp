@@ -194,6 +194,8 @@ String CachedResourceRequest::acceptHeaderValueFromType(CachedResource::Type typ
         return acceptHeaderValueForImageResource(usingSecureProtocol);
     case CachedResource::Type::CSSStyleSheet:
         return "text/css,*/*;q=0.1"_s;
+    case CachedResource::Type::JSON:
+        return "application/json,*/*;q=0.5"_s;
     case CachedResource::Type::SVGDocumentResource:
         return "image/svg+xml"_s;
 #if ENABLE(XSLT)

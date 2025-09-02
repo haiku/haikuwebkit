@@ -879,3 +879,8 @@
 #if ENABLE(LLVM_PROFILE_GENERATION)
 (allow file-write* (subpath "/private/tmp/WebKitPGO"))
 #endif
+
+#if HAVE(WEBCONTENTRESTRICTIONS) && PLATFORM(MAC)
+(allow mach-lookup
+    (global-name "com.apple.familycontrols"))
+#endif

@@ -22,7 +22,7 @@
 
 #include "APIPageConfiguration.h"
 #include "BuildRevision.h"
-#include "DRMDevice.h"
+#include "DRMMainDevice.h"
 #include "DisplayVBlankMonitor.h"
 #include "RendererBufferTransportMode.h"
 #include "WebKitError.h"
@@ -514,15 +514,16 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request)
         }
     }
 
+#if USE(GBM)
     if (policy != "never"_s) {
-        auto deviceFile = drmPrimaryDevice();
-        if (!deviceFile.isEmpty())
-            addTableRow(displayObject, "DRM Device"_s, deviceFile);
-
-        auto renderNode = drmRenderNodeDevice();
-        if (!renderNode.isEmpty())
-            addTableRow(displayObject, "DRM Render Node"_s, renderNode);
+        auto drmDevice = drmMainDevice();
+        if (!drmDevice.isNull()) {
+            addTableRow(displayObject, "DRM Primary Node"_s, String::fromUTF8(drmDevice.primaryNode.span()));
+            if (!drmDevice.renderNode.isNull())
+                addTableRow(displayObject, "DRM Render Node"_s, String::fromUTF8(drmDevice.renderNode.span()));
+        }
     }
+#endif
 
     stopTable();
     jsonObject->setObject("Display Information"_s, WTFMove(displayObject));
@@ -573,9 +574,10 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request)
         struct gbm_device* device = nullptr;
         const char* disableGBM = getenv("WEBKIT_DMABUF_RENDERER_DISABLE_GBM");
         if (!disableGBM || !strcmp(disableGBM, "0")) {
-            auto renderNode = drmRenderNodeDevice();
-            if (!renderNode.isEmpty()) {
-                fd = UnixFileDescriptor { open(renderNode.utf8().data(), O_RDWR | O_CLOEXEC), UnixFileDescriptor::Adopt };
+            auto drmDevice = drmMainDevice();
+            if (!drmDevice.isNull()) {
+                const auto& filename = !drmDevice.renderNode.isNull() ? drmDevice.renderNode : drmDevice.primaryNode;
+                fd = UnixFileDescriptor { open(filename.data(), O_RDWR | O_CLOEXEC), UnixFileDescriptor::Adopt };
                 if (fd) {
                     device = gbm_create_device(fd.value());
                     if (device)

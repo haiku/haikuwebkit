@@ -21,13 +21,13 @@
 
 #pragma once
 
-#include "CSSAttrValue.h"
-#include "CSSCalcValue.h"
-#include "CSSPrimitiveNumericUnits.h"
-#include "CSSPropertyNames.h"
-#include "CSSValue.h"
-#include "CSSValueKeywords.h"
-#include "LayoutUnit.h"
+#include <WebCore/CSSAttrValue.h>
+#include <WebCore/CSSCalcValue.h>
+#include <WebCore/CSSPrimitiveNumericUnits.h>
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CSSValue.h>
+#include <WebCore/CSSValueKeywords.h>
+#include <WebCore/LayoutUnit.h>
 #include <utility>
 #include <wtf/Forward.h>
 #include <wtf/MathExtras.h>

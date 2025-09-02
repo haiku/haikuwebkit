@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "DisplayListRecorderImpl.h"
-#include "ImageBufferBackend.h"
+#include <WebCore/DisplayListRecorderImpl.h>
+#include <WebCore/ImageBufferBackend.h>
 
 namespace WebCore {
 

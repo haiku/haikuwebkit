@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Apple Inc. All rights reserved.
+# Copyright (C) 2011-2025 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -191,7 +191,7 @@ macro doVMEntry(makeCall)
     # and the frame for the JS code we're executing. We need to do this check
     # before we start copying the args from the protoCallFrame below.
     if C_LOOP
-        bpaeq t3, VM::m_cloopStackLimit[vm], .stackHeightOK
+        bpaeq t3, VMCLoopStackLimitOffset[vm], .stackHeightOK
         move entry, t4
         move vm, t5
         cloopCallSlowPath _llint_stack_check_at_vm_entry, vm, t3
@@ -207,7 +207,7 @@ macro doVMEntry(makeCall)
 .stackHeightOK:
         move t3, sp
     else
-        bplteq t3, VM::m_softStackLimit[vm],  _llint_throw_stack_overflow_error_from_vm_entry
+        bpbeq t3, VMSoftStackLimitOffset[vm],  _llint_throw_stack_overflow_error_from_vm_entry
         move t3, sp
     end
 
@@ -327,7 +327,7 @@ _llint_call_javascript:
     elsif ARM64E
         move entry, t5
         leap _g_config, a7
-        jmp JSCConfigGateMapOffset + (constexpr Gate::vmEntryToJavaScript) * PtrSize[a7], NativeToJITGatePtrTag # JSEntryPtrTag
+        jmp JSCConfigGateMapOffset + (constexpr Gate::vmEntryToJavaScript) * PtrSize[a7], VMEntryToJITGatePtrTag # JSEntryPtrTag
         global _vmEntryToJavaScriptTrampoline
         _vmEntryToJavaScriptTrampoline:
         call t5, JSEntryPtrTag
@@ -710,9 +710,9 @@ macro functionArityCheck(opcodeName, doneLabel)
     subp cfr, t3, t5
     loadp CodeBlock::m_vm[t1], t0
     if C_LOOP
-        bplteq VM::m_cloopStackLimit[t0], t5, .stackHeightOK
+        bpbeq VMCLoopStackLimitOffset[t0], t5, .stackHeightOK
     else
-        bplteq VM::m_softStackLimit[t0], t5, .stackHeightOK
+        bpbeq VMSoftStackLimitOffset[t0], t5, .stackHeightOK
     end
 
     prepareStateForCCall()

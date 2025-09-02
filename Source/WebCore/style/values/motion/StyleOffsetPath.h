@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "StylePathOperationWrappers.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StylePathOperationWrappers.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

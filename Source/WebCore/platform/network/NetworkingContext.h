@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "StorageSessionProvider.h"
+#include <WebCore/StorageSessionProvider.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/text/WTFString.h>
 

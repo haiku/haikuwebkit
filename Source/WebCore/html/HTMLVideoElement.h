@@ -27,9 +27,9 @@
 
 #if ENABLE(VIDEO)
 
-#include "HTMLMediaElement.h"
-#include "Supplementable.h"
-#include "VideoFrameRequestCallback.h"
+#include <WebCore/HTMLMediaElement.h>
+#include <WebCore/Supplementable.h>
+#include <WebCore/VideoFrameRequestCallback.h>
 #include <memory>
 
 namespace WebCore {

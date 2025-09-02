@@ -28,7 +28,7 @@ import os
 import sqlite3
 from enum import Enum
 from fnmatch import fnmatch
-from typing import Callable, Iterable, NamedTuple, Optional, Union
+from typing import Any, Callable, Iterable, NamedTuple, Optional, Union
 from pathlib import Path
 
 from .macho import APIReport, objc_fully_qualified_method
@@ -37,7 +37,7 @@ from .allow import AllowList
 
 # Increment this number to force clients to rebuild from scratch, to
 # accomodate schema changes or fix caching bugs.
-VERSION = 6
+VERSION = 7
 
 
 class DeclarationKind(Enum):
@@ -149,12 +149,13 @@ class SDKDB:
             # The database was initialized while we were waiting.
             return
         cur.execute('CREATE TABLE input_file(path PRIMARY KEY, hash)')
-        cur.execute('CREATE TABLE exports(name, kind DeclarationKind, '
+        cur.execute('CREATE TABLE exports('
+                    '   name, class_name, kind DeclarationKind, '
                     '   input_file REFERENCES input_file(path) '
                     '              ON DELETE CASCADE)')
         cur.execute('CREATE INDEX export_names ON exports (name, kind)')
         cur.execute('CREATE TABLE allow('
-                    '   name, kind DeclarationKind, cond_id,'
+                    '   name, class_name, kind DeclarationKind, cond_id,'
                     '   input_file REFERENCES input_file(path) '
                     '              ON DELETE CASCADE)')
         cur.execute('CREATE INDEX allow_names ON allow (name, kind)')
@@ -225,8 +226,12 @@ class SDKDB:
         if self._cache_hit_preparing_to_insert(sdkdb_file,
                                                sdkdb_hash):
             return False
-
         doc = json.load(fd)
+        self._add_partial_sdkdb(doc, sdkdb_file, spi, abi)
+        return True
+
+    def _add_partial_sdkdb(self, doc: dict[str, Any], sdkdb_file: Path,
+                           spi: bool, abi: bool):
         criteria = [
             ('PublicSDKContentRoot', lambda _: True),
             ('SDKContentRoot',
@@ -271,14 +276,14 @@ class SDKDB:
         @property
         def statement(self) -> str:
             if self == self.EXPORTS:
-                return f'INSERT INTO exports VALUES (:name, :kind, :file)'
+                return f'INSERT INTO exports VALUES (:name, :class_name, :kind, :file)'
             else:  # self.ALLOW
-                return f'INSERT INTO allow VALUES (:name, :kind, :cond, :file)'
+                return f'INSERT INTO allow VALUES (:name, :class_name, :kind, :cond, :file)'
 
     def _add_api_report(self, report: APIReport, binary: Path,
                         dest=InsertionKind.EXPORTS):
-        for selector in report.methods:
-            self._add_objc_selector(selector, None, binary, dest=dest)
+        for sel in report.methods:
+            self._add_objc_selector(sel.name, sel.class_, binary, dest=dest)
         for symbol in report.exports:
             m = objc_fully_qualified_method.match(symbol)
             if m:
@@ -345,8 +350,8 @@ class SDKDB:
                 self._add_objc_class(class_, allowlist,
                                      dest=self.InsertionKind.ALLOW,
                                      cond_id=cond_id)
-            for selector in entry.selectors:
-                self._add_objc_selector(selector, None, allowlist,
+            for sel in entry.selectors:
+                self._add_objc_selector(sel.name, sel.class_, allowlist,
                                         dest=self.InsertionKind.ALLOW,
                                         cond_id=cond_id)
 
@@ -375,10 +380,10 @@ class SDKDB:
         # Since this binary's exports are not added to the cache, the query
         # won't weed these false positives out. Instead, remove them via the
         # `if` clause below.
+        method_names = {sel.name for sel in report.methods}
         cur.executemany('INSERT INTO imports VALUES (?, ?, ?, ?)',
                         ((sel, OBJC_SEL, path, report.arch)
-                         for sel in report.selrefs
-                         if sel not in report.methods))
+                         for sel in report.selrefs - method_names))
 
     def audit(self) -> Iterable[Diagnostic]:
         cur = self.con.cursor()
@@ -410,6 +415,7 @@ class SDKDB:
                     '           ew.input_file IS NOT NULL) as export_found, '
                     '       sum(a.name IS NOT NULL AND '
                     '           a.cond_id IS c.nextid AND '
+                    '           (a.class_name = e.class_name IS NOT FALSE) AND '
                     '           aw.input_file IS NOT NULL) as allow_found '
                     'FROM imports AS i '
                     'LEFT JOIN exports AS e USING (name, kind) '
@@ -446,13 +452,13 @@ class SDKDB:
                 # FIXME: split(',') falls apart if an allowlist path contains a
                 # comma. We could improve this by using quote() in the query
                 # and unquoting here.
-                for path in allowlist_paths.split(','):
+                for path in sorted(set(allowlist_paths.split(','))):
                     yield UnusedAllowedName(name=allowed_name, file=Path(path),
                                             kind=allowed_kind)
             elif allow_found and export_found:
                 # Allowed but also exported => unnecessary allowlist entry to
                 # remove.
-                for path in allowlist_paths.split(','):
+                for path in sorted(set(allowlist_paths.split(','))):
                     yield UnnecessaryAllowedName(name=allowed_name,
                                                  file=Path(path),
                                                  kind=allowed_kind,
@@ -492,22 +498,22 @@ class SDKDB:
                     dest=InsertionKind.EXPORTS,
                     cond_id: Optional[int] = None):
         cur = self.con.cursor()
-        params = dict(name=name, kind=SYMBOL, file=str(file.resolve()),
-                      cond=cond_id)
+        params = dict(name=name, class_name=None, kind=SYMBOL,
+                      file=str(file.resolve()), cond=cond_id)
         cur.execute(dest.statement, params)
 
     def _add_objc_class(self, name: str, file: Path,
                         dest=InsertionKind.EXPORTS,
                         cond_id: Optional[int] = None):
         cur = self.con.cursor()
-        params = dict(name=name, kind=OBJC_CLS, file=str(file.resolve()),
-                      cond=cond_id)
+        params = dict(name=name, class_name=None, kind=OBJC_CLS,
+                      file=str(file.resolve()), cond=cond_id)
         cur.execute(dest.statement, params)
 
     def _add_objc_selector(self, name: str, class_name: Optional[str],
                            file: Path, dest=InsertionKind.EXPORTS,
                            cond_id: Optional[int] = None):
         cur = self.con.cursor()
-        params = dict(name=name, kind=OBJC_SEL, file=str(file.resolve()),
-                      cond=cond_id)
+        params = dict(name=name, class_name=class_name,
+                      kind=OBJC_SEL, file=str(file.resolve()), cond=cond_id)
         cur.execute(dest.statement, params)

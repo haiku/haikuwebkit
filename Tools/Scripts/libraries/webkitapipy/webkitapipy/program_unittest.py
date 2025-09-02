@@ -38,6 +38,9 @@ def create_sdk_dir(root: Path):
     lib = sdk / 'usr/lib/libobjc.tbd'
     lib.parent.mkdir(parents=True)
     lib.touch()
+    merged_lib = sdk / 'usr/lib/swift/libswiftQuickLook.dylib'
+    merged_lib.parent.mkdir(parents=True)
+    merged_lib.symlink_to('../../../System/Library/Frameworks/QuickLook.framework/QuickLook')
     return sdk
 
 
@@ -135,3 +138,11 @@ class CLITest(TestCase):
         # It works around rdar://153937150 by tracking the framework's tbd as
         # an input.
         self.assertIn(f'{self.framework}/foo.tbd', result.dependencies)
+
+    def test_does_not_load_merged_swiftoverlays(self):
+        result = self.call(self.framework / 'foo')
+        self.assertNotIn(f'{self.sdk_dir}/usr/lib/swift/libswiftQuickLook.dylib', result.dependencies)
+
+    def test_depends_on_primary_file(self):
+        result = self.call(self.framework / 'foo')
+        self.assertIn(f'{self.framework}/foo', result.dependencies)

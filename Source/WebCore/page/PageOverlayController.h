@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "GraphicsLayer.h"
-#include "GraphicsLayerClient.h"
-#include "PageOverlay.h"
+#include <WebCore/GraphicsLayer.h>
+#include <WebCore/GraphicsLayerClient.h>
+#include <WebCore/PageOverlay.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>

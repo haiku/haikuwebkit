@@ -96,6 +96,11 @@ Ref<CalleeGroup> Module::getOrCreateCalleeGroup(VM& vm, MemoryMode mode)
     return calleeGroup.releaseNonNull();
 }
 
+void Module::applyCompileOptions(const WebAssemblyCompileOptions& options)
+{
+    m_moduleInformation->applyCompileOptions(options);
+}
+
 Ref<CalleeGroup> Module::compileSync(VM& vm, MemoryMode mode)
 {
     Ref<CalleeGroup> calleeGroup = getOrCreateCalleeGroup(vm, mode);

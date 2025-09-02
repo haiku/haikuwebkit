@@ -26,6 +26,7 @@
 #include "config.h"
 #include "HTMLElement.h"
 
+#include "AXObjectCache.h"
 #include "CSSMarkup.h"
 #include "CSSParserFastPaths.h"
 #include "CSSPropertyNames.h"

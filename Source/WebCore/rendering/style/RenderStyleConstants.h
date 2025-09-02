@@ -28,6 +28,7 @@
 #include <initializer_list>
 #include <limits>
 #include <optional>
+#include <wtf/EnumTraits.h>
 
 namespace WTF {
 class TextStream;
@@ -118,8 +119,9 @@ enum class PseudoId : uint32_t {
 
     FirstPublicPseudoId = FirstLine,
     FirstInternalPseudoId = WebKitScrollbarThumb,
-    PublicPseudoIdMask = ((1 << FirstInternalPseudoId) - 1) & ~((1 << FirstPublicPseudoId) - 1)
 };
+
+constexpr auto PublicPseudoIdMask = static_cast<std::underlying_type_t<PseudoId>>(((1U << enumToUnderlyingType(PseudoId::FirstInternalPseudoId)) - 1U) & ~((1U << enumToUnderlyingType(PseudoId::FirstPublicPseudoId)) - 1U));
 
 inline std::optional<PseudoId> parentPseudoElement(PseudoId pseudoId)
 {
@@ -658,8 +660,9 @@ enum class TextDecorationLine : uint8_t {
     Overline      = 1 << 1,
     LineThrough   = 1 << 2,
     Blink         = 1 << 3,
+    SpellingError = 1 << 4
 };
-constexpr auto maxTextDecorationLineValue = TextDecorationLine::Blink;
+constexpr auto maxTextDecorationLineValue = TextDecorationLine::SpellingError;
 
 enum class TextDecorationStyle : uint8_t {
     Solid,
@@ -1164,6 +1167,11 @@ enum class EventListenerRegionType : uint32_t {
     NonPassiveMouseMove    = 1 << 30,
 };
 
+enum class MathShift : bool {
+    Normal,
+    Compact,
+};
+
 enum class MathStyle : bool {
     Normal,
     Compact,
@@ -1359,6 +1367,7 @@ WTF::TextStream& operator<<(WTF::TextStream&, Visibility);
 WTF::TextStream& operator<<(WTF::TextStream&, WhiteSpace);
 WTF::TextStream& operator<<(WTF::TextStream&, WhiteSpaceCollapse);
 WTF::TextStream& operator<<(WTF::TextStream&, WordBreak);
+WTF::TextStream& operator<<(WTF::TextStream&, MathShift);
 WTF::TextStream& operator<<(WTF::TextStream&, MathStyle);
 WTF::TextStream& operator<<(WTF::TextStream&, ContainIntrinsicSizeType);
 WTF::TextStream& operator<<(WTF::TextStream&, FieldSizing);

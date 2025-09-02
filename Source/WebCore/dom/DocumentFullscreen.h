@@ -27,12 +27,12 @@
 
 #if ENABLE(FULLSCREEN_API)
 
-#include "DocumentInlines.h"
-#include "GCReachableRef.h"
-#include "HTMLMediaElement.h"
-#include "HTMLMediaElementEnums.h"
-#include "LayoutRect.h"
-#include "Page.h"
+#include <WebCore/DocumentInlines.h>
+#include <WebCore/GCReachableRef.h>
+#include <WebCore/HTMLMediaElement.h>
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/Page.h>
 #include <wtf/Deque.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>

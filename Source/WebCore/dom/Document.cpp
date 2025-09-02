@@ -28,7 +28,9 @@
 #include "config.h"
 #include "Document.h"
 
+#include "AXIsolatedTree.h"
 #include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
 #include "AnimationTimelinesController.h"
 #include "ApplicationManifest.h"
 #include "AsyncNodeDeletionQueueInlines.h"
@@ -3171,14 +3173,18 @@ std::unique_ptr<RenderStyle> Document::styleForElementIgnoringPendingStylesheets
     SetForScope change(m_ignorePendingStylesheets, true);
     Ref resolver = element.styleResolver();
 
+    auto elementStyle = resolver->styleForElement(element, { parentStyle });
     if (pseudoElementIdentifier) {
+        auto pseudoId = pseudoElementIdentifier->pseudoId;
+        if ((pseudoId == PseudoId::FirstLetter || pseudoId == PseudoId::FirstLine) && elementStyle.style && !Style::supportsFirstLineAndLetterPseudoElement(*elementStyle.style))
+            return { };
+
         auto style = resolver->styleForPseudoElement(element, { *pseudoElementIdentifier }, { parentStyle });
         if (!style)
             return nullptr;
         return WTFMove(style->style);
     }
 
-    auto elementStyle = resolver->styleForElement(element, { parentStyle });
     if (elementStyle.relations) {
         Style::Update emptyUpdate(*this);
         Style::commitRelations(WTFMove(elementStyle.relations), emptyUpdate);
@@ -8290,8 +8296,6 @@ void Document::initSecurityContext()
         m_isSrcdocDocument = true;
         setBaseURLOverride(parentDocument->baseURL());
     }
-    if (parentDocument)
-        setStrictMixedContentMode(parentDocument->isStrictMixedContentMode());
 
     if (!SecurityPolicy::shouldInheritSecurityOriginFromOwner(m_url))
         return;
@@ -9820,7 +9824,10 @@ CompositeOperator Document::compositeOperatorForBackgroundColor(const Color& col
 void Document::didAssociateFormControl(Element& element)
 {
     RefPtr page = this->page();
-    if (!page || !page->chrome().client().shouldNotifyOnFormChanges())
+    if (!page)
+        return;
+    if (!page->chrome().client().shouldNotifyOnFormChanges()
+        && !hasEventListenersOfType(eventNames().webkitassociateformcontrolsEvent))
         return;
 
     auto isNewEntry = m_associatedFormControls.add(element).isNewEntry;
@@ -9830,15 +9837,22 @@ void Document::didAssociateFormControl(Element& element)
 
 void Document::didAssociateFormControlsTimerFired()
 {
-    auto controls = WTF::compactMap(std::exchange(m_associatedFormControls, { }), [](auto&& element) -> std::optional<RefPtr<Element>> {
+    auto controls = WTF::compactMap(std::exchange(m_associatedFormControls, { }), [](auto&& element) -> std::optional<Ref<Element>> {
         if (element.isConnected())
-            return RefPtr { &element };
+            return Ref { element };
         return std::nullopt;
     });
 
     if (RefPtr page = this->page(); page && !controls.isEmpty()) {
         ASSERT(m_frame);
         page->chrome().client().didAssociateFormControls(controls, protectedFrame().releaseNonNull());
+    }
+
+    for (Ref control : controls) {
+        Ref event = Event::create(eventNames().webkitassociateformcontrolsEvent, Event::CanBubble::Yes, Event::IsCancelable::No);
+        event->setIsAutofillEvent();
+        event->setTarget(control.ptr());
+        control->dispatchEvent(event);
     }
 }
 

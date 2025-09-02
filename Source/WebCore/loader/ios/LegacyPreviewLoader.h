@@ -27,7 +27,7 @@
 
 #include "PreviewConverterClient.h"
 #include "PreviewConverterProvider.h"
-#include "SharedBuffer.h"
+#include <WebCore/SharedBuffer.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RetainPtr.h>

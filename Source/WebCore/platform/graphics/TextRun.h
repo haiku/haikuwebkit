@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "TabSize.h"
-#include "TextFlags.h"
-#include "TextSpacing.h"
-#include "WritingMode.h"
+#include <WebCore/TabSize.h>
+#include <WebCore/TextFlags.h>
+#include <WebCore/TextSpacing.h>
+#include <WebCore/WritingMode.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/text/StringView.h>

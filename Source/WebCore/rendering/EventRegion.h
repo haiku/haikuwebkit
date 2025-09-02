@@ -25,17 +25,17 @@
 
 #pragma once
 
-#include "AffineTransform.h"
-#include "EventTrackingRegions.h"
-#include "FloatRoundedRect.h"
-#include "IntRect.h"
-#include "IntRectHash.h"
-#include "InteractionRegion.h"
-#include "Node.h"
-#include "Region.h"
-#include "RegionContext.h"
-#include "RenderStyleConstants.h"
-#include "TouchAction.h"
+#include <WebCore/AffineTransform.h>
+#include <WebCore/EventTrackingRegions.h>
+#include <WebCore/FloatRoundedRect.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/IntRectHash.h>
+#include <WebCore/InteractionRegion.h>
+#include <WebCore/Node.h>
+#include <WebCore/Region.h>
+#include <WebCore/RegionContext.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/TouchAction.h>
 #include <wtf/ArgumentCoder.h>
 #include <wtf/OptionSet.h>
 #include <wtf/Ref.h>

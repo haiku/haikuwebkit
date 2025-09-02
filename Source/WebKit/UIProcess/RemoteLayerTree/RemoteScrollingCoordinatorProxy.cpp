@@ -265,6 +265,11 @@ WebCore::ScrollbarWidth RemoteScrollingCoordinatorProxy::mainFrameScrollbarWidth
     return m_scrollingTree->mainFrameScrollbarWidth();
 }
 
+std::optional<ScrollbarColor> RemoteScrollingCoordinatorProxy::mainFrameScrollbarColor() const
+{
+    return m_scrollingTree->mainFrameScrollbarColor();
+}
+
 OverscrollBehavior RemoteScrollingCoordinatorProxy::mainFrameHorizontalOverscrollBehavior() const
 {
     return m_scrollingTree->mainFrameHorizontalOverscrollBehavior();

@@ -169,7 +169,7 @@
 #endif
 
 #if USE(GBM)
-    String renderDeviceFile;
+    WebCore::DRMDevice drmDevice;
 #endif
 
 #if PLATFORM(GTK) || PLATFORM(WPE)

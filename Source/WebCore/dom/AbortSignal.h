@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "ContextDestructionObserverInlines.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "JSValueInWrappedObject.h"
+#include <WebCore/ContextDestructionObserverInlines.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/JSValueInWrappedObject.h>
 #include <wtf/Function.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>

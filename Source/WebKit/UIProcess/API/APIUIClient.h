@@ -240,6 +240,9 @@ public:
 #if PLATFORM(IOS_FAMILY)
     virtual void startXRSession(WebKit::WebPageProxy&, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&, CompletionHandler<void(RetainPtr<id>, PlatformViewController *)>&& completionHandler) { completionHandler(nil, nil); }
     virtual void endXRSession(WebKit::WebPageProxy&, WebKit::PlatformXRSessionEndReason) { }
+#elif USE(OPENXR)
+    virtual void didStartXRSession(WebKit::WebPageProxy&) { }
+    virtual void didEndXRSession(WebKit::WebPageProxy&) { }
 #endif
 #endif
 

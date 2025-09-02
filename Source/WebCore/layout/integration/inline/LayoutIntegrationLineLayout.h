@@ -25,18 +25,18 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "InlineDamage.h"
-#include "InlineFormattingConstraints.h"
-#include "InlineFormattingContext.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/InlineDamage.h>
+#include <WebCore/InlineFormattingConstraints.h>
+#include <WebCore/InlineFormattingContext.h>
 #include "InlineIteratorInlineBox.h"
-#include "InlineIteratorLineBox.h"
-#include "InlineIteratorTextBox.h"
-#include "LayoutIntegrationBoxGeometryUpdater.h"
-#include "LayoutIntegrationBoxTreeUpdater.h"
-#include "LayoutPoint.h"
-#include "LayoutState.h"
-#include "RenderObjectEnums.h"
+#include <WebCore/InlineIteratorLineBox.h>
+#include <WebCore/InlineIteratorTextBox.h>
+#include <WebCore/LayoutIntegrationBoxGeometryUpdater.h>
+#include <WebCore/LayoutIntegrationBoxTreeUpdater.h>
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/LayoutState.h>
+#include <WebCore/RenderObjectEnums.h>
 #include "SVGTextChunk.h"
 #include <wtf/CheckedPtr.h>
 

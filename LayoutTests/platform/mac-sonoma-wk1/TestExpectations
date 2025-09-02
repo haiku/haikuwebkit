@@ -5,4 +5,4 @@
 # Platform-specific tests. Skipped globally, then re-enabled here.
 #//////////////////////////////////////////////////////////////////////////////////////////
 
-webkit.org/b/295228 [ arm64 ] http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-script-in-iframe.html [ Pass Failure ]
+

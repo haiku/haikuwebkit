@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "NodeIdentifier.h"
-#include "PageIdentifier.h"
-#include "ProcessQualified.h"
-#include "ScriptExecutionContextIdentifier.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/NodeIdentifier.h>
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/ProcessQualified.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <wtf/ObjectIdentifier.h>
 
 namespace WebCore {

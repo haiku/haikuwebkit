@@ -1342,11 +1342,16 @@ JSObjectRef UIScriptControllerIOS::menuRect() const
 
 JSObjectRef UIScriptControllerIOS::contextMenuPreviewRect() const
 {
-    auto *container = findAllViewsInHierarchyOfType(webView().window, internalClassNamed(@"_UIMorphingPlatterView")).firstObject;
+#if HAVE(LIQUID_GLASS)
+    RetainPtr platterName = @"_UIContentPlatterView";
+#else
+    RetainPtr platterName = @"_UIMorphingPlatterView";
+#endif
+    RetainPtr<UIView> container = findAllViewsInHierarchyOfType(webView().window, internalClassNamed(platterName.get())).firstObject;
     if (!container)
         return nullptr;
 
-    return toObject([container convertRect:container.bounds toView:nil]);
+    return toObject([container convertRect:container.get().bounds toView:nil]);
 }
 
 JSObjectRef UIScriptControllerIOS::contextMenuRect() const

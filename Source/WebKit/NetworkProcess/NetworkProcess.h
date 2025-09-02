@@ -100,6 +100,10 @@ struct MessageWithMessagePorts;
 class SecurityOriginData;
 struct OrganizationStorageAccessPromptQuirk;
 struct SoupNetworkProxySettings;
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+struct ParentalControlsURLFilterParameters;
+#endif
 }
 
 namespace WebKit {
@@ -323,7 +327,7 @@ public:
     void setPrivateClickMeasurementDebugMode(PAL::SessionID, bool);
 
     void setShouldSendPrivateTokenIPCForTesting(PAL::SessionID, bool) const;
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     void setOptInCookiePartitioningEnabled(PAL::SessionID, bool) const;
 #endif
 
@@ -477,6 +481,10 @@ public:
     WebCore::ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlockingForPage(std::optional<WebPageProxyIdentifier>) const;
 
     void setDefaultRequestTimeoutInterval(double);
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+    void allowEvaluatedURL(const WebCore::ParentalControlsURLFilterParameters&, CompletionHandler<void(bool)>&&);
+#endif
 
 private:
     void platformInitializeNetworkProcess(const NetworkProcessCreationParameters&);

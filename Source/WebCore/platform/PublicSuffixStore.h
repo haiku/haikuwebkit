@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PublicSuffix.h"
+#include <WebCore/PublicSuffix.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/text/StringHash.h>

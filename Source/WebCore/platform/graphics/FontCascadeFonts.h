@@ -20,12 +20,12 @@
 
 #pragma once
 
-#include "Font.h"
-#include "FontCascadeDescription.h"
-#include "FontRanges.h"
-#include "FontSelector.h"
-#include "GlyphPage.h"
-#include "WidthCache.h"
+#include <WebCore/Font.h>
+#include <WebCore/FontCascadeDescription.h>
+#include <WebCore/FontRanges.h>
+#include <WebCore/FontSelector.h>
+#include <WebCore/GlyphPage.h>
+#include <WebCore/WidthCache.h>
 #include <wtf/EnumeratedArray.h>
 #include <wtf/Forward.h>
 #include <wtf/HashFunctions.h>
@@ -34,7 +34,7 @@
 #include <wtf/TriState.h>
 
 #if PLATFORM(IOS_FAMILY)
-#include "WebCoreThread.h"
+#include <WebCore/WebCoreThread.h>
 #endif
 
 namespace WTF {

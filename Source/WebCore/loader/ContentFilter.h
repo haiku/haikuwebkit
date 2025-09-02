@@ -27,10 +27,10 @@
 
 #if ENABLE(CONTENT_FILTERING)
 
-#include "CachedResourceHandle.h"
-#include "LoaderMalloc.h"
-#include "PlatformContentFilter.h"
-#include "ResourceError.h"
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/PlatformContentFilter.h>
+#include <WebCore/ResourceError.h>
 #include <functional>
 #include <wtf/Forward.h>
 #include <wtf/UniqueRef.h>

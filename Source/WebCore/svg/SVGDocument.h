@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "XMLDocument.h"
+#include <WebCore/XMLDocument.h>
 
 namespace WebCore {
 

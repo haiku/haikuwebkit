@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "WorkerRunLoop.h"
-#include "WorkerThreadMode.h"
+#include <WebCore/WorkerRunLoop.h>
+#include <WebCore/WorkerThreadMode.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/FunctionDispatcher.h>

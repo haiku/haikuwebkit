@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "CSSSelector.h"
+#include <WebCore/CSSSelector.h>
 #include <iterator>
 #include <memory>
 #include <wtf/TZoneMalloc.h>

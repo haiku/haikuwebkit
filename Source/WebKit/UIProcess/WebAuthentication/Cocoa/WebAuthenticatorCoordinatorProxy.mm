@@ -1301,6 +1301,7 @@ void WebAuthenticatorCoordinatorProxy::signalUnknownCredential(const WebCore::Se
         return;
     }
 
+#if USE(APPLE_INTERNAL_SDK)
     [getCredentialUpdaterShimClass() signalUnknownCredentialWithRelyingPartyIdentifier:options.rpId.createNSString().get() credentialID:WTF::toNSData(*decodedCredentialId).get() completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)](NSError *error) mutable {
         if (error) {
             RELEASE_LOG_ERROR(WebAuthn, "Error signaling unknown credential: %@.", error.localizedDescription);
@@ -1309,6 +1310,7 @@ void WebAuthenticatorCoordinatorProxy::signalUnknownCredential(const WebCore::Se
         }
         completionHandler(std::nullopt);
     }).get()];
+#endif
 }
 
 void WebAuthenticatorCoordinatorProxy::signalAllAcceptedCredentials(const WebCore::SecurityOriginData&, WebCore::AllAcceptedCredentialsOptions&& options, CompletionHandler<void(std::optional<ExceptionData>)>&& completionHandler)
@@ -1330,6 +1332,7 @@ void WebAuthenticatorCoordinatorProxy::signalAllAcceptedCredentials(const WebCor
         [credentialIds addObject:toNSData(*decodedCredentialId).leakRef()];
     }
 
+#if USE(APPLE_INTERNAL_SDK)
     [getCredentialUpdaterShimClass() signalAllAcceptedCredentialsWithRelyingPartyIdentifier:options.rpId.createNSString().get() userHandle:WTF::toNSData(*userHandle).get() acceptedCredentialIDs:credentialIds.get() completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)](NSError *error) mutable {
         if (error) {
             RELEASE_LOG_ERROR(WebAuthn, "Error signaling all accepted credentials: %@.", error.localizedDescription);
@@ -1338,6 +1341,7 @@ void WebAuthenticatorCoordinatorProxy::signalAllAcceptedCredentials(const WebCor
         }
         completionHandler(std::nullopt);
     }).get()];
+#endif
 }
 
 void WebAuthenticatorCoordinatorProxy::signalCurrentUserDetails(const WebCore::SecurityOriginData&, WebCore::CurrentUserDetailsOptions&& options, CompletionHandler<void(std::optional<ExceptionData>)>&& completionHandler)
@@ -1349,6 +1353,7 @@ void WebAuthenticatorCoordinatorProxy::signalCurrentUserDetails(const WebCore::S
         return;
     }
 
+#if USE(APPLE_INTERNAL_SDK)
     [getCredentialUpdaterShimClass() signalCurrentUserDetailsWithRelyingPartyIdentifier:options.rpId.createNSString().get() userHandle:WTF::toNSData(*userHandle).get() newName:options.name.createNSString().get() completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)](NSError *error) mutable {
         if (error) {
             RELEASE_LOG_ERROR(WebAuthn, "Error signaling current user details: %@.", error.localizedDescription);
@@ -1357,6 +1362,7 @@ void WebAuthenticatorCoordinatorProxy::signalCurrentUserDetails(const WebCore::S
         }
         completionHandler(std::nullopt);
     }).get()];
+#endif
 }
 
 } // namespace WebKit

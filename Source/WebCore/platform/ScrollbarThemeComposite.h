@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ScrollbarTheme.h"
+#include <WebCore/ScrollbarTheme.h>
 
 #if PLATFORM(COCOA)
 OBJC_CLASS NSScrollerImp;

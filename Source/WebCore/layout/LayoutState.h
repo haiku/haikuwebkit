@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "LayoutElementBox.h"
-#include "SecurityOrigin.h"
+#include <WebCore/LayoutElementBox.h>
+#include <WebCore/SecurityOrigin.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/WeakPtr.h>

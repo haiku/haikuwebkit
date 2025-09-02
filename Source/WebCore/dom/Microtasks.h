@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "EventLoop.h"
 #include <JavaScriptCore/MicrotaskQueue.h>
+#include <WebCore/EventLoop.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>

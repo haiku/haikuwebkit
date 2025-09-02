@@ -17,5 +17,8 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/fetch-local-http.html
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/fetch-local.html
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/fetch-public-http-wrong-address-space.html
+/LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/iframer.html
+/LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/navigate.html
+/LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/openee.html
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/support.sub.js
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/resources/target.py

@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "ThreadableLoader.h"
-#include "ThreadableLoaderClient.h"
-#include "URLKeepingBlobAlive.h"
+#include <WebCore/ThreadableLoader.h>
+#include <WebCore/ThreadableLoaderClient.h>
+#include <WebCore/URLKeepingBlobAlive.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/URL.h>
 

@@ -155,12 +155,8 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
         WPEDRMDevice* targetDevice = wpe_buffer_dma_buf_formats_get_group_device(formats, i);
         if (!targetDevice)
             targetDevice = mainDevice;
-        if (targetDevice) {
-            if (bufferFormat.usage == RendererBufferFormat::Usage::Scanout || !wpe_drm_device_get_render_node(targetDevice))
-                bufferFormat.drmDevice = wpe_drm_device_get_primary_node(targetDevice);
-            else
-                bufferFormat.drmDevice = wpe_drm_device_get_render_node(targetDevice);
-        }
+        if (targetDevice)
+            bufferFormat.drmDevice = { CString(wpe_drm_device_get_primary_node(targetDevice)), CString(wpe_drm_device_get_render_node(targetDevice)) };
 
         auto formatsCount = wpe_buffer_dma_buf_formats_get_group_n_formats(formats, i);
         bufferFormat.formats.reserveInitialCapacity(formatsCount);

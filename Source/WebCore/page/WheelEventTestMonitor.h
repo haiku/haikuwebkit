@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "PlatformWheelEvent.h"
-#include "ScrollingNodeID.h"
+#include <WebCore/PlatformWheelEvent.h>
+#include <WebCore/ScrollingNodeID.h>
 #include <functional>
 #include <wtf/Function.h>
 #include <wtf/HashMap.h>

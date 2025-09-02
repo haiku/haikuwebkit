@@ -27,9 +27,9 @@
 
 #if PLATFORM(COCOA)
 
-#include "CAAudioStreamDescription.h"
-#include "MediaSample.h"
 #include <CoreAudio/CoreAudioTypes.h>
+#include <WebCore/CAAudioStreamDescription.h>
+#include <WebCore/MediaSample.h>
 #include <memory>
 #include <wtf/Expected.h>
 #include <wtf/RetainPtr.h>

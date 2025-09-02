@@ -425,18 +425,6 @@ IGNORE_WARNINGS_END
     }
 }
 
-- (void)webViewDidDisplayInsecureContent:(WebView *)sender
-{
-    if (!done && gTestRunner->dumpFrameLoadCallbacks())
-        printf ("didDisplayInsecureContent\n");
-}
-
-- (void)webView:(WebView *)sender didRunInsecureContent:(WebSecurityOrigin *)origin
-{
-    if (!done && gTestRunner->dumpFrameLoadCallbacks())
-        printf ("didRunInsecureContent\n");
-}
-
 - (void)webView:(WebView *)sender didDetectXSS:(NSURL *)insecureURL
 {
     if (!done && gTestRunner->dumpFrameLoadCallbacks())

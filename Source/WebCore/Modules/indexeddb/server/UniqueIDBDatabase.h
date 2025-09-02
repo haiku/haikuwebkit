@@ -25,15 +25,15 @@
 
 #pragma once
 
-#include "IDBBackingStore.h"
-#include "IDBDatabaseIdentifier.h"
-#include "IDBDatabaseInfo.h"
-#include "IDBDatabaseNameAndVersion.h"
-#include "IDBGetResult.h"
-#include "IDBIndexIdentifier.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "ServerOpenDBRequest.h"
-#include "UniqueIDBDatabaseTransaction.h"
+#include <WebCore/IDBBackingStore.h>
+#include <WebCore/IDBDatabaseIdentifier.h>
+#include <WebCore/IDBDatabaseInfo.h>
+#include <WebCore/IDBDatabaseNameAndVersion.h>
+#include <WebCore/IDBGetResult.h>
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/ServerOpenDBRequest.h>
+#include <WebCore/UniqueIDBDatabaseTransaction.h>
 #include <wtf/Deque.h>
 #include <wtf/Function.h>
 #include <wtf/HashCountedSet.h>

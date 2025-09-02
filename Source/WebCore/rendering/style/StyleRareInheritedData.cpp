@@ -122,6 +122,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , textAlignLast(static_cast<unsigned>(RenderStyle::initialTextAlignLast()))
     , textJustify(static_cast<unsigned>(RenderStyle::initialTextJustify()))
     , textDecorationSkipInk(static_cast<unsigned>(RenderStyle::initialTextDecorationSkipInk()))
+    , mathShift(static_cast<unsigned>(RenderStyle::initialMathShift()))
     , mathStyle(static_cast<unsigned>(RenderStyle::initialMathStyle()))
     , rubyPosition(static_cast<unsigned>(RenderStyle::initialRubyPosition()))
     , rubyAlign(static_cast<unsigned>(RenderStyle::initialRubyAlign()))
@@ -224,6 +225,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , textAlignLast(o.textAlignLast)
     , textJustify(o.textJustify)
     , textDecorationSkipInk(o.textDecorationSkipInk)
+    , mathShift(o.mathShift)
     , mathStyle(o.mathStyle)
     , rubyPosition(o.rubyPosition)
     , rubyAlign(o.rubyAlign)
@@ -365,6 +367,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && joinStyle == o.joinStyle
         && hasSetStrokeWidth == o.hasSetStrokeWidth
         && hasSetStrokeColor == o.hasSetStrokeColor
+        && mathShift == o.mathShift
         && mathStyle == o.mathStyle
         && hasAutoCaretColor == o.hasAutoCaretColor
         && hasVisitedLinkAutoCaretColor == o.hasVisitedLinkAutoCaretColor
@@ -491,6 +494,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(bool, hasSetStrokeWidth);
     LOG_IF_DIFFERENT_WITH_CAST(bool, hasSetStrokeColor);
 
+    LOG_IF_DIFFERENT_WITH_CAST(MathShift, mathShift);
     LOG_IF_DIFFERENT_WITH_CAST(MathStyle, mathStyle);
 
     LOG_IF_DIFFERENT_WITH_CAST(bool, hasAutoCaretColor);

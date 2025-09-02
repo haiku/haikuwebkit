@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "GPUTextureFormat.h"
-#include "GPUTextureUsage.h"
-#include "WebGPUXRProjectionLayer.h"
-#include "XRCanvasConfiguration.h"
+#include <WebCore/GPUTextureFormat.h>
+#include <WebCore/GPUTextureUsage.h>
+#include <WebCore/WebGPUXRProjectionLayer.h>
+#include <WebCore/XRCanvasConfiguration.h>
 
 namespace WebCore {
 

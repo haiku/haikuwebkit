@@ -130,7 +130,7 @@ static bool shouldUseVisiblePathToCreatePreviewForDragSource(const DragSourceSta
 
 static bool shouldUseTextIndicatorToCreatePreviewForDragSource(const DragSourceState& source)
 {
-    if (!source.indicatorData)
+    if (!source.textIndicator)
         return false;
 
     if (source.action.containsAny({ DragSourceAction::Link, DragSourceAction::Selection }))
@@ -314,9 +314,9 @@ RetainPtr<UITargetedDragPreview> DragDropInteractionState::createDragPreviewInte
     }
 
     if (shouldUseTextIndicatorToCreatePreviewForDragSource(source)) {
-        auto indicatorData = source.indicatorData.value();
-        RetainPtr textIndicatorImage = uiImageForImage(indicatorData.contentImage.get());
-        return createTargetedDragPreview(textIndicatorImage.get(), contentView, previewContainer, indicatorData.textBoundingRectInRootViewCoordinates, indicatorData.textRectsInBoundingRectCoordinates, cocoaColor(indicatorData.estimatedBackgroundColor).get(), nil, addPreviewViewToContainer).autorelease();
+        RefPtr textIndicator = source.textIndicator;
+        RetainPtr textIndicatorImage = uiImageForImage(textIndicator->contentImage());
+        return createTargetedDragPreview(textIndicatorImage.get(), contentView, previewContainer, textIndicator->textBoundingRectInRootViewCoordinates(), textIndicator->textRectsInBoundingRectCoordinates(), cocoaColor(textIndicator->estimatedBackgroundColor()).get(), nil, addPreviewViewToContainer).autorelease();
     }
 
     return nil;
@@ -348,7 +348,7 @@ void DragDropInteractionState::stageDragItem(const DragItem& item, DragSourceSta
         item.sourceAction,
         item.dragPreviewFrameInRootViewCoordinates,
         dragPreviewContent,
-        item.image.textIndicator() ? std::optional { item.image.textIndicator()->data() } : std::nullopt,
+        item.image.textIndicator(),
         item.image.visiblePath(),
         item.title.isEmpty() ? nil : item.title.createNSString().get(),
         item.url.isEmpty() ? nil : item.url.createNSURL().get(),

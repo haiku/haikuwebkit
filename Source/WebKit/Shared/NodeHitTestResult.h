@@ -26,7 +26,7 @@
 #pragma once
 
 #include "FrameInfoData.h"
-#include "NodeInfo.h"
+#include "JSHandleInfo.h"
 #include <WebCore/FloatPoint.h>
 #include <WebCore/FrameIdentifier.h>
 #include <wtf/Variant.h>
@@ -34,7 +34,7 @@
 namespace WebKit {
 
 struct NodeAndFrameInfo {
-    WebKit::NodeInfo node;
+    WebKit::JSHandleInfo node;
     WebKit::FrameInfoData frame;
 };
 

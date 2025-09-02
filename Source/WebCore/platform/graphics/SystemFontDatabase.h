@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FontSelectionAlgorithm.h"
+#include <WebCore/FontSelectionAlgorithm.h>
 #include <array>
 #include <optional>
 #include <wtf/EnumeratedArray.h>

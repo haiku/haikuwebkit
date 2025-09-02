@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "PathOperation.h"
+#include <WebCore/PathOperation.h>
 
 namespace WebCore {
 namespace Style {

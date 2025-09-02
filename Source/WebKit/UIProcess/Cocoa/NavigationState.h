@@ -49,6 +49,9 @@ class Navigation;
 
 namespace WebCore {
 class SecurityOriginData;
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+struct ContentRuleListMatchedRule;
+#endif
 }
 
 namespace WebKit {
@@ -154,6 +157,9 @@ private:
 
 #if ENABLE(CONTENT_EXTENSIONS)
         void contentRuleListNotification(WebPageProxy&, URL&&, WebCore::ContentRuleListResults&&) final;
+#endif
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        void contentRuleListMatchedRule(WebPageProxy&, WebCore::ContentRuleListMatchedRule&&) final;
 #endif
         void decidePolicyForNavigationAction(WebPageProxy&, Ref<API::NavigationAction>&&, Ref<WebFramePolicyListenerProxy>&&) override;
         void decidePolicyForNavigationResponse(WebPageProxy&, Ref<API::NavigationResponse>&&, Ref<WebFramePolicyListenerProxy>&&) override;

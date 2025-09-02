@@ -27,9 +27,9 @@
 
 #if ENABLE(CONTENT_EXTENSIONS)
 
-#include "CompiledContentExtension.h"
-#include "ContentExtension.h"
-#include "ContentExtensionRule.h"
+#include <WebCore/CompiledContentExtension.h>
+#include <WebCore/ContentExtension.h>
+#include <WebCore/ContentExtensionRule.h>
 #include <wtf/CrossThreadCopier.h>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>

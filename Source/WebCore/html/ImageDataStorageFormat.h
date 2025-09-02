@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "PixelFormat.h"
 #include <JavaScriptCore/TypedArrayType.h>
+#include <WebCore/PixelFormat.h>
 
 namespace WebCore {
 

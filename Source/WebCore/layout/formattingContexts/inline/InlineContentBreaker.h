@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "FormattingConstraints.h"
-#include "LayoutUnits.h"
+#include <WebCore/FormattingConstraints.h>
+#include <WebCore/LayoutUnits.h>
 
 namespace WebCore {
 

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "GraphicsLayer.h"
+#include <WebCore/GraphicsLayer.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMallocInlines.h>
 

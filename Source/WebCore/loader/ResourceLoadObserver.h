@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "LoaderMalloc.h"
-#include "ResourceLoadStatistics.h"
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/ResourceLoadStatistics.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 

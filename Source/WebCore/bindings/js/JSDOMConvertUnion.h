@@ -25,16 +25,16 @@
 
 #pragma once
 
-#include "IDLTypes.h"
-#include "JSDOMBinding.h"
-#include "JSDOMConvertBase.h"
-#include "JSDOMConvertBoolean.h"
-#include "JSDOMConvertBufferSource.h"
-#include "JSDOMConvertInterface.h"
-#include "JSDOMConvertNull.h"
-#include "JSDOMConvertUndefined.h"
 #include <JavaScriptCore/IteratorOperations.h>
 #include <JavaScriptCore/JSArrayBufferViewInlines.h>
+#include <WebCore/IDLTypes.h>
+#include <WebCore/JSDOMBinding.h>
+#include <WebCore/JSDOMConvertBase.h>
+#include <WebCore/JSDOMConvertBoolean.h>
+#include <WebCore/JSDOMConvertBufferSource.h>
+#include <WebCore/JSDOMConvertInterface.h>
+#include <WebCore/JSDOMConvertNull.h>
+#include <WebCore/JSDOMConvertUndefined.h>
 
 namespace WebCore {
 

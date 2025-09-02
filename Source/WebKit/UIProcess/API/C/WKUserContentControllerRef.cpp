@@ -27,6 +27,7 @@
 #include "WKUserContentControllerRef.h"
 
 #include "APIArray.h"
+#include "APICompletionListener.h"
 #include "APIContentRuleList.h"
 #include "APIFrameInfo.h"
 #include "APIScriptMessage.h"
@@ -90,9 +91,12 @@ private:
     void didPostMessage(WebPageProxy& page, FrameInfoData&& frameInfo, API::ContentWorld&, JavaScriptEvaluationResult&& result, CompletionHandler<void(Expected<JavaScriptEvaluationResult, String>&&)>&& completionHandler) override
     {
         Ref message = API::ScriptMessage::create(result.toWK(), page, API::FrameInfo::create(WTFMove(frameInfo), &page), m_name, API::ContentWorld::pageContentWorldSingleton());
-        // FIXME: Pass in a non-null WKCompletionListenerRef to handle the reply
-        m_callback(toAPI(message.ptr()), nullptr, m_context);
-        completionHandler(makeUnexpected(String()));
+        Ref listener = API::CompletionListener::create([completionHandler = WTFMove(completionHandler)] (WKTypeRef reply) mutable {
+            if (auto result = JavaScriptEvaluationResult::extract(toProtectedImpl(reply).get()))
+                return completionHandler(WTFMove(*result));
+            completionHandler(makeUnexpected(String()));
+        });
+        m_callback(toAPI(message.ptr()), toAPI(listener.ptr()), m_context);
     }
 
     String m_name;

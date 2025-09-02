@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "EventModifierInit.h"
-#include "FocusEventData.h"
-#include "KeypressCommand.h"
-#include "UIEventWithKeyState.h"
+#include <WebCore/EventModifierInit.h>
+#include <WebCore/FocusEventData.h>
+#include <WebCore/KeypressCommand.h>
+#include <WebCore/UIEventWithKeyState.h>
 #include <memory>
 #include <wtf/Vector.h>
 

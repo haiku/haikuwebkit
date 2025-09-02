@@ -14,7 +14,7 @@ function tooltipDidChangeCallback(tooltip)
 async function runTest() {
 
     if (window.testRunner) {
-        testRunner.installTooltipDidChangeCallback('tooltipDidChangeCallback');
+        testRunner.installTooltipDidChangeCallback(tooltipDidChangeCallback);
 
         await eventSender.asyncMouseMoveTo(30, 30);
         await eventSender.asyncMouseMoveTo(100, 100);

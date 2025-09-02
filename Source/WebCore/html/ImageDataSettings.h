@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "ImageDataStorageFormat.h"
-#include "PredefinedColorSpace.h"
+#include <WebCore/ImageDataStorageFormat.h>
+#include <WebCore/PredefinedColorSpace.h>
 
 namespace WebCore {
 

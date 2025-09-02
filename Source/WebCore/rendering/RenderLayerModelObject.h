@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "PaintPhase.h"
-#include "RenderElement.h"
+#include <WebCore/PaintPhase.h>
+#include <WebCore/RenderElement.h>
 #include <wtf/OptionSet.h>
 
 namespace WebCore {

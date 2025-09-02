@@ -27,9 +27,9 @@
 
 #pragma once
 
-#include "CrossOriginEmbedderPolicy.h"
-#include "CrossOriginOpenerPolicy.h"
-#include "ReferrerPolicy.h"
+#include <WebCore/CrossOriginEmbedderPolicy.h>
+#include <WebCore/CrossOriginOpenerPolicy.h>
+#include <WebCore/ReferrerPolicy.h>
 #include <memory>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Forward.h>
@@ -103,24 +103,14 @@ public:
     static SandboxFlags parseSandboxPolicy(StringView policy, String& invalidTokensErrorMessage);
     static bool isSupportedSandboxPolicy(StringView);
 
-    enum MixedContentType : uint8_t {
-        Inactive = 1 << 0,
-        Active = 1 << 1,
-    };
-
     bool usedLegacyTLS() const { return m_usedLegacyTLS; }
     void setUsedLegacyTLS(bool used) { m_usedLegacyTLS = used; }
-    const OptionSet<MixedContentType>& foundMixedContent() const { return m_mixedContentTypes; }
     bool wasPrivateRelayed() const { return m_wasPrivateRelayed; }
     void setWasPrivateRelayed(bool privateRelayed) { m_wasPrivateRelayed = privateRelayed; }
-    void setFoundMixedContent(MixedContentType type) { m_mixedContentTypes.add(type); }
     bool geolocationAccessed() const { return m_geolocationAccessed; }
     void setGeolocationAccessed() { m_geolocationAccessed = true; }
     bool secureCookiesAccessed() const { return m_secureCookiesAccessed; }
     void setSecureCookiesAccessed() { m_secureCookiesAccessed = true; }
-
-    bool isStrictMixedContentMode() const { return m_isStrictMixedContentMode; }
-    void setStrictMixedContentMode(bool strictMixedContentMode) { m_isStrictMixedContentMode = strictMixedContentMode; }
 
     // This method implements the "Is the environment settings object settings a secure context?" algorithm from
     // the Secure Context spec: https://w3c.github.io/webappsec-secure-contexts/#settings-object (Editor's Draft, 17 November 2016)
@@ -152,11 +142,9 @@ private:
     SandboxFlags m_creationSandboxFlags;
     SandboxFlags m_sandboxFlags;
     ReferrerPolicy m_referrerPolicy { ReferrerPolicy::Default };
-    OptionSet<MixedContentType> m_mixedContentTypes;
     bool m_haveInitializedSecurityOrigin { false };
     bool m_geolocationAccessed { false };
     bool m_secureCookiesAccessed { false };
-    bool m_isStrictMixedContentMode { false };
     bool m_usedLegacyTLS { false };
     bool m_wasPrivateRelayed { false };
     bool m_hasEmptySecurityOriginPolicy { false };

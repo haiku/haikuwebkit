@@ -146,6 +146,26 @@ void TreeResolver::popScope()
     return m_scopeStack.removeLast();
 }
 
+// Takes an old style (from previous style resolution) and new style. Assuming
+// the old style is calculated using the last successful position-try fallback,
+// return the index of the used fallback. When trying position-try options on
+// the new style, we start from the last successful fallback first before trying
+// others. Only do this when position-try-fallbacks and position-try-order don't
+// change in the new style.
+static std::optional<size_t> lastSuccessfulPositionTryFallbackIndex(const RenderStyle* oldStyle, const RenderStyle* newStyle)
+{
+    if (!oldStyle || !newStyle)
+        return { };
+
+    if (oldStyle->positionTryFallbacks() != newStyle->positionTryFallbacks())
+        return { };
+
+    if (oldStyle->positionTryOrder() != newStyle->positionTryOrder())
+        return { };
+
+    return oldStyle->lastSuccessfulPositionTryFallbackIndex();
+}
+
 ResolvedStyle TreeResolver::styleForStyleable(const Styleable& styleable, ResolutionType resolutionType, const ResolutionContext& resolutionContext, const RenderStyle* existingStyle)
 {
     if (resolutionType == ResolutionType::AnimationOnly && styleable.lastStyleChangeEventStyle() && !styleable.hasPropertiesOverridenAfterAnimation())
@@ -153,7 +173,7 @@ ResolvedStyle TreeResolver::styleForStyleable(const Styleable& styleable, Resolu
 
     auto& element = styleable.element;
 
-    if (auto optionStyle = tryChoosePositionOption(styleable, existingStyle))
+    if (auto optionStyle = tryChoosePositionOption(styleable))
         return WTFMove(*optionStyle);
 
     if (resolutionType == ResolutionType::FastPathInherit) {
@@ -193,6 +213,9 @@ ResolvedStyle TreeResolver::styleForStyleable(const Styleable& styleable, Resolu
         Adjuster adjuster(m_document, *resolutionContext.parentStyle, resolutionContext.parentBoxStyle, &element);
         adjuster.adjust(*style);
     }
+
+    // Preserve the last successful fallback by propagating it from the old to new style.
+    style->setLastSuccessfulPositionTryFallbackIndex(lastSuccessfulPositionTryFallbackIndex(existingStyle, style.get()));
 
     return {
         .style = WTFMove(style),
@@ -330,7 +353,9 @@ auto TreeResolver::resolveElement(Element& element, const RenderStyle* existingS
     }
 
     auto resolveAndAddPseudoElementStyle = [&](const PseudoElementIdentifier& pseudoElementIdentifier) {
-        auto pseudoElementUpdate = resolvePseudoElement(element, pseudoElementIdentifier, update, parent().isInDisplayNoneTree);
+        const RenderStyle* existingPseudoStyle = existingStyle ? existingStyle->getCachedPseudoStyle(pseudoElementIdentifier) : nullptr;
+        auto pseudoElementUpdate = resolvePseudoElement(element, pseudoElementIdentifier, update, parent().isInDisplayNoneTree, existingPseudoStyle);
+
         auto pseudoElementChanges = [&]() -> OptionSet<Change> {
             if (pseudoElementUpdate) {
                 if (pseudoElementIdentifier.pseudoId == PseudoId::WebKitScrollbar)
@@ -393,18 +418,7 @@ auto TreeResolver::resolveElement(Element& element, const RenderStyle* existingS
     return { WTFMove(update), descendantsToResolve };
 }
 
-inline bool supportsFirstLineAndLetterPseudoElement(const RenderStyle& style)
-{
-    auto display = style.display();
-    return display == DisplayType::Block
-        || display == DisplayType::ListItem
-        || display == DisplayType::InlineBlock
-        || display == DisplayType::TableCell
-        || display == DisplayType::TableCaption
-        || display == DisplayType::FlowRoot;
-};
-
-std::optional<ElementUpdate> TreeResolver::resolvePseudoElement(Element& element, const PseudoElementIdentifier& pseudoElementIdentifier, const ElementUpdate& elementUpdate, IsInDisplayNoneTree isInDisplayNoneTree)
+std::optional<ElementUpdate> TreeResolver::resolvePseudoElement(Element& element, const PseudoElementIdentifier& pseudoElementIdentifier, const ElementUpdate& elementUpdate, IsInDisplayNoneTree isInDisplayNoneTree, const RenderStyle* existingStyle)
 {
     if (elementUpdate.style->display() == DisplayType::None)
         return { };
@@ -435,9 +449,31 @@ std::optional<ElementUpdate> TreeResolver::resolvePseudoElement(Element& element
 
     auto resolutionContext = makeResolutionContextForPseudoElement(elementUpdate, pseudoElementIdentifier);
 
-    auto resolvedStyle = scope().resolver->styleForPseudoElement(element, pseudoElementIdentifier, resolutionContext);
+    bool pseudoSupportsPositionTry = pseudoElementIdentifier.pseudoId == PseudoId::Before || pseudoElementIdentifier.pseudoId == PseudoId::After || pseudoElementIdentifier.pseudoId == PseudoId::Backdrop;
+
+    auto resolvedStyle = [&] () {
+        std::optional<ResolvedStyle> resolvedStyle;
+
+        if (pseudoSupportsPositionTry)
+            resolvedStyle = tryChoosePositionOption({ element, pseudoElementIdentifier });
+
+        if (!resolvedStyle) {
+            resolvedStyle = scope().resolver->styleForPseudoElement(element, pseudoElementIdentifier, resolutionContext);
+            if (resolvedStyle) {
+                ASSERT(resolvedStyle->style);
+                // Preserve the last successful fallback by propagating it from the old to new style.
+                resolvedStyle->style->setLastSuccessfulPositionTryFallbackIndex(lastSuccessfulPositionTryFallbackIndex(existingStyle, resolvedStyle->style.get()));
+            }
+        }
+
+        return resolvedStyle;
+    }();
+
     if (!resolvedStyle)
         return { };
+
+    if (pseudoSupportsPositionTry)
+        generatePositionOptionsIfNeeded(*resolvedStyle, { element, pseudoElementIdentifier }, resolutionContext);
 
     auto animatedUpdate = createAnimatedElementUpdate(WTFMove(*resolvedStyle), { element, pseudoElementIdentifier }, elementUpdate.changes, resolutionContext, isInDisplayNoneTree);
 
@@ -1362,11 +1398,12 @@ std::unique_ptr<Update> TreeResolver::resolve()
         }
     }
 
-    for (auto& elementAndOptions : m_positionOptions) {
-        if (!elementAndOptions.value.chosen) {
-            elementAndOptions.key->invalidateForResumingAnchorPositionedElementResolution();
+    for (auto& [styleable, options] : m_positionOptions) {
+        if (!options.chosen) {
+            ASSERT(styleable.first);
+            const_cast<Element&>(*styleable.first).invalidateForResumingAnchorPositionedElementResolution();
             m_needsInterleavedLayout = true;
-            saveBeforeResolutionStyleForInterleaving(elementAndOptions.key);
+            saveBeforeResolutionStyleForInterleaving(*styleable.first);
         }
     }
 
@@ -1430,7 +1467,7 @@ auto TreeResolver::updateAnchorPositioningState(Element& element, const RenderSt
     auto update = [&](const RenderStyle* style) {
         if (!style)
             return;
-        AnchorPositionEvaluator::updateAnchorPositionedStateForDefaultAnchor(element, *style, m_treeResolutionState.anchorPositionedStates);
+        AnchorPositionEvaluator::updateAnchorPositionedStateForDefaultAnchorAndPositionVisibility(element, *style, m_treeResolutionState.anchorPositionedStates);
     };
 
     update(style);
@@ -1454,17 +1491,22 @@ void TreeResolver::generatePositionOptionsIfNeeded(const ResolvedStyle& resolved
     if (!resolvedStyle.style->hasOutOfFlowPosition())
         return;
 
-    if (m_positionOptions.contains(styleable.element))
+    AnchorPositionedKey positionOptionsKey { styleable.element, styleable.pseudoElementIdentifier };
+
+    if (m_positionOptions.contains(positionOptionsKey))
         return;
 
     auto generatePositionOptions = [&] {
-        auto options = PositionOptions { .originalStyle = RenderStyle::clonePtr(*resolvedStyle.style) };
-        options.optionStyles.reserveInitialCapacity(resolvedStyle.style->positionTryFallbacks().size());
-        for (auto& fallback : resolvedStyle.style->positionTryFallbacks()) {
+        PositionOptions options;
+        options.optionStyles.append({ RenderStyle::clonePtr(*resolvedStyle.style), std::nullopt });
+
+        for (size_t i = 0; i < resolvedStyle.style->positionTryFallbacks().size(); ++i) {
+            const auto& fallback = resolvedStyle.style->positionTryFallbacks().at(i);
             auto optionStyle = generatePositionOption(fallback, resolvedStyle, styleable, resolutionContext);
             if (!optionStyle)
                 continue;
-            options.optionStyles.append(WTFMove(optionStyle));
+
+            options.optionStyles.append({ WTFMove(optionStyle), i });
         }
         return options;
     };
@@ -1475,7 +1517,7 @@ void TreeResolver::generatePositionOptionsIfNeeded(const ResolvedStyle& resolved
     if (hasUnresolvedAnchorPosition(styleable))
         return;
 
-    m_positionOptions.add(styleable.element, WTFMove(options));
+    m_positionOptions.add(positionOptionsKey, WTFMove(options));
 }
 
 std::unique_ptr<RenderStyle> TreeResolver::generatePositionOption(const PositionTryFallback& fallback, const ResolvedStyle& resolvedStyle, const Styleable& styleable, const ResolutionContext& resolutionContext)
@@ -1511,50 +1553,83 @@ std::unique_ptr<RenderStyle> TreeResolver::generatePositionOption(const Position
     return resolveAgainInDifferentContext(resolvedStyle, styleable, *resolutionContext.parentStyle, PropertyCascade::normalPropertyTypes(), WTFMove(builderFallback), resolutionContext);
 }
 
+const RenderStyle& TreeResolver::PositionOptions::originalStyle() const
+{
+    ASSERT(optionStyles.size());
+    ASSERT(optionStyles[0].style);
+    return *optionStyles[0].style;
+}
+
+std::unique_ptr<RenderStyle> TreeResolver::PositionOptions::currentOption() const
+{
+    ASSERT(index < optionStyles.size());
+    ASSERT(optionStyles[index].style);
+
+    auto newStyle = RenderStyle::clonePtr(*optionStyles[index].style);
+    if (optionStyles[index].fallbackIndex)
+        newStyle->setLastSuccessfulPositionTryFallbackIndex(*optionStyles[index].fallbackIndex);
+
+    return newStyle;
+}
+
 void TreeResolver::sortPositionOptionsIfNeeded(PositionOptions& options, const Styleable& styleable)
 {
     if (options.sorted)
         return;
     options.sorted = true;
 
-    auto order = options.originalStyle->positionTryOrder();
-    if (order == PositionTryOrder::Normal || options.optionStyles.size() < 2)
-        return;
-
     CheckedPtr box = dynamicDowncast<RenderBox>(styleable.renderer());
     if (!box || !box->isOutOfFlowPositioned())
         return;
 
-    // "For each entry in the position options list, apply that position option to the box, and find
-    // the specified inset-modified containing block size that results from those styles."
-    // https://drafts.csswg.org/css-anchor-position-1/#position-try-order-property
-    auto boxAxis = boxAxisForPositionTryOrder(order, options.originalStyle->writingMode());
+    auto order = options.originalStyle().positionTryOrder();
+    if (order != PositionTryOrder::Normal && options.optionStyles.size() > 2) {
+        // "For each entry in the position options list, apply that position option to the box, and find
+        // the specified inset-modified containing block size that results from those styles."
+        // https://drafts.csswg.org/css-anchor-position-1/#position-try-order-property
+        auto boxAxis = boxAxisForPositionTryOrder(order, options.originalStyle().writingMode());
 
-    struct SortingOption {
-        std::unique_ptr<RenderStyle> style;
-        LayoutUnit containingBlockSize;
-    };
-    Vector<SortingOption> optionsForSorting;
-    optionsForSorting.reserveInitialCapacity(options.optionStyles.size());
+        struct SortingOption {
+            PositionOption option;
+            LayoutUnit containingBlockSize;
+        };
+        Vector<SortingOption> optionsForSorting;
+        optionsForSorting.reserveInitialCapacity(options.optionStyles.size());
 
-    for (auto& optionStyle : options.optionStyles) {
-        auto constraints = PositionedLayoutConstraints { *box, *optionStyle, boxAxis };
-        constraints.computeInsets();
-        optionsForSorting.append({ WTFMove(optionStyle), constraints.insetModifiedContainingSize() });
+        for (size_t i = 1; i < options.optionStyles.size(); ++i) {
+            auto constraints = PositionedLayoutConstraints { *box, *options.optionStyles[i].style, boxAxis };
+            constraints.computeInsets();
+            optionsForSorting.append({ WTFMove(options.optionStyles[i]), constraints.insetModifiedContainingSize() });
+        }
+
+        // "Stably sort the position options list according to this size, with the largest coming first."
+        std::ranges::stable_sort(optionsForSorting, std::ranges::greater { }, &SortingOption::containingBlockSize);
+
+        for (size_t i = 0; i < optionsForSorting.size(); ++i)
+            options.optionStyles[i + 1] = WTFMove(optionsForSorting[i].option);
     }
 
-    // "Stably sort the position options list according to this size, with the largest coming first."
-    std::ranges::stable_sort(optionsForSorting, std::ranges::greater { }, &SortingOption::containingBlockSize);
-
-    for (size_t i = 0; i < optionsForSorting.size(); ++i)
-        options.optionStyles[i] = WTFMove(optionsForSorting[i].style);
+    // If the previous style has a position-try fallback applied to it...
+    if (options.originalStyle().lastSuccessfulPositionTryFallbackIndex()) {
+        // ... we look for the last successful fallback ...
+        for (size_t i = 1; i < options.optionStyles.size(); ++i) {
+            // ... if this option is the last successful fallback (as indicated by the index) ...
+            if (options.optionStyles[i].fallbackIndex == options.originalStyle().lastSuccessfulPositionTryFallbackIndex()) {
+                // ... rotate the options array to make it the original style (at index 0).
+                std::ranges::rotate(options.optionStyles, &options.optionStyles[i]);
+                break;
+            }
+        }
+    }
 }
 
-std::optional<ResolvedStyle> TreeResolver::tryChoosePositionOption(const Styleable& styleable, const RenderStyle* existingStyle)
+std::optional<ResolvedStyle> TreeResolver::tryChoosePositionOption(const Styleable& styleable)
 {
     // https://drafts.csswg.org/css-anchor-position-1/#fallback-apply
 
-    auto optionIt = m_positionOptions.find(styleable.element);
+    AnchorPositionedKey anchorPositionedKey { styleable.element, styleable.pseudoElementIdentifier };
+
+    auto optionIt = m_positionOptions.find(anchorPositionedKey);
     if (optionIt == m_positionOptions.end())
         return { };
 
@@ -1562,45 +1637,47 @@ std::optional<ResolvedStyle> TreeResolver::tryChoosePositionOption(const Styleab
 
     sortPositionOptionsIfNeeded(options, styleable);
 
-    if (!existingStyle) {
-        options.chosen = true;
-        return ResolvedStyle { RenderStyle::clonePtr(*options.originalStyle) };
-    }
-
     auto renderer = dynamicDowncast<RenderBox>(styleable.renderer());
     if (!renderer) {
         options.chosen = true;
-        return ResolvedStyle { RenderStyle::clonePtr(*options.originalStyle) };
+        return ResolvedStyle { RenderStyle::clonePtr(options.originalStyle()) };
+    }
+
+    // On the first try, we force apply the original style (which _could_ be different from
+    // the existing style, since the original style might have a fallback applied to it)
+    if (options.isFirstTry) {
+        options.isFirstTry = false;
+        options.index = 0;
+        return ResolvedStyle { options.currentOption() };
     }
 
     // We can't test for overflow before the box has been positioned.
     auto* anchorPositionedState = m_treeResolutionState.anchorPositionedStates.get({ &styleable.element, styleable.pseudoElementIdentifier });
     if (anchorPositionedState && anchorPositionedState->stage < AnchorPositionResolutionStage::Positioned)
-        return ResolvedStyle { RenderStyle::clonePtr(*existingStyle) };
+        return ResolvedStyle { options.currentOption() };
 
     if (!AnchorPositionEvaluator::overflowsInsetModifiedContainingBlock(*renderer)) {
         // We don't overflow anymore so this is a good style.
         options.chosen = true;
-        return ResolvedStyle { RenderStyle::clonePtr(*existingStyle) };
+        return ResolvedStyle { options.currentOption() };
     }
 
     if (options.chosen) {
         // We have already chosen.
-        return ResolvedStyle { RenderStyle::clonePtr(*existingStyle) };
+        return ResolvedStyle { options.currentOption() };
     }
-
-    if (options.index >= options.optionStyles.size()) {
-        // None of the options worked, return back to the original.
-        options.chosen = true;
-        return ResolvedStyle { RenderStyle::clonePtr(*options.originalStyle) };
-    }
-
-    auto& optionStyle = options.optionStyles[options.index];
 
     // Next option to try if this doesn't work.
     ++options.index;
 
-    return ResolvedStyle { RenderStyle::clonePtr(*optionStyle) };
+    if (options.index >= options.optionStyles.size()) {
+        // None of the options worked, return back to the original.
+        options.index = 0;
+        options.chosen = true;
+        return ResolvedStyle { options.currentOption() };
+    }
+
+    return ResolvedStyle { options.currentOption() };
 }
 
 void TreeResolver::updateForPositionVisibility(RenderStyle& style, const Styleable& styleable)
@@ -1618,13 +1695,24 @@ void TreeResolver::updateForPositionVisibility(RenderStyle& style, const Styleab
             if (AnchorPositionEvaluator::isDefaultAnchorInvisibleOrClippedByInterveningBoxes(*anchored))
                 return true;
         }
-        // FIXME: Remaining `position-visibility` values.
+        if (style.positionVisibility().contains(PositionVisibility::NoOverflow)) {
+            if (AnchorPositionEvaluator::overflowsInsetModifiedContainingBlock(*anchored))
+                return true;
+        }
+        if (style.positionVisibility().contains(PositionVisibility::AnchorsValid)) {
+            auto* anchorPositionedState = m_treeResolutionState.anchorPositionedStates.get({ &styleable.element, styleable.pseudoElementIdentifier });
+            if (anchorPositionedState) {
+                for (auto& anchorElement : anchorPositionedState->anchorElements.values()) {
+                    if (!anchorElement)
+                        return true;
+                }
+            }
+        }
         return false;
     };
 
     // FIXME: Implement via "visibility: force-hidden".
-    if (shouldHideAnchorPositioned())
-        style.setIsForceHidden();
+    style.setIsForceHidden(shouldHideAnchorPositioned());
 }
 
 const RenderStyle* TreeResolver::beforeResolutionStyle(const Element& element, std::optional<PseudoElementIdentifier> pseudo)

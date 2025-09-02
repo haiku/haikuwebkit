@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "File.h"
-#include "ScriptWrappable.h"
+#include <WebCore/File.h>
+#include <WebCore/ScriptWrappable.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>

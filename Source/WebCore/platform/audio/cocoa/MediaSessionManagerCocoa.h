@@ -27,11 +27,11 @@
 
 #if PLATFORM(COCOA)
 
-#include "AudioHardwareListener.h"
-#include "AudioSession.h"
-#include "NowPlayingManager.h"
-#include "PlatformMediaSessionManager.h"
-#include "RemoteCommandListener.h"
+#include <WebCore/AudioHardwareListener.h>
+#include <WebCore/AudioSession.h>
+#include <WebCore/NowPlayingManager.h>
+#include <WebCore/PlatformMediaSessionManager.h>
+#include <WebCore/RemoteCommandListener.h>
 #include <wtf/RunLoop.h>
 #include <wtf/TZoneMalloc.h>
 

@@ -24,16 +24,16 @@
 
 #pragma once
 
-#include "AXTextStateChangeIntent.h"
-#include "ContainerNode.h"
-#include "EventOptions.h"
-#include "FocusOptions.h"
-#include "HitTestRequest.h"
-#include "QualifiedName.h"
-#include "RenderPtr.h"
-#include "ScrollTypes.h"
-#include "SimulatedClickOptions.h"
 #include <JavaScriptCore/Forward.h>
+#include <WebCore/AXTextStateChangeIntent.h>
+#include <WebCore/ContainerNode.h>
+#include <WebCore/EventOptions.h>
+#include <WebCore/FocusOptions.h>
+#include <WebCore/HitTestRequest.h>
+#include <WebCore/QualifiedName.h>
+#include <WebCore/RenderPtr.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/SimulatedClickOptions.h>
 
 #define DUMP_NODE_STATISTICS 0
 
@@ -568,7 +568,7 @@ public:
     WEBCORE_EXPORT ExceptionOr<void> setOuterHTML(Variant<RefPtr<TrustedHTML>, String>&&);
     WEBCORE_EXPORT String innerText();
     WEBCORE_EXPORT String outerText();
- 
+
     virtual String title() const;
 
     WEBCORE_EXPORT const AtomString& userAgentPart() const;
@@ -992,9 +992,9 @@ private:
 
     // Anyone thinking of using this should call document instead of ownerDocument.
     void ownerDocument() const = delete;
-    
+
     void attachAttributeNodeIfNeeded(Attr&);
-    
+
 #if ASSERT_ENABLED
     WEBCORE_EXPORT bool fastAttributeLookupAllowed(const QualifiedName&) const;
 #endif

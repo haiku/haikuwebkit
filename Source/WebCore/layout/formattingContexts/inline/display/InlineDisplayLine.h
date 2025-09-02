@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "FontBaseline.h"
-#include "InlineRect.h"
-#include "TextRun.h"
-#include "TextUtil.h"
+#include <WebCore/FontBaseline.h>
+#include <WebCore/InlineRect.h>
+#include <WebCore/TextRun.h>
+#include <WebCore/TextUtil.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

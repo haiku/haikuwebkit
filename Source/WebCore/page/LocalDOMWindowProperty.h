@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "LocalDOMWindow.h"
+#include <WebCore/LocalDOMWindow.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {

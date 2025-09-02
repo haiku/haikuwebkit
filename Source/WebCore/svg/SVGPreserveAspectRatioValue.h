@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "SVGPropertyTraits.h"
+#include <WebCore/SVGPropertyTraits.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace IPC {

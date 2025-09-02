@@ -1,4 +1,4 @@
 
-FAIL cap unit in SVGLength undefined is not an object (evaluating 'cap_length.unitType')
-FAIL Convert back to cap from new user unit value undefined is not an object (evaluating 'cap_length.value = ref_width * 2')
+FAIL cap unit in SVGLength The operation is not supported.
+FAIL Convert back to cap from new user unit value The operation is not supported.
 

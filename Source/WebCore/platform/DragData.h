@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "Color.h"
-#include "DragActions.h"
-#include "IntPoint.h"
-#include "PageIdentifier.h"
+#include <WebCore/Color.h>
+#include <WebCore/DragActions.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/PageIdentifier.h>
 #include <wtf/Forward.h>
 #include <wtf/HashMap.h>
 #include <wtf/OptionSet.h>

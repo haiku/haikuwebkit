@@ -87,11 +87,12 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
     , cssTransformStyleSeparatedEnabled { document.settings().cssTransformStyleSeparatedEnabled() }
 #endif
-    , masonryEnabled { document.settings().masonryEnabled() }
+    , itemPackCollapseDisplayGridEnabled { document.settings().itemPackCollapseDisplayGridEnabled() }
     , cssAppearanceBaseEnabled { document.settings().cssAppearanceBaseEnabled() }
     , cssPaintingAPIEnabled { document.settings().cssPaintingAPIEnabled() }
     , cssShapeFunctionEnabled { document.settings().cssShapeFunctionEnabled() }
     , cssTextUnderlinePositionLeftRightEnabled { document.settings().cssTextUnderlinePositionLeftRightEnabled() }
+    , cssTextDecorationLineErrorValues { document.settings().cssTextDecorationLineErrorValues() }
     , cssBackgroundClipBorderAreaEnabled  { document.settings().cssBackgroundClipBorderAreaEnabled() }
     , cssWordBreakAutoPhraseEnabled { document.settings().cssWordBreakAutoPhraseEnabled() }
     , popoverAttributeEnabled { document.settings().popoverAttributeEnabled() }
@@ -128,7 +129,7 @@ void add(Hasher& hasher, const CSSParserContext& context)
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
         | context.cssTransformStyleSeparatedEnabled         << 5
 #endif
-        | context.masonryEnabled                            << 6
+        | context.itemPackCollapseDisplayGridEnabled        << 6
         | context.cssAppearanceBaseEnabled                  << 7
         | context.cssPaintingAPIEnabled                     << 8
         | context.cssShapeFunctionEnabled                   << 9
@@ -153,7 +154,8 @@ void add(Hasher& hasher, const CSSParserContext& context)
         | context.cssURLIntegrityModifierEnabled            << 26
         | context.cssAxisRelativePositionKeywordsEnabled    << 27
         | context.cssDynamicRangeLimitMixEnabled            << 28
-        | context.cssConstrainedDynamicRangeLimitEnabled    << 29;
+        | context.cssConstrainedDynamicRangeLimitEnabled    << 29
+        | context.cssTextDecorationLineErrorValues          << 30;
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
 }
 

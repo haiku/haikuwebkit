@@ -26,13 +26,13 @@
 
 #pragma once
 
-#include "ActiveDOMObject.h"
-#include "ContextDestructionObserverInlines.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "MessagePortChannel.h"
-#include "MessagePortIdentifier.h"
-#include "MessageWithMessagePorts.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/ContextDestructionObserverInlines.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/MessagePortChannel.h>
+#include <WebCore/MessagePortIdentifier.h>
+#include <WebCore/MessageWithMessagePorts.h>
 #include <wtf/WeakPtr.h>
 
 namespace JSC {

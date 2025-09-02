@@ -24,18 +24,18 @@
 
 #pragma once
 
-#include "AdjustViewSize.h"
-#include "Color.h"
-#include "FrameView.h"
-#include "LayoutMilestone.h"
-#include "LayoutRect.h"
-#include "LocalFrame.h"
-#include "LocalFrameViewLayoutContext.h"
-#include "Page.h"
-#include "Pagination.h"
-#include "PaintPhase.h"
-#include "RenderPtr.h"
-#include "SimpleRange.h"
+#include <WebCore/AdjustViewSize.h>
+#include <WebCore/Color.h>
+#include <WebCore/FrameView.h>
+#include <WebCore/LayoutMilestone.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameViewLayoutContext.h>
+#include <WebCore/Page.h>
+#include <WebCore/Pagination.h>
+#include <WebCore/PaintPhase.h>
+#include <WebCore/RenderPtr.h>
+#include <WebCore/SimpleRange.h>
 #include <memory>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
@@ -735,6 +735,7 @@ public:
     Color scrollbarTrackColorStyle() const final;
     Style::ScrollbarGutter scrollbarGutterStyle() const final;
     ScrollbarWidth scrollbarWidthStyle() const final;
+    std::optional<ScrollbarColor> scrollbarColorStyle() const final;
 
     void dequeueScrollableAreaForScrollAnchoringUpdate(ScrollableArea&);
     void queueScrollableAreaForScrollAnchoringUpdate(ScrollableArea&);

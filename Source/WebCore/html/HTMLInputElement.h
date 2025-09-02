@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "HTMLTextFormControlElement.h"
+#include <WebCore/HTMLTextFormControlElement.h>
 #include <memory>
 #include <wtf/ValueOrReference.h>
 

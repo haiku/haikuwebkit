@@ -26,11 +26,11 @@
 
 #pragma once
 
-#include "CacheValidation.h"
-#include "CertificateInfo.h"
-#include "HTTPHeaderMap.h"
-#include "NetworkLoadMetrics.h"
-#include "ParsedContentRange.h"
+#include <WebCore/CacheValidation.h>
+#include <WebCore/CertificateInfo.h>
+#include <WebCore/HTTPHeaderMap.h>
+#include <WebCore/NetworkLoadMetrics.h>
+#include <WebCore/ParsedContentRange.h>
 #include <span>
 #include <wtf/ArgumentCoder.h>
 #include <wtf/Box.h>

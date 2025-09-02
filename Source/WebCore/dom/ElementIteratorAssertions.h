@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Document.h"
-#include "NodeInlines.h"
-#include "ScriptDisallowedScope.h"
+#include <WebCore/Document.h>
+#include <WebCore/NodeInlines.h>
+#include <WebCore/ScriptDisallowedScope.h>
 
 namespace WebCore {
 

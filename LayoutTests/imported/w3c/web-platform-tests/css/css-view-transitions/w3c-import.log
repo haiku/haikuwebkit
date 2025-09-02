@@ -78,6 +78,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/clip-path-larger-than-border-box-on-child-of-named-element-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/clip-path-larger-than-border-box-on-child-of-named-element-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/clip-path-larger-than-border-box-on-child-of-named-element.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/column-span-during-transition-doesnt-skip-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/column-span-during-transition-doesnt-skip-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/column-span-during-transition-doesnt-skip.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/content-escapes-clip-with-abspos-child-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/content-object-fit-fill-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/content-object-fit-none-ref.html
@@ -127,6 +130,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/dialog-in-top-layer-during-transition-old-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/dialog-in-top-layer-during-transition-old.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/dialog-in-top-layer-during-transition-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/document-active-view-transition.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/document-element-detached-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/duplicate-tag-rejects-capture.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/duplicate-tag-rejects-start.html
@@ -153,6 +157,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/far-away-capture-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/far-away-capture.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/finished-promise-defers-cleanup.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/first-line-reparent-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-new-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-new.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-old-expected.html
@@ -190,6 +195,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/hit-test-unrelated-element-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/hit-test-unrelated-element-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/hit-test-unrelated-element.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/idlharness.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/iframe-and-main-frame-transition-new-main-new-iframe-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/iframe-and-main-frame-transition-new-main-new-iframe-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/iframe-and-main-frame-transition-new-main-new-iframe.html

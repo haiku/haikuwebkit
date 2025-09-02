@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "InlineIteratorTextBox.h"
-#include "LayoutRect.h"
-#include "RegionContext.h"
+#include <WebCore/InlineIteratorTextBox.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/RegionContext.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

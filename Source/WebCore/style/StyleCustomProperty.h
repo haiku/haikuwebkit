@@ -24,14 +24,14 @@
 
 #pragma once
 
-#include "CSSValue.h"
-#include "CSSValueAggregates.h"
-#include "CSSVariableData.h"
-#include "StyleColor.h"
-#include "StyleImageWrapper.h"
-#include "StylePrimitiveNumeric.h"
-#include "StyleURL.h"
-#include "TransformOperation.h"
+#include <WebCore/CSSValue.h>
+#include <WebCore/CSSValueAggregates.h>
+#include <WebCore/CSSVariableData.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StyleImageWrapper.h>
+#include <WebCore/StylePrimitiveNumeric.h>
+#include <WebCore/StyleURL.h>
+#include <WebCore/TransformOperation.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Variant.h>

@@ -277,6 +277,7 @@ InspectorPageAgent::ResourceType InspectorPageAgent::inspectorResourceType(Cache
 #endif
     case CachedResource::Type::CSSStyleSheet:
         return InspectorPageAgent::StyleSheetResource;
+    case CachedResource::Type::JSON: // FIXME: Add InspectorPageAgent::JSONResource.
     case CachedResource::Type::Script:
         return InspectorPageAgent::ScriptResource;
     case CachedResource::Type::MainResource:

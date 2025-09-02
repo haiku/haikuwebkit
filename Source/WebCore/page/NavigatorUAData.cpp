@@ -31,10 +31,13 @@
 #include "UADataValues.h"
 #include "UALowEntropyJSON.h"
 #include "UserAgent.h"
+#include "UserAgentStringData.h"
+#include "page/UserAgentStringData.h"
 #include <algorithm>
 #include <random>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/WeakRandomNumber.h>
+#include <wtf/text/WTFString.h>
 
 #if USE(GLIB)
 #include <wtf/glib/ChassisType.h>
@@ -54,25 +57,54 @@ namespace WebCore {
 NavigatorUAData::NavigatorUAData() = default;
 NavigatorUAData::~NavigatorUAData() = default;
 
+NavigatorUAData::NavigatorUAData(Ref<UserAgentStringData>&& userAgentStringData)
+{
+    overrideFromUserAgentString = true;
+    mobileOverride = userAgentStringData->mobile;
+    static std::once_flag onceKey;
+    std::call_once(onceKey, [userAgentStringData] {
+        Vector<NavigatorUABrandVersion> temp = {
+            NavigatorUABrandVersion {
+                .brand = userAgentStringData->browserName,
+                .version = userAgentStringData->browserVersion },
+            NavigatorUABrandVersion {
+                .brand = createArbitraryBrand(),
+                .version = createArbitraryVersion() }
+        };
+
+        auto rng = std::default_random_engine { };
+        std::ranges::shuffle(temp, rng);
+        NavigatorUAData::m_brands.construct(temp);
+    });
+
+    platformOverride = userAgentStringData->platform;
+}
+
 Ref<NavigatorUAData> NavigatorUAData::create()
 {
     return adoptRef(*new NavigatorUAData());
 }
 
+Ref<NavigatorUAData> NavigatorUAData::create(Ref<UserAgentStringData>&& userAgentStringData)
+{
+    return adoptRef(*new NavigatorUAData(WTFMove(userAgentStringData)));
+}
+
 const Vector<NavigatorUABrandVersion>& NavigatorUAData::brands() const
 {
+    if (overrideFromUserAgentString)
+        return NavigatorUAData::m_brands;
+
     static LazyNeverDestroyed<Vector<NavigatorUABrandVersion>> brandVersion;
     static std::once_flag onceKey;
     std::call_once(onceKey, [] {
         Vector<NavigatorUABrandVersion> temp = {
             NavigatorUABrandVersion {
                 .brand = "AppleWebKit"_s,
-                .version = "605.1.15"_s
-            },
+                .version = "605.1.15"_s },
             NavigatorUABrandVersion {
                 .brand = createArbitraryBrand(),
-                .version = createArbitraryVersion()
-            }
+                .version = createArbitraryVersion() }
         };
 
         auto rng = std::default_random_engine { };
@@ -85,6 +117,9 @@ const Vector<NavigatorUABrandVersion>& NavigatorUAData::brands() const
 
 bool NavigatorUAData::mobile() const
 {
+    if (overrideFromUserAgentString)
+        return mobileOverride;
+
 #if PLATFORM(IOS_FAMILY)
     return !(PAL::currentUserInterfaceIdiomIsDesktop() || PAL::currentUserInterfaceIdiomIsVision());
 #elif USE(GLIB)
@@ -96,6 +131,9 @@ bool NavigatorUAData::mobile() const
 
 String NavigatorUAData::platform() const
 {
+    if (overrideFromUserAgentString)
+        return platformOverride;
+
 #if OS(LINUX)
     static LazyNeverDestroyed<String> platformName;
     static std::once_flag onceKey;
@@ -125,6 +163,12 @@ UALowEntropyJSON NavigatorUAData::toJSON() const
 void NavigatorUAData::getHighEntropyValues(const Vector<String>& hints, NavigatorUAData::ValuesPromise&& promise) const
 {
     auto values = UADataValues::create(brands(), mobile(), platform());
+    if (overrideFromUserAgentString) {
+        // if the user agent string has been overridden, we should not expose high entropy values
+        promise.resolve(values);
+        return;
+    }
+
     for (auto& hint : hints) {
         if (hint == "architecture")
             values->architecture = ""_s;
@@ -162,7 +206,7 @@ String NavigatorUAData::createArbitraryVersion()
 
 String NavigatorUAData::createArbitraryBrand()
 {
-    auto greasyChars= unsafeSpan(" ()-./:;=?_");
+    auto greasyChars = unsafeSpan(" ()-./:;=?_");
     return makeString("The"_s, greasyChars[weakRandomNumber<unsigned>() % greasyChars.size()], "Best"_s, greasyChars[weakRandomNumber<unsigned>() % greasyChars.size()], "Browser"_s);
 }
 }

@@ -27,9 +27,9 @@
 
 #if ENABLE(CONTENT_EXTENSIONS)
 
-#include "ContentExtensionRule.h"
-#include "ContentExtensionsDebugging.h"
-#include "DFABytecode.h"
+#include <WebCore/ContentExtensionRule.h>
+#include <WebCore/ContentExtensionsDebugging.h>
+#include <WebCore/DFABytecode.h>
 #include <wtf/DataLog.h>
 #include <wtf/HashSet.h>
 

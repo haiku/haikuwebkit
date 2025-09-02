@@ -56,6 +56,8 @@ inline static WKTextExtractionContainer containerType(TextExtraction::ContainerT
         return WKTextExtractionContainerNav;
     case TextExtraction::ContainerType::Button:
         return WKTextExtractionContainerButton;
+    case TextExtraction::ContainerType::Generic:
+        return WKTextExtractionContainerGeneric;
     }
 }
 
@@ -70,18 +72,8 @@ static WKTextExtractionEventListenerTypes eventListenerTypes(OptionSet<TextExtra
         result |= WKTextExtractionEventListenerTypeTouch;
     if (eventListeners.contains(TextExtraction::EventListenerCategory::Wheel))
         result |= WKTextExtractionEventListenerTypeWheel;
-    if (eventListeners.contains(TextExtraction::EventListenerCategory::Gesture))
-        result |= WKTextExtractionEventListenerTypeGesture;
-    if (eventListeners.contains(TextExtraction::EventListenerCategory::Pointer))
-        result |= WKTextExtractionEventListenerTypePointer;
     if (eventListeners.contains(TextExtraction::EventListenerCategory::Keyboard))
         result |= WKTextExtractionEventListenerTypeKeyboard;
-    if (eventListeners.contains(TextExtraction::EventListenerCategory::Focus))
-        result |= WKTextExtractionEventListenerTypeFocus;
-    if (eventListeners.contains(TextExtraction::EventListenerCategory::Form))
-        result |= WKTextExtractionEventListenerTypeForm;
-    if (eventListeners.contains(TextExtraction::EventListenerCategory::Media))
-        result |= WKTextExtractionEventListenerTypeMedia;
     return result;
 }
 
@@ -97,12 +89,15 @@ static RetainPtr<WKTextExtractionEditable> createWKEditable(const TextExtraction
 inline static RetainPtr<WKTextExtractionItem> createItemWithChildren(const TextExtraction::Item& item, const RootViewToWebViewConverter& converter, NSArray<WKTextExtractionItem *> *children)
 {
     auto rectInWebView = converter(item.rectInRootView);
+    auto eventListeners = eventListenerTypes(item.eventListeners);
+    RetainPtr<NSString> nodeIdentifier;
+    if (item.nodeIdentifier)
+        nodeIdentifier = [NSString stringWithFormat:@"%llu", item.nodeIdentifier->toUInt64()];
 
-    // FIXME: Finish plumbing for event listeners, node identifiers, and various other attributes.
-    auto eventListeners = eventListenerTypes({ });
-    RetainPtr nodeIdentifier = @"";
-    RetainPtr accessibilityRole = @"";
-    RetainPtr ariaAttributes = adoptNS([[NSMutableDictionary alloc] init]);
+    RetainPtr accessibilityRole = item.accessibilityRole.createNSString();
+    RetainPtr ariaAttributes = adoptNS([[NSMutableDictionary alloc] initWithCapacity:item.ariaAttributes.size()]);
+    for (auto& [attribute, value] : item.ariaAttributes)
+        [ariaAttributes setObject:value.createNSString().get() forKey:attribute.createNSString().get()];
 
     return WTF::switchOn(item.data,
         [&](const TextExtraction::TextItemData& data) -> RetainPtr<WKTextExtractionItem> {
@@ -148,10 +143,54 @@ inline static RetainPtr<WKTextExtractionItem> createItemWithChildren(const TextE
                 ariaAttributes:ariaAttributes.get()
                 accessibilityRole:accessibilityRole.get()
                 nodeIdentifier:nodeIdentifier.get()]);
+        }, [&](const TextExtraction::SelectData& data) -> RetainPtr<WKTextExtractionItem> {
+            return adoptNS([[WKTextExtractionSelectItem alloc]
+                initWithSelectedValues:createNSArray(data.selectedValues).get()
+                supportsMultiple:data.isMultiple
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
         }, [&](const TextExtraction::ImageItemData& data) -> RetainPtr<WKTextExtractionItem> {
             return adoptNS([[WKTextExtractionImageItem alloc]
                 initWithName:data.name.createNSString().get()
                 altText:data.altText.createNSString().get()
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
+        }, [&](const TextExtraction::ContentEditableData& data) -> RetainPtr<WKTextExtractionItem> {
+            return adoptNS([[WKTextExtractionContentEditableItem alloc]
+                initWithContentEditableType:data.isPlainTextOnly ? WKTextExtractionEditablePlainTextOnly : WKTextExtractionEditableRichText
+                isFocused:data.isFocused
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
+        }, [&](const TextExtraction::TextFormControlData& data) -> RetainPtr<WKTextExtractionItem> {
+            return adoptNS([[WKTextExtractionTextFormControlItem alloc]
+                initWithEditable:createWKEditable(data.editable).get()
+                controlType:data.controlType.createNSString().get()
+                autocomplete:data.autocomplete.createNSString().get()
+                isReadonly:data.isReadonly
+                isDisabled:data.isDisabled
+                isChecked:data.isChecked
+                rectInWebView:rectInWebView
+                children:children
+                eventListeners:eventListeners
+                ariaAttributes:ariaAttributes.get()
+                accessibilityRole:accessibilityRole.get()
+                nodeIdentifier:nodeIdentifier.get()]);
+        }, [&](const TextExtraction::LinkItemData& data) -> RetainPtr<WKTextExtractionItem> {
+            return adoptNS([[WKTextExtractionLinkItem alloc]
+                initWithTarget:data.target.createNSString().get()
+                url:data.completedURL.createNSURL().get()
                 rectInWebView:rectInWebView
                 children:children
                 eventListeners:eventListeners

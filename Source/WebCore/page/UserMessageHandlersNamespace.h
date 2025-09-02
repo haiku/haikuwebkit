@@ -27,9 +27,9 @@
 
 #if ENABLE(USER_MESSAGE_HANDLERS)
 
-#include "FrameDestructionObserver.h"
-#include "UserContentProvider.h"
-#include "UserMessageHandler.h"
+#include <WebCore/FrameDestructionObserver.h>
+#include <WebCore/UserContentProvider.h>
+#include <WebCore/UserMessageHandler.h>
 #include <wtf/HashMap.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>

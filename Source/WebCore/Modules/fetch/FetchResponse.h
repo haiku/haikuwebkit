@@ -29,11 +29,11 @@
 #pragma once
 
 #include "FetchBodyOwner.h"
-#include "FetchHeaders.h"
-#include "HTTPStatusCodes.h"
-#include "ReadableStreamSink.h"
-#include "ResourceResponse.h"
 #include <JavaScriptCore/TypedArrays.h>
+#include <WebCore/FetchHeaders.h>
+#include <WebCore/HTTPStatusCodes.h>
+#include <WebCore/ReadableStreamSink.h>
+#include <WebCore/ResourceResponse.h>
 #include <span>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>

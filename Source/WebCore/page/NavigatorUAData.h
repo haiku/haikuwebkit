@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "IDLTypes.h"
-#include "JSDOMPromiseDeferred.h"
+#include <WebCore/IDLTypes.h>
+#include <WebCore/JSDOMPromiseDeferred.h>
 #include "NavigatorUABrandVersion.h"
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
@@ -35,10 +35,12 @@ namespace WebCore {
 struct NavigatorUABrandVersion;
 struct UADataValues;
 struct UALowEntropyJSON;
+struct UserAgentStringData;
 
 class NavigatorUAData : public RefCounted<NavigatorUAData> {
 public:
     static Ref<NavigatorUAData> create();
+    static Ref<NavigatorUAData> create(Ref<UserAgentStringData>&&);
     const Vector<NavigatorUABrandVersion>& brands() const;
     bool mobile() const;
     String platform() const;
@@ -50,7 +52,14 @@ public:
 
 private:
     NavigatorUAData();
+    NavigatorUAData(Ref<UserAgentStringData>&&);
     static String createArbitraryVersion();
     static String createArbitraryBrand();
+
+    bool overrideFromUserAgentString { false };
+    bool mobileOverride { false };
+    inline static LazyNeverDestroyed<Vector<NavigatorUABrandVersion>> m_brands;
+
+    String platformOverride;
 };
 }

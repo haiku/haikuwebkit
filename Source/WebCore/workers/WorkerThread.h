@@ -25,18 +25,18 @@
 
 #pragma once
 
-#include "ContentSecurityPolicyResponseHeaders.h"
-#include "CrossOriginEmbedderPolicy.h"
-#include "FetchRequestCredentials.h"
-#include "NotificationPermission.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "ServiceWorkerRegistrationData.h"
-#include "Settings.h"
-#include "WorkerClient.h"
-#include "WorkerOrWorkletThread.h"
-#include "WorkerRunLoop.h"
-#include "WorkerType.h"
 #include <JavaScriptCore/RuntimeFlags.h>
+#include <WebCore/ContentSecurityPolicyResponseHeaders.h>
+#include <WebCore/CrossOriginEmbedderPolicy.h>
+#include <WebCore/FetchRequestCredentials.h>
+#include <WebCore/NotificationPermission.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/ServiceWorkerRegistrationData.h>
+#include <WebCore/Settings.h>
+#include <WebCore/WorkerClient.h>
+#include <WebCore/WorkerOrWorkletThread.h>
+#include <WebCore/WorkerRunLoop.h>
+#include <WebCore/WorkerType.h>
 #include <memory>
 #include <pal/SessionID.h>
 #include <wtf/CheckedPtr.h>

@@ -25,14 +25,14 @@
 
 #pragma once
 
-#include "DragActions.h"
-#include "DragImage.h"
-#include "FloatPoint.h"
-#include "IntPoint.h"
-#include "IntRect.h"
-#include "PasteboardWriterData.h"
-#include "PlatformLayerIdentifier.h"
-#include "PromisedAttachmentInfo.h"
+#include <WebCore/DragActions.h>
+#include <WebCore/DragImage.h>
+#include <WebCore/FloatPoint.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/PasteboardWriterData.h>
+#include <WebCore/PlatformLayerIdentifier.h>
+#include <WebCore/PromisedAttachmentInfo.h>
 
 namespace WebCore {
 

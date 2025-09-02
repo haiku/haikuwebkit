@@ -214,7 +214,7 @@
     ;; <rdar://problem/10809394>
     (deny file-write-create
         (home-prefix "/Library/Preferences/com.apple.Accessibility.plist")
-        (with no-report))
+        NO_REPORT)
 )
 
 (define-once (media-accessibility-support)
@@ -267,7 +267,7 @@
            (literal "/dev/random")
            (literal "/dev/urandom"))
     ;; <rdar://problem/14215718>
-    (deny file-write-data (with no-report)
+    (deny file-write-data NO_REPORT
           (literal "/dev/random")
           (literal "/dev/urandom")))
 
@@ -312,7 +312,7 @@
     ;; <rdar://problem/13796537>
     (deny file-write-create
         (home-prefix "/Library/Preferences/com.apple.UIKit.plist")
-        (with no-report))
+        NO_REPORT)
 )
 
 (deny file-map-executable)
@@ -450,7 +450,7 @@
 (allow system-sched (with telemetry)
        (require-entitlement "com.apple.private.kernel.override-cpumon"))
 
-(deny sysctl-read (with no-report)
+(deny sysctl-read NO_REPORT
       (sysctl-name
           "hw.tbfrequency_compat" ;; <rdar://71740719>
           "sysctl.proc_native"))
@@ -473,7 +473,7 @@
 
 (managed-configuration-read-public)
 
-(deny system-info (with no-report)
+(deny system-info NO_REPORT
       (info-type "net.link.addr"))
 
 (allow-well-known-system-group-container-subpath-read
@@ -523,7 +523,7 @@
 
 ;; Silently deny unnecessary accesses caused by MessageUI framework.
 ;; This can be removed once <rdar://problem/47038102> is resolved.
-(deny file-read* (with no-report)
+(deny file-read* NO_REPORT
     (home-literal "/Library/Preferences/com.apple.mobilemail.plist"))
 
 (allow file-read*
@@ -539,7 +539,7 @@
 (uikit-requirements)
 
 ; Silently deny writes when CFData attempts to write to the cache directory.
-(deny file-write* (with no-report)
+(deny file-write* NO_REPORT
     (home-literal "/Library/Caches/DateFormats.plist"))
 
 ; <rdar://problem/7595408> , <rdar://problem/7643881>
@@ -549,7 +549,7 @@
 ; which will attempt to create the plist if it doesn't exist -- from any application.  Only SpringBoard is
 ; allowed to write its plist; ignore all others, they don't know what they are doing.
 ; See <rdar://problem/9375027> for sample backtraces.
-(deny file-write* (with no-report)
+(deny file-write* NO_REPORT
     (home-prefix "/Library/Preferences/com.apple.springboard.plist"))
 
 ;;;
@@ -691,7 +691,7 @@
         (global-name "com.apple.analyticsd")))
 
 ;; Silence reports about things we do not want access to:
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (global-name
         "com.apple.audioanalyticsd"
         "com.apple.coremedia.mediaparserd.utilities"
@@ -700,10 +700,10 @@
 (deny file-write-create (vnode-type SYMLINK))
 (deny file-read-xattr file-write-xattr (xattr-prefix "com.apple.security.private."))
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (xpc-service-name "com.apple.audio.toolbox.reporting.service"))
 
-(deny mach-lookup (with no-report)
+(deny mach-lookup NO_REPORT
     (global-name "com.apple.audio.AudioComponentRegistrar"))
 
 (deny mach-lookup
@@ -732,7 +732,7 @@
 (when (defined? 'syscall-unix)
     (deny syscall-unix (with telemetry))
     (when (defined? 'SYS_crossarch_trap)
-        (deny syscall-unix (with no-report) (syscall-number
+        (deny syscall-unix NO_REPORT (syscall-number
             SYS_crossarch_trap)))
 #if ASAN_ENABLED
     (allow syscall-unix
@@ -1004,3 +1004,10 @@
 #if __has_include(<WebKitAdditions/com.apple.WebKit.GPU.sb.in>)
 #include <WebKitAdditions/com.apple.WebKit.GPU.sb.in>
 #endif
+
+(with-filter (require-not (state-flag "local:FeatureCoreMLDisabled"))
+    (allow file-clone)
+    (allow syscall-unix
+        (syscall-number
+            SYS_mkdirat
+            SYS_rmdir)))

@@ -40,6 +40,7 @@
 #import "SandboxExtension.h"
 #import "SandboxInitializationParameters.h"
 #import "SharedBufferReference.h"
+#import "StreamClientConnection.h"
 #import "WKAPICast.h"
 #import "WKBrowsingContextHandleInternal.h"
 #import "WKFullKeyboardAccessWatcher.h"
@@ -180,6 +181,7 @@
 #endif
 
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+#import "LogStream.h"
 #import "LogStreamMessages.h"
 #endif
 
@@ -365,7 +367,7 @@ static void setVideoDecoderBehaviors(OptionSet<VideoDecoderBehavior> videoDecode
 void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& parameters)
 {
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
-    setupLogStream();
+    initializeLogForwarding();
 #endif
 
 #if ENABLE(NOTIFY_BLOCKING)
@@ -831,18 +833,20 @@ static void prewarmLogs()
 }
 #endif // PLATFORM(IOS_FAMILY)
 
-static bool shouldIgnoreLogMessage(const char* logSubsystem)
+static bool shouldIgnoreLogMessage(std::span<const LChar> logChannel)
 {
-    auto subsystem = unsafeSpan8(logSubsystem);
-    if (equal(subsystem, "com.apple.xpc"_s))
-        return true;
-    if (equal(subsystem, "com.apple.CoreAnalytics"_s))
-        return true;
-    return false;
+    return equalSpans(logChannel, "com.apple.xpc\0"_span8) || equalSpans(logChannel, "com.apple.CoreAnalytics\0"_span8);
 }
 
-void WebProcess::registerLogHook()
+static void registerLogClient(std::unique_ptr<LogClient>&& newLogClient)
 {
+#if PLATFORM(IOS_FAMILY)
+    prewarmLogs();
+#endif
+
+    RELEASE_ASSERT(!logClient());
+    logClient() = WTFMove(newLogClient);
+
     static os_log_hook_t prevHook = nullptr;
 
 #ifdef NDEBUG
@@ -870,29 +874,25 @@ void WebProcess::registerLogHook()
         if (Thread::currentThreadIsRealtime())
             return;
 
-        if (shouldIgnoreLogMessage(msg->subsystem))
-            return;
-
         auto logChannel = unsafeSpan8IncludingNullTerminator(msg->subsystem);
-        auto logCategory = unsafeSpan8IncludingNullTerminator(msg->category);
-
-        if (logCategory.size() > logCategoryMaxSize)
-            return;
         if (logChannel.size() > logSubsystemMaxSize)
+            return;
+        if (shouldIgnoreLogMessage(logChannel))
+            return;
+        auto logCategory = unsafeSpan8IncludingNullTerminator(msg->category);
+        if (logCategory.size() > logCategoryMaxSize)
             return;
 
         if (type == OS_LOG_TYPE_FAULT)
             type = OS_LOG_TYPE_ERROR;
 
         if (char* messageString = os_log_copy_message_string(msg)) {
-            auto logString = unsafeSpan8IncludingNullTerminator(messageString);
+            auto logString = spanConstCast<LChar>(unsafeSpan8IncludingNullTerminator(messageString));
             if (logString.size() > logStringMaxSize) {
-                auto mutableLogString = spanConstCast<LChar>(logString);
-                mutableLogString = mutableLogString.subspan(0, logStringMaxSize);
-                mutableLogString.back() = 0;
-                WebProcess::singleton().sendLogOnStream(logChannel, logCategory, mutableLogString, type);
-            } else
-                WebProcess::singleton().sendLogOnStream(logChannel, logCategory, logString, type);
+                logString = logString.first(logStringMaxSize);
+                logString.back() = 0;
+            }
+            logClient()->log(logChannel, logCategory, logString, type);
             free(messageString);
         }
     }).get());
@@ -900,55 +900,35 @@ void WebProcess::registerLogHook()
     WTFSignpostIndirectLoggingEnabled = true;
 }
 
-void WebProcess::setupLogStream()
+void WebProcess::initializeLogForwarding()
 {
     if (os_trace_get_mode() != OS_TRACE_MODE_OFF)
         return;
 
-    LogStreamIdentifier logStreamIdentifier { LogStreamIdentifier::generate() };
-
+    RefPtr parentConnection = parentProcessConnection();
+    if (!parentConnection)
+        return;
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-    static constexpr auto connectionBufferSizeLog2 = 21;
+    static constexpr auto connectionBufferSizeLog2 = 17;
     auto connectionPair = IPC::StreamClientConnection::create(connectionBufferSizeLog2, 1_s);
     if (!connectionPair)
         CRASH();
-    auto [streamConnection, serverHandle] = WTFMove(*connectionPair);
-
-    RefPtr logStreamConnection = WTFMove(streamConnection);
-    if (!logStreamConnection)
-        return;
-
-    logStreamConnection->open(*this, RunLoop::currentSingleton());
-
-    parentProcessConnection()->sendWithAsyncReply(Messages::WebProcessProxy::SetupLogStream(getpid(), WTFMove(serverHandle), logStreamIdentifier), [logStreamConnection, logStreamIdentifier] (IPC::Semaphore&& wakeUpSemaphore, IPC::Semaphore&& clientWaitSemaphore) {
-        logStreamConnection->setSemaphores(WTFMove(wakeUpSemaphore), WTFMove(clientWaitSemaphore));
-#if PLATFORM(IOS_FAMILY)
-        prewarmLogs();
-#endif
-        RELEASE_ASSERT(!logClient());
-        logClient() = makeUnique<LogClient>(*logStreamConnection, logStreamIdentifier);
-
-        WebProcess::singleton().registerLogHook();
+    auto [connection, handle] = WTFMove(*connectionPair);
+    connection->open(*this, RunLoop::currentSingleton());
+    std::unique_ptr newLogClient = makeUnique<LogClient>(Ref { connection });
+    parentConnection->sendWithAsyncReply(Messages::WebProcessProxy::CreateLogStream(WTFMove(handle), newLogClient->identifier()), [newLogClient = WTFMove(newLogClient), connection = WTFMove(connection)] (IPC::Semaphore&& wakeUpSemaphore, IPC::Semaphore&& clientWaitSemaphore) mutable {
+        connection->setSemaphores(WTFMove(wakeUpSemaphore), WTFMove(clientWaitSemaphore));
+        registerLogClient(WTFMove(newLogClient));
     });
 #else
-    RefPtr connection = parentProcessConnection();
-    connection->sendWithAsyncReply(Messages::WebProcessProxy::SetupLogStream(getpid(), logStreamIdentifier), [connection, logStreamIdentifier] () {
-        if (connection) {
-#if PLATFORM(IOS_FAMILY)
-            prewarmLogs();
-#endif
-            logClient() = makeUnique<LogClient>(*connection, logStreamIdentifier);
-            WebProcess::singleton().registerLogHook();
-        }
+    std::unique_ptr newLogClient = makeUnique<LogClient>(*parentConnection);
+    parentConnection->sendWithAsyncReply(Messages::WebProcessProxy::CreateLogStream(newLogClient->identifier()), [newLogClient = WTFMove(newLogClient)] mutable {
+        registerLogClient(WTFMove(newLogClient));
     });
 #endif
+
 }
 
-void WebProcess::sendLogOnStream(std::span<const uint8_t> logChannel, std::span<const uint8_t> logCategory, std::span<const uint8_t> logString, os_log_type_t type)
-{
-    if (auto& client = logClient())
-        client->log(logChannel, logCategory, logString, type);
-}
 #endif
 
 void WebProcess::platformInitializeProcess(const AuxiliaryProcessInitializationParameters& parameters)

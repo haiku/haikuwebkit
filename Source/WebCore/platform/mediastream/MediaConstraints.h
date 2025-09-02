@@ -33,7 +33,7 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "RealtimeMediaSourceSupportedConstraints.h"
+#include <WebCore/RealtimeMediaSourceSupportedConstraints.h>
 #include <cstdlib>
 #include <wtf/ArgumentCoder.h>
 #include <wtf/Function.h>

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "MediaSessionIdentifier.h"
+#include <WebCore/MediaSessionIdentifier.h>
 #include <wtf/URL.h>
 #include <wtf/text/WTFString.h>
 

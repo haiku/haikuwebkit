@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "IDBDatabaseIdentifier.h"
+#include <WebCore/IDBDatabaseIdentifier.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {

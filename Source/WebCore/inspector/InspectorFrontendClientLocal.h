@@ -31,8 +31,8 @@
 
 #pragma once
 
-#include "InspectorFrontendAPIDispatcher.h"
-#include "InspectorFrontendClient.h"
+#include <WebCore/InspectorFrontendAPIDispatcher.h>
+#include <WebCore/InspectorFrontendClient.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>

@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "LengthPoint.h"
-#include "StylePosition.h"
-#include "StyleValueTypes.h"
+#include <WebCore/LengthPoint.h>
+#include <WebCore/StylePosition.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 

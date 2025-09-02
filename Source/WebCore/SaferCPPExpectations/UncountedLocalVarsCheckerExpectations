@@ -308,9 +308,7 @@ page/DragController.cpp
 page/ElementTargetingController.cpp
 page/EventHandler.cpp
 page/FocusController.cpp
-page/Frame.cpp
 page/FrameSnapshotting.cpp
-page/FrameTree.cpp
 page/FrameView.cpp
 page/ImageAnalysisQueue.cpp
 page/InteractionRegion.cpp

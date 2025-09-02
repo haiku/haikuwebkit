@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FontCache.h"
+#include <WebCore/FontCache.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
 

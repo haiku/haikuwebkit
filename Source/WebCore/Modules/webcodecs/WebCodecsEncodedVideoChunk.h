@@ -27,8 +27,8 @@
 
 #if ENABLE(WEB_CODECS)
 
-#include "BufferSource.h"
-#include "WebCodecsEncodedVideoChunkData.h"
+#include <WebCore/BufferSource.h>
+#include <WebCore/WebCodecsEncodedVideoChunkData.h>
 #include <wtf/ThreadSafeRefCounted.h>
 
 namespace WebCore {

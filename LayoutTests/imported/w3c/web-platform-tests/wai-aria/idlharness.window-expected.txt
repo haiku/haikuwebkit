@@ -44,6 +44,7 @@ PASS Element interface: attribute ariaPlaceholder
 PASS Element interface: attribute ariaPosInSet
 PASS Element interface: attribute ariaPressed
 PASS Element interface: attribute ariaReadOnly
+PASS Element interface: attribute ariaRelevant
 PASS Element interface: attribute ariaRequired
 PASS Element interface: attribute ariaRoleDescription
 PASS Element interface: attribute ariaRowCount
@@ -95,6 +96,7 @@ PASS Element interface: element must inherit property "ariaPlaceholder" with the
 PASS Element interface: element must inherit property "ariaPosInSet" with the proper type
 PASS Element interface: element must inherit property "ariaPressed" with the proper type
 PASS Element interface: element must inherit property "ariaReadOnly" with the proper type
+PASS Element interface: element must inherit property "ariaRelevant" with the proper type
 PASS Element interface: element must inherit property "ariaRequired" with the proper type
 PASS Element interface: element must inherit property "ariaRoleDescription" with the proper type
 PASS Element interface: element must inherit property "ariaRowCount" with the proper type

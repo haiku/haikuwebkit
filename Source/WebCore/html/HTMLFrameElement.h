@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "HTMLFrameElementBase.h"
+#include <WebCore/HTMLFrameElementBase.h>
 
 namespace WebCore {
 

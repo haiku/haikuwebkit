@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "StyleScopeOrdinal.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StyleScopeOrdinal.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

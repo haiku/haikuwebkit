@@ -139,6 +139,7 @@ static CachedResourceHandle<CachedResource> createResource(CachedResource::Type 
         return new CachedImage(WTFMove(request), sessionID, cookieJar);
     case CachedResource::Type::CSSStyleSheet:
         return new CachedCSSStyleSheet(WTFMove(request), sessionID, cookieJar);
+    case CachedResource::Type::JSON:
     case CachedResource::Type::Script:
         return new CachedScript(WTFMove(request), sessionID, cookieJar, requiresScriptTrackingPrivacyProtections(document, request.resourceRequest()));
     case CachedResource::Type::SVGDocumentResource:
@@ -184,6 +185,7 @@ static CachedResourceHandle<CachedResource> createResource(CachedResourceRequest
         return new CachedImage(WTFMove(request), resource.sessionID(), resource.cookieJar());
     case CachedResource::Type::CSSStyleSheet:
         return new CachedCSSStyleSheet(WTFMove(request), resource.sessionID(), resource.cookieJar());
+    case CachedResource::Type::JSON:
     case CachedResource::Type::Script:
         return new CachedScript(WTFMove(request), resource.sessionID(), resource.cookieJar(), requiresScriptTrackingPrivacyProtections(document, request.resourceRequest()));
     case CachedResource::Type::SVGDocumentResource:
@@ -330,7 +332,8 @@ CachedResourceHandle<CachedCSSStyleSheet> CachedResourceLoader::requestUserCSSSt
 
 ResourceErrorOr<CachedResourceHandle<CachedScript>> CachedResourceLoader::requestScript(CachedResourceRequest&& request)
 {
-    return castCachedResourceTo<CachedScript>(requestResource(CachedResource::Type::Script, WTFMove(request)));
+    return castCachedResourceTo<CachedScript>(requestResource(
+        request.options().destination == FetchOptionsDestination::Json ? CachedResource::Type::JSON : CachedResource::Type::Script, WTFMove(request)));
 }
 
 #if ENABLE(XSLT)
@@ -422,56 +425,6 @@ ResourceErrorOr<CachedResourceHandle<CachedRawResource>> CachedResourceLoader::r
 }
 #endif
 
-static MixedContentChecker::ContentType contentTypeFromResourceType(CachedResource::Type type)
-{
-    switch (type) {
-    // https://w3c.github.io/webappsec-mixed-content/#category-optionally-blockable
-    // Editor's Draft, 11 February 2016
-    // 3.1. Optionally-blockable Content
-    case CachedResource::Type::ImageResource:
-    case CachedResource::Type::MediaResource:
-#if ENABLE(MODEL_ELEMENT)
-    case CachedResource::Type::EnvironmentMapResource:
-    case CachedResource::Type::ModelResource:
-#endif
-        return MixedContentChecker::ContentType::ActiveCanWarn;
-
-    case CachedResource::Type::CSSStyleSheet:
-    case CachedResource::Type::Script:
-    case CachedResource::Type::FontResource:
-        return MixedContentChecker::ContentType::Active;
-
-    case CachedResource::Type::SVGFontResource:
-        return MixedContentChecker::ContentType::Active;
-
-    case CachedResource::Type::Beacon:
-    case CachedResource::Type::Ping:
-    case CachedResource::Type::RawResource:
-    case CachedResource::Type::Icon:
-    case CachedResource::Type::SVGDocumentResource:
-        return MixedContentChecker::ContentType::Active;
-#if ENABLE(XSLT)
-    case CachedResource::Type::XSLStyleSheet:
-        return MixedContentChecker::ContentType::Active;
-#endif
-
-    case CachedResource::Type::LinkPrefetch:
-        return MixedContentChecker::ContentType::Active;
-
-#if ENABLE(VIDEO)
-    case CachedResource::Type::TextTrackResource:
-        return MixedContentChecker::ContentType::Active;
-#endif
-#if ENABLE(APPLICATION_MANIFEST)
-    case CachedResource::Type::ApplicationManifest:
-        return MixedContentChecker::ContentType::Active;
-#endif
-    default:
-        ASSERT_NOT_REACHED();
-        return MixedContentChecker::ContentType::Active;
-    }
-}
-
 static MixedContentChecker::IsUpgradable isUpgradableTypeFromResourceType(CachedResource::Type type)
 {
     // https://www.w3.org/TR/mixed-content/#category-upgradeable
@@ -493,23 +446,8 @@ bool CachedResourceLoader::checkInsecureContent(CachedResource::Type type, const
     if (!canRequestInContentDispositionAttachmentSandbox(type, url))
         return false;
 
-    if (RefPtr document = m_document.get(); document && !document->settings().upgradeMixedContentEnabled()) {
-        // These resource can inject script into the current document (Script,
-        // XSL) or exfiltrate the content of the current document (CSS).
-        // This block is a special-case for maintaining backwards compatibility.
-        if (type == CachedResource::Type::Script
-#if ENABLE(XSLT)
-            || type == CachedResource::Type::XSLStyleSheet
-#endif
-            || type == CachedResource::Type::SVGDocumentResource
-            || type == CachedResource::Type::CSSStyleSheet) {
-
-            if (RefPtr frame = this->frame())
-                return MixedContentChecker::frameAndAncestorsCanRunInsecureContent(*frame, document->protectedSecurityOrigin(), url);
-        }
-    }
-
     switch (type) {
+    case CachedResource::Type::JSON:
     case CachedResource::Type::Script:
 #if ENABLE(XSLT)
     case CachedResource::Type::XSLStyleSheet:
@@ -532,7 +470,7 @@ bool CachedResourceLoader::checkInsecureContent(CachedResource::Type type, const
     case CachedResource::Type::Ping:
     case CachedResource::Type::FontResource: {
         if (RefPtr frame = this->frame()) {
-            if (MixedContentChecker::shouldBlockRequestForDisplayableContent(*frame, url, contentTypeFromResourceType(type), isRequestUpgradable))
+            if (MixedContentChecker::shouldBlockRequest(*frame, url, isRequestUpgradable))
                 return false;
         }
         break;
@@ -577,6 +515,7 @@ bool CachedResourceLoader::allowedByContentSecurityPolicy(CachedResource::Type t
 #if ENABLE(XSLT)
     case CachedResource::Type::XSLStyleSheet:
 #endif
+    case CachedResource::Type::JSON:
     case CachedResource::Type::Script:
         if (!contentSecurityPolicy->allowScriptFromSource(url, redirectResponseReceived, preRedirectURL, options.integrity, options.nonce))
             return false;
@@ -1051,6 +990,8 @@ static FetchOptions::Destination destinationForType(CachedResource::Type type, L
         return FetchOptions::Destination::Image;
     case CachedResource::Type::CSSStyleSheet:
         return FetchOptions::Destination::Style;
+    case CachedResource::Type::JSON:
+        return FetchOptions::Destination::Json;
     case CachedResource::Type::Script:
         return FetchOptions::Destination::Script;
     case CachedResource::Type::FontResource:
@@ -1358,7 +1299,7 @@ ResourceErrorOr<CachedResourceHandle<CachedResource>> CachedResourceLoader::requ
     ASSERT(resource);
     resource->setOriginalRequest(WTFMove(originalRequest));
 
-    if (type == CachedResource::Type::Script && contentSecurityPolicy) {
+    if ((type == CachedResource::Type::Script || type == CachedResource::Type::JSON) && contentSecurityPolicy) {
         auto hashes = contentSecurityPolicy->hashesToReport();
         if (!hashes.isEmpty())
             resource->setIsHashReportingNeeded();
@@ -1821,7 +1762,7 @@ ResourceErrorOr<CachedResourceHandle<CachedResource>> CachedResourceLoader::prel
 
     RefPtr document = m_document.get();
     ASSERT(document);
-    if (request.charset().isEmpty() && document && (type == CachedResource::Type::Script || type == CachedResource::Type::CSSStyleSheet))
+    if (request.charset().isEmpty() && document && (type == CachedResource::Type::Script || type == CachedResource::Type::JSON || type == CachedResource::Type::CSSStyleSheet))
         request.setCharset(document->charset());
 
     auto resource = requestResource(type, WTFMove(request), ForPreload::Yes);

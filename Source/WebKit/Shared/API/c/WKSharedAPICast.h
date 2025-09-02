@@ -63,6 +63,7 @@
 
 namespace API {
 class Array;
+class CompletionListener;
 class Dictionary;
 class Data;
 class Point;
@@ -92,6 +93,7 @@ template<typename ImplType> struct ImplTypeInfo;
 
 WK_ADD_API_MAPPING(WKArrayRef, API::Array)
 WK_ADD_API_MAPPING(WKBooleanRef, API::Boolean)
+WK_ADD_API_MAPPING(WKCompletionListenerRef, API::CompletionListener);
 WK_ADD_API_MAPPING(WKContextMenuItemRef, WebContextMenuItem)
 WK_ADD_API_MAPPING(WKDataRef, API::Data)
 WK_ADD_API_MAPPING(WKDictionaryRef, API::Dictionary)

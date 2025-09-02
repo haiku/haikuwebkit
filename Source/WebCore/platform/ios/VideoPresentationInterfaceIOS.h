@@ -27,16 +27,16 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "EventListener.h"
-#include "HTMLMediaElementEnums.h"
-#include "MediaPlayerIdentifier.h"
-#include "PlatformImage.h"
-#include "PlatformLayer.h"
-#include "PlaybackSessionInterfaceIOS.h"
-#include "SpatialVideoMetadata.h"
-#include "VideoFullscreenCaptions.h"
-#include "VideoPresentationLayerProvider.h"
-#include "VideoPresentationModel.h"
+#include <WebCore/EventListener.h>
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/MediaPlayerIdentifier.h>
+#include <WebCore/PlatformImage.h>
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/PlaybackSessionInterfaceIOS.h>
+#include <WebCore/SpatialVideoMetadata.h>
+#include <WebCore/VideoFullscreenCaptions.h>
+#include <WebCore/VideoPresentationLayerProvider.h>
+#include <WebCore/VideoPresentationModel.h>
 #include <objc/objc.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>

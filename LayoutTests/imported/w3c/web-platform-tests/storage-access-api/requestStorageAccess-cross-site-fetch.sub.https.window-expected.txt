@@ -1,3 +1,3 @@
 
-FAIL Cross-site HTTP redirects from a frame with storage-access are not credentialed by default assert_true: frame has access to cookies after request. expected true got false
+PASS Cross-site HTTP redirects from a frame with storage-access are not credentialed by default
 

@@ -920,8 +920,11 @@ webkit_web_view_get_theme_color                      (WebKitWebView             
                                                       GdkRGBA                   *rgba);
 #endif
 
+WEBKIT_API gboolean
+webkit_web_view_is_immersive_mode_enabled            (WebKitWebView             *web_view);
+
 WEBKIT_API void
-webkit_web_view_end_immersive_session                (WebKitWebView             *web_view);
+webkit_web_view_leave_immersive_mode                 (WebKitWebView             *web_view);
 
 #if USE(GI_FINISH_FUNC_ANNOTATION)
 /**

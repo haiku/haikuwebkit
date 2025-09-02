@@ -27,10 +27,10 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from enum import Enum
-from typing import Any
+from typing import Any, NamedTuple, Optional, Union
 
 if sys.version_info < (3, 11):
-    from webkitapipy._vendor import tomli
+    from webkitapipy._vendor import tomli as tomllib
 else:
     import tomllib
 
@@ -48,9 +48,13 @@ class AllowedSPI:
     bug: str | PermanentlyAllowedReason
 
     symbols: list[str]
-    selectors: list[str]
+    selectors: list[Selector]
     classes: list[str]
     requires: list[str] = field(default_factory=list)
+
+    class Selector(NamedTuple):
+        name: str
+        class_: Optional[str]
 
 
 class PermanentlyAllowedReason(StrEnum):
@@ -71,9 +75,9 @@ class AllowList:
     @classmethod
     def from_dict(cls, doc: dict[str, Any]) -> AllowList:
         entries = []
-        seen_syms: dict[str, AllowedSPI] = {}
-        seen_sels: dict[str, AllowedSPI] = {}
-        seen_clss: dict[str, AllowedSPI] = {}
+        seen_syms: dict[Union[str, AllowedSPI.Selector], AllowedSPI] = {}
+        seen_sels: dict[Union[str, AllowedSPI.Selector], AllowedSPI] = {}
+        seen_clss: dict[Union[str, AllowedSPI.Selector], AllowedSPI] = {}
         for key in doc:
             for bug, entry in doc[key].items():
                 if bug.startswith('rdar://') or \
@@ -83,10 +87,17 @@ class AllowList:
                 else:
                     bug = PermanentlyAllowedReason(bug)
 
-                syms = entry.get('symbols', [])
-                sels = entry.get('selectors', [])
-                clss = entry.get('classes', [])
-                reqs = entry.get('requires', [])
+                syms = entry.pop('symbols', [])
+                clss = entry.pop('classes', [])
+                reqs = entry.pop('requires', [])
+                sels = []
+                for sel in entry.pop('selectors', []):
+                    receiver = sel.get('class')
+                    sels.append(AllowedSPI.Selector(sel['name'],
+                                                    None if receiver == '?' else receiver))
+                if entry:
+                    raise ValueError(f'Unrecognized items in "{key}"."{bug}": '
+                                     f'{entry}')
                 allow = AllowedSPI(key=key, bug=bug, symbols=syms,
                                    selectors=sels, classes=clss, requires=reqs)
 
@@ -115,8 +126,12 @@ class AllowList:
 
     @classmethod
     def from_file(cls, config_file: Path) -> AllowList:
-        if sys.version_info < (3, 11):
-            doc = tomli.load(config_file.open('rb'))
-        else:
+        try:
             doc = tomllib.load(config_file.open('rb'))
+        except tomllib.TOMLDecodeError as error:
+            if sys.version_info < (3, 11):
+                raise ValueError(f'{config_file}: error: decode failed') from error
+            else:
+                error.add_note(f'{config_file}: error: decode failed"')
+                raise
         return cls.from_dict(doc)

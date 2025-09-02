@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "ResourceLoader.h"
+#include <WebCore/ResourceLoader.h>
 #include <wtf/Function.h>
 #include <wtf/Forward.h>
 #include <wtf/WeakPtr.h>

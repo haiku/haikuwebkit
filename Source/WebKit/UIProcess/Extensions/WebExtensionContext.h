@@ -140,6 +140,10 @@ struct WebExtensionCookieStoreParameters;
 struct WebExtensionMenuItemContextParameters;
 struct WebExtensionMessageTargetParameters;
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+struct ContentRuleListMatchedRule;
+#endif
+
 enum class WebExtensionContextInstallReason : uint8_t {
     None,
     ExtensionInstall,
@@ -564,6 +568,10 @@ public:
 
     bool handleContentRuleListNotificationForTab(WebExtensionTab&, const URL&, WebCore::ContentRuleListResults::Result);
     void incrementActionCountForTab(WebExtensionTab&, ssize_t incrementAmount);
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    void handleContentRuleListMatchedRule(WebExtensionTab&, WebCore::ContentRuleListMatchedRule&);
+#endif
 
     // Returns whether or not there are any matched rules after the purge.
     bool purgeMatchedRulesFromBefore(const WallTime&);

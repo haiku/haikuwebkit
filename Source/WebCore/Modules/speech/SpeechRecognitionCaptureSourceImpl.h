@@ -27,13 +27,13 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "RealtimeMediaSource.h"
-#include "SpeechRecognitionConnectionClientIdentifier.h"
+#include <WebCore/RealtimeMediaSource.h>
+#include <WebCore/SpeechRecognitionConnectionClientIdentifier.h>
 #include <wtf/Lock.h>
 #include <wtf/TZoneMalloc.h>
 
 #if PLATFORM(COCOA)
-#include "AudioSampleDataSource.h"
+#include <WebCore/AudioSampleDataSource.h>
 #endif
 
 namespace WebCore {

@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "Page.h"
-#include "WorkerOrWorkletGlobalScope.h"
 #include <JavaScriptCore/InspectorAgentBase.h>
+#include <WebCore/Page.h>
+#include <WebCore/WorkerOrWorkletGlobalScope.h>
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {

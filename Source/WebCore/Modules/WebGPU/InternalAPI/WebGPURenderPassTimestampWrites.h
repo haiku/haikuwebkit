@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "WebGPUIntegralTypes.h"
-#include "WebGPUQuerySet.h"
+#include <WebCore/WebGPUIntegralTypes.h>
+#include <WebCore/WebGPUQuerySet.h>
 #include <wtf/Ref.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakPtr.h>

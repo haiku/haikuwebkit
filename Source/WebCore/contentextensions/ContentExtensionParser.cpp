@@ -297,7 +297,19 @@ static std::optional<Expected<ContentExtensionRule, std::error_code>> loadRule(c
     if (!action->has_value())
         return makeUnexpected(action->error());
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    auto identifierValue = ruleObject.getValue("_identifier"_s);
+    if (!identifierValue)
+        return { { { WTFMove(trigger.value()), WTFMove(action->value()), 0 } } };
+
+    auto identifierInteger = identifierValue->asValue()->asInteger();
+    if (!identifierInteger.has_value())
+        return makeUnexpected(ContentExtensionError::JSONInvalidRuleIdentifier);
+
+    return { { { WTFMove(trigger.value()), WTFMove(action->value()), static_cast<uint32_t>(identifierInteger.value()) } } };
+#else
     return { { { WTFMove(trigger.value()), WTFMove(action->value()) } } };
+#endif
 }
 
 static Expected<Vector<ContentExtensionRule>, std::error_code> loadEncodedRules(const String& ruleJSON, CSSSelectorsAllowed selectorsAllowed)
@@ -313,6 +325,9 @@ static Expected<Vector<ContentExtensionRule>, std::error_code> loadEncodedRules(
 
     Vector<ContentExtensionRule> ruleList;
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    size_t rulesWithIdentifiersCount = 0;
+#endif
     constexpr size_t maxRuleCount = 150000;
     if (topLevelArray->length() > maxRuleCount)
         return makeUnexpected(ContentExtensionError::JSONTooManyRules);
@@ -327,8 +342,17 @@ static Expected<Vector<ContentExtensionRule>, std::error_code> loadEncodedRules(
             continue;
         if (!rule->has_value())
             return makeUnexpected(rule->error());
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        if (rule->value().identifier())
+            ++rulesWithIdentifiersCount;
+#endif
         ruleList.append(WTFMove(rule->value()));
     }
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    if (rulesWithIdentifiersCount && rulesWithIdentifiersCount != topLevelArray->length())
+        return makeUnexpected(ContentExtensionError::JSONRulesMissingIdentifier);
+#endif
 
     return ruleList;
 }

@@ -27,8 +27,8 @@
 
 #if ENABLE(ATTACHMENT_ELEMENT)
 
-#include "HTMLAttachmentElement.h"
-#include "RenderReplaced.h"
+#include <WebCore/HTMLAttachmentElement.h>
+#include <WebCore/RenderReplaced.h>
 
 namespace WebCore {
 

@@ -118,7 +118,7 @@ auto SectionParser::parseType() -> PartialResult
             m_info->rtts.append(TypeInformation::getCanonicalRTT(signature->index()));
             const TypeDefinition& unrolled = signature->unroll();
             if (unrolled.is<Subtype>()) {
-                WASM_PARSER_FAIL_IF(m_info->rtts.last()->displaySize() > maxSubtypeDepth, "subtype depth for Type section's "_s, i, "th signature exceeded the limits of "_s, maxSubtypeDepth);
+                WASM_PARSER_FAIL_IF(m_info->rtts.last()->displaySizeExcludingThis() > maxSubtypeDepth, "subtype depth for Type section's "_s, i, "th signature exceeded the limits of "_s, maxSubtypeDepth);
                 WASM_FAIL_IF_HELPER_FAILS(checkSubtypeValidity(unrolled));
             }
             m_info->typeSignatures.append(signature.releaseNonNull());

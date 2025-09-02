@@ -393,7 +393,7 @@ void VMTraps::cancelThreadStopIfNeeded()
     if (!m_threadStopRequested)
         return; // Cancel was already processed due to another thread. Nothing more to do.
 
-    // Nothing else to do to cancel thread stopping for now.
+    m_stack.cancelStop();
 
     m_threadStopRequested = false;
 }
@@ -415,6 +415,8 @@ void VMTraps::requestThreadStopIfNeeded(VMTraps::Event event)
         return; // Stop requested was already processed due to another AsyncEvent source. Nothing more to do.
 
     VM& vm = this->vm();
+    m_stack.requestStop();
+
     m_needToInvalidateCodeBlocks = true;
 
 #if ENABLE(SIGNAL_BASED_VM_TRAPS)
@@ -434,7 +436,7 @@ void VMTraps::requestThreadStopIfNeeded(VMTraps::Event event)
     m_threadStopRequested = true;
 }
 
-void VMTraps::handleTraps(VMTraps::BitField mask)
+bool VMTraps::handleTraps(VMTraps::BitField mask)
 {
     VM& vm = this->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -442,7 +444,7 @@ void VMTraps::handleTraps(VMTraps::BitField mask)
     ASSERT(needHandling(mask));
 
     if (m_trapsDeferred)
-        return; // We'll service them on the next opportunity after deferring has stopped.
+        return false; // We'll service them on the next opportunity after deferring has stopped.
 
     if (isDeferringTermination())
         mask &= ~NeedTermination;
@@ -475,17 +477,20 @@ void VMTraps::handleTraps(VMTraps::BitField mask)
         cancelThreadStopIfNeeded();
     });
 
+    bool didHandleTrap = false;
     while (needHandling(mask)) {
         auto event = takeTopPriorityTrap(mask);
         switch (event) {
         case NeedDebuggerBreak:
             dataLog("VM ", RawPointer(&vm), " on pid ", getCurrentProcessID(), " received NeedDebuggerBreak trap\n");
             invalidateCodeBlocksOnStack(vm.topCallFrame);
+            didHandleTrap = true;
             break;
 
         case NeedShellTimeoutCheck:
             RELEASE_ASSERT(g_jscConfig.shellTimeoutCheckCallback);
             g_jscConfig.shellTimeoutCheckCallback(vm);
+            didHandleTrap = true;
             break;
 
         case NeedWatchdogCheck:
@@ -500,13 +505,21 @@ void VMTraps::handleTraps(VMTraps::BitField mask)
             scope.release();
             if (!isDeferringTermination())
                 vm.throwTerminationException();
-            return;
+            return true;
 
         case NeedExceptionHandling:
         default:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
+    return didHandleTrap;
+}
+
+bool VMTraps::handleTrapsIfNeeded(VMTraps::BitField mask)
+{
+    if (needHandling(mask))
+        return handleTraps(mask);
+    return false;
 }
 
 void VMTraps::deferTerminationSlow(DeferAction)
@@ -542,6 +555,8 @@ VMTraps::VMTraps()
     : m_lock(Box<Lock>::create())
     , m_condition(Box<Condition>::create())
 {
+    if (Options::forceTrapAwareStackChecks()) [[unlikely]]
+        m_stack.requestStop();
 }
 
 VMTraps::~VMTraps()

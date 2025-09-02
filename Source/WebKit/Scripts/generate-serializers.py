@@ -565,7 +565,7 @@ def typenames(alias):
 
 
 def remove_template_parameters(alias):
-    match = re.search(r'(struct|class) (.*)<', alias)
+    match = re.search(r'(struct|class) ([^<]*)<', alias)
     assert match
     return match.groups()[1]
 

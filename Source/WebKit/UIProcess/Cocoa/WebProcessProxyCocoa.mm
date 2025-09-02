@@ -265,18 +265,17 @@ bool WebProcessProxy::shouldDisableJITCage() const
 
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-void WebProcessProxy::setupLogStream(uint32_t pid, IPC::StreamServerConnectionHandle&& serverConnection, LogStreamIdentifier logStreamIdentifier, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&& completionHandler)
+void WebProcessProxy::createLogStream(IPC::StreamServerConnectionHandle&& serverConnection, LogStreamIdentifier identifier, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&& completionHandler)
 {
-    Ref logStream = LogStream::create(processID(), logStreamIdentifier);
-    logStream->setup(WTFMove(serverConnection), WTFMove(completionHandler));
-    m_logStream = WTFMove(logStream);
+    MESSAGE_CHECK(!m_logStream.get());
+    m_logStream = LogStream::create(WTFMove(serverConnection), processID(), identifier, WTFMove(completionHandler));
 }
 #else
-void WebProcessProxy::setupLogStream(uint32_t pid, LogStreamIdentifier logStreamIdentifier, CompletionHandler<void()>&& completionHandler)
+void WebProcessProxy::createLogStream(LogStreamIdentifier identifier, CompletionHandler<void()>&& completionHandler)
 {
-    Ref logStream = LogStream::create(processID(), logStreamIdentifier);
-    logStream->setup(protectedConnection());
-    addMessageReceiver(Messages::LogStream::messageReceiverName(), logStreamIdentifier, logStream);
+    MESSAGE_CHECK(!m_logStream.get());
+    Ref logStream = LogStream::create(protectedConnection(), processID(), identifier);
+    addMessageReceiver(Messages::LogStream::messageReceiverName(), logStream->identifier(), logStream);
     m_logStream = WTFMove(logStream);
     completionHandler();
 }
@@ -339,9 +338,14 @@ void WebProcessProxy::platformDestroy()
 #endif
 #endif // PLATFORM(IOS_FAMILY)
 
-#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT) && !ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-    if (m_logStream.get())
+#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+    if (m_logStream.get()) {
+#if !ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
         removeMessageReceiver(Messages::LogStream::messageReceiverName(), m_logStream->identifier());
+#endif
+        m_logStream.reset();
+    }
+
 #endif
 }
 

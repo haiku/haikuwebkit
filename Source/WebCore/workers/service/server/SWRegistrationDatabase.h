@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "ServiceWorkerTypes.h"
-#include "ServiceWorkerUpdateViaCache.h"
+#include <WebCore/ServiceWorkerTypes.h>
+#include <WebCore/ServiceWorkerUpdateViaCache.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

@@ -61,8 +61,11 @@ private:
     ExceptionOr<void> setValueAsDecimal(const Decimal&, TextFieldEventBehavior) const final;
     bool sizeShouldIncludeDecoration(int defaultSize, int& preferredSize) const final;
     float decorationWidth(float inputWidth) const final;
+    static ValueOrReference<String> stripInvalidNumberCharacters(const String&);
+    ValueOrReference<String> normalizeFullWidthNumberChars(const String&) const;
     StepRange createStepRange(AnyStepHandling) const final;
     ShouldCallBaseEventHandler handleKeydownEvent(KeyboardEvent&) final;
+    void handleBeforeTextInsertedEvent(BeforeTextInsertedEvent&) final;
     Decimal parseToNumber(const String&, const Decimal&) const final;
     String serialize(const Decimal&) const final;
     String localizeValue(const String&) const final;

@@ -32,6 +32,8 @@
 #include "AXIsolatedTree.h"
 #include "AXLogger.h"
 #include "AXLoggerBase.h"
+#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
 #include "AXSearchManager.h"
 #include "AXTextMarker.h"
 #include "AXTextRun.h"
@@ -373,15 +375,6 @@ std::optional<AXCoreObject::AccessibilityChildrenVector> AXIsolatedObject::mathR
         return { radicand };
     }
     return std::nullopt;
-}
-
-bool AXIsolatedObject::fileUploadButtonReturnsValueInTitle() const
-{
-#if PLATFORM(MAC)
-    return true;
-#else
-    return false;
-#endif
 }
 
 AXIsolatedObject* AXIsolatedObject::focusedUIElement() const
@@ -1665,11 +1658,6 @@ void AXIsolatedObject::setAccessibleName(const AtomString&)
 String AXIsolatedObject::textContentPrefixFromListMarker() const
 {
     return propertyValue<String>(AXProperty::TextContentPrefixFromListMarker);
-}
-
-String AXIsolatedObject::titleAttributeValue() const
-{
-    return optionalAttributeValue<String>(AXProperty::TitleAttributeValue).value_or(AXCoreObject::titleAttributeValue());
 }
 
 String AXIsolatedObject::stringValue() const

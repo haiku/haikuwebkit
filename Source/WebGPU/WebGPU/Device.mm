@@ -414,6 +414,11 @@ RefPtr<XRSubImage> Device::getXRViewSubImage(XRProjectionLayer& projectionLayer)
     return m_xrSubImage;
 }
 
+RefPtr<XRSubImage> Device::getXRViewSubImage() const
+{
+    return m_xrSubImage;
+}
+
 void Device::makeInvalid()
 {
     m_device = nil;

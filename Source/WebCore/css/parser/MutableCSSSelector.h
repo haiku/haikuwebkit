@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "CSSSelector.h"
+#include <WebCore/CSSSelector.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/text/AtomStringHash.h>
 

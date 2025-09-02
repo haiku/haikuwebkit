@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "IDBIndexIdentifier.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "IDBRequest.h"
-#include "IDBRequestData.h"
-#include "IDBResourceIdentifier.h"
-#include "IDBResultData.h"
-#include "IDBTransaction.h"
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/IDBRequest.h>
+#include <WebCore/IDBRequestData.h>
+#include <WebCore/IDBResourceIdentifier.h>
+#include <WebCore/IDBResultData.h>
+#include <WebCore/IDBTransaction.h>
 #include <optional>
 #include <wtf/Function.h>
 #include <wtf/MainThread.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -117,6 +117,14 @@ static_assert(Gigacage::reservedBytesForGigacageConfig + sizeof(WTF::Config) <= 
 static_assert(roundUpToMultipleOf<alignmentOfWTFConfig>(startOffsetOfWTFConfig) == startOffsetOfWTFConfig);
 
 WTF_EXPORT_PRIVATE void setPermissionsOfConfigPage();
+
+WTF_EXPORT_PRIVATE void makePagesFreezable(void* base, size_t); // Works together with permanentlyFreezePages().
+
+enum class FreezePagePermission {
+    None, // Remove all permissions i.e. no permissions at all.
+    ReadOnly, // The pages can be read.
+};
+WTF_EXPORT_PRIVATE void permanentlyFreezePages(void* base, size_t, FreezePagePermission);
 
 // Workaround to localize bounds safety warnings to this file.
 // FIXME: Use real types to make materializing WTF::Config* bounds-safe and type-safe.

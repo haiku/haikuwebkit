@@ -29,9 +29,9 @@
 #include <WebKitAdditions/TouchIOS.h>
 #elif ENABLE(TOUCH_EVENTS)
 
-#include "DoublePoint.h"
-#include "EventTarget.h"
-#include "LayoutPoint.h"
+#include <WebCore/DoublePoint.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/LayoutPoint.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>
 

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ScriptWrappable.h"
+#include <WebCore/ScriptWrappable.h>
 
 namespace WebCore {
 

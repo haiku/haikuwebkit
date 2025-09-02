@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "ContentSecurityPolicyResponseHeaders.h"
-#include "CrossOriginEmbedderPolicy.h"
-#include "CrossOriginOpenerPolicy.h"
-#include "ReferrerPolicy.h"
+#include <WebCore/ContentSecurityPolicyResponseHeaders.h>
+#include <WebCore/CrossOriginEmbedderPolicy.h>
+#include <WebCore/CrossOriginOpenerPolicy.h>
+#include <WebCore/ReferrerPolicy.h>
 
 namespace WebCore {
 

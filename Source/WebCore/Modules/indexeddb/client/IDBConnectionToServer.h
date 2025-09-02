@@ -25,14 +25,14 @@
 
 #pragma once
 
-#include "IDBConnectionProxy.h"
-#include "IDBConnectionToServerDelegate.h"
-#include "IDBDatabaseConnectionIdentifier.h"
-#include "IDBIndexIdentifier.h"
-#include "IDBKeyPath.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "IDBResourceIdentifier.h"
-#include "IndexKey.h"
+#include <WebCore/IDBConnectionProxy.h>
+#include <WebCore/IDBConnectionToServerDelegate.h>
+#include <WebCore/IDBDatabaseConnectionIdentifier.h>
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBKeyPath.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/IDBResourceIdentifier.h>
+#include <WebCore/IndexKey.h>
 #include <pal/SessionID.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Function.h>

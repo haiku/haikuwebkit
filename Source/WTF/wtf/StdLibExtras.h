@@ -1474,6 +1474,7 @@ ALWAYS_INLINE std::optional<double> stringToDouble(std::span<const char> buffer,
 {
     RELEASE_ASSERT(buffer.back() == '\0');
     char* end;
+    errno = 0;
     auto result = std::strtod(buffer.data(), &end);
     if (errno == ERANGE) {
         parsedLength = 0;

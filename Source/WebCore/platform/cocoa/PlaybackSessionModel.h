@@ -27,9 +27,9 @@
 
 #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
 
-#include "NowPlayingMetadataObserver.h"
-#include "PlatformMediaSession.h"
-#include "VideoReceiverEndpoint.h"
+#include <WebCore/NowPlayingMetadataObserver.h>
+#include <WebCore/PlatformMediaSession.h>
+#include <WebCore/VideoReceiverEndpoint.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/Ref.h>
@@ -149,6 +149,9 @@ public:
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     virtual bool supportsLinearMediaPlayer() const { return false; }
 #endif
+
+    virtual bool prefersAutoDimming() const { return false; }
+    virtual void setPrefersAutoDimming(bool) { }
 
 #if !RELEASE_LOG_DISABLED
     virtual uint64_t logIdentifier() const { return 0; }

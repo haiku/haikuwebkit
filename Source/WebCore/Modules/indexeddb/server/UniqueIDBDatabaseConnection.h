@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "IDBDatabaseConnectionIdentifier.h"
-#include "UniqueIDBDatabase.h"
+#include <WebCore/IDBDatabaseConnectionIdentifier.h>
+#include <WebCore/UniqueIDBDatabase.h>
 #include <wtf/HashMap.h>
 #include <wtf/Identified.h>
 #include <wtf/Ref.h>

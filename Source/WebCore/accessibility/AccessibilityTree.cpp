@@ -30,6 +30,7 @@
 #include "AccessibilityTree.h"
 
 #include "AXObjectCache.h"
+#include "AXUtilities.h"
 #include "AccessibilityTreeItem.h"
 #include "Element.h"
 #include "HTMLNames.h"

@@ -27,11 +27,11 @@
 
 #pragma once
 
-#include "FormData.h"
-#include "FrameLoaderTypes.h"
-#include "HTTPHeaderMap.h"
-#include "IntRect.h"
-#include "ResourceLoadPriority.h"
+#include <WebCore/FormData.h>
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/HTTPHeaderMap.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/ResourceLoadPriority.h>
 #include <wtf/EnumTraits.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/URL.h>

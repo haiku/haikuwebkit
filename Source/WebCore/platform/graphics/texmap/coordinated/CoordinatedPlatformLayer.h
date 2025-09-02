@@ -144,7 +144,7 @@ public:
     void setContentsClippingRect(const FloatRoundedRect&);
     void setContentsScale(float);
     enum class RequireComposition : bool { No, Yes };
-    void setContentsBuffer(std::unique_ptr<CoordinatedPlatformLayerBuffer>&&, RequireComposition = RequireComposition::Yes);
+    void setContentsBuffer(std::unique_ptr<CoordinatedPlatformLayerBuffer>&&, std::optional<Damage>&& = std::nullopt, RequireComposition = RequireComposition::Yes);
 #if ENABLE(VIDEO) && USE(GSTREAMER)
     void replaceCurrentContentsBufferWithCopy();
 #endif
@@ -196,6 +196,10 @@ private:
 
     bool needsBackingStore() const;
     void purgeBackingStores();
+
+#if ENABLE(DAMAGE_TRACKING)
+    void addDamage(Damage&&);
+#endif
 
     enum class Change : uint32_t {
         Position                     = 1 << 0,

@@ -61,7 +61,10 @@ ImageBuffer* FilterImage::imageBufferFromCIImage()
     if (m_imageBuffer)
         return m_imageBuffer.get();
 
-    RefPtr imageBuffer = ImageBuffer::create<ImageBufferIOSurfaceBackend>(m_absoluteImageRect.size(), 1, m_colorSpace, { ImageBufferPixelFormat::BGRA8 }, RenderingPurpose::Unspecified, { });
+    ImageBufferCreationContext creationContext;
+    creationContext.surfacePool = IOSurfacePool::sharedPoolSingleton();
+
+    RefPtr imageBuffer = ImageBuffer::create<ImageBufferIOSurfaceBackend>(m_absoluteImageRect.size(), 1, m_colorSpace, { ImageBufferPixelFormat::BGRA8 }, RenderingPurpose::Unspecified, creationContext);
     m_imageBuffer = imageBuffer;
     if (!imageBuffer)
         return nullptr;

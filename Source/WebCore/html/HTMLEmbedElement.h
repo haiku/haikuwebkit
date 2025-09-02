@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "HTMLPlugInImageElement.h"
+#include <WebCore/HTMLPlugInImageElement.h>
 
 namespace WebCore {
 

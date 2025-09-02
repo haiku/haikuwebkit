@@ -25,9 +25,9 @@
 
 #pragma once
 
+#include <WebCore/Timer.h>
 #include <wtf/Forward.h>
 #include <wtf/RetainPtr.h>
-#include "Timer.h"
 
 #if PLATFORM(IOS_FAMILY)
 OBJC_CLASS WebNetworkStateObserver;

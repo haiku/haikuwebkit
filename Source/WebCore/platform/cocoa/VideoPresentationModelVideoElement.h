@@ -27,13 +27,13 @@
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
 
-#include "EventListener.h"
-#include "FloatRect.h"
-#include "HTMLMediaElement.h"
-#include "MediaPlayerEnums.h"
-#include "MediaPlayerIdentifier.h"
-#include "PlatformLayer.h"
-#include "VideoPresentationModel.h"
+#include <WebCore/EventListener.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/HTMLMediaElement.h>
+#include <WebCore/MediaPlayerEnums.h>
+#include <WebCore/MediaPlayerIdentifier.h>
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/VideoPresentationModel.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Function.h>
 #include <wtf/HashSet.h>

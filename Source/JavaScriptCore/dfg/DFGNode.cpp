@@ -321,7 +321,7 @@ void Node::convertToDirectCall(FrozenValue* executable)
 
 void Node::convertToCallWasm(FrozenValue* callee)
 {
-    m_op = CallWasm;
+    m_op = m_op == Call ? CallWasm : TailCallInlinedCallerWasm;
     m_opInfo = callee;
 }
 

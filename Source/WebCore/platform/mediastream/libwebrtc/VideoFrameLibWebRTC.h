@@ -27,8 +27,8 @@
 
 #if PLATFORM(COCOA) && USE(LIBWEBRTC)
 
-#include "LibWebRTCUtils.h"
-#include "VideoFrame.h"
+#include <WebCore/LibWebRTCUtils.h>
+#include <WebCore/VideoFrame.h>
 
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 

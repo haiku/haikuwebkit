@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "StackManager.h"
 #include <wtf/AutomaticThread.h>
 #include <wtf/Box.h>
 #include <wtf/Expected.h>
@@ -233,19 +234,22 @@ public:
     }
     ALWAYS_INLINE void clearTrap(Event event)
     {
+        ASSERT(!(event & ~AllEvents));
         clearTrapWithoutCancellingThreadStop(event);
         if (isAsyncEvent(event))
             cancelThreadStopIfNeeded();
     }
     ALWAYS_INLINE void fireTrap(Event event)
     {
-        ASSERT((event & ~AllEvents) == 0);
+        ASSERT(!(event & ~AllEvents));
         m_trapBits.exchangeOr(event);
         if (isAsyncEvent(event))
             requestThreadStopIfNeeded(event);
     }
 
-    void handleTraps(BitField mask = AsyncEvents);
+    // The following returns true if a trap was handled.
+    bool handleTraps(BitField mask = AsyncEvents);
+    bool handleTrapsIfNeeded(BitField mask = AsyncEvents);
 
 #if ENABLE(SIGNAL_BASED_VM_TRAPS)
     struct SignalContext;
@@ -254,9 +258,31 @@ public:
 
     static WorkQueue& queue();
 
-private:
+#if ENABLE(C_LOOP)
+    ALWAYS_INLINE CLoopStack& cloopStack() { return m_stack.cloopStack(); }
+    ALWAYS_INLINE const CLoopStack& cloopStack() const { return m_stack.cloopStack(); }
+    ALWAYS_INLINE void* cloopStackLimit() { return m_stack.cloopStackLimit(); }
+    ALWAYS_INLINE void* currentCLoopStackPointer() const { return m_stack.currentCLoopStackPointer(); }
+#endif
+
+    ALWAYS_INLINE void* softStackLimit() const { return m_stack.softStackLimit(); };
+    ALWAYS_INLINE void setStackSoftLimit(void* newLimit) { m_stack.setStackSoftLimit(newLimit); }
+
+    ALWAYS_INLINE void** addressOfSoftStackLimit() { return m_stack.addressOfSoftStackLimit(); }
+
+    static constexpr ptrdiff_t offsetOfStackManager() { return OBJECT_OFFSETOF(VMTraps, m_stack); }
+    static constexpr ptrdiff_t offsetOfSoftStackLimit()
+    {
+        return offsetOfStackManager() + StackManager::offsetOfSoftStackLimit();
+    }
+
+    using Mirror = StackManager::Mirror;
+    ALWAYS_INLINE void registerMirror(Mirror& mirror) { m_stack.registerMirror(mirror); }
+    ALWAYS_INLINE void unregisterMirror(Mirror& mirror) { m_stack.unregisterMirror(mirror); }
+
     VM& vm() const;
 
+private:
     ALWAYS_INLINE void clearTrapWithoutCancellingThreadStop(Event event)
     {
         m_trapBits.exchangeAnd(~event);
@@ -285,6 +311,7 @@ private:
 
     static constexpr BitField NeedExceptionHandlingMask = ~(1 << NeedExceptionHandling);
 
+    StackManager m_stack;
     Atomic<BitField> m_trapBits { 0 };
     unsigned m_deferTerminationCount { 0 };
     bool m_needToInvalidateCodeBlocks { false };

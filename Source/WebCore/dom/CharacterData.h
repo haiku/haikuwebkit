@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "ContainerNode.h"
+#include <WebCore/ContainerNode.h>
 
 namespace WebCore {
 

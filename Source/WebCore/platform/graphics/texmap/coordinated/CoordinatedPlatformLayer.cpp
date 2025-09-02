@@ -474,7 +474,7 @@ void CoordinatedPlatformLayer::setContentsScale(float contentsScale)
     notifyCompositionRequired();
 }
 
-void CoordinatedPlatformLayer::setContentsBuffer(std::unique_ptr<CoordinatedPlatformLayerBuffer>&& buffer, RequireComposition requireComposition)
+void CoordinatedPlatformLayer::setContentsBuffer(std::unique_ptr<CoordinatedPlatformLayerBuffer>&& buffer, std::optional<Damage>&& dirtyRegion, RequireComposition requireComposition)
 {
     ASSERT(m_lock.isHeld());
     if (!buffer && !m_contentsBuffer.pending && !m_contentsBuffer.committed)
@@ -482,6 +482,12 @@ void CoordinatedPlatformLayer::setContentsBuffer(std::unique_ptr<CoordinatedPlat
 
     m_contentsBuffer.pending = WTFMove(buffer);
     m_pendingChanges.add(Change::ContentsBuffer);
+#if ENABLE(DAMAGE_TRACKING)
+    if (dirtyRegion)
+        addDamage(WTFMove(*dirtyRegion));
+#else
+    UNUSED_PARAM(dirtyRegion);
+#endif
     if (requireComposition == RequireComposition::Yes)
         notifyCompositionRequired();
 }
@@ -562,13 +568,20 @@ void CoordinatedPlatformLayer::setDirtyRegion(Damage&& damage)
     }
 
 #if ENABLE(DAMAGE_TRACKING)
+    addDamage(WTFMove(damage));
+#endif
+}
+
+#if ENABLE(DAMAGE_TRACKING)
+void CoordinatedPlatformLayer::addDamage(Damage&& damage)
+{
     if (!m_damage)
         m_damage = WTFMove(damage);
     else
         m_damage->add(damage);
     m_pendingChanges.add(Change::Damage);
-#endif
 }
+#endif
 
 void CoordinatedPlatformLayer::setFilters(const FilterOperations& filters)
 {

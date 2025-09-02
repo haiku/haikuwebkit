@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "ChromeClient.h"
-#include "CryptoClient.h"
-#include "ExceptionOr.h"
+#include <WebCore/ChromeClient.h>
+#include <WebCore/CryptoClient.h>
+#include <WebCore/ExceptionOr.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>
@@ -108,6 +108,7 @@ class EmptyChromeClient : public ChromeClient {
 
     KeyboardUIMode keyboardUIMode() final { return KeyboardAccessDefault; }
 
+    bool hasAccessoryMousePointingDevice() const final { return false; }
     bool hoverSupportedByPrimaryPointingDevice() const final { return false; };
     bool hoverSupportedByAnyAvailablePointingDevice() const final { return false; }
     std::optional<PointerCharacteristics> pointerCharacteristicsOfPrimaryPointingDevice() const final { return std::nullopt; };
@@ -220,7 +221,7 @@ class EmptyChromeClient : public ChromeClient {
     
     bool isEmptyChromeClient() const final { return true; }
 
-    void didAssociateFormControls(const Vector<RefPtr<Element>>&, LocalFrame&) final { }
+    void didAssociateFormControls(const Vector<Ref<Element>>&, LocalFrame&) final { }
     bool shouldNotifyOnFormChanges() final { return false; }
 
     RefPtr<Icon> createIconForFiles(const Vector<String>& /* filenames */) final;

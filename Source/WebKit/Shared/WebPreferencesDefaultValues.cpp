@@ -429,4 +429,13 @@ bool defaultIOSurfaceLosslessCompressionEnabled()
 }
 #endif
 
+bool defaultScrollbarColorEnabled()
+{
+#if HAVE(APPKIT_SCROLLBAR_COLOR_SPI) || HAVE(UIKIT_SCROLLBAR_COLOR_SPI)
+    return true;
+#else
+    return false;
+#endif
+}
+
 } // namespace WebKit

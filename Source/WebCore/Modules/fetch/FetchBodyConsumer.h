@@ -28,13 +28,13 @@
 
 #pragma once
 
-#include "FetchBodySource.h"
+#include <WebCore/FetchBodySource.h>
 #include "FormDataConsumer.h"
-#include "JSDOMPromiseDeferredForward.h"
-#include "ReadableStreamSink.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "SharedBuffer.h"
-#include "UserGestureIndicator.h"
+#include <WebCore/JSDOMPromiseDeferredForward.h>
+#include <WebCore/ReadableStreamSink.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/SharedBuffer.h>
+#include <WebCore/UserGestureIndicator.h>
 
 namespace WebCore {
 

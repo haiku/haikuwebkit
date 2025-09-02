@@ -27,8 +27,8 @@
 
 #if ENABLE(WEB_RTC)
 
-#include "DOMException.h"
-#include "RTCErrorDetailType.h"
+#include <WebCore/DOMException.h>
+#include <WebCore/RTCErrorDetailType.h>
 #include <optional>
 #include <wtf/text/WTFString.h>
 

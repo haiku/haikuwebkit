@@ -643,7 +643,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'checkout-pull-request',
             'kill-old-processes',
             'validate-change',
-            'compile-jsc'
+            'compile-jsc-32bit'
         ],
         'JSC-ARMv7-32bits-Tests-EWS': [
             'configure-build',
@@ -661,7 +661,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'kill-old-processes',
             'download-built-product',
             'extract-built-product',
-            'jscore-test'
+            'jscore-test-32bit'
         ],
         'Bindings-Tests-EWS': [
             'configure-build',

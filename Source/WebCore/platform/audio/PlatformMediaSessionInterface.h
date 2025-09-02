@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "MediaSessionGroupIdentifier.h"
-#include "MediaSessionIdentifier.h"
-#include "MediaSessionManagerInterface.h"
-#include "NowPlayingInfo.h"
-#include "PlatformMediaSessionTypes.h"
-#include "Timer.h"
+#include <WebCore/MediaSessionGroupIdentifier.h>
+#include <WebCore/MediaSessionIdentifier.h>
+#include <WebCore/MediaSessionManagerInterface.h>
+#include <WebCore/NowPlayingInfo.h>
+#include <WebCore/PlatformMediaSessionTypes.h>
+#include <WebCore/Timer.h>
 #include <wtf/Logger.h>
 #include <wtf/LoggerHelper.h>
 #include <wtf/MediaTime.h>
@@ -41,7 +41,7 @@
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
-#include "MediaPlaybackTargetClient.h"
+#include <WebCore/MediaPlaybackTargetClient.h>
 #endif
 
 namespace WebCore {

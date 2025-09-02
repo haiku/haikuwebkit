@@ -27,13 +27,13 @@
 
 #pragma once
 
-#include "Document.h"
-#include "Editor.h"
-#include "EventHandler.h"
-#include "FrameLoader.h"
-#include "FrameSelection.h"
-#include "LocalFrame.h"
-#include "LocalFrameView.h"
+#include <WebCore/Document.h>
+#include <WebCore/Editor.h>
+#include <WebCore/EventHandler.h>
+#include <WebCore/FrameLoader.h>
+#include <WebCore/FrameSelection.h>
+#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameView.h>
 
 namespace WebCore {
 

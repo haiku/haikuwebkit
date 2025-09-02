@@ -760,12 +760,12 @@ void RenderTable::addOverflowFromChildren()
     // Add overflow from our caption.
     for (unsigned i = 0; i < m_captions.size(); ++i) {
         if (auto* caption = m_captions[i].get())
-            addOverflowFromChild(*caption);
+            addOverflowFromInFlowChildOrAbsolutePositionedDescendant(*caption);
     }
 
     // Add overflow from our sections.
     for (auto* section = topSection(); section; section = sectionBelow(section))
-        addOverflowFromChild(*section);
+        addOverflowFromInFlowChildOrAbsolutePositionedDescendant(*section);
 }
 
 void RenderTable::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)

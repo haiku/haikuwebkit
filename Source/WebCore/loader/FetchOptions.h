@@ -28,14 +28,14 @@
 
 #pragma once
 
-#include "FetchOptionsCache.h"
-#include "FetchOptionsCredentials.h"
-#include "FetchOptionsDestination.h"
-#include "FetchOptionsMode.h"
-#include "FetchOptionsRedirect.h"
-#include "ProcessQualified.h"
-#include "ReferrerPolicy.h"
-#include "ScriptExecutionContextIdentifier.h"
+#include <WebCore/FetchOptionsCache.h>
+#include <WebCore/FetchOptionsCredentials.h>
+#include <WebCore/FetchOptionsDestination.h>
+#include <WebCore/FetchOptionsMode.h>
+#include <WebCore/FetchOptionsRedirect.h>
+#include <WebCore/ProcessQualified.h>
+#include <WebCore/ReferrerPolicy.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <wtf/Markable.h>
 #include <wtf/text/WTFString.h>
 

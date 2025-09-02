@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "ChromeClient.h"
-#include "GraphicsLayerClient.h"
-#include "LayerAncestorClippingStack.h"
-#include "RenderLayer.h"
+#include <WebCore/ChromeClient.h>
+#include <WebCore/GraphicsLayerClient.h>
+#include <WebCore/LayerAncestorClippingStack.h>
+#include <WebCore/RenderLayer.h>
 #include <pal/HysteresisActivity.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/HashMap.h>

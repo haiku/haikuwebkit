@@ -35,7 +35,7 @@ internal import WebKit_Internal
 
 extension WKTextExtractionEventListenerTypes {
     static let all: [WKTextExtractionEventListenerTypes] = [
-        .click, .hover, .touch, .wheel, .gesture, .pointer, .keyboard, .focus, .form, .media,
+        .click, .hover, .touch, .wheel, .keyboard,
     ]
 
     fileprivate var description: String {
@@ -48,18 +48,8 @@ extension WKTextExtractionEventListenerTypes {
             "touch"
         case .wheel:
             "wheel"
-        case .gesture:
-            "gesture"
-        case .pointer:
-            "pointer"
         case .keyboard:
             "keyboard"
-        case .focus:
-            "focus"
-        case .form:
-            "form"
-        case .media:
-            "media"
         default:
             "unknown"
         }
@@ -68,6 +58,22 @@ extension WKTextExtractionEventListenerTypes {
 
 private func eventListenerTypesAsArray(eventListeners: WKTextExtractionEventListenerTypes) -> [String] {
     WKTextExtractionEventListenerTypes.all.compactMap { eventListeners.contains($0) ? $0.description : nil }
+}
+
+extension String {
+    fileprivate var escaped: String {
+        self
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\t", with: "\\t")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\0", with: "\\0")
+            .replacingOccurrences(of: "\u{08}", with: "\\b")
+            .replacingOccurrences(of: "\u{0C}", with: "\\f")
+            .replacingOccurrences(of: "\u{0B}", with: "\\v")
+    }
 }
 
 @_objcImplementation
@@ -94,6 +100,49 @@ extension WKTextExtractionItem {
         self.nodeIdentifier = nodeIdentifier
         self.ariaAttributes = ariaAttributes
         self.accessibilityRole = accessibilityRole
+    }
+
+    @objc
+    fileprivate func textRepresentationRecursive(depth: Int) -> String {
+        let indent = String(repeating: "\t", count: depth)
+
+        var result = "\(indent)\(textRepresentationParts.joined(separator: ","))\n"
+
+        if !children.isEmpty {
+            for child in children {
+                result += child.textRepresentationRecursive(depth: depth + 1)
+            }
+        }
+
+        return result
+    }
+
+    @objc
+    fileprivate var textRepresentationParts: [String] {
+        var parts: [String] = []
+
+        if let nodeIdentifier, !nodeIdentifier.isEmpty {
+            parts.append("uid=\(nodeIdentifier)")
+        }
+
+        let origin = rectInWebView.origin
+        let size = rectInWebView.size
+        parts.append("rect=[\(Int(origin.x)),\(Int(origin.y));\(Int(size.width))x\(Int(size.height))]")
+
+        if !accessibilityRole.isEmpty {
+            parts.append("role='\(accessibilityRole.escaped)'")
+        }
+
+        let listeners = eventListenerTypesAsArray(eventListeners: eventListeners)
+        if !listeners.isEmpty {
+            parts.append("eventListeners=[\(listeners.joined(separator: ","))]")
+        }
+
+        for (key, value) in ariaAttributes.sorted(by: { $0.key < $1.key }) {
+            parts.append("\(key)='\(value.escaped)'")
+        }
+
+        return parts
     }
 
     #if compiler(<6.0)
@@ -125,6 +174,43 @@ extension WKTextExtractionContainerItem {
                 accessibilityRole: accessibilityRole,
                 nodeIdentifier: nodeIdentifier
             )
+    }
+
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        var containerString: String? = nil
+        switch container {
+        case .root:
+            containerString = "root"
+        case .viewportConstrained:
+            containerString = "overlay"
+        case .list:
+            containerString = "list"
+        case .listItem:
+            containerString = "list-item"
+        case .blockQuote:
+            containerString = "block-quote"
+        case .article:
+            containerString = "article"
+        case .section:
+            containerString = "section"
+        case .nav:
+            containerString = "navigation"
+        case .button:
+            containerString = "button"
+        case .generic:
+            break
+        @unknown default:
+            break
+        }
+
+        if let containerString {
+            parts.insert("container=\(containerString)", at: 0)
+        }
+
+        return parts
     }
 
     #if compiler(<6.0)
@@ -166,6 +252,23 @@ extension WKTextExtractionContentEditableItem {
                 accessibilityRole: accessibilityRole,
                 nodeIdentifier: nodeIdentifier
             )
+    }
+
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        parts.insert("type=contentEditable", at: 0)
+
+        if isFocused {
+            parts.append("focused")
+        }
+
+        if contentEditableType == .plainTextOnly {
+            parts.append("plainTextOnly")
+        }
+
+        return parts
     }
 
     #if compiler(<6.0)
@@ -256,6 +359,51 @@ extension WKTextExtractionTextFormControlItem {
             )
     }
 
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        parts.insert("type=textFormControl", at: 0)
+
+        if !controlType.isEmpty {
+            parts.insert("controlType='\(controlType)'", at: 1)
+        }
+
+        if !autocomplete.isEmpty {
+            parts.append("autoComplete='\(autocomplete)'")
+        }
+
+        if isReadonly {
+            parts.append("readOnly")
+        }
+
+        if isDisabled {
+            parts.append("disabled")
+        }
+
+        if isChecked {
+            parts.append("checked")
+        }
+
+        if !editable.label.isEmpty {
+            parts.append("label='\(editable.label.escaped)'")
+        }
+
+        if !editable.placeholder.isEmpty {
+            parts.append("placeholder='\(editable.placeholder.escaped)'")
+        }
+
+        if editable.isSecure {
+            parts.append("secure")
+        }
+
+        if editable.isFocused {
+            parts.append("focused")
+        }
+
+        return parts
+    }
+
     #if compiler(<6.0)
     @objc
     deinit {}
@@ -329,6 +477,20 @@ extension WKTextExtractionLinkItem {
             )
     }
 
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        parts.insert("type=link", at: 0)
+        parts.append("url='\(url.absoluteString.escaped)'")
+
+        if !target.isEmpty {
+            parts.append("target='\(target.escaped)'")
+        }
+
+        return parts
+    }
+
     #if compiler(<6.0)
     @objc
     deinit {}
@@ -392,6 +554,21 @@ extension WKTextExtractionTextItem {
             )
     }
 
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        if !content.isEmpty {
+            parts.insert("text='\(content.escaped)'", at: 0)
+        }
+
+        if selectedRange.length > 0 {
+            parts.append("selected=[\(selectedRange.location),\(selectedRange.location + selectedRange.length)]")
+        }
+
+        return parts
+    }
+
     #if compiler(<6.0)
     @objc
     deinit {}
@@ -423,6 +600,16 @@ extension WKTextExtractionScrollableItem {
             )
     }
 
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        parts.insert("type=scrollable", at: 0)
+        parts.append("contentSize=[\(contentSize.width)x\(contentSize.height)]")
+
+        return parts
+    }
+
     #if compiler(<6.0)
     @objc
     deinit {}
@@ -432,14 +619,7 @@ extension WKTextExtractionScrollableItem {
 @_objcImplementation
 extension WKTextExtractionSelectItem {
     let selectedValues: [String]
-
-    @nonobjc
-    private let backingSupportsMultiple: Bool
-    @objc(multiple)
-    var supportsMultiple: Bool {
-        @objc(supportsMultiple)
-        get { backingSupportsMultiple }
-    }
+    let supportsMultiple: Bool
 
     init(
         selectedValues: [String],
@@ -452,7 +632,7 @@ extension WKTextExtractionSelectItem {
         nodeIdentifier: String?
     ) {
         self.selectedValues = selectedValues
-        self.backingSupportsMultiple = supportsMultiple
+        self.supportsMultiple = supportsMultiple
         super
             .init(
                 with: rectInWebView,
@@ -462,6 +642,24 @@ extension WKTextExtractionSelectItem {
                 accessibilityRole: accessibilityRole,
                 nodeIdentifier: nodeIdentifier
             )
+    }
+
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        parts.insert("type=select", at: 0)
+
+        if !selectedValues.isEmpty {
+            let escapedValues = selectedValues.map { "'\($0.escaped)'" }
+            parts.append("selected=[\(escapedValues.joined(separator: ","))]")
+        }
+
+        if supportsMultiple {
+            parts.append("multiple")
+        }
+
+        return parts
     }
 
     #if compiler(<6.0)
@@ -498,6 +696,23 @@ extension WKTextExtractionImageItem {
             )
     }
 
+    @objc
+    override fileprivate var textRepresentationParts: [String] {
+        var parts = super.textRepresentationParts
+
+        parts.insert("type=image", at: 0)
+
+        if !name.isEmpty {
+            parts.append("name='\(name.escaped)'")
+        }
+
+        if !altText.isEmpty {
+            parts.append("alt='\(altText.escaped)'")
+        }
+
+        return parts
+    }
+
     #if compiler(<6.0)
     @objc
     deinit {}
@@ -510,6 +725,11 @@ extension WKTextExtractionPopupMenu {
 
     init(itemTitles: [String]) {
         self.itemTitles = itemTitles
+    }
+
+    fileprivate var textRepresentation: String {
+        let escapedTitles = itemTitles.map { "'\($0.escaped)'" }
+        return "type=nativePopupMenu,items=[\(escapedTitles.joined(separator: ","))]\n"
     }
 
     #if compiler(<6.0)
@@ -526,6 +746,12 @@ extension WKTextExtractionResult {
     init(rootItem: WKTextExtractionItem, popupMenu: WKTextExtractionPopupMenu?) {
         self.rootItem = rootItem
         self.popupMenu = popupMenu
+    }
+
+    @objc
+    var textRepresentation: String {
+        let popupMenuRepresentation = popupMenu?.textRepresentation ?? ""
+        return "\(rootItem.textRepresentationRecursive(depth: 0))\(popupMenuRepresentation)"
     }
 
     #if compiler(<6.0)

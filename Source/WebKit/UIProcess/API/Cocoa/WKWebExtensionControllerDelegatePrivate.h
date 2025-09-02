@@ -151,6 +151,28 @@ WK_API_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4))
  @param completionHandler A block that must be called upon completion.
  */
 - (void)_webExtensionController:(WKWebExtensionController * _Nonnull)controller removeBookmarkWithIdentifier:(NSString *)bookmarkIdentifier removeFolderWithChildren:(BOOL)removeFolderWithChildren forExtensionContext:(WKWebExtensionContext * _Nonnull)context completionHandler:(void (^)(NSError * _Nullable))completionHandler;
+
+/*!
+ @abstract Called to update properties of an existing bookmark node.
+ @param controller The WKWebExtensionController instance.
+ @param bookmarkId The identifier of the bookmark node to update.
+ @param title The new title for the bookmark node, or nil if not changing.
+ @param url The new URL for the bookmark (for bookmark types), or nil if not changing.
+ @param context The context in which the web extension is running.
+ @param completionHandler A block to call with the updated bookmark node or an error.
+ */
+- (void)_webExtensionController:(WKWebExtensionController *)controller updateBookmarkWithIdentifier:(NSString *)bookmarkId title:(nullable NSString *)title url:(nullable NSString *)url forExtensionContext:(WKWebExtensionContext *)context completionHandler:(void (^)(NSObject<_WKWebExtensionBookmark> *, NSError *))completionHandler;
+
+/*!
+ @abstract Called to move a bookmark node.
+ @param controller The WKWebExtensionController instance.
+ @param bookmarkId The identifier of the bookmark node to move.
+ @param parentId The identifier of the new parent folder, or nil/empty for root.
+ @param index The new zero-based index within the new parent, or nil for end.
+ @param context The context in which the web extension is running.
+ @param completionHandler A block to call with the moved bookmark node or an error.
+ */
+- (void)_webExtensionController:(WKWebExtensionController *)controller moveBookmarkWithIdentifier:(NSString *)bookmarkId toParent:(nullable NSString *)parentId atIndex:(nullable NSNumber *)index forExtensionContext:(WKWebExtensionContext *)context completionHandler:(void (^)(NSObject<_WKWebExtensionBookmark> *, NSError *))completionHandler;
 @end
 
 WK_HEADER_AUDIT_END(nullability, sendability)

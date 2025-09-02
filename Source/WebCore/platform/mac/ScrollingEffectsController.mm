@@ -78,6 +78,9 @@ void ScrollingEffectsController::stopAllTimers()
         m_client.didStopScrollSnapAnimation();
     }
 
+    if (m_discreteScrollendTimer)
+        m_discreteScrollendTimer->stop();
+
 #if ASSERT_ENABLED
     m_timersWereStopped = true;
 #endif
@@ -231,6 +234,8 @@ bool ScrollingEffectsController::handleWheelEvent(const PlatformWheelEvent& whee
         } else {
             delta.scale(scrollWheelMultiplier());
             m_client.immediateScrollBy(delta);
+            if (wheelEvent.phase() == PlatformWheelEventPhase::None && wheelEvent.momentumPhase() == PlatformWheelEventPhase::None)
+                scheduleScrollendTimer();
         }
     }
 
@@ -635,6 +640,18 @@ void ScrollingEffectsController::scheduleDiscreteScrollSnap(const FloatSize& del
     startDeferringWheelEventTestCompletion(WheelEventTestMonitor::DeferReason::ScrollSnapInProgress);
 }
 
+void ScrollingEffectsController::scheduleScrollendTimer()
+{
+    static const Seconds discreteScrollDelay = 100_ms;
+
+    if (!m_discreteScrollendTimer) {
+        m_discreteScrollendTimer = m_client.createTimer([this] {
+            scrollendTimerFired();
+        });
+    }
+    m_discreteScrollendTimer->startOneShot(discreteScrollDelay);
+}
+
 void ScrollingEffectsController::discreteSnapTransitionTimerFired()
 {
     auto recentDiscreteWheelDeltas = std::exchange(m_recentDiscreteWheelDeltas, { });
@@ -666,6 +683,11 @@ void ScrollingEffectsController::discreteSnapTransitionTimerFired()
         stopDeferringWheelEventTestCompletion(WheelEventTestMonitor::DeferReason::ScrollSnapInProgress);
         m_client.didStopScrollSnapAnimation();
     }
+}
+
+void ScrollingEffectsController::scrollendTimerFired()
+{
+    m_client.didStopWheelEventScroll();
 }
 
 bool ScrollingEffectsController::processWheelEventForScrollSnap(const PlatformWheelEvent& wheelEvent)

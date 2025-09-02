@@ -3928,11 +3928,16 @@ bool RenderLayerCompositor::requiresCompositingForCanvas(RenderLayerModelObject&
     if (!renderer.isRenderHTMLCanvas())
         return false;
 
-    bool isCanvasLargeEnoughToForceCompositing = true;
+    bool isCanvasLargeEnoughOrHDRToForceCompositing = true;
 #if !USE(COMPOSITING_FOR_SMALL_CANVASES)
     RefPtr canvas = downcast<HTMLCanvasElement>(renderer.element());
     auto canvasArea = canvas->size().area<RecordOverflow>();
-    isCanvasLargeEnoughToForceCompositing = !canvasArea.hasOverflowed() && canvasArea >= canvasAreaThresholdRequiringCompositing;
+    if (canvasArea.hasOverflowed() || canvasArea < canvasAreaThresholdRequiringCompositing) {
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+        if (RefPtr renderingContext = canvas->renderingContext(); !renderingContext || !renderingContext->isHDR())
+#endif
+            isCanvasLargeEnoughOrHDRToForceCompositing = false;
+    }
 #endif
 
     CanvasCompositingStrategy compositingStrategy = canvasCompositingStrategy(renderer);
@@ -3940,7 +3945,7 @@ bool RenderLayerCompositor::requiresCompositingForCanvas(RenderLayerModelObject&
         return true;
 
     if (m_compositingPolicy == CompositingPolicy::Normal)
-        return compositingStrategy == CanvasPaintedToLayer && isCanvasLargeEnoughToForceCompositing;
+        return compositingStrategy == CanvasPaintedToLayer && isCanvasLargeEnoughOrHDRToForceCompositing;
 
     return false;
 }
@@ -4137,7 +4142,7 @@ bool RenderLayerCompositor::requiresCompositingForOverflowScrolling(const Render
 
 bool RenderLayerCompositor::requiresCompositingForAnchorPositioning(const RenderLayer& layer) const
 {
-    return !!layer.snapshottedScrollOffsetForAnchorPositioning();
+    return !!layer.anchorScrollAdjustment();
 }
 
 IndirectCompositingReason RenderLayerCompositor::computeIndirectCompositingReason(const RenderLayer& layer, bool hasCompositedDescendants, bool has3DTransformedDescendants, bool paintsIntoProvidedBacking) const

@@ -75,6 +75,10 @@ class WebsiteDataStore;
 struct WebExtensionControllerParameters;
 struct WebExtensionFrameParameters;
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+struct ContentRuleListMatchedRule;
+#endif
+
 #if ENABLE(INSPECTOR_EXTENSIONS)
 class WebInspectorUIProxy;
 #endif
@@ -170,6 +174,10 @@ public:
 #endif
 
     void handleContentRuleListNotification(WebPageProxyIdentifier, URL&, WebCore::ContentRuleListResults&);
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    void handleContentRuleListMatchedRule(WebPageProxyIdentifier, WebCore::ContentRuleListMatchedRule&);
+#endif
 
 #if ENABLE(INSPECTOR_EXTENSIONS)
     void inspectorWillOpen(WebInspectorUIProxy&, WebPageProxy&);

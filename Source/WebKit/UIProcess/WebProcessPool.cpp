@@ -534,9 +534,6 @@ GPUProcessProxy& WebProcessPool::ensureGPUProcess()
         for (Ref process : m_processes)
             gpuProcess->updatePreferences(process);
         gpuProcess->updateScreenPropertiesIfNeeded();
-#if PLATFORM(COCOA)
-        registerFontsForGPUProcessIfNeeded();
-#endif
     }
     return *m_gpuProcess;
 }
@@ -978,7 +975,7 @@ WebProcessDataStoreParameters WebProcessPool::webProcessDataStoreParameters(WebP
         WTFMove(containerTemporaryDirectoryExtensionHandle),
 #endif
         websiteDataStore.trackingPreventionEnabled()
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
         , websiteDataStore.isOptInCookiePartitioningEnabled()
 #endif
     };
@@ -1190,7 +1187,7 @@ void WebProcessPool::processDidFinishLaunching(WebProcessProxy& process)
 #if ENABLE(EXTENSION_CAPABILITIES)
     for (auto& page : process.pages()) {
         if (RefPtr mediaCapability = page->mediaCapability()) {
-            WEBPROCESSPOOL_RELEASE_LOG(ProcessCapabilities, "processDidFinishLaunching[envID=%{public}s]: updating media capability", mediaCapability->environmentIdentifier().utf8().data());
+            WEBPROCESSPOOL_RELEASE_LOG(ProcessCapabilities, "processDidFinishLaunching[envID=%" PUBLIC_LOG_STRING "]: updating media capability", mediaCapability->environmentIdentifier().utf8().data());
             page->updateMediaCapability();
         }
     }
@@ -1486,8 +1483,6 @@ void WebProcessPool::handleMemoryPressureWarning(Critical)
     if (RefPtr prewarmedProcess = m_prewarmedProcess.get())
         prewarmedProcess->shutDown();
     ASSERT(!m_prewarmedProcess);
-
-    m_fileSandboxExtensions.clear();
 }
 
 ProcessID WebProcessPool::prewarmedProcessID()
@@ -2877,15 +2872,5 @@ void WebProcessPool::initializeAccessibilityIfNecessary()
     m_hasReceivedAXRequestInUIProcess = true;
 }
 #endif
-
-std::optional<SandboxExtension::Handle> WebProcessPool::sandboxExtensionForFile(const String& fileName)
-{
-    return m_fileSandboxExtensions.getOptional(fileName);
-}
-
-void WebProcessPool::addSandboxExtensionForFile(const String& fileName, SandboxExtension::Handle handle)
-{
-    m_fileSandboxExtensions.add(fileName, handle);
-}
 
 } // namespace WebKit

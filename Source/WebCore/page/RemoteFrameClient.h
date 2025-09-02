@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "FrameLoaderClient.h"
-#include "LayerTreeAsTextOptions.h"
-#include "ScrollTypes.h"
+#include <WebCore/FrameLoaderClient.h>
+#include <WebCore/LayerTreeAsTextOptions.h>
+#include <WebCore/ScrollTypes.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

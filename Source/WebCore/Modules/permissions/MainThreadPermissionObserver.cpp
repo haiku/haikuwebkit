@@ -66,4 +66,16 @@ void MainThreadPermissionObserver::stateChanged(PermissionState newPermissionSta
     });
 }
 
+void MainThreadPermissionObserver::addChangeListener(const RegistrableDomain& topFrameDomain, const RegistrableDomain& subFrameDomain)
+{
+    ASSERT(isMainThread());
+    PermissionController::singleton().addChangeListener(m_descriptor.name, topFrameDomain, subFrameDomain);
+}
+
+void MainThreadPermissionObserver::removeChangeListener(const RegistrableDomain& topFrameDomain, const RegistrableDomain& subFrameDomain)
+{
+    ASSERT(isMainThread());
+    PermissionController::singleton().removeChangeListener(m_descriptor.name, topFrameDomain, subFrameDomain);
+}
+
 }

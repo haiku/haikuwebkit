@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "WebKitFontFamilyNames.h"
+#include <WebCore/WebKitFontFamilyNames.h>
 #include <unicode/uscript.h>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>

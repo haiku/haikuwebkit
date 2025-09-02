@@ -60,7 +60,7 @@ JS_EXPORT_PRIVATE IterationMode getIterationMode(VM&, JSGlobalObject*, JSValue i
 JS_EXPORT_PRIVATE IterationMode getIterationMode(VM&, JSGlobalObject*, JSValue iterable, JSValue symbolIterator);
 
 template<typename CallBackType>
-static ALWAYS_INLINE void forEachInFastArray(JSGlobalObject* globalObject, JSValue iterable, JSArray* array, const CallBackType& callback)
+static ALWAYS_INLINE void forEachInFastArray(JSGlobalObject* globalObject, JSValue iterable, JSArray* array, NOESCAPE const CallBackType& callback)
 {
     UNUSED_PARAM(iterable);
 
@@ -84,7 +84,7 @@ static ALWAYS_INLINE void forEachInFastArray(JSGlobalObject* globalObject, JSVal
 }
 
 template<typename CallBackType>
-static ALWAYS_INLINE void forEachInIterationRecord(JSGlobalObject* globalObject, IterationRecord iterationRecord, const CallBackType& callback)
+static ALWAYS_INLINE void forEachInIterationRecord(JSGlobalObject* globalObject, IterationRecord iterationRecord, NOESCAPE const CallBackType& callback)
 {
     auto& vm = getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -109,7 +109,7 @@ static ALWAYS_INLINE void forEachInIterationRecord(JSGlobalObject* globalObject,
 }
 
 template<typename CallBackType>
-void forEachInIterable(JSGlobalObject* globalObject, JSValue iterable, const CallBackType& callback)
+void forEachInIterable(JSGlobalObject* globalObject, JSValue iterable, NOESCAPE const CallBackType& callback)
 {
     auto& vm = getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -128,7 +128,7 @@ void forEachInIterable(JSGlobalObject* globalObject, JSValue iterable, const Cal
 }
 
 template<typename CallBackType>
-void forEachInIterable(JSGlobalObject& globalObject, JSObject* iterable, JSValue iteratorMethod, const CallBackType& callback)
+void forEachInIterable(JSGlobalObject& globalObject, JSObject* iterable, JSValue iteratorMethod, NOESCAPE const CallBackType& callback)
 {
     auto& vm = getVM(&globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -172,7 +172,7 @@ void forEachInIterable(JSGlobalObject& globalObject, JSObject* iterable, JSValue
 }
 
 template<typename CallBackType>
-void forEachInIteratorProtocol(JSGlobalObject* globalObject, JSValue iterable, const CallBackType& callback)
+void forEachInIteratorProtocol(JSGlobalObject* globalObject, JSValue iterable, NOESCAPE const CallBackType& callback)
 {
     auto& vm = getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);

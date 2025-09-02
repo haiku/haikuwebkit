@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "IDBError.h"
-#include "IDBIndexIdentifier.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "IDBTransactionInfo.h"
-#include "IndexKey.h"
+#include <WebCore/IDBError.h>
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/IDBTransactionInfo.h>
+#include <WebCore/IndexKey.h>
 #include <wtf/Deque.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>

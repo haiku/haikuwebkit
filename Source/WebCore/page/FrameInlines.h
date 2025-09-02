@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Frame.h"
-#include "HTMLFrameOwnerElement.h"
-#include "Page.h"
+#include <WebCore/Frame.h>
+#include <WebCore/HTMLFrameOwnerElement.h>
+#include <WebCore/Page.h>
 
 namespace WebCore {
 

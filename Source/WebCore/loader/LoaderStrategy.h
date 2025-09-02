@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "FetchOptions.h"
-#include "LoadSchedulingMode.h"
-#include "PageIdentifier.h"
-#include "ResourceLoadPriority.h"
-#include "ResourceLoaderIdentifier.h"
-#include "ResourceLoaderOptions.h"
-#include "StoredCredentialsPolicy.h"
+#include <WebCore/FetchOptions.h>
+#include <WebCore/LoadSchedulingMode.h>
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/ResourceLoadPriority.h>
+#include <WebCore/ResourceLoaderIdentifier.h>
+#include <WebCore/ResourceLoaderOptions.h>
+#include <WebCore/StoredCredentialsPolicy.h>
 #include <wtf/Forward.h>
 
 namespace WebCore {

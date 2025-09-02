@@ -86,6 +86,10 @@ public:
     float minValueForRange() const override;
     float stepValueForRange() const override;
 
+#if ENABLE(ATTACHMENT_ELEMENT)
+    bool hasProgress() const final;
+#endif
+
     std::optional<AccessibilityOrientation> orientationFromARIA() const;
     std::optional<AccessibilityOrientation> explicitOrientation() const override { return orientationFromARIA(); }
 
@@ -96,7 +100,6 @@ public:
     String accessibilityDescriptionForChildren() const;
     String description() const override;
     String helpText() const override;
-    String title() const override;
     String text() const final;
     void alternativeText(Vector<AccessibilityText>&) const;
     void helpText(Vector<AccessibilityText>&) const;
@@ -204,6 +207,11 @@ protected:
 
     AccessibilityObject* captionForFigure() const;
     virtual void labelText(Vector<AccessibilityText>&) const;
+
+#if PLATFORM(IOS_FAMILY)
+    HTMLMediaElement* mediaElement() const;
+    HTMLVideoElement* videoElement() const;
+#endif
 private:
     bool isAccessibilityNodeObject() const final { return true; }
     void accessibilityText(Vector<AccessibilityText>&) const override;

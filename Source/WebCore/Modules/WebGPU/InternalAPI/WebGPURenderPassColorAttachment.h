@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "WebGPUColor.h"
-#include "WebGPUIntegralTypes.h"
-#include "WebGPULoadOp.h"
-#include "WebGPUStoreOp.h"
-#include "WebGPUTextureView.h"
+#include <WebCore/WebGPUColor.h>
+#include <WebCore/WebGPUIntegralTypes.h>
+#include <WebCore/WebGPULoadOp.h>
+#include <WebCore/WebGPUStoreOp.h>
+#include <WebCore/WebGPUTextureView.h>
 #include <wtf/Ref.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakRef.h>

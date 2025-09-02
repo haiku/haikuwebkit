@@ -29,6 +29,8 @@
 #include "AXLogger.h"
 #include "AXObjectCache.h"
 #include "AXTreeStore.h"
+#include "AXTreeStoreInlines.h"
+#include "AXUtilities.h"
 #include "BoundaryPointInlines.h"
 #include "HTMLInputElement.h"
 #include "Logging.h"
@@ -1488,7 +1490,9 @@ AXTextMarkerRange AXTextMarker::lineRange(LineRangeType type, IncludeTrailingLin
         auto startMarker = atLineStart() ? *this : previousLineStart();
         auto endMarker = atLineEnd() ? *this : nextLineEnd(includeTrailingLineBreak);
         return AXTextMarkerRange(startMarker, endMarker);
-    } else if (type == LineRangeType::Left) {
+    }
+
+    if (type == LineRangeType::Left) {
         // Move backwards off a line start (because this is a "left-line" request).
         auto startMarker = atLineStart() ? findMarker(AXDirection::Previous) : *this;
         if (!startMarker.atLineStart())
@@ -1496,17 +1500,17 @@ AXTextMarkerRange AXTextMarker::lineRange(LineRangeType type, IncludeTrailingLin
 
         auto endMarker = startMarker.nextLineEnd(includeTrailingLineBreak);
         return { WTFMove(startMarker), WTFMove(endMarker) };
-    } else {
-        ASSERT(type == LineRangeType::Right);
-
-        // Move forwards off a line end (because this a "right-line" request).
-        auto startMarker = atLineEnd() ? findMarker(AXDirection::Next) : *this;
-        if (!startMarker.atLineStart())
-            startMarker = startMarker.previousLineStart();
-
-        auto endMarker = startMarker.nextLineEnd(includeTrailingLineBreak);
-        return { WTFMove(startMarker), WTFMove(endMarker) };
     }
+
+    ASSERT(type == LineRangeType::Right);
+
+    // Move forwards off a line end (because this a "right-line" request).
+    auto startMarker = atLineEnd() ? findMarker(AXDirection::Next) : *this;
+    if (!startMarker.atLineStart())
+        startMarker = startMarker.previousLineStart();
+
+    auto endMarker = startMarker.nextLineEnd(includeTrailingLineBreak);
+    return { WTFMove(startMarker), WTFMove(endMarker) };
 
     return { };
 }

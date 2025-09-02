@@ -43,12 +43,12 @@ Ref<CachedScriptFetcher> CachedScriptFetcher::create(const AtomString& charset)
     return adoptRef(*new CachedScriptFetcher(charset));
 }
 
-CachedResourceHandle<CachedScript> CachedScriptFetcher::requestModuleScript(Document& document, const URL& sourceURL, String&& integrity, std::optional<ServiceWorkersMode> serviceWorkersMode) const
+CachedResourceHandle<CachedScript> CachedScriptFetcher::requestModuleScript(Document& document, const URL& sourceURL, FetchOptionsDestination destination, String&& integrity, std::optional<ServiceWorkersMode> serviceWorkersMode) const
 {
-    return requestScriptWithCache(document, sourceURL, String { }, WTFMove(integrity), { }, serviceWorkersMode);
+    return requestScriptWithCache(document, sourceURL, destination, String { }, WTFMove(integrity), { }, serviceWorkersMode);
 }
 
-CachedResourceHandle<CachedScript> CachedScriptFetcher::requestScriptWithCache(Document& document, const URL& sourceURL, const String& crossOriginMode, String&& integrity, std::optional<ResourceLoadPriority> resourceLoadPriority, std::optional<ServiceWorkersMode> serviceWorkersMode) const
+CachedResourceHandle<CachedScript> CachedScriptFetcher::requestScriptWithCache(Document& document, const URL& sourceURL, FetchOptionsDestination destination, const String& crossOriginMode, String&& integrity, std::optional<ResourceLoadPriority> resourceLoadPriority, std::optional<ServiceWorkersMode> serviceWorkersMode) const
 {
     if (!document.settings().isScriptEnabled())
         return nullptr;
@@ -63,6 +63,8 @@ CachedResourceHandle<CachedScript> CachedScriptFetcher::requestScriptWithCache(D
     options.referrerPolicy = m_referrerPolicy;
     options.fetchPriority = m_fetchPriority;
     options.nonce = m_nonce;
+    options.destination = destination;
+    ASSERT(destination == FetchOptionsDestination::Script || destination == FetchOptionsDestination::Json);
 
     auto request = createPotentialAccessControlRequest(URL { sourceURL }, WTFMove(options), document, crossOriginMode);
     request.upgradeInsecureRequestIfNeeded(document);

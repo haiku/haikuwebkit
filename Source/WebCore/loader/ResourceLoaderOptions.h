@@ -30,19 +30,19 @@
 
 #pragma once
 
-#include "ContentSecurityPolicyResponseHeaders.h"
-#include "CrossOriginAccessControl.h"
-#include "CrossOriginEmbedderPolicy.h"
-#include "FetchIdentifier.h"
-#include "FetchOptions.h"
-#include "FetchingWorkerIdentifier.h"
-#include "HTTPHeaderNames.h"
-#include "LoadedFromOpaqueSource.h"
-#include "RequestPriority.h"
-#include "ServiceWorkerIdentifier.h"
-#include "ServiceWorkerTypes.h"
-#include "SharedWorkerIdentifier.h"
-#include "StoredCredentialsPolicy.h"
+#include <WebCore/ContentSecurityPolicyResponseHeaders.h>
+#include <WebCore/CrossOriginAccessControl.h>
+#include <WebCore/CrossOriginEmbedderPolicy.h>
+#include <WebCore/FetchIdentifier.h>
+#include <WebCore/FetchOptions.h>
+#include <WebCore/FetchingWorkerIdentifier.h>
+#include <WebCore/HTTPHeaderNames.h>
+#include <WebCore/LoadedFromOpaqueSource.h>
+#include <WebCore/RequestPriority.h>
+#include <WebCore/ServiceWorkerIdentifier.h>
+#include <WebCore/ServiceWorkerTypes.h>
+#include <WebCore/SharedWorkerIdentifier.h>
+#include <WebCore/StoredCredentialsPolicy.h>
 #include <wtf/HashSet.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>

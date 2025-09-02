@@ -24,13 +24,13 @@
 
 #pragma once
 
-#include "FontPalette.h"
-#include "FontSelectionAlgorithm.h"
-#include "FontSizeAdjust.h"
-#include "FontTaggedSettings.h"
-#include "TextFlags.h"
-#include "TextSpacing.h"
-#include "WebKitFontFamilyNames.h"
+#include <WebCore/FontPalette.h>
+#include <WebCore/FontSelectionAlgorithm.h>
+#include <WebCore/FontSizeAdjust.h>
+#include <WebCore/FontTaggedSettings.h>
+#include <WebCore/TextFlags.h>
+#include <WebCore/TextSpacing.h>
+#include <WebCore/WebKitFontFamilyNames.h>
 #include <unicode/uscript.h>
 #include <wtf/MathExtras.h>
 

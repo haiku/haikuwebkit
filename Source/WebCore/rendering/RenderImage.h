@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "RenderImageResource.h"
-#include "RenderReplaced.h"
+#include <WebCore/RenderImageResource.h>
+#include <WebCore/RenderReplaced.h>
 
 namespace WebCore {
 

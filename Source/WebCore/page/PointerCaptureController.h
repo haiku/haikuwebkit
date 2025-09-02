@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "EventTarget.h"
-#include "MouseEventTypes.h"
-#include "PointerID.h"
+#include <WebCore/EventTarget.h>
+#include <WebCore/MouseEventTypes.h>
+#include <WebCore/PointerID.h>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>
 

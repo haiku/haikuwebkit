@@ -374,6 +374,18 @@ private:
         webkit_permission_state_query_unref(query);
     }
 
+#if ENABLE(WEBXR) && USE(OPENXR)
+    void didStartXRSession(WebPageProxy&) final
+    {
+        webkitWebViewSetIsImmersiveModeEnabled(m_webView, true);
+    }
+
+    void didEndXRSession(WebPageProxy&) final
+    {
+        webkitWebViewSetIsImmersiveModeEnabled(m_webView, false);
+    }
+#endif
+
     WebKitWebView* m_webView;
 #if ENABLE(POINTER_LOCK)
     GWeakPtr<WebKitPointerLockPermissionRequest> m_pointerLockPermissionRequest { nullptr };

@@ -66,6 +66,15 @@ static unsigned globalKeyboardUpdateForChangedSelectionCount = 0;
 
 @end
 
+#if HAVE(MOUSE_DEVICE_OBSERVATION)
+
+@interface WKMouseDeviceObserver
++ (WKMouseDeviceObserver *)sharedInstance;
+- (void)_setHasMouseDeviceForTesting:(BOOL)hasMouseDevice;
+@end
+
+#endif
+
 #if HAVE(UI_WINDOW_SCENE_GEOMETRY_PREFERENCES)
 
 @interface WindowDidRotateObserver : NSObject
@@ -616,6 +625,17 @@ void TestController::unlockScreenOrientation()
     [UIView performWithoutAnimation:^{
         [webView.window.rootViewController setNeedsUpdateOfSupportedInterfaceOrientations];
     }];
+}
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+void TestController::setHasMouseDeviceForTesting(bool hasMouseDevice)
+{
+#if HAVE(MOUSE_DEVICE_OBSERVATION)
+    [[NSClassFromString(@"WKMouseDeviceObserver") sharedInstance] _setHasMouseDeviceForTesting:hasMouseDevice];
+#else
+    UNUSED_PARAM(hasMouseDevice);
+#endif
 }
 #endif
 

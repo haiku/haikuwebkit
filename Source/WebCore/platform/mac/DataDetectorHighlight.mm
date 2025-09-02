@@ -35,6 +35,7 @@
 #import "GraphicsLayer.h"
 #import "GraphicsLayerFactory.h"
 #import "ImageBuffer.h"
+#import "Page.h"
 #import <wtf/Seconds.h>
 #import <pal/mac/DataDetectorsSoftLink.h>
 

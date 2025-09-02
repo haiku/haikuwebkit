@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ContentsFormat.h"
+#include <WebCore/ContentsFormat.h>
 #include <wtf/Forward.h>
 
 #if PLATFORM(MAC)

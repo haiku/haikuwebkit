@@ -27,10 +27,10 @@
 
 #if ENABLE(VIDEO)
 
-#include "CSSPropertyNames.h"
-#include "CaptionPreferencesDelegate.h"
-#include "CaptionUserPreferences.h"
-#include "Color.h"
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CaptionPreferencesDelegate.h>
+#include <WebCore/CaptionUserPreferences.h>
+#include <WebCore/Color.h>
 #include <wtf/TZoneMalloc.h>
 
 #if PLATFORM(COCOA)

@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "ScriptWrappable.h"
+#include <WebCore/ScriptWrappable.h>
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>

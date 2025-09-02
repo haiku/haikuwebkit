@@ -552,6 +552,8 @@ Modules/webxr/XRSessionEvent.cpp
 Modules/webxr/XRSubImage.cpp
 Modules/webxr/XRWebGLBinding.cpp
 Modules/webxr/XRWebGLSubImage.cpp
+accessibility/AXAttributeCacheScope.cpp
+accessibility/AXComputedObjectAttributeCache.cpp
 accessibility/AXCoreObject.cpp
 accessibility/AXGeometryManager.cpp
 accessibility/AXLogger.cpp
@@ -562,7 +564,8 @@ accessibility/AXSearchManager.cpp
 accessibility/AXTextMarker.cpp
 accessibility/AXTextRun.cpp
 accessibility/AXTreeStore.cpp
-accessibility/AccessibilityAttachment.cpp
+accessibility/AXUtilities.cpp
+accessibility/AXAttachmentHelpers.cpp
 accessibility/AccessibilityImageMapLink.cpp
 accessibility/AccessibilityLabel.cpp
 accessibility/AccessibilityList.cpp
@@ -2206,11 +2209,12 @@ page/UndoManager.cpp
 page/UserContentController.cpp
 page/UserContentProvider.cpp
 page/UserContentURLPattern.cpp
+page/UserAgentStringParser.cpp
 page/UserScript.cpp
 page/UserStyleSheet.cpp
 page/VisitedLinkStore.cpp
 page/VisualViewport.cpp
-page/WebKitNodeInfo.cpp
+page/WebKitJSHandle.cpp
 page/WebKitSerializedNode.cpp
 page/WheelEventDeltaFilter.cpp
 page/WheelEventTestMonitor.cpp
@@ -4971,13 +4975,13 @@ JSWebGLTransformFeedback.cpp
 JSWebGLUniformLocation.cpp
 JSWebGLVertexArrayObject.cpp
 JSWebGLVertexArrayObjectOES.cpp
+JSWebKitJSHandle.cpp
 JSWebKitMediaKeyError.cpp
 JSWebKitMediaKeyMessageEvent.cpp
 JSWebKitMediaKeyNeededEvent.cpp
 JSWebKitMediaKeySession.cpp
 JSWebKitMediaKeys.cpp
 JSWebKitNamespace.cpp
-JSWebKitNodeInfo.cpp
 JSWebKitPlaybackTargetAvailabilityEvent.cpp
 JSWebKitPoint.cpp
 JSWebKitSerializedNode.cpp

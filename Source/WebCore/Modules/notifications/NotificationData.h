@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ScriptExecutionContextIdentifier.h"
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <optional>
 #include <pal/SessionID.h>
 #include <wtf/MonotonicTime.h>

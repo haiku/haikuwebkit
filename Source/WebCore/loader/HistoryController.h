@@ -29,9 +29,9 @@
 
 #pragma once
 
-#include "BackForwardItemIdentifier.h"
-#include "FrameLoader.h"
-#include "ProcessSwapDisposition.h"
+#include <WebCore/BackForwardItemIdentifier.h>
+#include <WebCore/FrameLoader.h>
+#include <WebCore/ProcessSwapDisposition.h>
 
 namespace WebCore {
 

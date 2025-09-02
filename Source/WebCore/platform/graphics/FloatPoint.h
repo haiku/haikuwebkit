@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "DoublePoint.h"
-#include "FloatSize.h"
-#include "IntPoint.h"
+#include <WebCore/DoublePoint.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/IntPoint.h>
 #include <wtf/Hasher.h>
 #include <wtf/MathExtras.h>
 #include <wtf/TZoneMalloc.h>

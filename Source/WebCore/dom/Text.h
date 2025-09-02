@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "CharacterData.h"
-#include "RenderPtr.h"
+#include <WebCore/CharacterData.h>
+#include <WebCore/RenderPtr.h>
 
 namespace WebCore {
 

@@ -1219,6 +1219,81 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, MainFrameAllowAllRequests)
     [manager run];
 }
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugWithoutPermission)
+{
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+    };
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.test.assertEq(typeof browser.declarativeNetRequest, 'object')",
+        @"browser.test.assertEq(typeof browser.declarativeNetRequest.onRuleMatchedDebug, 'undefined')",
+        @"browser.test.notifyPass()"
+    ]);
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript });
+    [manager run];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebug)
+{
+    auto *identifier = @"org.webkit.test.extension (76C788B8)";
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    // FIXME: <rdar://157880177> Add assertions for the other properties on the MatchedRuleInfo object
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.assertEq(new URL(info.request.url).pathname, '/frame.html')",
+        @"  browser.test.assertEq(info.rule.ruleId, 1)",
+        [NSString stringWithFormat:@"  browser.test.assertEq(info.rule.extensionId, '%@')", identifier],
+        @"  browser.test.notifyPass()",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab')",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"*frame*\", \"resourceTypes\":[\"sub_frame\"]}}]";
+
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::parseExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+
+    manager.get().context.uniqueIdentifier = identifier;
+    [manager load];
+
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+
+    [manager run];
+}
+#endif
+
 // MARK: Rule translation tests
 
 TEST(WKWebExtensionAPIDeclarativeNetRequest, RequiredAndOptionalKeys)
@@ -1376,6 +1451,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RegexRuleConversion)
             @"url-filter": @".*\\.com",
             @"resource-type": @[ @"script" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -1427,6 +1505,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, BasicRuleConversion)
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"font" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -1456,6 +1537,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, MainFrameResourceRuleConversion)
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"top-document" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -1484,8 +1568,10 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, SubFrameResourceRuleConversion)
         @"trigger": @{
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"child-document" ],
-
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -1515,6 +1601,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RepeatedMainFrameResourceRuleConver
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"top-document" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -1546,6 +1635,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, CaseSensitiveConversion)
             @"url-filter-is-case-sensitive": @YES,
             @"resource-type": @[ @"font" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRule1, correctRuleConversion1);
 
@@ -1572,6 +1664,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, CaseSensitiveConversion)
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"font" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRule2, correctRuleConversion2);
 }
@@ -1600,6 +1695,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, ConvertingMultipleResourceTypes)
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"script", @"style-sheet", @"ping" ],
         } mutableCopy],
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     } mutableCopy];
     NSSet *actualResourceTypes = [NSSet setWithArray:convertedRule[@"trigger"][@"resource-type"]];
     NSSet *expectedResourceTypes = [NSSet setWithArray:correctRuleConversion[@"trigger"][@"resource-type"]];
@@ -1634,6 +1732,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, ConvertingXHRWebSocketAndOtherTypes
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"fetch", @"websocket", @"other" ],
         } mutableCopy],
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     } mutableCopy];
     NSSet *actualResourceTypes = [NSSet setWithArray:convertedRule[@"trigger"][@"resource-type"]];
     NSSet *expectedResourceTypes = [NSSet setWithArray:correctRuleConversion[@"trigger"][@"resource-type"]];
@@ -1668,8 +1769,10 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, UpgradeSchemeRuleConversion)
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"image" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
-
 
     NSDictionary *sortingRule = @{
         @"action": @{
@@ -1679,6 +1782,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, UpgradeSchemeRuleConversion)
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"image" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRules[0], makeHTTPSRule);
@@ -1709,6 +1815,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, UpgradeSchemeForMainFrameRuleConver
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"top-document" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRules[0], makeHTTPSRule);
 
@@ -1720,6 +1829,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, UpgradeSchemeForMainFrameRuleConver
             @"url-filter": @"crouton\\.net",
             @"resource-type": @[ @"top-document" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRules[1], sortingRule);
 }
@@ -1781,6 +1893,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithDomainType)
             @"resource-type": @[ @"script" ],
             @"load-type": @[ @"first-party" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -1808,6 +1923,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithNoSpecifiedResour
             @"url-filter": @".*",
             @"resource-type": @[ @"fetch", @"font", @"image", @"media", @"other", @"ping", @"script", @"style-sheet", @"websocket", @"child-document" ],
         } mutableCopy],
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     } mutableCopy];
     NSSet *actualResourceTypes = [NSSet setWithArray:convertedRule[@"trigger"][@"resource-type"]];
     NSSet *expectedResourceTypes = [NSSet setWithArray:correctRuleConversion[@"trigger"][@"resource-type"]];
@@ -1912,6 +2030,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithUnsupportedExclud
             @"url-filter": @".*",
             @"resource-type": @[ @"fetch", @"font", @"media", @"other", @"ping", @"script", @"style-sheet", @"websocket", @"top-document", @"child-document" ],
         } mutableCopy],
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     } mutableCopy];
     NSSet *actualResourceTypes = [NSSet setWithArray:convertedRule[@"trigger"][@"resource-type"]];
     NSSet *expectedResourceTypes = [NSSet setWithArray:correctRuleConversion[@"trigger"][@"resource-type"]];
@@ -1945,6 +2066,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithEmptyExcludedReso
             @"url-filter": @".*",
             @"resource-type": @[ @"fetch", @"font", @"image", @"media", @"other", @"ping", @"script", @"style-sheet", @"websocket", @"top-document", @"child-document" ],
         } mutableCopy],
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     } mutableCopy];
 
     NSSet *actualResourceTypes = [NSSet setWithArray:convertedRule[@"trigger"][@"resource-type"]];
@@ -2012,6 +2136,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithDomains)
             @"resource-type": @[ @"font" ],
             @"url-filter": @".*",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2044,6 +2171,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithURLFilterAndReque
                 @"url-filter": expectedRegexPattern,
                 @"resource-type": @[ @"script" ],
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
         };
 
         EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2095,6 +2225,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRequestDomains)
             @"resource-type": @[ @"font" ],
             @"url-filter": @"^[^:]+://+([^:/]+\\.)?apple\\.com",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRules[0], appleURLFilterRuleConversion);
 
@@ -2106,6 +2239,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRequestDomains)
             @"resource-type": @[ @"font" ],
             @"url-filter": @"^[^:]+://+([^:/]+\\.)?facebook\\.com",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRules[1], facebookURLFilterRuleConversion);
 
@@ -2117,6 +2253,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRequestDomains)
             @"resource-type": @[ @"font" ],
             @"url-filter": @"^[^:]+://+([^:/]+\\.)?.*google\\.com",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRules[2], googleURLFilterRuleConversion);
 }
@@ -2145,6 +2284,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithInitiatorDomains)
             @"resource-type": @[ @"font" ],
             @"url-filter": @".*",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2174,6 +2316,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedInitiator
             @"resource-type": @[ @"font" ],
             @"url-filter": @".*",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2204,7 +2349,10 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedInitiator
                 @"if-frame-url": @[ @"^[^:]+://+([^:/]+\\.)?blog\\.example\\.com/.*" ],
                 @"resource-type": @[ @"font" ],
                 @"url-filter": @".*",
-            }
+            },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         },
         @{
             @"action": @{
@@ -2214,7 +2362,10 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedInitiator
                 @"if-frame-url": @[ @"^[^:]+://+([^:/]+\\.)?example\\.com/.*" ],
                 @"resource-type": @[ @"font" ],
                 @"url-filter": @".*",
-            }
+            },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         }
     ];
 
@@ -2245,6 +2396,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithEmptyExcludedDoma
             @"resource-type": @[ @"media" ],
             @"url-filter": @".*",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2290,6 +2444,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedDomains)
             @"resource-type": @[ @"media" ],
             @"url-filter": @".*",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2318,6 +2475,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedRequestDo
             @"resource-type": @[ @"media" ],
             @"url-filter": @"apple\\.com",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRules[0], passRuleConversion);
 
@@ -2329,6 +2489,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedRequestDo
             @"resource-type": @[ @"media" ],
             @"url-filter": @".*",
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     };
     EXPECT_NS_EQUAL(convertedRules[1], blockRuleConversion);
 }
@@ -2388,6 +2551,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRequestMethods)
                 @"resource-type": @[ @"top-document" ],
                 @"request-method": @"get",
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         },
         @{
             @"action": @{
@@ -2398,6 +2564,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRequestMethods)
                 @"resource-type": @[ @"top-document" ],
                 @"request-method": @"post",
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         }
     ];
 
@@ -2429,6 +2598,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedRequestMe
                 @"resource-type": @[ @"top-document" ],
                 @"request-method": @"get",
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         },
         @{
             @"action": @{
@@ -2439,6 +2611,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedRequestMe
                 @"resource-type": @[ @"top-document" ],
                 @"request-method": @"post",
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         },
         @{
             @"action": @{
@@ -2448,6 +2623,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithExcludedRequestMe
                 @"url-filter": @".*",
                 @"resource-type": @[ @"top-document" ],
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         }
     ];
 
@@ -2482,6 +2660,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRequestMethodsAnd
                 @"resource-type": @[ @"top-document" ],
                 @"request-method": @"post",
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         },
         @{
             @"action": @{
@@ -2492,6 +2673,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRequestMethodsAnd
                 @"resource-type": @[ @"top-document" ],
                 @"request-method": @"get",
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         }
     ];
 
@@ -2552,6 +2736,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, URLFilterSpecialCharacters)
                 @"url-filter": expectedRegexPattern,
                 @"resource-type": @[ @"script" ],
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         };
 
         EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2644,6 +2831,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithMainFrameAllowAll
             @"url-filter": @".*",
             @"if-top-url": @[ @"apple\\.com" ],
         } mutableCopy],
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @1,
+#endif
     } mutableCopy];
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2683,6 +2873,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithRedirect)
                 @"url-filter": @".*",
                 @"resource-type": @[ @"script" ],
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @1,
+#endif
         };
 
         EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2762,6 +2955,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithModifyHeaders)
                 @"url-filter": @".*",
                 @"resource-type": @[ @"script" ],
             },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            @"_identifier": @10,
+#endif
         };
 
         EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);
@@ -2828,6 +3024,9 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RuleConversionWithModifyHeadersWith
             @"url-filter": @".*",
             @"resource-type": @[ @"script" ],
         },
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @10,
+#endif
     };
 
     EXPECT_NS_EQUAL(convertedRule, correctRuleConversion);

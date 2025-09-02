@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "ColorConversion.h"
-#include "ColorSpace.h"
-#include "ColorUtilities.h"
-#include "DestinationColorSpace.h"
+#include <WebCore/ColorConversion.h>
+#include <WebCore/ColorSpace.h>
+#include <WebCore/ColorUtilities.h>
+#include <WebCore/DestinationColorSpace.h>
 #include <bit>
 #include <functional>
 #include <wtf/Forward.h>

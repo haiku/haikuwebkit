@@ -38,6 +38,7 @@
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
+class RegistrableDomain;
 class ResourceError;
 class ResourceRequest;
 class ResourceResponse;
@@ -125,6 +126,8 @@ private:
 #endif
 
     void broadcastConsoleMessage(MessageSource, MessageLevel, const String& message);
+
+    void storageAccessPermissionChanged(const WebCore::RegistrableDomain& topFrameDomain, const WebCore::RegistrableDomain& subFrameDomain);
 
     // The connection from the web process to the network process.
     const Ref<IPC::Connection> m_connection;

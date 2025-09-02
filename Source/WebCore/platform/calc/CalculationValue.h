@@ -30,8 +30,8 @@
 
 #pragma once
 
-#include "CalculationRange.h"
-#include "CalculationTree.h"
+#include <WebCore/CalculationRange.h>
+#include <WebCore/CalculationTree.h>
 #include <wtf/Forward.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>

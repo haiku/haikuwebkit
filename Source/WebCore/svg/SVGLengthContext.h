@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "SVGLengthValue.h"
-#include "SVGUnitTypes.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/SVGLengthValue.h>
+#include <WebCore/SVGUnitTypes.h>
 
 namespace WebCore {
 

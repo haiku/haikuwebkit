@@ -591,6 +591,7 @@ static constexpr NSString *kPrefersFullScreenDimmingKey = @"WebKitPrefersFullScr
 @property (nonatomic, readonly) RSSSceneChromeOptions sceneChromeOptions;
 @property (nonatomic, readonly) MRUISceneResizingBehavior sceneResizingBehavior;
 @property (nonatomic, readonly) MRUIDarknessPreference preferredDarkness;
+@property (nonatomic, assign) BOOL prefersAutoDimming;
 
 @property (nonatomic, readonly) NSMapTable<MRUIPlatterOrnament *, WKMRUIPlatterOrnamentProperties *> *ornamentProperties;
 
@@ -735,6 +736,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 @interface WKFullScreenWindowController (VideoPresentationManagerProxyClient)
 - (void)didEnterPictureInPicture;
 - (void)didExitPictureInPicture;
+- (void)didEnterVideoFullscreen;
+- (void)didExitVideoFullscreen;
 @end
 
 #pragma mark -
@@ -811,7 +814,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         _logIdentifier = webPage->logIdentifier();
     }
 #endif
-
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:[UIApplication sharedApplication]];
 
     return self;
@@ -918,6 +920,29 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
         [self _enterFullScreen:mediaDimensions windowScene:windowScene completionHandler:WTFMove(completionHandler)];
     });
+}
+
+- (void)didEnterVideoFullscreen
+{
+#if PLATFORM(VISION)
+    if (self.isFullScreen)
+        UIApplication.sharedApplication.mrui_activeStage.preferredDarkness = MRUIDarknessPreferenceUnspecified;
+#endif
+}
+
+- (void)didExitVideoFullscreen
+{
+#if PLATFORM(VISION)
+    if (!self.isFullScreen || !WebKit::useSpatialFullScreenTransition())
+        return;
+
+    bool prefersAutoDimming = false;
+    if (RefPtr videoPresentationManager = [self _videoPresentationManager]) {
+        if (RefPtr bestVideo = videoPresentationManager->bestVideoForElementFullscreen())
+            prefersAutoDimming = bestVideo->playbackSessionModel()->prefersAutoDimming();
+    }
+    UIApplication.sharedApplication.mrui_activeStage.preferredDarkness = prefersAutoDimming ? MRUIDarknessPreferenceDark : MRUIDarknessPreferenceUnspecified;
+#endif
 }
 
 - (void)_enterFullScreen:(CGSize)mediaDimensions windowScene:(UIWindowScene *)windowScene completionHandler:(CompletionHandler<void(bool)>&&)completionHandler
@@ -1852,10 +1877,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (![self _sceneDimmingEnabled])
         return NO;
 
-    if (NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:kPrefersFullScreenDimmingKey])
-        return value.boolValue;
+    if (RefPtr videoPresentationManager = [self _videoPresentationManager]) {
+        if (RefPtr bestVideo = videoPresentationManager->bestVideoForElementFullscreen())
+            return bestVideo->playbackSessionModel()->prefersAutoDimming();
+    }
 
-    return YES;
+    return NO;
 }
 
 - (void)_configureSpatialFullScreenTransition
@@ -1940,10 +1967,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     inWindow.transform3D = CATransform3DTranslate(originalState.transform3D, 0, 0, kIncomingWindowZOffset);
 
     MRUIStage *stage = UIApplication.sharedApplication.mrui_activeStage;
-    if (self.prefersSceneDimming
-        || (!enter && stage.preferredDarkness != originalState.preferredDarkness)) {
+    MRUIDarknessPreference targetDarkness = enter ? (self.prefersSceneDimming ? MRUIDarknessPreferenceDark : originalState.preferredDarkness) : originalState.preferredDarkness;
+
+    if (stage.preferredDarkness != targetDarkness) {
         [UIView animateWithDuration:kDarknessAnimationDuration animations:^{
-            stage.preferredDarkness = enter ? MRUIDarknessPreferenceDark : originalState.preferredDarkness;
+            stage.preferredDarkness = targetDarkness;
         } completion:nil];
     }
 
@@ -2021,11 +2049,15 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     BOOL updatedPrefersSceneDimming = !self.prefersSceneDimming;
 
-    [[NSUserDefaults standardUserDefaults] setBool:updatedPrefersSceneDimming forKey:kPrefersFullScreenDimmingKey];
+    if (RefPtr videoPresentationManager = [self _videoPresentationManager]) {
+        if (RefPtr bestVideo = videoPresentationManager->bestVideoForElementFullscreen())
+            bestVideo->playbackSessionModel()->setPrefersAutoDimming(updatedPrefersSceneDimming);
+    }
 
     if (self.isFullScreen) {
+        MRUIDarknessPreference target = updatedPrefersSceneDimming ? MRUIDarknessPreferenceDark : (_parentWindowState ? [_parentWindowState preferredDarkness] : MRUIDarknessPreferenceUnspecified);
         MRUIStage *stage = UIApplication.sharedApplication.mrui_activeStage;
-        stage.preferredDarkness = updatedPrefersSceneDimming ? MRUIDarknessPreferenceDark : [_parentWindowState preferredDarkness];
+        stage.preferredDarkness = target;
     }
 }
 

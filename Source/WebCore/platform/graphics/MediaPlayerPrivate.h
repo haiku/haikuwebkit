@@ -27,18 +27,18 @@
 
 #if ENABLE(VIDEO)
 
-#include "HostingContext.h"
-#include "MediaPlayer.h"
-#include "MediaPlayerIdentifier.h"
-#include "NativeImage.h"
-#include "PlatformTimeRanges.h"
-#include "ProcessIdentity.h"
+#include <WebCore/HostingContext.h>
+#include <WebCore/MediaPlayer.h>
+#include <WebCore/MediaPlayerIdentifier.h>
+#include <WebCore/NativeImage.h>
+#include <WebCore/PlatformTimeRanges.h>
+#include <WebCore/ProcessIdentity.h>
 #include <optional>
 #include <wtf/AbstractRefCounted.h>
 #include <wtf/CompletionHandler.h>
 
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-#include "LegacyCDMSession.h"
+#include <WebCore/LegacyCDMSession.h>
 #endif
 
 namespace WebCore {

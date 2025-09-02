@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "LoaderMalloc.h"
+#include <WebCore/LoaderMalloc.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Deque.h>
 #include <wtf/URL.h>

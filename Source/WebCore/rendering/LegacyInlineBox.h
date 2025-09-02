@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "HitTestRequest.h"
-#include "RenderBoxModelObject.h"
-#include "RenderText.h"
-#include "TextFlags.h"
+#include <WebCore/HitTestRequest.h>
+#include <WebCore/RenderBoxModelObject.h>
+#include <WebCore/RenderText.h>
+#include <WebCore/TextFlags.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/TypeCasts.h>
 #include <wtf/WeakPtr.h>

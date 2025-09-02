@@ -23,11 +23,11 @@
 
 #pragma once
 
-#include "CSSValue.h"
-#include "FloatSize.h"
-#include "Image.h"
-#include "RenderObject.h"
-#include "StyleURL.h"
+#include <WebCore/CSSValue.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/Image.h>
+#include <WebCore/RenderObject.h>
+#include <WebCore/StyleURL.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TypeCasts.h>

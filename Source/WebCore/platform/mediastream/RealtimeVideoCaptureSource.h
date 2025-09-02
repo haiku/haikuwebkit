@@ -27,9 +27,9 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "ImageBuffer.h"
-#include "RealtimeMediaSource.h"
-#include "VideoPreset.h"
+#include <WebCore/ImageBuffer.h>
+#include <WebCore/RealtimeMediaSource.h>
+#include <WebCore/VideoPreset.h>
 #include <wtf/Lock.h>
 #include <wtf/RunLoop.h>
 

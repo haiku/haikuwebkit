@@ -26,8 +26,8 @@
 
 #if ENABLE(POINTER_LOCK)
 
-#include "ExceptionCode.h"
-#include "PointerLockOptions.h"
+#include <WebCore/ExceptionCode.h>
+#include <WebCore/PointerLockOptions.h>
 
 #include <optional>
 #include <wtf/Ref.h>
@@ -79,8 +79,6 @@ public:
     void dispatchLockedMouseEvent(const PlatformMouseEvent&, const AtomString& eventType);
     void dispatchLockedWheelEvent(const PlatformWheelEvent&);
 
-    static bool supportsUnadjustedMovement();
-
 private:
     void clearElement();
     void enqueueEvent(const AtomString& type, Element*);
@@ -88,6 +86,8 @@ private:
     void resolvePromises();
     void rejectPromises(ExceptionCode, const String&);
     void elementWasRemovedInternal();
+
+    bool supportsUnadjustedMovement() const;
 
     Page& m_page;
     bool m_lockPending { false };

@@ -85,6 +85,8 @@ static bool isAllowedByPermissionsPolicy(const Document& document, PermissionNam
         return PermissionsPolicy::isFeatureEnabled(PermissionsPolicy::Feature::Geolocation, document, PermissionsPolicy::ShouldReportViolation::No);
     case PermissionName::Microphone:
         return PermissionsPolicy::isFeatureEnabled(PermissionsPolicy::Feature::Microphone, document, PermissionsPolicy::ShouldReportViolation::No);
+    case PermissionName::StorageAccess:
+        return PermissionsPolicy::isFeatureEnabled(PermissionsPolicy::Feature::StorageAccess, document, PermissionsPolicy::ShouldReportViolation::No);
     default:
         return true;
     }
@@ -116,6 +118,8 @@ std::optional<PermissionName> Permissions::toPermissionName(const String& name)
         return PermissionName::Notifications;
     if (name == "push"_s)
         return PermissionName::Push;
+    if (name == "storage-access"_s)
+        return PermissionName::StorageAccess;
     return std::nullopt;
 }
 

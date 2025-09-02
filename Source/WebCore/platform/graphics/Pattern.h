@@ -27,8 +27,8 @@
 
 #pragma once
 
-#include "AffineTransform.h"
-#include "SourceImage.h"
+#include <WebCore/AffineTransform.h>
+#include <WebCore/SourceImage.h>
 
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>

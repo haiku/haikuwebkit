@@ -220,12 +220,12 @@ std::unique_ptr<AcceleratedSurface::RenderTarget> AcceleratedSurface::RenderTarg
         return nullptr;
     }
 
-    auto* device = bufferFormat.drmDeviceNode ? bufferFormat.drmDeviceNode->gbmDevice() : nullptr;
-    if (!device) {
-        device = DRMDeviceManager::singleton().mainGBMDeviceNode(bufferFormat.usage == RendererBufferFormat::Usage::Scanout ?
+    auto gbmDevice = bufferFormat.gbmDevice;
+    if (!gbmDevice) {
+        gbmDevice = DRMDeviceManager::singleton().mainGBMDevice(bufferFormat.usage == RendererBufferFormat::Usage::Scanout ?
             DRMDeviceManager::NodeType::Primary : DRMDeviceManager::NodeType::Render);
     }
-    if (!device) {
+    if (!gbmDevice) {
         WTFLogAlways("Failed to create GBM buffer of size %dx%d: no GBM device found", size.width(), size.height());
         return nullptr;
     }
@@ -234,12 +234,12 @@ std::unique_ptr<AcceleratedSurface::RenderTarget> AcceleratedSurface::RenderTarg
     uint32_t flags = bufferFormat.usage == RendererBufferFormat::Usage::Scanout ? GBM_BO_USE_SCANOUT : GBM_BO_USE_RENDERING;
     bool disableModifiers = bufferFormat.modifiers.size() == 1 && bufferFormat.modifiers[0] == DRM_FORMAT_MOD_INVALID;
     if (!disableModifiers && !bufferFormat.modifiers.isEmpty())
-        bo = gbm_bo_create_with_modifiers2(device, size.width(), size.height(), bufferFormat.fourcc, bufferFormat.modifiers.span().data(), bufferFormat.modifiers.size(), flags);
+        bo = gbm_bo_create_with_modifiers2(gbmDevice->device(), size.width(), size.height(), bufferFormat.fourcc, bufferFormat.modifiers.span().data(), bufferFormat.modifiers.size(), flags);
 
     if (!bo) {
         if (bufferFormat.usage == RendererBufferFormat::Usage::Mapping)
             flags |= GBM_BO_USE_LINEAR;
-        bo = gbm_bo_create(device, size.width(), size.height(), bufferFormat.fourcc, flags);
+        bo = gbm_bo_create(gbmDevice->device(), size.width(), size.height(), bufferFormat.fourcc, flags);
     }
 
     if (!bo) {
@@ -583,10 +583,12 @@ void AcceleratedSurface::SwapChain::setupBufferFormat(const Vector<RendererBuffe
         return;
 
     if (!newBufferFormat.drmDevice.isNull()) {
-        if (newBufferFormat.drmDevice == m_bufferFormat.drmDevice)
-            newBufferFormat.drmDeviceNode = m_bufferFormat.drmDeviceNode;
-        else
-            newBufferFormat.drmDeviceNode = DRMDeviceManager::singleton().deviceNode(newBufferFormat.drmDevice);
+        if (newBufferFormat.drmDevice == m_bufferFormat.drmDevice && newBufferFormat.usage == m_bufferFormat.usage)
+            newBufferFormat.gbmDevice = m_bufferFormat.gbmDevice;
+        else {
+            auto nodeType = newBufferFormat.usage == RendererBufferFormat::Usage::Scanout ? DRMDeviceManager::NodeType::Primary : DRMDeviceManager::NodeType::Render;
+            newBufferFormat.gbmDevice = DRMDeviceManager::singleton().gbmDevice(newBufferFormat.drmDevice, nodeType);
+        }
     }
 
     m_bufferFormat = WTFMove(newBufferFormat);

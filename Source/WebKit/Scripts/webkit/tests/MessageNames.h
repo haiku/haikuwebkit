@@ -32,6 +32,15 @@
 
 namespace IPC {
 
+enum class ProcessName : uint8_t {
+    UI,
+    Networking,
+    GPU,
+    WebContent,
+    Model,
+    Unknown
+};
+
 enum class ReceiverName : uint8_t {
     TestWithCVPixelBuffer = 1
     , TestWithDeferSendingOption = 2
@@ -255,6 +264,8 @@ struct MessageDescription {
     ReceiverName receiverName;
     bool messageAllowedWhenWaitingForSyncReply : 1;
     bool messageAllowedWhenWaitingForUnboundedSyncReply : 1;
+    ProcessName dispatchedFrom;
+    ProcessName dispatchedTo;
 };
 
 using MessageDescriptionsArray = std::array<MessageDescription, static_cast<size_t>(MessageName::Count) + 1>;
@@ -290,6 +301,10 @@ constexpr bool messageIsSync(MessageName name)
 {
     return name >= MessageName::FirstSynchronous;
 }
+
+ASCIILiteral processLiteral(ProcessName);
+ASCIILiteral dispatchedFrom(MessageName);
+ASCIILiteral dispatchedTo(MessageName);
 
 } // namespace IPC
 

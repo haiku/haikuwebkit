@@ -26,10 +26,10 @@
 #pragma once
 
 #if PLATFORM(COCOA) && ENABLE(MEDIA_RECORDER)
-#include "MediaRecorderPrivateWriter.h"
+#include <WebCore/MediaRecorderPrivateWriter.h>
 #endif
-#include "NativeImage.h"
-#include "NowPlayingManager.h"
+#include <WebCore/NativeImage.h>
+#include <WebCore/NowPlayingManager.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 

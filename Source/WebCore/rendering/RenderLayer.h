@@ -44,16 +44,16 @@
 
 #pragma once
 
-#include "ClipRect.h"
-#include "GraphicsLayer.h"
-#include "LayerFragment.h"
-#include "LayoutRect.h"
-#include "PaintFrequencyTracker.h"
-#include "PaintInfo.h"
-#include "RenderBox.h"
-#include "RenderPtr.h"
-#include "RenderSVGModelObject.h"
-#include "ScrollBehavior.h"
+#include <WebCore/ClipRect.h>
+#include <WebCore/GraphicsLayer.h>
+#include <WebCore/LayerFragment.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/PaintFrequencyTracker.h>
+#include <WebCore/PaintInfo.h>
+#include <WebCore/RenderBox.h>
+#include <WebCore/RenderPtr.h>
+#include <WebCore/RenderSVGModelObject.h>
+#include <WebCore/ScrollBehavior.h>
 #include <memory>
 #include <wtf/CheckedRef.h>
 #include <wtf/Markable.h>
@@ -520,7 +520,8 @@ public:
 
     // Notification from the renderer that its content changed (e.g. current frame of image changed).
     // Allows updates of layer content without repainting.
-    void contentChanged(ContentChangeType);
+    // Also, allows specifying the changed rectangle to limit the painting when patform supports it.
+    void contentChanged(ContentChangeType, const std::optional<FloatRect>& = std::nullopt);
 
     bool canRender3DTransforms() const;
 
@@ -819,9 +820,9 @@ public:
     bool hasTransformedAncestor() const { return m_hasTransformedAncestor; }
     bool participatesInPreserve3D() const;
 
-    std::optional<LayoutSize> snapshottedScrollOffsetForAnchorPositioning() const { return m_snapshottedScrollOffsetForAnchorPositioning; };
-    void setSnapshottedScrollOffsetForAnchorPositioning(LayoutSize);
-    void clearSnapshottedScrollOffsetForAnchorPositioning();
+    std::optional<LayoutSize> anchorScrollAdjustment() const { return m_anchorScrollAdjustment; };
+    bool setAnchorScrollAdjustment(LayoutSize); // Returns true if changed.
+    void clearAnchorScrollAdjustment();
 
     bool hasFixedContainingBlockAncestor() const { return m_hasFixedContainingBlockAncestor; }
 
@@ -1446,7 +1447,7 @@ private:
     // If the RenderLayer contains an anchor-positioned box, this is the "default scroll shift"
     // for scroll compensation purpose. This offset aligns the anchor-positioned box with the anchor
     // after scroll, and is applied as a transform.
-    std::optional<LayoutSize> m_snapshottedScrollOffsetForAnchorPositioning;
+    std::optional<LayoutSize> m_anchorScrollAdjustment;
 
     // May ultimately be extended to many replicas (with their own paint order).
     RenderPtr<RenderReplica> m_reflection;

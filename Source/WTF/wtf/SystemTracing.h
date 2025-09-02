@@ -328,40 +328,55 @@ enum WTFOSSignpostType {
 // These work like WTF{Emit,Begin,End}Signpost, but offset the timestamp associated with the event
 // by timeDelta (which should of type WTF::Seconds).
 #define WTFEmitSignpostWithTimeDelta(pointer, name, timeDelta, ...) \
-    WTFEmitSignpostWithType(WTFOSSignpostTypeEmitEvent, os_signpost_event_emit, (pointer), name, (timeDelta), " %{signpost.description:event_time}llu", "" __VA_ARGS__)
+    WTFEmitSignpostWithType(WTFOSSignpostTypeEmitEvent, os_signpost_event_emit, (pointer), name, WTFCurrentContinuousTime(timeDelta), " %{signpost.description:event_time}llu", "" __VA_ARGS__)
 
 #define WTFBeginSignpostWithTimeDelta(pointer, name, timeDelta, ...) \
-    WTFEmitSignpostWithType(WTFOSSignpostTypeBeginInterval, os_signpost_interval_begin, (pointer), name, (timeDelta), " %{signpost.description:begin_time}llu", "" __VA_ARGS__)
+    WTFEmitSignpostWithType(WTFOSSignpostTypeBeginInterval, os_signpost_interval_begin, (pointer), name, WTFCurrentContinuousTime(timeDelta), " %{signpost.description:begin_time}llu", "" __VA_ARGS__)
 
 #define WTFEndSignpostWithTimeDelta(pointer, name, timeDelta, ...) \
-    WTFEmitSignpostWithType(WTFOSSignpostTypeEndInterval, os_signpost_interval_end, (pointer), name, (timeDelta), " %{signpost.description:end_time}llu", "" __VA_ARGS__)
+    WTFEmitSignpostWithType(WTFOSSignpostTypeEndInterval, os_signpost_interval_end, (pointer), name, WTFCurrentContinuousTime(timeDelta), " %{signpost.description:end_time}llu", "" __VA_ARGS__)
 
 #define WTFEmitSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) \
-    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeEmitEvent, os_signpost_event_emit, (pointer), name, (timeDelta), " %{signpost.description:event_time}llu", "" __VA_ARGS__)
+    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeEmitEvent, os_signpost_event_emit, (pointer), name, WTFCurrentContinuousTime(timeDelta), " %{signpost.description:event_time}llu", "" __VA_ARGS__)
 
 #define WTFBeginSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) \
-    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeBeginInterval, os_signpost_interval_begin, (pointer), name, (timeDelta), " %{signpost.description:begin_time}llu", "" __VA_ARGS__)
+    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeBeginInterval, os_signpost_interval_begin, (pointer), name, WTFCurrentContinuousTime(timeDelta), " %{signpost.description:begin_time}llu", "" __VA_ARGS__)
 
 #define WTFEndSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) \
-    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeEndInterval, os_signpost_interval_end, (pointer), name, (timeDelta), " %{signpost.description:end_time}llu", "" __VA_ARGS__)
+    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeEndInterval, os_signpost_interval_end, (pointer), name, WTFCurrentContinuousTime(timeDelta), " %{signpost.description:end_time}llu", "" __VA_ARGS__)
 
-#define WTFEmitSignpostWithType(type, emitMacro, pointer, name, timeDelta, timeFormat, format, ...) \
+
+// These work like WTF{Emit,Begin,End}Signpost, but specific platform timestamp associated with the event.
+#define WTFEmitSignpostWithSpecificTime(pointer, name, specificTime, ...) \
+    WTFEmitSignpostWithType(WTFOSSignpostTypeEmitEvent, os_signpost_event_emit, (pointer), name, (specificTime), " %{signpost.description:event_time}llu", "" __VA_ARGS__)
+
+#define WTFBeginSignpostWithSpecificTime(pointer, name, specificTime, ...) \
+    WTFEmitSignpostWithType(WTFOSSignpostTypeBeginInterval, os_signpost_interval_begin, (pointer), name, (specificTime), " %{signpost.description:begin_time}llu", "" __VA_ARGS__)
+
+#define WTFEndSignpostWithSpecificTime(pointer, name, specificTime, ...) \
+    WTFEmitSignpostWithType(WTFOSSignpostTypeEndInterval, os_signpost_interval_end, (pointer), name, (specificTime), " %{signpost.description:end_time}llu", "" __VA_ARGS__)
+
+#define WTFEmitSignpostAlwaysWithSpecificTime(pointer, name, specificTime, ...) \
+    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeEmitEvent, os_signpost_event_emit, (pointer), name, (specificTime), " %{signpost.description:event_time}llu", "" __VA_ARGS__)
+
+#define WTFBeginSignpostAlwaysWithSpecificTime(pointer, name, specificTime, ...) \
+    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeBeginInterval, os_signpost_interval_begin, (pointer), name, (specificTime), " %{signpost.description:begin_time}llu", "" __VA_ARGS__)
+
+#define WTFEndSignpostAlwaysWithSpecificTime(pointer, name, specificTime, ...) \
+    WTFEmitSignpostAlwaysWithType(WTFOSSignpostTypeEndInterval, os_signpost_interval_end, (pointer), name, (specificTime), " %{signpost.description:end_time}llu", "" __VA_ARGS__)
+
+#define WTFEmitSignpostWithType(type, emitMacro, pointer, name, specificTime, timeFormat, format, ...) \
     do { \
         if (WTFSignpostsEnabled()) [[unlikely]] \
-            WTFEmitSignpostAlwaysWithType(type, emitMacro, pointer, name, timeDelta, timeFormat, format, ##__VA_ARGS__); \
+            WTFEmitSignpostAlwaysWithType(type, emitMacro, pointer, name, specificTime, timeFormat, format, ##__VA_ARGS__); \
     } while (0)
 
-#define WTFEmitSignpostAlwaysWithType(type, emitMacro, pointer, name, timeDelta, timeFormat, format, ...) \
+#define WTFEmitSignpostAlwaysWithType(type, emitMacro, pointer, name, specificTime, timeFormat, format, ...) \
     do { \
         if (WTFSignpostIndirectLoggingEnabled) \
-            WTFEmitSignpostIndirectlyWithType(type, pointer, name, timeDelta, format, ##__VA_ARGS__); \
-        else { \
-            Seconds delta = (timeDelta); \
-            if (delta) \
-                WTFEmitSignpostDirectlyWithType(emitMacro, pointer, name, format timeFormat, ##__VA_ARGS__, WTFCurrentContinuousTime(delta)); \
-            else \
-                WTFEmitSignpostDirectlyWithType(emitMacro, pointer, name, format, ##__VA_ARGS__); \
-        } \
+            WTFEmitSignpostIndirectlyWithType(type, pointer, name, specificTime, format, ##__VA_ARGS__); \
+        else \
+            WTFEmitSignpostDirectlyWithType(emitMacro, pointer, name, format timeFormat, ##__VA_ARGS__, specificTime); \
     } while (0)
 
 #define WTFEmitSignpostDirectlyWithType(emitMacro, pointer, name, format, ...) \
@@ -372,8 +387,8 @@ enum WTFOSSignpostType {
         emitMacro(wtfHandle.get(), wtfSignpostID, #name, format, ##__VA_ARGS__); \
     } while (0)
 
-#define WTFEmitSignpostIndirectlyWithType(type, pointer, name, timeDelta, format, ...) \
-    SUPPRESS_UNCOUNTED_LOCAL os_log(WTFSignpostLogHandle(), "type=%d name=%d p=%" PRIuPTR " ts=%llu " format, type, WTFOSSignpostName ## name, reinterpret_cast<uintptr_t>(pointer), WTFCurrentContinuousTime(timeDelta), ##__VA_ARGS__)
+#define WTFEmitSignpostIndirectlyWithType(type, pointer, name, specificTime, format, ...) \
+    SUPPRESS_UNCOUNTED_LOCAL os_log(WTFSignpostLogHandle(), "type=%d name=%d p=%" PRIuPTR " ts=%llu " format, type, WTFOSSignpostName ## name, reinterpret_cast<uintptr_t>(pointer), specificTime, ##__VA_ARGS__)
 
 #define WTFSetCounter(name, value) do { } while (0)
 
@@ -411,7 +426,7 @@ enum WTFOSSignpostType {
     do { \
         IGNORE_WARNINGS_BEGIN("format-zero-length") \
         if (auto* annotator = SysprofAnnotator::singletonIfCreated()) \
-            annotator->mark((timeDelta), std::span(_STRINGIFY(name)), "" __VA_ARGS__); \
+            annotator->mark(SysprofAnnotator::currentContinuousTime(timeDelta), std::span(_STRINGIFY(name)), "" __VA_ARGS__); \
         IGNORE_WARNINGS_END \
     } while (0)
 
@@ -421,6 +436,21 @@ enum WTFOSSignpostType {
 #define WTFEmitSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFEmitSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
 #define WTFBeginSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFBeginSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
 #define WTFEndSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFEndSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
+
+#define WTFEmitSignpostWithSpecificTime(pointer, name, specificTime, ...) \
+    do { \
+        IGNORE_WARNINGS_BEGIN("format-zero-length") \
+        if (auto* annotator = SysprofAnnotator::singletonIfCreated()) \
+            annotator->mark(specificTime, std::span(_STRINGIFY(name)), "" __VA_ARGS__); \
+        IGNORE_WARNINGS_END \
+    } while (0)
+
+#define WTFBeginSignpostWithSpecificTime(pointer, name, specificTime, ...) WTFEmitSignpostWithSpecificTime((pointer), name, (specificTime), ##__VA_ARGS__)
+#define WTFEndSignpostWithSpecificTime(pointer, name, specificTime, ...) WTFEmitSignpostWithSpecificTime((pointer), name, (specificTime), ##__VA_ARGS__)
+
+#define WTFEmitSignpostAlwaysWithSpecificTime(pointer, name, specificTime, ...) WTFEmitSignpostWithSpecificTime((pointer), name, (specificTime), ##__VA_ARGS__)
+#define WTFBeginSignpostAlwaysWithSpecificTime(pointer, name, specificTime, ...) WTFBeginSignpostWithSpecificTime((pointer), name, (specificTime), ##__VA_ARGS__)
+#define WTFEndSignpostAlwaysWithSpecificTime(pointer, name, specificTime, ...) WTFEndSignpostWithSpecificTime((pointer), name, (specificTime), ##__VA_ARGS__)
 
 #define WTFSetCounter(name, value) \
     do { \
@@ -445,6 +475,14 @@ enum WTFOSSignpostType {
 #define WTFEmitSignpostAlwaysWithTimeDelta(pointer, name, ...) do { } while (0)
 #define WTFBeginSignpostAlwaysWithTimeDelta(pointer, name, ...) do { } while (0)
 #define WTFEndSignpostAlwaysWithTimeDelta(pointer, name, ...) do { } while (0)
+
+#define WTFEmitSignpostWithSpecificTime(pointer, name, ...) do { } while (0)
+#define WTFBeginSignpostWithSpecificTime(pointer, name, ...) do { } while (0)
+#define WTFEndSignpostWithSpecificTime(pointer, name, ...) do { } while (0)
+
+#define WTFEmitSignpostAlwaysWithSpecificTime(pointer, name, ...) do { } while (0)
+#define WTFBeginSignpostAlwaysWithSpecificTime(pointer, name, ...) do { } while (0)
+#define WTFEndSignpostAlwaysWithSpecificTime(pointer, name, ...) do { } while (0)
 
 #define WTFSetCounter(name, value) do { } while (0)
 

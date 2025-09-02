@@ -233,20 +233,19 @@ void GamepadManager::registerDOMWindow(LocalDOMWindow& window)
     m_domWindows.add(window);
 
     // Anytime we register a LocalDOMWindow, we should make sure its NavigatorGamepad is constructed.
-    // Upon construction, it will register the navigator in m_navigators.
     Ref navigator = navigatorGamepadFromDOMWindow(window).navigator();
-    ASSERT(m_navigators.contains(navigator.get()));
-
-    // If this LocalDOMWindow's NavigatorGamepad was already registered but was still blind,
-    // then this LocalDOMWindow should be blind.
-    if (m_gamepadBlindNavigators.contains(navigator.get()))
-        m_gamepadBlindDOMWindows.add(window);
+    if (m_navigators.contains(navigator.get())) {
+        // If this LocalDOMWindow's NavigatorGamepad was already registered but was still blind,
+        // then this LocalDOMWindow should be blind.
+        if (m_gamepadBlindNavigators.contains(navigator.get()))
+            m_gamepadBlindDOMWindows.add(window);
 #if PLATFORM(VISION)
-    else if (m_gamepadQuarantinedNavigators.contains(navigator.get()))
-        m_gamepadQuarantinedDOMWindows.add(window);
+        else if (m_gamepadQuarantinedNavigators.contains(navigator.get()))
+            m_gamepadQuarantinedDOMWindows.add(window);
 #endif
 
-    maybeStartMonitoringGamepads();
+        maybeStartMonitoringGamepads();
+    }
 }
 
 void GamepadManager::unregisterDOMWindow(LocalDOMWindow& window)

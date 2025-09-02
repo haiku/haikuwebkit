@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "AnimationEffect.h"
-#include "AnimationEffectPhase.h"
-#include "RenderStyleConstants.h"
-#include "Styleable.h"
-#include "WebAnimation.h"
+#include <WebCore/AnimationEffect.h>
+#include <WebCore/AnimationEffectPhase.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/Styleable.h>
+#include <WebCore/WebAnimation.h>
 #include <wtf/Ref.h>
 #include <wtf/WeakPtr.h>
 

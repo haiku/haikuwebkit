@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "AnimationTimeline.h"
-#include "Element.h"
-#include "ScrollAxis.h"
-#include "ScrollTimelineOptions.h"
-#include "Styleable.h"
+#include <WebCore/AnimationTimeline.h>
+#include <WebCore/Element.h>
+#include <WebCore/ScrollAxis.h>
+#include <WebCore/ScrollTimelineOptions.h>
+#include <WebCore/Styleable.h>
 #include <wtf/Ref.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/WeakPtr.h>

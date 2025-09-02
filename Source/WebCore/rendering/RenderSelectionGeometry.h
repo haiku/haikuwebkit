@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "GapRects.h"
-#include "RenderBlock.h"
-#include "RenderObject.h"
+#include <WebCore/GapRects.h>
+#include <WebCore/RenderBlock.h>
+#include <WebCore/RenderObject.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

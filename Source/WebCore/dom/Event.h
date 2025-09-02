@@ -23,11 +23,11 @@
 
 #pragma once
 
-#include "DOMHighResTimeStamp.h"
-#include "EventInit.h"
-#include "EventInterfaces.h"
-#include "EventOptions.h"
-#include "ScriptWrappable.h"
+#include <WebCore/DOMHighResTimeStamp.h>
+#include <WebCore/EventInit.h>
+#include <WebCore/EventInterfaces.h>
+#include <WebCore/EventOptions.h>
+#include <WebCore/ScriptWrappable.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/TypeCasts.h>

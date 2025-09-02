@@ -30,9 +30,9 @@
 
 #pragma once
 
-#include "LoaderMalloc.h"
-#include "ResourceLoaderIdentifier.h"
-#include "ScriptExecutionContextIdentifier.h"
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/ResourceLoaderIdentifier.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/WeakPtr.h>
 

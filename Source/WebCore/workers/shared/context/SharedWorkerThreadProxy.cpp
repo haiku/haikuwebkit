@@ -29,6 +29,8 @@
 #include "BadgeClient.h"
 #include "CacheStorageProvider.h"
 #include "Chrome.h"
+#include "Document.h"
+#include "DocumentInlines.h"
 #include "ErrorEvent.h"
 #include "EventLoop.h"
 #include "EventNames.h"

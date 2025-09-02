@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "CachedImageClient.h"
-#include "CachedResourceHandle.h"
-#include "Element.h"
-#include "LoaderMalloc.h"
-#include "NodeInlines.h"
-#include "Timer.h"
+#include <WebCore/CachedImageClient.h>
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/Element.h>
+#include <WebCore/LoaderMalloc.h>
+#include <WebCore/NodeInlines.h>
+#include <WebCore/Timer.h>
 #include <wtf/Vector.h>
 #include <wtf/text/AtomString.h>
 

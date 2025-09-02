@@ -1714,6 +1714,9 @@ standalone enable-if=ENABLE_APPLICATION_MANIFEST
 minimal-ui enable-if=ENABLE_APPLICATION_MANIFEST
 browser enable-if=ENABLE_APPLICATION_MANIFEST
 
+// text-decoration-line
+spelling-error
+
 // text-decoration-thickness, text-underline-offset
 from-font
 

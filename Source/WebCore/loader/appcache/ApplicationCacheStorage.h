@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "SecurityOriginHash.h"
-#include "SQLiteDatabase.h"
+#include <WebCore/SQLiteDatabase.h>
+#include <WebCore/SecurityOriginHash.h>
 #include <wtf/HashCountedSet.h>
 #include <wtf/HashSet.h>
 #include <wtf/text/StringHash.h>

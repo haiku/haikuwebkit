@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "Archive.h"
-#include "FrameIdentifier.h"
-#include "MarkupExclusionRule.h"
+#include <WebCore/Archive.h>
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/MarkupExclusionRule.h>
 #include <wtf/Function.h>
 
 namespace WebCore {

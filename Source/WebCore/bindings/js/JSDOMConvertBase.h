@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "JSDOMConvertResult.h"
-#include "JSDOMExceptionHandling.h"
 #include <JavaScriptCore/Error.h>
+#include <WebCore/JSDOMConvertResult.h>
+#include <WebCore/JSDOMExceptionHandling.h>
 #include <concepts>
 #include <wtf/Compiler.h>
 

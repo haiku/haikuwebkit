@@ -27,13 +27,13 @@
 
 #if PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE)
 
-#include "HTMLMediaElementEnums.h"
-#include "MediaPlayerIdentifier.h"
-#include "PlaybackSessionInterfaceMac.h"
-#include "PlaybackSessionModel.h"
-#include "VideoFullscreenCaptions.h"
-#include "VideoPresentationLayerProvider.h"
-#include "VideoPresentationModel.h"
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/MediaPlayerIdentifier.h>
+#include <WebCore/PlaybackSessionInterfaceMac.h>
+#include <WebCore/PlaybackSessionModel.h>
+#include <WebCore/VideoFullscreenCaptions.h>
+#include <WebCore/VideoPresentationLayerProvider.h>
+#include <WebCore/VideoPresentationModel.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RetainPtr.h>

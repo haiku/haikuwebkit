@@ -123,11 +123,6 @@ void TestController::abortModal()
 {
 }
 
-WKContextRef TestController::platformContext()
-{
-    return m_context.get();
-}
-
 const char* TestController::platformLibraryPathForTesting()
 {
     return nullptr;

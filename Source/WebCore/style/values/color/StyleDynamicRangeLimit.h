@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "StyleDynamicRangeLimitMix.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StyleDynamicRangeLimitMix.h>
+#include <WebCore/StyleValueTypes.h>
 #include <wtf/CompactVariant.h>
 #include <wtf/UniqueRef.h>
 

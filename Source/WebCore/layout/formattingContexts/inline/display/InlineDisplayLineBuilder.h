@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "InlineDisplayLine.h"
-#include "InlineFormattingContext.h"
+#include <WebCore/InlineDisplayLine.h>
+#include <WebCore/InlineFormattingContext.h>
 #include "InlineLineBuilder.h"
 
 namespace WebCore {

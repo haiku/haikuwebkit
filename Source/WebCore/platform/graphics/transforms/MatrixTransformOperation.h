@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "TransformOperation.h"
-#include "TransformationMatrix.h"
+#include <WebCore/TransformOperation.h>
+#include <WebCore/TransformationMatrix.h>
 #include <wtf/Ref.h>
 
 namespace WebCore {

@@ -27,9 +27,9 @@
 
 #if ENABLE(WEB_AUTHN)
 
-#include "AuthenticatorCoordinator.h"
-#include "ExceptionData.h"
-#include "PublicKeyCredential.h"
+#include <WebCore/AuthenticatorCoordinator.h>
+#include <WebCore/ExceptionData.h>
+#include <WebCore/PublicKeyCredential.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/WeakPtr.h>
 

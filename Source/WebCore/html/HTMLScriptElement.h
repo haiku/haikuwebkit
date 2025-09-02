@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "DOMTokenList.h"
-#include "HTMLElement.h"
-#include "ScriptElement.h"
+#include <WebCore/DOMTokenList.h>
+#include <WebCore/HTMLElement.h>
+#include <WebCore/ScriptElement.h>
 
 namespace WebCore {
 

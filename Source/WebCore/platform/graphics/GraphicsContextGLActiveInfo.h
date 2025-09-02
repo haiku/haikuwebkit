@@ -27,7 +27,7 @@
 
 #if ENABLE(WEBGL)
 
-#include "GraphicsTypesGL.h"
+#include <WebCore/GraphicsTypesGL.h>
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {

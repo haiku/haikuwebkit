@@ -41,4 +41,29 @@ WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
 
 @end
 
+typedef NS_ENUM(NSInteger, _WKTextExtractionAction) {
+    _WKTextExtractionActionClick,
+    _WKTextExtractionActionSelectText,
+    _WKTextExtractionActionSelectMenuItem,
+    _WKTextExtractionActionTextInput,
+} WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+
+WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
+WK_SWIFT_UI_ACTOR
+NS_REQUIRES_PROPERTY_DEFINITIONS
+@interface _WKTextExtractionInteraction : NSObject
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithAction:(_WKTextExtractionAction)action NS_DESIGNATED_INITIALIZER;
+
+@property (nonatomic, readonly) _WKTextExtractionAction action;
+@property (nonatomic, copy, nullable) NSString *nodeIdentifier;
+@property (nonatomic, copy, nullable) NSString *text;
+@property (nonatomic) BOOL replaceAll;
+
+// Must be within the visible bounds of the web view.
+@property (nonatomic) CGPoint location;
+
+@end
+
 NS_HEADER_AUDIT_END(nullability, sendability)

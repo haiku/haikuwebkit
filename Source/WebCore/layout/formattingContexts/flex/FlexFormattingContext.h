@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "FlexFormattingConstraints.h"
-#include "FlexFormattingUtils.h"
-#include "FlexLayout.h"
-#include "FlexRect.h"
-#include "LayoutIntegrationUtils.h"
+#include <WebCore/FlexFormattingConstraints.h>
+#include <WebCore/FlexFormattingUtils.h>
+#include <WebCore/FlexLayout.h>
+#include <WebCore/FlexRect.h>
+#include <WebCore/LayoutIntegrationUtils.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

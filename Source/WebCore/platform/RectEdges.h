@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "BoxSides.h"
-#include "WritingMode.h"
+#include <WebCore/BoxSides.h>
+#include <WebCore/WritingMode.h>
 #include <array>
 #include <concepts>
 #include <wtf/OptionSet.h>

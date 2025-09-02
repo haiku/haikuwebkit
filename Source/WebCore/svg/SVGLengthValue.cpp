@@ -23,94 +23,31 @@
 #include "SVGLengthValue.h"
 
 #include "AnimationUtilities.h"
-#include "CSSPrimitiveValue.h"
+#include "CSSParserContext.h"
+#include "CSSParserTokenRange.h"
+#include "CSSPrimitiveNumericTypes+Serialization.h"
+#include "CSSPropertyParserConsumer+LengthPercentageDefinitions.h"
+#include "CSSPropertyParserConsumer+MetaConsumer.h"
+#include "CSSPropertyParserConsumer+NumberDefinitions.h"
+#include "CSSTokenizer.h"
 #include "ExceptionOr.h"
 #include "SVGElement.h"
 #include "SVGLengthContext.h"
-#include "SVGParserUtilities.h"
 #include "SVGParsingError.h"
 #include <wtf/TZoneMallocInlines.h>
-#include <wtf/text/FastCharacterComparison.h>
 #include <wtf/text/MakeString.h>
-#include <wtf/text/StringParsingBuffer.h>
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGLengthValue);
 
-static inline ASCIILiteral lengthTypeToString(SVGLengthType lengthType)
+static float adjustValueForPercentageStorage(float value, SVGLengthType type)
 {
-    switch (lengthType) {
-    case SVGLengthType::Unknown:
-    case SVGLengthType::Number:
-        return ""_s;
-    case SVGLengthType::Percentage:
-        return "%"_s;
-    case SVGLengthType::Ems:
-        return "em"_s;
-    case SVGLengthType::Exs:
-        return "ex"_s;
-    case SVGLengthType::Pixels:
-        return "px"_s;
-    case SVGLengthType::Centimeters:
-        return "cm"_s;
-    case SVGLengthType::Millimeters:
-        return "mm"_s;
-    case SVGLengthType::Inches:
-        return "in"_s;
-    case SVGLengthType::Points:
-        return "pt"_s;
-    case SVGLengthType::Picas:
-        return "pc"_s;
-    case SVGLengthType::Lh:
-        return "lh"_s;
-    case SVGLengthType::Ch:
-        return "ch"_s;
-    }
-
-    ASSERT_NOT_REACHED();
-    return ""_s;
-}
-
-template<typename CharacterType> static inline SVGLengthType parseLengthType(StringParsingBuffer<CharacterType>& buffer)
-{
-    if (buffer.atEnd())
-        return SVGLengthType::Number;
-
-    auto firstCharacterPosition = buffer.position();
-    buffer.advance();
-
-    if (buffer.atEnd())
-        return *firstCharacterPosition == '%' ? SVGLengthType::Percentage : SVGLengthType::Unknown;
-
-    buffer.advance();
-
-    if (!buffer.atEnd())
-        return SVGLengthType::Unknown;
-
-    if (compareCharacters(firstCharacterPosition, 'e', 'm'))
-        return SVGLengthType::Ems;
-    if (compareCharacters(firstCharacterPosition, 'e', 'x'))
-        return SVGLengthType::Exs;
-    if (compareCharacters(firstCharacterPosition, 'p', 'x'))
-        return SVGLengthType::Pixels;
-    if (compareCharacters(firstCharacterPosition, 'c', 'm'))
-        return SVGLengthType::Centimeters;
-    if (compareCharacters(firstCharacterPosition, 'm', 'm'))
-        return SVGLengthType::Millimeters;
-    if (compareCharacters(firstCharacterPosition, 'i', 'n'))
-        return SVGLengthType::Inches;
-    if (compareCharacters(firstCharacterPosition, 'p', 't'))
-        return SVGLengthType::Points;
-    if (compareCharacters(firstCharacterPosition, 'p', 'c'))
-        return SVGLengthType::Picas;
-    if (compareCharacters(firstCharacterPosition, 'l', 'h'))
-        return SVGLengthType::Lh;
-    if (compareCharacters(firstCharacterPosition, 'c', 'h'))
-        return SVGLengthType::Ch;
-
-    return SVGLengthType::Unknown;
+    // 100% = 100.0 instead of 1.0 for historical reasons, this could eventually be changed
+    if (type == SVGLengthType::Percentage)
+        return value / 100;
+    return value;
 }
 
 static inline SVGLengthType primitiveTypeToLengthType(CSSUnitType primitiveType)
@@ -184,22 +121,44 @@ static inline CSSUnitType lengthTypeToPrimitiveType(SVGLengthType lengthType)
     return CSSUnitType::CSS_UNKNOWN;
 }
 
+static Variant<CSS::Number<>, CSS::LengthPercentage<>> createVariantForLengthType(float value, SVGLengthType lengthType)
+{
+    if (lengthType == SVGLengthType::Number)
+        return CSS::Number<>(value);
+
+    if (lengthType == SVGLengthType::Unknown) {
+        // For unknown types (like container units), fall back to Number
+        // FIXME: Add support for container units
+        return CSS::Number<>(value);
+    }
+
+    auto unitType = lengthTypeToPrimitiveType(lengthType);
+    auto unit = CSS::toLengthPercentageUnit(unitType);
+
+    if (!unit) {
+        ASSERT_NOT_REACHED();
+        return CSS::Number<>(value);
+    }
+
+    return CSS::LengthPercentage<>(*unit, value);
+}
+
+
 SVGLengthValue::SVGLengthValue(SVGLengthMode lengthMode, const String& valueAsString)
-    : m_lengthMode(lengthMode)
+    : m_value(CSS::Number<>(0))
+    , m_lengthMode(lengthMode)
 {
     setValueAsString(valueAsString);
 }
 
 SVGLengthValue::SVGLengthValue(float valueInSpecifiedUnits, SVGLengthType lengthType, SVGLengthMode lengthMode)
-    : m_valueInSpecifiedUnits(valueInSpecifiedUnits)
-    , m_lengthType(lengthType)
+    : m_value(createVariantForLengthType(valueInSpecifiedUnits, lengthType))
     , m_lengthMode(lengthMode)
 {
-    ASSERT(m_lengthType != SVGLengthType::Unknown);
 }
 
 SVGLengthValue::SVGLengthValue(const SVGLengthContext& context, float value, SVGLengthType lengthType, SVGLengthMode lengthMode)
-    : m_lengthType(lengthType)
+    : m_value(createVariantForLengthType(0, lengthType))
     , m_lengthMode(lengthMode)
 {
     setValue(context, value);
@@ -260,45 +219,64 @@ SVGLengthValue SVGLengthValue::blend(const SVGLengthValue& from, const SVGLength
     return { WebCore::blend(fromValue.releaseReturnValue(), toValue, { progress }), to.lengthType() };
 }
 
-SVGLengthValue SVGLengthValue::fromCSSPrimitiveValue(const CSSPrimitiveValue& value, const CSSToLengthConversionData& conversionData, ShouldConvertNumberToPxLength shouldConvertNumberToPxLength)
-{
-    auto primitiveType = value.primitiveType();
-    if (primitiveType == CSSUnitType::CSS_NUMBER && shouldConvertNumberToPxLength == ShouldConvertNumberToPxLength::Yes)
-        return { value.resolveAsNumber<float>(conversionData), SVGLengthType::Pixels };
-
-    switch (primitiveTypeToLengthType(primitiveType)) {
-    case SVGLengthType::Unknown:
-        return { };
-    case SVGLengthType::Number:
-        return { value.resolveAsNumber<float>(conversionData), SVGLengthType::Number };
-    case SVGLengthType::Percentage:
-        return { value.resolveAsPercentage<float>(conversionData), SVGLengthType::Percentage };
-    default:
-        return { value.resolveAsLength<float>(conversionData), SVGLengthType::Pixels };
-    }
-
-    ASSERT_NOT_REACHED();
-    return { };
-}
-
-Ref<CSSPrimitiveValue> SVGLengthValue::toCSSPrimitiveValue(const Element* element) const
-{
-    if (RefPtr svgElement = dynamicDowncast<SVGElement>(element)) {
-        SVGLengthContext context { svgElement.get() };
-        auto computedValue = context.convertValueToUserUnits(valueInSpecifiedUnits(), lengthType(), lengthMode());
-        if (!computedValue.hasException())
-            return CSSPrimitiveValue::create(computedValue.releaseReturnValue(), CSSUnitType::CSS_PX);
-    }
-
-    return CSSPrimitiveValue::create(valueInSpecifiedUnits(), lengthTypeToPrimitiveType(lengthType()));
-}
-
 ExceptionOr<void> SVGLengthValue::setValueAsString(StringView valueAsString, SVGLengthMode lengthMode)
 {
-    m_valueInSpecifiedUnits = 0;
     m_lengthMode = lengthMode;
-    m_lengthType = SVGLengthType::Number;
     return setValueAsString(valueAsString);
+}
+
+SVGLengthType SVGLengthValue::lengthType() const
+{
+    return WTF::switchOn(m_value,
+        [](const CSS::Number<>&) -> SVGLengthType {
+            return SVGLengthType::Number;
+        },
+        [](const CSS::LengthPercentage<>& length) -> SVGLengthType {
+            if (auto raw = length.raw())
+                return primitiveTypeToLengthType(toCSSUnitType(raw->unit));
+
+            return SVGLengthType::Unknown;
+        }
+    );
+}
+
+bool SVGLengthValue::isZero() const
+{
+    return WTF::switchOn(m_value,
+        [](const auto& value) {
+            return value.isKnownZero();
+        }
+    );
+}
+
+bool SVGLengthValue::isRelative() const
+{
+    return WTF::switchOn(m_value,
+        [](const CSS::Number<>&) {
+            return false;
+        },
+        [](const CSS::LengthPercentage<>& length) {
+            if (auto raw = length.raw()) {
+                using Unit = CSS::LengthPercentageUnit;
+                switch (raw->unit) {
+                case Unit::Percentage:
+                case Unit::Em:
+                case Unit::Ex:
+                case Unit::Ch:
+                case Unit::Lh:
+                case Unit::Rem:
+                case Unit::Rex:
+                case Unit::Rlh:
+                case Unit::Rch:
+                    return true;
+                default:
+                    return false;
+                }
+            }
+
+            return false;
+        }
+    );
 }
 
 float SVGLengthValue::value(const SVGLengthContext& context) const
@@ -309,31 +287,122 @@ float SVGLengthValue::value(const SVGLengthContext& context) const
     return result.releaseReturnValue();
 }
 
+float SVGLengthValue::valueAsPercentage() const
+{
+    return WTF::switchOn(m_value,
+        [](const CSS::Number<>& number) -> float {
+            if (auto raw = number.raw())
+                return raw->value;
+
+            return 0.0f;
+        },
+        [](const CSS::LengthPercentage<>& length) -> float {
+            if (auto raw = length.raw()) {
+                if (raw->unit == CSS::LengthPercentageUnit::Percentage)
+                    return raw->value / 100.0f;
+
+                return raw->value;
+            }
+
+            return 0.0f;
+        }
+    );
+}
+
+float SVGLengthValue::valueInSpecifiedUnits() const
+{
+    // Per SVG spec: return 0 for non-scalar values like calc()
+    // https://svgwg.org/svg2-draft/types.html#__svg__SVGLength__valueInSpecifiedUnits
+
+    return WTF::switchOn(m_value,
+        [](const auto& value) {
+            if (auto raw = value.raw())
+                return clampTo<float>(raw->value);
+
+            return 0.f;
+        }
+    );
+}
+
 String SVGLengthValue::valueAsString() const
 {
-    return makeString(m_valueInSpecifiedUnits, lengthTypeToString(m_lengthType));
+    return WTF::switchOn(m_value,
+        [](const auto& value) {
+            if (auto raw = value.raw()) {
+                // FIXME: Handle calc() expressions and consider exponential notation for very large/small values
+                float numericValue = clampTo<float>(raw->value);
+                return formatCSSNumberValue(CSS::SerializableNumber { numericValue, CSS::unitString(raw->unit) });
+            }
+
+            return String();
+        }
+    );
 }
 
 AtomString SVGLengthValue::valueAsAtomString() const
 {
-    return makeAtomString(m_valueInSpecifiedUnits, lengthTypeToString(m_lengthType));
+    return makeAtomString(valueAsString());
 }
 
 ExceptionOr<float> SVGLengthValue::valueForBindings(const SVGLengthContext& context) const
 {
-    return context.convertValueToUserUnits(m_valueInSpecifiedUnits, m_lengthType, m_lengthMode);
+    return WTF::switchOn(m_value,
+        [&](const CSS::Number<>& number) -> ExceptionOr<float> {
+            if (auto raw = number.raw())
+                return context.convertValueToUserUnits(raw->value, SVGLengthType::Number, m_lengthMode);
+
+            return Exception { ExceptionCode::NotFoundError };
+        },
+        [&](const CSS::LengthPercentage<>& length) -> ExceptionOr<float> {
+            if (length.isCalc())
+                return Exception { ExceptionCode::NotSupportedError };
+
+            if (auto raw = length.raw()) {
+                auto lengthType = primitiveTypeToLengthType(toCSSUnitType(raw->unit));
+                return context.convertValueToUserUnits(raw->value, lengthType, m_lengthMode);
+            }
+
+            return Exception { ExceptionCode::NotFoundError };
+        }
+    );
+}
+
+void SVGLengthValue::setValueInSpecifiedUnits(float value)
+{
+    m_value = WTF::switchOn(m_value,
+        [&](const CSS::Number<>&) -> decltype(m_value) {
+            return CSS::Number<>(value);
+        },
+        [&](const CSS::LengthPercentage<>& current) -> decltype(m_value) {
+            if (auto raw = current.raw())
+                return CSS::LengthPercentage<>(raw->unit, value);
+
+            return CSS::Number<>(value);
+        }
+    );
 }
 
 ExceptionOr<void> SVGLengthValue::setValue(const SVGLengthContext& context, float value)
 {
-    // 100% = 100.0 instead of 1.0 for historical reasons, this could eventually be changed
-    if (m_lengthType == SVGLengthType::Percentage)
-        value = value / 100;
+    auto svgLengthType = lengthType();
+    auto adjustedValue = adjustValueForPercentageStorage(value, svgLengthType);
 
-    auto convertedValue = context.convertValueFromUserUnits(value, m_lengthType, m_lengthMode);
+    auto convertedValue = context.convertValueFromUserUnits(adjustedValue, svgLengthType, m_lengthMode);
     if (convertedValue.hasException())
         return convertedValue.releaseException();
-    m_valueInSpecifiedUnits = convertedValue.releaseReturnValue();
+
+    m_value = WTF::switchOn(m_value,
+        [&](const CSS::Number<>&) -> decltype(m_value) {
+            return CSS::Number<>(convertedValue.releaseReturnValue());
+        },
+        [&](const CSS::LengthPercentage<>& current) -> decltype(m_value) {
+            if (auto raw = current.raw())
+                return CSS::LengthPercentage<>(raw->unit, convertedValue.releaseReturnValue());
+
+            return CSS::Number<>(convertedValue.releaseReturnValue());
+        }
+    );
+
     return { };
 }
 
@@ -341,7 +410,8 @@ ExceptionOr<void> SVGLengthValue::setValue(const SVGLengthContext& context, floa
 {
     // FIXME: Seems like a bug that we change the value of m_unit even if setValue throws an exception.
     m_lengthMode = lengthMode;
-    m_lengthType = lengthType;
+    m_value = createVariantForLengthType(value, lengthType);
+
     return setValue(context, value);
 }
 
@@ -350,35 +420,74 @@ ExceptionOr<void> SVGLengthValue::setValueAsString(StringView string)
     if (string.isEmpty())
         return { };
 
-    return readCharactersForParsing(string, [&](auto buffer) -> ExceptionOr<void> {
-        auto convertedNumber = parseNumber(buffer, SuffixSkippingPolicy::DontSkip);
-        if (!convertedNumber)
+    // FIXME: Allow leading and trailing whitespace in SVG attributes
+    // using <integer>, <angle>, <number>, <length>, and <percentage>
+    // rdar://115963075
+    if (isASCIIWhitespace(string[string.length() - 1]))
+        return Exception { ExceptionCode::SyntaxError };
+
+    // CSS::Range only clamps to boundaries, but we historically handled
+    // overflow values like "-45e58" to 0 instead of FLT_MAX.
+    // FIXME: Consider setting to a proper value
+    auto isFloatOverflow = [](const auto& parsedValue) {
+        if (auto raw = parsedValue.raw()) {
+            double value = raw->value;
+            return value > FLT_MAX || value < -FLT_MAX;
+        }
+        return true;
+    };
+
+    auto parserContext = CSSParserContext { SVGAttributeMode };
+    auto parserState = CSS::PropertyParserState {
+        .context = parserContext
+    };
+
+    String newString = string.toString();
+    CSSTokenizer tokenizer(newString);
+    auto tokenRange = tokenizer.tokenRange();
+
+    if (auto number = CSSPropertyParserHelpers::MetaConsumer<CSS::Number<>>::consume(tokenRange, parserState, { })) {
+        if (!tokenRange.atEnd())
             return Exception { ExceptionCode::SyntaxError };
 
-        auto lengthType = parseLengthType(buffer);
-        if (lengthType == SVGLengthType::Unknown)
-            return Exception { ExceptionCode::SyntaxError };
+        m_value = isFloatOverflow(*number) ? CSS::Number<>(0) : WTFMove(*number);
 
-        m_lengthType = lengthType;
-        m_valueInSpecifiedUnits = *convertedNumber;
         return { };
-    });
+    }
+
+    tokenRange = tokenizer.tokenRange();
+    if (auto length = CSSPropertyParserHelpers::MetaConsumer<CSS::LengthPercentage<>>::consume(tokenRange, parserState, { })) {
+        if (!tokenRange.atEnd())
+            return Exception { ExceptionCode::SyntaxError };
+
+        // FIXME: Add support for calculated lengths.
+        if (length->isCalc())
+            return Exception { ExceptionCode::SyntaxError };
+
+        m_value = WTFMove(*length);
+
+        return { };
+    }
+
+    return Exception { ExceptionCode::SyntaxError };
 }
 
-ExceptionOr<void> SVGLengthValue::convertToSpecifiedUnits(const SVGLengthContext& context, SVGLengthType lengthType)
+ExceptionOr<void> SVGLengthValue::convertToSpecifiedUnits(const SVGLengthContext& context, SVGLengthType targetType)
 {
     auto valueInUserUnits = valueForBindings(context);
     if (valueInUserUnits.hasException())
         return valueInUserUnits.releaseException();
 
-    auto originalLengthType = m_lengthType;
-    m_lengthType = lengthType;
-    auto result = setValue(context, valueInUserUnits.releaseReturnValue());
-    if (!result.hasException())
-        return { };
+    auto convertedValue = context.convertValueFromUserUnits(valueInUserUnits.releaseReturnValue(), targetType, m_lengthMode);
 
-    m_lengthType = originalLengthType;
-    return result.releaseException();
+    if (convertedValue.hasException())
+        return convertedValue.releaseException();
+
+    float adjustedValue = adjustValueForPercentageStorage(convertedValue.releaseReturnValue(), targetType);
+
+    m_value = createVariantForLengthType(adjustedValue, targetType);
+
+    return { };
 }
 
 TextStream& operator<<(TextStream& ts, const SVGLengthValue& length)

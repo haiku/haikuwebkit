@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "ScrollTypes.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/ScrollTypes.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

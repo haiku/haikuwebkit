@@ -35,6 +35,7 @@
 #include "RemoteDOMWindow.h"
 #include "RemoteFrameClient.h"
 #include "RemoteFrameView.h"
+#include "SecurityOrigin.h"
 #include <wtf/CompletionHandler.h>
 
 namespace WebCore {
@@ -174,6 +175,14 @@ void RemoteFrame::updateScrollingMode()
 RefPtr<SecurityOrigin> RemoteFrame::frameDocumentSecurityOrigin() const
 {
     return frameTreeSyncData().frameDocumentSecurityOrigin;
+}
+
+const SecurityOrigin& RemoteFrame::frameDocumentSecurityOriginOrOpaque() const
+{
+    RefPtr securityOrigin = frameDocumentSecurityOrigin();
+    if (securityOrigin)
+        return *securityOrigin;
+    return SecurityOrigin::opaqueOrigin();
 }
 
 AutoplayPolicy RemoteFrame::autoplayPolicy() const

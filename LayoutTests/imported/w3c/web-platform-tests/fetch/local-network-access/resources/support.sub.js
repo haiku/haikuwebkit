@@ -1,3 +1,8 @@
+// Enable Local Network Access for testing
+if (window.testRunner) {
+    testRunner.overridePreference("LocalNetworkAccessEnabled", "1");
+}
+
 // Maps protocol (without the trailing colon) and address space to port.
 //
 // TODO(crbug.com/418737577): change keys to be consistent with new address
@@ -5,6 +10,7 @@
 const SERVER_PORTS = {
   "http": {
     "loopback": {{ports[http][0]}},
+    "other-loopback": {{ports[http][1]}},
     "local": {{ports[http-local][0]}},
     "public": {{ports[http-public][0]}},
   },
@@ -57,6 +63,7 @@ class Server {
   }
 
   static HTTP_LOOPBACK = Server.get("http", "loopback");
+  static OTHER_HTTP_LOOPBACK = Server.get("http", "other-loopback");
   static HTTP_LOCAL = Server.get("http", "local");
   static HTTP_PUBLIC = Server.get("http", "public");
   static HTTPS_LOOPBACK = Server.get("https", "loopback");
@@ -186,4 +193,67 @@ function checkTestResult(actual, expected) {
   if (expected.type !== undefined) {
     assert_equals(type, expected.type, "response type mismatch");
   }
+}
+
+// Registers an event listener that will resolve this promise when this
+// window receives a message posted to it.
+function futureMessage(options) {
+  return new Promise(resolve => {
+    window.addEventListener('message', (e) => {
+      resolve(e.data);
+    });
+  });
+};
+
+const NavigationTestResult = {
+  SUCCESS: 'loaded',
+  FAILURE: 'timeout',
+};
+
+async function iframeTest(
+    t, {source, target, expected, permission = 'denied'}) {
+  const targetUrl =
+      resolveUrl('resources/openee.html', sourceResolveOptions(target));
+
+  const sourceUrl =
+      resolveUrl('resources/iframer.html', sourceResolveOptions(source));
+  sourceUrl.searchParams.set('permission', permission);
+  sourceUrl.searchParams.set('url', targetUrl);
+
+  const popup = window.open(sourceUrl);
+  t.add_cleanup(() => popup.close());
+
+  // The child frame posts a message iff it loads successfully.
+  // There exists no interoperable way to check whether an iframe failed to
+  // load, so we use a timeout.
+  // See: https://github.com/whatwg/html/issues/125
+  const result = await Promise.race([
+    futureMessage().then((data) => data.message),
+    new Promise((resolve) => {
+      t.step_timeout(() => resolve('timeout'), 2000 /* ms */);
+    }),
+  ]);
+
+  assert_equals(result, expected);
+}
+
+async function navigateTest(t, {source, target, expected}) {
+  const targetUrl =
+      resolveUrl('resources/openee.html', sourceResolveOptions(target));
+
+  const sourceUrl =
+      resolveUrl('resources/navigate.html', sourceResolveOptions(source));
+  sourceUrl.searchParams.set('url', targetUrl);
+
+  const popup = window.open(sourceUrl);
+  t.add_cleanup(() => popup.close());
+
+  const result = await Promise.race([
+    futureMessage().then((data) => data.message),
+    new Promise((resolve) => {
+      t.step_timeout(() => resolve('timeout'), 2000 /* ms */);
+    }),
+  ]);
+
+  assert_equals(result, expected);
 }

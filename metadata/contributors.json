@@ -5441,7 +5441,7 @@
       ],
       "github" : "lilyspiniolas",
       "name" : "Lily Spiniolas",
-      "status" : "committer"
+      "status" : "reviewer"
    },
    {
       "emails" : [
@@ -7702,6 +7702,7 @@
    },
    {
       "emails" : [
+         "sosuke@bun.sh",
          "aosukeke@gmail.com"
       ],
       "github" : "sosukesuzuki",

@@ -27,10 +27,10 @@
 
 #if PLATFORM(COCOA)
 
-#include "NullPlaybackSessionInterface.h"
-#include "VideoFullscreenCaptions.h"
-#include "VideoPresentationLayerProvider.h"
-#include "VideoPresentationModel.h"
+#include <WebCore/NullPlaybackSessionInterface.h>
+#include <WebCore/VideoFullscreenCaptions.h>
+#include <WebCore/VideoPresentationLayerProvider.h>
+#include <WebCore/VideoPresentationModel.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "LayoutElementBox.h"
-#include "StyleFlexBasis.h"
+#include <WebCore/LayoutElementBox.h>
+#include <WebCore/StyleFlexBasis.h>
 
 namespace WebCore {
 namespace Layout {

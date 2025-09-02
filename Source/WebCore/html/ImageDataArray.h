@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "ImageDataStorageFormat.h"
 #include <JavaScriptCore/Float16Array.h>
 #include <JavaScriptCore/Uint8ClampedArray.h>
+#include <WebCore/ImageDataStorageFormat.h>
 #include <optional>
 #include <wtf/JSONValues.h>
 

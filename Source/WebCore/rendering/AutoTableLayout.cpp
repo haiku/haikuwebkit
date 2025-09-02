@@ -76,6 +76,9 @@ void AutoTableLayout::recalcColumn(unsigned effCol)
                 columnLayout.minLogicalWidth = std::max(columnLayout.minLogicalWidth, 0.f);
                 columnLayout.maxLogicalWidth = std::max(columnLayout.maxLogicalWidth, 0.f);
 
+                if (cell->isOrthogonal())
+                    cell->clearIntrinsicPadding();
+
                 if (cell->colSpan() == 1) {
                     columnLayout.minLogicalWidth = std::max(cell->minLogicalWidthForColumnSizing().ceilToFloat(), columnLayout.minLogicalWidth);
                     float maxPreferredWidth = cell->maxLogicalWidthForColumnSizing().ceilToFloat();
@@ -300,6 +303,8 @@ float AutoTableLayout::calcEffectiveLogicalWidth()
 
         unsigned effCol = m_table->colToEffCol(cell->col());
         size_t lastCol = effCol;
+        if (cell->isOrthogonal())
+            cell->clearIntrinsicPadding();
         float cellMinLogicalWidth = cell->minLogicalWidthForColumnSizing() + spacingInRowDirection;
         float cellMaxLogicalWidth = cell->maxLogicalWidthForColumnSizing() + spacingInRowDirection;
         float totalPercent = 0;

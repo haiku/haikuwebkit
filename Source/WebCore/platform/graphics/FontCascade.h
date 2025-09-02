@@ -24,12 +24,12 @@
 
 #pragma once
 
-#include "FloatSegment.h"
-#include "Font.h"
-#include "FontCascadeDescription.h"
-#include "FontCascadeFonts.h"
-#include "Path.h"
-#include "TextSpacing.h"
+#include <WebCore/FloatSegment.h>
+#include <WebCore/Font.h>
+#include <WebCore/FontCascadeDescription.h>
+#include <WebCore/FontCascadeFonts.h>
+#include <WebCore/Path.h>
+#include <WebCore/TextSpacing.h>
 #include <optional>
 #include <wtf/CheckedRef.h>
 #include <wtf/HashSet.h>

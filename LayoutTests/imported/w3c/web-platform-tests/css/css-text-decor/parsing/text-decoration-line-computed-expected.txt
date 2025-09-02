@@ -15,6 +15,6 @@ PASS Property text-decoration-line value 'underline overline blink'
 PASS Property text-decoration-line value 'underline line-through blink'
 PASS Property text-decoration-line value 'overline line-through blink'
 PASS Property text-decoration-line value 'underline overline line-through blink'
-FAIL Property text-decoration-line value 'spelling-error' assert_true: 'spelling-error' is a supported value for text-decoration-line. expected true got false
+PASS Property text-decoration-line value 'spelling-error'
 FAIL Property text-decoration-line value 'grammar-error' assert_true: 'grammar-error' is a supported value for text-decoration-line. expected true got false
 

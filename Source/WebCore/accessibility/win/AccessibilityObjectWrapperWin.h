@@ -30,26 +30,30 @@
 
 namespace WebCore {
 
-    class AccessibilityObject;
+class AccessibilityObject;
 
-    class AccessibilityObjectWrapper : public IUnknown {
-    public:
-        // IUnknown
-        virtual HRESULT STDMETHODCALLTYPE QueryInterface(_In_ REFIID riid, _COM_Outptr_ void** ppvObject) = 0;
-        virtual ULONG STDMETHODCALLTYPE AddRef() = 0;
-        virtual ULONG STDMETHODCALLTYPE Release(void) = 0;
+class AccessibilityObjectWrapper : public IUnknown {
+public:
+    // IUnknown
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(_In_ REFIID riid, _COM_Outptr_ void** ppvObject) = 0;
+    virtual ULONG STDMETHODCALLTYPE AddRef() = 0;
+    virtual ULONG STDMETHODCALLTYPE Release(void) = 0;
 
-        virtual void detach() = 0;
-        bool attached() const { return m_object; }
-        AccessibilityObject* accessibilityObject() const { return m_object; }
+    virtual void detach() = 0;
+    bool attached() const { return m_object; }
+    AccessibilityObject* accessibilityObject() const { return m_object; }
 
-        WEBCORE_EXPORT void accessibilityAttributeValue(const AtomString&, VARIANT*);
+    WEBCORE_EXPORT void accessibilityAttributeValue(const AtomString&, VARIANT*);
 
-    protected:
-        AccessibilityObjectWrapper(AccessibilityObject* obj) : m_object(obj) { }
-        AccessibilityObjectWrapper() : m_object(nullptr) { }
+protected:
+    AccessibilityObjectWrapper(AccessibilityObject* obj)
+        : m_object(obj)
+    { }
+    AccessibilityObjectWrapper()
+        : m_object(nullptr)
+    { }
 
-        AccessibilityObject* m_object;
-    };
+    AccessibilityObject* m_object;
+};
 
 } // namespace WebCore

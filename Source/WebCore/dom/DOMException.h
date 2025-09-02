@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "ExceptionCode.h"
+#include <WebCore/ExceptionCode.h>
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {

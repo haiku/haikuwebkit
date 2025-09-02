@@ -27,8 +27,8 @@
 
 #if ENABLE(MEDIA_SOURCE)
 
-#include "MediaPromiseTypes.h"
-#include "PlatformTimeRanges.h"
+#include <WebCore/MediaPromiseTypes.h>
+#include <WebCore/PlatformTimeRanges.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/Logger.h>

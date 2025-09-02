@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "RenderBoxModelObject.h"
-#include "RenderLineBoxList.h"
+#include <WebCore/RenderBoxModelObject.h>
+#include <WebCore/RenderLineBoxList.h>
 
 namespace WebCore {
 

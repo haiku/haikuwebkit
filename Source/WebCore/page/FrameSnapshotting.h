@@ -29,10 +29,10 @@
 
 #pragma once
 
-#include "Color.h"
-#include "DestinationColorSpace.h"
-#include "ImageBufferPixelFormat.h"
-#include "SimpleRange.h"
+#include <WebCore/Color.h>
+#include <WebCore/DestinationColorSpace.h>
+#include <WebCore/ImageBufferPixelFormat.h>
+#include <WebCore/SimpleRange.h>
 #include <memory>
 #include <wtf/OptionSet.h>
 

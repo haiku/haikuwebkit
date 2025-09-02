@@ -24,17 +24,17 @@
  */
 
 #import "config.h"
-#import "AccessibilityCommonCocoa.h"
-
-#import "AccessibilityNotificationHandler.h"
 #import "AccessibilityUIElement.h"
+
+#import "AccessibilityCommonCocoa.h"
+#import "AccessibilityNotificationHandler.h"
 #import "InjectedBundle.h"
 #import "InjectedBundlePage.h"
 #import "JSBasics.h"
 #import <AppKit/NSAccessibility.h>
 #import <Foundation/Foundation.h>
-#import <JavaScriptCore/JSStringRefCF.h>
 #import <JavaScriptCore/JSObjectRef.h>
+#import <JavaScriptCore/JSStringRefCF.h>
 #import <WebCore/DateComponents.h>
 #import <WebKit/WKBundleFrame.h>
 #import <wtf/RetainPtr.h>
@@ -294,10 +294,10 @@ static JSRetainPtr<JSStringRef> descriptionOfElements(const Vector<RefPtr<Access
 static NSDictionary *selectTextParameterizedAttributeForCriteria(JSContextRef context, JSStringRef ambiguityResolution, JSValueRef searchStrings, JSStringRef replacementString, JSStringRef activity)
 {
     NSMutableDictionary *parameterizedAttribute = [NSMutableDictionary dictionary];
-    
+
     if (ambiguityResolution)
         [parameterizedAttribute setObject:[NSString stringWithJSStringRef:ambiguityResolution] forKey:@"AXSelectTextAmbiguityResolution"];
-    
+
     if (searchStrings) {
         NSMutableArray *searchStringsParameter = [NSMutableArray array];
         if (JSValueIsString(context, searchStrings))
@@ -310,16 +310,16 @@ static NSDictionary *selectTextParameterizedAttributeForCriteria(JSContextRef co
         }
         [parameterizedAttribute setObject:searchStringsParameter forKey:@"AXSelectTextSearchStrings"];
     }
-    
+
     if (replacementString) {
         [parameterizedAttribute setObject:@"AXSelectTextActivityFindAndReplace" forKey:@"AXSelectTextActivity"];
         [parameterizedAttribute setObject:[NSString stringWithJSStringRef:replacementString] forKey:@"AXSelectTextReplacementString"];
     } else
         [parameterizedAttribute setObject:@"AXSelectTextActivityFindAndSelect" forKey:@"AXSelectTextActivity"];
-    
+
     if (activity)
         [parameterizedAttribute setObject:[NSString stringWithJSStringRef:activity] forKey:@"AXSelectTextActivity"];
-    
+
     return parameterizedAttribute;
 }
 
@@ -1120,7 +1120,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::helpText() const
     auto description = descriptionOfValue(attributeValue(NSAccessibilityHelpAttribute).get());
     return concatenateAttributeAndValue(@"AXHelp", description.get());
     END_AX_OBJC_EXCEPTIONS
-    
+
     return nullptr;
 }
 
@@ -1148,7 +1148,7 @@ double AccessibilityUIElement::x()
 {
     BEGIN_AX_OBJC_EXCEPTIONS
     auto positionValue = attributeValue(NSAccessibilityPositionAttribute);
-    return static_cast<double>([positionValue pointValue].x);    
+    return static_cast<double>([positionValue pointValue].x);
     END_AX_OBJC_EXCEPTIONS
 
     return 0.0f;
@@ -1158,7 +1158,7 @@ double AccessibilityUIElement::y()
 {
     BEGIN_AX_OBJC_EXCEPTIONS
     auto positionValue = attributeValue(NSAccessibilityPositionAttribute);
-    return static_cast<double>([positionValue pointValue].y);    
+    return static_cast<double>([positionValue pointValue].y);
     END_AX_OBJC_EXCEPTIONS
 
     return 0.0f;
@@ -1188,7 +1188,7 @@ double AccessibilityUIElement::clickPointX()
 {
     BEGIN_AX_OBJC_EXCEPTIONS
     auto positionValue = attributeValue(@"AXClickPoint");
-    return static_cast<double>([positionValue pointValue].x);        
+    return static_cast<double>([positionValue pointValue].x);
     END_AX_OBJC_EXCEPTIONS
 
     return 0.0f;
@@ -1257,7 +1257,7 @@ int AccessibilityUIElement::insertionPointLineNumber()
     BEGIN_AX_OBJC_EXCEPTIONS
     auto value = attributeValue(NSAccessibilityInsertionPointLineNumberAttribute);
     if ([value isKindOfClass:[NSNumber class]])
-        return [(NSNumber *)value intValue]; 
+        return [(NSNumber *)value intValue];
     END_AX_OBJC_EXCEPTIONS
 
     return -1;
@@ -1374,7 +1374,7 @@ int AccessibilityUIElement::hierarchicalLevel() const
 
     return 0;
 }
-    
+
 JSRetainPtr<JSStringRef> AccessibilityUIElement::classList() const
 {
     BEGIN_AX_OBJC_EXCEPTIONS
@@ -1439,7 +1439,7 @@ int AccessibilityUIElement::lineForIndex(int index)
     BEGIN_AX_OBJC_EXCEPTIONS
     auto value = attributeValueForParameter(NSAccessibilityLineForIndexParameterizedAttribute, @(index));
     if ([value isKindOfClass:[NSNumber class]])
-        return [(NSNumber *)value intValue]; 
+        return [(NSNumber *)value intValue];
     END_AX_OBJC_EXCEPTIONS
 
     return -1;
@@ -1477,9 +1477,9 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::boundsForRange(unsigned locatio
     NSRange range = NSMakeRange(location, length);
     BEGIN_AX_OBJC_EXCEPTIONS
     auto value = attributeValueForParameter(NSAccessibilityBoundsForRangeParameterizedAttribute, [NSValue valueWithRange:range]);
-    NSRect rect = NSMakeRect(0,0,0,0);
+    NSRect rect = NSMakeRect(0, 0, 0, 0);
     if ([value isKindOfClass:[NSValue class]])
-        rect = [value rectValue]; 
+        rect = [value rectValue];
 
     // don't return position information because it is platform dependent
     NSMutableString* boundsDescription = makeBoundsDescription(rect, false /* exposePosition */);
@@ -1515,7 +1515,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::stringForRange(unsigned locatio
 
     return [string createJSStringRef];
     END_AX_OBJC_EXCEPTIONS
-    
+
     return nullptr;
 }
 
@@ -1756,7 +1756,7 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::cellForColumnAndRow(unsig
     BEGIN_AX_OBJC_EXCEPTIONS
     if (auto cell = attributeValueForParameter(@"AXCellForColumnAndRow", colRowArray))
         return AccessibilityUIElement::create(cell.get());
-    END_AX_OBJC_EXCEPTIONS    
+    END_AX_OBJC_EXCEPTIONS
 
     return nullptr;
 }
@@ -1769,7 +1769,7 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::horizontalScrollbar() con
     BEGIN_AX_OBJC_EXCEPTIONS
     if (id scrollbar = attributeValue(NSAccessibilityHorizontalScrollBarAttribute).get())
         return AccessibilityUIElement::create(scrollbar);
-    END_AX_OBJC_EXCEPTIONS    
+    END_AX_OBJC_EXCEPTIONS
 
     return nullptr;
 }
@@ -1782,7 +1782,7 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::verticalScrollbar() const
     BEGIN_AX_OBJC_EXCEPTIONS
     if (id scrollbar = attributeValue(NSAccessibilityVerticalScrollBarAttribute).get())
         return AccessibilityUIElement::create(scrollbar);
-    END_AX_OBJC_EXCEPTIONS        
+    END_AX_OBJC_EXCEPTIONS
 
     return nullptr;
 }
@@ -1979,7 +1979,7 @@ bool AccessibilityUIElement::addNotificationListener(JSContextRef context, JSVal
 {
     if (!functionCallback)
         return false;
- 
+
     // Mac programmers should not be adding more than one notification listener per element.
     // Other platforms may be different.
     if (m_notificationHandler)
@@ -2000,7 +2000,7 @@ bool AccessibilityUIElement::removeNotificationListener()
 
     [m_notificationHandler stopObserving];
     m_notificationHandler = nil;
-    
+
     return true;
 }
 
@@ -2675,12 +2675,12 @@ bool AccessibilityUIElement::attributedStringForTextMarkerRangeContainsAttribute
 
     NSDictionary* attrs = [string attributesAtIndex:0 effectiveRange:nil];
     if ([attrs objectForKey:[NSString stringWithJSStringRef:attribute]])
-        return true;    
+        return true;
     END_AX_OBJC_EXCEPTIONS
 
     return false;
 }
-    
+
 int AccessibilityUIElement::indexForTextMarker(AccessibilityTextMarker* marker)
 {
     if (!marker)

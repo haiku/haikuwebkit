@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "CryptoAlgorithmIdentifier.h"
-#include "CryptoKey.h"
-#include "CryptoKeyFormat.h"
-#include "CryptoKeyPair.h"
-#include "CryptoKeyUsage.h"
-#include "JsonWebKey.h"
+#include <WebCore/CryptoAlgorithmIdentifier.h>
+#include <WebCore/CryptoKey.h>
+#include <WebCore/CryptoKeyFormat.h>
+#include <WebCore/CryptoKeyPair.h>
+#include <WebCore/CryptoKeyUsage.h>
+#include <WebCore/JsonWebKey.h>
 #include <pal/crypto/CryptoDigest.h>
 #include <wtf/Function.h>
 #include <wtf/ThreadSafeRefCounted.h>

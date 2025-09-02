@@ -26,9 +26,7 @@
 #import "config.h"
 #import "JavaScriptEvaluationResult.h"
 
-#import "APINodeInfo.h"
-#import "APISerializedNode.h"
-#import "_WKNodeInfoInternal.h"
+#import "_WKJSHandleInternal.h"
 #import "_WKSerializedNodeInternal.h"
 
 namespace WebKit {
@@ -59,8 +57,8 @@ RetainPtr<id> JavaScriptEvaluationResult::toID(Value&& root)
         RetainPtr dictionary = adoptNS([[NSMutableDictionary alloc] initWithCapacity:map.size()]);
         m_nsDictionaries.append({ WTFMove(map), dictionary });
         return dictionary;
-    }, [] (NodeInfo&& nodeInfo) -> RetainPtr<id> {
-        return wrapper(API::NodeInfo::create(WTFMove(nodeInfo)).get());
+    }, [] (JSHandleInfo&& info) -> RetainPtr<id> {
+        return wrapper(API::JSHandle::create(WTFMove(info)));
     }, [] (UniqueRef<WebCore::SerializedNode>&& serializedNode) -> RetainPtr<id> {
         return wrapper(API::SerializedNode::create(WTFMove(serializedNode.get())).get());
     });
@@ -134,8 +132,8 @@ auto JavaScriptEvaluationResult::toValue(id object) -> Value
     if ([object isKindOfClass:_WKSerializedNode.class])
         return makeUniqueRef<WebCore::SerializedNode>(((_WKSerializedNode *)object)->_node->coreSerializedNode());
 
-    if ([object isKindOfClass:_WKNodeInfo.class])
-        return NodeInfo { ((_WKNodeInfo *)object)->_info->info() };
+    if ([object isKindOfClass:_WKJSHandle.class])
+        return JSHandleInfo { ((_WKJSHandle *)object)->_ref->info() };
 
     // This object has been null checked and went through isSerializable which only supports these types.
     ASSERT_NOT_REACHED();
@@ -171,7 +169,7 @@ static bool isSerializable(id argument)
         || [argument isKindOfClass:NSNumber.class]
         || [argument isKindOfClass:NSDate.class]
         || [argument isKindOfClass:NSNull.class]
-        || [argument isKindOfClass:_WKNodeInfo.class]
+        || [argument isKindOfClass:_WKJSHandle.class]
         || [argument isKindOfClass:_WKSerializedNode.class])
         return true;
 

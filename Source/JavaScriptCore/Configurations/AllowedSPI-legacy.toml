@@ -3,9 +3,9 @@
 
 [legacy.legacy]
 selectors = [
-    "_web_looksLikeIPAddress",
-    "matchedLanguagesFromAvailableLanguages:forPreferredLanguages:",
-    "minimizedLanguagesFromLanguages:",
+    { name = "_web_looksLikeIPAddress", class = "?" },
+    { name = "matchedLanguagesFromAvailableLanguages:forPreferredLanguages:", class = "?" },
+    { name = "minimizedLanguagesFromLanguages:", class = "?" },
 ]
 symbols = [
     "_BOMCopierCopyWithOptions",

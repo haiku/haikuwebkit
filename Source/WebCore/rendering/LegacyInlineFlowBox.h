@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "LegacyInlineBox.h"
-#include "RenderOverflow.h"
+#include <WebCore/LegacyInlineBox.h>
+#include <WebCore/RenderOverflow.h>
 
 namespace WebCore {
 

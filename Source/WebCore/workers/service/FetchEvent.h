@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "ExtendableEvent.h"
-#include "FetchIdentifier.h"
-#include "JSDOMPromiseDeferredForward.h"
-#include "ResourceError.h"
+#include <WebCore/ExtendableEvent.h>
+#include <WebCore/FetchIdentifier.h>
+#include <WebCore/JSDOMPromiseDeferredForward.h>
+#include <WebCore/ResourceError.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Expected.h>
 

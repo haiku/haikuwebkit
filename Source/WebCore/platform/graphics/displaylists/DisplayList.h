@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "DisplayListItems.h"
+#include <WebCore/DisplayListItems.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeRefCounted.h>

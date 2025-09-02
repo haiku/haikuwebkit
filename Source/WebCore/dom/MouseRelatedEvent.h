@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "LayoutPoint.h"
-#include "UIEventWithKeyState.h"
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/UIEventWithKeyState.h>
 
 namespace WebCore {
 

@@ -27,7 +27,7 @@
 
 #if ENABLE(ASYNC_SCROLLING) && PLATFORM(MAC)
 
-#include "ScrollingTreePluginScrollingNode.h"
+#include <WebCore/ScrollingTreePluginScrollingNode.h>
 
 OBJC_CLASS CALayer;
 

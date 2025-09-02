@@ -47,11 +47,12 @@ public:
     template<typename CellType, SubspaceAccess mode>
     static CompleteSubspace* subspaceFor(VM& vm)
     {
-        return &vm.heap.variableSizedCellSpace;
+        return &vm.heap.cellSpace;
     }
 
     DECLARE_INFO;
 
+    static inline TypeInfoBlob typeInfoBlob();
     static inline WebAssemblyGCStructure* createStructure(VM&, JSGlobalObject*, Ref<const Wasm::TypeDefinition>&&, Ref<const Wasm::RTT>&&);
 
     static JSWebAssemblyArray* tryCreate(VM& vm, WebAssemblyGCStructure* structure, unsigned size);

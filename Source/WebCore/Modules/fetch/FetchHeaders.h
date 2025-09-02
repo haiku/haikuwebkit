@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "FetchHeadersGuard.h"
-#include "HTTPHeaderMap.h"
+#include <WebCore/FetchHeadersGuard.h>
+#include <WebCore/HTTPHeaderMap.h>
 #include <wtf/HashTraits.h>
 #include <wtf/Vector.h>
 

@@ -29,14 +29,14 @@
 
 #pragma once
 
-#include "FontCascadeCache.h"
-#include "FontCreationContext.h"
-#include "FontDescription.h"
-#include "FontPlatformData.h"
-#include "FontSelector.h"
-#include "FontTaggedSettings.h"
-#include "SystemFallbackFontCache.h"
-#include "Timer.h"
+#include <WebCore/FontCascadeCache.h>
+#include <WebCore/FontCreationContext.h>
+#include <WebCore/FontDescription.h>
+#include <WebCore/FontPlatformData.h>
+#include <WebCore/FontSelector.h>
+#include <WebCore/FontTaggedSettings.h>
+#include <WebCore/SystemFallbackFontCache.h>
+#include <WebCore/Timer.h>
 #include <array>
 #include <limits.h>
 #include <wtf/CheckedPtr.h>
@@ -56,10 +56,10 @@
 #include <wtf/text/WTFString.h>
 
 #if PLATFORM(COCOA)
-#include "FontCacheCoreText.h"
-#include "FontDatabase.h"
-#include "FontFamilySpecificationCoreTextCache.h"
-#include "SystemFontDatabaseCoreText.h"
+#include <WebCore/FontCacheCoreText.h>
+#include <WebCore/FontDatabase.h>
+#include <WebCore/FontFamilySpecificationCoreTextCache.h>
+#include <WebCore/SystemFontDatabaseCoreText.h>
 #endif
 
 #if PLATFORM(IOS_FAMILY)

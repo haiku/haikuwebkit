@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "InlineLine.h"
-#include "InlineLineTypes.h"
-#include "LayoutUnits.h"
-#include "PlacedFloats.h"
+#include <WebCore/InlineLine.h>
+#include <WebCore/InlineLineTypes.h>
+#include <WebCore/LayoutUnits.h>
+#include <WebCore/PlacedFloats.h>
 
 namespace WebCore {
 namespace Layout {

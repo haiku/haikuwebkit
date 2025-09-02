@@ -27,17 +27,17 @@
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 
-#include "FilterOperations.h"
-#include "Length.h"
-#include "LengthPoint.h"
-#include "PathOperation.h"
-#include "RenderStyleConstants.h"
-#include "RotateTransformOperation.h"
-#include "ScaleTransformOperation.h"
-#include "StyleOffsetRotate.h"
-#include "TransformOperations.h"
-#include "TransformationMatrix.h"
-#include "TranslateTransformOperation.h"
+#include <WebCore/FilterOperations.h>
+#include <WebCore/Length.h>
+#include <WebCore/LengthPoint.h>
+#include <WebCore/PathOperation.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/RotateTransformOperation.h>
+#include <WebCore/ScaleTransformOperation.h>
+#include <WebCore/StyleOffsetRotate.h>
+#include <WebCore/TransformOperations.h>
+#include <WebCore/TransformationMatrix.h>
+#include <WebCore/TranslateTransformOperation.h>
 
 namespace WebCore {
 

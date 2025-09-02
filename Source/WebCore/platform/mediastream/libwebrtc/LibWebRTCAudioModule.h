@@ -27,8 +27,8 @@
 
 #if USE(LIBWEBRTC)
 
-#include "LibWebRTCMacros.h"
-#include "Timer.h"
+#include <WebCore/LibWebRTCMacros.h>
+#include <WebCore/Timer.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/WorkQueue.h>

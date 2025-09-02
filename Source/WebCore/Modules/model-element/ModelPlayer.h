@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "HTMLModelElementCamera.h"
-#include "LayerHostingContextIdentifier.h"
-#include "LayoutPoint.h"
-#include "LayoutSize.h"
-#include "PlatformLayer.h"
+#include <WebCore/HTMLModelElementCamera.h>
+#include <WebCore/LayerHostingContextIdentifier.h>
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/LayoutSize.h>
+#include <WebCore/PlatformLayer.h>
 #include <optional>
 #include <wtf/Forward.h>
 #include <wtf/MonotonicTime.h>
@@ -37,7 +37,7 @@
 #include <wtf/TZoneMalloc.h>
 
 #if ENABLE(MODEL_PROCESS)
-#include "ModelPlayerIdentifier.h"
+#include <WebCore/ModelPlayerIdentifier.h>
 #include <WebCore/StageModeOperations.h>
 #endif
 

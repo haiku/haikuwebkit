@@ -222,18 +222,6 @@ AllowContentSecurityPolicySourceStarToMatchAnyProtocol:
     WebCore:
       default: false
 
-AllowDisplayOfInsecureContent:
-  type: bool
-  status: embedder
-  defaultValue:
-    WebKitLegacy:
-      "PLATFORM(HAIKU)": false
-      default: WebKit::defaultAllowDisplayOfInsecureContent()
-    WebKit:
-      default: false
-    WebCore:
-      default: false
-
 AllowFileAccessFromFileURLs:
   type: bool
   status: embedder
@@ -284,18 +272,6 @@ AllowPrivacySensitiveOperationsInNonPersistentDataStores:
     WebCore:
       default: false
   sharedPreferenceForWebProcess: true
-
-AllowRunningOfInsecureContent:
-  type: bool
-  status: embedder
-  defaultValue:
-    WebKitLegacy:
-      "PLATFORM(HAIKU)": false
-      default: WebKit::defaultAllowRunningOfInsecureContent()
-    WebKit:
-      default: false
-    WebCore:
-      default: false
 
 AllowTestOnlyIPC:
   type: bool
@@ -1020,7 +996,7 @@ CSSAnchorPositioningEnabled:
   status: stable
   category: css
   humanReadableName: "CSS Anchor Positioning"
-  humanReadableDescription: "Enable CSS Anchor Positioning (except position-visibility)"
+  humanReadableDescription: "Enable CSS Anchor Positioning"
   defaultValue:
     WebKitLegacy:
       default: true
@@ -1028,20 +1004,6 @@ CSSAnchorPositioningEnabled:
       default: true
     WebCore:
       default: true
-
-CSSAnchorPositioningPositionVisibilityEnabled:
-  type: bool
-  status: testable
-  category: css
-  humanReadableName: "CSS Anchor Positioning: position-visibility"
-  humanReadableDescription: "Enable position-visibility specified in CSS Anchor Positioning"
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: false
-    WebCore:
-      default: false
 
 CSSAppearanceBaseEnabled:
   type: bool
@@ -1286,16 +1248,16 @@ CSSProgressFunctionEnabled:
 CSSRandomFunctionEnabled:
   type: bool
   category: css
-  status: preview
+  status: stable
   humanReadableName: "CSS random()"
   humanReadableDescription: "Enable support for CSS Values and Units Module Level 5 random()"
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 CSSRhythmicSizingEnabled:
   type: bool
@@ -1355,7 +1317,7 @@ CSSScrollAnchoringEnabled:
 
 CSSScrollbarColorEnabled:
   type: bool
-  status: testable
+  status: stable
   category: css
   humanReadableName: "CSS scrollbar-color property"
   humanReadableDescription: "Enable scrollbar-color CSS property"
@@ -1363,7 +1325,7 @@ CSSScrollbarColorEnabled:
     WebKitLegacy:
       default: false
     WebKit:
-      default: false
+      default: defaultScrollbarColorEnabled()
     WebCore:
       default: false
 
@@ -1436,6 +1398,20 @@ CSSTextBoxTrimEnabled:
       default: true
     WebCore:
       default: true
+
+CSSTextDecorationLineErrorValues:
+  type: bool
+  status: testable
+  category: css
+  humanReadableName: "CSS text-decoration-line: spelling-error/grammar-error"
+  humanReadableDescription: "Enable support for spelling-error and grammar-error values on text-decoration-line"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 CSSTextGroupAlignEnabled:
   type: bool
@@ -1685,7 +1661,7 @@ CanvasLayersEnabled:
 
 CanvasPixelFormatEnabled:
   type: bool
-  status: unstable
+  status: testable
   category: dom
   humanReadableName: "CanvasRenderingContext2DSettings.pixelFormat"
   humanReadableDescription: "Allow different pixel formats in 2D canvas"
@@ -4022,6 +3998,20 @@ IsThirdPartyCookieBlockingDisabled:
     WebCore:
       default: false
 
+ItemPackCollapseDisplayGridEnabled:
+  type: bool
+  status: preview
+  category: css
+  humanReadableName: "CSS Item Pack Collapse (display: grid)"
+  humanReadableDescription: "Enable CSS Item Pack Collapse for CSS Grid"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 # FIXME: This is not relevent for WebKitLegacy, so should be excluded from WebKitLegacy entirely (though we should still set the default value to false when initializing settings).
 ItpDebugModeEnabled:
   type: bool
@@ -4636,20 +4626,6 @@ ManagedMediaSourceNeedsAirPlay:
       default: false
     WebKit:
       default: WebKit::defaultManagedMediaSourceNeedsAirPlay()
-    WebCore:
-      default: false
-
-MasonryEnabled:
-  type: bool
-  status: preview
-  category: css
-  humanReadableName: "CSS Masonry Layout"
-  humanReadableDescription: "Enable Masonry Layout for CSS Grid"
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: false
     WebCore:
       default: false
 
@@ -5314,7 +5290,7 @@ MuteCameraOnMicrophoneInterruptionEnabled:
 
 NavigationAPIEnabled:
   type: bool
-  status: preview
+  status: stable
   category: dom
   humanReadableName: "Navigation API"
   humanReadableDescription: "Enable Navigation API"
@@ -5322,8 +5298,10 @@ NavigationAPIEnabled:
     WebKitLegacy:
       default: false
     WebKit:
+      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)": true
       default: false
     WebCore:
+      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)": true
       default: false
 
 NavigatorUserAgentDataJavaScriptAPIEnabled:
@@ -5529,18 +5507,18 @@ OpportunisticSweepingAndGarbageCollectionEnabled:
 
 OptInPartitionedCookiesEnabled:
   type: bool
-  status: testable
+  status: stable
   category: dom
   humanReadableName: "Opt-in partitioned cookies (CHIPS)"
   humanReadableDescription: "Enable opt-in partitioned cookies"
-  condition: HAVE(ALLOW_ONLY_PARTITIONED_COOKIES) && 0
+  condition: ENABLE(OPT_IN_PARTITIONED_COOKIES)
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 OverlappingBackingStoreProvidersEnabled:
   type: bool
@@ -6639,7 +6617,7 @@ ScrollToTextFragmentMarkingEnabled:
       
 ScrollendEventEnabled:
   type: bool
-  status: testable
+  status: stable
   category: dom
   humanReadableName: "scrollend event"
   humanReadableDescription: "Enable scrollend event"
@@ -6647,9 +6625,9 @@ ScrollendEventEnabled:
     WebKitLegacy:
       default: false
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 ScrollingPerformanceTestingEnabled:
   type: bool
@@ -7955,20 +7933,6 @@ UpgradeKnownHostsToHTTPSEnabled:
     WebKit:
       default: true
 
-UpgradeMixedContentEnabled:
-  type: bool
-  status: stable
-  category: networking
-  humanReadableName: "Upgrade upgradable mixed content"
-  humanReadableDescription: "Upgrade upgradable mixed content"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 UseARKitForModel:
   type: bool
   status: internal
@@ -8286,14 +8250,11 @@ UsesWebContentRestrictionsForFilter:
   webcoreBinding: DeprecatedGlobalSettings
   defaultValue:
     WebKitLegacy:
-      "PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)": true
-      default: false
+      default: true
     WebKit:
-      "PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)": true
-      default: false
+      default: true
     WebCore:
-      "PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)": true
-      default: false
+      default: true
   sharedPreferenceForWebProcess: true
 
 VP9DecoderEnabled:

@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "IDBConnectionToClient.h"
-#include "IDBDatabaseIdentifier.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "UniqueIDBDatabase.h"
-#include "UniqueIDBDatabaseConnection.h"
-#include "UniqueIDBDatabaseManager.h"
+#include <WebCore/IDBConnectionToClient.h>
+#include <WebCore/IDBDatabaseIdentifier.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/UniqueIDBDatabase.h>
+#include <WebCore/UniqueIDBDatabaseConnection.h>
+#include <WebCore/UniqueIDBDatabaseManager.h>
 #include <pal/HysteresisActivity.h>
 #include <pal/SessionID.h>
 #include <wtf/CrossThreadTaskHandler.h>

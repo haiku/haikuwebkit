@@ -280,8 +280,8 @@ id<MTLBuffer> ComputePassEncoder::runPredispatchIndirectCallValidation(const Buf
     static id<MTLFunction> function = nil;
     id<MTLDevice> mtlDevice = m_device->device();
     static std::once_flag onceFlag;
-    std::call_once(onceFlag, [&] {
-        auto dimensionMax = m_device->limits().maxComputeWorkgroupsPerDimension;
+    std::call_once(onceFlag, [protectedThis = Ref { *this }, &mtlDevice] {
+        auto dimensionMax = protectedThis->m_device->limits().maxComputeWorkgroupsPerDimension;
         MTLCompileOptions* options = [MTLCompileOptions new];
         ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         options.fastMathEnabled = YES;

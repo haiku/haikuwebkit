@@ -76,7 +76,7 @@ void NetworkSendQueue::enqueue(WebCore::Blob& blob)
     auto blobLoader = makeUniqueRef<BlobLoader>([this](BlobLoader&) {
         processMessages();
     });
-    auto* blobLoaderPtr = &blobLoader.get();
+    CheckedPtr blobLoaderPtr = &blobLoader.get();
     m_queue.append(WTFMove(blobLoader));
     blobLoaderPtr->start(blob, context.get(), FileReaderLoader::ReadAsArrayBuffer);
 }

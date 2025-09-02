@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "CSSRule.h"
+#include <WebCore/CSSRule.h>
 #include <memory>
 #include <wtf/Vector.h>
 

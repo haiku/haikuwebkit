@@ -50,6 +50,7 @@ private:
     void runOpenPanel(WebCore::LocalFrame&, WebCore::FileChooser&) final;
     void showShareSheet(WebCore::ShareDataWithParsedURL&&, CompletionHandler<void(bool)>&&) final;
 
+    bool hasAccessoryMousePointingDevice() const final { return false; }
     bool hoverSupportedByPrimaryPointingDevice() const final { return false; }
     bool hoverSupportedByAnyAvailablePointingDevice() const final { return false; }
     std::optional<WebCore::PointerCharacteristics> pointerCharacteristicsOfPrimaryPointingDevice() const final { return WebCore::PointerCharacteristics::Coarse; }

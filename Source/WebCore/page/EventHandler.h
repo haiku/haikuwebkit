@@ -25,21 +25,21 @@
 
 #pragma once
 
-#include "Cursor.h"
-#include "DragActions.h"
-#include "FocusDirection.h"
-#include "HitTestRequest.h"
-#include "ImmediateActionStage.h"
-#include "IntPointHash.h"
-#include "LayoutPoint.h"
-#include "NodeIdentifier.h"
-#include "PlatformMouseEvent.h"
-#include "RenderObject.h"
-#include "ScrollTypes.h"
-#include "SimpleRange.h"
-#include "TextEventInputType.h"
-#include "TextGranularity.h"
-#include "Timer.h"
+#include <WebCore/Cursor.h>
+#include <WebCore/DragActions.h>
+#include <WebCore/FocusDirection.h>
+#include <WebCore/HitTestRequest.h>
+#include <WebCore/ImmediateActionStage.h>
+#include <WebCore/IntPointHash.h>
+#include <WebCore/LayoutPoint.h>
+#include <WebCore/NodeIdentifier.h>
+#include <WebCore/PlatformMouseEvent.h>
+#include <WebCore/RenderObject.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/SimpleRange.h>
+#include <WebCore/TextEventInputType.h>
+#include <WebCore/TextGranularity.h>
+#include <WebCore/Timer.h>
 #include <memory>
 #include <utility>
 #include <wtf/CheckedRef.h>
@@ -63,7 +63,7 @@ OBJC_CLASS NSEvent;
 #endif
 
 #if PLATFORM(IOS_FAMILY) && defined(__OBJC__)
-#include "WAKAppKitStubs.h"
+#include <WebCore/WAKAppKitStubs.h>
 #endif
 
 namespace WebCore {

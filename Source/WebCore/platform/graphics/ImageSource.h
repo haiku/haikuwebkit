@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "ImageFrame.h"
-#include "ImageOrientation.h"
-#include "ImageTypes.h"
+#include <WebCore/ImageFrame.h>
+#include <WebCore/ImageOrientation.h>
+#include <WebCore/ImageTypes.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 
 namespace WebCore {

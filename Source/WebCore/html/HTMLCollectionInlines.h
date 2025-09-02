@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "HTMLCollection.h"
-#include "LiveNodeListInlines.h"
-#include "TreeScopeInlines.h"
+#include <WebCore/HTMLCollection.h>
+#include <WebCore/LiveNodeListInlines.h>
+#include <WebCore/TreeScopeInlines.h>
 
 namespace WebCore {
 

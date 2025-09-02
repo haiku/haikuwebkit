@@ -22,6 +22,7 @@
 
 // Currently DispatchedFrom both the Networking and UI process
 [
+    ExceptionForDispatchedFrom,
     DispatchedTo=WebContent
 ]
 messages -> WebPage WantsAsyncDispatchMessage {
@@ -808,7 +809,8 @@ messages -> WebPage WantsAsyncDispatchMessage {
 
     RequestAllTargetableElements(float hitTestInterval) -> (Vector<Vector<WebCore::TargetedElementInfo>> elements)
 
-    RequestTextExtraction(std::optional<WebCore::FloatRect> collectionRectInRootView) -> (struct WebCore::TextExtraction::Item item)
+    RequestTextExtraction(struct WebCore::TextExtraction::Request request) -> (struct WebCore::TextExtraction::Item item)
+    HandleTextExtractionInteraction(struct WebCore::TextExtraction::Interaction interaction) -> (bool success)
 
 #if PLATFORM(IOS_FAMILY)
     ShouldDismissKeyboardAfterTapAtPoint(WebCore::FloatPoint point) -> (bool shouldDismiss)

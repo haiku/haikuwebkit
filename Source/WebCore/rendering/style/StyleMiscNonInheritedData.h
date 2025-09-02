@@ -26,16 +26,16 @@
 
 #pragma once
 
-#include "LengthPoint.h"
-#include "StyleAppearance.h"
-#include "StyleAspectRatio.h"
-#include "StyleBoxShadow.h"
-#include "StyleContent.h"
-#include "StyleContentAlignmentData.h"
-#include "StyleObjectPosition.h"
-#include "StyleOpacity.h"
-#include "StyleOrder.h"
-#include "StyleSelfAlignmentData.h"
+#include <WebCore/LengthPoint.h>
+#include <WebCore/StyleAppearance.h>
+#include <WebCore/StyleAspectRatio.h>
+#include <WebCore/StyleBoxShadow.h>
+#include <WebCore/StyleContent.h>
+#include <WebCore/StyleContentAlignmentData.h>
+#include <WebCore/StyleObjectPosition.h>
+#include <WebCore/StyleOpacity.h>
+#include <WebCore/StyleOrder.h>
+#include <WebCore/StyleSelfAlignmentData.h>
 #include <memory>
 #include <wtf/DataRef.h>
 #include <wtf/FixedVector.h>

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "AvailableLineWidthOverride.h"
-#include "BlockLayoutState.h"
+#include <WebCore/AvailableLineWidthOverride.h>
+#include <WebCore/BlockLayoutState.h>
 
 namespace WebCore {
 namespace Layout {

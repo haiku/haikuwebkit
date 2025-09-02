@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "IDBDatabaseInfo.h"
-#include "IDBKeyData.h"
-#include "IDBTransactionInfo.h"
-#include "IndexValueStore.h"
-#include "ThreadSafeDataBuffer.h"
+#include <WebCore/IDBDatabaseInfo.h>
+#include <WebCore/IDBKeyData.h>
+#include <WebCore/IDBTransactionInfo.h>
+#include <WebCore/IndexValueStore.h>
+#include <WebCore/ThreadSafeDataBuffer.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>

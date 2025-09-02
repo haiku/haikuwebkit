@@ -209,7 +209,7 @@ class JSCBuildFactory(Factory):
         Factory.__init__(self, platform=platform, configuration=configuration, architectures=architectures, buildOnly=False, triggers=triggers, remotes=remotes, additionalArguments=additionalArguments, checkRelevance=True)
         self.addStep(KillOldProcesses())
         self.addStep(ValidateChange(addURLs=False))
-        self.addStep(CompileJSC())
+        self.addStep(CompileJSC32() if architectures and 'armv7' in architectures else CompileJSC())
 
 
 class JSCBuildAndTestsFactory(Factory):
@@ -217,9 +217,9 @@ class JSCBuildAndTestsFactory(Factory):
         Factory.__init__(self, platform=platform, configuration=configuration, architectures=architectures, buildOnly=False, remotes=remotes, additionalArguments=additionalArguments, checkRelevance=True)
         self.addStep(KillOldProcesses())
         self.addStep(ValidateChange(addURLs=False))
-        self.addStep(CompileJSC(skipUpload=True))
+        self.addStep(CompileJSC32(skipUpload=True) if architectures and 'armv7' in architectures else CompileJSC(skipUpload=True))
         if runTests.lower() == 'true':
-            self.addStep(RunJavaScriptCoreTests())
+            self.addStep(RunJavaScriptCoreTests32() if architectures and 'armv7' in architectures else RunJavaScriptCoreTests())
 
 
 class JSCTestsFactory(Factory):
@@ -228,7 +228,7 @@ class JSCTestsFactory(Factory):
         self.addStep(KillOldProcesses())
         self.addStep(DownloadBuiltProduct())
         self.addStep(ExtractBuiltProduct())
-        self.addStep(RunJavaScriptCoreTests())
+        self.addStep(RunJavaScriptCoreTests32() if architectures and 'armv7' in architectures else RunJavaScriptCoreTests())
 
 
 class APITestsFactory(TestFactory):

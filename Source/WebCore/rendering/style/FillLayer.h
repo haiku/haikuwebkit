@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "GraphicsTypes.h"
-#include "LengthSize.h"
-#include "RenderStyleConstants.h"
-#include "StyleImage.h"
-#include "StylePosition.h"
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/LengthSize.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleImage.h>
+#include <WebCore/StylePosition.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -196,9 +196,11 @@ private:
     LengthSize m_sizeLength;
     FillRepeatXY m_repeat;
 
+    static constexpr unsigned FillBoxBitWidth = 3;
+
     PREFERRED_TYPE(FillAttachment) unsigned m_attachment : 2;
-    PREFERRED_TYPE(FillBox) unsigned m_clip : 3;
-    PREFERRED_TYPE(FillBox) unsigned m_origin : 2;
+    PREFERRED_TYPE(FillBox) unsigned m_clip : FillBoxBitWidth;
+    PREFERRED_TYPE(FillBox) unsigned m_origin : FillBoxBitWidth;
     PREFERRED_TYPE(CompositeOperator) unsigned m_composite : 4;
     PREFERRED_TYPE(FillSizeType) unsigned m_sizeType : 2;
     PREFERRED_TYPE(BlendMode) unsigned m_blendMode : 5;
@@ -217,7 +219,7 @@ private:
 
     PREFERRED_TYPE(FillLayerType) unsigned m_type : 1;
 
-    PREFERRED_TYPE(FillBox) mutable unsigned m_clipMax : 2; // maximum m_clip value from this to bottom layer
+    PREFERRED_TYPE(FillBox) mutable unsigned m_clipMax : FillBoxBitWidth; // maximum m_clip value from this to bottom layer
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, FillSize);

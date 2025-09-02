@@ -300,7 +300,7 @@ public:
 
     CallInformation callInformationFor(const TypeDefinition& type, CallRole role = CallRole::Caller) const
     {
-        const auto& signature = *type.as<FunctionSignature>();
+        SUPPRESS_UNCOUNTED_LOCAL const auto& signature = *type.as<FunctionSignature>();
         return callInformationFor(signature, role);
     }
 
@@ -396,7 +396,11 @@ private:
     }
 
 public:
-    CallInformation callInformationFor(const TypeDefinition& signature, CallRole role = CallRole::Callee) const { return callInformationFor(*signature.as<FunctionSignature>(), role); }
+    CallInformation callInformationFor(const TypeDefinition& signature, CallRole role = CallRole::Callee) const
+    {
+        SUPPRESS_UNCOUNTED_LOCAL auto& functionSignature = *signature.as<FunctionSignature>();
+        return callInformationFor(functionSignature, role);
+    }
     CallInformation callInformationFor(const FunctionSignature& signature, CallRole role = CallRole::Callee) const
     {
         size_t gpArgumentCount = 0;

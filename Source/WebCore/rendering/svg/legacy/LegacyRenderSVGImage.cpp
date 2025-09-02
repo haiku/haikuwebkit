@@ -223,7 +223,9 @@ void LegacyRenderSVGImage::paintForeground(PaintInfo& paintInfo)
 
     ImagePaintingOptions options = {
         imageOrientation(),
-        ImageQualityController::chooseInterpolationQualityForSVG(paintInfo.context(), *this, *image)
+        ImageQualityController::chooseInterpolationQualityForSVG(paintInfo.context(), *this, *image),
+        paintInfo.paintBehavior.contains(PaintBehavior::DrawsHDRContent) ? DrawsHDRContent::Yes : DrawsHDRContent::No,
+        style().dynamicRangeLimit().toPlatformDynamicRangeLimit()
     };
 
     paintInfo.context().drawImage(*image, destRect, srcRect, options);

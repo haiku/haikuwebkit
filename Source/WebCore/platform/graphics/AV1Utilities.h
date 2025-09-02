@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "SharedBuffer.h"
 #include <JavaScriptCore/DataView.h>
+#include <WebCore/SharedBuffer.h>
 #include <wtf/EnumTraits.h>
 #include <wtf/text/StringView.h>
 #include <wtf/text/WTFString.h>

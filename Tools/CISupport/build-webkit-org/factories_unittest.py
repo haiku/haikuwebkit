@@ -1390,7 +1390,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'show-identifier',
             'delete-WebKitBuild-directory',
             'delete-stale-build-files',
-            'compile-jsc',
+            'compile-jsc-32bit',
             'jscore-test'
         ],
         'WPE-Linux-64-bit-Release-Build': [

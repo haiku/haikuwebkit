@@ -28,7 +28,7 @@
 
 #if USE(GBM)
 #include "DRMDeviceManager.h"
-#include "DRMDeviceNode.h"
+#include "GBMDevice.h"
 #include "GBMVersioning.h"
 #include "IntRect.h"
 #include "Logging.h"
@@ -66,15 +66,9 @@ std::unique_ptr<MemoryMappedGPUBuffer> MemoryMappedGPUBuffer::create(const IntSi
     auto& manager = WebCore::DRMDeviceManager::singleton();
     ASSERT(manager.isInitialized());
 
-    auto deviceNode = manager.mainDeviceNode(WebCore::DRMDeviceManager::NodeType::Render);
-    if (!deviceNode) {
+    auto gbmDevice = manager.mainGBMDevice(WebCore::DRMDeviceManager::NodeType::Render);
+    if (!gbmDevice) {
         LOG_ERROR("MemoryMappedGPUBuffer::create(), failed to get GBM render device node");
-        return nullptr;
-    }
-
-    auto* device = deviceNode->gbmDevice();
-    if (!device) {
-        LOG_ERROR("MemoryMappedGPUBuffer::create(), failed to get GBM device");
         return nullptr;
     }
 
@@ -107,7 +101,7 @@ std::unique_ptr<MemoryMappedGPUBuffer> MemoryMappedGPUBuffer::create(const IntSi
     }
 
     auto buffer = std::unique_ptr<MemoryMappedGPUBuffer>(new MemoryMappedGPUBuffer(size, flags));
-    if (!buffer->allocate(device, bufferFormat.value())) {
+    if (!buffer->allocate(gbmDevice->device(), bufferFormat.value())) {
         LOG_ERROR("MemoryMappedGPUBuffer::create(), failed to create GBM buffer of size %dx%d: %s", size.width(), size.height(), safeStrerror(errno).data());
         return nullptr;
     }

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "BlockFormattingQuirks.h"
+#include <WebCore/BlockFormattingQuirks.h>
 
 namespace WebCore {
 namespace Layout {

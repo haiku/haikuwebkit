@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "StyleOriginatedAnimation.h"
-#include "Styleable.h"
+#include <WebCore/StyleOriginatedAnimation.h>
+#include <WebCore/Styleable.h>
 #include <wtf/OptionSet.h>
 #include <wtf/Ref.h>
 

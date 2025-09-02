@@ -52,7 +52,7 @@
     String applicationVisibleName;
 
 #if USE(GBM)
-    String renderDeviceFile;
+    WebCore::DRMDevice drmDevice;
 #endif
 
     Vector<String> overrideLanguages;

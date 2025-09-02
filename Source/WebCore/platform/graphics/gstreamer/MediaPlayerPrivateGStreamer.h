@@ -645,6 +645,8 @@ private:
 
 private:
     std::optional<VideoFrameMetadata> videoFrameMetadata() final;
+    bool applyAudioSinkDevice(GstElement* audioSink, GstDevice*);
+
     uint64_t m_sampleCount { 0 };
     uint64_t m_lastVideoFrameMetadataSampleCount { 0 };
     mutable PlatformTimeRanges m_buffered;

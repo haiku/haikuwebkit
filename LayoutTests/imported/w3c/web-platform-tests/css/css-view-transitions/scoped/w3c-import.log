@@ -20,6 +20,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/capture.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/contain-view-transition-name-discovery.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/content-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/display-change-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/display-change.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/display-inline-block.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/display-none-during-transition.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/document-element-start-view-transition.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/empty-ref.html
@@ -27,6 +30,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/from-scale-zero-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/from-scale-zero-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/from-scale-zero.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/implicit-contain-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/implicit-contain-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/implicit-contain.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/missing-view-transition-name.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/negative-playback-rate.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/nested-scope-expected.html

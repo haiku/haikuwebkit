@@ -793,6 +793,7 @@ FOR_EACH_IPINT_UINT_OPCODE(IPINT_VALIDATE_DEFINE_FUNCTION);
 namespace JSC { namespace IPInt {
 
 void initialize();
+void verifyInitialization();
 
 } }
 

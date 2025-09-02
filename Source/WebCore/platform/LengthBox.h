@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "BoxExtents.h"
-#include "Length.h"
-#include "WritingMode.h"
+#include <WebCore/BoxExtents.h>
+#include <WebCore/Length.h>
+#include <WebCore/WritingMode.h>
 
 namespace WebCore {
 

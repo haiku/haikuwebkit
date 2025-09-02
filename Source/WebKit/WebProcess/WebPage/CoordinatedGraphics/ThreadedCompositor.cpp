@@ -129,7 +129,7 @@ ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost, ThreadedDis
         // a plain C cast expression in this one instance works in all cases.
         static_assert(sizeof(GLNativeWindowType) <= sizeof(uint64_t), "GLNativeWindowType must not be longer than 64 bits.");
         auto nativeSurfaceHandle = (GLNativeWindowType)m_surface->window();
-        m_context = GLContext::create(nativeSurfaceHandle, PlatformDisplay::sharedDisplay());
+        m_context = GLContext::create(PlatformDisplay::sharedDisplay(), nativeSurfaceHandle);
         if (m_context && m_context->makeContextCurrent()) {
             if (!nativeSurfaceHandle)
                 m_flipY = !m_flipY;

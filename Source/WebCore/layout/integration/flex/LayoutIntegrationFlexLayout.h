@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "LayoutIntegrationBoxTreeUpdater.h"
-#include "LayoutState.h"
-#include "RenderObjectEnums.h"
+#include <WebCore/LayoutIntegrationBoxTreeUpdater.h>
+#include <WebCore/LayoutState.h>
+#include <WebCore/RenderObjectEnums.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/TZoneMalloc.h>
 

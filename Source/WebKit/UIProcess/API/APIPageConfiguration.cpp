@@ -367,6 +367,16 @@ bool PageConfiguration::lockdownModeEnabled() const
     return lockdownModeEnabledBySystem();
 }
 
+void PageConfiguration::setAllowJSHandleInPageContentWorld(bool allow)
+{
+    m_data.allowJSHandleInPageContentWorld = allow;
+}
+
+bool PageConfiguration::allowJSHandleInPageContentWorld() const
+{
+    return m_data.allowJSHandleInPageContentWorld;
+}
+
 void PageConfiguration::setDelaysWebProcessLaunchUntilFirstLoad(bool delaysWebProcessLaunchUntilFirstLoad)
 {
     RELEASE_LOG(Process, "%p - PageConfiguration::setDelaysWebProcessLaunchUntilFirstLoad(%d)", this, delaysWebProcessLaunchUntilFirstLoad);

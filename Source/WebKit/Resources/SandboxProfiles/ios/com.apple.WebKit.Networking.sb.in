@@ -307,7 +307,7 @@
            (global-name "com.apple.cfnetwork.cfnetworkagent"))
 
     ;; <rdar://problem/12620714>
-    (deny file-write-create (with no-report)
+    (deny file-write-create NO_REPORT
           (home-prefix "/Library/Logs/CrashReporter/CFNetwork_"))
 
     (deny mach-lookup 
@@ -514,7 +514,7 @@
 (deny mach-lookup 
     (global-name "com.apple.ctkd.token-client"))
 
-(deny system-info (with no-report)
+(deny system-info NO_REPORT
     (info-type "net.link.addr"))
 
 (allow mach-lookup
@@ -624,7 +624,7 @@
 (deny file-write-create
       (vnode-type SYMLINK))
 
-(deny file-read* (with no-report)
+(deny file-read* NO_REPORT
     (literal "/private/etc/group"))
 
 ;; FIXME should be removed when <rdar://problem/30498072> is fixed.
@@ -687,7 +687,7 @@
     (allow file-read* file-write-data file-ioctl 
         (literal "/dev/dtracehelper"))
 ; else
-    (deny (with no-report) file-read* file-write-data file-ioctl
+    (deny NO_REPORT file-read* file-write-data file-ioctl
         (literal "/dev/dtracehelper"))
 )
 
@@ -709,9 +709,9 @@
 (when (defined? 'syscall-unix)
     (deny syscall-unix (with telemetry))
     (when (defined? 'SYS_crossarch_trap)
-        (deny syscall-unix (with no-report) (syscall-number
+        (deny syscall-unix NO_REPORT (syscall-number
             SYS_crossarch_trap)))
-    (deny syscall-unix (with no-report) (syscall-number
+    (deny syscall-unix NO_REPORT (syscall-number
         SYS___nexus_set_opt))
     (allow syscall-unix (syscall-number
         SYS___channel_get_info

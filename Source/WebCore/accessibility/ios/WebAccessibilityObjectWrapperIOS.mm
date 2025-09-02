@@ -28,10 +28,13 @@
 
 #if PLATFORM(IOS_FAMILY)
 
+#import "AXAttributeCacheScope.h"
 #import "AXLogger.h"
+#import "AXNotifications.h"
+#import "AXObjectCache.h"
+#import "AXObjectCacheInlines.h"
 #import "AXSearchManager.h"
-#import "AccessibilityAttachment.h"
-#import "AccessibilityMediaObject.h"
+#import "AXUtilities.h"
 #import "AccessibilityRenderObject.h"
 #import "AccessibilityScrollView.h"
 #import "AccessibilityTable.h"
@@ -40,11 +43,11 @@
 #import "ChromeClient.h"
 #import "FontCascade.h"
 #import "FrameSelection.h"
-#import "HitTestResult.h"
 #import "HTMLFrameOwnerElement.h"
 #import "HTMLInputElement.h"
 #import "HTMLNames.h"
 #import "HTMLTextAreaElement.h"
+#import "HitTestResult.h"
 #import "IntRect.h"
 #import "LocalFrame.h"
 #import "LocalizedStrings.h"
@@ -57,10 +60,10 @@
 #import "SimpleRange.h"
 #import "TextIterator.h"
 #import "VisiblePosition.h"
+#import "VisibleUnits.h"
 #import "WAKScrollView.h"
 #import "WAKWindow.h"
 #import "WebCoreThread.h"
-#import "VisibleUnits.h"
 #import <CoreText/CoreText.h>
 #import <wtf/RuntimeApplicationChecks.h>
 #import <wtf/cocoa/VectorCocoa.h>
@@ -348,7 +351,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     // Try a fuzzy hit test first to find an accessible element.
     AXCoreObject *axObject = nullptr;
     {
-        AXAttributeCacheEnabler enableCache(self.axBackingObject->axObjectCache());
+        AXAttributeCacheScope enableCache(self.axBackingObject->axObjectCache());
         axObject = self.axBackingObject->accessibilityHitTest(IntPoint(point));
     }
 
@@ -702,14 +705,14 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
         return NO;
 
     // Convey the video object as interactive if auto-play is not enabled.
-    auto* mediaObject = dynamicDowncast<AccessibilityMediaObject>(self.axBackingObject);
-    return mediaObject && !mediaObject->isAutoplayEnabled();
+    RefPtr object = dynamicDowncast<AccessibilityRenderObject>(self.axBackingObject);
+    return object && !object->isAutoplayEnabled();
 }
 
 - (NSString *)interactiveVideoDescription
 {
-    auto* mediaObject = dynamicDowncast<AccessibilityMediaObject>(self.axBackingObject);
-    return mediaObject ? mediaObject->interactiveVideoDuration().createNSString().autorelease() : @"";
+    RefPtr object = dynamicDowncast<AccessibilityRenderObject>(self.axBackingObject);
+    return object ? object->interactiveVideoDuration().createNSString().autorelease() : @"";
 }
 
 - (BOOL)accessibilityIsMediaPlaying
@@ -717,8 +720,8 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     if (![self _prepareAccessibilityCall])
         return NO;
 
-    auto* mediaObject = dynamicDowncast<AccessibilityMediaObject>(self.axBackingObject);
-    return mediaObject && mediaObject->isPlaying();
+    RefPtr object = dynamicDowncast<AccessibilityRenderObject>(self.axBackingObject);
+    return object && object->isPlaying();
 }
 
 - (BOOL)accessibilityIsMediaMuted
@@ -726,8 +729,8 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     if (![self _prepareAccessibilityCall])
         return NO;
 
-    auto* mediaObject = dynamicDowncast<AccessibilityMediaObject>(self.axBackingObject);
-    return mediaObject && mediaObject->isMuted();
+    RefPtr object = dynamicDowncast<AccessibilityRenderObject>(self.axBackingObject);
+    return object && object->isMuted();
 }
 
 - (void)accessibilityToggleMuteForMedia
@@ -735,8 +738,8 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     if (![self _prepareAccessibilityCall])
         return;
 
-    if (auto* mediaObject = dynamicDowncast<AccessibilityMediaObject>(self.axBackingObject))
-        mediaObject->toggleMute();
+    if (RefPtr object = dynamicDowncast<AccessibilityRenderObject>(self.axBackingObject))
+        object->toggleMute();
 }
 
 - (void)accessibilityVideoEnterFullscreen
@@ -744,8 +747,8 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     if (![self _prepareAccessibilityCall])
         return;
 
-    if (auto* mediaObject = dynamicDowncast<AccessibilityMediaObject>(self.axBackingObject))
-        mediaObject->enterFullscreen();
+    if (RefPtr object = dynamicDowncast<AccessibilityRenderObject>(self.axBackingObject))
+        object->enterFullscreen();
 }
 
 - (uint64_t)_accessibilityTextEntryTraits
@@ -1196,7 +1199,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
 
     // iOS doesn't distinguish between the title and description properties,
     // so concatenate them when different.
-    String title = backingObject->titleAttributeValue();
+    String title = backingObject->title();
     String description = backingObject->descriptionAttributeValue();
     RetainPtr landmarkDescription = [self ariaLandmarkRoleDescription];
     RetainPtr interactiveVideoDescription = [self interactiveVideoDescription];
@@ -1596,8 +1599,10 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
         return [NSString stringWithFormat:@"%.2f", backingObject->valueForRange()];
     }
 
-    if (auto* attachment = dynamicDowncast<AccessibilityAttachment>(backingObject.get()); attachment && attachment->hasProgress())
+#if ENABLE(ATTACHMENT_ELEMENT)
+    if (backingObject->isAttachmentElement() && backingObject->hasProgress())
         return [NSString stringWithFormat:@"%.2f", backingObject->valueForRange()];
+#endif
 
     return nil;
 }
@@ -1645,7 +1650,11 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     if (![self _prepareAccessibilityCall])
         return NO;
 
-    return is<AccessibilityAttachment>(self.axBackingObject);
+#if ENABLE(ATTACHMENT_ELEMENT)
+    return self.axBackingObject->isAttachmentElement();
+#else
+    return NO;
+#endif
 }
 
 - (BOOL)accessibilityIsComboBox
@@ -1837,7 +1846,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     if (![self _prepareAccessibilityCall])
         return nil;
 
-    AXAttributeCacheEnabler enableCache(self.axBackingObject->axObjectCache());
+    AXAttributeCacheScope enableCache(self.axBackingObject->axObjectCache());
 
     // As long as there's a parent wrapper, that's the correct chain to climb.
     AXCoreObject* parent = self.axBackingObject->parentObjectUnignored();

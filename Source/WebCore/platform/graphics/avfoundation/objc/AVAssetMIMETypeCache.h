@@ -27,7 +27,7 @@
 
 #if PLATFORM(COCOA)
 
-#include "MIMETypeCache.h"
+#include <WebCore/MIMETypeCache.h>
 
 namespace WebCore {
 

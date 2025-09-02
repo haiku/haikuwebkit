@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "Document.h"
-#include "TreeScopeOrderedMap.h"
+#include <WebCore/Document.h>
+#include <WebCore/TreeScopeOrderedMap.h>
 
 namespace WebCore {
 

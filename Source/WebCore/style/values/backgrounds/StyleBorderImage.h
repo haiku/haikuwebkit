@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "StyleBorderImageOutset.h"
-#include "StyleBorderImageRepeat.h"
-#include "StyleBorderImageSlice.h"
-#include "StyleBorderImageSource.h"
-#include "StyleBorderImageWidth.h"
+#include <WebCore/StyleBorderImageOutset.h>
+#include <WebCore/StyleBorderImageRepeat.h>
+#include <WebCore/StyleBorderImageSlice.h>
+#include <WebCore/StyleBorderImageSource.h>
+#include <WebCore/StyleBorderImageWidth.h>
 #include <wtf/DataRef.h>
 
 namespace WebCore {

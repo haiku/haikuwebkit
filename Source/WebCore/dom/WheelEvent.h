@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "MouseEvent.h"
-#include "PlatformWheelEvent.h"
+#include <WebCore/MouseEvent.h>
+#include <WebCore/PlatformWheelEvent.h>
 
 namespace WebCore {
 

@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "CSSPrimitiveNumericConcepts.h"
-#include "CSSPrimitiveNumericRange.h"
-#include "CSSUnits.h"
-#include "CalculationCategory.h"
+#include <WebCore/CSSPrimitiveNumericConcepts.h>
+#include <WebCore/CSSPrimitiveNumericRange.h>
+#include <WebCore/CSSUnits.h>
+#include <WebCore/CalculationCategory.h>
 #include <wtf/Brigand.h>
 #include <wtf/EnumTraits.h>
 #include <wtf/MathExtras.h>

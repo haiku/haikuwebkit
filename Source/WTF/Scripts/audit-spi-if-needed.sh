@@ -8,6 +8,8 @@ program="$(dirname $(dirname $(dirname "${SRCROOT}")))/${WK_ADDITIONAL_SCRIPTS_D
 # the same basename as the timestamp output.
 depfile="${SCRIPT_OUTPUT_FILE_0/%.timestamp/.d}"
 
+eval allowlists=(${WK_AUDIT_SPI_ALLOWLISTS})
+
 if [[ "${WK_AUDIT_SPI}" == YES && -f "${program}" ]]; then
     mkdir -p "${OBJROOT}/WebKitSDKDBs"
 
@@ -30,6 +32,8 @@ if [[ "${WK_AUDIT_SPI}" == YES && -f "${program}" ]]; then
          --depfile "${depfile}" \
          -F "${BUILT_PRODUCTS_DIR}" \
          -L "${BUILT_PRODUCTS_DIR}" \
+         ${allowlists[@]/#/--allowlist } \
+         ${WK_OTHER_AUDIT_SPI_FLAGS} \
          @"${BUILT_PRODUCTS_DIR}/DerivedSources/${PROJECT_NAME}/platform-enabled-swift-args.${arch}.resp" \
          --no-errors \
          $@)

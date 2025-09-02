@@ -19,11 +19,11 @@
  */
 #pragma once
 
-#include "DestinationColorSpace.h"
-#include "FloatPoint3D.h"
-#include "GraphicsTypesGL.h"
-#include "IntRect.h"
-#include "IntSize.h"
+#include <WebCore/DestinationColorSpace.h>
+#include <WebCore/FloatPoint3D.h>
+#include <WebCore/GraphicsTypesGL.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/IntSize.h>
 #include <memory>
 #include <wtf/CompletionHandler.h>
 #include <wtf/HashMap.h>
@@ -38,7 +38,7 @@
 #endif
 
 #if PLATFORM(COCOA)
-#include "IOSurface.h"
+#include <WebCore/IOSurface.h>
 #include <WebCore/XRGPUProjectionLayerInit.h>
 #include <wtf/MachSendRight.h>
 #endif

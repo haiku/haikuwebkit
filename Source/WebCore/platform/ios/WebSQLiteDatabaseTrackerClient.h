@@ -27,7 +27,7 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "SQLiteDatabaseTrackerClient.h"
+#include <WebCore/SQLiteDatabaseTrackerClient.h>
 #include <pal/HysteresisActivity.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>

@@ -291,7 +291,6 @@ void FindController::findString(const String& string, OptionSet<FindOptions> opt
         if (RefPtr selectedFrame = frameWithSelection(webPage->protectedCorePage().get())) {
             if (selectedFrame->checkedSelection()->selectionBounds().isEmpty()) {
                 auto result = webPage->protectedCorePage()->findTextMatches(string, coreOptions, maxMatchCount);
-                m_findMatches = WTFMove(result.ranges);
                 m_foundStringMatchIndex = result.indexForSelection;
                 foundStringStartsAfterSelection = true;
             }

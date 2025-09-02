@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "MediaSessionGroupIdentifier.h"
-#include "MediaUniqueIdentifier.h"
-#include "NowPlayingMetadataObserver.h"
-#include "PlatformMediaSessionTypes.h"
+#include <WebCore/MediaSessionGroupIdentifier.h>
+#include <WebCore/MediaUniqueIdentifier.h>
+#include <WebCore/NowPlayingMetadataObserver.h>
+#include <WebCore/PlatformMediaSessionTypes.h>
 #include <wtf/LoggerHelper.h>
 #include <wtf/ProcessID.h>
 #include <wtf/ThreadSafeWeakPtr.h>

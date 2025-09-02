@@ -25,40 +25,40 @@
 
 #pragma once
 
-#include "Color.h"
-#include "EventRegion.h"
-#include "FilterOperations.h"
-#include "FloatPoint.h"
-#include "FloatPoint3D.h"
-#include "FloatRoundedRect.h"
-#include "FloatSize.h"
-#include "GraphicsLayerClient.h"
-#include "GraphicsTypes.h"
-#include "HTMLMediaElementIdentifier.h"
-#include "LayerHostingContextIdentifier.h"
-#include "MediaPlayerEnums.h"
-#include "Path.h"
-#include "PlatformLayer.h"
-#include "PlatformLayerIdentifier.h"
-#include "ProcessIdentifier.h"
-#include "ProcessQualified.h"
-#include "Region.h"
-#include "ScrollableArea.h"
-#include "ScrollTypes.h"
-#include "TimingFunction.h"
-#include "TransformOperations.h"
-#include "WindRule.h"
+#include <WebCore/Color.h>
+#include <WebCore/EventRegion.h>
+#include <WebCore/FilterOperations.h>
+#include <WebCore/FloatPoint.h>
+#include <WebCore/FloatPoint3D.h>
+#include <WebCore/FloatRoundedRect.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/GraphicsLayerClient.h>
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/HTMLMediaElementIdentifier.h>
+#include <WebCore/LayerHostingContextIdentifier.h>
+#include <WebCore/MediaPlayerEnums.h>
+#include <WebCore/Path.h>
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/PlatformLayerIdentifier.h>
+#include <WebCore/ProcessIdentifier.h>
+#include <WebCore/ProcessQualified.h>
+#include <WebCore/Region.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/ScrollableArea.h>
+#include <WebCore/TimingFunction.h>
+#include <WebCore/TransformOperations.h>
+#include <WebCore/WindRule.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Function.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/TypeCasts.h>
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-#include "AcceleratedEffectStack.h"
+#include <WebCore/AcceleratedEffectStack.h>
 #endif
 
 #if HAVE(CORE_MATERIAL)
-#include "AppleVisualEffect.h"
+#include <WebCore/AppleVisualEffect.h>
 #endif
 
 namespace WTF {
@@ -511,6 +511,7 @@ public:
     virtual void setNeedsDisplayInRect(const FloatRect&, ShouldClipToLayer = ClipToLayer) = 0;
 
     virtual void setContentsNeedsDisplay() { };
+    virtual void setContentsNeedsDisplayInRect(const FloatRect&) { setContentsNeedsDisplay(); }
 
     // The tile phase is relative to the GraphicsLayer bounds.
     virtual void setContentsTilePhase(const FloatSize& p) { m_contentsTilePhase = p; }

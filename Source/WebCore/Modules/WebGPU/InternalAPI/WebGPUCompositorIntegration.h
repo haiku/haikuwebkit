@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "AlphaPremultiplication.h"
+#include <WebCore/AlphaPremultiplication.h>
 
 #include <optional>
 #include <wtf/CompletionHandler.h>

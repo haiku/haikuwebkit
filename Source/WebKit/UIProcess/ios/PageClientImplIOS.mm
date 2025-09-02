@@ -815,7 +815,6 @@ WebFullScreenManagerProxyClient& PageClientImpl::fullScreenManagerProxyClient()
         return *m_fullscreenClientForTesting;
     return *this;
 }
-
 // WebFullScreenManagerProxyClient
 
 void PageClientImpl::closeFullScreenManager()
@@ -895,6 +894,20 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
 }
 
 #endif // ENABLE(FULLSCREEN_API)
+
+void PageClientImpl::didEnterFullscreen()
+{
+#if ENABLE(VIDEO_PRESENTATION_MODE) && ENABLE(FULLSCREEN_API)
+    [[webView() fullScreenWindowController] didEnterVideoFullscreen];
+#endif
+}
+
+void PageClientImpl::didExitFullscreen()
+{
+#if ENABLE(VIDEO_PRESENTATION_MODE) && ENABLE(FULLSCREEN_API)
+    [[webView() fullScreenWindowController] didExitVideoFullscreen];
+#endif
+}
 
 void PageClientImpl::didFinishLoadingDataForCustomContentProvider(const String& suggestedFilename, std::span<const uint8_t> dataReference)
 {
@@ -1267,6 +1280,20 @@ UIViewController *PageClientImpl::presentingViewController() const
 
     return nil;
 }
+
+#if ENABLE(POINTER_LOCK)
+
+void PageClientImpl::beginPointerLockMouseTracking()
+{
+    [contentView() _beginPointerLockMouseTracking];
+}
+
+void PageClientImpl::endPointerLockMouseTracking()
+{
+    [contentView() _endPointerLockMouseTracking];
+}
+
+#endif
 
 FloatRect PageClientImpl::rootViewToWebView(const FloatRect& rect) const
 {

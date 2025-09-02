@@ -877,6 +877,9 @@ static BOOL isArrayOfRequestMethodsValid(NSArray<NSString *> *requestMethods)
     NSDictionary<NSString *, id> *convertedRule = @{
         @"action": actionDictionary,
         @"trigger": triggerDictionary,
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        @"_identifier": @(_ruleID),
+#endif
     };
 
     if ([chromeActionType isEqualToString:declarativeNetRequestRuleActionTypeAllowAllRequests]) {

@@ -21,12 +21,11 @@
 
 #pragma once
 
-#include "AXObjectCache.h"
-#include "Cursor.h"
-#include "DisabledAdaptations.h"
-#include "FocusDirection.h"
-#include "HostWindow.h"
-#include "ImageBufferFormat.h"
+#include <WebCore/Cursor.h>
+#include <WebCore/DisabledAdaptations.h>
+#include <WebCore/FocusDirection.h>
+#include <WebCore/HostWindow.h>
+#include <WebCore/ImageBufferFormat.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/FunctionDispatcher.h>

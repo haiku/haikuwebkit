@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Animation.h"
+#include <WebCore/Animation.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>

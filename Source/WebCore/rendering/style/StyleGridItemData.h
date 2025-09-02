@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "StyleGridPosition.h"
+#include <WebCore/StyleGridPosition.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 

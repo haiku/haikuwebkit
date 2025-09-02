@@ -87,6 +87,7 @@ OBJC_CLASS UIView;
 OBJC_CLASS UIViewController;
 OBJC_CLASS WKBaseScrollView;
 OBJC_CLASS WKBEScrollViewScrollUpdate;
+OBJC_CLASS WKFullScreenWindowController;
 OBJC_CLASS _WKRemoteObjectRegistry;
 
 #if USE(APPKIT)
@@ -831,6 +832,11 @@ public:
     virtual void didChangeScreenTimeWebpageControllerURL() { };
     virtual void setURLIsPictureInPictureForScreenTime(bool) { };
     virtual void setURLIsPlayingVideoForScreenTime(bool) { };
+#endif
+
+#if ENABLE(POINTER_LOCK)
+    virtual void beginPointerLockMouseTracking() { }
+    virtual void endPointerLockMouseTracking() { }
 #endif
 };
 

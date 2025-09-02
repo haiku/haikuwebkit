@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include <WebCore/CachedResourceClient.h>
+#include <WebCore/ImageTypes.h>
 #include <wtf/CheckedPtr.h>
-#include "CachedResourceClient.h"
-#include "ImageTypes.h"
 
 namespace WebCore {
 

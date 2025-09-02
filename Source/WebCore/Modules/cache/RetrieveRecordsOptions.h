@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "CrossOriginEmbedderPolicy.h"
-#include "ResourceRequest.h"
-#include "SecurityOrigin.h"
+#include <WebCore/CrossOriginEmbedderPolicy.h>
+#include <WebCore/ResourceRequest.h>
+#include <WebCore/SecurityOrigin.h>
 
 namespace WebCore {
 

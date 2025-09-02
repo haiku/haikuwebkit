@@ -31,8 +31,9 @@
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
 #include "Logging.h"
-#include "WebKitNodeInfo.h"
+#include "WebKitJSHandle.h"
 #include "WebKitSerializedNode.h"
+#include <JavaScriptCore/JSCellInlines.h>
 
 #define WEBKIT_NAMESPACE_RELEASE_LOG_ERROR(channel, fmt, ...) RELEASE_LOG_ERROR(channel, "%p - WebKitNamespace::" fmt, this, ##__VA_ARGS__)
 
@@ -67,9 +68,9 @@ UserMessageHandlersNamespace* WebKitNamespace::messageHandlers()
     return &m_messageHandlerNamespace.get();
 }
 
-Ref<WebKitNodeInfo> WebKitNamespace::createNodeInfo(Node& node)
+Ref<WebKitJSHandle> WebKitNamespace::createJSHandle(Document& document, JSC::Strong<JSC::JSObject> object)
 {
-    return WebKitNodeInfo::create(node);
+    return WebKitJSHandle::create(document, object.get());
 }
 
 Ref<WebKitSerializedNode> WebKitNamespace::serializeNode(Node& node, SerializedNodeInit&& init)

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PermissionsPolicy.h"
+#include <WebCore/PermissionsPolicy.h>
 
 namespace WebCore {
 

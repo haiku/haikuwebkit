@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ScriptElementCachedScriptFetcher.h"
+#include <WebCore/ScriptElementCachedScriptFetcher.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/WeakHashCountedSet.h>
 #include <wtf/text/WTFString.h>

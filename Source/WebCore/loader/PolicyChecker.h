@@ -29,14 +29,14 @@
 
 #pragma once
 
-#include "FrameLoader.h"
-#include "LocalFrameLoaderClient.h"
-#include "ResourceRequest.h"
+#include <WebCore/FrameLoader.h>
+#include <WebCore/LocalFrameLoaderClient.h>
+#include <WebCore/ResourceRequest.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(CONTENT_FILTERING)
-#include "ContentFilterUnblockHandler.h"
+#include <WebCore/ContentFilterUnblockHandler.h>
 #endif
 
 namespace WebCore {

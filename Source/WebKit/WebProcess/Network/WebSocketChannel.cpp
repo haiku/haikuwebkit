@@ -145,14 +145,13 @@ WebSocketChannel::ConnectStatus WebSocketChannel::connect(const URL& url, const 
 
     OptionSet<AdvancedPrivacyProtections> advancedPrivacyProtections;
     bool allowPrivacyProxy { true };
-    std::optional<FrameIdentifier> frameID;
     std::optional<PageIdentifier> pageID;
     StoredCredentialsPolicy storedCredentialsPolicy { StoredCredentialsPolicy::Use };
     RefPtr frame = document->frame();
     RefPtr mainFrame = document->localMainFrame();
     if (!mainFrame)
         return ConnectStatus::KO;
-    frameID = mainFrame->frameID();
+    auto frameID = frame ? std::optional(frame->frameID()) : std::nullopt;
     pageID = mainFrame->pageID();
     if (RefPtr policySourceDocumentLoader = mainFrame->document() ? mainFrame->protectedDocument()->loader() : nullptr) {
         if (!policySourceDocumentLoader->request().url().hasSpecialScheme() && frame->document()->url().protocolIsInHTTPFamily())

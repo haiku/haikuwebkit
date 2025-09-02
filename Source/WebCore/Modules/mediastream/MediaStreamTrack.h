@@ -29,20 +29,20 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "ActiveDOMObject.h"
-#include "Blob.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "IDLTypes.h"
-#include "JSDOMPromiseDeferred.h"
-#include "MediaProducer.h"
-#include "MediaStreamTrackDataHolder.h"
-#include "MediaStreamTrackPrivate.h"
-#include "MediaTrackCapabilities.h"
-#include "MediaTrackConstraints.h"
-#include "PhotoCapabilities.h"
-#include "PhotoSettings.h"
-#include "PlatformMediaSession.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/Blob.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/IDLTypes.h>
+#include <WebCore/JSDOMPromiseDeferred.h>
+#include <WebCore/MediaProducer.h>
+#include <WebCore/MediaStreamTrackDataHolder.h>
+#include <WebCore/MediaStreamTrackPrivate.h>
+#include <WebCore/MediaTrackCapabilities.h>
+#include <WebCore/MediaTrackConstraints.h>
+#include <WebCore/PhotoCapabilities.h>
+#include <WebCore/PhotoSettings.h>
+#include <WebCore/PlatformMediaSession.h>
 #include <wtf/LoggerHelper.h>
 
 namespace WebCore {

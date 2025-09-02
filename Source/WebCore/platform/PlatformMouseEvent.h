@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "DoublePoint.h"
-#include "IntPoint.h"
-#include "MouseEventTypes.h"
-#include "PlatformEvent.h"
-#include "PointerEventTypeNames.h"
-#include "PointerID.h"
+#include <WebCore/DoublePoint.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/MouseEventTypes.h>
+#include <WebCore/PlatformEvent.h>
+#include <WebCore/PointerEventTypeNames.h>
+#include <WebCore/PointerID.h>
 #include <wtf/UUID.h>
 #include <wtf/WindowsExtras.h>
 

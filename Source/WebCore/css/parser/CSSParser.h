@@ -30,11 +30,11 @@
 
 #pragma once
 
-#include "CSSParserEnum.h"
-#include "CSSParserTokenRange.h"
-#include "CSSProperty.h"
-#include "CSSPropertyNames.h"
-#include "StyleRule.h"
+#include <WebCore/CSSParserEnum.h>
+#include <WebCore/CSSParserTokenRange.h>
+#include <WebCore/CSSProperty.h>
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/StyleRule.h>
 #include <memory>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>

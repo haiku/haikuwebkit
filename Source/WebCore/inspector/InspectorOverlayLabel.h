@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "Color.h"
-#include "FloatPoint.h"
+#include <WebCore/Color.h>
+#include <WebCore/FloatPoint.h>
 #include <wtf/ArgumentCoder.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>

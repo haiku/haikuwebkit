@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "CSSPrimitiveValue.h"
+#include <WebCore/CSSPrimitiveValue.h>
 #include <wtf/text/StringView.h>
 
 namespace WebCore {

@@ -20,30 +20,30 @@
 
 #pragma once
 
-#include "ActivityState.h"
-#include "AnimationFrameRate.h"
-#include "BackForwardItemIdentifier.h"
-#include "BoxExtents.h"
-#include "Color.h"
-#include "DocumentEnums.h"
-#include "FindOptions.h"
-#include "FrameIdentifier.h"
-#include "FrameLoaderTypes.h"
-#include "ImageTypes.h"
-#include "IntRectHash.h"
-#include "LoadSchedulingMode.h"
-#include "MediaSessionGroupIdentifier.h"
-#include "PageIdentifier.h"
-#include "Pagination.h"
-#include "PlaybackTargetClientContextIdentifier.h"
-#include "ProcessSwapDisposition.h"
-#include "RegistrableDomain.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "ScriptTrackingPrivacyCategory.h"
-#include "ScrollTypes.h"
-#include "Supplementable.h"
-#include "Timer.h"
-#include "UserInterfaceLayoutDirection.h"
+#include <WebCore/ActivityState.h>
+#include <WebCore/AnimationFrameRate.h>
+#include <WebCore/BackForwardItemIdentifier.h>
+#include <WebCore/BoxExtents.h>
+#include <WebCore/Color.h>
+#include <WebCore/DocumentEnums.h>
+#include <WebCore/FindOptions.h>
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/ImageTypes.h>
+#include <WebCore/IntRectHash.h>
+#include <WebCore/LoadSchedulingMode.h>
+#include <WebCore/MediaSessionGroupIdentifier.h>
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/Pagination.h>
+#include <WebCore/PlaybackTargetClientContextIdentifier.h>
+#include <WebCore/ProcessSwapDisposition.h>
+#include <WebCore/RegistrableDomain.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/ScriptTrackingPrivacyCategory.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/Supplementable.h>
+#include <WebCore/Timer.h>
+#include <WebCore/UserInterfaceLayoutDirection.h>
 #include <memory>
 #include <pal/SessionID.h>
 #include <wtf/Assertions.h>
@@ -66,11 +66,11 @@
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(APPLICATION_MANIFEST)
-#include "ApplicationManifest.h"
+#include <WebCore/ApplicationManifest.h>
 #endif
 
 #if PLATFORM(VISION) && ENABLE(GAMEPAD)
-#include "ShouldRequireExplicitConsentForGamepadAccess.h"
+#include <WebCore/ShouldRequireExplicitConsentForGamepadAccess.h>
 #endif
 
 namespace JSC {

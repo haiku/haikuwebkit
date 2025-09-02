@@ -27,7 +27,7 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "MediaPlaybackTarget.h"
+#include <WebCore/MediaPlaybackTarget.h>
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {

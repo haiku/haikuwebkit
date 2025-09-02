@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CharacterData.h"
-#include "ContainerNode.h"
-#include "EditingBoundary.h"
-#include "TextAffinity.h"
+#include <WebCore/CharacterData.h>
+#include <WebCore/ContainerNode.h>
+#include <WebCore/EditingBoundary.h>
+#include <WebCore/TextAffinity.h>
 
 namespace WTF {
 class TextStream;

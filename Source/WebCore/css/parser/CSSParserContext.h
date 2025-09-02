@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "CSSParserMode.h"
-#include "CSSPropertyNames.h"
-#include "LoadedFromOpaqueSource.h"
-#include "StyleRuleType.h"
+#include <WebCore/CSSParserMode.h>
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/LoadedFromOpaqueSource.h>
+#include <WebCore/StyleRuleType.h>
 #include <pal/text/TextEncoding.h>
 #include <wtf/HashFunctions.h>
 #include <wtf/Hasher.h>
@@ -60,11 +60,12 @@ struct CSSParserContext {
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
     bool cssTransformStyleSeparatedEnabled : 1 { false };
 #endif
-    bool masonryEnabled : 1 { false };
+    bool itemPackCollapseDisplayGridEnabled : 1 { false };
     bool cssAppearanceBaseEnabled : 1 { false };
     bool cssPaintingAPIEnabled : 1 { false };
     bool cssShapeFunctionEnabled : 1 { false };
     bool cssTextUnderlinePositionLeftRightEnabled : 1 { false };
+    bool cssTextDecorationLineErrorValues : 1 { false };
     bool cssBackgroundClipBorderAreaEnabled : 1 { false };
     bool cssWordBreakAutoPhraseEnabled : 1 { false };
     bool popoverAttributeEnabled : 1 { false };

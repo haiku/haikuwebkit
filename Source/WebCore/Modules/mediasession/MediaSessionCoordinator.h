@@ -27,12 +27,12 @@
 
 #if ENABLE(MEDIA_SESSION_COORDINATOR)
 
-#include "ActiveDOMObject.h"
-#include "EventTarget.h"
-#include "EventTargetInterfaces.h"
-#include "MediaSession.h"
-#include "MediaSessionCoordinatorPrivate.h"
-#include "MediaSessionCoordinatorState.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
+#include <WebCore/MediaSession.h>
+#include <WebCore/MediaSessionCoordinatorPrivate.h>
+#include <WebCore/MediaSessionCoordinatorState.h>
 #include <wtf/Logger.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>

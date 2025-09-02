@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "StyleValueTypes.h"
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

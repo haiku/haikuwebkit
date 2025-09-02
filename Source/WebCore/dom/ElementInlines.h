@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "CustomElementDefaultARIA.h"
-#include "DocumentInlines.h"
-#include "Element.h"
-#include "ElementData.h"
-#include "HTMLNames.h"
-#include "RenderStyleInlines.h"
-#include "StyleChange.h"
+#include <WebCore/CustomElementDefaultARIA.h>
+#include <WebCore/DocumentInlines.h>
+#include <WebCore/Element.h>
+#include <WebCore/ElementData.h>
+#include <WebCore/HTMLNames.h>
+#include <WebCore/RenderStyleInlines.h>
+#include <WebCore/StyleChange.h>
 
 namespace WebCore {
 

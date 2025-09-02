@@ -22,5 +22,6 @@
 ; THE POSSIBILITY OF SUCH DAMAGE.
 
 #define deny allow (with report)
+#define NO_REPORT
 
 #include "Resources/SandboxProfiles/ios/com.apple.WebKit.WebContent.sb.in"

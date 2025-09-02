@@ -27,9 +27,9 @@
 
 #if ENABLE(VIDEO)
 
-#include "ContainerNodeInlines.h"
-#include "HTMLMediaElement.h"
-#include "RenderImage.h"
+#include <WebCore/ContainerNodeInlines.h>
+#include <WebCore/HTMLMediaElement.h>
+#include <WebCore/RenderImage.h>
 
 namespace WebCore {
 

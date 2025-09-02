@@ -173,6 +173,10 @@ void RenderBox::willBeDestroyed()
             view().unregisterAnchor(*this);
         if (!style().positionTryFallbacks().isEmpty())
             view().unregisterPositionTryBox(*this);
+        if (Style::AnchorPositionEvaluator::isAnchorPositioned(style())) // Keep this in sync with styleDidChange().
+            layoutContext().unregisterAnchorScrollAdjusterFor(*this);
+        if (hasPotentiallyScrollableOverflow()) // Keep this in sync with AnchorScrollAdjuster::addSnapshot() calls.
+            layoutContext().removeScrollerFromAnchorScrollAdjusters(*this);
     }
 
     RenderBoxModelObject::willBeDestroyed();
@@ -372,6 +376,22 @@ void RenderBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle
             scrollableArea->scrollbarWidthChanged(newStyle.scrollbarWidth());
     }
 
+    if (layer() && oldStyle && oldStyle->scrollbarColor() != newStyle.scrollbarColor()) {
+        std::optional<ScrollbarColor> scrollbarColor;
+
+        if (auto value = newStyle.scrollbarColor().tryValue()) {
+            scrollbarColor = ScrollbarColor {
+                .thumbColor = newStyle.colorResolvingCurrentColor(value->thumb),
+                .trackColor = newStyle.colorResolvingCurrentColor(value->track)
+            };
+        }
+
+        if (isDocElementRenderer)
+            view().frameView().scrollbarColorDidChange(scrollbarColor);
+        else if (auto* scrollableArea = layer()->scrollableArea())
+            scrollableArea->scrollbarColorDidChange(scrollbarColor);
+    }
+
 #if ENABLE(DARK_MODE_CSS)
     if (layer() && oldStyle && oldStyle->colorScheme() != newStyle.colorScheme()) {
         if (auto* scrollableArea = layer()->scrollableArea())
@@ -409,6 +429,16 @@ void RenderBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle
             containingBlock->setNeedsLayoutAndPreferredWidthsUpdate();
         }
     }
+    if (oldStyle && Style::AnchorPositionEvaluator::isAnchorPositioned(*oldStyle)
+        && !Style::AnchorPositionEvaluator::isAnchorPositioned(style())) {
+        // Only out-of-flow code manages these, so if we're changing we need to clear them.
+        // Keep this in sync with willBeDestroyed().
+        layoutContext().unregisterAnchorScrollAdjusterFor(*this);
+    }
+
+    if ((layer() && diff == StyleDifference::Layout && hasNonVisibleOverflow())
+        || (oldStyle && oldStyle->isOverflowVisible() != style().isOverflowVisible()))
+        layoutContext().invalidateAnchorDependenciesForScroller(*this);
 }
 
 static bool hasEquivalentGridPositioningStyle(const RenderStyle& style, const RenderStyle& oldStyle)
@@ -3286,9 +3316,18 @@ RenderBox::LogicalExtentComputedValues RenderBox::computeLogicalHeight(LayoutUni
     computedValues.m_extent = logicalHeight;
     computedValues.m_position = logicalTop;
 
-    // Cell height is managed by the table and inline non-replaced elements do not support a height property.
-    if (isRenderTableCell() || (isInline() && !isBlockLevelReplacedOrAtomicInline()))
+    // Inline non-replaced elements do not support a height property.
+    if (isInline() && !isBlockLevelReplacedOrAtomicInline())
         return computedValues;
+
+    // Let's allow the table cell to compute its preferred size.
+    if (CheckedPtr tableCell = dynamicDowncast<RenderTableCell>(*this); tableCell && !tableCell->isComputingPreferredSize()) {
+        // Use the value set by table layout for orthogonal cells which in this case the logical width of the cell from the table's point of view.
+        // see RenderTableCell::setCellLogicalWidth.
+        if (tableCell->isOrthogonal())
+            computedValues.m_extent = overridingBorderBoxLogicalHeight().value_or(computedValues.m_extent);
+        return computedValues;
+    }
 
     if (isOutOfFlowPositioned()) {
         computePositionedLogicalHeight(computedValues);
@@ -3990,6 +4029,9 @@ bool RenderBox::replacedMaxLogicalHeightComputesAsNone() const
 
 LayoutUnit RenderBox::computeReplacedLogicalHeightRespectingMinMaxHeight(LayoutUnit logicalHeight) const
 {
+    if (shouldIgnoreLogicalMinMaxHeightSizes())
+        return logicalHeight;
+
     LayoutUnit minLogicalHeight;
     if (!replacedMinLogicalHeightComputesAsNone())
         minLogicalHeight = computeReplacedLogicalHeightUsing(style().logicalMinHeight());
@@ -4798,27 +4840,79 @@ LayoutRect RenderBox::applyVisualEffectOverflow(const LayoutRect& borderBox) con
     return LayoutRect(overflowMinX, overflowMinY, overflowMaxX - overflowMinX, overflowMaxY - overflowMinY);
 }
 
-void RenderBox::addOverflowFromChild(const RenderBox& child, const LayoutSize& delta)
+void RenderBox::addOverflowFromInFlowChildOrAbsolutePositionedDescendant(const RenderBox& inFlowChildOrAbsolutePositionedDescendant)
 {
-    addOverflowFromChild(child, delta, flippedClientBoxRect());
+    ASSERT(!inFlowChildOrAbsolutePositionedDescendant.isFloating());
+    addOverflowWithRendererOffset(inFlowChildOrAbsolutePositionedDescendant, inFlowChildOrAbsolutePositionedDescendant.locationOffset());
 }
 
-void RenderBox::addOverflowFromChild(const RenderBox& child, const LayoutSize& delta, const LayoutRect& flippedClientRect)
+void RenderBox::addOverflowFromFloatBox(const FloatingObject& floatBox)
+{
+    addOverflowWithRendererOffset(floatBox.renderer(), floatBox.locationOffsetOfBorderBox());
+}
+
+void RenderBox::addOverflowWithRendererOffset(const RenderBox& renderer, LayoutSize offsetFromThis)
 {
     // Never allow flow threads to propagate overflow up to a parent.
-    if (child.isRenderFragmentedFlow())
+    if (renderer.isRenderFragmentedFlow())
         return;
 
+    // 'offsetFromThis' is normally the renderer's position (RenderBox::location()).
+    // However in case of a float box, it may belong to a different container (but is intrusive to this container hence calling this function),
+    // meaning that the renderer's position may not be the same as its actual offset from this container.
+    auto flippedClientRect = flippedClientBoxRect();
     CheckedPtr fragmentedFlow = enclosingFragmentedFlow();
     if (fragmentedFlow)
-        fragmentedFlow->addFragmentsOverflowFromChild(*this, child, delta);
+        fragmentedFlow->addFragmentsOverflowFromChild(*this, renderer, offsetFromThis);
 
     // Only propagate layout overflow from the child if the child isn't clipping its overflow.  If it is, then
     // its overflow is internal to it, and we don't care about it. layoutOverflowRectForPropagation takes care of this
     // and just propagates the border box rect instead.
-    LayoutRect childLayoutOverflowRect = child.layoutOverflowRectForPropagation(writingMode());
-    childLayoutOverflowRect.move(delta);
+    auto childLayoutOverflowRect = renderer.layoutOverflowRectForPropagation(writingMode());
+    childLayoutOverflowRect.move(offsetFromThis);
     addLayoutOverflow(childLayoutOverflowRect, flippedClientRect);
+
+    auto ensurePaddingEndIsIncluded = [&] {
+        if (!hasNonVisibleOverflow())
+            return;
+
+        // As per https://github.com/w3c/csswg-drafts/issues/3653 padding should contribute to the scrollable overflow area.
+        if (!paddingEnd())
+            return;
+
+        // FIXME: Expand it to non-grid/flex cases when applicable.
+        if (!is<RenderGrid>(*this) && !is<RenderFlexibleBox>(*this))
+            return;
+
+        if (renderer.isOutOfFlowPositioned())
+            return;
+
+        // Note that we can't use childLayoutOverflowRect here as it already includes propagated overflow from descendents.
+        auto isMainAxisFlipped = [&] {
+            auto isInlineFlipped = writingMode().isInlineFlipped();
+            if (CheckedPtr flexContainer = dynamicDowncast<RenderFlexibleBox>(*this)) {
+                auto isColumnOrRowReverseSameAsWrapReverse = flexContainer->isColumnOrRowReverse() == flexContainer->isWrapReverse();
+                return isInlineFlipped == isColumnOrRowReverseSameAsWrapReverse;
+            }
+            return isInlineFlipped;
+        }();
+        auto childLogicalRight = [&] {
+            if (!isMainAxisFlipped)
+                return (isHorizontalWritingMode() ? offsetFromThis.width() + renderer.width() : offsetFromThis.height() + renderer.height()) + renderer.marginEnd(writingMode());
+            return (isHorizontalWritingMode() ? offsetFromThis.width() : offsetFromThis.height()) - renderer.marginEnd(writingMode());
+        };
+
+        auto layoutOverflowRect = this->layoutOverflowRect();
+        if (!isMainAxisFlipped) {
+            auto layoutOverflowLogicalRightIncludingPaddingEnd = childLogicalRight() + paddingEnd();
+            isHorizontalWritingMode() ? layoutOverflowRect.shiftMaxXEdgeTo(layoutOverflowLogicalRightIncludingPaddingEnd) : layoutOverflowRect.shiftMaxYEdgeTo(layoutOverflowLogicalRightIncludingPaddingEnd);
+        } else {
+            auto layoutOverflowLogicalRightIncludingPaddingEnd = childLogicalRight() - paddingEnd();
+            isHorizontalWritingMode() ? layoutOverflowRect.shiftXEdgeTo(layoutOverflowLogicalRightIncludingPaddingEnd) : layoutOverflowRect.shiftYEdgeTo(layoutOverflowLogicalRightIncludingPaddingEnd);
+        }
+        addLayoutOverflow(layoutOverflowRect);
+    };
+    ensurePaddingEndIsIncluded();
 
     if (paintContainmentApplies())
         return;
@@ -4829,10 +4923,10 @@ void RenderBox::addOverflowFromChild(const RenderBox& child, const LayoutSize& d
     if (hasPotentiallyScrollableOverflow())
         return;
 
-    std::optional<LayoutRect> childVisualOverflowRect;
+    auto childVisualOverflowRect = std::optional<LayoutRect> { };
     auto computeChildVisualOverflowRect = [&] () {
-        childVisualOverflowRect = child.visualOverflowRectForPropagation(writingMode());
-        childVisualOverflowRect->move(delta);
+        childVisualOverflowRect = renderer.visualOverflowRectForPropagation(writingMode());
+        childVisualOverflowRect->move(offsetFromThis);
     };
     // If this block is flowed inside a flow thread, make sure its overflow is propagated to the containing fragments.
     if (fragmentedFlow) {
@@ -4841,7 +4935,7 @@ void RenderBox::addOverflowFromChild(const RenderBox& child, const LayoutSize& d
     } else {
         // Update our visual overflow in case the child spills out the block, but only if we were going to paint
         // the child block ourselves.
-        if (child.hasSelfPaintingLayer())
+        if (renderer.hasSelfPaintingLayer())
             return;
     }
     if (!childVisualOverflowRect)
@@ -4915,7 +5009,7 @@ void RenderBox::addVisualOverflow(const LayoutRect& rect)
     LayoutRect borderBox = borderBoxRect();
     if (borderBox.contains(rect) || rect.isEmpty())
         return;
-        
+
     if (!m_overflow)
         m_overflow = makeUnique<RenderOverflow>(flippedClientBoxRect(), borderBox);
     
@@ -4928,7 +5022,7 @@ void RenderBox::clearOverflow()
     if (CheckedPtr fragmentedFlow = enclosingFragmentedFlow())
         fragmentedFlow->clearFragmentsOverflow(*this);
 }
-    
+
 bool RenderBox::percentageLogicalHeightIsResolvable() const
 {
     // Do this to avoid duplicating all the logic that already exists when computing an actual percentage height.

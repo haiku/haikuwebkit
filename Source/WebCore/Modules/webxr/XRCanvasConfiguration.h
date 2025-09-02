@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "WebGPUTextureFormat.h"
+#include <WebCore/WebGPUTextureFormat.h>
 
 namespace WebCore {
 

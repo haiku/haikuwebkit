@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "CSSBorderRadius.h"
-#include "FloatRoundedRect.h"
-#include "LayoutRoundedRect.h"
-#include "StylePrimitiveNumericTypes.h"
+#include <WebCore/CSSBorderRadius.h>
+#include <WebCore/FloatRoundedRect.h>
+#include <WebCore/LayoutRoundedRect.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
 
 namespace WebCore {
 

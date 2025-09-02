@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "CharacterRange.h"
-#include "FindOptions.h"
-#include "InlineIteratorLogicalOrderTraversal.h"
-#include "InlineIteratorTextBox.h"
-#include "SimpleRange.h"
-#include "TextIteratorBehavior.h"
+#include <WebCore/CharacterRange.h>
+#include <WebCore/FindOptions.h>
+#include <WebCore/InlineIteratorLogicalOrderTraversal.h>
+#include <WebCore/InlineIteratorTextBox.h>
+#include <WebCore/SimpleRange.h>
+#include <WebCore/TextIteratorBehavior.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
 #include <wtf/text/StringCommon.h>

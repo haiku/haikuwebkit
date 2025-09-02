@@ -161,7 +161,7 @@ bool FrameLoader::SubframeLoader::pluginIsLoadable(const URL& url, const HTMLPlu
             return false;
         }
 
-        if (MixedContentChecker::shouldBlockRequestForRunnableContent(protectedFrame(), securityOrigin, url))
+        if (MixedContentChecker::shouldBlockRequest(protectedFrame(), url))
             return false;
     }
 

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PlatformContentFilter.h"
+#include <WebCore/PlatformContentFilter.h>
 #include <wtf/Compiler.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>

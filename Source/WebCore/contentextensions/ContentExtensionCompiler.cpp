@@ -105,16 +105,30 @@ static Vector<unsigned> serializeActions(const Vector<ContentExtensionRule>& rul
         // Anything with condition is just pushed.
         // We could try to merge conditions but that case is not common in practice.
         //
-        // Also, if the rule is an ignore-following-rules rule, we shouldn't try to
-        // combine them so that we maintain the position of the rule when we process
-        // them later.
-        if (!rule.trigger().conditions.isEmpty() || std::holds_alternative<IgnoreFollowingRulesAction>(actionData)) {
+        // FIXME: <rdar://157880650> We can actually combine ignore-following-rules actions, order would still be maintained.
+        // If the rule is an ignore-following-rules rule, we shouldn't try to combine them so that we maintain the position
+        // of the rule when we process them later.
+        //
+        // If we're tracking rule identifiers, we also cannot combine actions since the identifiers are unique.
+        bool shouldPushRule = !rule.trigger().conditions.isEmpty() || std::holds_alternative<IgnoreFollowingRulesAction>(actionData);
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        shouldPushRule = shouldPushRule || rule.identifier();
+#endif
+        if (shouldPushRule) {
             actionLocations.append(actions.size());
 
             actions.append(actionData.index());
             WTF::visit(WTF::makeVisitor([&](const auto& member) {
                 member.serialize(actions);
             }), actionData);
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            if (rule.identifier()) {
+                actions.reserveCapacity(actions.size() + sizeof(rule.identifier()));
+                actions.append(asByteSpan(rule.identifier()));
+            }
+#endif
+
             continue;
         }
 
@@ -288,7 +302,7 @@ std::error_code compileRuleList(ContentExtensionCompilationClient& client, Strin
 #if CONTENT_EXTENSIONS_PERFORMANCE_REPORTING
     MonotonicTime patternPartitioningStart = MonotonicTime::now();
 #endif
-    
+
     client.writeSource(std::exchange(ruleJSON, String()));
 
     Vector<SerializedActionByte> actions;

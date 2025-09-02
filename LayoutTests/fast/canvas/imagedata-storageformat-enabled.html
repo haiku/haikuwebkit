@@ -26,17 +26,17 @@ function shouldBeAround(to_eval, targetNumber, tolerance, quiet)
     return shouldBeCloseTo(to_eval, targetNumber, tolerance, quiet);
 }
 
-function verifyImageData(variable, constructor, bytesPerElement, red, green, blue, alpha, tolerance) {
-    shouldBe(variable + '.width', '1');
-    shouldBe(variable + '.height', '1');
-    shouldBe(variable + '.data.constructor', constructor);
-    shouldBe(variable + '.data.BYTES_PER_ELEMENT', String(bytesPerElement));
-    shouldBe(variable + '.data.length', '4');
-    shouldBe(variable + '.data.byteLength', String(bytesPerElement * 4));
-    shouldBeAround(variable + '.data.at(0)', red, tolerance);
-    shouldBeAround(variable + '.data.at(1)', green, tolerance);
-    shouldBeAround(variable + '.data.at(2)', blue, tolerance);
-    shouldBeAround(variable + '.data.at(3)', alpha, tolerance);
+function verifyImageData(variable, constructor, bytesPerElement, red, green, blue, alpha, tolerance, quiet) {
+    shouldBe(variable + '.width', '1', quiet);
+    shouldBe(variable + '.height', '1', quiet);
+    shouldBe(variable + '.data.constructor', constructor, quiet);
+    shouldBe(variable + '.data.BYTES_PER_ELEMENT', String(bytesPerElement), quiet);
+    shouldBe(variable + '.data.length', '4', quiet);
+    shouldBe(variable + '.data.byteLength', String(bytesPerElement * 4), quiet);
+    shouldBeAround(variable + '.data.at(0)', red, tolerance, quiet);
+    shouldBeAround(variable + '.data.at(1)', green, tolerance, quiet);
+    shouldBeAround(variable + '.data.at(2)', blue, tolerance, quiet);
+    shouldBeAround(variable + '.data.at(3)', alpha, tolerance, quiet);
 }
 
 const uint8_bytes_per_element = 1;
@@ -53,16 +53,49 @@ verifyImageData('gotten_imageData_uint8', 'Uint8ClampedArray', uint8_bytes_per_e
 var created_imageData_float16 = context.createImageData(1, 1, { storageFormat: "float16" });
 verifyImageData('created_imageData_float16', 'Float16Array', float16_bytes_per_element, 0, 0, 0, 0, 0);
 
-// This verifies the basic float16->uint8 conversion.
+// This verifies the basic uint8->float16 conversion.
 var gotten_imageData_float16 = context.getImageData(0, 0, 1, 1, { storageFormat: "float16" });
 verifyImageData('gotten_imageData_float16', 'Float16Array', float16_bytes_per_element, r / 255, g / 255, b / 255, a / 255, float16_nonzero_tolerance);
 
 // Put the float16 ImageData back into the (uint8-backed) canvas, and get a default (uint8) ImageData.
-// This verifies the basic uint8->float16 conversion:
+// This verifies the basic float16->uint8 conversion:
 context.clearRect(0, 0, 1, 1);
 context.putImageData(gotten_imageData_float16, 0, 0);
 var gotten_imageData_uint8_from_float16 = context.getImageData(0, 0, 1, 1);
 verifyImageData('gotten_imageData_uint8_from_float16', 'Uint8ClampedArray', uint8_bytes_per_element, r, g, b, a);
+
+// Exhaustive uint8->float16->uint8 round-trip test for all possible individual component values. Only log errors.
+for (let v = 0; v < 256; ++v) {
+    for (component = 0; component < 4; ++component) {
+        const quiet = true;
+        r = g = b = 0;
+        a = 255;
+        switch (component) {
+        case 0: r = v; break;
+        case 1: g = v; break;
+        case 2: b = v; break;
+        case 2: r = g = b = 255; a = v; break;
+        }
+        created_imageData_uint8.data[0] = r;
+        created_imageData_uint8.data[1] = g;
+        created_imageData_uint8.data[2] = b;
+        created_imageData_uint8.data[3] = a;
+        const prefix = '/* ' + r + "," + g + "," + b + "," + a + " */ ";
+
+        context.putImageData(created_imageData_uint8, 0, 0);
+        gotten_imageData_uint8 = context.getImageData(0, 0, 1, 1, { storageFormat: "uint8" });
+        verifyImageData(prefix + 'gotten_imageData_uint8', 'Uint8ClampedArray', uint8_bytes_per_element, r, g, b, a, 0, quiet);
+        gotten_imageData_float16 = context.getImageData(0, 0, 1, 1, { storageFormat: "float16" });
+        verifyImageData(prefix + 'gotten_imageData_float16', 'Float16Array', float16_bytes_per_element, r / 255, g / 255, b / 255, a / 255, float16_nonzero_tolerance, quiet);
+
+        context.clearRect(0, 0, 1, 1);
+        context.putImageData(gotten_imageData_float16, 0, 0);
+        gotten_imageData_float16 = context.getImageData(0, 0, 1, 1, { storageFormat: "float16" });
+        verifyImageData(prefix + 'gotten_imageData_float16', 'Float16Array', float16_bytes_per_element, r / 255, g / 255, b / 255, a / 255, float16_nonzero_tolerance, quiet);
+        gotten_imageData_uint8 = context.getImageData(0, 0, 1, 1, { storageFormat: "uint8" });
+        verifyImageData(prefix + 'gotten_imageData_uint8', 'Uint8ClampedArray', uint8_bytes_per_element, r, g, b, a, 0, quiet);
+    }
+}
 
 shouldThrowErrorName(`context.createImageData(1, 1, { storageFormat: "foo" })`, "TypeError")
 shouldThrowErrorName(`context.getImageData(0, 0, 1, 1, { storageFormat: "foo" })`, "TypeError")

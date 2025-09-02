@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "FormattingConstraints.h"
-#include "InlineFormattingContext.h"
-#include "InlineFormattingUtils.h"
-#include "InlineItem.h"
+#include <WebCore/FormattingConstraints.h>
+#include <WebCore/InlineFormattingContext.h>
+#include <WebCore/InlineFormattingUtils.h>
+#include <WebCore/InlineItem.h>
 #include "InlineLineBuilder.h"
-#include "InlineLineTypes.h"
-#include "InlineTextItem.h"
+#include <WebCore/InlineLineTypes.h>
+#include <WebCore/InlineTextItem.h>
 #include <optional>
 
 namespace WebCore {

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "SharedBuffer.h"
+#include <WebCore/SharedBuffer.h>
 #include <wtf/URL.h>
 
 namespace IPC {

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "LocalFrameLoaderClient.h"
+#include <WebCore/LocalFrameLoaderClient.h>
 
 namespace WebCore {
 
@@ -164,8 +164,6 @@ private:
 
     void saveViewStateToItem(HistoryItem&) final;
     bool canCachePage() const final;
-    void didDisplayInsecureContent() final;
-    void didRunInsecureContent(SecurityOrigin&) final;
     RefPtr<LocalFrame> createFrame(const AtomString&, HTMLFrameOwnerElement&) final;
     RefPtr<Widget> createPlugin(HTMLPlugInElement&, const URL&, const Vector<AtomString>&, const Vector<AtomString>&, const String&, bool) final;
 
@@ -195,6 +193,7 @@ private:
 #endif
 
     bool hasFrameSpecificStorageAccess() final;
+    void revokeFrameSpecificStorageAccess() final;
 
     void dispatchLoadEventToOwnerElementInAnotherProcess() final;
 

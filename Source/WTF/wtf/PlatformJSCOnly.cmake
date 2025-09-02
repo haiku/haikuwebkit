@@ -133,7 +133,12 @@ if (LOWERCASE_EVENT_LOOP_TYPE STREQUAL "glib")
             glib/SocketConnection.cpp
         )
     endif ()
-
+    if (ENABLE_JSC_GLIB_API)
+        list(APPEND WTF_PUBLIC_HEADERS
+            glib/GWeakPtr.h
+            glib/WTFGType.h
+        )
+    endif ()
     list(APPEND WTF_SYSTEM_INCLUDE_DIRECTORIES
         ${GIO_UNIX_INCLUDE_DIRS}
         ${GLIB_INCLUDE_DIRS}

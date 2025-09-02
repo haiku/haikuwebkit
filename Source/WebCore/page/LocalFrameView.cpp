@@ -4566,8 +4566,8 @@ void LocalFrameView::updateScrollAnchoringPositionForScrollableAreas()
 
 void LocalFrameView::updateAnchorPositionedAfterScroll()
 {
-    if (RefPtr document = m_frame->document())
-        Style::AnchorPositionEvaluator::updatePositionsAfterScroll(*document);
+    if (CheckedPtr view = renderView())
+        Style::AnchorPositionEvaluator::updateScrollAdjustments(*view);
 }
 
 IntSize LocalFrameView::sizeForResizeEvent() const
@@ -6901,6 +6901,21 @@ ScrollbarWidth LocalFrameView::scrollbarWidthStyle()  const
     if (scrollingObject && renderView())
         return scrollingObject->style().scrollbarWidth();
     return ScrollbarWidth::Auto;
+}
+
+std::optional<ScrollbarColor> LocalFrameView::scrollbarColorStyle() const
+{
+    auto* document = m_frame->document();
+    auto scrollingObject = document && document->documentElement() ? document->documentElement()->renderer() : nullptr;
+    if (scrollingObject && renderView()) {
+        if (auto value = scrollingObject->style().scrollbarColor().tryValue()) {
+            return ScrollbarColor {
+                .thumbColor = scrollingObject->style().colorResolvingCurrentColor(value->thumb),
+                .trackColor = scrollingObject->style().colorResolvingCurrentColor(value->track)
+            };
+        }
+    }
+    return { };
 }
 
 bool LocalFrameView::isVisibleToHitTesting() const

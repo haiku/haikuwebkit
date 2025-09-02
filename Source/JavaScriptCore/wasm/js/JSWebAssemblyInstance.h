@@ -32,6 +32,7 @@
 #include "JSWebAssemblyGlobal.h"
 #include "JSWebAssemblyMemory.h"
 #include "JSWebAssemblyTable.h"
+#include "StackManager.h"
 #include "WasmCalleeGroup.h"
 #include "WasmCreationMode.h"
 #include "WasmFormat.h"
@@ -40,6 +41,7 @@
 #include "WasmModule.h"
 #include "WasmModuleInformation.h"
 #include "WasmTable.h"
+#include "WebAssemblyBuiltin.h"
 #include "WebAssemblyFunction.h"
 #include "WriteBarrier.h"
 #include <wtf/BitVector.h>
@@ -129,9 +131,7 @@ public:
 
     using FunctionWrapperMap = UncheckedKeyHashMap<uint32_t, WriteBarrier<Unknown>, IntHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
 
-    static constexpr ptrdiff_t offsetOfSoftStackLimit() { return OBJECT_OFFSETOF(JSWebAssemblyInstance, m_softStackLimit); }
-
-    void updateSoftStackLimit(void* softStackLimit) { m_softStackLimit = softStackLimit; }
+    static constexpr ptrdiff_t offsetOfSoftStackLimit() { return OBJECT_OFFSETOF(JSWebAssemblyInstance, m_stackMirror) + StackManager::Mirror::offsetOfSoftStackLimit(); }
 
     Wasm::Module& module() const { return m_module.get(); }
     SourceTaintedOrigin taintedness() const { return m_sourceProvider->sourceTaintedOrigin(); }
@@ -245,6 +245,7 @@ public:
     JSValue getFunctionWrapper(unsigned) const;
     typename FunctionWrapperMap::ValuesConstIteratorRange functionWrappers() const { return m_functionWrappers.values(); }
     void setFunctionWrapper(unsigned, JSValue);
+    void setBuiltinCalleeBits(uint32_t builtinID, CalleeBits calleeBits) { m_builtinCalleeBits[builtinID] = calleeBits; }
 
     Wasm::Global* getGlobalBinding(unsigned i)
     {
@@ -297,7 +298,7 @@ public:
         m_temporaryCallFrame = callFrame;
     }
 
-    void* softStackLimit() const { return m_softStackLimit; }
+    void* softStackLimit() const { return m_stackMirror.softStackLimit(); }
 
     void setFaultPC(void* pc) { m_faultPC = pc; };
     void* faultPC() const { return m_faultPC; }
@@ -315,7 +316,7 @@ private:
     WriteBarrier<WebAssemblyModuleRecord> m_moduleRecord;
     WriteBarrier<JSWebAssemblyMemory> m_memory;
     FixedVector<WriteBarrier<JSWebAssemblyTable>> m_tables;
-    void* m_softStackLimit { nullptr };
+    StackManager::Mirror m_stackMirror;
     CagedPtr<Gigacage::Primitive, void> m_cachedMemory;
     size_t m_cachedBoundsCheckingSize { 0 };
     const Ref<Wasm::Module> m_module;
@@ -333,6 +334,9 @@ private:
     FixedVector<RefPtr<const Wasm::Tag>> m_tags;
     Vector<Ref<Wasm::WasmToJSCallee>> importCallees;
     void* m_faultPC { nullptr };
+    // Used by builtin trampolines to quickly fetch callee bits to store in the call frame.
+    // The actual callees are owned by builtins. Populated by WebAssemblyModuleRecord::initializeImports().
+    CalleeBits m_builtinCalleeBits[WASM_BUILTIN_COUNT];
 };
 
 } // namespace JSC

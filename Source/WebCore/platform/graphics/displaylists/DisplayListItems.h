@@ -25,22 +25,22 @@
 
 #pragma once
 
-#include "AlphaPremultiplication.h"
-#include "ControlPart.h"
-#include "DashArray.h"
-#include "DecomposedGlyphs.h"
-#include "DisplayListItem.h"
-#include "Filter.h"
-#include "FloatRoundedRect.h"
-#include "Font.h"
-#include "GlyphBuffer.h"
-#include "Gradient.h"
-#include "GraphicsContext.h"
-#include "Image.h"
-#include "NativeImage.h"
-#include "SharedBuffer.h"
-#include "SystemImage.h"
-#include "TextFlags.h"
+#include <WebCore/AlphaPremultiplication.h>
+#include <WebCore/ControlPart.h>
+#include <WebCore/DashArray.h>
+#include <WebCore/DecomposedGlyphs.h>
+#include <WebCore/DisplayListItem.h>
+#include <WebCore/Filter.h>
+#include <WebCore/FloatRoundedRect.h>
+#include <WebCore/Font.h>
+#include <WebCore/GlyphBuffer.h>
+#include <WebCore/Gradient.h>
+#include <WebCore/GraphicsContext.h>
+#include <WebCore/Image.h>
+#include <WebCore/NativeImage.h>
+#include <WebCore/SharedBuffer.h>
+#include <WebCore/SystemImage.h>
+#include <WebCore/TextFlags.h>
 #include <wtf/TypeCasts.h>
 
 namespace WTF {

@@ -12142,6 +12142,16 @@ static WebKit::DocumentEditingContextRequest toWebRequest(id request)
     _page->handleMouseEvent(event);
 }
 
+#if ENABLE(POINTER_LOCK)
+- (void)mouseInteractionDidLoseMouseDeviceDuringPointerLock:(WKMouseInteraction *)interaction
+{
+    if (!_page->hasRunningProcess())
+        return;
+
+    _page->resetPointerLockState();
+}
+#endif
+
 - (void)_configureMouseGestureRecognizer
 {
     [_mouseInteraction setEnabled:self.shouldUseMouseGestureRecognizer];
@@ -14283,6 +14293,28 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
 #endif // HAVE(UI_CONVERSATION_CONTEXT)
 
 @end
+
+#if ENABLE(POINTER_LOCK)
+
+@implementation WKContentView (PointerLock)
+
+- (void)_beginPointerLockMouseTracking
+{
+#if HAVE(UIKIT_WITH_MOUSE_SUPPORT)
+    [_mouseInteraction beginPointerLockMouseTracking];
+#endif
+}
+
+- (void)_endPointerLockMouseTracking
+{
+#if HAVE(UIKIT_WITH_MOUSE_SUPPORT)
+    [_mouseInteraction endPointerLockMouseTracking];
+#endif
+}
+
+@end
+
+#endif // ENABLE(POINTER_LOCK)
 
 @implementation WKContentView (WKTesting)
 

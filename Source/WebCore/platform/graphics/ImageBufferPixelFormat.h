@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "ContentsFormat.h"
+#include <WebCore/ContentsFormat.h>
 #if HAVE(IOSURFACE)
-#include "IOSurface.h"
+#include <WebCore/IOSurface.h>
 #endif
-#include "PixelFormat.h"
+#include <WebCore/PixelFormat.h>
 
 #include <wtf/Forward.h>
 

@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "InlineFormattingContext.h"
-#include "InlineLayoutState.h"
+#include <WebCore/InlineFormattingContext.h>
+#include <WebCore/InlineLayoutState.h>
 #include "InlineLineBuilder.h"
-#include "TextUtil.h"
+#include <WebCore/TextUtil.h>
 
 namespace WebCore {
 namespace Layout {

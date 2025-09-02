@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "StylePrimitiveNumericAdaptors.h"
-#include "StyleTransformOperationWrapper.h"
-#include "TranslateTransformOperation.h"
+#include <WebCore/StylePrimitiveNumericAdaptors.h>
+#include <WebCore/StyleTransformOperationWrapper.h>
+#include <WebCore/TranslateTransformOperation.h>
 #include <wtf/PointerComparison.h>
 
 namespace WebCore {

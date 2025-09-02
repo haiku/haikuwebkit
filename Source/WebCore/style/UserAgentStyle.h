@@ -57,9 +57,6 @@ public:
 #if ENABLE(ATTACHMENT_ELEMENT)
     static StyleSheetContents* attachmentStyleSheet;
 #endif
-#if ENABLE(FORM_CONTROL_REFRESH)
-    static StyleSheetContents* vectorControlsStyleSheet;
-#endif
 
     static void initDefaultStyleSheet();
     static void ensureDefaultStyleSheetsForElement(const Element&);

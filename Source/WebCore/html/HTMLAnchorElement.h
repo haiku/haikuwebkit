@@ -23,12 +23,12 @@
 
 #pragma once
 
-#include "Document.h"
-#include "HTMLElement.h"
-#include "HTMLNames.h"
-#include "PrivateClickMeasurement.h"
-#include "SharedStringHash.h"
-#include "URLDecomposition.h"
+#include <WebCore/Document.h>
+#include <WebCore/HTMLElement.h>
+#include <WebCore/HTMLNames.h>
+#include <WebCore/PrivateClickMeasurement.h>
+#include <WebCore/SharedStringHash.h>
+#include <WebCore/URLDecomposition.h>
 #include <wtf/OptionSet.h>
 
 namespace WebCore {

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "SpeechRecognitionCaptureSourceImpl.h"
-#include "SpeechRecognitionConnectionClientIdentifier.h"
+#include <WebCore/SpeechRecognitionCaptureSourceImpl.h>
+#include <WebCore/SpeechRecognitionConnectionClientIdentifier.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WTF {

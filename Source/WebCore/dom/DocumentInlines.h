@@ -25,31 +25,31 @@
 
 #pragma once
 
-#include "CachedResourceLoader.h"
-#include "ClientOrigin.h"
-#include "Document.h"
-#include "DocumentMarkerController.h"
-#include "DocumentParser.h"
-#include "DocumentSyncData.h"
-#include "Element.h"
-#include "EventLoop.h"
-#include "ExtensionStyleSheets.h"
-#include "FocusOptions.h"
-#include "FrameDestructionObserverInlines.h"
-#include "FrameInlines.h"
-#include "FrameSelection.h"
-#include "LocalDOMWindow.h"
-#include "LocalFrameInlines.h"
-#include "LocalFrameView.h"
-#include "NodeIterator.h"
-#include "NodeInlines.h"
-#include "PageInlines.h"
-#include "ReportingScope.h"
-#include "SecurityOrigin.h"
-#include "Settings.h"
-#include "TextResourceDecoder.h"
-#include "UndoManager.h"
-#include "WebCoreOpaqueRoot.h"
+#include <WebCore/CachedResourceLoader.h>
+#include <WebCore/ClientOrigin.h>
+#include <WebCore/Document.h>
+#include <WebCore/DocumentMarkerController.h>
+#include <WebCore/DocumentParser.h>
+#include <WebCore/DocumentSyncData.h>
+#include <WebCore/Element.h>
+#include <WebCore/EventLoop.h>
+#include <WebCore/ExtensionStyleSheets.h>
+#include <WebCore/FocusOptions.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
+#include <WebCore/FrameInlines.h>
+#include <WebCore/FrameSelection.h>
+#include <WebCore/LocalDOMWindow.h>
+#include <WebCore/LocalFrameInlines.h>
+#include <WebCore/LocalFrameView.h>
+#include <WebCore/NodeInlines.h>
+#include <WebCore/NodeIterator.h>
+#include <WebCore/PageInlines.h>
+#include <WebCore/ReportingScope.h>
+#include <WebCore/SecurityOrigin.h>
+#include <WebCore/Settings.h>
+#include <WebCore/TextResourceDecoder.h>
+#include <WebCore/UndoManager.h>
+#include <WebCore/WebCoreOpaqueRoot.h>
 
 namespace WebCore {
 

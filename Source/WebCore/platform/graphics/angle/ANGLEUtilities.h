@@ -27,8 +27,8 @@
 
 #if ENABLE(WEBGL)
 
-#include "GraphicsContextGL.h"
-#include "GraphicsTypesGL.h"
+#include <WebCore/GraphicsContextGL.h>
+#include <WebCore/GraphicsTypesGL.h>
 #include <optional>
 #include <wtf/Noncopyable.h>
 

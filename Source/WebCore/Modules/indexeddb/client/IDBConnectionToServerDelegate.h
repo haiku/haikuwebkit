@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "IDBDatabaseConnectionIdentifier.h"
-#include "IDBIndexIdentifier.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "IDBResourceIdentifier.h"
-#include "IndexKey.h"
+#include <WebCore/IDBDatabaseConnectionIdentifier.h>
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/IDBResourceIdentifier.h>
+#include <WebCore/IndexKey.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 

@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "JSDOMConvert.h"
 #include <JavaScriptCore/JSIteratorPrototype.h>
 #include <JavaScriptCore/PropertySlot.h>
+#include <WebCore/JSDOMConvert.h>
 #include <type_traits>
 
 namespace WebCore {

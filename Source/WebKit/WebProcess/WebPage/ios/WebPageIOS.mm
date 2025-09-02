@@ -70,6 +70,8 @@
 #import "WebProcess.h"
 #import "WebTouchEvent.h"
 #import <CoreText/CTFont.h>
+#import <WebCore/AXRemoteTokenIOS.h>
+#import <WebCore/AccessibilityObject.h>
 #import <WebCore/Autofill.h>
 #import <WebCore/AutofillElements.h>
 #import <WebCore/BoundaryPointInlines.h>
@@ -5233,6 +5235,10 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
             layerAction = ScrollingLayerPositionAction::SetApproximate;
         }
         scrollingCoordinator->reconcileScrollingState(frameView, scrollPosition, visibleContentRectUpdateInfo.layoutViewportRect(), ScrollType::User, viewportStability, layerAction);
+        if (visibleContentRectUpdateInfo.needsScrollend()) {
+            auto scrollUpdate = ScrollUpdate { *frameView.scrollingNodeID(), { }, { }, ScrollUpdateType::WheelEventScrollDidEnd };
+            scrollingCoordinator->applyScrollUpdate(WTFMove(scrollUpdate), ScrollType::User);
+        }
     }
 }
 
@@ -5499,7 +5505,7 @@ static bool isMousePrimaryPointingDevice()
 #endif
 }
 
-static bool hasAccessoryMousePointingDevice()
+bool WebPage::hasAccessoryMousePointingDevice() const
 {
     if (isMousePrimaryPointingDevice())
         return true;

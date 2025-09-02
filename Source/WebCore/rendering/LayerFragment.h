@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ClipRect.h"
+#include <WebCore/ClipRect.h>
 
 namespace WebCore {
 

@@ -1,5 +1,6 @@
+CONSOLE MESSAGE: Unhandled Promise Rejection: SyntaxError: The string did not match the expected pattern.
 
-Harness Error (TIMEOUT), message = null
+Harness Error (FAIL), message = Unhandled rejection: The string did not match the expected pattern.
 
 TIMEOUT Self-initiated reloads preserve storage access Test timed out
 NOTRUN Self-initiated same-origin navigations preserve storage access

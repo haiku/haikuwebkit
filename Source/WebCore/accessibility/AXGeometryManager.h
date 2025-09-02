@@ -26,8 +26,8 @@
 #pragma once
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-#include "AXCoreObject.h"
-#include "IntRectHash.h"
+#include <WebCore/AXCoreObject.h>
+#include <WebCore/IntRectHash.h>
 #include <wtf/Lock.h>
 #include <wtf/RefCounted.h>
 #include <wtf/ThreadSafeRefCounted.h>

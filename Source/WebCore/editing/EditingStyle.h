@@ -31,10 +31,10 @@
 
 #pragma once
 
-#include "CSSProperty.h"
-#include "CSSPropertyNames.h"
-#include "CSSValueKeywords.h"
-#include "WritingDirection.h"
+#include <WebCore/CSSProperty.h>
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CSSValueKeywords.h>
+#include <WebCore/WritingDirection.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TriState.h>
 #include <wtf/text/WTFString.h>

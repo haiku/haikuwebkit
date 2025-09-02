@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2012 Research In Motion Limited. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,6 @@
 #include <JavaScriptCore/Opcode.h>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>
-
-#if ENABLE(C_LOOP)
-#include <JavaScriptCore/CLoopStack.h>
-#endif
 
 
 namespace JSC {
@@ -134,11 +130,6 @@ using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffs
         Interpreter();
         ~Interpreter();
 
-#if ENABLE(C_LOOP)
-        CLoopStack& cloopStack() { return m_cloopStack; }
-        const CLoopStack& cloopStack() const { return m_cloopStack; }
-#endif
-        
         static inline JSC::Opcode getOpcode(OpcodeID);
 
         static inline OpcodeID getOpcodeID(JSC::Opcode);
@@ -179,9 +170,6 @@ using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffs
 #endif
 
         inline VM& vm();
-#if ENABLE(C_LOOP)
-        CLoopStack m_cloopStack;
-#endif
         
 #if ENABLE(COMPUTED_GOTO_OPCODES)
 #if !ENABLE(LLINT_EMBEDDED_OPCODE_ID) || ASSERT_ENABLED

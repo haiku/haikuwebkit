@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "IntPoint.h"
-#include "RenderStyleConstants.h"
-#include "StyleImage.h"
-#include "StyleValueTypes.h"
+#include <WebCore/IntPoint.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleImage.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

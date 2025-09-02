@@ -27,7 +27,7 @@
 
 #if PLATFORM(APPLETV)
 
-#include "PlaybackSessionInterfaceIOS.h"
+#include <WebCore/PlaybackSessionInterfaceIOS.h>
 
 namespace WebCore {
 

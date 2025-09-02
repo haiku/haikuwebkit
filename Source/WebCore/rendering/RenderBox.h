@@ -23,13 +23,13 @@
 
 #pragma once
 
-#include "FontBaseline.h"
-#include "LocalFrameView.h"
-#include "RenderBoxModelObject.h"
-#include "RenderOverflow.h"
-#include "ScrollSnapOffsetsInfo.h"
-#include "ScrollTypes.h"
-#include "ShapeOutsideInfo.h"
+#include <WebCore/FontBaseline.h>
+#include <WebCore/LocalFrameView.h>
+#include <WebCore/RenderBoxModelObject.h>
+#include <WebCore/RenderOverflow.h>
+#include <WebCore/ScrollSnapOffsetsInfo.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/ShapeOutsideInfo.h>
 #include <wtf/TypeCasts.h>
 
 namespace WebCore {
@@ -169,9 +169,8 @@ public:
     void addVisualEffectOverflow();
     LayoutRect applyVisualEffectOverflow(const LayoutRect&) const;
 
-    void addOverflowFromChild(const RenderBox& child) { addOverflowFromChild(child, child.locationOffset()); }
-    void addOverflowFromChild(const RenderBox& child, const LayoutSize& delta);
-    void addOverflowFromChild(const RenderBox&, const LayoutSize& delta, const LayoutRect& flippedClientRect);
+    void addOverflowFromInFlowChildOrAbsolutePositionedDescendant(const RenderBox&);
+    void addOverflowFromFloatBox(const FloatingObject&);
 
     void applyTransform(TransformationMatrix&, const RenderStyle&, const FloatRect& boundingBox, OptionSet<RenderStyle::TransformOperationOption>) const override;
 
@@ -711,6 +710,8 @@ protected:
     bool overflowChangesMayAffectLayout() const final;
 
 private:
+    void addOverflowWithRendererOffset(const RenderBox&, LayoutSize);
+
     bool replacedMinMaxLogicalHeightComputesAsNone(const auto& logicalHeight, const auto& initialLogicalHeight) const;
     bool replacedMinLogicalHeightComputesAsNone() const;
     bool replacedMaxLogicalHeightComputesAsNone() const;

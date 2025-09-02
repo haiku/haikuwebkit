@@ -2067,6 +2067,10 @@ window.UIHelper = class UIHelper {
 
     static setWindowIsKey(isKey)
     {
+        if (!this.isWebKit2()) {
+            testRunner.setWindowIsKey(isKey);
+            return Promise.resolve();
+        }
         const script = `uiController.windowIsKey = ${isKey}`;
         return new Promise(resolve => testRunner.runUIScript(script, resolve));
     }
@@ -2438,6 +2442,54 @@ window.UIHelper = class UIHelper {
                 await UIHelper.ensurePresentationUpdate();
             }, eventTarget || document.activeElement, waitForEvent);
         }
+    }
+
+    static async requestDebugText(options = { })
+    {
+        if (!this.isWebKit2())
+            return Promise.resolve("");
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`(() => {
+                uiController.requestDebugText(result => uiController.uiScriptComplete(result));
+            })()`, debugText => {
+                if (options.normalize) {
+                    debugText = debugText
+                        .replace(/uid=\d+/g, "uid=…")
+                        .replace(/rect=\[[^\]]+\]/g, "rect=[…]")
+                        .replace(/\t/g, "    ");
+                }
+                resolve(debugText);
+            });
+        });
+    }
+
+    static nodeIdentifierFromDebugText(text, searchTerm)
+    {
+        for (let line of text.split("\n")) {
+            if (!line.includes(searchTerm))
+                continue;
+
+            const match = line.match(/uid=(\d+)/);
+            if (match)
+                return match[1];
+        }
+        return null;
+    }
+
+    static async performTextExtractionInteraction(action, options)
+    {
+        if (!this.isWebKit2())
+            return Promise.resolve(false);
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`
+                uiController.performTextExtractionInteraction("${action}"
+                    , ${JSON.stringify(options)}
+                    , result => uiController.uiScriptComplete(result));`, (result) => {
+                        resolve(result === "true")
+                    });
+        });
     }
 }
 

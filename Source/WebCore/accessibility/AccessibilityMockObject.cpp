@@ -40,4 +40,4 @@ bool AccessibilityMockObject::computeIsIgnored() const
     return isIgnoredByDefault();
 }
 
-}
+} // namespace WebCore

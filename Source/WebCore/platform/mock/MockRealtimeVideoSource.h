@@ -32,13 +32,13 @@
 
 #if ENABLE(MEDIA_STREAM)
 
-#include "DashArray.h"
-#include "FontCascade.h"
-#include "ImageBuffer.h"
-#include "MockMediaDevice.h"
-#include "OrientationNotifier.h"
-#include "RealtimeMediaSourceFactory.h"
-#include "RealtimeVideoCaptureSource.h"
+#include <WebCore/DashArray.h>
+#include <WebCore/FontCascade.h>
+#include <WebCore/ImageBuffer.h>
+#include <WebCore/MockMediaDevice.h>
+#include <WebCore/OrientationNotifier.h>
+#include <WebCore/RealtimeMediaSourceFactory.h>
+#include <WebCore/RealtimeVideoCaptureSource.h>
 #include <wtf/Lock.h>
 #include <wtf/RunLoop.h>
 

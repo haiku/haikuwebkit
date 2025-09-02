@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "StyleMaskBorderOutset.h"
-#include "StyleMaskBorderRepeat.h"
-#include "StyleMaskBorderSlice.h"
-#include "StyleMaskBorderSource.h"
-#include "StyleMaskBorderWidth.h"
+#include <WebCore/StyleMaskBorderOutset.h>
+#include <WebCore/StyleMaskBorderRepeat.h>
+#include <WebCore/StyleMaskBorderSlice.h>
+#include <WebCore/StyleMaskBorderSource.h>
+#include <WebCore/StyleMaskBorderWidth.h>
 #include <wtf/DataRef.h>
 
 namespace WebCore {

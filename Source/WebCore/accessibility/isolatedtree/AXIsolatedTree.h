@@ -27,14 +27,14 @@
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
-#include "AXCoreObject.h"
-#include "AXLoggerBase.h"
-#include "AXTextMarker.h"
-#include "AXTextRun.h"
-#include "AXTreeStore.h"
-#include "ColorHash.h"
-#include "PageIdentifier.h"
-#include "RenderStyleConstants.h"
+#include <WebCore/AXCoreObject.h>
+#include <WebCore/AXLoggerBase.h>
+#include <WebCore/AXTextMarker.h>
+#include <WebCore/AXTextRun.h>
+#include <WebCore/AXTreeStore.h>
+#include <WebCore/ColorHash.h>
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>
 #include <wtf/RefPtr.h>
@@ -117,6 +117,7 @@ enum class AXProperty : uint16_t {
     SupportsSetSize = lastPropertyFlagIndex,
     // End bool attributes that are matched in order by AXPropertyFlag.
 
+    Abbreviation,
     ARIALevel,
     ARIARoleDescription,
 #if !ENABLE(AX_THREAD_TEXT_APIS)
@@ -161,7 +162,6 @@ enum class AXProperty : uint16_t {
     DocumentURI,
     ElementName,
     EmbeddedImageDescription,
-    ExpandedTextValue,
     ExplicitAutoCompleteValue,
     ExplicitInvalidStatus,
     ExplicitLiveRegionRelevant,
@@ -282,7 +282,6 @@ enum class AXProperty : uint16_t {
     SupportsDropping,
     SupportsARIAOwns,
     SupportsCurrent,
-    SupportsExpandedTextValue,
     SupportsKeyShortcuts,
     TextContentPrefixFromListMarker,
 #if !ENABLE(AX_THREAD_TEXT_APIS)
@@ -294,8 +293,7 @@ enum class AXProperty : uint16_t {
 #if ENABLE(AX_THREAD_TEXT_APIS)
     TextRuns,
 #endif
-    Title,
-    TitleAttributeValue,
+    TitleAttribute,
     URL,
     UnderlineColor,
     ValueAutofillButtonType,
@@ -304,6 +302,7 @@ enum class AXProperty : uint16_t {
     VerticalScrollBar,
     VisibleChildren,
     VisibleRows,
+    WebAreaTitle
 };
 WTF::TextStream& operator<<(WTF::TextStream&, AXProperty);
 

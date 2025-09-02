@@ -545,6 +545,13 @@ bool BorderPainter::paintNinePieceImageImpl(const LayoutRect& rect, const Render
     if (!modelObject)
         return false;
 
+    ImagePaintingOptions options = {
+        op,
+        ImageOrientation::Orientation::FromImage,
+        m_paintInfo.paintBehavior.contains(PaintBehavior::DrawsHDRContent) ? DrawsHDRContent::Yes : DrawsHDRContent::No,
+        style.dynamicRangeLimit().toPlatformDynamicRangeLimit()
+    };
+
     // FIXME: border-image is broken with full page zooming when tiling has to happen, since the tiling function
     // doesn't have any understanding of the zoom that is in effect on the tile.
     float deviceScaleFactor = document().deviceScaleFactor();
@@ -558,7 +565,7 @@ bool BorderPainter::paintNinePieceImageImpl(const LayoutRect& rect, const Render
     // If both values are ‘auto’ then the intrinsic width and/or height of the image should be used, if any.
     image->setContainerContextForRenderer(m_renderer, source, style.usedZoom());
 
-    NinePieceImagePainter::paint(ninePieceImage, m_paintInfo.context(), m_renderer.ptr(), style, destination, source, deviceScaleFactor, op);
+    NinePieceImagePainter::paint(ninePieceImage, m_paintInfo.context(), m_renderer.ptr(), style, destination, source, deviceScaleFactor, options);
     return true;
 }
 

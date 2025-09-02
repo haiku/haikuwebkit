@@ -613,7 +613,7 @@ void DocumentThreadableLoader::loadRequest(ResourceRequest&& request, SecurityCh
     if (!frame)
         return;
 
-    if (MixedContentChecker::shouldBlockRequestForRunnableContent(*frame, m_document->protectedSecurityOrigin(), requestURL, MixedContentChecker::ShouldLogWarning::Yes))
+    if (MixedContentChecker::shouldBlockRequest(*frame, requestURL))
         return;
 
     RefPtr<SharedBuffer> data;

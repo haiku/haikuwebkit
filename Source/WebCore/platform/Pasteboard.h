@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "DragImage.h"
-#include "PasteboardContext.h"
-#include "PasteboardCustomData.h"
-#include "PasteboardItemInfo.h"
-#include "SharedBuffer.h"
+#include <WebCore/DragImage.h>
+#include <WebCore/PasteboardContext.h>
+#include <WebCore/PasteboardCustomData.h>
+#include <WebCore/PasteboardItemInfo.h>
+#include <WebCore/SharedBuffer.h>
 #include <wtf/HashMap.h>
 #include <wtf/ListHashSet.h>
 #include <wtf/Noncopyable.h>

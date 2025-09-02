@@ -639,7 +639,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmToJSExitIterateResults, bool, (JS
     NativeCallFrameTracer tracer(vm, callFrame);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    const FunctionSignature* signature = type->as<FunctionSignature>();
+    SUPPRESS_UNCOUNTED_LOCAL const FunctionSignature* signature = type->as<FunctionSignature>();
 
     auto wasmCallInfo = wasmCallingConvention().callInformationFor(*type, CallRole::Callee);
 

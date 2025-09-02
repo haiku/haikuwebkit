@@ -74,8 +74,8 @@
 #include <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #endif
 
-#if PLATFORM(GTK) || PLATFORM(WPE)
-#include "DRMDevice.h"
+#if USE(GBM)
+#include "DRMMainDevice.h"
 #endif
 
 #if ENABLE(EXTENSION_CAPABILITIES)
@@ -200,7 +200,7 @@ GPUProcessProxy::GPUProcessProxy()
 #endif
 
 #if USE(GBM)
-    parameters.renderDeviceFile = drmRenderNodeOrPrimaryDevice();
+    parameters.drmDevice = drmMainDevice();
 #endif
 
 #if PLATFORM(COCOA)

@@ -29,8 +29,8 @@
 
 #pragma once
 
-#include "CSSParserToken.h"
-#include "CSSTokenizerInputStream.h"
+#include <WebCore/CSSParserToken.h>
+#include <WebCore/CSSTokenizerInputStream.h>
 #include <climits>
 #include <wtf/text/StringView.h>
 #include <wtf/text/WTFString.h>

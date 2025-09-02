@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "AuthenticationChallengeBase.h"
-#include "AuthenticationClient.h"
+#include <WebCore/AuthenticationChallengeBase.h>
+#include <WebCore/AuthenticationClient.h>
 
 typedef struct _GTlsClientConnection GTlsClientConnection;
 typedef struct _GTlsPassword GTlsPassword;

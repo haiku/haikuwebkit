@@ -29,13 +29,13 @@
 
 #pragma once
 
-#include "AXCoreObject.h"
-#include "AXTextRun.h"
-#include "CharacterRange.h"
-#include "FloatQuad.h"
-#include "LayoutRect.h"
-#include "Path.h"
-#include "TextIterator.h"
+#include <WebCore/AXCoreObject.h>
+#include <WebCore/AXTextRun.h>
+#include <WebCore/CharacterRange.h>
+#include <WebCore/FloatQuad.h>
+#include <WebCore/LayoutRect.h>
+#include <WebCore/Path.h>
+#include <WebCore/TextIterator.h>
 #include <iterator>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
@@ -113,12 +113,14 @@ public:
     virtual bool isAccessibilityListBoxOptionInstance() const { return false; }
     bool isAXIsolatedObjectInstance() const final { return false; }
 
-    virtual bool isAttachmentElement() const { return false; }
     bool isSecureField() const override { return false; }
     bool isContainedBySecureField() const;
     bool isNativeTextControl() const override { return false; }
     virtual bool isSearchField() const { return false; }
     bool isAttachment() const override { return false; }
+#if ENABLE(ATTACHMENT_ELEMENT)
+    virtual bool isAttachmentElement() const { return false; }
+#endif
     bool isMediaTimeline() const { return false; }
     virtual bool isSliderThumb() const { return false; }
     bool isLabel() const { return isAccessibilityLabelInstance() || labelForObjects().size(); }
@@ -362,7 +364,6 @@ public:
     void setAccessibleName(const AtomString&) override { }
     virtual bool hasAttributesRequiredForInclusion() const { return false; }
 
-    String title() const override { return { }; }
     String description() const override { return { }; }
     virtual String helpText() const { return { }; }
     String altTextFromAttributeOrStyle() const;
@@ -420,8 +421,7 @@ public:
     String extendedDescription() const final;
 
     // Abbreviations
-    String expandedTextValue() const override { return String(); }
-    bool supportsExpandedTextValue() const override { return false; }
+    String abbreviation() const final { return getAttribute(HTMLNames::abbrAttr); }
 
     Vector<Ref<Element>> elementsFromAttribute(const QualifiedName&) const;
 
@@ -562,7 +562,8 @@ public:
     const AtomString& getAttribute(const QualifiedName&) const;
     String getAttributeTrimmed(const QualifiedName&) const;
 
-    String nameAttribute() const final;
+    String nameAttribute() const final { return getAttribute(HTMLNames::nameAttr); }
+    String titleAttribute() const final { return getAttribute(HTMLNames::titleAttr); }
     int integralAttribute(const QualifiedName&) const;
     bool hasElementName(const ElementName) const final;
     bool hasAttachmentTag() const final { return hasElementName(ElementName::HTML_attachment); }
@@ -745,7 +746,6 @@ public:
 #if PLATFORM(COCOA)
     bool preventKeyboardDOMEventDispatch() const final;
     void setPreventKeyboardDOMEventDispatch(bool) final;
-    bool fileUploadButtonReturnsValueInTitle() const final;
     OptionSet<SpeakAs> speakAs() const final;
     bool hasApplePDFAnnotationAttribute() const final { return hasAttribute(HTMLNames::x_apple_pdf_annotationAttr); }
 #endif
@@ -950,6 +950,11 @@ private:
 #endif
 };
 
+inline AXObjectCache* AccessibilityObject::axObjectCache() const
+{
+    return m_axObjectCache.get();
+}
+
 inline bool AccessibilityObject::hasDisplayContents() const
 {
     RefPtr element = this->element();
@@ -994,13 +999,6 @@ inline bool AccessibilityObject::hasAttributedText() const
 #endif
 
 AccessibilityObject* firstAccessibleObjectFromNode(const Node*, NOESCAPE const Function<bool(const AccessibilityObject&)>& isAccessible);
-
-namespace Accessibility {
-
-#if PLATFORM(IOS_FAMILY)
-WEBCORE_EXPORT RetainPtr<NSData> newAccessibilityRemoteToken(NSString *);
-#endif
-} // namespace Accessibility
 
 class AXChildIterator {
 public:

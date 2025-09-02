@@ -28,28 +28,28 @@
 
 #if ENABLE(VIDEO)
 
-#include "ActiveDOMObject.h"
-#include "AudioSession.h"
-#include "AudioTrackClient.h"
-#include "AutoplayEvent.h"
-#include "CaptionUserPreferences.h"
-#include "HTMLElement.h"
-#include "HTMLMediaElementEnums.h"
-#include "HTMLMediaElementIdentifier.h"
-#include "MediaCanStartListener.h"
-#include "MediaControllerInterface.h"
-#include "MediaElementSession.h"
-#include "MediaPlayer.h"
-#include "MediaProducer.h"
-#include "MediaResourceSniffer.h"
-#include "MediaUniqueIdentifier.h"
-#include "MessageTargetForTesting.h"
-#include "PlatformDynamicRangeLimit.h"
-#include "ReducedResolutionSeconds.h"
-#include "TextTrackClient.h"
-#include "URLKeepingBlobAlive.h"
-#include "VideoTrackClient.h"
-#include "VisibilityChangeClient.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/AudioSession.h>
+#include <WebCore/AudioTrackClient.h>
+#include <WebCore/AutoplayEvent.h>
+#include <WebCore/CaptionUserPreferences.h>
+#include <WebCore/HTMLElement.h>
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/HTMLMediaElementIdentifier.h>
+#include <WebCore/MediaCanStartListener.h>
+#include <WebCore/MediaControllerInterface.h>
+#include <WebCore/MediaElementSession.h>
+#include <WebCore/MediaPlayer.h>
+#include <WebCore/MediaProducer.h>
+#include <WebCore/MediaResourceSniffer.h>
+#include <WebCore/MediaUniqueIdentifier.h>
+#include <WebCore/MessageTargetForTesting.h>
+#include <WebCore/PlatformDynamicRangeLimit.h>
+#include <WebCore/ReducedResolutionSeconds.h>
+#include <WebCore/TextTrackClient.h>
+#include <WebCore/URLKeepingBlobAlive.h>
+#include <WebCore/VideoTrackClient.h>
+#include <WebCore/VisibilityChangeClient.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/Identified.h>
@@ -58,12 +58,8 @@
 #include <wtf/WallTime.h>
 #include <wtf/WeakPtr.h>
 
-#if USE(AUDIO_SESSION) && PLATFORM(MAC)
-#include "AudioSession.h"
-#endif
-
 #if ENABLE(ENCRYPTED_MEDIA)
-#include "CDMClient.h"
+#include <WebCore/CDMClient.h>
 #endif
 
 #ifndef NDEBUG

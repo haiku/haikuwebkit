@@ -559,7 +559,7 @@ bool RenderThemeCocoa::controlSupportsTints(const RenderObject& box) const
 #if PLATFORM(MAC)
     switch (box.style().usedAppearance()) {
     case StyleAppearance::Button:
-        return isSubmitButton(box);
+        return isSubmitStyleButton(box.node());
     case StyleAppearance::Checkbox:
     case StyleAppearance::Radio:
         return isChecked(box) || isIndeterminate(box);
@@ -1273,7 +1273,7 @@ bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderObject& box
 #if PLATFORM(MAC)
         isWindowActive = states.contains(ControlStyle::State::WindowActive);
 #endif
-        if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.node()); input && input->isSubmitButton() && isWindowActive)
+        if (isSubmitStyleButton(box.node()) && isWindowActive)
             backgroundColor = controlTintColorWithContrast(box.style(), styleColorOptions);
         else
             backgroundColor = colorCompositedOverCanvasColor(CSSValueAppleSystemOpaqueSecondaryFill, styleColorOptions);
@@ -1490,6 +1490,10 @@ bool RenderThemeCocoa::paintColorWellDecorationsForVectorBasedControls(const Ren
     if (!formControlRefreshEnabled(box))
         return false;
 
+    auto& context = paintInfo.context();
+    GraphicsContextStateSaver stateSaver(context);
+    context.clip(rect);
+
     const auto zoomFactor = box.style().zoom();
     const auto strokeThickness = 3.f * zoomFactor;
 
@@ -1506,9 +1510,6 @@ bool RenderThemeCocoa::paintColorWellDecorationsForVectorBasedControls(const Ren
     Ref gradient = Gradient::create(Gradient::ConicData { rect.center(), 0 }, { ColorInterpolationMethod::SRGB { }, AlphaPremultiplication::Unpremultiplied });
     for (int i = 0; i < numColorStops; ++i)
         gradient->addColorStop({ i * 1.0f / (numColorStops - 1), colorStops[i] });
-
-    auto& context = paintInfo.context();
-    GraphicsContextStateSaver stateSaver(context);
 
     FloatRect strokeRect = rect;
     strokeRect.inflate(-strokeThickness / 2.0f);
@@ -2387,10 +2388,6 @@ bool RenderThemeCocoa::adjustButtonStyleForVectorBasedControls(RenderStyle& styl
     RenderTheme::adjustButtonStyle(style, element);
 #endif
 
-    auto isSubmitButton = false;
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(element))
-        isSubmitButton = input->isSubmitButton();
-
     auto isEnabled = true;
     if (RefPtr input = dynamicDowncast<HTMLFormControlElement>(element))
         isEnabled = !input->isDisabledFormControl();
@@ -2405,7 +2402,7 @@ bool RenderThemeCocoa::adjustButtonStyleForVectorBasedControls(RenderStyle& styl
     };
 
     if (!style.hasExplicitlySetColor()) {
-        if (isSubmitButton)
+        if (isSubmitStyleButton(element))
             adjustStyleForSubmitButton();
         else
             style.setColor(buttonTextColor(styleColorOptions, isEnabled));
@@ -4474,6 +4471,17 @@ void RenderThemeCocoa::adjustTextControlInnerTextStyle(RenderStyle& style, const
 #endif
 
     RenderTheme::adjustTextControlInnerTextStyle(style, shadowHostStyle, shadowHost);
+}
+
+bool RenderThemeCocoa::isSubmitStyleButton(const Node* node) const
+{
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(node))
+        return input->isSubmitButton();
+
+    if (RefPtr button = dynamicDowncast<HTMLButtonElement>(node))
+        return button->isExplicitlySetSubmitButton();
+
+    return false;
 }
 
 }

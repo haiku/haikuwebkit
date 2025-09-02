@@ -1467,6 +1467,8 @@
 		DD2170FC29A58B300057233A /* MigratedHeaders-input.xcfilelist */ = {isa = PBXFileReference; lastKnownFileType = text.xcfilelist; path = "MigratedHeaders-input.xcfilelist"; sourceTree = "<group>"; };
 		DD2170FD29A58B300057233A /* MigratedHeaders-output.xcfilelist */ = {isa = PBXFileReference; lastKnownFileType = text.xcfilelist; path = "MigratedHeaders-output.xcfilelist"; sourceTree = "<group>"; };
 		DD6502D72A26BD730018CF04 /* ExtraPrivateSymbolsForTAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExtraPrivateSymbolsForTAPI.h; path = mac/ExtraPrivateSymbolsForTAPI.h; sourceTree = "<group>"; };
+		DD7181352E21D3DF00A096B7 /* AllowedSPI.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = AllowedSPI.toml; sourceTree = "<group>"; };
+		DD7181362E21D3DF00A096B7 /* AllowedSPI-legacy.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = "AllowedSPI-legacy.toml"; sourceTree = "<group>"; };
 		DD7AF5D0298C52FC0059E87E /* xcfilelist-copy.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = "xcfilelist-copy.py"; path = "scripts/xcfilelist-copy.py"; sourceTree = "<group>"; };
 		DD89681E09AA87240097E7F0 /* WebElementDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = WebElementDictionary.h; sourceTree = "<group>"; tabWidth = 8; usesTabs = 0; };
 		DD89681F09AA87240097E7F0 /* WebElementDictionary.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebElementDictionary.mm; sourceTree = "<group>"; tabWidth = 8; usesTabs = 0; };
@@ -1637,6 +1639,8 @@
 		1C904FCE0BA9DCF20081E9D0 /* Configurations */ = {
 			isa = PBXGroup;
 			children = (
+				DD7181362E21D3DF00A096B7 /* AllowedSPI-legacy.toml */,
+				DD7181352E21D3DF00A096B7 /* AllowedSPI.toml */,
 				1C904FD50BA9DD0F0081E9D0 /* Base.xcconfig */,
 				1C904FD40BA9DD0F0081E9D0 /* DebugRelease.xcconfig */,
 				1C904FD20BA9DD0F0081E9D0 /* WebKitLegacy.xcconfig */,
@@ -3456,7 +3460,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -f \"${SCRIPT_INPUT_FILE_0}\" ]\nthen \"${SCRIPT_INPUT_FILE_0}\" \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\" -framework JavaScriptCore -framework WebCore --allowlist \"${SRCROOT}/mac/Configurations/AllowedSPI-legacy.toml\" \"${SRCROOT}/mac/Configurations/AllowedSPI.toml\"\nfi && touch \"${DERIVED_FILES_DIR}/audit-spi.d\"\n";
+			shellScript = "if [ -f \"${SCRIPT_INPUT_FILE_0}\" ]\nthen \"${SCRIPT_INPUT_FILE_0}\" \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\" -framework JavaScriptCore -framework WebCore\nfi && touch \"${DERIVED_FILES_DIR}/audit-spi.d\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

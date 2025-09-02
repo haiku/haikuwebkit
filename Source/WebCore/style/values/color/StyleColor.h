@@ -32,13 +32,13 @@
 
 #pragma once
 
-#include "CSSColor.h"
-#include "CSSColorDescriptors.h"
-#include "CSSColorType.h"
-#include "CSSValueKeywords.h"
-#include "StyleColorOptions.h"
-#include "StyleCurrentColor.h"
-#include "StyleResolvedColor.h"
+#include <WebCore/CSSColor.h>
+#include <WebCore/CSSColorDescriptors.h>
+#include <WebCore/CSSColorType.h>
+#include <WebCore/CSSValueKeywords.h>
+#include <WebCore/StyleColorOptions.h>
+#include <WebCore/StyleCurrentColor.h>
+#include <WebCore/StyleResolvedColor.h>
 #include <wtf/Markable.h>
 #include <wtf/OptionSet.h>
 #include <wtf/UniqueRef.h>

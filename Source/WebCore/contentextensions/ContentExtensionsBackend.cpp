@@ -54,6 +54,10 @@
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+#include "ContentRuleListMatchedRule.h"
+#endif
+
 namespace WebCore::ContentExtensions {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ContentExtensionsBackend);
@@ -316,6 +320,15 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
                     results.summary.redirectActions.append({ redirectAction, m_contentExtensions.get(contentRuleListIdentifier)->extensionBaseURL() });
                 }
             }), action.data());
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+            // FIXME: <rdar://157880177> Include the rest of the parameters on the ContentRuleListMatchedRule struct.
+            ContentRuleListMatchedRule matchedRule;
+            matchedRule.request.url = url.string();
+            matchedRule.rule.extensionId = contentRuleListIdentifier;
+            matchedRule.rule.ruleId = action.actionID();
+            page.chrome().client().contentRuleListMatchedRule(matchedRule);
+#endif
         }
 
         if (!actionsFromContentRuleList.sawIgnorePreviousRules) {

@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "GlyphBufferMembers.h"
-#include "RenderingResource.h"
-#include "TextFlags.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/GlyphBufferMembers.h>
+#include <WebCore/RenderingResource.h>
+#include <WebCore/TextFlags.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

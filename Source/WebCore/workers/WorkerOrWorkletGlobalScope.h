@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "EventTarget.h"
-#include "FetchOptions.h"
-#include "ScriptExecutionContext.h"
-#include "WorkerThreadType.h"
+#include <WebCore/EventTarget.h>
+#include <WebCore/FetchOptions.h>
+#include <WebCore/ScriptExecutionContext.h>
+#include <WebCore/WorkerThreadType.h>
 #include <pal/SessionID.h>
 
 namespace WebCore {

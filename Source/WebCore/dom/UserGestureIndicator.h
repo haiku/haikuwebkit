@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "DOMPasteAccess.h"
+#include <WebCore/DOMPasteAccess.h>
 #include <wtf/Function.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/Noncopyable.h>

@@ -2488,23 +2488,24 @@ void RenderBlockFlow::addFloatsToNewParent(RenderBlockFlow& toBlockFlow) const
     }
 }
 
-void RenderBlockFlow::addOverflowFromFloats()
-{
-    if (!m_floatingObjects)
-        return;
-
-    for (auto& floatingObject : m_floatingObjects->set()) {
-        if (floatingObject->isDescendant())
-            addOverflowFromChild(floatingObject->renderer(), floatingObject->locationOffsetOfBorderBox());
-    }
-}
-
 void RenderBlockFlow::computeOverflow(LayoutUnit oldClientAfterEdge, bool recomputeFloats)
 {
     RenderBlock::computeOverflow(oldClientAfterEdge, recomputeFloats);
 
-    if (!multiColumnFlow() && (recomputeFloats || createsNewFormattingContext() || hasSelfPaintingLayer()))
-        addOverflowFromFloats();
+    auto addOverflowFromFloatsIfApplicable = [&] {
+
+        if (!m_floatingObjects)
+            return;
+        auto shouldIncludeFloats = !multiColumnFlow() && (recomputeFloats || createsNewFormattingContext() || hasSelfPaintingLayer());
+        if (!shouldIncludeFloats)
+            return;
+
+        for (auto& floatingObject : m_floatingObjects->set()) {
+            if (floatingObject->isDescendant())
+                addOverflowFromFloatBox(*floatingObject);
+        }
+    };
+    addOverflowFromFloatsIfApplicable();
 }
 
 void RenderBlockFlow::repaintOverhangingFloats(bool paintAllDescendants)
@@ -3009,7 +3010,7 @@ LayoutUnit RenderBlockFlow::addOverhangingFloats(RenderBlockFlow& child, bool ma
             
             // Since the float doesn't overhang, it didn't get put into our list. We need to add its overflow in to the child now.
             if (floatingObject->isDescendant())
-                child.addOverflowFromChild(renderer, floatingObject->locationOffsetOfBorderBox());
+                child.addOverflowFromFloatBox(*floatingObject);
         }
     }
     return lowestFloatLogicalBottom;

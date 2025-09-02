@@ -589,40 +589,6 @@ void RenderBlock::computeOverflow(LayoutUnit oldClientAfterEdge, bool)
     addOverflowFromOutOfFlowBoxes();
 
     if (hasNonVisibleOverflow()) {
-        auto includePaddingEnd = [&] {
-            // As per https://github.com/w3c/csswg-drafts/issues/3653 padding should contribute to the scrollable overflow area.
-            if (!paddingEnd())
-                return;
-            // FIXME: Expand it to non-grid/flex cases when applicable.
-            if (!is<RenderGrid>(*this) && !is<RenderFlexibleBox>(*this))
-                return;
-
-            auto layoutOverflowRect = this->layoutOverflowRect();
-            auto layoutOverflowLogicalWidthIncludingPaddingEnd = [&] {
-                if (hasHorizontalLayoutOverflow())
-                    return (isHorizontalWritingMode() ? layoutOverflowRect.width() : layoutOverflowRect.height()) + paddingEnd();
-
-                // FIXME: This is not sufficient for BFC layout (missing non-formatting-context root descendants).
-                auto contentLogicalRight = LayoutUnit { };
-                for (auto& child : childrenOfType<RenderBox>(*this)) {
-                    if (child.isOutOfFlowPositioned())
-                        continue;
-                    auto childLogicalRight = logicalLeftForChild(child) + logicalWidthForChild(child) + std::max(0_lu, marginEndForChild(child));
-                    contentLogicalRight = std::max(contentLogicalRight, childLogicalRight);
-                }
-                auto logicalRightWithPaddingEnd = contentLogicalRight + paddingEnd();
-                // Use padding box as the reference box.
-                return logicalRightWithPaddingEnd - (isHorizontalWritingMode() ? borderLeft() : borderTop());
-            };
-
-            if (isHorizontalWritingMode())
-                layoutOverflowRect.setWidth(layoutOverflowLogicalWidthIncludingPaddingEnd());
-            else
-                layoutOverflowRect.setHeight(layoutOverflowLogicalWidthIncludingPaddingEnd());
-            addLayoutOverflow(layoutOverflowRect);
-        };
-        includePaddingEnd();
-
         auto includePaddingAfter = [&] {
             // When we have overflow clip, propagate the original spillout since it will include collapsed bottom margins and bottom padding.
             auto clientRect = flippedClientBoxRect();
@@ -667,7 +633,7 @@ void RenderBlock::addOverflowFromBlockChildren()
 {
     for (auto& child : childrenOfType<RenderBox>(*this)) {
         if (!child.isFloatingOrOutOfFlowPositioned())
-            addOverflowFromChild(child);
+            addOverflowFromInFlowChildOrAbsolutePositionedDescendant(child);
     }
 }
 
@@ -677,11 +643,10 @@ void RenderBlock::addOverflowFromOutOfFlowBoxes()
     if (!outOfFlowDescendants)
         return;
 
-    auto clientBoxRect = this->flippedClientBoxRect();
     for (auto& outOfFlowBox : *outOfFlowDescendants) {
         // Fixed positioned elements don't contribute to layout overflow, since they don't scroll with the content.
-        if (!outOfFlowBox.isFixedPositioned())
-            addOverflowFromChild(outOfFlowBox, { outOfFlowBox.x(), outOfFlowBox.y() }, clientBoxRect);
+        if (outOfFlowBox.isAbsolutelyPositioned())
+            addOverflowFromInFlowChildOrAbsolutePositionedDescendant(outOfFlowBox);
     }
 }
 
@@ -805,6 +770,9 @@ bool RenderBlock::simplifiedLayout()
 
     updateScrollInfoAfterLayout();
 
+    if (Style::AnchorPositionEvaluator::isAnchorPositioned(style()))
+        Style::AnchorPositionEvaluator::captureScrollSnapshots(*this);
+
     clearNeedsLayout();
     return true;
 }
@@ -888,8 +856,11 @@ void RenderBlock::layoutOutOfFlowBox(RenderBox& outOfFlowBox, RelayoutChildren r
     
     // We don't have to do a full layout.  We just have to update our position. Try that first. If we have shrink-to-fit width
     // and we hit the available width constraint, the layoutIfNeeded() will catch it and do a full layout.
-    if (outOfFlowBox.needsOutOfFlowMovementLayoutOnly() && outOfFlowBox.tryLayoutDoingOutOfFlowMovementOnly())
+    if (outOfFlowBox.needsOutOfFlowMovementLayoutOnly() && outOfFlowBox.tryLayoutDoingOutOfFlowMovementOnly()) {
+        if (Style::AnchorPositionEvaluator::isAnchorPositioned(outOfFlowBox.style()))
+            Style::AnchorPositionEvaluator::captureScrollSnapshots(outOfFlowBox);
         outOfFlowBox.clearNeedsLayout();
+    }
 
     // If we are paginated or in a line grid, compute a vertical position for our object now.
     // If it's wrong we'll lay out again.
@@ -2742,6 +2713,7 @@ void RenderBlock::updateHitTestResult(HitTestResult& result, const LayoutPoint& 
         result.setInnerNode(node.get());
         if (!result.innerNonSharedNode())
             result.setInnerNonSharedNode(node.get());
+        result.setPseudoElementIdentifier(style().pseudoElementIdentifier());
         result.setLocalPoint(point);
     }
 }

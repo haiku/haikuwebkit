@@ -25,19 +25,19 @@
 
 #pragma once
 
-#include "EventTarget.h"
-#include "IDBActiveDOMObject.h"
-#include "IDBError.h"
-#include "IDBGetAllResult.h"
-#include "IDBGetResult.h"
-#include "IDBIndexIdentifier.h"
-#include "IDBKeyData.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "IDBResourceIdentifier.h"
-#include "IDBValue.h"
-#include "IndexedDB.h"
-#include "JSValueInWrappedObject.h"
 #include <JavaScriptCore/Strong.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/IDBActiveDOMObject.h>
+#include <WebCore/IDBError.h>
+#include <WebCore/IDBGetAllResult.h>
+#include <WebCore/IDBGetResult.h>
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBKeyData.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/IDBResourceIdentifier.h>
+#include <WebCore/IDBValue.h>
+#include <WebCore/IndexedDB.h>
+#include <WebCore/JSValueInWrappedObject.h>
 #include <optional>
 #include <wtf/Function.h>
 #include <wtf/Scope.h>

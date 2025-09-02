@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "PlatformLayerIdentifier.h"
-#include "Position.h"
-#include "TextIteratorBehavior.h"
+#include <WebCore/PlatformLayerIdentifier.h>
+#include <WebCore/Position.h>
+#include <WebCore/TextIteratorBehavior.h>
 #include <wtf/Forward.h>
 #include <wtf/HashSet.h>
 #include <wtf/unicode/CharacterNames.h>

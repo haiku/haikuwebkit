@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "SharedWorkerObjectIdentifier.h"
-#include "TransferredMessagePort.h"
+#include <WebCore/SharedWorkerObjectIdentifier.h>
+#include <WebCore/TransferredMessagePort.h>
 #include <wtf/Forward.h>
 #include <wtf/HashMap.h>
 #include <wtf/RefCounted.h>

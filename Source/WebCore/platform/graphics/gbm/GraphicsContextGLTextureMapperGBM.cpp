@@ -31,6 +31,7 @@
 #include "CoordinatedPlatformLayerBufferDMABuf.h"
 #include "DMABufBuffer.h"
 #include "DRMDeviceManager.h"
+#include "GBMDevice.h"
 #include "GBMVersioning.h"
 #include "GLFence.h"
 #include "Logging.h"
@@ -103,17 +104,17 @@ bool GraphicsContextGLTextureMapperGBM::platformInitializeExtensions()
 
 GraphicsContextGLTextureMapperGBM::DrawingBuffer GraphicsContextGLTextureMapperGBM::createDrawingBuffer() const
 {
-    auto* device = DRMDeviceManager::singleton().mainGBMDeviceNode(DRMDeviceManager::NodeType::Render);
-    if (!device)
+    auto gbmDevice = DRMDeviceManager::singleton().mainGBMDevice(DRMDeviceManager::NodeType::Render);
+    if (!gbmDevice)
         return { };
 
     const auto size = getInternalFramebufferSize();
     struct gbm_bo* bo = nullptr;
     bool disableModifiers = m_drawingBufferFormat.modifiers.size() == 1 && m_drawingBufferFormat.modifiers[0] == DRM_FORMAT_MOD_INVALID;
     if (!disableModifiers && !m_drawingBufferFormat.modifiers.isEmpty())
-        bo = gbm_bo_create_with_modifiers2(device, size.width(), size.height(), m_drawingBufferFormat.fourcc, m_drawingBufferFormat.modifiers.span().data(), m_drawingBufferFormat.modifiers.size(), GBM_BO_USE_RENDERING);
+        bo = gbm_bo_create_with_modifiers2(gbmDevice->device(), size.width(), size.height(), m_drawingBufferFormat.fourcc, m_drawingBufferFormat.modifiers.span().data(), m_drawingBufferFormat.modifiers.size(), GBM_BO_USE_RENDERING);
     if (!bo)
-        bo = gbm_bo_create(device, size.width(), size.height(), m_drawingBufferFormat.fourcc, GBM_BO_USE_RENDERING);
+        bo = gbm_bo_create(gbmDevice->device(), size.width(), size.height(), m_drawingBufferFormat.fourcc, GBM_BO_USE_RENDERING);
     if (!bo)
         return { };
 
@@ -209,11 +210,32 @@ bool GraphicsContextGLTextureMapperGBM::reshapeDrawingBuffer()
     return bindNextDrawingBuffer();
 }
 
+UnixFileDescriptor GraphicsContextGLTextureMapperGBM::createExportedFence() const
+{
+    const auto& eglExtensions = PlatformDisplay::sharedDisplay().eglExtensions();
+    if (!eglExtensions.KHR_fence_sync || !eglExtensions.ANDROID_native_fence_sync)
+        return { };
+
+    auto sync = EGL_CreateSyncKHR(m_displayObj, EGL_SYNC_NATIVE_FENCE_ANDROID, nullptr);
+    if (sync == EGL_NO_SYNC)
+        return { };
+
+    GL_Flush();
+    auto fd = UnixFileDescriptor { EGL_DupNativeFenceFDANDROID(m_displayObj, sync), UnixFileDescriptor::Adopt };
+    EGL_DestroySyncKHR(m_displayObj, sync);
+    return fd;
+}
+
 void GraphicsContextGLTextureMapperGBM::prepareForDisplay()
 {
+    UnixFileDescriptor fenceFD;
     std::unique_ptr<GLFence> fence;
-    prepareForDisplayWithFinishedSignal([&fence] {
-        fence = GLFence::create();
+    prepareForDisplayWithFinishedSignal([this, &fenceFD, &fence] {
+        fenceFD = createExportedFence();
+        if (!fenceFD) {
+            GL_Flush();
+            fence = GLFence::create();
+        }
     });
 
     if (!m_displayBuffer.dmabuf)
@@ -223,7 +245,12 @@ void GraphicsContextGLTextureMapperGBM::prepareForDisplay()
     OptionSet<TextureMapperFlags> flags = TextureMapperFlags::ShouldFlipTexture;
     if (contextAttributes().alpha)
         flags.add(TextureMapperFlags::ShouldBlend);
-    m_layerContentsDisplayDelegate->setDisplayBuffer(CoordinatedPlatformLayerBufferDMABuf::create(Ref { *m_displayBuffer.dmabuf }, flags, WTFMove(fence)));
+    std::unique_ptr<CoordinatedPlatformLayerBuffer> buffer;
+    if (fenceFD)
+        buffer = CoordinatedPlatformLayerBufferDMABuf::create(Ref { *m_displayBuffer.dmabuf }, flags, WTFMove(fenceFD));
+    else
+        buffer = CoordinatedPlatformLayerBufferDMABuf::create(Ref { *m_displayBuffer.dmabuf }, flags, WTFMove(fence));
+    m_layerContentsDisplayDelegate->setDisplayBuffer(WTFMove(buffer));
 }
 
 void GraphicsContextGLTextureMapperGBM::prepareForDisplayWithFinishedSignal(Function<void()>&& finishedSignalCreator)

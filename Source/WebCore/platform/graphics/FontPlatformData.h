@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "SharedBuffer.h"
-#include "ShouldLocalizeAxisNames.h"
-#include "TextFlags.h"
+#include <WebCore/SharedBuffer.h>
+#include <WebCore/ShouldLocalizeAxisNames.h>
+#include <WebCore/TextFlags.h>
 #include <wtf/Forward.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>

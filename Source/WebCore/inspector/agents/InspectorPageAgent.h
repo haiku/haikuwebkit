@@ -31,12 +31,12 @@
 
 #pragma once
 
-#include "CachedResource.h"
-#include "InspectorWebAgentBase.h"
-#include "LayoutRect.h"
 #include <JavaScriptCore/InspectorBackendDispatchers.h>
 #include <JavaScriptCore/InspectorFrontendDispatchers.h>
 #include <JavaScriptCore/InspectorProtocolObjects.h>
+#include <WebCore/CachedResource.h>
+#include <WebCore/InspectorWebAgentBase.h>
+#include <WebCore/LayoutRect.h>
 #include <wtf/RobinHoodHashMap.h>
 #include <wtf/Seconds.h>
 #include <wtf/TZoneMalloc.h>

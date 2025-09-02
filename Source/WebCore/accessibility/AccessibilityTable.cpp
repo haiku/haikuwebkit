@@ -30,6 +30,7 @@
 #include "AccessibilityTable.h"
 
 #include "AXObjectCache.h"
+#include "AXUtilities.h"
 #include "AccessibilityTableCell.h"
 #include "AccessibilityTableColumn.h"
 #include "AccessibilityTableHeaderContainer.h"
@@ -48,10 +49,9 @@
 #include "RenderTable.h"
 #include "RenderTableCell.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
+#include <queue>
 #include <wtf/Scope.h>
 #include <wtf/WeakRef.h>
-
-#include <queue>
 
 namespace WebCore {
 
@@ -927,27 +927,11 @@ bool AccessibilityTable::computeIsIgnored() const
 
 void AccessibilityTable::labelText(Vector<AccessibilityText>& textOrder) const
 {
-    String title = this->title();
-    if (!title.isEmpty())
-        textOrder.append(AccessibilityText(WTFMove(title), AccessibilityTextSource::LabelByElement));
-}
-
-String AccessibilityTable::title() const
-{
-    if (!isExposable())
-        return AccessibilityRenderObject::title();
-
-    String title;
-    // Prefer the table caption if present.
     if (RefPtr tableElement = dynamicDowncast<HTMLTableElement>(node())) {
-        if (RefPtr caption = tableElement->caption())
-            title = caption->innerText();
+        RefPtr caption = tableElement->caption();
+        if (String captionText = caption ? caption->innerText() : emptyString(); !captionText.isEmpty())
+            textOrder.append(AccessibilityText(WTFMove(captionText), AccessibilityTextSource::LabelByElement));
     }
-
-    // Fall back to standard title computation.
-    if (title.isEmpty())
-        title = AccessibilityRenderObject::title();
-    return title;
 }
 
 int AccessibilityTable::axColumnCount() const

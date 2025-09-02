@@ -4443,6 +4443,7 @@ void SpeculativeJIT::compile(Node* node)
     case DateGetTime:
     case DateSetTime:
     case CallWasm:
+    case TailCallInlinedCallerWasm:
     case FunctionBind:
     case NewBoundFunction:
     case EnumeratorPutByVal:

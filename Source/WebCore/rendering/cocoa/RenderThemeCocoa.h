@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "Icon.h"
-#include "RenderTheme.h"
+#include <WebCore/Icon.h>
+#include <WebCore/RenderTheme.h>
 #include <wtf/RetainPtr.h>
 
 OBJC_CLASS NSDateComponentsFormatter;
@@ -271,6 +271,8 @@ protected:
 
     float adjustedMaximumLogicalWidthForControl(const RenderStyle&, const Element&, float) const final;
 #endif
+
+    bool isSubmitStyleButton(const Node*) const;
 
 private:
     void purgeCaches() override;

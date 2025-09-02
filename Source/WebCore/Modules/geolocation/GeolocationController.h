@@ -27,10 +27,10 @@
 
 #if ENABLE(GEOLOCATION)
 
-#include "ActivityStateChangeObserver.h"
-#include "Geolocation.h"
-#include "Page.h"
-#include "RegistrableDomain.h"
+#include <WebCore/ActivityStateChangeObserver.h>
+#include <WebCore/Geolocation.h>
+#include <WebCore/Page.h>
+#include <WebCore/RegistrableDomain.h>
 #include <wtf/HashSet.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RefPtr.h>

@@ -1621,6 +1621,11 @@ void WebsiteDataStore::setThirdPartyCookieBlockingMode(WebCore::ThirdPartyCookie
 {
     Ref callbackAggregator = CallbackAggregator::create(WTFMove(completionHandler));
 
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
+    if (!isOptInCookiePartitioningEnabled() && blockingMode == WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned)
+        blockingMode = WebCore::ThirdPartyCookieBlockingMode::All;
+#endif
+
     if (thirdPartyCookieBlockingMode() != blockingMode) {
         m_thirdPartyCookieBlockingMode = blockingMode;
         for (Ref webProcess : processes())
@@ -2008,7 +2013,7 @@ void WebsiteDataStore::setPrivateTokenIPCForTesting(bool enabled)
     protectedNetworkProcess()->send(Messages::NetworkProcess::SetShouldSendPrivateTokenIPCForTesting(sessionID(), enabled), 0);
 }
 
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES) && !PLATFORM(COCOA)
 bool WebsiteDataStore::isOptInCookiePartitioningEnabled() const
 {
     return std::ranges::any_of(m_processes, [](auto& process) {
@@ -2021,7 +2026,7 @@ bool WebsiteDataStore::isOptInCookiePartitioningEnabled() const
 
 void WebsiteDataStore::propagateSettingUpdates()
 {
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     RefPtr networkProcess = networkProcessIfExists();
     if (!networkProcess)
         return;
@@ -2166,7 +2171,7 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
     networkSessionParameters.pcmMachServiceName = m_configuration->pcmMachServiceName();
     networkSessionParameters.webPushMachServiceName = m_configuration->webPushMachServiceName();
     networkSessionParameters.webPushPartitionString = m_configuration->webPushPartitionString();
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     networkSessionParameters.isOptInCookiePartitioningEnabled = isOptInCookiePartitioningEnabled();
 #endif
     networkSessionParameters.cookiesVersion = cookiesVersion();

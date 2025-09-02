@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "Document.h"
+#include <WebCore/Document.h>
 
 namespace WebCore {
 

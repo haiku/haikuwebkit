@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include "StyleGridPositionSide.h"
-#include "StylePrimitiveNumeric.h"
-#include "StyleValueTypes.h"
+#include <WebCore/StyleGridPositionSide.h>
+#include <WebCore/StylePrimitiveNumeric.h>
+#include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {

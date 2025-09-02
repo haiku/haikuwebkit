@@ -26,13 +26,13 @@
 
 #pragma once
 
-#include "DecodingOptions.h"
-#include "DestinationColorSpace.h"
-#include "FloatRect.h"
-#include "ImageAdapter.h"
-#include "ImageOrientation.h"
-#include "ImagePaintingOptions.h"
-#include "ImageTypes.h"
+#include <WebCore/DecodingOptions.h>
+#include <WebCore/DestinationColorSpace.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/ImageAdapter.h>
+#include <WebCore/ImageOrientation.h>
+#include <WebCore/ImagePaintingOptions.h>
+#include <WebCore/ImageTypes.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RefPtr.h>
 #include <wtf/RetainPtr.h>

@@ -172,7 +172,7 @@ public:
     static Ref<CSSValue> convertImageOrientation(ExtractorState&, ImageOrientation);
     static Ref<CSSValue> convertLineClamp(ExtractorState&, const LineClampValue&);
     static Ref<CSSValue> convertContain(ExtractorState&, OptionSet<Containment>);
-    static Ref<CSSValue> convertInitialLetter(ExtractorState&, IntSize);
+    static Ref<CSSValue> convertInitialLetter(ExtractorState&, FloatSize);
     static Ref<CSSValue> convertTextSpacingTrim(ExtractorState&, TextSpacingTrim);
     static Ref<CSSValue> convertTextAutospace(ExtractorState&, TextAutospace);
     static Ref<CSSValue> convertReflection(ExtractorState&, const StyleReflection*);
@@ -644,7 +644,7 @@ inline Ref<CSSValue> ExtractorConverter::convertContain(ExtractorState&, OptionS
     return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertInitialLetter(ExtractorState&, IntSize initialLetter)
+inline Ref<CSSValue> ExtractorConverter::convertInitialLetter(ExtractorState&, FloatSize initialLetter)
 {
     return CSSValuePair::create(
         !initialLetter.width() ? CSSPrimitiveValue::create(CSSValueNormal) : CSSPrimitiveValue::create(initialLetter.width()),
@@ -916,7 +916,11 @@ inline Ref<CSSValue> ExtractorConverter::convertTextTransform(ExtractorState&, O
 
 inline Ref<CSSValue> ExtractorConverter::convertTextDecorationLine(ExtractorState&, OptionSet<TextDecorationLine> textDecorationLine)
 {
-    // Blink value is ignored.
+    if (textDecorationLine.isEmpty())
+        return CSSPrimitiveValue::create(CSSValueNone);
+    if (textDecorationLine & TextDecorationLine::SpellingError)
+        return CSSPrimitiveValue::create(CSSValueSpellingError);
+
     CSSValueListBuilder list;
     if (textDecorationLine & TextDecorationLine::Underline)
         list.append(CSSPrimitiveValue::create(CSSValueUnderline));

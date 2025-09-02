@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "CredentialBase.h"
 #include <Security/SecBase.h>
+#include <WebCore/CredentialBase.h>
 #include <wtf/RetainPtr.h>
 
 OBJC_CLASS NSURLCredential;

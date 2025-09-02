@@ -397,7 +397,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::stringAttributeValue(JSStringRe
 
     m_element->updateBackingStore();
     auto attributes = m_element->attributes();
-    
+
     if (attributeName == "AXPlaceholderValue"_s)
         return OpaqueJSString::tryCreate(attributes.get("placeholder-text"_s)).leakRef();
 
@@ -417,7 +417,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::stringAttributeValue(JSStringRe
 
     if (attributeName == "AXAutocompleteValue"_s)
         return OpaqueJSString::tryCreate(attributes.get("autocomplete"_s)).leakRef();
-    
+
     if (attributeName == "AXKeyShortcutsValue"_s)
         return OpaqueJSString::tryCreate(attributes.get("keyshortcuts"_s)).leakRef();
 
@@ -467,7 +467,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::sortDirection() const
         return OpaqueJSString::tryCreate("AXDescendingSortDirection"_s).leakRef();
     if (sort == "other"_s)
         return OpaqueJSString::tryCreate("AXUnknownSortDirection"_s).leakRef();
-    
+
     return nullptr;
 }
 

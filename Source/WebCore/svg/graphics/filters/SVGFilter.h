@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "Filter.h"
-#include "FilterResults.h"
-#include "FloatRect.h"
-#include "SVGFilterExpression.h"
-#include "SVGUnitTypes.h"
+#include <WebCore/Filter.h>
+#include <WebCore/FilterResults.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/SVGFilterExpression.h>
+#include <WebCore/SVGUnitTypes.h>
 #include <wtf/Ref.h>
 #include <wtf/TypeCasts.h>
 

@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "TimelineRange.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/TimelineRange.h>
+#include <WebCore/WebAnimationTypes.h>
 #include <wtf/Forward.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/WeakPtr.h>

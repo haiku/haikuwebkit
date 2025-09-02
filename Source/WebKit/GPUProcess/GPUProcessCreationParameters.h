@@ -31,6 +31,10 @@
 #include "SandboxExtension.h"
 #include <wtf/ProcessID.h>
 
+#if USE(GBM)
+#include <WebCore/DRMDevice.h>
+#endif
+
 namespace IPC {
 class Decoder;
 class Encoder;
@@ -64,8 +68,9 @@ struct GPUProcessCreationParameters {
     String applicationVisibleName;
 
 #if USE(GBM)
-    String renderDeviceFile;
+    WebCore::DRMDevice drmDevice;
 #endif
+
     Vector<String> overrideLanguages;
 #if PLATFORM(COCOA)
     bool enableMetalDebugDeviceForTesting { false };

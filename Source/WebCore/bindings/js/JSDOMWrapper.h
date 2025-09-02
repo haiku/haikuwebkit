@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "JSDOMGlobalObject.h"
-#include "NodeConstants.h"
 #include <JavaScriptCore/JSDestructibleObject.h>
+#include <WebCore/JSDOMGlobalObject.h>
+#include <WebCore/NodeConstants.h>
 #include <wtf/Compiler.h>
 #include <wtf/SignedPtr.h>
 

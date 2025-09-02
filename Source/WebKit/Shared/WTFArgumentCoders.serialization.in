@@ -69,6 +69,7 @@ template: class WebKit::WebURLSchemeHandler
 template: enum class WebCore::AXIDType
 template: struct WebCore::BackgroundFetchRecordIdentifierType
 template: struct WebCore::NodeIdentifierType
+template: struct WebCore::JSHandleIdentifierType
 template: struct WebCore::FetchIdentifierType
 template: struct WebCore::ImageDecoderIdentifierType
 template: enum class WebCore::ImageOverlayDataDetectionResultIdentifierType

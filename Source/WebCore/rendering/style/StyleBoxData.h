@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "Length.h"
-#include "RenderStyleConstants.h"
-#include "StyleMaximumSize.h"
-#include "StyleMinimumSize.h"
-#include "StylePreferredSize.h"
-#include "StyleVerticalAlign.h"
-#include "StyleZIndex.h"
+#include <WebCore/Length.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleMaximumSize.h>
+#include <WebCore/StyleMinimumSize.h>
+#include <WebCore/StylePreferredSize.h>
+#include <WebCore/StyleVerticalAlign.h>
+#include <WebCore/StyleZIndex.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 

@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "AdvancedPrivacyProtections.h"
-#include "FrameLoaderTypes.h"
-#include "ReferrerPolicy.h"
-#include "ResourceRequest.h"
-#include "ShouldTreatAsContinuingLoad.h"
-#include "SubstituteData.h"
+#include <WebCore/AdvancedPrivacyProtections.h>
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/ReferrerPolicy.h>
+#include <WebCore/ResourceRequest.h>
+#include <WebCore/ShouldTreatAsContinuingLoad.h>
+#include <WebCore/SubstituteData.h>
 #include <wtf/Forward.h>
 
 namespace WebCore {

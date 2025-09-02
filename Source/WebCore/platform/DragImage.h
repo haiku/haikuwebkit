@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "FloatSize.h"
-#include "ImageOrientation.h"
-#include "IntSize.h"
-#include "Path.h"
-#include "TextFlags.h"
-#include "TextIndicator.h"
+#include <WebCore/FloatSize.h>
+#include <WebCore/ImageOrientation.h>
+#include <WebCore/IntSize.h>
+#include <WebCore/Path.h>
+#include <WebCore/TextFlags.h>
+#include <WebCore/TextIndicator.h>
 #include <wtf/Forward.h>
 
 #if PLATFORM(IOS_FAMILY)

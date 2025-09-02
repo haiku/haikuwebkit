@@ -41,6 +41,18 @@
             "type": "string"
         },
         {
+            "id": "NavigationInfo",
+            "description": "Information about a navigation.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#type-browsingContext-NavigationInfo",
+            "type": "object",
+            "properties": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.Navigation", "nullable": true },
+                { "name": "timestamp", "type": "number" },
+                { "name": "url", "type": "string" }
+            ]
+        },
+        {
             "id": "ReadinessState",
             "description": "Represents the stage of document loading at which a navigation command will return.",
             "spec": "https://w3c.github.io/webdriver-bidi/#type-browsingContext-ReadinessState",
@@ -153,6 +165,17 @@
         }
     ],
     "events": [
+        {
+            "name": "navigationStarted",
+            "description": "Event fired when navigation starts in a navigable.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-navigationStarted",
+            "parameters": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.Navigation", "nullable": true },
+                { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
+                { "name": "url", "type": "string" }
+            ]
+        },
         {
             "name": "userPromptClosed",
             "description": "Event fired when a user prompt is dismissed in a navigable.",

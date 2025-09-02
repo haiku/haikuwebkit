@@ -27,8 +27,8 @@
 
 #if ENABLE(USER_MESSAGE_HANDLERS)
 
-#include "FrameDestructionObserver.h"
-#include "UserMessageHandlerDescriptor.h"
+#include <WebCore/FrameDestructionObserver.h>
+#include <WebCore/UserMessageHandlerDescriptor.h>
 
 namespace JSC {
 class JSGlobalObject;

@@ -264,8 +264,8 @@ void RecorderImpl::beginTransparencyLayer(CompositeOperator compositeOperator, B
 
 void RecorderImpl::endTransparencyLayer()
 {
-    updateStateForEndTransparencyLayer();
-    m_items.append(EndTransparencyLayer());
+    if (updateStateForEndTransparencyLayer())
+        m_items.append(EndTransparencyLayer());
 }
 
 void RecorderImpl::drawRect(const FloatRect& rect, float lineWidth)

@@ -3346,6 +3346,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObject.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObject.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObjectOES.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObjectOES.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitJSHandle.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitJSHandle.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeyError.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeyError.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeyMessageEvent.cpp
@@ -3358,8 +3360,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeys.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeys.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNamespace.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNamespace.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNodeInfo.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitNodeInfo.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPlaybackTargetAvailabilityEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPlaybackTargetAvailabilityEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPoint.cpp

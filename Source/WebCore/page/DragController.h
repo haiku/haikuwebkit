@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "Document.h"
-#include "DragActions.h"
-#include "DragImage.h"
-#include "IntPoint.h"
-#include "IntRect.h"
-#include "SimpleRange.h"
+#include <WebCore/Document.h>
+#include <WebCore/DragActions.h>
+#include <WebCore/DragImage.h>
+#include <WebCore/IntPoint.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/SimpleRange.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/URL.h>

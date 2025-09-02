@@ -224,15 +224,16 @@ void JSPromise::markAsHandled(JSGlobalObject* lexicalGlobalObject)
 {
     VM& vm = lexicalGlobalObject->vm();
     uint32_t flags = this->flags();
-    if (!(flags & isFirstResolvingFunctionCalledFlag))
-        internalField(Field::Flags).set(vm, this, jsNumber(flags | isHandledFlag));
+    internalField(Field::Flags).set(vm, this, jsNumber(flags | isHandledFlag));
 }
 
 void JSPromise::rejectAsHandled(JSGlobalObject* lexicalGlobalObject, JSValue value)
 {
     // Setting isHandledFlag before calling reject since this removes round-trip between JSC and PromiseRejectionTracker, and it does not show an user-observable behavior.
-    markAsHandled(lexicalGlobalObject);
-    reject(lexicalGlobalObject, value);
+    if (!(flags() & isFirstResolvingFunctionCalledFlag)) {
+        markAsHandled(lexicalGlobalObject);
+        reject(lexicalGlobalObject, value);
+    }
 }
 
 void JSPromise::reject(JSGlobalObject* lexicalGlobalObject, Exception* reason)

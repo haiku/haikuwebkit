@@ -67,6 +67,10 @@
 #import "FoundationSPI.h"
 #endif
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+#import <WebCore/ContentRuleListMatchedRule.h>
+#endif
+
 static constexpr Seconds purgeMatchedRulesInterval = 5_min;
 
 static NSString * const WebExtensionUniqueIdentifierKey = @"uniqueIdentifier";
@@ -665,6 +669,28 @@ void WebExtensionController::handleContentRuleListNotification(WebPageProxyIdent
     m_purgeOldMatchedRulesTimer = makeUnique<RunLoop::Timer>(RunLoop::mainSingleton(), "WebExtensionController::PurgeOldMatchedRulesTimer"_s, this, &WebExtensionController::purgeOldMatchedRules);
     m_purgeOldMatchedRulesTimer->startRepeating(purgeMatchedRulesInterval);
 }
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+void WebExtensionController::handleContentRuleListMatchedRule(WebPageProxyIdentifier pageID, WebCore::ContentRuleListMatchedRule& matchedRule)
+{
+    auto contentRuleListIdentifier = matchedRule.rule.extensionId;
+    if (!contentRuleListIdentifier.has_value())
+        return;
+
+    for (Ref context : m_extensionContexts) {
+        if (context->uniqueIdentifier() != contentRuleListIdentifier.value())
+            continue;
+
+        RefPtr tab = context->getTab(pageID);
+        if (!tab)
+            break;
+
+        context->handleContentRuleListMatchedRule(*tab, matchedRule);
+
+        break;
+    }
+}
+#endif
 
 void WebExtensionController::purgeOldMatchedRules()
 {

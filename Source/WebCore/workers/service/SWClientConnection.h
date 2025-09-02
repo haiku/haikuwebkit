@@ -25,15 +25,15 @@
 
 #pragma once
 
-#include "BackgroundFetchRecordIdentifier.h"
-#include "ExceptionData.h"
-#include "NavigationPreloadState.h"
-#include "NotificationData.h"
-#include "PushPermissionState.h"
-#include "PushSubscriptionData.h"
-#include "ScriptExecutionContextIdentifier.h"
-#include "ServiceWorkerJob.h"
-#include "ServiceWorkerTypes.h"
+#include <WebCore/BackgroundFetchRecordIdentifier.h>
+#include <WebCore/ExceptionData.h>
+#include <WebCore/NavigationPreloadState.h>
+#include <WebCore/NotificationData.h>
+#include <WebCore/PushPermissionState.h>
+#include <WebCore/PushSubscriptionData.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/ServiceWorkerJob.h>
+#include <WebCore/ServiceWorkerTypes.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/HashMap.h>

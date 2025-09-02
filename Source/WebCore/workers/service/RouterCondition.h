@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "FetchRequestDestination.h"
-#include "FetchRequestMode.h"
-#include "RunningStatus.h"
+#include <WebCore/FetchRequestDestination.h>
+#include <WebCore/FetchRequestMode.h>
+#include <WebCore/RunningStatus.h>
 #include "URLPattern.h"
 #include <wtf/FastMalloc.h>
 #include <wtf/Vector.h>

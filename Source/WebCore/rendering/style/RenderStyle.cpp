@@ -3717,6 +3717,16 @@ void RenderStyle::setPositionTryFallbacks(FixedVector<Style::PositionTryFallback
     SET_NESTED_VAR(m_nonInheritedData, rareData, positionTryFallbacks, WTFMove(fallbacks));
 }
 
+std::optional<size_t> RenderStyle::lastSuccessfulPositionTryFallbackIndex() const
+{
+    return m_nonInheritedData->rareData->lastSuccessfulPositionTryFallbackIndex;
+}
+
+void RenderStyle::setLastSuccessfulPositionTryFallbackIndex(std::optional<size_t>&& index)
+{
+    SET_NESTED_VAR(m_nonInheritedData, rareData, lastSuccessfulPositionTryFallbackIndex, WTFMove(index));
+}
+
 std::optional<Style::PseudoElementIdentifier> RenderStyle::pseudoElementIdentifier() const
 {
     if (pseudoElementType() == PseudoId::None)

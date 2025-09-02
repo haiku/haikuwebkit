@@ -517,8 +517,10 @@ void TestController::tooltipDidChange(WKStringRef tooltip)
         return;
 
     for (auto& listener : m_framesListeningForTooltipChange) {
-        WKRetainPtr js = toWK(makeString(listener.callbackName, "('"_s, toWTFString(tooltip), "')"_s));
-        WKPageEvaluateJavaScriptInFrame(WKFrameInfoGetPage(listener.frame.get()), listener.frame.get(), js.get(), nullptr, nullptr);
+        auto arguments = adoptWK(WKMutableDictionaryCreate());
+        setValue(arguments, "callback", listener.callbackHandle);
+        setValue(arguments, "tooltip", tooltip);
+        WKPageCallAsyncJavaScript(WKFrameInfoGetPage(listener.frame.get()), toWK("return callback(tooltip)").get(), arguments.get(), listener.frame.get(), nullptr, nullptr);
     }
 }
 
@@ -944,7 +946,8 @@ WKRetainPtr<WKPageConfigurationRef> TestController::generatePageConfiguration(co
 {
     if (!m_context || !m_mainWebView || !m_mainWebView->viewSupportsOptions(options)) {
         auto contextConfiguration = generateContextConfiguration(options);
-        m_context = platformAdjustContext(adoptWK(WKContextCreateWithConfiguration(contextConfiguration.get())).get(), contextConfiguration.get());
+        m_preferences = adoptWK(WKPreferencesCreate());
+        m_context = adoptWK(WKContextCreateWithConfiguration(contextConfiguration.get()));
 
         auto localhostAliases = adoptWK(WKMutableArrayCreate());
         for (const auto& alias : m_localhostAliases)
@@ -1024,6 +1027,7 @@ WKRetainPtr<WKPageConfigurationRef> TestController::generatePageConfiguration(co
     if (options.allowTestOnlyIPC())
         WKPageConfigurationSetAllowTestOnlyIPC(pageConfiguration.get(), true);
     WKPageConfigurationSetShouldSendConsoleLogsToUIProcessForTesting(pageConfiguration.get(), true);
+    WKPageConfigurationSetAllowJSHandleInPageContentWorld(pageConfiguration.get(), true);
 
     m_userContentController = adoptWK(WKUserContentControllerCreate());
     WKPageConfigurationSetUserContentController(pageConfiguration.get(), userContentController());
@@ -1112,9 +1116,9 @@ void TestController::simulateClickBackgroundFetch(WKStringRef)
 }
 #endif
 
-void TestController::listenForTooltipChanges(WKFrameInfoRef frame, WKStringRef callbackName)
+void TestController::listenForTooltipChanges(WKFrameInfoRef frame, WKTypeRef callbackHandle)
 {
-    m_framesListeningForTooltipChange.append({ frame, toWTFString(callbackName) });
+    m_framesListeningForTooltipChange.append({ frame, callbackHandle });
 }
 
 void TestController::createWebViewWithOptions(const TestOptions& options)
@@ -1815,6 +1819,56 @@ void TestController::configureViewForTest(const TestInvocation& test)
     installUserScript(test);
 }
 
+static WKFindOptions findOptionsFromArray(WKArrayRef array)
+{
+    auto length = WKArrayGetSize(array);
+    WKFindOptions options { };
+    for (unsigned i = 0; i < length; ++i) {
+        auto optionName = (WKStringRef)WKArrayGetItemAtIndex(array, i);
+        ASSERT(WKGetTypeID(optionName) == WKStringGetTypeID());
+        if (WKStringIsEqualToUTF8CString(optionName, "CaseInsensitive"))
+            options |= kWKFindOptionsCaseInsensitive;
+        else if (WKStringIsEqualToUTF8CString(optionName, "AtWordStarts"))
+            options |= kWKFindOptionsAtWordStarts;
+        else if (WKStringIsEqualToUTF8CString(optionName, "TreatMedialCapitalAsWordStart"))
+            options |= kWKFindOptionsTreatMedialCapitalAsWordStart;
+        else if (WKStringIsEqualToUTF8CString(optionName, "Backwards"))
+            options |= kWKFindOptionsBackwards;
+        else if (WKStringIsEqualToUTF8CString(optionName, "WrapAround"))
+            options |= kWKFindOptionsWrapAround;
+        // FIXME: No kWKFindOptionsStartInSelection.
+    }
+    return options;
+}
+
+constexpr auto testRunnerJS = R"testRunnerJS(
+if (window.testRunner) {
+    testRunner.installTooltipDidChangeCallback = (callback) => window.webkit.messageHandlers.webkitTestRunner.postMessage(window.webkit.createJSHandle(callback));
+    testRunner.findString = (target, options) => window.webkit.messageHandlers.webkitTestRunner.postMessage([target, options]);
+}
+)testRunnerJS";
+
+static void didReceiveScriptMessage(WKScriptMessageRef message, WKCompletionListenerRef listener, const void *)
+{
+    // FIXME: Make JSHandle able to be sent as a member of a dictionary and use something other than WKGetTypeID to distinguish different messages.
+    WKTypeRef messageBody = WKScriptMessageGetBody(message);
+    if (WKGetTypeID(messageBody) == WKArrayGetTypeID()) {
+        auto array = (WKArrayRef)messageBody;
+        auto target = (WKStringRef)WKArrayGetItemAtIndex(array, 0);
+        ASSERT(WKGetTypeID(target) == WKStringGetTypeID());
+        ASSERT(WKGetTypeID(WKArrayGetItemAtIndex(array, 1)) == WKArrayGetTypeID());
+        auto options = findOptionsFromArray((WKArrayRef)WKArrayGetItemAtIndex(array, 1));
+        WKPageFindStringForTesting(TestController::singleton().mainWebView()->page(), (void*)WKRetain(listener), target, options, 0, [] (bool found, void* context) {
+            auto listener = (WKCompletionListenerRef)context;
+            WKCompletionListenerComplete(listener, adoptWK(WKBooleanCreate(found)).get());
+            WKRelease(listener);
+        });
+        return;
+    }
+    TestController::singleton().listenForTooltipChanges(WKScriptMessageGetFrameInfo(message), messageBody);
+    WKCompletionListenerComplete(listener, nullptr);
+}
+
 void TestController::installUserScript(const TestInvocation& test)
 {
     WKRetainPtr configuration = adoptWK(WKPageCopyPageConfiguration(mainWebView()->page()));
@@ -1825,15 +1879,10 @@ void TestController::installUserScript(const TestInvocation& test)
     if (!test.options().shouldInjectTestRunner())
         return;
 
-    WKRetainPtr js = toWK("if (window.testRunner) { testRunner.installTooltipDidChangeCallback = function (name) { window.webkit.messageHandlers.webkitTestRunner.postMessage(name) } }");
     constexpr bool forMainFrameOnly { true };
-    WKRetainPtr script = adoptWK(WKUserScriptCreateWithSource(js.get(), kWKInjectAtDocumentStart, forMainFrameOnly));
+    WKRetainPtr script = adoptWK(WKUserScriptCreateWithSource(toWK(testRunnerJS).get(), kWKInjectAtDocumentStart, forMainFrameOnly));
     WKUserContentControllerAddUserScript(controller.get(), script.get());
-
-    // FIXME: Generalize this to be able to be used for different test callbacks.
-    WKUserContentControllerAddScriptMessageHandler(controller.get(), toWK("webkitTestRunner").get(), [] (WKScriptMessageRef message, WKCompletionListenerRef, const void *) {
-        TestController::singleton().listenForTooltipChanges(WKScriptMessageGetFrameInfo(message), (WKStringRef)WKScriptMessageGetBody(message));
-    }, nullptr);
+    WKUserContentControllerAddScriptMessageHandler(controller.get(), toWK("webkitTestRunner").get(), didReceiveScriptMessage, nullptr);
 }
 
 #if ENABLE(CONTENT_EXTENSIONS) && !PLATFORM(COCOA)
@@ -2470,16 +2519,6 @@ void TestController::didReceiveAsyncMessageFromInjectedBundle(WKStringRef messag
 
     if (WKStringIsEqualToUTF8CString(messageName, "SetResourceMonitorList"))
         return setResourceMonitorList(stringValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "FindString")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto string = stringValue(messageBodyDictionary, "String");
-        auto findOptions = static_cast<WKFindOptions>(uint64Value(messageBodyDictionary, "FindOptions"));
-        return WKPageFindStringForTesting(TestController::singleton().mainWebView()->page(), completionHandler.leak(), string, findOptions, 0, [](bool found, void* context) {
-            auto completionHandler = WTF::adopt(static_cast<CompletionHandler<void(WKTypeRef)>::Impl*>(context));
-            completionHandler(WKBooleanCreate(found));
-        });
-    }
 
     if (WKStringIsEqualToUTF8CString(messageName, "SetStorageAccessPermission")) {
         auto messageBodyDictionary = dictionaryValue(messageBody);
@@ -3659,7 +3698,7 @@ void TestController::setUseDarkAppearanceForTesting(bool useDarkAppearance)
 
 void TestController::terminateGPUProcess()
 {
-    WKContextTerminateGPUProcess(platformContext());
+    WKContextTerminateGPUProcess(context());
 }
 
 void TestController::terminateNetworkProcess()
@@ -3669,7 +3708,7 @@ void TestController::terminateNetworkProcess()
 
 void TestController::terminateServiceWorkers()
 {
-    WKContextTerminateServiceWorkers(platformContext());
+    WKContextTerminateServiceWorkers(context());
 }
 
 #if !PLATFORM(COCOA)
@@ -3693,12 +3732,6 @@ void TestController::platformCreateWebView(WKPageConfigurationRef configuration,
 UniqueRef<PlatformWebView> TestController::platformCreateOtherPage(PlatformWebView* parentView, WKPageConfigurationRef configuration, const TestOptions& options)
 {
     return makeUniqueRef<PlatformWebView>(configuration, options);
-}
-
-WKContextRef TestController::platformAdjustContext(WKContextRef context, WKContextConfigurationRef)
-{
-    m_preferences = adoptWK(WKPreferencesCreate());
-    return context;
 }
 
 unsigned TestController::imageCountInGeneralPasteboard() const
@@ -4365,27 +4398,27 @@ void TestController::removeAllCookies(CompletionHandler<void(WKTypeRef)>&& compl
 void TestController::addMockMediaDevice(WKStringRef persistentID, WKStringRef label, WKStringRef type, WKDictionaryRef properties)
 {
     bool isDefault = false;
-    WKAddMockMediaDevice(platformContext(), persistentID, label, type, properties, isDefault);
+    WKAddMockMediaDevice(context(), persistentID, label, type, properties, isDefault);
 }
 
 void TestController::clearMockMediaDevices()
 {
-    WKClearMockMediaDevices(platformContext());
+    WKClearMockMediaDevices(context());
 }
 
 void TestController::removeMockMediaDevice(WKStringRef persistentID)
 {
-    WKRemoveMockMediaDevice(platformContext(), persistentID);
+    WKRemoveMockMediaDevice(context(), persistentID);
 }
 
 void TestController::setMockMediaDeviceIsEphemeral(WKStringRef persistentID, bool isEphemeral)
 {
-    WKSetMockMediaDeviceIsEphemeral(platformContext(), persistentID, isEphemeral);
+    WKSetMockMediaDeviceIsEphemeral(context(), persistentID, isEphemeral);
 }
 
 void TestController::resetMockMediaDevices()
 {
-    WKResetMockMediaDevices(platformContext());
+    WKResetMockMediaDevices(context());
 }
 
 void TestController::setMockCameraOrientation(uint64_t rotation, WKStringRef persistentId)
@@ -4681,5 +4714,11 @@ void TestController::setResourceMonitorList(WKStringRef rulesText, CompletionHan
 {
     WKContextSetResourceMonitorURLsForTesting(m_context.get(), rulesText, completionHandler.leak(), adoptAndCallCompletionHandler);
 }
+
+#if !PLATFORM(IOS_FAMILY)
+void TestController::setHasMouseDeviceForTesting(bool)
+{
+}
+#endif
 
 } // namespace WTR

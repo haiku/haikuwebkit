@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "Font.h"
-#include "PlacedFloats.h"
-#include "StyleTextEdge.h"
+#include <WebCore/Font.h>
+#include <WebCore/PlacedFloats.h>
+#include <WebCore/StyleTextEdge.h>
 #include <algorithm>
 
 namespace WebCore {

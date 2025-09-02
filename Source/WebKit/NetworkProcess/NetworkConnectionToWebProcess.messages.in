@@ -61,6 +61,9 @@ messages -> NetworkConnectionToWebProcess WantsDispatchMessage {
     UnsubscribeFromCookieChangeNotifications(String host) AllowedWhenWaitingForSyncReply
 #endif
 
+    SubscribeToStorageAccessPermissionChanges(WebCore::RegistrableDomain topFrameDomain, WebCore::RegistrableDomain subFrameDomain);
+    UnsubscribeFromStorageAccessPermissionChanges(WebCore::RegistrableDomain topFrameDomain, WebCore::RegistrableDomain subFrameDomain);
+
     RegisterInternalFileBlobURL(URL url, String path, String replacementPath, WebKit::SandboxExtensionHandle extensionHandle, String contentType)
     RegisterInternalBlobURL(URL url, Vector<WebCore::BlobPart> blobParts, String contentType)
     RegisterBlobURL(URL url, URL srcURL, struct WebCore::PolicyContainer policyContainer, std::optional<WebCore::SecurityOriginData> topOrigin)
@@ -85,6 +88,7 @@ messages -> NetworkConnectionToWebProcess WantsDispatchMessage {
     ResourceLoadStatisticsUpdated(Vector<WebCore::ResourceLoadStatistics> statistics) -> ()
     [EnabledBy=StorageAccessAPIEnabled] HasStorageAccess(WebCore::RegistrableDomain subFrameDomain, WebCore::RegistrableDomain topFrameDomain, WebCore::FrameIdentifier frameID, WebCore::PageIdentifier pageID) -> (bool hasStorageAccess)
     [EnabledBy=StorageAccessAPIEnabled] RequestStorageAccess(WebCore::RegistrableDomain subFrameDomain, WebCore::RegistrableDomain topFrameDomain, WebCore::FrameIdentifier frameID, WebCore::PageIdentifier webPageID, WebKit::WebPageProxyIdentifier webPageProxyID, enum:bool WebCore::StorageAccessScope scope, enum:bool WebCore::HasOrShouldIgnoreUserGesture hasOrShouldIgnoreUserGesture) -> (struct WebCore::RequestStorageAccessResult result)
+    [EnabledBy=StorageAccessAPIEnabled] QueryStorageAccessPermission(WebCore::RegistrableDomain subFrameDomain, WebCore::RegistrableDomain topFrameDomain) -> (enum:uint8_t WebCore::PermissionState permissionState)
     [EnabledBy=StorageAccessAPIEnabled] StorageAccessQuirkForTopFrameDomain(URL topFrameURL) -> (Vector<WebCore::RegistrableDomain> domains)
     [EnabledBy=StorageAccessAPIEnabled] RequestStorageAccessUnderOpener(WebCore::RegistrableDomain domainInNeedOfStorageAccess, WebCore::PageIdentifier openerPageID, WebCore::RegistrableDomain openerDomain)
 

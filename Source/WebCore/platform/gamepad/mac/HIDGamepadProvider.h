@@ -27,10 +27,10 @@
 
 #if ENABLE(GAMEPAD) && PLATFORM(MAC)
 
-#include "GamepadProvider.h"
-#include "HIDGamepad.h"
-#include "Timer.h"
 #include <IOKit/hid/IOHIDManager.h>
+#include <WebCore/GamepadProvider.h>
+#include <WebCore/HIDGamepad.h>
+#include <WebCore/Timer.h>
 #include <pal/spi/cocoa/IOKitSPI.h>
 #include <wtf/Deque.h>
 #include <wtf/HashMap.h>

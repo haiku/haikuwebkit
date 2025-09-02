@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "EventListener.h"
+#include <WebCore/EventListener.h>
 #include <wtf/Ref.h>
 
 namespace WebCore {

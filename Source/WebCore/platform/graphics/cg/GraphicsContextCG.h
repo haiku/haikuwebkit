@@ -27,8 +27,8 @@
 
 #if USE(CG)
 
-#include "ColorSpaceCG.h"
-#include "GraphicsContext.h"
+#include <WebCore/ColorSpaceCG.h>
+#include <WebCore/GraphicsContext.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
@@ -181,6 +181,6 @@ CGAffineTransform getUserToBaseCTM(CGContextRef);
 
 } // namespace WebCore
 
-#include "CGContextStateSaver.h"
+#include <WebCore/CGContextStateSaver.h>
 
 #endif // USE(CG)

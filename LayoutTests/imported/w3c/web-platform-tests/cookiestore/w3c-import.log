@@ -53,6 +53,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/cookiestore/cookieStore_set_domain_parsing.sub.https.html
 /LayoutTests/imported/w3c/web-platform-tests/cookiestore/cookieStore_set_domain_parsing.tentative.sub.https.html
 /LayoutTests/imported/w3c/web-platform-tests/cookiestore/cookieStore_set_limit.https.any.js
+/LayoutTests/imported/w3c/web-platform-tests/cookiestore/cookieStore_set_path.https.window.js
 /LayoutTests/imported/w3c/web-platform-tests/cookiestore/cookieStore_special_names.https.any.js
 /LayoutTests/imported/w3c/web-platform-tests/cookiestore/cookieStore_subscribe_arguments.https.any.js
 /LayoutTests/imported/w3c/web-platform-tests/cookiestore/cookieStore_subscriptions_empty.https.window.js

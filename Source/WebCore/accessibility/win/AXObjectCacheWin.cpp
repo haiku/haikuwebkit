@@ -28,6 +28,7 @@
 #include "config.h"
 #include "AXObjectCache.h"
 
+#include "AXNotifications.h"
 #include "AccessibilityObject.h"
 #include "Chrome.h"
 #include "ChromeClient.h"

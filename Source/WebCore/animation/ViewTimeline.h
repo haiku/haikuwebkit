@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "CSSNumericValue.h"
-#include "CSSPrimitiveValue.h"
-#include "ScrollTimeline.h"
-#include "Styleable.h"
-#include "ViewTimelineOptions.h"
+#include <WebCore/CSSNumericValue.h>
+#include <WebCore/CSSPrimitiveValue.h>
+#include <WebCore/ScrollTimeline.h>
+#include <WebCore/Styleable.h>
+#include <WebCore/ViewTimelineOptions.h>
 #include <wtf/Ref.h>
 #include <wtf/WeakPtr.h>
 

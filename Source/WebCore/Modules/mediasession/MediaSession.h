@@ -27,13 +27,13 @@
 
 #if ENABLE(MEDIA_SESSION)
 
-#include "ActiveDOMObject.h"
-#include "MediaPositionState.h"
-#include "MediaProducer.h"
-#include "MediaSessionAction.h"
-#include "MediaSessionActionHandler.h"
-#include "MediaSessionPlaybackState.h"
-#include "MediaSessionReadyState.h"
+#include <WebCore/ActiveDOMObject.h>
+#include <WebCore/MediaPositionState.h>
+#include <WebCore/MediaProducer.h>
+#include <WebCore/MediaSessionAction.h>
+#include <WebCore/MediaSessionActionHandler.h>
+#include <WebCore/MediaSessionPlaybackState.h>
+#include <WebCore/MediaSessionReadyState.h>
 #include <wtf/Logger.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>

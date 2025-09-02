@@ -619,7 +619,6 @@ public:
 
 #if PLATFORM(COCOA)
     void registerAssetFonts(WebProcessProxy&);
-    void registerFontsForGPUProcessIfNeeded();
 #endif
 
 #if PLATFORM(MAC)
@@ -635,9 +634,6 @@ public:
 #if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
     void initializeAccessibilityIfNecessary();
 #endif
-
-    std::optional<SandboxExtension::Handle> sandboxExtensionForFile(const String& fileName);
-    void addSandboxExtensionForFile(const String& fileName, SandboxExtension::Handle);
 
 private:
     enum class NeedsGlobalStaticInitialization : bool { No, Yes };
@@ -1034,8 +1030,6 @@ private:
 
     bool m_hasReceivedAXRequestInUIProcess { false };
     bool m_suppressEDR { false };
-
-    HashMap<String, SandboxExtension::Handle> m_fileSandboxExtensions;
 };
 
 template<typename T>

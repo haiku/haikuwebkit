@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "LengthBox.h"
-#include "LengthSize.h"
-#include "RenderStyleConstants.h"
+#include <WebCore/LengthBox.h>
+#include <WebCore/LengthSize.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
 

@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "AbortSignal.h"
-#include "EventListenerOptions.h"
+#include <WebCore/AbortSignal.h>
+#include <WebCore/EventListenerOptions.h>
 #include <optional>
 
 namespace WebCore {

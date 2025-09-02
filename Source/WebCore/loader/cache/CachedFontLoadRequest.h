@@ -28,11 +28,11 @@
 
 #include "CachedFont.h"
 #include "CachedFontClient.h"
-#include "CachedResourceHandle.h"
-#include "FontLoadRequest.h"
-#include "FontSelectionAlgorithm.h"
-#include "ScriptExecutionContext.h"
 #include <JavaScriptCore/ConsoleTypes.h>
+#include <WebCore/CachedResourceHandle.h>
+#include <WebCore/FontLoadRequest.h>
+#include <WebCore/FontSelectionAlgorithm.h>
+#include <WebCore/ScriptExecutionContext.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {

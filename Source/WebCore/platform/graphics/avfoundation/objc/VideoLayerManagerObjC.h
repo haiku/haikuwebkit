@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "FloatRect.h"
-#include "IntSize.h"
-#include "NativeImage.h"
-#include "PlatformLayer.h"
-#include "VideoLayerManager.h"
+#include <WebCore/FloatRect.h>
+#include <WebCore/IntSize.h>
+#include <WebCore/NativeImage.h>
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/VideoLayerManager.h>
 #include <wtf/Function.h>
 #include <wtf/LoggerHelper.h>
 #include <wtf/Noncopyable.h>

@@ -29,13 +29,13 @@
 
 #pragma once
 
-#include "Color.h"
-#include "FloatLine.h"
-#include "FloatQuad.h"
-#include "FloatRect.h"
-#include "InspectorOverlayLabel.h"
-#include "Path.h"
-#include "Timer.h"
+#include <WebCore/Color.h>
+#include <WebCore/FloatLine.h>
+#include <WebCore/FloatQuad.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/InspectorOverlayLabel.h>
+#include <WebCore/Path.h>
+#include <WebCore/Timer.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Deque.h>
 #include <wtf/MonotonicTime.h>

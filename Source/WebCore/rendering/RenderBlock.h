@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "GapRects.h"
-#include "LineWidth.h"
-#include "RenderBox.h"
-#include "TextRun.h"
+#include <WebCore/GapRects.h>
+#include <WebCore/LineWidth.h>
+#include <WebCore/RenderBox.h>
+#include <WebCore/TextRun.h>
 #include <memory>
 #include <wtf/WeakListHashSet.h>
 

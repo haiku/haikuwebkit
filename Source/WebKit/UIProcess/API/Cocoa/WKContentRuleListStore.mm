@@ -30,6 +30,7 @@
 #import "APIContentRuleListStore.h"
 #import "NetworkCacheFileSystem.h"
 #import "WKErrorInternal.h"
+#import "WebPrivacyHelpers.h"
 #import <WebCore/WebCoreObjCExtras.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/CompletionHandler.h>
@@ -211,6 +212,17 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
         } else
             rawHandler(source.createNSString().get());
     });
+#endif
+}
+
++ (void)_setContentRuleListStoreForResourceMonitorURLsControllerForTesting:(WKContentRuleListStore *)store
+{
+#if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
+    RetainPtr protectedStore = store;
+    Ref apiStore = *(protectedStore->_contentRuleListStore);
+    WebKit::ResourceMonitorURLsController::singleton().setContentRuleListStore(apiStore.get());
+#else
+    UNUSED_PARAM(store);
 #endif
 }
 

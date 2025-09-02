@@ -137,7 +137,13 @@ struct CookieHash {
     static const bool safeToCompareToEmptyOrDeleted = false;
 };
 
-}
+namespace CookieUtil {
+
+WEBCORE_EXPORT String defaultPathForURL(const URL&);
+
+} // namespace CookieUtil
+
+} // namespace WebCore
 
 namespace WTF {
     template<typename T> struct DefaultHash;

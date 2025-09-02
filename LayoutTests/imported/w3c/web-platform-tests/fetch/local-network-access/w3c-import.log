@@ -17,3 +17,6 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/META.yml
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/README.md
 /LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/fetch.tentative.https.html
+/LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/iframe.tentative.https.window.js
+/LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/navigate.tentative.https.window.js
+/LayoutTests/imported/w3c/web-platform-tests/fetch/local-network-access/navigate.tentative.window.js

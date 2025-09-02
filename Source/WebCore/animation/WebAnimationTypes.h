@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
-#include "CSSValue.h"
-#include "EventTarget.h"
-#include "Length.h"
-#include "TimelineRangeOffset.h"
-#include "WebAnimationTime.h"
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CSSValue.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/Length.h>
+#include <WebCore/TimelineRangeOffset.h>
+#include <WebCore/WebAnimationTime.h>
 #include <wtf/BitSet.h>
 #include <wtf/HashMap.h>
 #include <wtf/ListHashSet.h>

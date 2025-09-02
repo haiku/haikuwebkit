@@ -27,9 +27,9 @@
 
 #if HAVE(AVASSETREADER)
 
-#include "ImageDecoder.h"
-#include "ProcessIdentity.h"
-#include "SampleMap.h"
+#include <WebCore/ImageDecoder.h>
+#include <WebCore/ProcessIdentity.h>
+#include <WebCore/SampleMap.h>
 #include <wtf/Lock.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>

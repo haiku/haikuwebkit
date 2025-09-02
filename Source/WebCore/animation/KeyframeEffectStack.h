@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "AnimationList.h"
-#include "AnimationMalloc.h"
-#include "CSSPropertyNames.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/AnimationList.h>
+#include <WebCore/AnimationMalloc.h>
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/WebAnimationTypes.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakPtr.h>
 

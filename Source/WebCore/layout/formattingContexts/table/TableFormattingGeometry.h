@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FormattingGeometry.h"
+#include <WebCore/FormattingGeometry.h>
 #include "TableGrid.h"
 
 namespace WebCore {

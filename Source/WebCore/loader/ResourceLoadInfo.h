@@ -27,7 +27,7 @@
 
 #if ENABLE(CONTENT_EXTENSIONS)
 
-#include "CachedResource.h"
+#include <WebCore/CachedResource.h>
 #include <wtf/OptionSet.h>
 #include <wtf/URL.h>
 

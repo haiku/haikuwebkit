@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "Event.h"
-#include "ExtendableEventInit.h"
+#include <WebCore/Event.h>
+#include <WebCore/ExtendableEventInit.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {

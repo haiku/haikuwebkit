@@ -166,20 +166,12 @@ function requestFetch(entry, parameters, fetcher)
     "use strict";
 
     if (entry.fetch) {
-        var currentAttempt = entry.fetch;
-        if (entry.state !== @ModuleFetch)
-            return currentAttempt;
-
-        return currentAttempt.catch((error) => {
-            // Even if the existing fetching request failed, this attempt may succeed.
-            // For example, previous attempt used invalid integrity="" value. But this
-            // request could have the correct integrity="" value. In that case, we should
-            // retry fetching for this request.
-            // https://html.spec.whatwg.org/#fetch-a-single-module-script
-            if (currentAttempt === entry.fetch)
-                entry.fetch = @undefined;
-            return this.requestFetch(entry, parameters, fetcher);
-        });
+        var promiseConstructor = @InternalPromise;
+        var newPromise = @createPromise(promiseConstructor, /* isInternalPromise */ true);
+        entry.fetch.then(
+            (result) => @fulfillPromiseWithFirstResolvingFunctionCallCheck(newPromise, result),
+            (error) => @rejectPromiseWithFirstResolvingFunctionCallCheck(newPromise, this.createTypeErrorCopy(error)));
+        return newPromise;
     }
 
     // Hook point.

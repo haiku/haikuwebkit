@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "StyleValueTypes.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/StyleValueTypes.h>
+#include <WebCore/WebAnimationTypes.h>
 
 namespace WebCore {
 namespace Style {

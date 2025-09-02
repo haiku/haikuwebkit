@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,6 +56,8 @@ struct VMEntryRecord {
     EntryFrame* prevTopEntryFrame() { return m_prevTopEntryFrame; }
     SUPPRESS_ASAN EntryFrame* unsafePrevTopEntryFrame() { return m_prevTopEntryFrame; }
 };
+
+static_assert(OBJECT_OFFSETOF(VMEntryRecord, m_prevTopEntryFrame) == OBJECT_OFFSETOF(VMEntryRecord, m_prevTopCallFrame) + sizeof(void*), "We load/store these using a pair instruction");
 
 extern "C" VMEntryRecord* SYSV_ABI vmEntryRecord(EntryFrame*);
 

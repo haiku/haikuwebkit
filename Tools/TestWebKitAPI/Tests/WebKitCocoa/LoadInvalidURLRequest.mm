@@ -176,7 +176,7 @@ TEST(WebKit, LoadInvalidURLWithSpaceCharacter)
     delegate.get().didFailProvisionalNavigation = ^(WKWebView *, WKNavigation *, NSError *error) {
         EXPECT_WK_STREQ(error.domain, @"WebKitErrorDomain");
         EXPECT_EQ(error.code, WebKitErrorCannotShowURL);
-        EXPECT_WK_STREQ(error.userInfo[NSErrorFailingURLStringKey], "https://%20.example.com/");
+        EXPECT_WK_STREQ([error.userInfo[NSURLErrorFailingURLErrorKey] absoluteString], "");
         done = true;
     };
     auto webView = adoptNS([WKWebView new]);

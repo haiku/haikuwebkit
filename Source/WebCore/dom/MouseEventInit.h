@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "EventTargetInlines.h"
-#include "MouseRelatedEvent.h"
+#include <WebCore/EventTargetInlines.h>
+#include <WebCore/MouseRelatedEvent.h>
 
 namespace WebCore {
 

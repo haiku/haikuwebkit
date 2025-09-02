@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "GlyphBuffer.h"
-#include "TextSpacing.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/GlyphBuffer.h>
+#include <WebCore/TextSpacing.h>
 #include <wtf/HashSet.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RetainPtr.h>

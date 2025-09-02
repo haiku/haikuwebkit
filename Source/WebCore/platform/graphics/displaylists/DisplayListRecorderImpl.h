@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "DisplayListRecorder.h"
+#include <WebCore/DisplayListRecorder.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

@@ -31,15 +31,18 @@
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "Document.h"
+#include "DocumentInlines.h"
 #include "FrameInlines.h"
 #include "Gamepad.h"
 #include "GamepadManager.h"
 #include "GamepadProvider.h"
 #include "LocalDOMWindow.h"
+#include "LocalFrame.h"
 #include "Navigator.h"
 #include "Page.h"
 #include "PermissionsPolicy.h"
 #include "PlatformGamepad.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -49,7 +52,9 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(NavigatorGamepad);
 NavigatorGamepad::NavigatorGamepad(Navigator& navigator)
     : m_navigator(navigator)
 {
-    GamepadManager::singleton().registerNavigator(navigator);
+    RefPtr document = navigator.document();
+    if (document && document->settingsValues().gamepadsEnabled)
+        GamepadManager::singleton().registerNavigator(navigator);
 }
 
 NavigatorGamepad::~NavigatorGamepad()

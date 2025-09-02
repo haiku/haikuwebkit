@@ -4477,38 +4477,6 @@ void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRRe
         consume(value);
 }
 
-void BBQJIT::addRTTSlowPathJump(TypeIndex signature, GPRReg calleeRTT)
-{
-    auto jump = m_jit.jump();
-    auto returnLabel = m_jit.label();
-    m_latePaths.append([jump, returnLabel, signature, calleeRTT](BBQJIT& bbq, CCallHelpers& jit) {
-        jump.link(jit);
-        bbq.emitSlowPathRTTCheck(returnLabel, signature, calleeRTT);
-    });
-}
-
-void BBQJIT::emitSlowPathRTTCheck(MacroAssembler::Label returnLabel, TypeIndex typeIndex, GPRReg calleeRTT)
-{
-    auto signatureRTT = TypeInformation::getCanonicalRTT(typeIndex);
-    GPRReg rttSize = wasmScratchGPR;
-    m_jit.loadPtr(Address(calleeRTT, FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfRTT()), calleeRTT);
-    m_jit.load32(Address(calleeRTT, RTT::offsetOfDisplaySize()), rttSize);
-
-    JIT_COMMENT(m_jit, "RTT::isStrictSubRTT()");
-    auto displaySmallerThanParent = m_jit.branch32(CCallHelpers::BelowOrEqual, rttSize, TrustedImm32(signatureRTT->displaySize()));
-
-    GPRReg index = rttSize;
-    auto scale = static_cast<CCallHelpers::Scale>(std::bit_width(sizeof(uintptr_t) - 1));
-    auto rttBaseIndex = CCallHelpers::BaseIndex(calleeRTT, index, scale, RTT::offsetOfPayload());
-    m_jit.sub32(TrustedImm32(1 + signatureRTT->displaySize()), index);
-    m_jit.loadPtr(rttBaseIndex, calleeRTT);
-    auto rttEqual = m_jit.branchPtr(CCallHelpers::Equal, calleeRTT, TrustedImmPtr(signatureRTT.get()));
-    rttEqual.linkTo(returnLabel, &m_jit);
-
-    displaySmallerThanParent.link(&m_jit);
-    emitThrowException(ExceptionType::BadSignature);
-}
-
 PartialResult WARN_UNUSED_RETURN BBQJIT::addCallIndirect(unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType callType)
 {
     Value calleeIndex = args.takeLast();
@@ -4618,9 +4586,13 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCallIndirect(unsigned tableIndex, co
 
             auto indexEqual = m_jit.branchPtr(CCallHelpers::Equal, calleeSignatureIndexTmp, TrustedImmPtr(TypeInformation::get(originalSignature)));
 
-            if (needsSubtypeCheck)
-                addRTTSlowPathJump(originalSignature.index(), calleeRTT);
-            else
+            if (needsSubtypeCheck) {
+                auto targetRTT = TypeInformation::getCanonicalRTT(originalSignature.index());
+                JIT_COMMENT(m_jit, "RTT::isStrictSubRTT()");
+                m_jit.loadPtr(Address(calleeRTT, FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfRTT()), calleeRTT);
+                throwExceptionIf(ExceptionType::BadSignature, m_jit.branch32(CCallHelpers::BelowOrEqual, Address(calleeRTT, RTT::offsetOfDisplaySizeExcludingThis()), TrustedImm32(targetRTT->displaySizeExcludingThis())));
+                throwExceptionIf(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, CCallHelpers::Address(calleeRTT, RTT::offsetOfData() + targetRTT->displaySizeExcludingThis() * sizeof(const RTT*)), TrustedImmPtr(targetRTT.ptr())));
+            } else
                 emitThrowException(ExceptionType::BadSignature);
 
             indexEqual.link(&m_jit);

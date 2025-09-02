@@ -20,7 +20,10 @@
 #include "config.h"
 #include "Page.h"
 
+#include "AXIsolatedTree.h"
 #include "AXLogger.h"
+#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
 #include "ActivityStateChangeObserver.h"
 #include "AdvancedPrivacyProtections.h"
 #include "AlternativeTextClient.h"
@@ -2287,7 +2290,8 @@ void Page::updateRendering()
     });
 
     runProcessingStep(RenderingUpdateStep::SnapshottedScrollOffsets, [&] (Document& document) {
-        Style::AnchorPositionEvaluator::updateSnapshottedScrollOffsets(document);
+        if (CheckedPtr renderView = document.renderView())
+            Style::AnchorPositionEvaluator::updateScrollAdjustments(*renderView);
     });
 
     for (auto& document : initialDocuments) {

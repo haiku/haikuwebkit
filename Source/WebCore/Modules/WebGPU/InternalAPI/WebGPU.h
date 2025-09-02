@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "WebGPURequestAdapterOptions.h"
+#include <WebCore/WebGPURequestAdapterOptions.h>
 #include <optional>
 #include <wtf/AbstractRefCounted.h>
 #include <wtf/CompletionHandler.h>

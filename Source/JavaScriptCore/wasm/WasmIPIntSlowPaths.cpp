@@ -1091,6 +1091,29 @@ extern "C" UGPRPair SYSV_ABI slow_path_wasm_throw_exception(CallFrame* callFrame
     WASM_RETURN_TWO(Wasm::throwWasmToJSException(callFrame, exceptionType, instance), nullptr);
 }
 
+// Similar logic to 'slow_path_wasm_throw_exception', but the exception is already sitting
+// in the VM. We don't throw, we only unwind and go to the handler.
+extern "C" UCPURegister SYSV_ABI slow_path_wasm_unwind_exception(CallFrame* callFrame, JSWebAssemblyInstance* instance)
+{
+    VM& vm = instance->vm();
+    SlowPathFrameTracer tracer(vm, callFrame);
+#if ENABLE(WEBASSEMBLY_BBQJIT)
+    void* pc = instance->faultPC();
+    instance->setFaultPC(nullptr);
+    auto* callee = callFrame->callee().asNativeCallee();
+    ASSERT(callee->category() == NativeCallee::Category::Wasm);
+    auto& wasmCallee = static_cast<Wasm::Callee&>(*callee);
+    if (isAnyOMG(wasmCallee.compilationMode())) {
+        if (auto callSiteIndexFromPC = static_cast<Wasm::OptimizingJITCallee&>(wasmCallee).tryGetCallSiteIndex(pc))
+            callFrame->setCallSiteIndex(callSiteIndexFromPC.value());
+    }
+#endif
+    genericUnwind(vm, callFrame);
+    ASSERT(!!vm.callFrameForCatch);
+    ASSERT(!!vm.targetMachinePCForThrow);
+    return reinterpret_cast<UCPURegister>(vm.targetMachinePCForThrow);
+}
+
 extern "C" UGPRPair SYSV_ABI slow_path_wasm_popcount(const void* pc, uint32_t x)
 {
     void* result = std::bit_cast<void*>(static_cast<size_t>(std::popcount(x)));
@@ -1101,6 +1124,22 @@ extern "C" UGPRPair SYSV_ABI slow_path_wasm_popcountll(const void* pc, uint64_t 
 {
     void* result = std::bit_cast<void*>(static_cast<size_t>(std::popcount(x)));
     WASM_RETURN_TWO(pc, result);
+}
+
+WASM_IPINT_EXTERN_CPP_DECL(check_stack_and_vm_traps, void* candidateNewStackPointer)
+{
+    VM& vm = instance->vm();
+    if (vm.traps().handleTrapsIfNeeded()) {
+        if (vm.hasPendingTerminationException())
+            IPINT_THROW(Wasm::ExceptionType::Termination);
+        ASSERT(!vm.exceptionForInspection());
+    }
+
+    // Redo stack check because we may really have gotten here due to an imminent StackOverflow.
+    if (vm.softStackLimit() <= candidateNewStackPointer)
+        IPINT_RETURN(encodedJSValue()); // No stack overflow. Carry on.
+
+    IPINT_THROW(Wasm::ExceptionType::StackOverflow);
 }
 
 } } // namespace JSC::IPInt

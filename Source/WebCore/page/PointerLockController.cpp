@@ -331,10 +331,10 @@ void PointerLockController::rejectPromises(ExceptionCode code, const String& rea
         promise->reject(code, reason);
 }
 
-bool PointerLockController::supportsUnadjustedMovement()
+bool PointerLockController::supportsUnadjustedMovement() const
 {
-#if HAVE(MOUSE_UNACCELERATED_MOVEMENT)
-    return true;
+#if HAVE(MOUSE_UNACCELERATED_MOVEMENT) || PLATFORM(IOS_FAMILY)
+    return m_page.chrome().client().hasAccessoryMousePointingDevice();
 #else
     return false;
 #endif

@@ -26,7 +26,7 @@
 #ifndef WebCoreThreadInternal_h
 #define WebCoreThreadInternal_h
 
-#include "WebCoreThread.h"
+#include <WebCore/WebCoreThread.h>
 
 #if defined(__cplusplus)
 extern "C" {

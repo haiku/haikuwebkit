@@ -25,35 +25,35 @@
 
 #pragma once
 
-#include "Length.h"
-#include "RenderStyleConstants.h"
-#include "StyleBlockEllipsis.h"
-#include "StyleColor.h"
-#include "StyleCursor.h"
-#include "StyleCustomPropertyData.h"
-#include "StyleLineBoxContain.h"
-#include "StyleDynamicRangeLimit.h"
-#include "StyleHyphenateCharacter.h"
-#include "StyleHyphenateLimitEdge.h"
-#include "StyleHyphenateLimitLines.h"
-#include "StyleListStyleType.h"
-#include "StyleOrphans.h"
-#include "StyleQuotes.h"
-#include "StyleScrollbarColor.h"
-#include "StyleStrokeMiterlimit.h"
-#include "StyleStrokeWidth.h"
-#include "StyleTextEdge.h"
-#include "StyleTextEmphasisStyle.h"
-#include "StyleTextIndent.h"
-#include "StyleTextShadow.h"
-#include "StyleTextUnderlineOffset.h"
-#include "StyleWebKitLineGrid.h"
-#include "StyleWebKitOverflowScrolling.h"
-#include "StyleWebKitTextStrokeWidth.h"
-#include "StyleWebKitTouchCallout.h"
-#include "StyleWidows.h"
-#include "TabSize.h"
-#include "TouchAction.h"
+#include <WebCore/Length.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleBlockEllipsis.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StyleCursor.h>
+#include <WebCore/StyleCustomPropertyData.h>
+#include <WebCore/StyleDynamicRangeLimit.h>
+#include <WebCore/StyleHyphenateCharacter.h>
+#include <WebCore/StyleHyphenateLimitEdge.h>
+#include <WebCore/StyleHyphenateLimitLines.h>
+#include <WebCore/StyleLineBoxContain.h>
+#include <WebCore/StyleListStyleType.h>
+#include <WebCore/StyleOrphans.h>
+#include <WebCore/StyleQuotes.h>
+#include <WebCore/StyleScrollbarColor.h>
+#include <WebCore/StyleStrokeMiterlimit.h>
+#include <WebCore/StyleStrokeWidth.h>
+#include <WebCore/StyleTextEdge.h>
+#include <WebCore/StyleTextEmphasisStyle.h>
+#include <WebCore/StyleTextIndent.h>
+#include <WebCore/StyleTextShadow.h>
+#include <WebCore/StyleTextUnderlineOffset.h>
+#include <WebCore/StyleWebKitLineGrid.h>
+#include <WebCore/StyleWebKitOverflowScrolling.h>
+#include <WebCore/StyleWebKitTextStrokeWidth.h>
+#include <WebCore/StyleWebKitTouchCallout.h>
+#include <WebCore/StyleWidows.h>
+#include <WebCore/TabSize.h>
+#include <WebCore/TouchAction.h>
 #include <wtf/DataRef.h>
 #include <wtf/FixedVector.h>
 #include <wtf/OptionSet.h>
@@ -61,15 +61,15 @@
 #include <wtf/text/AtomString.h>
 
 #if HAVE(CORE_MATERIAL)
-#include "AppleVisualEffect.h"
+#include <WebCore/AppleVisualEffect.h>
 #endif
 
 #if ENABLE(TEXT_AUTOSIZING)
-#include "StyleTextSizeAdjust.h"
+#include <WebCore/StyleTextSizeAdjust.h>
 #endif
 
 #if ENABLE(DARK_MODE_CSS)
-#include "StyleColorScheme.h"
+#include <WebCore/StyleColorScheme.h>
 #endif
 
 namespace WTF {
@@ -168,6 +168,7 @@ public:
     PREFERRED_TYPE(TextAlignLast) unsigned textAlignLast : 3;
     PREFERRED_TYPE(TextJustify) unsigned textJustify : 2;
     PREFERRED_TYPE(TextDecorationSkipInk) unsigned textDecorationSkipInk : 2;
+    PREFERRED_TYPE(MathShift) unsigned mathShift : 1;
     PREFERRED_TYPE(MathStyle) unsigned mathStyle : 1;
     PREFERRED_TYPE(RubyPosition) unsigned rubyPosition : 2;
     PREFERRED_TYPE(RubyAlign) unsigned rubyAlign : 2;

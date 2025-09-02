@@ -37,6 +37,7 @@ enum class CompilationMode : uint8_t {
     JSToWasmEntrypointMode,
     JSToWasmICMode,
     WasmToJSMode,
+    WasmBuiltinMode
 };
 
 constexpr inline bool isAnyInterpreter(CompilationMode compilationMode)
@@ -50,6 +51,7 @@ constexpr inline bool isAnyInterpreter(CompilationMode compilationMode)
     case CompilationMode::JSToWasmEntrypointMode:
     case CompilationMode::JSToWasmICMode:
     case CompilationMode::WasmToJSMode:
+    case CompilationMode::WasmBuiltinMode:
         return false;
     }
     RELEASE_ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
@@ -66,6 +68,7 @@ constexpr inline bool isAnyBBQ(CompilationMode compilationMode)
     case CompilationMode::JSToWasmEntrypointMode:
     case CompilationMode::JSToWasmICMode:
     case CompilationMode::WasmToJSMode:
+    case CompilationMode::WasmBuiltinMode:
         return false;
     }
     RELEASE_ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
@@ -82,6 +85,7 @@ constexpr inline bool isAnyOMG(CompilationMode compilationMode)
     case CompilationMode::JSToWasmEntrypointMode:
     case CompilationMode::JSToWasmICMode:
     case CompilationMode::WasmToJSMode:
+    case CompilationMode::WasmBuiltinMode:
         return false;
     }
     RELEASE_ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
@@ -98,6 +102,7 @@ constexpr inline bool isAnyWasmToJS(CompilationMode compilationMode)
     case CompilationMode::IPIntMode:
     case CompilationMode::JSToWasmEntrypointMode:
     case CompilationMode::JSToWasmICMode:
+    case CompilationMode::WasmBuiltinMode:
         return false;
     }
     RELEASE_ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();

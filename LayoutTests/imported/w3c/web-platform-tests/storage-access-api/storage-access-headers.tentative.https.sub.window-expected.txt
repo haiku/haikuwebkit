@@ -7,9 +7,9 @@ FAIL Sec-Fetch-Storage-Access is active after retry with wildcard `allowed-origi
 FAIL 'Activate-Storage-Access: retry' is a no-op on a request without an `allowed-origin` value. assert_array_equals: value is undefined, expected array
 FAIL 'Activate-Storage-Access: retry' is a no-op on a request from an origin that does not match its `allowed-origin` value. assert_array_equals: value is undefined, expected array
 FAIL Activate-Storage-Access `retry` is a no-op on a request with a `none` Storage Access status. assert_array_equals: value is undefined, expected array
-PASS Activate-Storage-Access `load` header grants storage access to frame.
-PASS Activate-Storage-Access `load` is honored for `active` cases.
-FAIL Activate-Storage-Access `load` header is a no-op for requests without storage access. assert_false: frame should not have received storage access. expected false got true
+FAIL Activate-Storage-Access `load` header grants storage access to frame. assert_true: frame should have storage access because of the `load` header expected true got false
+FAIL Activate-Storage-Access `load` is honored for `active` cases. assert_true: expected true got false
+PASS Activate-Storage-Access `load` header is a no-op for requests without storage access.
 FAIL Sec-Fetch-Storage-Access is `inactive` for ABA case. assert_array_equals: value is undefined, expected array
 FAIL Storage Access can be activated for ABA cases by retrying. assert_array_equals: value is undefined, expected array
 FAIL Sec-Fetch-Storage-Access maintains value on same-origin redirect. assert_array_equals: value is undefined, expected array

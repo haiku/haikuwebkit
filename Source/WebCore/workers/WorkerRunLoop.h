@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "ScriptExecutionContext.h"
+#include <WebCore/ScriptExecutionContext.h>
 #include <memory>
 #include <wtf/MessageQueue.h>
 #include <wtf/TZoneMalloc.h>

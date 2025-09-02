@@ -23,6 +23,7 @@
 #include "GLContext.h"
 #include "GLFenceEGL.h"
 #include "GLFenceGL.h"
+#include "PlatformDisplay.h"
 #include <wtf/TZoneMallocInlines.h>
 
 #if USE(LIBEPOXY)

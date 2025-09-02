@@ -78,6 +78,7 @@ private:
     void setContentsTilePhase(const FloatSize&) override;
     void setContentsClippingRect(const FloatRoundedRect&) override;
     void setContentsNeedsDisplay() override;
+    void setContentsNeedsDisplayInRect(const FloatRect&) override;
     void setContentsToPlatformLayer(PlatformLayer*, ContentsLayerPurpose) override;
     void setContentsDisplayDelegate(RefPtr<GraphicsLayerContentsDisplayDelegate>&&, ContentsLayerPurpose) override;
     RefPtr<GraphicsLayerAsyncContentsDisplayDelegate> createAsyncContentsDisplayDelegate(GraphicsLayerAsyncContentsDisplayDelegate*) override;
@@ -199,6 +200,7 @@ private:
     bool m_hasDescendantsWithRunningTransformAnimations { false };
     FloatSize m_pixelAlignmentOffset;
     std::optional<Damage> m_dirtyRegion;
+    std::optional<Damage> m_contentsDirtyRegion;
     FloatRect m_visibleRect;
     struct {
         GraphicsLayerTransform current;

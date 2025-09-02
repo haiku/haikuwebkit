@@ -28,12 +28,12 @@
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
 
-#include "AudioSession.h"
-#include "FloatRect.h"
-#include "HTMLMediaElementEnums.h"
-#include "MediaPlayerEnums.h"
-#include "MediaPlayerIdentifier.h"
-#include "PlaybackSessionModel.h"
+#include <WebCore/AudioSession.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/MediaPlayerEnums.h>
+#include <WebCore/MediaPlayerIdentifier.h>
+#include <WebCore/PlaybackSessionModel.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/WeakPtr.h>

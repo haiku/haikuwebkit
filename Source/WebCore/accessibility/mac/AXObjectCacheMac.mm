@@ -29,6 +29,8 @@
 #if PLATFORM(MAC)
 
 #import "AXIsolatedObject.h"
+#import "AXNotifications.h"
+#import "AXObjectCacheInlines.h"
 #import "AXSearchManager.h"
 #import "AccessibilityObject.h"
 #import "AccessibilityTable.h"
@@ -44,13 +46,13 @@
 #import <wtf/StdLibExtras.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 
+#if USE(APPLE_INTERNAL_SDK)
+#import <ApplicationServices/ApplicationServicesPriv.h>
+#endif
+
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 #import <pal/spi/cocoa/AccessibilitySupportSPI.h>
 #import <pal/spi/cocoa/AccessibilitySupportSoftLink.h>
-#endif
-
-#if USE(APPLE_INTERNAL_SDK)
-#import <ApplicationServices/ApplicationServicesPriv.h>
 #endif
 
 // Very large strings can negatively impact the performance of notifications, so this length is chosen to try to fit an average paragraph or line of text, but not allow strings to be large enough to hurt performance.
@@ -235,9 +237,10 @@ static void exerciseIsIgnored(AccessibilityObject& object)
 {
     object.updateBackingStore();
     if (object.isAttachment()) {
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         [[object.wrapper() attachmentView] accessibilityIsIgnored];
-ALLOW_DEPRECATED_DECLARATIONS_END
+        ALLOW_DEPRECATED_DECLARATIONS_END
+
         return;
     }
     object.isIgnored();
@@ -752,7 +755,7 @@ void AXObjectCache::initializeAXThreadIfNeeded()
         // Initialize the role map before the accessibility thread starts so that it's safe for both threads
         // to use (the only thing that needs to be thread-safe about it is initialization since it's not modified
         // after creation and is never destroyed).
-        initializeRoleMap();
+        Accessibility::initializeRoleMap();
 
         _AXUIElementUseSecondaryAXThread(true);
         axThreadInitialized = true;
@@ -1088,6 +1091,6 @@ std::optional<SimpleRange> rangeForTextMarkerRange(AXObjectCache* cache, AXTextM
     return cache->rangeForUnorderedCharacterOffsets(startCharacterOffset, endCharacterOffset);
 }
 
-}
+} // namespace WebCore
 
 #endif // PLATFORM(MAC)

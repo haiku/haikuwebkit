@@ -147,7 +147,7 @@ String WebCookieJar::cookies(WebCore::Document& document, const URL& url) const
     if (shouldBlockCookies(webFrame.get(), document.firstPartyForCookies(), url) == BlockCookies::Yes)
         return cookiesInPartitionedCookieStorage(document, url, sameSiteInfo);
 
-    auto includeSecureCookies = CookieJar::shouldIncludeSecureCookies(document, url);
+    auto includeSecureCookies = CookieJar::shouldIncludeSecureCookies(url);
     auto frameID = webFrame->frameID();
     auto pageID = page->identifier();
     auto webPageProxyID = page->webPageProxyIdentifier();
@@ -340,7 +340,7 @@ void WebCookieJar::getCookiesAsync(WebCore::Document& document, const URL& url, 
     }
 
     auto sameSiteInfo = CookieJar::sameSiteInfo(document, IsForDOMCookieAccess::Yes);
-    auto includeSecureCookies = CookieJar::shouldIncludeSecureCookies(document, url);
+    auto includeSecureCookies = CookieJar::shouldIncludeSecureCookies(url);
     auto frameID = webFrame ? std::make_optional(webFrame->frameID()) : std::nullopt;
     auto pageID = webFrame && webFrame->page() ? std::make_optional(webFrame->page()->identifier()) : std::nullopt;
     auto webPageProxyID = webFrame && webFrame->page() ? std::make_optional(webFrame->page()->webPageProxyIdentifier()) : std::nullopt;
@@ -440,7 +440,7 @@ void WebCookieJar::removeChangeListener(const String& host, const WebCore::Cooki
 }
 #endif
 
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
 void WebCookieJar::setOptInCookiePartitioningEnabled(bool enabled)
 {
     m_cache->setOptInCookiePartitioningEnabled(enabled);

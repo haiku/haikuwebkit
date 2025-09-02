@@ -88,7 +88,7 @@ private:
     bool isKeyboardFocusable(const FocusEventData&) const final;
     bool isMouseFocusable() const final;
     bool isEmptyValue() const final;
-    void handleBeforeTextInsertedEvent(BeforeTextInsertedEvent&) final;
+    void handleBeforeTextInsertedEvent(BeforeTextInsertedEvent&) override;
     void forwardEvent(Event&) final;
     bool shouldSubmitImplicitly(Event&) final;
     RenderPtr<RenderElement> createInputRenderer(RenderStyle&&) override;

@@ -49,7 +49,7 @@ inline bool RenderLayer::isTransformed() const
 {
     // If the scroll offset is present, a transform is applied on top of existing
     // transforms from the renderer.
-    return renderer().isTransformed() || m_snapshottedScrollOffsetForAnchorPositioning;
+    return renderer().isTransformed() || m_anchorScrollAdjustment;
 }
 
 inline bool RenderLayer::hasBlendMode() const { return renderer().hasBlendMode(); } // FIXME: Why ask the renderer this given we have m_blendMode?

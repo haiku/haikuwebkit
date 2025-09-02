@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "HitTestSource.h"
+#include <WebCore/HitTestSource.h>
 #include <wtf/Assertions.h>
 #include <wtf/OptionSet.h>
 

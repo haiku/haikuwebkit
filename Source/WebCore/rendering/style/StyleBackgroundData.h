@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "FillLayer.h"
-#include "OutlineValue.h"
-#include "StyleColor.h"
+#include <WebCore/FillLayer.h>
+#include <WebCore/OutlineValue.h>
+#include <WebCore/StyleColor.h>
 #include <wtf/DataRef.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Ref.h>

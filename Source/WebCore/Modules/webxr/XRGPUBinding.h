@@ -78,7 +78,7 @@ public:
     double nativeProjectionScaleFactor() const;
 
     ExceptionOr<Ref<XRProjectionLayer>> createProjectionLayer(ScriptExecutionContext&, std::optional<XRGPUProjectionLayerInit>);
-    RefPtr<XRGPUSubImage> getSubImage(XRCompositionLayer&, WebXRFrame&, std::optional<XREye>/* = "none"*/);
+    ExceptionOr<Ref<XRGPUSubImage>> getSubImage(XRProjectionLayer&, WebXRFrame&, std::optional<XREye>/* = "none"*/);
     ExceptionOr<Ref<XRGPUSubImage>> getViewSubImage(XRProjectionLayer&, WebXRView&);
     GPUTextureFormat getPreferredColorFormat();
 
@@ -91,6 +91,8 @@ public:
     // XRCubeLayer createCubeLayer(optional XRGPUCubeLayerInit init);
 private:
     XRGPUBinding(WebXRSession&, GPUDevice&);
+
+    ExceptionOr<Ref<XRGPUSubImage>> getSubImage(XRProjectionLayer&, XREye);
 
     RefPtr<WebGPU::XRBinding> m_backing;
     RefPtr<WebXRSession> m_session;

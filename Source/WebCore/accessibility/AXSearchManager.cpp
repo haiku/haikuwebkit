@@ -26,8 +26,10 @@
 #include "AXSearchManager.h"
 
 #include "AXLogger.h"
+#include "AXLoggerBase.h"
 #include "AXObjectCache.h"
 #include "AccessibilityObject.h"
+#include "Logging.h"
 #include "TextIterator.h"
 
 namespace WebCore {

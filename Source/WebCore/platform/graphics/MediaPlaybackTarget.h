@@ -27,7 +27,7 @@
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
 
-#include "MediaPlaybackTargetContext.h"
+#include <WebCore/MediaPlaybackTargetContext.h>
 #include <wtf/Forward.h>
 #include <wtf/ThreadSafeRefCounted.h>
 

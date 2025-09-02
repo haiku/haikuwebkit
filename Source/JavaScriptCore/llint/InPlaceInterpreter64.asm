@@ -73,8 +73,8 @@ if ARM64 or ARM64E
     emit "add x0, x7, x0, lsl #8"
     emit "br x0"
 elsif X86_64
-    leap _g_config, t1
-    loadp JSCConfigOffset + JSC::Config::ipint_dispatch_base[t1], t1
+    leap _g_opcodeConfigStorage, t1
+    loadp JSC::LLInt::OpcodeConfig::ipint_dispatch_base[t1], t1
     lshiftq 8, t0
     addq t1, t0
     jmp t0
@@ -193,13 +193,14 @@ macro ipintEntry()
     move argumINTDsp, argumINTDst
     leap FirstArgumentOffset[cfr], argumINTSrc
 
+    validateOpcodeConfig(argumINTTmp)
     argumINTDispatch()
 end
 
 macro argumINTDispatch()
     loadb [MC], argumINTTmp
     addq 1, MC
-    bbgteq argumINTTmp, (constexpr IPInt::ArgumINTBytecode::NumOpcodes), .err
+    bbgteq argumINTTmp, (constexpr IPInt::ArgumINTBytecode::NumOpcodes), _ipint_argument_dispatch_err
     lshiftq 6, argumINTTmp
 if ARM64 or ARM64E
     pcrtoaddr _argumINT_begin, argumINTDsp
@@ -212,8 +213,6 @@ elsif X86_64
 else
     break
 end
-.err:
-    break
 end
 
 macro argumINTInitializeDefaultLocals()
@@ -248,6 +247,7 @@ end)
 
 ipintOp(_block, macro()
     # block
+    validateOpcodeConfig(t0)
 if ARM64 or ARM64E
     loadpairi IPInt::BlockMetadata::deltaPC[MC], t0, t1
 else
@@ -263,6 +263,7 @@ end)
 
 ipintOp(_loop, macro()
     # loop
+    # We already validateOpcodeConfig in ipintLoopOSR.
     ipintLoopOSR(1)
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
@@ -272,6 +273,7 @@ end)
 
 ipintOp(_if, macro()
     # if
+    validateOpcodeConfig(t1)
     popInt32(t0, t1)
     bineq 0, t0, .ipint_if_taken
 if ARM64 or ARM64E
@@ -296,6 +298,7 @@ ipintOp(_else, macro()
     # Counterintuitively, we only run this instruction if the if
     # clause is TAKEN. This is used to branch to the end of the
     # block.
+    validateOpcodeConfig(t0)
 if ARM64 or ARM64E
     loadpairi IPInt::BlockMetadata::deltaPC[MC], t0, t1
 else
@@ -309,6 +312,7 @@ end
 end)
 
 ipintOp(_try, macro()
+    validateOpcodeConfig(t0)
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -318,6 +322,7 @@ end)
 ipintOp(_catch, macro()
     # Counterintuitively, like else, we only run this instruction
     # if no exception was thrown during the preceeding try or catch block.
+    validateOpcodeConfig(t0)
 if ARM64 or ARM64E
     loadpairi IPInt::BlockMetadata::deltaPC[MC], t0, t1
 else
@@ -380,9 +385,7 @@ macro uintDispatch()
 if ARM64 or ARM64E
     loadb [MC], sc2
     addq 1, MC
-    bilt sc2, (constexpr IPInt::UIntBytecode::NumOpcodes), .safe
-    break
-.safe:
+    bigteq sc2, (constexpr IPInt::UIntBytecode::NumOpcodes), _ipint_uint_dispatch_err
     lshiftq 6, sc2
     pcrtoaddr _uint_begin, sc3
     addq sc2, ws3
@@ -401,6 +404,7 @@ end
 end
 
 ipintOp(_end, macro()
+    validateOpcodeConfig(t1)
 if X86_64
     loadp UnboxedWasmCalleeStackSlot[cfr], ws0
 end
@@ -421,10 +425,13 @@ end
     addp cfr, sc0
 
     initPCRelative(mint_entry, PC)
+
+    // We've already validateOpcodeConfig() in all the places that can jump to .ipint_end_ret.
     uintDispatch()
 
 ipintOp(_br, macro()
     # br
+    validateOpcodeConfig(t0)
     loadh IPInt::BranchTargetMetadata::toPop[MC], t0
     # number to keep
     loadh IPInt::BranchTargetMetadata::toKeep[MC], t1
@@ -470,6 +477,7 @@ end)
 
 ipintOp(_br_if, macro()
     # pop i32
+    validateOpcodeConfig(t2)
     popInt32(t0, t2)
     bineq t0, 0, _ipint_br
     loadb IPInt::BranchMetadata::instructionLength[MC], t0
@@ -480,6 +488,7 @@ end)
 
 ipintOp(_br_table, macro()
     # br_table
+    validateOpcodeConfig(t2)
     popInt32(t0, t2)
     loadi IPInt::SwitchMetadata::size[MC], t1
     advanceMC(constexpr (sizeof(IPInt::SwitchMetadata)))
@@ -493,6 +502,7 @@ ipintOp(_br_table, macro()
 end)
 
 ipintOp(_return, macro()
+    validateOpcodeConfig(MC)
     # ret
 
 if X86_64
@@ -513,6 +523,7 @@ elsif X86_64
 end
 
 ipintOp(_call, macro()
+    // The operationCall below already calls validateOpcodeConfig().
     saveCallSiteIndex()
 
     loadb IPInt::CallMetadata::length[MC], t0
@@ -537,6 +548,7 @@ ipintOp(_call, macro()
 end)
 
 ipintOp(_call_indirect, macro()
+    // The operationCall below already calls validateOpcodeConfig().
     saveCallSiteIndex()
 
     loadb IPInt::CallIndirectMetadata::length[MC], t2
@@ -560,6 +572,7 @@ ipintOp(_call_indirect, macro()
 end)
 
 ipintOp(_return_call, macro()
+    // The operationCall below already calls validateOpcodeConfig().
     saveCallSiteIndex()
 
     loadb IPInt::TailCallMetadata::length[MC], t0
@@ -585,6 +598,7 @@ ipintOp(_return_call, macro()
 end)
 
 ipintOp(_return_call_indirect, macro()
+    // The operationCallMayThrow below already calls validateOpcodeConfig().
     saveCallSiteIndex()
 
     loadb IPInt::TailCallIndirectMetadata::length[MC], t2
@@ -608,6 +622,7 @@ ipintOp(_return_call_indirect, macro()
 end)
 
 ipintOp(_call_ref, macro()
+    // The operationCall below already calls validateOpcodeConfig().
     saveCallSiteIndex()
 
     move cfr, a1
@@ -627,6 +642,7 @@ ipintOp(_call_ref, macro()
 end)
 
 ipintOp(_return_call_ref, macro()
+    // The operationCallMayThrow below already calls validateOpcodeConfig().
     saveCallSiteIndex()
 
     loadb IPInt::TailCallRefMetadata::length[MC], t2
@@ -651,6 +667,7 @@ reservedOpcode(0x17)
 ipintOp(_delegate, macro()
     # Counterintuitively, like else, we only run this instruction
     # if no exception was thrown during the preceeding try or catch block.
+    validateOpcodeConfig(t0)
 if ARM64 or ARM64E
     loadpairi IPInt::BlockMetadata::deltaPC[MC], t0, t1
 else
@@ -666,6 +683,7 @@ end)
 ipintOp(_catch_all, macro()
     # Counterintuitively, like else, we only run this instruction
     # if no exception was thrown during the preceeding try or catch block.
+    validateOpcodeConfig(t0)
 if ARM64 or ARM64E
     loadpairi IPInt::BlockMetadata::deltaPC[MC], t0, t1
 else
@@ -723,6 +741,7 @@ reservedOpcode(0x1e)
 
 ipintOp(_try_table, macro()
     # advance MC/PC
+    validateOpcodeConfig(t0)
 if ARM64 or ARM64E
     loadpairi IPInt::BlockMetadata::deltaPC[MC], t0, t1
 else
@@ -3092,6 +3111,7 @@ ipintOp(_ref_as_non_null, macro()
 end)
 
 ipintOp(_br_on_null, macro()
+    validateOpcodeConfig(t0)
     loadq [sp], t0
     bqneq t0, ValueNull, .br_on_null_not_null
 
@@ -3106,6 +3126,7 @@ ipintOp(_br_on_null, macro()
 end)
 
 ipintOp(_br_on_non_null, macro()
+    validateOpcodeConfig(t0)
     loadq [sp], t0
     bqneq t0, ValueNull, _ipint_br
     addq StackValueSize, sp
@@ -3159,13 +3180,12 @@ ipintOp(_gc_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 30 (0x00 -> 0x1e)
     biaeq t0, 0x1f, .ipint_gc_nonexistent
+    leap _g_opcodeConfigStorage, t1
+    loadp JSC::LLInt::OpcodeConfig::ipint_gc_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        pcrtoaddr ipint_gc_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        leap _g_config, t1
-        loadp JSCConfigOffset + JSC::Config::ipint_gc_dispatch_base[t1], t1
         lshiftq 8, t0
         addq t1, t0
         jmp t0
@@ -3179,13 +3199,12 @@ ipintOp(_conversion_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 18 (0x00 -> 0x11)
     biaeq t0, 0x12, .ipint_conversion_nonexistent
+    leap _g_opcodeConfigStorage, t1
+    loadp JSC::LLInt::OpcodeConfig::ipint_conversion_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        pcrtoaddr ipint_conversion_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        leap _g_config, t1
-        loadp JSCConfigOffset + JSC::Config::ipint_conversion_dispatch_base[t1], t1
         lshiftq 8, t0
         addq t1, t0
         jmp t0
@@ -3199,13 +3218,12 @@ ipintOp(_simd_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 256 (0x00 -> 0xff)
     biaeq t0, 0x100, .ipint_simd_nonexistent
+    leap _g_opcodeConfigStorage, t1
+    loadp JSC::LLInt::OpcodeConfig::ipint_simd_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        pcrtoaddr ipint_simd_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        leap _g_config, t1
-        loadp JSCConfigOffset + JSC::Config::ipint_simd_dispatch_base[t1], t1
         lshiftq 8, t0
         addq t1, t0
         jmp t0
@@ -3219,13 +3237,12 @@ ipintOp(_atomic_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 78 (0x00 -> 0x4e)
     biaeq t0, 0x4f, .ipint_atomic_nonexistent
+    leap _g_opcodeConfigStorage, t1
+    loadp JSC::LLInt::OpcodeConfig::ipint_atomic_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        pcrtoaddr ipint_atomic_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        leap _g_config, t1
-        loadp JSCConfigOffset + JSC::Config::ipint_atomic_dispatch_base[t1], t1
         lshiftq 8, t0
         addq t1, t0
         jmp t0
@@ -3563,6 +3580,7 @@ ipintOp(_ref_cast_nullable, macro()
 end)
 
 ipintOp(_br_on_cast, macro()
+    validateOpcodeConfig(a1)
     loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
     # fb 18 FLAGS
     loadb 2[PC], a2
@@ -3580,6 +3598,7 @@ ipintOp(_br_on_cast, macro()
 end)
 
 ipintOp(_br_on_cast_fail, macro()
+    validateOpcodeConfig(a1)
     loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
     loadb 2[PC], a2
     # fb 19 FLAGS
@@ -4618,6 +4637,7 @@ ipintOp(_i64_atomic_load32_u, macro()
 end)
 
 macro weakCASLoopByte(mem, value, scratch1AndOldValue, scratch2, fn)
+    validateOpcodeConfig(scratch1AndOldValue)
     if X86_64
         loadb [mem], scratch1AndOldValue
     .loop:
@@ -4634,6 +4654,7 @@ macro weakCASLoopByte(mem, value, scratch1AndOldValue, scratch2, fn)
 end
 
 macro weakCASLoopHalf(mem, value, scratch1AndOldValue, scratch2, fn)
+    validateOpcodeConfig(scratch1AndOldValue)
     if X86_64
         loadh [mem], scratch1AndOldValue
     .loop:
@@ -4650,6 +4671,7 @@ macro weakCASLoopHalf(mem, value, scratch1AndOldValue, scratch2, fn)
 end
 
 macro weakCASLoopInt(mem, value, scratch1AndOldValue, scratch2, fn)
+    validateOpcodeConfig(scratch1AndOldValue)
     if X86_64
         loadi [mem], scratch1AndOldValue
     .loop:
@@ -4666,6 +4688,7 @@ macro weakCASLoopInt(mem, value, scratch1AndOldValue, scratch2, fn)
 end
 
 macro weakCASLoopQuad(mem, value, scratch1AndOldValue, scratch2, fn)
+    validateOpcodeConfig(scratch1AndOldValue)
     if X86_64
         loadq [mem], scratch1AndOldValue
     .loop:
@@ -5669,6 +5692,7 @@ end
 
 macro weakCASExchangeByte(mem, value, expected, scratch, scratch2)
     if ARM64
+    validateOpcodeConfig(scratch2)
     .loop:
         loadlinkacqb [mem], scratch2
         bqneq expected, scratch2, .fail
@@ -5688,6 +5712,7 @@ end
 
 macro weakCASExchangeHalf(mem, value, expected, scratch, scratch2)
     if ARM64
+    validateOpcodeConfig(scratch2)
     .loop:
         loadlinkacqh [mem], scratch2
         bqneq expected, scratch2, .fail
@@ -5707,6 +5732,7 @@ end
 
 macro weakCASExchangeInt(mem, value, expected, scratch, scratch2)
     if ARM64
+    validateOpcodeConfig(scratch2)
     .loop:
         loadlinkacqi [mem], scratch2
         bqneq expected, scratch2, .fail
@@ -5726,6 +5752,7 @@ end
 
 macro weakCASExchangeQuad(mem, value, expected, scratch, scratch2)
     if ARM64
+    validateOpcodeConfig(scratch2)
     .loop:
         loadlinkacqq [mem], scratch2
         bqneq expected, scratch2, .fail
@@ -5848,6 +5875,7 @@ macro decodeULEB128(result)
     # result should already be the first byte.
     andq 0x7f, result
     move 7, t2 # t1 holds the shift.
+    validateOpcodeConfig(t3)
 .loop:
     loadb [PC], t3
     andq t3, 0x7f, t1
@@ -5889,9 +5917,7 @@ end
 macro mintArgDispatch()
     loadb [MC], sc0
     addq 1, MC
-    bilt sc0, (constexpr IPInt::CallArgumentBytecode::NumOpcodes), .safe
-    break
-.safe:
+    bigteq sc0, (constexpr IPInt::CallArgumentBytecode::NumOpcodes), _ipint_mint_arg_dispatch_err
     lshiftq 6, sc0
 if ARM64 or ARM64E
     pcrtoaddr _mint_begin, csr4
@@ -5907,9 +5933,7 @@ end
 macro mintRetDispatch()
     loadb [MC], sc0
     addq 1, MC
-    bilt sc0, (constexpr IPInt::CallResultBytecode::NumOpcodes), .safe
-    break
-.safe:
+    bigteq sc0, (constexpr IPInt::CallResultBytecode::NumOpcodes), _ipint_mint_ret_dispatch_err
     lshiftq 6, sc0
 if ARM64 or ARM64E
     pcrtoaddr _mint_begin_return, csr4
@@ -6132,6 +6156,7 @@ end
     # on x86, we'll use PC for our PC base
     initPCRelative(mint_arg, PC)
 
+    // We've already validateOpcodeConfig() in all the Wasm call opcodes.
     mintArgDispatch()
 
     # tail calls reuse most of mINT's argument logic, but exit into a different tail call stub.
@@ -6330,6 +6355,8 @@ end
     # on x86, we'll use PC again for our PC base
     initPCRelative(mint_ret, PC)
 
+    // We've already validateOpcodeConfig() in all the Wasm call opcodes, and
+    // that is the only way to get here.
     mintRetDispatch()
 
 mintAlign(_r0)
@@ -6513,6 +6540,7 @@ end
     mulq -SlotSize, sc3
 
     # copy from sc2 downwards
+    validateOpcodeConfig(sc0)
 .ipint_tail_call_copy_stackargs_loop:
     btiz sc3, .ipint_tail_call_copy_stackargs_loop_end
 if ARM64 or ARM64E
@@ -6609,6 +6637,19 @@ _wasm_trampoline_wasm_ipint_tail_call:
 _wasm_trampoline_wasm_ipint_tail_call_wide16:
 _wasm_trampoline_wasm_ipint_tail_call_wide32:
     jmp ws0, WasmEntryPtrTag
+
+_ipint_argument_dispatch_err:
+    move 0x55, a0
+    break
+_ipint_uint_dispatch_err:
+    move 0x66, a0
+    break
+_ipint_mint_arg_dispatch_err:
+    move 0x77, a0
+    break
+_ipint_mint_ret_dispatch_err:
+    move 0x88, a0
+    break
 
 ###########################################
 # uINT: function return value interpreter #

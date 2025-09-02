@@ -26,10 +26,10 @@
 #pragma once
 
 #include "CertificateInfo.h"
-#include "DocumentLoader.h"
-#include "FrameLoaderTypes.h"
-#include "NavigationIdentifier.h"
-#include "SandboxFlags.h"
+
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/NavigationIdentifier.h>
+#include <WebCore/SandboxFlags.h>
 
 namespace WebCore {
 

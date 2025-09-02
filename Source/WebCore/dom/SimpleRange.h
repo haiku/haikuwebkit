@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "BoundaryPoint.h"
+#include <WebCore/BoundaryPoint.h>
 
 namespace WebCore {
 

@@ -23,11 +23,11 @@
 
 #pragma once
 
-#include "FilterEffect.h"
-#include "Image.h"
-#include "ImageBuffer.h"
-#include "SVGPreserveAspectRatioValue.h"
-#include "SourceImage.h"
+#include <WebCore/FilterEffect.h>
+#include <WebCore/Image.h>
+#include <WebCore/ImageBuffer.h>
+#include <WebCore/SVGPreserveAspectRatioValue.h>
+#include <WebCore/SourceImage.h>
 
 namespace WebCore {
 

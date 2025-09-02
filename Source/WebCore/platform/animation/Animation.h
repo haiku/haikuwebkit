@@ -24,14 +24,14 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
-#include "CompositeOperation.h"
-#include "RenderStyleConstants.h"
-#include "ScopedName.h"
-#include "ScrollAxis.h"
-#include "TimelineRange.h"
-#include "TimingFunction.h"
-#include "WebAnimationTypes.h"
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CompositeOperation.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/ScopedName.h>
+#include <WebCore/ScrollAxis.h>
+#include <WebCore/TimelineRange.h>
+#include <WebCore/TimingFunction.h>
+#include <WebCore/WebAnimationTypes.h>
 
 namespace WebCore {
 

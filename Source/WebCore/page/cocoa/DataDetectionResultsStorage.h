@@ -27,7 +27,7 @@
 
 #if ENABLE(DATA_DETECTION)
 
-#include "ImageOverlayDataDetectionResultIdentifier.h"
+#include <WebCore/ImageOverlayDataDetectionResultIdentifier.h>
 #include <wtf/HashMap.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RetainPtr.h>

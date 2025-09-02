@@ -1876,6 +1876,21 @@ void WebPageProxy::didEndContextMenuInteraction()
 
 #endif // USE(UICONTEXTMENU)
 
+#if ENABLE(POINTER_LOCK)
+
+void WebPageProxy::platformLockPointer()
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->beginPointerLockMouseTracking();
+}
+
+void WebPageProxy::platformUnlockPointer()
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->endPointerLockMouseTracking();
+}
+
+#endif
 
 #if HAVE(MOUSE_DEVICE_OBSERVATION)
 bool WebPageProxy::hasMouseDevice()

@@ -60,7 +60,7 @@ messages -> WebProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
     UserPreferredLanguagesChanged(Vector<String> languages)
     FullKeyboardAccessModeChanged(bool fullKeyboardAccessEnabled)
     UpdateStorageAccessUserAgentStringQuirks(HashMap<WebCore::RegistrableDomain, String> userAgentStringQuirks)
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     SetOptInCookiePartitioningEnabled(bool enabled);
 #endif
 
@@ -230,6 +230,8 @@ messages -> WebProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
 #endif
 
     ReleaseMemory() -> ()
+
+    JSHandleDestroyed(WebCore::JSHandleIdentifier identifier);
 
 #if ENABLE(NOTIFY_BLOCKING)
     [DeferSendingIfSuspendedWithCoalescingKeys=(message)] PostNotification(String message, std::optional<uint64_t> state)

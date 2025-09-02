@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "CSSStyleSheet.h"
-#include "Element.h"
-#include "FloatSize.h"
-#include "HTMLInterchange.h"
-#include "MarkupExclusionRule.h"
-#include "ParserContentPolicy.h"
-#include "ShadowRoot.h"
+#include <WebCore/CSSStyleSheet.h>
+#include <WebCore/Element.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/HTMLInterchange.h>
+#include <WebCore/MarkupExclusionRule.h>
+#include <WebCore/ParserContentPolicy.h>
+#include <WebCore/ShadowRoot.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/HashMap.h>

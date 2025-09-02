@@ -1054,15 +1054,6 @@ bool EmptyFrameLoaderClient::canCachePage() const
     return false;
 }
 
-void EmptyFrameLoaderClient::didDisplayInsecureContent()
-{
-}
-
-void EmptyFrameLoaderClient::didRunInsecureContent(SecurityOrigin&)
-{
-}
-
-
 ObjectContentType EmptyFrameLoaderClient::objectContentType(const URL&, const String&)
 {
     return ObjectContentType::None;
@@ -1132,6 +1123,10 @@ RefPtr<LegacyPreviewLoaderClient> EmptyFrameLoaderClient::createPreviewLoaderCli
 bool EmptyFrameLoaderClient::hasFrameSpecificStorageAccess()
 {
     return false;
+}
+
+void EmptyFrameLoaderClient::revokeFrameSpecificStorageAccess()
+{
 }
 
 void EmptyFrameLoaderClient::dispatchLoadEventToOwnerElementInAnotherProcess()

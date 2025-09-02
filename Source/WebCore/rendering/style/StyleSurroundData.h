@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "BorderData.h"
-#include "StyleInset.h"
-#include "StyleMargin.h"
-#include "StylePadding.h"
+#include <WebCore/BorderData.h>
+#include <WebCore/StyleInset.h>
+#include <WebCore/StyleMargin.h>
+#include <WebCore/StylePadding.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 

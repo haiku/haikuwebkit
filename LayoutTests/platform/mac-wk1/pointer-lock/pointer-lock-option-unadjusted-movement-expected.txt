@@ -16,6 +16,7 @@ PASS onpointerlockchange received after: Unlock
 PASS undefined is undefined.
 FAIL onpointerlockerror received after: Lock with PointerLockOptionsEnabled = false
 PASS successfullyParsed is true
+Some tests failed.
 
 TEST COMPLETE
 

@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "LengthBox.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/LengthBox.h>
 
 #if USE(CG)
 typedef struct CGRect CGRect;

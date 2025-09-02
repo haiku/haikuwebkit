@@ -21,6 +21,7 @@ promise_test(async t => {
     let currentCount = internals.trackVideoSampleCount;
     while (currentCount === internals.trackVideoSampleCount)
         await new Promise(resolve => setTimeout(resolve, 50));
+    stream.getTracks().forEach(track => track.stop());
 }, "Ensure getDisplayMedia generate frames");
 
 promise_test(async t => {
@@ -69,6 +70,9 @@ promise_test(async t => {
             return;
     };
     assert_not_equals(counter, 10);
+
+    stream.getTracks().forEach(track => track.stop());
+    stream2.getTracks().forEach(track => track.stop());
 }, "Ensure getDisplayMedia generate frames with valid frame rate and size in case of clones");
         </script>
     </body>

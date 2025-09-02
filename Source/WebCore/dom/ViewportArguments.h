@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include "FloatSize.h"
+#include <WebCore/FloatSize.h>
 #include <wtf/Forward.h>
 
 namespace WebCore {

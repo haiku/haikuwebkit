@@ -26,7 +26,7 @@
 
 #if ENABLE(WEB_RTC) && USE(LIBWEBRTC)
 
-#include "LibWebRTCMacros.h"
+#include <WebCore/LibWebRTCMacros.h>
 
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 IGNORE_CLANG_WARNINGS_BEGIN("nullability-completeness")

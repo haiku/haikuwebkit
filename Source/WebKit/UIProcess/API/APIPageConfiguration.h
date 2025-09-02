@@ -453,6 +453,9 @@ public:
     void setDelaysWebProcessLaunchUntilFirstLoad(bool);
     bool delaysWebProcessLaunchUntilFirstLoad() const;
 
+    void setAllowJSHandleInPageContentWorld(bool);
+    bool allowJSHandleInPageContentWorld() const;
+
     void setContentSecurityPolicyModeForExtension(WebCore::ContentSecurityPolicyModeForExtension mode) { m_data.contentSecurityPolicyModeForExtension = mode; }
     WebCore::ContentSecurityPolicyModeForExtension contentSecurityPolicyModeForExtension() const { return m_data.contentSecurityPolicyModeForExtension; }
 
@@ -636,6 +639,8 @@ private:
         bool scrollToTextFragmentMarkingEnabled { true };
         bool showsSystemScreenTimeBlockingView { true };
         bool shouldSendConsoleLogsToUIProcessForTesting { false };
+        bool allowJSHandleInPageContentWorld { false };
+
 #if PLATFORM(VISION)
 
 #if ENABLE(GAMEPAD)

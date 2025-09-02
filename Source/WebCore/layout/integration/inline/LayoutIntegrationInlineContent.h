@@ -26,7 +26,7 @@
 #pragma once
 
 
-#include "InlineDisplayContent.h"
+#include <WebCore/InlineDisplayContent.h>
 #include <wtf/HashMap.h>
 #include <wtf/IteratorRange.h>
 #include <wtf/Vector.h>

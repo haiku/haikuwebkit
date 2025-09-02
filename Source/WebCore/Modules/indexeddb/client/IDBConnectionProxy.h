@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "IDBConnectionToServer.h"
-#include "IDBDatabaseNameAndVersionRequest.h"
-#include "IDBIndexIdentifier.h"
-#include "IDBObjectStoreIdentifier.h"
-#include "IDBResourceIdentifier.h"
-#include "IndexKey.h"
-#include "TransactionOperation.h"
+#include <WebCore/IDBConnectionToServer.h>
+#include <WebCore/IDBDatabaseNameAndVersionRequest.h>
+#include <WebCore/IDBIndexIdentifier.h>
+#include <WebCore/IDBObjectStoreIdentifier.h>
+#include <WebCore/IDBResourceIdentifier.h>
+#include <WebCore/IndexKey.h>
+#include <WebCore/TransactionOperation.h>
 #include <pal/SessionID.h>
 #include <wtf/CrossThreadQueue.h>
 #include <wtf/CrossThreadTask.h>

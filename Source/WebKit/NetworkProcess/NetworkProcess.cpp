@@ -75,6 +75,7 @@
 #include "WebsiteDataType.h"
 #include <WebCore/ClientOrigin.h>
 #include <WebCore/CommonAtomStrings.h>
+#include <WebCore/ContentFilterUnblockHandler.h>
 #include <WebCore/CookieJar.h>
 #include <WebCore/CrossOriginPreflightResultCache.h>
 #include <WebCore/DNS.h>
@@ -129,6 +130,10 @@
 
 #if USE(CURL)
 #include <WebCore/CurlContext.h>
+#endif
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+#include <WebCore/ParentalControlsURLFilter.h>
 #endif
 
 namespace WebKit {
@@ -1534,7 +1539,7 @@ void NetworkProcess::setShouldSendPrivateTokenIPCForTesting(PAL::SessionID sessi
         session->setShouldSendPrivateTokenIPCForTesting(enabled);
 }
 
-#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
 void NetworkProcess::setOptInCookiePartitioningEnabled(PAL::SessionID sessionID, bool enabled) const
 {
     if (CheckedPtr session = networkSession(sessionID))
@@ -3297,5 +3302,12 @@ void NetworkProcess::setDefaultRequestTimeoutInterval(double timeoutInterval)
 {
     ResourceRequestBase::setDefaultTimeoutInterval(timeoutInterval);
 }
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+void NetworkProcess::allowEvaluatedURL(const WebCore::ParentalControlsURLFilterParameters& parameters, CompletionHandler<void(bool)>&& completionHandler)
+{
+    WebCore::ParentalControlsURLFilter::allowURL(parameters, WTFMove(completionHandler));
+}
+#endif
 
 } // namespace WebKit

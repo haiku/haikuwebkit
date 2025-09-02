@@ -39,6 +39,7 @@
 #include "VMInspector.h"
 #include "WasmCallingConvention.h"
 #include "WasmModuleInformation.h"
+#include "WebAssemblyBuiltin.h"
 
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
@@ -57,6 +58,7 @@ WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(OMGCallee);
 WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(OMGOSREntryCallee);
 WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(BBQCallee);
 WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(IPIntCallee);
+WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(WasmBuiltinCallee);
 
 Callee::Callee(Wasm::CompilationMode compilationMode)
     : NativeCallee(NativeCallee::Category::Wasm, ImplementationVisibility::Private)
@@ -120,6 +122,9 @@ inline void Callee::runWithDowncast(const Func& func)
         break;
     case CompilationMode::WasmToJSMode:
         func(static_cast<WasmToJSCallee*>(this));
+        break;
+    case CompilationMode::WasmBuiltinMode:
+        func(static_cast<WasmBuiltinCallee*>(this));
         break;
     }
 }
@@ -492,6 +497,19 @@ BBQCallee::~BBQCallee()
 }
 
 #endif
+
+WasmBuiltinCallee::WasmBuiltinCallee(const WebAssemblyBuiltin* builtin, FunctionSpaceIndex index, std::pair<const Name*, RefPtr<NameSection>>&& name)
+    : Callee(Wasm::CompilationMode::WasmBuiltinMode, index, WTFMove(name))
+    , m_builtin(builtin, { })
+{
+    void* cFunctionPtr = std::bit_cast<void*>(m_builtin->implementation());
+    m_hostFunction = CodePtr<CFunctionPtrTag>::fromTaggedPtr(cFunctionPtr).retagged<WasmEntryPtrTag>();
+}
+
+CodePtr<WasmEntryPtrTag> WasmBuiltinCallee::entrypointImpl() const
+{
+    return CodePtr<CFunctionPtrTag>(m_builtin->implementation()).retagged<WasmEntryPtrTag>();
+}
 
 } // namespace JSC::Wasm
 

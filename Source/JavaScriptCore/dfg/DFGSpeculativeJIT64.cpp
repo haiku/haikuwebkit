@@ -6602,6 +6602,7 @@ void SpeculativeJIT::compile(Node* node)
     case IdentityWithProfile:
     case CPUIntrinsic:
     case CallWasm:
+    case TailCallInlinedCallerWasm:
     case MultiGetByVal:
     case MultiPutByVal:
         DFG_CRASH(m_graph, node, "Unexpected node");

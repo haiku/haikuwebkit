@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "FrameLoaderTypes.h"
-#include "JSWindowProxy.h"
-#include "LoadableScript.h"
-#include "SerializedScriptValue.h"
-#include "WindowProxy.h"
 #include <JavaScriptCore/JSBase.h>
 #include <JavaScriptCore/ScriptFetchParameters.h>
 #include <JavaScriptCore/Strong.h>
+#include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/JSWindowProxy.h>
+#include <WebCore/LoadableScript.h>
+#include <WebCore/SerializedScriptValue.h>
+#include <WebCore/WindowProxy.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/RefPtr.h>

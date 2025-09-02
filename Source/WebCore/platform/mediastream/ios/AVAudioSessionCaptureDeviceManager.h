@@ -27,7 +27,7 @@
 
 #if ENABLE(MEDIA_STREAM) && PLATFORM(IOS_FAMILY)
 
-#include "CaptureDeviceManager.h"
+#include <WebCore/CaptureDeviceManager.h>
 #include <wtf/Lock.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/WorkQueue.h>

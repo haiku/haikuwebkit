@@ -1,0 +1,48 @@
+container=root,rect=[…]
+    rect=[…],role='banner'
+        rect=[…],aria-label='Main Page Title'
+            text='Welcome to Test Page\n\n',rect=[…]
+    container=navigation,rect=[…],role='navigation',aria-label='Main navigation'
+        container=list,rect=[…]
+            container=list-item,rect=[…]
+                type=link,uid=…,rect=[…],eventListeners=[click],url='mailto:wenson_hsieh@apple.com'
+                    text='Section 1\n',rect=[…]
+            container=list-item,rect=[…]
+                type=link,uid=…,rect=[…],eventListeners=[click],url='https://example.com/'
+                    text='Section 2\n',rect=[…]
+    rect=[…],role='main'
+        container=section,rect=[…],aria-label='Interactive Elements'
+            container=button,uid=…,rect=[…],eventListeners=[click],aria-label='Test button'
+                text='Click Me',rect=[…]
+            text='This button does nothing\n',rect=[…]
+            type=textFormControl,controlType='text',uid=…,rect=[…],placeholder='Enter text here'
+                text='Enter text here\n',rect=[…]
+            uid=…,rect=[…],role='button',eventListeners=[click,keyboard]
+                text='Clickable Div\n',rect=[…]
+        container=section,rect=[…],aria-label='Content with Roles'
+            container=article,rect=[…],role='article'
+                text='Article Title\n\n',rect=[…]
+                text='January 1, 2024',rect=[…]
+                text='This is some article content with ',rect=[…]
+                text='highlighted text',rect=[…]
+                text='.\n\n',rect=[…]
+            rect=[…],role='complementary',aria-label='Related information'
+                text='Related Links\n\n',rect=[…]
+                container=list,rect=[…]
+                    container=list-item,rect=[…]
+                        type=link,uid=…,rect=[…],eventListeners=[hover],url='https://webkit.org/'
+                            text='Example Link\n',rect=[…]
+                    container=list-item,rect=[…]
+                        type=link,uid=…,rect=[…],eventListeners=[hover],url='https://apple.com/'
+                            text='Test Link\n',rect=[…]
+            rect=[…],role='region'
+                rect=[…],role='status'
+                    text='Ready\n',rect=[…]
+                container=button,uid=…,rect=[…],eventListeners=[click]
+                    text='Update Status',rect=[…]
+    rect=[…],role='contentinfo'
+        text='Footer content with ',rect=[…]
+        rect=[…],role='img',aria-label='copyright symbol'
+            text='©',rect=[…]
+        text=' 2024\n\n',rect=[…]
+

@@ -25,49 +25,49 @@
 
 #pragma once
 
-#include "AnchorPositionEvaluator.h"
-#include "AnimationList.h"
-#include "Element.h"
-#include "FontCascadeDescription.h"
-#include "GraphicsTypes.h"
-#include "HitTestRequest.h"
-#include "ImageOrientation.h"
-#include "PositionArea.h"
-#include "PositionTryOrder.h"
-#include "RenderStyle.h"
-#include "ScrollTypes.h"
-#include "StyleAppearance.h"
-#include "StyleBackgroundData.h"
-#include "StyleBoxData.h"
-#include "StyleDeprecatedFlexibleBoxData.h"
-#include "StyleFilterData.h"
-#include "StyleFlexibleBoxData.h"
-#include "StyleFontData.h"
-#include "StyleGridData.h"
-#include "StyleGridItemData.h"
-#include "StyleGridTrackSizingDirection.h"
-#include "StyleInheritedData.h"
-#include "StyleLineBoxContain.h"
-#include "StyleMarqueeData.h"
-#include "StyleMiscNonInheritedData.h"
-#include "StyleMultiColData.h"
-#include "StyleNonInheritedData.h"
-#include "StyleRareInheritedData.h"
-#include "StyleRareNonInheritedData.h"
-#include "StyleSurroundData.h"
-#include "StyleTransformData.h"
-#include "StyleVisitedLinkColorData.h"
-#include "UnicodeBidi.h"
-#include "ViewTimeline.h"
-#include "WebAnimationTypes.h"
-#include "WillChangeData.h"
+#include <WebCore/AnchorPositionEvaluator.h>
+#include <WebCore/AnimationList.h>
+#include <WebCore/Element.h>
+#include <WebCore/FontCascadeDescription.h>
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/HitTestRequest.h>
+#include <WebCore/ImageOrientation.h>
+#include <WebCore/PositionArea.h>
+#include <WebCore/PositionTryOrder.h>
+#include <WebCore/RenderStyle.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/StyleAppearance.h>
+#include <WebCore/StyleBackgroundData.h>
+#include <WebCore/StyleBoxData.h>
+#include <WebCore/StyleDeprecatedFlexibleBoxData.h>
+#include <WebCore/StyleFilterData.h>
+#include <WebCore/StyleFlexibleBoxData.h>
+#include <WebCore/StyleFontData.h>
+#include <WebCore/StyleGridData.h>
+#include <WebCore/StyleGridItemData.h>
+#include <WebCore/StyleGridTrackSizingDirection.h>
+#include <WebCore/StyleInheritedData.h>
+#include <WebCore/StyleLineBoxContain.h>
+#include <WebCore/StyleMarqueeData.h>
+#include <WebCore/StyleMiscNonInheritedData.h>
+#include <WebCore/StyleMultiColData.h>
+#include <WebCore/StyleNonInheritedData.h>
+#include <WebCore/StyleRareInheritedData.h>
+#include <WebCore/StyleRareNonInheritedData.h>
+#include <WebCore/StyleSurroundData.h>
+#include <WebCore/StyleTransformData.h>
+#include <WebCore/StyleVisitedLinkColorData.h>
+#include <WebCore/UnicodeBidi.h>
+#include <WebCore/ViewTimeline.h>
+#include <WebCore/WebAnimationTypes.h>
+#include <WebCore/WillChangeData.h>
 
 #if ENABLE(APPLE_PAY)
-#include "ApplePayButtonPart.h"
+#include <WebCore/ApplePayButtonPart.h>
 #endif
 
 #if HAVE(CORE_MATERIAL)
-#include "AppleVisualEffect.h"
+#include <WebCore/AppleVisualEffect.h>
 #endif
 
 namespace WebCore {
@@ -417,14 +417,14 @@ constexpr Hyphens RenderStyle::initialHyphens() { return Hyphens::Manual; }
 constexpr ImageOrientation RenderStyle::initialImageOrientation() { return ImageOrientation::Orientation::FromImage; }
 constexpr ImageRendering RenderStyle::initialImageRendering() { return ImageRendering::Auto; }
 inline Style::InsetEdge RenderStyle::initialInset() { return CSS::Keyword::Auto { }; }
-constexpr IntSize RenderStyle::initialInitialLetter() { return { }; }
+constexpr FloatSize RenderStyle::initialInitialLetter() { return { }; }
 constexpr InputSecurity RenderStyle::initialInputSecurity() { return InputSecurity::Auto; }
 constexpr LineJoin RenderStyle::initialJoinStyle() { return LineJoin::Miter; }
 constexpr StyleSelfAlignmentData RenderStyle::initialJustifyItems() { return { ItemPosition::Legacy }; }
 inline const Style::InsetBox& RenderStyle::insetBox() const { return m_nonInheritedData->surroundData->inset; }
-inline const IntSize& RenderStyle::initialLetter() const { return m_nonInheritedData->rareData->initialLetter; }
-inline int RenderStyle::initialLetterDrop() const { return initialLetter().width(); }
-inline int RenderStyle::initialLetterHeight() const { return initialLetter().height(); }
+inline const FloatSize& RenderStyle::initialLetter() const { return m_nonInheritedData->rareData->initialLetter; }
+inline float RenderStyle::initialLetterDrop() const { return initialLetter().width(); }
+inline float RenderStyle::initialLetterHeight() const { return initialLetter().height(); }
 constexpr LineAlign RenderStyle::initialLineAlign() { return LineAlign::None; }
 constexpr OptionSet<Style::LineBoxContain> RenderStyle::initialLineBoxContain() { return { Style::LineBoxContain::Block, Style::LineBoxContain::Inline, Style::LineBoxContain::Replaced }; }
 constexpr LineBreak RenderStyle::initialLineBreak() { return LineBreak::Auto; }
@@ -440,6 +440,7 @@ constexpr MarqueeDirection RenderStyle::initialMarqueeDirection() { return Marqu
 inline Length RenderStyle::initialMarqueeIncrement() { return { 6, LengthType::Fixed }; }
 inline Style::MaskBorder RenderStyle::initialMaskBorder() { return Style::MaskBorder { }; }
 inline Style::MaskBorderSource RenderStyle::initialMaskBorderSource() { return CSS::Keyword::None { }; }
+constexpr MathShift RenderStyle::initialMathShift() { return MathShift::Normal; }
 constexpr MathStyle RenderStyle::initialMathStyle() { return MathStyle::Normal; }
 constexpr Style::MaximumLines RenderStyle::initialMaxLines() { return CSS::Keyword::None { }; }
 inline Style::MaximumSize RenderStyle::initialMaxSize() { return CSS::Keyword::None { }; }
@@ -659,6 +660,7 @@ inline FillBox RenderStyle::maskOrigin() const { return maskLayers().origin(); }
 inline FillRepeatXY RenderStyle::maskRepeat() const { return maskLayers().repeat(); }
 inline const LengthSize& RenderStyle::maskSizeLength() const { return maskLayers().sizeLength(); }
 inline FillSizeType RenderStyle::maskSizeType() const { return maskLayers().sizeType(); }
+inline MathShift RenderStyle::mathShift() const { return static_cast<MathShift>(m_rareInheritedData->mathShift); }
 inline MathStyle RenderStyle::mathStyle() const { return static_cast<MathStyle>(m_rareInheritedData->mathStyle); }
 inline const Style::MaximumSize& RenderStyle::maxHeight() const { return m_nonInheritedData->boxData->maxHeight(); }
 inline Style::MaximumLines RenderStyle::maxLines() const { return m_nonInheritedData->rareData->maxLines; }
@@ -911,7 +913,7 @@ inline bool RenderStyle::NonInheritedFlags::hasPseudoStyle(PseudoId pseudo) cons
 
 inline bool RenderStyle::NonInheritedFlags::hasAnyPublicPseudoStyles() const
 {
-    return static_cast<unsigned>(PseudoId::PublicPseudoIdMask) & pseudoBits;
+    return PublicPseudoIdMask & pseudoBits;
 }
 
 inline bool RenderStyle::breakOnlyAfterWhiteSpace() const

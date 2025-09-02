@@ -27,9 +27,9 @@
 
 #pragma once
 
-#include "BackForwardFrameItemIdentifier.h"
-#include "BackForwardItemIdentifier.h"
-#include "FrameIdentifier.h"
+#include <WebCore/BackForwardFrameItemIdentifier.h>
+#include <WebCore/BackForwardItemIdentifier.h>
+#include <WebCore/FrameIdentifier.h>
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 

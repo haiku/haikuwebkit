@@ -28,7 +28,7 @@
 
 #include "AcceleratedBackingStoreMessages.h"
 #include "AcceleratedSurfaceMessages.h"
-#include "DRMDevice.h"
+#include "DRMMainDevice.h"
 #include "Display.h"
 #include "HardwareAccelerationManager.h"
 #include "LayerTreeContext.h"
@@ -53,6 +53,7 @@
 
 #if USE(GBM)
 #include <WebCore/DRMDeviceManager.h>
+#include <WebCore/GBMDevice.h>
 #include <gbm.h>
 
 static constexpr uint64_t s_dmabufInvalidModifier = DRM_FORMAT_MOD_INVALID;
@@ -99,10 +100,12 @@ OptionSet<RendererBufferTransportMode> AcceleratedBackingStore::rendererBufferTr
         if (forceSHM && g_strcmp0(forceSHM, "0"))
             return;
 
+#if USE(GBM)
         // Don't claim to support hardware buffers if we don't have a device to import them.
-        const auto& device = drmRenderNodeOrPrimaryDevice();
-        if (device.isEmpty())
+        const auto& device = drmMainDevice();
+        if (device.isNull())
             return;
+#endif
 
         if (auto* glDisplay = Display::singleton().glDisplay()) {
             const auto& eglExtensions = glDisplay->extensions();
@@ -155,7 +158,7 @@ Vector<RendererBufferFormat> AcceleratedBackingStore::preferredBufferFormats()
         if (!tokens.isEmpty() && tokens[0].length() >= 2 && tokens[0].length() <= 4) {
             RendererBufferFormat format;
             format.usage = display.glDisplayIsSharedWithGtk() ? RendererBufferFormat::Usage::Rendering : RendererBufferFormat::Usage::Mapping;
-            format.drmDevice = drmRenderNodeOrPrimaryDevice().utf8();
+            format.drmDevice = drmMainDevice();
             uint32_t fourcc = fourcc_code(tokens[0][0], tokens[0][1], tokens[0].length() > 2 ? tokens[0][2] : ' ', tokens[0].length() > 3 ? tokens[0][3] : ' ');
             char* endptr = nullptr;
             uint64_t modifier = tokens.size() > 1 ? g_ascii_strtoull(tokens[1].ascii().data(), &endptr, 16) : DRM_FORMAT_MOD_INVALID;
@@ -171,7 +174,7 @@ Vector<RendererBufferFormat> AcceleratedBackingStore::preferredBufferFormats()
     if (!display.glDisplayIsSharedWithGtk()) {
         RendererBufferFormat format;
         format.usage = RendererBufferFormat::Usage::Mapping;
-        format.drmDevice = drmRenderNodeOrPrimaryDevice().utf8();
+        format.drmDevice = drmMainDevice();
         format.formats.append({ DRM_FORMAT_XRGB8888, { DRM_FORMAT_MOD_LINEAR } });
         format.formats.append({ DRM_FORMAT_ARGB8888, { DRM_FORMAT_MOD_LINEAR } });
         return { WTFMove(format) };
@@ -181,7 +184,7 @@ Vector<RendererBufferFormat> AcceleratedBackingStore::preferredBufferFormats()
 
     RendererBufferFormat format;
     format.usage = RendererBufferFormat::Usage::Rendering;
-    format.drmDevice = drmRenderNodeOrPrimaryDevice().utf8();
+    format.drmDevice = drmMainDevice();
     format.formats = display.glDisplay()->dmabufFormats().map([](const auto& format) -> RendererBufferFormat::Format {
         return { format.fourcc, format.modifiers };
     });
@@ -527,16 +530,18 @@ void AcceleratedBackingStore::BufferEGLImage::release()
 RefPtr<AcceleratedBackingStore::Buffer> AcceleratedBackingStore::BufferGBM::create(WebPageProxy& webPage, uint64_t id, uint64_t surfaceID, const IntSize& size, RendererBufferFormat::Usage usage, uint32_t format, UnixFileDescriptor&& fd, uint32_t stride)
 {
     auto& manager = DRMDeviceManager::singleton();
-    if (!manager.isInitialized())
-        manager.initializeMainDevice(drmPrimaryDevice());
-    auto* device = manager.mainGBMDeviceNode(DRMDeviceManager::NodeType::Render);
-    if (!device) {
+    if (!manager.isInitialized()) {
+        DRMDevice device = drmMainDevice();
+        manager.initializeMainDevice(WTFMove(device));
+    }
+    auto gbmDevice = manager.mainGBMDevice(DRMDeviceManager::NodeType::Render);
+    if (!gbmDevice) {
         WTFLogAlways("Failed to get GBM device");
         return nullptr;
     }
 
     struct gbm_import_fd_data fdData = { fd.value(), static_cast<uint32_t>(size.width()), static_cast<uint32_t>(size.height()), stride, format };
-    auto* buffer = gbm_bo_import(device, GBM_BO_IMPORT_FD, &fdData, GBM_BO_USE_RENDERING | GBM_BO_USE_LINEAR);
+    auto* buffer = gbm_bo_import(gbmDevice->device(), GBM_BO_IMPORT_FD, &fdData, GBM_BO_USE_RENDERING | GBM_BO_USE_LINEAR);
     if (!buffer) {
         WTFLogAlways("Failed to import DMABuf with file descriptor %d", fd.value());
         return nullptr;

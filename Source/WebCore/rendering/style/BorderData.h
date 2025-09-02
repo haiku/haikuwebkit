@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "BorderValue.h"
-#include "LengthSize.h"
-#include "RectCorners.h"
-#include "RectEdges.h"
-#include "StyleBorderImage.h"
-#include "StyleBorderRadius.h"
-#include "StyleCornerShapeValue.h"
+#include <WebCore/BorderValue.h>
+#include <WebCore/LengthSize.h>
+#include <WebCore/RectCorners.h>
+#include <WebCore/RectEdges.h>
+#include <WebCore/StyleBorderImage.h>
+#include <WebCore/StyleBorderRadius.h>
+#include <WebCore/StyleCornerShapeValue.h>
 
 namespace WebCore {
 

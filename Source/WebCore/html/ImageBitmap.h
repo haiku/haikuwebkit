@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "IDLTypes.h"
-#include "ScriptWrappable.h"
+#include <WebCore/IDLTypes.h>
+#include <WebCore/ScriptWrappable.h>
 #include <atomic>
 #include <wtf/RefCounted.h>
 #include <wtf/UniqueRef.h>

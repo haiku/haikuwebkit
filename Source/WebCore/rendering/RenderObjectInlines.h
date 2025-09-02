@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include "DocumentInlines.h"
-#include "FloatQuad.h"
-#include "FrameDestructionObserverInlines.h"
-#include "LocalFrameInlines.h"
-#include "RenderElement.h"
-#include "RenderIFrame.h"
-#include "RenderObject.h"
-#include "RenderReplaced.h"
-#include "RenderStyleInlines.h"
-#include "RenderView.h"
+#include <WebCore/DocumentInlines.h>
+#include <WebCore/FloatQuad.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
+#include <WebCore/LocalFrameInlines.h>
+#include <WebCore/RenderElement.h>
+#include <WebCore/RenderIFrame.h>
+#include <WebCore/RenderObject.h>
+#include <WebCore/RenderReplaced.h>
+#include <WebCore/RenderStyleInlines.h>
+#include <WebCore/RenderView.h>
 
 namespace WebCore {
 
@@ -38,7 +38,7 @@ inline bool RenderObject::isAtomicInlineLevelBox() const { return style().isDisp
 inline bool RenderObject::isTransformed() const { return hasTransformRelatedProperty() && (style().affectsTransform() || hasSVGTransform()); }
 inline Document& RenderObject::document() const { return m_node.get().document(); }
 inline Ref<Document> RenderObject::protectedDocument() const { return document(); }
-inline const LocalFrameViewLayoutContext& RenderObject::layoutContext() const { return view().frameView().layoutContext(); }
+inline LocalFrameViewLayoutContext& RenderObject::layoutContext() const { return view().frameView().layoutContext(); }
 inline bool RenderObject::isBody() const { return node() && node()->hasTagName(HTMLNames::bodyTag); }
 inline bool RenderObject::isHR() const { return node() && node()->hasTagName(HTMLNames::hrTag); }
 inline bool RenderObject::isPseudoElement() const { return node() && node()->isPseudoElement(); }

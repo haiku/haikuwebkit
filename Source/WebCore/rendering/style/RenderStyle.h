@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include "BoxExtents.h"
-#include "PseudoElementIdentifier.h"
-#include "StylePrimitiveNumeric+Forward.h"
-#include "WritingMode.h"
+#include <WebCore/BoxExtents.h>
+#include <WebCore/PseudoElementIdentifier.h>
+#include <WebCore/StylePrimitiveNumeric+Forward.h>
+#include <WebCore/WritingMode.h>
 #include <unicode/utypes.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/DataRef.h>
@@ -54,6 +54,7 @@ class Element;
 class FillLayer;
 class FilterOperations;
 class FloatPoint;
+class FloatSize;
 class FloatPoint3D;
 class FloatRect;
 class FontCascade;
@@ -166,6 +167,7 @@ enum class ListStylePosition : bool;
 enum class MarginTrimType : uint8_t;
 enum class MarqueeBehavior : uint8_t;
 enum class MarqueeDirection : uint8_t;
+enum class MathShift : bool;
 enum class MathStyle : bool;
 enum class NBSPMode : bool;
 enum class NinePieceImageRule : uint8_t;
@@ -400,7 +402,7 @@ using WebkitBorderSpacing = Length<CSS::Nonnegative>;
 }
 
 constexpr auto PublicPseudoIDBits = 17;
-constexpr auto TextDecorationLineBits = 4;
+constexpr auto TextDecorationLineBits = 5;
 constexpr auto TextTransformBits = 5;
 constexpr auto PseudoElementTypeBits = 5;
 
@@ -1146,9 +1148,9 @@ public:
     inline const Style::BlockEllipsis& blockEllipsis() const;
     inline Style::MaximumLines maxLines() const;
     inline OverflowContinue overflowContinue() const;
-    inline const IntSize& initialLetter() const;
-    inline int initialLetterDrop() const;
-    inline int initialLetterHeight() const;
+    inline const FloatSize& initialLetter() const;
+    inline float initialLetterDrop() const;
+    inline float initialLetterHeight() const;
 
     inline OptionSet<TouchAction> touchActions() const;
     // 'touch-action' behavior depends on values in ancestors. We use an additional inherited property to implement that.
@@ -1224,7 +1226,7 @@ public:
     inline void setBlendMode(BlendMode);
     inline bool isInSubtreeWithBlendMode() const;
 
-    inline void setIsForceHidden();
+    inline void setIsForceHidden(bool = true);
     inline bool isForceHidden() const;
 
     inline void setIsolation(Isolation);
@@ -1256,6 +1258,7 @@ public:
     inline AppleVisualEffect usedAppleVisualEffectForSubtree() const;
 #endif
 
+    inline MathShift mathShift() const;
     inline MathStyle mathStyle() const;
 
     inline const Style::ViewTransitionClasses& viewTransitionClasses() const;
@@ -1680,7 +1683,7 @@ public:
     inline void setOverflowContinue(OverflowContinue);
     inline void setBlockEllipsis(Style::BlockEllipsis&&);
 
-    inline void setInitialLetter(const IntSize&);
+    inline void setInitialLetter(const FloatSize&);
     
     inline void setTouchActions(OptionSet<TouchAction>);
     inline void setUsedTouchActions(OptionSet<TouchAction>);
@@ -1949,6 +1952,7 @@ public:
     bool disallowsFastPathInheritance() const { return m_nonInheritedFlags.disallowsFastPathInheritance; }
     void setDisallowsFastPathInheritance() { m_nonInheritedFlags.disallowsFastPathInheritance = true; }
 
+    inline void setMathShift(const MathShift&);
     inline void setMathStyle(const MathStyle&);
 
     void setTextSpacingTrim(TextSpacingTrim v);
@@ -2207,7 +2211,7 @@ public:
     static constexpr LineSnap initialLineSnap();
     static constexpr LineAlign initialLineAlign();
 
-    static constexpr IntSize initialInitialLetter();
+    static constexpr FloatSize initialInitialLetter();
     static constexpr LineClampValue initialLineClamp();
     static inline Style::BlockEllipsis initialBlockEllipsis();
     static OverflowContinue initialOverflowContinue();
@@ -2237,6 +2241,7 @@ public:
     static constexpr BlendMode initialBlendMode();
     static constexpr Isolation initialIsolation();
 
+    static constexpr MathShift initialMathShift();
     static constexpr MathStyle initialMathStyle();
 
     void setVisitedLinkColor(Color&&);
@@ -2364,6 +2369,9 @@ public:
     const FixedVector<Style::PositionTryFallback>& positionTryFallbacks() const;
     void setPositionTryFallbacks(FixedVector<Style::PositionTryFallback>&&);
 
+    std::optional<size_t> lastSuccessfulPositionTryFallbackIndex() const;
+    void setLastSuccessfulPositionTryFallbackIndex(std::optional<size_t>&&);
+
     static constexpr OptionSet<PositionVisibility> initialPositionVisibility();
     inline OptionSet<PositionVisibility> positionVisibility() const;
     inline void setPositionVisibility(OptionSet<PositionVisibility>);
@@ -2400,7 +2408,6 @@ private:
         PREFERRED_TYPE(bool) unsigned usesViewportUnits : 1;
         PREFERRED_TYPE(bool) unsigned usesContainerUnits : 1;
         PREFERRED_TYPE(bool) unsigned useTreeCountingFunctions : 1;
-        PREFERRED_TYPE(OptionSet<TextDecorationLine>) unsigned textDecorationLine : TextDecorationLineBits; // Text decorations defined *only* by this element.
         PREFERRED_TYPE(bool) unsigned hasExplicitlyInheritedProperties : 1; // Explicitly inherits a non-inherited property.
         PREFERRED_TYPE(bool) unsigned disallowsFastPathInheritance : 1;
 
@@ -2411,6 +2418,7 @@ private:
         PREFERRED_TYPE(bool) unsigned isLink : 1;
         PREFERRED_TYPE(PseudoId) unsigned pseudoElementType : PseudoElementTypeBits;
         unsigned pseudoBits : PublicPseudoIDBits;
+        PREFERRED_TYPE(OptionSet<TextDecorationLine>) unsigned textDecorationLine : TextDecorationLineBits; // Text decorations defined *only* by this element.
 
         // If you add more style bits here, you will also need to update RenderStyle::NonInheritedFlags::copyNonInheritedFrom().
     };

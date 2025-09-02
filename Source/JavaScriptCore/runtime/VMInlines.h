@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,6 +33,10 @@
 #include <JavaScriptCore/VM.h>
 #include <JavaScriptCore/Watchdog.h>
 
+#if ENABLE(C_LOOP)
+#include "CLoopStackInlines.h"
+#endif
+
 namespace JSC {
 
 inline ActiveScratchBufferScope::ActiveScratchBufferScope(ScratchBuffer* buffer, size_t activeScratchBufferSizeInJSValues)
@@ -50,21 +54,21 @@ inline ActiveScratchBufferScope::~ActiveScratchBufferScope()
         m_scratchBuffer->setActiveLength(0);
 }
 
-bool VM::ensureStackCapacityFor(Register* newTopOfStack)
+bool VM::ensureJSStackCapacityFor(Register* newTopOfStack)
 {
 #if !ENABLE(C_LOOP)
-    return newTopOfStack >= m_softStackLimit;
+    return newTopOfStack >= softStackLimit();
 #else
-    return ensureStackCapacityForCLoop(newTopOfStack);
+    return cloopStack().ensureCapacityFor(newTopOfStack);
 #endif
     
 }
 
 bool VM::isSafeToRecurseSoft() const
 {
-    bool safe = isSafeToRecurse(m_softStackLimit);
+    bool safe = isSafeToRecurse(softStackLimit());
 #if ENABLE(C_LOOP)
-    safe = safe && isSafeToRecurseSoftCLoop();
+    safe = safe && cloopStack().isSafeToRecurse();
 #endif
     return safe;
 }

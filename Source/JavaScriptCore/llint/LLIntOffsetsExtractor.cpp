@@ -75,6 +75,7 @@
 #include "WasmIPIntGenerator.h"
 #include "WasmIPIntSlowPaths.h"
 #include "Watchdog.h"
+#include "WebAssemblyBuiltin.h"
 #include "WebAssemblyFunction.h"
 #include <stdio.h>
 #include <wtf/FastTLS.h>

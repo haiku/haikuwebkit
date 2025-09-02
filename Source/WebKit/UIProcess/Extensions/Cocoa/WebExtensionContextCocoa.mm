@@ -101,6 +101,10 @@
 #import "_WKInspectorInternal.h"
 #endif
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+#import <WebCore/ContentRuleListMatchedRule.h>
+#endif
+
 // This number was chosen arbitrarily based on testing with some popular extensions.
 static constexpr size_t maximumCachedPermissionResults = 256;
 
@@ -4901,6 +4905,19 @@ void WebExtensionContext::loadDeclarativeNetRequestRules(CompletionHandler<void(
         addDynamicAndStaticRules();
     }).get()];
 }
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+void WebExtensionContext::handleContentRuleListMatchedRule(WebExtensionTab& tab, WebCore::ContentRuleListMatchedRule& matchedRule)
+{
+    // FIXME: <158147119> Figure out the permissions story for onRuleMatchedDebug
+    if (!(hasPermission(WKWebExtensionPermissionDeclarativeNetRequestFeedback) && hasPermission(WKWebExtensionPermissionDeclarativeNetRequest) && hasPermission(URL { matchedRule.request.url.value() }, &tab)))
+        return;
+
+    wakeUpBackgroundContentIfNecessaryToFireEvents({ WebExtensionEventListenerType::DeclarativeNetRequestOnRuleMatchedDebug }, [=, this, protectedThis = Ref { *this }] {
+        sendToProcessesForEvent(WebExtensionEventListenerType::DeclarativeNetRequestOnRuleMatchedDebug, Messages::WebExtensionContextProxy::DispatchOnRuleMatchedDebugEvent(matchedRule));
+    });
+}
+#endif
 
 bool WebExtensionContext::handleContentRuleListNotificationForTab(WebExtensionTab& tab, const URL& url, WebCore::ContentRuleListResults::Result)
 {

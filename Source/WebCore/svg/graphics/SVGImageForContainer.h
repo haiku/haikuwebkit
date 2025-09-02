@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "AffineTransform.h"
-#include "FloatRect.h"
-#include "FloatSize.h"
-#include "Image.h"
-#include "SVGImage.h"
+#include <WebCore/AffineTransform.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/Image.h>
+#include <WebCore/SVGImage.h>
 #include <wtf/URL.h>
 
 namespace WebCore {

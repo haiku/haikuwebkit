@@ -27,7 +27,7 @@
 
 #if PLATFORM(MAC)
 
-#include "Scrollbar.h"
+#include <WebCore/Scrollbar.h>
 
 OBJC_CLASS NSScrollerImp;
 

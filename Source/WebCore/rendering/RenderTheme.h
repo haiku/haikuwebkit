@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "ColorHash.h"
-#include "GraphicsContext.h"
-#include "PaintInfo.h"
-#include "PopupMenuStyle.h"
-#include "ScrollTypes.h"
-#include "StyleColor.h"
-#include "SwitchTrigger.h"
-#include "ThemeTypes.h"
+#include <WebCore/ColorHash.h>
+#include <WebCore/GraphicsContext.h>
+#include <WebCore/PaintInfo.h>
+#include <WebCore/PopupMenuStyle.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/SwitchTrigger.h>
+#include <WebCore/ThemeTypes.h>
 #include <wtf/HashMap.h>
 
 namespace WebCore {
@@ -414,7 +414,6 @@ public:
     bool isWindowActive(const RenderObject&) const;
     bool isChecked(const RenderObject&) const;
     bool isIndeterminate(const RenderObject&) const;
-    bool isSubmitButton(const RenderObject&) const;
     bool isEnabled(const RenderObject&) const;
     bool isFocused(const RenderObject&) const;
     bool isPressed(const RenderObject&) const;

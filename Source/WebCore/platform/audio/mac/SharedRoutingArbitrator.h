@@ -27,7 +27,7 @@
 
 #if ENABLE(ROUTING_ARBITRATION) && HAVE(AVAUDIO_ROUTING_ARBITER)
 
-#include "AudioSession.h"
+#include <WebCore/AudioSession.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>
 

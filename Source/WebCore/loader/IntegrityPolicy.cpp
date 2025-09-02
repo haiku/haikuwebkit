@@ -120,7 +120,7 @@ bool shouldRequestBeBlockedByIntegrityPolicy(ScriptExecutionContext& context, co
     if (!integrityPolicy && !integrityPolicyReportOnly)
         return false;
     // We don't currently support anything but script
-    if (options.destination != FetchOptionsDestination::Script)
+    if (options.destination != FetchOptionsDestination::Script && options.destination != FetchOptionsDestination::Json)
         return false;
 
     // 10. Let block be a boolean, initially false.

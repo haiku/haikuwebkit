@@ -96,18 +96,8 @@
         base.environmentPickerButtonViewController
     }
 
-    @nonobjc final var playable: (any Playable)? {
-        get {
-            #if USE_APPLE_INTERNAL_SDK
-            base.playable
-            #else
-            nil
-            #endif
-        }
-        set { base.playable = newValue }
-    }
-
-    @nonobjc final var prefersAutoDimming: Bool {
+    @objc
+    var prefersAutoDimming: Bool {
         get {
             #if USE_APPLE_INTERNAL_SDK
             base.prefersAutoDimming
@@ -115,7 +105,24 @@
             false
             #endif
         }
-        set { base.prefersAutoDimming = newValue }
+        set {
+            base.prefersAutoDimming = newValue
+        }
+    }
+
+    @nonobjc
+    final var playable: (any Playable)? {
+        get {
+            #if USE_APPLE_INTERNAL_SDK
+            base.playable
+            #else
+            nil
+            #endif
+        }
+        set {
+            base.playable = newValue
+        }
+
     }
 }
 

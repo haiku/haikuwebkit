@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "CachedScriptFetcher.h"
-#include "ResourceLoaderOptions.h"
-#include "ScriptType.h"
+#include <WebCore/CachedScriptFetcher.h>
+#include <WebCore/ResourceLoaderOptions.h>
+#include <WebCore/ScriptType.h>
 
 namespace WebCore {
 
@@ -35,7 +35,7 @@ class ScriptElementCachedScriptFetcher : public CachedScriptFetcher {
 public:
     static const ASCIILiteral defaultCrossOriginModeForModule;
 
-    virtual CachedResourceHandle<CachedScript> requestModuleScript(Document&, const URL& sourceURL, String&& integrity, std::optional<ServiceWorkersMode>) const;
+    virtual CachedResourceHandle<CachedScript> requestModuleScript(Document&, const URL& sourceURL, FetchOptionsDestination, String&& integrity, std::optional<ServiceWorkersMode>) const;
 
     virtual ScriptType scriptType() const = 0;
     bool isClassicScript() const { return scriptType() == ScriptType::Classic; }

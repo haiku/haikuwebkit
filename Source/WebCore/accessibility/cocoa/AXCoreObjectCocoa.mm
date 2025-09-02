@@ -27,6 +27,7 @@
 #import "AXCoreObject.h"
 
 #import "AXObjectCache.h"
+#import "AXTreeStoreInlines.h"
 #import "ColorCocoa.h"
 #import "RenderObjectInlines.h"
 #import "WebAccessibilityObjectWrapperBase.h"

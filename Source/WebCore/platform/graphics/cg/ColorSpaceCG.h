@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "ColorSpace.h"
 #include <CoreGraphics/CoreGraphics.h>
+#include <WebCore/ColorSpace.h>
 #include <optional>
 #include <wtf/cf/TypeCastsCF.h>
 

@@ -85,7 +85,7 @@ DOCUMENTLOADER_DETACHFROMFRAME, "[pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMai
 DOCUMENTLOADER_STOPLOADING, "[pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] DocumentLoader::stopLoading", (uint64_t, uint64_t, int), DEFAULT, Network
 
 MEDIASESSIONMANAGERCOCOA_SESSIONCANPRODUCEAUDIOCHANGED, "MediaSessionManagerCocoa::sessionCanProduceAudioChanged", (), DEFAULT, Media
-MEDIASESSIONMANAGERCOCOA_CLIENTCHARACTERISTICSCHANGED, "MediaSessionManagerCocoa::clientCharacteristicsChanged, session ID = %llu", (uint64_t), DEFAULT, Media
+MEDIASESSIONMANAGERCOCOA_CLIENTCHARACTERISTICSCHANGED, "MediaSessionManagerCocoa::clientCharacteristicsChanged, session ID = %" PRIu64, (uint64_t), DEFAULT, Media
 MEDIASESSIONMANAGERCOCOA_UPDATESESSIONSTATE, "MediaSessionManagerCocoa::updateSessionState: AudioCapture(%d), AudioTrack(%d), Video(%d), Audio(%d), VideoAudio(%d), WebAudio(%d)", (int, int, int, int, int, int), DEFAULT, Media
 
 PLATFORMMEDIASESSIONMANAGER_REMOVESESSION, "PlatformMediaSessionManager::removeSession, session ID = %" PRIu64 "", (uint64_t), DEFAULT, Media
@@ -149,7 +149,7 @@ HTMLVIDEOELEMENT_MEDIAPLAYERFIRSTVIDEOFRAMEAVAILABLE, "HTMLVideoElement::mediaPl
 HTMLVIDEOELEMENT_SCHEDULERESIZEEVENT, "HTMLMediaElement::scheduleResizeEvent(%" PRIX64 ") width: %f height: %f", (uint64_t, float, float), DEFAULT, Media
 
 PERFORMANCELOGGING_MEMORY_USAGE_INFO, "Memory usage info dump at %s:", (CString), DEFAULT, PerformanceLogging
-PERFORMANCELOGGING_MEMORY_USAGE_FOR_KEY, "  %s: %llu", (CString, uint64_t), DEFAULT, PerformanceLogging
+PERFORMANCELOGGING_MEMORY_USAGE_FOR_KEY, "  %s: %" PRIu64, (CString, uint64_t), DEFAULT, PerformanceLogging
 
 PERFORMANCEMONITOR_MEASURE_POSTLOAD_CPUUSAGE, "PerformanceMonitor::measurePostLoadCPUUsage: Process was using %.1f%% CPU after the page load.", (double), DEFAULT, PerformanceLogging
 PERFORMANCEMONITOR_MEASURE_POSTLOAD_MEMORYUSAGE, "PerformanceMonitor::measurePostLoadMemoryUsage: Process was using %" PRIu64 " bytes of memory after the page load.", (uint64_t), DEFAULT, PerformanceLogging
@@ -164,9 +164,9 @@ LOCALFRAMEVIEW_FIRING_FIRST_VISUALLY_NON_EMPTY_LAYOUT_MILESTONE, "[pageID=%" PRI
 LOCALFRAMEVIEW_FIRING_RESIZE_EVENTS_DISABLED_FOR_PAGE, "[pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] LocalFrameView::scheduleResizeEventIfNeeded: Not firing resize events because they are temporarily disabled for this page", (uint64_t, uint64_t, int), DEFAULT, Events
 LOCALFRAMEVIEW_NOT_PAINTING_LAYOUT_NEEDED, "    [pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] LocalFrameView::paintContents: Not painting because render tree needs layout", (uint64_t, uint64_t, int), DEFAULT, Layout
 
-SERVICEWORKERTHREADPROXY_REMOVEFETCH, "ServiceWorkerThreadProxy::removeFetch %llu", (uint64_t), DEFAULT, ServiceWorker
+SERVICEWORKERTHREADPROXY_REMOVEFETCH, "ServiceWorkerThreadProxy::removeFetch %" PRIu64, (uint64_t), DEFAULT, ServiceWorker
 
-FONTCACHECORETEXT_REGISTER_FONT, "Registering font %{private}s with fontURL %{private}s", (CString, CString), DEFAULT, Fonts
-FONTCACHECORETEXT_REGISTER_ERROR, "Could not register font %{private}s, error %{public}s", (CString, CString), DEFAULT, Fonts
+FONTCACHECORETEXT_REGISTER_FONT, "Registering font %" PRIVATE_LOG_STRING " with fontURL %" PRIVATE_LOG_STRING, (CString, CString), DEFAULT, Fonts
+FONTCACHECORETEXT_REGISTER_ERROR, "Could not register font %" PRIVATE_LOG_STRING ", error %" PUBLIC_LOG_STRING, (CString, CString), DEFAULT, Fonts
 
 WEBCORE_TEST_LOG, "WebCore log message for testing (%u)", (unsigned), DEFAULT, Testing

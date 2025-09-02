@@ -27,9 +27,9 @@
 #include <wtf/RetainPtr.h>
 
 #if PLATFORM(COCOA)
-#include "NativeImage.h"
-#include "PlatformImage.h"
 #include <CoreGraphics/CoreGraphics.h>
+#include <WebCore/NativeImage.h>
+#include <WebCore/PlatformImage.h>
 
 #if USE(APPKIT)
 OBJC_CLASS NSImage;

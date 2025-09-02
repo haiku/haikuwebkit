@@ -31,11 +31,11 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "PlatformWheelEvent.h"
-#include "ScrollingEffectsController.h"
-#include "Timer.h"
-#include "WheelEventTestMonitor.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/PlatformWheelEvent.h>
+#include <WebCore/ScrollingEffectsController.h>
+#include <WebCore/Timer.h>
+#include <WebCore/WheelEventTestMonitor.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
 

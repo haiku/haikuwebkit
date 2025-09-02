@@ -25,26 +25,44 @@
 
 #pragma once
 
-#include "CharacterRange.h"
-#include "FloatRect.h"
-#include "FloatSize.h"
+#include <WebCore/CharacterRange.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/FloatSize.h>
+#include <WebCore/NodeIdentifier.h>
 #include <wtf/Forward.h>
 #include <wtf/URL.h>
 
 namespace WebCore {
 namespace TextExtraction {
 
-enum class EventListenerCategory : uint16_t {
+enum class Action : uint8_t {
+    Click,
+    SelectText,
+    SelectMenuItem,
+    TextInput,
+};
+
+struct Interaction {
+    Action action { Action::Click };
+    String text;
+    std::optional<FloatPoint> locationInRootView;
+    std::optional<NodeIdentifier> nodeIdentifier;
+    bool replaceAll { false };
+};
+
+enum class EventListenerCategory : uint8_t {
     Click       = 1 << 0,
     Hover       = 1 << 1,
     Touch       = 1 << 2,
     Wheel       = 1 << 3,
-    Gesture     = 1 << 4,
-    Pointer     = 1 << 5,
-    Keyboard    = 1 << 6,
-    Focus       = 1 << 7,
-    Form        = 1 << 8,
-    Media       = 1 << 9,
+    Keyboard    = 1 << 4,
+};
+
+struct Request {
+    std::optional<WebCore::FloatRect> collectionRectInRootView;
+    bool mergeParagraphs { false };
+    bool skipNearlyTransparentContent { false };
+    bool canIncludeIdentifiers { false };
 };
 
 struct Editable {
@@ -70,6 +88,30 @@ struct ImageItemData {
     String altText;
 };
 
+struct LinkItemData {
+    String target;
+    URL completedURL;
+};
+
+struct ContentEditableData {
+    bool isPlainTextOnly { false };
+    bool isFocused { false };
+};
+
+struct TextFormControlData {
+    Editable editable;
+    String controlType;
+    String autocomplete;
+    bool isReadonly { false };
+    bool isDisabled { false };
+    bool isChecked { false };
+};
+
+struct SelectData {
+    Vector<String> selectedValues;
+    bool isMultiple { false };
+};
+
 enum class ContainerType : uint8_t {
     Root,
     ViewportConstrained,
@@ -80,14 +122,19 @@ enum class ContainerType : uint8_t {
     Section,
     Nav,
     Button,
+    Generic,
 };
 
-using ItemData = Variant<ContainerType, TextItemData, ScrollableItemData, ImageItemData>;
+using ItemData = Variant<ContainerType, TextItemData, ScrollableItemData, ImageItemData, SelectData, ContentEditableData, TextFormControlData, LinkItemData>;
 
 struct Item {
     ItemData data;
     FloatRect rectInRootView;
     Vector<Item> children;
+    std::optional<NodeIdentifier> nodeIdentifier;
+    OptionSet<EventListenerCategory> eventListeners;
+    HashMap<String, String> ariaAttributes;
+    String accessibilityRole;
 };
 
 } // namespace TextExtraction

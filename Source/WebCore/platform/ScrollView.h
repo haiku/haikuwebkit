@@ -26,13 +26,13 @@
 
 #pragma once
 
-#include "DoublePoint.h"
-#include "FloatRect.h"
-#include "IntRect.h"
-#include "Scrollbar.h"
-#include "ScrollableArea.h"
-#include "ScrollTypes.h"
-#include "Widget.h"
+#include <WebCore/DoublePoint.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/ScrollableArea.h>
+#include <WebCore/Scrollbar.h>
+#include <WebCore/Widget.h>
 #include <wtf/HashSet.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>

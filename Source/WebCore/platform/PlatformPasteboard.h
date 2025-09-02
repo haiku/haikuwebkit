@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "DataOwnerType.h"
+#include <WebCore/DataOwnerType.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/RetainPtr.h>

@@ -25,10 +25,10 @@
  
 #pragma once
 
-#include <wtf/URL.h>
-#include "UserContentTypes.h"
-#include "UserScriptTypes.h"
+#include <WebCore/UserContentTypes.h>
+#include <WebCore/UserScriptTypes.h>
 #include <wtf/TZoneMalloc.h>
+#include <wtf/URL.h>
 #include <wtf/Vector.h>
 
 namespace WebCore {

@@ -27,7 +27,7 @@
 
 #if USE(AUDIO_SESSION) && PLATFORM(COCOA)
 
-#include "AudioSession.h"
+#include <WebCore/AudioSession.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WTF {

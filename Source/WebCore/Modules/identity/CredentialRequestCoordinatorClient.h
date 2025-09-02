@@ -27,8 +27,8 @@
 
 #if ENABLE(WEB_AUTHN)
 
-#include "DigitalCredentialsProtocols.h"
-#include "UnvalidatedDigitalCredentialRequest.h"
+#include <WebCore/DigitalCredentialsProtocols.h>
+#include <WebCore/UnvalidatedDigitalCredentialRequest.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>

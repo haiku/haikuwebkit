@@ -60,9 +60,21 @@ ScrollToOptions* toScrollToOptions(JSContextRef, JSValueRef);
 struct TextExtractionOptions {
     bool clipToBounds { false };
     bool includeRects { false };
+    bool mergeParagraphs { false };
+    bool skipNearlyTransparentContent { false };
+    bool canIncludeIdentifiers { false };
 };
 
 TextExtractionOptions* toTextExtractionOptions(JSContextRef, JSValueRef);
+
+struct TextExtractionInteractionOptions {
+    JSRetainPtr<JSStringRef> nodeIdentifier;
+    JSRetainPtr<JSStringRef> text;
+    std::optional<std::pair<double, double>> location;
+    bool replaceAll { false };
+};
+
+TextExtractionInteractionOptions* toTextExtractionInteractionOptions(JSContextRef, JSValueRef);
 
 class UIScriptController : public JSWrappable {
 public:
@@ -433,6 +445,8 @@ public:
 
     // Text Extraction
     virtual void requestTextExtraction(JSValueRef, TextExtractionOptions*) { notImplemented(); }
+    virtual void requestDebugText(JSValueRef) { notImplemented(); }
+    virtual void performTextExtractionInteraction(JSStringRef, TextExtractionInteractionOptions*, JSValueRef) { notImplemented(); }
 
     // Element Targeting
     virtual void requestRenderedTextForFrontmostTarget(int, int, JSValueRef) { notImplemented(); }

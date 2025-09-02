@@ -165,22 +165,6 @@ void ContentSecurityPolicy::copyUpgradeInsecureRequestStateFrom(const ContentSec
     m_insecureNavigationRequestsToUpgrade = shouldMakeIsolatedCopy == ShouldMakeIsolatedCopy::Yes ? crossThreadCopy(other.m_insecureNavigationRequestsToUpgrade) : other.m_insecureNavigationRequestsToUpgrade;
 }
 
-bool ContentSecurityPolicy::allowRunningOrDisplayingInsecureContent(const URL& url)
-{
-    bool allow = true;
-    for (auto& policy : m_policies) {
-        if (!policy->hasBlockAllMixedContentDirective())
-            continue;
-        bool isReportOnly = policy->isReportOnly();
-        auto message = makeString(isReportOnly ? "[Report Only] "_s : ""_s, "Blocked mixed content "_s,
-            url.stringCenterEllipsizedToLength(), " because 'block-all-mixed-content' appears in the Content Security Policy."_s);
-        reportViolation(ContentSecurityPolicyDirectiveNames::blockAllMixedContent, *policy, url.string(), message);
-        if (!isReportOnly)
-            allow = false;
-    }
-    return allow;
-}
-
 void ContentSecurityPolicy::didCreateWindowProxy(JSWindowProxy& windowProxy) const
 {
     auto* window = windowProxy.window();
@@ -310,7 +294,6 @@ void ContentSecurityPolicy::applyPolicyToScriptExecutionContext()
     ASSERT(scriptExecutionContext->securityOrigin());
     updateSourceSelf(*scriptExecutionContext->securityOrigin());
 
-    bool enableStrictMixedContentMode = false;
     bool requiresTrustedTypesForScript = false;
     bool requiresTrustedTypesForScriptEnforced = false;
     for (auto& policy : m_policies) {
@@ -319,9 +302,6 @@ void ContentSecurityPolicy::applyPolicyToScriptExecutionContext()
             m_lastPolicyEvalDisabledErrorMessage = policy->evalDisabledErrorMessage();
             m_lastPolicyWebAssemblyDisabledErrorMessage = policy->webAssemblyDisabledErrorMessage();
         }
-        if (policy->hasBlockAllMixedContentDirective() && !policy->isReportOnly())
-            enableStrictMixedContentMode = true;
-
         if (policy->requiresTrustedTypesForScript()) {
             requiresTrustedTypesForScript = true;
             requiresTrustedTypesForScriptEnforced = !policy->isReportOnly();
@@ -337,8 +317,6 @@ void ContentSecurityPolicy::applyPolicyToScriptExecutionContext()
         scriptExecutionContext->disableWebAssembly(m_lastPolicyWebAssemblyDisabledErrorMessage);
     if (!m_sandboxFlags.isEmpty() && is<Document>(scriptExecutionContext.get()))
         scriptExecutionContext->enforceSandboxFlags(m_sandboxFlags, SecurityContext::SandboxFlagsSource::CSP);
-    if (enableStrictMixedContentMode)
-        scriptExecutionContext->setStrictMixedContentMode(true);
     if (requiresTrustedTypesForScript && requiresTrustedTypesForScriptEnforced && m_trustedEvalEnabled)
         scriptExecutionContext->setTrustedTypesEnforcement(JSC::TrustedTypesEnforcement::EnforcedWithEvalEnabled);
     else if (requiresTrustedTypesForScript && requiresTrustedTypesForScriptEnforced)
@@ -1175,13 +1153,11 @@ void ContentSecurityPolicy::upgradeInsecureRequestIfNeeded(URL& url, InsecureReq
 
     bool upgradeRequest = m_insecureNavigationRequestsToUpgrade.contains(SecurityOriginData::fromURL(url));
     RefPtr scriptExecutionContext = m_scriptExecutionContext.get();
-    bool isUpgradeMixedContentEnabled = scriptExecutionContext ? scriptExecutionContext->settingsValues().upgradeMixedContentEnabled : false;
-    bool shouldUpgradeLocalhostAndIPAddressInMixedContext = isUpgradeMixedContentEnabled && scriptExecutionContext && scriptExecutionContext->settingsValues().iPAddressAndLocalhostMixedContentUpgradeTestingEnabled;
+    bool shouldUpgradeLocalhostAndIPAddressInMixedContext = scriptExecutionContext && scriptExecutionContext->settingsValues().iPAddressAndLocalhostMixedContentUpgradeTestingEnabled;
 
     if (requestType == InsecureRequestType::Load || requestType == InsecureRequestType::FormSubmission)
         upgradeRequest |= m_upgradeInsecureRequests;
 
-    alwaysUpgradeRequest = isUpgradeMixedContentEnabled && alwaysUpgradeRequest == AlwaysUpgradeRequest::Yes ? AlwaysUpgradeRequest::Yes : AlwaysUpgradeRequest::No;
     if (!upgradeRequest && alwaysUpgradeRequest == AlwaysUpgradeRequest::No)
         return;
 

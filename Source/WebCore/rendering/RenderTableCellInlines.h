@@ -51,20 +51,6 @@ inline const BorderValue& RenderTableCell::borderAdjoiningTableStart() const
     return style().borderStart(tableWritingMode());
 }
 
-inline LayoutUnit RenderTableCell::logicalHeightForRowSizing() const
-{
-    // FIXME: This function does too much work, and is very hot during table layout!
-    LayoutUnit adjustedLogicalHeight = logicalHeight() - (intrinsicPaddingBefore() + intrinsicPaddingAfter());
-    if (!style().logicalHeight().isSpecified())
-        return adjustedLogicalHeight;
-    LayoutUnit styleLogicalHeight = Style::evaluate(style().logicalHeight(), 0_lu);
-    // In strict mode, box-sizing: content-box do the right thing and actually add in the border and padding.
-    // Call computedCSSPadding* directly to avoid including implicitPadding.
-    if (!document().inQuirksMode() && style().boxSizing() != BoxSizing::BorderBox)
-        styleLogicalHeight += computedCSSPaddingBefore() + computedCSSPaddingAfter() + borderBefore() + borderAfter();
-    return std::max(styleLogicalHeight, adjustedLogicalHeight);
-}
-
 inline Style::PreferredSize RenderTableCell::styleOrColLogicalWidth() const
 {
     auto& styleWidth = style().logicalWidth();

@@ -25,56 +25,56 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
-#include "CounterDirectives.h"
-#include "LengthPoint.h"
-#include "LineClampValue.h"
-#include "NameScope.h"
-#include "PositionArea.h"
-#include "PositionTryFallback.h"
-#include "ScopedName.h"
-#include "ScrollTypes.h"
-#include "StyleAnchorName.h"
-#include "StyleBlockStepSize.h"
-#include "StyleClip.h"
-#include "StyleClipPath.h"
-#include "StyleColor.h"
-#include "StyleContainIntrinsicSize.h"
-#include "StyleContainerName.h"
-#include "StyleContentAlignmentData.h"
-#include "StyleGapGutter.h"
-#include "StyleMaskBorder.h"
-#include "StyleMaximumLines.h"
-#include "StyleOffsetAnchor.h"
-#include "StyleOffsetDistance.h"
-#include "StyleOffsetPath.h"
-#include "StyleOffsetPosition.h"
-#include "StyleOffsetRotate.h"
-#include "StylePerspective.h"
-#include "StylePerspectiveOrigin.h"
-#include "StylePrimitiveNumericTypes.h"
-#include "StyleProgressTimelineAxes.h"
-#include "StyleProgressTimelineName.h"
-#include "StyleRotate.h"
-#include "StyleScale.h"
-#include "StyleScrollBehavior.h"
-#include "StyleScrollMargin.h"
-#include "StyleScrollPadding.h"
-#include "StyleScrollSnapPoints.h"
-#include "StyleScrollTimelines.h"
-#include "StyleScrollbarGutter.h"
-#include "StyleSelfAlignmentData.h"
-#include "StyleShapeImageThreshold.h"
-#include "StyleShapeMargin.h"
-#include "StyleShapeOutside.h"
-#include "StyleTextDecorationThickness.h"
-#include "StyleTextEdge.h"
-#include "StyleTranslate.h"
-#include "StyleViewTimelineInsets.h"
-#include "StyleViewTimelines.h"
-#include "StyleViewTransitionClass.h"
-#include "StyleViewTransitionName.h"
-#include "TouchAction.h"
+#include <WebCore/CSSPropertyNames.h>
+#include <WebCore/CounterDirectives.h>
+#include <WebCore/LengthPoint.h>
+#include <WebCore/LineClampValue.h>
+#include <WebCore/NameScope.h>
+#include <WebCore/PositionArea.h>
+#include <WebCore/PositionTryFallback.h>
+#include <WebCore/ScopedName.h>
+#include <WebCore/ScrollTypes.h>
+#include <WebCore/StyleAnchorName.h>
+#include <WebCore/StyleBlockStepSize.h>
+#include <WebCore/StyleClip.h>
+#include <WebCore/StyleClipPath.h>
+#include <WebCore/StyleColor.h>
+#include <WebCore/StyleContainIntrinsicSize.h>
+#include <WebCore/StyleContainerName.h>
+#include <WebCore/StyleContentAlignmentData.h>
+#include <WebCore/StyleGapGutter.h>
+#include <WebCore/StyleMaskBorder.h>
+#include <WebCore/StyleMaximumLines.h>
+#include <WebCore/StyleOffsetAnchor.h>
+#include <WebCore/StyleOffsetDistance.h>
+#include <WebCore/StyleOffsetPath.h>
+#include <WebCore/StyleOffsetPosition.h>
+#include <WebCore/StyleOffsetRotate.h>
+#include <WebCore/StylePerspective.h>
+#include <WebCore/StylePerspectiveOrigin.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
+#include <WebCore/StyleProgressTimelineAxes.h>
+#include <WebCore/StyleProgressTimelineName.h>
+#include <WebCore/StyleRotate.h>
+#include <WebCore/StyleScale.h>
+#include <WebCore/StyleScrollBehavior.h>
+#include <WebCore/StyleScrollMargin.h>
+#include <WebCore/StyleScrollPadding.h>
+#include <WebCore/StyleScrollSnapPoints.h>
+#include <WebCore/StyleScrollTimelines.h>
+#include <WebCore/StyleScrollbarGutter.h>
+#include <WebCore/StyleSelfAlignmentData.h>
+#include <WebCore/StyleShapeImageThreshold.h>
+#include <WebCore/StyleShapeMargin.h>
+#include <WebCore/StyleShapeOutside.h>
+#include <WebCore/StyleTextDecorationThickness.h>
+#include <WebCore/StyleTextEdge.h>
+#include <WebCore/StyleTranslate.h>
+#include <WebCore/StyleViewTimelineInsets.h>
+#include <WebCore/StyleViewTimelines.h>
+#include <WebCore/StyleViewTransitionClass.h>
+#include <WebCore/StyleViewTransitionName.h>
+#include <WebCore/TouchAction.h>
 #include <memory>
 #include <wtf/DataRef.h>
 #include <wtf/Markable.h>
@@ -157,7 +157,7 @@ public:
     OptionSet<MarginTrimType> marginTrim;
     OptionSet<Containment> contain;
 
-    IntSize initialLetter;
+    FloatSize initialLetter;
 
     DataRef<StyleMarqueeData> marquee; // Marquee properties
 
@@ -239,6 +239,7 @@ public:
     std::optional<Style::ScopedName> positionAnchor;
     std::optional<PositionArea> positionArea;
     FixedVector<Style::PositionTryFallback> positionTryFallbacks;
+    std::optional<size_t> lastSuccessfulPositionTryFallbackIndex;
 
     Style::BlockStepSize blockStepSize;
     PREFERRED_TYPE(BlockStepAlign) unsigned blockStepAlign : 2;

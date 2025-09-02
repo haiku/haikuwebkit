@@ -1507,6 +1507,9 @@ TEST(KeyboardInputTests, ImplementAllOptionalTextInputTraits)
     EXPECT_EQ(traits.smartDashesType, UITextSmartDashesTypeDefault);
     EXPECT_EQ(traits.smartInsertDeleteType, UITextSmartInsertDeleteTypeDefault);
     EXPECT_EQ(traits.keyboardType, UIKeyboardTypeDefault);
+#if HAVE(ALLOW_NUMBERPAD_POPOVER_TEXT_INPUT_TRAITS)
+    EXPECT_FALSE(traits.allowsNumberPadPopover);
+#endif
     EXPECT_EQ(traits.keyboardAppearance, UIKeyboardAppearanceDefault);
     EXPECT_EQ(traits.returnKeyType, UIReturnKeyDefault);
     EXPECT_FALSE(traits.enablesReturnKeyAutomatically);

@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "GlyphDisplayListCacheRemoval.h"
-#include "InlineRect.h"
-#include "LayoutBox.h"
-#include "TextFlags.h"
+#include <WebCore/GlyphDisplayListCacheRemoval.h>
+#include <WebCore/InlineRect.h>
+#include <WebCore/LayoutBox.h>
+#include <WebCore/TextFlags.h>
 #include <unicode/ubidi.h>
 #include <wtf/OptionSet.h>
 

@@ -1473,7 +1473,7 @@ TEST_F(ContentExtensionTest, MatchesEverything)
     testRequest(backend6, subResourceRequest("http://example.com/"_s, "http://example.com/"_s, ResourceType::Script), { });
     testRequest(backend6, subResourceRequest("http://example.com/ignore"_s, "http://example.com/"_s, ResourceType::Script), { });
 }
-    
+
 TEST_F(ContentExtensionTest, InvalidJSON)
 {
     checkCompilerError("["_s, ContentExtensionError::JSONInvalid);
@@ -1622,6 +1622,15 @@ TEST_F(ContentExtensionTest, InvalidJSON)
     checkCompilerError("[{\"action\":{\"type\":\"modify-headers\",\"priority\":2,\"request-headers\":[{\"operation\":\"invalid\",\"header\":\"testheader\"}]},\"trigger\":{\"url-filter\":\"webkit.org\"}}]"_s, ContentExtensionError::JSONModifyHeadersInvalidOperation);
     checkCompilerError("[{\"action\":{\"type\":\"modify-headers\",\"priority\":\"\",\"request-headers\":[{\"operation\":\"remove\",\"header\":\"testheader\"}]},\"trigger\":{\"url-filter\":\"webkit.org\"}}]"_s, ContentExtensionError::JSONModifyHeadersInvalidPriority);
     checkCompilerError("[{\"action\":{\"type\":\"modify-headers\",\"priority\":-1,\"request-headers\":[{\"operation\":\"remove\",\"header\":\"testheader\"}]},\"trigger\":{\"url-filter\":\"webkit.org\"}}]"_s, ContentExtensionError::JSONModifyHeadersInvalidPriority);
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+    checkCompilerError("[{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"},\"_identifier\":\"foo\"}]"_s, ContentExtensionError::JSONInvalidRuleIdentifier);
+    checkCompilerError("[{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"},\"_identifier\":null}]"_s, ContentExtensionError::JSONInvalidRuleIdentifier);
+    checkCompilerError("[{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"},\"_identifier\":false}]"_s, ContentExtensionError::JSONInvalidRuleIdentifier);
+    checkCompilerError("[{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"},\"_identifier\":[]}]"_s, ContentExtensionError::JSONInvalidRuleIdentifier);
+    checkCompilerError("[{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"},\"_identifier\":{}}]"_s, ContentExtensionError::JSONInvalidRuleIdentifier);
+    checkCompilerError("[{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"},\"_identifier\":1},{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}}]"_s, ContentExtensionError::JSONRulesMissingIdentifier);
+#endif
 }
 
 TEST_F(ContentExtensionTest, StrictPrefixSeparatedMachines1)
@@ -3423,6 +3432,38 @@ TEST_F(ContentExtensionTest, IgnoreFollowingRules)
     testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::BlockLoadAction>, variantIndex<ContentExtensions::BlockLoadAction> });
     testRequest(backend, mainDocumentRequest("https://www.w3.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
 }
+
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+TEST_F(ContentExtensionTest, RuleIdentifiers)
+{
+    static constexpr auto jsonRuleListJSONString = "["
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"A\"},\"_identifier\":1},"
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\"AAA\"},\"trigger\":{\"url-filter\":\"B\"},\"_identifier\":2}"
+    "]"_s;
+
+    auto extension = InMemoryCompiledContentExtension::create(jsonRuleListJSONString);
+    const auto& data = extension->data();
+
+    // Should be 17 bytes total
+    ASSERT_EQ(data.actions.size(), 17u);
+
+    // First byte is the first rule's variant, block, which is 0
+    ASSERT_EQ(data.actions[0], 0u);
+
+    // Next four bytes is the identifier of the first rule
+    ASSERT_EQ(reinterpretCastSpanStartTo<const uint32_t>(data.actions.subvector(1, 4).span()), 1u);
+
+    // This byte is the second rule's variant, css-display-none, which is 2
+    ASSERT_EQ(data.actions[5], 2u);
+
+    // These bytes are the second rule's selector string's size and actual characters
+    auto serializedSelectorLength = reinterpretCastSpanStartTo<const uint32_t>(data.actions.subvector(6, 7).span());
+    ASSERT_EQ(String::fromUTF8(data.actions.subvector(6, 7).span().subspan(sizeof(uint32_t), serializedSelectorLength - sizeof(uint32_t))), "AAA"_s);
+
+    // The last four bytes is the identifier of the second rule
+    ASSERT_EQ(reinterpretCastSpanStartTo<const uint32_t>(data.actions.subvector(13, 4).span()), 2u);
+}
+#endif
 
 } // namespace TestWebKitAPI
 

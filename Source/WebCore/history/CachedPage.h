@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "CachedFrame.h"
+#include <WebCore/CachedFrame.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/TZoneMalloc.h>

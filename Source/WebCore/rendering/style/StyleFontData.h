@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FontCascade.h"
+#include <WebCore/FontCascade.h>
 #include <wtf/DataRef.h>
 
 namespace WTF {

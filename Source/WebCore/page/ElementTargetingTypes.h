@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "FloatPoint.h"
-#include "FloatRect.h"
-#include "FrameIdentifier.h"
-#include "NodeIdentifier.h"
-#include "RectEdges.h"
-#include "RenderStyleConstants.h"
-#include "ScriptExecutionContextIdentifier.h"
+#include <WebCore/FloatPoint.h>
+#include <WebCore/FloatRect.h>
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/NodeIdentifier.h>
+#include <WebCore/RectEdges.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <wtf/URLHash.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>

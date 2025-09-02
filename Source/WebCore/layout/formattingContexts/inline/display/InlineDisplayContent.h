@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "InlineDisplayBox.h"
-#include "InlineDisplayLine.h"
+#include <WebCore/InlineDisplayBox.h>
+#include <WebCore/InlineDisplayLine.h>
 #include <wtf/Vector.h>
 
 namespace WebCore {

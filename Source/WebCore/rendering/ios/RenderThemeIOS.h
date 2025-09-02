@@ -28,8 +28,8 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "CSSValueKey.h"
-#include "RenderThemeCocoa.h"
+#include <WebCore/CSSValueKey.h>
+#include <WebCore/RenderThemeCocoa.h>
 
 OBJC_CLASS UIImage;
 
@@ -171,8 +171,6 @@ private:
 #if PLATFORM(WATCHOS)
     String extraDefaultStyleSheet() final;
 #endif
-
-    bool isSubmitStyleButton(const Element&) const;
 
     void adjustButtonLikeControlStyle(RenderStyle&, const Element&) const;
 

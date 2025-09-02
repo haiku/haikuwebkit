@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "CSSPosition.h"
-#include "FloatPoint.h"
-#include "StyleLengthWrapper.h"
-#include "StylePrimitiveNumericTypes.h"
+#include <WebCore/CSSPosition.h>
+#include <WebCore/FloatPoint.h>
+#include <WebCore/StyleLengthWrapper.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
 
 namespace WebCore {
 
