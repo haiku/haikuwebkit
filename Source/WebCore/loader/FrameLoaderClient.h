@@ -27,6 +27,7 @@
 
 #include "CertificateInfo.h"
 
+#include <WebCore/DocumentLoader.h>
 #include <WebCore/FrameLoaderTypes.h>
 #include <WebCore/NavigationIdentifier.h>
 #include <WebCore/SandboxFlags.h>

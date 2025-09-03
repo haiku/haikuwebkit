@@ -205,6 +205,8 @@ namespace WebCore {
         RefPtr<DataListSuggestionPicker> createDataListSuggestionPicker(DataListSuggestionsClient&) final;
 
         void updateTextIndicator(const TextIndicatorData&) const override {}
+
+        bool hasAccessoryMousePointingDevice() const override { return false; }
     private:
         void EnterVideoFullscreenForVideoElement(WebCore::HTMLVideoElement& element);
         void ExitVideoFullscreenForVideoElement(WebCore::HTMLVideoElement& element);

@@ -721,15 +721,6 @@ RefPtr<HistoryItem> FrameLoaderClientHaiku::createHistoryItemTree(bool clipAtTar
     return frame->loader().history().createItemTree(*frame, clipAtTarget, identifier);
 }
 
-void FrameLoaderClientHaiku::didDisplayInsecureContent()
-{
-}
-
-void FrameLoaderClientHaiku::didRunInsecureContent(WebCore::SecurityOrigin&)
-{
-    notImplemented();
-}
-
 void FrameLoaderClientHaiku::convertMainResourceLoadToDownload(DocumentLoader*,
     const ResourceRequest& request, const ResourceResponse&)
 {

@@ -85,7 +85,7 @@ Ref<CurlRequest> CurlDownload::createCurlRequest(ResourceRequest& request)
     // FIXME: Use a correct sessionID.
     if (m_resourceHandle != nullptr && !request.httpHeaderFields().contains(HTTPHeaderName::Cookie)) {
         auto includeSecureCookies = request.url().protocolIs("https"_s) ? IncludeSecureCookies::Yes : IncludeSecureCookies::No;
-        String cookieHeaderField = m_resourceHandle->context()->storageSession()->cookieRequestHeaderFieldValue(request.firstPartyForCookies(), SameSiteInfo::create(request), request.url(), std::nullopt, std::nullopt, includeSecureCookies, ApplyTrackingPrevention::Yes, ShouldRelaxThirdPartyCookieBlocking::No).first;
+        String cookieHeaderField = m_resourceHandle->context()->storageSession()->cookieRequestHeaderFieldValue(request.firstPartyForCookies(), SameSiteInfo::create(request), request.url(), std::nullopt, std::nullopt, includeSecureCookies, ApplyTrackingPrevention::Yes, ShouldRelaxThirdPartyCookieBlocking::No, IsKnownCrossSiteTracker::No).first;
         if (!cookieHeaderField.isEmpty())
             request.addHTTPHeaderField(HTTPHeaderName::Cookie, cookieHeaderField);
     }

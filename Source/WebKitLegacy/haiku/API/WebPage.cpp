@@ -72,6 +72,8 @@
 #include "WebCore/GraphicsContextHaiku.h"
 #include "WebCore/HandleUserInputEventResult.h"
 #include "WebCore/LibWebRTCProvider.h"
+#include "WebCore/LocalFrameView.h"
+#include "WebCore/LocalFrameInlines.h"
 #include "WebCore/LogInitialization.h"
 #include "WebCore/MemoryCache.h"
 #include "WebNavigatorContentUtilsClient.h"

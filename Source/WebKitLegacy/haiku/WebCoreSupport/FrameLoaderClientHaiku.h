@@ -167,10 +167,6 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
     void convertMainResourceLoadToDownload(DocumentLoader*,
         const ResourceRequest&, const ResourceResponse&) override;
 
-    void didDisplayInsecureContent() override;
-
-    void didRunInsecureContent(SecurityOrigin&) override;
-
     bool shouldFallBack(const ResourceError&) const override;
 
     String userAgent(const URL&) const override;

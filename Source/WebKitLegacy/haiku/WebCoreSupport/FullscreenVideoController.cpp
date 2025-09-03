@@ -30,6 +30,7 @@
 
 #include "WebView.h"
 #include <WebCore/Chrome.h>
+#include <WebCore/ExceptionOr.h>
 #include <WebCore/FloatRoundedRect.h>
 #include <WebCore/FontCascade.h>
 #include <WebCore/FontSelector.h>
