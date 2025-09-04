@@ -33,12 +33,15 @@
 #include <WebCore/IntPoint.h>
 #include <WebCore/IntRect.h>
 
+#include <wtf/IsoMalloc.h>
+
 namespace WebKit {
 
 class DrawingAreaProxy;
 class WebViewBase;
 
 class PageClientImpl: public PageClient {
+    WTF_MAKE_ISO_ALLOCATED(PageClientImpl);
 public:
     PageClientImpl(WebViewBase&);
     WebViewBase* viewWidget();
@@ -51,7 +54,7 @@ private:
     WebCore::IntSize viewSize() override;
     bool isViewWindowActive() override;
     bool isViewFocused() override;
-    bool isViewVisible() override;
+    bool isActiveViewVisible() override;
     bool isViewInWindow() override;
     void processDidExit() override;
     void didRelaunchProcess() override;

@@ -94,7 +94,7 @@ bool PageClientImpl::isViewFocused()
     return false;
 }
 
-bool PageClientImpl::isViewVisible()
+bool PageClientImpl::isActiveViewVisible()
 {
     //return fWebView.isVisible();
     return true;
