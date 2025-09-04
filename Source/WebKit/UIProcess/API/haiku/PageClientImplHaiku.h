@@ -39,6 +39,7 @@ class DrawingAreaProxy;
 class WebViewBase;
 
 class PageClientImpl: public PageClient {
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(PageClientImpl);
 public:
     PageClientImpl(WebViewBase&);
     WebViewBase* viewWidget();
@@ -51,7 +52,7 @@ private:
     WebCore::IntSize viewSize() override;
     bool isViewWindowActive() override;
     bool isViewFocused() override;
-    bool isViewVisible() override;
+    bool isActiveViewVisible() override;
     bool isViewInWindow() override;
     void processDidExit() override;
     void didRelaunchProcess() override;
