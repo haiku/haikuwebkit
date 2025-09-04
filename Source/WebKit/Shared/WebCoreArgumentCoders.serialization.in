@@ -8917,7 +8917,11 @@ using WebCore::GlyphBufferGlyph = CGGlyph
 #else
 using WebCore::GlyphBufferGlyph = WebCore::Glyph
 #endif
+#if USE(HAIKU)
+using WebCore::Glyph = unsigned int
+#else
 using WebCore::Glyph = unsigned short
+#endif
 
 enum class WebCore::ContentExtensionDefaultEnablement : bool
 using WebCore::ContentExtensionEnablement = std::pair<WebCore::ContentExtensionDefaultEnablement, HashSet<String>>;
