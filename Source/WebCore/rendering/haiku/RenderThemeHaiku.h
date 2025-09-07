@@ -80,6 +80,7 @@ protected:
     bool paintRadio(const RenderObject&, const PaintInfo&, const FloatRect&) override;
     bool paintButton(const RenderObject&, const PaintInfo&, const FloatRect&) override;
 
+    Style::PreferredSizePair controlSize(StyleAppearance, const FontCascade&, const Style::PreferredSizePair&, float) const override;
 private:
     uint32 flagsForObject(const RenderObject&) const;
     rgb_color colorForControl(const RenderObject&) const;

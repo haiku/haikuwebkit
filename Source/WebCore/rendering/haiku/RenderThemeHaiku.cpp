@@ -52,8 +52,8 @@ static const int sliderThumbHeight = 17;
 
 RenderTheme& RenderTheme::singleton()
 {
-	static NeverDestroyed<RenderThemeHaiku> theme;
-	return theme;
+    static NeverDestroyed<RenderThemeHaiku> theme;
+    return theme;
 }
 
 RenderThemeHaiku::RenderThemeHaiku()
@@ -68,7 +68,7 @@ bool RenderThemeHaiku::paintSliderTrack(const RenderObject& object, const PaintI
 {
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     rgb_color background = base;
-    	// TODO: From PaintInfo?
+        // TODO: From PaintInfo?
     BRect rect = intRect;
     BView* view = info.context().platformContext();
     unsigned flags = flagsForObject(object);
@@ -237,7 +237,7 @@ void RenderThemeHaiku::paintMenuListButtonDecorations(const RenderBox& object, c
 bool RenderThemeHaiku::paintCheckbox(const RenderObject& object, const PaintInfo& info, const FloatRect& zoomedRect)
 {
     if (!be_control_look)
-        return false;
+        return true;
 
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
         // TODO get the color from PaintInfo?
@@ -246,13 +246,13 @@ bool RenderThemeHaiku::paintCheckbox(const RenderObject& object, const PaintInfo
     uint32 flags = flagsForObject(object) & ~BControlLook::B_CLICKED;
 
     be_control_look->DrawCheckBox(view, rect, view->Bounds(), base, flags);
-    return true;
+    return false;
 }
 
 bool RenderThemeHaiku::paintRadio(const RenderObject& object, const PaintInfo& info, const FloatRect& zoomedRect)
 {
     if (!be_control_look)
-        return false;
+        return true;
 
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
         // TODO get the color from PaintInfo?
@@ -261,13 +261,13 @@ bool RenderThemeHaiku::paintRadio(const RenderObject& object, const PaintInfo& i
     uint32 flags = flagsForObject(object) & ~BControlLook::B_CLICKED;
 
     be_control_look->DrawRadioButton(view, rect, view->Bounds(), base, flags);
-    return true;
+    return false;
 }
 
 bool RenderThemeHaiku::paintButton(const RenderObject& object, const PaintInfo& info, const FloatRect& zoomedRect)
 {
     if (!be_control_look)
-        return false;
+        return true;
 
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
         // TODO get the color from PaintInfo?
@@ -278,7 +278,27 @@ bool RenderThemeHaiku::paintButton(const RenderObject& object, const PaintInfo& 
     be_control_look->DrawButtonFrame(view, rect, view->Bounds(), base, view->ViewColor(), flags);
     be_control_look->DrawButtonBackground(view, rect, view->Bounds(), base, flags);
 
-    return true;
+    return false;
+}
+
+Style::PreferredSizePair RenderThemeHaiku::controlSize(StyleAppearance appearance,
+    const FontCascade& font, const Style::PreferredSizePair& minimum, float zoom) const
+{
+    switch (appearance) {
+        case StyleAppearance::Checkbox:
+        case StyleAppearance::Radio:
+        {
+            // Keep in sync with min size code in BCheckbox constructor
+            float minHeight = (float)ceil(6.0f + font.size());
+            return {
+                Style::PreferredSize::Fixed { minHeight },
+                Style::PreferredSize::Fixed { minHeight }
+            };
+        }
+
+        default:
+            return RenderTheme::controlSize(appearance, font, minimum, zoom);
+    }
 }
 
 bool RenderThemeHaiku::paintMenuList(const RenderObject&, const PaintInfo&, const FloatRect&)
