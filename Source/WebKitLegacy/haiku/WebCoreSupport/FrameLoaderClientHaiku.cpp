@@ -210,8 +210,10 @@ void FrameLoaderClientHaiku::dispatchWillSendRequest(DocumentLoader* /*loader*/,
 
 bool FrameLoaderClientHaiku::shouldUseCredentialStorage(DocumentLoader*, ResourceLoaderIdentifier)
 {
+    // TODO disable when in "private browsing" mode or similar, or allow to remember passwords or
+    // not per website
     notImplemented();
-    return false;
+    return true;
 }
 
 void FrameLoaderClientHaiku::dispatchDidReceiveAuthenticationChallenge(DocumentLoader*, ResourceLoaderIdentifier, const AuthenticationChallenge& challenge)
