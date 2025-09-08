@@ -49,10 +49,5 @@ const float MaxDragLabelStringWidth = (MaxDragLabelWidth - 2 * DragLabelBorderX)
 const float DragLinkLabelFontsize = 11;
 const float DragLinkUrlFontSize = 10;
 
-DragImageRef createDragImageForColor(const Color&, const FloatRect&, float, Path&)
-{
-    return nullptr;
-}
-
 } // namespace WebCore
 
