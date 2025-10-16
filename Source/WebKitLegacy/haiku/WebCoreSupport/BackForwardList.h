@@ -49,6 +49,8 @@ public:
     unsigned int forwardListCount(void) const override;
     bool containsItem(const WebCore::HistoryItem&) const override;
 
+    Vector<Ref<WebCore::HistoryItem>> allItems(WebCore::FrameIdentifier) override;
+
     void close() override;
 
 private:

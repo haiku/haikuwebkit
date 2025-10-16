@@ -121,6 +121,11 @@ RefPtr<HistoryItem> BackForwardList::itemAtIndex(int index, FrameIdentifier)
 }
 
 
+Vector<Ref<WebCore::HistoryItem>> BackForwardList::allItems(WebCore::FrameIdentifier)
+{
+    return {};
+}
+
 void BackForwardList::close()
 {
     m_entries.clear();
