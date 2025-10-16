@@ -320,7 +320,7 @@ public:
     virtual AVPlayer *objCAVFoundationAVPlayer() const { return nullptr; }
 #endif
 
-    virtual bool performTaskAtTime(Function<void()>&&, const MediaTime&) { return false; }
+    virtual bool performTaskAtTime(Function<void(const MediaTime&)>&&, const MediaTime&) { return false; }
 
     virtual bool shouldIgnoreIntrinsicSize() { return false; }
 

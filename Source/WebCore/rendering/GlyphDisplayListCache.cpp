@@ -179,7 +179,7 @@ bool GlyphDisplayListCache::canShareDisplayList(const DisplayList::DisplayList& 
         if (!(std::holds_alternative<DisplayList::Translate>(item)
             || std::holds_alternative<DisplayList::Scale>(item)
             || std::holds_alternative<DisplayList::ConcatenateCTM>(item)
-            || std::holds_alternative<DisplayList::DrawDecomposedGlyphs>(item)
+            || std::holds_alternative<DisplayList::DrawGlyphs>(item)
             || std::holds_alternative<DisplayList::DrawImageBuffer>(item)
             || std::holds_alternative<DisplayList::DrawNativeImage>(item)
             || std::holds_alternative<DisplayList::BeginTransparencyLayer>(item)

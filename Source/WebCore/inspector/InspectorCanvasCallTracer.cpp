@@ -73,7 +73,7 @@ static InspectorCanvasAgent* enabledCanvasAgent(CanvasRenderingContext& canvasRe
 {
     ASSERT(InspectorInstrumentationPublic::hasFrontends());
 
-    auto* agents = InspectorInstrumentation::instrumentingAgents(canvasRenderingContext.canvasBase().scriptExecutionContext());
+    auto* agents = InspectorInstrumentation::instrumentingAgents(canvasRenderingContext.canvasBase().protectedScriptExecutionContext().get());
     ASSERT(agents);
     if (!agents)
         return nullptr;

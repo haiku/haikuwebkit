@@ -52,13 +52,13 @@ auto CSSValueConversion<OffsetAnchor>::operator()(BuilderState& state, const CSS
 
 auto Blending<OffsetAnchor>::canBlend(const OffsetAnchor& a, const OffsetAnchor& b) -> bool
 {
-    return WTF::holdsAlternative<Position>(a) && WTF::holdsAlternative<Position>(b);
+    return a.isPosition() && b.isPosition();
 }
 
 auto Blending<OffsetAnchor>::requiresInterpolationForAccumulativeIteration(const OffsetAnchor& a, const OffsetAnchor& b) -> bool
 {
     ASSERT(canBlend(a, b));
-    return Style::requiresInterpolationForAccumulativeIteration(Position { a.value }, Position { b.value });
+    return Style::requiresInterpolationForAccumulativeIteration(*a.tryPosition(), *b.tryPosition());
 }
 
 auto Blending<OffsetAnchor>::blend(const OffsetAnchor& a, const OffsetAnchor& b, const BlendingContext& context) -> OffsetAnchor
@@ -69,14 +69,21 @@ auto Blending<OffsetAnchor>::blend(const OffsetAnchor& a, const OffsetAnchor& b,
     }
 
     ASSERT(canBlend(a, b));
-    return OffsetAnchor { Style::blend(Position { a.value }, Position { b.value }, context) };
+    return OffsetAnchor { Style::blend(*a.tryPosition(), *b.tryPosition(), context) };
 }
 
 // MARK: - Platform
 
 auto ToPlatform<OffsetAnchor>::operator()(const OffsetAnchor& value) -> WebCore::LengthPoint
 {
-    return value.value;
+    return WTF::switchOn(value,
+        [](const CSS::Keyword::Auto&) {
+            return WebCore::LengthPoint { WebCore::LengthType::Auto, WebCore::LengthType::Auto };
+        },
+        [](const Position& position) {
+            return toPlatform(position);
+        }
+    );
 }
 
 } // namespace Style

@@ -30,19 +30,21 @@
 #include "SpatialNavigation.h"
 
 #include "ContainerNodeInlines.h"
+#include "DocumentInlines.h"
 #include "FrameTree.h"
 #include "HTMLAreaElement.h"
 #include "HTMLImageElement.h"
 #include "HTMLMapElement.h"
 #include "HTMLSelectElement.h"
 #include "IntRect.h"
-#include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "NodeInlines.h"
 #include "Page.h"
 #include "RenderInline.h"
 #include "RenderLayer.h"
 #include "RenderLayerScrollableArea.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
 #include "Settings.h"
 
@@ -521,9 +523,9 @@ LayoutRect nodeRectInAbsoluteCoordinates(const ContainerNode& containerNode, boo
         // the rect of the focused element.
         if (ignoreBorder) {
             auto& style = renderer->style();
-            rect.move(Style::evaluate(style.borderLeftWidth()), Style::evaluate(style.borderTopWidth()));
-            rect.setWidth(rect.width() - Style::evaluate(style.borderLeftWidth()) - Style::evaluate(style.borderRightWidth()));
-            rect.setHeight(rect.height() - Style::evaluate(style.borderTopWidth()) - Style::evaluate(style.borderBottomWidth()));
+            rect.move(Style::evaluate(style.borderLeftWidth(), 1.0f /* FIXME FIND ZOOM */), Style::evaluate(style.borderTopWidth(), 1.0f /* FIXME FIND ZOOM */));
+            rect.setWidth(rect.width() - Style::evaluate(style.borderLeftWidth(), 1.0f /* FIXME FIND ZOOM */) - Style::evaluate(style.borderRightWidth(), 1.0f /* FIXME FIND ZOOM */));
+            rect.setHeight(rect.height() - Style::evaluate(style.borderTopWidth(), 1.0f /* FIXME FIND ZOOM */) - Style::evaluate(style.borderBottomWidth(), 1.0f /* FIXME FIND ZOOM */));
         }
         return rect;
     }

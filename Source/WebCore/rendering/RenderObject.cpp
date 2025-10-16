@@ -91,7 +91,6 @@
 #include <algorithm>
 #include <stdio.h>
 #include <wtf/HexNumber.h>
-#include <wtf/RefCountedLeakCounter.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>
 
@@ -145,8 +144,6 @@ struct SameSizeAsRenderObject final : public CachedImageClient {
 static_assert(sizeof(RenderObject) == sizeof(SameSizeAsRenderObject), "RenderObject should stay small");
 #endif
 
-DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, renderObjectCounter, ("RenderObject"));
-
 void RenderObjectDeleter::operator() (RenderObject* renderer) const
 {
     renderer->destroy();
@@ -165,17 +162,11 @@ RenderObject::RenderObject(Type type, Node& node, OptionSet<TypeFlag> typeFlags,
     ASSERT(!typeFlags.contains(TypeFlag::IsAnonymous));
     if (CheckedPtr renderView = node.document().renderView())
         renderView->didCreateRenderer();
-#ifndef NDEBUG
-    renderObjectCounter.increment();
-#endif
 }
 
 RenderObject::~RenderObject()
 {
     clearLayoutBox();
-#ifndef NDEBUG
-    renderObjectCounter.decrement();
-#endif
     ASSERT(!hasRareData());
 }
 
@@ -1196,7 +1187,7 @@ auto RenderObject::computeVisibleRectsInContainer(const RepaintRects& rects, con
     if (parent->hasNonVisibleOverflow()) {
         bool isEmpty = !downcast<RenderLayerModelObject>(*parent).applyCachedClipAndScrollPosition(adjustedRects, container, context);
         if (isEmpty) {
-            if (context.options.contains(VisibleRectContextOption::UseEdgeInclusiveIntersection))
+            if (context.options.contains(VisibleRectContext::Option::UseEdgeInclusiveIntersection))
                 return std::nullopt;
             return adjustedRects;
         }
@@ -2020,6 +2011,11 @@ PositionWithAffinity RenderObject::createPositionWithAffinity(const Position& po
     return createPositionWithAffinity(0, Affinity::Downstream);
 }
 
+const RenderStyle& RenderObject::outlineStyleForRepaint() const
+{
+    return style();
+}
+
 CursorDirective RenderObject::getCursor(const LayoutPoint&, Cursor&) const
 {
     return SetCursorBasedOnStyle;
@@ -2168,7 +2164,13 @@ bool RenderObject::hasEmptyVisibleRectRespectingParentFrames() const
     };
 
     auto hasEmptyVisibleRect = [] (const RenderObject& renderer) {
-        VisibleRectContext context { false, false, { VisibleRectContextOption::UseEdgeInclusiveIntersection, VisibleRectContextOption::ApplyCompositedClips }};
+        VisibleRectContext context {
+            .hasPositionFixedDescendant = false,
+            .dirtyRectIsFlipped = false,
+            .descendantNeedsEnclosingIntRect = false,
+            .options = { VisibleRectContext::Option::UseEdgeInclusiveIntersection, VisibleRectContext::Option::ApplyCompositedClips },
+            .scrollMargin = { }
+        };
         CheckedRef box = renderer.enclosingBoxModelObject();
         auto clippedBounds = box->computeVisibleRectsInContainer({ box->borderBoundingBox() }, &box->view(), context);
         return !clippedBounds || clippedBounds->clippedOverflowRect.isEmpty();
@@ -2278,19 +2280,27 @@ static Vector<FloatRect> borderAndTextRects(const SimpleRange& range, Coordinate
             selectedElementsSet.remove(&ancestor);
     }
 
-    constexpr OptionSet<RenderObject::VisibleRectContextOption> visibleRectOptions = {
-        RenderObject::VisibleRectContextOption::UseEdgeInclusiveIntersection,
-        RenderObject::VisibleRectContextOption::ApplyCompositedClips,
-        RenderObject::VisibleRectContextOption::ApplyCompositedContainerScrolls
-    };
-
     for (Ref node : intersectingNodesWithDeprecatedZeroOffsetStartQuirk(range)) {
         auto* element = dynamicDowncast<Element>(node.get());
         if (element && selectedElementsSet.contains(element) && (useVisibleBounds || !node->parentElement() || !selectedElementsSet.contains(node->parentElement()))) {
             if (CheckedPtr renderer = element->renderBoxModelObject()) {
                 if (useVisibleBounds) {
                     auto localBounds = renderer->borderBoundingBox();
-                    auto rootClippedBounds = renderer->computeVisibleRectsInContainer({ localBounds }, renderer->checkedView().ptr(), { false, false, visibleRectOptions });
+                    auto rootClippedBounds = renderer->computeVisibleRectsInContainer(
+                        { localBounds },
+                        renderer->checkedView().ptr(),
+                        {
+                            .hasPositionFixedDescendant = false,
+                            .dirtyRectIsFlipped = false,
+                            .descendantNeedsEnclosingIntRect = false,
+                            .options = {
+                                VisibleRectContext::Option::UseEdgeInclusiveIntersection,
+                                VisibleRectContext::Option::ApplyCompositedClips,
+                                VisibleRectContext::Option::ApplyCompositedContainerScrolls
+                            },
+                            .scrollMargin = { }
+                        }
+                    );
                     if (!rootClippedBounds)
                         continue;
                     auto snappedBounds = snapRectToDevicePixels(rootClippedBounds->clippedOverflowRect, node->document().deviceScaleFactor());

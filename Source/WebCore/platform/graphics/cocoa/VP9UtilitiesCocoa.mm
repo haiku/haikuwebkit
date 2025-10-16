@@ -31,11 +31,11 @@
 #import "FourCC.h"
 #import "LibWebRTCProvider.h"
 #import "MediaCapabilitiesInfo.h"
-#import "MediaSample.h"
 #import "PlatformScreen.h"
 #import "ScreenProperties.h"
 #import "SharedBuffer.h"
 #import "SystemBattery.h"
+#import "TrackInfo.h"
 #import "VideoConfiguration.h"
 #import "VideoDecoder.h"
 #import <JavaScriptCore/DataView.h>

@@ -8,18 +8,22 @@
 #ifndef skgpu_graphite_DrawParams_DEFINED
 #define skgpu_graphite_DrawParams_DEFINED
 
-
 #include "include/core/SkPaint.h"
 #include "include/core/SkRect.h"
+#include "include/private/base/SkAssert.h"
+#include "include/private/base/SkTo.h"
 #include "src/gpu/graphite/DrawOrder.h"
 #include "src/gpu/graphite/geom/Geometry.h"
 #include "src/gpu/graphite/geom/NonMSAAClip.h"
 #include "src/gpu/graphite/geom/Rect.h"
-#include "src/gpu/graphite/geom/Transform.h"
 
+#include <algorithm>
 #include <optional>
 
+class SkShader;
+
 namespace skgpu::graphite {
+class Transform;
 
 // NOTE: Only represents the stroke or hairline styles; stroke-and-fill must be handled higher up.
 class StrokeStyle {
@@ -108,6 +112,16 @@ public:
     bool isClippedOut() const { return fDrawBounds.isEmptyNegativeOrNaN(); }
 
     bool needsCoverage() const { return SkToBool(fShader) || !fNonMSAAClip.isEmpty(); }
+
+    void outsetBoundsForAA() {
+        // We use 1px to handle both subpixel/hairline approaches and the standard 1/2px outset
+        // for shapes that cover multiple pixels.
+        fTransformedShapeBounds.outset(1.f);
+        // This is a no-op for inverse fills (where fDrawBounds was already equal to fScissor),
+        // and equivalent to fDrawBounds = fTransformedShapeBounds.makeIntersect(fScissor) with
+        // the outset shape bounds.
+        fDrawBounds.outset(1.f).intersect(fScissor);
+    }
 
 private:
     // DrawList assumes the DrawBounds are correct for a given shape, transform, and style. They

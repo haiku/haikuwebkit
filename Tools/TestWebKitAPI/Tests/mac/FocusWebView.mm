@@ -35,6 +35,7 @@
 #import "WKWebViewConfigurationExtras.h"
 #import <QuartzCore/QuartzCore.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 namespace TestWebKitAPI {
 
@@ -59,7 +60,7 @@ TEST(FocusWebView, DoNotFocusWebViewWhenUnparented)
     [webView removeFromSuperview];
     [CATransaction flush];
     __block bool doneUnparenting = false;
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(mainDispatchQueueSingleton(), ^{
         doneUnparenting = true;
     });
     Util::run(&doneUnparenting);

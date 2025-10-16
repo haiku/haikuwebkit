@@ -60,6 +60,7 @@ public:
 
     // EventTarget.
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ActiveDOMObject::protectedScriptExecutionContext;
 
     void reportNetworkUsage(size_t bytesTransferredOverNetworkDelta);
 

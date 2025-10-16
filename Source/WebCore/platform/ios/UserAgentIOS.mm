@@ -45,17 +45,17 @@ namespace WebCore {
 
 static inline bool isClassic()
 {
-    return [[PAL::getUIApplicationClass() sharedApplication] _isClassic];
+    return [[PAL::getUIApplicationClassSingleton() sharedApplication] _isClassic];
 }
 
 static inline bool isClassicPad()
 {
-    return [PAL::getUIApplicationClass() _classicMode] == UIApplicationSceneClassicModeOriginalPad;
+    return [PAL::getUIApplicationClassSingleton() _classicMode] == UIApplicationSceneClassicModeOriginalPad;
 }
 
 static inline bool isClassicPhone()
 {
-    return isClassic() && [PAL::getUIApplicationClass() _classicMode] != UIApplicationSceneClassicModeOriginalPad;
+    return isClassic() && [PAL::getUIApplicationClassSingleton() _classicMode] != UIApplicationSceneClassicModeOriginalPad;
 }
 
 ASCIILiteral osNameForUserAgent()

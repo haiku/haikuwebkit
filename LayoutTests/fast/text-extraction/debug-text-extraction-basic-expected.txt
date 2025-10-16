@@ -25,6 +25,8 @@ root
             role='region'
                 role='status','Ready',[…]
                 button,uid=…,events=[click],'Update Status',[…]
+            aria-label='Figure 1'
+                canvas,uid=…,[…]
     role='contentinfo'
         '    \nFooter content with ',[…]
         role='img',aria-label='copyright symbol','©',[…]

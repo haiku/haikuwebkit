@@ -34,7 +34,7 @@ import unittest
 from webkitpy.common.system.executive_mock import MockExecutive
 from webkitpy.common.system.filesystem_mock import MockFileSystem
 from webkitpy.port.wpe import WPEPort
-from webkitpy.port import port_testcase
+from webkitpy.port import Driver, port_testcase
 from webkitpy.thirdparty.mock import Mock, patch
 from webkitpy.tool.mocktool import MockOptions
 from webkitcorepy import OutputCapture
@@ -174,3 +174,24 @@ class WPEPortTest(port_testcase.PortTestCase):
         self.assertTrue(mb_path.endswith('/MiniBrowser'))
         cog_path = port.get_browser_path('cog')
         self.assertTrue(cog_path.endswith('/cog'))
+
+    def test_setup_environ_for_test_wpe_prefix(self):
+        environment_user = {'WPE_DISPLAY':  'wpe-display-drm',
+                            'WPE_DRM_DEVICE': 'drm1',
+                            'WPE_USE_EXPLICIT_SYNC': '1',
+                            'WPE_RANDOM_VAR': 'randValue',
+                            'WPE-NOTPASS': '0',
+                            'WPEWEBKIT_NOT_PASS': '0'}
+        # Test that WPE_ prefixed variables from the environment are allowed on the generic
+        # base driver. Specific drivers (like headless or wayland) can filter-out or override
+        # some of this variables. But that is tested on their respective unit test files.
+        with patch('os.environ', environment_user), patch('sys.platform', 'linux2'):
+            port = self.make_port()
+            driver = Driver(port, None, pixel_tests=False)
+            environment_driver_test = driver._setup_environ_for_test()
+            for var in environment_user:
+                if var.startswith('WPE_'):
+                    self.assertIn(var, environment_driver_test)
+                    self.assertEqual(environment_user[var], environment_driver_test[var])
+                else:
+                    self.assertNotIn(var, environment_driver_test)

@@ -32,6 +32,7 @@
 #import <wtf/SHA1.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/Base64.h>
 #import <wtf/text/StringToIntegerConversion.h>
 
@@ -53,7 +54,7 @@ static RetainPtr<dispatch_data_t> dataFromString(String&& s)
     auto impl = s.releaseImpl();
     ASSERT(impl->is8Bit());
     auto characters = impl->span8();
-    return adoptNS(dispatch_data_create(characters.data(), characters.size(), dispatch_get_main_queue(), ^{
+    return adoptNS(dispatch_data_create(characters.data(), characters.size(), mainDispatchQueueSingleton(), ^{
         (void)impl;
     }));
 }
@@ -228,7 +229,7 @@ Connection ConnectionGroup::createWebTransportConnection(ConnectionType type) co
 
     RetainPtr connection = adoptNS(nw_connection_group_extract_connection(m_data->group.get(), nil, webtransportOptions.get()));
     ASSERT(connection);
-    nw_connection_set_queue(connection.get(), dispatch_get_main_queue());
+    nw_connection_set_queue(connection.get(), mainDispatchQueueSingleton());
     nw_connection_start(connection.get());
     return Connection(connection.get());
 }
@@ -259,7 +260,7 @@ void ConnectionGroup::receiveIncomingConnection(Connection connection)
             return;
         data->connectionHandler(connection);
     });
-    nw_connection_set_queue(connection.m_connection.get(), dispatch_get_main_queue());
+    nw_connection_set_queue(connection.m_connection.get(), mainDispatchQueueSingleton());
     nw_connection_start(connection.m_connection.get());
 }
 

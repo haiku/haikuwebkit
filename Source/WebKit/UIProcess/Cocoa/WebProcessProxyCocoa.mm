@@ -50,6 +50,7 @@
 #import <wtf/cocoa/Entitlements.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/spi/darwin/SandboxSPI.h>
 
 #if PLATFORM(IOS_FAMILY)
@@ -179,7 +180,7 @@ void WebProcessProxy::unblockAccessibilityServerIfNeeded()
 #if PLATFORM(MAC) || PLATFORM(MACCATALYST)
 void WebProcessProxy::isAXAuthenticated(CoreIPCAuditToken&& auditToken, CompletionHandler<void(bool)>&& completionHandler)
 {
-    auto authenticated = TCCAccessCheckAuditToken(get_TCC_kTCCServiceAccessibility(), auditToken.auditToken(), nullptr);
+    auto authenticated = TCCAccessCheckAuditToken(get_TCC_kTCCServiceAccessibilitySingleton(), auditToken.auditToken(), nullptr);
     completionHandler(authenticated);
 }
 #endif
@@ -196,7 +197,7 @@ void WebProcessProxy::hardwareConsoleStateChanged()
 #if HAVE(AUDIO_COMPONENT_SERVER_REGISTRATIONS)
 void WebProcessProxy::sendAudioComponentRegistrations()
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), [weakThis = WeakPtr { *this }] () mutable {
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), [weakThis = WeakPtr { *this }] () mutable {
 
         auto registrations = fetchAudioComponentServerRegistrations();
         if (!registrations)

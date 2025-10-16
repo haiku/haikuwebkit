@@ -31,7 +31,7 @@
 #import <objc/runtime.h>
 #import <wtf/text/WTFString.h>
 
-static inline Class wkNSStringClass()
+static inline Class wkNSStringClassSingleton()
 {
     static dispatch_once_t once;
     static Class wkNSStringClass;
@@ -44,7 +44,7 @@ static inline Class wkNSStringClass()
 WKStringRef WKStringCreateWithCFString(CFStringRef cfString)
 {
     // Since WKNSString is an internal class with no subclasses, we can do a simple equality check.
-    if (object_getClass((__bridge NSString *)cfString) == wkNSStringClass())
+    if (object_getClass((__bridge NSString *)cfString) == wkNSStringClassSingleton())
         return WebKit::toAPI(RefPtr { downcast<API::String>(&[(WKNSString *)(__bridge NSString *)CFRetain(cfString) _apiObject]) }.get());
     String string(cfString);
     return WebKit::toCopiedAPI(string);

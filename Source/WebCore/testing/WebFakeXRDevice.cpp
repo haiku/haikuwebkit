@@ -158,7 +158,8 @@ void SimulatedXRDevice::frameTimerFired()
             .layerSetup = layerSetupData,
             .renderingFrameIndex = 0,
             .textureData = std::nullopt,
-            .requestDepth = false
+            .requestDepth = false,
+            .isForTesting = true
         });
         data.layers.add(layer.key, WTFMove(layerData));
     }

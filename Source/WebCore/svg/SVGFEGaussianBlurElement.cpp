@@ -26,7 +26,7 @@
 #include "FEGaussianBlur.h"
 #include "NodeName.h"
 #include "SVGDocumentExtensions.h"
-#include "SVGFilter.h"
+#include "SVGFilterRenderer.h"
 #include "SVGNames.h"
 #include "SVGParserUtilities.h"
 #include "SVGPropertyOwnerRegistry.h"
@@ -140,7 +140,7 @@ bool SVGFEGaussianBlurElement::isIdentity() const
 
 IntOutsets SVGFEGaussianBlurElement::outsets(const FloatRect& targetBoundingBox, SVGUnitTypes::SVGUnitType primitiveUnits) const
 {
-    auto stdDeviation = SVGFilter::calculateResolvedSize({ stdDeviationX(), stdDeviationY() }, targetBoundingBox, primitiveUnits);
+    auto stdDeviation = SVGFilterRenderer::calculateResolvedSize({ stdDeviationX(), stdDeviationY() }, targetBoundingBox, primitiveUnits);
     return FEGaussianBlur::calculateOutsets(stdDeviation);
 }
 

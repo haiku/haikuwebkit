@@ -26,7 +26,6 @@
 #pragma once
 
 #include <WebCore/PixelFormat.h>
-#include <WebCore/PixelFormat.h>
 
 #include <wtf/Forward.h>
 

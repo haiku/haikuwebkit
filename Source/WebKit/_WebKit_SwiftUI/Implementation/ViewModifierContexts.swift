@@ -21,6 +21,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
+#if ENABLE_SWIFTUI
+
 internal import SwiftUI
 @_spi(Private) internal import WebKit
 
@@ -43,3 +45,24 @@ struct ScrollInputBehaviorContext {
     let behavior: ScrollInputBehavior
     let input: ScrollInputKind
 }
+
+struct ScrollEdgeEffectStyleContext {
+    let style: ScrollEdgeEffectStyle?
+    let edges: Edge.Set
+}
+
+struct WebPreferenceContext {
+    private var features: [String: Any] = [:]
+
+    mutating func set<Value>(_ key: WebView.WebPreferenceFeature<Value>, to value: Value) {
+        features[key.rawValue] = value
+    }
+
+    func get<Value>(_ key: String, as: Value.Type) -> Value? {
+        features[key] as? Value
+    }
+
+    var isEmpty: Bool { features.isEmpty }
+}
+
+#endif

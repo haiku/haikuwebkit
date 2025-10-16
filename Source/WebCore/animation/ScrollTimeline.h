@@ -27,6 +27,7 @@
 
 #include <WebCore/AnimationTimeline.h>
 #include <WebCore/Element.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <WebCore/ScrollAxis.h>
 #include <WebCore/ScrollTimelineOptions.h>
 #include <WebCore/Styleable.h>
@@ -41,8 +42,6 @@ class Document;
 class Element;
 class RenderStyle;
 class ScrollableArea;
-
-struct TimelineRange;
 
 class ScrollTimeline : public AnimationTimeline {
 public:
@@ -71,12 +70,12 @@ public:
     AnimationTimelinesController* controller() const override;
 
     std::optional<WebAnimationTime> currentTime(UseCachedCurrentTime = UseCachedCurrentTime::Yes) override;
-    TimelineRange defaultRange() const override;
+    Style::SingleAnimationRange defaultRange() const override;
     WeakPtr<Element, WeakPtrImplWithEventTargetData> timelineScopeDeclaredElement() const { return m_timelineScopeElement; }
     void setTimelineScopeElement(const Element&);
     void clearTimelineScopeDeclaredElement() { m_timelineScopeElement = nullptr; }
 
-    virtual std::pair<WebAnimationTime, WebAnimationTime> intervalForAttachmentRange(const TimelineRange&) const;
+    virtual std::pair<WebAnimationTime, WebAnimationTime> intervalForAttachmentRange(const Style::SingleAnimationRange&) const;
 
     void removeTimelineFromDocument(Element*);
 

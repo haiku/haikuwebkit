@@ -67,6 +67,7 @@ constexpr char16_t doublePrimeQuotationMark = 0x301E;
 constexpr char16_t emSpace = 0x2003;
 constexpr char32_t emojiCat = 0x1F408;
 constexpr char16_t emojiVariationSelector = 0xFE0F; // Technical name is "VARIATION SELECTOR-16"
+constexpr char16_t emDash = 0x2014;
 constexpr char16_t enDash = 0x2013;
 constexpr char16_t ethiopicPrefaceColon = 0x1366;
 constexpr char16_t ethiopicWordspace = 0x1361;
@@ -218,6 +219,7 @@ using WTF::Unicode::doublePrimeQuotationMark;
 using WTF::Unicode::emSpace;
 using WTF::Unicode::emojiCat;
 using WTF::Unicode::emojiVariationSelector;
+using WTF::Unicode::emDash;
 using WTF::Unicode::enDash;
 using WTF::Unicode::ethiopicPrefaceColon;
 using WTF::Unicode::ethiopicWordspace;

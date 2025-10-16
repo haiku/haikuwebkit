@@ -61,8 +61,8 @@ public:
     void unregisterMirror(Mirror&);
 
     bool hasStopRequest() { return trapAwareSoftStackLimit() == stopRequestMarker(); }
-    void requestStop();
-    void cancelStop();
+    CONCURRENT_SAFE void requestStop();
+    CONCURRENT_SAFE void cancelStop();
 
     void* softStackLimit() const { return m_softStackLimit; }
     void* trapAwareSoftStackLimit() const { return m_trapAwareSoftStackLimit.loadRelaxed(); }

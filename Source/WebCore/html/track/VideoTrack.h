@@ -54,7 +54,7 @@ public:
     static const AtomString& signKeyword();
 
     bool selected() const { return m_selected; }
-    virtual void setSelected(const bool);
+    void setSelected(const bool);
 
     void addClient(VideoTrackClient&);
     void clearClient(VideoTrackClient&);

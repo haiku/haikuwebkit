@@ -5617,7 +5617,7 @@ template <class TreeBuilder> TreeExpression Parser<LexerType>::parseUnaryExpress
             m_parserState.assignmentCount++;
             break;
         case TYPEOF:
-            expr = context.makeTypeOfNode(location, expr);
+            expr = context.makeTypeOfNode(location, expr, subExprStart, subExprStart, end);
             break;
         case VOIDTOKEN:
             expr = context.createVoid(location, expr);

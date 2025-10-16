@@ -875,14 +875,10 @@ $(PROJECT_DIR)/Modules/streams/CountQueuingStrategy.idl
 $(PROJECT_DIR)/Modules/streams/CountQueuingStrategy.js
 $(PROJECT_DIR)/Modules/streams/GenericTransformStream.idl
 $(PROJECT_DIR)/Modules/streams/ReadableByteStreamController.idl
-$(PROJECT_DIR)/Modules/streams/ReadableByteStreamController.js
-$(PROJECT_DIR)/Modules/streams/ReadableByteStreamInternals.js
 $(PROJECT_DIR)/Modules/streams/ReadableStream.idl
 $(PROJECT_DIR)/Modules/streams/ReadableStream.js
 $(PROJECT_DIR)/Modules/streams/ReadableStreamBYOBReader.idl
-$(PROJECT_DIR)/Modules/streams/ReadableStreamBYOBReader.js
 $(PROJECT_DIR)/Modules/streams/ReadableStreamBYOBRequest.idl
-$(PROJECT_DIR)/Modules/streams/ReadableStreamBYOBRequest.js
 $(PROJECT_DIR)/Modules/streams/ReadableStreamDefaultController.idl
 $(PROJECT_DIR)/Modules/streams/ReadableStreamDefaultController.js
 $(PROJECT_DIR)/Modules/streams/ReadableStreamDefaultReader.idl
@@ -1509,7 +1505,6 @@ $(PROJECT_DIR)/dom/NonElementParentNode.idl
 $(PROJECT_DIR)/dom/Observable.idl
 $(PROJECT_DIR)/dom/ObservableInspector.idl
 $(PROJECT_DIR)/dom/ObservableInspectorAbortCallback.idl
-$(PROJECT_DIR)/dom/OverflowEvent.idl
 $(PROJECT_DIR)/dom/PageRevealEvent.idl
 $(PROJECT_DIR)/dom/PageSwapEvent.idl
 $(PROJECT_DIR)/dom/PageTransitionEvent.idl

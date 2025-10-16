@@ -1527,7 +1527,7 @@ void HTMLInputElement::logUserInteraction()
     if (!document().frame() || !document().frame()->localMainFrame())
         return;
     if (RefPtr mainFrameDocument = document().frame()->localMainFrame()->document())
-        ResourceLoadObserver::shared().logUserInteractionWithReducedTimeResolution(*mainFrameDocument);
+        ResourceLoadObserver::singleton().logUserInteractionWithReducedTimeResolution(*mainFrameDocument);
 }
 
 void HTMLInputElement::setAutofilled(bool autoFilled)

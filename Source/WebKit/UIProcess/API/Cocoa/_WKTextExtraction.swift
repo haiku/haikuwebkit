@@ -208,6 +208,8 @@ extension WKTextExtractionContainerItem {
             containerString = "navigation"
         case .button:
             containerString = "button"
+        case .canvas:
+            containerString = "canvas"
         case .generic:
             break
         @unknown default:
@@ -458,13 +460,13 @@ extension WKTextExtractionEditable {
 extension WKTextExtractionLinkItem {
     let target: String
     @nonobjc
-    private let backingURL: NSURL
+    private let backingURL: NSURL?
 
-    var url: URL { backingURL as URL }
+    var url: URL? { backingURL as URL? }
 
     init(
         target: String,
-        url: URL,
+        url: URL?,
         rectInWebView: CGRect,
         children: [WKTextExtractionItem],
         eventListeners: WKTextExtractionEventListenerTypes,
@@ -473,7 +475,7 @@ extension WKTextExtractionLinkItem {
         nodeIdentifier: String?
     ) {
         self.target = target
-        self.backingURL = url as NSURL
+        self.backingURL = url as NSURL?
         super
             .init(
                 with: rectInWebView,
@@ -490,7 +492,10 @@ extension WKTextExtractionLinkItem {
         var parts = super.textRepresentationParts
 
         parts.insert("link", at: 0)
-        parts.append("url='\(url.absoluteString.escaped)'")
+
+        if let url {
+            parts.append("url='\(url.absoluteString.escaped)'")
+        }
 
         if !target.isEmpty {
             parts.append("target='\(target.escaped)'")
@@ -530,8 +535,8 @@ extension WKTextExtractionLink {
 
 @_objcImplementation
 extension WKTextExtractionTextItem {
-    let content: String
-    let selectedRange: NSRange
+    var content: String
+    var selectedRange: NSRange
     let links: [WKTextExtractionLink]
     let editable: WKTextExtractionEditable?
 

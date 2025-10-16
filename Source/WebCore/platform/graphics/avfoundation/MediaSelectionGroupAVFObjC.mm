@@ -129,7 +129,7 @@ MediaSelectionGroupAVFObjC::~MediaSelectionGroupAVFObjC()
 
 void MediaSelectionGroupAVFObjC::updateOptions(const Vector<String>& characteristics)
 {
-    RetainPtr<NSSet> newAVOptions = adoptNS([[NSSet alloc] initWithArray:[PAL::getAVMediaSelectionGroupClass() playableMediaSelectionOptionsFromArray:[m_mediaSelectionGroup options]]]);
+    RetainPtr<NSSet> newAVOptions = adoptNS([[NSSet alloc] initWithArray:[PAL::getAVMediaSelectionGroupClassSingleton() playableMediaSelectionOptionsFromArray:[m_mediaSelectionGroup options]]]);
     RetainPtr<NSMutableSet> oldAVOptions = adoptNS([[NSMutableSet alloc] initWithCapacity:m_options.size()]);
     for (auto& avOption : m_options.keys())
         [oldAVOptions addObject:(__bridge AVMediaSelectionOption *)avOption];
@@ -159,7 +159,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!m_shouldSelectOptionAutomatically)
         return;
 
-    NSArray* filteredOptions = [PAL::getAVMediaSelectionGroupClass() mediaSelectionOptionsFromArray:[m_mediaSelectionGroup options]
+    NSArray* filteredOptions = [PAL::getAVMediaSelectionGroupClassSingleton() mediaSelectionOptionsFromArray:[m_mediaSelectionGroup options]
         filteredAndSortedAccordingToPreferredLanguages:createNSArray(userPreferredLanguages(ShouldMinimizeLanguages::No)).get()];
 
     if (![filteredOptions count] && characteristics.isEmpty())
@@ -169,7 +169,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (![filteredOptions count])
         filteredOptions = [m_mediaSelectionGroup options];
 
-    NSArray* optionsWithCharacteristics = [PAL::getAVMediaSelectionGroupClass() mediaSelectionOptionsFromArray:filteredOptions withMediaCharacteristics:createNSArray(characteristics).get()];
+    NSArray* optionsWithCharacteristics = [PAL::getAVMediaSelectionGroupClassSingleton() mediaSelectionOptionsFromArray:filteredOptions withMediaCharacteristics:createNSArray(characteristics).get()];
     if (optionsWithCharacteristics && [optionsWithCharacteristics count])
         filteredOptions = optionsWithCharacteristics;
 

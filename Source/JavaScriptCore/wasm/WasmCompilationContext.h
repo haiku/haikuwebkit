@@ -70,7 +70,7 @@ struct CompilationContext {
     Box<PCToCodeOriginMap> pcToCodeOriginMap;
     Box<PCToCodeOriginMapBuilder> pcToCodeOriginMapBuilder;
     Vector<CCallHelpers::Label> catchEntrypoints;
-    SegmentedVector<OMGOrigin> origins;
+    SegmentedVector<WasmOrigin> origins;
 };
 
 } // namespace Wasm

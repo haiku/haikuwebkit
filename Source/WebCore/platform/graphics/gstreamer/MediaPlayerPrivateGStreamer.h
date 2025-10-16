@@ -184,7 +184,7 @@ public:
     unsigned decodedFrameCount() const final;
     unsigned droppedFrameCount() const final;
     void acceleratedRenderingStateChanged() final;
-    bool performTaskAtTime(Function<void()>&&, const MediaTime&) override;
+    bool performTaskAtTime(Function<void(const MediaTime&)>&&, const MediaTime&) override;
     void isLoopingChanged() final;
     void audioOutputDeviceChanged() final;
 
@@ -206,6 +206,9 @@ public:
 
     RefPtr<VideoFrame> videoFrameForCurrentTime() override;
 
+    virtual void mirrorEnabledVideoTrackIfNeeded(const VideoTrackPrivateGStreamer&) { }
+
+    // Used for the non-MSE case.
     void updateEnabledVideoTrack();
     void updateEnabledAudioTrack();
     void playbin3SendSelectStreamsIfAppropriate();
@@ -443,6 +446,14 @@ protected:
     GstSeekFlags m_seekFlags;
     bool m_ignoreErrors { false };
 
+    TrackIDHashMap<Ref<AudioTrackPrivateGStreamer>> m_audioTracks;
+    TrackIDHashMap<Ref<VideoTrackPrivateGStreamer>> m_videoTracks;
+    TrackIDHashMap<Ref<InbandTextTrackPrivateGStreamer>> m_textTracks;
+    RefPtr<InbandMetadataTextTrackPrivateGStreamer> m_chaptersTrack;
+#if USE(GSTREAMER_MPEGTS)
+    TrackIDHashMap<RefPtr<InbandMetadataTextTrackPrivateGStreamer>> m_metadataTracks;
+#endif
+
     String errorMessage() const override { return m_errorMessage; }
 
     void incrementDecodedVideoFramesCount() { m_decodedVideoFrames++; }
@@ -626,13 +637,6 @@ private:
 #endif
     GRefPtr<GstElement> m_downloadBuffer;
 
-    TrackIDHashMap<Ref<AudioTrackPrivateGStreamer>> m_audioTracks;
-    TrackIDHashMap<Ref<VideoTrackPrivateGStreamer>> m_videoTracks;
-    TrackIDHashMap<Ref<InbandTextTrackPrivateGStreamer>> m_textTracks;
-    RefPtr<InbandMetadataTextTrackPrivateGStreamer> m_chaptersTrack;
-#if USE(GSTREAMER_MPEGTS)
-    TrackIDHashMap<RefPtr<InbandMetadataTextTrackPrivateGStreamer>> m_metadataTracks;
-#endif
     virtual bool isMediaSource() const { return false; }
 
     uint64_t m_httpResponseTotalSize { 0 };

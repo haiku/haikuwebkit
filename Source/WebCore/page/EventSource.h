@@ -79,6 +79,7 @@ private:
 
     enum EventTargetInterfaceType eventTargetInterface() const final { return EventTargetInterfaceType::EventSource; }
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ActiveDOMObject::protectedScriptExecutionContext;
 
     void refEventTarget() final { ref(); }
     void derefEventTarget() final { deref(); }

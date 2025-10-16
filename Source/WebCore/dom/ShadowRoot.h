@@ -44,6 +44,8 @@ class TrustedHTML;
 class WebAnimation;
 
 enum class ParserContentPolicy : uint8_t;
+enum class ShadowRootAvailableToElementInternals : bool { No, Yes };
+enum class ShadowRootScopedCustomElementRegistry : bool { No, Yes };
 
 struct GetHTMLOptions;
 
@@ -56,15 +58,11 @@ class ShadowRoot final : public DocumentFragment, public TreeScope {
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(ShadowRoot);
 public:
 
-    enum class DelegatesFocus : bool { No, Yes };
     enum class Clonable : bool { No, Yes };
-    enum class Serializable : bool { No, Yes };
-    enum class AvailableToElementInternals : bool { No, Yes };
-    enum class ScopedCustomElementRegistry : bool { No, Yes };
 
     static Ref<ShadowRoot> create(Document& document, ShadowRootMode type, SlotAssignmentMode assignmentMode = SlotAssignmentMode::Named,
-        DelegatesFocus delegatesFocus = DelegatesFocus::No, Clonable clonable = Clonable::No, Serializable serializable = Serializable::No, AvailableToElementInternals availableToElementInternals = AvailableToElementInternals::No,
-        RefPtr<CustomElementRegistry>&& registry = nullptr, ScopedCustomElementRegistry scopedRegistry = ScopedCustomElementRegistry::No, const AtomString& referenceTarget = nullAtom())
+        ShadowRootDelegatesFocus delegatesFocus = ShadowRootDelegatesFocus::No, Clonable clonable = Clonable::No, ShadowRootSerializable serializable = ShadowRootSerializable::No, ShadowRootAvailableToElementInternals availableToElementInternals = ShadowRootAvailableToElementInternals::No,
+        RefPtr<CustomElementRegistry>&& registry = nullptr, ShadowRootScopedCustomElementRegistry scopedRegistry = ShadowRootScopedCustomElementRegistry::No, const AtomString& referenceTarget = nullAtom())
     {
         return adoptRef(*new ShadowRoot(document, type, assignmentMode, delegatesFocus, clonable, serializable, availableToElementInternals, WTFMove(registry), scopedRegistry, referenceTarget));
     }
@@ -163,7 +161,7 @@ public:
     }
 
 private:
-    ShadowRoot(Document&, ShadowRootMode, SlotAssignmentMode, DelegatesFocus, Clonable, Serializable, AvailableToElementInternals, RefPtr<CustomElementRegistry>&&, ScopedCustomElementRegistry, const AtomString& referenceTarget);
+    ShadowRoot(Document&, ShadowRootMode, SlotAssignmentMode, ShadowRootDelegatesFocus, Clonable, ShadowRootSerializable, ShadowRootAvailableToElementInternals, RefPtr<CustomElementRegistry>&&, ShadowRootScopedCustomElementRegistry, const AtomString& referenceTarget);
     ShadowRoot(Document&, std::unique_ptr<SlotAssignment>&&);
 
     bool childTypeAllowed(NodeType) const override;

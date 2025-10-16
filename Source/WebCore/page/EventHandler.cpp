@@ -108,6 +108,7 @@
 #include "RenderLayer.h"
 #include "RenderLayerScrollableArea.h"
 #include "RenderListBox.h"
+#include "RenderObjectStyle.h"
 #include "RenderTextControlSingleLine.h"
 #include "RenderView.h"
 #include "RenderWidget.h"
@@ -290,6 +291,7 @@ public:
         static constexpr double radiusXDefaultValue = 1;
         static constexpr double radiusYDefaultValue = 1;
         static constexpr float rotationAngleDefaultValue = 0.0f;
+        static constexpr double twistDefaultValue = 0;
         static constexpr float forceDefaultValue = 1.0f;
 
         m_id = idDefaultValue; // There is only one active TouchPoint.
@@ -297,6 +299,7 @@ public:
         m_pos = event.position();
         m_radius = { radiusXDefaultValue, radiusYDefaultValue };
         m_rotationAngle = rotationAngleDefaultValue;
+        m_twist = twistDefaultValue;
         m_force = forceDefaultValue;
 
         PlatformEvent::Type type = event.type();
@@ -405,12 +408,17 @@ EventHandler::EventHandler(LocalFrame& frame)
 #if ENABLE(IMAGE_ANALYSIS)
     , m_textRecognitionHoverTimer(*this, &EventHandler::textRecognitionHoverTimerFired, 250_ms)
 #endif
+    , m_mouseEventTargetUpdateTimer(*this, &EventHandler::updateMouseEventTargetAfterLayoutIfNeeded)
+    , m_mouseEventTargetFinalUpdateTimer(*this, &EventHandler::updateMouseEventTargetAfterLayoutIfNeeded)
     , m_autoscrollController(makeUniqueRef<AutoscrollController>())
 #if !ENABLE(IOS_TOUCH_EVENTS)
     , m_fakeMouseMoveEventTimer(*this, &EventHandler::fakeMouseMoveEventTimerFired)
 #endif
 #if ENABLE(CURSOR_VISIBILITY)
     , m_autoHideCursorTimer(*this, &EventHandler::autoHideCursorTimerFired)
+#endif
+#if ENABLE(FULLSCREEN_API)
+    , m_holdEscKeyEventTimer(*this, &EventHandler::holdEscKeyEventTimerFired)
 #endif
 {
 }
@@ -423,6 +431,8 @@ EventHandler::~EventHandler()
 #if ENABLE(CURSOR_VISIBILITY)
     ASSERT(!m_autoHideCursorTimer.isActive());
 #endif
+    ASSERT(!m_mouseEventTargetUpdateTimer.isActive());
+    ASSERT(!m_mouseEventTargetFinalUpdateTimer.isActive());
 }
     
 #if ENABLE(DRAG_SUPPORT)
@@ -457,6 +467,11 @@ void EventHandler::clear()
 #endif
 #if ENABLE(IMAGE_ANALYSIS)
     m_textRecognitionHoverTimer.stop();
+#endif
+    m_mouseEventTargetUpdateTimer.stop();
+    m_mouseEventTargetFinalUpdateTimer.stop();
+#if ENABLE(FULLSCREEN_API)
+    m_holdEscKeyEventTimer.stop();
 #endif
     m_resizeLayer = nullptr;
     clearElementUnderMouse();
@@ -1874,6 +1889,19 @@ void EventHandler::autoHideCursorTimerFired()
 }
 #endif
 
+#if ENABLE(FULLSCREEN_API)
+void EventHandler::holdEscKeyEventTimerFired()
+{
+    Ref frame = m_frame.get();
+    RefPtr document = frame->document();
+    if (!document)
+        return;
+
+    if (RefPtr documentFullscreen = document->fullscreenIfExists(); documentFullscreen && documentFullscreen->isFullscreen())
+        documentFullscreen->fullyExitFullscreen();
+}
+#endif
+
 // FIXME: Should this method return a FloatPoint instead of a LayoutPoint?
 static LayoutPoint documentPointForWindowPoint(LocalFrame& frame, const DoublePoint& windowPoint)
 {
@@ -2132,7 +2160,7 @@ bool EventHandler::handleMouseDoubleClickEvent(const PlatformMouseEvent& platfor
         return true;
 
     m_clickCount = platformMouseEvent.clickCount();
-    bool swallowMouseUpEvent = !dispatchMouseEvent(eventNames().mouseupEvent, mouseEvent.protectedTargetNode().get(), m_clickCount, platformMouseEvent, FireMouseOverOut::No);
+    bool swallowMouseUpEvent = !dispatchMouseEvent(eventNames().mouseupEvent, mouseEvent.protectedTargetNode().get(), m_clickCount, platformMouseEvent, FireMouseOverOut::Yes);
     bool swallowClickEvent = swallowAnyClickEvent(platformMouseEvent, mouseEvent, IgnoreAncestorNodesForClickEvent::Yes);
 
     if (m_lastScrollbarUnderMouse)
@@ -2450,7 +2478,7 @@ bool EventHandler::swallowAnyClickEvent(const PlatformMouseEvent& platformMouseE
         updateMouseEventTargetNode(eventName, nodeToClick.get(), platformMouseEvent, FireMouseOverOut::Yes);
         swallowed = !dispatchAnyClickEvent(eventName, clickCaptureElement.get(), m_clickCount, platformMouseEvent);
     } else
-        swallowed = !dispatchMouseEvent(eventName, nodeToClick.get(), m_clickCount, platformMouseEvent, FireMouseOverOut::Yes);
+        swallowed = !dispatchMouseEvent(eventName, nodeToClick.get(), m_clickCount, platformMouseEvent, FireMouseOverOut::No);
 
     if (RefPtr page = m_frame->page())
         page->chrome().client().didDispatchClickEvent(platformMouseEvent, *nodeToClick);
@@ -2537,7 +2565,7 @@ HandleUserInputEventResult EventHandler::handleMouseReleaseEvent(const PlatformM
             return true;
     }
 
-    bool swallowMouseUpEvent = !dispatchMouseEvent(eventNames().mouseupEvent, mouseEvent.protectedTargetNode().get(), m_clickCount, platformMouseEvent, FireMouseOverOut::No);
+    bool swallowMouseUpEvent = !dispatchMouseEvent(eventNames().mouseupEvent, mouseEvent.protectedTargetNode().get(), m_clickCount, platformMouseEvent, FireMouseOverOut::Yes);
 
     bool swallowClickEvent = swallowAnyClickEvent(platformMouseEvent, mouseEvent, IgnoreAncestorNodesForClickEvent::No);
 
@@ -2613,7 +2641,7 @@ bool EventHandler::dispatchDragEvent(const AtomString& eventType, Element& dragT
         return false;
 
     auto dragEvent = DragEvent::create(eventType, Event::CanBubble::Yes, Event::IsCancelable::Yes, Event::IsComposed::Yes,
-        event.timestamp().approximateMonotonicTime(), &frame->windowProxy(), 0,
+        event.timestamp(), &frame->windowProxy(), 0,
         flooredIntPoint(event.globalPosition()), flooredIntPoint(event.position()), event.movementDelta().x(), event.movementDelta().y(),
         event.modifiers(), MouseButton::Left, 0, nullptr, event.force(), SyntheticClickType::NoTap, &dataTransfer);
 
@@ -2873,8 +2901,12 @@ void EventHandler::pointerCaptureElementDidChange(Element* element)
     if (element && m_clickNode)
         m_clickCaptureElement = element;
 
-    // Now that we have a new capture element, we need to dispatch boundary mouse events.
-    updateMouseEventTargetNode(eventNames().gotpointercaptureEvent, element, m_lastPlatformMouseEvent, FireMouseOverOut::Yes);
+    // Since `updateMouseEventTargetNode` will dispatch boundary events, call it only when
+    // pointer capture is received. When capture is released, the PointerCaptureController
+    // already handles the appropriate boundary events (pointerout and pointerleave from
+    // the captured element).
+    if (element)
+        updateMouseEventTargetNode(eventNames().gotpointercaptureEvent, element, m_lastPlatformMouseEvent, FireMouseOverOut::Yes);
 }
 
 MouseEventWithHitTestResults EventHandler::prepareMouseEvent(const HitTestRequest& request, const PlatformMouseEvent& mouseEvent)
@@ -2929,6 +2961,20 @@ RefPtr<Element> EventHandler::textRecognitionCandidateElement() const
 
 #endif // ENABLE(IMAGE_ANALYSIS)
 
+static RefPtr<Element> getElementOrAncestorElementForNode(Node* targetNode)
+{
+    RefPtr<Element> targetElement;
+    while (targetNode) {
+        if (RefPtr asElement = dynamicDowncast<Element>(*targetNode)) {
+            targetElement = asElement;
+            break;
+        }
+        targetNode = targetNode->parentInComposedTree();
+    }
+
+    return targetElement;
+}
+
 void EventHandler::updateMouseEventTargetNode(const AtomString& eventType, Node* targetNode, const PlatformMouseEvent& platformMouseEvent, FireMouseOverOut fireMouseOverOut)
 {
     Ref frame = m_frame.get();
@@ -2939,13 +2985,7 @@ void EventHandler::updateMouseEventTargetNode(const AtomString& eventType, Node*
         targetElement = m_capturingMouseEventsElement.get();
     else {
         // If the target node is a non-element, dispatch on the parent. <rdar://problem/4196646>
-        while (targetNode) {
-            if (auto* asElement = dynamicDowncast<Element>(*targetNode)) {
-                targetElement = asElement;
-                break;
-            }
-            targetNode = targetNode->parentInComposedTree();
-        }
+        targetElement = getElementOrAncestorElementForNode(targetNode);
     }
 
     m_elementUnderMouse = targetElement;
@@ -3043,6 +3083,75 @@ void EventHandler::clearElementUnderMouse()
         return;
 
     imageOverlayController->elementUnderMouseDidChange(protectedFrame(), nullptr);
+}
+
+void EventHandler::scheduleMouseEventTargetUpdateAfterLayout()
+{
+    // If the element underneath the mouse is changing more frequently than every 200ms for
+    // a period of time, we want to fire boundary events both during the period of updates,
+    // and afterwards. For this reason, two timers are used.
+    if (!m_mouseEventTargetUpdateTimer.isActive())
+        m_mouseEventTargetUpdateTimer.startOneShot(200_ms);
+
+    m_mouseEventTargetFinalUpdateTimer.startOneShot(200_ms);
+}
+
+static constexpr OptionSet hoverTimerHitType { HitTestRequest::Type::Move, HitTestRequest::Type::DisallowUserAgentShadowContent };
+
+void EventHandler::updateMouseEventTargetAfterLayoutIfNeeded()
+{
+    if (!m_lastKnownMousePosition.has_value())
+        return;
+
+    Ref frame = m_frame.get();
+    RefPtr view = frame->view();
+    if (!view || !m_elementUnderMouse)
+        return;
+
+    if (!m_elementUnderMouse)
+        return;
+
+    RefPtr document = frame->document();
+
+    // Clear element tracking if there's a document mismatch.
+    if ((&m_elementUnderMouse->document() != document)
+        || (m_lastElementUnderMouse && &m_lastElementUnderMouse->document() != document)) {
+        m_elementUnderMouse = nullptr;
+        m_lastElementUnderMouse = nullptr;
+        return;
+    }
+
+    RefPtr<Element> targetElement;
+
+    // If pointer capture isn't active, we'll need to hit test to determine our target element.
+    // If it is active, our target is the capturing element.
+    if (!m_capturingMouseEventsElement) {
+        const auto mousePosition = view->windowToContents(valueOrDefault(m_lastKnownMousePosition));
+        HitTestResult hitResult((LayoutPoint(mousePosition)));
+
+        // We use the same hit test as the hover timer because we may need to update
+        // the hover state in this method as well.
+        if (document)
+            document->hitTest(hoverTimerHitType, hitResult);
+
+        targetElement = getElementOrAncestorElementForNode(hitResult.innerNode());
+    } else
+        targetElement = m_capturingMouseEventsElement.get();
+
+    if (targetElement && (targetElement != m_elementUnderMouse)) {
+        // Create a synthetic mouse event and update the mouse event target node in order to trigger
+        // boundary event processing.
+        auto modifiers = PlatformKeyboardEvent::currentStateOfModifierKeys();
+        PlatformMouseEvent syntheticEvent(valueOrDefault(m_lastKnownMousePosition), m_lastKnownMouseGlobalPosition,
+            MouseButton::None, PlatformEvent::Type::NoType, 0, modifiers, MonotonicTime::now(), 0, SyntheticClickType::NoTap);
+
+        // EventHandler updates scrollable areas when the element under the mouse changes as a result of the
+        // mouse moving. In this case, the mouse did not move, but the element under the mouse still changed,
+        // so we treat it internally as a mousemove event.
+        updateMouseEventTargetNode(eventNames().mousemoveEvent, targetElement.get(), syntheticEvent, FireMouseOverOut::Yes);
+        if (document)
+            document->updateHoverActiveState(hoverTimerHitType, targetElement.get());
+    }
 }
 
 void EventHandler::notifyScrollableAreasOfMouseEvents(const AtomString& eventType, Element* lastElementUnderMouse, Element* elementUnderMouse)
@@ -3762,7 +3871,7 @@ bool EventHandler::sendContextMenuEventForKey()
 #else
     PlatformEvent::Type eventType = PlatformEvent::Type::MousePressed;
 #endif
-    PlatformMouseEvent platformMouseEvent(position, globalPosition, MouseButton::Right, eventType, 1, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap);
+    PlatformMouseEvent platformMouseEvent(position, globalPosition, MouseButton::Right, eventType, 1, { }, MonotonicTime::now(), ForceAtClick, SyntheticClickType::NoTap);
 
     return sendContextMenuEvent(platformMouseEvent);
 }
@@ -3848,7 +3957,7 @@ void EventHandler::fakeMouseMoveEventTimerFired()
         return;
 
     auto modifiers = PlatformKeyboardEvent::currentStateOfModifierKeys();
-    PlatformMouseEvent fakeMouseMoveEvent(valueOrDefault(m_lastKnownMousePosition), m_lastKnownMouseGlobalPosition, MouseButton::None, PlatformEvent::Type::MouseMoved, 0, modifiers, WallTime::now(), 0, SyntheticClickType::NoTap);
+    PlatformMouseEvent fakeMouseMoveEvent(valueOrDefault(m_lastKnownMousePosition), m_lastKnownMouseGlobalPosition, MouseButton::None, PlatformEvent::Type::MouseMoved, 0, modifiers, MonotonicTime::now(), 0, SyntheticClickType::NoTap);
     mouseMoved(fakeMouseMoveEvent);
 }
 #endif // !ENABLE(IOS_TOUCH_EVENTS)
@@ -3875,9 +3984,8 @@ void EventHandler::hoverTimerFired()
     if (RefPtr document = frame->document()) {
         if (RefPtr view = frame->view()) {
             HitTestResult result(view->windowToContents(flooredIntPoint(valueOrDefault(m_lastKnownMousePosition))));
-            constexpr OptionSet<HitTestRequest::Type> hitType { HitTestRequest::Type::Move, HitTestRequest::Type::DisallowUserAgentShadowContent };
-            document->hitTest(hitType, result);
-            document->updateHoverActiveState(hitType, result.targetElement());
+            document->hitTest(hoverTimerHitType, result);
+            document->updateHoverActiveState(hoverTimerHitType, result.targetElement());
         }
     }
 }
@@ -3962,7 +4070,7 @@ bool EventHandler::keyEvent(const PlatformKeyboardEvent& keyEvent)
             if (page)
                 page->setUserDidInteractWithPage(savedUserDidInteractWithPage);
         } else
-            ResourceLoadObserver::shared().logUserInteractionWithReducedTimeResolution(*mainFrameDocument);
+            ResourceLoadObserver::singleton().logUserInteractionWithReducedTimeResolution(*mainFrameDocument);
     }
 
     if (!wasHandled && frame->document())
@@ -4003,8 +4111,17 @@ bool EventHandler::internalKeyEvent(const PlatformKeyboardEvent& initialKeyEvent
     RefPtr document = frame->document();
     if (RefPtr documentFullscreen = document->fullscreenIfExists(); documentFullscreen && documentFullscreen->isFullscreen()) {
         if (initialKeyEvent.type() == PlatformEvent::Type::KeyDown && initialKeyEvent.windowsVirtualKeyCode() == VK_ESCAPE) {
-            documentFullscreen->fullyExitFullscreen();
-            return true;
+            if (documentFullscreen->isBrowserKeyboardLockEnabled()) {
+                // check 1.5 ms ESC hold to cancel Full Screen
+                if (!m_holdEscKeyEventTimer.isActive())
+                    m_holdEscKeyEventTimer.startOneShot(1500_ms);
+            } else {
+                documentFullscreen->fullyExitFullscreen();
+                return true;
+            }
+        } else {
+            if (m_holdEscKeyEventTimer.isActive())
+                m_holdEscKeyEventTimer.stop();
         }
 
         if (!isKeyEventAllowedInFullScreen(initialKeyEvent))
@@ -5100,7 +5217,7 @@ void EventHandler::scheduleScrollEvent()
     if (!frame->view())
         return;
     if (RefPtr document = frame->document())
-        document->addPendingScrollEventTarget(*document);
+        document->addPendingScrollEventTarget(*document, ScrollEventType::Scroll);
 }
 
 void EventHandler::setFrameWasScrolledByUser()

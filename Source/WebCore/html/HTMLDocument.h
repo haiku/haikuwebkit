@@ -23,7 +23,6 @@
 #pragma once
 
 #include <WebCore/Document.h>
-#include <WebCore/DocumentInlines.h>
 #include <WebCore/TreeScopeOrderedMap.h>
 
 namespace WebCore {

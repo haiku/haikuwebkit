@@ -250,6 +250,7 @@ void GPUQueue::writeTexture(
     m_backing->writeTexture(destination.convertToBacking(), span.subspan(initialOffset, requiredBytes), imageDataLayout.convertToBacking(), convertToBacking(size));
 }
 
+#if PLATFORM(COCOA) && ENABLE(VIDEO) && ENABLE(WEB_CODECS)
 static PixelFormat toPixelFormat(GPUTextureFormat textureFormat)
 {
     switch (textureFormat) {
@@ -363,9 +364,10 @@ static PixelFormat toPixelFormat(GPUTextureFormat textureFormat)
 
     return PixelFormat::RGBA8;
 }
+#endif
 
 using ImageDataCallback = Function<void(std::span<const uint8_t>, size_t, size_t)>;
-static void getImageBytesFromImageBuffer(const RefPtr<ImageBuffer>& imageBuffer, const auto& destination, bool& needsPremultipliedAlpha, NOESCAPE const ImageDataCallback& callback)
+static void getImageBytesFromImageBuffer(const RefPtr<ImageBuffer>& imageBuffer, bool& needsPremultipliedAlpha, NOESCAPE const ImageDataCallback& callback)
 {
     UNUSED_PARAM(needsPremultipliedAlpha);
     if (!imageBuffer)
@@ -375,7 +377,7 @@ static void getImageBytesFromImageBuffer(const RefPtr<ImageBuffer>& imageBuffer,
     if (!size.width() || !size.height())
         return callback({ }, 0, 0);
 
-    auto pixelBuffer = imageBuffer->getPixelBuffer({ AlphaPremultiplication::Unpremultiplied, toPixelFormat(destination.texture->format()), DestinationColorSpace::SRGB() }, { { }, size });
+    auto pixelBuffer = imageBuffer->getPixelBuffer({ AlphaPremultiplication::Unpremultiplied, PixelFormat::RGBA8, DestinationColorSpace::SRGB() }, { { }, size });
     if (!pixelBuffer)
         return callback({ }, 0, 0);
 
@@ -470,11 +472,12 @@ static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExtern
     UNUSED_PARAM(needsPremultipliedAlpha);
     UNUSED_PARAM(backing);
     UNUSED_PARAM(backingCopySize);
+    UNUSED_PARAM(destination);
 
     const auto& source = sourceDescriptor.source;
     using ResultType = void;
     return WTF::switchOn(source, [&](const RefPtr<ImageBitmap>& imageBitmap) -> ResultType {
-        return getImageBytesFromImageBuffer(imageBitmap->buffer(), destination, needsPremultipliedAlpha, callback);
+        return getImageBytesFromImageBuffer(imageBitmap->buffer(), needsPremultipliedAlpha, callback);
 #if ENABLE(VIDEO) && ENABLE(WEB_CODECS)
     }, [&](const RefPtr<ImageData> imageData) -> ResultType {
         if (!imageData)
@@ -610,11 +613,11 @@ static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExtern
 #endif
 #endif
     }, [&](const RefPtr<HTMLCanvasElement>& canvasElement) -> ResultType {
-        return getImageBytesFromImageBuffer(canvasElement->makeRenderingResultsAvailable(ShouldApplyPostProcessingToDirtyRect::No), destination, needsPremultipliedAlpha, callback);
+        return getImageBytesFromImageBuffer(canvasElement->makeRenderingResultsAvailable(ShouldApplyPostProcessingToDirtyRect::No), needsPremultipliedAlpha, callback);
     }
 #if ENABLE(OFFSCREEN_CANVAS)
     , [&](const RefPtr<OffscreenCanvas>& offscreenCanvasElement) -> ResultType {
-        return getImageBytesFromImageBuffer(offscreenCanvasElement->makeRenderingResultsAvailable(ShouldApplyPostProcessingToDirtyRect::No), destination, needsPremultipliedAlpha, callback);
+        return getImageBytesFromImageBuffer(offscreenCanvasElement->makeRenderingResultsAvailable(ShouldApplyPostProcessingToDirtyRect::No), needsPremultipliedAlpha, callback);
     }
 #endif
     );
@@ -920,9 +923,7 @@ static MallocSpan<uint8_t> copyToDestinationFormat(std::span<const uint8_t> rgba
     }
 
     case GPUTextureFormat::Rgba8unorm:
-    case GPUTextureFormat::Rgba8unormSRGB:
-    case GPUTextureFormat::Bgra8unorm:
-    case GPUTextureFormat::Bgra8unormSRGB: {
+    case GPUTextureFormat::Rgba8unormSRGB: {
         if (flipY || premultiplyAlpha || sourceX || sourceY) {
             auto data = MallocSpan<uint8_t>::malloc(sizeInBytes);
             memcpySpan(data.mutableSpan(), rgbaBytes);
@@ -930,6 +931,18 @@ static MallocSpan<uint8_t> copyToDestinationFormat(std::span<const uint8_t> rgba
             return data;
         }
         return { };
+    }
+    case GPUTextureFormat::Bgra8unorm:
+    case GPUTextureFormat::Bgra8unormSRGB: {
+        auto data = MallocSpan<uint8_t>::malloc(sizeInBytes);
+        for (size_t i = 0; i < sizeInBytes; i += 4) {
+            data[i] = rgbaBytes[i + 2];
+            data[i + 1] = rgbaBytes[i + 1];
+            data[i + 2] = rgbaBytes[i];
+            data[i + 3] = rgbaBytes[i + 3];
+        }
+        flipAndPremultiply(data, flipY, premultiplyAlpha, 255);
+        return data;
     }
     case GPUTextureFormat::Rgb10a2unorm: {
         auto data = MallocSpan<uint32_t>::malloc(sizeInBytes);

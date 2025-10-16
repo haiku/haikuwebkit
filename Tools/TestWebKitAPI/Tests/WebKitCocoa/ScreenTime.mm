@@ -72,7 +72,7 @@ static void testSuppressUsageRecordingWithDataStore(RetainPtr<WKWebsiteDataStore
     __block bool suppressUsageRecording = false;
 
     InstanceMethodSwizzler swizzler {
-        PAL::getSTWebpageControllerClass(),
+        PAL::getSTWebpageControllerClassSingleton(),
         @selector(setSuppressUsageRecording:),
         imp_implementationWithBlock(^(id object, bool value) {
             suppressUsageRecording = value;
@@ -327,7 +327,7 @@ TEST(ScreenTime, IdentifierNil)
     __block NSString *identifier = @"testing123";
 
     InstanceMethodSwizzler swizzler {
-        PAL::getSTWebpageControllerClass(),
+        PAL::getSTWebpageControllerClassSingleton(),
         @selector(setProfileIdentifier:),
         imp_implementationWithBlock(^(id object, NSString *profileIdentifier) {
             identifier = profileIdentifier;
@@ -350,7 +350,7 @@ TEST(ScreenTime, IdentifierString)
     __block RetainPtr identifier = @"";
 
     InstanceMethodSwizzler swizzler {
-        PAL::getSTWebpageControllerClass(),
+        PAL::getSTWebpageControllerClassSingleton(),
         @selector(setProfileIdentifier:),
         imp_implementationWithBlock(^(id object, NSString *profileIdentifier) {
             identifier = profileIdentifier;
@@ -381,7 +381,7 @@ TEST(ScreenTime, IdentifierStringWithRemoveData)
     RetainPtr dataTypeScreenTime = adoptNS([[NSSet alloc] initWithArray:@[ WKWebsiteDataTypeScreenTime ]]);
 
     InstanceMethodSwizzler swizzler {
-        PAL::getSTWebHistoryClass(),
+        PAL::getSTWebHistoryClassSingleton(),
         @selector(deleteHistoryDuringInterval:),
         imp_implementationWithBlock(^(STWebHistory *object, NSDateInterval *) {
             identifier = object.profileIdentifier;
@@ -604,7 +604,7 @@ TEST(ScreenTime, FetchData)
 {
     __block RetainPtr<NSSet<NSURL *>> urls;
     InstanceMethodSwizzler swizzler {
-        PAL::getSTWebHistoryClass(),
+        PAL::getSTWebHistoryClassSingleton(),
         @selector(fetchAllHistoryWithCompletionHandler:),
         imp_implementationWithBlock(^(id object, void (^completionHandler)(NSSet<NSURL *> *urls, NSError *error)) {
             urls = [NSSet setWithArray:@[ adoptNS([[NSURL alloc] initWithString:@"https://www.webkit.org/"]).get() ]];
@@ -636,7 +636,7 @@ TEST(ScreenTime, RemoveDataWithTimeInterval)
 {
     __block bool removedHistory = false;
     InstanceMethodSwizzler swizzler {
-        PAL::getSTWebHistoryClass(),
+        PAL::getSTWebHistoryClassSingleton(),
         @selector(deleteHistoryDuringInterval:),
         imp_implementationWithBlock(^(id object, NSDateInterval *interval) {
             removedHistory = true;
@@ -675,7 +675,7 @@ TEST(ScreenTime, RemoveData)
     ]]);
 
     InstanceMethodSwizzler fetchHistorySwizzler {
-        PAL::getSTWebHistoryClass(),
+        PAL::getSTWebHistoryClassSingleton(),
         @selector(fetchAllHistoryWithCompletionHandler:),
         imp_implementationWithBlock(^(id object, void (^completionHandler)(NSSet<NSURL *> *urls, NSError *error)) {
             completionHandler(fetchedURLs.get(), nil);
@@ -684,7 +684,7 @@ TEST(ScreenTime, RemoveData)
 
     __block RetainPtr<NSMutableSet<NSURL *>> deletedURLs = adoptNS([[NSMutableSet alloc] init]);
     InstanceMethodSwizzler deleteHistorySwizzler {
-        PAL::getSTWebHistoryClass(),
+        PAL::getSTWebHistoryClassSingleton(),
         @selector(deleteHistoryForURL:),
         imp_implementationWithBlock(^(id object, NSURL *url) {
             [deletedURLs addObject:url];
@@ -778,7 +778,7 @@ TEST(ScreenTime, DoNotDonateURLsInOccludedWebView)
     __block bool done = false;
 
     InstanceMethodSwizzler swizzler {
-        PAL::getSTWebpageControllerClass(),
+        PAL::getSTWebpageControllerClassSingleton(),
         @selector(setSuppressUsageRecording:),
         imp_implementationWithBlock(^(id object, bool value) {
             suppressUsageRecording = value;

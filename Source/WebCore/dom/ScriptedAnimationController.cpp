@@ -27,10 +27,12 @@
 #include "config.h"
 #include "ScriptedAnimationController.h"
 
+#include "DocumentInlines.h"
 #include "InspectorInstrumentation.h"
 #include "Logging.h"
 #include "OpportunisticTaskScheduler.h"
 #include "Page.h"
+#include "RenderObjectStyle.h"
 #include "RequestAnimationFrameCallback.h"
 #include "Settings.h"
 #include "UserGestureIndicator.h"

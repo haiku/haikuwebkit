@@ -115,10 +115,10 @@ protected:
         paint.setAntiAlias(true);
         SkSamplingOptions sampling(SkFilterMode::kLinear);
 
-        canvas->drawAtlas(atlas.get(), xform, tex, nullptr, N, SkBlendMode::kDst,
+        canvas->drawAtlas(atlas.get(), xform, tex, {}, SkBlendMode::kDst,
                           sampling, nullptr, &paint);
         canvas->translate(0, 100);
-        canvas->drawAtlas(atlas.get(), xform, tex, colors, N, SkBlendMode::kSrcIn,
+        canvas->drawAtlas(atlas.get(), xform, tex, colors, SkBlendMode::kSrcIn,
                           sampling, nullptr, &paint);
     }
 
@@ -302,11 +302,10 @@ DEF_SIMPLE_GM(blob_rsxform_distortable, canvas, 500, 100) {
 
 static sk_sp<SkVertices> make_vertices(sk_sp<SkImage> image, const SkRect& r,
                                        SkColor color) {
-    SkPoint pos[4];
-    r.toQuad(pos);
+    const std::array<SkPoint, 4> pos = r.toQuad();
     SkColor colors[4] = { color, color, color, color };
     return SkVertices::MakeCopy(SkVertices::kTriangleFan_VertexMode, 4,
-                                pos, pos, colors);
+                                pos.data(), pos.data(), colors);
 }
 
 /*
@@ -344,7 +343,7 @@ DEF_SIMPLE_GM(compare_atlas_vertices, canvas, 560, 585) {
             canvas->save();
             for (const sk_sp<SkColorFilter>& cf : filters) {
                 paint.setColorFilter(cf);
-                canvas->drawAtlas(image.get(), &xform, &tex, &color, 1, mode,
+                canvas->drawAtlas(image.get(), {&xform, 1}, {&tex, 1}, {&color, 1}, mode,
                                   SkSamplingOptions(), &tex, &paint);
                 canvas->translate(128, 0);
                 paint.setShader(image->makeShader(SkSamplingOptions()));

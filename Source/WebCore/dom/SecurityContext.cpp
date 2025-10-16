@@ -208,7 +208,7 @@ PolicyContainer SecurityContext::policyContainer() const
 {
     ASSERT(m_contentSecurityPolicy);
     return {
-        m_contentSecurityPolicy->responseHeaders(),
+        CheckedRef { *m_contentSecurityPolicy }->responseHeaders(),
         crossOriginEmbedderPolicy(),
         crossOriginOpenerPolicy(),
         referrerPolicy(),

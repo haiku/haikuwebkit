@@ -118,7 +118,8 @@ void JSDocument::setAdoptedStyleSheets(JSC::JSGlobalObject& lexicalGlobalObject,
 template<typename Visitor>
 void JSDocument::visitAdditionalChildren(Visitor& visitor)
 {
-    addWebCoreOpaqueRoot(visitor, static_cast<ScriptExecutionContext&>(wrapped()));
+    // This may get called on the GC thread so we cannot ref this object.
+    SUPPRESS_UNCOUNTED_ARG addWebCoreOpaqueRoot(visitor, static_cast<ScriptExecutionContext&>(wrapped()));
 }
 
 DEFINE_VISIT_ADDITIONAL_CHILDREN(JSDocument);

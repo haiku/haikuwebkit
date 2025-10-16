@@ -27,7 +27,6 @@
 #include "PageConfiguration.h"
 
 #include "AlternativeTextClient.h"
-#include "ApplicationCacheStorage.h"
 #include "AttachmentElementClient.h"
 #include "BackForwardClient.h"
 #include "BadgeClient.h"

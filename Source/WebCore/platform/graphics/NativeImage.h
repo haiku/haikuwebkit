@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <WebCore/PlatformExportMacros.h>
 #include <WebCore/PlatformImage.h>
 #include <WebCore/RenderingResource.h>
 #include <wtf/TZoneMalloc.h>

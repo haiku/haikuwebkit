@@ -48,6 +48,7 @@
 #include <wtf/SoftLinking.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/URL.h>
+#include <wtf/cf/NotificationCenterCF.h>
 #include <wtf/cf/VectorCF.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
@@ -150,11 +151,10 @@ CaptionUserPreferencesMediaAF::~CaptionUserPreferencesMediaAF()
 {
 #if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
     if (m_observer) {
-        auto center = CFNotificationCenterGetLocalCenter();
         if (kMAXCaptionAppearanceSettingsChangedNotification)
-            CFNotificationCenterRemoveObserver(center, m_observer.get(), kMAXCaptionAppearanceSettingsChangedNotification, 0);
+            CFNotificationCenterRemoveObserver(CFNotificationCenterGetLocalCenterSingleton(), m_observer.get(), RetainPtr { kMAXCaptionAppearanceSettingsChangedNotification }.get(), 0);
         if (kMAAudibleMediaSettingsChangedNotification)
-            CFNotificationCenterRemoveObserver(center, m_observer.get(), kMAAudibleMediaSettingsChangedNotification, 0);
+            CFNotificationCenterRemoveObserver(CFNotificationCenterGetLocalCenterSingleton(), m_observer.get(), RetainPtr { kMAAudibleMediaSettingsChangedNotification }.get(), 0);
     }
 #endif // HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
 }
@@ -287,12 +287,11 @@ void CaptionUserPreferencesMediaAF::setInterestedInCaptionPreferenceChanges()
     if (!m_observer)
         lazyInitialize(m_observer, createWeakObserver(this));
     auto suspensionBehavior = static_cast<CFNotificationSuspensionBehavior>(CFNotificationSuspensionBehaviorCoalesce | _CFNotificationObserverIsObjC);
-    auto center = CFNotificationCenterGetLocalCenter();
     if (kMAXCaptionAppearanceSettingsChangedNotification)
-        CFNotificationCenterAddObserver(center, m_observer.get(), userCaptionPreferencesChangedNotificationCallback, kMAXCaptionAppearanceSettingsChangedNotification, 0, suspensionBehavior);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetLocalCenterSingleton(), m_observer.get(), userCaptionPreferencesChangedNotificationCallback, RetainPtr { kMAXCaptionAppearanceSettingsChangedNotification }.get(), 0, suspensionBehavior);
 
     if (canLoad_MediaAccessibility_kMAAudibleMediaSettingsChangedNotification())
-        CFNotificationCenterAddObserver(center, m_observer.get(), userCaptionPreferencesChangedNotificationCallback, kMAAudibleMediaSettingsChangedNotification, 0, suspensionBehavior);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetLocalCenterSingleton(), m_observer.get(), userCaptionPreferencesChangedNotificationCallback, RetainPtr { kMAAudibleMediaSettingsChangedNotification }.get(), 0, suspensionBehavior);
     m_registeringForNotification = false;
 
     // Generating and registering the caption stylesheet can be expensive and this method is called indirectly when the parser creates an audio or
@@ -490,10 +489,10 @@ String CaptionUserPreferencesMediaAF::captionsDefaultFontCSS() const
     builder.append("font-family: \""_s, name.get(), '"');
     if (RetainPtr cascadeList = adoptCF(static_cast<CFArrayRef>(CTFontDescriptorCopyAttribute(font.get(), kCTFontCascadeListAttribute)))) {
         for (CFIndex i = 0; i < CFArrayGetCount(cascadeList.get()); i++) {
-            auto fontCascade = static_cast<CTFontDescriptorRef>(CFArrayGetValueAtIndex(cascadeList.get(), i));
+            RetainPtr fontCascade = static_cast<CTFontDescriptorRef>(CFArrayGetValueAtIndex(cascadeList.get(), i));
             if (!fontCascade)
                 continue;
-            RetainPtr fontCascadeName = adoptCF(static_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontCascade, kCTFontNameAttribute)));
+            RetainPtr fontCascadeName = adoptCF(static_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontCascade.get(), kCTFontNameAttribute)));
             if (!fontCascadeName)
                 continue;
             builder.append(", \""_s, fontCascadeName.get(), '"');
@@ -807,9 +806,9 @@ Vector<RefPtr<AudioTrack>> CaptionUserPreferencesMediaAF::sortedTrackListForMenu
     Vector<RefPtr<AudioTrack>> tracksForMenu;
     
     for (unsigned i = 0, length = trackList->length(); i < length; ++i) {
-        AudioTrack* track = trackList->item(i);
+        RefPtr track = trackList->item(i);
         String language = displayNameForLanguageLocale(track->validBCP47Language());
-        tracksForMenu.append(track);
+        tracksForMenu.append(WTFMove(track));
     }
 
     Collator collator;

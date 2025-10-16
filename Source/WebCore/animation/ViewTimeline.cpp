@@ -40,7 +40,10 @@
 #include "RenderSVGModelObject.h"
 #include "ScrollAnchoringController.h"
 #include "ScrollingConstraints.h"
+#include "StyleLengthWrapper+DeprecatedCSSValueConversion.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 #include "StyleScrollPadding.h"
+#include "StyleSingleAnimationRange.h"
 #include "WebAnimation.h"
 
 namespace WebCore {
@@ -71,17 +74,18 @@ ExceptionOr<Ref<ViewTimeline>> ViewTimeline::create(Document& document, ViewTime
     return viewTimeline;
 }
 
-Ref<ViewTimeline> ViewTimeline::create(const AtomString& name, ScrollAxis axis, const ViewTimelineInsetItem& insetItem)
+Ref<ViewTimeline> ViewTimeline::create(const AtomString& name, ScrollAxis axis, const Style::ViewTimelineInsetItem& insetItem)
 {
     return adoptRef(*new ViewTimeline(name, axis, insetItem));
 }
 
 ViewTimeline::ViewTimeline(ScrollAxis axis)
     : ScrollTimeline(nullAtom(), axis)
+    , m_insets(CSS::Keyword::Auto { })
 {
 }
 
-ViewTimeline::ViewTimeline(const AtomString& name, ScrollAxis axis, const ViewTimelineInsetItem& insetItem)
+ViewTimeline::ViewTimeline(const AtomString& name, ScrollAxis axis, const Style::ViewTimelineInsetItem& insetItem)
     : ScrollTimeline(name, axis)
     , m_insets(insetItem)
 {
@@ -333,12 +337,31 @@ void ViewTimeline::cacheCurrentTime()
 
         if (m_specifiedInsets) {
             RefPtr subjectElement { &subject->element };
-            auto computedInset = [&](const RefPtr<CSSPrimitiveValue>& specifiedInset) -> std::optional<Length> {
-                if (specifiedInset)
-                    return SingleTimelineRange::lengthForCSSValue(specifiedInset, subjectElement);
-                return { };
+
+            auto computedInset = [&](const CSSPrimitiveValue& specifiedInset) {
+                return Style::deprecatedToStyleFromCSSValue<Style::ViewTimelineInsetItem::Length>(subjectElement, specifiedInset).value_or(Style::ViewTimelineInsetItem::Length { CSS::Keyword::Auto { } });
             };
-            m_insets = { computedInset(m_specifiedInsets->start), computedInset(m_specifiedInsets->end) };
+
+            if (m_specifiedInsets->start && m_specifiedInsets->end) {
+                m_insets = {
+                    computedInset(*m_specifiedInsets->start),
+                    computedInset(*m_specifiedInsets->end),
+                };
+            } else if (m_specifiedInsets->start) {
+                m_insets = {
+                    computedInset(*m_specifiedInsets->start),
+                };
+            } else if (m_specifiedInsets->end) {
+                m_insets = {
+                    Style::ViewTimelineInsetItem::Length { CSS::Keyword::Auto { } },
+                    computedInset(*m_specifiedInsets->end),
+                };
+            } else {
+                m_insets = {
+                    Style::ViewTimelineInsetItem::Length { CSS::Keyword::Auto { } },
+                    Style::ViewTimelineInsetItem::Length { CSS::Keyword::Auto { } },
+                };
+            }
         }
 
         enum class PaddingEdge : bool { Start, End };
@@ -349,40 +372,18 @@ void ViewTimeline::cacheCurrentTime()
             return scrollDirection.isVertical ? style.scrollPaddingBottom() : style.scrollPaddingRight();
         };
 
-        bool hasInsetsStart = m_insets.start.has_value();
-        bool hasInsetsEnd = m_insets.end.has_value();
-
         float insetStart = 0;
         float insetEnd = 0;
-        if (hasInsetsStart && hasInsetsEnd) {
-            if (m_insets.start->isAuto())
-                insetStart = Style::evaluate(scrollPadding(PaddingEdge::Start), scrollContainerSize);
-            else
-                insetStart = floatValueForOffset(*m_insets.start, scrollContainerSize);
 
-            if (m_insets.end->isAuto())
-                insetEnd = Style::evaluate(scrollPadding(PaddingEdge::End), scrollContainerSize);
-            else
-                insetEnd = floatValueForOffset(*m_insets.end, scrollContainerSize);
-        } else if (hasInsetsStart) {
-            if (m_insets.start->isAuto()) {
-                insetStart = Style::evaluate(scrollPadding(PaddingEdge::Start), scrollContainerSize);
-                insetEnd = Style::evaluate(scrollPadding(PaddingEdge::End), scrollContainerSize);
-            } else {
-                insetStart = floatValueForOffset(*m_insets.start, scrollContainerSize);
-                insetEnd = insetStart; 
-            }
-        } else if (hasInsetsEnd) {
-            insetStart = Style::evaluate(scrollPadding(PaddingEdge::Start), scrollContainerSize);
+        if (m_insets.start().isAuto())
+            insetStart = Style::evaluate(scrollPadding(PaddingEdge::Start), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
+        else
+            insetStart = Style::evaluate(m_insets.start(), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
 
-            if (m_insets.end->isAuto())
-                insetEnd = Style::evaluate(scrollPadding(PaddingEdge::End), scrollContainerSize);
-            else
-                insetEnd = floatValueForOffset(*m_insets.end, scrollContainerSize);
-        } else {
-            insetStart = Style::evaluate(scrollPadding(PaddingEdge::Start), scrollContainerSize);
-            insetEnd = Style::evaluate(scrollPadding(PaddingEdge::End), scrollContainerSize);
-        }
+        if (m_insets.end().isAuto())
+            insetEnd = Style::evaluate(scrollPadding(PaddingEdge::End), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
+        else
+            insetEnd = Style::evaluate(m_insets.end(), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
 
         StickinessAdjustmentData stickyData;
         if (auto stickyContainer = dynamicDowncast<RenderBoxModelObject>(this->stickyContainer())) {
@@ -424,9 +425,9 @@ AnimationTimeline::ShouldUpdateAnimationsAndSendEvents ViewTimeline::documentWil
     return AnimationTimeline::ShouldUpdateAnimationsAndSendEvents::No;
 }
 
-TimelineRange ViewTimeline::defaultRange() const
+Style::SingleAnimationRange ViewTimeline::defaultRange() const
 {
-    return TimelineRange::defaultForViewTimeline();
+    return Style::SingleAnimationRange::defaultForViewTimeline();
 }
 
 Element* ViewTimeline::bindingsSource() const
@@ -491,26 +492,26 @@ ScrollTimeline::Data ViewTimeline::computeTimelineData() const
     };
 }
 
-std::pair<double, double> ViewTimeline::intervalForTimelineRangeName(const ScrollTimeline::Data& data, const SingleTimelineRange::Name name) const
+std::pair<double, double> ViewTimeline::intervalForTimelineRangeName(const ScrollTimeline::Data& data, const Style::SingleAnimationRangeName name) const
 {
     auto subjectRangeStart = [&]() -> double {
         switch (name) {
-        case SingleTimelineRange::Name::Normal:
-        case SingleTimelineRange::Name::Omitted:
-        case SingleTimelineRange::Name::Cover:
-        case SingleTimelineRange::Name::EntryCrossing:
+        case Style::SingleAnimationRangeName::Normal:
+        case Style::SingleAnimationRangeName::Omitted:
+        case Style::SingleAnimationRangeName::Cover:
+        case Style::SingleAnimationRangeName::EntryCrossing:
             return data.rangeStart;
-        case SingleTimelineRange::Name::Entry:
+        case Style::SingleAnimationRangeName::Entry:
             // https://drafts.csswg.org/scroll-animations-1/#valdef-animation-timeline-range-entry
             // 0% is equivalent to 0% of the cover range.
-            return intervalForTimelineRangeName(data, SingleTimelineRange::Name::Cover).first;
-        case SingleTimelineRange::Name::Contain:
+            return intervalForTimelineRangeName(data, Style::SingleAnimationRangeName::Cover).first;
+        case Style::SingleAnimationRangeName::Contain:
             return data.rangeStart + m_cachedCurrentTimeData.subjectSize + m_cachedCurrentTimeData.stickinessData.entryDistanceAdjustment();
-        case SingleTimelineRange::Name::Exit:
+        case Style::SingleAnimationRangeName::Exit:
             // https://drafts.csswg.org/scroll-animations-1/#valdef-animation-timeline-range-exit
             // 0% is equivalent to 100% of the contain range.
-            return intervalForTimelineRangeName(data, SingleTimelineRange::Name::Contain).second;
-        case SingleTimelineRange::Name::ExitCrossing:
+            return intervalForTimelineRangeName(data, Style::SingleAnimationRangeName::Contain).second;
+        case Style::SingleAnimationRangeName::ExitCrossing:
             return data.rangeEnd - m_cachedCurrentTimeData.subjectSize - m_cachedCurrentTimeData.stickinessData.exitDistanceAdjustment();
         default:
             break;
@@ -521,22 +522,22 @@ std::pair<double, double> ViewTimeline::intervalForTimelineRangeName(const Scrol
 
     auto subjectRangeEnd = [&]() -> double {
         switch (name) {
-        case SingleTimelineRange::Name::Normal:
-        case SingleTimelineRange::Name::Omitted:
-        case SingleTimelineRange::Name::Cover:
-        case SingleTimelineRange::Name::ExitCrossing:
+        case Style::SingleAnimationRangeName::Normal:
+        case Style::SingleAnimationRangeName::Omitted:
+        case Style::SingleAnimationRangeName::Cover:
+        case Style::SingleAnimationRangeName::ExitCrossing:
             return data.rangeEnd;
-        case SingleTimelineRange::Name::Exit:
+        case Style::SingleAnimationRangeName::Exit:
             // https://drafts.csswg.org/scroll-animations-1/#valdef-animation-timeline-range-exit
             // 100% is equivalent to 100% of the cover range.
-            return intervalForTimelineRangeName(data, SingleTimelineRange::Name::Cover).second;
-        case SingleTimelineRange::Name::Contain:
+            return intervalForTimelineRangeName(data, Style::SingleAnimationRangeName::Cover).second;
+        case Style::SingleAnimationRangeName::Contain:
             return data.rangeEnd - m_cachedCurrentTimeData.subjectSize - m_cachedCurrentTimeData.stickinessData.exitDistanceAdjustment();
-        case SingleTimelineRange::Name::Entry:
+        case Style::SingleAnimationRangeName::Entry:
             // https://drafts.csswg.org/scroll-animations-1/#valdef-animation-timeline-range-entry
             // 100% is equivalent to 0% of the contain range.
-            return intervalForTimelineRangeName(data, SingleTimelineRange::Name::Contain).first;
-        case SingleTimelineRange::Name::EntryCrossing:
+            return intervalForTimelineRangeName(data, Style::SingleAnimationRangeName::Contain).first;
+        case Style::SingleAnimationRangeName::EntryCrossing:
             return data.rangeStart + m_cachedCurrentTimeData.subjectSize + m_cachedCurrentTimeData.stickinessData.entryDistanceAdjustment();
         default:
             break;
@@ -551,7 +552,7 @@ std::pair<double, double> ViewTimeline::intervalForTimelineRangeName(const Scrol
     return { subjectRangeStart, subjectRangeEnd };
 }
 
-template<typename F> double ViewTimeline::mapOffsetToTimelineRange(const ScrollTimeline::Data& data, const SingleTimelineRange::Name name, F&& valueWithinSubjectRange) const
+template<typename F> double ViewTimeline::mapOffsetToTimelineRange(const ScrollTimeline::Data& data, const Style::SingleAnimationRangeName name, F&& valueWithinSubjectRange) const
 {
     auto timelineRange = data.rangeEnd - data.rangeStart;
     ASSERT(timelineRange);
@@ -562,7 +563,7 @@ template<typename F> double ViewTimeline::mapOffsetToTimelineRange(const ScrollT
     return positionWithinTimelineRange / timelineRange;
 }
 
-std::pair<double, double> ViewTimeline::offsetIntervalForTimelineRangeName(const SingleTimelineRange::Name name) const
+std::pair<double, double> ViewTimeline::offsetIntervalForTimelineRangeName(const Style::SingleAnimationRangeName name) const
 {
     auto data = computeTimelineData();
     auto computeOffset = [&](double offset) {
@@ -573,24 +574,27 @@ std::pair<double, double> ViewTimeline::offsetIntervalForTimelineRangeName(const
     return { computeOffset(0), computeOffset(1) };
 }
 
-std::pair<double, double> ViewTimeline::offsetIntervalForAttachmentRange(const TimelineRange& attachmentRange) const
+std::pair<double, double> ViewTimeline::offsetIntervalForAttachmentRange(const Style::SingleAnimationRange& attachmentRange) const
 {
     auto data = computeTimelineData();
     auto timelineRange = data.rangeEnd - data.rangeStart;
     ASSERT(timelineRange);
 
-    auto offsetForSingleTimelineRange = [&](const SingleTimelineRange& rangeToConvert) {
-        auto [conversionRangeStart, conversionRangeEnd] = intervalForTimelineRangeName(data, rangeToConvert.name);
+    auto offsetForSingleTimelineRange = [&](const auto& rangeToConvert) {
+        auto [conversionRangeStart, conversionRangeEnd] = intervalForTimelineRangeName(data, rangeToConvert.name());
         auto conversionRange = conversionRangeEnd - conversionRangeStart;
-        auto convertedValue = floatValueForOffset(rangeToConvert.offset, conversionRange);
+        auto convertedValue = Style::evaluate(rangeToConvert.offset(), conversionRange, 1.0f /* FIXME FIND ZOOM */);
         auto position = conversionRangeStart + convertedValue;
         return (position - data.rangeStart) / timelineRange;
     };
 
-    return { offsetForSingleTimelineRange(attachmentRange.start), offsetForSingleTimelineRange(attachmentRange.end) };
+    return {
+        offsetForSingleTimelineRange(attachmentRange.start),
+        offsetForSingleTimelineRange(attachmentRange.end)
+    };
 }
 
-std::pair<WebAnimationTime, WebAnimationTime> ViewTimeline::intervalForAttachmentRange(const TimelineRange& attachmentRange) const
+std::pair<WebAnimationTime, WebAnimationTime> ViewTimeline::intervalForAttachmentRange(const Style::SingleAnimationRange& attachmentRange) const
 {
     // https://drafts.csswg.org/scroll-animations-1/#view-timelines-ranges
     auto data = computeTimelineData();
@@ -598,9 +602,9 @@ std::pair<WebAnimationTime, WebAnimationTime> ViewTimeline::intervalForAttachmen
     if (!timelineRange)
         return { WebAnimationTime::fromPercentage(0), WebAnimationTime::fromPercentage(100) };
 
-    auto computeTime = [&](const SingleTimelineRange& rangeToConvert) {
-        auto mappedOffset = mapOffsetToTimelineRange(data, rangeToConvert.name, [&](const float& subjectRange) {
-            return floatValueForOffset(rangeToConvert.offset, subjectRange);
+    auto computeTime = [&](const auto& rangeToConvert) {
+        auto mappedOffset = mapOffsetToTimelineRange(data, rangeToConvert.name(), [&](const float& subjectRange) {
+            return Style::evaluate(rangeToConvert.offset(), subjectRange, 1.0f /* FIXME FIND ZOOM */);
         });
         return WebAnimationTime::fromPercentage(mappedOffset * 100);
     };

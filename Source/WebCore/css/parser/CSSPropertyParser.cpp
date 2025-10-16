@@ -70,7 +70,6 @@
 #include "StylePropertyShorthand.h"
 #include "StylePropertyShorthandFunctions.h"
 #include "StyleRuleType.h"
-#include "TransformOperationsBuilder.h"
 #include <memory>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/ParsingUtilities.h>
@@ -566,12 +565,8 @@ std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> consume
         case CSSCustomPropertySyntax::Type::String:
             return downcast<CSSPrimitiveValue>(value).stringValue();
         case CSSCustomPropertySyntax::Type::TransformFunction:
-        case CSSCustomPropertySyntax::Type::TransformList: {
-            auto operation = Style::createTransformOperation(value, builderState);
-            if (!operation)
-                return { };
-            return Style::CustomProperty::Transform { operation.releaseNonNull() };
-        }
+        case CSSCustomPropertySyntax::Type::TransformList:
+            return Style::toStyleFromCSSValue<Style::TransformFunction>(builderState, value);
         case CSSCustomPropertySyntax::Type::Unknown:
             return { };
         }

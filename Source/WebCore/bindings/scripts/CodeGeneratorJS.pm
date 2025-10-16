@@ -724,6 +724,9 @@ sub AddToIncludes
 {
     my ($header, $includesRef, $conditional) = @_;
 
+    # Unquote string literals if needed.
+    $conditional = $codeGenerator->UnquoteStringLiteral($conditional) if $conditional && $conditional =~ /^['"]/;
+
     if (not $conditional) {
         $includesRef->{$header} = 1;
     } elsif (not exists($includesRef->{$header})) {
@@ -2191,6 +2194,7 @@ sub NeedsRuntimeCheck
 
     return $context->extendedAttributes->{EnabledByDeprecatedGlobalSetting}
         || $context->extendedAttributes->{EnabledForContext}
+        || $context->extendedAttributes->{EnabledForGlobalObject}
         || $context->extendedAttributes->{EnabledForWorld}
         || $context->extendedAttributes->{EnabledBySetting}
         || $context->extendedAttributes->{EnabledByQuirk}
@@ -4377,6 +4381,14 @@ sub GenerateRuntimeEnableConditionalString
         push(@conjuncts, "worldForDOMObject(*this)." . ToMethodName($context->extendedAttributes->{EnabledForWorld}) . "()");
     }
 
+    if ($context->extendedAttributes->{EnabledForGlobalObject}) {
+        assert("Must specify value for EnabledForGlobalObject.") if $context->extendedAttributes->{EnabledForGlobalObject} eq "VALUE_IS_MISSING";
+
+        AddToImplIncludes("DOMWrapperWorld.h");
+
+        push(@conjuncts, "jsCast<JSDOMGlobalObject*>(this->globalObject())->" . ToMethodName($context->extendedAttributes->{EnabledForGlobalObject}) . "()");
+    }
+
     if ($context->extendedAttributes->{EnabledBySetting}) {
         assert("Must specify value for EnabledBySetting.") if $context->extendedAttributes->{EnabledBySetting} eq "VALUE_IS_MISSING";
 
@@ -5229,7 +5241,7 @@ sub GenerateImplementation
     if (!$hasParent) {
         push(@implContent, "void ${className}::destroy(JSC::JSCell* cell)\n");
         push(@implContent, "{\n");
-        push(@implContent, "    ${className}* thisObject = static_cast<${className}*>(cell);\n");
+        push(@implContent, "    SUPPRESS_MEMORY_UNSAFE_CAST ${className}* thisObject = static_cast<${className}*>(cell);\n");
         push(@implContent, "    thisObject->${className}::~${className}();\n");
         push(@implContent, "}\n\n");
     }
@@ -5512,7 +5524,7 @@ sub GenerateImplementation
     if (ShouldGenerateWrapperOwnerCode($hasParent, $interface) && !$interface->extendedAttributes->{JSCustomFinalize}) {
         push(@implContent, "void JS${interfaceName}Owner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)\n");
         push(@implContent, "{\n");
-        push(@implContent, "    auto* js${interfaceName} = static_cast<JS${interfaceName}*>(handle.slot()->asCell());\n");
+        push(@implContent, "    SUPPRESS_MEMORY_UNSAFE_CAST auto* js${interfaceName} = static_cast<JS${interfaceName}*>(handle.slot()->asCell());\n");
         push(@implContent, "    auto& world = *static_cast<DOMWrapperWorld*>(context);\n");
         push(@implContent, "    uncacheWrapper(world, js${interfaceName}->protectedWrapped().ptr(), js${interfaceName});\n");
         push(@implContent, "}\n\n");
@@ -5688,7 +5700,7 @@ sub GenerateAttributeGetterBodyDefinition
         $implIncludes{"EventNames.h"} = 1;
         my $getter = $attribute->extendedAttributes->{WindowEventHandler} ? "windowEventHandlerAttribute" : "eventHandlerAttribute";
         my $eventName = EventHandlerAttributeEventName($attribute);
-        push(@$outputArray, "    return $getter(thisObject.protectedWrapped(), $eventName, worldForDOMObject(thisObject));\n");
+        push(@$outputArray, "    return $getter(thisObject.protectedWrapped(), $eventName, protectedWorldForDOMObject(thisObject));\n");
     } elsif ($isConstructor) {
         # FIXME: This should be switched to using an extended attribute rather than infering this information from name.
         my $constructorType = $attribute->type->name;
@@ -6479,7 +6491,7 @@ sub GenerateCallWith
     }
     # Script execution context of current realm (https://html.spec.whatwg.org/multipage/webappapis.html#concept-current-everything)
     if ($codeGenerator->ExtendedAttributeContains($callWith, "CurrentScriptExecutionContext")) {
-        push(@$outputArray, $indent . "auto* context = ${scriptExecutionContextAccessor}->scriptExecutionContext();\n");
+        push(@$outputArray, $indent . "RefPtr context = ${scriptExecutionContextAccessor}->scriptExecutionContext();\n");
         push(@$outputArray, $indent . "if (!context) [[unlikely]]\n");
         push(@$outputArray, $indent . "    return" . ($contextMissing ? " " . $contextMissing : "") . ";\n");
         push(@callWithArgs, "*context");

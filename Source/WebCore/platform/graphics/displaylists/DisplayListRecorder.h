@@ -60,10 +60,7 @@ public:
         Normal,
         // Deconstruct different text layers into separate DrawGlyphs commands. Allows for doing the deconstruct work once during recording instead of
         // multiple times during multiple playbacks.
-        Deconstruct,
-        // Deconstruct different text layers into separate DrawDeconstructed commands. Allows for caching based on DeconstructedGlyphs
-        // identities during multiple playbacks.
-        DeconstructAndRetain,
+        Deconstruct
     };
 
     Recorder(const GraphicsContextState& state, const FloatRect& initialClip, const AffineTransform& transform, const DestinationColorSpace& colorSpace, DrawGlyphsMode drawGlyphsMode = DrawGlyphsMode::Normal)
@@ -71,6 +68,8 @@ public:
     {
     }
     WEBCORE_EXPORT virtual ~Recorder();
+
+    WEBCORE_EXPORT void appendDisplayList(const DisplayList&);
 
 protected:
     WEBCORE_EXPORT Recorder(IsDeferred, const GraphicsContextState&, const FloatRect& initialClip, const AffineTransform&, const DestinationColorSpace&, DrawGlyphsMode);
@@ -141,7 +140,6 @@ private:
 
     WEBCORE_EXPORT void didUpdateState(GraphicsContextState&) final;
     WEBCORE_EXPORT void didUpdateSingleState(GraphicsContextState&, GraphicsContextState::ChangeIndex) final;
-    // Returns true if decomposition handled the glyphs by calling drawDecomposedGlyphs and other functions.
     WEBCORE_EXPORT void drawConsumingImageBuffer(RefPtr<ImageBuffer>, const FloatRect& destination, const FloatRect& source, ImagePaintingOptions) final;
     WEBCORE_EXPORT AffineTransform getCTM(GraphicsContext::IncludeDeviceScale = PossiblyIncludeDeviceScale) const final;
     WEBCORE_EXPORT IntRect clipBounds() const final;

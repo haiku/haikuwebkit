@@ -61,6 +61,7 @@
 #include "OffscreenCanvas.h"
 #include "RenderBox.h"
 #include "ScriptExecutionContextInlines.h"
+#include "Settings.h"
 #include "WebCodecsVideoFrame.h"
 #include "WebCoreOpaqueRootInlines.h"
 #include "WebGLActiveInfo.h"

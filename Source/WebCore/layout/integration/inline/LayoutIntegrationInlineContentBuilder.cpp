@@ -241,7 +241,7 @@ void InlineContentBuilder::computeIsFirstIsLastBoxAndBidiReorderingForInlineCont
     lastDisplayBoxForLayoutBoxIndexes.reserveInitialCapacity(boxes.size() - 1);
 
     ASSERT(boxes[0].isRootInlineBox());
-    boxes[0].setIsFirstForLayoutBox(true);
+    boxes[0].setIsFirstForLayoutBox();
     size_t lastRootInlineBoxIndex = 0;
 
     for (size_t index = 1; index < boxes.size(); ++index) {
@@ -255,12 +255,12 @@ void InlineContentBuilder::computeIsFirstIsLastBoxAndBidiReorderingForInlineCont
             downcast<RenderText>(*layoutBox.rendererForIntegration()).setNeedsVisualReordering();
 
         if (lastDisplayBoxForLayoutBoxIndexes.set(&layoutBox, index).isNewEntry)
-            displayBox.setIsFirstForLayoutBox(true);
+            displayBox.setIsFirstForLayoutBox();
     }
     for (auto index : lastDisplayBoxForLayoutBoxIndexes.values())
-        boxes[index].setIsLastForLayoutBox(true);
+        boxes[index].setIsLastForLayoutBox();
 
-    boxes[lastRootInlineBoxIndex].setIsLastForLayoutBox(true);
+    boxes[lastRootInlineBoxIndex].setIsLastForLayoutBox();
 }
 
 FloatRect InlineContentBuilder::handlePartialDisplayContentUpdate(Layout::InlineLayoutResult&& layoutResult, InlineContent& inlineContent, const Layout::InlineDamage* lineDamage) const

@@ -55,6 +55,7 @@
 #include "ObjectConstructor.h"
 #include "ScopedArguments.h"
 #include "TypeProfilerLog.h"
+#include "runtime/Error.h"
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
@@ -306,8 +307,16 @@ JSC_DEFINE_COMMON_SLOW_PATH(slow_path_check_tdz)
     auto bytecode = pc->as<OpCheckTdz>();
     if (bytecode.m_targetVirtualRegister == codeBlock->thisRegister())
         THROW(createReferenceError(globalObject, "'super()' must be called in derived constructor before accessing |this| or returning non-object."_s));
-    else
-        THROW(createTDZError(globalObject));
+    else {
+        auto [block, index] = getBytecodeIndex(codeBlock->vm(), callFrame);
+        auto info = block->expressionInfoForBytecodeIndex(index);
+        int expressionStart = info.divot - info.startOffset;
+        int expressionStop = info.divot + info.endOffset;
+
+        RefPtr provider = codeBlock->source().provider();
+        auto ident = provider->getRange(expressionStart, expressionStop);
+        THROW(createTDZError(globalObject, ident));
+    }
 }
 
 JSC_DEFINE_COMMON_SLOW_PATH(slow_path_throw_strict_mode_readonly_property_write_error)
@@ -789,7 +798,7 @@ JSC_DEFINE_COMMON_SLOW_PATH(slow_path_is_constructor)
 }
 
 template<OpcodeSize width>
-ALWAYS_INLINE UGPRPair iteratorOpenTryFastImpl(VM& vm, JSGlobalObject* globalObject, CodeBlock* codeBlock, CallFrame* callFrame, const JSInstruction* pc)
+ALWAYS_INLINE UGPRPair iteratorOpenTryFastImpl(VM& vm, JSGlobalObject* globalObject, CodeBlock* codeBlock, CallFrame* callFrame, ThrowScope& throwScope, const JSInstruction* pc)
 {
     auto bytecode = pc->asKnownWidth<OpIteratorOpen, width>();
     auto& metadata = bytecode.metadata(codeBlock);
@@ -798,7 +807,8 @@ ALWAYS_INLINE UGPRPair iteratorOpenTryFastImpl(VM& vm, JSGlobalObject* globalObj
     JSValue symbolIterator = GET_C(bytecode.m_symbolIterator).jsValue();
     auto& iterator = GET(bytecode.m_iterator);
 
-    if (getIterationMode(vm, globalObject, iterable, symbolIterator) == IterationMode::FastArray) {
+    auto iterationMode = getIterationMode(vm, globalObject, iterable, symbolIterator);
+    if (iterationMode == IterationMode::FastArray) {
         // We should be good to go.
         metadata.m_iterationMetadata.seenModes = metadata.m_iterationMetadata.seenModes | IterationMode::FastArray;
         GET(bytecode.m_next) = JSValue();
@@ -808,6 +818,12 @@ ALWAYS_INLINE UGPRPair iteratorOpenTryFastImpl(VM& vm, JSGlobalObject* globalObj
         return encodeResult(pc, reinterpret_cast<void*>(static_cast<uintptr_t>(IterationMode::FastArray)));
     }
 
+    auto validationResult = validateIterable(vm, iterable, symbolIterator);
+    if (validationResult != IterableValidationResult::Valid) [[unlikely]] {
+        throwTypeError(globalObject, throwScope, getIteratorErrorMessage(validationResult, iterable));
+        return encodeResult(nullptr, reinterpret_cast<void*>(static_cast<uintptr_t>(IterationMode::Generic)));
+    }
+
     // Return to the bytecode to try in generic mode.
     metadata.m_iterationMetadata.seenModes = metadata.m_iterationMetadata.seenModes | IterationMode::Generic;
     return encodeResult(pc, reinterpret_cast<void*>(static_cast<uintptr_t>(IterationMode::Generic)));
@@ -815,23 +831,20 @@ ALWAYS_INLINE UGPRPair iteratorOpenTryFastImpl(VM& vm, JSGlobalObject* globalObj
 
 JSC_DEFINE_COMMON_SLOW_PATH(iterator_open_try_fast_narrow)
 {
-    // Don't set PC; we can't throw and it's relatively slow.
-    BEGIN_NO_SET_PC();
-    return iteratorOpenTryFastImpl<Narrow>(vm, globalObject, codeBlock, callFrame, pc);
+    BEGIN();
+    return iteratorOpenTryFastImpl<Narrow>(vm, globalObject, codeBlock, callFrame, throwScope, pc);
 }
 
 JSC_DEFINE_COMMON_SLOW_PATH(iterator_open_try_fast_wide16)
 {
-    // Don't set PC; we can't throw and it's relatively slow.
-    BEGIN_NO_SET_PC();
-    return iteratorOpenTryFastImpl<Wide16>(vm, globalObject, codeBlock, callFrame, pc);
+    BEGIN();
+    return iteratorOpenTryFastImpl<Wide16>(vm, globalObject, codeBlock, callFrame, throwScope, pc);
 }
 
 JSC_DEFINE_COMMON_SLOW_PATH(iterator_open_try_fast_wide32)
 {
-    // Don't set PC; we can't throw and it's relatively slow.
-    BEGIN_NO_SET_PC();
-    return iteratorOpenTryFastImpl<Wide32>(vm, globalObject, codeBlock, callFrame, pc);
+    BEGIN();
+    return iteratorOpenTryFastImpl<Wide32>(vm, globalObject, codeBlock, callFrame, throwScope, pc);
 }
 
 template<OpcodeSize width>

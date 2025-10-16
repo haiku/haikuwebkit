@@ -151,7 +151,7 @@ void AutoscrollController::updateAutoscrollRenderer()
     m_autoscrollRenderer = WeakPtr { downcast<RenderBox>(*renderer) };
 }
 
-void AutoscrollController::updateDragAndDrop(Node* dropTargetNode, const IntPoint& eventPosition, WallTime eventTime)
+void AutoscrollController::updateDragAndDrop(Node* dropTargetNode, const IntPoint& eventPosition, MonotonicTime eventTime)
 {
     IntSize offset;
     auto findDragAndDropScroller = [&]() -> RenderBox* {
@@ -256,7 +256,7 @@ void AutoscrollController::autoscrollTimerFired()
     Ref frame = m_autoscrollRenderer->frame();
     switch (m_autoscrollType) {
     case AutoscrollType::DragAndDrop:
-        if (WallTime::now() - m_dragAndDropAutoscrollStartTime > autoscrollDelay)
+        if (MonotonicTime::now() - m_dragAndDropAutoscrollStartTime > autoscrollDelay)
             CheckedRef { *m_autoscrollRenderer }->autoscroll(m_dragAndDropAutoscrollReferencePosition);
         break;
     case AutoscrollType::Selection: {

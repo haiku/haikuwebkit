@@ -114,6 +114,17 @@ public:
     class ClientData : public ThreadSafeRefCounted<ClientData> {
     public:
         virtual ~ClientData() = default;
+
+        enum class Type : uint8_t {
+            WebCoreThreadGlobalData
+        };
+        Type type() const { return Type::WebCoreThreadGlobalData; }
+
+    protected:
+        explicit ClientData(Type type)
+        {
+            ASSERT_UNUSED(type, type == Type::WebCoreThreadGlobalData);
+        }
     };
 
     WTF_EXPORT_PRIVATE ~Thread();

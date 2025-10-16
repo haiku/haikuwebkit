@@ -22,7 +22,7 @@
 #pragma once
 
 #include <WebCore/FontCascade.h>
-#include <WebCore/RenderObjectInlines.h>
+#include <WebCore/RenderObjectNode.h>
 #include <WebCore/RenderText.h>
 #include <WebCore/SVGTextLayoutAttributes.h>
 #include <WebCore/Text.h>

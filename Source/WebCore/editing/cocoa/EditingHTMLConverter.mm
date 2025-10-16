@@ -57,6 +57,7 @@
 #import "LocalizedStrings.h"
 #import "NodeName.h"
 #import "RenderImage.h"
+#import "RenderObjectStyle.h"
 #import "RenderText.h"
 #import "StyleExtractor.h"
 #import "StyleProperties.h"
@@ -353,7 +354,7 @@ static void updateAttributes(const Node* node, const RenderStyle& style, OptionS
     else
         [attributes removeObjectForKey:NSStrikethroughStyleAttributeName];
 
-    if (auto ctFont = style.fontCascade().primaryFont()->getCTFont())
+    if (auto ctFont = style.fontCascade().primaryFont()->ctFont())
         [attributes setObject:(__bridge PlatformFont *)ctFont forKey:NSFontAttributeName];
     else {
         auto size = style.fontCascade().primaryFont()->platformData().size();

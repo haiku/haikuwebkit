@@ -62,6 +62,7 @@
 #import <WebCore/Editor.h>
 #import <WebCore/Event.h>
 #import <WebCore/FloatQuad.h>
+#import <WebCore/FrameDestructionObserverInlines.h>
 #import <WebCore/FrameInlines.h>
 #import <WebCore/HTMLInputElement.h>
 #import <WebCore/HTMLNames.h>
@@ -576,6 +577,15 @@ bool WebEditorClient::isAutomaticSpellingCorrectionEnabled()
 void WebEditorClient::toggleAutomaticSpellingCorrection()
 {
     [m_webView toggleAutomaticSpellingCorrection:nil];
+}
+
+bool WebEditorClient::isSmartListsEnabled()
+{
+    return false;
+}
+
+void WebEditorClient::toggleSmartLists()
+{
 }
 
 #endif // USE(AUTOMATIC_TEXT_REPLACEMENT)

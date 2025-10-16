@@ -64,7 +64,6 @@ static Ref<SupportedFeatures> supportedFeatures(WGPUAdapter adapter)
 static Ref<SupportedLimits> supportedLimits(WGPUAdapter adapter)
 {
     WGPUSupportedLimits limits;
-    limits.nextInChain = nullptr;
     auto result = wgpuAdapterGetLimits(adapter, &limits);
     ASSERT_UNUSED(result, result);
     return SupportedLimits::create(
@@ -248,17 +247,15 @@ void AdapterImpl::requestDevice(const DeviceDescriptor& descriptor, CompletionHa
 #undef SET_MAX_VALUE
     }
 
-    WGPURequiredLimits requiredLimits { nullptr, WTFMove(limits) };
+    WGPURequiredLimits requiredLimits { .limits = WTFMove(limits) };
 
     WGPUDeviceDescriptor backingDescriptor {
-        .nextInChain = nullptr,
         .label = label.data(),
         .requiredFeatureCount = features.size(),
         .requiredFeatures = features.size() ? features.span().data() : nullptr,
         .requiredLimits = &requiredLimits,
         .defaultQueue = {
-            { },
-            "queue"
+            .label = "queue"
         },
         .deviceLostCallback = nullptr,
         .deviceLostUserdata = nullptr,

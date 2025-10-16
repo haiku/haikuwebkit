@@ -26,6 +26,7 @@
 #include "config.h"
 #include "WakeLock.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "EventLoop.h"
 #include "Exception.h"

@@ -36,10 +36,10 @@
 #include "Logging.h"
 #include "RemoteBarcodeDetector.h"
 #include "RemoteBarcodeDetectorMessages.h"
+#include "RemoteDisplayListRecorder.h"
 #include "RemoteFaceDetector.h"
 #include "RemoteFaceDetectorMessages.h"
 #include "RemoteGraphicsContext.h"
-#include "RemoteGraphicsContextMessages.h"
 #include "RemoteImageBuffer.h"
 #include "RemoteImageBufferProxyMessages.h"
 #include "RemoteImageBufferSet.h"
@@ -48,6 +48,8 @@
 #include "RemoteRenderingBackendMessages.h"
 #include "RemoteRenderingBackendProxyMessages.h"
 #include "RemoteSharedResourceCache.h"
+#include "RemoteSnapshot.h"
+#include "RemoteSnapshotRecorder.h"
 #include "RemoteTextDetector.h"
 #include "RemoteTextDetectorMessages.h"
 #include "ShapeDetectionObjectHeap.h"
@@ -104,14 +106,14 @@ bool isSmallLayerBacking(const ImageBufferParameters& parameters)
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteRenderingBackend);
 
-Ref<RemoteRenderingBackend> RemoteRenderingBackend::create(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RenderingBackendIdentifier identifier, Ref<IPC::StreamServerConnection>&& streamConnection)
+Ref<RemoteRenderingBackend> RemoteRenderingBackend::create(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RemoteRenderingBackendIdentifier identifier, Ref<IPC::StreamServerConnection>&& streamConnection)
 {
     auto instance = adoptRef(*new RemoteRenderingBackend(gpuConnectionToWebProcess, identifier, WTFMove(streamConnection)));
     instance->startListeningForIPC();
     return instance;
 }
 
-RemoteRenderingBackend::RemoteRenderingBackend(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RenderingBackendIdentifier identifier, Ref<IPC::StreamServerConnection>&& streamConnection)
+RemoteRenderingBackend::RemoteRenderingBackend(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RemoteRenderingBackendIdentifier identifier, Ref<IPC::StreamServerConnection>&& streamConnection)
     : m_workQueue(IPC::StreamConnectionWorkQueue::create("RemoteRenderingBackend work queue"_s))
     , m_streamConnection(WTFMove(streamConnection))
     , m_gpuConnectionToWebProcess(gpuConnectionToWebProcess)
@@ -210,23 +212,30 @@ void RemoteRenderingBackend::moveToImageBuffer(RemoteSerializedImageBufferIdenti
     MESSAGE_CHECK(result.isNewEntry, "Duplicate ImageBuffer");
 }
 
-#if PLATFORM(COCOA)
-void RemoteRenderingBackend::didDrawRemoteToPDF(PageIdentifier pageID, RenderingResourceIdentifier imageBufferIdentifier, SnapshotIdentifier snapshotIdentifier)
+void RemoteRenderingBackend::createSnapshotRecorder(RemoteSnapshotRecorderIdentifier identifier, RemoteSnapshotIdentifier snapshotIdentifier)
 {
     assertIsCurrent(workQueue());
-    auto imageBuffer = this->imageBuffer(imageBufferIdentifier);
-    if (!imageBuffer) {
-        ASSERT_IS_TESTING_IPC();
-        return;
-    }
-
-    auto data = imageBuffer->sinkIntoPDFDocument();
-
-    callOnMainRunLoop([pageID, data = WTFMove(data), snapshotIdentifier]() mutable {
-        GPUProcess::singleton().didDrawRemoteToPDF(pageID, WTFMove(data), snapshotIdentifier);
-    });
+    // FIXME: using global identifiers (snapshotIdentifier) is not secure. Do not follow this pattern.
+    Ref snapshot = GPUProcess::singleton().getOrCreateSnapshot(snapshotIdentifier);
+    auto result = m_remoteSnapshotRecorders.add(identifier, RemoteSnapshotRecorder::create(identifier, snapshot, *this));
+    MESSAGE_CHECK(result.isNewEntry, "Recorder already created");
 }
-#endif
+
+void RemoteRenderingBackend::sinkSnapshotRecorderIntoSnapshotFrame(RemoteSnapshotRecorderIdentifier identifier, FrameIdentifier frameIdentifier, CompletionHandler<void(bool)>&& completionHandler)
+{
+    assertIsCurrent(workQueue());
+    RefPtr recorder = m_remoteSnapshotRecorders.take(identifier).get();
+    MESSAGE_CHECK(recorder, "Recorder sunk into snapshot before being cached");
+    Ref snapshot = recorder->snapshot();
+    // FIXME: using global identifiers (frameIdentifier) is not secure. Do not follow this pattern.
+    bool success = snapshot->setFrame(frameIdentifier, recorder->takeDisplayList(), workQueue());
+    MESSAGE_CHECK(success, "Frame already present");
+
+    // Note:
+    // Success completion handlers are used to ensure that getOrCreateSnapshot does not vivify already released snapshot identifier into a leaked object. Caller is expected to wait
+    // until completion of *all* handlers, failing or not, before consuming the snapshot, otherwise leaks occur.
+    completionHandler(true);
+}
 
 template<typename ImageBufferType>
 static RefPtr<ImageBuffer> allocateImageBufferInternal(const FloatSize& logicalSize, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, const DestinationColorSpace& colorSpace, ImageBufferFormat bufferFormat, ImageBufferCreationContext& creationContext)
@@ -398,27 +407,14 @@ void RemoteRenderingBackend::releaseFontCustomPlatformData(WebCore::RenderingRes
     MESSAGE_CHECK(success, "FontCustomPlatformData released before being cached.");
 }
 
-void RemoteRenderingBackend::cacheDecomposedGlyphs(IPC::ArrayReferenceTuple<WebCore::GlyphBufferGlyph, FloatSize> glyphsAdvances, FloatPoint localAnchor, FontSmoothingMode smoothingMode, RenderingResourceIdentifier identifier)
-{
-    assertIsCurrent(workQueue());
-    m_remoteResourceCache.cacheDecomposedGlyphs(DecomposedGlyphs::create(Vector(glyphsAdvances.span<0>()), Vector<GlyphBufferAdvance>(glyphsAdvances.span<1>()), localAnchor, smoothingMode, identifier));
-}
-
-void RemoteRenderingBackend::releaseDecomposedGlyphs(RenderingResourceIdentifier identifier)
-{
-    assertIsCurrent(workQueue());
-    bool success = m_remoteResourceCache.releaseDecomposedGlyphs(identifier);
-    MESSAGE_CHECK(success, "DecomposedGlyphs released before being cached.");
-}
-
-void RemoteRenderingBackend::cacheGradient(Ref<Gradient>&& gradient, RenderingResourceIdentifier identifier)
+void RemoteRenderingBackend::cacheGradient(Ref<Gradient>&& gradient, RemoteGradientIdentifier identifier)
 {
     assertIsCurrent(workQueue());
     bool success = m_remoteResourceCache.cacheGradient(identifier, WTFMove(gradient));
     MESSAGE_CHECK(success, "Gradient already cached.");
 }
 
-void RemoteRenderingBackend::releaseGradient(RenderingResourceIdentifier identifier)
+void RemoteRenderingBackend::releaseGradient(RemoteGradientIdentifier identifier)
 {
     assertIsCurrent(workQueue());
     bool success = m_remoteResourceCache.releaseGradient(identifier);
@@ -442,6 +438,29 @@ void RemoteRenderingBackend::releaseFilter(RenderingResourceIdentifier identifie
     MESSAGE_CHECK(success, "Filter released before being cached.");
 }
 
+void RemoteRenderingBackend::createDisplayListRecorder(RemoteDisplayListRecorderIdentifier identifier)
+{
+    assertIsCurrent(workQueue());
+    auto result = m_remoteDisplayListRecorders.add(identifier, RemoteDisplayListRecorder::create(identifier, *this));
+    MESSAGE_CHECK(result.isNewEntry, "Recorder already created");
+}
+
+void RemoteRenderingBackend::sinkDisplayListRecorderIntoDisplayList(RemoteDisplayListRecorderIdentifier identifier, RemoteDisplayListIdentifier displayListIdentifier)
+{
+    assertIsCurrent(workQueue());
+    RefPtr recorder = m_remoteDisplayListRecorders.take(identifier).get();
+    MESSAGE_CHECK(recorder, "Recorder sunk into display list before being cached");
+    Ref displayList = recorder->takeDisplayList();
+    bool success = m_remoteResourceCache.cacheDisplayList(displayListIdentifier, WTFMove(displayList));
+    MESSAGE_CHECK(success, "Display list already created");
+}
+
+void RemoteRenderingBackend::releaseDisplayList(RemoteDisplayListIdentifier identifier)
+{
+    assertIsCurrent(workQueue());
+    bool success = m_remoteResourceCache.releaseDisplayList(identifier);
+    MESSAGE_CHECK(success, "Display list released before being cached");
+}
 
 void RemoteRenderingBackend::releaseMemory()
 {

@@ -182,7 +182,7 @@ void SourceBufferPrivateGStreamer::enqueueSample(Ref<MediaSample>&& sample, Trac
 {
     ASSERT(isMainThread());
 
-    GRefPtr<GstSample> gstSample = sample->platformSample().sample.gstSample;
+    GRefPtr<GstSample> gstSample = sample->platformSample().gstSample();
     ASSERT(gstSample);
 
 #ifndef GST_DISABLE_GST_DEBUG

@@ -71,9 +71,6 @@ Ref<CSSValue> CustomProperty::propertyValue(CSSValuePool& pool, const RenderStyl
 {
     auto convertValue = [&](const Value& value) {
         return WTF::switchOn(value,
-            [&](const Transform& value) -> Ref<CSSValue> {
-                return ExtractorConverter::convertTransformOperation(style, value.operation);
-            },
             [&](const auto& value) -> Ref<CSSValue> {
                 return createCSSValue(pool, style, value);
             }
@@ -118,9 +115,6 @@ void CustomProperty::propertyValueSerialization(StringBuilder& builder, const CS
 {
     auto serializeValue = [&](StringBuilder& builder, const Value& value) {
         WTF::switchOn(value,
-            [&](const Transform& value) {
-                ExtractorSerializer::serializeTransformOperation(style, builder, context, value.operation);
-            },
             [&](const auto& value) {
                 Style::serializationForCSS(builder, context, style, value);
             }
@@ -164,9 +158,6 @@ void CustomProperty::propertyValueSerializationForTokenization(StringBuilder& bu
 
     auto serializeValue = [&](StringBuilder& builder, const Value& value) {
         WTF::switchOn(value,
-            [&](const Transform& value) {
-                ExtractorSerializer::serializeTransformOperation(style, builder, context, value.operation);
-            },
             [&](const Color& value) {
                 Style::serializationForCSSTokenization(builder, context, value);
             },

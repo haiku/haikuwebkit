@@ -55,8 +55,8 @@ public:
     void setAllowAutofill() { m_allowAutofill = true; }
     bool allowAutofill() const { return m_allowAutofill; }
 
-    bool allowJSHandleCreation() const { return m_allowJSHandleCreation; }
-    void setAllowJSHandleCreation() { m_allowJSHandleCreation = true; }
+    bool allowsJSHandleCreation() const { return m_allowsJSHandleCreation; }
+    void setAllowsJSHandleCreation() { m_allowsJSHandleCreation = true; }
 
     void setAllowNodeSerialization() { m_allowNodeSerialization = true; }
     bool allowNodeSerialization() const { return m_allowNodeSerialization; }
@@ -107,7 +107,7 @@ private:
     bool m_shadowRootIsAlwaysOpen : 1 { false };
     bool m_closedShadowRootIsExposedForExtensions : 1 { false };
     bool m_shouldDisableLegacyOverrideBuiltInsBehavior : 1 { false };
-    bool m_allowJSHandleCreation : 1 { false };
+    bool m_allowsJSHandleCreation : 1 { false };
     bool m_allowNodeSerialization : 1 { false };
     bool m_allowPostLegacySynchronousMessage : 1 { false };
     bool m_isMediaControls : 1 { false };
@@ -122,6 +122,7 @@ inline DOMWrapperWorld& pluginWorldSingleton() { return mainThreadNormalWorldSin
 
 DOMWrapperWorld& currentWorld(JSC::JSGlobalObject&);
 DOMWrapperWorld& worldForDOMObject(JSC::JSObject&);
+Ref<DOMWrapperWorld> protectedWorldForDOMObject(JSC::JSObject&);
 
 // Helper function for code paths that must not share objects across isolated DOM worlds.
 bool isWorldCompatible(JSC::JSGlobalObject&, JSC::JSValue);
@@ -134,6 +135,11 @@ inline DOMWrapperWorld& currentWorld(JSC::JSGlobalObject& lexicalGlobalObject)
 inline DOMWrapperWorld& worldForDOMObject(JSC::JSObject& object)
 {
     return JSC::jsCast<JSDOMGlobalObject*>(object.globalObject())->world();
+}
+
+inline Ref<DOMWrapperWorld> protectedWorldForDOMObject(JSC::JSObject& object)
+{
+    return worldForDOMObject(object);
 }
 
 inline bool isWorldCompatible(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value)

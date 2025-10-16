@@ -45,6 +45,10 @@ namespace WebKit {
 using RootViewToWebViewConverter = Function<WebCore::FloatRect(const WebCore::FloatRect&)>;
 RetainPtr<WKTextExtractionItem> createItem(const WebCore::TextExtraction::Item&, RootViewToWebViewConverter&&);
 
+#if ENABLE(TEXT_EXTRACTION_FILTER)
+void filterText(WKTextExtractionItem *, CompletionHandler<void()>&&);
+#endif
+
 } // namespace WebKit
 
 #endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))

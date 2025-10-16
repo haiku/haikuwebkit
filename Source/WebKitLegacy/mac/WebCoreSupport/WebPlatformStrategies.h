@@ -34,12 +34,13 @@ struct PasteboardImage;
 struct PasteboardWebContent;
 
 class WebPlatformStrategies : public WebCore::PlatformStrategies, private WebCore::PasteboardStrategy {
+    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebPlatformStrategies);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebPlatformStrategies);
 public:
     static void initializeIfNecessary();
-    
-private:
     WebPlatformStrategies();
-    
+
+private:
     // WebCore::PlatformStrategies
     WebCore::LoaderStrategy* createLoaderStrategy() override;
     WebCore::PasteboardStrategy* createPasteboardStrategy() override;

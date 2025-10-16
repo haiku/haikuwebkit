@@ -172,7 +172,7 @@ private:
 
 class RestrictedOpenerDomainsController {
 public:
-    static RestrictedOpenerDomainsController& shared();
+    static RestrictedOpenerDomainsController& singleton();
 
     RestrictedOpenerType lookup(const WebCore::RegistrableDomain&) const;
 

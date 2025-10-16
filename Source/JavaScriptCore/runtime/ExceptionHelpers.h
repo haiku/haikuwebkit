@@ -45,6 +45,7 @@ String constructErrorMessage(JSGlobalObject*, JSValue, const String&);
 JS_EXPORT_PRIVATE JSObject* createError(JSGlobalObject*, JSValue, const String&, ErrorInstance::SourceAppender);
 JS_EXPORT_PRIVATE JSObject* createStackOverflowError(JSGlobalObject*);
 JSObject* createUndefinedVariableError(JSGlobalObject*, const Identifier&);
+JSObject* createTDZError(JSGlobalObject*, StringView);
 JSObject* createTDZError(JSGlobalObject*);
 JSObject* createNotAnObjectError(JSGlobalObject*, JSValue);
 JSObject* createInvalidFunctionApplyParameterError(JSGlobalObject*, JSValue);

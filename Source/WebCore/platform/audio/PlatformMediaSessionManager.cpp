@@ -34,19 +34,35 @@
 #include <ranges>
 #include <wtf/TZoneMallocInlines.h>
 
+#if RELEASE_LOG_DISABLED
+#define PLATFORMMEDIASESSIONMANAGER_RELEASE_LOG(formatString, ...)
+#else
+#define PLATFORMMEDIASESSIONMANAGER_RELEASE_LOG(formatString, ...) \
+do { \
+    if (willLog(WTFLogLevel::Always)) { \
+        RELEASE_LOG_FORWARDABLE(Media, PLATFORMMEDIASESSIONMANAGER_##formatString, ##__VA_ARGS__); \
+        if (logger().developerExtrasEnabled()) { \
+            char buffer[1024] = { 0 }; \
+            SAFE_SPRINTF(std::span { buffer }, MESSAGE_PLATFORMMEDIASESSIONMANAGER_##formatString, ##__VA_ARGS__); \
+            logger().toObservers(logChannel(), WTFLogLevel::Always, String::fromUTF8(buffer)); \
+        } \
+    } \
+} while (0)
+#endif
+
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(PlatformMediaSessionManager);
 
 #if !PLATFORM(COCOA) && (!USE(GLIB) || !ENABLE(MEDIA_SESSION))
-RefPtr<PlatformMediaSessionManager> PlatformMediaSessionManager::create(std::optional<PageIdentifier>)
+RefPtr<PlatformMediaSessionManager> PlatformMediaSessionManager::create(PageIdentifier pageIdentifier)
 {
-    return adoptRef(new PlatformMediaSessionManager);
+    return adoptRef(new PlatformMediaSessionManager(pageIdentifier));
 }
 #endif // !PLATFORM(COCOA) && (!USE(GLIB) || !ENABLE(MEDIA_SESSION))
 
-PlatformMediaSessionManager::PlatformMediaSessionManager()
-    : MediaSessionManagerInterface()
+PlatformMediaSessionManager::PlatformMediaSessionManager(PageIdentifier pageIdentifier)
+    : MediaSessionManagerInterface(pageIdentifier)
 {
 }
 
@@ -116,10 +132,10 @@ WeakPtr<PlatformMediaSessionInterface> PlatformMediaSessionManager::bestEligible
     if (eligibleAudioVideoSessions.isEmpty()) {
         if (eligibleWebAudioSessions.isEmpty())
             return nullptr;
-        return WeakPtr { eligibleWebAudioSessions[0].get() }->selectBestMediaSession(eligibleWebAudioSessions, purpose);
+        return RefPtr { eligibleWebAudioSessions[0].get() }->selectBestMediaSession(eligibleWebAudioSessions, purpose);
     }
 
-    return WeakPtr { eligibleAudioVideoSessions[0].get() }->selectBestMediaSession(eligibleAudioVideoSessions, purpose);
+    return RefPtr { eligibleAudioVideoSessions[0].get() }->selectBestMediaSession(eligibleAudioVideoSessions, purpose);
 }
 
 } // namespace WebCore

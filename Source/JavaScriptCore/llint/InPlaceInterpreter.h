@@ -792,6 +792,12 @@ FOR_EACH_IPINT_UINT_OPCODE(IPINT_VALIDATE_DEFINE_FUNCTION);
 
 namespace JSC { namespace IPInt {
 
+constexpr uint64_t alignIPInt = 256;
+constexpr uint64_t alignArgumInt = 64;
+constexpr uint64_t alignUInt = 64;
+constexpr uint64_t alignMInt = 64;
+
+
 void initialize();
 void verifyInitialization();
 

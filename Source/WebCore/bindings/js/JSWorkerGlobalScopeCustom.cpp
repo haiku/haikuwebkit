@@ -44,8 +44,9 @@ void JSWorkerGlobalScope::visitAdditionalChildren(Visitor& visitor)
         addWebCoreOpaqueRoot(visitor, *location);
     if (auto* navigator = wrapped().optionalNavigator())
         addWebCoreOpaqueRoot(visitor, *navigator);
-    ScriptExecutionContext& context = wrapped();
-    addWebCoreOpaqueRoot(visitor, context);
+
+    // We cannot ref the object here as this may get called on the GC thread.
+    SUPPRESS_UNCOUNTED_ARG addWebCoreOpaqueRoot(visitor, static_cast<ScriptExecutionContext&>(wrapped()));
     
     // Normally JSEventTargetCustom.cpp's JSEventTarget::visitAdditionalChildren() would call this. But
     // even though WorkerGlobalScope is an EventTarget, JSWorkerGlobalScope does not subclass

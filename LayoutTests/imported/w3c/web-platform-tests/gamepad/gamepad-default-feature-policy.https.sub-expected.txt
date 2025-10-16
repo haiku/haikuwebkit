@@ -1,5 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/gamepad/feature-policy-gamepad.html
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/gamepad/feature-policy-gamepad.html
 
 
 Harness Error (TIMEOUT), message = null

@@ -34,6 +34,7 @@
 
 #include "CachedResource.h"
 #include "ComputedEffectTiming.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DOMWrapperWorld.h"
 #include "DocumentLoader.h"
 #include "Event.h"
@@ -64,6 +65,7 @@
 #include "PageTimelineAgent.h"
 #include "PlatformStrategies.h"
 #include "RenderObjectInlines.h"
+#include "RenderObjectNode.h"
 #include "RenderView.h"
 #include "ScriptController.h"
 #include "ScriptExecutionContext.h"
@@ -1333,6 +1335,24 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(WorkerOrWorkl
 InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(ServiceWorkerGlobalScope& globalScope)
 {
     return globalScope.inspectorController().m_instrumentingAgents;
+}
+
+InstrumentingAgents* InspectorInstrumentation::instrumentingAgents(const LocalFrameView& frameView)
+{
+    return instrumentingAgents(frameView.frame());
+}
+
+InstrumentingAgents* InspectorInstrumentation::instrumentingAgents(const Frame& frame)
+{
+    return instrumentingAgents(frame.page());
+}
+
+InstrumentingAgents* InspectorInstrumentation::instrumentingAgents(Document& document)
+{
+    Page* page = document.page();
+    if (!page && document.templateDocumentHost())
+        page = document.templateDocumentHost()->page();
+    return instrumentingAgents(page);
 }
 
 InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)

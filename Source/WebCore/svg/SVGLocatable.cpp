@@ -25,6 +25,7 @@
 
 #include "ContainerNodeInlines.h"
 #include "RenderElement.h"
+#include "RenderObjectDocument.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGGraphicsElement.h"
 #include "SVGImageElement.h"

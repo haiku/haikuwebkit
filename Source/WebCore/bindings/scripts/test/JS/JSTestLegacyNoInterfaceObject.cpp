@@ -149,7 +149,7 @@ JSObject* JSTestLegacyNoInterfaceObject::prototype(VM& vm, JSDOMGlobalObject& gl
 
 void JSTestLegacyNoInterfaceObject::destroy(JSC::JSCell* cell)
 {
-    JSTestLegacyNoInterfaceObject* thisObject = static_cast<JSTestLegacyNoInterfaceObject*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestLegacyNoInterfaceObject* thisObject = static_cast<JSTestLegacyNoInterfaceObject*>(cell);
     thisObject->JSTestLegacyNoInterfaceObject::~JSTestLegacyNoInterfaceObject();
 }
 
@@ -359,7 +359,7 @@ bool JSTestLegacyNoInterfaceObjectOwner::isReachableFromOpaqueRoots(JSC::Handle<
 
 void JSTestLegacyNoInterfaceObjectOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestLegacyNoInterfaceObject = static_cast<JSTestLegacyNoInterfaceObject*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestLegacyNoInterfaceObject = static_cast<JSTestLegacyNoInterfaceObject*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestLegacyNoInterfaceObject->protectedWrapped().ptr(), jsTestLegacyNoInterfaceObject);
 }

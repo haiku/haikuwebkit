@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Igalia S.L. All rights reserved.
- * Copyright (C) 2016-2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,6 @@
 
 #include "RenderStyleInlines.h"
 #include "StyleInheritedData.h"
-#include <numbers>
 #include <wtf/StdLibExtras.h>
 
 static const unsigned kRadicalOperator = 0x221A;
@@ -242,8 +241,7 @@ void MathOperator::calculateDisplayStyleLargeOperator(const RenderStyle& style)
     if (!getBaseGlyph(style, baseGlyph) || !baseGlyph.font->mathData())
         return;
 
-    // The value of displayOperatorMinHeight is sometimes too small, so we ensure that it is at least \sqrt{2} times the size of the base glyph.
-    float displayOperatorMinHeight = std::max(heightForGlyph(baseGlyph) * std::numbers::sqrt2_v<float>, baseGlyph.font->mathData()->getMathConstant(*baseGlyph.font, OpenTypeMathData::DisplayOperatorMinHeight));
+    float displayOperatorMinHeight = baseGlyph.font->mathData()->getMathConstant(*baseGlyph.font, OpenTypeMathData::DisplayOperatorMinHeight);
 
     Vector<Glyph> sizeVariants;
     Vector<OpenTypeMathData::AssemblyPart> assemblyParts;

@@ -63,6 +63,7 @@ struct AnchorScrollSnapshot {
     inline LayoutSize adjustmentForCurrentScrollPosition() const;
     AnchorScrollSnapshot(const RenderBox& scroller, LayoutPoint snapshot);
     AnchorScrollSnapshot(LayoutPoint snapshot);
+    bool operator==(const AnchorScrollSnapshot&) const = default;
 };
 
 class AnchorScrollAdjuster {
@@ -77,6 +78,9 @@ public:
 
     inline void addSnapshot(const RenderBox& scroller);
     inline void addViewportSnapshot(const RenderView&);
+
+    enum Diff : uint8_t { New, SnapshotsDiffer, SnapshotsMatch };
+    bool recaptureDiffers(const AnchorScrollAdjuster&) const; // Snapshot differences can require invalidation.
 
     void setFallbackLimits(const RenderBox& anchored);
     bool hasFallbackLimits() const { return m_hasFallback; }
@@ -170,7 +174,7 @@ public:
     static void updateAnchorPositionedStateForDefaultAnchorAndPositionVisibility(Element&, const RenderStyle&, AnchorPositionedStates&);
 
     static LayoutRect computeAnchorRectRelativeToContainingBlock(CheckedRef<const RenderBoxModelObject> anchorBox, const RenderElement& containingBlock, const RenderBox& anchoredBox);
-    static void captureScrollSnapshots(RenderBox& anchored);
+    static void captureScrollSnapshots(RenderBox& anchored, bool invalidateStyleForScrollPositionChanges = true);
 
     static AnchorToAnchorPositionedMap makeAnchorPositionedForAnchorMap(AnchorPositionedToAnchorMap&);
 

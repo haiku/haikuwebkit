@@ -45,7 +45,7 @@
 #include <WebCore/UserInterfaceDirectionPolicy.h>
 #include <WebCore/WritingMode.h>
 #include <unicode/uscript.h>
-#include <wtf/AbstractRefCounted.h>
+#include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Seconds.h>
 #include <wtf/TZoneMalloc.h>
@@ -60,7 +60,7 @@ namespace WebCore {
 
 class Page;
 
-class SettingsBase : public AbstractRefCounted {
+class SettingsBase : public AbstractRefCountedAndCanMakeWeakPtr<SettingsBase> {
     WTF_MAKE_TZONE_ALLOCATED(SettingsBase);
     WTF_MAKE_NONCOPYABLE(SettingsBase);
 public:

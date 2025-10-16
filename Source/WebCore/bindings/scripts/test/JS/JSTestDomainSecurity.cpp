@@ -177,7 +177,7 @@ JSValue JSTestDomainSecurity::getConstructor(VM& vm, const JSGlobalObject* globa
 
 void JSTestDomainSecurity::destroy(JSC::JSCell* cell)
 {
-    JSTestDomainSecurity* thisObject = static_cast<JSTestDomainSecurity*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestDomainSecurity* thisObject = static_cast<JSTestDomainSecurity*>(cell);
     thisObject->JSTestDomainSecurity::~JSTestDomainSecurity();
 }
 
@@ -341,7 +341,7 @@ bool JSTestDomainSecurityOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unkn
 
 void JSTestDomainSecurityOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestDomainSecurity = static_cast<JSTestDomainSecurity*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestDomainSecurity = static_cast<JSTestDomainSecurity*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestDomainSecurity->protectedWrapped().ptr(), jsTestDomainSecurity);
 }

@@ -150,7 +150,7 @@ JSValue JSTestNamedAndIndexedSetterNoIdentifier::getConstructor(VM& vm, const JS
 
 void JSTestNamedAndIndexedSetterNoIdentifier::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedAndIndexedSetterNoIdentifier* thisObject = static_cast<JSTestNamedAndIndexedSetterNoIdentifier*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedAndIndexedSetterNoIdentifier* thisObject = static_cast<JSTestNamedAndIndexedSetterNoIdentifier*>(cell);
     thisObject->JSTestNamedAndIndexedSetterNoIdentifier::~JSTestNamedAndIndexedSetterNoIdentifier();
 }
 
@@ -423,7 +423,7 @@ bool JSTestNamedAndIndexedSetterNoIdentifierOwner::isReachableFromOpaqueRoots(JS
 
 void JSTestNamedAndIndexedSetterNoIdentifierOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedAndIndexedSetterNoIdentifier = static_cast<JSTestNamedAndIndexedSetterNoIdentifier*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedAndIndexedSetterNoIdentifier = static_cast<JSTestNamedAndIndexedSetterNoIdentifier*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedAndIndexedSetterNoIdentifier->protectedWrapped().ptr(), jsTestNamedAndIndexedSetterNoIdentifier);
 }

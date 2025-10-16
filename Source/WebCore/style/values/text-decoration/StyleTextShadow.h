@@ -76,6 +76,12 @@ template<> struct Blending<TextShadow> {
     auto blend(const TextShadow&, const TextShadow&, const RenderStyle&, const RenderStyle&, const BlendingContext&) -> TextShadow;
 };
 
+template<> struct Blending<TextShadows> {
+    auto canBlend(const TextShadows&, const TextShadows&, CompositeOperation) -> bool;
+    constexpr auto requiresInterpolationForAccumulativeIteration(const TextShadows&, const TextShadows&) -> bool { return true; }
+    auto blend(const TextShadows&, const TextShadows&, const RenderStyle&, const RenderStyle&, const BlendingContext&) -> TextShadows;
+};
+
 // MARK: - Shadow-specific Interfaces
 
 constexpr ShadowStyle shadowStyle(const TextShadow&)

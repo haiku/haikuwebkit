@@ -573,6 +573,11 @@ public:
     WEBCORE_EXPORT bool isAutomaticSpellingCorrectionEnabled();
     WEBCORE_EXPORT void toggleAutomaticSpellingCorrection();
     WEBCORE_EXPORT bool canEnableAutomaticSpellingCorrection() const;
+    WEBCORE_EXPORT void toggleSmartLists();
+#endif
+
+#if PLATFORM(COCOA)
+    WEBCORE_EXPORT bool isSmartListsEnabled();
 #endif
 
     RefPtr<DocumentFragment> webContentFromPasteboard(Pasteboard&, const SimpleRange& context, bool allowPlainText, bool& chosePlainText);

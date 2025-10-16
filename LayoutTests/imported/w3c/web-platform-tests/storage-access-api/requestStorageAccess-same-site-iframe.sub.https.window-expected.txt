@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/storage-access-api/resources/requestStorageAccess-iframe.https.html?testCase=same-site-frame
 
 Harness Error (TIMEOUT), message = null
 

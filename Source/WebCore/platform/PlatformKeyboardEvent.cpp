@@ -204,7 +204,7 @@ std::optional<PlatformKeyboardEvent> PlatformKeyboardEvent::syntheticEventFromTe
         return { };
 
     auto [text, keyCode, keyIdentifier, virtualKey, code, commandAndText] = *info;
-    PlatformKeyboardEvent event { type, text, text, key, code, keyIdentifier, virtualKey, false, false, false, { }, WallTime::now() };
+    PlatformKeyboardEvent event { type, text, text, key, code, keyIdentifier, virtualKey, false, false, false, { }, MonotonicTime::now() };
 #if USE(APPKIT)
     if (commandAndText) {
         auto [editCommandName, text] = *commandAndText;

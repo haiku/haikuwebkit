@@ -76,10 +76,11 @@ public:
     void clear();
     
     bool contain(const MediaTime&) const;
+    bool containWithEpsilon(const MediaTime&, const MediaTime& epsilon) const;
 
     size_t find(const MediaTime&) const;
-    size_t findWithEpsilon(const MediaTime&, const MediaTime& epsilon);
-    
+    size_t findWithEpsilon(const MediaTime&, const MediaTime& epsilon) const;
+
     MediaTime nearest(const MediaTime&) const;
 
     MediaTime totalDuration() const;

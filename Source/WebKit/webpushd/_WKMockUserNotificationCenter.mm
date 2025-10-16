@@ -27,6 +27,7 @@
 #import "_WKMockUserNotificationCenter.h"
 
 #import <wtf/BlockPtr.h>
+#import <wtf/OSObjectPtr.h>
 #import <wtf/RetainPtr.h>
 
 #if HAVE(FULL_FEATURED_USER_NOTIFICATIONS)
@@ -46,7 +47,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
 }
 
 @implementation _WKMockUserNotificationCenter {
-    dispatch_queue_t m_queue;
+    OSObjectPtr<dispatch_queue_t> m_queue;
     BOOL m_hasPermission;
     RetainPtr<NSString> m_bundleIdentifier;
     RetainPtr<NSMutableArray> m_notifications;
@@ -59,7 +60,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
     if (!self)
         return nil;
 
-    m_queue = dispatch_queue_create(nullptr, DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
+    m_queue = adoptOSObject(dispatch_queue_create(nullptr, DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL));
     m_bundleIdentifier = bundleIdentifier;
     m_notifications = adoptNS([[NSMutableArray alloc] init]);
 
@@ -83,7 +84,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
     if (!request.content.targetContentIdentifier)
         m_appBadge = request.content.badge;
 
-    dispatch_async(m_queue, ^{
+    dispatch_async(m_queue.get(), ^{
         completionHandler(nil);
     });
 }
@@ -96,7 +97,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
 - (void)getDeliveredNotificationsWithCompletionHandler:(void(^)(NSArray<UNNotification *> *notifications))completionHandler
 {
     RetainPtr<NSArray> notifications = adoptNS([m_notifications copy]);
-    dispatch_async(m_queue, ^{
+    dispatch_async(m_queue.get(), ^{
         completionHandler(notifications.get());
     });
 }
@@ -122,7 +123,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
 - (void)getNotificationSettingsWithCompletionHandler:(void(^)(UNNotificationSettings *settings))completionHandler
 {
     BOOL hasPermission = m_hasPermission;
-    dispatch_async(m_queue, ^{
+    dispatch_async(m_queue.get(), ^{
         UNMutableNotificationSettings *settings = [UNMutableNotificationSettings emptySettings];
         settings.authorizationStatus = hasPermission ? UNAuthorizationStatusAuthorized : UNAuthorizationStatusNotDetermined;
         completionHandler(settings);
@@ -132,7 +133,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
 - (void)requestAuthorizationWithOptions:(UNAuthorizationOptions)options completionHandler:(void (^)(BOOL granted, NSError *))completionHandler
 {
     m_hasPermission = YES;
-    dispatch_async(m_queue, ^{
+    dispatch_async(m_queue.get(), ^{
         completionHandler(YES, nil);
     });
 }

@@ -597,10 +597,12 @@ sub generateNewChangeLogs($$$$$$$$$$$$$$$)
 {
     my ($prefixes, $filesInChangeLog, $addedRegressionTests, $requiresTests, $functionLists, $bugURL, $bugDescription, $bugRadarURL, $name, $emailAddress, $gitReviewer, $gitCommit, $writeChangeLogs, $delimiters, $onlyFiles) = @_;
 
-    my $hasWebCoreChange = 0;
-    foreach my $prefix (@$prefixes) {
-        if (unixPath($prefix) =~ m|/WebCore/$|) {
-            $hasWebCoreChange = 1;
+    my $hasSourceChange = 0;
+    while (my ($prefix, $files) = each(%$filesInChangeLog)) {
+        foreach my $file (@$files) {
+            if (unixPath($file) =~ m|Source/|) {
+                $hasSourceChange = 1;
+            }
         }
     }
 
@@ -654,9 +656,7 @@ sub generateNewChangeLogs($$$$$$$$$$$$$$$)
             print CHANGE_LOG normalizeLineEndings($description . "\n", $endl) if $description;
         }
 
-        my $shouldMentionTests = @$requiresTests;
-        $shouldMentionTests |= !$hasWebCoreChange && unixPath($prefix) =~ m|/WebKit/$|;
-        $shouldMentionTests |= unixPath($prefix) =~ m|/WebCore/$|;
+        my $shouldMentionTests = @$requiresTests || $hasSourceChange;
 
         if ($shouldMentionTests) {
             if (@$addedRegressionTests) {
@@ -2160,10 +2160,15 @@ sub generateFileList(\%$$$\%)
                        && $file !~ /-expected(-mismatch)?\.html$/
                        && !scalar(grep(/^resources$/i, @components))
                        && !scalar(grep(/^script-tests$/i, @components));
+            } elsif ($components[0] eq "JSTests") {
+                push @addedRegressionTests, $file
+                    if isAddedStatus($status)
+                       && $file =~ /\.js$/
+                       && !scalar(grep(/^resources$/i, @components));
             } elsif (attributeCommand($attributeCache, $file, "test")) {
                 push @addedRegressionTests, $file;
             } elsif (attributeCommand($attributeCache, $file, "requiresTests")) {
-                push @requiresTests, $file
+                push @requiresTests, $file;
             }
             push @changedFiles, $file if $components[$#components] ne "ChangeLog";
         } elsif (isConflictStatus($status, $gitCommit, $gitIndex) || isConflictStatus($propertyStatus, $gitCommit, $gitIndex)) {

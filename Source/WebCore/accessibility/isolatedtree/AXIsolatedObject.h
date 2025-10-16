@@ -61,11 +61,14 @@ public:
     std::optional<AXID> treeID() const final { return tree()->treeID(); }
     String debugDescriptionInternal(bool, std::optional<OptionSet<AXDebugStringOption>> = std::nullopt) const final;
 
+    void updateFromData(IsolatedObjectData&&);
+
     void attachPlatformWrapper(AccessibilityObjectWrapper*);
     bool isDetached() const final;
     bool isTable() const final { return boolAttributeValue(AXProperty::IsTable); }
     bool isExposableTable() const final { return boolAttributeValue(AXProperty::IsExposableTable); }
     bool hasClickHandler() const final { return boolAttributeValue(AXProperty::HasClickHandler); }
+    bool hasCursorPointer() const final { return boolAttributeValue(AXProperty::HasCursorPointer);  }
     FloatRect relativeFrame() const final;
 
     bool hasAttachmentTag() const final { return elementName() == ElementName::HTML_attachment; }

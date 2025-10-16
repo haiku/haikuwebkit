@@ -1,4 +1,4 @@
-    /*
+/*
  * Copyright (C) 2018-2020 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,11 @@
 #include "APIUIClient.h"
 #include "InspectorBrowserAgent.h"
 #include "ProvisionalPageProxy.h"
+#include "WebFrameInspectorTargetProxy.h"
 #include "WebFrameProxy.h"
 #include "WebPageInspectorAgentBase.h"
 #include "WebPageInspectorTarget.h"
+#include "WebPageInspectorTargetProxy.h"
 #include "WebPageProxy.h"
 #include "WebsiteDataStore.h"
 #include <JavaScriptCore/InspectorAgentBase.h>
@@ -73,7 +75,7 @@ Ref<WebPageProxy> WebPageInspectorController::protectedInspectedPage()
 void WebPageInspectorController::init()
 {
     String pageTargetId = WebPageInspectorTarget::toTargetID(m_inspectedPage->webPageIDInMainFrameProcess());
-    createInspectorTarget(pageTargetId, Inspector::InspectorTargetType::Page);
+    createWebPageInspectorTarget(pageTargetId, Inspector::InspectorTargetType::Page);
 }
 
 void WebPageInspectorController::pageClosed()
@@ -166,9 +168,14 @@ void WebPageInspectorController::setIndicating(bool indicating)
 }
 #endif
 
-void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
+void WebPageInspectorController::createWebPageInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
 {
-    addTarget(InspectorTargetProxy::create(protectedInspectedPage(), targetId, type));
+    addTarget(WebPageInspectorTargetProxy::create(protectedInspectedPage(), targetId, type));
+}
+
+void WebPageInspectorController::createWebFrameInspectorTarget(WebFrameProxy& frame, const String& targetId)
+{
+    addTarget(WebFrameInspectorTargetProxy::create(frame, targetId));
 }
 
 void WebPageInspectorController::destroyInspectorTarget(const String& targetId)
@@ -204,7 +211,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
 
 void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
 {
-    addTarget(InspectorTargetProxy::create(provisionalPage, getTargetID(provisionalPage), Inspector::InspectorTargetType::Page));
+    addTarget(WebPageInspectorTargetProxy::create(provisionalPage, getTargetID(provisionalPage), Inspector::InspectorTargetType::Page));
 }
 
 void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)

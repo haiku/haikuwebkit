@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,12 +46,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 static RetainPtr<NSString> toUTIUnlessAlreadyUTI(NSString *type)
 {
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    if (UTTypeIsDeclared(bridge_cast(type)) || UTTypeIsDynamic(bridge_cast(type))) {
+    RetainPtr utType = [UTType typeWithIdentifier:type];
+    if ([utType isDeclared] || [utType isDynamic]) {
         // This is already a UTI.
         return type;
     }
-ALLOW_DEPRECATED_DECLARATIONS_END
 
     return toUTI(type);
 }
@@ -87,17 +86,15 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
         // NSURLPboardType.
         if (NSURL *baseCocoaURL = nsURL.get().baseURL)
-            [pasteboardItem setPropertyList:@[ nsURL.get().relativeString, baseCocoaURL.absoluteString ] forType:toUTI(WebCore::legacyURLPasteboardType()).get()];
+            [pasteboardItem setPropertyList:@[ nsURL.get().relativeString, baseCocoaURL.absoluteString ] forType:toUTI(WebCore::legacyURLPasteboardTypeSingleton()).get()];
         else if (nsURL)
-            [pasteboardItem setPropertyList:@[ nsURL.get().absoluteString, @"" ] forType:toUTI(WebCore::legacyURLPasteboardType()).get()];
+            [pasteboardItem setPropertyList:@[ nsURL.get().absoluteString, @"" ] forType:toUTI(WebCore::legacyURLPasteboardTypeSingleton()).get()];
         else
-            [pasteboardItem setPropertyList:@[ @"", @"" ] forType:toUTI(WebCore::legacyURLPasteboardType()).get()];
+            [pasteboardItem setPropertyList:@[ @"", @"" ] forType:toUTI(WebCore::legacyURLPasteboardTypeSingleton()).get()];
 
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         if (nsURL.get().fileURL)
-            [pasteboardItem setString:nsURL.get().absoluteString forType:(NSString *)kUTTypeFileURL];
-        [pasteboardItem setString:userVisibleString.get() forType:(NSString *)kUTTypeURL];
-ALLOW_DEPRECATED_DECLARATIONS_END
+            [pasteboardItem setString:nsURL.get().absoluteString forType:UTTypeFileURL.identifier];
+        [pasteboardItem setString:userVisibleString.get() forType:UTTypeURL.identifier];
 
         // WebURLNamePboardType.
         [pasteboardItem setString:title.get() forType:@"public.url-name"];

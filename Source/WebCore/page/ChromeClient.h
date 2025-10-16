@@ -230,16 +230,9 @@ public:
     virtual bool canRunModal() const = 0;
     virtual void runModal() = 0;
 
-    virtual void setToolbarsVisible(bool) = 0;
     virtual bool toolbarsVisible() const = 0;
-
-    virtual void setStatusbarVisible(bool) = 0;
     virtual bool statusbarVisible() const = 0;
-
-    virtual void setScrollbarsVisible(bool) = 0;
     virtual bool scrollbarsVisible() const = 0;
-
-    virtual void setMenubarVisible(bool) = 0;
     virtual bool menubarVisible() const = 0;
 
     virtual void setResizable(bool) = 0;
@@ -331,16 +324,6 @@ public:
     // The chrome client would need to take some action such as evicting some
     // old caches.
     virtual void reachedMaxAppCacheSize(int64_t) { }
-
-    // Callback invoked when the application cache origin quota is reached. This
-    // means that the resources attempting to be cached via the manifest are
-    // more than allowed on this origin. This callback allows the chrome client
-    // to take action, such as prompting the user to ask to increase the quota
-    // for this origin. The totalSpaceNeeded parameter is the total amount of
-    // storage, in bytes, needed to store the new cache along with all of the
-    // other existing caches for the origin that would not be replaced by
-    // the new cache.
-    virtual void reachedApplicationCacheOriginQuota(SecurityOrigin&, int64_t) { }
 
     WEBCORE_EXPORT virtual std::unique_ptr<WorkerClient> createWorkerClient(SerialFunctionDispatcher&);
 

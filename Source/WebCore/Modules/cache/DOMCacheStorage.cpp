@@ -28,6 +28,7 @@
 
 #include "CacheQueryOptions.h"
 #include "ClientOrigin.h"
+#include "ContextDestructionObserverInlines.h"
 #include "EventLoop.h"
 #include "JSDOMCache.h"
 #include "JSDOMPromiseDeferred.h"

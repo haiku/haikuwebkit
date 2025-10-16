@@ -26,6 +26,7 @@
 #include "config.h"
 #include "WorkerInspectorProxy.h"
 
+#include "DocumentInlines.h"
 #include "InspectorInstrumentation.h"
 #include "ScriptExecutionContext.h"
 #include "WorkerGlobalScope.h"

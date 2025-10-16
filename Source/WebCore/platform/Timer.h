@@ -158,22 +158,30 @@ public:
     }
 
     template<typename TimerFiredClass, typename TimerFiredBaseClass>
-    requires (WTF::HasRefPtrMemberFunctions<TimerFiredClass>::value)
+    requires (WTF::HasRefPtrMemberFunctions<TimerFiredClass>::value && WTF::HasThreadSafeWeakPtrFunctions<TimerFiredClass>::value)
     Timer(TimerFiredClass& object, void (TimerFiredBaseClass::*function)())
-        : m_function([objectPtr = &object, function] SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE {
-            Ref protectedObject { *objectPtr };
-            (objectPtr->*function)();
+        : m_function([weakObject = ThreadSafeWeakPtr { object }, function] {
+            if (RefPtr protectedObject = weakObject.get())
+                (protectedObject.get()->*function)();
         })
     {
     }
 
+    template<typename TimerFiredClass, typename TimerFiredBaseClass>
+    requires (WTF::HasRefPtrMemberFunctions<TimerFiredClass>::value && !WTF::HasThreadSafeWeakPtrFunctions<TimerFiredClass>::value && WTF::HasWeakPtrFunctions<TimerFiredClass>::value)
+    Timer(TimerFiredClass& object, void (TimerFiredBaseClass::*function)())
+        : m_function([weakObject = WeakPtr { object }, function] {
+            if (RefPtr protectedObject = weakObject.get())
+                (protectedObject.get()->*function)();
+        })
+    {
+    }
 
     template<typename TimerFiredClass, typename TimerFiredBaseClass>
-    requires (WTF::HasCheckedPtrMemberFunctions<TimerFiredClass>::value && !WTF::HasRefPtrMemberFunctions<TimerFiredClass>::value)
+    requires (WTF::HasCheckedPtrMemberFunctions<TimerFiredClass>::value && (!WTF::HasRefPtrMemberFunctions<TimerFiredClass>::value || (!WTF::HasWeakPtrFunctions<TimerFiredClass>::value && !WTF::HasThreadSafeWeakPtrFunctions<TimerFiredClass>::value)))
     Timer(TimerFiredClass& object, void (TimerFiredBaseClass::*function)())
-        : m_function([objectPtr = &object, function] {
-            CheckedRef checkedObject { *objectPtr };
-            (objectPtr->*function)();
+        : m_function([checkedObject = CheckedRef { object }, function] {
+            (checkedObject.ptr()->*function)();
         })
     {
     }

@@ -78,6 +78,11 @@ EventTarget::~EventTarget()
         eventTargetData->clear();
 }
 
+RefPtr<ScriptExecutionContext> EventTarget::protectedScriptExecutionContext() const
+{
+    return scriptExecutionContext();
+}
+
 bool EventTarget::isPaymentRequest() const
 {
     return false;
@@ -401,7 +406,7 @@ const EventListenerVector& EventTarget::eventListeners(const AtomString& eventTy
 
 void EventTarget::removeAllEventListeners()
 {
-    Ref threadData = threadGlobalData();
+    Ref threadData = threadGlobalDataSingleton();
     RELEASE_ASSERT(!threadData->isInRemoveAllEventListeners());
 
     threadData->setIsInRemoveAllEventListeners(true);

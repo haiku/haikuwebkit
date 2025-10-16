@@ -63,6 +63,7 @@
 #import <pal/spi/cocoa/AVFoundationSPI.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <wtf/BlockObjCExceptions.h>
+#import <wtf/BlockPtr.h>
 #import <wtf/Deque.h>
 #import <wtf/FileSystem.h>
 #import <wtf/MachSendRightAnnotated.h>
@@ -71,6 +72,7 @@
 #import <wtf/NeverDestroyed.h>
 #import <wtf/TZoneMallocInlines.h>
 #import <wtf/WeakPtr.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/spi/cocoa/NSObjCRuntimeSPI.h>
 
 #import "CoreVideoSoftLink.h"
@@ -110,7 +112,7 @@ MediaPlayerPrivateMediaSourceAVFObjC::MediaPlayerPrivateMediaSourceAVFObjC(Media
     , m_logger(player->mediaPlayerLogger())
     , m_logIdentifier(player->mediaPlayerLogIdentifier())
     , m_videoLayerManager(makeUniqueRef<VideoLayerManagerObjC>(m_logger, m_logIdentifier))
-    , m_effectiveRateChangedListener(EffectiveRateChangedListener::create([weakThis = WeakPtr { *this }] {
+    , m_effectiveRateChangedListener(EffectiveRateChangedListener::create([weakThis = WeakPtr { *this }](double) {
         callOnMainThread([weakThis] {
             if (RefPtr protectedThis = weakThis.get())
                 protectedThis->effectiveRateChanged();
@@ -129,7 +131,7 @@ MediaPlayerPrivateMediaSourceAVFObjC::MediaPlayerPrivateMediaSourceAVFObjC(Media
     // addPeriodicTimeObserverForInterval: throws an exception if you pass a non-numeric CMTime, so just use
     // an arbitrarily large time value of once an hour:
     __block WeakPtr weakThis { *this };
-    m_timeJumpedObserver = [m_synchronizer addPeriodicTimeObserverForInterval:PAL::toCMTime(MediaTime::createWithDouble(3600)) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
+    m_timeJumpedObserver = [m_synchronizer addPeriodicTimeObserverForInterval:PAL::toCMTime(MediaTime::createWithDouble(3600)) queue:mainDispatchQueueSingleton() usingBlock:^(CMTime time) {
 #if LOG_DISABLED
         UNUSED_PARAM(time);
 #endif
@@ -217,10 +219,10 @@ bool MediaPlayerPrivateMediaSourceAVFObjC::isAvailable()
 {
     return PAL::isAVFoundationFrameworkAvailable()
         && PAL::isCoreMediaFrameworkAvailable()
-        && PAL::getAVStreamDataParserClass()
-        && PAL::getAVSampleBufferAudioRendererClass()
-        && PAL::getAVSampleBufferRenderSynchronizerClass()
-        && class_getInstanceMethod(PAL::getAVSampleBufferAudioRendererClass(), @selector(setMuted:));
+        && PAL::getAVStreamDataParserClassSingleton()
+        && PAL::getAVSampleBufferAudioRendererClassSingleton()
+        && PAL::getAVSampleBufferRenderSynchronizerClassSingleton()
+        && class_getInstanceMethod(PAL::getAVSampleBufferAudioRendererClassSingleton(), @selector(setMuted:));
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::getSupportedTypes(HashSet<String>& types)
@@ -441,7 +443,7 @@ bool MediaPlayerPrivateMediaSourceAVFObjC::setCurrentTimeDidChangeCallback(Media
     m_currentTimeDidChangeCallback = WTFMove(callback);
 
     if (m_currentTimeDidChangeCallback) {
-        m_timeChangedObserver = [m_synchronizer addPeriodicTimeObserverForInterval:PAL::CMTimeMake(1, 10) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
+        m_timeChangedObserver = [m_synchronizer addPeriodicTimeObserverForInterval:PAL::CMTimeMake(1, 10) queue:mainDispatchQueueSingleton() usingBlock:^(CMTime time) {
             if (!m_currentTimeDidChangeCallback)
                 return;
 
@@ -532,10 +534,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::seekInternal()
         mediaSourcePrivate->willSeek();
         [protectedThis->m_synchronizer setRate:0 time:PAL::toCMTime(seekedTime)];
 
-        mediaSourcePrivate->seekToTime(seekedTime)->whenSettled(RunLoop::currentSingleton(), [weakThis = WTFMove(weakThis)]() mutable {
-            if (RefPtr protectedThis = weakThis.get())
-                protectedThis->maybeCompleteSeek();
-        });
+        mediaSourcePrivate->seekToTime(seekedTime);
     });
 }
 
@@ -656,7 +655,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::bufferedChanged()
             auto logSiteIdentifier = LOGIDENTIFIER;
             UNUSED_PARAM(logSiteIdentifier);
 
-            m_gapObserver = [m_synchronizer addBoundaryTimeObserverForTimes:times queue:dispatch_get_main_queue() usingBlock:[weakThis = WeakPtr { *this }, logSiteIdentifier, gapStart] {
+            m_gapObserver = [m_synchronizer addBoundaryTimeObserverForTimes:times queue:mainDispatchQueueSingleton() usingBlock:[weakThis = WeakPtr { *this }, logSiteIdentifier, gapStart] {
                 RefPtr protectedThis = weakThis.get();
                 if (!protectedThis)
                     return;
@@ -1419,7 +1418,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::sizeWillChangeAtTime(const MediaTime&
 {
     auto weakThis = m_sizeChangeObserverWeakPtrFactory.createWeakPtr(*this);
     NSArray* times = @[[NSValue valueWithCMTime:PAL::toCMTime(time)]];
-    RetainPtr<id> observer = [m_synchronizer addBoundaryTimeObserverForTimes:times queue:dispatch_get_main_queue() usingBlock:[weakThis = WTFMove(weakThis), size] {
+    RetainPtr<id> observer = [m_synchronizer addBoundaryTimeObserverForTimes:times queue:mainDispatchQueueSingleton() usingBlock:[weakThis = WTFMove(weakThis), size] {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -1767,16 +1766,15 @@ bool MediaPlayerPrivateMediaSourceAVFObjC::isCurrentPlaybackTargetWireless() con
 }
 #endif
 
-bool MediaPlayerPrivateMediaSourceAVFObjC::performTaskAtTime(WTF::Function<void()>&& task, const MediaTime& time)
+bool MediaPlayerPrivateMediaSourceAVFObjC::performTaskAtTime(WTF::Function<void(const MediaTime&)>&& task, const MediaTime& time)
 {
-    __block WTF::Function<void()> taskIn = WTFMove(task);
-
     if (m_performTaskObserver)
         [m_synchronizer removeTimeObserver:m_performTaskObserver.get()];
 
-    m_performTaskObserver = [m_synchronizer addBoundaryTimeObserverForTimes:@[[NSValue valueWithCMTime:PAL::toCMTime(time)]] queue:dispatch_get_main_queue() usingBlock:^{
-        taskIn();
-    }];
+    m_performTaskObserver = [m_synchronizer addBoundaryTimeObserverForTimes:@[[NSValue valueWithCMTime:PAL::toCMTime(time)]] queue:mainDispatchQueueSingleton() usingBlock:makeBlockPtr([weakThis = WeakPtr { *this }, task = WTFMove(task)] {
+        if (RefPtr protectedThis = weakThis.get())
+            task(protectedThis->currentTime());
+    }).get()];
     return true;
 }
 
@@ -1829,7 +1827,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::startVideoFrameMetadataGathering()
         return;
 
     ASSERT(m_synchronizer);
-    m_videoFrameMetadataGatheringObserver = [m_synchronizer addPeriodicTimeObserverForInterval:PAL::CMTimeMake(1, 60) queue:dispatch_get_main_queue() usingBlock:[weakThis = WeakPtr { *this }](CMTime currentCMTime) {
+    m_videoFrameMetadataGatheringObserver = [m_synchronizer addPeriodicTimeObserverForInterval:PAL::CMTimeMake(1, 60) queue:mainDispatchQueueSingleton() usingBlock:[weakThis = WeakPtr { *this }](CMTime currentCMTime) {
         ensureOnMainThread([weakThis, currentCMTime] {
             if (!weakThis)
                 return;
@@ -2015,7 +2013,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::updateSpatialTrackingLabel()
     // If there is no video renderer, use the default spatial tracking label if available, or
     // the session's spatial tracking label if not, and set the label directly on each audio
     // renderer.
-    AVAudioSession *session = [PAL::getAVAudioSessionClass() sharedInstance];
+    AVAudioSession *session = [PAL::getAVAudioSessionClassSingleton() sharedInstance];
     RetainPtr<NSString> defaultLabel;
     if (!m_defaultSpatialTrackingLabel.isNull()) {
         ALWAYS_LOG(LOGIDENTIFIER, "Default STSLabel: ", m_defaultSpatialTrackingLabel);
@@ -2100,6 +2098,18 @@ void MediaPlayerPrivateMediaSourceAVFObjC::applicationWillResignActive()
 {
     if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
         mediaSourcePrivate->applicationWillResignActive();
+
+    RefPtr videoRenderer = m_videoRenderer;
+    if (!videoRenderer || !videoRenderer->isUsingDecompressionSession())
+        return;
+
+    if (!paused()) {
+        ALWAYS_LOG(LOGIDENTIFIER, "Playing; not invalidating VideoMediaSampleRenderer Decompression Session");
+        return;
+    }
+
+    videoRenderer->invalidateDecompressionSession();
+    ALWAYS_LOG(LOGIDENTIFIER, "Paused; invalidating VideoMediaSampleRenderer Decompression Session");
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::applicationDidBecomeActive()

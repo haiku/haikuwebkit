@@ -33,7 +33,7 @@ namespace WebCore {
 
 std::unique_ptr<ImageBufferDisplayListBackend> ImageBufferDisplayListBackend::create(const Parameters& parameters, const ImageBufferCreationContext&)
 {
-    return std::unique_ptr<ImageBufferDisplayListBackend>(new ImageBufferDisplayListBackend(parameters, ControlFactory::shared()));
+    return std::unique_ptr<ImageBufferDisplayListBackend>(new ImageBufferDisplayListBackend(parameters, ControlFactory::singleton()));
 }
 
 

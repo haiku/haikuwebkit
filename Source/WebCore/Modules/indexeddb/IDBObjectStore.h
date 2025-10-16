@@ -75,6 +75,7 @@ public:
     const std::optional<IDBKeyPath>& keyPath() const;
     Ref<DOMStringList> indexNames() const;
     IDBTransaction& transaction();
+    Ref<IDBTransaction> protectedTransaction();
     bool autoIncrement() const;
 
     struct IndexParameters {
@@ -118,7 +119,7 @@ public:
     void ref() const final;
     void deref() const final;
 
-    template<typename Visitor> void visitReferencedIndexes(Visitor&) const;
+    template<typename Visitor> void visitReferencedIndexesConcurrently(Visitor&) const;
     void renameReferencedIndex(IDBIndex&, const String& newName);
 
 private:

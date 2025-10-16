@@ -27,6 +27,7 @@
 #include "WKPageConfigurationRef.h"
 
 #include "APIPageConfiguration.h"
+#include "APIWebsitePolicies.h"
 #include "BrowsingContextGroup.h"
 #include "WKAPICast.h"
 #include "WebPageGroup.h"
@@ -130,12 +131,12 @@ void WKPageConfigurationSetPortsForUpgradingInsecureSchemeForTesting(WKPageConfi
     toProtectedImpl(configuration)->setPortsForUpgradingInsecureSchemeForTesting(upgradeFromInsecurePort, upgradeToSecurePort);
 }
 
-void WKPageConfigurationSetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration, bool allow)
+WKWebsitePoliciesRef WKPageConfigurationGetDefaultWebsitePolicies(WKPageConfigurationRef configuration)
 {
-    toProtectedImpl(configuration)->setAllowJSHandleInPageContentWorld(allow);
+    return toAPI(toProtectedImpl(configuration)->protectedDefaultWebsitePolicies().get());
 }
 
-bool WKPageConfigurationGetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration)
+void WKPageConfigurationSetDefaultWebsitePolicies(WKPageConfigurationRef configuration, WKWebsitePoliciesRef policies)
 {
-    return toProtectedImpl(configuration)->allowJSHandleInPageContentWorld();
+    toProtectedImpl(configuration)->setDefaultWebsitePolicies(toProtectedImpl(policies));
 }

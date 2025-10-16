@@ -39,6 +39,7 @@
 #include "SourceBufferPrivateClient.h"
 #include "TimeRanges.h"
 #include "TrackBuffer.h"
+#include "TrackInfo.h"
 #include "VideoTrackPrivate.h"
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/IteratorRange.h>
@@ -294,7 +295,7 @@ void SourceBufferPrivate::provideMediaData(TrackID trackID)
 
 void SourceBufferPrivate::provideMediaData(TrackBuffer& trackBuffer, TrackID trackID)
 {
-    if (isSeeking())
+    if (trackBuffer.needsReenqueueing() || isSeeking())
         return;
     RefPtr client = this->client();
     if (!client)

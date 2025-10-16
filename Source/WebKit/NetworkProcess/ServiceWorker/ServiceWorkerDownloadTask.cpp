@@ -50,7 +50,7 @@ static WorkQueue& serviceWorkerDownloadTaskQueueSingleton()
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ServiceWorkerDownloadTask);
 
 ServiceWorkerDownloadTask::ServiceWorkerDownloadTask(NetworkSession& session, NetworkDataTaskClient& client, WebSWServerToContextConnection& serviceWorkerConnection, ServiceWorkerIdentifier serviceWorkerIdentifier, SWServerConnectionIdentifier serverConnectionIdentifier, FetchIdentifier fetchIdentifier, const WebCore::ResourceRequest& request, const ResourceResponse& response, DownloadID downloadID)
-    : NetworkDataTask(session, client, request, StoredCredentialsPolicy::DoNotUse, false, false)
+    : NetworkDataTask(session, client, request, StoredCredentialsPolicy::DoNotUse, false, false, false)
     , m_serviceWorkerConnection(serviceWorkerConnection)
     , m_serviceWorkerIdentifier(serviceWorkerIdentifier)
     , m_serverConnectionIdentifier(serverConnectionIdentifier)

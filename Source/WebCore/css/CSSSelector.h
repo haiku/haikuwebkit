@@ -55,6 +55,8 @@ class CSSSelector {
 public:
     CSSSelector() = default;
     CSSSelector(const CSSSelector&);
+    enum MutableSelectorCopyTag { MutableSelectorCopy };
+    CSSSelector(const CSSSelector&, MutableSelectorCopyTag);
     explicit CSSSelector(const QualifiedName&, bool tagIsForNamespaceRule = false);
 
     ~CSSSelector();
@@ -68,14 +70,12 @@ public:
 
     enum class VisitFunctionalPseudoClasses { No, Yes };
     enum class VisitOnlySubject { No, Yes };
-    using VisitFunctor = WTF::Function<bool(CSSSelector&)>;
+    using VisitFunctor = WTF::Function<bool(const CSSSelector&)>;
     bool visitSimpleSelectors(VisitFunctor&&, VisitFunctionalPseudoClasses = VisitFunctionalPseudoClasses::No, VisitOnlySubject = VisitOnlySubject::No) const;
 
     bool hasExplicitNestingParent() const;
     bool hasExplicitPseudoClassScope() const;
     bool hasScope() const;
-    void resolveNestingParentSelectors(const CSSSelectorList& parent);
-    void replaceNestingParentByPseudoClassScope();
 
     using PseudoClass = CSSSelectorPseudoClass;
     using PseudoElement = CSSSelectorPseudoElement;
@@ -139,6 +139,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     const CSSSelector* precedingInComplexSelector() const { return m_isFirstInComplexSelector ? nullptr : this + 1; }
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
+    const CSSSelector* firstInCompound() const;
     const CSSSelector* lastInCompound() const;
 
     const QualifiedName& tagQName() const;
@@ -271,6 +272,8 @@ private:
         RareData* rareData;
     } m_data;
 };
+
+bool complexSelectorCanMatchPseudoElement(const CSSSelector&);
 
 inline bool operator==(const PossiblyQuotedIdentifier& a, const AtomString& b) { return a.identifier == b; }
 

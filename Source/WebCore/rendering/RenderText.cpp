@@ -2156,37 +2156,4 @@ void RenderText::setInlineWrapperForDisplayContents(RenderInline* wrapper)
     m_hasInlineWrapperForDisplayContents = true;
 }
 
-std::optional<bool> RenderText::emphasisMarkExistsAndIsAbove(const RenderText& renderer, const RenderStyle& style)
-{
-    // This function returns true if there are text emphasis marks and they are suppressed by ruby text.
-    if (style.textEmphasisStyle().isNone())
-        return std::nullopt;
-
-    auto emphasisPosition = style.textEmphasisPosition();
-    bool isAbove = !emphasisPosition.contains(TextEmphasisPosition::Under);
-    if (style.writingMode().isVerticalTypographic())
-        isAbove = !emphasisPosition.contains(TextEmphasisPosition::Left);
-
-    auto findRubyAnnotation = [&]() -> RenderBlockFlow* {
-        for (auto* baseCandidate = renderer.parent(); baseCandidate; baseCandidate = baseCandidate->parent()) {
-            if (!baseCandidate->isInline())
-                return nullptr;
-            if (baseCandidate->style().display() == DisplayType::RubyBase) {
-                if (auto* annotationCandidate = dynamicDowncast<RenderBlockFlow>(baseCandidate->nextSibling()); annotationCandidate && annotationCandidate->style().display() == DisplayType::RubyAnnotation)
-                    return annotationCandidate;
-                return nullptr;
-            }
-        }
-        return nullptr;
-    };
-
-    if (auto* annotation = findRubyAnnotation()) {
-        // The emphasis marks are suppressed only if there is a ruby annotation box on the same side and it is not empty.
-        if (annotation->hasLines() && isAbove == (annotation->style().rubyPosition() == RubyPosition::Over))
-            return { };
-    }
-
-    return isAbove;
-}
-
 } // namespace WebCore

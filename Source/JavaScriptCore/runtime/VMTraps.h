@@ -146,6 +146,7 @@ public:
     //    check to determine if the VM possibly has a pending exception to handle,
     //    as well as if there are asynchronous VMTraps events to handle.
 
+// WARNING: Do NOT sort this list. Read comment above for the reason.
 #define FOR_EACH_VMTRAPS_EVENTS(v) \
     v(NeedShellTimeoutCheck) \
     v(NeedTermination) \
@@ -232,14 +233,14 @@ public:
         BitField maskedBits = event & mask;
         return m_trapBits.loadRelaxed() & maskedBits;
     }
-    ALWAYS_INLINE void clearTrap(Event event)
+    ALWAYS_INLINE CONCURRENT_SAFE void clearTrap(Event event)
     {
         ASSERT(!(event & ~AllEvents));
         clearTrapWithoutCancellingThreadStop(event);
         if (isAsyncEvent(event))
             cancelThreadStopIfNeeded();
     }
-    ALWAYS_INLINE void fireTrap(Event event)
+    ALWAYS_INLINE CONCURRENT_SAFE void fireTrap(Event event)
     {
         ASSERT(!(event & ~AllEvents));
         m_trapBits.exchangeOr(event);
@@ -288,8 +289,8 @@ private:
         m_trapBits.exchangeAnd(~event);
     }
 
-    JS_EXPORT_PRIVATE void cancelThreadStopIfNeeded();
-    JS_EXPORT_PRIVATE void requestThreadStopIfNeeded(Event);
+    JS_EXPORT_PRIVATE CONCURRENT_SAFE void cancelThreadStopIfNeeded();
+    JS_EXPORT_PRIVATE CONCURRENT_SAFE void requestThreadStopIfNeeded(Event);
 
     JS_EXPORT_PRIVATE void deferTerminationSlow(DeferAction);
     JS_EXPORT_PRIVATE void undoDeferTerminationSlow(DeferAction);
@@ -308,8 +309,6 @@ private:
     void invalidateCodeBlocksOnStack() { }
     void invalidateCodeBlocksOnStack(CallFrame*) { }
 #endif
-
-    static constexpr BitField NeedExceptionHandlingMask = ~(1 << NeedExceptionHandling);
 
     StackManager m_stack;
     Atomic<BitField> m_trapBits { 0 };

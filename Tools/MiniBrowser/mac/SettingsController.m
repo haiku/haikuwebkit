@@ -72,6 +72,7 @@ static NSString * const AttachmentElementEnabledPreferenceKey = @"AttachmentElem
 static NSString * const AdvancedPrivacyProtectionsPreferenceKey = @"AdvancedPrivacyProtectionsEnabled";
 static NSString * const AllowsContentJavascriptPreferenceKey = @"AllowsContentJavascript";
 static NSString * const AllowUniversalAccessFromFileURLsPreferenceKey = @"AllowUniversalAccessFromFileURLs";
+static NSString * const TabFocusesLinksEnabledPreferenceKey = @"TabFocusesLinksEnabled";
 
 // This default name intentionally overlaps with the key that WebKit2 checks when creating a view.
 static NSString * const UseRemoteLayerTreeDrawingAreaPreferenceKey = @"WebKit2UseRemoteLayerTreeDrawingArea";
@@ -198,6 +199,7 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
     addItem(@"Use Mock Capture Devices", @selector(toggleUseMockCaptureDevices:));
     addItem(@"Advanced Privacy Protections", @selector(toggleAdvancedPrivacyProtections:));
     addItem(@"Disable local file restrictions", @selector(toggleAllowUniversalAccessFromFileURLs:));
+    addItem(@"Enable focusing on links/form controls by pressing tab key", @selector(toggleTabFocusesLinksEnabled:));
 
     NSMenu *attachmentElementMenu = addSubmenu(@"Enable Attachment Element");
     addItemToMenu(attachmentElementMenu, @"Disabled", @selector(changeAttachmentElementEnabled:), NO, AttachmentElementDisabledTag);
@@ -439,6 +441,8 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
             [menuItem setState:NSControlStateValueOff];
     } else if (action == @selector(changeAttachmentElementEnabled:))
         [menuItem setState:[self attachmentElementEnabled:menuItem] ? NSControlStateValueOn : NSControlStateValueOff];
+    else if (action == @selector(toggleTabFocusesLinksEnabled:))
+        [menuItem setState:[self tabFocusesLinksEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
 
     WKPreferences *defaultPreferences = [[NSApplication sharedApplication] browserAppDelegate].defaultPreferences;
     if (menuItem.tag == ExperimentalFeatureTag) {
@@ -698,6 +702,16 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
 - (BOOL)siteSpecificQuirksModeEnabled
 {
     return [[NSUserDefaults standardUserDefaults] boolForKey:SiteSpecificQuirksModeEnabledPreferenceKey];
+}
+
+- (void)toggleTabFocusesLinksEnabled:(id)sender
+{
+    [self _toggleBooleanDefault:TabFocusesLinksEnabledPreferenceKey];
+}
+
+- (BOOL)tabFocusesLinksEnabled
+{
+    return [[NSUserDefaults standardUserDefaults] boolForKey:TabFocusesLinksEnabledPreferenceKey];
 }
 
 - (void)togglePunchOutWhiteBackgroundsInDarkMode:(id)sender

@@ -31,13 +31,30 @@
 
 namespace API {
 
+using HandleMap = HashMap<WebCore::JSHandleIdentifier, JSHandle*>;
+static HandleMap& handleMap()
+{
+    static MainRunLoopNeverDestroyed<HandleMap> map;
+    return map.get();
+}
+
+Ref<JSHandle> JSHandle::getOrCreate(WebKit::JSHandleInfo&& info)
+{
+    if (RefPtr existingHandle = handleMap().get(info.identifier))
+        return existingHandle.releaseNonNull();
+    return adoptRef(*new JSHandle(WTFMove(info)));
+}
+
 JSHandle::JSHandle(WebKit::JSHandleInfo&& info)
     : m_info(WTFMove(info))
 {
+    handleMap().add(m_info.identifier, this);
 }
 
 JSHandle::~JSHandle()
 {
+    ASSERT(handleMap().get(m_info.identifier) == this);
+    handleMap().remove(m_info.identifier);
     if (RefPtr webProcess = WebKit::WebProcessProxy::processForIdentifier(m_info.identifier.processIdentifier()))
         webProcess->send(Messages::WebProcess::JSHandleDestroyed(m_info.identifier), 0);
 }

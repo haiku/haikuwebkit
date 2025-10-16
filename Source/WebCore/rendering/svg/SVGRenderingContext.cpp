@@ -148,7 +148,7 @@ void SVGRenderingContext::prepareToRenderSVGContent(RenderElement& renderer, Pai
         resources = SVGResourcesCache::cachedResourcesForRenderer(*m_renderer);
 
     if (!resources) {
-        if (style.hasReferenceFilterOnly())
+        if (style.filter().isReferenceFilter())
             return;
 
         m_renderingFlags |= RenderingPrepared;

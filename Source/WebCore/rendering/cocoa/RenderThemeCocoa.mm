@@ -128,7 +128,7 @@ static void drawFocusRingForPathForVectorBasedControls(const RenderObject& box, 
     // macOS controls have never honored outline offset.
 #if PLATFORM(IOS_FAMILY)
     auto deviceScaleFactor = box.document().deviceScaleFactor();
-    auto outlineOffset = floorToDevicePixel(Style::evaluate(box.style().outlineOffset()), deviceScaleFactor);
+    auto outlineOffset = floorToDevicePixel(Style::evaluate(box.style().outlineOffset(), 1.0f /* FIXME FIND ZOOM */), deviceScaleFactor);
 
     if (outlineOffset > 0) {
         const auto center = rect.center();
@@ -210,12 +210,12 @@ static constexpr auto logicalSwitchWidth = 51.f;
 static constexpr FloatSize idealRefreshedSwitchSize = { 64, 28 };
 static constexpr auto logicalRefreshedSwitchWidth = logicalSwitchHeight * (idealRefreshedSwitchSize.width() / idealRefreshedSwitchSize.height());
 
-static bool renderThemePaintSwitchThumb(OptionSet<ControlStyle::State>, const RenderObject&, const PaintInfo&, const FloatRect&, const Color&)
+static bool renderThemePaintSwitchThumb(OptionSet<ControlStyle::State>, const RenderElement&, const PaintInfo&, const FloatRect&, const Color&)
 {
     return true;
 }
 
-static bool renderThemePaintSwitchTrack(OptionSet<ControlStyle::State>, const RenderObject&, const PaintInfo&, const FloatRect&)
+static bool renderThemePaintSwitchTrack(OptionSet<ControlStyle::State>, const RenderElement&, const PaintInfo&, const FloatRect&)
 {
     return true;
 }
@@ -267,12 +267,12 @@ bool RenderThemeCocoa::shouldHaveCapsLockIndicator(const HTMLInputElement& eleme
     return canShowCapsLockIndicator() && element.isPasswordField();
 }
 
-Color RenderThemeCocoa::pictureFrameColor(const RenderObject& buttonRenderer)
+Color RenderThemeCocoa::pictureFrameColor(const RenderElement& buttonRenderer)
 {
     return systemColor(CSSValueAppleSystemControlBackground, buttonRenderer.styleColorOptions());
 }
 
-void RenderThemeCocoa::paintFileUploadIconDecorations(const RenderObject&, const RenderObject& buttonRenderer, const PaintInfo& paintInfo, const FloatRect& rect, Icon* icon, FileUploadDecorations fileUploadDecorations)
+void RenderThemeCocoa::paintFileUploadIconDecorations(const RenderElement&, const RenderElement& buttonRenderer, const PaintInfo& paintInfo, const FloatRect& rect, Icon* icon, FileUploadDecorations fileUploadDecorations)
 {
     GraphicsContextStateSaver stateSaver(paintInfo.context());
 
@@ -475,7 +475,7 @@ int RenderThemeCocoa::attachmentBaseline(const RenderAttachment& attachment) con
 
 void RenderThemeCocoa::paintAttachmentText(GraphicsContext& context, AttachmentLayout* layout)
 {
-    DrawGlyphsRecorder recorder(context, 1, DrawGlyphsRecorder::DeriveFontFromContext::Yes, DrawGlyphsRecorder::DrawDecomposedGlyphs::No);
+    DrawGlyphsRecorder recorder(context, 1, DrawGlyphsRecorder::DeriveFontFromContext::Yes);
 
     for (const auto& line : layout->lines)
         recorder.drawNativeText(line.font.get(), CTFontGetSize(line.font.get()), line.line.get(), line.rect);
@@ -524,7 +524,7 @@ Color RenderThemeCocoa::controlTintColor(const RenderStyle& style, OptionSet<Sty
     return systemColor(cssColorValue, options | StyleColorOptions::UseSystemAppearance);
 }
 
-void RenderThemeCocoa::inflateRectForControlRenderer(const RenderObject& renderer, FloatRect& rect)
+void RenderThemeCocoa::inflateRectForControlRenderer(const RenderElement& renderer, FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (inflateRectForControlRendererForVectorBasedControls(renderer, rect))
@@ -569,12 +569,12 @@ void RenderThemeCocoa::adjustRepaintRect(const RenderBox& renderer, FloatRect& r
 
 #if ENABLE(FORM_CONTROL_REFRESH)
 
-bool RenderThemeCocoa::controlSupportsTints(const RenderObject& box) const
+bool RenderThemeCocoa::controlSupportsTints(const RenderElement& box) const
 {
 #if PLATFORM(MAC)
     switch (box.style().usedAppearance()) {
     case StyleAppearance::Button:
-        return isSubmitStyleButton(box.node());
+        return isSubmitStyleButton(box.element());
     case StyleAppearance::Checkbox:
     case StyleAppearance::Radio:
         return isChecked(box) || isIndeterminate(box);
@@ -611,7 +611,7 @@ struct PathWithSize {
 
 static constexpr auto sliderThumbShadowRadius = 2.f;
 
-bool RenderThemeCocoa::inflateRectForControlRendererForVectorBasedControls(const RenderObject& renderer, FloatRect& rect) const
+bool RenderThemeCocoa::inflateRectForControlRendererForVectorBasedControls(const RenderElement& renderer, FloatRect& rect) const
 {
     if (!formControlRefreshEnabled(renderer))
         return false;
@@ -631,7 +631,7 @@ bool RenderThemeCocoa::inflateRectForControlRendererForVectorBasedControls(const
     return true;
 }
 
-bool RenderThemeCocoa::canCreateControlPartForRendererForVectorBasedControls(const RenderObject& renderer) const
+bool RenderThemeCocoa::canCreateControlPartForRendererForVectorBasedControls(const RenderElement& renderer) const
 {
     auto type = renderer.style().usedAppearance();
 
@@ -677,7 +677,7 @@ bool RenderThemeCocoa::canCreateControlPartForRendererForVectorBasedControls(con
     return false;
 }
 
-bool RenderThemeCocoa::canCreateControlPartForBorderOnlyForVectorBasedControls(const RenderObject& renderer) const
+bool RenderThemeCocoa::canCreateControlPartForBorderOnlyForVectorBasedControls(const RenderElement& renderer) const
 {
     auto appearance = renderer.style().usedAppearance();
 
@@ -689,7 +689,7 @@ bool RenderThemeCocoa::canCreateControlPartForBorderOnlyForVectorBasedControls(c
     return appearance == StyleAppearance::Listbox;
 }
 
-bool RenderThemeCocoa::canCreateControlPartForDecorationsForVectorBasedControls(const RenderObject& renderer) const
+bool RenderThemeCocoa::canCreateControlPartForDecorationsForVectorBasedControls(const RenderElement& renderer) const
 {
     return renderer.style().usedAppearance() == StyleAppearance::MenulistButton;
 }
@@ -701,7 +701,7 @@ constexpr auto nativeControlBorderInlineSizeForVectorBasedControls = 1.0f;
 constexpr auto checkboxRadioSizeForVectorBasedControls = 16.f;
 constexpr auto checkboxRadioBorderWidthForVectorBasedControls = 1.5f;
 
-static bool controlIsFocusedWithOutlineStyleAutoForVectorBasedControls(const RenderObject& renderer)
+static bool controlIsFocusedWithOutlineStyleAutoForVectorBasedControls(const RenderElement& renderer)
 {
     return RenderTheme::singleton().isFocused(renderer) && renderer.style().outlineStyle() == OutlineStyle::Auto;
 }
@@ -923,7 +923,7 @@ static bool nodeIsDateOrTimeRelatedInput(Node* node)
     return false;
 }
 
-static RoundedShape shapeForButton(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+static RoundedShape shapeForButton(const RenderElement& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
 {
     CheckedRef style = box.style();
     const auto zoomScale = style->usedZoom();
@@ -980,7 +980,7 @@ static constexpr auto searchFieldDecorationWithDropdownEmSizeLTR = 1.5f;
 static constexpr auto searchFieldDecorationWithDropdownEmSizeRTL = 1.7f;
 #endif
 
-static bool searchFieldCanBeCapsule(const RenderObject& box, const FloatRect& rect, float pixelsPerEm, bool supportsResults)
+static bool searchFieldCanBeCapsule(const RenderElement& box, const FloatRect& rect, float pixelsPerEm, bool supportsResults)
 {
     // Depending on dimensions and styles, it might not be possible to make the control
     // capsule-shaped in a reasonable manner, or it may look especially strange with a
@@ -1016,7 +1016,7 @@ static bool searchFieldCanBeCapsule(const RenderObject& box, const FloatRect& re
     return textGapEmSize * pixelsPerEm >= borderRadius;
 }
 
-static RoundedShape shapeForSearchField(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+static RoundedShape shapeForSearchField(const RenderElement& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
 {
     CheckedRef style = box.style();
     const auto isVertical = style->writingMode().isVertical();
@@ -1025,7 +1025,7 @@ static RoundedShape shapeForSearchField(const RenderObject& box, const FloatRect
 
     auto supportsResults = false;
 #if PLATFORM(MAC)
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.node()))
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.element()))
         supportsResults = input->maxResults() > 0;
 #endif
 
@@ -1042,7 +1042,7 @@ static RoundedShape shapeForSearchField(const RenderObject& box, const FloatRect
     return continuousRoundedShape(rect, rectRadius, computePath);
 }
 
-static RoundedShape shapeForSwitchTrack(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+static RoundedShape shapeForSwitchTrack(const RenderElement& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
 {
     const auto states = RenderTheme::singleton().extractControlStyleStatesForRenderer(box);
     const auto isVertical = states.contains(ControlStyle::State::VerticalWritingMode);
@@ -1058,7 +1058,7 @@ static RoundedShape shapeForSwitchTrack(const RenderObject& box, const FloatRect
 
 static constexpr auto defaultCornerRadiusForTextBasedControls = 5.f;
 
-static RoundedShape shapeForSliderThumb(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+static RoundedShape shapeForSliderThumb(const RenderElement& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
 {
     const auto deviceScaleFactor = box.document().deviceScaleFactor();
 
@@ -1068,13 +1068,13 @@ static RoundedShape shapeForSliderThumb(const RenderObject& box, const FloatRect
     return continuousRoundedShape(snappedRect, cornerRadius, computePath);
 }
 
-static RoundedShape shapeForTextAreaOrTextField(const RenderObject& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
+static RoundedShape shapeForTextAreaOrTextField(const RenderElement& box, const FloatRect& rect, ShouldComputePath computePath = ShouldComputePath::Yes)
 {
     const auto cornerRadius = defaultCornerRadiusForTextBasedControls * box.style().usedZoom();
     return continuousRoundedShape(rect, cornerRadius, computePath);
 }
 
-bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     // FIXME: A pre-existing flicker issue caused by a delay between the pressed state ending
     // and the new checked state updating is now more apparent due to color changes in the
@@ -1196,7 +1196,7 @@ bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& b
     return true;
 }
 
-bool RenderThemeCocoa::paintRadioForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintRadioForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -1274,7 +1274,7 @@ bool RenderThemeCocoa::paintRadioForVectorBasedControls(const RenderObject& box,
     return true;
 }
 
-bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -1298,7 +1298,7 @@ bool RenderThemeCocoa::paintButtonForVectorBasedControls(const RenderObject& box
 #if PLATFORM(MAC)
         isWindowActive = states.contains(ControlStyle::State::WindowActive);
 #endif
-        if (isSubmitStyleButton(box.node()) && isWindowActive)
+        if (isSubmitStyleButton(box.element()) && isWindowActive)
             backgroundColor = controlTintColorWithContrast(box.style(), styleColorOptions);
         else
             backgroundColor = colorCompositedOverCanvasColor(CSSValueAppleSystemOpaqueSecondaryFill, styleColorOptions);
@@ -1350,7 +1350,7 @@ bool RenderThemeCocoa::adjustColorWellStyleForVectorBasedControls(RenderStyle& s
 #endif
 }
 
-bool RenderThemeCocoa::paintColorWellForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintColorWellForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(IOS_FAMILY)
     UNUSED_PARAM(box);
@@ -1389,7 +1389,7 @@ bool RenderThemeCocoa::paintColorWellForVectorBasedControls(const RenderObject& 
 #endif
 }
 
-bool RenderThemeCocoa::paintColorWellSwatchForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintColorWellSwatchForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(IOS_FAMILY)
     UNUSED_PARAM(box);
@@ -1410,7 +1410,7 @@ bool RenderThemeCocoa::paintColorWellSwatchForVectorBasedControls(const RenderOb
     const auto borderWidth = box.style().usedZoom() * 0.5f;
     Color borderOverlayColor = SRGBA<uint8_t> { 0, 0, 0, 26 }; // alpha 0.1f
 
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.node()->shadowHost())) {
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.element()->shadowHost())) {
         if (input->alpha() && !input->valueAsColor().isOpaque()) {
             inputValueIsOpaque = false;
             primarySwatchColor = input->valueAsColor();
@@ -1503,7 +1503,7 @@ bool RenderThemeCocoa::adjustColorWellSwatchOverlayStyleForVectorBasedControls(R
 #endif
 }
 
-bool RenderThemeCocoa::paintColorWellDecorationsForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintColorWellDecorationsForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(MAC)
     UNUSED_PARAM(box);
@@ -1727,7 +1727,7 @@ static float spinButtonIndicatorWidthRatio(ControlSize controlSize)
     }
 }
 
-static FloatRect spinButtonRectForContentRect(const RenderObject& box, const FloatRect& contentRect)
+static FloatRect spinButtonRectForContentRect(const RenderElement& box, const FloatRect& contentRect)
 {
     const auto isHorizontal = !box.writingMode().isVertical();
     const auto isInlineFlipped = box.writingMode().isInlineFlipped();
@@ -1769,7 +1769,7 @@ static FloatRect spinButtonRectForContentRect(const RenderObject& box, const Flo
 
 #endif
 
-bool RenderThemeCocoa::paintInnerSpinButtonStyleForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintInnerSpinButtonStyleForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(IOS_FAMILY)
     UNUSED_PARAM(box);
@@ -2029,7 +2029,7 @@ static float listButtonCornerRadius(ControlSize controlSize)
 static constexpr auto borderThicknessForTextBasedControl = 0.5f;
 
 #if PLATFORM(MAC)
-static float cornerRadiusForConcentricTextBasedControl(const RenderObject& box, const FloatRect& rect)
+static float cornerRadiusForConcentricTextBasedControl(const RenderElement& box, const FloatRect& rect)
 {
     CheckedPtr renderBox = dynamicDowncast<RenderBox>(box);
     if (!renderBox)
@@ -2168,7 +2168,7 @@ static void paintTextAreaOrTextFieldInnerShadow(GraphicsContext& context, const 
 }
 #endif
 
-static bool paintTextAreaOrTextField(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+static bool paintTextAreaOrTextField(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -2180,7 +2180,7 @@ static bool paintTextAreaOrTextField(const RenderObject& box, const PaintInfo& p
     const auto usedZoom = style->usedZoom();
 
 #if PLATFORM(MAC)
-    RefPtr input = dynamicDowncast<HTMLInputElement>(box.node());
+    RefPtr input = dynamicDowncast<HTMLInputElement>(box.element());
     const auto hasInnerButton = input && (input->hasDataList() || input->isNumberField());
     const auto cornerRadius = hasInnerButton ? cornerRadiusForConcentricTextBasedControl(box, rect) : defaultCornerRadiusForTextBasedControls * usedZoom;
 #else
@@ -2221,7 +2221,7 @@ static bool paintTextAreaOrTextField(const RenderObject& box, const PaintInfo& p
     return true;
 }
 
-bool RenderThemeCocoa::paintTextFieldForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintTextFieldForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     return paintTextAreaOrTextField(box, paintInfo, rect);
 }
@@ -2241,7 +2241,7 @@ bool RenderThemeCocoa::adjustTextAreaStyleForVectorBasedControls(RenderStyle& st
     return true;
 }
 
-bool RenderThemeCocoa::paintTextAreaForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintTextAreaForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     return paintTextAreaOrTextField(box, paintInfo, rect);
 }
@@ -2349,7 +2349,7 @@ bool RenderThemeCocoa::adjustMenuListStyleForVectorBasedControls(RenderStyle& st
     return true;
 }
 
-bool RenderThemeCocoa::paintMenuListForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintMenuListForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(IOS_FAMILY)
     UNUSED_PARAM(box);
@@ -2366,12 +2366,12 @@ bool RenderThemeCocoa::paintMenuListForVectorBasedControls(const RenderObject& b
 #endif
 }
 
-bool RenderThemeCocoa::paintMenuListDecorationsForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&)
+bool RenderThemeCocoa::paintMenuListDecorationsForVectorBasedControls(const RenderElement&, const PaintInfo&, const FloatRect&)
 {
     return false;
 }
 
-bool RenderThemeCocoa::paintMenuListButtonForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintMenuListButtonForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(MAC)
     UNUSED_PARAM(box);
@@ -2496,14 +2496,14 @@ bool RenderThemeCocoa::adjustMenuListButtonStyleForVectorBasedControls(RenderSty
     return true;
 }
 
-bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
 
-    RefPtr node = box.node();
+    RefPtr element = box.element();
 
-    if (!node || is<HTMLInputElement>(node))
+    if (!element || is<HTMLInputElement>(element))
         return true;
 
     auto& context = paintInfo.context();
@@ -2515,7 +2515,7 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     Path glyphPath;
     FloatSize glyphSize;
 
-    if (box.isRenderMenuList() && downcast<HTMLSelectElement>(node)->multiple()) {
+    if (box.isRenderMenuList() && downcast<HTMLSelectElement>(element)->multiple()) {
         constexpr int length = 18;
         constexpr int count = 3;
         constexpr int padding = 12;
@@ -2583,9 +2583,9 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     }
 
     if (!style->writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate(box.style().borderEndWidth()) - glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate(box.style().borderEndWidth(), 1.0f /* FIXME ZOOM EFFECTED? */) - glyphPaddingEnd);
     else
-        glyphOrigin.setX(logicalRect.x() + Style::evaluate(box.style().borderEndWidth()) + glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.x() + Style::evaluate(box.style().borderEndWidth(), 1.0f /* FIXME ZOOM EFFECTED? */) + glyphPaddingEnd);
 
     if (!isHorizontalWritingMode)
         glyphOrigin = glyphOrigin.transposedPoint();
@@ -2609,7 +2609,7 @@ bool RenderThemeCocoa::adjustMeterStyleForVectorBasedControls(RenderStyle&, cons
 
 static constexpr auto cssValueForProgressAndMeterTrackColor = CSSValueAppleSystemOpaqueFill;
 
-bool RenderThemeCocoa::paintMeterForVectorBasedControls(const RenderObject& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintMeterForVectorBasedControls(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(renderer))
         return false;
@@ -2738,7 +2738,7 @@ Color RenderThemeCocoa::controlTintColorWithContrast(const RenderStyle& style, c
     return tintColor;
 }
 
-bool RenderThemeCocoa::paintListButtonForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintListButtonForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -2747,7 +2747,7 @@ bool RenderThemeCocoa::paintListButtonForVectorBasedControls(const RenderObject&
     if (!renderBox)
         return true;
 
-    if (RefPtr shadowHost = box.node()->shadowHost()) {
+    if (RefPtr shadowHost = box.element()->shadowHost()) {
         CheckedPtr hostStyle = shadowHost->existingComputedStyle();
         if (hostStyle->usedAppearance() == StyleAppearance::None)
             return false;
@@ -2840,7 +2840,7 @@ bool RenderThemeCocoa::adjustProgressBarStyleForVectorBasedControls(RenderStyle&
 
 static constexpr auto cssValueForInactiveBarFill = CSSValueAppleSystemTertiaryLabel;
 
-bool RenderThemeCocoa::paintProgressBarForVectorBasedControls(const RenderObject& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintProgressBarForVectorBasedControls(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(renderer))
         return false;
@@ -2942,7 +2942,7 @@ bool RenderThemeCocoa::paintProgressBarForVectorBasedControls(const RenderObject
     return true;
 }
 
-static bool hasVisibleSliderThumbDescendant(const RenderObject& box)
+static bool hasVisibleSliderThumbDescendant(const RenderElement& box)
 {
     CheckedPtr renderBox = dynamicDowncast<RenderBox>(box);
     if (!renderBox)
@@ -2970,11 +2970,11 @@ constexpr auto tickLengthForVectorBasedControls = trackThicknessForVectorBasedCo
 constexpr auto defaultSliderTickRadius = trackThicknessForVectorBasedControls / 8.0;
 constexpr FloatSize sliderThumbSize = { 24.f, 16.f };
 
-static void paintSliderTicksForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect, bool isThumbVisible, const Color& tickColorOn, const Color& tickColorOff)
+static void paintSliderTicksForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect, bool isThumbVisible, const Color& tickColorOn, const Color& tickColorOff)
 {
     // FIXME: RenderTheme{Mac,IOS}::sliderTickSize() and RenderThemeIOS{Mac,IOS}::sliderTickOffsetFromTrackCenter() need to be updated.
 
-    RefPtr input = dynamicDowncast<HTMLInputElement>(box.node());
+    RefPtr input = dynamicDowncast<HTMLInputElement>(box.element());
     if (!input || !input->isRangeControl())
         return;
 
@@ -3062,7 +3062,7 @@ bool RenderThemeCocoa::adjustSliderTrackStyleForVectorBasedControls(RenderStyle&
     return true;
 }
 
-bool RenderThemeCocoa::paintSliderTrackForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSliderTrackForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -3153,7 +3153,7 @@ bool RenderThemeCocoa::paintSliderTrackForVectorBasedControls(const RenderObject
     double valueRatio = renderSlider->valueRatio();
 
     auto hasTicks = false;
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.node()); input
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(box.element()); input
         && input->isRangeControl()
         && input->dataList()
         && input->minimum() < input->maximum())
@@ -3246,7 +3246,7 @@ bool RenderThemeCocoa::adjustSliderThumbStyleForVectorBasedControls(RenderStyle&
     return true;
 }
 
-bool RenderThemeCocoa::paintSliderThumbForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSliderThumbForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -3302,7 +3302,7 @@ bool RenderThemeCocoa::adjustSearchFieldStyleForVectorBasedControls(RenderStyle&
     return true;
 }
 
-bool RenderThemeCocoa::paintSearchFieldForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSearchFieldForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -3495,7 +3495,7 @@ bool RenderThemeCocoa::adjustSearchFieldDecorationPartStyleForVectorBasedControl
     return true;
 }
 
-bool RenderThemeCocoa::paintSearchFieldDecorationPartForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSearchFieldDecorationPartForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     if (!formControlRefreshEnabled(box))
         return false;
@@ -3503,7 +3503,7 @@ bool RenderThemeCocoa::paintSearchFieldDecorationPartForVectorBasedControls(cons
     auto styleColorOptions = box.styleColorOptions();
     auto isDarkMode = styleColorOptions.contains(StyleColorOptions::UseDarkAppearance);
 
-    RefPtr input = dynamicDowncast<HTMLInputElement>(box.node()->shadowHost());
+    RefPtr input = dynamicDowncast<HTMLInputElement>(box.element()->shadowHost());
     auto isEnabled = input && !input->isDisabledFormControl();
 
     static constexpr auto colorForDarkMode = Color::white;
@@ -3696,7 +3696,7 @@ bool RenderThemeCocoa::paintPlatformResizerFrameForVectorBasedControls(const Ren
     return formControlRefreshEnabled(renderer);
 }
 
-bool RenderThemeCocoa::supportsFocusRingForVectorBasedControls(const RenderObject& box, const RenderStyle& style) const
+bool RenderThemeCocoa::supportsFocusRingForVectorBasedControls(const RenderElement& box, const RenderStyle& style) const
 {
     if (!formControlRefreshEnabled(box))
         return RenderTheme::supportsFocusRing(box, style);
@@ -3750,17 +3750,17 @@ bool RenderThemeCocoa::adjustTextControlInnerTextStyleForVectorBasedControls(Ren
     return true;
 }
 
-Color RenderThemeCocoa::submitButtonTextColor(const RenderObject& box) const
+Color RenderThemeCocoa::submitButtonTextColor(const RenderText& textRenderer) const
 {
     auto isEnabled = true;
-    if (CheckedPtr controlRenderer = box.parent()) {
+    if (CheckedPtr controlRenderer = textRenderer.parent()) {
         if ((controlRenderer = controlRenderer->parent())) {
             const auto states = extractControlStyleStatesForRenderer(*controlRenderer.get());
             isEnabled = states.contains(ControlStyle::State::Enabled);
         }
     }
 
-    const auto tintColor = controlTintColorWithContrast(box.style(), box.styleColorOptions());
+    const auto tintColor = controlTintColorWithContrast(textRenderer.style(), textRenderer.styleColorOptions());
     auto textColor = foregroundColorForBackgroundColor(tintColor);
     if (!isEnabled)
         textColor = textColor.colorWithAlphaMultipliedBy(textColor != Color::white ? 0.3f : 0.6f);
@@ -3857,9 +3857,9 @@ std::optional<RoundedShape> RenderThemeCocoa::shapeForInteractionRegion(const Re
     }
 }
 
-FloatSize RenderThemeCocoa::inflateRectForInteractionRegion(const RenderObject& box, FloatRect& rect)
+FloatSize RenderThemeCocoa::inflateRectForInteractionRegion(const RenderElement& box, FloatRect& rect)
 {
-    if (nodeIsDateOrTimeRelatedInput(box.node())) {
+    if (nodeIsDateOrTimeRelatedInput(box.element())) {
         const auto cssBorderWidth = box.style().usedZoom();
         rect.inflate(cssBorderWidth);
         return { cssBorderWidth, cssBorderWidth };
@@ -3912,7 +3912,7 @@ void RenderThemeCocoa::adjustCheckboxStyle(RenderStyle& style, const Element* el
     RenderTheme::adjustCheckboxStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintCheckbox(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintCheckbox(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintCheckboxForVectorBasedControls(box, paintInfo, rect))
@@ -3932,7 +3932,7 @@ void RenderThemeCocoa::adjustRadioStyle(RenderStyle& style, const Element* eleme
     RenderTheme::adjustRadioStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintRadio(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintRadio(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintRadioForVectorBasedControls(box, paintInfo, rect))
@@ -3952,7 +3952,7 @@ void RenderThemeCocoa::adjustButtonStyle(RenderStyle& style, const Element* elem
     RenderTheme::adjustButtonStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintButton(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintButton(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintButtonForVectorBasedControls(box, paintInfo, rect))
@@ -4002,7 +4002,7 @@ void RenderThemeCocoa::adjustColorWellSwatchWrapperStyle(RenderStyle& style, con
     RenderTheme::adjustColorWellSwatchWrapperStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintColorWellSwatch(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintColorWellSwatch(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintColorWellSwatchForVectorBasedControls(box, paintInfo, rect))
@@ -4012,7 +4012,7 @@ bool RenderThemeCocoa::paintColorWellSwatch(const RenderObject& box, const Paint
     return RenderTheme::paintColorWellSwatch(box, paintInfo, rect);
 }
 
-bool RenderThemeCocoa::paintColorWell(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintColorWell(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintColorWellForVectorBasedControls(box, paintInfo, rect))
@@ -4022,7 +4022,7 @@ bool RenderThemeCocoa::paintColorWell(const RenderObject& box, const PaintInfo& 
     return RenderTheme::paintColorWell(box, paintInfo, rect);
 }
 
-void RenderThemeCocoa::paintColorWellDecorations(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+void RenderThemeCocoa::paintColorWellDecorations(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintColorWellDecorationsForVectorBasedControls(box, paintInfo, rect))
@@ -4042,7 +4042,7 @@ void RenderThemeCocoa::adjustInnerSpinButtonStyle(RenderStyle& style, const Elem
     RenderTheme::adjustInnerSpinButtonStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintInnerSpinButton(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintInnerSpinButton(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintInnerSpinButtonStyleForVectorBasedControls(box, paintInfo, rect))
@@ -4062,7 +4062,7 @@ void RenderThemeCocoa::adjustTextFieldStyle(RenderStyle& style, const Element* e
     RenderTheme::adjustTextFieldStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintTextField(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintTextField(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintTextFieldForVectorBasedControls(box, paintInfo, rect))
@@ -4092,7 +4092,7 @@ void RenderThemeCocoa::adjustTextAreaStyle(RenderStyle& style, const Element* el
     RenderTheme::adjustTextAreaStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintTextArea(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintTextArea(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintTextAreaForVectorBasedControls(box, paintInfo, rect))
@@ -4122,7 +4122,7 @@ void RenderThemeCocoa::adjustMenuListStyle(RenderStyle& style, const Element* el
     RenderTheme::adjustMenuListStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintMenuList(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintMenuList(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintMenuListForVectorBasedControls(box, paintInfo, rect))
@@ -4132,7 +4132,7 @@ bool RenderThemeCocoa::paintMenuList(const RenderObject& box, const PaintInfo& p
     return RenderTheme::paintMenuList(box, paintInfo, rect);
 }
 
-void RenderThemeCocoa::paintMenuListDecorations(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+void RenderThemeCocoa::paintMenuListDecorations(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintMenuListDecorationsForVectorBasedControls(box, paintInfo, rect))
@@ -4162,7 +4162,7 @@ void RenderThemeCocoa::paintMenuListButtonDecorations(const RenderBox& box, cons
     RenderTheme::paintMenuListButtonDecorations(box, paintInfo, rect);
 }
 
-bool RenderThemeCocoa::paintMenuListButton(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintMenuListButton(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintMenuListButtonForVectorBasedControls(box, paintInfo, rect))
@@ -4182,7 +4182,7 @@ void RenderThemeCocoa::adjustMeterStyle(RenderStyle& style, const Element* eleme
     RenderTheme::adjustMeterStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintMeter(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintMeter(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintMeterForVectorBasedControls(box, paintInfo, rect))
@@ -4202,7 +4202,7 @@ void RenderThemeCocoa::adjustListButtonStyle(RenderStyle& style, const Element* 
     RenderTheme::adjustListButtonStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintListButton(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintListButton(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintListButtonForVectorBasedControls(box, paintInfo, rect))
@@ -4222,7 +4222,7 @@ void RenderThemeCocoa::adjustProgressBarStyle(RenderStyle& style, const Element*
     RenderTheme::adjustProgressBarStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintProgressBar(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintProgressBar(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintProgressBarForVectorBasedControls(box, paintInfo, rect))
@@ -4242,7 +4242,7 @@ void RenderThemeCocoa::adjustSliderTrackStyle(RenderStyle& style, const Element*
     RenderTheme::adjustSliderTrackStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintSliderTrack(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSliderTrack(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintSliderTrackForVectorBasedControls(box, paintInfo, rect))
@@ -4272,7 +4272,7 @@ void RenderThemeCocoa::adjustSliderThumbStyle(RenderStyle& style, const Element*
     RenderTheme::adjustSliderThumbStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintSliderThumb(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSliderThumb(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintSliderThumbForVectorBasedControls(box, paintInfo, rect))
@@ -4292,7 +4292,7 @@ void RenderThemeCocoa::adjustSearchFieldStyle(RenderStyle& style, const Element*
     RenderTheme::adjustSearchFieldStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintSearchField(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSearchField(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintSearchFieldForVectorBasedControls(box, paintInfo, rect))
@@ -4342,7 +4342,7 @@ void RenderThemeCocoa::adjustSearchFieldDecorationPartStyle(RenderStyle& style, 
     RenderTheme::adjustSearchFieldDecorationPartStyle(style, element);
 }
 
-bool RenderThemeCocoa::paintSearchFieldDecorationPart(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSearchFieldDecorationPart(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (paintSearchFieldDecorationPartForVectorBasedControls(box, paintInfo, rect))
@@ -4417,7 +4417,7 @@ void RenderThemeCocoa::adjustSwitchStyle(RenderStyle& style, const Element* elem
 #endif
 }
 
-bool RenderThemeCocoa::paintSwitchThumb(const RenderObject& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSwitchThumb(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(MAC)
     bool useDefaultImplementation = true;
@@ -4432,7 +4432,7 @@ bool RenderThemeCocoa::paintSwitchThumb(const RenderObject& renderer, const Pain
     return renderThemePaintSwitchThumb(extractControlStyleStatesForRenderer(renderer), renderer, paintInfo, rect, platformFocusRingColor(renderer.styleColorOptions()));
 }
 
-bool RenderThemeCocoa::paintSwitchTrack(const RenderObject& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSwitchTrack(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(MAC)
     bool useDefaultImplementation = true;
@@ -4465,7 +4465,7 @@ void RenderThemeCocoa::paintPlatformResizerFrame(const RenderLayerModelObject& r
     RenderTheme::paintPlatformResizerFrame(renderer, context, resizerCornerRect);
 }
 
-bool RenderThemeCocoa::supportsFocusRing(const RenderObject& renderer, const RenderStyle& style) const
+bool RenderThemeCocoa::supportsFocusRing(const RenderElement& renderer, const RenderStyle& style) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     auto tryFocusRingForVectorBasedControls = renderer.settings().formControlRefreshEnabled();

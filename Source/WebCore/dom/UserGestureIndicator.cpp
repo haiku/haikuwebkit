@@ -128,7 +128,7 @@ UserGestureIndicator::UserGestureIndicator(std::optional<IsProcessingUserGesture
         if (processInteractionStyle == ProcessInteractionStyle::Immediate) {
             RefPtr mainFrameDocument = document->mainFrameDocument();
             if (mainFrameDocument)
-                ResourceLoadObserver::shared().logUserInteractionWithReducedTimeResolution(*mainFrameDocument);
+                ResourceLoadObserver::singleton().logUserInteractionWithReducedTimeResolution(*mainFrameDocument);
             else
                 LOG_ONCE(SiteIsolation, "Unable to properly construct UserGestureIndicator::UserGestureIndicator() without access to the main frame document ");
         }

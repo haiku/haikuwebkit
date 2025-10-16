@@ -933,7 +933,6 @@ void TestController::configureWebsiteDataStoreTemporaryDirectories(WKWebsiteData
         String temporaryFolder = String::fromUTF8(dumpRenderTreeTemp);
         auto randomNumber = cryptographicallyRandomNumber<uint32_t>();
 
-        WKWebsiteDataStoreConfigurationSetApplicationCacheDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "ApplicationCache"_s, pathSeparator, randomNumber)).get());
         WKWebsiteDataStoreConfigurationSetNetworkCacheDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "Cache"_s, pathSeparator, randomNumber)).get());
         WKWebsiteDataStoreConfigurationSetCacheStorageDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "CacheStorage"_s, pathSeparator, randomNumber)).get());
         WKWebsiteDataStoreConfigurationSetIndexedDBDatabaseDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "Databases"_s, pathSeparator, "IndexedDB"_s, pathSeparator, randomNumber)).get());
@@ -974,6 +973,8 @@ WKRetainPtr<WKPageConfigurationRef> TestController::generatePageConfiguration(co
 {
     if (!m_context || !m_mainWebView || !m_mainWebView->viewSupportsOptions(options)) {
         auto contextConfiguration = generateContextConfiguration(options);
+        if (options.siteIsolationEnabled() && options.runInCrossOriginFrame())
+            WKContextConfigurationSetPrewarmsProcessesAutomatically(contextConfiguration.get(), false);
         m_preferences = adoptWK(WKPreferencesCreate());
         m_context = adoptWK(WKContextCreateWithConfiguration(contextConfiguration.get()));
 
@@ -1055,7 +1056,6 @@ WKRetainPtr<WKPageConfigurationRef> TestController::generatePageConfiguration(co
     if (options.allowTestOnlyIPC())
         WKPageConfigurationSetAllowTestOnlyIPC(pageConfiguration.get(), true);
     WKPageConfigurationSetShouldSendConsoleLogsToUIProcessForTesting(pageConfiguration.get(), true);
-    WKPageConfigurationSetAllowJSHandleInPageContentWorld(pageConfiguration.get(), true);
 
     m_userContentController = adoptWK(WKUserContentControllerCreate());
     WKPageConfigurationSetUserContentController(pageConfiguration.get(), userContentController());
@@ -1908,7 +1908,7 @@ void TestController::uiScriptDidComplete(const String& result, unsigned scriptCa
 constexpr auto testRunnerJS = R"testRunnerJS(
 if (window.testRunner) {
     let post = window.webkit.messageHandlers.webkitTestRunner.postMessage.bind(window.webkit.messageHandlers.webkitTestRunner);
-    let createHandle = (object) => object ? window.webkit.createJSHandle(object) : undefined;
+    let createHandle = (object) => object ? window.webkit.jsHandle(object) : undefined;
 
     testRunner.installTooltipDidChangeCallback = callback => post(['InstallTooltipCallback', createHandle(callback)]);
     testRunner.installDidBeginSwipeCallback = callback => post(['InstallBeginSwipeCallback', createHandle(callback)]);
@@ -1942,6 +1942,161 @@ if (window.testRunner) {
     testRunner.setBlockAllPlugins = value => post(['SetBlockAllPlugins', value]);
     testRunner.stopLoading = () => post(['StopLoading']);
     testRunner.dumpFullScreenCallbacks = () => post(['DumpFullScreenCallbacks']);
+    testRunner.displayAndTrackRepaints = () => post(['DisplayAndTrackRepaints']);
+    testRunner.clearBackForwardList = () => post(['ClearBackForwardList']);
+    testRunner.addChromeInputField = async (callback) => { await post(['AddChromeInputField']); callback?.(); }; // NOLINT
+    testRunner.removeChromeInputField = async (callback) => { await post(['RemoveChromeInputField']); callback?.(); }; // NOLINT
+    testRunner.setTextInChromeInputField = async (text, callback) => { await post(['SetTextInChromeInputField', text]); callback?.(); }; // NOLINT
+    testRunner.selectChromeInputField = async (callback) => { await post(['SelectChromeInputField']); callback?.(); }; // NOLINT
+    testRunner.getSelectedTextInChromeInputField = async (callback) => { const result = await post(['GetSelectedTextInChromeInputField']); callback?.(result); }; // NOLINT
+    testRunner.focusWebView = async (callback) => { await post(['FocusWebView']); callback?.(); }; // NOLINT
+    testRunner.setBackingScaleFactor = async (value, callback) => { await post(['SetBackingScaleFactor', value]); callback?.(); }; // NOLINT
+    testRunner.removeAllCookies = async (callback) => { await post(['RemoveAllCookies']); callback?.(); }; // NOLINT
+    testRunner.setStatisticsDebugMode = async (value, callback) => { // NOLINT
+        await post(['SetStatisticsDebugMode', value]);
+        callback?.();
+    };
+    testRunner.setStatisticsPrevalentResourceForDebugMode = async (hostName, callback) => { // NOLINT
+        await post(['SetStatisticsPrevalentResourceForDebugMode', hostName]);
+        callback?.();
+    };
+    testRunner.setStatisticsLastSeen = (hostName, seconds) => post(['SetStatisticsLastSeen', { HostName: hostName, Value: seconds }]);
+    testRunner.setStatisticsMergeStatistic = async (hostName, topFrameDomain1, topFrameDomain2, lastSeen, hadUserInteraction, mostRecentUserInteraction, isGrandfathered, isPrevalent, isVeryPrevalent, dataRecordsRemoved, callback) => { // NOLINT
+        await post(['SetStatisticsMergeStatistic', {
+            HostName: hostName,
+            TopFrameDomain1: topFrameDomain1,
+            TopFrameDomain2: topFrameDomain2,
+            LastSeen: lastSeen,
+            HadUserInteraction: hadUserInteraction,
+            MostRecentUserInteraction: mostRecentUserInteraction,
+            IsGrandfathered: isGrandfathered,
+            IsPrevalent: isPrevalent,
+            IsVeryPrevalent: isVeryPrevalent,
+            DataRecordsRemoved: dataRecordsRemoved
+        }]);
+        callback?.();
+    };
+    testRunner.setStatisticsExpiredStatistic = async (hostName, numberOfOperatingDaysPassed, hadUserInteraction, isScheduledForAllButCookieDataRemoval, isPrevalent, callback) => { // NOLINT
+        await post(['SetStatisticsExpiredStatistic', {
+            HostName: hostName,
+            NumberOfOperatingDaysPassed: numberOfOperatingDaysPassed,
+            HadUserInteraction: hadUserInteraction,
+            IsScheduledForAllButCookieDataRemoval: isScheduledForAllButCookieDataRemoval,
+            IsPrevalent: isPrevalent
+        }]);
+        callback?.();
+    };
+    testRunner.setStatisticsPrevalentResource = async (hostName, value, callback) => { // NOLINT
+        await post(['SetStatisticsPrevalentResource', {
+            HostName: hostName,
+            Value: value
+        }]);
+        callback?.();
+    };
+    testRunner.setStatisticsVeryPrevalentResource = async (hostName, value, callback) => { // NOLINT
+        await post(['SetStatisticsVeryPrevalentResource', {
+            HostName: hostName,
+            Value: value
+        }]);
+        callback?.();
+    };
+    testRunner.setStatisticsHasHadUserInteraction = async (hostName, value, callback) => { // NOLINT
+        await post(['SetStatisticsHasHadUserInteraction', {
+            HostName: hostName,
+            Value: value
+        }]);
+        callback?.();
+    };
+    testRunner.statisticsProcessStatisticsAndDataRecords = async () => { // NOLINT
+        await post(['StatisticsProcessStatisticsAndDataRecords']);
+    };
+    testRunner.statisticsUpdateCookieBlocking = async (callback) => { // NOLINT
+        await post(['StatisticsUpdateCookieBlocking']);
+        callback?.();
+    };
+    testRunner.statisticsClearInMemoryAndPersistentStoreModifiedSinceHours = async (hours, callback) => { // NOLINT
+        await post(['StatisticsClearInMemoryAndPersistentStore', hours]);
+        callback?.();
+    };
+    testRunner.statisticsClearInMemoryAndPersistentStore = async (callback) => { // NOLINT
+        await post(['StatisticsClearInMemoryAndPersistentStore']);
+        callback?.();
+    };
+    testRunner.statisticsClearThroughWebsiteDataRemoval = async (callback) => { // NOLINT
+        await post(['StatisticsClearThroughWebsiteDataRemoval']);
+        callback?.();
+    };
+    testRunner.statisticsDeleteCookiesForHost = async (hostName, includeHttpOnlyCookies, callback) => { // NOLINT
+        await post(['StatisticsDeleteCookiesForHost', { HostName: hostName, IncludeHttpOnlyCookies: includeHttpOnlyCookies }]);
+        callback?.();
+    };
+    testRunner.setStatisticsShouldDowngradeReferrer = async (value, callback) => { // NOLINT
+        await post(['SetStatisticsShouldDowngradeReferrer', value]);
+        callback?.();
+    };
+    testRunner.setStatisticsShouldBlockThirdPartyCookies = async (value, callback, onlyOnSitesWithoutUserInteraction, onlyUnpartitionedCookies) => { // NOLINT
+        let message = 'SetStatisticsShouldBlockThirdPartyCookies';
+        if (onlyOnSitesWithoutUserInteraction || onlyUnpartitionedCookies)
+            message = 'SetStatisticsShouldBlockThirdPartyCookiesOnSitesWithoutUserInteraction';
+        else if (onlyUnpartitionedCookies)
+            message = 'SetStatisticsShouldBlockThirdPartyCookiesExceptPartitioned';
+        await post([message, value]);
+        callback?.();
+    };
+    testRunner.setStatisticsFirstPartyWebsiteDataRemovalMode = async (value, callback) => { // NOLINT
+        await post(['SetStatisticsFirstPartyWebsiteDataRemovalMode', value]);
+        callback?.();
+    };
+    testRunner.statisticsSetToSameSiteStrictCookies = async (hostName, callback) => { // NOLINT
+        await post(['StatisticsSetToSameSiteStrictCookies', hostName]);
+        callback?.();
+    };
+    testRunner.statisticsSetFirstPartyHostCNAMEDomain = async (firstPartURL, cnameURLString, callback) => { // NOLINT
+        await post(['StatisticsSetFirstPartyHostCNAMEDomain', { FirstPartyURL: firstPartURL, CNAME: cnameURLString }]);
+        callback?.();
+    };
+    testRunner.statisticsSetThirdPartyCNAMEDomain = async (cnameURLString, callback) => { // NOLINT
+        await post(['StatisticsSetThirdPartyCNAMEDomain', cnameURLString]);
+        callback?.();
+    };
+    testRunner.statisticsResetToConsistentState = async (callback) => { // NOLINT
+        await post(['StatisticsResetToConsistentState']);
+        callback?.();
+    };
+    testRunner.getAllStorageAccessEntries = async (callback) => { // NOLINT
+        const entries = await post(['GetAllStorageAccessEntries']);
+        callback?.(entries);
+    };
+    testRunner.setStorageAccessPermission = async (granted, subFrameURL, callback) => { // NOLINT
+        await post(['SetStorageAccessPermission', { Value: granted, SubFrameURL: subFrameURL }]);
+        callback?.();
+    };
+    testRunner.setStorageAccess = async (blocked, callback) => { // NOLINT
+        await post(['SetStorageAccess', blocked]);
+        callback?.();
+    };
+    testRunner.loadedSubresourceDomains = async (callback) => { // NOLINT
+        const arrays = await post(['LoadedSubresourceDomains']);
+        callback?.(arrays);
+    };
+    testRunner.removeAllSessionCredentials = async (callback) => { // NOLINT
+        await post(['RemoveAllSessionCredentials']);
+        callback?.();
+    };
+    testRunner.takeViewPortSnapshot = async (callback) => { // NOLINT
+        const snapshot = await post(['TakeViewPortSnapshot']);
+        callback?.(snapshot);
+    };
+    testRunner.flushConsoleLogs = () => post(['FlushConsoleLogs']);
+    testRunner.updatePresentation = () => post(['UpdatePresentation']);
+    testRunner.setPageScaleFactor = (scaleFactor, x, y) => post(['SetPageScaleFactor', { scaleFactor: scaleFactor, x: x, y: y }]);
+    testRunner.getAndClearReportedWindowProxyAccessDomains = async (callback) => { // NOLINT
+        const domains = await post(['GetAndClearReportedWindowProxyAccessDomains']);
+        callback?.(domains);
+    };
+    testRunner.setObscuredContentInsets = (top, right, bottom, left) => post(['SetObscuredContentInsets', [top, right, bottom, left]]);
+    testRunner.setResourceMonitorList = (rulesText) => post(['SetResourceMonitorList', rulesText]);
+
 }
 )testRunnerJS";
 
@@ -1972,6 +2127,227 @@ void TestController::didReceiveScriptMessage(WKScriptMessageRef message, Complet
             completionHandler(adoptWK(WKBooleanCreate(found)).get());
         });
     }
+
+    if (WKStringIsEqualToUTF8CString(command, "RemoveAllCookies"))
+        return removeAllCookies(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "AddChromeInputField")) {
+        mainWebView()->addChromeInputField();
+        return completionHandler(nullptr);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "RemoveChromeInputField")) {
+        mainWebView()->removeChromeInputField();
+        return completionHandler(nullptr);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetTextInChromeInputField")) {
+        mainWebView()->setTextInChromeInputField(toWTFString(stringValue(argument)));
+        return completionHandler(nullptr);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SelectChromeInputField")) {
+        mainWebView()->selectChromeInputField();
+        return completionHandler(nullptr);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "GetSelectedTextInChromeInputField")) {
+        auto selectedText = mainWebView()->getSelectedTextInChromeInputField();
+        return completionHandler(toWK(selectedText).get());
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "FocusWebView")) {
+        mainWebView()->makeWebViewFirstResponder();
+        return completionHandler(nullptr);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetBackingScaleFactor")) {
+        WKPageSetCustomBackingScaleFactorWithCallback(TestController::singleton().mainWebView()->page(), doubleValue(argument), completionHandler.leak(), adoptAndCallCompletionHandler);
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "ClearBackForwardList"))
+        return WKPageClearBackForwardListForTesting(TestController::singleton().mainWebView()->page(), completionHandler.leak(), adoptAndCallCompletionHandler);
+
+    if (WKStringIsEqualToUTF8CString(command, "DisplayAndTrackRepaints"))
+        return WKPageDisplayAndTrackRepaintsForTesting(TestController::singleton().mainWebView()->page(), completionHandler.leak(), adoptAndCallCompletionHandler);
+
+    if (WKStringIsEqualToUTF8CString(command, "SetResourceMonitorList"))
+        return setResourceMonitorList(stringValue(argument), WTFMove(completionHandler));
+
+
+    if (WKStringIsEqualToUTF8CString(command, "SetPageScaleFactor")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto scaleFactor = doubleValue(argumentDictionary, "scaleFactor");
+        auto x = doubleValue(argumentDictionary, "x");
+        auto y = doubleValue(argumentDictionary, "y");
+        return setPageScaleFactor(static_cast<float>(scaleFactor), static_cast<int>(x), static_cast<int>(y), WTFMove(completionHandler));
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetObscuredContentInsets")) {
+        auto insetValues = arrayValue(argument);
+        auto top = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 0)));
+        auto right = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 1)));
+        auto bottom = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 2)));
+        auto left = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 3)));
+        return WKPageSetObscuredContentInsetsForTesting(TestController::singleton().mainWebView()->page(), top, right, bottom, left, completionHandler.leak(), adoptAndCallCompletionHandler);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "UpdatePresentation"))
+        return updatePresentation(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "FlushConsoleLogs"))
+        return completionHandler(nullptr);
+
+    if (WKStringIsEqualToUTF8CString(command, "GetAndClearReportedWindowProxyAccessDomains"))
+        return completionHandler(getAndClearReportedWindowProxyAccessDomains().get());
+
+    if (WKStringIsEqualToUTF8CString(command, "TakeViewPortSnapshot"))
+        return completionHandler(takeViewPortSnapshot().get());
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsShouldBlockThirdPartyCookies"))
+        return setStatisticsShouldBlockThirdPartyCookies(booleanValue(argument), ThirdPartyCookieBlockingPolicy::All, WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsShouldDowngradeReferrer"))
+        return setStatisticsShouldDowngradeReferrer(booleanValue(argument), WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsFirstPartyWebsiteDataRemovalMode"))
+        return setStatisticsFirstPartyWebsiteDataRemovalMode(booleanValue(argument), WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsSetToSameSiteStrictCookies"))
+        return setStatisticsToSameSiteStrictCookies(stringValue(argument), WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsSetFirstPartyHostCNAMEDomain")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto firstPartyURLString = stringValue(argumentDictionary, "FirstPartyURL");
+        auto cnameURLString = stringValue(argumentDictionary, "CNAME");
+        setStatisticsFirstPartyHostCNAMEDomain(firstPartyURLString, cnameURLString, WTFMove(completionHandler));
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsSetThirdPartyCNAMEDomain"))
+        return setStatisticsThirdPartyCNAMEDomain(stringValue(argument), WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "LoadedSubresourceDomains"))
+        return loadedSubresourceDomains(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "RemoveAllSessionCredentials"))
+        return TestController::singleton().removeAllSessionCredentials(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStorageAccessPermission")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto value = booleanValue(argumentDictionary, "Value");
+        auto subFrameURL = stringValue(argumentDictionary, "SubFrameURL");
+        auto page = mainWebView()->page();
+        auto mainFrameURL = adoptWK(WKURLCopyString(WKPageCopyActiveURL(page)));
+        return WKWebsiteDataStoreSetStorageAccessPermissionForTesting(websiteDataStore(), page, value, mainFrameURL.get(), subFrameURL, completionHandler.leak(), adoptAndCallCompletionHandler);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStorageAccess"))
+        return WKWebsiteDataStoreSetStorageAccessForTesting(websiteDataStore(), booleanValue(argument), completionHandler.leak(), adoptAndCallCompletionHandler);
+
+
+
+    if (WKStringIsEqualToUTF8CString(command, "GetAllStorageAccessEntries"))
+        return getAllStorageAccessEntries(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsResetToConsistentState")) {
+        protectedCurrentInvocation()->dumpResourceLoadStatisticsIfNecessary();
+        statisticsResetToConsistentState();
+        return completionHandler(nullptr);
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsDeleteCookiesForHost")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto hostName = stringValue(argumentDictionary, "HostName");
+        auto includeHttpOnlyCookies = booleanValue(argumentDictionary, "IncludeHttpOnlyCookies");
+        return TestController::singleton().statisticsDeleteCookiesForHost(hostName, includeHttpOnlyCookies, WTFMove(completionHandler));
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsClearInMemoryAndPersistentStore"))
+        return statisticsClearInMemoryAndPersistentStore(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsClearThroughWebsiteDataRemoval"))
+        return statisticsClearThroughWebsiteDataRemoval(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsClearInMemoryAndPersistentStoreModifiedSinceHours"))
+        return statisticsClearInMemoryAndPersistentStoreModifiedSinceHours(uint64Value(argument), WTFMove(completionHandler));
+
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsUpdateCookieBlocking"))
+        return statisticsUpdateCookieBlocking(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "StatisticsProcessStatisticsAndDataRecords"))
+        return TestController::singleton().statisticsProcessStatisticsAndDataRecords(WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsHasHadUserInteraction")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto hostName = stringValue(argumentDictionary, "HostName");
+        auto value = booleanValue(argumentDictionary, "Value");
+        setStatisticsHasHadUserInteraction(hostName, value, WTFMove(completionHandler));
+        return;
+    }
+
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsPrevalentResourceForDebugMode")) {
+        WKStringRef hostName = stringValue(argument);
+        setStatisticsPrevalentResourceForDebugMode(hostName, WTFMove(completionHandler));
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsLastSeen")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto hostName = stringValue(argumentDictionary, "HostName");
+        auto value = doubleValue(argumentDictionary, "Value");
+        setStatisticsLastSeen(hostName, value, WTFMove(completionHandler));
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsMergeStatistic")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto hostName = stringValue(argumentDictionary, "HostName");
+        auto topFrameDomain1 = stringValue(argumentDictionary, "TopFrameDomain1");
+        auto topFrameDomain2 = stringValue(argumentDictionary, "TopFrameDomain2");
+        auto lastSeen = doubleValue(argumentDictionary, "LastSeen");
+        auto hadUserInteraction = booleanValue(argumentDictionary, "HadUserInteraction");
+        auto mostRecentUserInteraction = doubleValue(argumentDictionary, "MostRecentUserInteraction");
+        auto isGrandfathered = booleanValue(argumentDictionary, "IsGrandfathered");
+        auto isPrevalent = booleanValue(argumentDictionary, "IsPrevalent");
+        auto isVeryPrevalent = booleanValue(argumentDictionary, "IsVeryPrevalent");
+        auto dataRecordsRemoved = uint64Value(argumentDictionary, "DataRecordsRemoved");
+        setStatisticsMergeStatistic(hostName, topFrameDomain1, topFrameDomain2, lastSeen, hadUserInteraction, mostRecentUserInteraction, isGrandfathered, isPrevalent, isVeryPrevalent, dataRecordsRemoved, WTFMove(completionHandler));
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsExpiredStatistic")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto hostName = stringValue(argumentDictionary, "HostName");
+        auto numberOfOperatingDaysPassed = static_cast<uint64_t>(doubleValue(argumentDictionary, "NumberOfOperatingDaysPassed"));
+        auto hadUserInteraction = booleanValue(argumentDictionary, "HadUserInteraction");
+        auto isScheduledForAllButCookieDataRemoval = booleanValue(argumentDictionary, "IsScheduledForAllButCookieDataRemoval");
+        auto isPrevalent = booleanValue(argumentDictionary, "IsPrevalent");
+        setStatisticsExpiredStatistic(hostName, numberOfOperatingDaysPassed, hadUserInteraction, isScheduledForAllButCookieDataRemoval, isPrevalent, WTFMove(completionHandler));
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsPrevalentResource")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto hostName = stringValue(argumentDictionary, "HostName");
+        auto value = booleanValue(argumentDictionary, "Value");
+        setStatisticsPrevalentResource(hostName, value, WTFMove(completionHandler));
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsVeryPrevalentResource")) {
+        auto argumentDictionary = dictionaryValue(argument);
+        auto hostName = stringValue(argumentDictionary, "HostName");
+        auto value = booleanValue(argumentDictionary, "Value");
+        setStatisticsVeryPrevalentResource(hostName, value, WTFMove(completionHandler));
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsDebugMode"))
+        return setStatisticsDebugMode(booleanValue(argument), WTFMove(completionHandler));
 
     if (WKStringIsEqualToUTF8CString(command, "InstallTooltipCallback")) {
         m_tooltipCallbacks.append(dynamic_wk_cast<WKJSHandleRef>(argument));
@@ -2132,6 +2508,12 @@ void TestController::didReceiveScriptMessage(WKScriptMessageRef message, Complet
         setBlockAllPlugins(WKBooleanGetValue(dynamic_wk_cast<WKBooleanRef>(argument)));
         return completionHandler(nullptr);
     }
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsShouldBlockThirdPartyCookiesOnSitesWithoutUserInteraction"))
+        return setStatisticsShouldBlockThirdPartyCookies(booleanValue(argument), ThirdPartyCookieBlockingPolicy::AllOnlyOnSitesWithoutUserInteraction, WTFMove(completionHandler));
+
+    if (WKStringIsEqualToUTF8CString(command, "SetStatisticsShouldBlockThirdPartyCookiesExceptPartitioned"))
+        return setStatisticsShouldBlockThirdPartyCookies(booleanValue(argument), ThirdPartyCookieBlockingPolicy::AllExceptPartitioned, WTFMove(completionHandler));
 
     ASSERT_NOT_REACHED();
 }
@@ -2576,233 +2958,11 @@ void TestController::didReceiveAsyncMessageFromInjectedBundle(WKStringRef messag
         return completionHandler(nullptr);
     }
 
-    if (WKStringIsEqualToUTF8CString(messageName, "FlushConsoleLogs"))
-        return completionHandler(nullptr);
-
-    if (WKStringIsEqualToUTF8CString(messageName, "UpdatePresentation"))
-        return updatePresentation(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetPageScaleFactor")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto scaleFactor = doubleValue(messageBodyDictionary, "scaleFactor");
-        auto x = doubleValue(messageBodyDictionary, "x");
-        auto y = doubleValue(messageBodyDictionary, "y");
-        return setPageScaleFactor(static_cast<float>(scaleFactor), static_cast<int>(x), static_cast<int>(y), WTFMove(completionHandler));
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "GetAllStorageAccessEntries"))
-        return getAllStorageAccessEntries(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "GetAndClearReportedWindowProxyAccessDomains"))
-        return completionHandler(getAndClearReportedWindowProxyAccessDomains().get());
-
-    if (WKStringIsEqualToUTF8CString(messageName, "RemoveAllCookies"))
-        return removeAllCookies(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "TakeViewPortSnapshot"))
-        return completionHandler(takeViewPortSnapshot().get());
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsDebugMode"))
-        return setStatisticsDebugMode(booleanValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsShouldBlockThirdPartyCookiesOnSitesWithoutUserInteraction"))
-        return setStatisticsShouldBlockThirdPartyCookies(booleanValue(messageBody), ThirdPartyCookieBlockingPolicy::AllOnlyOnSitesWithoutUserInteraction, WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsShouldBlockThirdPartyCookiesExceptPartitioned"))
-        return setStatisticsShouldBlockThirdPartyCookies(booleanValue(messageBody), ThirdPartyCookieBlockingPolicy::AllExceptPartitioned, WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsShouldBlockThirdPartyCookies"))
-        return setStatisticsShouldBlockThirdPartyCookies(booleanValue(messageBody), ThirdPartyCookieBlockingPolicy::All, WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsPrevalentResourceForDebugMode")) {
-        WKStringRef hostName = stringValue(messageBody);
-        setStatisticsPrevalentResourceForDebugMode(hostName, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsLastSeen")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto hostName = stringValue(messageBodyDictionary, "HostName");
-        auto value = doubleValue(messageBodyDictionary, "Value");
-        setStatisticsLastSeen(hostName, value, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsMergeStatistic")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto hostName = stringValue(messageBodyDictionary, "HostName");
-        auto topFrameDomain1 = stringValue(messageBodyDictionary, "TopFrameDomain1");
-        auto topFrameDomain2 = stringValue(messageBodyDictionary, "TopFrameDomain2");
-        auto lastSeen = doubleValue(messageBodyDictionary, "LastSeen");
-        auto hadUserInteraction = booleanValue(messageBodyDictionary, "HadUserInteraction");
-        auto mostRecentUserInteraction = doubleValue(messageBodyDictionary, "MostRecentUserInteraction");
-        auto isGrandfathered = booleanValue(messageBodyDictionary, "IsGrandfathered");
-        auto isPrevalent = booleanValue(messageBodyDictionary, "IsPrevalent");
-        auto isVeryPrevalent = booleanValue(messageBodyDictionary, "IsVeryPrevalent");
-        auto dataRecordsRemoved = uint64Value(messageBodyDictionary, "DataRecordsRemoved");
-        setStatisticsMergeStatistic(hostName, topFrameDomain1, topFrameDomain2, lastSeen, hadUserInteraction, mostRecentUserInteraction, isGrandfathered, isPrevalent, isVeryPrevalent, dataRecordsRemoved, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsExpiredStatistic")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto hostName = stringValue(messageBodyDictionary, "HostName");
-        auto numberOfOperatingDaysPassed = uint64Value(messageBodyDictionary, "NumberOfOperatingDaysPassed");
-        auto hadUserInteraction = booleanValue(messageBodyDictionary, "HadUserInteraction");
-        auto isScheduledForAllButCookieDataRemoval = booleanValue(messageBodyDictionary, "IsScheduledForAllButCookieDataRemoval");
-        auto isPrevalent = booleanValue(messageBodyDictionary, "IsPrevalent");
-        setStatisticsExpiredStatistic(hostName, numberOfOperatingDaysPassed, hadUserInteraction, isScheduledForAllButCookieDataRemoval, isPrevalent, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsPrevalentResource")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto hostName = stringValue(messageBodyDictionary, "HostName");
-        auto value = booleanValue(messageBodyDictionary, "Value");
-        setStatisticsPrevalentResource(hostName, value, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsVeryPrevalentResource")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto hostName = stringValue(messageBodyDictionary, "HostName");
-        auto value = booleanValue(messageBodyDictionary, "Value");
-        setStatisticsVeryPrevalentResource(hostName, value, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsClearInMemoryAndPersistentStore"))
-        return statisticsClearInMemoryAndPersistentStore(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsClearThroughWebsiteDataRemoval"))
-        return statisticsClearThroughWebsiteDataRemoval(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsClearInMemoryAndPersistentStoreModifiedSinceHours"))
-        return statisticsClearInMemoryAndPersistentStoreModifiedSinceHours(uint64Value(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsShouldDowngradeReferrer"))
-        return setStatisticsShouldDowngradeReferrer(booleanValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsFirstPartyWebsiteDataRemovalMode"))
-        return setStatisticsFirstPartyWebsiteDataRemovalMode(booleanValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsSetToSameSiteStrictCookies"))
-        return setStatisticsToSameSiteStrictCookies(stringValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsSetFirstPartyHostCNAMEDomain")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto firstPartyURLString = stringValue(messageBodyDictionary, "FirstPartyURL");
-        auto cnameURLString = stringValue(messageBodyDictionary, "CNAME");
-        setStatisticsFirstPartyHostCNAMEDomain(firstPartyURLString, cnameURLString, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsSetThirdPartyCNAMEDomain"))
-        return setStatisticsThirdPartyCNAMEDomain(stringValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStatisticsHasHadUserInteraction")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto hostName = stringValue(messageBodyDictionary, "HostName");
-        auto value = booleanValue(messageBodyDictionary, "Value");
-        setStatisticsHasHadUserInteraction(hostName, value, WTFMove(completionHandler));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsUpdateCookieBlocking"))
-        return statisticsUpdateCookieBlocking(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsResetToConsistentState")) {
-        protectedCurrentInvocation()->dumpResourceLoadStatisticsIfNecessary();
-        statisticsResetToConsistentState();
-        return completionHandler(nullptr);
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsDeleteCookiesForHost")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto hostName = stringValue(messageBodyDictionary, "HostName");
-        auto includeHttpOnlyCookies = booleanValue(messageBodyDictionary, "IncludeHttpOnlyCookies");
-        return TestController::singleton().statisticsDeleteCookiesForHost(hostName, includeHttpOnlyCookies, WTFMove(completionHandler));
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "StatisticsProcessStatisticsAndDataRecords"))
-        return TestController::singleton().statisticsProcessStatisticsAndDataRecords(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "AddChromeInputField")) {
-        mainWebView()->addChromeInputField();
-        return completionHandler(nullptr);
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetTextInChromeInputField")) {
-        mainWebView()->setTextInChromeInputField(toWTFString(stringValue(messageBody)));
-        return completionHandler(nullptr);
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SelectChromeInputField")) {
-        mainWebView()->selectChromeInputField();
-        return completionHandler(nullptr);
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "GetSelectedTextInChromeInputField")) {
-        auto selectedText = mainWebView()->getSelectedTextInChromeInputField();
-        return completionHandler(toWK(selectedText).get());
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "FocusWebView")) {
-        mainWebView()->makeWebViewFirstResponder();
-        return completionHandler(nullptr);
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "LoadedSubresourceDomains"))
-        return loadedSubresourceDomains(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "RemoveChromeInputField")) {
-        mainWebView()->removeChromeInputField();
-        return completionHandler(nullptr);
-    }
-
     if (WKStringIsEqualToUTF8CString(messageName, "SetManagedDomains"))
         return setManagedDomains(arrayValue(messageBody), WTFMove(completionHandler));
 
     if (WKStringIsEqualToUTF8CString(messageName, "SetAppBoundDomains"))
         return setAppBoundDomains(arrayValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetBackingScaleFactor")) {
-        WKPageSetCustomBackingScaleFactorWithCallback(TestController::singleton().mainWebView()->page(), doubleValue(messageBody), completionHandler.leak(), adoptAndCallCompletionHandler);
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "RemoveAllSessionCredentials"))
-        return TestController::singleton().removeAllSessionCredentials(WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetObscuredContentInsets")) {
-        auto insetValues = arrayValue(messageBody);
-        auto top = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 0)));
-        auto right = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 1)));
-        auto bottom = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 2)));
-        auto left = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 3)));
-        return WKPageSetObscuredContentInsetsForTesting(TestController::singleton().mainWebView()->page(), top, right, bottom, left, completionHandler.leak(), adoptAndCallCompletionHandler);
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "ClearBackForwardList"))
-        return WKPageClearBackForwardListForTesting(TestController::singleton().mainWebView()->page(), completionHandler.leak(), adoptAndCallCompletionHandler);
-
-    if (WKStringIsEqualToUTF8CString(messageName, "DisplayAndTrackRepaints"))
-        return WKPageDisplayAndTrackRepaintsForTesting(TestController::singleton().mainWebView()->page(), completionHandler.leak(), adoptAndCallCompletionHandler);
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetResourceMonitorList"))
-        return setResourceMonitorList(stringValue(messageBody), WTFMove(completionHandler));
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStorageAccessPermission")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto value = booleanValue(messageBodyDictionary, "Value");
-        auto subFrameURL = stringValue(messageBodyDictionary, "SubFrameURL");
-        auto page = mainWebView()->page();
-        auto mainFrameURL = adoptWK(WKURLCopyString(WKPageCopyActiveURL(page)));
-        return WKWebsiteDataStoreSetStorageAccessPermissionForTesting(websiteDataStore(), page, value, mainFrameURL.get(), subFrameURL, completionHandler.leak(), adoptAndCallCompletionHandler);
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetStorageAccess"))
-        return WKWebsiteDataStoreSetStorageAccessForTesting(websiteDataStore(), booleanValue(messageBody), completionHandler.leak(), adoptAndCallCompletionHandler);
 
     ASSERT_NOT_REACHED();
 }
@@ -3790,7 +3950,14 @@ void TestController::decidePolicyForNavigationAction(WKPageRef page, WKNavigatio
     WKRetainPtr<WKFramePolicyListenerRef> retainedListener { listener };
     WKRetainPtr<WKNavigationActionRef> retainedNavigationAction { navigationAction };
     const bool shouldIgnore { m_policyDelegateEnabled && !m_policyDelegatePermissive };
-    auto decisionFunction = [shouldIgnore, retainedListener, retainedNavigationAction, shouldSwapToEphemeralSessionOnNextNavigation = m_shouldSwapToEphemeralSessionOnNextNavigation, shouldSwapToDefaultSessionOnNextNavigation = m_shouldSwapToDefaultSessionOnNextNavigation]() {
+    auto decisionFunction = [
+        shouldIgnore,
+        retainedListener,
+        retainedNavigationAction,
+        shouldSwapToEphemeralSessionOnNextNavigation = m_shouldSwapToEphemeralSessionOnNextNavigation,
+        shouldSwapToDefaultSessionOnNextNavigation = m_shouldSwapToDefaultSessionOnNextNavigation,
+        page = WKRetainPtr { page }
+    ] {
         if (shouldIgnore)
             WKFramePolicyListenerIgnore(retainedListener.get());
         else if (WKNavigationActionShouldPerformDownload(retainedNavigationAction.get()))
@@ -3798,14 +3965,18 @@ void TestController::decidePolicyForNavigationAction(WKPageRef page, WKNavigatio
         else {
             if (shouldSwapToEphemeralSessionOnNextNavigation || shouldSwapToDefaultSessionOnNextNavigation) {
                 ASSERT(shouldSwapToEphemeralSessionOnNextNavigation != shouldSwapToDefaultSessionOnNextNavigation);
-                auto policies = adoptWK(WKWebsitePoliciesCreate());
+                WKRetainPtr policies = adoptWK(WKWebsitePoliciesCreate());
+                WKWebsitePoliciesSetAllowsJSHandleCreationInPageWorld(policies.get(), true);
                 WKRetainPtr<WKWebsiteDataStoreRef> newSession = TestController::defaultWebsiteDataStore();
                 if (shouldSwapToEphemeralSessionOnNextNavigation)
                     newSession = adoptWK(WKWebsiteDataStoreCreateNonPersistentDataStore());
                 WKWebsitePoliciesSetDataStore(policies.get(), newSession.get());
                 WKFramePolicyListenerUseWithPolicies(retainedListener.get(), policies.get());
-            } else
-                WKFramePolicyListenerUse(retainedListener.get());
+            } else {
+                WKRetainPtr policies = WKPageConfigurationGetDefaultWebsitePolicies(adoptWK(WKPageCopyPageConfiguration(page.get())).get());
+                WKWebsitePoliciesSetAllowsJSHandleCreationInPageWorld(policies.get(), true);
+                WKFramePolicyListenerUseWithPolicies(retainedListener.get(), policies.get());
+            }
         }
     };
     m_shouldSwapToEphemeralSessionOnNextNavigation = false;

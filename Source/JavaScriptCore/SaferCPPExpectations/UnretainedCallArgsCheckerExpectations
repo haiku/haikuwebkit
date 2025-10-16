@@ -7,5 +7,4 @@ inspector/JSGlobalObjectDebugger.cpp
 inspector/remote/RemoteInspectionTarget.cpp
 inspector/remote/cocoa/RemoteConnectionToTargetCocoa.mm
 inspector/remote/cocoa/RemoteInspectorCocoa.mm
-inspector/remote/cocoa/RemoteInspectorXPCConnection.mm
 runtime/JSDateMath.cpp

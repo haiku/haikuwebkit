@@ -33,6 +33,8 @@
 #include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StylePrimitiveNumericTypes+Serialization.h"
+#include "StyleShadowInterpolation.h"
+#include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 namespace Style {
@@ -104,6 +106,30 @@ auto Blending<TextShadow>::blend(const TextShadow& a, const TextShadow& b, const
         .location = WebCore::Style::blend(a.location, b.location, context),
         .blur = WebCore::Style::blend(a.blur, b.blur, context),
     };
+}
+
+struct MatchingTextShadows {
+    static const TextShadow& shadowForInterpolation(const TextShadow&)
+    {
+        static NeverDestroyed<const TextShadow> defaultShadowData {
+            TextShadow {
+                .color = { WebCore::Color::transparentBlack },
+                .location = { { 0 }, { 0 } },
+                .blur = { 0 },
+            }
+        };
+        return defaultShadowData.get();
+    }
+};
+
+auto Blending<TextShadows>::canBlend(const TextShadows& from, const TextShadows& to, CompositeOperation compositeOperation) -> bool
+{
+    return ShadowInterpolation<TextShadows, MatchingTextShadows>::canInterpolate(from, to, compositeOperation);
+}
+
+auto Blending<TextShadows>::blend(const TextShadows& from, const TextShadows& to, const RenderStyle& fromStyle, const RenderStyle& toStyle, const BlendingContext& context) -> TextShadows
+{
+    return ShadowInterpolation<TextShadows, MatchingTextShadows>::interpolate(from, to, fromStyle, toStyle, context);
 }
 
 } // namespace Style

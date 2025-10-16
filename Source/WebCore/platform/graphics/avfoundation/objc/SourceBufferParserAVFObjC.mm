@@ -185,7 +185,7 @@ private:
         if (!description)
             return emptyString();
         FourCC originalCodec = PAL::softLink_CoreMedia_CMFormatDescriptionGetMediaSubType(description);
-        CFStringRef originalFormatKey = PAL::canLoad_CoreMedia_kCMFormatDescriptionExtension_ProtectedContentOriginalFormat() ? PAL::get_CoreMedia_kCMFormatDescriptionExtension_ProtectedContentOriginalFormat() : CFSTR("CommonEncryptionOriginalFormat");
+        CFStringRef originalFormatKey = PAL::canLoad_CoreMedia_kCMFormatDescriptionExtension_ProtectedContentOriginalFormat() ? PAL::kCMFormatDescriptionExtension_ProtectedContentOriginalFormat : CFSTR("CommonEncryptionOriginalFormat");
         if (auto originalFormat = dynamic_cf_cast<CFNumberRef>(PAL::CMFormatDescriptionGetExtension(description, originalFormatKey)))
             CFNumberGetValue(originalFormat, kCFNumberSInt32Type, &originalCodec.value);
         return String::fromLatin1(originalCodec.string().data());
@@ -201,13 +201,13 @@ private:
 MediaPlayerEnums::SupportsType SourceBufferParserAVFObjC::isContentTypeSupported(const ContentType& type)
 {
     // Check that AVStreamDataParser is in a functional state.
-    if (!PAL::getAVStreamDataParserClass() || !adoptNS([PAL::allocAVStreamDataParserInstance() init]))
+    if (!PAL::getAVStreamDataParserClassSingleton() || !adoptNS([PAL::allocAVStreamDataParserInstance() init]))
         return MediaPlayerEnums::SupportsType::IsNotSupported;
 
     String extendedType = type.raw();
     String outputCodecs = type.parameter(ContentType::codecsParameter());
-    if (!outputCodecs.isEmpty() && [PAL::getAVStreamDataParserClass() respondsToSelector:@selector(outputMIMECodecParameterForInputMIMECodecParameter:)]) {
-        outputCodecs = [PAL::getAVStreamDataParserClass() outputMIMECodecParameterForInputMIMECodecParameter:outputCodecs.createNSString().get()];
+    if (!outputCodecs.isEmpty() && [PAL::getAVStreamDataParserClassSingleton() respondsToSelector:@selector(outputMIMECodecParameterForInputMIMECodecParameter:)]) {
+        outputCodecs = [PAL::getAVStreamDataParserClassSingleton() outputMIMECodecParameterForInputMIMECodecParameter:outputCodecs.createNSString().get()];
         extendedType = makeString(type.containerType(), "; codecs=\""_s, outputCodecs, "\""_s);
     }
 

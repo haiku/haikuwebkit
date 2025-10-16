@@ -32,6 +32,7 @@
 #include "JSCJSValueInlines.h"
 #include "JSWebAssemblyInstance.h"
 #include "WasmTypeDefinitionInlines.h"
+#include "WeakGCSetInlines.h"
 #include <type_traits>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -92,7 +93,7 @@ Table::Table(uint32_t initial, std::optional<uint32_t> maximum, Type wasmType, T
     ASSERT(!m_maximum || *m_maximum >= m_length);
 }
 
-RefPtr<Table> Table::tryCreate(uint32_t initial, std::optional<uint32_t> maximum, TableElementType type, Type wasmType)
+RefPtr<Table> Table::tryCreate(VM& vm, uint32_t initial, std::optional<uint32_t> maximum, TableElementType type, Type wasmType)
 {
     if (!isValidLength(initial))
         return nullptr;
@@ -102,9 +103,9 @@ RefPtr<Table> Table::tryCreate(uint32_t initial, std::optional<uint32_t> maximum
     case TableElementType::Funcref: {
         if (maximum && maximum.value() == initial) {
             // If the table is fixed-sized, we should put table slots inline to avoid one-level indirection.
-            return FuncRefTable::createFixedSized(initial, wasmType);
+            return FuncRefTable::createFixedSized(vm, initial, wasmType);
         }
-        return adoptRef(new FuncRefTable(initial, maximum, wasmType));
+        return adoptRef(new FuncRefTable(vm, initial, maximum, wasmType));
     }
     }
 
@@ -154,6 +155,7 @@ std::optional<uint32_t> Table::grow(uint32_t delta, JSValue defaultValue)
         });
         if (!success) [[unlikely]]
             return std::nullopt;
+        setLength(newLength);
         break;
     }
     case TableElementType::Funcref: {
@@ -162,11 +164,14 @@ std::optional<uint32_t> Table::grow(uint32_t delta, JSValue defaultValue)
         });
         if (!success) [[unlikely]]
             return std::nullopt;
+        setLength(newLength);
+        for (auto& instance : static_cast<FuncRefTable*>(this)->m_instances) {
+            if (auto* strongReference = instance.get())
+                strongReference->updateCachedTable0();
+        }
         break;
     }
     }
-
-    setLength(newLength);
     return newLength;
 }
 
@@ -256,8 +261,9 @@ void ExternOrAnyRefTable::set(uint32_t index, JSValue value)
     m_jsValues.get()[index].set(m_owner->vm(), m_owner, value);
 }
 
-FuncRefTable::FuncRefTable(uint32_t initial, std::optional<uint32_t> maximum, Type wasmType)
+FuncRefTable::FuncRefTable(VM& vm, uint32_t initial, std::optional<uint32_t> maximum, Type wasmType)
     : Table(initial, maximum, wasmType, TableElementType::Funcref)
+    , m_instances(vm)
 {
     ASSERT(isSubtype(wasmType, funcrefType()));
     // FIXME: It might be worth trying to pre-allocate maximum here. The spec recommends doing so.
@@ -284,9 +290,9 @@ FuncRefTable::~FuncRefTable()
     }
 }
 
-Ref<FuncRefTable> FuncRefTable::createFixedSized(uint32_t size, Type wasmType)
+Ref<FuncRefTable> FuncRefTable::createFixedSized(VM& vm, uint32_t size, Type wasmType)
 {
-    return adoptRef(*new (NotNull, fastMalloc(allocationSize(allocatedLength(size)))) FuncRefTable(size, size, wasmType));
+    return adoptRef(*new (NotNull, fastMalloc(allocationSize(allocatedLength(size)))) FuncRefTable(vm, size, size, wasmType));
 }
 
 void FuncRefTable::setFunction(uint32_t index, WebAssemblyFunctionBase* function)
@@ -330,6 +336,11 @@ void FuncRefTable::set(uint32_t index, JSValue value)
         clear(index);
     else
         setFunction(index, jsCast<WebAssemblyFunctionBase*>(value));
+}
+
+void FuncRefTable::registerInstance(JSWebAssemblyInstance& instance)
+{
+    m_instances.add(&instance);
 }
 
 } } // namespace JSC::Table

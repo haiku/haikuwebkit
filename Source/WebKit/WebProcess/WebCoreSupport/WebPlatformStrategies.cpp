@@ -72,6 +72,8 @@
 namespace WebKit {
 using namespace WebCore;
 
+WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebPlatformStrategies);
+
 class RemoteAudioDestination;
 
 void WebPlatformStrategies::initialize()

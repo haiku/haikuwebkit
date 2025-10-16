@@ -105,7 +105,7 @@ public:
 protected:
     JSDOMAsyncIteratorBase(JSC::Structure* structure, JSWrapper& iteratedObject, IterationKind kind)
         : Base(structure, *iteratedObject.globalObject())
-        , m_iterator(iteratedObject.wrapped().createIterator(iteratedObject.globalObject()->scriptExecutionContext()))
+        , m_iterator(iteratedObject.wrapped().createIterator(iteratedObject.globalObject()->protectedScriptExecutionContext().get()))
         , m_kind(kind)
     {
     }

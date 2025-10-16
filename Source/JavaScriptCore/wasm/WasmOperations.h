@@ -71,6 +71,9 @@ JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmTriggerTierUpNow, void, (CallFra
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmTriggerOSREntryNow, void, (Probe::Context&));
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmLoopOSREnterBBQJIT, void, (Probe::Context&));
 #endif
+#if ENABLE(WEBASSEMBLY_BBQJIT)
+JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmMaterializeBaselineData, void, (CallFrame*, JSWebAssemblyInstance*));
+#endif
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmUnwind, void*, (JSWebAssemblyInstance*));
 
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationConvertToI64, int64_t, (JSWebAssemblyInstance*, EncodedJSValue));
@@ -113,6 +116,7 @@ JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmThrow, void*, (JSWebAssemblyInst
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmRethrow, void*, (JSWebAssemblyInstance*, EncodedJSValue thrownValue));
 
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationWasmToJSException, void*, (JSWebAssemblyInstance*, Wasm::ExceptionType));
+JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationThrowExceptionFromOMG, void*, (JSWebAssemblyInstance*, Wasm::ExceptionType, void* returnAddress));
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationCrashDueToBBQStackOverflow, void, ());
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationCrashDueToOMGStackOverflow, void, ());
 

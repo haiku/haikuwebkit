@@ -884,6 +884,9 @@ private:
 
                 FrozenValue* globalObjectFrozenValue = m_graph.freeze(globalObject);
 
+                if (regExpObjectNode->op() == NewRegExp && regExpObjectNode->child1()->isInt32Constant())
+                    lastIndex = regExpObjectNode->child1()->asUInt32();
+
                 MatchResult result;
                 Vector<int> ovector;
                 // We have to call the kind of match function that the main thread would have called.

@@ -29,6 +29,8 @@
 
 NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 
+@class WKWebView;
+
 WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
 @interface _WKTextExtractionConfiguration : NSObject
 
@@ -56,6 +58,8 @@ NS_REQUIRES_PROPERTY_DEFINITIONS
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithAction:(_WKTextExtractionAction)action NS_DESIGNATED_INITIALIZER;
+
+- (void)debugDescriptionInWebView:(WKWebView *)webView completionHandler:(void (^)(NSString * _Nullable, NSError * _Nullable))completionHandler;
 
 @property (nonatomic, readonly) _WKTextExtractionAction action;
 @property (nonatomic, copy, nullable) NSString *nodeIdentifier;

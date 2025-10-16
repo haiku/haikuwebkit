@@ -30,6 +30,7 @@
 #include <WebCore/PlatformLayerIdentifier.h>
 #include <WebCore/RenderObjectEnums.h>
 #include <WebCore/RenderStyleConstants.h>
+#include <WebCore/RepaintRectCalculation.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Platform.h>
 #include <wtf/TZoneMalloc.h>
@@ -88,9 +89,9 @@ class SelectionGeometry;
 
 struct InlineBoxAndOffset;
 struct PaintInfo;
-struct SimpleRange;
-
 struct ScrollRectToVisibleOptions;
+struct SimpleRange;
+struct VisibleRectContext;
 
 namespace Layout {
 class Box;
@@ -102,7 +103,6 @@ class PseudoElementRequest;
 
 enum class Affinity : bool;
 enum class HitTestSource : bool;
-enum class RepaintRectCalculation : bool { Fast, Accurate };
 enum class RepaintOutlineBounds : bool { No, Yes };
 enum class PointerEvents : uint8_t;
 enum class RequiresFullRepaint : bool { No, Yes };
@@ -427,7 +427,7 @@ public:
     void outputRegionsInformation(WTF::TextStream&) const;
 #endif
 
-    inline bool isPseudoElement() const; // Defined in RenderObjectInlines.h
+    inline bool isPseudoElement() const; // Defined in RenderObjectNode.h
 
     bool isRenderElement() const { return !isRenderText(); }
     bool isRenderReplaced() const { return m_typeSpecificFlags.kind() == TypeSpecificFlags::Kind::Replaced; }
@@ -437,7 +437,7 @@ public:
     bool isRenderInline() const { return m_typeFlags.contains(TypeFlag::IsRenderInline); }
     bool isRenderLayerModelObject() const { return m_typeFlags.contains(TypeFlag::IsLayerModelObject); }
 
-    inline bool isAtomicInlineLevelBox() const;
+    inline bool isAtomicInlineLevelBox() const; // Defined in RenderObjectStyle.h
     inline bool isNonReplacedAtomicInlineLevelBox() const;
 
     bool isRenderCounter() const { return type() == Type::Counter; }
@@ -499,8 +499,8 @@ public:
     bool isViewTransitionContainingBlock() const { return isRenderBlockFlow() && m_typeSpecificFlags.blockFlowFlags().contains(BlockFlowFlag::IsViewTransitionContainingBlock); }
 
     inline bool isDocumentElementRenderer() const; // Defined in RenderObjectInlines.h
-    inline bool isBody() const; // Defined in RenderObjectInlines.h
-    inline bool isHR() const; // Defined in RenderObjectInlines.h
+    inline bool isBody() const; // Defined in RenderObjectNode.h
+    inline bool isHR() const; // Defined in RenderObjectNode.h
     bool isLegend() const;
 
     bool isHTMLMarquee() const;
@@ -712,8 +712,8 @@ public:
     bool hasNonVisibleOverflow() const { return m_stateBitfields.hasFlag(StateFlag::HasNonVisibleOverflow); }
 
     bool hasTransformRelatedProperty() const { return m_stateBitfields.hasFlag(StateFlag::HasTransformRelatedProperty); } // Transform, perspective or transform-style: preserve-3d.
-    inline bool isTransformed() const;
-    inline bool hasTransformOrPerspective() const;
+    inline bool isTransformed() const; // Defined in RenderObjectStyle.h
+    inline bool hasTransformOrPerspective() const; // Defined in RenderObjectStyle.h
 
     bool capturedInViewTransition() const { return m_stateBitfields.hasFlag(StateFlag::CapturedInViewTransition); }
     bool setCapturedInViewTransition(bool);
@@ -722,7 +722,7 @@ public:
     // instead. Returns the capture state with this adjustment applied.
     bool effectiveCapturedInViewTransition() const;
 
-    inline RenderView& view() const; // Defined in RenderObjectInlines.h
+    inline RenderView& view() const; // Defined in RenderObjectDocument.h
     CheckedRef<RenderView> checkedView() const;
     inline LocalFrameViewLayoutContext& layoutContext() const;
 
@@ -731,13 +731,13 @@ public:
     // Returns true if this renderer is rooted.
     bool isRooted() const;
 
-    inline Node* node() const; // Defined in RenderObjectInlines.h
-    inline RefPtr<Node> protectedNode() const; // Defined in RenderObjectInlines.h
+    inline Node* node() const; // Defined in RenderObjectNode.h
+    inline RefPtr<Node> protectedNode() const; // Defined in RenderObjectNode.h
 
-    inline Node* nonPseudoNode() const; // Defined in RenderObjectInlines.h
+    inline Node* nonPseudoNode() const; // Defined in RenderObjectNode.h
 
-    inline Document& document() const; // Defined in RenderObjectInlines.h
-    inline Ref<Document> protectedDocument() const; // Defined in RenderObjectInlines.h
+    inline Document& document() const; // Defined in RenderObjectDocument.h
+    inline Ref<Document> protectedDocument() const; // Defined in RenderObjectDocument.h
     inline TreeScope& treeScopeForSVGReferences() const; // Defined in RenderObjectInlines.h
     inline Ref<TreeScope> protectedTreeScopeForSVGReferences() const; // Defined in RenderObjectInlines.h
     inline LocalFrame& frame() const; // Defined in RenderObjectInlines.h
@@ -862,16 +862,16 @@ public:
     // the rect that will be painted if this object is passed as the paintingRoot
     WEBCORE_EXPORT LayoutRect paintingRootRect(LayoutRect& topLevelRect);
 
-    const RenderStyle& style() const; // Defined in RenderObjectInlines.h.
-    inline CheckedRef<const RenderStyle> checkedStyle() const; // Defined in RenderObjectInlines.h.
-    const RenderStyle& firstLineStyle() const;
-    inline WritingMode writingMode() const; // Defined in RenderObjectInlines.h.
+    inline const RenderStyle& style() const; // Defined in RenderObjectStyle.h.
+    inline CheckedRef<const RenderStyle> checkedStyle() const; // Defined in RenderObjectStyle.h.
+    inline const RenderStyle& firstLineStyle() const;
+    inline WritingMode writingMode() const; // Defined in RenderObjectStyle.h.
     // writingMode().isHorizontal() is cached by isHorizontalWritingMode() above.
 
     // Anonymous blocks that are part of of a continuation chain will return their inline continuation's outline style instead.
     // This is typically only relevant when repainting.
-    virtual const RenderStyle& outlineStyleForRepaint() const { return style(); }
-    
+    virtual const RenderStyle& outlineStyleForRepaint() const;
+
     virtual CursorDirective getCursor(const LayoutPoint&, Cursor&) const;
 
     // Return the RenderLayerModelObject in the container chain which is responsible for painting this object, or nullptr
@@ -898,34 +898,6 @@ public:
 
     // Repaint a slow repaint object, which, at this time, means we are repainting an object with background-attachment:fixed.
     void repaintSlowRepaintObject() const;
-
-    enum class VisibleRectContextOption {
-        UseEdgeInclusiveIntersection        = 1 << 0,
-        ApplyCompositedClips                = 1 << 1,
-        ApplyCompositedContainerScrolls     = 1 << 2,
-        ApplyContainerClip                  = 1 << 3,
-        CalculateAccurateRepaintRect        = 1 << 4,
-    };
-    struct VisibleRectContext {
-        VisibleRectContext(bool hasPositionFixedDescendant = false, bool dirtyRectIsFlipped = false, OptionSet<VisibleRectContextOption> options = { }, const std::optional<LengthBox>& scrollMargin = std::nullopt)
-            : hasPositionFixedDescendant(hasPositionFixedDescendant)
-            , dirtyRectIsFlipped(dirtyRectIsFlipped)
-            , options(options)
-            , scrollMargin(scrollMargin)
-            {
-            }
-
-        RepaintRectCalculation repaintRectCalculation() const
-        {
-            return options.contains(VisibleRectContextOption::CalculateAccurateRepaintRect) ? RepaintRectCalculation::Accurate : RepaintRectCalculation::Fast;
-        }
-
-        bool hasPositionFixedDescendant { false };
-        bool dirtyRectIsFlipped { false };
-        bool descendantNeedsEnclosingIntRect { false };
-        OptionSet<VisibleRectContextOption> options;
-        std::optional<LengthBox> scrollMargin;
-    };
 
     struct RepaintRects {
         LayoutRect clippedOverflowRect; // Some rect (normally the visual overflow rect) mapped up to the repaint container, respecting clipping.
@@ -1007,14 +979,14 @@ public:
 
     // Returns the rect that should be repainted whenever this object changes. The rect is in the view's
     // coordinate space. This method deals with outlines and overflow.
-    LayoutRect absoluteClippedOverflowRectForRepaint() const { return clippedOverflowRect(nullptr, visibleRectContextForRepaint()); }
-    LayoutRect absoluteClippedOverflowRectForSpatialNavigation() const { return clippedOverflowRect(nullptr, visibleRectContextForSpatialNavigation()); }
-    LayoutRect absoluteClippedOverflowRectForRenderTreeAsText() const { return clippedOverflowRect(nullptr, visibleRectContextForRenderTreeAsText()); }
+    inline LayoutRect absoluteClippedOverflowRectForRepaint() const;
+    inline LayoutRect absoluteClippedOverflowRectForSpatialNavigation() const;
+    inline LayoutRect absoluteClippedOverflowRectForRenderTreeAsText() const;
 
     WEBCORE_EXPORT IntRect pixelSnappedAbsoluteClippedOverflowRect() const;
 
     virtual LayoutRect clippedOverflowRect(const RenderLayerModelObject* repaintContainer, VisibleRectContext) const;
-    LayoutRect clippedOverflowRectForRepaint(const RenderLayerModelObject* repaintContainer) const { return clippedOverflowRect(repaintContainer, visibleRectContextForRepaint()); }
+    inline LayoutRect clippedOverflowRectForRepaint(const RenderLayerModelObject* repaintContainer) const;
     virtual LayoutRect rectWithOutlineForRepaint(const RenderLayerModelObject* repaintContainer, LayoutUnit outlineWidth) const;
     virtual LayoutRect outlineBoundsForRepaint(const RenderLayerModelObject* /*repaintContainer*/, const RenderGeometryMap* = nullptr) const { return { }; }
 
@@ -1022,7 +994,7 @@ public:
     // of repaintContainer suitable for the given VisibleRectContext.
     RepaintRects computeRects(const RepaintRects&, const RenderLayerModelObject* repaintContainer, VisibleRectContext) const;
 
-    LayoutRect computeRectForRepaint(const LayoutRect& rect, const RenderLayerModelObject* repaintContainer) const { return computeRects({ rect }, repaintContainer, visibleRectContextForRepaint()).clippedOverflowRect; }
+    inline LayoutRect computeRectForRepaint(const LayoutRect& rect, const RenderLayerModelObject* repaintContainer) const;
     FloatRect computeFloatRectForRepaint(const FloatRect&, const RenderLayerModelObject* repaintContainer) const;
 
     virtual RepaintRects rectsForRepaintingAfterLayout(const RenderLayerModelObject* repaintContainer, RepaintOutlineBounds) const;
@@ -1378,20 +1350,6 @@ inline void RenderObject::setPositionState(PositionType position)
     m_stateBitfields.setPositionedState(position);
 }
 
-inline auto RenderObject::visibleRectContextForRepaint() -> VisibleRectContext
-{
-    return { false, false, { VisibleRectContextOption::ApplyContainerClip, VisibleRectContextOption::ApplyCompositedContainerScrolls } };
-}
-
-inline auto RenderObject::visibleRectContextForSpatialNavigation() -> VisibleRectContext
-{
-    return { false, false, { VisibleRectContextOption::ApplyContainerClip, VisibleRectContextOption::ApplyCompositedContainerScrolls, VisibleRectContextOption::ApplyCompositedClips } };
-}
-
-inline auto RenderObject::visibleRectContextForRenderTreeAsText() -> VisibleRectContext
-{
-    return { false, false, { VisibleRectContextOption::ApplyContainerClip, VisibleRectContextOption::ApplyCompositedContainerScrolls, VisibleRectContextOption::ApplyCompositedClips, VisibleRectContextOption::CalculateAccurateRepaintRect  } };
-}
 
 inline bool RenderObject::isSetNeedsLayoutForbidden() const
 {

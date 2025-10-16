@@ -201,7 +201,7 @@ typedef NS_ENUM(NSInteger, _WKPitchCorrectionAlgorithm) {
 @property (nonatomic, setter=_setModelProcessEnabled:) BOOL _modelProcessEnabled WK_API_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4));
 @property (nonatomic, setter=_setModelNoPortalAttributeEnabled:) BOOL _modelNoPortalAttributeEnabled WK_API_AVAILABLE(visionos(2.4));
 @property (nonatomic, setter=_setRequiresPageVisibilityForVideoToBeNowPlayingForTesting:) BOOL _requiresPageVisibilityForVideoToBeNowPlayingForTesting WK_API_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4));
-@property (nonatomic, setter=_setSiteIsolationEnabled:) BOOL _siteIsolationEnabled WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+@property (nonatomic, setter=_setSiteIsolationEnabled:) BOOL _siteIsolationEnabled WK_API_AVAILABLE(macos(26.0), ios(26.0), visionos(26.0));
 
 #if !TARGET_OS_IPHONE
 @property (nonatomic, setter=_setWebGLEnabled:) BOOL _webGLEnabled WK_API_AVAILABLE(macos(10.13.4));
@@ -258,7 +258,7 @@ typedef NS_ENUM(NSInteger, _WKPitchCorrectionAlgorithm) {
 #endif
 @property (nonatomic, setter=_setDisplayListDrawingEnabled:) BOOL _displayListDrawingEnabled WK_API_DEPRECATED("Display list drawing is no longer supported", macos(10.12, 14.4), ios(10.0, 17.4), visionos(1.0, 1.1));
 // FIXME: We should remove this property.
-@property (nonatomic, setter=_setOfflineApplicationCacheIsEnabled:) BOOL _offlineApplicationCacheIsEnabled;
+@property (nonatomic, setter=_setOfflineApplicationCacheIsEnabled:) BOOL _offlineApplicationCacheIsEnabled WK_API_DEPRECATED("OfflineApplicationCache is no longer supported", macos(10.10, WK_MAC_TBA), ios(8.0, WK_IOS_TBA));
 @property (nonatomic, setter=_setMediaStreamEnabled:) BOOL _mediaStreamEnabled WK_API_DEPRECATED("Media stream preference is no longer supported", macos(10.14, 15.4));
 @property (nonatomic, setter=_setClientBadgeEnabled:) BOOL _clientBadgeEnabled WK_API_DEPRECATED("Client badge is no longer supported", macos(13.3, WK_MAC_TBA), ios(16.4, WK_IOS_TBA));
 @end

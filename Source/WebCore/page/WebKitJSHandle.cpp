@@ -27,7 +27,6 @@
 #include "WebKitJSHandle.h"
 
 #include "DOMWindow.h"
-#include "Document.h"
 #include "Frame.h"
 #include "JSWindowProxy.h"
 #include <JavaScriptCore/JSCellInlines.h>
@@ -43,22 +42,41 @@ static HandleMap& handleMap()
     return map.get();
 }
 
-using DocumentMap = HashMap<JSHandleIdentifier, WeakPtr<Document, WeakPtrImplWithEventTargetData>>;
-static DocumentMap& documentMap()
+using GlobalObjectMap = HashMap<JSHandleIdentifier, JSC::JSGlobalObject*>;
+static GlobalObjectMap& globalObjectMap()
 {
-    static MainThreadNeverDestroyed<DocumentMap> map;
+    static MainThreadNeverDestroyed<GlobalObjectMap> map;
     return map.get();
+}
+
+using ObjectMap = HashMap<JSC::JSObject*, WeakPtr<WebKitJSHandle>>;
+static ObjectMap& objectMap()
+{
+    static MainThreadNeverDestroyed<ObjectMap> map;
+    return map.get();
+}
+
+Ref<WebKitJSHandle> WebKitJSHandle::getOrCreate(JSC::JSGlobalObject& globalObject, JSC::JSObject* object)
+{
+    if (auto existingHandle = objectMap().get(object))
+        return *existingHandle;
+    return adoptRef(*new WebKitJSHandle(globalObject, object));
 }
 
 void WebKitJSHandle::jsHandleDestroyed(JSHandleIdentifier identifier)
 {
-    handleMap().remove(identifier);
-    documentMap().remove(identifier);
+    ASSERT(handleMap().contains(identifier));
+    ASSERT(globalObjectMap().contains(identifier));
+    if (auto strong = handleMap().take(identifier)) {
+        ASSERT(objectMap().contains(strong.get()));
+        objectMap().remove(strong.get());
+    }
+    globalObjectMap().remove(identifier);
 }
 
-std::pair<RefPtr<Document>, JSC::JSObject*> WebKitJSHandle::objectForIdentifier(JSHandleIdentifier identifier)
+std::pair<JSC::JSGlobalObject*, JSC::JSObject*> WebKitJSHandle::objectForIdentifier(JSHandleIdentifier identifier)
 {
-    return { documentMap().get(identifier).get(), handleMap().get(identifier).get() };
+    return { globalObjectMap().get(identifier), handleMap().get(identifier).get() };
 }
 
 static Markable<FrameIdentifier> windowFrameIdentifier(JSC::JSObject* object)
@@ -70,12 +88,13 @@ static Markable<FrameIdentifier> windowFrameIdentifier(JSC::JSObject* object)
     return std::nullopt;
 }
 
-WebKitJSHandle::WebKitJSHandle(Document& document, JSC::JSObject* object)
+WebKitJSHandle::WebKitJSHandle(JSC::JSGlobalObject& globalObject, JSC::JSObject* object)
     : m_identifier(JSHandleIdentifier::generate())
     , m_windowFrameIdentifier(WebCore::windowFrameIdentifier(object))
 {
-    handleMap().add(m_identifier, JSC::Strong<JSC::JSObject> { document.vm(), object });
-    documentMap().add(m_identifier, WeakPtr { document });
+    handleMap().add(m_identifier, JSC::Strong<JSC::JSObject> { globalObject.vm(), object });
+    globalObjectMap().add(m_identifier, &globalObject);
+    objectMap().add(object, *this);
 }
 
 }

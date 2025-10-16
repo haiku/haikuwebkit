@@ -114,7 +114,7 @@ static NSInteger WKCoreCursor_coreCursorType(id self, SEL)
     return NSNotFound;
 }
 
-static Class createCoreCursorClass()
+static Class createCoreCursorClassSingleton()
 {
     Class coreCursorClass = objc_allocateClassPair([NSCursor class], "WKCoreCursor", 0);
     SEL coreCursorType = NSSelectorFromString(@"_coreCursorType");
@@ -123,11 +123,11 @@ static Class createCoreCursorClass()
     return coreCursorClass;
 }
 
-static Class coreCursorClass()
+static Class coreCursorClassSingleton()
 {
     Class coreCursorClass = objc_lookUpClass("WKCoreCursor");
     if (!coreCursorClass)
-        coreCursorClass = createCoreCursorClass();
+        coreCursorClass = createCoreCursorClassSingleton();
     return coreCursorClass;
 }
 
@@ -178,7 +178,7 @@ static NSCursor *cursor(ASCIILiteral name)
         return nil;
     
     if (!*slot)
-        *slot = [[coreCursorClass() alloc] init];
+        *slot = [[coreCursorClassSingleton() alloc] init];
     return *slot;
 }
 

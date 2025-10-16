@@ -141,7 +141,7 @@ class PlaybackSessionInterfaceIOS;
 
 @end
 
-Class webAVPlayerControllerClass();
+Class webAVPlayerControllerClassSingleton();
 RetainPtr<WebAVPlayerController> createWebAVPlayerController();
 
 NS_ASSUME_NONNULL_END

@@ -63,6 +63,7 @@
 #include "SVGTextLayoutEngine.h"
 #include "SVGURIReference.h"
 #include "SVGVisitedRendererTracking.h"
+#include "Settings.h"
 #include "StyleTextShadow.h"
 #include "TransformState.h"
 #include "VisiblePosition.h"
@@ -801,6 +802,13 @@ PositionWithAffinity RenderSVGText::positionForPoint(const LayoutPoint& pointInC
         return createPositionWithAffinity(0, Affinity::Downstream);
 
     return const_cast<RenderObject&>(closestBox->renderer()).positionForPoint({ pointInContents.x(), LayoutUnit(closestBox->visualRectIgnoringBlockDirection().y()) }, source, fragment);
+}
+
+bool RenderSVGText::requiresLayer() const
+{
+    if (document().settings().layerBasedSVGEngineEnabled())
+        return true;
+    return false;
 }
 
 void RenderSVGText::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)

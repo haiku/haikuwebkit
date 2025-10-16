@@ -182,6 +182,13 @@ std::pair<float, float> ComplexTextController::enclosingGlyphBoundsForTextRun(co
     return { enclosingAscent.value_or(0.f), enclosingDescent.value_or(0.f) };
 }
 
+Vector<float> ComplexTextController::glyphBoundsForTextRun(const FontCascade& fontCascade, const TextRun& textRun)
+{
+    UNUSED_PARAM(fontCascade);
+    UNUSED_PARAM(textRun);
+    return { };
+}
+
 void ComplexTextController::finishConstruction()
 {
     adjustGlyphsAndAdvances();

@@ -491,7 +491,7 @@ static RetainPtr<NSString> linkDestinationName(PDFDocument *document, PDFDestina
     }
 
     for (PDFAnnotation *annotation in [pdfPage annotations]) {
-        if (![[annotation valueForAnnotationKey:WebKit::get_PDFKit_PDFAnnotationKeySubtype()] isEqualToString:WebKit::get_PDFKit_PDFAnnotationSubtypeLink()])
+        if (![[annotation valueForAnnotationKey:WebKit::get_PDFKit_PDFAnnotationKeySubtypeSingleton()] isEqualToString:WebKit::get_PDFKit_PDFAnnotationSubtypeLinkSingleton()])
             continue;
 
         RetainPtr<NSURL> url = annotation.URL;
@@ -598,7 +598,7 @@ static RetainPtr<NSString> linkDestinationName(PDFDocument *document, PDFDestina
         for (unsigned i = 0; i < pageCount; i++) {
             RetainPtr page = [_printedPagesPDFDocument pageAtIndex:i];
             for (PDFAnnotation *annotation in page.get().annotations) {
-                if (![[annotation valueForAnnotationKey:WebKit::get_PDFKit_PDFAnnotationKeySubtype()] isEqualToString:WebKit::get_PDFKit_PDFAnnotationSubtypeLink()])
+                if (![[annotation valueForAnnotationKey:WebKit::get_PDFKit_PDFAnnotationKeySubtypeSingleton()] isEqualToString:WebKit::get_PDFKit_PDFAnnotationSubtypeLinkSingleton()])
                     continue;
 
                 if (annotation.URL)

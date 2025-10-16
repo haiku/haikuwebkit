@@ -358,7 +358,7 @@ LayoutSize CachedImage::imageSizeForRenderer(const RenderElement* renderer, floa
     return imageSize;
 }
 
-void CachedImage::computeIntrinsicDimensions(Length& intrinsicWidth, Length& intrinsicHeight, FloatSize& intrinsicRatio)
+void CachedImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, FloatSize& intrinsicRatio)
 {
     if (RefPtr image = m_image)
         image->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);

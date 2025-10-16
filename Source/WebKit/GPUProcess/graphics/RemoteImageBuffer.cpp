@@ -31,7 +31,7 @@
 #include "IPCSemaphore.h"
 #include "ImageBufferBackendHandleSharing.h"
 #include "Logging.h"
-#include "RemoteGraphicsContext.h"
+#include "RemoteImageBufferGraphicsContext.h"
 #include "RemoteImageBufferMessages.h"
 #include "RemoteImageBufferProxyMessages.h"
 #include "RemoteRenderingBackend.h"
@@ -55,7 +55,7 @@ RemoteImageBuffer::RemoteImageBuffer(Ref<WebCore::ImageBuffer>&& imageBuffer, We
     : m_imageBuffer(WTFMove(imageBuffer))
     , m_identifier(identifier)
     , m_renderingBackend(renderingBackend)
-    , m_context(RemoteGraphicsContext::create(m_imageBuffer, contextIdentifier, m_renderingBackend))
+    , m_context(RemoteImageBufferGraphicsContext::create(m_imageBuffer, contextIdentifier, m_renderingBackend))
 {
     m_renderingBackend->sharedResourceCache().didCreateImageBuffer(m_imageBuffer->renderingPurpose(), m_imageBuffer->renderingMode());
 

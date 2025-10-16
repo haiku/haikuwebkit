@@ -57,6 +57,7 @@
 #import <wtf/CompletionHandler.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/Base64.h>
 
 static const NSUInteger windowStyleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
@@ -157,7 +158,7 @@ static void* kWindowContentLayoutObserverContext = &kWindowContentLayoutObserver
     // depend on this for enforcing the height constraints, so a small delay isn't terrible. Most
     // of the time the views will already have the correct frames because of autoresizing masks.
 
-    dispatch_after(DISPATCH_TIME_NOW, dispatch_get_main_queue(), ^{
+    dispatch_after(DISPATCH_TIME_NOW, mainDispatchQueueSingleton(), ^{
         if (RefPtr proxy = _inspectorProxy.get())
             proxy->inspectedViewFrameDidChange();
     });
@@ -175,7 +176,7 @@ static void* kWindowContentLayoutObserverContext = &kWindowContentLayoutObserver
     if (window.inLiveResize)
         return;
 
-    dispatch_after(DISPATCH_TIME_NOW, dispatch_get_main_queue(), ^{
+    dispatch_after(DISPATCH_TIME_NOW, mainDispatchQueueSingleton(), ^{
         if (RefPtr proxy = _inspectorProxy.get())
             proxy->inspectedViewFrameDidChange();
     });

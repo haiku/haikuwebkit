@@ -32,6 +32,7 @@
 #include "ANGLEHeaders.h"
 #include "ANGLEUtilities.h"
 #include "ByteArrayPixelBuffer.h"
+#include "GraphicsContext.h"
 #include "ImageBuffer.h"
 #include "IntRect.h"
 #include "IntSize.h"

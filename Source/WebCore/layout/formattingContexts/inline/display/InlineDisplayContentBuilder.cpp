@@ -235,6 +235,15 @@ void InlineDisplayContentBuilder::appendTextDisplayBox(const Line::Run& lineRun,
     auto adjustedContentToRender = [&] {
         return text->needsHyphen ? makeString(StringView(content).substring(text->start, text->length), style.hyphenString()) : String();
     };
+    auto shapingBoundary = [&] {
+        if (lineRun.isShapingBoundaryStart())
+            return InlineDisplay::Box::Text::ShapingBoundary::Start;
+        if (lineRun.isShapingBoundaryEnd())
+            return InlineDisplay::Box::Text::ShapingBoundary::End;
+        if (lineRun.isBetweenShapingBoundaries())
+            return InlineDisplay::Box::Text::ShapingBoundary::Inside;
+        return InlineDisplay::Box::Text::ShapingBoundary::NotApplicable;
+    };
     boxes.append({ lineIndex()
         , lineRun.isWordSeparator() ? InlineDisplay::Box::Type::WordSeparator : InlineDisplay::Box::Type::Text
         , inlineTextBox
@@ -243,7 +252,7 @@ void InlineDisplayContentBuilder::appendTextDisplayBox(const Line::Run& lineRun,
         , inkOverflow
         , isFirstFormattedLine()
         , lineRun.expansion()
-        , InlineDisplay::Box::Text { text->start, text->length, content, adjustedContentToRender(), text->needsHyphen }
+        , InlineDisplay::Box::Text { text->start, text->length, content, adjustedContentToRender(), text->needsHyphen, shapingBoundary() }
         , isContentful
         , isLineFullyTruncatedInBlockDirection()
     });

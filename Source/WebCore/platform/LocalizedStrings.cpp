@@ -104,7 +104,7 @@ String formatLocalizedString(const char* format, ...)
 #endif
 
 #if PLATFORM(COCOA)
-static CFBundleRef webCoreBundle()
+static CFBundleRef webCoreBundleSingleton()
 {
     static LazyNeverDestroyed<RetainPtr<CFBundleRef>> bundle;
     static std::once_flag flag;
@@ -119,7 +119,7 @@ RetainPtr<CFStringRef> copyLocalizedString(CFStringRef key)
 {
     static CFStringRef notFound = CFSTR("localized string not found");
 
-    auto result = adoptCF(CFBundleCopyLocalizedString(webCoreBundle(), key, notFound, nullptr));
+    auto result = adoptCF(CFBundleCopyLocalizedString(webCoreBundleSingleton(), key, notFound, nullptr));
 
 #if ASSERT_ENABLED
     if (result.get() == notFound) {

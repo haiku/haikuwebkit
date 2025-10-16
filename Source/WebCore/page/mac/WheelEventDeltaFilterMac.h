@@ -50,8 +50,8 @@ private:
     void updateCurrentVelocityFromEvent(const PlatformWheelEvent&);
 
     const RetainPtr<_NSScrollingPredominantAxisFilter> m_predominantAxisFilter;
-    WallTime m_initialWallTime;
-    WallTime m_lastIOHIDEventTimestamp;
+    MonotonicTime m_initialMonotonicTime;
+    MonotonicTime m_lastIOHIDEventTimestamp;
 };
 
 } // namespace WebCore

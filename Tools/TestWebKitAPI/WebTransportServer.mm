@@ -32,6 +32,7 @@
 #import "Utilities.h"
 #import <pal/spi/cocoa/NetworkSPI.h>
 #import <wtf/BlockPtr.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 namespace TestWebKitAPI {
 
@@ -85,11 +86,11 @@ WebTransportServer::WebTransportServer(Function<ConnectionTask(ConnectionGroup)>
         nw_connection_group_set_new_connection_handler(incomingConnectionGroup, [connectionGroup] (nw_connection_t incomingConnection) mutable {
             connectionGroup.receiveIncomingConnection(incomingConnection);
         });
-        nw_connection_group_set_queue(incomingConnectionGroup, dispatch_get_main_queue());
+        nw_connection_group_set_queue(incomingConnectionGroup, mainDispatchQueueSingleton());
         nw_connection_group_start(incomingConnectionGroup);
     });
 
-    nw_listener_set_queue(listener.get(), dispatch_get_main_queue());
+    nw_listener_set_queue(listener.get(), mainDispatchQueueSingleton());
 
     __block bool ready = false;
     nw_listener_set_state_changed_handler(listener.get(), ^(nw_listener_state_t state, nw_error_t error) {

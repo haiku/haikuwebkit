@@ -122,7 +122,7 @@ public:
 
     void drawDotsForDocumentMarker(const FloatRect&, DocumentMarkerLineStyle) final;
 
-    void beginPage(const IntSize& pageSize) final;
+    void beginPage(const FloatRect& pageRect) final;
     void endPage() final;
 
     void setURLForRect(const URL&, const FloatRect&) final;
@@ -154,14 +154,17 @@ public:
     void setMaxEDRHeadroom(std::optional<float>) final;
 #endif
 
-protected:
-    void setCGShadow(const std::optional<GraphicsDropShadow>&, bool shadowsIgnoreTransforms);
-    void setCGStyle(const std::optional<GraphicsStyle>&, bool shadowsIgnoreTransforms);
-
 private:
     void drawNativeImageInternal(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions = { }) final;
 
-    void clearCGShadow();
+    void setCGDropShadow(const std::optional<GraphicsDropShadow>&, bool shadowsIgnoreTransforms);
+    void clearCGDropShadow();
+#if HAVE(CGSTYLE_COLORMATRIX_BLUR)
+    void setCGGaussianBlur(const GraphicsGaussianBlur&, bool shadowsIgnoreTransforms);
+    void setCGColorMatrix(const GraphicsColorMatrix&);
+#endif
+    void setCGStyle(const std::optional<GraphicsStyle>&, bool shadowsIgnoreTransforms);
+
     // Returns the platform context for purposes of context state change, not draws.
     CGContextRef contextForState() const;
 

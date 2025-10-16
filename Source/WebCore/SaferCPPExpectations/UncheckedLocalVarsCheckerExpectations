@@ -1,11 +1,3 @@
-Modules/indexeddb/IDBCursor.cpp
-Modules/indexeddb/IDBTransaction.cpp
-Modules/indexeddb/server/MemoryBackingStoreTransaction.cpp
-Modules/indexeddb/server/MemoryIDBBackingStore.cpp
-Modules/indexeddb/server/MemoryIndexCursor.cpp
-Modules/indexeddb/server/MemoryObjectStore.cpp
-Modules/indexeddb/server/SQLiteIDBBackingStore.cpp
-Modules/indexeddb/server/SQLiteIDBCursor.cpp
 Modules/mediarecorder/MediaRecorder.cpp
 Modules/mediastream/RTCPeerConnection.cpp
 Modules/mediastream/UserMediaRequest.cpp
@@ -162,7 +154,6 @@ html/HTMLMarqueeElement.cpp
 html/HTMLMediaElement.cpp
 html/HTMLPictureElement.cpp
 html/HTMLPlugInElement.cpp
-html/HTMLPlugInImageElement.cpp
 html/HTMLSlotElement.cpp
 html/HTMLStyleElement.cpp
 html/HTMLTableCellElement.cpp
@@ -196,7 +187,6 @@ inspector/agents/InspectorCanvasAgent.cpp
 inspector/agents/InspectorDOMAgent.cpp
 inspector/agents/InspectorDOMDebuggerAgent.cpp
 inspector/agents/InspectorDOMStorageAgent.cpp
-inspector/agents/InspectorIndexedDBAgent.cpp
 inspector/agents/InspectorLayerTreeAgent.cpp
 inspector/agents/InspectorNetworkAgent.cpp
 inspector/agents/InspectorPageAgent.cpp
@@ -275,6 +265,7 @@ page/DragController.cpp
 page/ElementTargetingController.cpp
 page/EventHandler.cpp
 page/FocusController.cpp
+page/FrameConsoleClient.cpp
 page/FrameSnapshotting.cpp
 page/FrameView.cpp
 page/ImageAnalysisQueue.cpp
@@ -286,9 +277,7 @@ page/LocalDOMWindow.cpp
 page/LocalFrame.cpp
 page/LocalFrameView.cpp
 page/LocalFrameViewLayoutContext.cpp
-page/Page.cpp
 page/PageColorSampler.cpp
-page/PageConsoleClient.cpp
 page/PageOverlay.cpp
 page/PageSerializer.cpp
 page/PerformanceTiming.cpp
@@ -321,10 +310,8 @@ platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/PlatformCALayer.mm
 platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
 platform/graphics/cg/CGSubimageCacheWithTimer.cpp
-platform/graphics/mac/controls/ImageControlsButtonMac.mm
 platform/ios/PlaybackSessionInterfaceIOS.mm
 platform/ios/WebAVPlayerController.mm
-platform/mac/PlaybackSessionInterfaceMac.mm
 platform/mac/VideoPresentationInterfaceMac.mm
 platform/mac/WebPlaybackControlsManager.mm
 platform/network/mac/ResourceHandleMac.mm
@@ -519,7 +506,6 @@ style/StyleBuilderStateInlines.h
 style/StyleCustomPropertyRegistry.cpp
 style/StyleExtractor.cpp
 style/StyleExtractorCustom.h
-style/StyleInterpolationFunctions.h
 style/StyleInvalidationFunctions.h
 style/StyleInvalidator.cpp
 style/StylePendingResources.cpp
@@ -532,6 +518,7 @@ style/StyleUpdate.cpp
 style/Styleable.cpp
 style/values/grid/StyleGridPositionsResolver.cpp
 style/values/primitives/StyleLengthResolution.cpp
+style/values/transforms/StyleTransformList.cpp
 svg/SVGAnimateMotionElement.cpp
 svg/SVGClipPathElement.cpp
 svg/SVGElement.cpp

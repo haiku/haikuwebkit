@@ -34,6 +34,7 @@
 #include "LayoutElementBox.h"
 #include "LayoutInitialContainingBlock.h"
 #include "RenderBox.h"
+#include "Settings.h"
 #include "TableFormattingState.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -44,6 +45,7 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(LayoutState);
 
 LayoutState::LayoutState(const Document& document, const ElementBox& rootContainer, Type type, FormattingContextLayoutFunction&& formattingContextLayoutFunction, FormattingContextLogicalWidthFunction&& formattingContextLogicalWidthFunction , FormattingContextLogicalHeightFunction&& formattingContextLogicalHeightFunction)
     : m_type(type)
+    , m_isTextShapingAcrossInlineBoxesEnabled(document.settings().textShapingAcrossInlineBoxes())
     , m_rootContainer(rootContainer)
     , m_securityOrigin(document.securityOrigin())
     , m_formattingContextLayoutFunction(WTFMove(formattingContextLayoutFunction))

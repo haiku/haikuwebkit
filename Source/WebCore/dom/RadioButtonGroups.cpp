@@ -22,6 +22,7 @@
 #include "RadioButtonGroups.h"
 
 #include "AXObjectCache.h"
+#include "DocumentInlines.h"
 #include "HTMLInputElement.h"
 #include "Range.h"
 #include <ranges>

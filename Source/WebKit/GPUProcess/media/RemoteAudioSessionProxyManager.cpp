@@ -28,6 +28,7 @@
 
 #if ENABLE(GPU_PROCESS) && USE(AUDIO_SESSION)
 
+#include "GPUConnectionToWebProcess.h"
 #include "GPUProcess.h"
 #include "GPUProcessConnectionMessages.h"
 #include "RemoteAudioSessionProxy.h"
@@ -55,13 +56,13 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteAudioSessionProxyManager);
 RemoteAudioSessionProxyManager::RemoteAudioSessionProxyManager(GPUProcess& gpuProcess)
     : m_gpuProcess(gpuProcess)
 {
-    AudioSession::singleton().addInterruptionObserver(*this);
+    AudioSession::addInterruptionObserver(*this);
     AudioSession::singleton().addConfigurationChangeObserver(*this);
 }
 
 RemoteAudioSessionProxyManager::~RemoteAudioSessionProxyManager()
 {
-    AudioSession::singleton().removeInterruptionObserver(*this);
+    AudioSession::removeInterruptionObserver(*this);
     AudioSession::singleton().removeConfigurationChangeObserver(*this);
 }
 
@@ -291,18 +292,18 @@ void RemoteAudioSessionProxyManager::beginInterruptionRemote()
 {
     Ref session = this->session();
     // Temporarily remove as an observer to avoid a spurious IPC back to the web process.
-    session->removeInterruptionObserver(*this);
+    AudioSession::removeInterruptionObserver(*this);
     session->beginInterruption();
-    session->addInterruptionObserver(*this);
+    AudioSession::addInterruptionObserver(*this);
 }
 
 void RemoteAudioSessionProxyManager::endInterruptionRemote(AudioSession::MayResume mayResume)
 {
     Ref session = this->session();
     // Temporarily remove as an observer to avoid a spurious IPC back to the web process.
-    session->removeInterruptionObserver(*this);
+    AudioSession::removeInterruptionObserver(*this);
     session->endInterruption(mayResume);
-    session->addInterruptionObserver(*this);
+    AudioSession::addInterruptionObserver(*this);
 }
 
 void RemoteAudioSessionProxyManager::beginAudioSessionInterruption()

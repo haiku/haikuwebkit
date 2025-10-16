@@ -95,7 +95,6 @@
 #include "XMLNames.h"
 #include <JavaScriptCore/HeapInlines.h>
 #include <wtf/HexNumber.h>
-#include <wtf/RefCountedLeakCounter.h>
 #include <wtf/SHA1.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -326,7 +325,6 @@ void Node::dumpStatistics()
         SAFE_PRINTF("  %s: %zu\n", stringForRareDataUseType(static_cast<NodeRareData::UseType>(it.key)), it.value);
     printf("\n");
 
-
     printf("NodeType distribution:\n");
     printf("  Number of Element nodes: %zu\n", elementNodes);
     printf("  Number of Attribute nodes: %zu\n", attrNodes);
@@ -353,42 +351,8 @@ void Node::dumpStatistics()
 #endif // DUMP_NODE_STATISTICS
 }
 
-DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, nodeCounter, ("WebCoreNode"));
-
-#ifndef NDEBUG
-static bool shouldIgnoreLeaks = false;
-
-static WeakHashSet<Node, WeakPtrImplWithEventTargetData>& ignoreSet()
-{
-    static NeverDestroyed<WeakHashSet<Node, WeakPtrImplWithEventTargetData>> ignore;
-    return ignore;
-}
-
-#endif
-
-void Node::startIgnoringLeaks()
-{
-#ifndef NDEBUG
-    shouldIgnoreLeaks = true;
-#endif
-}
-
-void Node::stopIgnoringLeaks()
-{
-#ifndef NDEBUG
-    shouldIgnoreLeaks = false;
-#endif
-}
-
 void Node::trackForDebugging()
 {
-#ifndef NDEBUG
-    if (shouldIgnoreLeaks)
-        ignoreSet().add(*this);
-    else
-        nodeCounter.increment();
-#endif
-
 #if DUMP_NODE_STATISTICS
     liveNodeSet().add(*this);
 #endif
@@ -439,11 +403,6 @@ Node::~Node()
     ASSERT(!m_adoptionIsRequired);
 
     InspectorInstrumentation::willDestroyDOMNode(*this);
-
-#ifndef NDEBUG
-    if (!ignoreSet().remove(*this))
-        nodeCounter.decrement();
-#endif
 
     if (hasStateFlag(StateFlag::HasNodeIdentifier)) [[unlikely]]
         nodeIdentifiersMap().remove(*this);

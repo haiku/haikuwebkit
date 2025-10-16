@@ -6,6 +6,7 @@
 import lldb
 
 import bisect
+import platform
 import struct
 from pathlib import Path
 
@@ -16,16 +17,18 @@ DIM = '\033[2m'
 RED = '\033[31m'
 CYAN = '\033[36m'
 
-ARCH = 'arm64'
+machine = platform.machine().lower()
 
-if ARCH == 'arm64':
+if machine in ['arm64', 'aarch64']:
     PC_REG = 'x26'
     MC_REG = 'x25'
     PL_REG = 'x6'
-elif ARCH == 'x64':
+elif machine in ['x86_64', 'amd64']:
     PC_REG = 'r13'
     MC_REG = 'r12'
     PL_REG = 'r10'
+else:
+    raise RuntimeError(f"Unsupported architecture: {machine}")
 
 # Instruction opcode symbols from InPlaceInterpreter64.asm, without the "ipint_" prefix.
 # The order should match the address space order.
@@ -185,7 +188,8 @@ def extract_gprs(top_frame):
     regs = top_frame.GetRegisters()
     gprs = {}
     for reg in regs[0]:
-        gprs[reg.name] = int(reg.value[2:], 16)
+        if reg.value is not None:
+            gprs[reg.name] = int(reg.value[2:], 16)
     return gprs
 
 

@@ -113,7 +113,7 @@ public:
         }
         if (m_displayBuffer && displayBuffer->surface() == m_displayBuffer->surface())
             return;
-        m_displayBuffer = IOSurface::createFromSurface(displayBuffer->surface(), { });
+        m_displayBuffer = IOSurface::createFromSurface(displayBuffer->protectedSurface().get(), { });
         m_finishedFence = WTFMove(finishedFence);
     }
 

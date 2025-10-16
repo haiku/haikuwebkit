@@ -199,7 +199,7 @@ auto ContentExtensionsBackend::actionsForResourceLoad(const ResourceLoadInfo& re
     return actionsVector;
 }
 
-void ContentExtensionsBackend::forEach(NOESCAPE const Function<void(const String&, ContentExtension&)>& apply)
+void ContentExtensionsBackend::forEach(NOESCAPE const Function<void(const String&, ContentExtension&)>& apply) const
 {
     for (auto& pair : m_contentExtensions)
         apply(pair.key, pair.value);
@@ -240,7 +240,7 @@ std::optional<String> customTrackerBlockingMessageForConsole(const ContentRuleLi
 #endif
 }
 
-ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(Page& page, const URL& url, OptionSet<ResourceType> resourceType, DocumentLoader& initiatingDocumentLoader, const URL& redirectFrom, const RuleListFilter& ruleListFilter)
+ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(Page& page, const URL& url, OptionSet<ResourceType> resourceType, DocumentLoader& initiatingDocumentLoader, const URL& redirectFrom, const RuleListFilter& ruleListFilter) const
 {
     Document* currentDocument = nullptr;
     URL mainDocumentURL;

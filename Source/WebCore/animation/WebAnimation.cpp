@@ -112,6 +112,7 @@ WebAnimation::WebAnimation(Document& document)
     : ActiveDOMObject(document)
     , m_readyPromise(makeUniqueRef<ReadyPromise>(*this, &WebAnimation::readyPromiseResolve))
     , m_finishedPromise(makeUniqueRef<FinishedPromise>(*this, &WebAnimation::finishedPromiseResolve))
+    , m_timelineRange({ Style::SingleAnimationRangeStart { CSS::Keyword::Normal { } }, Style::SingleAnimationRangeEnd { CSS::Keyword::Normal { } } })
 {
     instances().add(this);
 }
@@ -1020,7 +1021,7 @@ void WebAnimation::timingDidChange(DidSeek didSeek, SynchronouslyNotify synchron
 
     if (silently == Silently::No && m_timeline)
         m_timeline->animationTimingDidChange(*this);
-};
+}
 
 void WebAnimation::invalidateEffect()
 {
@@ -1798,7 +1799,11 @@ ExceptionOr<void> WebAnimation::commitStyles()
     // would be disregarded.
     auto* unsortedAnimations = styledElement->animations({ });
     ASSERT(unsortedAnimations && !unsortedAnimations->isEmpty());
-    auto sortedAnimations = copyToVector(*unsortedAnimations);
+    auto sortedAnimations = WTF::compactMap(*unsortedAnimations, [](auto& animation) -> RefPtr<WebAnimation> {
+        if (animation->playState() != WebAnimation::PlayState::Idle)
+            return animation.ptr();
+        return nullptr;
+    });
     std::ranges::stable_sort(sortedAnimations, [](auto& lhs, auto& rhs) {
         return compareAnimationsByCompositeOrder(lhs.get(), rhs.get());
     });
@@ -1949,7 +1954,7 @@ void WebAnimation::setBindingsRangeStart(TimelineRangeValue&& rangeStartValue)
     if (!keyframeEffect)
         return;
 
-    auto rangeStart = SingleTimelineRange::parse(WTFMove(rangeStartValue), keyframeEffect->target(), SingleTimelineRange::Type::Start);
+    auto rangeStart = convertToCSSValue(WTFMove(rangeStartValue), keyframeEffect->target(), Style::SingleAnimationRangeType::Start);
     if (m_specifiedRangeStart == rangeStart)
         return;
 
@@ -1964,7 +1969,7 @@ void WebAnimation::setBindingsRangeEnd(TimelineRangeValue&& rangeEndValue)
     if (!keyframeEffect)
         return;
 
-    auto rangeEnd = SingleTimelineRange::parse(WTFMove(rangeEndValue), keyframeEffect->target(), SingleTimelineRange::Type::End);
+    auto rangeEnd = convertToCSSValue(WTFMove(rangeEndValue), keyframeEffect->target(), Style::SingleAnimationRangeType::End);
     if (m_specifiedRangeEnd == rangeEnd)
         return;
 
@@ -1973,33 +1978,33 @@ void WebAnimation::setBindingsRangeEnd(TimelineRangeValue&& rangeEndValue)
         effect->animationRangeDidChange();
 }
 
-void WebAnimation::setRangeStart(SingleTimelineRange rangeStart)
+void WebAnimation::setRangeStart(Style::SingleAnimationRangeStart&& rangeStart)
 {
     if (m_timelineRange.start == rangeStart)
         return;
 
-    m_timelineRange.start = rangeStart;
+    m_timelineRange.start = WTFMove(rangeStart);
     if (RefPtr effect = this->effect())
         effect->animationRangeDidChange();
 }
 
-void WebAnimation::setRangeEnd(SingleTimelineRange rangeEnd)
+void WebAnimation::setRangeEnd(Style::SingleAnimationRangeEnd&& rangeEnd)
 {
     if (m_timelineRange.end == rangeEnd)
         return;
 
-    m_timelineRange.end = rangeEnd;
+    m_timelineRange.end = WTFMove(rangeEnd);
     if (RefPtr effect = this->effect())
         effect->animationRangeDidChange();
 }
 
-const TimelineRange& WebAnimation::range()
+const Style::SingleAnimationRange& WebAnimation::range()
 {
     if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect)) {
         if (m_specifiedRangeStart)
-            m_timelineRange.start = SingleTimelineRange::range(*m_specifiedRangeStart, SingleTimelineRange::Type::Start, nullptr, keyframeEffect->target());
+            m_timelineRange.start = Style::deprecatedToStyleFromCSSValue<Style::SingleAnimationRangeStart>(keyframeEffect->target(), *m_specifiedRangeStart).value_or(Style::SingleAnimationRangeStart { CSS::Keyword::Normal { } });
         if (m_specifiedRangeEnd)
-            m_timelineRange.end = SingleTimelineRange::range(*m_specifiedRangeEnd, SingleTimelineRange::Type::End, nullptr, keyframeEffect->target());
+            m_timelineRange.end = Style::deprecatedToStyleFromCSSValue<Style::SingleAnimationRangeEnd>(keyframeEffect->target(), *m_specifiedRangeEnd).value_or(Style::SingleAnimationRangeEnd { CSS::Keyword::Normal { } });
     }
 
     return m_timelineRange;

@@ -1342,7 +1342,7 @@ template<typename CharacterType, typename Predicate> ALWAYS_INLINE Ref<StringImp
 
     StringBuffer<CharacterType> data(m_length);
     auto to = data.span();
-    unsigned outc = from.begin() - characters.begin();
+    unsigned outc = from.data() - characters.data();
 
     copyCharacters(to, characters.first(outc));
 
@@ -1435,7 +1435,7 @@ inline Expected<std::invoke_result_t<Func, std::span<const char8_t>>, UTF8Conver
     //    have a good chance of being able to write the string into the
     //    buffer without reallocing (say, 1.5 x length).
 
-    if (productOverflows<size_t>(characters.size(), 2))
+    if (productOverflows<size_t>(characters.size(), 2) || !isValidCapacityForVector<char8_t>(characters.size() * 2)) [[unlikely]]
         return makeUnexpected(UTF8ConversionError::OutOfMemory);
 
 #if CPU(ARM64)
@@ -1463,7 +1463,7 @@ inline Expected<std::invoke_result_t<Func, std::span<const char8_t>>, UTF8Conver
     if (characters.empty())
         return function(nonNullEmptyUTF8Span());
 
-    if (productOverflows<size_t>(characters.size(), 3))
+    if (productOverflows<size_t>(characters.size(), 3) || !isValidCapacityForVector<char8_t>(characters.size() * 3)) [[unlikely]]
         return makeUnexpected(UTF8ConversionError::OutOfMemory);
 
     size_t bufferSize = characters.size() * 3;

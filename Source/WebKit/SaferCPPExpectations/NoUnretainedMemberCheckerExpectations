@@ -12,11 +12,13 @@ UIProcess/API/Cocoa/WKFrameInfo.h
 UIProcess/API/Cocoa/WKNavigationAction.h
 UIProcess/API/Cocoa/WKNavigationData.h
 UIProcess/API/Cocoa/WKNavigationResponse.h
+UIProcess/API/Cocoa/WKProcessPoolPrivate.h
 UIProcess/API/Cocoa/WKScriptMessage.h
 UIProcess/API/Cocoa/WKSecurityOrigin.h
 UIProcess/API/Cocoa/WKSnapshotConfiguration.h
 UIProcess/API/Cocoa/WKURLSchemeTask.h
 UIProcess/API/Cocoa/WKURLSchemeTaskPrivate.h
+UIProcess/API/Cocoa/WKUserContentController.h
 UIProcess/API/Cocoa/WKUserScript.h
 UIProcess/API/Cocoa/WKView.h
 UIProcess/API/Cocoa/WKWebExtension.h
@@ -32,6 +34,7 @@ UIProcess/API/Cocoa/WKWebExtensionDataRecord.h
 UIProcess/API/Cocoa/WKWebExtensionMatchPattern.h
 UIProcess/API/Cocoa/WKWebExtensionMessagePort.h
 UIProcess/API/Cocoa/WKWebExtensionTabConfiguration.h
+UIProcess/API/Cocoa/WKWebExtensionWindowConfiguration.h
 UIProcess/API/Cocoa/WKWebView.h
 UIProcess/API/Cocoa/WKWebViewConfiguration.h
 UIProcess/API/Cocoa/WKWebViewConfigurationInternal.h
@@ -52,8 +55,10 @@ UIProcess/API/Cocoa/_WKAuthenticatorAssertionResponse.h
 UIProcess/API/Cocoa/_WKAuthenticatorAttestationResponse.h
 UIProcess/API/Cocoa/_WKAuthenticatorResponse.h
 UIProcess/API/Cocoa/_WKAutomationSession.h
+UIProcess/API/Cocoa/_WKContentRuleListAction.h
 UIProcess/API/Cocoa/_WKContentWorldConfiguration.h
 UIProcess/API/Cocoa/_WKContextMenuElementInfo.h
+UIProcess/API/Cocoa/_WKCustomHeaderFields.h
 UIProcess/API/Cocoa/_WKDataTask.h
 UIProcess/API/Cocoa/_WKDownload.h
 UIProcess/API/Cocoa/_WKFrameTreeNode.h
@@ -84,6 +89,7 @@ UIProcess/API/Cocoa/_WKSessionState.h
 UIProcess/API/Cocoa/_WKSpatialBackdropSource.h
 UIProcess/API/Cocoa/_WKTargetedElementInfo.h
 UIProcess/API/Cocoa/_WKTextExtractionInternal.h
+UIProcess/API/Cocoa/_WKTextManipulationConfiguration.h
 UIProcess/API/Cocoa/_WKTextManipulationExclusionRule.h
 UIProcess/API/Cocoa/_WKTextManipulationItem.h
 UIProcess/API/Cocoa/_WKTextManipulationToken.h
@@ -103,6 +109,7 @@ UIProcess/API/Cocoa/_WKWebPushMessage.h
 UIProcess/API/Cocoa/_WKWebPushSubscriptionData.h
 UIProcess/API/Cocoa/_WKWebsiteDataStoreConfiguration.h
 UIProcess/API/mac/WKViewInternal.h
+UIProcess/Inspector/mac/WKInspectorResourceURLSchemeHandler.h
 UIProcess/Inspector/mac/WKInspectorViewController.h
 UIProcess/Inspector/mac/WebInspectorUIProxyMac.mm
 UIProcess/WebAuthentication/Cocoa/AuthenticationServicesForwardDeclarations.h

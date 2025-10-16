@@ -65,7 +65,6 @@
 #include <JavaScriptCore/JSCInlines.h>
 #include <JavaScriptCore/JSLock.h>
 #include <pal/text/TextCodecUTF8.h>
-#include <wtf/RefCountedLeakCounter.h>
 #include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -75,8 +74,6 @@
 namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(XMLHttpRequest);
-
-DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, xmlHttpRequestCounter, ("XMLHttpRequest"));
 
 // Histogram enum to see when we can deprecate xhr.send(ArrayBuffer).
 enum XMLHttpRequestSendArrayBufferOrView {
@@ -126,16 +123,10 @@ XMLHttpRequest::XMLHttpRequest(ScriptExecutionContext& context)
     , m_progressEventThrottle(makeUniqueRef<XMLHttpRequestProgressEventThrottle>(*this))
     , m_timeoutTimer(*this, &XMLHttpRequest::timeoutTimerFired)
 {
-#ifndef NDEBUG
-    xmlHttpRequestCounter.increment();
-#endif
 }
 
 XMLHttpRequest::~XMLHttpRequest()
 {
-#ifndef NDEBUG
-    xmlHttpRequestCounter.decrement();
-#endif
 }
 
 ScriptExecutionContext* XMLHttpRequest::scriptExecutionContext() const

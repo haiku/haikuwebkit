@@ -71,9 +71,9 @@ auto Blending<SVGStrokeDasharray>::blend(const SVGStrokeDasharray& a, const SVGS
             resultLength = aLength * bLength;
     }
 
-    return { SVGStrokeDasharrayList::Container::createWithSizeFromGenerator(resultLength, [&](auto i) {
+    return SVGStrokeDasharrayList::createWithSizeFromGenerator(resultLength, [&](auto i) {
         return Style::blend(a[i % aLength], b[i % bLength], context);
-    }) };
+    });
 
 }
 

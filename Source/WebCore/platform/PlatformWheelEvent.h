@@ -150,7 +150,7 @@ public:
     unsigned scrollCount() const { return m_scrollCount; }
     FloatSize unacceleratedScrollingDelta() const { return { m_unacceleratedScrollingDeltaX, m_unacceleratedScrollingDeltaY }; }
     
-    WallTime ioHIDEventTimestamp() const { return m_ioHIDEventTimestamp; }
+    MonotonicTime ioHIDEventTimestamp() const { return m_ioHIDEventTimestamp; }
 
     std::optional<FloatSize> rawPlatformDelta() const { return m_rawPlatformDelta; }
 #endif
@@ -203,7 +203,7 @@ protected:
     PlatformWheelEventPhase m_momentumPhase { PlatformWheelEventPhase::None };
 
 #if PLATFORM(COCOA)
-    WallTime m_ioHIDEventTimestamp;
+    MonotonicTime m_ioHIDEventTimestamp;
     std::optional<FloatSize> m_rawPlatformDelta;
     unsigned m_scrollCount { 0 };
     float m_unacceleratedScrollingDeltaX { 0 };

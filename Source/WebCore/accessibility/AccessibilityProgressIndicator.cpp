@@ -21,8 +21,10 @@
 #include "config.h"
 #include "AccessibilityProgressIndicator.h"
 
-#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
+#include "AccessibilityObjectInlines.h"
 #include "FloatConversion.h"
+#include "FrameDestructionObserverInlines.h"
 #include "HTMLMeterElement.h"
 #include "HTMLNames.h"
 #include "HTMLProgressElement.h"

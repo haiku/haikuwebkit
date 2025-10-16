@@ -161,7 +161,7 @@ JSValue JSTestNamedSetterWithIndexedGetter::getConstructor(VM& vm, const JSGloba
 
 void JSTestNamedSetterWithIndexedGetter::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedSetterWithIndexedGetter* thisObject = static_cast<JSTestNamedSetterWithIndexedGetter*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedSetterWithIndexedGetter* thisObject = static_cast<JSTestNamedSetterWithIndexedGetter*>(cell);
     thisObject->JSTestNamedSetterWithIndexedGetter::~JSTestNamedSetterWithIndexedGetter();
 }
 
@@ -457,7 +457,7 @@ bool JSTestNamedSetterWithIndexedGetterOwner::isReachableFromOpaqueRoots(JSC::Ha
 
 void JSTestNamedSetterWithIndexedGetterOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedSetterWithIndexedGetter = static_cast<JSTestNamedSetterWithIndexedGetter*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedSetterWithIndexedGetter = static_cast<JSTestNamedSetterWithIndexedGetter*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedSetterWithIndexedGetter->protectedWrapped().ptr(), jsTestNamedSetterWithIndexedGetter);
 }

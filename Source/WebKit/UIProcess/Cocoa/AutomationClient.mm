@@ -110,7 +110,7 @@ void AutomationClient::requestedDebuggablesToWakeUp()
 String AutomationClient::browserName() const
 {
     if (m_delegateMethods.browserNameForAutomation)
-        return [m_delegate _processPoolBrowserNameForAutomation:m_processPool.get().get()];
+        return [m_delegate.get() _processPoolBrowserNameForAutomation:m_processPool.get().get()];
 
     // Fall back to using the unlocalized app name (i.e., 'Safari').
     RetainPtr appBundle = [NSBundle mainBundle];
@@ -122,7 +122,7 @@ String AutomationClient::browserName() const
 String AutomationClient::browserVersion() const
 {
     if (m_delegateMethods.browserVersionForAutomation)
-        return [m_delegate _processPoolBrowserVersionForAutomation:m_processPool.get().get()];
+        return [m_delegate.get() _processPoolBrowserVersionForAutomation:m_processPool.get().get()];
 
     // Fall back to using the app short version (i.e., '11.1.1').
     RetainPtr appBundle = [NSBundle mainBundle];

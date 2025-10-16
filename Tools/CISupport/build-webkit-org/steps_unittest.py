@@ -1244,7 +1244,7 @@ class TestRunAPITests(BuildStepMixinAdditions, unittest.TestCase):
         self.expectRemoteCommands(
             ExpectShell(workdir='wkdir',
                         logEnviron=False,
-                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', command + ' > logs.txt 2>&1 ; grep "Ran " logs.txt'],
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', command + ' > logs.txt 2>&1 ; ret=$? ; grep "Ran " logs.txt ; exit $ret'],
                         logfiles={'json': self.jsonFileName},
                         env={'RESULTS_SERVER_API_KEY': 'test-api-key'},
                         timeout=10800,
@@ -1712,33 +1712,37 @@ class TestGenerateUploadBundleSteps(BuildStepMixinAdditions, unittest.TestCase):
     def test_success_test_minibrowser_bundle(self):
         self.setupStep(TestMiniBrowserBundle())
         self.setUpPropertiesForTest()
+        next_steps = []
+        self.patch(self.build, 'addStepsAfterCurrentStep', lambda s: next_steps.extend(s))
         self.expectRemoteCommands(
             ExpectShell(workdir='wkdir',
-                        command=['Tools/Scripts/test-bundle', '--platform=gtk', '--bundle-type=universal', 'WebKitBuild/MiniBrowser_gtk_release.tar.xz'],
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'Tools/Scripts/test-bundle --platform=gtk --bundle-type=universal WebKitBuild/MiniBrowser_gtk_release.tar.xz 2>&1 | python3 Tools/Scripts/filter-test-logs minibrowser'],
                         logEnviron=True,
-                        timeout=1200,
+                        timeout=10800,
                         )
             + 0,
         )
         self.expectOutcome(result=SUCCESS, state_string='tested minibrowser bundle')
         rc = self.runStep()
-        self.assertTrue(UploadMiniBrowserBundleViaSftp() in self.build.addedStepsAfterCurrentStep)
+        self.assertEqual([GenerateS3URL('gtk-None-release-test-minibrowser-bundle', extension='txt', content_type='text/plain', additions='13'), UploadFileToS3('logs.txt', links={'test-minibrowser-bundle': 'Full logs'}, content_type='text/plain'), UploadMiniBrowserBundleViaSftp()], next_steps)
         return rc
 
     def test_failure_test_minibrowser_bundle(self):
         self.setupStep(TestMiniBrowserBundle())
         self.setUpPropertiesForTest()
+        next_steps = []
+        self.patch(self.build, 'addStepsAfterCurrentStep', lambda s: next_steps.extend(s))
         self.expectRemoteCommands(
             ExpectShell(workdir='wkdir',
-                        command=['Tools/Scripts/test-bundle', '--platform=gtk', '--bundle-type=universal', 'WebKitBuild/MiniBrowser_gtk_release.tar.xz'],
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'Tools/Scripts/test-bundle --platform=gtk --bundle-type=universal WebKitBuild/MiniBrowser_gtk_release.tar.xz 2>&1 | python3 Tools/Scripts/filter-test-logs minibrowser'],
                         logEnviron=True,
-                        timeout=1200,
+                        timeout=10800,
                         )
             + 2,
         )
         self.expectOutcome(result=FAILURE, state_string='tested minibrowser bundle (failure)')
         rc = self.runStep()
-        self.assertTrue(UploadMiniBrowserBundleViaSftp() not in self.build.addedStepsAfterCurrentStep)
+        self.assertEqual([GenerateS3URL('gtk-None-release-test-minibrowser-bundle', extension='txt', content_type='text/plain', additions='13'), UploadFileToS3('logs.txt', links={'test-minibrowser-bundle': 'Full logs'}, content_type='text/plain')], next_steps)
         return rc
 
     def test_success_generate_jsc_bundle(self):
@@ -2390,4 +2394,46 @@ class TestDisplaySaferCPPResults(BuildStepMixinAdditions, unittest.TestCase):
         self.setProperty('unexpected_failing_files', 1)
 
         self.expectOutcome(result=FAILURE, state_string='Unexpected failing files: 1 Unexpected passing files: 1')
+        return self.runStep()
+
+
+class TestRunTest262Tests(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(RunTest262Tests())
+        self.setProperty('fullPlatform', 'mac-sonoma')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        timeout=7200,
+                        logEnviron=True,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'perl Tools/Scripts/test262-runner --verbose --release 2>&1 | python3 Tools/Scripts/filter-test-logs test262'],
+                        )
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='test262-test')
+        return self.runStep()
+
+    def test_failure(self):
+        self.setupStep(RunTest262Tests())
+        self.setProperty('fullPlatform', 'mac-sonoma')
+        self.setProperty('configuration', 'debug')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        timeout=7200,
+                        logEnviron=True,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'perl Tools/Scripts/test262-runner --verbose --debug 2>&1 | python3 Tools/Scripts/filter-test-logs test262'],
+                        )
+            + ExpectShell.log('stdio', stdout='''! NEW FAIL: test/built-ins/Array/prototype/at/index-non-numeric.js
+! NEW FAIL: test/built-ins/Array/prototype/at/index-out-of-range.js
+! NEW FAIL: test/built-ins/Array/prototype/at/index-string.js''')
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='3 Test262 tests failed')
         return self.runStep()

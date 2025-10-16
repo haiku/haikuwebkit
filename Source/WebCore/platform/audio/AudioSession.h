@@ -160,8 +160,8 @@ public:
     virtual void endInterruptionForTesting() { endInterruption(MayResume::Yes); }
     virtual void clearInterruptionFlagForTesting() { }
 
-    virtual void addInterruptionObserver(AudioSessionInterruptionObserver&);
-    virtual void removeInterruptionObserver(AudioSessionInterruptionObserver&);
+    static void addInterruptionObserver(AudioSessionInterruptionObserver&);
+    static void removeInterruptionObserver(AudioSessionInterruptionObserver&);
 
     virtual bool isActive() const { return m_active; }
 
@@ -195,8 +195,6 @@ protected:
     uint64_t logIdentifier() const { return 0; }
 
     mutable RefPtr<Logger> m_logger;
-
-    WeakHashSet<AudioSessionInterruptionObserver> m_interruptionObservers;
 
     WeakPtr<AudioSessionRoutingArbitrationClient> m_routingArbitrationClient;
     AudioSession::CategoryType m_categoryOverride { AudioSession::CategoryType::None };

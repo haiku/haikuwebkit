@@ -35,8 +35,6 @@
 #import <wtf/cocoa/SpanCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
-#import <pal/cocoa/NetworkSoftLink.h>
-
 namespace WebKit {
 
 NetworkTransportStream::NetworkTransportStream(NetworkTransportSession& session, nw_connection_t connection, NetworkTransportStreamType streamType)

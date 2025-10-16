@@ -22,6 +22,7 @@
 
 #include <WebCore/CSSURL.h>
 #include <WebCore/CSSValue.h>
+#include <WebCore/CachedImage.h>
 #include <WebCore/CachedResourceHandle.h>
 #include <WebCore/ResourceLoaderOptions.h>
 #include <wtf/Function.h>

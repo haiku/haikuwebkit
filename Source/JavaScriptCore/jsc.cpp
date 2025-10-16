@@ -457,13 +457,13 @@ struct Script {
     StrictMode strictMode;
     CodeSource codeSource;
     ScriptType scriptType;
-    char* argument;
+    String argument;
 
     Script(StrictMode strictMode, CodeSource codeSource, ScriptType scriptType, char *argument)
         : strictMode(strictMode)
         , codeSource(codeSource)
         , scriptType(scriptType)
-        , argument(argument)
+        , argument(String::fromLatin1(argument))
     {
         if (strictMode == StrictMode::Strict)
             ASSERT(codeSource == CodeSource::File);
@@ -499,7 +499,7 @@ public:
     bool m_canBlockIsFalse { false };
     bool m_reprl { false }; // Set to true to use Fuzzilli.
 
-    void parseArguments(int, char**);
+    void parseArguments(int, char**, int start = 1);
 };
 static LazyNeverDestroyed<CommandLine> mainCommandLine;
 
@@ -3824,7 +3824,7 @@ static void runWithOptions(GlobalObject* globalObject, CommandLine& options, boo
 
         switch (scripts[i].codeSource) {
         case Script::CodeSource::File: {
-            fileName = String::fromLatin1(scripts[i].argument);
+            fileName = scripts[i].argument;
             if (scripts[i].strictMode == Script::StrictMode::Strict)
                 scriptBuffer.append("\"use strict\";\n"_span);
 
@@ -3842,9 +3842,9 @@ static void runWithOptions(GlobalObject* globalObject, CommandLine& options, boo
             break;
         }
         case Script::CodeSource::CommandLine: {
-            size_t commandLineLength = strlen(scripts[i].argument);
+            size_t commandLineLength = scripts[i].argument.length();
             scriptBuffer.resize(commandLineLength);
-            std::copy_n(scripts[i].argument, commandLineLength, scriptBuffer.begin());
+            std::copy_n(scripts[i].argument.impl()->span8().data(), commandLineLength, scriptBuffer.begin());
             fileName = "[Command Line]"_s;
             break;
         }
@@ -4016,6 +4016,7 @@ static void runInteractive(GlobalObject* globalObject)
 #endif
     fprintf(stderr, "  --destroy-vm               Destroy VM before exiting\n");
     fprintf(stderr, "  --can-block-is-false       Make main thread's Atomics.wait throw\n");
+    fprintf(stderr, "  --singleStringSubArgList=<args>   Parse args as a space separated list of arguments. (For VSCode debuggers to pass arguments).\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Files with a .mjs extension will always be evaluated as modules.\n");
     fprintf(stderr, "\n");
@@ -4068,7 +4069,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-void CommandLine::parseArguments(int argc, char** argv)
+void CommandLine::parseArguments(int argc, char** argv, int start)
 {
     Options::AllowUnfinalizedAccessScope scope;
     Options::initialize([] {
@@ -4092,7 +4093,7 @@ void CommandLine::parseArguments(int argc, char** argv)
         printf("\n");
     }
 
-    int i = 1;
+    int i = start;
     bool optionsDumpRequested = false;
 
     bool hasBadJSCOptions = false;
@@ -4284,6 +4285,17 @@ void CommandLine::parseArguments(int argc, char** argv)
                 hasBadJSCOptions = true;
                 dataLogLn("ERROR: invalid value for --useJITCodeValidations: ", valueStr);
             }
+            continue;
+        }
+
+        ASCIILiteral singleStringSubArgList = "--singleStringSubArgList="_s;
+        if (!strncmp(arg, singleStringSubArgList.characters(), singleStringSubArgList.length())) {
+            // We just assume input is utf-8 (probably ascii)
+            String subArgList = String::fromLatin1(arg + singleStringSubArgList.length());
+            Vector<CString> splitArgs = subArgList.split(" "_s).map([](const String& arg) { return arg.impl()->utf8(); });
+            Vector<char*> buffer = splitArgs.map([](const CString& arg) { return const_cast<char*>(arg.data()); });
+
+            parseArguments(buffer.mutableSpan().size(), buffer.mutableSpan().data(), 0);
             continue;
         }
 
@@ -4528,7 +4540,8 @@ int jscmain(int argc, char** argv)
 #if PLATFORM(COCOA)
     auto& memoryPressureHandler = MemoryPressureHandler::singleton();
     {
-        auto queue = adoptOSObject(dispatch_queue_create("jsc shell memory pressure handler", DISPATCH_QUEUE_SERIAL));
+        // FIXME: This is a false positive. rdar://160931336
+        SUPPRESS_RETAINPTR_CTOR_ADOPT auto queue = adoptOSObject(dispatch_queue_create("jsc shell memory pressure handler", DISPATCH_QUEUE_SERIAL));
         memoryPressureHandler.setDispatchQueue(WTFMove(queue));
     }
     Box<Critical> memoryPressureCriticalState = Box<Critical>::create(Critical::No);

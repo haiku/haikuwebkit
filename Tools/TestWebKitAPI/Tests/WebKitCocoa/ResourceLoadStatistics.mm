@@ -47,6 +47,7 @@
 #import <wtf/BlockPtr.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/URL.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 
 static bool finishedNavigation = false;
@@ -495,7 +496,7 @@ void waitUntilTwoServersConnected(const unsigned& serversConnected, CompletionHa
         completionHandler();
         return;
     }
-    dispatch_async(dispatch_get_main_queue(), makeBlockPtr([&serversConnected, completionHandler = WTFMove(completionHandler)] () mutable {
+    dispatch_async(mainDispatchQueueSingleton(), makeBlockPtr([&serversConnected, completionHandler = WTFMove(completionHandler)] () mutable {
         waitUntilTwoServersConnected(serversConnected, WTFMove(completionHandler));
     }).get());
 }

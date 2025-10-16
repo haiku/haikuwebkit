@@ -127,9 +127,9 @@ SkiaHarfBuzzFont::SkiaHarfBuzzFont(SkTypeface& typeface)
     auto hbFace = createHarfBuzzFace(typeface);
     HbUniquePtr<hb_font_t> hbFont(hb_font_create(hbFace.get()));
 
-    if (int axisCount = typeface.getVariationDesignPosition(nullptr, 0)) {
+    if (int axisCount = typeface.getVariationDesignPosition({ }); axisCount > 0) {
         Vector<SkFontArguments::VariationPosition::Coordinate> axisValues(axisCount);
-        if (typeface.getVariationDesignPosition(axisValues.mutableSpan().data(), axisValues.size()) != -1)
+        if (typeface.getVariationDesignPosition(axisValues.mutableSpan()) > 0)
             hb_font_set_variations(hbFont.get(), reinterpret_cast<hb_variation_t*>(axisValues.mutableSpan().data()), axisValues.size());
     }
 
@@ -192,9 +192,7 @@ std::optional<hb_codepoint_t> SkiaHarfBuzzFont::glyph(hb_codepoint_t unicode, st
 
 hb_position_t SkiaHarfBuzzFont::glyphWidth(hb_codepoint_t glyph)
 {
-    SkGlyphID glyphID = glyph;
-    SkScalar width;
-    m_scaledFont.getWidths(&glyphID, 1, &width);
+    SkScalar width = m_scaledFont.getWidth(glyph);
     if (!m_scaledFont.isSubpixel())
         width = SkScalarRoundToInt(width);
     return skScalarToHarfBuzzPosition(width);
@@ -211,7 +209,7 @@ void SkiaHarfBuzzFont::glyphWidths(unsigned count, const hb_codepoint_t* glyphs,
     }
 
     Vector<SkScalar, 256> widths(count);
-    m_scaledFont.getWidths(skGlyphs.span().data(), count, widths.mutableSpan().data());
+    m_scaledFont.getWidths(skGlyphs.span(), widths.mutableSpan());
     if (!m_scaledFont.isSubpixel()) {
         for (unsigned i = 0; i < count; ++i)
             widths[i] = SkScalarRoundToInt(widths[i]);
@@ -227,9 +225,7 @@ void SkiaHarfBuzzFont::glyphWidths(unsigned count, const hb_codepoint_t* glyphs,
 
 void SkiaHarfBuzzFont::glyphExtents(hb_codepoint_t glyph, hb_glyph_extents_t* extents)
 {
-    SkGlyphID glyphID = glyph;
-    SkRect bounds;
-    m_scaledFont.getBounds(&glyphID, 1, &bounds, nullptr);
+    SkRect bounds = m_scaledFont.getBounds(glyph, nullptr);
     if (!m_scaledFont.isSubpixel())
         bounds.set(bounds.roundOut());
 

@@ -28,11 +28,11 @@
 
 #import "Logging.h"
 #import "NetworkCacheFileSystem.h"
-#import <dispatch/dispatch.h>
 #import <mach/vm_param.h>
 #import <sys/mman.h>
 #import <sys/stat.h>
 #import <wtf/BlockPtr.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/CString.h>
 
 namespace WebKit {
@@ -79,7 +79,7 @@ IOChannel::IOChannel(const String& filePath, Type type, std::optional<WorkQueue:
     }
 
     int fd = ::open(path.data(), oflag, mode);
-    m_dispatchIO = adoptOSObject(dispatch_io_create(DISPATCH_IO_RANDOM, fd, dispatch_get_global_queue(dispatchQueueIdentifier(dispatchQOS), 0), [fd](int) {
+    m_dispatchIO = adoptOSObject(dispatch_io_create(DISPATCH_IO_RANDOM, fd, globalDispatchQueueSingleton(dispatchQueueIdentifier(dispatchQOS), 0), [fd](int) {
         close(fd);
     }));
     ASSERT(m_dispatchIO.get());

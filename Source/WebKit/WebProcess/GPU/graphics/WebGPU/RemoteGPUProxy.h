@@ -28,7 +28,7 @@
 #if ENABLE(GPU_PROCESS)
 
 #include "GPUProcessConnection.h"
-#include "RenderingBackendIdentifier.h"
+#include "RemoteRenderingBackendIdentifier.h"
 #include "StreamClientConnection.h"
 #include "WebGPUIdentifier.h"
 #include <WebCore/WebGPU.h>
@@ -75,7 +75,7 @@ private:
     friend class WebGPU::DowncastConvertToBackingContext;
 
     RemoteGPUProxy(WebGPU::ConvertToBackingContext&, SerialFunctionDispatcher&);
-    void initializeIPC(Ref<IPC::StreamClientConnection>&&, RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
+    void initializeIPC(Ref<IPC::StreamClientConnection>&&, RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
 
     RemoteGPUProxy(const RemoteGPUProxy&) = delete;
     RemoteGPUProxy(RemoteGPUProxy&&) = delete;

@@ -33,6 +33,7 @@
 #import "PlatformUtilities.h"
 #import "TestCocoa.h"
 #import "TestNavigationDelegate.h"
+#import "TestUIDelegate.h"
 #import "TestURLSchemeHandler.h"
 #import "TestWKWebView.h"
 #import "Utilities.h"
@@ -48,6 +49,7 @@
 #import <WebKit/WKWebViewConfiguration.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
 #import <WebKit/WKWebViewPrivateForTestingMac.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 #if ENABLE(POINTER_LOCK)
 #import <GameController/GameController.h>
@@ -910,65 +912,91 @@ TEST(WebKit, NotificationPermission)
     TestWebKitAPI::Util::run(&done);
 }
 
-bool firstToolbarDone;
-
-@interface ToolbarDelegate : NSObject <WKUIDelegatePrivate>
-@end
-
-@implementation ToolbarDelegate
-
-- (void)_webView:(WKWebView *)webView getToolbarsAreVisibleWithCompletionHandler:(void(^)(BOOL))completionHandler
-{
-    completionHandler(firstToolbarDone);
-}
-
-- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
-{
-    if (firstToolbarDone) {
-        EXPECT_STREQ(message.UTF8String, "visible:true");
-        done = true;
-    } else {
-        EXPECT_STREQ(message.UTF8String, "visible:false");
-        firstToolbarDone = true;
-    }
-    completionHandler();
-}
-
-@end
-
 TEST(WebKit, ToolbarVisible)
 {
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:adoptNS([[WKWebViewConfiguration alloc] init]).get()]);
-    auto delegate = adoptNS([[ToolbarDelegate alloc] init]);
-    [webView setUIDelegate:delegate.get()];
-    [webView synchronouslyLoadHTMLString:@"<script>alert('visible:' + window.toolbar.visible);alert('visible:' + window.toolbar.visible)</script>"];
-    TestWebKitAPI::Util::run(&done);
+    [webView loadHTMLString:@"<script>alert('visible:' + window.toolbar.visible)</script>" baseURL:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "visible:true");
+    webView.get()._toolbarsAreVisible = NO;
+    [webView evaluateJavaScript:@"alert('visible:' + window.toolbar.visible)" completionHandler:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "visible:false");
 }
 
 @interface MouseMoveOverElementDelegate : NSObject <WKUIDelegatePrivate>
+@property (nonatomic, copy) void (^mouseDidMoveOverElement)(_WKHitTestResult *, NSEventModifierFlags, id<NSSecureCoding>);
+@property (nonatomic, copy) WKWebView* (^createWebViewWithConfiguration)(WKWebViewConfiguration *, WKNavigationAction *, WKWindowFeatures *);
 @end
 
 @implementation MouseMoveOverElementDelegate
 
 - (void)_webView:(WKWebView *)webview mouseDidMoveOverElement:(_WKHitTestResult *)hitTestResult withFlags:(NSEventModifierFlags)flags userInfo:(id <NSSecureCoding>)userInfo
 {
-    EXPECT_STREQ(hitTestResult.absoluteLinkURL.absoluteString.UTF8String, "http://example.com/path");
-    EXPECT_STREQ(hitTestResult.linkLabel.UTF8String, "link label");
-    EXPECT_STREQ(hitTestResult.linkTitle.UTF8String, "link title");
-    EXPECT_EQ(flags, NSEventModifierFlagShift);
-    EXPECT_STREQ(NSStringFromClass([(NSObject *)userInfo class]).UTF8String, "_WKFrameHandle");
-    done = true;
+    _mouseDidMoveOverElement(hitTestResult, flags, userInfo);
+}
+
+- (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
+{
+    return _createWebViewWithConfiguration(configuration, navigationAction, windowFeatures);
 }
 
 @end
 
 TEST(WebKit, MouseMoveOverElement)
 {
-    WKWebViewConfiguration *configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"FrameHandleSerialization"];
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
-    auto uiDelegate = adoptNS([[MouseMoveOverElementDelegate alloc] init]);
+    __block bool done { false };
+    RetainPtr configuration = adoptNS([WKWebViewConfiguration new]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration.get()]);
+    RetainPtr uiDelegate = adoptNS([MouseMoveOverElementDelegate new]);
+    uiDelegate.get().mouseDidMoveOverElement = ^(_WKHitTestResult *hitTestResult, NSEventModifierFlags flags, id<NSSecureCoding> userInfo) {
+        EXPECT_STREQ(hitTestResult.absoluteLinkURL.absoluteString.UTF8String, "http://example.com/path");
+        EXPECT_STREQ(hitTestResult.linkLabel.UTF8String, "link label");
+        EXPECT_STREQ(hitTestResult.linkTitle.UTF8String, "link title");
+        EXPECT_EQ(flags, NSEventModifierFlagShift);
+        EXPECT_NULL(userInfo);
+        EXPECT_TRUE(hitTestResult.linkTargetFrameIsSameAsLinkFrame);
+        EXPECT_TRUE(hitTestResult.linkHasTargetFrame);
+        done = true;
+    };
     [webView setUIDelegate:uiDelegate.get()];
     [webView synchronouslyLoadHTMLString:@"<a href='http://example.com/path' title='link title'>link label</a>"];
+    [webView mouseMoveToPoint:NSMakePoint(20, 600 - 20) withFlags:NSEventModifierFlagShift];
+    TestWebKitAPI::Util::run(&done);
+
+    done = false;
+    uiDelegate.get().mouseDidMoveOverElement = ^(_WKHitTestResult *hitTestResult, NSEventModifierFlags, id<NSSecureCoding>) {
+        EXPECT_FALSE(hitTestResult.linkTargetFrameIsSameAsLinkFrame);
+        EXPECT_TRUE(hitTestResult.linkHasTargetFrame);
+        EXPECT_FALSE(hitTestResult.linkTargetFrameIsInDifferentWebView);
+        done = true;
+    };
+    [webView synchronouslyLoadHTMLString:@"<a href='http://example.com/path' title='link title' target='testiframe'>link label</a><iframe name='testiframe' style='height:1px;width:1px'></iframe>"];
+    [webView mouseMoveToPoint:NSMakePoint(20, 600 - 20) withFlags:NSEventModifierFlagShift];
+    TestWebKitAPI::Util::run(&done);
+
+    done = false;
+    uiDelegate.get().mouseDidMoveOverElement = ^(_WKHitTestResult *hitTestResult, NSEventModifierFlags, id<NSSecureCoding>) {
+        EXPECT_FALSE(hitTestResult.linkTargetFrameIsSameAsLinkFrame);
+        EXPECT_FALSE(hitTestResult.linkHasTargetFrame);
+        done = true;
+    };
+    [webView mouseMoveToPoint:NSMakePoint(300, 300) withFlags:NSEventModifierFlagShift];
+    TestWebKitAPI::Util::run(&done);
+
+    done = false;
+    uiDelegate.get().mouseDidMoveOverElement = ^(_WKHitTestResult *hitTestResult, NSEventModifierFlags, id<NSSecureCoding>) {
+        EXPECT_FALSE(hitTestResult.linkTargetFrameIsSameAsLinkFrame);
+        EXPECT_TRUE(hitTestResult.linkHasTargetFrame);
+        EXPECT_TRUE(hitTestResult.linkTargetFrameIsInDifferentWebView);
+        done = true;
+    };
+    __block bool opened { false };
+    uiDelegate.get().createWebViewWithConfiguration = ^WKWebView *(WKWebViewConfiguration * configuration, WKNavigationAction *navigationAction, WKWindowFeatures *) {
+        static RetainPtr<WKWebView> openedView = adoptNS([[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration]);
+        opened = true;
+        return openedView.get();
+    };
+    [webView synchronouslyLoadHTMLString:@"<a href='http://example.com/path' title='link title' target='testtarget'>link label</a><script>window.open('about:blank', 'testtarget')</script>"];
+    TestWebKitAPI::Util::run(&opened);
     [webView mouseMoveToPoint:NSMakePoint(20, 600 - 20) withFlags:NSEventModifierFlagShift];
     TestWebKitAPI::Util::run(&done);
 }
@@ -1041,12 +1069,23 @@ TEST(WebKit, MouseMoveOverElementWithClosedWebView)
         return linkLocation;
     }));
 
+    __block bool done { false };
     @autoreleasepool {
-        WKWebViewConfiguration *configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"FrameHandleSerialization"];
-        auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 400, 300) configuration:configuration]);
+        RetainPtr configuration = adoptNS([WKWebViewConfiguration new]);
+        RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 400, 300) configuration:configuration.get()]);
         [webView removeFromSuperview];
         [webView addToTestWindow];
-        auto uiDelegate = adoptNS([[MouseMoveOverElementDelegate alloc] init]);
+        RetainPtr uiDelegate = adoptNS([MouseMoveOverElementDelegate new]);
+        uiDelegate.get().mouseDidMoveOverElement = ^(_WKHitTestResult *hitTestResult, NSEventModifierFlags flags, id<NSSecureCoding> userInfo) {
+            EXPECT_STREQ(hitTestResult.absoluteLinkURL.absoluteString.UTF8String, "http://example.com/path");
+            EXPECT_STREQ(hitTestResult.linkLabel.UTF8String, "link label");
+            EXPECT_STREQ(hitTestResult.linkTitle.UTF8String, "link title");
+            EXPECT_EQ(flags, NSEventModifierFlagShift);
+            EXPECT_NULL(userInfo);
+            EXPECT_TRUE(hitTestResult.linkTargetFrameIsSameAsLinkFrame);
+            EXPECT_TRUE(hitTestResult.linkHasTargetFrame);
+            done = true;
+        };
         [webView setUIDelegate:uiDelegate.get()];
         [webView synchronouslyLoadHTMLString:@"<a id='link' href='http://example.com/path' style='font-size: 300px;' title='link title'>link label</a>"];
 
@@ -1063,6 +1102,7 @@ TEST(WebKit, MouseMoveOverElementWithClosedWebView)
     }
 
     TestWebKitAPI::Util::runFor(10_ms);
+    TestWebKitAPI::Util::run(&done);
 }
 
 static bool readyForClick;
@@ -1387,7 +1427,7 @@ static void synthesizeWheelEvents(NSView *view, int x, int y)
     [view scrollWheel:event];
     
     // Wheel events get coalesced sometimes. Make more events until one is not handled.
-    dispatch_async(dispatch_get_main_queue(), ^ {
+    dispatch_async(mainDispatchQueueSingleton(), ^{
         synthesizeWheelEvents(view, x, y);
     });
 }

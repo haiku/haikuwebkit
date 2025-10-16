@@ -30,6 +30,7 @@
 #include "LegacyRenderSVGResourceMaskerInlines.h"
 #include "NodeName.h"
 #include "RenderElementInlines.h"
+#include "RenderObjectInlines.h"
 #include "RenderSVGResourceMasker.h"
 #include "SVGElementInlines.h"
 #include "SVGLayerTransformComputation.h"

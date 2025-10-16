@@ -78,12 +78,8 @@ WebSharedWorkerContextManagerConnection::WebSharedWorkerContextManagerConnection
 #else
     , m_userAgent(WebCore::standardUserAgent())
 #endif
-    , m_userContentController(WebUserContentController::getOrCreate(initializationData.userContentControllerIdentifier))
+    , m_userContentController(WebUserContentController::getOrCreate(WTFMove(initializationData.userContentControllerParameters)))
 {
-#if ENABLE(CONTENT_EXTENSIONS)
-    m_userContentController->addContentRuleLists(WTFMove(initializationData.contentRuleLists));
-#endif
-
     updatePreferencesStore(preferencesStore);
     WebProcess::singleton().disableTermination();
 }

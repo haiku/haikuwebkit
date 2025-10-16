@@ -727,7 +727,7 @@ public:
     AVPlayer *objCAVFoundationAVPlayer() const;
 #endif
 
-    bool performTaskAtTime(Function<void()>&&, const MediaTime&);
+    bool performTaskAtTime(Function<void(const MediaTime&)>&&, const MediaTime&);
 
     bool shouldIgnoreIntrinsicSize();
 

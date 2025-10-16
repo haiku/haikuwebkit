@@ -251,7 +251,7 @@ RefPtr<const DisplayList::DisplayList> FontCascade::displayListForTextRun(Graphi
 
     DisplayList::RecorderImpl recordingContext(context.state().clone(GraphicsContextState::Purpose::Initial), { },
         context.getCTM(GraphicsContext::DefinitelyIncludeDeviceScale), context.colorSpace(),
-        DisplayList::Recorder::DrawGlyphsMode::DeconstructAndRetain);
+        DisplayList::Recorder::DrawGlyphsMode::Deconstruct);
 
     FloatPoint startPoint = toFloatPoint(WebCore::size(glyphBuffer.initialAdvance()));
     drawGlyphBuffer(recordingContext, glyphBuffer, startPoint, customFontNotReadyAction);

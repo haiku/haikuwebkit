@@ -173,6 +173,8 @@ bool isWebGPUSwiftEnabled()
     static bool isWebGPUSwiftEnabled;
     std::call_once(onceFlag, [&] {
         isWebGPUSwiftEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"WebKitWebGPUSwiftEnabled"];
+        if (isWebGPUSwiftEnabled)
+            WTFLogAlways("WebGPU: using SWIFT backend"); // NOLINT
     });
     return isWebGPUSwiftEnabled;
 }

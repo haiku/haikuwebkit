@@ -37,15 +37,17 @@ messages -> RemoteGraphicsContext Stream {
     ConcatCTM(WebCore::AffineTransform ctm) StreamBatched
     SetFillPackedColor(struct WebCore::PackedColor::RGBA color) StreamBatched
     SetFillColor(WebCore::Color color) StreamBatched
-    SetFillCachedGradient(WebCore::RenderingResourceIdentifier gradientIdentifier, WebCore::AffineTransform spaceTransform) StreamBatched
+    SetFillCachedGradient(WebKit::RemoteGradientIdentifier identifier, WebCore::AffineTransform spaceTransform) StreamBatched
     SetFillGradient(Ref<WebCore::Gradient> gradient, WebCore::AffineTransform spaceTransform) StreamBatched
-    SetFillPattern(WebCore::RenderingResourceIdentifier tileImageIdentifier, WebCore::PatternParameters pattern) StreamBatched
+    SetFillPatternNativeImage(WebCore::RenderingResourceIdentifier nativeImageIdentifier, WebCore::PatternParameters pattern) StreamBatched
+    SetFillPatternImageBuffer(WebCore::RenderingResourceIdentifier imageBufferIdentifier, WebCore::PatternParameters pattern) StreamBatched
     SetFillRule(enum:bool WebCore::WindRule rule) StreamBatched
     SetStrokePackedColor(WebCore::PackedColor::RGBA color) StreamBatched
     SetStrokeColor(WebCore::Color color) StreamBatched
-    SetStrokeCachedGradient(WebCore::RenderingResourceIdentifier gradientIdentifier, WebCore::AffineTransform spaceTransform) StreamBatched
+    SetStrokeCachedGradient(WebKit::RemoteGradientIdentifier identifier, WebCore::AffineTransform spaceTransform) StreamBatched
     SetStrokeGradient(Ref<WebCore::Gradient> gradient, WebCore::AffineTransform spaceTransform) StreamBatched
-    SetStrokePattern(WebCore::RenderingResourceIdentifier tileImageIdentifier, WebCore::PatternParameters pattern) StreamBatched
+    SetStrokePatternNativeImage(WebCore::RenderingResourceIdentifier nativeImageIdentifier, WebCore::PatternParameters pattern) StreamBatched
+    SetStrokePatternImageBuffer(WebCore::RenderingResourceIdentifier imageBufferIdentifier, WebCore::PatternParameters pattern) StreamBatched
     SetStrokePackedColorAndThickness(WebCore::PackedColor::RGBA color, float thickness) StreamBatched
     SetStrokeThickness(float thickness) StreamBatched
     SetStrokeStyle(enum:uint8_t WebCore::StrokeStyle style) StreamBatched
@@ -73,7 +75,7 @@ messages -> RemoteGraphicsContext Stream {
     ClipPath(WebCore::Path path, enum:bool WebCore::WindRule windRule)
     ResetClip()
     DrawGlyphs(WebCore::RenderingResourceIdentifier fontIdentifier, IPC::ArrayReferenceTuple<WebCore::GlyphBufferGlyph, WebCore::FloatSize> glyphsAdvances, WebCore::FloatPoint localAnchor, enum:uint8_t WebCore::FontSmoothingMode smoothingMode)
-    DrawDecomposedGlyphs(WebCore::RenderingResourceIdentifier fontIdentifier, WebCore::RenderingResourceIdentifier decomposedGlyphsIdentifier)
+    DrawDisplayList(WebKit::RemoteDisplayListIdentifier identifier)
     DrawFilteredImageBuffer(std::optional<WebCore::RenderingResourceIdentifier> sourceImageIdentifier, WebCore::FloatRect sourceImageRect, Ref<WebCore::Filter> filter)
     DrawImageBuffer(WebCore::RenderingResourceIdentifier imageBufferIdentifier, WebCore::FloatRect destinationRect, WebCore::FloatRect srcRect, struct WebCore::ImagePaintingOptions options)
     DrawNativeImage(WebCore::RenderingResourceIdentifier imageIdentifier, WebCore::FloatRect destRect, WebCore::FloatRect srcRect, struct WebCore::ImagePaintingOptions options)
@@ -128,7 +130,7 @@ messages -> RemoteGraphicsContext Stream {
 #endif
     ApplyDeviceScaleFactor(float scaleFactor)
 
-    BeginPage(WebCore::IntSize pageSize)
+    BeginPage(WebCore::FloatRect pageRect)
     EndPage()
     SetURLForRect(URL link, WebCore::FloatRect destRect)
 

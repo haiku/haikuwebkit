@@ -115,11 +115,7 @@ LibWebRTCMediaEndpoint::LibWebRTCMediaEndpoint(RTCPeerConnection& peerConnection
     ASSERT(isMainThread());
     ASSERT(client.factory());
 
-    if (!document.settings().webRTCL4SEnabled())
-        return;
-
-    auto fieldTrials = "WebRTC-RFC8888CongestionControlFeedback/Enabled,force_send:true/"_s;
-    webrtc::field_trial::InitFieldTrialsFromString(fieldTrials.characters());
+    client.setUseL4S(document.settings().webRTCL4SEnabled());
 }
 
 LibWebRTCMediaEndpoint::~LibWebRTCMediaEndpoint()
@@ -669,7 +665,7 @@ static std::optional<PeerConnectionBackend::DescriptionStates> descriptionsFromP
     };
 }
 
-void LibWebRTCMediaEndpoint::addIceCandidate(std::unique_ptr<webrtc::IceCandidateInterface>&& candidate, PeerConnectionBackend::AddIceCandidateCallback&& callback)
+void LibWebRTCMediaEndpoint::addIceCandidate(std::unique_ptr<webrtc::IceCandidate>&& candidate, PeerConnectionBackend::AddIceCandidateCallback&& callback)
 {
     m_backend->AddIceCandidate(WTFMove(candidate), [task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTFMove(callback)), backend = m_backend]<typename Error> (Error&& error) mutable {
         callOnMainThread([task = WTFMove(task), descriptions = crossThreadCopy(descriptionsFromPeerConnection(backend.get())), error = std::forward<Error>(error)] () mutable {
@@ -682,7 +678,7 @@ void LibWebRTCMediaEndpoint::addIceCandidate(std::unique_ptr<webrtc::IceCandidat
     });
 }
 
-void LibWebRTCMediaEndpoint::OnIceCandidate(const webrtc::IceCandidateInterface *rtcCandidate)
+void LibWebRTCMediaEndpoint::OnIceCandidate(const webrtc::IceCandidate *rtcCandidate)
 {
     ASSERT(rtcCandidate);
 
@@ -929,7 +925,7 @@ void LibWebRTCMediaEndpoint::OnStatsDelivered(const webrtc::scoped_refptr<const 
             // Stats are very verbose, let's only display them in inspector console in verbose mode.
             logger().toObservers(LogWebRTC, WTFLogLevel::Debug, Logger::LogSiteIdentifier("LibWebRTCMediaEndpoint"_s, "OnStatsDelivered"_s, logIdentifier()), statsLogger);
 
-            RELEASE_LOG_FORWARDABLE(WebRTCStats, LIBWEBRTCMEDIAENDPOINT_ONSTATSDELIVERED, logIdentifier(), statsLogger.toJSONString().utf8().data());
+            RELEASE_LOG_FORWARDABLE(WebRTCStats, LIBWEBRTCMEDIAENDPOINT_ONSTATSDELIVERED, logIdentifier(), statsLogger.toJSONString().utf8());
         }
     });
 #else // !RELEASE_LOG_DISABLED

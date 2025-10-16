@@ -51,6 +51,7 @@ class BackendTexture;
 class Context;
 class Device;
 class DrawBufferManager;
+class FloatStorageManager;
 class ImageProvider;
 class ProxyReadCountMap;
 class RecorderPriv;
@@ -58,15 +59,11 @@ class ResourceProvider;
 class RuntimeEffectDictionary;
 class SharedContext;
 class TaskList;
-class TextureDataBlock;
 class TextureInfo;
 class UploadBufferManager;
 class UploadList;
 
 struct RecorderOptionsPriv;
-
-template<typename T> class PipelineDataCache;
-using TextureDataCache = PipelineDataCache<TextureDataBlock>;
 
 struct SK_API RecorderOptions final {
     RecorderOptions();
@@ -275,19 +272,22 @@ private:
     void registerDevice(sk_sp<Device>);
     void deregisterDevice(const Device*);
 
+    SkCanvas* makeCaptureCanvas(SkCanvas*) override;
+
     sk_sp<SharedContext> fSharedContext;
     ResourceProvider* fResourceProvider; // May point to the Context's resource provider
     std::unique_ptr<ResourceProvider> fOwnedResourceProvider; // May be null
-    std::unique_ptr<RuntimeEffectDictionary> fRuntimeEffectDict;
+
+    sk_sp<RuntimeEffectDictionary> fRuntimeEffectDict;
 
     // NOTE: These are stored by pointer to allow them to be forward declared.
     std::unique_ptr<TaskList> fRootTaskList;
     // Aggregated one-time uploads that preceed all tasks in the root task list.
     std::unique_ptr<UploadList> fRootUploads;
 
-    std::unique_ptr<TextureDataCache> fTextureDataCache;
     std::unique_ptr<DrawBufferManager> fDrawBufferManager;
     std::unique_ptr<UploadBufferManager> fUploadBufferManager;
+    sk_sp<FloatStorageManager> fFloatStorageManager;
     std::unique_ptr<ProxyReadCountMap> fProxyReadCounts;
 
     // Iterating over tracked devices in flushTrackedDevices() needs to be re-entrant and support

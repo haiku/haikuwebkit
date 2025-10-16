@@ -130,7 +130,7 @@ static JSValue *jsValueWithValueInContext(id value, JSContext *context)
     if ([value isKindOfClass:[NSData class]])
         return jsValueWithDataInContext(value, context);
 
-    if ([value isKindOfClass:PAL::getAVMetadataItemClass()])
+    if ([value isKindOfClass:PAL::getAVMetadataItemClassSingleton()])
         return jsValueWithAVMetadataItemInContext(value, context);
 
     return nil;

@@ -179,8 +179,6 @@ float RenderTextControl::scaleEmToUnits(int x) const
 
 void RenderTextControl::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const
 {
-    // FIXME: Fix field-sizing: content with size containment
-    // https://bugs.webkit.org/show_bug.cgi?id=269169
     if (style().fieldSizing() == FieldSizing::Content)
         return RenderBlockFlow::computeIntrinsicLogicalWidths(minLogicalWidth, maxLogicalWidth);
 
@@ -197,7 +195,7 @@ void RenderTextControl::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidt
 
     auto& logicalWidth = style().logicalWidth();
     if (logicalWidth.isCalculated())
-        minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu));
+        minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu, 1.0f /* FIXME FIND ZOOM */));
     else if (!logicalWidth.isPercent())
         minLogicalWidth = maxLogicalWidth;
 }

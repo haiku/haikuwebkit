@@ -52,6 +52,7 @@
 #endif
 #import <wtf/LoggerHelper.h>
 #import <wtf/TZoneMallocInlines.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 namespace WebKit {
 using namespace WebCore;
@@ -1057,7 +1058,7 @@ void PlaybackSessionManagerProxy::setVideoReceiverEndpoint(PlaybackSessionContex
         return;
 
     VideoReceiverEndpointMessage endpointMessage(WTFMove(processIdentifier), contextId.object(), WTFMove(playerIdentifier), endpoint, endpointIdentifier);
-    xpc_connection_send_message_with_reply(xpcConnection.get(), endpointMessage.encode().get(), dispatch_get_main_queue(), ^(xpc_object_t reply) {
+    xpc_connection_send_message_with_reply(xpcConnection.get(), endpointMessage.encode().get(), mainDispatchQueueSingleton(), ^(xpc_object_t reply) {
         RefPtr videoPresentationManager = page->videoPresentationManager();
         if (!videoPresentationManager)
             return;

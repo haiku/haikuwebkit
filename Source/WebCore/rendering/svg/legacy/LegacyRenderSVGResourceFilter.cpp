@@ -31,6 +31,7 @@
 #include "IntRect.h"
 #include "LegacyRenderSVGResourceFilterInlines.h"
 #include "Logging.h"
+#include "RenderObjectInlines.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGRenderStyle.h"
 #include "SVGRenderingContext.h"
@@ -51,7 +52,7 @@ LegacyRenderSVGResourceFilter::~LegacyRenderSVGResourceFilter() = default;
 
 bool LegacyRenderSVGResourceFilter::isIdentity() const
 {
-    return SVGFilter::isIdentity(protectedFilterElement());
+    return SVGFilterRenderer::isIdentity(protectedFilterElement());
 }
 
 void LegacyRenderSVGResourceFilter::removeAllClientsFromCache()
@@ -127,8 +128,8 @@ auto LegacyRenderSVGResourceFilter::applyResource(RenderElement& renderer, const
 
     auto preferredFilterModes = renderer.page().preferredFilterRenderingModes();
 
-    // Create the SVGFilter object.
-    filterData->filter = SVGFilter::create(filterElement, preferredFilterModes, filterScale, filterRegion, targetBoundingBox, *context, RenderingResourceIdentifier::generate());
+    // Create the SVGFilterRenderer object.
+    filterData->filter = SVGFilterRenderer::create(filterElement, preferredFilterModes, filterScale, filterRegion, targetBoundingBox, *context, RenderingResourceIdentifier::generate());
     if (!filterData->filter) {
         m_rendererFilterDataMap.remove(renderer);
         return { };

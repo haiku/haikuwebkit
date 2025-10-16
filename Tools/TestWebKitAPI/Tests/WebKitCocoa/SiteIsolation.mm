@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,6 +38,7 @@
 #import "Utilities.h"
 #import "WKWebViewConfigurationExtras.h"
 #import "WKWebViewFindStringFindDelegate.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <WebKit/WKFrameInfoPrivate.h>
 #import <WebKit/WKNavigationDelegatePrivate.h>
 #import <WebKit/WKNavigationPrivate.h>
@@ -60,6 +61,12 @@
 #import <WebKit/_WKWebsiteDataStoreConfiguration.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/text/MakeString.h>
+
+#if ENABLE(IMAGE_ANALYSIS)
+#import "ImageAnalysisTestingUtilities.h"
+#import <pal/spi/cocoa/VisionKitCoreSPI.h>
+#import <pal/cocoa/VisionKitCoreSoftLink.h>
+#endif
 
 #if PLATFORM(IOS_FAMILY)
 #import <MobileCoreServices/MobileCoreServices.h>
@@ -130,6 +137,50 @@
 }
 
 @end
+
+#if ENABLE(IMAGE_ANALYSIS)
+
+static unsigned gDidProcessRequestCount = 0;
+
+static void processRequestWithResults(id, SEL, VKImageAnalyzerRequest *, void (^)(double progress), void (^completion)(VKImageAnalysis *, NSError *))
+{
+    gDidProcessRequestCount++;
+    completion(TestWebKitAPI::createImageAnalysisWithSimpleFixedResults().get(), nil);
+}
+
+static VKImageAnalyzerRequest *makeFakeRequest(id, SEL, CGImageRef image, VKImageOrientation orientation, VKAnalysisTypes requestTypes)
+{
+    return TestWebKitAPI::createRequest(image, orientation, requestTypes).leakRef();
+}
+
+template <typename FunctionType>
+std::pair<std::unique_ptr<InstanceMethodSwizzler>, std::unique_ptr<InstanceMethodSwizzler>> makeImageAnalysisRequestSwizzler(FunctionType function)
+{
+    return std::pair {
+        makeUnique<InstanceMethodSwizzler>(PAL::getVKImageAnalyzerClassSingleton(), @selector(processRequest:progressHandler:completionHandler:), reinterpret_cast<IMP>(function)),
+        makeUnique<InstanceMethodSwizzler>(PAL::getVKImageAnalyzerRequestClassSingleton(), @selector(initWithCGImage:orientation:requestType:), reinterpret_cast<IMP>(makeFakeRequest))
+    };
+}
+
+@interface TestWKWebViewImageAnalysisTests : TestWKWebView
+- (void)waitForImageAnalysisRequests:(unsigned)numberOfRequests;
+@end
+
+@implementation TestWKWebViewImageAnalysisTests
+
+- (void)waitForImageAnalysisRequests:(unsigned)numberOfRequests
+{
+    TestWebKitAPI::Util::waitForConditionWithLogging([&] {
+        return gDidProcessRequestCount == numberOfRequests;
+    }, 3, @"Timed out waiting for %u image analysis requests to complete, got %u", numberOfRequests, gDidProcessRequestCount);
+
+    [self waitForNextPresentationUpdate];
+    EXPECT_EQ(gDidProcessRequestCount, numberOfRequests);
+}
+
+@end
+
+#endif // ENABLE(IMAGE_ANALYSIS)
 
 namespace TestWebKitAPI {
 
@@ -1961,7 +2012,7 @@ TEST(SiteIsolation, PasteGIF)
     [webView waitForPendingMouseEvents];
 
     auto *data = [NSData dataWithContentsOfFile:[NSBundle.test_resourcesBundle pathForResource:@"sunset-in-cupertino-400px" ofType:@"gif"]];
-    writeImageDataToPasteboard((__bridge NSString *)kUTTypeGIF, data);
+    writeImageDataToPasteboard(UTTypeGIF.identifier, data);
     [webView paste:nil];
 
     [webView mouseEnterAtPoint:eventLocationInWindow];
@@ -4962,6 +5013,52 @@ TEST(SiteIsolation, CreateWebArchiveNestedFrame)
     done = false;
 }
 
+TEST(SiteIsolation, CreateWebArchiveForFrame)
+{
+    HTTPServer server({
+        { "/mainframe"_s, { "<div>mainframe content</div><iframe src='https://apple.com/iframe'></iframe>"_s } },
+        { "/iframe"_s, { "<div>iframe content</div>"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto webViewAndDelegates = makeWebViewAndDelegates(server);
+    RetainPtr webView = webViewAndDelegates.webView;
+    RetainPtr navigationDelegate = webViewAndDelegates.navigationDelegate;
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/mainframe"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    static bool done = false;
+    __block RetainPtr<NSArray<_WKFrameTreeNode *>> childFrames;
+    [webView _frames:^(_WKFrameTreeNode *result) {
+        EXPECT_NOT_NULL(result);
+        EXPECT_NOT_NULL(result.childFrames);
+        childFrames = result.childFrames;
+        done = true;
+    }];
+    Util::run(&done);
+    done = false;
+
+    EXPECT_EQ([childFrames count], 1u);
+    [webView _createWebArchiveForFrame:childFrames.get().firstObject.info completionHandler:^(NSData *result, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_NOT_NULL(result);
+        NSDictionary* actualDictionary = [NSPropertyListSerialization propertyListWithData:result options:0 format:nil error:nil];
+        EXPECT_NOT_NULL(actualDictionary);
+        NSDictionary *expectedDictionary = @{
+            @"WebMainResource" : @{
+                @"WebResourceData" : [@"<html><head></head><body><div>iframe content</div></body></html>" dataUsingEncoding:NSUTF8StringEncoding],
+                @"WebResourceFrameName" : @"<!--frame1-->",
+                @"WebResourceMIMEType" : @"text/html",
+                @"WebResourceTextEncodingName" : @"UTF-8",
+                @"WebResourceURL" : @"https://apple.com/iframe"
+            },
+        };
+        EXPECT_TRUE([expectedDictionary isEqualToDictionary:actualDictionary]);
+        done = true;
+    }];
+    Util::run(&done);
+    done = false;
+}
+
 // FIXME: Re-enable this once the extra resize events are gone.
 // https://bugs.webkit.org/show_bug.cgi?id=292311 might do it.
 TEST(SiteIsolation, DISABLED_Events)
@@ -5068,7 +5165,7 @@ TEST(SiteIsolation, DragAndDrop)
     [simulator runFrom:CGPointMake(100, 50) to:CGPointMake(100, 300)];
 
     NSArray *registeredTypes = [[simulator sourceItemProviders].firstObject registeredTypeIdentifiers];
-    EXPECT_WK_STREQ((__bridge NSString *)kUTTypeURL, [registeredTypes firstObject]);
+    EXPECT_WK_STREQ(UTTypeURL.identifier, [registeredTypes firstObject]);
 }
 #endif
 
@@ -5576,5 +5673,133 @@ TEST(SiteIsolation, AlternateRequest)
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://webkit.org/webkit1"]]];
     EXPECT_WK_STREQ([webView _test_waitForAlert], "https://webkit.org/webkit2");
 }
+
+TEST(SiteIsolation, StatusBarVisibility)
+{
+    HTTPServer server({
+        { "/example"_s, { "<script>w = window.open('https://webkit.org/webkit', '_blank', 'popup=no,menubar=no,status=no,toolbar=no,resizable=no,location=no,scrollbars=no,fullscreen=no')</script>"_s } },
+        { "/webkit"_s, { "<iframe src='https://apple.com/apple'></iframe>"_s } },
+        { "/apple"_s, { "hi"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [opener, opened] = openerAndOpenedViews(server);
+    NSString *statusBarVisible = @"window.statusbar.visible";
+    EXPECT_TRUE([[opener.webView objectByEvaluatingJavaScript:statusBarVisible] boolValue]);
+    EXPECT_FALSE([[opened.webView objectByEvaluatingJavaScript:statusBarVisible] boolValue]);
+    EXPECT_FALSE([[opened.webView objectByEvaluatingJavaScript:statusBarVisible inFrame:[opened.webView firstChildFrame]] boolValue]);
+    EXPECT_TRUE([opener.webView _statusBarIsVisible]);
+    EXPECT_FALSE([opened.webView _statusBarIsVisible]);
+    [opened.webView _setStatusBarIsVisible:YES];
+    EXPECT_TRUE([[opened.webView objectByEvaluatingJavaScript:statusBarVisible] boolValue]);
+    EXPECT_TRUE([[opened.webView objectByEvaluatingJavaScript:statusBarVisible inFrame:[opened.webView firstChildFrame]] boolValue]);
+}
+
+#if ENABLE(IMAGE_ANALYSIS)
+
+static RetainPtr<WKWebViewConfiguration> createWebViewConfigurationWithTextRecognitionEnhancements()
+{
+    RetainPtr configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"WebProcessPlugInWithInternals" configureJSCForTesting:YES];
+    for (_WKFeature *feature in WKPreferences._features) {
+        NSString *key = feature.key;
+        if ([key isEqualToString:@"TextRecognitionInVideosEnabled"] || [key isEqualToString:@"VisualTranslationEnabled"] || [key isEqualToString:@"RemoveBackgroundEnabled"])
+            [[configuration preferences] _setEnabled:YES forFeature:feature];
+    }
+    [configuration _setAttachmentElementEnabled:YES];
+#if ENABLE(SERVICE_CONTROLS)
+    [configuration _setImageControlsEnabled:YES];
+#endif
+    return configuration;
+}
+
+TEST(SiteIsolation, IframeImageTranslation)
+{
+    auto requestSwizzler = makeImageAnalysisRequestSwizzler(processRequestWithResults);
+
+    HTTPServer server({
+        { "/example"_s, { "<iframe src='https://apple.com/multiple-images.html'></iframe>"_s } },
+        { "/multiple-images.html"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"multiple-images" withExtension:@"html"]] } },
+        { "/large-red-square.png"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"large-red-square" withExtension:@"png"]] } },
+        { "/sunset-in-cupertino-200px.png"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"sunset-in-cupertino-200px" withExtension:@"png"]] } },
+        { "/test.jpg"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"jpg"]] } },
+        { "/400x400-green.png"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"400x400-green" withExtension:@"png"]] } },
+        { "/sunset-in-cupertino-100px.tiff"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"sunset-in-cupertino-100px" withExtension:@"tiff"]] } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    RetainPtr configuration = createWebViewConfigurationWithTextRecognitionEnhancements();
+
+    auto storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration]);
+    [storeConfiguration setHTTPSProxy:[NSURL URLWithString:[NSString stringWithFormat:@"https://127.0.0.1:%d/", server.port()]]];
+    [configuration setWebsiteDataStore:adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]).get()];
+
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    enableSiteIsolation(configuration.get());
+
+    RetainPtr webView = adoptNS([[TestWKWebViewImageAnalysisTests alloc] initWithFrame:CGRectMake(0, 0, 600, 600) configuration:configuration.get()]);
+    webView.get().navigationDelegate = navigationDelegate.get();
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    [webView _startImageAnalysis:nil target:nil];
+    [webView waitForImageAnalysisRequests:5];
+    gDidProcessRequestCount = 0;
+}
+
+TEST(SiteIsolation, IframeImageTranslationIfIframeIsAddedAfterTranslationCall)
+{
+    auto requestSwizzler = makeImageAnalysisRequestSwizzler(processRequestWithResults);
+
+    HTTPServer server({
+        { "/example"_s, {
+        "<script>"
+        "    function addCrossDomainIframe() {"
+        "        const iframe = document.createElement('iframe');"
+        "        iframe.src = 'https://apple.com/multiple-images.html';"
+        "        iframe.width = '100%';"
+        "        iframe.height = '700';"
+        "        iframe.style='border:none';"
+        "        document.body.appendChild(iframe);"
+        "    }"
+        "</script>"_s } },
+
+        { "/multiple-images.html"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"multiple-images" withExtension:@"html"]] } },
+        { "/large-red-square.png"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"large-red-square" withExtension:@"png"]] } },
+        { "/sunset-in-cupertino-200px.png"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"sunset-in-cupertino-200px" withExtension:@"png"]] } },
+        { "/test.jpg"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"jpg"]] } },
+        { "/400x400-green.png"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"400x400-green" withExtension:@"png"]] } },
+        { "/sunset-in-cupertino-100px.tiff"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"sunset-in-cupertino-100px" withExtension:@"tiff"]] } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    RetainPtr configuration = createWebViewConfigurationWithTextRecognitionEnhancements();
+
+    auto storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration]);
+    [storeConfiguration setHTTPSProxy:[NSURL URLWithString:[NSString stringWithFormat:@"https://127.0.0.1:%d/", server.port()]]];
+    [configuration setWebsiteDataStore:adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]).get()];
+
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    enableSiteIsolation(configuration.get());
+
+    RetainPtr webView = adoptNS([[TestWKWebViewImageAnalysisTests alloc] initWithFrame:CGRectMake(0, 0, 600, 600) configuration:configuration.get()]);
+    webView.get().navigationDelegate = navigationDelegate.get();
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    [webView _startImageAnalysis:nil target:nil];
+
+    [webView evaluateJavaScript: @"addCrossDomainIframe();" completionHandler:nil];
+    [webView waitForImageAnalysisRequests:5];
+
+    NSArray<NSString *> *overlaysAsText = [webView objectByEvaluatingJavaScript:@"imageOverlaysAsText();" inFrame:[webView firstChildFrame]];
+    EXPECT_EQ(overlaysAsText.count, 5U);
+    for (NSString *overlayText in overlaysAsText)
+        EXPECT_WK_STREQ(overlayText, @"Foo bar");
+
+    gDidProcessRequestCount = 0;
+}
+
+#endif // ENABLE(IMAGE_ANALYSIS)
 
 }

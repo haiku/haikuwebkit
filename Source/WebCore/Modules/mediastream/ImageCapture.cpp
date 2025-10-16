@@ -154,7 +154,7 @@ static void createImageBitmap(VideoFrame& videoFrame, CompletionHandler<void(Ref
     }
 
     if (hasPlatformStrategies()) {
-        platformStrategies()->mediaStrategy().nativeImageFromVideoFrame(videoFrame, [videoFrame = Ref { videoFrame }, imageBuffer = imageBuffer.releaseNonNull(), completionHandler = WTFMove(completionHandler)](auto&& nativeImage) mutable {
+        platformStrategies()->mediaStrategy()->nativeImageFromVideoFrame(videoFrame, [videoFrame = Ref { videoFrame }, imageBuffer = imageBuffer.releaseNonNull(), completionHandler = WTFMove(completionHandler)](auto&& nativeImage) mutable {
             if (!nativeImage) {
                 completionHandler(createImageBitmapViaDrawing(WTFMove(imageBuffer), videoFrame));
                 return;

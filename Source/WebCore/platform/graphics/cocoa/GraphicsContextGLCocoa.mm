@@ -801,7 +801,7 @@ RefPtr<VideoFrame> GraphicsContextGLCocoa::surfaceBufferToVideoFrame(SurfaceBuff
     if (!source || source.size() != getInternalFramebufferSize())
         return nullptr;
     // We will mirror and rotate the buffer explicitly. Thus the source being used is always a new one.
-    auto pixelBuffer = createCVPixelBuffer(source.surface()->surface());
+    auto pixelBuffer = createCVPixelBuffer(source.surface()->protectedSurface().get());
     if (!pixelBuffer)
         return nullptr;
     // Mirror and rotate the pixel buffer explicitly, as WebRTC encoders cannot mirror.
@@ -877,15 +877,15 @@ void GraphicsContextGLCocoa::insertFinishedSignalOrInvoke(Function<void()> signa
 {
     static std::atomic<uint64_t> nextSignalValue;
     uint64_t signalValue = ++nextSignalValue;
-    id<MTLSharedEvent> event = m_finishedMetalSharedEvent.get();
+    RetainPtr<id<MTLSharedEvent>> event = m_finishedMetalSharedEvent.get();
     // The block below has to be a real compiler generated block instead of BlockPtr due to a Metal bug. rdar://108035473
     __block Function<void()> blockSignal = WTFMove(signal);
     [event notifyListener:m_finishedMetalSharedEventListener.get() atValue:signalValue block:^(id<MTLSharedEvent>, uint64_t) {
         blockSignal();
     }];
-    auto* eglSync = createMetalSharedEventEGLSync(event, signalValue);
+    auto* eglSync = createMetalSharedEventEGLSync(event.get(), signalValue);
     if (!eglSync) [[unlikely]] {
-        event.signaledValue = signalValue;
+        event.get().signaledValue = signalValue;
         ASSERT_NOT_REACHED();
         return;
     }

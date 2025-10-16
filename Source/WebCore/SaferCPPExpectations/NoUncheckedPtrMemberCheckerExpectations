@@ -41,7 +41,7 @@ page/UndoManager.h
 platform/ScrollAnimator.h
 platform/Scrollbar.h
 platform/ScrollbarsController.h
-platform/graphics/TextBoxIterator.h
+platform/graphics/TextRunIterator.h
 platform/graphics/ca/TileCoverageMap.h
 platform/mac/VideoPresentationInterfaceMac.mm
 platform/mock/DeviceOrientationClientMock.h

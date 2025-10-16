@@ -57,7 +57,7 @@ AbstractHeapRepository::AbstractHeapRepository()
     FOR_EACH_ABSTRACT_HEAP(ABSTRACT_HEAP_INITIALIZATION)
 #undef ABSTRACT_HEAP_INITIALIZATION
 
-#define ABSTRACT_FIELD_INITIALIZATION(name, offset) , name(&root, #name, offset)
+#define ABSTRACT_FIELD_INITIALIZATION(name, offset, mutability) , name(&root, #name, offset, mutability)
     FOR_EACH_ABSTRACT_FIELD(ABSTRACT_FIELD_INITIALIZATION)
 #undef ABSTRACT_FIELD_INITIALIZATION
     
@@ -159,8 +159,12 @@ void AbstractHeapRepository::computeRangesAndDecorateInstructions()
         return HeapRange();
     };
 
-    for (HeapForValue entry : m_heapForMemory)
-        entry.value->as<MemoryValue>()->setRange(rangeFor(entry.heap));
+    for (HeapForValue entry : m_heapForMemory) {
+        auto* memoryValue = entry.value->as<MemoryValue>();
+        memoryValue->setRange(rangeFor(entry.heap));
+        if (memoryValue->isLoad())
+            memoryValue->setReadsMutability(entry.heap->mutability());
+    }
     for (HeapForValue entry : m_heapForCCallRead)
         entry.value->as<CCallValue>()->effects.reads = rangeFor(entry.heap);
     for (HeapForValue entry : m_heapForCCallWrite)

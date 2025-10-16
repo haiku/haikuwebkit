@@ -445,6 +445,7 @@
       "name": "API-Tests-iOS-Simulator-EWS", "shortname": "api-ios", "icon": "testOnly",
       "factory": "APITestsFactory", "platform": "*",
       "triggered_by": ["ios-18-sim-build-ews"],
+      "additionalArguments": ["--child-processes=3"],
       "workernames": ["ews156", "ews157", "ews158", "ews159", "ews160", "ews183", "ews254", "ews255", "ews256", "ews257", "ews258", "ews259"]
     },
     {

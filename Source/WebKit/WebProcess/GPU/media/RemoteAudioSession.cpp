@@ -49,7 +49,7 @@ Ref<RemoteAudioSession> RemoteAudioSession::create()
 
 RemoteAudioSession::RemoteAudioSession()
 {
-    addInterruptionObserver(*this);
+    AudioSession::addInterruptionObserver(*this);
 }
 
 RemoteAudioSession::~RemoteAudioSession()
@@ -57,7 +57,7 @@ RemoteAudioSession::~RemoteAudioSession()
     if (auto gpuProcessConnection = m_gpuProcessConnection.get())
         gpuProcessConnection->messageReceiverMap().removeMessageReceiver(Messages::RemoteAudioSession::messageReceiverName());
 
-    removeInterruptionObserver(*this);
+    AudioSession::removeInterruptionObserver(*this);
 }
 
 void RemoteAudioSession::gpuProcessConnectionDidClose(GPUProcessConnection& connection)
@@ -188,16 +188,16 @@ void RemoteAudioSession::configurationChanged(RemoteAudioSessionConfiguration&& 
 
 void RemoteAudioSession::beginInterruptionRemote()
 {
-    removeInterruptionObserver(*this);
+    AudioSession::removeInterruptionObserver(*this);
     beginInterruption();
-    addInterruptionObserver(*this);
+    AudioSession::addInterruptionObserver(*this);
 }
 
 void RemoteAudioSession::endInterruptionRemote(MayResume mayResume)
 {
-    removeInterruptionObserver(*this);
+    AudioSession::removeInterruptionObserver(*this);
     endInterruption(mayResume);
-    addInterruptionObserver(*this);
+    AudioSession::addInterruptionObserver(*this);
 }
 
 void RemoteAudioSession::beginAudioSessionInterruption()

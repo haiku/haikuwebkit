@@ -856,6 +856,11 @@ RenderLayerCompositor& RenderView::compositor()
     return *m_compositor;
 }
 
+CheckedRef<RenderLayerCompositor> RenderView::checkedCompositor()
+{
+    return compositor();
+}
+
 void RenderView::setIsInWindow(bool isInWindow)
 {
     if (m_compositor)

@@ -31,9 +31,10 @@
 
 #include "AXObjectCacheInlines.h"
 #include "AXUtilities.h"
-#include "AccessibilityObject.h"
+#include "AccessibilityObjectInlines.h"
 #include "AccessibilityRenderObject.h"
 #include "ContainerNodeInlines.h"
+#include "FrameDestructionObserverInlines.h"
 #include "HTMLElement.h"
 #include "HTMLNames.h"
 #include "PseudoElement.h"

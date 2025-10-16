@@ -135,6 +135,14 @@ template<> std::optional<JSC::JSValue> jsValueForDecodedMessageReply<MessageName
     return jsValueForDecodedArguments<Messages::TestWithStream::SendAndReceiveMachSendRight::ReplyArguments>(globalObject, decoder);
 }
 #endif
+template<> std::optional<JSC::JSValue> jsValueForDecodedMessage<MessageName::TestWithStream_SendStringAsyncReply>(JSC::JSGlobalObject* globalObject, Decoder& decoder)
+{
+    return jsValueForDecodedArguments<Messages::TestWithStream::SendStringAsyncReply::Arguments>(globalObject, decoder);
+}
+template<> std::optional<JSC::JSValue> jsValueForDecodedMessage<MessageName::TestWithStream_CallWithIdentifierReply>(JSC::JSGlobalObject* globalObject, Decoder& decoder)
+{
+    return jsValueForDecodedArguments<Messages::TestWithStream::CallWithIdentifierReply::Arguments>(globalObject, decoder);
+}
 
 }
 

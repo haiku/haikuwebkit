@@ -8,12 +8,8 @@ if (window.testRunner) {
     testRunner.waitUntilDone();
 }
 
-if (window.internals) {
-    internals.setConsoleMessageListener((message) => {
-        if (message.startsWith("Blocked access to external URL"))
-            testRunner.notifyDone();
-    });
-}
+window.internals?.setConsoleMessageListener((message) => { testRunner.notifyDone(); });
+
 </script>
 </head>
 <body>

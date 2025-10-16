@@ -40,7 +40,8 @@
 namespace TestWebKitAPI {
 
 namespace {
-static constexpr Seconds defaultTimeout = 1_s;
+// Default timeout must be long enough that taxed system still is likely to not get false negatives.
+static constexpr Seconds defaultTimeout = 100_s;
 static constexpr unsigned defaultBufferSizeLog2 = 8;
 
 
@@ -349,11 +350,16 @@ public:
     void TearDown() override
     {
         m_clientConnection->invalidate();
-        serverQueue().dispatch([&] {
-            assertIsCurrent(serverQueue());
-            m_serverConnection->stopReceivingMessages(IPC::receiverName(MockStreamTestMessage1::name()), defaultDestinationID().toUInt64());
-            m_serverConnection->invalidate();
-        });
+        {
+            serverQueue().dispatch([&] {
+                assertIsCurrent(serverQueue());
+                m_serverConnection->stopReceivingMessages(IPC::receiverName(MockStreamTestMessage1::name()), defaultDestinationID().toUInt64());
+                m_serverConnection->invalidate();
+            });
+            localReferenceBarrier();
+        }
+        EXPECT_TRUE(m_mockClientReceiver->checkMessages());
+        EXPECT_TRUE(m_mockServerReceiver->checkMessages());
         teardownBase();
     }
 
@@ -658,11 +664,16 @@ public:
     void TearDown() override
     {
         m_clientConnection->invalidate();
-        serverQueue().dispatch([&] {
-            assertIsCurrent(serverQueue());
-            m_serverConnection->stopReceivingMessages(IPC::receiverName(MockStreamTestMessage1::name()), defaultDestinationID().toUInt64());
-            m_serverConnection->invalidate();
-        });
+        {
+            serverQueue().dispatch([&] {
+                assertIsCurrent(serverQueue());
+                m_serverConnection->stopReceivingMessages(IPC::receiverName(MockStreamTestMessage1::name()), defaultDestinationID().toUInt64());
+                m_serverConnection->invalidate();
+            });
+            localReferenceBarrier();
+        }
+        EXPECT_TRUE(m_mockClientReceiver->checkMessages());
+        EXPECT_TRUE(m_mockServerReceiver->checkMessages());
         teardownBase();
     }
 
@@ -682,12 +693,11 @@ protected:
 TEST_P(StreamServerDidReceiveInvalidMessageTest, Async)
 {
     constexpr uint64_t messageCount = 2u;
-    for (uint64_t i = 0u; i < messageCount; ++i) {
-        auto result = m_clientConnection->send(MockStreamTestMessage1 { }, defaultDestinationID());
-        ASSERT_EQ(result, IPC::Error::NoError);
-    }
-    auto flushResult = m_clientConnection->flushSentMessages();
-    EXPECT_EQ(flushResult, IPC::Error::NoError);
+    // Note: here we do not check for errors, since the receiver might already have closed the connection and as such
+    // we would get a InvalidConnection.
+    for (uint64_t i = 0u; i < messageCount; ++i)
+        m_clientConnection->send(MockStreamTestMessage1 { }, defaultDestinationID());
+    m_clientConnection->flushSentMessages();
 
     std::optional invalidMessageName = m_mockServerReceiver->waitForInvalidMessage(defaultTimeout);
     ASSERT_TRUE(invalidMessageName.has_value());
@@ -697,12 +707,11 @@ TEST_P(StreamServerDidReceiveInvalidMessageTest, Async)
 TEST_P(StreamServerDidReceiveInvalidMessageTest, AsyncNotStreamEncodable)
 {
     constexpr uint64_t messageCount = 2u;
-    for (uint64_t i = 0u; i < messageCount; ++i) {
-        auto result = m_clientConnection->send(MockStreamTestMessageNotStreamEncodable { IPC::Semaphore { } }, defaultDestinationID());
-        ASSERT_EQ(result, IPC::Error::NoError);
-    }
-    auto flushResult = m_clientConnection->flushSentMessages();
-    EXPECT_EQ(flushResult, IPC::Error::NoError);
+    // Note: here we do not check for send errors, since the receiver might already have closed the connection and as such
+    // we would get a InvalidConnection.
+    for (uint64_t i = 0u; i < messageCount; ++i)
+        m_clientConnection->send(MockStreamTestMessageNotStreamEncodable { IPC::Semaphore { } }, defaultDestinationID());
+    m_clientConnection->flushSentMessages();
 
     std::optional invalidMessageName = m_mockServerReceiver->waitForInvalidMessage(defaultTimeout);
     ASSERT_TRUE(invalidMessageName.has_value());
@@ -721,8 +730,7 @@ TEST_P(StreamServerDidReceiveInvalidMessageTest, AsyncWithReply)
         }, defaultDestinationID());
         EXPECT_TRUE(!!result);
     }
-    auto flushResult = m_clientConnection->flushSentMessages();
-    EXPECT_EQ(flushResult, IPC::Error::NoError);
+    m_clientConnection->flushSentMessages();
 
     std::optional invalidMessageName = m_mockServerReceiver->waitForInvalidMessage(defaultTimeout);
     ASSERT_TRUE(invalidMessageName.has_value());

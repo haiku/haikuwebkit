@@ -140,6 +140,7 @@ namespace WebCore {
     WEBCORE_EXPORT String contextMenuItemTagSmartQuotes();
     WEBCORE_EXPORT String contextMenuItemTagSmartDashes();
     WEBCORE_EXPORT String contextMenuItemTagSmartLinks();
+    WEBCORE_EXPORT String contextMenuItemTagSmartLists();
     WEBCORE_EXPORT String contextMenuItemTagTextReplacement();
     WEBCORE_EXPORT String contextMenuItemTagTransformationsMenu();
     WEBCORE_EXPORT String contextMenuItemTagMakeUpperCase();

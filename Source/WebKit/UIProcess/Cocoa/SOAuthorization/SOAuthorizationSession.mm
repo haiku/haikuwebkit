@@ -346,6 +346,14 @@ void SOAuthorizationSession::complete(NSHTTPURLResponse *httpResponse, NSData *d
         return;
     }
 
+    // https://bugs.webkit.org/show_bug.cgi?id=299083
+    if (!cookies.isEmpty()) {
+        size_t totalHeaderSize = 0;
+        for (const auto& cookie : cookies)
+            totalHeaderSize += cookie.name.length() + cookie.value.length() + 1;
+        AUTHORIZATIONSESSION_RELEASE_LOG("complete: Setting %zu cookies with total header size ~%zu bytes in data store %p", cookies.size(), totalHeaderSize, page->protectedWebsiteDataStore().ptr());
+    }
+
     page->protectedWebsiteDataStore()->protectedCookieStore()->setCookies(WTFMove(cookies), [weakThis = ThreadSafeWeakPtr { *this }, response = WTFMove(response), data = adoptNS([[NSData alloc] initWithData:data])] () mutable {
         auto protectedThis = weakThis.get();
         if (!protectedThis)

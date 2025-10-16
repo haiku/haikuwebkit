@@ -117,11 +117,15 @@ skip:
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Inherited.js
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Kannada.js
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Latin.js
+    - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Nandinagari.js
+    - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Newa.js
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Oriya.js
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sharada.js
+    - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Syriac.js
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tangut.js
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Telugu.js
     - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tifinagh.js
+    - test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tirhuta.js
     - test/built-ins/RegExp/property-escapes/generated/Unified_Ideograph.js
     - test/built-ins/RegExp/property-escapes/generated/Uppercase.js
     - test/built-ins/RegExp/property-escapes/generated/XID_Continue.js

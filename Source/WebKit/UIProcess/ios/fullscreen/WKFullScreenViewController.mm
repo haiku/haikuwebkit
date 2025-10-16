@@ -736,8 +736,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     CGSize buttonSize;
     UIImage *doneImage;
-    UIImage *startPiPImage;
-    UIImage *stopPiPImage;
 
     // FIXME: Rename `alternateFullScreenControlDesignEnabled` to something that explains it is for visionOS.
     auto alternateFullScreenControlDesignEnabled = self._webView._page->preferences().alternateFullScreenControlDesignEnabled();
@@ -745,14 +743,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (alternateFullScreenControlDesignEnabled) {
         buttonSize = CGSizeMake(44.0, 44.0);
         doneImage = [UIImage systemImageNamed:@"arrow.down.right.and.arrow.up.left"];
-        startPiPImage = nil;
-        stopPiPImage = nil;
     } else {
         buttonSize = CGSizeMake(60.0, 47.0);
         NSBundle *bundle = [NSBundle bundleForClass:self.class];
         doneImage = [UIImage imageNamed:@"Done" inBundle:bundle compatibleWithTraitCollection:nil];
-        startPiPImage = [UIImage imageNamed:@"StartPictureInPictureButton" inBundle:bundle compatibleWithTraitCollection:nil];
-        stopPiPImage = [UIImage imageNamed:@"StopPictureInPictureButton" inBundle:bundle compatibleWithTraitCollection:nil];
     }
     
     [self setView:adoptNS([[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)]).get()];
@@ -771,14 +765,21 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [_cancelButton setConfiguration:UIButtonConfiguration.filledButtonConfiguration];
 #endif
 
+    _pipButton = [self _createButtonWithExtrinsicContentSize:buttonSize];
+    [_pipButton setImage:[UIImage systemImageNamed:@"pip.enter"] forState:UIControlStateNormal];
+    [_pipButton setImage:[UIImage systemImageNamed:@"pip.exit"] forState:UIControlStateSelected];
+    [_pipButton sizeToFit];
+    [_pipButton addTarget:self action:@selector(_togglePiPAction:) forControlEvents:UIControlEventTouchUpInside];
+
     if (alternateFullScreenControlDesignEnabled) {
-        UIButtonConfiguration *cancelButtonConfiguration = [UIButtonConfiguration filledButtonConfiguration];
-        [_cancelButton setConfiguration:cancelButtonConfiguration];
+        UIButtonConfiguration *buttonConfiguration = [UIButtonConfiguration filledButtonConfiguration];
+        [_cancelButton setConfiguration:buttonConfiguration];
+        [_pipButton setConfiguration:buttonConfiguration];
 
 #if PLATFORM(VISION)
         // FIXME: I think PLATFORM(VISION) is always true when `alternateFullScreenControlDesignEnabled` is true.
         _moreActionsButton = [self _createButtonWithExtrinsicContentSize:buttonSize];
-        [_moreActionsButton setConfiguration:cancelButtonConfiguration];
+        [_moreActionsButton setConfiguration:buttonConfiguration];
         [_moreActionsButton setMenu:self._webView.fullScreenWindowSceneDimmingAction];
         [_moreActionsButton setShowsMenuAsPrimaryAction:YES];
         [_moreActionsButton setImage:[[UIImage systemImageNamed:@"ellipsis"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
@@ -802,12 +803,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
         [_stackView setSpacing:24.0];
     } else {
-        _pipButton = [self _createButtonWithExtrinsicContentSize:buttonSize];
-        [_pipButton setImage:[startPiPImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_pipButton setImage:[stopPiPImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateSelected];
-        [_pipButton sizeToFit];
-        [_pipButton addTarget:self action:@selector(_togglePiPAction:) forControlEvents:UIControlEventTouchUpInside];
-
         RetainPtr<WKFullscreenStackView> stackView = adoptNS([[WKFullscreenStackView alloc] init]);
 #if PLATFORM(APPLETV)
         [stackView addArrangedSubview:_cancelButton.get()];

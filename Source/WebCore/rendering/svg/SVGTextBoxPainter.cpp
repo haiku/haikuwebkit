@@ -30,6 +30,7 @@
 #include "GraphicsContextStateSaver.h"
 #include "LegacyRenderSVGResourceSolidColor.h"
 #include "RenderInline.h"
+#include "RenderObjectDocument.h"
 #include "RenderSVGInlineText.h"
 #include "RenderSVGText.h"
 #include "SVGInlineTextBox.h"
@@ -37,6 +38,7 @@
 #include "SVGRenderStyle.h"
 #include "SVGResourcesCache.h"
 #include "SVGTextFragment.h"
+#include "Settings.h"
 #include "StyleTextShadow.h"
 #include "TextPainter.h"
 
@@ -606,7 +608,7 @@ void SVGTextBoxPainter<TextBoxPath>::paintTextWithShadows(const RenderStyle& sty
                 }
             }
 
-            ShadowApplier shadowApplier(style, *usedContext, shadow, nullptr, shadowRect, lastShadowInIteration);
+            ShadowApplier shadowApplier(style, *usedContext, shadow, Style::AppleColorFilter::none(), shadowRect, lastShadowInIteration);
 
             if (!shadowApplier.didSaveContext())
                 usedContext->save();

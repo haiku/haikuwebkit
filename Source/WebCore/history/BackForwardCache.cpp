@@ -26,7 +26,6 @@
 #include "config.h"
 #include "BackForwardCache.h"
 
-#include "ApplicationCacheHost.h"
 #include "BackForwardController.h"
 #include "CachedPage.h"
 #include "DeviceMotionController.h"
@@ -175,13 +174,6 @@ static bool canCacheFrame(LocalFrame& frame, DiagnosticLoggingClient& diagnostic
         isCacheable = false;
     }
 
-    // FIXME: We should investigating caching frames that have an associated
-    // application cache. <rdar://problem/5917899> tracks that work.
-    if (!documentLoader->applicationCacheHost().canCacheInBackForwardCache()) {
-        PCLOG("   -The DocumentLoader uses an application cache"_s);
-        logBackForwardCacheFailureDiagnosticMessage(diagnosticLoggingClient, DiagnosticLoggingKeys::applicationCacheKey());
-        isCacheable = false;
-    }
     if (!frameLoader->client().canCachePage()) {
         PCLOG("   -The client says this frame cannot be cached"_s);
         logBackForwardCacheFailureDiagnosticMessage(diagnosticLoggingClient, DiagnosticLoggingKeys::deniedByClientKey());

@@ -80,12 +80,6 @@ public:
     bool hasFilterOfType() const;
 
     bool hasReferenceFilter() const;
-    bool isReferenceFilter() const;
-
-    bool transformColor(Color&) const;
-    bool inverseTransformColor(Color&) const;
-
-    bool requiresRepaintForCurrentColorChange() const;
 
     WEBCORE_EXPORT bool canInterpolate(const FilterOperations&, CompositeOperation) const;
     WEBCORE_EXPORT FilterOperations blend(const FilterOperations&, const BlendingContext&) const;

@@ -64,7 +64,7 @@ class CSSFontFace final : public RefCountedAndCanMakeWeakPtr<CSSFontFace> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CSSFontFace, CSSFontFace);
 public:
     static Ref<CSSFontFace> create(CSSFontSelector&, StyleRuleFontFace* cssConnection = nullptr, FontFace* wrapper = nullptr, bool isLocalFallback = false);
-    virtual ~CSSFontFace();
+    ~CSSFontFace();
 
     void setFamily(CSSValue&);
     void setStyle(CSSValue&);

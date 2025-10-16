@@ -1536,7 +1536,7 @@ struct WebCore::PushSubscriptionData {
 [RefCounted] class WebCore::Report {
     String type()
     String url()
-    RefPtr<WebCore::ReportBody> body()
+    RefPtr<WebCore::ReportBody> protectedBody()
 };
 
 [RefCounted] class WebCore::TestReportBody {
@@ -3004,7 +3004,7 @@ header: <WebCore/KeyboardScroll.h>
 }
 
 [RefCounted] class WebCore::PerspectiveTransformOperation {
-    std::optional<WebCore::Length> perspective();
+    std::optional<float> perspective();
 }
 
 [RefCounted] class WebCore::MatrixTransformOperation {
@@ -3060,6 +3060,7 @@ class WebCore::TransformOperations {
     WebCore::ColorInterpolationMethod colorInterpolationMethod();
     WebCore::GradientSpreadMethod spreadMethod();
     WebCore::GradientColorStops stops();
+    bool isTransient();
 }
 
 header: <WebCore/Pattern.h>
@@ -3143,11 +3144,6 @@ enum class WebCore::GraphicsContextGLSimulatedEventForTesting : uint8_t {
 struct WebCore::LengthPoint {
     WebCore::Length x;
     WebCore::Length y;
-}
-
-struct WebCore::LengthSize {
-    WebCore::Length width;
-    WebCore::Length height;
 }
 
 class WebCore::SVGPathByteStream {
@@ -3670,7 +3666,7 @@ enum class WebCore::ResourceLoadPriority : uint8_t {
     MemoryCache,
     MemoryCacheAfterValidation,
     ServiceWorker,
-    ApplicationCache,
+    LegacyApplicationCachePlaceholder,
     DOMCache,
     InspectorOverride
 };
@@ -6612,6 +6608,8 @@ header: <WebCore/ISOVTTCue.h>
 
 [Nested] struct WebCore::MockWebAuthenticationConfiguration::HidConfiguration {
     Vector<String> payloadBase64;
+    Vector<String> expectedCommandsBase64;
+    bool validateExpectedCommands;
     WebCore::MockWebAuthenticationConfiguration::HidStage stage;
     WebCore::MockWebAuthenticationConfiguration::HidSubStage subStage;
     WebCore::MockWebAuthenticationConfiguration::HidError error;
@@ -7059,6 +7057,12 @@ header: <WebCore/TextExtractionTypes.h>
 };
 
 header: <WebCore/TextExtractionTypes.h>
+[CustomHeader] struct WebCore::TextExtraction::InteractionDescription {
+    String description;
+    Vector<String> stringsToValidate;
+};
+
+header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::Request {
     std::optional<WebCore::FloatRect> collectionRectInRootView;
     bool mergeParagraphs;
@@ -7132,6 +7136,7 @@ header: <WebCore/TextExtractionTypes.h>
     Section,
     Nav,
     Button,
+    Canvas,
     Generic
 };
 
@@ -7904,11 +7909,11 @@ class WebCore::FilterOperations {
 #endif // !USE(COORDINATED_GRAPHICS)
 
 [AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::Filter subclasses {
-    WebCore::CSSFilter
-    WebCore::SVGFilter
+    WebCore::CSSFilterRenderer
+    WebCore::SVGFilterRenderer
 }
 
-[AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::CSSFilter {
+[AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::CSSFilterRenderer {
     Vector<Ref<WebCore::FilterFunction>> functions();
 
     OptionSet<WebCore::FilterRenderingMode> filterRenderingModes();
@@ -7916,11 +7921,11 @@ class WebCore::FilterOperations {
     WebCore::FloatRect filterRegion();
 }
 
-[AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::SVGFilter {
+[AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::SVGFilterRenderer {
     WebCore::FloatRect targetBoundingBox();
     WebCore::SVGUnitTypes::SVGUnitType primitiveUnits();
     WebCore::SVGFilterExpression expression();
-    [Validator='WebCore::SVGFilter::isValidSVGFilterExpression(*expression, *effects)'] Vector<Ref<WebCore::FilterEffect>> effects();
+    [Validator='WebCore::SVGFilterRenderer::isValidSVGFilterExpression(*expression, *effects)'] Vector<Ref<WebCore::FilterEffect>> effects();
     std::optional<WebCore::RenderingResourceIdentifier> renderingResourceIdentifierIfExists();
 
     OptionSet<WebCore::FilterRenderingMode> filterRenderingModes();
@@ -8036,7 +8041,7 @@ enum class WebCore::PaginationMode : uint8_t {
     BottomToTopPaginated
 };
 
-header: <WebCore/RenderObject.h>
+header: <WebCore/RepaintRectCalculation.h>
 enum class WebCore::RepaintRectCalculation : bool;
 
 [Nested] enum class WebCore::HdrMetadataType : uint8_t {
@@ -8272,7 +8277,7 @@ header: <WebCore/SharedBuffer.h>
     [Validator='WebCore::FilterOperation::isBasicComponentTransferFilterOperationType(*type)'] WebCore::FilterOperation::Type type();
 };
 [CustomHeader, RefCounted] class WebCore::BlurFilterOperation {
-    WebCore::Length stdDeviation();
+    float stdDeviation();
 };
 [CustomHeader, RefCounted] class WebCore::DropShadowFilterOperation {
     WebCore::IntPoint location();
@@ -8494,7 +8499,7 @@ struct WebCore::Length {
 };
 
 [AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::FilterFunction subclasses {
-    WebCore::SVGFilter
+    WebCore::SVGFilterRenderer
     WebCore::FEBlend
     WebCore::FEColorMatrix
     WebCore::FEComponentTransfer
@@ -8855,8 +8860,8 @@ header: <WebCore/FilterOperation.h>
 
 header: <WebCore/FilterFunction.h>
 [Nested] enum class WebCore::FilterFunction::Type : uint8_t {
-    CSSFilter,
-    SVGFilter,
+    CSSFilterRenderer,
+    SVGFilterRenderer,
     FEBlend,
     FEColorMatrix,
     FEComponentTransfer,
@@ -9268,15 +9273,16 @@ enum class WebCore::DOMAudioSessionType : uint8_t {
 };
 #endif
 
-header: <WebCore/MediaSample.h>
-[Nested] enum class WebCore::TrackInfo::TrackType : uint8_t {
+header: <WebCore/TrackInfo.h>
+[Nested] enum class WebCore::TrackInfoTrackType : uint8_t {
     Unknown,
     Audio,
-    Video
+    Video,
+    Text
 };
 
-header: <WebCore/MediaSample.h>
-[Nested] class WebCore::MediaSamplesBlock::MediaSampleItem {
+header: <WebCore/MediaSamplesBlock.h>
+[CustomHeader, Nested] class WebCore::MediaSamplesBlock::MediaSampleItem {
     MediaTime presentationTime;
     MediaTime decodeTime;
     MediaTime duration;
@@ -9394,5 +9400,13 @@ struct WebCore::ParentalControlsURLFilterParameters {
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
     String configurationPath;
 #endif
+};
+#endif
+
+#if ENABLE(IMAGE_ANALYSIS)
+header: <WebCore/ImageAnalysisQueue.h>
+[CustomHeader] struct WebCore::ImageTranslationLanguageIdentifiers {
+    String source;
+    String target;
 };
 #endif

@@ -88,6 +88,7 @@ public:
 #endif
 
     void flush();
+    void shutdown();
 
     void expectMinimumUpcomingSampleBufferPresentationTime(const MediaTime&);
 
@@ -116,6 +117,8 @@ public:
     void setResourceOwner(const ProcessIdentity&);
 
     static WorkQueue& queueSingleton();
+
+    void invalidateDecompressionSession();
 
 private:
     VideoMediaSampleRenderer(WebSampleBufferVideoRendering *);
@@ -158,6 +161,7 @@ private:
 
     void assignResourceOwner(const MediaSample&);
     bool areSamplesQueuesReadyForMoreMediaData(size_t waterMark) const;
+    size_t compressedSamplesCount() const;
     void maybeBecomeReadyForMoreMediaData();
     bool shouldDecodeSample(const MediaSample&);
 
@@ -192,6 +196,7 @@ private:
     std::atomic<FlushId> m_flushId { 0 };
     Deque<std::tuple<Ref<const MediaSample>, MediaTime, FlushId, bool>> m_compressedSampleQueue WTF_GUARDED_BY_CAPABILITY(dispatcher().get());
     std::atomic<uint32_t> m_compressedSamplesCount { 0 };
+    std::atomic<uint32_t> m_pendingSamplesCount { 0 };
     MediaSampleReorderQueue m_decodedSampleQueue WTF_GUARDED_BY_CAPABILITY(dispatcher().get());
     RefPtr<WebCoreDecompressionSession> m_decompressionSession WTF_GUARDED_BY_LOCK(m_lock);
     bool m_decompressionSessionBlocked WTF_GUARDED_BY_CAPABILITY(mainThread) { false };

@@ -311,7 +311,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
     }
 
     RunLoop::mainSingleton().dispatch([targetURL = m_url.isolatedCopy(), mainFrameURL = context->url().isolatedCopy()]() {
-        ResourceLoadObserver::shared().logWebSocketLoading(targetURL, mainFrameURL);
+        ResourceLoadObserver::singleton().logWebSocketLoading(targetURL, mainFrameURL);
     });
 
     if (RefPtr document = dynamicDowncast<Document>(context)) {
@@ -430,7 +430,7 @@ ExceptionOr<void> WebSocket::close(std::optional<unsigned short> optionalCode, c
             return Exception { ExceptionCode::InvalidAccessError };
         CString utf8 = reason.utf8(StrictConversionReplacingUnpairedSurrogatesWithFFFD);
         if (utf8.length() > maxReasonSizeInBytes) {
-            scriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, "WebSocket close message is too long."_s);
+            protectedScriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, "WebSocket close message is too long."_s);
             return Exception { ExceptionCode::SyntaxError };
         }
     }

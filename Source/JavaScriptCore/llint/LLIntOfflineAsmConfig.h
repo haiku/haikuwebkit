@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <JavaScriptCore/InPlaceInterpreter.h>
 #include <JavaScriptCore/LLIntCommon.h>
 #include <JavaScriptCore/StructureID.h>
 #include <wtf/Assertions.h>

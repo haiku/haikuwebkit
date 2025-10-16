@@ -304,14 +304,14 @@ static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
 #if USE(AVFOUNDATION)
     auto& registerRemoteEngine = registerRemotePlayerCallback();
 #if ENABLE(MEDIA_SOURCE)
-    if (registerRemoteEngine && platformStrategies()->mediaStrategy().mockMediaSourceEnabled())
+    if (registerRemoteEngine && platformStrategies()->mediaStrategy()->mockMediaSourceEnabled())
         registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::MockMSE);
 #endif
 
     if (DeprecatedGlobalSettings::isAVFoundationEnabled()) {
 
 #if ENABLE(COCOA_WEBM_PLAYER)
-        if (!hasPlatformStrategies() || platformStrategies()->mediaStrategy().enableWebMMediaPlayer()) {
+        if (!hasPlatformStrategies() || platformStrategies()->mediaStrategy()->enableWebMMediaPlayer()) {
             if (registerRemoteEngine)
                 registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::CocoaWebM);
             else
@@ -1873,7 +1873,7 @@ AVPlayer* MediaPlayer::objCAVFoundationAVPlayer() const
 
 #endif
 
-bool MediaPlayer::performTaskAtTime(Function<void()>&& task, const MediaTime& time)
+bool MediaPlayer::performTaskAtTime(Function<void(const MediaTime&)>&& task, const MediaTime& time)
 {
     return protectedPrivate()->performTaskAtTime(WTFMove(task), time);
 }

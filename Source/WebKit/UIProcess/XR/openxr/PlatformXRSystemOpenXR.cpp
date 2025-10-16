@@ -23,14 +23,15 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if ENABLE(WEBXR) && USE(OPENXR)
-
 #include "config.h"
 #include "PlatformXRSystem.h"
+
+#if ENABLE(WEBXR) && USE(OPENXR)
 
 #include "PlatformXROpenXR.h"
 #include "WebPageProxy.h"
 #include <wtf/NeverDestroyed.h>
+#include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {
 

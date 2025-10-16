@@ -62,6 +62,7 @@ enum class LinkTimeConstant : int32_t;
     macro(getRegExpStringIteratorInternalField) \
     macro(getProxyInternalField) \
     macro(getWrapForValidIteratorInternalField) \
+    macro(getPromiseAllContextInternalField) \
     macro(getDisposableStackInternalField) \
     macro(idWithProfile) \
     macro(isAsyncDisposableStack) \
@@ -76,6 +77,7 @@ enum class LinkTimeConstant : int32_t;
     macro(isIteratorHelper) \
     macro(isAsyncGenerator) \
     macro(isPromise) \
+    macro(isPromiseAllContext) \
     macro(isRegExpObject) \
     macro(isMap) \
     macro(isSet) \
@@ -108,6 +110,7 @@ enum class LinkTimeConstant : int32_t;
     macro(putMapIteratorInternalField) \
     macro(putSetIteratorInternalField) \
     macro(putRegExpStringIteratorInternalField) \
+    macro(putPromiseAllContextInternalField) \
     macro(putDisposableStackInternalField) \
     macro(superSamplerBegin) \
     macro(superSamplerEnd) \
@@ -199,6 +202,10 @@ enum class LinkTimeConstant : int32_t;
     macro(abstractModuleRecordFieldState) \
     macro(wrapForValidIteratorFieldIteratedIterator) \
     macro(wrapForValidIteratorFieldIteratedNextMethod) \
+    macro(promiseAllContextFieldPromise) \
+    macro(promiseAllContextFieldValues) \
+    macro(promiseAllContextFieldRemainingElementsCount) \
+    macro(promiseAllContextFieldIndex) \
     macro(regExpStringIteratorFieldRegExp) \
     macro(regExpStringIteratorFieldString) \
     macro(regExpStringIteratorFieldGlobal) \

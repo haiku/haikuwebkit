@@ -2240,7 +2240,7 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
         if (gst_structure_has_name(structure, "http-headers")) {
             GST_DEBUG_OBJECT(pipeline(), "Processing HTTP headers: %" GST_PTR_FORMAT, structure);
             if (auto uri = gstStructureGetString(structure, "uri"_s)) {
-                URL url { makeString(uri) };
+                URL url { uri.toString() };
 
                 if (url != m_url) {
                     GST_DEBUG_OBJECT(pipeline(), "Ignoring HTTP response headers for non-main URI.");
@@ -2265,7 +2265,7 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
                     // handle it here, until we remove the webkit+ protocol
                     // prefix from webkitwebsrc.
                     if (auto contentLengthValue = gstStructureGetString(responseHeaders.get(), contentLengthHeaderName)) {
-                        if (auto parsedContentLength = parseInteger<uint64_t>(contentLengthValue))
+                        if (auto parsedContentLength = parseInteger<uint64_t>(contentLengthValue.toString()))
                             contentLength = *parsedContentLength;
                     }
                 } else
@@ -3019,7 +3019,7 @@ bool MediaPlayerPrivateGStreamer::loadNextLocation()
         return false;
 
     const GValue* locations = gst_structure_get_value(m_mediaLocations.get(), "locations");
-    StringView newLocation;
+    CStringView newLocation;
 
     if (!locations) {
         // Fallback on new-location string.
@@ -3028,7 +3028,7 @@ bool MediaPlayerPrivateGStreamer::loadNextLocation()
             return false;
     }
 
-    if (!newLocation) {
+    if (newLocation.isEmpty()) {
         if (m_mediaLocationCurrentIndex < 0) {
             m_mediaLocations.reset();
             return false;
@@ -3045,11 +3045,11 @@ bool MediaPlayerPrivateGStreamer::loadNextLocation()
         newLocation = gstStructureGetString(structure, "new-location"_s);
     }
 
-    if (newLocation) {
+    if (!newLocation.isEmpty()) {
         // Found a candidate. new-location is not always an absolute url
         // though. We need to take the base of the current url and
         // append the value of new-location to it.
-        auto locationString = makeString(newLocation);
+        auto locationString = newLocation.toString();
         URL baseURL = gst_uri_is_valid(locationString.utf8().data()) ? URL() : m_url;
         URL newURL = URL(baseURL, WTFMove(locationString));
 
@@ -3598,7 +3598,7 @@ void MediaPlayerPrivateGStreamer::acceleratedRenderingStateChanged()
     m_canRenderingBeAccelerated = player && player->acceleratedCompositingEnabled();
 }
 
-bool MediaPlayerPrivateGStreamer::performTaskAtTime(Function<void()>&& task, const MediaTime& time)
+bool MediaPlayerPrivateGStreamer::performTaskAtTime(Function<void(const MediaTime&)>&& task, const MediaTime& time)
 {
     ASSERT(isMainThread());
 
@@ -3610,8 +3610,10 @@ bool MediaPlayerPrivateGStreamer::performTaskAtTime(Function<void()>&& task, con
     std::optional<Function<void()>> taskToSchedule;
     {
         DataMutexLocker taskAtMediaTimeScheduler { m_TaskAtMediaTimeSchedulerDataMutex };
-        taskAtMediaTimeScheduler->setTask(WTFMove(task), time,
-            m_playbackRate >= 0 ? TaskAtMediaTimeScheduler::Forward : TaskAtMediaTimeScheduler::Backward);
+        taskAtMediaTimeScheduler->setTask([weakThis = ThreadSafeWeakPtr { *this }, task = WTFMove(task)]() mutable {
+            if (RefPtr protectedThis = weakThis.get())
+                task(protectedThis->currentTime());
+        }, time, m_playbackRate >= 0 ? TaskAtMediaTimeScheduler::Forward : TaskAtMediaTimeScheduler::Backward);
         taskToSchedule = taskAtMediaTimeScheduler->checkTaskForScheduling(currentTime);
     }
 

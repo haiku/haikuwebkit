@@ -34,5 +34,13 @@ promise_test(async t => {
 
   assert_equals(document.activeViewTransition, null, "activeViewTransition is null after transition finishes");
 
+
+  const transition2 = document.startViewTransition(() => {});
+  assert_equals(document.activeViewTransition, transition2, "activeViewTransition returns the running transition (2)");
+
+  transition2.skipTransition();
+
+  assert_equals(document.activeViewTransition, null, "activeViewTransition is null after transition is skipped");
+
 }, "document.activeViewTransition returns the active transition");
 </script>

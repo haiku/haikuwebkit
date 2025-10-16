@@ -34,6 +34,7 @@
 #include "HTMLTableSectionElement.h"
 #include "NodeList.h"
 #include "NodeRareData.h"
+#include "NodeInlines.h"
 #include "Text.h"
 #include <wtf/TZoneMallocInlines.h>
 

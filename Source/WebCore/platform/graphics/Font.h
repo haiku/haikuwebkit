@@ -228,7 +228,8 @@ public:
     bool shouldNotBeUsedForArabic() const { return m_shouldNotBeUsedForArabic; };
 #endif
 #if USE(CORE_TEXT)
-    CTFontRef getCTFont() const { return m_platformData.ctFont(); }
+    CTFontRef ctFont() const { return m_platformData.ctFont(); }
+    RetainPtr<CTFontRef> protectedCTFont() const { return ctFont(); }
     RetainPtr<CFDictionaryRef> getCFStringAttributes(bool enableKerning, FontOrientation, const AtomString& locale) const;
     bool supportsSmallCaps() const;
     bool supportsAllSmallCaps() const;

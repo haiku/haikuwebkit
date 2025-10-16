@@ -67,7 +67,6 @@ public:
     void ref() const { m_document->ref(); }
     void deref() const { m_document->deref(); }
 
-    void didAddTransition(const Element&, const Animation&);
     void didFinishTransition(const Element&, CSSPropertyID);
     void didRemoveTransition(const Element&, CSSPropertyID);
 

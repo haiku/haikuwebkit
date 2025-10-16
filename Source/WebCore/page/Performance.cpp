@@ -318,7 +318,7 @@ void Performance::processEventEntry(const PerformanceEventTimingCandidate& candi
     static constexpr Seconds minDurationCutoffBeforeRounding = PerformanceEventTiming::minimumDurationThreshold - (PerformanceEventTiming::durationResolution / 2);
     static constexpr Seconds defaultDurationCutoffBeforeRounding = PerformanceEventTiming::defaultDurationThreshold - (PerformanceEventTiming::durationResolution / 2);
 
-    if (!m_firstInput && candidate.interactionID.value) {
+    if (!m_firstInput && !candidate.interactionID.isUnassigned()) {
         m_firstInput = PerformanceEventTiming::create(candidate, true);
         queueEntry(*m_firstInput);
     }
@@ -573,13 +573,13 @@ void Performance::scheduleTaskIfNeeded()
     if (m_hasScheduledDeliveryTask)
         return;
 
-    auto* context = scriptExecutionContext();
+    RefPtr context = scriptExecutionContext();
     if (!context)
         return;
 
     m_hasScheduledDeliveryTask = true;
     context->eventLoop().queueTask(TaskSource::PerformanceTimeline, [protectedThis = Ref { *this }, this] {
-        auto* context = scriptExecutionContext();
+        RefPtr context = scriptExecutionContext();
         if (!context)
             return;
 

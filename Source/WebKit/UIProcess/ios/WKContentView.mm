@@ -78,6 +78,7 @@
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/cocoa/SpanCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/TextStream.h>
 #import <wtf/threads/BinarySemaphore.h>
@@ -529,7 +530,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         }
     });
 
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), deleteTemporaryFiles.get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), deleteTemporaryFiles.get());
 }
 
 - (void)_removeTemporaryDirectoriesWhenDeallocated:(Vector<RetainPtr<NSURL>>&&)urls
@@ -854,9 +855,9 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
         return;
 
     if (registerProcess)
-        [WebKit::getNSAccessibilityRemoteUIElementClass() registerRemoteUIProcessIdentifier:pid];
+        [WebKit::getNSAccessibilityRemoteUIElementClassSingleton() registerRemoteUIProcessIdentifier:pid];
     else
-        [WebKit::getNSAccessibilityRemoteUIElementClass() unregisterRemoteUIProcessIdentifier:pid];
+        [WebKit::getNSAccessibilityRemoteUIElementClassSingleton() unregisterRemoteUIProcessIdentifier:pid];
 #endif
 }
 
@@ -1122,6 +1123,11 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
 - (void)_screenCapturedDidChange:(NSNotification *)notification
 {
     _page->setScreenIsBeingCaptured([self screenIsBeingCaptured]);
+}
+
+- (BOOL)_shouldExposeRollAngleAsTwist
+{
+    return _page->preferences().exposeRollAngleAsTwistEnabled();
 }
 
 @end

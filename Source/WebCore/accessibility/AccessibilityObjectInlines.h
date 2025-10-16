@@ -33,6 +33,7 @@
 #include <WebCore/Color.h>
 #include <WebCore/Document.h>
 #include <WebCore/Element.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/HTMLParserIdioms.h>
 #include <WebCore/LocalFrame.h>
 #include <WebCore/RenderInline.h>
@@ -144,6 +145,11 @@ inline bool AccessibilityObject::isRenderHidden() const
 {
     CheckedPtr style = this->style();
     return WebCore::isRenderHidden(style.get());
+}
+
+inline bool AccessibilityObject::isHidden() const
+{
+    return isAXHidden() || isRenderHidden();
 }
 
 inline ElementName AccessibilityObject::elementName() const
@@ -290,6 +296,12 @@ inline std::optional<AXID> AccessibilityObject::treeID() const
 {
     auto* cache = axObjectCache();
     return cache ? std::optional { cache->treeID() } : std::nullopt;
+}
+
+inline void AccessibilityObject::recomputeIsIgnored()
+{
+    // isIgnoredWithoutCache will update m_lastKnownIsIgnoredValue and perform any necessary actions if it has changed.
+    isIgnoredWithoutCache(axObjectCache());
 }
 
 } // namespace WebCore

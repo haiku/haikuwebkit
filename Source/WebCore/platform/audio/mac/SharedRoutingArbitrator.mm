@@ -94,7 +94,7 @@ void SharedRoutingArbitrator::beginRoutingArbitrationForToken(const SharedRoutin
         }
 
         ALWAYS_LOG_IF(m_logger, identifier, "leaving current arbitration");
-        [[PAL::getAVAudioRoutingArbiterClass() sharedRoutingArbiter] leaveArbitration];
+        [[PAL::getAVAudioRoutingArbiterClassSingleton() sharedRoutingArbiter] leaveArbitration];
     }
 
     m_currentCategory = requestedCategory;
@@ -122,7 +122,7 @@ void SharedRoutingArbitrator::beginRoutingArbitrationForToken(const SharedRoutin
         callback(error, routeChanged);
     });
 
-    [[PAL::getAVAudioRoutingArbiterClass() sharedRoutingArbiter] beginArbitrationWithCategory:arbitrationCategory completionHandler:[this, identifier = WTFMove(identifier)](BOOL defaultDeviceChanged, NSError * _Nullable error) mutable {
+    [[PAL::getAVAudioRoutingArbiterClassSingleton() sharedRoutingArbiter] beginArbitrationWithCategory:arbitrationCategory completionHandler:[this, identifier = WTFMove(identifier)](BOOL defaultDeviceChanged, NSError * _Nullable error) mutable {
         callOnMainRunLoop([this, defaultDeviceChanged, error = retainPtr(error), identifier = WTFMove(identifier)] {
             if (error)
                 ERROR_LOG(identifier, error.get(), ", routeChanged = ", !!defaultDeviceChanged);
@@ -154,7 +154,7 @@ void SharedRoutingArbitrator::endRoutingArbitrationForToken(const SharedRoutingA
 
     m_enqueuedCallbacks.clear();
     m_currentCategory.reset();
-    [[PAL::getAVAudioRoutingArbiterClass() sharedRoutingArbiter] leaveArbitration];
+    [[PAL::getAVAudioRoutingArbiterClassSingleton() sharedRoutingArbiter] leaveArbitration];
 }
 
 void SharedRoutingArbitrator::setLogger(const Logger& logger)

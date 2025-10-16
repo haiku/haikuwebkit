@@ -107,7 +107,7 @@ public:
     void willBeginPlayback();
     void willPausePlayback();
 
-    Document* document() const;
+    WEBCORE_EXPORT Document* document() const;
     RefPtr<Document> protectedDocument() const;
 
 #if ENABLE(MEDIA_SESSION_COORDINATOR)

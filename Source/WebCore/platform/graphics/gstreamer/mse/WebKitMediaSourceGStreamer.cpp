@@ -69,7 +69,10 @@ struct WebKitMediaSrcPrivate {
     {
         ASSERT(isMainThread());
         Stream* stream = streams.get(id);
-        ASSERT(stream);
+        if (!stream) {
+            GST_INFO_OBJECT(player.get() ? player.get()->webKitMediaSrc() : nullptr, "Track %" PRIu64
+                " not present in this WebKitMediaSrc", id);
+        }
         return stream;
     }
 
@@ -370,6 +373,11 @@ static void webKitMediaSrcTearDownStream(WebKitMediaSrc* source, TrackID id)
     Stream* stream = source->priv->streamById(id);
     GST_DEBUG_OBJECT(source, "Tearing down stream '%" PRIu64 "'", id);
 
+    if (!stream) {
+        GST_INFO_OBJECT(source, "Ignoring teardown on track not present in this WebKitMediaSrc");
+        return;
+    }
+
     // Flush the source element **and** downstream. We want to stop the streaming thread and for that we need all elements downstream to be idle.
     webKitMediaSrcStreamFlush(stream, false);
     // Stop the thread now.
@@ -593,7 +601,10 @@ static void webKitMediaSrcLoop(void* userData)
         ASSERT(GST_BUFFER_PTS_IS_VALID(buffer.get()));
         GST_TRACE_OBJECT(pad, "Pushing buffer downstream: %" GST_PTR_FORMAT, buffer.get());
         GstFlowReturn result = gst_pad_push(pad, buffer.leakRef());
-        if (result != GST_FLOW_OK && result != GST_FLOW_FLUSHING) {
+        if (result == GST_FLOW_NOT_LINKED && stream->track->type() == TrackPrivateBaseGStreamer::TrackType::Video) {
+            // We allow multiple video tracks and all of them except one may be unlinked. Just drop the buffer.
+            GST_TRACE_OBJECT(pad, "Buffer not pushed because pad is not-linked, ignoring");
+        } else if (result != GST_FLOW_OK && result != GST_FLOW_FLUSHING) {
             gst_pad_pause_task(pad);
             GST_ELEMENT_ERROR(stream->source, CORE, PAD, ("Failed to push buffer"), ("gst_pad_push() returned %s", gst_flow_get_name(result)));
         } else if (pushingFirstBuffer) {
@@ -740,6 +751,11 @@ void webKitMediaSrcFlush(WebKitMediaSrc* source, TrackID streamId)
     ASSERT(isMainThread());
     GST_DEBUG_OBJECT(source, "Received non-seek flush request for stream '%" PRIu64 "'.", streamId);
     Stream* stream = source->priv->streamById(streamId);
+
+    if (!stream) {
+        GST_INFO_OBJECT(source, "Ignoring flush on track not present in this WebKitMediaSrc");
+        return;
+    }
 
     webKitMediaSrcStreamFlush(stream, false);
 }

@@ -26,7 +26,6 @@
 #include "config.h"
 #include "InspectorAnimationAgent.h"
 
-#include "Animation.h"
 #include "AnimationEffect.h"
 #include "AnimationEffectPhase.h"
 #include "BlendingKeyframes.h"
@@ -36,6 +35,7 @@
 #include "CSSTransition.h"
 #include "CSSValue.h"
 #include "CSSValuePool.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "Element.h"
 #include "Event.h"
@@ -146,13 +146,13 @@ static Ref<JSON::ArrayOf<Inspector::Protocol::Animation::Keyframe>> buildObjectF
                 .setOffset(blendingKeyframe.offset())
                 .release();
 
-            RefPtr<TimingFunction> timingFunction;
+            RefPtr<const TimingFunction> timingFunction;
             if (!parsedKeyframes.isEmpty())
                 timingFunction = parsedKeyframes[i].timingFunction;
             if (!timingFunction)
                 timingFunction = blendingKeyframe.timingFunction();
             if (!timingFunction)
-                timingFunction = styleOriginatedAnimation->backingAnimation().timingFunction();
+                timingFunction = styleOriginatedAnimation->backingAnimationTimingFunction();
             if (timingFunction)
                 keyframePayload->setEasing(timingFunction->cssText());
 
@@ -358,7 +358,7 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Runtime::RemoteObjec
     if (!animation)
         return makeUnexpected(errorString);
 
-    auto* state = animation->scriptExecutionContext()->globalObject();
+    auto* state = animation->protectedScriptExecutionContext()->globalObject();
     auto injectedScript = m_injectedScriptManager.injectedScriptFor(state);
     ASSERT(!injectedScript.hasNoValue());
 

@@ -32,7 +32,7 @@ namespace API {
 
 class JSHandle final : public ObjectImpl<Object::Type::JSHandle> {
 public:
-    static Ref<JSHandle> create(WebKit::JSHandleInfo&& info) { return adoptRef(*new JSHandle(WTFMove(info))); }
+    static Ref<JSHandle> getOrCreate(WebKit::JSHandleInfo&&);
     virtual ~JSHandle();
 
     const WebKit::JSHandleInfo& info() const { return m_info; }

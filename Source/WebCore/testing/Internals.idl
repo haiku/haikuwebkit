@@ -890,8 +890,6 @@ enum ContentsFormat {
     [Conditional=VIDEO] boolean isChangingPresentationMode(HTMLVideoElement element);
     [Conditional=VIDEO_PRESENTATION_MODE] undefined setMockVideoPresentationModeEnabled(boolean enabled);
 
-    undefined setApplicationCacheOriginQuota(unsigned long long quota);
-
     undefined registerURLSchemeAsBypassingContentSecurityPolicy(DOMString scheme);
     undefined removeURLSchemeRegisteredAsBypassingContentSecurityPolicy(DOMString scheme);
 

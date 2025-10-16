@@ -31,6 +31,7 @@
 #endif
 #include <WebCore/NativeImage.h>
 #include <WebCore/NowPlayingManager.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 
@@ -44,7 +45,9 @@ class VideoFrame;
 
 struct AudioDestinationCreationOptions;
 
-class WEBCORE_EXPORT MediaStrategy {
+class WEBCORE_EXPORT MediaStrategy : public CanMakeThreadSafeCheckedPtr<MediaStrategy> {
+    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(MediaStrategy);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MediaStrategy);
 public:
 #if ENABLE(WEB_AUDIO)
     virtual Ref<AudioDestination> createAudioDestination(const AudioDestinationCreationOptions&) = 0;
@@ -71,9 +74,11 @@ protected:
     bool m_mockMediaSourceEnabled { false };
 };
 
+#if ENABLE(VIDEO)
 inline void MediaStrategy::nativeImageFromVideoFrame(const VideoFrame&, CompletionHandler<void(std::optional<RefPtr<NativeImage>>&&)>&& completionHandler)
 {
     completionHandler(std::nullopt);
 }
+#endif
 
 } // namespace WebCore

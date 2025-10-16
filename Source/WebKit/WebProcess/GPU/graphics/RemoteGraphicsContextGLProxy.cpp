@@ -108,7 +108,7 @@ RemoteGraphicsContextGLProxy::~RemoteGraphicsContextGLProxy()
     disconnectGpuProcessIfNeeded();
 }
 
-void RemoteGraphicsContextGLProxy::initializeIPC(Ref<IPC::StreamClientConnection>&& streamConnection, RenderingBackendIdentifier renderingBackend, IPC::StreamServerConnection::Handle&& serverHandle, SerialFunctionDispatcher& dispatcher)
+void RemoteGraphicsContextGLProxy::initializeIPC(Ref<IPC::StreamClientConnection>&& streamConnection, RemoteRenderingBackendIdentifier renderingBackend, IPC::StreamServerConnection::Handle&& serverHandle, SerialFunctionDispatcher& dispatcher)
 {
     m_streamConnection = streamConnection.ptr();
     streamConnection->open(*this, dispatcher);

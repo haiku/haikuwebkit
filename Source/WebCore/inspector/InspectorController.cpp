@@ -415,6 +415,11 @@ Page& InspectorController::inspectedPage() const
     return m_page;
 }
 
+Ref<Page> InspectorController::protectedInspectedPage() const
+{
+    return inspectedPage();
+}
+
 void InspectorController::dispatchMessageFromFrontend(const String& message)
 {
     m_backendDispatcher->dispatch(message);

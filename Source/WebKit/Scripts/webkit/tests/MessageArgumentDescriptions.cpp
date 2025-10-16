@@ -42,6 +42,8 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
         return jsValueForDecodedMessage<MessageName::TestWithCVPixelBuffer_SendCVPixelBuffer>(globalObject, decoder);
     case MessageName::TestWithCVPixelBuffer_ReceiveCVPixelBuffer:
         return jsValueForDecodedMessage<MessageName::TestWithCVPixelBuffer_ReceiveCVPixelBuffer>(globalObject, decoder);
+    case MessageName::TestWithCVPixelBuffer_ReceiveCVPixelBufferReply:
+        return jsValueForDecodedMessage<MessageName::TestWithCVPixelBuffer_ReceiveCVPixelBufferReply>(globalObject, decoder);
 #endif
     case MessageName::TestWithDeferSendingOption_NoOptions:
         return jsValueForDecodedMessage<MessageName::TestWithDeferSendingOption_NoOptions>(globalObject, decoder);
@@ -77,6 +79,8 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
         return jsValueForDecodedMessage<MessageName::TestWithImageData_SendImageData>(globalObject, decoder);
     case MessageName::TestWithImageData_ReceiveImageData:
         return jsValueForDecodedMessage<MessageName::TestWithImageData_ReceiveImageData>(globalObject, decoder);
+    case MessageName::TestWithImageData_ReceiveImageDataReply:
+        return jsValueForDecodedMessage<MessageName::TestWithImageData_ReceiveImageDataReply>(globalObject, decoder);
 #if (ENABLE(WEBKIT2) && (NESTED_MASTER_CONDITION || MASTER_OR && MASTER_AND))
     case MessageName::TestWithLegacyReceiver_LoadURL:
         return jsValueForDecodedMessage<MessageName::TestWithLegacyReceiver_LoadURL>(globalObject, decoder);
@@ -135,6 +139,16 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
 #if ENABLE(FEATURE_FOR_TESTING)
     case MessageName::TestWithLegacyReceiver_ExperimentalOperation:
         return jsValueForDecodedMessage<MessageName::TestWithLegacyReceiver_ExperimentalOperation>(globalObject, decoder);
+#endif
+    case MessageName::TestWithLegacyReceiver_CreatePluginReply:
+        return jsValueForDecodedMessage<MessageName::TestWithLegacyReceiver_CreatePluginReply>(globalObject, decoder);
+    case MessageName::TestWithLegacyReceiver_RunJavaScriptAlertReply:
+        return jsValueForDecodedMessage<MessageName::TestWithLegacyReceiver_RunJavaScriptAlertReply>(globalObject, decoder);
+    case MessageName::TestWithLegacyReceiver_GetPluginsReply:
+        return jsValueForDecodedMessage<MessageName::TestWithLegacyReceiver_GetPluginsReply>(globalObject, decoder);
+#if PLATFORM(MAC)
+    case MessageName::TestWithLegacyReceiver_InterpretKeyEventReply:
+        return jsValueForDecodedMessage<MessageName::TestWithLegacyReceiver_InterpretKeyEventReply>(globalObject, decoder);
 #endif
 #endif
     case MessageName::TestWithMultiLineExtendedAttributes_AlwaysEnabled:
@@ -198,6 +212,16 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
     case MessageName::TestWithoutAttributes_ExperimentalOperation:
         return jsValueForDecodedMessage<MessageName::TestWithoutAttributes_ExperimentalOperation>(globalObject, decoder);
 #endif
+    case MessageName::TestWithoutAttributes_CreatePluginReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutAttributes_CreatePluginReply>(globalObject, decoder);
+    case MessageName::TestWithoutAttributes_RunJavaScriptAlertReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutAttributes_RunJavaScriptAlertReply>(globalObject, decoder);
+    case MessageName::TestWithoutAttributes_GetPluginsReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutAttributes_GetPluginsReply>(globalObject, decoder);
+#if PLATFORM(MAC)
+    case MessageName::TestWithoutAttributes_InterpretKeyEventReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutAttributes_InterpretKeyEventReply>(globalObject, decoder);
+#endif
 #endif
     case MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgument:
         return jsValueForDecodedMessage<MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgument>(globalObject, decoder);
@@ -211,10 +235,20 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
         return jsValueForDecodedMessage<MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndEmptyReply>(globalObject, decoder);
     case MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndReplyWithArgument:
         return jsValueForDecodedMessage<MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndReplyWithArgument>(globalObject, decoder);
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgumentAndEmptyReplyReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgumentAndEmptyReplyReply>(globalObject, decoder);
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgumentAndReplyWithArgumentReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgumentAndReplyWithArgumentReply>(globalObject, decoder);
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndEmptyReplyReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndEmptyReplyReply>(globalObject, decoder);
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndReplyWithArgumentReply:
+        return jsValueForDecodedMessage<MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndReplyWithArgumentReply>(globalObject, decoder);
     case MessageName::TestWithSemaphore_SendSemaphore:
         return jsValueForDecodedMessage<MessageName::TestWithSemaphore_SendSemaphore>(globalObject, decoder);
     case MessageName::TestWithSemaphore_ReceiveSemaphore:
         return jsValueForDecodedMessage<MessageName::TestWithSemaphore_ReceiveSemaphore>(globalObject, decoder);
+    case MessageName::TestWithSemaphore_ReceiveSemaphoreReply:
+        return jsValueForDecodedMessage<MessageName::TestWithSemaphore_ReceiveSemaphoreReply>(globalObject, decoder);
     case MessageName::TestWithSpanOfConst_TestSpanOfConstFloat:
         return jsValueForDecodedMessage<MessageName::TestWithSpanOfConst_TestSpanOfConstFloat>(globalObject, decoder);
     case MessageName::TestWithSpanOfConst_TestSpanOfConstFloatSegments:
@@ -235,6 +269,10 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
     case MessageName::TestWithStream_SendAndReceiveMachSendRight:
         return jsValueForDecodedMessage<MessageName::TestWithStream_SendAndReceiveMachSendRight>(globalObject, decoder);
 #endif
+    case MessageName::TestWithStream_SendStringAsyncReply:
+        return jsValueForDecodedMessage<MessageName::TestWithStream_SendStringAsyncReply>(globalObject, decoder);
+    case MessageName::TestWithStream_CallWithIdentifierReply:
+        return jsValueForDecodedMessage<MessageName::TestWithStream_CallWithIdentifierReply>(globalObject, decoder);
     case MessageName::TestWithStreamBatched_SendString:
         return jsValueForDecodedMessage<MessageName::TestWithStreamBatched_SendString>(globalObject, decoder);
     case MessageName::TestWithStreamBuffer_SendStreamBuffer:
@@ -257,6 +295,16 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
         return jsValueForDecodedMessage<MessageName::TestWithSuperclass_TestSyncMessage>(globalObject, decoder);
     case MessageName::TestWithSuperclass_TestSynchronousMessage:
         return jsValueForDecodedMessage<MessageName::TestWithSuperclass_TestSynchronousMessage>(globalObject, decoder);
+#if ENABLE(TEST_FEATURE)
+    case MessageName::TestWithSuperclass_TestAsyncMessageReply:
+        return jsValueForDecodedMessage<MessageName::TestWithSuperclass_TestAsyncMessageReply>(globalObject, decoder);
+    case MessageName::TestWithSuperclass_TestAsyncMessageWithNoArgumentsReply:
+        return jsValueForDecodedMessage<MessageName::TestWithSuperclass_TestAsyncMessageWithNoArgumentsReply>(globalObject, decoder);
+    case MessageName::TestWithSuperclass_TestAsyncMessageWithMultipleArgumentsReply:
+        return jsValueForDecodedMessage<MessageName::TestWithSuperclass_TestAsyncMessageWithMultipleArgumentsReply>(globalObject, decoder);
+    case MessageName::TestWithSuperclass_TestAsyncMessageWithConnectionReply:
+        return jsValueForDecodedMessage<MessageName::TestWithSuperclass_TestAsyncMessageWithConnectionReply>(globalObject, decoder);
+#endif
     case MessageName::TestWithSuperclassAndWantsAsyncDispatch_LoadURL:
         return jsValueForDecodedMessage<MessageName::TestWithSuperclassAndWantsAsyncDispatch_LoadURL>(globalObject, decoder);
     case MessageName::TestWithSuperclassAndWantsAsyncDispatch_TestSyncMessage:
@@ -273,6 +321,8 @@ std::optional<JSC::JSValue> jsValueForArguments(JSC::JSGlobalObject* globalObjec
         return jsValueForDecodedMessage<MessageName::TestWithValidator_EnabledIfSomeFeatureEnabledAndPassValidation>(globalObject, decoder);
     case MessageName::TestWithValidator_MessageWithReply:
         return jsValueForDecodedMessage<MessageName::TestWithValidator_MessageWithReply>(globalObject, decoder);
+    case MessageName::TestWithValidator_MessageWithReplyReply:
+        return jsValueForDecodedMessage<MessageName::TestWithValidator_MessageWithReplyReply>(globalObject, decoder);
     case MessageName::TestWithWantsAsyncDispatch_TestMessage:
         return jsValueForDecodedMessage<MessageName::TestWithWantsAsyncDispatch_TestMessage>(globalObject, decoder);
     case MessageName::TestWithWantsAsyncDispatch_TestSyncMessage:
@@ -432,7 +482,6 @@ Vector<ASCIILiteral> serializedIdentifiers()
         "WebCore::SharedWorkerIdentifier"_s,
         "WebCore::SharedWorkerObjectIdentifierID"_s,
         "WebCore::SleepDisablerIdentifier"_s,
-        "WebCore::SnapshotIdentifier"_s,
         "WebCore::SpeechRecognitionConnectionClientIdentifier"_s,
         "WebCore::TextCheckingRequestIdentifier"_s,
         "WebCore::TextManipulationItemIdentifier"_s,
@@ -455,7 +504,7 @@ Vector<ASCIILiteral> serializedIdentifiers()
         "WebKit::DrawingAreaIdentifier"_s,
         "WebKit::GeolocationIdentifier"_s,
         "WebKit::GPUProcessConnectionIdentifier"_s,
-        "WebKit::GraphicsContextGLIdentifier"_s,
+        "WebKit::RemoteGraphicsContextGLIdentifier"_s,
         "WebKit::IPCConnectionTesterIdentifier"_s,
         "WebKit::IPCStreamTesterIdentifier"_s,
         "WebKit::JSObjectID"_s,
@@ -475,15 +524,20 @@ Vector<ASCIILiteral> serializedIdentifiers()
         "WebKit::RemoteCDMInstanceIdentifier"_s,
         "WebKit::RemoteCDMInstanceSessionIdentifier"_s,
         "WebKit::RemoteGraphicsContextIdentifier"_s,
+        "WebKit::RemoteGradientIdentifier"_s,
+        "WebKit::RemoteDisplayListIdentifier"_s,
+        "WebKit::RemoteDisplayListRecorderIdentifier"_s,
         "WebKit::RemoteLegacyCDMIdentifier"_s,
         "WebKit::RemoteLegacyCDMSessionIdentifier"_s,
         "WebKit::RemoteMediaResourceIdentifier"_s,
         "WebKit::RemoteMediaSourceIdentifier"_s,
         "WebKit::RemoteRemoteCommandListenerIdentifier"_s,
         "WebKit::RemoteSerializedImageBufferIdentifier"_s,
+        "WebKit::RemoteSnapshotIdentifier"_s,
+        "WebKit::RemoteSnapshotRecorderIdentifier"_s,
         "WebKit::RemoteSourceBufferIdentifier"_s,
         "WebKit::RemoteVideoFrameIdentifier"_s,
-        "WebKit::RenderingBackendIdentifier"_s,
+        "WebKit::RemoteRenderingBackendIdentifier"_s,
         "WebKit::RenderingUpdateID"_s,
         "WebKit::RetrieveRecordResponseBodyCallbackIdentifier"_s,
         "WebKit::SampleBufferDisplayLayerIdentifier"_s,
@@ -526,6 +580,10 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
         };
     case MessageName::TestWithCVPixelBuffer_ReceiveCVPixelBuffer:
         return Vector<ArgumentDescription> { };
+    case MessageName::TestWithCVPixelBuffer_ReceiveCVPixelBufferReply:
+        return Vector<ArgumentDescription> {
+            { "r0"_s, "RetainPtr<CVPixelBufferRef>"_s },
+        };
 #endif
     case MessageName::TestWithDeferSendingOption_NoOptions:
         return Vector<ArgumentDescription> {
@@ -589,6 +647,10 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
         };
     case MessageName::TestWithImageData_ReceiveImageData:
         return Vector<ArgumentDescription> { };
+    case MessageName::TestWithImageData_ReceiveImageDataReply:
+        return Vector<ArgumentDescription> {
+            { "r0"_s, "RefPtr<WebCore::ImageData>"_s },
+        };
 #if (ENABLE(WEBKIT2) && (NESTED_MASTER_CONDITION || MASTER_OR && MASTER_AND))
     case MessageName::TestWithLegacyReceiver_LoadURL:
         return Vector<ArgumentDescription> {
@@ -695,6 +757,22 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
     case MessageName::TestWithLegacyReceiver_ExperimentalOperation:
         return Vector<ArgumentDescription> {
             { "dummy"_s, "IPC::DummyType"_s },
+        };
+#endif
+    case MessageName::TestWithLegacyReceiver_CreatePluginReply:
+        return Vector<ArgumentDescription> {
+            { "result"_s, "bool"_s },
+        };
+    case MessageName::TestWithLegacyReceiver_RunJavaScriptAlertReply:
+        return Vector<ArgumentDescription> { };
+    case MessageName::TestWithLegacyReceiver_GetPluginsReply:
+        return Vector<ArgumentDescription> {
+            { "plugins"_s, "Vector<WebCore::PluginInfo>"_s },
+        };
+#if PLATFORM(MAC)
+    case MessageName::TestWithLegacyReceiver_InterpretKeyEventReply:
+        return Vector<ArgumentDescription> {
+            { "commandName"_s, "Vector<WebCore::KeypressCommand>"_s },
         };
 #endif
 #endif
@@ -810,6 +888,22 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
             { "dummy"_s, "IPC::DummyType"_s },
         };
 #endif
+    case MessageName::TestWithoutAttributes_CreatePluginReply:
+        return Vector<ArgumentDescription> {
+            { "result"_s, "bool"_s },
+        };
+    case MessageName::TestWithoutAttributes_RunJavaScriptAlertReply:
+        return Vector<ArgumentDescription> { };
+    case MessageName::TestWithoutAttributes_GetPluginsReply:
+        return Vector<ArgumentDescription> {
+            { "plugins"_s, "Vector<WebCore::PluginInfo>"_s },
+        };
+#if PLATFORM(MAC)
+    case MessageName::TestWithoutAttributes_InterpretKeyEventReply:
+        return Vector<ArgumentDescription> {
+            { "commandName"_s, "Vector<WebCore::KeypressCommand>"_s },
+        };
+#endif
 #endif
     case MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgument:
         return Vector<ArgumentDescription> { };
@@ -829,12 +923,28 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
         return Vector<ArgumentDescription> {
             { "argument"_s, "String"_s },
         };
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgumentAndEmptyReplyReply:
+        return Vector<ArgumentDescription> { };
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithoutArgumentAndReplyWithArgumentReply:
+        return Vector<ArgumentDescription> {
+            { "reply"_s, "String"_s },
+        };
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndEmptyReplyReply:
+        return Vector<ArgumentDescription> { };
+    case MessageName::TestWithoutUsingIPCConnection_MessageWithArgumentAndReplyWithArgumentReply:
+        return Vector<ArgumentDescription> {
+            { "reply"_s, "String"_s },
+        };
     case MessageName::TestWithSemaphore_SendSemaphore:
         return Vector<ArgumentDescription> {
             { "s0"_s, "IPC::Semaphore"_s },
         };
     case MessageName::TestWithSemaphore_ReceiveSemaphore:
         return Vector<ArgumentDescription> { };
+    case MessageName::TestWithSemaphore_ReceiveSemaphoreReply:
+        return Vector<ArgumentDescription> {
+            { "r0"_s, "IPC::Semaphore"_s },
+        };
     case MessageName::TestWithSpanOfConst_TestSpanOfConstFloat:
         return Vector<ArgumentDescription> {
             { "floats"_s, "std::span<const float>"_s },
@@ -869,6 +979,12 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
             { "a1"_s, "MachSendRight"_s },
         };
 #endif
+    case MessageName::TestWithStream_SendStringAsyncReply:
+        return Vector<ArgumentDescription> {
+            { "returnValue"_s, "int64_t"_s },
+        };
+    case MessageName::TestWithStream_CallWithIdentifierReply:
+        return Vector<ArgumentDescription> { };
     case MessageName::TestWithStreamBatched_SendString:
         return Vector<ArgumentDescription> {
             { "url"_s, "String"_s },
@@ -907,6 +1023,23 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
         return Vector<ArgumentDescription> {
             { "value"_s, "bool"_s },
         };
+#if ENABLE(TEST_FEATURE)
+    case MessageName::TestWithSuperclass_TestAsyncMessageReply:
+        return Vector<ArgumentDescription> {
+            { "result"_s, "uint64_t"_s },
+        };
+    case MessageName::TestWithSuperclass_TestAsyncMessageWithNoArgumentsReply:
+        return Vector<ArgumentDescription> { };
+    case MessageName::TestWithSuperclass_TestAsyncMessageWithMultipleArgumentsReply:
+        return Vector<ArgumentDescription> {
+            { "flag"_s, "bool"_s },
+            { "value"_s, "uint64_t"_s },
+        };
+    case MessageName::TestWithSuperclass_TestAsyncMessageWithConnectionReply:
+        return Vector<ArgumentDescription> {
+            { "flag"_s, "bool"_s },
+        };
+#endif
     case MessageName::TestWithSuperclassAndWantsAsyncDispatch_LoadURL:
         return Vector<ArgumentDescription> {
             { "url"_s, "String"_s },
@@ -938,6 +1071,11 @@ std::optional<Vector<ArgumentDescription>> messageArgumentDescriptions(MessageNa
     case MessageName::TestWithValidator_MessageWithReply:
         return Vector<ArgumentDescription> {
             { "url"_s, "String"_s },
+        };
+    case MessageName::TestWithValidator_MessageWithReplyReply:
+        return Vector<ArgumentDescription> {
+            { "reply"_s, "String"_s },
+            { "value"_s, "double"_s },
         };
     case MessageName::TestWithWantsAsyncDispatch_TestMessage:
         return Vector<ArgumentDescription> {

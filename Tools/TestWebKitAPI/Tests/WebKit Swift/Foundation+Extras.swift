@@ -21,9 +21,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
-#if ENABLE_SWIFTUI && canImport(Testing) && compiler(>=6.0)
-
 import Foundation
+
+#if compiler(>=6.2)
 
 extension RangeReplaceableCollection {
     init<Failure>(
@@ -32,7 +32,8 @@ extension RangeReplaceableCollection {
     ) async throws(Failure) where Failure: Error {
         self.init()
 
-        for try await element in sequence {
+        // Safety: this is actually safe; false positive is rdar://154775389
+        for try await unsafe element in sequence {
             append(element)
         }
     }
@@ -40,9 +41,10 @@ extension RangeReplaceableCollection {
 
 extension AsyncSequence {
     func wait(isolation: isolated (any Actor)? = #isolation) async throws(Failure) {
-        for try await _ in self {
+        // Safety: this is actually safe; false positive is rdar://154775389
+        for try await unsafe _ in self {
         }
     }
 }
 
-#endif // ENABLE_SWIFTUI && canImport(Testing) && compiler(>=6.0)
+#endif // compiler(>=6.2)

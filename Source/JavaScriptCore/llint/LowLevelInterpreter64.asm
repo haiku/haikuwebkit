@@ -3304,12 +3304,12 @@ llintOpWithMetadata(op_iterator_open, OpIteratorOpen, macro (size, get, dispatch
         callSlowPath(_iterator_open_try_fast_wide32)
     end
     size(fastNarrow, fastWide16, fastWide32, macro (callOp) callOp() end)
-
-    # FIXME: We should do this with inline assembly since it's the "fast" case.
+    
     bbeq r1, constexpr IterationMode::Generic, .iteratorOpenGeneric
     dispatch()
 
 .iteratorOpenGeneric:
+    btpz r0, .iteratorOpenException
     macro gotoGetByIdCheckpoint()
         jmp .getByIdStart
     end
@@ -3350,6 +3350,9 @@ llintOpWithMetadata(op_iterator_open, OpIteratorOpen, macro (size, get, dispatch
 .iteratorOpenGenericGetNextSlow:
     callSlowPath(_llint_slow_path_iterator_open_get_next)
     dispatch()
+
+.iteratorOpenException:
+    jmp _llint_throw_from_slow_path_trampoline
 
 end)
 

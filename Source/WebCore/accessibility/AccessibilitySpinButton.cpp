@@ -28,6 +28,7 @@
 
 #include "AXObjectCache.h"
 #include "ContainerNodeInlines.h"
+#include "DocumentInlines.h"
 #include "RenderElement.h"
 
 namespace WebCore {

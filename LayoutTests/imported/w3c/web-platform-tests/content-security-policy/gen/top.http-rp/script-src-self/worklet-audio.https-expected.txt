@@ -1,7 +1,3 @@
-CONSOLE MESSAGE: Refused to load https://www1.localhost:9443/common/security-features/subresource/worker.py?redirection=keep-origin&action=purge&key=718ee9e8-aefe-46b6-ab42-729b724186e8&path=%2Fmixed-content because it does not appear in the script-src directive of the Content Security Policy.
-CONSOLE MESSAGE: Refused to load https://www1.localhost:9443/common/security-features/subresource/worker.py?redirection=no-redirect&action=purge&key=e1f03533-8e8a-4a97-b973-b97f8776ce2a&path=%2Fmixed-content because it does not appear in the script-src directive of the Content Security Policy.
-CONSOLE MESSAGE: Refused to load https://www1.localhost:9443/common/security-features/subresource/worker.py?redirection=swap-origin&action=purge&key=baf9b5ab-54a2-4a22-a361-912bc7ef4357&path=%2Fmixed-content because it does not appear in the script-src directive of the Content Security Policy.
-CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/common/security-features/subresource/worker.py?action=purge&key=GENERATED_KEY&path=%2Fmixed-content
 
 PASS Content Security Policy: Expects allowed for worklet-audio to same-https origin and keep-origin redirection from https context.
 PASS Content Security Policy: Expects allowed for worklet-audio to same-https origin and keep-origin redirection from https context.: securitypolicyviolation

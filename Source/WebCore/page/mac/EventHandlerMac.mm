@@ -45,7 +45,7 @@
 #import "HTMLIFrameElement.h"
 #import "HandleUserInputEventResult.h"
 #import "KeyboardEvent.h"
-#import "LocalFrame.h"
+#import "LocalFrameInlines.h"
 #import "LocalFrameView.h"
 #import "Logging.h"
 #import "MouseEventWithHitTestResults.h"

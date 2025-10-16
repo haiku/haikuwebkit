@@ -50,7 +50,7 @@ WK_CLASS_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4))
 /*! @abstract A boolean value indicating whether the behavior that elements with a name attribute overrides builtin methods on document object should be disabled or not. */
 @property (nonatomic) BOOL disableLegacyBuiltinOverrides;
 
-/*! @abstract A boolean indicating whether window.webkit.createJSHandle is available. */
+/*! @abstract A boolean indicating whether window.webkit.jsHandle is available. */
 @property (nonatomic) BOOL allowJSHandleCreation WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
 /*! @abstract A boolean indicating whether window.webkit.serializeNode is available. */

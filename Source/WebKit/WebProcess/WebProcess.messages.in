@@ -252,4 +252,6 @@ messages -> WebProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
 #if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
     InitializeAccessibility(Vector<WebKit::SandboxExtensionHandle> handles);
 #endif
+
+    ContentWorldDestroyed(WebKit::ContentWorldIdentifier identifier)
 }

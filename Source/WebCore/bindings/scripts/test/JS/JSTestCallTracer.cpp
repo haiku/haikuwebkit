@@ -201,7 +201,7 @@ JSValue JSTestCallTracer::getConstructor(VM& vm, const JSGlobalObject* globalObj
 
 void JSTestCallTracer::destroy(JSC::JSCell* cell)
 {
-    JSTestCallTracer* thisObject = static_cast<JSTestCallTracer*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestCallTracer* thisObject = static_cast<JSTestCallTracer*>(cell);
     thisObject->JSTestCallTracer::~JSTestCallTracer();
 }
 
@@ -544,7 +544,7 @@ bool JSTestCallTracerOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown>
 
 void JSTestCallTracerOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestCallTracer = static_cast<JSTestCallTracer*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestCallTracer = static_cast<JSTestCallTracer*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestCallTracer->protectedWrapped().ptr(), jsTestCallTracer);
 }

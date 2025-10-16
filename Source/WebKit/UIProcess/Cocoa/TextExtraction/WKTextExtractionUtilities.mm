@@ -28,8 +28,11 @@
 
 #if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
+#import "TextExtractionFilter.h"
 #import "_WKTextExtractionInternal.h"
 #import <WebCore/TextExtraction.h>
+#import <wtf/CallbackAggregator.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
 namespace WebKit {
@@ -56,6 +59,8 @@ inline static WKTextExtractionContainer containerType(TextExtraction::ContainerT
         return WKTextExtractionContainerNav;
     case TextExtraction::ContainerType::Button:
         return WKTextExtractionContainerButton;
+    case TextExtraction::ContainerType::Canvas:
+        return WKTextExtractionContainerCanvas;
     case TextExtraction::ContainerType::Generic:
         return WKTextExtractionContainerGeneric;
     }
@@ -231,6 +236,32 @@ RetainPtr<WKTextExtractionItem> createItem(const TextExtraction::Item& item, Roo
 
     return createItemRecursive(item, WTFMove(converter));
 }
+
+#if ENABLE(TEXT_EXTRACTION_FILTER)
+
+static void filterTextRecursive(WKTextExtractionItem *item, MainRunLoopCallbackAggregator& aggregator)
+{
+    if (RetainPtr textItem = dynamic_objc_cast<WKTextExtractionTextItem>(item)) {
+        TextExtractionFilter::singleton().shouldFilter([textItem content], [textItem, aggregator = Ref { aggregator }](bool shouldFilter) mutable {
+            if (!shouldFilter)
+                return;
+
+            [textItem setContent:@""];
+            [textItem setSelectedRange:NSMakeRange(NSNotFound, 0)];
+        });
+    }
+
+    for (WKTextExtractionItem *child in item.children)
+        filterTextRecursive(child, aggregator);
+}
+
+void filterText(WKTextExtractionItem *item, CompletionHandler<void()>&& completion)
+{
+    Ref aggregator = MainRunLoopCallbackAggregator::create(WTFMove(completion));
+    filterTextRecursive(item, aggregator.get());
+}
+
+#endif // ENABLE(TEXT_EXTRACTION_FILTER)
 
 } // namespace WebKit
 

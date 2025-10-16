@@ -27,6 +27,8 @@
 #include "APIContentWorld.h"
 
 #include "ContentWorldShared.h"
+#include "WebProcessMessages.h"
+#include "WebProcessProxy.h"
 #include "WebUserContentControllerProxy.h"
 #include <wtf/HashMap.h>
 #include <wtf/WeakRef.h>
@@ -112,20 +114,14 @@ ContentWorld::~ContentWorld()
         ASSERT_UNUSED(taken, taken.get() == this);
     }
 
-    for (Ref proxy : m_associatedContentControllerProxies)
-        proxy->contentWorldDestroyed(*this);
+    for (Ref process : m_processes)
+        process->send(Messages::WebProcess::ContentWorldDestroyed(m_identifier), 0);
 }
 
-void ContentWorld::addAssociatedUserContentControllerProxy(WebKit::WebUserContentControllerProxy& proxy)
+WebKit::ContentWorldData ContentWorld::worldDataForProcess(WebKit::WebProcessProxy& process) const
 {
-    auto addResult = m_associatedContentControllerProxies.add(proxy);
-    ASSERT_UNUSED(addResult, addResult.isNewEntry);
-}
-
-void ContentWorld::userContentControllerProxyDestroyed(WebKit::WebUserContentControllerProxy& proxy)
-{
-    bool removed = m_associatedContentControllerProxies.remove(proxy);
-    ASSERT_UNUSED(removed, removed);
+    m_processes.add(process);
+    return { m_identifier, m_name, m_options };
 }
 
 } // namespace API

@@ -60,6 +60,8 @@ private:
 
     void cancelForStop() final;
 
+    EventTargetInterfaceType eventTargetInterface() const final;
+
     void onError(const IDBResultData&);
     void onSuccess(const IDBResultData&);
     void onUpgradeNeeded(const IDBResultData&);
@@ -75,3 +77,7 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::IDBOpenDBRequest)
+    static bool isType(const WebCore::EventTarget& eventTarget) { return eventTarget.eventTargetInterface() == WebCore::EventTargetInterfaceType::IDBOpenDBRequest; }
+SPECIALIZE_TYPE_TRAITS_END()

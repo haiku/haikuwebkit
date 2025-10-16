@@ -1,5 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/corb/resources/css-mislabeled-as-html.css
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/corb/resources/css-mislabeled-as-html.css
 Header example
 
 Paragraph body

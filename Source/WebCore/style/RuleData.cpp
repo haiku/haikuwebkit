@@ -86,25 +86,6 @@ static inline MatchBasedOnRuleHash computeMatchBasedOnRuleHash(const CSSSelector
     return MatchBasedOnRuleHash::None;
 }
 
-static bool selectorCanMatchPseudoElement(const CSSSelector& rootSelector)
-{
-    const CSSSelector* selector = &rootSelector;
-    do {
-        if (selector->matchesPseudoElement())
-            return true;
-
-        if (const CSSSelectorList* selectorList = selector->selectorList()) {
-            for (auto& subSelector : *selectorList) {
-                if (selectorCanMatchPseudoElement(subSelector))
-                    return true;
-            }
-        }
-
-        selector = selector->precedingInComplexSelector();
-    } while (selector);
-    return false;
-}
-
 static inline PropertyAllowlist determinePropertyAllowlist(const CSSSelector* selector)
 {
     for (const CSSSelector* component = selector; component; component = component->precedingInComplexSelector()) {
@@ -138,7 +119,7 @@ RuleData::RuleData(const StyleRule& styleRule, unsigned selectorIndex, unsigned 
     , m_selectorListIndex(selectorListIndex)
     , m_position(position)
     , m_matchBasedOnRuleHash(enumToUnderlyingType(computeMatchBasedOnRuleHash(*selector())))
-    , m_canMatchPseudoElement(selectorCanMatchPseudoElement(*selector()))
+    , m_canMatchPseudoElement(complexSelectorCanMatchPseudoElement(*selector()))
     , m_propertyAllowlist(enumToUnderlyingType(determinePropertyAllowlist(selector())))
     , m_isStartingStyle(enumToUnderlyingType(isStartingStyle))
     , m_isEnabled(true)

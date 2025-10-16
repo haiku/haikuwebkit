@@ -19,10 +19,10 @@
 
 #pragma once
 
+#include <WebCore/DocumentInlines.h>
 #include <WebCore/RenderBox.h>
 #include <WebCore/RenderBoxModelObjectInlines.h>
 #include <WebCore/RenderElementInlines.h>
-#include <WebCore/RenderObjectInlines.h>
 
 namespace WebCore {
 

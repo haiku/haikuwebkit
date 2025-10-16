@@ -896,6 +896,8 @@ public:
     double lookupCSSRandomBaseValue(const std::optional<Style::PseudoElementIdentifier>&, const CSSCalc::RandomCachingKey&) const;
     bool hasRandomCachingKeyMap() const;
 
+    void addShadowRoot(Ref<ShadowRoot>&&);
+
 protected:
     Element(const QualifiedName&, Document&, OptionSet<TypeFlag>);
 
@@ -909,8 +911,6 @@ protected:
     void classAttributeChanged(const AtomString& newClassString, AttributeModificationReason);
     void partAttributeChanged(const AtomString& newValue);
 
-    void addShadowRoot(Ref<ShadowRoot>&&);
-
     ExceptionOr<void> replaceChildrenWithMarkup(const String&, OptionSet<ParserContentPolicy>);
 
     static ExceptionOr<void> mergeWithNextTextNode(Text&);
@@ -923,6 +923,9 @@ protected:
 
     void disconnectFromIntersectionObservers();
     static AtomString makeTargetBlankIfHasDanglingMarkup(const AtomString& target);
+
+    template<typename ShadowRoot> std::optional<ShadowRoot> serializeShadowRoot() const;
+    template<typename Attribute> Vector<Attribute> serializeAttributes() const;
 
 private:
     LocalFrame* documentFrameWithNonNullView() const;

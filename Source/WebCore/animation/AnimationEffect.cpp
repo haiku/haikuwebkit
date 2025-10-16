@@ -36,6 +36,7 @@
 #include "JSComputedEffectTiming.h"
 #include "ScriptExecutionContext.h"
 #include "ScrollTimeline.h"
+#include "StyleSingleAnimationRange.h"
 #include "WebAnimation.h"
 #include "WebAnimationUtilities.h"
 #include <wtf/TZoneMallocInlines.h>
@@ -417,7 +418,7 @@ void AnimationEffect::animationPlaybackRateDidChange()
     m_timingDidMutate = true;
 }
 
-void AnimationEffect::animationProgressBasedTimelineSourceDidChangeMetrics(const TimelineRange& animationAttachmentRange)
+void AnimationEffect::animationProgressBasedTimelineSourceDidChangeMetrics(const Style::SingleAnimationRange& animationAttachmentRange)
 {
     if (!animationAttachmentRange.isDefault())
         m_timingDidMutate = true;

@@ -1041,21 +1041,23 @@ std::optional<TypeIndex> TypeInformation::tryGetCachedUnrolling(TypeIndex type)
 
 void TypeInformation::registerCanonicalRTTForType(TypeIndex type)
 {
-    TypeInformation& info = singleton();
+    Ref def = get(type);
+    if (def->m_rtt)
+        return;
 
-    auto registered = tryGetCanonicalRTT(type);
-    if (!registered) {
-        auto rtt = TypeInformation::createCanonicalRTTForType(type);
-        {
-            Locker locker { info.m_lock };
-            info.m_rttMap.add(type, WTFMove(rtt));
-        }
+    {
+        Locker locker { def->m_rttLock };
+        if (def->m_rtt)
+            return;
+        auto rtt = TypeInformation::createCanonicalRTTForType(locker, def);
+        WTF::storeStoreFence(); // Make double-checked locking work.
+        def->m_rtt = WTFMove(rtt);
     }
 }
 
-Ref<RTT> TypeInformation::createCanonicalRTTForType(TypeIndex type)
+Ref<RTT> TypeInformation::createCanonicalRTTForType(const AbstractLocker&, const TypeDefinition& def)
 {
-    const TypeDefinition& signature = TypeInformation::get(type).unroll();
+    const TypeDefinition& signature = def.unroll();
     RTTKind kind;
     if (signature.expand().is<FunctionSignature>())
         kind = RTTKind::Function;
@@ -1065,7 +1067,8 @@ Ref<RTT> TypeInformation::createCanonicalRTTForType(TypeIndex type)
         kind = RTTKind::Struct;
 
     if (signature.is<Subtype>() && signature.as<Subtype>()->supertypeCount() > 0) {
-        auto superRTT = TypeInformation::tryGetCanonicalRTT(signature.as<Subtype>()->firstSuperType());
+        Ref superTypeDef = TypeInformation::get(signature.as<Subtype>()->firstSuperType());
+        auto superRTT = superTypeDef->m_rtt;
         ASSERT(superRTT);
         auto protector = RTT::tryCreate(kind, *superRTT);
         RELEASE_ASSERT(protector);
@@ -1077,16 +1080,10 @@ Ref<RTT> TypeInformation::createCanonicalRTTForType(TypeIndex type)
     return protector.releaseNonNull();
 }
 
-RefPtr<const RTT> TypeInformation::tryGetCanonicalRTT(TypeIndex type)
-{
-    TypeInformation& info = singleton();
-    Locker locker { info.m_lock };
-    return info.m_rttMap.get(type);
-}
-
 Ref<const RTT> TypeInformation::getCanonicalRTT(TypeIndex type)
 {
-    auto result = TypeInformation::tryGetCanonicalRTT(type);
+    Ref def = get(type);
+    auto result = def->m_rtt;
     RELEASE_ASSERT(result);
     return result.releaseNonNull();
 }
@@ -1165,7 +1162,6 @@ void TypeInformation::tryCleanup()
             if (signature->refCount() == 1) {
                 TypeIndex index = signature->unownedIndex();
                 info.m_unrollingCache.remove(index);
-                info.m_rttMap.remove(index);
                 changed |= signature->cleanup();
                 return true;
             }

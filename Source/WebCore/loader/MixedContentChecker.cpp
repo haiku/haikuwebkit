@@ -161,18 +161,4 @@ bool MixedContentChecker::shouldBlockRequest(LocalFrame& frame, const URL& url, 
     return true;
 }
 
-void MixedContentChecker::checkFormForMixedContent(LocalFrame& frame, const URL& url)
-{
-    // Unconditionally allow javascript: URLs as form actions as some pages do this and it does not introduce
-    // a mixed content issue.
-    if (url.protocolIsJavaScript())
-        return;
-
-    if (!isMixedContent(*frame.document(), url))
-        return;
-
-    auto message = makeString("The page at "_s, frame.document()->url().stringCenterEllipsizedToLength(), " contains a form which targets an insecure URL "_s, url.stringCenterEllipsizedToLength(), ".\n"_s);
-    frame.protectedDocument()->addConsoleMessage(MessageSource::Security, MessageLevel::Warning, message);
-}
-
 } // namespace WebCore

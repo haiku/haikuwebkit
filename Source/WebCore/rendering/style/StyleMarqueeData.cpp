@@ -25,13 +25,14 @@
 #include "RenderStyleConstants.h"
 #include "RenderStyleDifference.h"
 #include "RenderStyleInlines.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 
 namespace WebCore {
 
 StyleMarqueeData::StyleMarqueeData()
     : increment(RenderStyle::initialMarqueeIncrement())
     , speed(RenderStyle::initialMarqueeSpeed())
-    , loops(RenderStyle::initialMarqueeLoopCount())
+    , repetition(RenderStyle::initialMarqueeRepetition())
     , behavior(static_cast<unsigned>(RenderStyle::initialMarqueeBehavior()))
     , direction(static_cast<unsigned>(RenderStyle::initialMarqueeDirection()))
 {
@@ -41,7 +42,7 @@ inline StyleMarqueeData::StyleMarqueeData(const StyleMarqueeData& o)
     : RefCounted<StyleMarqueeData>()
     , increment(o.increment)
     , speed(o.speed)
-    , loops(o.loops)
+    , repetition(o.repetition)
     , behavior(o.behavior)
     , direction(o.direction) 
 {
@@ -59,8 +60,11 @@ Ref<StyleMarqueeData> StyleMarqueeData::copy() const
 
 bool StyleMarqueeData::operator==(const StyleMarqueeData& o) const
 {
-    return increment == o.increment && speed == o.speed && direction == o.direction &&
-           behavior == o.behavior && loops == o.loops;
+    return increment == o.increment
+        && speed == o.speed
+        && repetition == o.repetition
+        && behavior == o.behavior
+        && direction == o.direction;
 }
 
 #if !LOG_DISABLED
@@ -68,6 +72,7 @@ void StyleMarqueeData::dumpDifferences(TextStream& ts, const StyleMarqueeData& o
 {
     LOG_IF_DIFFERENT(increment);
     LOG_IF_DIFFERENT(speed);
+    LOG_IF_DIFFERENT(repetition);
     LOG_IF_DIFFERENT_WITH_CAST(MarqueeBehavior, behavior);
     LOG_IF_DIFFERENT_WITH_CAST(MarqueeDirection, direction);
 }

@@ -54,6 +54,7 @@ struct WebKit::WebHitTestResultData {
     bool isActivePDFAnnotation;
     WebKit::WebHitTestResultData::ElementType elementType;
     std::optional<WebKit::FrameInfoData> frameInfo;
+    std::optional<WebCore::FrameIdentifier> targetFrame;
     std::optional<WebCore::RemoteUserInputEventData> remoteUserInputEventData;
     String lookupText;
     String tooltipText;

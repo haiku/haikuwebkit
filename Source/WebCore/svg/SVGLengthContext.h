@@ -60,7 +60,6 @@ public:
     static FloatPoint resolvePoint(const SVGElement*, SVGUnitTypes::SVGUnitType, const SVGLengthValue& x, const SVGLengthValue& y);
     static float resolveLength(const SVGElement*, SVGUnitTypes::SVGUnitType, const SVGLengthValue&);
 
-    float valueForLength(const Length&, SVGLengthMode = SVGLengthMode::Other);
     float valueForLength(const Style::PreferredSize&, SVGLengthMode = SVGLengthMode::Other);
     float valueForLength(const Style::SVGCenterCoordinateComponent&, SVGLengthMode = SVGLengthMode::Other);
     float valueForLength(const Style::SVGCoordinateComponent&, SVGLengthMode = SVGLengthMode::Other);
@@ -69,9 +68,6 @@ public:
     float valueForLength(const Style::SVGStrokeDasharrayValue&, SVGLengthMode = SVGLengthMode::Other);
     float valueForLength(const Style::SVGStrokeDashoffset&, SVGLengthMode = SVGLengthMode::Other);
     float valueForLength(const Style::StrokeWidth&, SVGLengthMode = SVGLengthMode::Other);
-
-    ExceptionOr<float> convertValueToUserUnits(float, SVGLengthType, SVGLengthMode) const;
-    ExceptionOr<float> convertValueFromUserUnits(float, SVGLengthType, SVGLengthMode) const;
 
     ExceptionOr<float> resolveValueToUserUnits(float, const CSS::LengthPercentageUnit&, SVGLengthMode) const;
     ExceptionOr<CSS::LengthPercentage<>> resolveValueFromUserUnits(float, const CSS::LengthPercentageUnit&, SVGLengthMode) const;
@@ -83,17 +79,8 @@ private:
     ExceptionOr<float> convertValueFromPercentageToUserUnits(float value, SVGLengthMode) const;
     static float convertValueFromPercentageToUserUnits(float value, SVGLengthMode, FloatSize);
 
-    ExceptionOr<float> convertValueFromUserUnitsToEMS(float) const;
-    ExceptionOr<float> convertValueFromEMSToUserUnits(float) const;
-
     ExceptionOr<float> convertValueFromUserUnitsToEXS(float) const;
     ExceptionOr<float> convertValueFromEXSToUserUnits(float) const;
-
-    ExceptionOr<float> convertValueFromUserUnitsToLh(float) const;
-    ExceptionOr<float> convertValueFromLhToUserUnits(float) const;
-
-    ExceptionOr<float> convertValueFromUserUnitsToCh(float) const;
-    ExceptionOr<float> convertValueFromChToUserUnits(float) const;
 
     std::optional<FloatSize> computeViewportSize() const;
     float computeNonCalcLength(float, CSS::LengthUnit) const;

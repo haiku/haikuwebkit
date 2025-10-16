@@ -229,7 +229,6 @@ private:
     std::optional<AST::ParameterRole> m_parameterRole;
     std::optional<ShaderStage> m_entryPointStage;
     AST::Function* m_currentFunction { nullptr };
-    unsigned m_functionConstantIndex { 0 };
     AST::Continuing*m_continuing { nullptr };
     HashSet<AST::Function*> m_visitedFunctions;
     PrepareResult& m_prepareResult;

@@ -25,6 +25,7 @@
 #pragma once
 
 #include <WebCore/Event.h>
+#include <WebCore/EventTimingInteractionID.h>
 #include <WebCore/UIEventInit.h>
 #include <WebCore/WindowProxy.h>
 
@@ -54,6 +55,8 @@ public:
 
     WindowProxy* view() const { return m_view.get(); }
     int detail() const { return m_detail; }
+    EventTimingInteractionID interactionID() const { return m_interactionID; }
+    void setInteractionID(EventTimingInteractionID interactionID) { m_interactionID = interactionID; }
 
     virtual int layerX();
     virtual int layerY();
@@ -79,6 +82,7 @@ private:
 
     RefPtr<WindowProxy> m_view;
     int m_detail;
+    EventTimingInteractionID m_interactionID;
 };
 
 } // namespace WebCore

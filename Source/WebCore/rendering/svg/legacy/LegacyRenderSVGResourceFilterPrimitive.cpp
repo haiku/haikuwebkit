@@ -29,6 +29,7 @@
 #include "config.h"
 #include "LegacyRenderSVGResourceFilterPrimitive.h"
 
+#include "RenderObjectDocument.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGFEDiffuseLightingElement.h"
 #include "SVGFEDropShadowElement.h"

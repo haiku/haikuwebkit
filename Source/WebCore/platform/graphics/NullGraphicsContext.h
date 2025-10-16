@@ -111,7 +111,6 @@ private:
     FloatSize drawText(const FontCascade&, const TextRun&, const FloatPoint&, unsigned = 0, std::optional<unsigned> = std::nullopt) final { return { }; }
 
     void drawGlyphs(const Font&, std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, const FloatPoint&, FontSmoothingMode) final { }
-    void drawDecomposedGlyphs(const Font&, const DecomposedGlyphs&) final { }
     void drawDisplayList(const DisplayList::DisplayList&, ControlFactory&) final { }
 
     void drawEmphasisMarks(const FontCascade&, const TextRun&, const AtomString&, const FloatPoint&, unsigned = 0, std::optional<unsigned> = std::nullopt) final { }

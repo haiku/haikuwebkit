@@ -2190,8 +2190,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSOverconstrainedError.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSOverconstrainedError.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSOverconstrainedErrorEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSOverconstrainedErrorEvent.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSOverflowEvent.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSOverflowEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPageRevealEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPageRevealEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSPageSwapEvent.cpp
@@ -2552,10 +2550,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableByteStreamController.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableByteStreamController.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStream.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStream.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBReader.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBReader.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBRequest.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBRequest.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamDefaultController.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamDefaultController.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamDefaultReader.cpp
@@ -3665,12 +3659,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ProcessSyncData.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ProcessSyncData.serialization.in
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableByteStreamControllerBuiltins.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableByteStreamControllerBuiltins.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableByteStreamInternalsBuiltins.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableByteStreamInternalsBuiltins.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamBYOBReaderBuiltins.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamBYOBReaderBuiltins.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamBYOBRequestBuiltins.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamBYOBRequestBuiltins.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamBuiltins.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamBuiltins.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamDefaultControllerBuiltins.cpp

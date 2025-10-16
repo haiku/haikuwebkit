@@ -28,7 +28,6 @@
 #include <WebCore/BoxExtents.h>
 #include <WebCore/FloatRect.h>
 #include <WebCore/IntRect.h>
-#include <WebCore/LengthBox.h>
 #include <WebCore/PlatformCALayer.h>
 #include <WebCore/PlatformCALayerClient.h>
 #include <WebCore/TiledBacking.h>

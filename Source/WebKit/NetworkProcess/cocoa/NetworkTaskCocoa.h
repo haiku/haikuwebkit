@@ -55,6 +55,8 @@ public:
 
     WebCore::ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking() const;
 
+    virtual bool isInitiatedByDedicatedWorker() const { return false; }
+
 protected:
     NetworkTaskCocoa(NetworkSession&);
 

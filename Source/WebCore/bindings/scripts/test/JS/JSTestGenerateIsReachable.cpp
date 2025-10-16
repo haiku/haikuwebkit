@@ -159,7 +159,7 @@ JSValue JSTestGenerateIsReachable::getConstructor(VM& vm, const JSGlobalObject* 
 
 void JSTestGenerateIsReachable::destroy(JSC::JSCell* cell)
 {
-    JSTestGenerateIsReachable* thisObject = static_cast<JSTestGenerateIsReachable*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestGenerateIsReachable* thisObject = static_cast<JSTestGenerateIsReachable*>(cell);
     thisObject->JSTestGenerateIsReachable::~JSTestGenerateIsReachable();
 }
 
@@ -216,7 +216,7 @@ bool JSTestGenerateIsReachableOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC:
 
 void JSTestGenerateIsReachableOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestGenerateIsReachable = static_cast<JSTestGenerateIsReachable*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestGenerateIsReachable = static_cast<JSTestGenerateIsReachable*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestGenerateIsReachable->protectedWrapped().ptr(), jsTestGenerateIsReachable);
 }

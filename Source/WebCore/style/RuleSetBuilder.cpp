@@ -279,9 +279,13 @@ void RuleSetBuilder::addRulesFromSheetContents(const StyleSheetContents& sheet)
 void RuleSetBuilder::resolveSelectorListWithNesting(StyleRuleWithNesting& rule)
 {
     const CSSSelectorList* parentResolvedSelectorList = nullptr;
-    if (m_selectorListStack.size())
+    bool parentIsScopeRule = false;
+    if (m_selectorListStack.size()) {
         parentResolvedSelectorList = m_selectorListStack.last();
-    auto resolvedSelectorList = CSSSelectorParser::resolveNestingParent(rule.originalSelectorList(), parentResolvedSelectorList);
+        parentIsScopeRule = m_ancestorStack.last() == CSSParserEnum::NestedContextType::Scope;
+    }
+
+    auto resolvedSelectorList = CSSSelectorParser::resolveNestingParent(rule.originalSelectorList(), parentResolvedSelectorList, parentIsScopeRule);
     rule.wrapperAdoptSelectorList(WTFMove(resolvedSelectorList));
 }
 

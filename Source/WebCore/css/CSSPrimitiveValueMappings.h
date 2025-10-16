@@ -38,6 +38,7 @@
 #include <WebCore/CSSPrimitiveValue.h>
 #include <WebCore/CSSToLengthConversionData.h>
 #include <WebCore/CSSValueKeywords.h>
+#include <WebCore/CompositeOperation.h>
 #include <WebCore/FontSizeAdjust.h>
 #include <WebCore/GraphicsTypes.h>
 #include <WebCore/Length.h>
@@ -2306,56 +2307,6 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-constexpr CSSValueID toCSSValueID(TextEdgeType textEdgeType)
-{
-    switch (textEdgeType) {
-    case TextEdgeType::Auto:
-        return CSSValueAuto;
-    case TextEdgeType::Leading:
-        return CSSValueLeading;
-    case TextEdgeType::Text:
-        return CSSValueText;
-    case TextEdgeType::CapHeight:
-        return CSSValueCap;
-    case TextEdgeType::ExHeight:
-        return CSSValueEx;
-    case TextEdgeType::Alphabetic:
-        return CSSValueAlphabetic;
-    case TextEdgeType::CJKIdeographic:
-        return CSSValueIdeographic;
-    case TextEdgeType::CJKIdeographicInk:
-        return CSSValueIdeographicInk;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return CSSValueInvalid;
-}
-
-template<> constexpr TextEdgeType fromCSSValueID(CSSValueID valueID)
-{
-    switch (valueID) {
-    case CSSValueAuto:
-        return TextEdgeType::Auto;
-    case CSSValueLeading:
-        return TextEdgeType::Leading;
-    case CSSValueText:
-        return TextEdgeType::Text;
-    case CSSValueCap:
-        return TextEdgeType::CapHeight;
-    case CSSValueEx:
-        return TextEdgeType::ExHeight;
-    case CSSValueAlphabetic:
-        return TextEdgeType::Alphabetic;
-    case CSSValueIdeographic:
-        return TextEdgeType::CJKIdeographic;
-    case CSSValueIdeographicInk:
-        return TextEdgeType::CJKIdeographicInk;
-    default:
-        break;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return TextEdgeType::Auto;
-}
-
 #if ENABLE(APPLE_PAY)
 
 #define TYPE ApplePayButtonStyle
@@ -2593,8 +2544,56 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
+#define TYPE Scroller
+#define FOR_EACH(CASE) CASE(Nearest) CASE(Root) CASE(Self)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
 #define TYPE NinePieceImageRule
 #define FOR_EACH(CASE) CASE(Stretch) CASE(Round) CASE(Space) CASE(Repeat)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE AnimationDirection
+#define FOR_EACH(CASE) CASE(Normal) CASE(Alternate) CASE(Reverse) CASE(AlternateReverse)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE AnimationFillMode
+#define FOR_EACH(CASE) CASE(None) CASE(Forwards) CASE(Backwards) CASE(Both)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE AnimationPlayState
+#define FOR_EACH(CASE) CASE(Running) CASE(Paused)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE CompositeOperation
+#define FOR_EACH(CASE) CASE(Replace) CASE(Add) CASE(Accumulate)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE TransitionBehavior
+#define FOR_EACH(CASE) CASE(Normal) CASE(AllowDiscrete)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE TextEdgeOver
+#define FOR_EACH(CASE) CASE(Text) CASE(Ideographic) CASE(IdeographicInk) CASE(Cap) CASE(Ex)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE TextEdgeUnder
+#define FOR_EACH(CASE) CASE(Text) CASE(Ideographic) CASE(IdeographicInk) CASE(Alphabetic)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH

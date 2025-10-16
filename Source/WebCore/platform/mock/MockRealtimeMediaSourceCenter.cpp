@@ -162,7 +162,6 @@ private:
     RealtimeMediaSourceSettings m_settings;
     Timer m_readyTimer;
     bool m_isRunning { false };
-    bool m_didReceiveVideoFrame { false };
     CompletionHandler<void(CaptureSourceError&&)> m_whenReadyCallback;
 };
 

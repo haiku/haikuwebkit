@@ -27,12 +27,16 @@
 #include "MediaStrategy.h"
 
 #include "MediaPlayer.h"
+#include <wtf/TZoneMallocInlines.h>
+
 #if ENABLE(MEDIA_SOURCE)
 #include "DeprecatedGlobalSettings.h"
 #include "MockMediaPlayerMediaSource.h"
 #endif
 
 namespace WebCore {
+
+WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(MediaStrategy);
 
 MediaStrategy::MediaStrategy() = default;
 

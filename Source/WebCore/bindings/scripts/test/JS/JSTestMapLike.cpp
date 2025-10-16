@@ -174,7 +174,7 @@ JSValue JSTestMapLike::getConstructor(VM& vm, const JSGlobalObject* globalObject
 
 void JSTestMapLike::destroy(JSC::JSCell* cell)
 {
-    JSTestMapLike* thisObject = static_cast<JSTestMapLike*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestMapLike* thisObject = static_cast<JSTestMapLike*>(cell);
     thisObject->JSTestMapLike::~JSTestMapLike();
 }
 
@@ -389,7 +389,7 @@ bool JSTestMapLikeOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> ha
 
 void JSTestMapLikeOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestMapLike = static_cast<JSTestMapLike*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestMapLike = static_cast<JSTestMapLike*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestMapLike->protectedWrapped().ptr(), jsTestMapLike);
 }

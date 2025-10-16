@@ -29,6 +29,7 @@
 #include <WebCore/MediaUniqueIdentifier.h>
 #include <WebCore/NowPlayingInfo.h>
 #include <WebCore/NowPlayingMetadataObserver.h>
+#include <WebCore/PageIdentifier.h>
 #include <WebCore/PlatformMediaSessionTypes.h>
 #include <wtf/AggregateLogger.h>
 #include <wtf/CancellableTask.h>
@@ -167,7 +168,7 @@ public:
     virtual void resetSessionState() { };
 
 protected:
-    MediaSessionManagerInterface();
+    MediaSessionManagerInterface(PageIdentifier);
 
     virtual WeakListHashSet<PlatformMediaSessionInterface>& sessions() const = 0;
     virtual Vector<WeakPtr<PlatformMediaSessionInterface>> copySessionsToVector() const = 0;
@@ -192,6 +193,8 @@ protected:
 
     void scheduleUpdateSessionState();
     virtual void updateSessionState() { }
+
+    PageIdentifier pageIdentifier() const { return m_pageIdentifier; }
 
 #if !RELEASE_LOG_DISABLED
     void scheduleStateLog();
@@ -219,6 +222,7 @@ private:
     WeakHashSet<NowPlayingMetadataObserver> m_nowPlayingMetadataObservers;
     TaskCancellationGroup m_taskGroup;
 
+    PageIdentifier m_pageIdentifier;
 #if !RELEASE_LOG_DISABLED
     UniqueRef<Timer> m_stateLogTimer;
     const Ref<AggregateLogger> m_logger;

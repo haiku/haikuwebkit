@@ -84,6 +84,12 @@ template<> struct Blending<BoxShadow> {
     auto blend(const BoxShadow&, const BoxShadow&, const RenderStyle&, const RenderStyle&, const BlendingContext&) -> BoxShadow;
 };
 
+template<> struct Blending<BoxShadows> {
+    auto canBlend(const BoxShadows&, const BoxShadows&, CompositeOperation) -> bool;
+    constexpr auto requiresInterpolationForAccumulativeIteration(const BoxShadows&, const BoxShadows&) -> bool { return true; }
+    auto blend(const BoxShadows&, const BoxShadows&, const RenderStyle&, const RenderStyle&, const BlendingContext&) -> BoxShadows;
+};
+
 // MARK: - Shadow-specific Interfaces
 
 inline ShadowStyle shadowStyle(const BoxShadow& shadow)

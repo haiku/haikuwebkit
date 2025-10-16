@@ -136,7 +136,7 @@ PixelFormat CanvasRenderingContext::pixelFormat() const
 
 bool CanvasRenderingContext::isOpaque() const
 {
-    return imageBufferPixelFormatIsOpaque(pixelFormat());
+    return pixelFormatIsOpaque(pixelFormat());
 }
 
 DestinationColorSpace CanvasRenderingContext::colorSpace() const

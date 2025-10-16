@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include <WebCore/AnimationList.h>
 #include <WebCore/AnimationMalloc.h>
 #include <WebCore/CSSPropertyNames.h>
+#include <WebCore/StyleAnimations.h>
 #include <WebCore/WebAnimationTypes.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakPtr.h>
@@ -61,8 +61,8 @@ public:
     void removeEffect(KeyframeEffect&);
     bool hasEffects() const { return !m_effects.isEmpty(); }
     Vector<WeakPtr<KeyframeEffect>> sortedEffects();
-    const AnimationList* cssAnimationList() const { return m_cssAnimationList.get(); }
-    void setCSSAnimationList(RefPtr<const AnimationList>&&);
+    const std::optional<Style::Animations>& cssAnimationList() const { return m_cssAnimationList; }
+    void setCSSAnimationList(std::optional<Style::Animations>&&);
     bool containsProperty(CSSPropertyID) const;
     bool isCurrentlyAffectingProperty(CSSPropertyID) const;
     bool requiresPseudoElement() const;
@@ -101,7 +101,7 @@ private:
 #endif
     HashSet<String> m_invalidCSSAnimationNames;
     HashSet<AnimatableCSSProperty> m_acceleratedPropertiesOverriddenByCascade;
-    RefPtr<const AnimationList> m_cssAnimationList;
+    std::optional<Style::Animations> m_cssAnimationList;
     bool m_isSorted { true };
 };
 

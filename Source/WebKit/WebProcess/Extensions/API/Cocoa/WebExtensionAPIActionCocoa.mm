@@ -390,8 +390,8 @@ bool WebExtensionAPIAction::isValidDimensionKey(NSString *dimension)
 
 NSString *WebExtensionAPIAction::parseIconPath(NSString *path, const URL& baseURL)
 {
-    // Resolve paths as relative against the base URL, unless it is a data URL.
-    if ([path hasPrefix:@"data:"])
+    // Resolve paths as relative against the base URL, unless it is a data or symbol URL.
+    if ([path hasPrefix:@"data:"] || [path hasPrefix:@"symbol:"])
         return path;
     return URL { baseURL, path }.path().createNSString().autorelease();
 }

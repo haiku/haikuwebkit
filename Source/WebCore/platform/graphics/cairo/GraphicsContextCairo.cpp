@@ -37,7 +37,6 @@
 
 #include "AffineTransform.h"
 #include "CairoOperations.h"
-#include "DecomposedGlyphs.h"
 #include "FloatRect.h"
 #include "FloatRoundedRect.h"
 #include "Gradient.h"

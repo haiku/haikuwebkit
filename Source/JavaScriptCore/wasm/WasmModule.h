@@ -32,6 +32,7 @@
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 #include <JavaScriptCore/WasmCalleeGroup.h>
+#include <JavaScriptCore/WasmInstanceAnchor.h>
 #include <JavaScriptCore/WasmJS.h>
 #include <JavaScriptCore/WasmMemory.h>
 #include <JavaScriptCore/WasmOps.h>
@@ -48,7 +49,9 @@ class WebAssemblyCompileOptions;
 
 namespace Wasm {
 
+class IPIntCallee;
 class IPIntPlan;
+class MergedProfile;
 struct ModuleInformation;
 enum class BindingFailure;
 
@@ -82,6 +85,12 @@ public:
 
     CodePtr<WasmEntryPtrTag> importFunctionStub(FunctionSpaceIndex importFunctionNum) { return m_wasmToJSExitStubs[importFunctionNum].code(); }
 
+    IPIntCallees& ipintCallees() const { return m_ipintCallees.get(); }
+
+    Ref<Wasm::InstanceAnchor> registerAnchor(JSWebAssemblyInstance*);
+
+    std::unique_ptr<MergedProfile> createMergedProfile(IPIntCallee&);
+
 private:
     Ref<CalleeGroup> getOrCreateCalleeGroup(VM&, MemoryMode);
 
@@ -90,6 +99,7 @@ private:
     RefPtr<CalleeGroup> m_calleeGroups[numberOfMemoryModes];
     const Ref<IPIntCallees> m_ipintCallees;
     FixedVector<MacroAssemblerCodeRef<WasmEntryPtrTag>> m_wasmToJSExitStubs;
+    ThreadSafeWeakHashSet<InstanceAnchor> m_anchors;
     Lock m_lock;
 };
 

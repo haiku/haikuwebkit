@@ -50,6 +50,7 @@ class Element;
 class EventListener;
 class FloatRect;
 class Frame;
+class FrameConsoleClient;
 class HTMLFrameOwnerElement;
 class History;
 class IdleRequestCallback;
@@ -63,7 +64,6 @@ class Navigator;
 class Node;
 class NodeList;
 class Page;
-class PageConsoleClient;
 class Performance;
 class PushManager;
 class RequestAnimationFrameCallback;
@@ -122,8 +122,8 @@ public:
     void close(Document&);
     virtual void closePage() = 0;
 
-    PageConsoleClient* console() const;
-    CheckedPtr<PageConsoleClient> checkedConsole() const;
+    FrameConsoleClient* console() const;
+    CheckedPtr<FrameConsoleClient> checkedConsole() const;
 
     WindowProxy* opener() const;
     Document* documentIfLocal();

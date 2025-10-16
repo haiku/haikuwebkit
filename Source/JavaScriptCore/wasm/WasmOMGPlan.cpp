@@ -33,6 +33,7 @@
 #include "LinkBuffer.h"
 #include "NativeCalleeRegistry.h"
 #include "WasmCallee.h"
+#include "WasmFaultSignalHandler.h"
 #include "WasmIRGeneratorHelpers.h"
 #include "WasmNameSection.h"
 #include "WasmOMGIRGenerator.h"
@@ -59,6 +60,7 @@ OMGPlan::OMGPlan(VM& vm, Ref<Module>&& module, FunctionCodeIndex functionIndex, 
     setMode(mode);
     ASSERT(m_calleeGroup->runnable());
     ASSERT(m_calleeGroup.ptr() == m_module->calleeGroupFor(m_mode));
+    Wasm::activateSignalingMemory();
     dataLogLnIf(WasmOMGPlanInternal::verbose, "[", m_moduleInformation->toSpaceIndex(m_functionIndex), "]: Starting OMG plan for ", functionIndex, " of module: ", RawPointer(&m_module.get()));
 }
 
@@ -128,17 +130,13 @@ void OMGPlan::work()
     TypeIndex typeIndex = m_moduleInformation->internalFunctionTypeIndices[m_functionIndex];
     const TypeDefinition& signature = TypeInformation::get(typeIndex).expand();
 
-    RefPtr<IPIntCallee> profiledCallee;
-    {
-        Locker locker { m_calleeGroup->m_lock };
-        profiledCallee = m_calleeGroup->ipintCalleeFromFunctionIndexSpace(locker, functionIndexSpace);
-    }
+    Ref<IPIntCallee> profiledCallee = m_calleeGroup->ipintCalleeFromFunctionIndexSpace(functionIndexSpace);
     Ref<OMGCallee> callee = OMGCallee::create(functionIndexSpace, m_moduleInformation->nameSection->get(functionIndexSpace));
 
     beginCompilerSignpost(callee.get());
     Vector<UnlinkedWasmToWasmCall> unlinkedCalls;
     CompilationContext context;
-    auto parseAndCompileResult = parseAndCompileOMG(context, *profiledCallee, callee.get(), function, signature, unlinkedCalls, m_calleeGroup.get(), m_moduleInformation.get(), m_mode, CompilationMode::OMGMode, m_functionIndex, UINT32_MAX);
+    auto parseAndCompileResult = parseAndCompileOMG(context, profiledCallee.get(), callee.get(), function, signature, unlinkedCalls, m_module.get(), m_calleeGroup.get(), m_moduleInformation.get(), m_mode, CompilationMode::OMGMode, m_functionIndex, UINT32_MAX);
     endCompilerSignpost(callee.get());
 
     if (!parseAndCompileResult) [[unlikely]] {
@@ -179,40 +177,13 @@ void OMGPlan::work()
         if (samplingProfilerMap)
             NativeCalleeRegistry::singleton().addPCToCodeOriginMap(callee.ptr(), WTFMove(samplingProfilerMap));
 
-        // We want to make sure we publish our callee at the same time as we link our callsites. This enables us to ensure we
-        // always call the fastest code. Any function linked after us will see our new code and the new callsites, which they
-        // will update. It's also ok if they publish their code before we reset the instruction caches because after we release
-        // the lock our code is ready to be published too.
         Locker locker { m_calleeGroup->m_lock };
-
-        m_calleeGroup->setOMGCallee(locker, m_functionIndex, callee.copyRef());
-        ASSERT(m_calleeGroup->replacement(locker, callee->index()) == callee.ptr());
-        m_calleeGroup->reportCallees(locker, callee.ptr(), internalFunction->outgoingJITDirectCallees);
-
-        for (auto& call : callee->wasmToWasmCallsites()) {
-            CodePtr<WasmEntryPtrTag> entrypoint;
-            if (call.functionIndexSpace < m_module->moduleInformation().importFunctionCount())
-                entrypoint = m_calleeGroup->m_wasmToWasmExitStubs[call.functionIndexSpace].code();
-            else {
-                Ref calleeCallee = m_calleeGroup->wasmEntrypointCalleeFromFunctionIndexSpace(locker, call.functionIndexSpace);
-                entrypoint = calleeCallee->entrypoint().retagged<WasmEntryPtrTag>();
-            }
-
-            // FIXME: This does an icache flush for each of these... which doesn't make any sense since this code isn't runnable here
-            // and any stale cache will be evicted when updateCallsitesToCallUs is called.
-            MacroAssembler::repatchNearCall(call.callLocation, CodeLocationLabel<WasmEntryPtrTag>(entrypoint));
-        }
-
-        m_calleeGroup->updateCallsitesToCallUs(locker, CodeLocationLabel<WasmEntryPtrTag>(entrypoint), m_functionIndex);
-        ASSERT(*m_calleeGroup->entrypointLoadLocationFromFunctionIndexSpace(functionIndexSpace) == entrypoint);
-
+        m_calleeGroup->installOptimizedCallee(locker, m_moduleInformation, m_functionIndex, callee.copyRef(), internalFunction->outgoingJITDirectCallees);
         {
-            WTF::storeStoreFence();
             if (RefPtr bbqCallee = m_calleeGroup->bbqCallee(locker, m_functionIndex)) {
                 Locker locker { bbqCallee->tierUpCounter().getLock() };
                 bbqCallee->tierUpCounter().setCompilationStatusForOMG(mode(), TierUpCount::CompilationStatus::Compiled);
             }
-            ASSERT(m_calleeGroup->m_ipintCallees);
             IPIntCallee& ipintCallee = m_calleeGroup->m_ipintCallees->at(m_functionIndex).get();
             Locker locker { ipintCallee.tierUpCounter().m_lock };
             ipintCallee.tierUpCounter().setCompilationStatus(mode(), IPIntTierUpCounter::CompilationStatus::Compiled);

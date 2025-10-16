@@ -46,7 +46,7 @@ class StreamConnectionWorkQueue;
 
 namespace WebKit {
 
-class RemoteGraphicsContext;
+class RemoteImageBufferGraphicsContext;
 class RemoteRenderingBackend;
 
 class RemoteImageBuffer : public IPC::StreamMessageReceiver {
@@ -83,7 +83,7 @@ private:
     const Ref<WebCore::ImageBuffer> m_imageBuffer;
     const WebCore::RenderingResourceIdentifier m_identifier;
     const Ref<RemoteRenderingBackend> m_renderingBackend;
-    IPC::ScopedActiveMessageReceiveQueue<RemoteGraphicsContext> m_context;
+    IPC::ScopedActiveMessageReceiveQueue<RemoteImageBufferGraphicsContext> m_context;
     ScopedRenderingResourcesRequest m_renderingResourcesRequest { ScopedRenderingResourcesRequest::acquire() };
 };
 

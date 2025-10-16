@@ -110,6 +110,7 @@ public:
     bool inLimitedQuirksMode() const { return m_quirksMode == QuirksMode::Limited; }
     bool inStandardsMode() const { return m_quirksMode == QuirksMode::No; }
     const SecurityOrigin& securityOrigin() const { return m_securityOrigin.get(); }
+    bool isTextShapingAcrossInlineBoxesEnabled() const { return m_isTextShapingAcrossInlineBoxesEnabled; }
 
     const ElementBox& root() const { return m_rootContainer; }
 
@@ -133,6 +134,7 @@ private:
 #endif
     HashMap<const Box*, std::unique_ptr<BoxGeometry>> m_layoutBoxToBoxGeometry;
     QuirksMode m_quirksMode { QuirksMode::No };
+    bool m_isTextShapingAcrossInlineBoxesEnabled { false };
 
     const CheckedRef<const ElementBox> m_rootContainer;
     const Ref<SecurityOrigin> m_securityOrigin;

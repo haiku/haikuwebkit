@@ -153,7 +153,7 @@ MediaSession::MediaSession(Navigator& navigator)
     : ActiveDOMObject(navigator.scriptExecutionContext())
     , m_navigator(navigator)
 #if ENABLE(MEDIA_SESSION_COORDINATOR)
-    , m_coordinator(MediaSessionCoordinator::create(navigator.scriptExecutionContext()))
+    , m_coordinator(MediaSessionCoordinator::create(navigator.protectedScriptExecutionContext().get()))
 #endif
 {
     m_logger = Document::sharedLogger();
@@ -416,7 +416,7 @@ RefPtr<MediaSessionManagerInterface> MediaSession::sessionManager() const
     if (!page)
         return nullptr;
 
-    return &page->mediaSessionManager();
+    return page->mediaSessionManager();
 }
 
 void MediaSession::metadataUpdated(const MediaMetadata& metadata)

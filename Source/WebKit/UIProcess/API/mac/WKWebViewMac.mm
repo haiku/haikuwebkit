@@ -2044,6 +2044,21 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 }
 
+- (BOOL)_isSmartListsEnabled
+{
+    return _impl->isSmartListsEnabled();
+}
+
+- (void)_setSmartListsEnabled:(BOOL)flag
+{
+    _impl->setSmartListsEnabled(flag);
+}
+
+- (void)_toggleSmartLists:(id)sender
+{
+    _impl->toggleSmartLists();
+}
+
 @end // WKWebView (WKPrivateMac)
 
 @implementation WKWebView (WKWindowSnapshot)

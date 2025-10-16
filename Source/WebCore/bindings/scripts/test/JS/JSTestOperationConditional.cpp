@@ -172,7 +172,7 @@ JSValue JSTestOperationConditional::getConstructor(VM& vm, const JSGlobalObject*
 
 void JSTestOperationConditional::destroy(JSC::JSCell* cell)
 {
-    JSTestOperationConditional* thisObject = static_cast<JSTestOperationConditional*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestOperationConditional* thisObject = static_cast<JSTestOperationConditional*>(cell);
     thisObject->JSTestOperationConditional::~JSTestOperationConditional();
 }
 
@@ -251,7 +251,7 @@ bool JSTestOperationConditionalOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC
 
 void JSTestOperationConditionalOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestOperationConditional = static_cast<JSTestOperationConditional*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestOperationConditional = static_cast<JSTestOperationConditional*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestOperationConditional->protectedWrapped().ptr(), jsTestOperationConditional);
 }

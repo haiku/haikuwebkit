@@ -42,8 +42,9 @@ namespace JSC { namespace FTL {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(AbstractHeap);
 
-AbstractHeap::AbstractHeap(AbstractHeap* parent, const char* heapName, ptrdiff_t offset)
+AbstractHeap::AbstractHeap(AbstractHeap* parent, const char* heapName, ptrdiff_t offset, B3::Mutability mutability)
     : m_offset(offset)
+    , m_mutability(mutability)
     , m_heapName(heapName)
 {
     changeParent(parent);
@@ -97,6 +98,8 @@ void AbstractHeap::shallowDump(PrintStream& out) const
     out.print(heapName(), "(", m_offset, ")");
     if (m_range)
         out.print("<", m_range, ">");
+    if (m_mutability == B3::Mutability::Immutable)
+        out.print("[immutable]");
 }
 
 void AbstractHeap::dump(PrintStream& out) const

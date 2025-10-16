@@ -22,7 +22,8 @@
 
 #include "Document.h"
 #include "EventNames.h"
-#include "LocalFrame.h"
+#include "FrameDestructionObserverInlines.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
 #include "MediaQueryEvaluator.h"

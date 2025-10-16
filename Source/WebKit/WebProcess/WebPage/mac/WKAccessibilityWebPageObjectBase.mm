@@ -45,6 +45,7 @@
 #import <WebCore/RemoteFrame.h>
 #import <WebCore/ScrollView.h>
 #import <WebCore/Scrollbar.h>
+#import <WebCore/Settings.h>
 
 namespace ax = WebCore::Accessibility;
 

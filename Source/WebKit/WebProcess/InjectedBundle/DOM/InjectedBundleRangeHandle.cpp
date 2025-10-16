@@ -33,13 +33,14 @@
 #include <WebCore/BoundaryPointInlines.h>
 #include <WebCore/Document.h>
 #include <WebCore/FloatRect.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameInlines.h>
 #include <WebCore/FrameSelection.h>
 #include <WebCore/GeometryUtilities.h>
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/IntRect.h>
 #include <WebCore/JSRange.h>
-#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
 #include <WebCore/NodeInlines.h>
 #include <WebCore/Page.h>

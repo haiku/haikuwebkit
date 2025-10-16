@@ -112,6 +112,8 @@ void EventSource::connect()
     if (!m_lastEventId.isEmpty())
         request.setHTTPHeaderField(HTTPHeaderName::LastEventID, m_lastEventId);
 
+    RefPtr context = scriptExecutionContext();
+
     ThreadableLoaderOptions options;
     options.sendLoadCallbacks = SendCallbackPolicy::SendCallbacks;
     options.credentials = m_withCredentials ? FetchOptions::Credentials::Include : FetchOptions::Credentials::SameOrigin;
@@ -119,11 +121,10 @@ void EventSource::connect()
     options.mode = FetchOptions::Mode::Cors;
     options.cache = FetchOptions::Cache::NoStore;
     options.dataBufferingPolicy = DataBufferingPolicy::DoNotBufferData;
-    options.contentSecurityPolicyEnforcement = scriptExecutionContext()->shouldBypassMainWorldContentSecurityPolicy() ? ContentSecurityPolicyEnforcement::DoNotEnforce : ContentSecurityPolicyEnforcement::EnforceConnectSrcDirective;
+    options.contentSecurityPolicyEnforcement = context->shouldBypassMainWorldContentSecurityPolicy() ? ContentSecurityPolicyEnforcement::DoNotEnforce : ContentSecurityPolicyEnforcement::EnforceConnectSrcDirective;
     options.initiatorType = cachedResourceRequestInitiatorTypes().eventsource;
 
-    ASSERT(scriptExecutionContext());
-    m_loader = ThreadableLoader::create(*scriptExecutionContext(), *this, WTFMove(request), options);
+    m_loader = ThreadableLoader::create(*context, *this, WTFMove(request), options);
 
     // FIXME: Can we just use m_loader for this, null it out when it's no longer in flight, and eliminate the m_requestInFlight member?
     if (m_loader)
@@ -189,7 +190,7 @@ bool EventSource::responseIsValid(const ResourceResponse& response) const
     if (!equalLettersIgnoringASCIICase(response.mimeType(), "text/event-stream"_s)) {
         auto message = makeString("EventSource's response has a MIME type (\""_s, response.mimeType(), "\") that is not \"text/event-stream\". Aborting the connection."_s);
         // FIXME: Console message would be better with a source code location; where would we get that?
-        scriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, WTFMove(message));
+        protectedScriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, WTFMove(message));
         return false;
     }
 
@@ -199,7 +200,7 @@ bool EventSource::responseIsValid(const ResourceResponse& response) const
     if (!charset.isEmpty() && !equalLettersIgnoringASCIICase(charset, "utf-8"_s)) {
         auto message = makeString("EventSource's response has a charset (\""_s, charset, "\") that is not UTF-8. The response will be decoded as UTF-8."_s);
         // FIXME: Console message would be better with a source code location; where would we get that?
-        scriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, WTFMove(message));
+        protectedScriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, WTFMove(message));
     }
 
     return true;
@@ -424,7 +425,7 @@ void EventSource::resume()
 
     m_isSuspendedForBackForwardCache = false;
     if (std::exchange(m_shouldReconnectOnResume, false)) {
-        scriptExecutionContext()->postTask([pendingActivity = makePendingActivity(*this)](ScriptExecutionContext&) {
+        protectedScriptExecutionContext()->postTask([pendingActivity = makePendingActivity(*this)](ScriptExecutionContext&) {
             if (!pendingActivity->object().isContextStopped())
                 pendingActivity->object().scheduleReconnect();
         });

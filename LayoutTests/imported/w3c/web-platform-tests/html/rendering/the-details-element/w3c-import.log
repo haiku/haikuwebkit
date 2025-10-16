@@ -9,8 +9,8 @@ Do NOT modify or remove this file.
 
 ------------------------------------------------------------------------
 Properties requiring vendor prefixes:
-box-reflect
 line-grid
+box-reflect
 Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
@@ -33,6 +33,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-display-type-002-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-display-type-002.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-display.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-focus-steps.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-page-break-after-1-print.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-page-break-after-2-print.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-page-break-before-1-print.html
@@ -64,6 +65,8 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-summary-display-inline-002.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-two-pages-print-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/empty-crash.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/firefox-bug-1928736-1-crash.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/firefox-bug-1928736-2-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/single-summary.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/summary-display-flex-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/summary-display-flex-ref.html

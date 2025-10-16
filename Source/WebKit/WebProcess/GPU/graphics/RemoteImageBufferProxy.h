@@ -29,8 +29,8 @@
 
 #include "ImageBufferBackendHandle.h"
 #include "RemoteGraphicsContextProxy.h"
+#include "RemoteRenderingBackendIdentifier.h"
 #include "RemoteSerializedImageBufferIdentifier.h"
-#include "RenderingBackendIdentifier.h"
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/ImageBufferBackend.h>
 #include <wtf/Condition.h>

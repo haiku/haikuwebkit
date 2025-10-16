@@ -64,7 +64,6 @@ void GPUImpl::requestAdapter(const RequestAdapterOptions& options, CompletionHan
     Ref convertToBackingContext = m_convertToBackingContext;
 
     WGPURequestAdapterOptions backingOptions {
-        .nextInChain = nullptr,
         .compatibleSurface = nullptr,
 #if CPU(X86_64)
         .powerPreference = WGPUPowerPreference_HighPerformance,
@@ -100,17 +99,11 @@ RefPtr<PresentationContext> GPUImpl::createPresentationContext(const Presentatio
         compositorIntegration->registerCallbacks(makeBlockPtr(WTFMove(renderBuffersWereRecreatedCallback)), convert(WTFMove(onSubmittedWorkScheduledCallback)));
     });
 
-    WGPUSurfaceDescriptorCocoaCustomSurface cocoaSurface {
-        {
-            nullptr,
-            static_cast<WGPUSType>(WGPUSTypeExtended_SurfaceDescriptorCocoaSurfaceBacking),
-        },
-        registerCallbacksBlock.get(),
-    };
-
     WGPUSurfaceDescriptor surfaceDescriptor {
-        &cocoaSurface.chain,
-        nullptr,
+        .label = nullptr,
+        .cocoaDescriptor = WGPUSurfaceDescriptorCocoaCustomSurface {
+            .compositorIntegrationRegister = registerCallbacksBlock.get(),
+        }
     };
 
     auto result = PresentationContextImpl::create(adoptWebGPU(wgpuInstanceCreateSurface(m_backing.get(), &surfaceDescriptor)), m_convertToBackingContext);

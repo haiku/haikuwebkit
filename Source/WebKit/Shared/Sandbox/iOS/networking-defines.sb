@@ -126,10 +126,6 @@
     (allow mach-lookup
            (global-name "com.apple.cfnetwork.cfnetworkagent"))
 
-    ;; <rdar://problem/12620714>
-    (deny file-write-create NO_REPORT
-          (home-prefix "/Library/Logs/CrashReporter/CFNetwork_"))
-
     ;; <rdar://problem/17910466>
     (allow mach-lookup
            (global-name "com.apple.accountsd.accountmanager"))
@@ -490,3 +486,85 @@
 
 (define (sysctl-read-prefix-allowed)
     (sysctl-name-prefix "kern.proc.pid."))
+
+(define (mach-lookup-allowed)
+    (global-name
+#if (PLATFORM(IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED > 180000)
+        "com.apple.duetactivityscheduler"
+#endif
+#if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
+        "com.apple.WebPrivacy.Service"
+        "com.apple.webprivacyd"
+#endif
+        "com.apple.ciphermld" ;; <rdar://106216542>
+        "com.apple.containermanagerd"
+        "com.apple.containermanagerd.system"
+        "com.apple.ctcategories.service"
+        "com.apple.logd"
+        "com.apple.logd.events"
+        "com.apple.lsd.mapdb"
+        "com.apple.mobileasset.autoasset" ;; <rdar://problem/101780002>
+        "com.apple.nesessionmanager.content-filter" ;; <rdar://problem/47598758>
+        "com.apple.passd.in-app-payment" ;; PassKit framework
+        "com.apple.passd.library"
+        "com.apple.ProgressReporting" ;; For reporting progress for active downloads <rdar://problem/44405661>
+        "com.apple.runningboard" ;; Needed by process assertion code (ProcessTaskStateObserver).
+        "com.apple.siri.context.service"
+        "com.apple.system.libinfo.muser"
+        "com.apple.system.notification_center"
+        "com.apple.tccd"))
+
+(define (rules-with-elevated-precedence)
+    (with-elevated-precedence
+        ;; System files.
+        (allow file-read*
+            (subpath "/usr/lib"
+                     "/usr/share"
+                     "/private/var/db/timezone"
+                     "/private/var/preferences/Logging"))
+
+        (allow-read-and-issue-generic-extensions
+             (subpath "/Library/RegionFeatures"
+                      "/System/Library"))
+        
+        (allow file-map-executable
+            (subpath "/System/Library")
+            (subpath "/usr/lib"))
+
+        (allow file-read-metadata
+            (vnode-type SYMLINK))
+
+        (allow user-preference-read (preference-domain "kCFPreferencesAnyApplication"))
+        (allow file-read*
+               (front-user-home-literal "/Library/Preferences/.GlobalPreferences.plist")
+               (front-user-home-literal "/Library/Preferences/.GlobalPreferences_m.plist"))
+
+        (allow file-read*
+               (literal "/private/var/Managed Preferences/mobile/.GlobalPreferences.plist"))
+        (allow managed-preference-read (preference-domain "kCFPreferencesAnyApplication"))
+
+        (allow-read-and-issue-generic-extensions (executable-bundle))
+        (allow file-map-executable  (executable-bundle))
+
+        (allow managed-preference-read
+               (extension "com.apple.security.exception.managed-preference.read-only"))
+        (allow user-preference-read
+               (extension "com.apple.security.exception.shared-preference.read-only"))
+        (allow sysctl-read
+               (extension "com.apple.security.exception.sysctl.read-only"))
+        (allow sysctl-read sysctl-write
+               (extension "com.apple.security.exception.sysctl.read-write"))
+
+        (allow file-issue-extension
+              (require-all
+                  (extension-class "com.apple.nsurlstorage.extension-cache")
+                  (extension "com.apple.security.exception.files.home-relative-path.read-write")
+                  (require-any
+                      (prefix "/private/var/root/Library/Caches/")
+                      (front-user-home-prefix "/Library/Caches/"))))
+
+        (with-filter (require-entitlement "com.apple.security.exception.process-info")
+            (allow process-info-pidinfo process-info-pidfdinfo process-info-pidfileportinfo process-info-rusage process-info-codesignature)
+            (allow sysctl-read
+                   (sysctl-name-prefix "kern.proc.")
+                   (sysctl-name-prefix "kern.procargs2.")))))

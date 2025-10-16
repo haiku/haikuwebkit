@@ -159,7 +159,7 @@ JSValue JSTestCEReactionsStringifier::getConstructor(VM& vm, const JSGlobalObjec
 
 void JSTestCEReactionsStringifier::destroy(JSC::JSCell* cell)
 {
-    JSTestCEReactionsStringifier* thisObject = static_cast<JSTestCEReactionsStringifier*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestCEReactionsStringifier* thisObject = static_cast<JSTestCEReactionsStringifier*>(cell);
     thisObject->JSTestCEReactionsStringifier::~JSTestCEReactionsStringifier();
 }
 
@@ -285,7 +285,7 @@ bool JSTestCEReactionsStringifierOwner::isReachableFromOpaqueRoots(JSC::Handle<J
 
 void JSTestCEReactionsStringifierOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestCEReactionsStringifier = static_cast<JSTestCEReactionsStringifier*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestCEReactionsStringifier = static_cast<JSTestCEReactionsStringifier*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestCEReactionsStringifier->protectedWrapped().ptr(), jsTestCEReactionsStringifier);
 }

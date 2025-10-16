@@ -894,6 +894,8 @@ void run(const TestConfig* config)
     RUN(testConstDoubleMove());
     RUN(testConstFloatMove());
 
+    RUN(testLoadImmutable());
+
     RUN_UNARY(testSShrCompare32, int32OperandsMore());
     RUN_UNARY(testSShrCompare64, int64OperandsMore());
 
@@ -947,6 +949,10 @@ void run(const TestConfig* config)
         RUN(testMulHigh64());
         RUN(testUMulHigh32());
         RUN(testUMulHigh64());
+        RUN(testMemoryCopy());
+        RUN(testMemoryFill());
+        RUN(testMemoryCopyConstant());
+        RUN(testMemoryFillConstant());
     }
 
     Lock lock;

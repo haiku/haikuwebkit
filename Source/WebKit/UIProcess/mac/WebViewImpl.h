@@ -460,6 +460,9 @@ public:
     bool isAutomaticTextReplacementEnabled();
     void setAutomaticTextReplacementEnabled(bool);
     void toggleAutomaticTextReplacement();
+    bool isSmartListsEnabled();
+    void setSmartListsEnabled(bool);
+    void toggleSmartLists();
     void uppercaseWord();
     void lowercaseWord();
     void capitalizeWord();

@@ -102,6 +102,8 @@ static Protocol::Target::TargetInfo::Type targetTypeToProtocolType(InspectorTarg
     switch (type) {
     case InspectorTargetType::Page:
         return Protocol::Target::TargetInfo::Type::Page;
+    case InspectorTargetType::Frame:
+        return Protocol::Target::TargetInfo::Type::Frame;
     case InspectorTargetType::DedicatedWorker:
         return Protocol::Target::TargetInfo::Type::Worker;
     case InspectorTargetType::ServiceWorker:

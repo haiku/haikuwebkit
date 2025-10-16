@@ -63,18 +63,9 @@ function createInternalReadableStreamFromUnderlyingSource(underlyingSource, stra
     const type = underlyingSource.type;
     const typeString = @toString(type);
 
-    if (typeString === "bytes") {
-        if (!@readableByteStreamAPIEnabled())
-            @throwTypeError("ReadableByteStreamController is not implemented");
-
-        if (strategy.highWaterMark === @undefined)
-            strategy.highWaterMark = 0;
-        if (strategy.size !== @undefined)
-            @throwRangeError("Strategy for a ReadableByteStreamController cannot have a size");
-
-        let readableByteStreamControllerConstructor = @ReadableByteStreamController;
-        @putByIdDirectPrivate(stream, "readableStreamController", new @ReadableByteStreamController(stream, underlyingSource, strategy.highWaterMark, @isReadableStream));
-    } else if (type === @undefined) {
+    if (typeString === "bytes")
+        @throwTypeError("ReadableByteStreamController is not implemented");
+    else if (type === @undefined) {
         let highWaterMark = strategy.highWaterMark;
         if (highWaterMark !== @undefined)
             highWaterMark = @toNumber(highWaterMark);
@@ -113,12 +104,6 @@ function readableStreamGetReaderForBindings(stream, options)
     if (mode === @undefined) {
         const readableStreamDefaultReaderConstructor = @getByIdDirectPrivate(readableStreamGlobalObject, "ReadableStreamDefaultReader");
         return new readableStreamDefaultReaderConstructor(stream);
-    }
-
-    // String conversion is required by spec, hence double equals.
-    if (mode == 'byob') {
-        const readableStreamBYOBReaderConstructor = @getByIdDirectPrivate(readableStreamGlobalObject, "ReadableStreamBYOBReader");
-        return new readableStreamBYOBReaderConstructor(stream);
     }
 
     @throwTypeError("Invalid mode is specified");
@@ -770,13 +755,6 @@ function readableStreamError(stream, error)
 
     if (@isReadableStreamDefaultReader(reader))
         @readableStreamDefaultReaderErrorReadRequests(reader, error);
-    else {
-        @assert(@isReadableStreamBYOBReader(reader));
-        const requests = @getByIdDirectPrivate(reader, "readIntoRequests");
-        @putByIdDirectPrivate(reader, "readIntoRequests", []);
-        for (let index = 0, length = requests.length; index < length; ++index)
-            @rejectPromise(requests[index], error);
-    }
 }
 
 function readableStreamDefaultControllerShouldCallPull(controller)

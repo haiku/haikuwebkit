@@ -149,7 +149,7 @@ JSValue JSTestGenerateAddOpaqueRoot::getConstructor(VM& vm, const JSGlobalObject
 
 void JSTestGenerateAddOpaqueRoot::destroy(JSC::JSCell* cell)
 {
-    JSTestGenerateAddOpaqueRoot* thisObject = static_cast<JSTestGenerateAddOpaqueRoot*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestGenerateAddOpaqueRoot* thisObject = static_cast<JSTestGenerateAddOpaqueRoot*>(cell);
     thisObject->JSTestGenerateAddOpaqueRoot::~JSTestGenerateAddOpaqueRoot();
 }
 
@@ -216,7 +216,7 @@ bool JSTestGenerateAddOpaqueRootOwner::isReachableFromOpaqueRoots(JSC::Handle<JS
 
 void JSTestGenerateAddOpaqueRootOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestGenerateAddOpaqueRoot = static_cast<JSTestGenerateAddOpaqueRoot*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestGenerateAddOpaqueRoot = static_cast<JSTestGenerateAddOpaqueRoot*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestGenerateAddOpaqueRoot->protectedWrapped().ptr(), jsTestGenerateAddOpaqueRoot);
 }

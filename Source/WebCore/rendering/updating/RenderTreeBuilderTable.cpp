@@ -27,6 +27,8 @@
 #include "RenderTreeBuilderTable.h"
 
 #include "RenderElementInlines.h"
+#include "RenderObjectStyle.h"
+#include "RenderStyleInlines.h"
 #include "RenderTableCaption.h"
 #include "RenderTableCell.h"
 #include "RenderTableCol.h"

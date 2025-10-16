@@ -89,10 +89,10 @@ using CBOR = cbor::CBORValue;
 BOOL shouldUseAlternateKeychainAttribute()
 {
 #if HAVE(UNIFIED_ASC_AUTH_UI)
-    if (![WebKit::getASCWebKitSPISupportClass() respondsToSelector:@selector(shouldUseAlternateKeychainAttribute)])
+    if (![WebKit::getASCWebKitSPISupportClassSingleton() respondsToSelector:@selector(shouldUseAlternateKeychainAttribute)])
         return NO;
 
-    return [WebKit::getASCWebKitSPISupportClass() shouldUseAlternateKeychainAttribute];
+    return [WebKit::getASCWebKitSPISupportClassSingleton() shouldUseAlternateKeychainAttribute];
 #else
     return NO;
 #endif

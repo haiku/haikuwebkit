@@ -32,7 +32,6 @@
 #include "LayoutContainingBlockChainIterator.h"
 #include "LayoutContext.h"
 #include "LayoutInitialContainingBlock.h"
-#include "LengthFunctions.h"
 #include "Logging.h"
 #include "PlacedFloats.h"
 #include "RenderStyleInlines.h"
@@ -114,7 +113,7 @@ template<FormattingGeometry::HeightType heightType> std::optional<LayoutUnit> Fo
     if (!containingBlockHeight)
         return { };
 
-    return Style::evaluate(height, *containingBlockHeight);
+    return Style::evaluate(height, *containingBlockHeight, 1.0f /* FIXME FIND ZOOM */);
 }
 
 std::optional<LayoutUnit> FormattingGeometry::computedHeight(const Box& layoutBox, std::optional<LayoutUnit> containingBlockHeight) const
@@ -197,96 +196,6 @@ LayoutUnit FormattingGeometry::contentHeightForFormattingContextRoot(const Eleme
     if (hasContent && !shouldIgnoreContent)
         usedContentHeight = LayoutContext::createFormattingContext(formattingContextRoot, const_cast<LayoutState&>(layoutState()))->usedContentHeight();
     return usedContentHeight;
-}
-
-std::optional<LayoutUnit> FormattingGeometry::computedValue(const Style::InsetEdge& geometryProperty, LayoutUnit containingBlockWidth) const
-{
-    //  In general, the computed value resolves the specified value as far as possible without laying out the content.
-    if (!geometryProperty.isAuto())
-        return Style::evaluate(geometryProperty, containingBlockWidth);
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::computedValue(const Style::MarginEdge& geometryProperty, LayoutUnit containingBlockWidth) const
-{
-    //  In general, the computed value resolves the specified value as far as possible without laying out the content.
-    if (!geometryProperty.isAuto())
-        return Style::evaluate(geometryProperty, containingBlockWidth);
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::computedValue(const Style::PreferredSize& geometryProperty, LayoutUnit containingBlockWidth) const
-{
-    //  In general, the computed value resolves the specified value as far as possible without laying out the content.
-    if (geometryProperty.isSpecified())
-        return Style::evaluate(geometryProperty, containingBlockWidth);
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::computedValue(const Style::MinimumSize& geometryProperty, LayoutUnit containingBlockWidth) const
-{
-    //  In general, the computed value resolves the specified value as far as possible without laying out the content.
-    if (geometryProperty.isSpecified())
-        return Style::evaluate(geometryProperty, containingBlockWidth);
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::computedValue(const Style::MaximumSize& geometryProperty, LayoutUnit containingBlockWidth) const
-{
-    //  In general, the computed value resolves the specified value as far as possible without laying out the content.
-    if (geometryProperty.isSpecified())
-        return Style::evaluate(geometryProperty, containingBlockWidth);
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::computedValue(const Length& geometryProperty, LayoutUnit containingBlockWidth) const
-{
-    //  In general, the computed value resolves the specified value as far as possible without laying out the content.
-    if (geometryProperty.isSpecified())
-        return valueForLength(geometryProperty, containingBlockWidth);
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::fixedValue(const Style::MarginEdge& geometryProperty) const
-{
-    if (auto fixed = geometryProperty.tryFixed())
-        return LayoutUnit { fixed->value };
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::fixedValue(const Style::PaddingEdge& geometryProperty) const
-{
-    if (auto fixed = geometryProperty.tryFixed())
-        return LayoutUnit { fixed->value };
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::fixedValue(const Style::PreferredSize& geometryProperty) const
-{
-    if (auto fixed = geometryProperty.tryFixed())
-        return LayoutUnit { fixed->value };
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::fixedValue(const Style::MinimumSize& geometryProperty) const
-{
-    if (auto fixed = geometryProperty.tryFixed())
-        return LayoutUnit { fixed->value };
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::fixedValue(const Style::MaximumSize& geometryProperty) const
-{
-    if (auto fixed = geometryProperty.tryFixed())
-        return LayoutUnit { fixed->value };
-    return { };
-}
-
-std::optional<LayoutUnit> FormattingGeometry::fixedValue(const Length& geometryProperty) const
-{
-    if (auto fixed = geometryProperty.tryFixed())
-        return LayoutUnit { fixed->value };
-    return { };
 }
 
 // https://www.w3.org/TR/CSS22/visudet.html#min-max-heights
@@ -1175,8 +1084,8 @@ BoxGeometry::Edges FormattingGeometry::computedBorder(const Box& layoutBox) cons
     auto& style = layoutBox.style();
     LOG_WITH_STREAM(FormattingContextLayout, stream << "[Border] -> layoutBox: " << &layoutBox);
     return {
-        { LayoutUnit(Style::evaluate(style.borderLeftWidth())), LayoutUnit(Style::evaluate(style.borderRightWidth())) },
-        { LayoutUnit(Style::evaluate(style.borderTopWidth())), LayoutUnit(Style::evaluate(style.borderBottomWidth())) },
+        { LayoutUnit(Style::evaluate(style.borderLeftWidth(), 1.0f /* FIXME FIND ZOOM */)), LayoutUnit(Style::evaluate(style.borderRightWidth(), 1.0f /* FIXME FIND ZOOM */)) },
+        { LayoutUnit(Style::evaluate(style.borderTopWidth(), 1.0f /* FIXME FIND ZOOM */)), LayoutUnit(Style::evaluate(style.borderBottomWidth(), 1.0f /* FIXME FIND ZOOM */)) },
     };
 }
 
@@ -1188,8 +1097,8 @@ BoxGeometry::Edges FormattingGeometry::computedPadding(const Box& layoutBox, con
     auto& style = layoutBox.style();
     LOG_WITH_STREAM(FormattingContextLayout, stream << "[Padding] -> layoutBox: " << &layoutBox);
     return {
-        { Style::evaluate(style.paddingStart(), containingBlockWidth), Style::evaluate(style.paddingEnd(), containingBlockWidth) },
-        { Style::evaluate(style.paddingBefore(), containingBlockWidth), Style::evaluate(style.paddingAfter(), containingBlockWidth) }
+        { Style::evaluate(style.paddingStart(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */), Style::evaluate(style.paddingEnd(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */) },
+        { Style::evaluate(style.paddingBefore(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */), Style::evaluate(style.paddingAfter(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */) }
     };
 }
 

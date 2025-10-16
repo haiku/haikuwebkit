@@ -176,7 +176,7 @@ JSValue JSTestSetLikeWithOverriddenOperations::getConstructor(VM& vm, const JSGl
 
 void JSTestSetLikeWithOverriddenOperations::destroy(JSC::JSCell* cell)
 {
-    JSTestSetLikeWithOverriddenOperations* thisObject = static_cast<JSTestSetLikeWithOverriddenOperations*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestSetLikeWithOverriddenOperations* thisObject = static_cast<JSTestSetLikeWithOverriddenOperations*>(cell);
     thisObject->JSTestSetLikeWithOverriddenOperations::~JSTestSetLikeWithOverriddenOperations();
 }
 
@@ -375,7 +375,7 @@ bool JSTestSetLikeWithOverriddenOperationsOwner::isReachableFromOpaqueRoots(JSC:
 
 void JSTestSetLikeWithOverriddenOperationsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestSetLikeWithOverriddenOperations = static_cast<JSTestSetLikeWithOverriddenOperations*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestSetLikeWithOverriddenOperations = static_cast<JSTestSetLikeWithOverriddenOperations*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestSetLikeWithOverriddenOperations->protectedWrapped().ptr(), jsTestSetLikeWithOverriddenOperations);
 }

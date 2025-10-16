@@ -45,7 +45,6 @@ enum class IsUpgradable : bool { No, Yes, };
 bool shouldUpgradeInsecureContent(LocalFrame&, IsUpgradable, const URL&, FetchOptions::Destination, Initiator);
 
 bool shouldBlockRequest(LocalFrame&, const URL&, IsUpgradable = IsUpgradable::No);
-void checkFormForMixedContent(LocalFrame&, const URL&);
 
 WEBCORE_EXPORT bool canModifyRequest(const URL&, FetchOptions::Destination, Initiator);
 

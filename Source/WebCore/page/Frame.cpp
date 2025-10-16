@@ -27,7 +27,9 @@
 #include "Frame.h"
 
 #include "ContainerNodeInlines.h"
+#include "FrameConsoleClient.h"
 #include "FrameInlines.h"
+#include "FrameInspectorController.h"
 #include "FrameLoader.h"
 #include "FrameLoaderClient.h"
 #include "HTMLFrameOwnerElement.h"
@@ -119,6 +121,8 @@ Frame::Frame(Page& page, FrameIdentifier frameID, FrameType frameType, HTMLFrame
     , m_navigationScheduler(makeUniqueRefWithoutRefCountedCheck<NavigationScheduler>(*this))
     , m_opener(opener)
     , m_frameTreeSyncData(WTFMove(frameTreeSyncData))
+    , m_inspectorController(makeUniqueRefWithoutRefCountedCheck<FrameInspectorController>(*this))
+    , m_consoleClient(makeUniqueRef<FrameConsoleClient>(*this))
 {
     relaxAdoptionRequirement();
     if (parent && addToFrameTree == AddToFrameTree::Yes)
@@ -191,6 +195,7 @@ void Frame::takeWindowProxyAndOpenerFrom(Frame& frame)
         opened->m_opener = *this;
         m_openedFrames.add(opened);
     }
+    frame.m_openedFrames.clear();
 }
 
 Ref<WindowProxy> Frame::protectedWindowProxy() const
@@ -333,6 +338,11 @@ bool Frame::frameCanCreatePaymentSession() const
     // Prefer the LocalFrame code path when site isolation is disabled.
     ASSERT(m_settings->siteIsolationEnabled());
     return m_frameTreeSyncData->frameCanCreatePaymentSession;
+}
+
+Ref<FrameInspectorController> Frame::protectedInspectorController()
+{
+    return m_inspectorController.get();
 }
 
 } // namespace WebCore

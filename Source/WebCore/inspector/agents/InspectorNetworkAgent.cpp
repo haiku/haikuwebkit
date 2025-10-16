@@ -362,8 +362,7 @@ static Inspector::Protocol::Network::Response::Source responseSource(ResourceRes
 {
     switch (source) {
     case ResourceResponse::Source::DOMCache:
-    case ResourceResponse::Source::ApplicationCache:
-        // FIXME: Add support for ApplicationCache in inspector.
+    case ResourceResponse::Source::LegacyApplicationCachePlaceholder:
     case ResourceResponse::Source::Unknown:
         return Inspector::Protocol::Network::Response::Source::Unknown;
     case ResourceResponse::Source::Network:

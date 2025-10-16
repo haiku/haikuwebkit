@@ -3238,7 +3238,8 @@ void Session::dispatchBidiMessage(RefPtr<JSON::Object>&& message)
         return;
     }
 
-    // FIXME: Move event subscription into the browser
+    // FIXME: Move event subscription into the browser, so we can just forward the events to the client
+    // https://bugs.webkit.org/show_bug.cgi?id=295497
     if (bidiMessage->getString("type"_s) == "event"_s) {
         if (bidiMessage->size() < 3 || (bidiMessage->find("method"_s) == bidiMessage->end()) || (bidiMessage->find("params"_s) == bidiMessage->end())) {
             RELEASE_LOG(WebDriverBiDi, "Session::dispatchBidiMessage: Malformed bidi event: %s", bidiMessageValue->toJSONString().utf8().data());
@@ -3251,20 +3252,23 @@ void Session::dispatchBidiMessage(RefPtr<JSON::Object>&& message)
             return;
         }
         if (bidiMethod == "log.entryAdded"_s)
-            doLogEntryAdded(WTFMove(bidiMessage));
+            bidiMessage = processLogEntryAdded(WTFMove(bidiMessage));
+
+        if (bidiMessage)
+            server->sendMessage(this->id(), bidiMessage->toJSONString());
         return;
     }
 
     server->sendMessage(this->id(), bidiMessage->toJSONString());
 }
 
-void Session::doLogEntryAdded(RefPtr<JSON::Object>&& message)
+RefPtr<JSON::Object> Session::processLogEntryAdded(RefPtr<JSON::Object>&& message)
 {
     // https://w3c.github.io/webdriver-bidi/#event-log-entryAdded
     auto params = message->getObject("params"_s);
     if (!params) {
         RELEASE_LOG(WebDriverBiDi, "Log event without parameter information, ignoring.");
-        return;
+        return nullptr;
     }
 
     auto method = params->getString("method"_s);
@@ -3321,24 +3325,14 @@ void Session::doLogEntryAdded(RefPtr<JSON::Object>&& message)
 
     auto body = JSON::Object::create();
     body->setObject("params"_s, WTFMove(entry));
+    body->setString("type"_s, "event"_s);
+    body->setString("method"_s, "log.entryAdded"_s);
 
-    emitEvent("log.entryAdded"_s, WTFMove(body));
 
     // TODO Implement event buffering, to save the log entries for later emission when the user subscribes to it
     // https://bugs.webkit.org/show_bug.cgi?id=282980
-}
 
-void Session::emitEvent(const String& eventName, RefPtr<JSON::Object>&& body)
-{
-    RefPtr<WebSocketServer> server = m_bidiServer.get();
-    if (!server) {
-        RELEASE_LOG(WebDriverBiDi, "Session::emitEvent: No BiDi server associated with the session. Ignoring event %s", eventName.utf8().data());
-        return;
-    }
-    // https://w3c.github.io/webdriver-bidi/#emit-an-event
-    body->setString("type"_s, "event"_s);
-    body->setString("method"_s, eventName);
-    server->sendMessage(this->id(), body->toJSONString());
+    return body;
 }
 
 bool Session::eventIsEnabled(const String& eventName, const Vector<String>&)

@@ -47,6 +47,7 @@
 #import "FrameInlines.h"
 #import "FrameSelection.h"
 #import "LayoutRect.h"
+#import "LocalFrameInlines.h"
 #import "LocalizedStrings.h"
 #import "Page.h"
 #import "RenderTextControl.h"
@@ -427,7 +428,7 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
     auto extendedDescription = backingObject->extendedDescription();
     if (extendedDescription.length()) {
         accessibilityCustomContent = adoptNS([[NSMutableArray alloc] init]);
-        Class customContentClass = PAL::getAXCustomContentClass();
+        Class customContentClass = PAL::getAXCustomContentClassSingleton();
         AXCustomContent *contentItem = [customContentClass customContentWithLabel:WEB_UI_STRING("description", "description detail").createNSString().get() value:extendedDescription.createNSString().get()];
         // Set this to high, so that it's always spoken.
         [contentItem setImportance:AXCustomContentImportanceHigh];

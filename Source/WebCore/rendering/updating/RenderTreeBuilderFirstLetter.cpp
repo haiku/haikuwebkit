@@ -29,6 +29,7 @@
 #include "RenderBlock.h"
 #include "RenderButton.h"
 #include "RenderInline.h"
+#include "RenderObjectDocument.h"
 #include "RenderSVGText.h"
 #include "RenderStyleSetters.h"
 #include "RenderTable.h"

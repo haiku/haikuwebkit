@@ -48,7 +48,7 @@ public:
     {
     }
 
-    PlatformMouseEvent(const DoublePoint& position, const DoublePoint& globalPosition, MouseButton button, PlatformEvent::Type type, int clickCount, OptionSet<PlatformEvent::Modifier> modifiers, WallTime timestamp, double force, SyntheticClickType syntheticClickType, PointerID pointerId = mousePointerID)
+    PlatformMouseEvent(const DoublePoint& position, const DoublePoint& globalPosition, MouseButton button, PlatformEvent::Type type, int clickCount, OptionSet<PlatformEvent::Modifier> modifiers, MonotonicTime timestamp, double force, SyntheticClickType syntheticClickType, PointerID pointerId = mousePointerID)
         : PlatformEvent(type, modifiers, timestamp)
         , m_button(button)
         , m_syntheticClickType(syntheticClickType)

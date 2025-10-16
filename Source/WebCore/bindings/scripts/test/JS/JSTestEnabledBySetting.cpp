@@ -279,7 +279,7 @@ JSValue JSTestEnabledBySetting::getConstructor(VM& vm, const JSGlobalObject* glo
 
 void JSTestEnabledBySetting::destroy(JSC::JSCell* cell)
 {
-    JSTestEnabledBySetting* thisObject = static_cast<JSTestEnabledBySetting*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestEnabledBySetting* thisObject = static_cast<JSTestEnabledBySetting*>(cell);
     thisObject->JSTestEnabledBySetting::~JSTestEnabledBySetting();
 }
 
@@ -490,7 +490,7 @@ bool JSTestEnabledBySettingOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Un
 
 void JSTestEnabledBySettingOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestEnabledBySetting = static_cast<JSTestEnabledBySetting*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestEnabledBySetting = static_cast<JSTestEnabledBySetting*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestEnabledBySetting->protectedWrapped().ptr(), jsTestEnabledBySetting);
 }

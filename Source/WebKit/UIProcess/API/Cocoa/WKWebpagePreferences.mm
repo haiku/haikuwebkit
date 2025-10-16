@@ -421,7 +421,7 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
 
 - (void)_setUserContentController:(WKUserContentController *)userContentController
 {
-    _websitePolicies->setUserContentController(userContentController->_userContentControllerProxy.get());
+    _websitePolicies->setUserContentController(userContentController ? userContentController->_userContentControllerProxy.get() : nullptr);
 }
 
 - (void)_setCustomUserAgent:(NSString *)customUserAgent
@@ -800,6 +800,17 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
 - (NSURLRequest *)_alternateRequest
 {
     return _websitePolicies->alternateRequest().nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody);
+}
+
+
+- (void)_setAllowsJSHandleCreationInPageWorld:(BOOL)allows
+{
+    _websitePolicies->setAllowsJSHandleCreationInPageWorld(allows);
+}
+
+- (BOOL)_allowsJSHandleCreationInPageWorld
+{
+    return _websitePolicies->allowsJSHandleCreationInPageWorld();
 }
 
 @end

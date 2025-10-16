@@ -50,7 +50,6 @@ public:
     bool operator==(const TransformOperations&) const;
 
     WEBCORE_EXPORT TransformOperations clone() const;
-    TransformOperations selfOrCopyWithResolvedCalculatedValues(const FloatSize&) const;
 
     const_iterator begin() const LIFETIME_BOUND { return m_operations.begin(); }
     const_iterator end() const LIFETIME_BOUND { return m_operations.end(); }
@@ -67,22 +66,11 @@ public:
 
     void apply(TransformationMatrix&, const FloatSize&, unsigned start = 0) const;
 
-    // Return true if any of the operation types are 3D operation types (even if the
-    // values describe affine transforms)
-    bool has3DOperation() const;
-    bool isRepresentableIn2D() const;
-    bool affectedByTransformOrigin() const;
-
     template<TransformOperation::Type operationType>
     bool hasTransformOfType() const;
 
     bool isInvertible(const LayoutSize&) const;
-
     bool containsNonInvertibleMatrix(const LayoutSize&) const;
-    bool shouldFallBackToDiscreteAnimation(const TransformOperations&, const LayoutSize&) const;
-
-    Ref<TransformOperation> createBlendedMatrixOperationFromOperationsSuffix(const TransformOperations& from, unsigned start, const BlendingContext&, const LayoutSize& referenceBoxSize) const;
-    TransformOperations blend(const TransformOperations& from, const BlendingContext&, const LayoutSize&, std::optional<unsigned> prefixLength = std::nullopt) const;
 
 private:
     friend struct IPC::ArgumentCoder<TransformOperations, void>;
@@ -96,6 +84,8 @@ bool TransformOperations::hasTransformOfType() const
 {
     return std::ranges::any_of(m_operations, [](auto& op) { return op->type() == operationType; });
 }
+
+TransformOperations blend(const TransformOperations& from, const TransformOperations& to, const BlendingContext&, const LayoutSize&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const TransformOperations&);
 

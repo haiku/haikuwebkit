@@ -38,7 +38,7 @@ namespace TestWebKitAPI {
 template <typename T>
 std::optional<T> copyViaEncoder(const T& o)
 {
-    IPC::Encoder encoder(static_cast<IPC::MessageName>(78), 0);
+    IPC::Encoder encoder(IPC::MessageName::IPCTester_EmptyMessage, 0);
     encoder << o;
     auto decoder = IPC::Decoder::create(encoder.span(), encoder.releaseAttachments());
     return decoder->decode<T>();
@@ -53,7 +53,7 @@ struct MockTestMessage1 {
     static constexpr bool isSync = false;
     static constexpr bool canDispatchOutOfOrder = true;
     static constexpr bool replyCanDispatchOutOfOrder = false;
-    static constexpr IPC::MessageName name()  { return static_cast<IPC::MessageName>(123); }
+    static constexpr IPC::MessageName name()  { return IPC::MessageName::IPCTester_EmptyMessage; }
     template<typename Encoder> void encode(Encoder&) { }
 };
 
@@ -61,10 +61,8 @@ struct MockTestMessageWithAsyncReply1 {
     static constexpr bool isSync = false;
     static constexpr bool canDispatchOutOfOrder = false;
     static constexpr bool replyCanDispatchOutOfOrder = false;
-    static constexpr IPC::MessageName name()  { return static_cast<IPC::MessageName>(124); }
-    // Just using WebPage_GetBytecodeProfileReply as something that is async message name.
-    // If WebPage_GetBytecodeProfileReply is removed, just use another one.
-    static constexpr IPC::MessageName asyncMessageReplyName() { return IPC::MessageName::WebPage_GetBytecodeProfileReply; }
+    static constexpr IPC::MessageName name()  { return IPC::MessageName::IPCTester_EmptyMessageWithReply; }
+    static constexpr IPC::MessageName asyncMessageReplyName() { return IPC::MessageName::IPCTester_EmptyMessageWithReplyReply; }
     template<typename Encoder> void encode(Encoder&) { }
 
     using ReplyArguments = std::tuple<uint64_t>;
@@ -77,6 +75,17 @@ public:
     {
         ASSERT(m_messages.isEmpty()); // Received unexpected messages.
         ASSERT(m_invalidMessages.isEmpty()); // Received unexpected invalid message.
+    }
+
+    testing::AssertionResult checkMessages()
+    {
+        auto messages = takeMessages();
+        if (!messages.isEmpty())
+            return testing::AssertionFailure() << "Unexpected messages: " << messages.size() << " first: " << static_cast<unsigned>(messages[0].messageName) << " to " << messages[0].destinationID;
+        auto invalidMessages = takeInvalidMessages();
+        if (!invalidMessages.isEmpty())
+            return testing::AssertionFailure() << "Unexpected invalid messages: " << invalidMessages.size() << " first:" << static_cast<unsigned>(invalidMessages[0]);
+        return testing::AssertionSuccess();
     }
 
     Vector<MessageInfo> takeMessages()

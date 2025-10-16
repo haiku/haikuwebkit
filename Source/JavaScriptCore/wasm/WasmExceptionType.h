@@ -59,15 +59,11 @@ namespace Wasm {
     macro(BadArrayNew, "Failed to allocate new array"_s) \
     macro(BadArrayNewInitElem, "Out of bounds or failed to allocate in array.new_elem"_s) \
     macro(BadArrayNewInitData, "Out of bounds or failed to allocate in array.new_data"_s) \
-    macro(NullArrayGet, "array.get to a null reference"_s) \
-    macro(NullArraySet, "array.set to a null reference"_s) \
-    macro(NullArrayLen, "array.len to a null reference"_s) \
+    macro(NullAccess, "access to a null reference"_s) \
     macro(NullArrayFill, "array.fill to a null reference"_s) \
     macro(NullArrayCopy, "array.copy to a null reference"_s) \
     macro(NullArrayInitElem, "array.init_elem to a null reference"_s) \
     macro(NullArrayInitData, "array.init_data to a null reference"_s) \
-    macro(NullStructGet, "struct.get to a null reference"_s) \
-    macro(NullStructSet, "struct.set to a null reference"_s) \
     macro(TypeErrorInvalidValueUse, "an exported wasm function cannot contain an invalid parameter or return value"_s) \
     macro(TypeErrorV128TagAccessInJS, "a v128 parameter of a tag may not be accessed from JS"_s) \
     macro(NullRefAsNonNull, "ref.as_non_null to a null reference"_s) \
@@ -130,15 +126,11 @@ ALWAYS_INLINE bool isTypeErrorExceptionType(ExceptionType type)
     case ExceptionType::BadArrayNew:
     case ExceptionType::BadArrayNewInitElem:
     case ExceptionType::BadArrayNewInitData:
-    case ExceptionType::NullArrayGet:
-    case ExceptionType::NullArraySet:
-    case ExceptionType::NullArrayLen:
+    case ExceptionType::NullAccess:
     case ExceptionType::NullArrayFill:
     case ExceptionType::NullArrayCopy:
     case ExceptionType::NullArrayInitElem:
     case ExceptionType::NullArrayInitData:
-    case ExceptionType::NullStructGet:
-    case ExceptionType::NullStructSet:
     case ExceptionType::NullRefAsNonNull:
     case ExceptionType::CastFailure:
     case ExceptionType::OutOfMemory:

@@ -1,6 +1,3 @@
-CONSOLE MESSAGE: Encountered an unsupported request protocol. The request will be ignored.
-CONSOLE MESSAGE: Encountered an unsupported request protocol. The request will be ignored.
-CONSOLE MESSAGE: Encountered an unsupported request protocol. The request will be ignored.
 
 PASS With Get: Policy to use: null, is cross-origin: false, is allowed by policy: true
 PASS With Get: Policy to use: null, is cross-origin: true, is allowed by policy: false

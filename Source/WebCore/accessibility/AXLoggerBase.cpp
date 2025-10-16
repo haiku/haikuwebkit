@@ -23,6 +23,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+#include "AXLoggerBase.h"
+
 static bool accessibilityLogChannelEnabled = false;
 
 void setAccessibilityLogChannelEnabled(bool enabled)

@@ -55,7 +55,7 @@ static String& globalStringForFind()
 void updateStringForFind(const String& string)
 {
 #if PLATFORM(MAC)
-    [findPasteboard() setString:string.createNSString().get() forType:WebCore::legacyStringPasteboardType()];
+    [findPasteboard() setString:string.createNSString().get() forType:WebCore::legacyStringPasteboardTypeSingleton()];
 #else
     globalStringForFind() = string;
 #endif
@@ -64,7 +64,7 @@ void updateStringForFind(const String& string)
 String stringForFind()
 {
 #if PLATFORM(MAC)
-    return [findPasteboard() stringForType:WebCore::legacyStringPasteboardType()];
+    return [findPasteboard() stringForType:WebCore::legacyStringPasteboardTypeSingleton()];
 #else
     return globalStringForFind();
 #endif

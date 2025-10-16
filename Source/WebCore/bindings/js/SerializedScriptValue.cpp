@@ -2031,7 +2031,7 @@ private:
                 code = SerializationReturnCode::ValidationError;
                 return true;
             }
-            if (auto* arrayBuffer = toPossiblySharedArrayBuffer(vm, obj)) {
+            if (RefPtr arrayBuffer = toPossiblySharedArrayBuffer(vm, obj)) {
                 if (arrayBuffer->isDetached()) {
                     code = SerializationReturnCode::ValidationError;
                     return true;
@@ -2461,10 +2461,10 @@ private:
 #endif
 
 #if PLATFORM(COCOA)
-        auto colorSpace = destinationColorSpace.platformColorSpace();
+        RetainPtr colorSpace = destinationColorSpace.platformColorSpace();
 
-        if (auto name = CGColorSpaceGetName(colorSpace)) {
-            auto data = adoptCF(CFStringCreateExternalRepresentation(nullptr, name, kCFStringEncodingUTF8, 0));
+        if (RetainPtr name = CGColorSpaceGetName(colorSpace.get())) {
+            auto data = adoptCF(CFStringCreateExternalRepresentation(nullptr, name.get(), kCFStringEncodingUTF8, 0));
             if (!data) {
                 write(DestinationColorSpaceSRGBTag);
                 return;
@@ -2475,7 +2475,7 @@ private:
             return;
         }
 
-        if (auto propertyList = adoptCF(CGColorSpaceCopyPropertyList(colorSpace))) {
+        if (auto propertyList = adoptCF(CGColorSpaceCopyPropertyList(colorSpace.get()))) {
             auto data = adoptCF(CFPropertyListCreateData(nullptr, propertyList.get(), kCFPropertyListBinaryFormat_v1_0, 0, nullptr));
             if (!data) {
                 write(DestinationColorSpaceSRGBTag);
@@ -6127,7 +6127,7 @@ static ExceptionOr<std::unique_ptr<ArrayBufferContentsArray>> transferArrayBuffe
             continue;
         visited.add(arrayBuffers[arrayBufferIndex].get());
 
-        bool result = arrayBuffers[arrayBufferIndex]->transferTo(vm, contents->at(arrayBufferIndex));
+        bool result = Ref { *arrayBuffers[arrayBufferIndex] }->transferTo(vm, contents->at(arrayBufferIndex));
         if (!result)
             return Exception { ExceptionCode::TypeError };
     }
@@ -6294,12 +6294,12 @@ ExceptionOr<Ref<SerializedScriptValue>> SerializedScriptValue::create(JSGlobalOb
         if (!uniqueTransferables.add(transferable.get()).isNewEntry)
             return Exception { ExceptionCode::DataCloneError, "Duplicate transferable for structured clone"_s };
 
-        if (auto arrayBuffer = toPossiblySharedArrayBuffer(vm, transferable.get())) {
+        if (RefPtr arrayBuffer = toPossiblySharedArrayBuffer(vm, transferable.get())) {
             if (arrayBuffer->isDetached() || arrayBuffer->isShared())
                 return Exception { ExceptionCode::DataCloneError };
             if (!arrayBuffer->isDetachable()) {
                 auto scope = DECLARE_THROW_SCOPE(vm);
-                throwVMTypeError(&lexicalGlobalObject, scope, errorMessageForTransfer(arrayBuffer));
+                throwVMTypeError(&lexicalGlobalObject, scope, errorMessageForTransfer(arrayBuffer.get()));
                 return Exception { ExceptionCode::ExistingExceptionError };
             }
             arrayBuffers.append(WTFMove(arrayBuffer));
@@ -6675,7 +6675,7 @@ void SerializedScriptValue::writeBlobsToDiskForIndexedDB(bool isEphemeral, Compl
     if (isEphemeral)
         return completionHandler({ });
 
-    blobRegistry().writeBlobsToTemporaryFilesForIndexedDB(blobURLs(), [completionHandler = WTFMove(completionHandler), this, protectedThis = Ref { *this }] (auto&& blobFilePaths) mutable {
+    blobRegistry()->writeBlobsToTemporaryFilesForIndexedDB(blobURLs(), [completionHandler = WTFMove(completionHandler), this, protectedThis = Ref { *this }] (auto&& blobFilePaths) mutable {
         ASSERT(isMainThread());
 
         if (blobFilePaths.isEmpty()) {

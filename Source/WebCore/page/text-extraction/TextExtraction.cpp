@@ -44,6 +44,7 @@
 #include "HTMLAnchorElement.h"
 #include "HTMLBodyElement.h"
 #include "HTMLButtonElement.h"
+#include "HTMLCanvasElement.h"
 #include "HTMLFrameOwnerElement.h"
 #include "HTMLIFrameElement.h"
 #include "HTMLImageElement.h"
@@ -70,6 +71,7 @@
 #include "SimpleRange.h"
 #include "Text.h"
 #include "TextIterator.h"
+#include "TypedElementDescendantIteratorInlines.h"
 #include "UserGestureIndicator.h"
 #include "UserTypingGestureIndicator.h"
 #include "VisibleSelection.h"
@@ -412,6 +414,9 @@ static inline Variant<SkipExtraction, ItemData, URL, Editable> extractItemData(N
             return { ItemData { ContainerType::Button } };
     }
 
+    if (is<HTMLCanvasElement>(element))
+        return { ItemData { ContainerType::Canvas } };
+
     if (CheckedPtr box = dynamicDowncast<RenderBox>(node.renderer()); box && box->canBeScrolledAndHasScrollableArea()) {
         if (CheckedPtr layer = box->layer(); layer && layer->scrollableArea())
             return { ScrollableItemData { layer->scrollableArea()->totalContentsSize() } };
@@ -465,6 +470,7 @@ static inline bool shouldIncludeNodeIdentifier(OptionSet<EventListenerCategory> 
             case ContainerType::Generic:
                 return eventListeners || AccessibilityObject::isARIAControl(role);
             case ContainerType::Button:
+            case ContainerType::Canvas:
                 return true;
             }
             ASSERT_NOT_REACHED();
@@ -664,8 +670,14 @@ static void pruneEmptyContainersRecursive(Item& item)
         if (!std::holds_alternative<ContainerType>(child.data))
             return false;
 
-        auto containerType = std::get<ContainerType>(child.data);
-        return containerType != ContainerType::Button;
+        switch (std::get<ContainerType>(child.data)) {
+        case ContainerType::Button:
+        case ContainerType::Canvas:
+            return false;
+        default:
+            break;
+        }
+        return true;
     });
 }
 
@@ -973,15 +985,15 @@ static void dispatchSimulatedClick(Page& page, IntPoint location, CompletionHand
         return completion(false, nullFrameDescription);
 
     frame->eventHandler().handleMouseMoveEvent({
-        location, location, MouseButton::Left, PlatformEvent::Type::MouseMoved, 0, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap
+        location, location, MouseButton::Left, PlatformEvent::Type::MouseMoved, 0, { }, MonotonicTime::now(), ForceAtClick, SyntheticClickType::NoTap
     });
 
     frame->eventHandler().handleMousePressEvent({
-        location, location, MouseButton::Left, PlatformEvent::Type::MousePressed, 1, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap
+        location, location, MouseButton::Left, PlatformEvent::Type::MousePressed, 1, { }, MonotonicTime::now(), ForceAtClick, SyntheticClickType::NoTap
     });
 
     frame->eventHandler().handleMouseReleaseEvent({
-        location, location, MouseButton::Left, PlatformEvent::Type::MouseReleased, 1, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap
+        location, location, MouseButton::Left, PlatformEvent::Type::MouseReleased, 1, { }, MonotonicTime::now(), ForceAtClick, SyntheticClickType::NoTap
     });
 
     completion(true, { });
@@ -1253,6 +1265,209 @@ void handleInteraction(Interaction&& interaction, Page& page, CompletionHandler<
         break;
     }
     completion(false, "Invalid action"_s);
+}
+
+static constexpr auto maxDescriptionLength = 512;
+
+static String normalizeText(const String& string)
+{
+    auto result = foldQuoteMarks(string);
+    for (auto character : { '"', '\'', '\r' })
+        result = makeStringByReplacingAll(result, character, ""_s);
+    result = makeStringByReplacingAll(result, '\n', " "_s);
+    result = result.trim(isASCIIWhitespace<char16_t>);
+    if (result.length() <= maxDescriptionLength)
+        return result;
+
+    return makeString(result.left(maxDescriptionLength / 2 - 2), "..."_s, result.right(maxDescriptionLength / 2 - 1));
+}
+
+static String normalizedLabelText(const Element& element)
+{
+    for (auto attribute : { HTMLNames::aria_labelAttr.get(), HTMLNames::labelAttr.get() }) {
+        auto text = normalizeText(element.attributeWithoutSynchronization(attribute));
+        if (!text.isEmpty())
+            return text;
+    }
+
+    return { };
+}
+
+static String textDescription(const Element& element, Vector<String>& stringsToValidate, bool isTargetElement = true)
+{
+    StringBuilder description;
+
+    if (element.hasEditableStyle())
+        description.append("editable "_s);
+
+    auto tagName = element.tagName().convertToASCIILowercase();
+    if (element.isLink())
+        description.append("link"_s);
+    else
+        description.append(tagName);
+
+    bool needsParentContext = true;
+
+    if (element.isLink()) {
+        if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::hrefAttr)); !text.isEmpty()) {
+            description.append(makeString(" with href '"_s, text, '\''));
+            stringsToValidate.append(WTFMove(text));
+            needsParentContext = false;
+        }
+    }
+
+    if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::roleAttr)); !text.isEmpty() && text != tagName) {
+        description.append(makeString(" with role "_s, text));
+        needsParentContext = false;
+    }
+
+    if (auto text = normalizedLabelText(element); !text.isEmpty()) {
+        description.append(makeString(" labeled '"_s, text, '\''));
+        stringsToValidate.append(WTFMove(text));
+        needsParentContext = false;
+    }
+
+    if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::titleAttr)); !text.isEmpty()) {
+        description.append(makeString(" titled '"_s, text, '\''));
+        stringsToValidate.append(WTFMove(text));
+        needsParentContext = false;
+    }
+
+    if (auto text = element.attributeWithoutSynchronization(HTMLNames::typeAttr); !text.isEmpty() && text != tagName)
+        description.append(makeString(" of type "_s, text));
+
+    if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::placeholderAttr)); !text.isEmpty()) {
+        description.append(makeString(" with placeholder '"_s, text, '\''));
+        stringsToValidate.append(WTFMove(text));
+        needsParentContext = false;
+    }
+
+    auto elementDescription = description.toString();
+    if (!needsParentContext)
+        return elementDescription;
+
+    RefPtr parent = element.parentElementInComposedTree();
+    if (!parent)
+        return elementDescription;
+
+    auto parentDescription = textDescription(*parent, stringsToValidate, false);
+    if (parentDescription.isEmpty())
+        return elementDescription;
+
+    if (isTargetElement)
+        return makeString(WTFMove(elementDescription), " under "_s, WTFMove(parentDescription));
+
+    return parentDescription;
+}
+
+static String textDescription(std::optional<NodeIdentifier> identifier, Vector<String>& stringsToValidate)
+{
+    if (!identifier)
+        return { };
+
+    RefPtr node = Node::fromIdentifier(*identifier);
+    if (!node)
+        return { };
+
+    auto addRenderedTextOrLabeledChild = [&](const String& description) {
+        StringBuilder extendedDescription;
+        extendedDescription.append(description);
+
+        String renderedTextSuffix;
+        auto range = makeRangeSelectingNodeContents(*node);
+        if (auto text = normalizeText(plainText(range, TextIteratorBehavior::EntersTextControls)); !text.isEmpty()) {
+            stringsToValidate.append(text);
+            extendedDescription.append(makeString(", with rendered text '"_s, WTFMove(text), '\''));
+        }
+
+        String labeledChildSuffix;
+        if (RefPtr container = dynamicDowncast<ContainerNode>(node)) {
+            for (Ref child : descendantsOfType<Element>(*container)) {
+                auto label = normalizedLabelText(child);
+                if (label.isEmpty())
+                    continue;
+
+                stringsToValidate.append(label);
+                extendedDescription.append(makeString(", containing child labeled '"_s, WTFMove(label), '\''));
+                break;
+            }
+        }
+
+        return extendedDescription.toString();
+    };
+
+    if (RefPtr element = dynamicDowncast<Element>(*node))
+        return addRenderedTextOrLabeledChild(textDescription(*element, stringsToValidate));
+
+    if (RefPtr parentElement = node->parentElementInComposedTree())
+        return addRenderedTextOrLabeledChild(makeString("child node of "_s, textDescription(*parentElement, stringsToValidate)));
+
+    return { };
+}
+
+InteractionDescription interactionDescription(const Interaction& interaction)
+{
+    auto action = interaction.action;
+    bool isSingleKeyPress = action == Action::KeyPress && PlatformKeyboardEvent::syntheticEventFromText(PlatformEvent::Type::KeyUp, interaction.text);
+
+    StringBuilder description;
+    description.append([&] -> String {
+        if (isSingleKeyPress)
+            return makeString("Press the "_s, interaction.text, " key"_s);
+
+        switch (action) {
+        case Action::Click:
+            return "Click"_s;
+        case Action::SelectText:
+            return "Select text"_s;
+        case Action::SelectMenuItem:
+            return "Select menu item"_s;
+        case Action::TextInput:
+        case Action::KeyPress:
+            return "Enter text"_s;
+        }
+        ASSERT_NOT_REACHED();
+        return { };
+    }());
+
+    Vector<String> stringsToValidate;
+    if (!isSingleKeyPress) {
+        if (auto escapedString = normalizeText(interaction.text); !escapedString.isEmpty()) {
+            if (action == Action::Click)
+                description.append(" over text"_s);
+            description.append(makeString(" '"_s, escapedString, '\''));
+            stringsToValidate.append(WTFMove(escapedString));
+        }
+    }
+
+    if (auto location = interaction.locationInRootView) {
+        auto roundedLocation = roundedIntPoint(*location);
+        description.append(" at coordinates ("_s, roundedLocation.x(), ", "_s, roundedLocation.y(), ')');
+    }
+
+    if (auto elementString = textDescription(interaction.nodeIdentifier, stringsToValidate); !elementString.isEmpty()) {
+        auto prefix = [action] -> String {
+            switch (action) {
+            case Action::Click:
+                return " on "_s;
+            case Action::SelectText:
+                return " inside "_s;
+            case Action::SelectMenuItem:
+            case Action::KeyPress:
+                return " in "_s;
+            case Action::TextInput:
+                return " into "_s;
+            }
+            ASSERT_NOT_REACHED();
+            return { };
+        }();
+        description.append(makeString(WTFMove(prefix), WTFMove(elementString)));
+    }
+
+    if ((action == Action::KeyPress || action == Action::TextInput) && interaction.replaceAll)
+        description.append(", replacing any existing content"_s);
+
+    return { description.toString(), WTFMove(stringsToValidate) };
 }
 
 } // namespace TextExtraction

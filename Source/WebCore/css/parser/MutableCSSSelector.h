@@ -43,6 +43,10 @@ public:
     // Recursively copy the selector chain.
     MutableCSSSelector(const CSSSelector&);
 
+    // Only copy the simple selector.
+    enum SimpleSelectorTag { SimpleSelector };
+    MutableCSSSelector(const CSSSelector&, SimpleSelectorTag);
+
     explicit MutableCSSSelector(const QualifiedName&);
 
     ~MutableCSSSelector();

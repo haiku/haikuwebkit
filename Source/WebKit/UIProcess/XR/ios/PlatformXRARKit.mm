@@ -71,12 +71,12 @@ void ARKitCoordinator::getPrimaryDeviceInfo(WebPageProxy&, DeviceInfoCallback&& 
     RELEASE_LOG(XR, "ARKitCoordinator::getPrimaryDeviceInfo");
     ASSERT(RunLoop::isMain());
 
-    if (![getARWorldTrackingConfigurationClass() isSupported]) {
+    if (![getARWorldTrackingConfigurationClassSingleton() isSupported]) {
         RELEASE_LOG_ERROR(XR, "ARKitCoordinator: WorldTrackingConfiguration is not supported");
         return callback(std::nullopt);
     }
 
-    NSArray<ARVideoFormat *> *supportedVideoFormats = [getARWorldTrackingConfigurationClass() supportedVideoFormats];
+    NSArray<ARVideoFormat *> *supportedVideoFormats = [getARWorldTrackingConfigurationClassSingleton() supportedVideoFormats];
     if (![supportedVideoFormats count])
         return callback(std::nullopt);
 

@@ -102,6 +102,8 @@ public:
     void waitForAllCommitedWorkToComplete();
     void synchronizeResourceAndWait(id<MTLBuffer>);
     id<MTLIndirectCommandBuffer> trimICB(id<MTLIndirectCommandBuffer> dest, id<MTLIndirectCommandBuffer> src, NSUInteger newSize);
+    id<MTLDevice> metalDevice() const;
+
 private:
     Queue(id<MTLCommandQueue>, Adapter&, Device&);
     Queue(Adapter&, Device&);
@@ -117,16 +119,12 @@ private:
 
     NSString* errorValidatingWriteTexture(const WGPUImageCopyTexture&, const WGPUTextureDataLayout&, const WGPUExtent3D&, size_t, const Texture&) const;
 
-private PUBLIC_IN_WEBGPU_SWIFT:
     std::pair<id<MTLBuffer>, uint64_t> newTemporaryBufferWithBytes(const std::span<uint8_t> data, bool noCopy);
 
-private:
     id<MTLCommandQueue> m_commandQueue { nil };
     id<MTLCommandBuffer> m_commandBuffer { nil };
     id<MTLBlitCommandEncoder> m_blitCommandEncoder { nil };
-private PUBLIC_IN_WEBGPU_SWIFT:
     ThreadSafeWeakPtr<Device> m_device; // The only kind of queues that exist right now are default queues, which are owned by Devices.
-private:
     uint64_t m_submittedCommandBufferCount { 0 };
     uint64_t m_completedCommandBufferCount { 0 };
     uint64_t m_scheduledCommandBufferCount { 0 };
@@ -142,8 +140,7 @@ private:
     const ThreadSafeWeakPtr<Instance> m_instance;
     id<MTLBuffer> m_temporaryBuffer;
     uint64_t m_temporaryBufferOffset;
-// FIXME: remove @safe once rdar://151039766 lands
-} __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(refQueue, derefQueue);
+} SWIFT_SHARED_REFERENCE(refQueue, derefQueue) SWIFT_PRIVATE_FILEID("WebGPU/Queue.swift");
 
 } // namespace WebGPU
 

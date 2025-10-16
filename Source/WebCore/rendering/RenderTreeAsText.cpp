@@ -275,7 +275,7 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
                 ts << " [textStrokeColor="_s << serializationForRenderTreeAsText(textStrokeColor) << ']';
 
             if (renderElement->parent()->style().textStrokeWidth() != renderElement->style().textStrokeWidth() && renderElement->style().textStrokeWidth().isPositive())
-                ts << " [textStrokeWidth="_s << Style::evaluate(renderElement->style().textStrokeWidth()) << ']';
+                ts << " [textStrokeWidth="_s << Style::evaluate(renderElement->style().textStrokeWidth(), 1.0f /* FIXME FIND ZOOM */) << ']';
         }
 
         auto* box = dynamicDowncast<RenderBoxModelObject>(o);
@@ -657,21 +657,19 @@ static void writeLayers(TextStream& ts, const RenderLayer& rootLayer, RenderLaye
     }
     
     // Calculate the clip rects we should use.
-    LayoutRect layerBounds;
-    ClipRect damageRect;
-    ClipRect clipRectToApply;
     LayoutSize offsetFromRoot = layer.offsetFromAncestor(&rootLayer);
-    layer.calculateRects(RenderLayer::ClipRectsContext(&rootLayer, PaintingClipRects, RenderLayer::clipRectTemporaryOptions), paintDirtyRect, layerBounds, damageRect, clipRectToApply, offsetFromRoot);
+    RenderLayer::ClipRectsContext clipRectsContext(&rootLayer, PaintingClipRects, RenderLayer::clipRectTemporaryOptions);
+    auto rects = layer.calculateRects(clipRectsContext, offsetFromRoot, paintDirtyRect);
 
     // Ensure our lists are up-to-date.
     layer.updateLayerListsIfNeeded();
     layer.updateDescendantDependentFlags();
 
-    bool shouldPaint = (behavior.contains(RenderAsTextFlag::ShowAllLayers)) ? true : layer.intersectsDamageRect(layerBounds, damageRect.rect(), &rootLayer, layer.offsetFromAncestor(&rootLayer));
+    bool shouldPaint = (behavior.contains(RenderAsTextFlag::ShowAllLayers)) ? true : layer.intersectsDamageRect(rects.layerBounds(), rects.dirtyBackgroundRect().rect(), &rootLayer, layer.offsetFromAncestor(&rootLayer));
     auto negativeZOrderLayers = layer.negativeZOrderLayers();
     bool paintsBackgroundSeparately = negativeZOrderLayers.size() > 0;
     if (shouldPaint && paintsBackgroundSeparately) {
-        writeLayer(ts, layer, layerBounds, damageRect.rect(), clipRectToApply.rect(), LayerPaintPhaseBackground, behavior);
+        writeLayer(ts, layer, rects.layerBounds(), rects.dirtyBackgroundRect().rect(), rects.dirtyForegroundRect().rect(), LayerPaintPhaseBackground, behavior);
         writeLayerRenderers(ts, layer, LayerPaintPhaseBackground, behavior);
     }
         
@@ -689,7 +687,7 @@ static void writeLayers(TextStream& ts, const RenderLayer& rootLayer, RenderLaye
     }
 
     if (shouldPaint) {
-        writeLayer(ts, layer, layerBounds, damageRect.rect(), clipRectToApply.rect(), paintsBackgroundSeparately ? LayerPaintPhaseForeground : LayerPaintPhaseAll, behavior);
+        writeLayer(ts, layer, rects.layerBounds(), rects.dirtyBackgroundRect().rect(), rects.dirtyForegroundRect().rect(), paintsBackgroundSeparately ? LayerPaintPhaseForeground : LayerPaintPhaseAll, behavior);
         
         if (behavior.contains(RenderAsTextFlag::ShowLayerFragments)) {
             LayerFragments layerFragments;
@@ -699,7 +697,7 @@ static void writeLayers(TextStream& ts, const RenderLayer& rootLayer, RenderLaye
                 TextStream::IndentScope indentScope(ts, 2);
                 for (unsigned i = 0; i < layerFragments.size(); ++i) {
                     const auto& fragment = layerFragments[i];
-                    ts << indent << " fragment "_s << i << ": bounds in layer "_s << fragment.layerBounds << " fragment bounds "_s << fragment.boundingBox << '\n';
+                    ts << indent << " fragment "_s << i << ": bounds in layer "_s << fragment.layerBounds() << " fragment bounds "_s << fragment.boundingBox() << '\n';
                 }
             }
         }

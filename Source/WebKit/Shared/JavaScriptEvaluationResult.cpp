@@ -114,7 +114,7 @@ RefPtr<API::Object> JavaScriptEvaluationResult::APIInserter::toAPI(Value&& root)
         m_dictionaries.append({ WTFMove(map), dictionary });
         return { WTFMove(dictionary) };
     }, [] (UniqueRef<JSHandleInfo>&& info) -> RefPtr<API::Object> {
-        return API::JSHandle::create(WTFMove(info.get()));
+        return API::JSHandle::getOrCreate(WTFMove(info.get()));
     }, [] (UniqueRef<WebCore::SerializedNode>&& node) -> RefPtr<API::Object> {
         return API::SerializedNode::create(WTFMove(node.get()));
     });
@@ -399,11 +399,11 @@ JSValueRef JavaScriptEvaluationResult::JSInserter::toJS(JSGlobalContextRef conte
         m_dictionaries.append({ WTFMove(map), Protected<JSObjectRef>(context, dictionary) });
         return dictionary;
     }, [&] (UniqueRef<JSHandleInfo>&& info) -> JSValueRef {
-        auto [originalDocument, object] = WebCore::WebKitJSHandle::objectForIdentifier(info.get().identifier);
+        auto [originalGlobalObject, object] = WebCore::WebKitJSHandle::objectForIdentifier(info.get().identifier);
         if (!object)
             return JSValueMakeUndefined(context);
         auto [lexicalGlobalObject, domGlobalObject, document] = globalObjectTuple(context);
-        if (document.get() != originalDocument.get())
+        if (lexicalGlobalObject != originalGlobalObject)
             return JSValueMakeUndefined(context);
         return ::toRef(object);
     }, [&] (UniqueRef<WebCore::SerializedNode>&& serializedNode) -> JSValueRef {

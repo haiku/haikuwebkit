@@ -65,6 +65,7 @@ public:
     DoublePoint pos() const { return m_pos; }
     DoubleSize radius() const { return m_radius; }
     float rotationAngle() const { return m_rotationAngle; }
+    float twist() const { return m_twist; }
     float force() const { return m_force; }
 
 protected:
@@ -74,6 +75,7 @@ protected:
     DoublePoint m_pos;
     DoubleSize m_radius;
     float m_rotationAngle;
+    float m_twist;
     float m_force;
 };
 

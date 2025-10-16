@@ -113,7 +113,6 @@ public:
     void removedFromMediaSource();
     using ComputeSeekPromise = SourceBufferPrivate::ComputeSeekPromise;
     Ref<ComputeSeekPromise> computeSeekTime(const SeekTarget&);
-    void seekToTime(const MediaTime&);
 
     bool hasVideo() const;
 
@@ -121,6 +120,7 @@ public:
 
     // EventTarget
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ActiveDOMObject::protectedScriptExecutionContext;
 
     enum class AppendMode { Segments, Sequence };
     AppendMode mode() const { return m_mode; }
@@ -214,6 +214,10 @@ private:
     bool hasAudio() const;
 
     void rangeRemoval(const MediaTime&, const MediaTime&);
+    RefPtr<MediaSource> protectedSource() const;
+    RefPtr<VideoTrackList> protectedVideoTracks() const;
+    RefPtr<AudioTrackList> protectedAudioTracks() const;
+    RefPtr<TextTrackList> protectedTextTracks() const;
 
     friend class Internals;
     using SamplesPromise = NativePromise<Vector<String>, PlatformMediaError>;

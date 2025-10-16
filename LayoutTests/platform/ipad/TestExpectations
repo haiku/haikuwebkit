@@ -65,9 +65,6 @@ fast/scrolling/ios/body-overflow-hidden-height-100-percent-zoomed-1.html [ Skip 
 # <rdar://problem/52914585> (Layout Test fast/forms/file/file-input-reset-using-open-panel.html is Failing)
 fast/forms/file/file-input-reset-using-open-panel.html [ ImageOnlyFailure ]
 
-# <rdar://problem/56512107> [ iOS ] Three editing/pasteboard/smart-paste-paragraph tests have been flaky since they landed in r243124 (203264)
-webkit.org/b/203264 editing/pasteboard/smart-paste-paragraph-001.html [ Pass ]
-
 webkit.org/b/231635 [ Release ] editing/selection/ios/scroll-to-reveal-selection-when-showing-software-keyboard.html [ Timeout ]
 
 media/picture-in-picture [ Pass ]

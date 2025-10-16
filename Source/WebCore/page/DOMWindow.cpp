@@ -33,6 +33,7 @@
 #include "Document.h"
 #include "ExceptionOr.h"
 #include "Frame.h"
+#include "FrameConsoleClient.h"
 #include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "HTTPParsers.h"
@@ -42,7 +43,6 @@
 #include "MediaQueryList.h"
 #include "NodeList.h"
 #include "Page.h"
-#include "PageConsoleClient.h"
 #include "PlatformStrategies.h"
 #include "RemoteDOMWindow.h"
 #include "ResourceLoadObserver.h"
@@ -130,19 +130,19 @@ void DOMWindow::close()
     if (localFrame && !localFrame->loader().shouldClose())
         return;
 
-    ResourceLoadObserver::shared().updateCentralStatisticsStore([] { });
+    ResourceLoadObserver::singleton().updateCentralStatisticsStore([] { });
 
     page->setIsClosing();
     closePage();
 }
 
-PageConsoleClient* DOMWindow::console() const
+FrameConsoleClient* DOMWindow::console() const
 {
     RefPtr frame = this->frame();
-    return frame && frame->page() ? &frame->page()->console() : nullptr;
+    return frame ? &frame->console() : nullptr;
 }
 
-CheckedPtr<PageConsoleClient> DOMWindow::checkedConsole() const
+CheckedPtr<FrameConsoleClient> DOMWindow::checkedConsole() const
 {
     return console();
 }
@@ -942,8 +942,8 @@ void DOMWindow::printErrorMessage(const String& message) const
     if (message.isEmpty())
         return;
 
-    if (CheckedPtr pageConsole = console())
-        pageConsole->addMessage(MessageSource::JS, MessageLevel::Error, message);
+    if (CheckedPtr frameConsole = console())
+        frameConsole->addMessage(MessageSource::JS, MessageLevel::Error, message);
 }
 
 String DOMWindow::crossDomainAccessErrorMessage(const LocalDOMWindow& activeWindow, IncludeTargetOrigin includeTargetOrigin)
@@ -1028,7 +1028,7 @@ bool DOMWindow::isInsecureScriptAccess(const LocalDOMWindow& activeWindow, const
             return false;
     }
 
-    printErrorMessage(crossDomainAccessErrorMessage(activeWindow, IncludeTargetOrigin::Yes));
+    activeWindow.printErrorMessage(crossDomainAccessErrorMessage(activeWindow, IncludeTargetOrigin::Yes));
     return true;
 }
 

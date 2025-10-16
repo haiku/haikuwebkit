@@ -157,7 +157,7 @@ IDBError MemoryObjectStore::updateIndexRecordsWithIndexKey(MemoryBackingStoreTra
     if (!m_writeTransaction || !m_writeTransaction->isVersionChange() || m_writeTransaction != &transaction)
         return IDBError { ExceptionCode::ConstraintError, "Transaction state is invalid."_s };
 
-    auto* index = m_indexesByIdentifier.get(indexInfo.identifier());
+    RefPtr index = m_indexesByIdentifier.get(indexInfo.identifier());
     if (!index)
         return IDBError { ExceptionCode::ConstraintError, "Index does not exist."_s };
 
@@ -364,10 +364,10 @@ void MemoryObjectStore::updateIndexesForDeleteRecord(const IDBKeyData& value)
 IDBError MemoryObjectStore::updateIndexesForPutRecord(const IDBKeyData& key, const IndexIDToIndexKeyMap& indexKeys)
 {
     IDBError error;
-    Vector<std::pair<MemoryIndex*, IndexKey>> changedIndexRecords;
+    Vector<std::pair<RefPtr<MemoryIndex>, IndexKey>> changedIndexRecords;
 
     for (const auto& [indexID, indexKey] : indexKeys) {
-        auto* index = m_indexesByIdentifier.get(indexID);
+        RefPtr index = m_indexesByIdentifier.get(indexID);
         ASSERT(index);
         if (!index) {
             error = IDBError { ExceptionCode::InvalidStateError, "Missing index metadata"_s };
@@ -378,13 +378,13 @@ IDBError MemoryObjectStore::updateIndexesForPutRecord(const IDBKeyData& key, con
         if (!error.isNull())
             break;
 
-        changedIndexRecords.append(std::make_pair(index, indexKey));
+        changedIndexRecords.append(std::make_pair(WTFMove(index), indexKey));
     }
 
     // If any of the index puts failed, revert all of the ones that went through.
     if (!error.isNull()) {
         for (auto& record : changedIndexRecords)
-            record.first->removeRecord(key, record.second);
+            Ref { *record.first }->removeRecord(key, record.second);
     }
 
     return error;
@@ -395,7 +395,7 @@ uint64_t MemoryObjectStore::countForKeyRange(std::optional<IDBIndexIdentifier> i
     LOG(IndexedDB, "MemoryObjectStore::countForKeyRange");
 
     if (indexIdentifier) {
-        auto* index = m_indexesByIdentifier.get(*indexIdentifier);
+        RefPtr index = m_indexesByIdentifier.get(*indexIdentifier);
         ASSERT(index);
         return index->countForKeyRange(inRange);
     }
@@ -465,7 +465,7 @@ IDBGetResult MemoryObjectStore::indexValueForKeyRange(IDBIndexIdentifier indexId
 {
     LOG(IndexedDB, "MemoryObjectStore::indexValueForKeyRange");
 
-    auto* index = m_indexesByIdentifier.get(indexIdentifier);
+    RefPtr index = m_indexesByIdentifier.get(indexIdentifier);
     ASSERT(index);
     return index->getResultForKeyRange(recordType, range);
 }

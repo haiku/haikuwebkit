@@ -147,6 +147,7 @@ class JSGlobalObject;
     v(BigUint64Array, nullptr) \
     v(wrapForValidIteratorCreate, nullptr) \
     v(asyncFromSyncIteratorCreate, nullptr) \
+    v(promiseAllContextCreate, nullptr) \
     v(regExpStringIteratorCreate, nullptr) \
     v(iteratorHelperCreate, nullptr) \
     v(ReferenceError, nullptr) \

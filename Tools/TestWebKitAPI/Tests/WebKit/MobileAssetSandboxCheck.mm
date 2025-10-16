@@ -31,11 +31,9 @@
 #import "TestWKWebView.h"
 #import <WebKit/WKWebViewPrivate.h>
 
-#if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
+// This test no longer makes sense on macOS26+ as we no longer allow com.apple.mobileassetd.v2 access.
+#if !PLATFORM(MAC) || __MAC_OS_X_VERSION_MIN_REQUIRED < 260000
 TEST(WebKit, DISABLED_MobileAssetSandboxCheck)
-#else
-TEST(WebKit, MobileAssetSandboxCheck)
-#endif
 {
     auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
     auto context = adoptWK(TestWebKitAPI::Util::createContextForInjectedBundleTest("InternalsInjectedBundleTest"));
@@ -52,5 +50,6 @@ TEST(WebKit, MobileAssetSandboxCheck)
 
     ASSERT_TRUE(sandboxAccess());
 }
+#endif
 
 #endif // WK_HAVE_C_SPI

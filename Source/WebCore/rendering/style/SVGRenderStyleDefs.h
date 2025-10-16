@@ -34,11 +34,11 @@
 #include <WebCore/StyleBoxShadow.h>
 #include <WebCore/StyleColor.h>
 #include <WebCore/StyleOpacity.h>
-#include <WebCore/StylePathData.h>
 #include <WebCore/StyleSVGBaselineShift.h>
 #include <WebCore/StyleSVGCenterCoordinateComponent.h>
 #include <WebCore/StyleSVGCoordinateComponent.h>
 #include <WebCore/StyleSVGPaint.h>
+#include <WebCore/StyleSVGPathData.h>
 #include <WebCore/StyleSVGRadius.h>
 #include <WebCore/StyleSVGRadiusComponent.h>
 #include <WebCore/StyleSVGStrokeDasharray.h>
@@ -292,7 +292,7 @@ public:
     Style::SVGRadiusComponent ry;
     Style::SVGCoordinateComponent x;
     Style::SVGCoordinateComponent y;
-    RefPtr<StylePathData> d;
+    Style::SVGPathData d;
 
 private:
     StyleLayoutData();

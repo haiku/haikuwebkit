@@ -827,6 +827,7 @@ localizedStrings["Format: Short Hex with Alpha"] = "Format: Short Hex with Alpha
 localizedStrings["Forward (%s)"] = "Forward (%s)";
 localizedStrings["Fragment"] = "Fragment";
 localizedStrings["Fragment Shader"] = "Fragment Shader";
+localizedStrings["Frame"] = "Frame";
 localizedStrings["Frame %d"] = "Frame %d";
 localizedStrings["Frame %d \u2014 %s"] = "Frame %d \u2014 %s";
 localizedStrings["Frames"] = "Frames";

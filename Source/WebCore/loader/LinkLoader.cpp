@@ -293,18 +293,15 @@ void LinkLoader::preconnectIfNeeded(const LinkLoadParameters& params, Document& 
     ResourceRequest request { URL { params.href } };
 #if ENABLE(CONTENT_EXTENSIONS)
     RefPtr page = document.page();
-    if (!page)
-        return;
-
     RefPtr documentLoader = document.loader();
-    if (!documentLoader)
-        return;
-
-    auto results = page->protectedUserContentProvider()->processContentRuleListsForLoad(*page, params.href, ContentExtensions::ResourceType::Ping, *documentLoader);
-    if (results.shouldBlock())
-        return;
-
-    ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), request);
+    RefPtr frame = document.frame();
+    RefPtr userContentProvider = frame ? frame->userContentProvider() : nullptr;
+    if (page && documentLoader && userContentProvider) {
+        auto results = userContentProvider->processContentRuleListsForLoad(*page, params.href, ContentExtensions::ResourceType::Ping, *documentLoader);
+        if (results.shouldBlock())
+            return;
+        ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), request);
+    }
 #endif
 
     ASSERT(document.settings().linkPreconnectEnabled());

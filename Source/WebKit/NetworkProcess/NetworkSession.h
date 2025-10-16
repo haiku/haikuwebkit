@@ -50,6 +50,7 @@
 #include <wtf/HashSet.h>
 #include <wtf/LazyUniqueRef.h>
 #include <wtf/Ref.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/Seconds.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeWeakHashSet.h>
@@ -349,7 +350,7 @@ protected:
 
     HashSet<Ref<NetworkResourceLoader>> m_keptAliveLoads;
 
-    class CachedNetworkResourceLoader : public RefCounted<CachedNetworkResourceLoader> {
+    class CachedNetworkResourceLoader : public RefCountedAndCanMakeWeakPtr<CachedNetworkResourceLoader> {
         WTF_MAKE_TZONE_ALLOCATED(CachedNetworkResourceLoader);
     public:
         static Ref<CachedNetworkResourceLoader> create(Ref<NetworkResourceLoader>&&);

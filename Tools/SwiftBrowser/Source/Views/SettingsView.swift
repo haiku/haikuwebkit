@@ -25,7 +25,8 @@ import SwiftUI
 import WebKit
 
 private struct PermissionDecisionView: View {
-    @Binding var permissionDecision: WKPermissionDecision
+    @Binding
+    var permissionDecision: WKPermissionDecision
 
     let label: String
 
@@ -41,7 +42,8 @@ private struct PermissionDecisionView: View {
 }
 
 private struct BinaryValuePicker: View {
-    @Binding var value: Bool
+    @Binding
+    var value: Bool
 
     let description: String
 
@@ -59,13 +61,23 @@ private struct BinaryValuePicker: View {
 }
 
 struct GeneralSettingsView: View {
-    @AppStorage(AppStorageKeys.homepage) private var homepage = "https://www.webkit.org"
+    @AppStorage(AppStorageKeys.homepage)
+    private var homepage = "https://www.webkit.org"
 
-    @AppStorage(AppStorageKeys.orientationAndMotionAuthorization) private var orientationAndMotionAuthorization = WKPermissionDecision.prompt
-    @AppStorage(AppStorageKeys.mediaCaptureAuthorization) private var mediaCaptureAuthorization = WKPermissionDecision.prompt
+    @AppStorage(AppStorageKeys.orientationAndMotionAuthorization)
+    private var orientationAndMotionAuthorization = WKPermissionDecision.prompt
 
-    @AppStorage(AppStorageKeys.scrollBounceBehaviorBasedOnSize) private var scrollBounceBehaviorBasedOnSize = false
-    @AppStorage(AppStorageKeys.backgroundHidden) private var backgroundHidden = false
+    @AppStorage(AppStorageKeys.mediaCaptureAuthorization)
+    private var mediaCaptureAuthorization = WKPermissionDecision.prompt
+
+    @AppStorage(AppStorageKeys.scrollBounceBehaviorBasedOnSize)
+    private var scrollBounceBehaviorBasedOnSize = false
+
+    @AppStorage(AppStorageKeys.backgroundHidden)
+    private var backgroundHidden = false
+
+    @AppStorage(AppStorageKeys.showColorInTabBar)
+    private var showColorInTabBar = true
 
     let currentURL: URL?
 
@@ -110,6 +122,11 @@ struct GeneralSettingsView: View {
                     falseLabel: "Automatic",
                     trueLabel: "Always Hide"
                 )
+            }
+
+            Section {
+                Toggle("Show color in tab bar", isOn: $showColorInTabBar)
+                    .padding(.top)
             }
         }
     }

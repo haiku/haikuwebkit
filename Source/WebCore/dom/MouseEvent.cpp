@@ -65,7 +65,7 @@ Ref<MouseEvent> MouseEvent::create(const AtomString& eventType, RefPtr<WindowPro
     auto canBubble = !isMouseEnterOrLeave ? CanBubble::Yes : CanBubble::No;
     auto isComposed = !isMouseEnterOrLeave ? IsComposed::Yes : IsComposed::No;
 
-    return MouseEvent::create(eventType, canBubble, isCancelable, isComposed, event.timestamp().approximateMonotonicTime(), WTFMove(view), detail,
+    return MouseEvent::create(eventType, canBubble, isCancelable, isComposed, event.timestamp(), WTFMove(view), detail,
         event.globalPosition(), event.position(), event.movementDelta().x(), event.movementDelta().y(),
         event.modifiers(), event.button(), event.buttons(), relatedTarget, event.force(), event.syntheticClickType(), coalescedEvents, predictedEvents);
 }

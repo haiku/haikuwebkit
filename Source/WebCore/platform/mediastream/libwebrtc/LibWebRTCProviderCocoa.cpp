@@ -46,7 +46,7 @@ WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/darwin/WeakLinking.h>
 
-WTF_WEAK_LINK_FORCE_IMPORT(webrtc::CreatePeerConnectionFactory);
+WTF_WEAK_LINK_FORCE_IMPORT(webrtc::CreateModularPeerConnectionFactory);
 
 namespace WebCore {
 
@@ -96,10 +96,10 @@ bool LibWebRTCProviderCocoa::isVPSoftwareDecoderSmooth(const VideoConfiguration&
 bool WebRTCProvider::webRTCAvailable()
 {
 #if PLATFORM(IOS) || PLATFORM(VISION)
-    ASSERT_WITH_MESSAGE(!!webrtc::CreatePeerConnectionFactory, "Failed to find or load libwebrtc");
+    ASSERT_WITH_MESSAGE(!!webrtc::CreateModularPeerConnectionFactory, "Failed to find or load libwebrtc");
     return true;
 #else
-    return !!webrtc::CreatePeerConnectionFactory;
+    return !!webrtc::CreateModularPeerConnectionFactory;
 #endif
 }
 

@@ -52,7 +52,7 @@ static bool usageTrackingAvailable()
     static std::once_flag onceFlag;
     std::call_once(onceFlag, [&] () {
         available = PAL::isUsageTrackingFrameworkAvailable()
-            && PAL::getUSVideoUsageClass()
+            && PAL::getUSVideoUsageClassSingleton()
             && PAL::canLoad_UsageTracking_USVideoMetadataKeyCanShowControlsManager()
             && PAL::canLoad_UsageTracking_USVideoMetadataKeyCanShowNowPlayingControls()
             && PAL::canLoad_UsageTracking_USVideoMetadataKeyIsSuspended()

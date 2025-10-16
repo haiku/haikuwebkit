@@ -877,6 +877,30 @@ class StyleProperty:
         raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
 
     @property
+    def method_name_for_set_animations_or_transitions(self):
+        if "animation-" in self.name:
+            return "setAnimations"
+        if "transition-" in self.name:
+            return "setTransitions"
+        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
+
+    @property
+    def method_name_for_initial_animations_or_transitions(self):
+        if "animation-" in self.name:
+            return "initialAnimations"
+        if "transition-" in self.name:
+            return "initialTransitions"
+        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
+
+    @property
+    def type_name_for_animations_or_transitions(self):
+        if "animation-" in self.name:
+            return "Animations"
+        if "transition-" in self.name:
+            return "Transitions"
+        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
+
+    @property
     def method_name_for_ensure_layers(self):
         if "background-" in self.name:
             return "ensureBackgroundLayers"
@@ -914,14 +938,6 @@ class StyleProperty:
             return "BackgroundLayers"
         if "mask-" in self.name:
             return "MaskLayers"
-        raise Exception(f"Unrecognized FillLayer property name: '{self.name}")
-
-    @property
-    def enum_name_for_layers_type(self):
-        if "background-" in self.name:
-            return "FillLayerType::Background"
-        if "mask-" in self.name:
-            return "FillLayerType::Mask"
         raise Exception(f"Unrecognized FillLayer property name: '{self.name}")
 
 
@@ -4008,47 +4024,19 @@ class GenerateStyleBuilderGenerated:
     # Animation property setters.
 
     def _generate_animation_property_initial_value_setter(self, to, property):
-        to.write(f"auto& list = builderState.style().{property.method_name_for_ensure_animations_or_transitions}();")
-        to.write(f"if (list.isEmpty())")
-        to.write(f"    list.append(Animation::create());")
-        to.write(f"list.animation(0).{property.codegen_properties.animation_setter}(Animation::{property.codegen_properties.animation_initial}());")
-        to.write(f"for (auto& animation : list)")
-        to.write(f"    animation->clear{property.codegen_properties.animation_name_for_methods}();")
+        to.write(f"applyInitialAnimationOrTransitionProperty<&RenderStyle::{property.method_name_for_ensure_animations_or_transitions}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_setter}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}, &{property.type_name_for_animations_or_transitions}::value_type::clear{property.codegen_properties.animation_name_for_methods}, {property.type_name_for_animations_or_transitions}>(builderState);")
 
     def _generate_animation_property_inherit_value_setter(self, to, property):
-        to.write(f"auto& list = builderState.style().{property.method_name_for_ensure_animations_or_transitions}();")
-        to.write(f"auto* parentList = builderState.parentStyle().{property.method_name_for_animations_or_transitions}();")
-        to.write(f"size_t i = 0, parentSize = parentList ? parentList->size() : 0;")
-        to.write(f"for ( ; i < parentSize && parentList->animation(i).is{property.codegen_properties.animation_name_for_methods}Set(); ++i) {{")
-        to.write(f"    if (list.size() <= i)")
-        to.write(f"        list.append(Animation::create());")
-        to.write(f"    list.animation(i).{property.codegen_properties.animation_setter}(parentList->animation(i).{property.codegen_properties.animation_getter}());")
-        to.write(f"}}")
-        to.write(f"// Reset any remaining animations to not have the property set.")
-        to.write(f"for ( ; i < list.size(); ++i)")
-        to.write(f"    list.animation(i).clear{property.codegen_properties.animation_name_for_methods}();")
+        to.write(f"applyInheritAnimationOrTransitionProperty<&RenderStyle::{property.method_name_for_ensure_animations_or_transitions}, &RenderStyle::{property.method_name_for_animations_or_transitions}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_getter}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_setter}, &{property.type_name_for_animations_or_transitions}::value_type::clear{property.codegen_properties.animation_name_for_methods}, &{property.type_name_for_animations_or_transitions}::value_type::is{property.codegen_properties.animation_name_for_methods}Set, {property.type_name_for_animations_or_transitions}>(builderState);")
 
     def _generate_animation_property_value_setter(self, to, property):
-        to.write(f"auto& list = builderState.style().{property.method_name_for_ensure_animations_or_transitions}();")
-        to.write(f"size_t childIndex = 0;")
-        to.write(f"if (auto* valueList = dynamicDowncast<CSSValueList>(value)) {{")
-        to.write(f"    // Walk each value and put it into an animation, creating new animations as needed.")
-        to.write(f"    for (auto& currentValue : *valueList) {{")
-        to.write(f"        if (childIndex >= list.size())")
-        to.write(f"            list.append(Animation::create());")
-        to.write(f"        builderState.styleMap().mapAnimation{property.codegen_properties.animation_name_for_methods}(list.animation(childIndex), currentValue);")
-        to.write(f"        ++childIndex;")
-        to.write(f"    }}")
-        to.write(f"}} else {{")
-        to.write(f"    if (list.isEmpty())")
-        to.write(f"        list.append(Animation::create());")
-        to.write(f"    builderState.styleMap().mapAnimation{property.codegen_properties.animation_name_for_methods}(list.animation(childIndex), value);")
-        to.write(f"    childIndex = 1;")
-        to.write(f"}}")
-        to.write(f"for ( ; childIndex < list.size(); ++childIndex) {{")
-        to.write(f"    // Reset all remaining animations to not have the property set.")
-        to.write(f"    list.animation(childIndex).clear{property.codegen_properties.animation_name_for_methods}();")
-        to.write(f"}}")
+        def converter(property):
+            if property.codegen_properties.style_builder_converter:
+                return f"&BuilderConverter::convert{property.codegen_properties.style_builder_converter}"
+            else:
+                return "&fromCSSValueDeducingType"
+
+        to.write(f"applyValuePrimaryAnimationOrTransitionProperty<&RenderStyle::{property.method_name_for_ensure_animations_or_transitions}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_setter}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}, &{property.type_name_for_animations_or_transitions}::value_type::clear{property.codegen_properties.animation_name_for_methods}, {converter(property)}, {property.type_name_for_animations_or_transitions}>(builderState, value);")
 
     # Font property setters.
 
@@ -4364,8 +4352,6 @@ class GenerateStyleExtractorGenerated:
     def wrap_in_converter(property, value):
         if property.codegen_properties.style_extractor_converter:
             return f"ExtractorConverter::convert{property.codegen_properties.style_extractor_converter}(extractorState, {value})"
-        elif property.codegen_properties.animation_property:
-            return f"ExtractorConverter::convertAnimation{property.codegen_properties.animation_name_for_methods}(extractorState, {value}, animation, animationList)"
         elif property.codegen_properties.color_property:
             return f"ExtractorConverter::convertStyleType<Color>(extractorState, {value})"
         else:
@@ -4375,8 +4361,6 @@ class GenerateStyleExtractorGenerated:
     def wrap_in_serializer(property, value):
         if property.codegen_properties.style_extractor_converter:
             return f"ExtractorSerializer::serialize{property.codegen_properties.style_extractor_converter}(extractorState, builder, context, {value})"
-        elif property.codegen_properties.animation_property:
-            return f"ExtractorSerializer::serializeAnimation{property.codegen_properties.animation_name_for_methods}(extractorState, builder, context, {value}, animation, animationList)"
         elif property.codegen_properties.color_property:
             return f"ExtractorSerializer::serializeStyleType<Color>(extractorState, builder, context, {value})"
         else:
@@ -4402,11 +4386,11 @@ class GenerateStyleExtractorGenerated:
     # Animation property getters.
 
     def _generate_animation_property_value_getter(self, to, property):
-        to.write(f"auto mapper = [](auto& extractorState, const Animation* animation, const AnimationList* animationList) -> RefPtr<CSSValue> {{")
+        to.write(f"auto mapper = [](auto& extractorState, const std::optional<{property.type_name_for_animations_or_transitions}::value_type>& animation, const auto&) -> RefPtr<CSSValue> {{")
         with to.indent():
             to.write(f"if (!animation) {{")
             with to.indent():
-                to.write(f"return {GenerateStyleExtractorGenerated.wrap_in_converter(property, f'Animation::{property.codegen_properties.animation_initial}()')};")
+                to.write(f"return {GenerateStyleExtractorGenerated.wrap_in_converter(property, f'{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}()')};")
             to.write(f"}}")
             to.write(f"if (!animation->is{property.codegen_properties.animation_name_for_methods}Filled()) {{")
             with to.indent():
@@ -4417,14 +4401,14 @@ class GenerateStyleExtractorGenerated:
         to.write(f"return extractAnimationOrTransitionValue(extractorState, extractorState.style.{property.method_name_for_animations_or_transitions}(), mapper);")
 
     def _generate_animation_property_value_serialization_getter(self, to, property):
-        to.write(f"auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, const Animation* animation, const AnimationList* animationList) {{")
+        to.write(f"auto mapper = [](auto& extractorState, auto& builder, const auto& context, bool includeComma, const std::optional<{property.type_name_for_animations_or_transitions}::value_type>& animation, const auto&) {{")
         with to.indent():
             to.write(f"if (!animation) {{")
             with to.indent():
                 to.write(f"if (includeComma)")
                 with to.indent():
                     to.write(f"builder.append(\", \"_s);")
-                to.write(f"{GenerateStyleExtractorGenerated.wrap_in_serializer(property, f'Animation::{property.codegen_properties.animation_initial}()')};")
+                to.write(f"{GenerateStyleExtractorGenerated.wrap_in_serializer(property, f'{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}()')};")
                 to.write(f"return;")
             to.write(f"}}")
             to.write(f"if (!animation->is{property.codegen_properties.animation_name_for_methods}Filled()) {{")

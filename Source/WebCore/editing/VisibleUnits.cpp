@@ -43,6 +43,7 @@
 #include "PositionInlines.h"
 #include "Range.h"
 #include "RenderBlockFlow.h"
+#include "RenderObjectStyle.h"
 #include "RenderStyleInlines.h"
 #include "RenderedPosition.h"
 #include "Text.h"

@@ -83,7 +83,7 @@ std::optional<IPC::AsyncReplyID> WebPasteboardProxy::grantAccessToCurrentData(We
     }
 #if PLATFORM(MAC)
     if (!paths.size())
-        pasteboard.getPathnamesForType(paths, legacyFilenamesPasteboardType());
+        pasteboard.getPathnamesForType(paths, legacyFilenamesPasteboardTypeSingleton());
 #endif
 
     if (!paths.size()) {
@@ -212,7 +212,7 @@ void WebPasteboardProxy::getPasteboardPathnamesForType(IPC::Connection& connecti
             PlatformPasteboard(pasteboardName).getPathnamesForType(pathnames, pasteboardType);
             // On iOS, files are copied into app's container upon paste.
 #if PLATFORM(MAC)
-            bool needsExtensions = pasteboardType == String(WebCore::legacyFilenamesPasteboardType());
+            bool needsExtensions = pasteboardType == String(WebCore::legacyFilenamesPasteboardTypeSingleton());
             sandboxExtensions = pathnames.map([needsExtensions](auto& filename) {
                 if (!needsExtensions || ![[NSFileManager defaultManager] fileExistsAtPath:filename.createNSString().get()])
                     return SandboxExtension::Handle { };

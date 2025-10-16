@@ -190,7 +190,7 @@ static RetainPtr<PKDateComponentsRange> toPKDateComponentsRange(const WebCore::A
 
 RetainPtr<PKShippingMethod> toPKShippingMethod(const WebCore::ApplePayShippingMethod& shippingMethod)
 {
-    RetainPtr<PKShippingMethod> result = [PAL::getPKShippingMethodClass() summaryItemWithLabel:shippingMethod.label.createNSString().get() amount:WebCore::toDecimalNumber(shippingMethod.amount)];
+    RetainPtr<PKShippingMethod> result = [PAL::getPKShippingMethodClassSingleton() summaryItemWithLabel:shippingMethod.label.createNSString().get() amount:WebCore::toDecimalNumber(shippingMethod.amount)];
     [result setIdentifier:shippingMethod.identifier.createNSString().get()];
     [result setDetail:shippingMethod.detail.createNSString().get()];
 #if HAVE(PASSKIT_SHIPPING_METHOD_DATE_COMPONENTS_RANGE)
@@ -460,7 +460,7 @@ void WebPaymentCoordinatorProxy::platformCompleteCouponCodeChange(std::optional<
 void WebPaymentCoordinatorProxy::getSetupFeatures(const PaymentSetupConfiguration& configuration, CompletionHandler<void(PaymentSetupFeatures&&)>&& reply)
 {
 #if PLATFORM(MAC)
-    if (!PAL::getPKPaymentSetupControllerClass()) {
+    if (!PAL::getPKPaymentSetupControllerClassSingleton()) {
         reply({ });
         return;
     }
@@ -473,7 +473,7 @@ void WebPaymentCoordinatorProxy::getSetupFeatures(const PaymentSetupConfiguratio
     });
 
 ALLOW_NEW_API_WITHOUT_GUARDS_BEGIN
-    [PAL::getPKPaymentSetupControllerClass() paymentSetupFeaturesForConfiguration:configuration.platformConfiguration().get() completion:completion.get()];
+    [PAL::getPKPaymentSetupControllerClassSingleton() paymentSetupFeaturesForConfiguration:configuration.platformConfiguration().get() completion:completion.get()];
 ALLOW_NEW_API_WITHOUT_GUARDS_END
 }
 
@@ -493,7 +493,7 @@ void WebPaymentCoordinatorProxy::endApplePaySetup()
 
 void WebPaymentCoordinatorProxy::platformBeginApplePaySetup(const PaymentSetupConfiguration& configuration, const PaymentSetupFeatures& features, CompletionHandler<void(bool)>&& reply)
 {
-    if (!PAL::getPKPaymentSetupRequestClass()) {
+    if (!PAL::getPKPaymentSetupRequestClassSingleton()) {
         reply(false);
         return;
     }

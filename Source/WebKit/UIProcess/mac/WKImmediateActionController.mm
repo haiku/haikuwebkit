@@ -85,7 +85,7 @@
     _contentPreventsDefault = NO;
     
     RetainPtr<id> animationController = [_immediateActionRecognizer animationController];
-    if (PAL::isQuickLookUIFrameworkAvailable() && [animationController isKindOfClass:PAL::getQLPreviewMenuItemClass()]) {
+    if (PAL::isQuickLookUIFrameworkAvailable() && [animationController isKindOfClass:PAL::getQLPreviewMenuItemClassSingleton()]) {
         RetainPtr menuItem = (QLPreviewMenuItem *)animationController.get();
         menuItem.get().delegate = nil;
     }
@@ -118,7 +118,7 @@
     if (_currentActionContext && _hasActivatedActionContext) {
         _hasActivatedActionContext = NO;
         if (PAL::isDataDetectorsFrameworkAvailable())
-            [PAL::getDDActionsManagerClass() didUseActions];
+            [PAL::getDDActionsManagerClassSingleton() didUseActions];
     }
 
     _state = WebKit::ImmediateActionState::None;
@@ -211,7 +211,7 @@
     if (_currentActionContext) {
         _hasActivatedActionContext = YES;
         if (PAL::isDataDetectorsFrameworkAvailable()) {
-            if (![PAL::getDDActionsManagerClass() shouldUseActionsWithContext:_currentActionContext.get()])
+            if (![PAL::getDDActionsManagerClassSingleton() shouldUseActionsWithContext:_currentActionContext.get()])
                 [self _cancelImmediateAction];
         }
     }
@@ -423,7 +423,7 @@
 
     actionContext.get().altMode = YES;
     actionContext.get().immediate = YES;
-    if (![[PAL::getDDActionsManagerClass() sharedManager] hasActionsForResult:actionContext.get().mainResult actionContext:actionContext.get()])
+    if (![[PAL::getDDActionsManagerClassSingleton() sharedManager] hasActionsForResult:actionContext.get().mainResult actionContext:actionContext.get()])
         return nil;
 
     RefPtr<WebKit::WebPageProxy> page = _page.get();
@@ -441,7 +441,7 @@
 
     [_currentActionContext setHighlightFrame:[_view.window convertRectToScreen:[_view convertRect:_hitTestResultData.platformData.detectedDataBoundingBox toView:nil]]];
 
-    RetainPtr menuItems = [[PAL::getDDActionsManagerClass() sharedManager] menuItemsForResult:[_currentActionContext mainResult] actionContext:_currentActionContext.get()];
+    RetainPtr menuItems = [[PAL::getDDActionsManagerClassSingleton() sharedManager] menuItemsForResult:[_currentActionContext mainResult] actionContext:_currentActionContext.get()];
 
     if (menuItems.get().count != 1)
         return nil;
@@ -476,7 +476,7 @@
     if (!hitTestResult)
         return nil;
 
-    RetainPtr menuItems = [[PAL::getDDActionsManagerClass() sharedManager] menuItemsForTargetURL:hitTestResult->absoluteLinkURL().createNSString().get() actionContext:_currentActionContext.get()];
+    RetainPtr menuItems = [[PAL::getDDActionsManagerClassSingleton() sharedManager] menuItemsForTargetURL:hitTestResult->absoluteLinkURL().createNSString().get() actionContext:_currentActionContext.get()];
 
     if (menuItems.get().count != 1)
         return nil;

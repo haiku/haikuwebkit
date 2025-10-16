@@ -30,6 +30,7 @@
 #include "AccessibilityObject.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "DocumentInlines.h"
 #include "HTMLSelectElement.h"
 #include "LocalFrame.h"
 #include "Page.h"

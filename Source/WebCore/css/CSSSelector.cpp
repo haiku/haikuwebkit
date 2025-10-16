@@ -31,6 +31,7 @@
 #include "CSSSelectorList.h"
 #include "CommonAtomStrings.h"
 #include "HTMLNames.h"
+#include "MutableCSSSelector.h"
 #include "SelectorPseudoTypeMap.h"
 #include <memory>
 #include <queue>
@@ -359,6 +360,17 @@ std::optional<CSSSelector::PseudoElement> CSSSelector::parsePseudoElementName(St
 }
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+const CSSSelector* CSSSelector::firstInCompound() const
+{
+    auto* selector = this;
+    while (!selector->isFirstInComplexSelector()) {
+        if (selector->relation() != Relation::Subselector)
+            break;
+        ++selector;
+    }
+    return selector;
+}
+
 const CSSSelector* CSSSelector::lastInCompound() const
 {
     auto* selector = this;
@@ -820,6 +832,15 @@ CSSSelector::CSSSelector(const CSSSelector& other)
     }
 }
 
+CSSSelector::CSSSelector(const CSSSelector& other, MutableSelectorCopyTag)
+    : CSSSelector(other)
+{
+    // Restore the selector list bits to the initial state when copying to a MutableCSSSelector.
+    m_isLastInSelectorList = false;
+    m_isFirstInComplexSelector = true;
+    m_isLastInComplexSelector = true;
+}
+
 bool CSSSelector::visitSimpleSelectors(VisitFunctor&& functor, VisitFunctionalPseudoClasses visitFunctionalPseudoClasses, VisitOnlySubject visitOnlySubject) const
 {
     std::queue<const CSSSelector*> worklist;
@@ -848,38 +869,6 @@ bool CSSSelector::visitSimpleSelectors(VisitFunctor&& functor, VisitFunctionalPs
         }
     }
     return false;
-}
-
-void CSSSelector::resolveNestingParentSelectors(const CSSSelectorList& parent)
-{
-    auto replaceParentSelector = [&parent] (CSSSelector& selector) {
-        if (selector.match() == CSSSelector::Match::NestingParent) {
-            // FIXME: Optimize cases where we can include the parent selector directly instead of wrapping it in a ":is" pseudo class.
-            selector.setMatch(Match::PseudoClass);
-            selector.setPseudoClass(PseudoClass::Is);
-            selector.setSelectorList(makeUnique<CSSSelectorList>(parent));
-        }
-        return false;
-    };
-
-    visitSimpleSelectors(WTFMove(replaceParentSelector), VisitFunctionalPseudoClasses::Yes);
-}
-
-void CSSSelector::replaceNestingParentByPseudoClassScope()
-{
-    auto replaceParentSelector = [] (CSSSelector& selector) {
-        if (selector.match() == Match::NestingParent) {
-            // Replace by :scope
-            selector.setMatch(Match::PseudoClass);
-            selector.setPseudoClass(PseudoClass::Scope);
-            // Top-level nesting parent selector acts like :scope with zero specificity.
-            // https://github.com/w3c/csswg-drafts/issues/10196#issuecomment-2161119978
-            selector.setImplicit();
-        }
-        return false;
-    };
-
-    visitSimpleSelectors(WTFMove(replaceParentSelector), VisitFunctionalPseudoClasses::Yes);
 }
 
 bool CSSSelector::hasExplicitNestingParent() const
@@ -921,6 +910,26 @@ bool CSSSelector::hasScope() const
             return true;
         return false;
     });
+}
+
+bool complexSelectorCanMatchPseudoElement(const CSSSelector& complexSelector)
+{
+    const CSSSelector* selector = &complexSelector;
+    do {
+        if (selector->matchesPseudoElement())
+            return true;
+
+        // FIXME: This is probably unneeded as functional pseudo-classes can't contain valid pseudo elements.
+        if (const CSSSelectorList* selectorList = selector->selectorList()) {
+            for (auto& subSelector : *selectorList) {
+                if (complexSelectorCanMatchPseudoElement(subSelector))
+                    return true;
+            }
+        }
+
+        selector = selector->precedingInComplexSelector();
+    } while (selector);
+    return false;
 }
 
 } // namespace WebCore

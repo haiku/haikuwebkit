@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: <link rel=preload> has an invalid `href` value
 
 PASS <link> cannot request the same resource twice by touching the 'rel' attribute, if its value never changes
 PASS <link> cannot request the same resource twice by touching the 'href' attribute, if its value never changes

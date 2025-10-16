@@ -1,7 +1,6 @@
 //@ requireOptions("--useWasmSIMD=1")
 //@ skip if !$isSIMDPlatform
 import { runSIMDTests } from "./simd-instructions-lib.js"
-import * as assert from "../assert.js"
 
 const verbose = false;
 
@@ -456,6 +455,90 @@ const comparisonTests = [
         [1.25, -3.5],
         [1.25, -3.5],
         [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // Both equal
+    ],
+
+    // i64x2.eq tests
+    [
+        "i64x2.eq",
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // Both equal
+    ],
+    [
+        "i64x2.eq",
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0x123456789ABCDEF1n, 0xFEDCBA9876543210n],
+        [0x0000000000000000n, 0xFFFFFFFFFFFFFFFFn] // Different, equal
+    ],
+
+    // i64x2.ne tests
+    [
+        "i64x2.ne",
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0x0000000000000000n, 0x0000000000000000n] // Both equal, so ne = false
+    ],
+    [
+        "i64x2.ne",
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0x123456789ABCDEF1n, 0xFEDCBA9876543210n],
+        [0xFFFFFFFFFFFFFFFFn, 0x0000000000000000n] // Different, equal
+    ],
+
+    // i64x2.lt_s tests (signed less than)
+    [
+        "i64x2.lt_s",
+        [0x0000000000000000n, 0x7FFFFFFFFFFFFFFFn],
+        [0x0000000000000001n, 0x8000000000000000n],
+        [0xFFFFFFFFFFFFFFFFn, 0x0000000000000000n] // 0<1, 0x7FFFFFFF...>0x8000000...(signed)
+    ],
+    [
+        "i64x2.lt_s",
+        [0x8000000000000000n, 0xFFFFFFFFFFFFFFFFn],
+        [0x7FFFFFFFFFFFFFFFn, 0x0000000000000000n],
+        [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // 0x8000000...<0x7FFFFFFF...(signed), -1<0
+    ],
+
+    // i64x2.gt_s tests (signed greater than)
+    [
+        "i64x2.gt_s",
+        [0x0000000000000001n, 0x8000000000000000n],
+        [0x0000000000000000n, 0x7FFFFFFFFFFFFFFFn],
+        [0xFFFFFFFFFFFFFFFFn, 0x0000000000000000n] // 1>0, 0x8000000...>0x7FFFFFFF...(signed)
+    ],
+    [
+        "i64x2.gt_s",
+        [0x7FFFFFFFFFFFFFFFn, 0x0000000000000000n],
+        [0x8000000000000000n, 0xFFFFFFFFFFFFFFFFn],
+        [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // 0x7FFFFFFF...>0x8000000...(signed), 0>-1
+    ],
+
+    // i64x2.le_s tests (signed less than or equal)
+    [
+        "i64x2.le_s",
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // Both equal
+    ],
+    [
+        "i64x2.le_s",
+        [0x0000000000000000n, 0x8000000000000000n],
+        [0x0000000000000001n, 0x7FFFFFFFFFFFFFFFn],
+        [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // 0<=1, 0x8000000...<=0x7FFFFFFF...(signed)
+    ],
+
+    // i64x2.ge_s tests (signed greater than or equal)
+    [
+        "i64x2.ge_s",
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0x123456789ABCDEF0n, 0xFEDCBA9876543210n],
+        [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // Both equal
+    ],
+    [
+        "i64x2.ge_s",
+        [0x0000000000000001n, 0x7FFFFFFFFFFFFFFFn],
+        [0x0000000000000000n, 0x8000000000000000n],
+        [0xFFFFFFFFFFFFFFFFn, 0xFFFFFFFFFFFFFFFFn] // 1>=0, 0x7FFFFFFF...>=0x8000000...(signed)
     ]
 ];
 

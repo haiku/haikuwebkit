@@ -119,7 +119,7 @@ RenderTheme& RenderTheme::singleton()
     return theme;
 }
 
-bool RenderThemeIOS::canCreateControlPartForRenderer(const RenderObject& renderer) const
+bool RenderThemeIOS::canCreateControlPartForRenderer(const RenderElement& renderer) const
 {
     auto type = renderer.style().usedAppearance();
 #if ENABLE(APPLE_PAY)
@@ -383,7 +383,7 @@ Style::PaddingBox RenderThemeIOS::popupInternalPaddingBox(const RenderStyle& sty
     auto padding = emSize->resolveAsLength<float>({ style, nullptr, nullptr, nullptr });
 
     if (style.usedAppearance() == StyleAppearance::MenulistButton) {
-        auto value = toTruncatedPaddingEdge(padding + Style::evaluate(style.borderTopWidth()));
+        auto value = toTruncatedPaddingEdge(padding + Style::evaluate(style.borderTopWidth(), 1.0f /* FIXME FIND ZOOM */));
         if (style.writingMode().isBidiRTL())
             return { 0_css_px, 0_css_px, 0_css_px, value };
         return { 0_css_px, value, 0_css_px, 0_css_px };
@@ -610,9 +610,9 @@ void RenderThemeIOS::paintMenuListButtonDecorations(const RenderBox& box, const 
     FloatPoint glyphOrigin;
     glyphOrigin.setY(logicalRect.center().y() - glyphSize.height() / 2.0f);
     if (!style.writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate(box.style().borderEndWidth()) - Style::evaluate(box.style().paddingEnd(), logicalRect.width()));
+        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate(box.style().borderEndWidth(), 1.0f /* FIXME FIND ZOOM */) - Style::evaluate(box.style().paddingEnd(), logicalRect.width(), 1.0f/* FIXME FIND ZOOM */));
     else
-        glyphOrigin.setX(logicalRect.x() + Style::evaluate(box.style().borderEndWidth()) + Style::evaluate(box.style().paddingEnd(), logicalRect.width()));
+        glyphOrigin.setX(logicalRect.x() + Style::evaluate(box.style().borderEndWidth(), 1.0f /* FIXME FIND ZOOM */) + Style::evaluate(box.style().paddingEnd(), logicalRect.width(), 1.0f /* FIXME FIND ZOOM */));
 
     if (!isHorizontalWritingMode)
         glyphOrigin = glyphOrigin.transposedPoint();
@@ -652,7 +652,7 @@ void RenderThemeIOS::adjustSliderTrackStyle(RenderStyle& style, const Element* e
 
 constexpr auto nativeControlBorderInlineSize = 1.0f;
 
-bool RenderThemeIOS::paintSliderTrack(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeIOS::paintSliderTrack(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (box.settings().formControlRefreshEnabled())
@@ -758,7 +758,7 @@ void RenderThemeIOS::adjustSliderThumbSize(RenderStyle& style, const Element* el
 constexpr auto reducedMotionProgressAnimationMinOpacity = 0.3f;
 constexpr auto reducedMotionProgressAnimationMaxOpacity = 0.6f;
 
-bool RenderThemeIOS::paintProgressBar(const RenderObject& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeIOS::paintProgressBar(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled())
@@ -1001,7 +1001,7 @@ Color RenderThemeIOS::systemFocusRingColor()
 {
     if (!cachedFocusRingColor().has_value()) {
         // FIXME: Should be using +keyboardFocusIndicatorColor. For now, work around <rdar://problem/50838886>.
-        cachedFocusRingColor() = colorFromCocoaColor([PAL::getUIColorClass() systemBlueColor]);
+        cachedFocusRingColor() = colorFromCocoaColor([PAL::getUIColorClassSingleton() systemBlueColor]);
     }
     return *cachedFocusRingColor();
 }
@@ -1052,7 +1052,7 @@ bool RenderThemeIOS::shouldHaveSpinButton(const HTMLInputElement&) const
     return false;
 }
 
-bool RenderThemeIOS::supportsFocusRing(const RenderObject& renderer, const RenderStyle& style) const
+bool RenderThemeIOS::supportsFocusRing(const RenderElement& renderer, const RenderStyle& style) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled())
@@ -1144,7 +1144,7 @@ static const Vector<CSSValueSystemColorInformation>& cssValueSystemColorInformat
 
 static inline std::optional<Color> systemColorFromCSSValueSystemColorInformation(CSSValueSystemColorInformation systemColorInformation, bool useDarkAppearance)
 {
-    UIColor *color = wtfObjCMsgSend<UIColor *>(PAL::getUIColorClass(), systemColorInformation.selector);
+    UIColor *color = wtfObjCMsgSend<UIColor *>(PAL::getUIColorClassSingleton(), systemColorInformation.selector);
     if (!color)
         return std::nullopt;
 
@@ -1247,7 +1247,7 @@ Color RenderThemeIOS::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOpt
     return color;
 }
 
-Color RenderThemeIOS::pictureFrameColor(const RenderObject& buttonRenderer)
+Color RenderThemeIOS::pictureFrameColor(const RenderElement& buttonRenderer)
 {
     return buttonRenderer.style().visitedDependentColor(CSSPropertyBorderTopColor);
 }
@@ -1356,7 +1356,7 @@ static void paintAttachmentBorder(GraphicsContext& context, Path& borderPath)
     context.strokePath(borderPath);
 }
 
-bool RenderThemeIOS::paintAttachment(const RenderObject& renderer, const PaintInfo& paintInfo, const IntRect& paintRect)
+bool RenderThemeIOS::paintAttachment(const RenderElement& renderer, const PaintInfo& paintInfo, const IntRect& paintRect)
 {
     auto* attachment = dynamicDowncast<RenderAttachment>(renderer);
     if (!attachment)
@@ -1521,7 +1521,7 @@ void RenderThemeIOS::paintCheckboxRadioInnerShadow(const PaintInfo& paintInfo, c
     context.fillPath(innerShadowPath);
 }
 
-bool RenderThemeIOS::paintCheckbox(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeIOS::paintCheckbox(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (box.settings().formControlRefreshEnabled())
@@ -1611,7 +1611,7 @@ bool RenderThemeIOS::paintCheckbox(const RenderObject& box, const PaintInfo& pai
     return false;
 }
 
-bool RenderThemeIOS::paintRadio(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeIOS::paintRadio(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (box.settings().formControlRefreshEnabled())
@@ -1673,7 +1673,7 @@ bool RenderThemeIOS::supportsMeter(StyleAppearance appearance) const
     return appearance == StyleAppearance::Meter;
 }
 
-bool RenderThemeIOS::paintMeter(const RenderObject& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeIOS::paintMeter(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled())
@@ -1730,7 +1730,7 @@ bool RenderThemeIOS::paintMeter(const RenderObject& renderer, const PaintInfo& p
     return false;
 }
 
-bool RenderThemeIOS::paintListButton(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeIOS::paintListButton(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (box.settings().formControlRefreshEnabled())
@@ -1744,10 +1744,10 @@ bool RenderThemeIOS::paintListButton(const RenderObject& box, const PaintInfo& p
     auto& context = paintInfo.context();
     GraphicsContextStateSaver stateSaver(context);
 
-    float paddingTop = Style::evaluate(style.paddingTop(), rect.height());
-    float paddingRight = Style::evaluate(style.paddingRight(), rect.width());
-    float paddingBottom = Style::evaluate(style.paddingBottom(), rect.height());
-    float paddingLeft = Style::evaluate(style.paddingLeft(), rect.width());
+    float paddingTop = Style::evaluate(style.paddingTop(), rect.height(), 1.0f /* FIXME FIND ZOOM */);
+    float paddingRight = Style::evaluate(style.paddingRight(), rect.width(), 1.0f /* FIXME FIND ZOOM */);
+    float paddingBottom = Style::evaluate(style.paddingBottom(), rect.height(), 1.0f /* FIXME FIND ZOOM */);
+    float paddingLeft = Style::evaluate(style.paddingLeft(), rect.width(), 1.0f /* FIXME FIND ZOOM */);
 
     FloatRect indicatorRect = rect;
     indicatorRect.move(paddingLeft, paddingTop);
@@ -1782,9 +1782,9 @@ bool RenderThemeIOS::paintListButton(const RenderObject& box, const PaintInfo& p
     return false;
 }
 
-void RenderThemeIOS::paintSliderTicks(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+void RenderThemeIOS::paintSliderTicks(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
-    RefPtr input = dynamicDowncast<HTMLInputElement>(box.node());
+    RefPtr input = dynamicDowncast<HTMLInputElement>(box.element());
     if (!input || !input->isRangeControl())
         return;
 
@@ -1838,7 +1838,7 @@ void RenderThemeIOS::paintSliderTicks(const RenderObject& box, const PaintInfo& 
     }
 }
 
-void RenderThemeIOS::paintColorWellDecorations(const RenderObject& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+void RenderThemeIOS::paintColorWellDecorations(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled()) {
@@ -1904,7 +1904,7 @@ void RenderThemeIOS::adjustSearchFieldDecorationPartStyle(RenderStyle& style, co
     style.setMarginEnd(searchFieldDecorationMargin);
 }
 
-bool RenderThemeIOS::paintSearchFieldDecorationPart(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeIOS::paintSearchFieldDecorationPart(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (box.settings().formControlRefreshEnabled())

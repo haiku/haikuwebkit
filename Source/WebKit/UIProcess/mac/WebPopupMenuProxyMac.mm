@@ -109,17 +109,16 @@ void WebPopupMenuProxyMac::showPopupMenu(const IntRect& rect, TextDirection text
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
 
-    if (RetainPtr fontAttributes = bridge_cast(data.fontInfo.fontAttributeDictionary.get())) {
-        auto scaledFontSize = [fontAttributes.get()[NSFontSizeAttribute] floatValue] * pageScaleFactor;
-
-        font = fontWithAttributes(fontAttributes.get(), ((pageScaleFactor != 1) ? scaledFontSize : 0));
-        // font will be nil when using a custom font. However, we should still
-        // honor the font size, matching other browsers.
-        if (!font)
-            font = [NSFont menuFontOfSize:scaledFontSize];
-    } else
-        font = [NSFont menuFontOfSize:0];
+    auto scaledFontSize = data.pointSize * pageScaleFactor;
     
+    RetainPtr<NSFontDescriptor> descriptor = [NSFontDescriptor fontDescriptorWithName:data.postScriptName.createNSString().get() size:scaledFontSize];
+    font = [NSFont fontWithDescriptor:descriptor.get() size:scaledFontSize];
+
+    // font will be nil when using a custom font. However, we should still
+    // honor the font size, matching other browsers.
+    if (!font)
+        font = [NSFont menuFontOfSize:scaledFontSize];
+
     END_BLOCK_OBJC_EXCEPTIONS
 
     populate(items, font.get(), textDirection);

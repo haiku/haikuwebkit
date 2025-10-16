@@ -914,8 +914,9 @@ std::unique_ptr<RenderStyle> TreeResolver::resolveAgainInDifferentContext(const 
     auto newStyle = RenderStyle::createPtr();
     newStyle->inheritFrom(parentStyle);
 
-    if (styleable.pseudoElementIdentifier)
-        newStyle->setPseudoElementType(styleable.pseudoElementIdentifier->pseudoId);
+    newStyle->setPseudoElementType(resolvedStyle.style->pseudoElementType());
+    newStyle->setPseudoElementNameArgument(resolvedStyle.style->pseudoElementNameArgument());
+    newStyle->copyPseudoElementBitsFrom(*resolvedStyle.style);
 
     auto builderContext = BuilderContext {
         m_document.get(),
@@ -930,7 +931,6 @@ std::unique_ptr<RenderStyle> TreeResolver::resolveAgainInDifferentContext(const 
         *newStyle,
         WTFMove(builderContext),
         *resolvedStyle.matchResult,
-        CascadeLevel::Author,
         { properties }
     };
 
@@ -968,7 +968,6 @@ HashSet<AnimatableCSSProperty> TreeResolver::applyCascadeAfterAnimation(RenderSt
         animatedStyle,
         WTFMove(builderContext),
         matchResult,
-        CascadeLevel::Author,
         { isTransition ? PropertyCascade::PropertyType::AfterTransition : PropertyCascade::PropertyType::AfterAnimation },
         &animatedProperties
     };
@@ -1538,14 +1537,16 @@ std::unique_ptr<RenderStyle> TreeResolver::generatePositionOption(const Position
         }
         if (!fallback.positionTryRuleName)
             return nullptr;
-        auto* styleScope = Style::Scope::forOrdinal(styleable.element, fallback.positionTryRuleName->scopeOrdinal);
-        if (!styleScope)
-            return nullptr;
-        auto& ruleSet = styleScope->resolver().ruleSets().authorStyle();
-        auto rule = ruleSet.positionTryRuleForName(fallback.positionTryRuleName->name);
-        if (!rule)
-            return nullptr;
-        return rule->properties();
+
+        // "If an at-rule or property defines a name that other CSS constructs can refer to it by, ... it must be defined as a tree-scoped name."
+        // https://drafts.csswg.org/css-scoping-1/#shadow-names
+        return Style::Scope::resolveTreeScopedReference(styleable.element, *fallback.positionTryRuleName, [](const Style::Scope& scope, const AtomString& name) -> RefPtr<const StyleProperties> {
+            auto& ruleSet = scope.resolverIfExists()->ruleSets().authorStyle();
+            auto rule = ruleSet.positionTryRuleForName(name);
+            if (!rule)
+                return nullptr;
+            return rule->properties();
+        });
     };
 
     auto builderFallback = BuilderPositionTryFallback {

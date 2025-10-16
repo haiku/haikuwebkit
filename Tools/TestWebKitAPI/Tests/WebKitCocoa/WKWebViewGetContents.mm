@@ -25,6 +25,7 @@
 
 #import "config.h"
 
+#import "DecomposedAttributedText.h"
 #import "PlatformUtilities.h"
 #import "Test.h"
 #import "TestNavigationDelegate.h"
@@ -457,6 +458,94 @@ TEST(WKWebView, AttributedStringFromList)
     checkListAtIndex(5, @"Three", secondList);
     checkListAtIndex(6, @"•", secondList);
     checkListAtIndex(7, @"Four", secondList);
+}
+
+TEST(WKWebView, AttributedStringFromListWithNegativeStartValue)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <ol start='-4'>
+            <li>A</li>
+        </ol>
+    </body>
+    )"""_s;
+
+    const DecomposedAttributedText expected { {
+        DecomposedAttributedText::OrderedList { -4, {
+            "\t-4\tA\n"_s,
+        } },
+    } };
+
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+    [webView synchronouslyLoadHTMLString:html.createNSString().get()];
+
+    RetainPtr string = [webView _contentsAsAttributedString];
+    auto actual = decompose(string.get());
+
+    TextStream stream;
+    stream << "expected " << actual << " to equal " << expected;
+    EXPECT_EQ(actual, expected) << stream.release().utf8().data();
+}
+
+TEST(WKWebView, AttributedStringFromListWithCustomListStyleTypes)
+{
+    static constexpr auto html = R"""(
+    <body contenteditable dir='auto'>
+        <ol start='4' style='list-style-type: lower-roman;'>
+            <li>A</li>
+            <li>B</li>
+            <li>C</li>
+        </ol>
+        <ol start='4' style='list-style-type: "#";'>
+            <li>D</li>
+            <li>E</li>
+            <li>F</li>
+        </ol>
+        <ul style='list-style-type: "#";'>
+            <li>G</li>
+            <li>H</li>
+            <li>I</li>
+        </ul>
+        <ul style='list-style-type: decimal;'>
+            <li>J</li>
+            <li>K</li>
+            <li>L</li>
+        </ul>
+    </body>
+    )"""_s;
+
+    const DecomposedAttributedText expected { {
+        DecomposedAttributedText::OrderedList { 4, DecomposedAttributedText::ListMarker::LowercaseRoman, {
+            "\tiv\tA\n"_s,
+            "\tv\tB\n"_s,
+            "\tvi\tC\n"_s,
+        } },
+        DecomposedAttributedText::OrderedList { 4, DecomposedAttributedText::ListMarker { "{#}"_s }, {
+            "\t4\tD\n"_s,
+            "\t5\tE\n"_s,
+            "\t6\tF\n"_s,
+        } },
+        DecomposedAttributedText::UnorderedList { DecomposedAttributedText::ListMarker { "#"_s }, {
+            "\t#\tG\n"_s,
+            "\t#\tH\n"_s,
+            "\t#\tI\n"_s,
+        } },
+        DecomposedAttributedText::OrderedList { 0, DecomposedAttributedText::ListMarker::Decimal, {
+            "\t0\tJ\n"_s,
+            "\t1\tK\n"_s,
+            "\t2\tL\n"_s,
+        } },
+    } };
+
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+    [webView synchronouslyLoadHTMLString:html.createNSString().get()];
+
+    RetainPtr string = [webView _contentsAsAttributedString];
+    auto actual = decompose(string.get());
+
+    TextStream stream;
+    stream << "expected " << actual << " to equal " << expected;
+    EXPECT_EQ(actual, expected) << stream.release().utf8().data();
 }
 
 TEST(WKWebView, AttributedStringWithoutNetworkLoads)

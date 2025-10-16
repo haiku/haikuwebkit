@@ -76,7 +76,11 @@ static bool processContentRuleListsForLoad(const LocalFrame& frame, ResourceRequ
     if (!page)
         return false;
 
-    auto results = page->protectedUserContentProvider()->processContentRuleListsForLoad(*page, request.url(), resourceType, *documentLoader);
+    RefPtr userContentProvider = frame.userContentProvider();
+    if (!userContentProvider)
+        return false;
+
+    auto results = userContentProvider->processContentRuleListsForLoad(*page, request.url(), resourceType, *documentLoader);
     ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), request);
     return results.shouldBlock();
 }

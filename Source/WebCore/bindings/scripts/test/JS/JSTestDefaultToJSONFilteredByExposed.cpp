@@ -179,7 +179,7 @@ JSValue JSTestDefaultToJSONFilteredByExposed::getConstructor(VM& vm, const JSGlo
 
 void JSTestDefaultToJSONFilteredByExposed::destroy(JSC::JSCell* cell)
 {
-    JSTestDefaultToJSONFilteredByExposed* thisObject = static_cast<JSTestDefaultToJSONFilteredByExposed*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestDefaultToJSONFilteredByExposed* thisObject = static_cast<JSTestDefaultToJSONFilteredByExposed*>(cell);
     thisObject->JSTestDefaultToJSONFilteredByExposed::~JSTestDefaultToJSONFilteredByExposed();
 }
 
@@ -289,7 +289,7 @@ bool JSTestDefaultToJSONFilteredByExposedOwner::isReachableFromOpaqueRoots(JSC::
 
 void JSTestDefaultToJSONFilteredByExposedOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestDefaultToJSONFilteredByExposed = static_cast<JSTestDefaultToJSONFilteredByExposed*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestDefaultToJSONFilteredByExposed = static_cast<JSTestDefaultToJSONFilteredByExposed*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestDefaultToJSONFilteredByExposed->protectedWrapped().ptr(), jsTestDefaultToJSONFilteredByExposed);
 }

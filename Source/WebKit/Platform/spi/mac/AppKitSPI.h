@@ -97,6 +97,29 @@ static const NSWindowStyleMask NSWindowStyleMaskAlertWindow = (NSWindowStyleMask
 - (instancetype)initWithItem:(id)item linkMetadata:(LPLinkMetadata *)linkMetadata;
 @end
 
+typedef NS_ENUM(NSInteger, NSScrollPocketStyle) {
+    NSScrollPocketStyleAutomatic,
+    NSScrollPocketStyleSoft,
+    NSScrollPocketStyleHard,
+};
+
+typedef NS_ENUM(NSInteger, NSScrollPocketEdge) {
+    NSScrollPocketEdgeTop    = 0,
+    NSScrollPocketEdgeBottom = 1,
+    NSScrollPocketEdgeLeft   = 2,
+    NSScrollPocketEdgeRight  = 3,
+};
+
+@interface NSScrollPocket : NSView
+- (void)addElementContainer:(NSView *)elementContainer;
+- (void)removeElementContainer:(NSView *)elementContainer;
+@property (nonatomic) BOOL prefersSolidColorHardPocket;
+@property NSScrollPocketEdge edge;
+@property NSScrollPocketStyle style;
+@property (copy, nullable) NSColor *captureColor;
+@property (readonly, strong) NSView *captureView;
+@end
+
 #endif
 
 @interface NSPopover (IPI)
@@ -122,19 +145,6 @@ static const NSWindowStyleMask NSWindowStyleMaskAlertWindow = (NSWindowStyleMask
 typedef void (^NSWindowSnapshotReadinessHandler) (void);
 - (NSWindowSnapshotReadinessHandler)_holdResizeSnapshotWithReason:(NSString *)reason;
 @end
-#endif
-
-#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-
-@interface NSScrollPocket (Staging_151173930)
-- (void)addElementContainer:(NSView *)elementContainer;
-- (void)removeElementContainer:(NSView *)elementContainer;
-@end
-
-@interface NSScrollPocket (Staging_149248735)
-@property (nonatomic) BOOL prefersSolidColorHardPocket;
-@end
-
 #endif
 
 #endif // PLATFORM(MAC)

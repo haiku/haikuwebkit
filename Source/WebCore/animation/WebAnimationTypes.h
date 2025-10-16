@@ -26,10 +26,7 @@
 #pragma once
 
 #include <WebCore/CSSPropertyNames.h>
-#include <WebCore/CSSValue.h>
 #include <WebCore/EventTarget.h>
-#include <WebCore/Length.h>
-#include <WebCore/TimelineRangeOffset.h>
 #include <WebCore/WebAnimationTime.h>
 #include <wtf/BitSet.h>
 #include <wtf/HashMap.h>
@@ -43,7 +40,6 @@
 namespace WebCore {
 
 class AnimationEventBase;
-class AnimationList;
 class CSSAnimation;
 class CSSKeywordValue;
 class CSSTransition;
@@ -100,19 +96,6 @@ constexpr OptionSet<AcceleratedEffectProperty> transformRelatedAcceleratedProper
 struct CSSPropertiesBitSet {
     WTF::BitSet<cssPropertyIDEnumValueCount> m_properties { };
 };
-
-using TimelineRangeValue = Variant<TimelineRangeOffset, RefPtr<CSSNumericValue>, RefPtr<CSSKeywordValue>, String>;
-
-enum class Scroller : uint8_t { Nearest, Root, Self };
-
-struct ViewTimelineInsetItem {
-    std::optional<Length> start;
-    std::optional<Length> end;
-    bool operator==(const ViewTimelineInsetItem&) const = default;
-};
-
-WTF::TextStream& operator<<(WTF::TextStream&, Scroller);
-WTF::TextStream& operator<<(WTF::TextStream&, const ViewTimelineInsetItem&);
 
 } // namespace WebCore
 

@@ -130,6 +130,7 @@ public:
     static bool consumeBorderInlineShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
     static bool consumeBorderBlockShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
     static bool consumeAnimationShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
+    static bool consumeTransitionShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
     static bool consumeBackgroundShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
     static bool consumeBackgroundPositionShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
     static bool consumeWebkitBackgroundSizeShorthand(CSSParserTokenRange&, PropertyParserState&, const StylePropertyShorthand&, PropertyParserResult&);
@@ -905,29 +906,14 @@ inline bool PropertyParserCustom::consumeWebkitTextOrientationShorthand(CSSParse
 
 inline bool PropertyParserCustom::consumeAnimationShorthand(CSSParserTokenRange& range, PropertyParserState& state, const StylePropertyShorthand& shorthand, PropertyParserResult& result)
 {
-    auto isValidAnimationPropertyList = [](CSSPropertyID property, const CSSValueListBuilder& valueList) {
-        // If there is more than one <single-transition> in the shorthand, and any of the transitions
-        // has none as the <single-transition-property>, then the declaration is invalid.
-        if (property != CSSPropertyTransitionProperty || valueList.size() < 2)
-            return true;
-        for (auto& value : valueList) {
-            if (isValueID(value, CSSValueNone))
-                return false;
-        }
-        return true;
-    };
-
     auto consumeAnimationValueForShorthand = [&](CSSPropertyID property) -> RefPtr<CSSValue> {
         switch (property) {
         case CSSPropertyAnimationDelay:
-        case CSSPropertyTransitionDelay:
             return CSSPrimitiveValueResolver<Time<>>::consumeAndResolve(range, state);
         case CSSPropertyAnimationDirection:
             return CSSPropertyParsing::consumeSingleAnimationDirection(range);
         case CSSPropertyAnimationDuration:
             return CSSPropertyParsing::consumeSingleAnimationDuration(range, state);
-        case CSSPropertyTransitionDuration:
-            return CSSPrimitiveValueResolver<Time<Nonnegative>>::consumeAndResolve(range, state);
         case CSSPropertyAnimationFillMode:
             return CSSPropertyParsing::consumeSingleAnimationFillMode(range);
         case CSSPropertyAnimationIterationCount:
@@ -942,10 +928,7 @@ inline bool PropertyParserCustom::consumeAnimationShorthand(CSSParserTokenRange&
         case CSSPropertyAnimationRangeStart:
         case CSSPropertyAnimationRangeEnd:
             return nullptr; // reset-only longhands
-        case CSSPropertyTransitionProperty:
-            return consumeSingleTransitionPropertyOrNone(range, state);
         case CSSPropertyAnimationTimingFunction:
-        case CSSPropertyTransitionTimingFunction:
             return consumeEasingFunction(range, state);
         case CSSPropertyTransitionBehavior:
             return CSSPropertyParsing::consumeTransitionBehaviorValue(range);
@@ -1000,11 +983,6 @@ inline bool PropertyParserCustom::consumeAnimationShorthand(CSSParserTokenRange&
     } while (consumeCommaIncludingWhitespace(range));
 
     for (size_t i = 0; i < longhandCount; ++i) {
-        if (!isValidAnimationPropertyList(shorthandProperties[i], longhands[i]))
-            return false;
-    }
-
-    for (size_t i = 0; i < longhandCount; ++i) {
         auto& list = longhands[i];
         if (list.isEmpty()) // reset-only property
             result.addPropertyForCurrentShorthand(state, shorthandProperties[i], nullptr);
@@ -1014,6 +992,83 @@ inline bool PropertyParserCustom::consumeAnimationShorthand(CSSParserTokenRange&
 
     return range.atEnd();
 }
+
+inline bool PropertyParserCustom::consumeTransitionShorthand(CSSParserTokenRange& range, PropertyParserState& state, const StylePropertyShorthand& shorthand, PropertyParserResult& result)
+{
+    auto isValidTransitionPropertyList = [](CSSPropertyID property, const CSSValueListBuilder& valueList) {
+        // If there is more than one <single-transition> in the shorthand, and any of the transitions
+        // has none as the <single-transition-property>, then the declaration is invalid.
+        if (property != CSSPropertyTransitionProperty || valueList.size() < 2)
+            return true;
+        for (auto& value : valueList) {
+            if (isValueID(value, CSSValueNone))
+                return false;
+        }
+        return true;
+    };
+
+    auto consumeTransitionValueForShorthand = [&](CSSPropertyID property) -> RefPtr<CSSValue> {
+        switch (property) {
+        case CSSPropertyTransitionDelay:
+            return CSSPrimitiveValueResolver<Time<>>::consumeAndResolve(range, state);
+        case CSSPropertyTransitionDuration:
+            return CSSPrimitiveValueResolver<Time<Nonnegative>>::consumeAndResolve(range, state);
+        case CSSPropertyTransitionProperty:
+            return consumeSingleTransitionPropertyOrNone(range, state);
+        case CSSPropertyTransitionTimingFunction:
+            return consumeEasingFunction(range, state);
+        case CSSPropertyTransitionBehavior:
+            return CSSPropertyParsing::consumeTransitionBehaviorValue(range);
+        default:
+            ASSERT_NOT_REACHED();
+            return nullptr;
+        }
+    };
+
+    auto shorthandProperties = shorthand.properties();
+
+    const size_t longhandCount = shorthand.length();
+    const size_t maxLonghandCount = 11;
+    std::array<CSSValueListBuilder, maxLonghandCount> longhands;
+    ASSERT(longhandCount <= maxLonghandCount);
+
+    do {
+        std::array<bool, maxLonghandCount> parsedLonghand = { };
+        do {
+            bool foundProperty = false;
+            for (size_t i = 0; i < longhandCount; ++i) {
+                if (parsedLonghand[i])
+                    continue;
+
+                if (auto value = consumeTransitionValueForShorthand(shorthandProperties[i])) {
+                    parsedLonghand[i] = true;
+                    foundProperty = true;
+                    longhands[i].append(*value);
+                    break;
+                }
+            }
+            if (!foundProperty)
+                return false;
+        } while (!range.atEnd() && range.peek().type() != CommaToken);
+
+        for (size_t i = 0; i < longhandCount; ++i) {
+            if (!parsedLonghand[i])
+                longhands[i].append(Ref { CSSPrimitiveValue::implicitInitialValue() });
+            parsedLonghand[i] = false;
+        }
+    } while (consumeCommaIncludingWhitespace(range));
+
+    for (size_t i = 0; i < longhandCount; ++i) {
+        if (!isValidTransitionPropertyList(shorthandProperties[i], longhands[i]))
+            return false;
+    }
+
+    for (size_t i = 0; i < longhandCount; ++i)
+        result.addPropertyForCurrentShorthand(state, shorthandProperties[i], CSSValueList::createCommaSeparated(WTFMove(longhands[i])));
+
+    return range.atEnd();
+}
+
 
 inline bool PropertyParserCustom::consumeBackgroundShorthand(CSSParserTokenRange& range, PropertyParserState& state, const StylePropertyShorthand& shorthand, PropertyParserResult& result)
 {
@@ -2012,7 +2067,6 @@ inline bool PropertyParserCustom::consumeWhiteSpaceShorthand(CSSParserTokenRange
     return true;
 }
 
-
 inline bool PropertyParserCustom::consumeAnimationRangeShorthand(CSSParserTokenRange& range, PropertyParserState& state, const StylePropertyShorthand&, PropertyParserResult& result)
 {
     CSSValueListBuilder startList;
@@ -2028,8 +2082,11 @@ inline bool PropertyParserCustom::consumeAnimationRangeShorthand(CSSParserTokenR
             // From the spec: If <'animation-range-end'> is omitted and <'animation-range-start'> includes a component, then
             // animation-range-end is set to that same and 100%. Otherwise, any omitted longhand is set to its initial value.
             auto rangeEndValueForStartValue = [](const CSSValue& value) {
-                RefPtr primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value);
-                if (primitiveValue && SingleTimelineRange::isOffsetValue(downcast<CSSPrimitiveValue>(value)))
+                auto isRangeOffset = [](auto& value) {
+                    return value.isLength() || value.isPercentage() || value.isCalculatedPercentageWithLength();
+                };
+
+                if (RefPtr primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value); primitiveValue && isRangeOffset(downcast<CSSPrimitiveValue>(value)))
                     return CSSPrimitiveValue::create(CSSValueNormal);
                 return CSSPrimitiveValue::create(value.valueID());
             };

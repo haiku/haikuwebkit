@@ -36,8 +36,7 @@
 #include "ScriptExecutionContext.h"
 #include "ScriptWrappableInlines.h"
 #include "StyleProperties.h"
-#include "TransformOperations.h"
-#include "TransformOperationsBuilder.h"
+#include "StyleTransform.h"
 #include <JavaScriptCore/GenericTypedArrayViewInlines.h>
 #include <JavaScriptCore/HeapInlines.h>
 #include <JavaScriptCore/JSGenericTypedArrayViewInlines.h>
@@ -231,19 +230,19 @@ ExceptionOr<DOMMatrixReadOnly::AbstractMatrix> DOMMatrixReadOnly::parseStringInt
     if (string.isEmpty())
         return AbstractMatrix { };
 
-    auto operations = CSSPropertyParserHelpers::parseTransformRaw(string, CSSParserContext(HTMLStandardMode));
-    if (!operations)
+    auto transform = CSSPropertyParserHelpers::parseTransformRaw(string, CSSParserContext(HTMLStandardMode));
+    if (!transform)
         return Exception { ExceptionCode::SyntaxError };
 
     // Check for an empty transform operations list, in which case we can use the default identity matrix.
-    if (operations->isEmpty())
+    if (transform->isNone())
         return AbstractMatrix { };
 
     AbstractMatrix matrix;
-    for (auto& operation : *operations) {
-        if (operation->apply(matrix.matrix, { 0, 0 }))
+    for (auto& function : *transform) {
+        if (function->apply(matrix.matrix, { 0, 0 }))
             return Exception { ExceptionCode::SyntaxError };
-        if (operation->is3DOperation())
+        if (function->is3DOperation())
             matrix.is2D = false;
     }
 

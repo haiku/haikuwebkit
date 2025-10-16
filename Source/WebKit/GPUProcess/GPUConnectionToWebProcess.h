@@ -34,7 +34,7 @@
 #include "RemoteAudioSessionIdentifier.h"
 #include "RemoteGPU.h"
 #include "RemoteRemoteCommandListenerIdentifier.h"
-#include "RenderingBackendIdentifier.h"
+#include "RemoteRenderingBackendIdentifier.h"
 #include "ScopedActiveMessageReceiveQueue.h"
 #include "SharedPreferencesForWebProcess.h"
 #include "WebGPUIdentifier.h"
@@ -56,7 +56,7 @@
 #endif
 
 #if ENABLE(WEBGL)
-#include "GraphicsContextGLIdentifier.h"
+#include "RemoteGraphicsContextGLIdentifier.h"
 #include <WebCore/GraphicsContextGLAttributes.h>
 #endif
 
@@ -235,15 +235,15 @@ public:
     void lowMemoryHandler(WTF::Critical, WTF::Synchronous);
 
 #if ENABLE(WEBGL)
-    void releaseGraphicsContextGLForTesting(GraphicsContextGLIdentifier);
+    void releaseGraphicsContextGLForTesting(RemoteGraphicsContextGLIdentifier);
 #endif
 
     static uint64_t objectCountForTesting() { return gObjectCountForTesting; }
 
-    using RemoteRenderingBackendMap = HashMap<RenderingBackendIdentifier, IPC::ScopedActiveMessageReceiveQueue<RemoteRenderingBackend>>;
+    using RemoteRenderingBackendMap = HashMap<RemoteRenderingBackendIdentifier, IPC::ScopedActiveMessageReceiveQueue<RemoteRenderingBackend>>;
     const RemoteRenderingBackendMap& remoteRenderingBackendMap() const { return m_remoteRenderingBackendMap; }
 
-    RemoteRenderingBackend* remoteRenderingBackend(RenderingBackendIdentifier);
+    RemoteRenderingBackend* remoteRenderingBackend(RemoteRenderingBackendIdentifier);
 
 #if HAVE(AUDIT_TOKEN)
     const HashMap<WebCore::PageIdentifier, CoreIPCAuditToken>& presentingApplicationAuditTokens() const { return m_presentingApplicationAuditTokens; }
@@ -293,15 +293,15 @@ private:
     Ref<RemoteAudioMediaStreamTrackRendererInternalUnitManager> protectedAudioMediaStreamTrackRendererInternalUnitManager();
 #endif
 
-    void createRenderingBackend(RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
-    void releaseRenderingBackend(RenderingBackendIdentifier);
+    void createRenderingBackend(RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
+    void releaseRenderingBackend(RemoteRenderingBackendIdentifier);
 
 #if ENABLE(WEBGL)
-    void createGraphicsContextGL(GraphicsContextGLIdentifier, WebCore::GraphicsContextGLAttributes, RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
-    void releaseGraphicsContextGL(GraphicsContextGLIdentifier);
+    void createGraphicsContextGL(RemoteGraphicsContextGLIdentifier, WebCore::GraphicsContextGLAttributes, RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
+    void releaseGraphicsContextGL(RemoteGraphicsContextGLIdentifier);
 #endif
 
-    void createGPU(WebGPUIdentifier, RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
+    void createGPU(WebGPUIdentifier, RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
     void releaseGPU(WebGPUIdentifier);
 
     void clearNowPlayingInfo();
@@ -406,7 +406,7 @@ private:
 
     RemoteRenderingBackendMap m_remoteRenderingBackendMap;
 #if ENABLE(WEBGL)
-    using RemoteGraphicsContextGLMap = HashMap<GraphicsContextGLIdentifier, IPC::ScopedActiveMessageReceiveQueue<RemoteGraphicsContextGL>>;
+    using RemoteGraphicsContextGLMap = HashMap<RemoteGraphicsContextGLIdentifier, IPC::ScopedActiveMessageReceiveQueue<RemoteGraphicsContextGL>>;
     RemoteGraphicsContextGLMap m_remoteGraphicsContextGLMap;
 #endif
     using RemoteGPUMap = HashMap<WebGPUIdentifier, IPC::ScopedActiveMessageReceiveQueue<RemoteGPU>>;

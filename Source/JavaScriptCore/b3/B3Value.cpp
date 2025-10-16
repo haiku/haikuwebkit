@@ -32,6 +32,7 @@
 #include "B3AtomicValue.h"
 #include "B3BasicBlockInlines.h"
 #include "B3BottomProvider.h"
+#include "B3BulkMemoryValue.h"
 #include "B3CCallValue.h"
 #include "B3FenceValue.h"
 #include "B3MemoryValue.h"
@@ -797,7 +798,8 @@ Effects Value::effects() const
             result.writes = memory->fenceRange();
             result.fence = true;
         }
-        result.controlDependent = true;
+        result.controlDependent = memory->controlDependent();
+        result.readsMutability = memory->readsMutability();
         break;
     }
     case Store8:
@@ -809,6 +811,19 @@ Effects Value::effects() const
             result.reads = memory->fenceRange();
             result.fence = true;
         }
+        result.controlDependent = memory->controlDependent();
+        break;
+    }
+    case MemoryCopy: {
+        const auto* memory = as<BulkMemoryValue>();
+        result.reads = memory->readRange();
+        result.writes = memory->writeRange();
+        result.controlDependent = true;
+        break;
+    }
+    case MemoryFill: {
+        const auto* memory = as<BulkMemoryValue>();
+        result.writes = memory->writeRange();
         result.controlDependent = true;
         break;
     }

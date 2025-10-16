@@ -43,11 +43,8 @@ void IDBActiveDOMObject::performCallbackOnOriginThread(T& object, void (T::*meth
 
     Locker<Lock> lock(m_scriptExecutionContextLock);
 
-    ScriptExecutionContext* context = scriptExecutionContext();
-    if (!context)
-        return;
-
-    context->postCrossThreadTask(object, method, arguments...);
+    if (CheckedPtr context = scriptExecutionContext())
+        context->postCrossThreadTask(object, method, arguments...);
 }
 
 inline void IDBActiveDOMObject::callFunctionOnOriginThread(Function<void()>&& function)
@@ -59,11 +56,8 @@ inline void IDBActiveDOMObject::callFunctionOnOriginThread(Function<void()>&& fu
 
     Locker<Lock> lock(m_scriptExecutionContextLock);
 
-    ScriptExecutionContext* context = scriptExecutionContext();
-    if (!context)
-        return;
-
-    context->postTask(WTFMove(function));
+    if (CheckedPtr context = scriptExecutionContext())
+        context->postTask(WTFMove(function));
 }
 
 }

@@ -288,7 +288,7 @@ static std::optional<Vector<Ref<SharedBuffer>>> extractKeyIDsWebM(const SharedBu
     return keyIDs;
 }
 
-InitDataRegistry& InitDataRegistry::shared()
+InitDataRegistry& InitDataRegistry::singleton()
 {
     static NeverDestroyed<InitDataRegistry> registry;
     return registry.get();

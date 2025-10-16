@@ -31,7 +31,6 @@
 
 namespace WebCore {
 
-class FilterOperations;
 class FontCascade;
 class RenderObject;
 class RenderStyle;
@@ -39,7 +38,7 @@ class TextRun;
     
 class TextDecorationPainter {
 public:
-    TextDecorationPainter(GraphicsContext&, const FontCascade&, const Style::TextShadows&, const FilterOperations*, bool isPrinting, WritingMode);
+    TextDecorationPainter(GraphicsContext&, const FontCascade&, const Style::TextShadows&, const Style::AppleColorFilter&, bool isPrinting, WritingMode);
 
     struct Styles {
         bool operator==(const Styles&) const;
@@ -85,7 +84,7 @@ private:
     bool m_isPrinting { false };
     WritingMode m_writingMode;
     const Style::TextShadows& m_shadow;
-    const FilterOperations* m_shadowColorFilter { nullptr };
+    const Style::AppleColorFilter& m_shadowColorFilter;
     const FontCascade& m_font;
 };
 

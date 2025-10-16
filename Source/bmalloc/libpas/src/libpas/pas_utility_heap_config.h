@@ -93,6 +93,7 @@ PAS_API void pas_utility_heap_config_dump_shared_page_directory_arg(
         .small_segregated_config = { \
             .base = { \
                 .is_enabled = true, \
+                .allow_profiling = true, \
                 .heap_config_ptr = &pas_utility_heap_config, \
                 .page_config_ptr = &pas_utility_heap_config.small_segregated_config.base, \
                 .page_config_kind = pas_page_config_kind_segregated, \

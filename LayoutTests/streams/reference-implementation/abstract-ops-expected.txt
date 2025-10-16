@@ -1,3 +1,5 @@
+CONSOLE MESSAGE: Unhandled Promise Rejection: Error: waffles
+CONSOLE MESSAGE: Unhandled Promise Rejection: Error: waffles
 
 PASS IsReadableStreamDisturbed returns true for an empty non-closed stream on which read() has been called
 PASS IsReadableStreamDisturbed returns true for an empty non-closed stream on which cancel() has been called

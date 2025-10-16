@@ -127,9 +127,9 @@ ReferencedSVGResources::SVGElementIdentifierAndTagPairs ReferencedSVGResources::
     );
 
     if (style.hasFilter()) {
-        const auto& filterOperations = style.filter();
-        for (auto& operation : filterOperations) {
-            if (RefPtr referenceFilterOperation = dynamicDowncast<Style::ReferenceFilterOperation>(operation)) {
+        const auto& filter = style.filter();
+        for (auto& value : filter) {
+            if (RefPtr referenceFilterOperation = dynamicDowncast<Style::ReferenceFilterOperation>(value.get())) {
                 if (!referenceFilterOperation->fragment().isEmpty())
                     referencedResources.append({ referenceFilterOperation->fragment(), { SVGNames::filterTag } });
             }
@@ -172,14 +172,14 @@ ReferencedSVGResources::SVGElementIdentifierAndTagPairs ReferencedSVGResources::
         }
     }
 
-    if (svgStyle.fill().type >= Style::SVGPaintType::URINone) {
-        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(svgStyle.fill().url, document);
+    if (auto fillURL = svgStyle.fill().tryAnyURL()) {
+        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(*fillURL, document);
         if (!resourceID.isEmpty())
             referencedResources.append({ resourceID, { SVGNames::linearGradientTag, SVGNames::radialGradientTag, SVGNames::patternTag } });
     }
 
-    if (svgStyle.stroke().type >= Style::SVGPaintType::URINone) {
-        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(svgStyle.stroke().url, document);
+    if (auto strokeURL = svgStyle.stroke().tryAnyURL()) {
+        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(*strokeURL, document);
         if (!resourceID.isEmpty())
             referencedResources.append({ resourceID, { SVGNames::linearGradientTag, SVGNames::radialGradientTag, SVGNames::patternTag } });
     }

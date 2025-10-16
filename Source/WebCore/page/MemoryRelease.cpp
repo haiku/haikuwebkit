@@ -52,6 +52,7 @@
 #include "Page.h"
 #include "PerformanceLogging.h"
 #include "PluginDocument.h"
+#include "RenderObjectInlines.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "SVGPathElement.h"

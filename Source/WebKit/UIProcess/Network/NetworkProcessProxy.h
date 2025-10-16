@@ -453,10 +453,6 @@ private:
 
     RefPtr<ProcessThrottler::Activity> m_activityFromWebProcesses;
 
-#if ENABLE(CONTENT_EXTENSIONS)
-    WeakHashSet<WebUserContentControllerProxy> m_webUserContentControllerProxies;
-#endif
-
 #if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
     RefPtr<ListDataObserver> m_storageAccessPromptQuirksDataUpdateObserver;
 #endif

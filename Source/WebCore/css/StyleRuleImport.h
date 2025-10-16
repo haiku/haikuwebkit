@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <WebCore/CachedCSSStyleSheet.h>
 #include <WebCore/CachedResourceHandle.h>
 #include <WebCore/CachedStyleSheetClient.h>
 #include <WebCore/MediaQuery.h>

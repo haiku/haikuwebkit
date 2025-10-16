@@ -1,5 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/permissions/feature-policy-permissions-query.html
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/permissions/feature-policy-permissions-query.html
 
 Harness Error (TIMEOUT), message = null
 

@@ -44,10 +44,6 @@
 #include <wtf/UniqueRef.h>
 #include <wtf/Vector.h>
 
-OBJC_CLASS AVSampleBufferAudioRenderer;
-OBJC_CLASS AVSampleBufferDisplayLayer;
-OBJC_CLASS AVSampleBufferRenderSynchronizer;
-OBJC_CLASS AVSampleBufferVideoRenderer;
 OBJC_PROTOCOL(WebSampleBufferVideoRendering);
 
 typedef struct CF_BRIDGED_TYPE(id) __CVBuffer *CVPixelBufferRef;
@@ -123,10 +119,17 @@ private:
     void pause() final;
     bool paused() const final;
     bool timeIsProgressing() const final;
+    void playInternal(std::optional<MonotonicTime> = std::nullopt);
 
-    WebSampleBufferVideoRendering *layerOrVideoRenderer() const;
+    bool supportsPlayAtHostTime() const final { return true; }
+    bool supportsPauseAtHostTime() const final { return true; }
+    bool playAtHostTime(const MonotonicTime&) final;
+    bool pauseAtHostTime(const MonotonicTime&) final;
 
     FloatSize naturalSize() const final { return m_naturalSize; }
+
+    bool performTaskAtTime(Function<void(const MediaTime&)>&&, const MediaTime&) final;
+    void audioOutputDeviceChanged() final;
 
     bool hasVideo() const final { return m_hasVideo; }
     bool hasAudio() const final { return m_hasAudio; }
@@ -169,6 +172,7 @@ private:
     DestinationColorSpace colorSpace() final;
 
     void setNaturalSize(FloatSize);
+    void effectiveRateChanged();
     void setHasAudio(bool);
     void setHasVideo(bool);
     void setHasAvailableVideoFrame(bool);
@@ -178,6 +182,7 @@ private:
     void setReadyState(MediaPlayer::ReadyState);
     void characteristicsChanged();
 
+    void setPreservesPitch(bool) final;
     void setPresentationSize(const IntSize&) final;
     bool supportsAcceleratedRendering() const final { return true; }
     void acceleratedRenderingStateChanged() final;
@@ -271,7 +276,7 @@ private:
 #endif
 
     using TrackIdentifier = TracksRendererManager::TrackIdentifier;
-    TrackIdentifier trackIdentifierFor(TrackID);
+    TrackIdentifier trackIdentifierFor(TrackID) const;
 
     void setLayerRequiresFlush();
     void setAllTracksForReenqueuing();

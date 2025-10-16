@@ -884,9 +884,8 @@ MediaPlayerEnums::SupportsType GStreamerRegistryScanner::isContentTypeSupported(
                 continue;
             }
             auto structure = gst_caps_get_structure(codecCaps.get(), 0);
-            auto nameView = gstStructureGetName(structure);
-            auto name = nameView.utf8();
-            auto caps = adoptGRef(gst_caps_new_simple("application/x-webm-enc", "original-media-type", G_TYPE_STRING, name.data(), nullptr));
+            auto name = gstStructureGetName(structure);
+            auto caps = adoptGRef(gst_caps_new_simple("application/x-webm-enc", "original-media-type", G_TYPE_STRING, name.utf8(), nullptr));
             if (!factories.hasElementForCaps(ElementFactories::Type::Decryptor, caps))
                 return SupportsType::IsNotSupported;
         }

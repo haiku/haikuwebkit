@@ -136,7 +136,7 @@ public:
     FingerprintingScriptsRequestSwizzler(NSArray<NSString *> *hosts, Vector<WPScriptAccessCategories>&& allowedCategories = { })
     {
         m_swizzler = makeUnique<InstanceMethodSwizzler>(
-            PAL::getWPResourcesClass(),
+            PAL::getWPResourcesClassSingleton(),
             @selector(requestFingerprintingScripts:completionHandler:),
             makeFingerprintingScriptsRequestHandler(hosts, WTFMove(allowedCategories))
         );
@@ -149,7 +149,7 @@ private:
 static bool supportsFingerprintingScriptRequests()
 {
     return PAL::isWebPrivacyFrameworkAvailable()
-        && [PAL::getWPResourcesClass() instancesRespondToSelector:@selector(requestFingerprintingScripts:completionHandler:)];
+        && [PAL::getWPResourcesClassSingleton() instancesRespondToSelector:@selector(requestFingerprintingScripts:completionHandler:)];
 }
 
 static RetainPtr<TestWKWebView> setUpWebViewForFingerprintingTests(NSString *pageURLString, id<WKUIDelegate> uiDelegate, NSDictionary<NSString *, NSString *> *responseData,

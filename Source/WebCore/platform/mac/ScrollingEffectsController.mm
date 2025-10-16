@@ -460,7 +460,7 @@ void ScrollingEffectsController::didStopRubberBandAnimation()
 
 void ScrollingEffectsController::startRubberBandAnimationIfNecessary()
 {
-    auto timeDelta = WallTime::now() - m_lastMomentumScrollTimestamp;
+    auto timeDelta = MonotonicTime::now() - m_lastMomentumScrollTimestamp;
     if (m_lastMomentumScrollTimestamp && timeDelta >= scrollVelocityZeroingTimeout)
         m_momentumVelocity = { };
 

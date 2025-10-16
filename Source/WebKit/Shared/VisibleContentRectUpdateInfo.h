@@ -28,8 +28,8 @@
 #if ENABLE(UI_SIDE_COMPOSITING)
 
 #include "TransactionID.h"
+#include <WebCore/BoxExtents.h>
 #include <WebCore/FloatRect.h>
-#include <WebCore/LengthBox.h>
 #include <WebCore/VelocityData.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/OptionSet.h>

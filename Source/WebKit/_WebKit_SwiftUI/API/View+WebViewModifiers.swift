@@ -21,6 +21,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
+#if ENABLE_SWIFTUI
+
 import Foundation
 public import SwiftUI
 
@@ -154,4 +156,28 @@ extension View {
     public nonisolated func webViewScrollInputBehavior(_ behavior: ScrollInputBehavior, for input: ScrollInputKind) -> some View {
         environment(\.webViewScrollInputBehaviorContext, .init(behavior: behavior, input: input))
     }
+
+    // FIXME: This is currently a very limited and simple implementation of scroll edge effects.
+    // SPI for testing.
+    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+    @_spi(Testing)
+    public nonisolated func webViewScrollEdgeEffectStyle(_ style: ScrollEdgeEffectStyle?, for edges: Edge.Set) -> some View {
+        self
+            .ignoresSafeArea(edges: edges)
+            .environment(\.webViewScrollEdgeEffectStyleContext, .init(style: style, edges: edges))
+    }
+
+    // SPI for testing.
+    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+    @_spi(Testing)
+    public nonisolated func webViewWebPreference<Value>(
+        _ feature: WebView.WebPreferenceFeature<Value>,
+        value: Value
+    ) -> some View where Value: Sendable, Value: Codable {
+        transformEnvironment(\.webViewWebPreferenceContext) { context in
+            context.set(feature, to: value)
+        }
+    }
 }
+
+#endif

@@ -31,6 +31,7 @@
 #import "TestUIDelegate.h"
 #import "TestWKWebView.h"
 #import "WebExtensionUtilities.h"
+#import <wtf/darwin/DispatchExtras.h>
 
 namespace TestWebKitAPI {
 
@@ -1396,7 +1397,7 @@ TEST(WKWebExtensionAPIRuntime, SendNativeMessage)
         EXPECT_NS_EQUAL(applicationIdentifier, @"test");
         EXPECT_NS_EQUAL(message, @"Hello");
 
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), mainDispatchQueueSingleton(), ^{
             replyHandler(@"Received", nil);
         });
     };
@@ -1420,7 +1421,7 @@ TEST(WKWebExtensionAPIRuntime, SendNativeMessageWithInvalidReply)
         EXPECT_NS_EQUAL(applicationIdentifier, @"test");
         EXPECT_NS_EQUAL(message, @"Hello");
 
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), mainDispatchQueueSingleton(), ^{
             replyHandler(@{ @"bad": NSUUID.UUID }, nil);
         });
     };

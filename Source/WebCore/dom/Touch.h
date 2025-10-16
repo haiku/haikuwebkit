@@ -43,10 +43,10 @@ class Touch : public RefCounted<Touch> {
 public:
     static Ref<Touch> create(LocalFrame* frame, EventTarget* target,
         int identifier, const DoublePoint& screenPos, const DoublePoint& pagePos,
-        const DoubleSize& radius, float rotationAngle, float force)
+        const DoubleSize& radius, float rotationAngle, float force, double twist = 0)
     {
         return adoptRef(
-            *new Touch(frame, target, identifier, screenPos, pagePos, radius, rotationAngle, force));
+            *new Touch(frame, target, identifier, screenPos, pagePos, radius, rotationAngle, twist, force));
     }
 
     ~Touch();
@@ -62,6 +62,7 @@ public:
     double webkitRadiusX() const { return m_radius.width(); }
     double webkitRadiusY() const { return m_radius.height(); }
     float webkitRotationAngle() const { return m_rotationAngle; }
+    double twist() const { return m_twist; }
     float webkitForce() const { return m_force; }
     const DoublePoint& absoluteLocation() const { return m_absoluteLocation; }
     Ref<Touch> cloneWithNewTarget(EventTarget*) const;
@@ -69,11 +70,11 @@ public:
 private:
     Touch(LocalFrame*, EventTarget*, int identifier,
         const DoublePoint& screenPosition, const DoublePoint& pagePosition,
-        const DoubleSize& radius, float rotationAngle, float force);
+        const DoubleSize& radius, float rotationAngle, double twist, float force);
 
     Touch(EventTarget*, int identifier, const DoublePoint& clientPosition,
         const DoublePoint& screenPosition, const DoublePoint& pagePosition,
-        const DoubleSize& radius, float rotationAngle, float force, DoublePoint absoluteLocation);
+        const DoubleSize& radius, float rotationAngle, double twist, float force, DoublePoint absoluteLocation);
 
     RefPtr<EventTarget> m_target;
     int m_identifier;
@@ -86,6 +87,8 @@ private:
     // Radius in CSS px.
     DoubleSize m_radius;
     float m_rotationAngle;
+    // Twist is stored so that it can be exposed for pointer events.
+    double m_twist;
     float m_force;
     DoublePoint m_absoluteLocation;
 };

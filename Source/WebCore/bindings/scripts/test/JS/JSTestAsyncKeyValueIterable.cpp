@@ -160,7 +160,7 @@ JSValue JSTestAsyncKeyValueIterable::getConstructor(VM& vm, const JSGlobalObject
 
 void JSTestAsyncKeyValueIterable::destroy(JSC::JSCell* cell)
 {
-    JSTestAsyncKeyValueIterable* thisObject = static_cast<JSTestAsyncKeyValueIterable*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestAsyncKeyValueIterable* thisObject = static_cast<JSTestAsyncKeyValueIterable*>(cell);
     thisObject->JSTestAsyncKeyValueIterable::~JSTestAsyncKeyValueIterable();
 }
 
@@ -292,7 +292,7 @@ bool JSTestAsyncKeyValueIterableOwner::isReachableFromOpaqueRoots(JSC::Handle<JS
 
 void JSTestAsyncKeyValueIterableOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestAsyncKeyValueIterable = static_cast<JSTestAsyncKeyValueIterable*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestAsyncKeyValueIterable = static_cast<JSTestAsyncKeyValueIterable*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestAsyncKeyValueIterable->protectedWrapped().ptr(), jsTestAsyncKeyValueIterable);
 }

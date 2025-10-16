@@ -26,6 +26,7 @@
 #include "config.h"
 #include "NavigatorScreenWakeLock.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "Navigator.h"
 #include "WakeLock.h"

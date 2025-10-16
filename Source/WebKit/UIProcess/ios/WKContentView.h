@@ -140,4 +140,5 @@ enum class ViewStabilityFlag : uint8_t;
 #if ENABLE(MODEL_PROCESS)
 - (void)_setTransform3DForModelViews:(CGFloat)newScale;
 #endif
+- (BOOL)_shouldExposeRollAngleAsTwist;
 @end

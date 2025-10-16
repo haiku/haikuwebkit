@@ -27,6 +27,7 @@
 
 #if ENABLE(FTL_JIT)
 
+#include "B3Effects.h"
 #include "B3HeapRange.h"
 #include "FTLAbbreviatedTypes.h"
 #include "JSCJSValue.h"
@@ -51,15 +52,16 @@ public:
     {
     }
     
-    AbstractHeap(AbstractHeap* parent, const char* heapName, ptrdiff_t offset = 0);
+    AbstractHeap(AbstractHeap* parent, const char* heapName, ptrdiff_t offset = 0, B3::Mutability = B3::Mutability::Mutable);
 
     bool isInitialized() const { return !!m_heapName; }
     
-    void initialize(AbstractHeap* parent, const char* heapName, ptrdiff_t offset = 0)
+    void initialize(AbstractHeap* parent, const char* heapName, ptrdiff_t offset = 0, B3::Mutability mutability = B3::Mutability::Mutable)
     {
         changeParent(parent);
         m_heapName = heapName;
         m_offset = offset;
+        m_mutability = mutability;
     }
     
     void changeParent(AbstractHeap* parent);
@@ -88,6 +90,12 @@ public:
         return m_range;
     }
 
+    B3::Mutability mutability() const
+    {
+        ASSERT(isInitialized());
+        return m_mutability;
+    }
+
     // WARNING: Not all abstract heaps have a meaningful offset.
     ptrdiff_t offset() const
     {
@@ -114,6 +122,7 @@ private:
     AbstractHeap* m_parent { nullptr };
     Vector<AbstractHeap*> m_children;
     intptr_t m_offset { 0 };
+    B3::Mutability m_mutability { B3::Mutability::Mutable };
     B3::HeapRange m_range;
     const char* m_heapName { nullptr };
 };

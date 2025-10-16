@@ -30,7 +30,7 @@
 
 namespace JSC {
 
-void StackManager::requestStop()
+CONCURRENT_SAFE void StackManager::requestStop()
 {
     Locker lock { m_mirrorLock };
     m_trapAwareSoftStackLimit.storeRelaxed(stopRequestMarker());
@@ -38,7 +38,7 @@ void StackManager::requestStop()
         mirror.m_trapAwareSoftStackLimit.storeRelaxed(stopRequestMarker());
 }
 
-void StackManager::cancelStop()
+CONCURRENT_SAFE void StackManager::cancelStop()
 {
     if (Options::forceTrapAwareStackChecks()) [[unlikely]]
         return;

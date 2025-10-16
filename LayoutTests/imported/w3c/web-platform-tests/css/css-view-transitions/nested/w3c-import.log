@@ -38,6 +38,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/contain-on-self.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/custom-ident-implies-contain-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/custom-ident-implies-contain.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/green-rect-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-animations.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/group-children-sizing-ref.html
@@ -63,6 +64,10 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-group-in-pseudo-basic.tentative-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-group-in-pseudo-basic.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-opacity-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-parent-changes-transform-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-parent-changes-transform-twice-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-parent-changes-transform-twice.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-parent-changes-transform.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-position-with-border-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-position-with-border-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/nested/nested-position-with-border.html

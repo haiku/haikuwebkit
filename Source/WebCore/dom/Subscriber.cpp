@@ -141,7 +141,7 @@ bool Subscriber::isInactiveDocument() const
 
 void Subscriber::reportErrorObject(JSC::JSValue value)
 {
-    auto* context = scriptExecutionContext();
+    RefPtr context = scriptExecutionContext();
     if (!context)
         return;
 

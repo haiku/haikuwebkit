@@ -41,6 +41,7 @@
 #include <WebCore/Timer.h>
 #include <wtf/ApproximateTime.h>
 #include <wtf/CompletionHandler.h>
+#include <wtf/HashCountedSet.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RobinHoodHashMap.h>
 #include <wtf/URLHash.h>
@@ -157,6 +158,9 @@ public:
     void needsRunning() { m_lastNeedRunningTime = ApproximateTime::now(); }
     bool isIdle(Seconds) const;
 
+    void registerServiceWorkerConnection(SWServerConnectionIdentifier);
+    void unregisterServiceWorkerConnection(SWServerConnectionIdentifier);
+
     std::optional<ExceptionData> addRoutes(Vector<ServiceWorkerRoute>&&);
 
 private:
@@ -177,6 +181,7 @@ private:
     WeakPtr<SWServer> m_server;
     ServiceWorkerRegistrationKey m_registrationKey;
     WeakPtr<SWServerRegistration> m_registration;
+    HashCountedSet<SWServerConnectionIdentifier> m_connectionsWithServiceWorker;
     ServiceWorkerData m_data;
     ScriptBuffer m_script;
     CertificateInfo m_certificateInfo;

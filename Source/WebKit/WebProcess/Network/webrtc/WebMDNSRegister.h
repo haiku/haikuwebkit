@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(WEB_RTC)
+#if ENABLE(WEB_RTC) && USE(LIBWEBRTC)
 
 #include <WebCore/MDNSRegisterError.h>
 #include <WebCore/ProcessQualified.h>
@@ -67,4 +67,4 @@ private:
 
 } // namespace WebKit
 
-#endif // ENABLE(WEB_RTC)
+#endif // ENABLE(WEB_RTC) && USE(LIBWEBRTC)

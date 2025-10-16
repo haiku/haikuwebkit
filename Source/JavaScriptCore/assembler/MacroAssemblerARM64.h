@@ -4093,6 +4093,10 @@ public:
     Jump branch32(RelationalCondition cond, RegisterID left, TrustedImm32 right)
     {
         auto immediate = right.m_value;
+
+        if (auto result = attemptToFoldToBitTest32(cond, left, immediate))
+            return result.value();
+
         if (!immediate) {
             if (auto resultCondition = commuteCompareToZeroIntoTest(cond))
                 return branchTest32(*resultCondition, left, left);
@@ -4166,6 +4170,10 @@ public:
     Jump branch64(RelationalCondition cond, RegisterID left, TrustedImm32 right)
     {
         auto immediate = right.m_value;
+
+        if (auto result = attemptToFoldToBitTest64(cond, left, immediate))
+            return result.value();
+
         if (!immediate) {
             if (auto resultCondition = commuteCompareToZeroIntoTest(cond))
                 return branchTest64(*resultCondition, left, left);
@@ -4187,6 +4195,10 @@ public:
     Jump branch64(RelationalCondition cond, RegisterID left, TrustedImm64 right)
     {
         auto immediate = right.m_value;
+
+        if (auto result = attemptToFoldToBitTest64(cond, left, immediate))
+            return result.value();
+
         if (!immediate) {
             if (auto resultCondition = commuteCompareToZeroIntoTest(cond))
                 return branchTest64(*resultCondition, left, left);
@@ -6432,6 +6444,107 @@ public:
         default:
             return std::nullopt;
         }
+    }
+
+    std::optional<Jump> attemptToFoldToBitTest32(RelationalCondition cond, RegisterID left, int32_t immediate)
+    {
+        int32_t signbit = static_cast<int32_t>(1U << (32 - 1));
+        switch (cond) {
+        case LessThan:
+            // left < 0
+            if (!immediate)
+                return branchTest32(NonZero, left, TrustedImm32(signbit));
+            break;
+        case LessThanOrEqual:
+            // left <= -1
+            if (immediate == -1)
+                return branchTest32(NonZero, left, TrustedImm32(signbit));
+            break;
+        case GreaterThan:
+            // left > -1
+            if (immediate == -1)
+                return branchTest32(Zero, left, TrustedImm32(signbit));
+            break;
+        case GreaterThanOrEqual:
+            // left >= 0
+            if (!immediate)
+                return branchTest32(Zero, left, TrustedImm32(signbit));
+            break;
+
+        case Below:
+            // left < signbit
+            if (immediate == signbit)
+                return branchTest32(Zero, left, TrustedImm32(signbit));
+            break;
+        case BelowOrEqual:
+            // left <= (signbit - 1)
+            if (immediate == (signbit - 1))
+                return branchTest32(Zero, left, TrustedImm32(signbit));
+            break;
+        case Above:
+            // left > (signbit - 1)
+            if (immediate == (signbit - 1))
+                return branchTest32(NonZero, left, TrustedImm32(signbit));
+            break;
+        case AboveOrEqual:
+            // left >= signbit
+            if (immediate == signbit)
+                return branchTest32(NonZero, left, TrustedImm32(signbit));
+            break;
+        default:
+            break;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Jump> attemptToFoldToBitTest64(RelationalCondition cond, RegisterID left, int64_t immediate)
+    {
+        int64_t signbit = static_cast<int64_t>(1ULL << (64 - 1));
+        switch (cond) {
+        case LessThan:
+            // left < 0
+            if (!immediate)
+                return branchTest64(NonZero, left, TrustedImm64(signbit));
+            break;
+        case LessThanOrEqual:
+            // left <= -1
+            if (immediate == -1)
+                return branchTest64(NonZero, left, TrustedImm64(signbit));
+            break;
+        case GreaterThan:
+            // left > -1
+            if (immediate == -1)
+                return branchTest64(Zero, left, TrustedImm64(signbit));
+            break;
+        case GreaterThanOrEqual:
+            // left >= 0
+            if (!immediate)
+                return branchTest64(Zero, left, TrustedImm64(signbit));
+            break;
+        case Below:
+            // left < signbit
+            if (immediate == signbit)
+                return branchTest64(Zero, left, TrustedImm64(signbit));
+            break;
+        case BelowOrEqual:
+            // left <= (signbit - 1)
+            if (immediate == (signbit - 1))
+                return branchTest64(Zero, left, TrustedImm64(signbit));
+            break;
+        case Above:
+            // left > (signbit - 1)
+            if (immediate == (signbit - 1))
+                return branchTest64(NonZero, left, TrustedImm64(signbit));
+            break;
+        case AboveOrEqual:
+            // left >= signbit
+            if (immediate == signbit)
+                return branchTest64(NonZero, left, TrustedImm64(signbit));
+            break;
+        default:
+            break;
+        }
+        return std::nullopt;
     }
 
     template<PtrTag resultTag, PtrTag locationTag>

@@ -27,12 +27,12 @@
 
 #if ENABLE(GPU_PROCESS)
 
+#include "RemoteDisplayListIdentifier.h"
+#include "RemoteGradientIdentifier.h"
 #include "RemoteGraphicsContextIdentifier.h"
 #include <WebCore/DisplayListRecorder.h>
-#include <WebCore/GraphicsContext.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeWeakPtr.h>
-#include <wtf/URL.h>
 
 namespace IPC {
 class Signal;
@@ -59,15 +59,20 @@ public:
 
     // Called when rendering backend gets discarded but reference to the owning image buffer is still referenced.
     void abandon();
-
+    using GraphicsContext::drawDisplayList;
+    void drawDisplayList(const WebCore::DisplayList::DisplayList&, WebCore::ControlFactory&) final;
 
     void setClient(ThreadSafeWeakPtr<RemoteImageBufferProxy>&& client) { m_client = WTFMove(client); }
     // Returns false if there has not been any potential draws since last call.
     // Returns true if there has been potential draws since last call.
     bool consumeHasDrawn();
 
-private:
+protected:
+    RemoteGraphicsContextProxy(const WebCore::DestinationColorSpace&, std::optional<WebCore::ContentsFormat>, WebCore::RenderingMode, const WebCore::FloatRect& initialClip, const WebCore::AffineTransform&, DrawGlyphsMode, RemoteGraphicsContextIdentifier, RemoteRenderingBackendProxy&);
+
     template<typename T> void send(T&& message);
+
+private:
     void didBecomeUnresponsive() const;
 
     WebCore::RenderingMode renderingMode() const final;
@@ -127,7 +132,6 @@ private:
     void drawControlPart(WebCore::ControlPart&, const WebCore::FloatRoundedRect& borderRect, float deviceScaleFactor, const WebCore::ControlStyle&) final;
     void drawGlyphs(const WebCore::Font&, std::span<const WebCore::GlyphBufferGlyph>, std::span<const WebCore::GlyphBufferAdvance>, const WebCore::FloatPoint& localAnchor, WebCore::FontSmoothingMode) final;
     void drawGlyphsImmediate(const WebCore::Font&, std::span<const WebCore::GlyphBufferGlyph>, std::span<const WebCore::GlyphBufferAdvance>, const WebCore::FloatPoint& localAnchor, WebCore::FontSmoothingMode) final;
-    void drawDecomposedGlyphs(const WebCore::Font&, const WebCore::DecomposedGlyphs&) final;
 
 #if USE(CG)
     void applyStrokePattern() final;
@@ -135,7 +139,7 @@ private:
 #endif
     void applyDeviceScaleFactor(float) final;
 
-    void beginPage(const WebCore::IntSize& pageSize) final;
+    void beginPage(const WebCore::FloatRect&) final;
     void endPage() final;
     void setURLForRect(const URL&, const WebCore::FloatRect&) final;
 
@@ -143,11 +147,15 @@ private:
     bool recordResourceUse(WebCore::ImageBuffer&);
     bool recordResourceUse(const WebCore::SourceImage&);
     bool recordResourceUse(WebCore::Font&);
-    bool recordResourceUse(WebCore::DecomposedGlyphs&);
-    bool recordResourceUse(WebCore::Gradient&);
+    std::optional<RemoteGradientIdentifier> recordResourceUse(WebCore::Gradient&);
     bool recordResourceUse(WebCore::Filter&);
+    std::optional<RemoteDisplayListIdentifier> recordResourceUse(const WebCore::DisplayList::DisplayList&);
+
     // Synchronizes draw state.
+protected:
     void appendStateChangeItemIfNecessary() final;
+
+private:
     struct InlineStrokeData {
         std::optional<WebCore::PackedColor::RGBA> color;
         std::optional<float> thickness;

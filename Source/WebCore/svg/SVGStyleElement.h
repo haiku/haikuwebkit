@@ -52,7 +52,7 @@ private:
 
     void finishParsingChildren() final;
 
-    virtual bool isLoading() const { return m_styleSheetOwner.isLoading(); }
+    bool isLoading() const { return m_styleSheetOwner.isLoading(); }
     bool sheetLoaded() final { return m_styleSheetOwner.sheetLoaded(*this); }
     void startLoadingDynamicSheet() final { m_styleSheetOwner.startLoadingDynamicSheet(*this); }
     Timer* loadEventTimer() final { return &m_loadEventTimer; }

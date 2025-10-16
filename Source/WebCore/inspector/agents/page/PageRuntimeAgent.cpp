@@ -34,13 +34,13 @@
 
 #include "DOMWrapperWorld.h"
 #include "Document.h"
+#include "FrameConsoleClient.h"
 #include "InspectorPageAgent.h"
 #include "InstrumentingAgents.h"
 #include "JSDOMWindowCustom.h"
 #include "JSExecState.h"
 #include "LocalFrame.h"
 #include "Page.h"
-#include "PageConsoleClient.h"
 #include "ScriptController.h"
 #include "SecurityOrigin.h"
 #include "UserGestureEmulationScope.h"
@@ -127,12 +127,12 @@ InjectedScript PageRuntimeAgent::injectedScriptForEval(Inspector::Protocol::Erro
 
 void PageRuntimeAgent::muteConsole()
 {
-    PageConsoleClient::mute();
+    FrameConsoleClient::mute();
 }
 
 void PageRuntimeAgent::unmuteConsole()
 {
-    PageConsoleClient::unmute();
+    FrameConsoleClient::unmute();
 }
 
 void PageRuntimeAgent::reportExecutionContextCreation()

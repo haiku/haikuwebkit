@@ -29,6 +29,7 @@
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
 #include "Event.h"
+#include "FrameConsoleClient.h"
 #include "FrameLoader.h"
 #include "HTMLPlugInElement.h"
 #include "HistoryController.h"
@@ -46,7 +47,6 @@
 #include "ModuleFetchParameters.h"
 #include "NavigationAction.h"
 #include "Page.h"
-#include "PageConsoleClient.h"
 #include "PageGroup.h"
 #include "PaymentCoordinator.h"
 #include "Quirks.h"
@@ -312,13 +312,14 @@ void ScriptController::initScriptForWindowProxy(JSWindowProxy& windowProxy)
     jsCast<JSDOMWindow*>(windowProxy.window())->updateDocument();
     EXCEPTION_ASSERT_UNUSED(scope, !scope.exception());
 
+    windowProxy.window()->setConsoleClient(m_frame->console());
+
     if (RefPtr document = m_frame->document())
         document->checkedContentSecurityPolicy()->didCreateWindowProxy(windowProxy);
 
     if (RefPtr page = m_frame->page()) {
         windowProxy.attachDebugger(page->debugger());
         windowProxy.window()->setProfileGroup(page->group().identifier());
-        windowProxy.window()->setConsoleClient(page->console());
     }
 
     protectedFrame()->loader().dispatchDidClearWindowObjectInWorld(world);

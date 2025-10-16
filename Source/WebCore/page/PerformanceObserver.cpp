@@ -143,7 +143,7 @@ void PerformanceObserver::deliver()
     if (m_entriesToDeliver.isEmpty())
         return;
 
-    auto* context = m_callback->scriptExecutionContext();
+    RefPtr context = m_callback->scriptExecutionContext();
     if (!context)
         return;
 

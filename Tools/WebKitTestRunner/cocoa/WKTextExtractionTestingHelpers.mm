@@ -60,6 +60,8 @@ ASCIILiteral description(WKTextExtractionContainer container)
         return "NAV"_s;
     case WKTextExtractionContainerButton:
         return "BUTTON"_s;
+    case WKTextExtractionContainerCanvas:
+        return "CANVAS"_s;
     case WKTextExtractionContainerGeneric:
         return "GENERIC"_s;
     }

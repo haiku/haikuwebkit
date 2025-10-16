@@ -25,7 +25,7 @@
 #include "NodeName.h"
 #include "RenderElement.h"
 #include "RenderStyle.h"
-#include "SVGFilter.h"
+#include "SVGFilterRenderer.h"
 #include "SVGNames.h"
 #include "SVGParserUtilities.h"
 #include "SVGPropertyOwnerRegistry.h"
@@ -145,8 +145,8 @@ bool SVGFEDropShadowElement::isIdentity() const
 
 IntOutsets SVGFEDropShadowElement::outsets(const FloatRect& targetBoundingBox, SVGUnitTypes::SVGUnitType primitiveUnits) const
 {
-    auto offset = SVGFilter::calculateResolvedSize({ dx(), dy() }, targetBoundingBox, primitiveUnits);
-    auto stdDeviation = SVGFilter::calculateResolvedSize({ stdDeviationX(), stdDeviationY() }, targetBoundingBox, primitiveUnits);
+    auto offset = SVGFilterRenderer::calculateResolvedSize({ dx(), dy() }, targetBoundingBox, primitiveUnits);
+    auto stdDeviation = SVGFilterRenderer::calculateResolvedSize({ stdDeviationX(), stdDeviationY() }, targetBoundingBox, primitiveUnits);
     return FEDropShadow::calculateOutsets(offset, stdDeviation);
 }
 

@@ -1748,8 +1748,7 @@ static Int128 roundTimeDurationToIncrement(JSGlobalObject* globalObject, Int128 
 }
 
 // https://tc39.es/proposal-temporal/#sec-temporal-roundtimeduration
-static Int128 roundTimeDuration(JSGlobalObject* globalObject, Int128 timeDuration, unsigned increment,
-    TemporalUnit unit, RoundingMode roundingMode)
+Int128 roundTimeDuration(JSGlobalObject* globalObject, Int128 timeDuration, unsigned increment, TemporalUnit unit, RoundingMode roundingMode)
 {
     auto divisor = lengthInNanoseconds(unit);
 

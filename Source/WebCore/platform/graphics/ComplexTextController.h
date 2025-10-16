@@ -67,6 +67,7 @@ public:
     ComplexTextController(const FontCascade&, const TextRun&, bool mayUseNaturalWritingDirection = false, SingleThreadWeakHashSet<const Font>* fallbackFonts = 0, bool forTextEmphasis = false);
 
     static std::pair<float, float> enclosingGlyphBoundsForTextRun(const FontCascade&, const TextRun&);
+    static Vector<float> glyphBoundsForTextRun(const FontCascade&, const TextRun&);
 
     class ComplexTextRun;
     WEBCORE_EXPORT ComplexTextController(const FontCascade&, const TextRun&, Vector<Ref<ComplexTextRun>>&);

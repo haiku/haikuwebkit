@@ -51,7 +51,7 @@ class MediaSessionManageriOS
     , public AudioSessionInterruptionObserver {
     WTF_MAKE_TZONE_ALLOCATED(MediaSessionManageriOS);
 public:
-    MediaSessionManageriOS();
+    MediaSessionManageriOS(PageIdentifier);
     virtual ~MediaSessionManageriOS();
 
     bool hasWirelessTargetsAvailable() final;

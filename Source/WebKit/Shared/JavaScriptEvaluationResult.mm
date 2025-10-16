@@ -81,7 +81,7 @@ RetainPtr<id> JavaScriptEvaluationResult::ObjCInserter::toID(Value&& root)
         m_dictionaries.append({ WTFMove(map), dictionary });
         return dictionary;
     }, [] (UniqueRef<JSHandleInfo>&& info) -> RetainPtr<id> {
-        return wrapper(API::JSHandle::create(WTFMove(info.get())));
+        return wrapper(API::JSHandle::getOrCreate(WTFMove(info.get())));
     }, [] (UniqueRef<WebCore::SerializedNode>&& serializedNode) -> RetainPtr<id> {
         return wrapper(API::SerializedNode::create(WTFMove(serializedNode.get())).get());
     });

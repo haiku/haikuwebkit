@@ -28,6 +28,7 @@
 #include "InlineIteratorTextBox.h"
 #include "LineSelection.h"
 #include "PaintInfo.h"
+#include "RenderObjectDocument.h"
 #include "RenderView.h"
 
 namespace WebCore {

@@ -27,7 +27,7 @@
 #include "PlatformWebViewClientWPE.h"
 
 #if ENABLE(WPE_PLATFORM)
-#include <wpe/headless/wpe-headless.h>
+#include <wpe/wpe-platform.h>
 #include <wtf/glib/GUniquePtr.h>
 
 #if USE(CAIRO)
@@ -42,9 +42,11 @@ IGNORE_CLANG_WARNINGS_END
 namespace WTR {
 
 PlatformWebViewClientWPE::PlatformWebViewClientWPE(WKPageConfigurationRef configuration)
-    : m_display(adoptGRef(wpe_display_headless_new()))
 {
-    m_view = WKViewCreate(m_display.get(), configuration);
+    WPEDisplay* display = wpe_display_get_default();
+    if (!display)
+        g_error("Failed to get the default WPE display\n");
+    m_view = WKViewCreate(display, configuration);
     auto* wpeView = WKViewGetView(m_view);
     wpe_view_focus_in(wpeView);
     wpe_toplevel_resize(wpe_view_get_toplevel(wpeView), 800, 600);

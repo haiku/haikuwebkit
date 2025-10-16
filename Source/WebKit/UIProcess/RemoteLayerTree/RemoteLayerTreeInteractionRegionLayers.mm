@@ -47,10 +47,10 @@ NSString *interactionRegionElementIdentifierKey = @"WKInteractionRegionElementId
 
 RCPRemoteEffectInputTypes interactionRegionInputTypes = RCPRemoteEffectInputTypesAll ^ RCPRemoteEffectInputTypePointer;
 
-static Class interactionRegionLayerClass()
+static Class interactionRegionLayerClassSingleton()
 {
-    if (getRCPGlowEffectLayerClass())
-        return getRCPGlowEffectLayerClass();
+    if (getRCPGlowEffectLayerClassSingleton())
+        return getRCPGlowEffectLayerClassSingleton();
     return [CALayer class];
 }
 
@@ -92,7 +92,7 @@ static bool applyBackgroundColorForDebugging()
 
 static void configureLayerForInteractionRegion(CALayer *layer, NSString *groupName)
 {
-    if (![layer isKindOfClass:getRCPGlowEffectLayerClass()])
+    if (![layer isKindOfClass:getRCPGlowEffectLayerClassSingleton()])
         return;
 
     [(RCPGlowEffectLayer *)layer setBrightnessMultiplier:brightnessMultiplier() forInputTypes:interactionRegionInputTypes];
@@ -106,7 +106,7 @@ static void configureLayerForInteractionRegion(CALayer *layer, NSString *groupNa
 
 static void reconfigureLayerContentHint(CALayer *layer, WebCore::InteractionRegion::ContentHint contentHint)
 {
-    if (![layer isKindOfClass:getRCPGlowEffectLayerClass()])
+    if (![layer isKindOfClass:getRCPGlowEffectLayerClassSingleton()])
         return;
 
     if (contentHint == WebCore::InteractionRegion::ContentHint::Photo)
@@ -169,7 +169,7 @@ static void applyBackgroundColorForDebuggingToLayer(CALayer *layer, const WebCor
 static CALayer *createInteractionRegionLayer(WebCore::InteractionRegion::Type type, WebCore::NodeIdentifier identifier, NSString *groupName)
 {
     CALayer *layer = type == InteractionRegion::Type::Interaction
-        ? [[interactionRegionLayerClass() alloc] init]
+        ? [[interactionRegionLayerClassSingleton() alloc] init]
         : [[CALayer alloc] init];
 
     [layer setHitTestsAsOpaque:YES];

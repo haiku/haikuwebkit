@@ -248,7 +248,7 @@ static NSString* NSStringOrNil(String coreString)
 
 - (WebFrame *)_targetWebFrame
 {
-    return kit(_result->targetFrame());
+    return kit(dynamicDowncast<LocalFrame>(_result->targetFrame()));
 }
 
 - (NSString *)_titleDisplayString

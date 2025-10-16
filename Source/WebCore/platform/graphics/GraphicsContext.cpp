@@ -27,7 +27,6 @@
 #include "GraphicsContext.h"
 
 #include "BidiResolver.h"
-#include "DecomposedGlyphs.h"
 #include "DisplayList.h"
 #include "Filter.h"
 #include "FilterImage.h"
@@ -38,7 +37,7 @@
 #include "IntRect.h"
 #include "LayoutRoundedRect.h"
 #include "SystemImage.h"
-#include "TextBoxIterator.h"
+#include "TextRunIterator.h"
 #include "VideoFrame.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>
@@ -175,13 +174,8 @@ void GraphicsContext::drawGlyphs(const Font& font, std::span<const GlyphBufferGl
 
 void GraphicsContext::drawGlyphsImmediate(const Font& font, std::span<const GlyphBufferGlyph> glyphs, std::span<const GlyphBufferAdvance> advances, const FloatPoint& point, FontSmoothingMode fontSmoothingMode)
 {
-    // Called by implementations that transform drawGlyphs into drawGlyphsImmediate or drawDecomposedGlyphs.
+    // Called by implementations that transform drawGlyphs into drawGlyphsImmediate, drawImageBuffer, etc calls.
     drawGlyphs(font, glyphs, advances, point, fontSmoothingMode);
-}
-
-void GraphicsContext::drawDecomposedGlyphs(const Font& font, const DecomposedGlyphs& decomposedGlyphs)
-{
-    FontCascade::drawGlyphs(*this, font, decomposedGlyphs.glyphs(), decomposedGlyphs.advances(), decomposedGlyphs.localAnchor(), decomposedGlyphs.fontSmoothingMode());
 }
 
 void GraphicsContext::drawEmphasisMarks(const FontCascade& font, const TextRun& run, const AtomString& mark, const FloatPoint& point, unsigned from, std::optional<unsigned> to)
@@ -191,14 +185,14 @@ void GraphicsContext::drawEmphasisMarks(const FontCascade& font, const TextRun& 
 
 void GraphicsContext::drawBidiText(const FontCascade& font, const TextRun& run, const FloatPoint& point, FontCascade::CustomFontNotReadyAction customFontNotReadyAction)
 {
-    BidiResolver<TextBoxIterator, BidiCharacterRun> bidiResolver;
+    BidiResolver<TextRunIterator, BidiCharacterRun> bidiResolver;
     bidiResolver.setStatus(BidiStatus(run.direction(), run.directionalOverride()));
-    bidiResolver.setPositionIgnoringNestedIsolates(TextBoxIterator(&run, 0));
+    bidiResolver.setPositionIgnoringNestedIsolates(TextRunIterator(&run, 0));
 
     // FIXME: This ownership should be reversed. We should pass BidiRunList
     // to BidiResolver in createBidiRunsForLine.
     BidiRunList<BidiCharacterRun>& bidiRuns = bidiResolver.runs();
-    bidiResolver.createBidiRunsForLine(TextBoxIterator(&run, run.length()));
+    bidiResolver.createBidiRunsForLine(TextRunIterator(&run, run.length()));
 
     if (!bidiRuns.runCount())
         return;
@@ -563,7 +557,7 @@ void GraphicsContext::drawLineForText(const FloatRect& rect, bool isPrinting, bo
 
 void GraphicsContext::drawDisplayList(const DisplayList::DisplayList& displayList)
 {
-    Ref controlFactory = ControlFactory::shared();
+    Ref controlFactory = ControlFactory::singleton();
     drawDisplayList(displayList, controlFactory);
 }
 

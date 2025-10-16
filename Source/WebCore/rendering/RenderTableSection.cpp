@@ -5,7 +5,7 @@
  *           (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
- * Copyright (C) 2014 Google Inc. All rights reserved.
+ * Copyright (C) 2014-2018 Google Inc. All rights reserved.
  * Copyright (C) 2006 Alexey Proskuryakov (ap@nypop.com)
  *
  * This library is free software; you can redistribute it and/or
@@ -221,7 +221,7 @@ static LayoutUnit resolveLogicalHeightForRow(const Style::PreferredSize& rowLogi
     if (auto fixedRowLogicalHeight = rowLogicalHeight.tryFixed())
         return LayoutUnit(fixedRowLogicalHeight->value);
     if (rowLogicalHeight.isCalculated())
-        return LayoutUnit(Style::evaluate(rowLogicalHeight, 0));
+        return LayoutUnit(Style::evaluate(rowLogicalHeight, 0, 1.0f /* FIXME FIND ZOOM */));
     return 0;
 }
 
@@ -589,10 +589,20 @@ void RenderTableSection::layoutRows()
         if (RenderTableRow* rowRenderer = m_grid[rowIndex].rowRenderer) {
             // FIXME: the x() position of the row should be table()->hBorderSpacing() so that it can 
             // report the correct offsetLeft. However, that will require a lot of rebaselining of test results.
-            rowRenderer->setLogicalLeft(0_lu);
-            rowRenderer->setLogicalTop(m_rowPos[rowIndex]);
+            rowRenderer->setLogicalLocation({ 0_lu, m_rowPos[rowIndex] });
             rowRenderer->setLogicalWidth(logicalWidth());
-            rowRenderer->setLogicalHeight(m_rowPos[rowIndex + 1] - m_rowPos[rowIndex] - vspacing);
+
+            LayoutUnit rowLogicalHeight;
+            // If the row is collapsed then it has 0 height. vspacing was implicitly
+            // removed earlier, when m_rowPos[rowIndex+1] was set to m_rowPos[rowIndex].
+            auto rowHasVisibilityCollapse = [&](auto row) {
+                return (m_grid[row].rowRenderer && m_grid[row].rowRenderer->style().visibility() == Visibility::Collapse) || style().visibility() == Visibility::Collapse;
+            };
+            if (!rowHasVisibilityCollapse(rowIndex))
+                rowLogicalHeight = m_rowPos[rowIndex + 1] - m_rowPos[rowIndex] - vspacing;
+
+            ASSERT(rowLogicalHeight >= 0);
+            rowRenderer->setLogicalHeight(rowLogicalHeight);
             rowRenderer->updateLayerTransform();
             rowRenderer->clearOverflow();
             rowRenderer->addVisualEffectOverflow();
@@ -777,7 +787,7 @@ LayoutUnit RenderTableSection::calcBlockDirectionOuterBorder(BlockBorderSide sid
 
     if (allHidden)
         return -1;
-    return CollapsedBorderValue::adjustedCollapsedBorderWidth(Style::evaluate(borderWidth), document().deviceScaleFactor(), (side == BlockBorderSide::BorderAfter));
+    return CollapsedBorderValue::adjustedCollapsedBorderWidth(Style::evaluate(borderWidth, 1.0f /* FIXME FIND ZOOM */), document().deviceScaleFactor(), (side == BlockBorderSide::BorderAfter));
 }
 
 LayoutUnit RenderTableSection::calcInlineDirectionOuterBorder(InlineBorderSide side) const
@@ -831,7 +841,7 @@ LayoutUnit RenderTableSection::calcInlineDirectionOuterBorder(InlineBorderSide s
 
     if (allHidden)
         return -1;
-    return CollapsedBorderValue::adjustedCollapsedBorderWidth(Style::evaluate(borderWidth), document().deviceScaleFactor(), (side == InlineBorderSide::BorderStart) ? writingMode.isInlineFlipped() : !writingMode.isInlineFlipped());
+    return CollapsedBorderValue::adjustedCollapsedBorderWidth(Style::evaluate(borderWidth, 1.0f /* FIXME FIND ZOOM */), document().deviceScaleFactor(), (side == InlineBorderSide::BorderStart) ? writingMode.isInlineFlipped() : !writingMode.isInlineFlipped());
 }
 
 void RenderTableSection::recalcOuterBorder()
@@ -1134,18 +1144,18 @@ void RenderTableSection::paintRowGroupBorderIfRequired(const PaintInfo& paintInf
     switch (borderSide) {
     case BoxSide::Top:
         paintRowGroupBorder(paintInfo, antialias, LayoutRect(paintOffset.x() + offsetLeftForRowGroupBorder(cell, rowGroupRect, row), rowGroupRect.y(), 
-            horizontalRowGroupBorderWidth(cell, rowGroupRect, row, column), LayoutUnit(Style::evaluate(style.borderTop().width()))), BoxSide::Top, CSSPropertyBorderTopColor, style.borderTopStyle(), table()->style().borderTopStyle());
+            horizontalRowGroupBorderWidth(cell, rowGroupRect, row, column), LayoutUnit(Style::evaluate(style.borderTop().width(), 1.0f /* FIXME FIND ZOOM */))), BoxSide::Top, CSSPropertyBorderTopColor, style.borderTopStyle(), table()->style().borderTopStyle());
         break;
     case BoxSide::Bottom:
         paintRowGroupBorder(paintInfo, antialias, LayoutRect(paintOffset.x() + offsetLeftForRowGroupBorder(cell, rowGroupRect, row), rowGroupRect.y() + rowGroupRect.height(), 
-            horizontalRowGroupBorderWidth(cell, rowGroupRect, row, column), LayoutUnit(Style::evaluate(style.borderBottom().width()))), BoxSide::Bottom, CSSPropertyBorderBottomColor, style.borderBottomStyle(), table()->style().borderBottomStyle());
+            horizontalRowGroupBorderWidth(cell, rowGroupRect, row, column), LayoutUnit(Style::evaluate(style.borderBottom().width(), 1.0f /* FIXME FIND ZOOM */))), BoxSide::Bottom, CSSPropertyBorderBottomColor, style.borderBottomStyle(), table()->style().borderBottomStyle());
         break;
     case BoxSide::Left:
-        paintRowGroupBorder(paintInfo, antialias, LayoutRect(rowGroupRect.x(), rowGroupRect.y() + offsetTopForRowGroupBorder(cell, borderSide, row), LayoutUnit(Style::evaluate(style.borderLeft().width())),
+        paintRowGroupBorder(paintInfo, antialias, LayoutRect(rowGroupRect.x(), rowGroupRect.y() + offsetTopForRowGroupBorder(cell, borderSide, row), LayoutUnit(Style::evaluate(style.borderLeft().width(), 1.0f /* FIXME FIND ZOOM */)),
             verticalRowGroupBorderHeight(cell, rowGroupRect, row)), BoxSide::Left, CSSPropertyBorderLeftColor, style.borderLeftStyle(), table()->style().borderLeftStyle());
         break;
     case BoxSide::Right:
-        paintRowGroupBorder(paintInfo, antialias, LayoutRect(rowGroupRect.x() + rowGroupRect.width(), rowGroupRect.y() + offsetTopForRowGroupBorder(cell, borderSide, row), LayoutUnit(Style::evaluate(style.borderRight().width())),
+        paintRowGroupBorder(paintInfo, antialias, LayoutRect(rowGroupRect.x() + rowGroupRect.width(), rowGroupRect.y() + offsetTopForRowGroupBorder(cell, borderSide, row), LayoutUnit(Style::evaluate(style.borderRight().width(), 1.0f /* FIXME FIND ZOOM */)),
             verticalRowGroupBorderHeight(cell, rowGroupRect, row)), BoxSide::Right, CSSPropertyBorderRightColor, style.borderRightStyle(), table()->style().borderRightStyle());
         break;
     default:

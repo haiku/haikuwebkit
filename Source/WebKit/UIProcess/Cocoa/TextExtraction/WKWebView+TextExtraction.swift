@@ -112,6 +112,7 @@ extension WKWebView {
             configuration.mergeParagraphs = true
             configuration.skipNearlyTransparentContent = true
             configuration.canIncludeIdentifiers = false
+            configuration.shouldFilterText = false
             if let result = await _requestTextExtraction(configuration) {
                 collector.collect(createIntelligenceElement(item: result.rootItem))
             }

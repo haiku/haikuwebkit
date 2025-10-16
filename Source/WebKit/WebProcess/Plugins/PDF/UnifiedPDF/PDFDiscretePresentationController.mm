@@ -33,8 +33,8 @@
 #include "WebEventConversion.h"
 #include "WebKeyboardEvent.h"
 #include "WebWheelEvent.h"
-#include <WebCore/Animation.h>
 #include <WebCore/GraphicsLayer.h>
+#include <WebCore/GraphicsLayerAnimation.h>
 #include <WebCore/Length.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/PlatformWheelEvent.h>
@@ -536,14 +536,14 @@ void PDFDiscretePresentationController::startTransitionAnimation(PageTransitionS
         }
 
         auto moveFrames = createPositionKeyframesForAnimation(direction, startOffset, endOffset);
-        Ref moveAnimation = Animation::create();
+        Ref moveAnimation = GraphicsLayerAnimation::create();
         moveAnimation->setDuration(transitionDuration.seconds());
         moveAnimation->setTimingFunction(WTFMove(moveTimingFunction));
         Ref animatingRowContainerLayer = *animatingRow.containerLayer;
         animatingRowContainerLayer->addAnimation(moveFrames, { }, moveAnimation.ptr(), "move"_s, 0);
 
         auto fadeKeyframes = createOpacityKeyframesForAnimation(direction, layerEndOpacities[topLayerIndex]);
-        Ref fadeAnimation = Animation::create();
+        Ref fadeAnimation = GraphicsLayerAnimation::create();
         fadeAnimation->setDuration(transitionDuration.seconds());
         fadeAnimation->setTimingFunction(WTFMove(fadeTimingFunction));
         animatingRowContainerLayer->addAnimation(fadeKeyframes, { }, fadeAnimation.ptr(), "fade"_s, 0);

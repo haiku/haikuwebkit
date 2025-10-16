@@ -46,6 +46,7 @@ public:
 
     SQLiteStatement* get() { return m_statement.get(); }
     SQLiteStatement* operator->() { return m_statement.get(); }
+    SQLiteStatement& operator*() const { ASSERT(m_statement); return *m_statement; }
 
 private:
     CheckedPtr<SQLiteStatement> m_statement;

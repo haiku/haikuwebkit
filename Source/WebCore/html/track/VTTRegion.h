@@ -37,6 +37,7 @@
 #include <WebCore/FloatPoint.h>
 #include <WebCore/TextTrack.h>
 #include <WebCore/Timer.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 
 namespace WebCore {
 
@@ -44,7 +45,7 @@ class HTMLDivElement;
 class VTTCueBox;
 class VTTScanner;
 
-class WEBCORE_EXPORT VTTRegion final : public RefCounted<VTTRegion>, public ContextDestructionObserver {
+class WEBCORE_EXPORT VTTRegion final : public RefCountedAndCanMakeWeakPtr<VTTRegion>, public ContextDestructionObserver {
 public:
     static Ref<VTTRegion> create(ScriptExecutionContext& context)
     {

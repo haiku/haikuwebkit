@@ -63,7 +63,7 @@ static constexpr auto httpPartialContentText = "Partial Content"_s;
 static constexpr auto webKitBlobResourceDomain = "WebKitBlobResource"_s;
 
 NetworkDataTaskBlob::NetworkDataTaskBlob(NetworkSession& session, NetworkDataTaskClient& client, const ResourceRequest& request, const Vector<RefPtr<WebCore::BlobDataFileReference>>& fileReferences, const RefPtr<SecurityOrigin>& topOrigin)
-    : NetworkDataTask(session, client, request, StoredCredentialsPolicy::DoNotUse, false, false)
+    : NetworkDataTask(session, client, request, StoredCredentialsPolicy::DoNotUse, false, false, false)
     , m_stream(makeUnique<AsyncFileStream>(*this))
     , m_fileReferences(fileReferences)
     , m_networkProcess(session.networkProcess())

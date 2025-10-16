@@ -132,10 +132,19 @@ Element* DocumentFragment::getElementById(const AtomString& id) const
     return nullptr;
 }
 
-SerializedNode DocumentFragment::serializeNode(CloningOperation) const
+SerializedNode DocumentFragment::serializeNode(CloningOperation type) const
 {
-    // FIXME: Implement.
-    return { SerializedNode::DocumentFragment { } };
+    Vector<SerializedNode> children;
+    switch (type) {
+    case CloningOperation::SelfOnly:
+    case CloningOperation::SelfWithTemplateContent:
+        break;
+    case CloningOperation::Everything:
+        children = serializeChildNodes();
+        break;
+    }
+
+    return { SerializedNode::DocumentFragment { WTFMove(children) } };
 }
 
 }

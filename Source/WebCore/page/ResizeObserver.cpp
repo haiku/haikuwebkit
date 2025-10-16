@@ -28,6 +28,7 @@
 
 #include "ResizeObserver.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Element.h"
 #include "InspectorInstrumentation.h"
 #include "JSNodeCustom.h"

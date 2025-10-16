@@ -168,10 +168,12 @@ extern "C" {
     M(StorageAPI) \
     M(SystemPreview) \
     M(Telephony) \
+    M(TextExtraction) \
     M(TextInput) \
     M(TextInteraction) \
     M(Translation) \
     M(UIHitTesting) \
+    M(UserContentController) \
     M(ViewGestures) \
     M(ViewState) \
     M(ViewportSizing) \

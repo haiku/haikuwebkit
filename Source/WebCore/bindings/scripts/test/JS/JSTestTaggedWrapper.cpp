@@ -144,7 +144,7 @@ JSValue JSTestTaggedWrapper::getConstructor(VM& vm, const JSGlobalObject* global
 
 void JSTestTaggedWrapper::destroy(JSC::JSCell* cell)
 {
-    JSTestTaggedWrapper* thisObject = static_cast<JSTestTaggedWrapper*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestTaggedWrapper* thisObject = static_cast<JSTestTaggedWrapper*>(cell);
     thisObject->JSTestTaggedWrapper::~JSTestTaggedWrapper();
 }
 
@@ -187,7 +187,7 @@ bool JSTestTaggedWrapperOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unkno
 
 void JSTestTaggedWrapperOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestTaggedWrapper = static_cast<JSTestTaggedWrapper*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestTaggedWrapper = static_cast<JSTestTaggedWrapper*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestTaggedWrapper->protectedWrapped().ptr(), jsTestTaggedWrapper);
 }

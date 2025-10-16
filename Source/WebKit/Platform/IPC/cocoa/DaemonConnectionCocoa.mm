@@ -31,6 +31,7 @@
 #import "WebPushDaemonConnection.h"
 #import <wtf/BlockPtr.h>
 #import <wtf/RunLoop.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 namespace WebKit {
 
@@ -53,7 +54,7 @@ void Connection::sendWithReply(xpc_object_t message, CompletionHandler<void(xpc_
 
     ASSERT(m_connection.get());
     ASSERT(xpc_get_type(message) == XPC_TYPE_DICTIONARY);
-    xpc_connection_send_message_with_reply(m_connection.get(), message, dispatch_get_main_queue(), makeBlockPtr([completionHandler = WTFMove(completionHandler)] (xpc_object_t reply) mutable {
+    xpc_connection_send_message_with_reply(m_connection.get(), message, mainDispatchQueueSingleton(), makeBlockPtr([completionHandler = WTFMove(completionHandler)] (xpc_object_t reply) mutable {
         ASSERT(RunLoop::isMain());
         completionHandler(reply);
     }).get());
@@ -64,7 +65,7 @@ void ConnectionToMachService<Traits>::initializeConnectionIfNeeded() const
 {
     if (m_connection)
         return;
-    m_connection = adoptOSObject(xpc_connection_create_mach_service(m_machServiceName.data(), dispatch_get_main_queue(), 0));
+    m_connection = adoptOSObject(xpc_connection_create_mach_service(m_machServiceName.data(), mainDispatchQueueSingleton(), 0));
     xpc_connection_set_event_handler(m_connection.get(), [weakThis = WeakPtr { *this }](xpc_object_t event) {
         if (!weakThis)
             return;

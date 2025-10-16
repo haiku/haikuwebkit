@@ -204,7 +204,6 @@ public:
     void postMenuClosedNotificationIfNecessary() const;
 
     bool isFieldset() const override { return false; }
-    virtual bool isImageMapLink() const { return false; }
     virtual bool isMenuList() const { return false; }
     virtual bool isMenuListPopup() const { return false; }
     virtual bool isMenuListOption() const { return false; }
@@ -237,7 +236,7 @@ public:
     bool isVisited() const final;
     bool isRequired() const override { return false; }
     bool isExpanded() const final;
-    bool isVisible() const override { return !isHidden(); }
+    bool isVisible() const override;
     virtual bool isCollapsed() const { return false; }
     void setIsExpanded(bool) override { }
     FloatRect unobscuredContentRect() const;
@@ -281,10 +280,10 @@ public:
     // Use isIgnored as the word of law when determining if an object is ignored.
     virtual bool computeIsIgnored() const { return true; }
     bool isIgnored() const final;
-    void recomputeIsIgnored();
+    inline void recomputeIsIgnored();
     void recomputeIsIgnoredForDescendants(bool includeSelf = false);
     AccessibilityObjectInclusion defaultObjectInclusion() const;
-    bool isIgnoredByDefault() const;
+    inline bool isIgnoredByDefault() const;
     bool includeIgnoredInCoreTree() const;
     bool isARIAHidden() const;
 
@@ -460,7 +459,7 @@ public:
 
     String ariaRoleDescription() const final { return getAttributeTrimmed(HTMLNames::aria_roledescriptionAttr); };
 
-    AXObjectCache* axObjectCache() const;
+    inline AXObjectCache* axObjectCache() const;
 
     static AccessibilityObject* anchorElementForNode(Node&);
     static AccessibilityObject* headingElementForNode(Node*);
@@ -512,7 +511,7 @@ public:
     Document* document() const override;
     RefPtr<Document> protectedDocument() const;
     LocalFrameView* documentFrameView() const override;
-    LocalFrame* frame() const;
+    inline LocalFrame* frame() const;
     RefPtr<LocalFrame> localMainFrame() const;
     Document* topDocument() const;
     RenderView* topRenderer() const;
@@ -748,8 +747,8 @@ public:
 
     // Visibility.
     bool isAXHidden() const;
-    bool isRenderHidden() const;
-    bool isHidden() const { return isAXHidden() || isRenderHidden(); }
+    inline bool isRenderHidden() const;
+    inline bool isHidden() const;
     bool isOnScreen() const final;
 
 #if PLATFORM(MAC)
@@ -788,6 +787,7 @@ public:
 #endif // PLATFORM(MAC)
 
     bool hasClickHandler() const override { return false; }
+    bool hasCursorPointer() const override { return false; };
     AccessibilityObject* clickableSelfOrAncestor(ClickHandlerFilter filter = ClickHandlerFilter::ExcludeBody) const final { return Accessibility::clickableSelfOrAncestor(*this, filter); };
     AccessibilityObject* focusableAncestor() final { return Accessibility::focusableAncestor(*this); }
     AccessibilityObject* editableAncestor() const final { return Accessibility::editableAncestor(*this); };
@@ -984,12 +984,6 @@ inline bool AccessibilityObject::hasDisplayContents() const
 {
     RefPtr element = this->element();
     return element && element->hasDisplayContents();
-}
-
-inline void AccessibilityObject::recomputeIsIgnored()
-{
-    // isIgnoredWithoutCache will update m_lastKnownIsIgnoredValue and perform any necessary actions if it has changed.
-    isIgnoredWithoutCache(axObjectCache());
 }
 
 inline std::optional<BoundaryPoint> AccessibilityObject::lastBoundaryPointContainedInRect(const Vector<BoundaryPoint>& boundaryPoints, const BoundaryPoint& startBoundaryPoint, const FloatRect& targetRect, bool isFlippedWritingMode) const

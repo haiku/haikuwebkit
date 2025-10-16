@@ -63,6 +63,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool needsResettingTransitionCancelsRunningTransitionQuirk : 1 { false };
     bool needsScrollbarWidthThinDisabledQuirk : 1 { false };
     bool needsSeekingSupportDisabledQuirk : 1 { false };
+    bool needsTextInputBoxSizingBorderBoxQuirk : 1 { false };
     bool needsVP9FullRangeFlagQuirk : 1 { false };
     bool needsVideoShouldMaintainAspectRatioQuirk : 1 { false };
     bool returnNullPictureInPictureElementDuringFullscreenChangeQuirk : 1 { false };
@@ -149,6 +150,7 @@ struct WEBCORE_EXPORT QuirksData {
 #endif
 
 #if ENABLE(MEDIA_STREAM)
+    bool shouldEnableFacebookFlagQuirk : 1 { false };
     bool shouldDisableImageCaptureQuirk : 1 { false };
     bool shouldEnableLegacyGetUserMediaQuirk : 1 { false };
     bool shouldEnableSpeakerSelectionPermissionsPolicyQuirk : 1 { false };
@@ -199,6 +201,10 @@ struct WEBCORE_EXPORT QuirksData {
     bool shouldEnterNativeFullscreenWhenCallingElementRequestFullscreen : 1 { false };
     bool shouldDelayReloadWhenRegisteringServiceWorker : 1 { false };
     bool shouldDisableDOMAudioSession : 1 { false };
+
+#if HAVE(PIP_SKIP_PREROLL)
+    bool shouldDisableAdSkippingInPip : 1 { false };
+#endif
 };
 
 } // namespace WebCore

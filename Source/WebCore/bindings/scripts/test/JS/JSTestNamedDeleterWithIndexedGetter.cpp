@@ -150,7 +150,7 @@ JSValue JSTestNamedDeleterWithIndexedGetter::getConstructor(VM& vm, const JSGlob
 
 void JSTestNamedDeleterWithIndexedGetter::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedDeleterWithIndexedGetter* thisObject = static_cast<JSTestNamedDeleterWithIndexedGetter*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedDeleterWithIndexedGetter* thisObject = static_cast<JSTestNamedDeleterWithIndexedGetter*>(cell);
     thisObject->JSTestNamedDeleterWithIndexedGetter::~JSTestNamedDeleterWithIndexedGetter();
 }
 
@@ -369,7 +369,7 @@ bool JSTestNamedDeleterWithIndexedGetterOwner::isReachableFromOpaqueRoots(JSC::H
 
 void JSTestNamedDeleterWithIndexedGetterOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedDeleterWithIndexedGetter = static_cast<JSTestNamedDeleterWithIndexedGetter*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedDeleterWithIndexedGetter = static_cast<JSTestNamedDeleterWithIndexedGetter*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedDeleterWithIndexedGetter->protectedWrapped().ptr(), jsTestNamedDeleterWithIndexedGetter);
 }

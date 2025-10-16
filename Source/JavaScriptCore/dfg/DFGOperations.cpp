@@ -66,8 +66,10 @@
 #include "JSLexicalEnvironment.h"
 #include "JSMap.h"
 #include "JSMapIterator.h"
+#include "JSPromiseAllContext.h"
 #include "JSPromiseConstructor.h"
 #include "JSPropertyNameEnumerator.h"
+#include "JSRegExpStringIterator.h"
 #include "JSSet.h"
 #include "JSSetIterator.h"
 #include "JSWeakMapInlines.h"
@@ -2198,9 +2200,10 @@ JSC_DEFINE_JIT_OPERATION(operationNewArrayWithSize, char*, (JSGlobalObject* glob
     }
 
     JSArray* result;
-    if (butterfly)
+    if (butterfly) {
+        ASSERT(butterfly->publicLength() <= butterfly->vectorLength());
         result = JSArray::createWithButterfly(vm, nullptr, arrayStructure, butterfly);
-    else {
+    } else {
         result = JSArray::tryCreate(vm, arrayStructure, size);
         if (!result) [[unlikely]] {
             throwOutOfMemoryError(globalObject, scope);
@@ -2357,6 +2360,26 @@ JSC_DEFINE_JIT_OPERATION(operationNewAsyncFromSyncIterator, JSCell*, (VM* vmPoin
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     OPERATION_RETURN(scope, JSAsyncFromSyncIterator::createWithInitialValues(vm, structure));
+}
+
+JSC_DEFINE_JIT_OPERATION(operationNewPromiseAllContext, JSCell*, (VM* vmPointer, Structure* structure))
+{
+    VM& vm = *vmPointer;
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    OPERATION_RETURN(scope, JSPromiseAllContext::createWithInitialValues(vm, structure));
+}
+
+JSC_DEFINE_JIT_OPERATION(operationNewRegExpStringIterator, JSCell*, (VM* vmPointer, Structure* structure))
+{
+    VM& vm = *vmPointer;
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    OPERATION_RETURN(scope, JSRegExpStringIterator::createWithInitialValues(vm, structure));
 }
 
 JSC_DEFINE_JIT_OPERATION(operationCreateActivationDirect, JSCell*, (VM* vmPointer, Structure* structure, JSScope* jsScope, SymbolTable* table, EncodedJSValue initialValueEncoded))
@@ -2586,6 +2609,27 @@ JSC_DEFINE_JIT_OPERATION(operationAllocateComplexPropertyStorage, Butterfly*, (V
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     OPERATION_RETURN(scope, object->allocateMoreOutOfLineStorage(vm, object->structure()->outOfLineCapacity(), newSize));
+}
+
+JSC_DEFINE_JIT_OPERATION(operationAllocateUnitializedAuxiliaryBase, void*, (VM* vmPointer, size_t allocationSize))
+{
+    VM& vm = *vmPointer;
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    // allocationSize accounts for IndexingHeader already.
+    unsigned indexingPayloadInBytes = allocationSize - sizeof(IndexingHeader);
+    // If we wanted to lift this restriction we'd need to teach DFG's NewArrayWithButterfly and the Phantom/Materialize friends
+    // about converting the new Array's IndexingType / Structure.
+    ASSERT(indexingPayloadInBytes / sizeof(JSValue) < MIN_ARRAY_STORAGE_CONSTRUCTION_LENGTH);
+    constexpr bool hasIndexingHeader = true;
+    unsigned preCapacity = 0;
+    unsigned propertyCapacity = 0;
+    Butterfly* result = Butterfly::createUninitialized(vm, nullptr, preCapacity, propertyCapacity, hasIndexingHeader, indexingPayloadInBytes);
+
+
+    OPERATION_RETURN(scope, result->base(preCapacity, propertyCapacity));
 }
 
 JSC_DEFINE_JIT_OPERATION(operationEnsureInt32, Butterfly*, (VM* vmPointer, JSCell* cell))
@@ -4174,6 +4218,7 @@ JSC_DEFINE_JIT_OPERATION(operationCopyOnWriteArrayIndexOfString, UCPUStrictInt32
         }
 #if ASSERT_ENABLED
         UCPUStrictInt32 expected = arrayIndexOfString(globalObject, butterfly, searchElement, index);
+        OPERATION_RETURN_IF_EXCEPTION(scope, 0);
         ASSERT(expected == result);
 #endif
         OPERATION_RETURN(scope, result);
@@ -4633,7 +4678,7 @@ JSC_DEFINE_JIT_OPERATION(operationGetDynamicVar, EncodedJSValue, (JSGlobalObject
             // When we can't statically prove we need a TDZ check, we must perform the check on the slow path.
             JSValue result = slot.getValue(globalObject, ident);
             if (result == jsTDZValue()) {
-                throwException(globalObject, scope, createTDZError(globalObject));
+                throwException(globalObject, scope, createTDZError(globalObject, ident.string()));
                 return jsUndefined();
             }
             return result;
@@ -4658,7 +4703,7 @@ ALWAYS_INLINE static void putDynamicVar(JSGlobalObject* globalObject, VM& vm, JS
         PropertySlot slot(scope, PropertySlot::InternalMethodType::Get);
         JSGlobalLexicalEnvironment::getOwnPropertySlot(scope, globalObject, ident, slot);
         if (slot.getValue(globalObject, ident) == jsTDZValue()) {
-            throwException(globalObject, throwScope, createTDZError(globalObject));
+            throwException(globalObject, throwScope, createTDZError(globalObject, ident.string()));
             return;
         }
     }

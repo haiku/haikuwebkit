@@ -29,6 +29,7 @@
 #if HAVE(IOSURFACE)
 
 #include <WebCore/IOSurface.h>
+#include <WebCore/IOSurfacePoolIdentifier.h>
 #include <WebCore/IntSize.h>
 #include <WebCore/IntSizeHash.h>
 #include <WebCore/Timer.h>
@@ -124,6 +125,7 @@ private:
     size_t m_bytesCached WTF_GUARDED_BY_LOCK(m_lock) { 0 };
     size_t m_inUseBytesCached WTF_GUARDED_BY_LOCK(m_lock) { 0 };
     size_t m_maximumBytesCached WTF_GUARDED_BY_LOCK(m_lock) { defaultMaximumBytesCached };
+    const IOSurfacePoolIdentifier m_poolIdentifier { IOSurfacePoolIdentifier::generate() };
 };
 
 }

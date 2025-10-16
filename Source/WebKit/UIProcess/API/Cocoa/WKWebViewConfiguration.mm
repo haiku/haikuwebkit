@@ -1036,7 +1036,7 @@ static WebKit::AttributionOverrideTesting toAttributionOverrideTesting(_WKAttrib
 
 - (Class)_attachmentFileWrapperClass
 {
-    return _pageConfiguration->attachmentFileWrapperClass();
+    return _pageConfiguration->attachmentFileWrapperClassSingleton();
 }
 
 - (void)_setAttachmentFileWrapperClass:(Class)attachmentFileWrapperClass

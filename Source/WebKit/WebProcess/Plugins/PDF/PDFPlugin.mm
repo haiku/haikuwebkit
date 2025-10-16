@@ -511,7 +511,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(PDFPlugin);
 
 bool PDFPlugin::pdfKitLayerControllerIsAvailable()
 {
-    return getPDFLayerControllerClass();
+    return getPDFLayerControllerClassSingleton();
 }
 
 Ref<PDFPlugin> PDFPlugin::create(HTMLPlugInElement& pluginElement)
@@ -558,8 +558,8 @@ PDFPlugin::PDFPlugin(HTMLPlugInElement& element)
     if ([m_pdfLayerController respondsToSelector:@selector(setDeviceColorSpace:)])
         [m_pdfLayerController setDeviceColorSpace:screenColorSpace(frame->protectedCoreLocalFrame()->view()).platformColorSpace()];
     
-    if ([getPDFLayerControllerClass() respondsToSelector:@selector(setUseIOSurfaceForTiles:)])
-        [getPDFLayerControllerClass() setUseIOSurfaceForTiles:false];
+    if ([getPDFLayerControllerClassSingleton() respondsToSelector:@selector(setUseIOSurfaceForTiles:)])
+        [getPDFLayerControllerClassSingleton() setUseIOSurfaceForTiles:false];
 }
 
 PDFPlugin::~PDFPlugin() = default;
@@ -1090,7 +1090,7 @@ bool PDFPlugin::showContextMenuAtPoint(const IntPoint& point)
     if (!frameView)
         return false;
     IntPoint contentsPoint = frameView->contentsToRootView(point);
-    WebMouseEvent event({ WebEventType::MouseDown, OptionSet<WebEventModifier> { }, WallTime::now() }, WebMouseEventButton::Right, 0, contentsPoint, contentsPoint, 0, 0, 0, 1, WebCore::ForceAtClick);
+    WebMouseEvent event({ WebEventType::MouseDown, OptionSet<WebEventModifier> { }, MonotonicTime::now() }, WebMouseEventButton::Right, 0, contentsPoint, contentsPoint, 0, 0, 0, 1, WebCore::ForceAtClick);
     return handleContextMenuEvent(event);
 }
 

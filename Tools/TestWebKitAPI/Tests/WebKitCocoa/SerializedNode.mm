@@ -26,6 +26,7 @@
 #import "config.h"
 
 #import "PlatformUtilities.h"
+#import "TestNavigationDelegate.h"
 #import "TestWKWebView.h"
 #import <WebKit/WKContentWorldPrivate.h>
 #import <WebKit/_WKContentWorldConfiguration.h>
@@ -37,6 +38,7 @@ TEST(SerializedNode, Basic)
 {
     RetainPtr webView = adoptNS([WKWebView new]);
     [webView loadHTMLString:@"<div id='testid'><div>test</div></div><template id='outerTemplate'><template id='innerTemplate'><span>Contents</span></template></template>" baseURL:[NSURL URLWithString:@"https://webkit.org/"]];
+    [webView _test_waitForDidFinishNavigation];
 
     RetainPtr worldConfiguration = adoptNS([_WKContentWorldConfiguration new]);
     worldConfiguration.get().allowNodeSerialization = YES;
@@ -71,8 +73,33 @@ TEST(SerializedNode, Basic)
     auto documentAccessor = "n.URL + ',' + n.documentURI + ',' + new XMLSerializer().serializeToString(n)";
     verifyNodeSerialization("document.implementation.createDocument('http://www.w3.org/2000/svg', 'svg', null)", documentAccessor, "about:blank,about:blank,<svg xmlns=\"http://www.w3.org/2000/svg\"/>", "XMLDocument");
     verifyNodeSerialization("document.implementation.createHTMLDocument('test title')", documentAccessor, "about:blank,about:blank,<!DOCTYPE html><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>test title</title></head><body></body></html>", "HTMLDocument");
-    verifyNodeSerialization("document", documentAccessor, "https://webkit.org/,https://webkit.org/,<html xmlns=\"http://www.w3.org/1999/xhtml\"><head></head><body><div id=\"testid\"><div>test</div></div><template id=\"outerTemplate\"></template></body></html>", "HTMLDocument");
+    verifyNodeSerialization("document", documentAccessor, "https://webkit.org/,https://webkit.org/,<html xmlns=\"http://www.w3.org/1999/xhtml\"><head></head><body><div id=\"testid\"><div>test</div></div><template id=\"outerTemplate\"><template id=\"innerTemplate\"><span>Contents</span></template></template></body></html>", "HTMLDocument");
     verifyNodeSerialization("document.getElementById('testid')", documentAccessor, "undefined,undefined,<div xmlns=\"http://www.w3.org/1999/xhtml\" id=\"testid\"></div>", "HTMLDivElement", "");
+
+    verifyNodeSerialization("document.createDocumentFragment()", "n.nodeName", "#document-fragment", "DocumentFragment");
+
+    NSString *shadowRootJS = @""
+    "<div id='host'>"
+    "    <template shadowrootmode='open' shadowrootclonable='true' shadowrootcustomelements>"
+    "        <a-b>"
+    "            <template shadowrootmode='open' shadowrootclonable='true' shadowrootcustomelements>"
+    "                <c-d/><c-d>"
+    "            </template>"
+    "        </a-b>"
+    "        <ef></ef>"
+    "    </template>"
+    "</div>";
+    [webView loadHTMLString:shadowRootJS baseURL:[NSURL URLWithString:@"https://webkit.org/"]];
+    [webView _test_waitForDidFinishNavigation];
+    verifyNodeSerialization("document.getElementById('host')", "n.shadowRoot.mode + ' ' + n.shadowRoot.delegatesFocus + ' ' + n.shadowRoot.serializable + ' ' + n.shadowRoot.host.tagName + ' ' + n.shadowRoot.querySelector('c-d')", "open false false DIV null", "HTMLDivElement");
+
+    __block bool done { false };
+    [webView evaluateJavaScript:@"window.webkit.serializeNode(document.getElementById('host').shadowRoot)" inFrame:nil inContentWorld:world.get() completionHandler:^(id, NSError *error) {
+        EXPECT_WK_STREQ(error.domain, WKErrorDomain);
+        EXPECT_EQ(error.code, WKErrorJavaScriptExceptionOccurred);
+        done = true;
+    }];
+    Util::run(&done);
 }
 
 }

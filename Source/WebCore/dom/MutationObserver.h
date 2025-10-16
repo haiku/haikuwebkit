@@ -32,9 +32,9 @@
 #pragma once
 
 #include <WebCore/GCReachableRef.h>
+#include <WebCore/MutationObserverOptions.h>
 #include <wtf/Forward.h>
 #include <wtf/HashSet.h>
-#include <wtf/OptionSet.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakHashSet.h>
@@ -53,24 +53,6 @@ class MutationRecord;
 class Node;
 class WindowEventLoop;
 template<typename> class ExceptionOr;
-
-enum class MutationObserverOptionType : uint8_t {
-    // MutationType
-    ChildList = 1 << 0,
-    Attributes = 1 << 1,
-    CharacterData = 1 << 2,
-
-    // ObservationFlags
-    Subtree = 1 << 3,
-    AttributeFilter = 1 << 4,
-
-    // DeliveryFlags
-    AttributeOldValue = 1 << 5,
-    CharacterDataOldValue = 1 << 6,
-};
-
-using MutationObserverOptions = OptionSet<MutationObserverOptionType>;
-using MutationRecordDeliveryOptions = OptionSet<MutationObserverOptionType>;
 
 class MutationObserver final : public RefCounted<MutationObserver> {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(MutationObserver);

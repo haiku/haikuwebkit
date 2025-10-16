@@ -85,7 +85,7 @@ public:
         return apply(transform, borderBoxSize);
     }
 
-    virtual Ref<TransformOperation> blend(const TransformOperation* from, const BlendingContext&, bool blendToIdentity = false) = 0;
+    virtual Ref<TransformOperation> blend(const TransformOperation* from, const BlendingContext&, bool blendToIdentity = false) const = 0;
 
     Type type() const { return m_type; }
     bool isSameType(const TransformOperation& other) const { return type() == other.type(); }

@@ -377,7 +377,7 @@ void VMTraps::willDestroyVM()
 #endif
 }
 
-void VMTraps::cancelThreadStopIfNeeded()
+CONCURRENT_SAFE void VMTraps::cancelThreadStopIfNeeded()
 {
     Locker locker { *m_trapSignalingLock };
 
@@ -398,7 +398,7 @@ void VMTraps::cancelThreadStopIfNeeded()
     m_threadStopRequested = false;
 }
 
-void VMTraps::requestThreadStopIfNeeded(VMTraps::Event event)
+CONCURRENT_SAFE void VMTraps::requestThreadStopIfNeeded(VMTraps::Event event)
 {
     Locker locker { *m_trapSignalingLock };
     ASSERT(!m_isShuttingDown);

@@ -21,7 +21,6 @@ mac/Misc/WebDownload.mm
 mac/Misc/WebElementDictionary.mm
 mac/Misc/WebKitErrors.m
 mac/Misc/WebKitNSStringExtras.mm
-mac/Misc/WebLocalizableStrings.mm
 mac/Misc/WebNSObjectExtras.mm
 mac/Misc/WebNSPasteboardExtras.mm
 mac/Misc/WebNSURLExtras.mm

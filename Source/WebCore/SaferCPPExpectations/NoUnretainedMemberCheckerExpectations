@@ -2,13 +2,10 @@ PAL/pal/graphics/cocoa/WebAVContentKeyGrouping.h
 accessibility/cocoa/AXCoreObjectCocoa.mm
 bridge/objc/WebScriptObject.h
 page/EventHandler.h
-platform/MediaSample.h
 platform/cocoa/WebAVPlayerLayer.h
-platform/graphics/avfoundation/objc/ImageDecoderAVFObjC.mm
 platform/graphics/ca/cocoa/WebVideoContainerLayer.h
 platform/graphics/cg/CGSubimageCacheWithTimer.cpp
 platform/graphics/cocoa/WebSampleBufferVideoRendering.h
-platform/graphics/mac/LegacyDisplayRefreshMonitorMac.h
 platform/ios/WebAVPlayerController.h
 platform/ios/WebAVPlayerController.mm
 platform/mac/WebCoreFullScreenPlaceholderView.h

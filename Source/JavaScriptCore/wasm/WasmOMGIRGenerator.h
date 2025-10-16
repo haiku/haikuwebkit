@@ -45,14 +45,13 @@
 
 extern "C" void SYSV_ABI dumpProcedure(void*);
 
-namespace JSC {
-
-namespace Wasm {
+namespace JSC::Wasm {
 
 class IPIntCallee;
+class Module;
 
-Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(CompilationContext&, IPIntCallee&, OptimizingJITCallee&, const FunctionData&, const TypeDefinition&, Vector<UnlinkedWasmToWasmCall>&, CalleeGroup&, const ModuleInformation&, MemoryMode, CompilationMode, FunctionCodeIndex functionIndex, uint32_t loopIndexForOSREntry);
+Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(CompilationContext&, IPIntCallee&, OptimizingJITCallee&, const FunctionData&, const TypeDefinition&, Vector<UnlinkedWasmToWasmCall>&, Module&, CalleeGroup&, const ModuleInformation&, MemoryMode, CompilationMode, FunctionCodeIndex functionIndex, uint32_t loopIndexForOSREntry);
 
-} } // namespace JSC::Wasm
+} // namespace JSC::Wasm
 
 #endif // ENABLE(WEBASSEMBLY_OMGJIT)

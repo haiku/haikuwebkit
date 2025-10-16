@@ -185,6 +185,8 @@ extension WebPageWebView {
 }
 
 extension WebPageWebView {
+    // SPI for the cross-import overlay.
+    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public func setNeedsScrollGeometryUpdates(_ value: Bool) {
         self._setNeedsScrollGeometryUpdates(value)
     }

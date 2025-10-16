@@ -64,7 +64,7 @@ bool FontPlatformData::skiaTypefaceHasAnySupportedColorTable(const SkTypeface& t
         return false;
 
     Vector<SkFontTableTag> tables(tablesCount);
-    const int tableTagsCount = typeface.getTableTags(tables.mutableSpan().data());
+    const int tableTagsCount = typeface.readTableTags(tables.mutableSpan());
     if (!tableTagsCount)
         return false;
 

@@ -39,6 +39,8 @@ class WebPlatformStrategies :
     , public WebCore::PushStrategy
 #endif
 {
+    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebPlatformStrategies);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebPlatformStrategies);
     friend NeverDestroyed<WebPlatformStrategies>;
 public:
     static void initialize();
@@ -114,6 +116,11 @@ private:
     void windowUnsubscribeFromPushService(const URL& scope, std::optional<WebCore::PushSubscriptionIdentifier>, UnsubscribeFromPushServiceCallback&&) override;
     void windowGetPushSubscription(const URL& scope, GetPushSubscriptionCallback&&) override;
     void windowGetPushPermissionState(const URL& scope, GetPushPermissionStateCallback&&) override;
+
+    uint32_t checkedPtrCount() const final { return WebCore::PasteboardStrategy::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return WebCore::PasteboardStrategy::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { WebCore::PasteboardStrategy::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { WebCore::PasteboardStrategy::decrementCheckedPtrCount(); }
 #endif
 };
 

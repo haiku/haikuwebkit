@@ -33,6 +33,7 @@
 #include "PathUtilities.h"
 #include "RenderAncestorIterator.h"
 #include "RenderBox.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
 #include "SimpleRange.h"
 #include "WindRule.h"
@@ -50,7 +51,7 @@ EventRegionContext::EventRegionContext(EventRegion& eventRegion)
 
 EventRegionContext::~EventRegionContext() = default;
 
-void EventRegionContext::unite(const FloatRoundedRect& roundedRect, RenderObject& renderer, const RenderStyle& style, bool overrideUserModifyIsEditable)
+void EventRegionContext::unite(const FloatRoundedRect& roundedRect, const RenderObject& renderer, const RenderStyle& style, bool overrideUserModifyIsEditable)
 {
     auto transformAndClipIfNeeded = [&](auto input, auto transform) {
         if (m_transformStack.isEmpty() && m_clipStack.isEmpty())
@@ -133,7 +134,7 @@ static std::optional<FloatRect> guardRectForRegionBounds(const InteractionRegion
     return std::nullopt;
 }
 
-void EventRegionContext::uniteInteractionRegions(RenderObject& renderer, const FloatRect& layerBounds, const FloatSize& clipOffset, const std::optional<AffineTransform>& transform)
+void EventRegionContext::uniteInteractionRegions(const RenderObject& renderer, const FloatRect& layerBounds, const FloatSize& clipOffset, const std::optional<AffineTransform>& transform)
 {
     if (!renderer.page().shouldBuildInteractionRegions())
         return;
@@ -195,7 +196,7 @@ void EventRegionContext::uniteInteractionRegions(RenderObject& renderer, const F
     }
 }
 
-bool EventRegionContext::shouldConsolidateInteractionRegion(RenderObject& renderer, const IntRect& bounds, const NodeIdentifier& nodeIdentifier)
+bool EventRegionContext::shouldConsolidateInteractionRegion(const RenderObject& renderer, const IntRect& bounds, const NodeIdentifier& nodeIdentifier)
 {
     for (auto& ancestor : ancestorsOfType<RenderElement>(renderer)) {
         if (!ancestor.element())
@@ -462,7 +463,7 @@ EventRegion::EventRegion(Region&& region
 {
 }
 
-void EventRegion::unite(const Region& region, RenderObject& renderer, const RenderStyle& style, bool overrideUserModifyIsEditable)
+void EventRegion::unite(const Region& region, const RenderObject& renderer, const RenderStyle& style, bool overrideUserModifyIsEditable)
 {
     if (renderer.usedPointerEvents() == PointerEvents::None)
         return;

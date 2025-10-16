@@ -70,7 +70,6 @@ public:
     void setPrivateAndOpen(Ref<WebCore::MediaSourcePrivate>&&) final;
     void reOpen() final;
     Ref<WebCore::MediaTimePromise> waitForTarget(const WebCore::SeekTarget&) final;
-    Ref<WebCore::MediaPromise> seekToTime(const MediaTime&) final;
     RefPtr<WebCore::MediaSourcePrivate> mediaSourcePrivate() const final { return m_private; }
 
 #if !RELEASE_LOG_DISABLED

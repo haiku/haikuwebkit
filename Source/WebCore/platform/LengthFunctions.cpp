@@ -27,43 +27,36 @@
 #include "FloatSize.h"
 #include "LayoutSize.h"
 #include "LengthPoint.h"
-#include "LengthSize.h"
 
 namespace WebCore {
 
-int intValueForLength(const Length& length, LayoutUnit maximumValue)
+int intValueForLength(const Length& length, LayoutUnit maximumValue, float zoom)
 {
-    return static_cast<int>(valueForLength(length, maximumValue));
+    return static_cast<int>(valueForLength(length, maximumValue, zoom));
 }
 
-LayoutUnit valueForLength(const Length& length, LayoutUnit maximumValue)
+LayoutUnit valueForLength(const Length& length, LayoutUnit maximumValue, float zoom)
 {
-    return valueForLengthWithLazyMaximum<LayoutUnit, LayoutUnit>(length, [&] ALWAYS_INLINE_LAMBDA { return maximumValue; });
+    return valueForLengthWithLazyMaximum<LayoutUnit, LayoutUnit>(length, [&] ALWAYS_INLINE_LAMBDA {
+        return maximumValue;
+    }, zoom);
 }
 
-float floatValueForLength(const Length& length, float maximumValue)
+float floatValueForLength(const Length& length, float maximumValue, float zoom)
 {
-    return valueForLengthWithLazyMaximum<float, float>(length, [&] ALWAYS_INLINE_LAMBDA { return maximumValue; });
+    return valueForLengthWithLazyMaximum<float, float>(length, [&] ALWAYS_INLINE_LAMBDA {
+        return maximumValue;
+    }, zoom);
 }
 
-LayoutSize sizeForLengthSize(const LengthSize& length, const LayoutSize& maximumValue)
+LayoutPoint pointForLengthPoint(const LengthPoint& lengthPoint, const LayoutSize& maximumValue, float zoom)
 {
-    return { valueForLength(length.width, maximumValue.width()), valueForLength(length.height, maximumValue.height()) };
+    return { valueForLength(lengthPoint.x, maximumValue.width(), zoom), valueForLength(lengthPoint.y, maximumValue.height(), zoom) };
 }
 
-LayoutPoint pointForLengthPoint(const LengthPoint& lengthPoint, const LayoutSize& maximumValue)
+FloatPoint floatPointForLengthPoint(const LengthPoint& lengthPoint, const FloatSize& boxSize, float zoom)
 {
-    return { valueForLength(lengthPoint.x, maximumValue.width()), valueForLength(lengthPoint.y, maximumValue.height()) };
-}
-
-FloatSize floatSizeForLengthSize(const LengthSize& lengthSize, const FloatSize& boxSize)
-{
-    return { floatValueForLength(lengthSize.width, boxSize.width()), floatValueForLength(lengthSize.height, boxSize.height()) };
-}
-
-FloatPoint floatPointForLengthPoint(const LengthPoint& lengthPoint, const FloatSize& boxSize)
-{
-    return { floatValueForLength(lengthPoint.x, boxSize.width()), floatValueForLength(lengthPoint.y, boxSize.height()) };
+    return { floatValueForLength(lengthPoint.x, boxSize.width(), zoom), floatValueForLength(lengthPoint.y, boxSize.height(), zoom) };
 }
 
 } // namespace WebCore

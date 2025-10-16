@@ -51,7 +51,7 @@ class WebMediaSessionManager : public MediaPlaybackTargetPicker::Client, public 
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebMediaSessionManager);
 public:
 
-    WEBCORE_EXPORT static WebMediaSessionManager& shared();
+    WEBCORE_EXPORT static WebMediaSessionManager& singleton();
 
     WEBCORE_EXPORT void setMockMediaPlaybackTargetPickerEnabled(bool);
     WEBCORE_EXPORT void setMockMediaPlaybackTargetPickerState(const String&, MediaPlaybackTargetContext::MockState);

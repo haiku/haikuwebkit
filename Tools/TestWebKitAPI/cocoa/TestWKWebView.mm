@@ -26,6 +26,8 @@
 #import "config.h"
 #import "TestWKWebView.h"
 
+#ifdef __cplusplus
+
 #import "CGImagePixelReader.h"
 #import "ClassMethodSwizzler.h"
 #import "HostWindowManager.h"
@@ -55,10 +57,14 @@
 #import <wtf/WeakObjCPtr.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 
+#endif
+
 #if PLATFORM(MAC)
 #import <AppKit/AppKit.h>
 #import <Carbon/Carbon.h>
 #endif
+
+#ifdef __cplusplus
 
 #if PLATFORM(IOS_FAMILY)
 #import "UIKitSPIForTesting.h"
@@ -180,11 +186,6 @@ static NSString *overrideBundleIdentifier(id, SEL)
 }
 
 #if PLATFORM(IOS_FAMILY)
-
-- (UIView <UITextInputPrivate, UITextInputMultiDocument> *)textInputContentView
-{
-    return (UIView <UITextInputPrivate, UITextInputMultiDocument> *)[self valueForKey:@"_currentContentView"];
-}
 
 - (NSArray<_WKTextInputContext *> *)synchronouslyRequestTextInputContextsInRect:(CGRect)rect
 {
@@ -806,6 +807,21 @@ static IterationStatus forEachCALayer(CALayer *layer, IterationStatus(^visitor)(
 }
 
 @end
+
+#endif // __cplusplus
+
+@implementation WKWebView (TestWebKitAPI_NonCpp)
+
+#if PLATFORM(IOS_FAMILY)
+- (UIView <UITextInputPrivate, UITextInputMultiDocument> *)textInputContentView
+{
+    return (UIView <UITextInputPrivate, UITextInputMultiDocument> *)[self valueForKey:@"_currentContentView"];
+}
+#endif // PLATFORM(IOS_FAMILY)
+
+@end
+
+#ifdef __cplusplus
 
 @implementation TestMessageHandler {
     NSMutableDictionary<NSString *, dispatch_block_t> *_messageHandlers;
@@ -1734,3 +1750,5 @@ static WKContentView *recursiveFindWKContentView(UIView *view)
 }
 
 @end
+
+#endif // __cplusplus

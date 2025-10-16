@@ -44,6 +44,7 @@
 #import <wtf/StdLibExtras.h>
 #import <wtf/StringPrintStream.h>
 #import <wtf/URL.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/WTFString.h>
 
@@ -262,7 +263,7 @@ private:
     }
 
     auto allowSOAuthorizationLoad = self.allowSOAuthorizationLoad;
-    dispatch_async(dispatch_get_main_queue(), ^() {
+    dispatch_async(mainDispatchQueueSingleton(), ^() {
         if (allowSOAuthorizationLoad)
             completionHandler(_WKSOAuthorizationLoadPolicyAllow);
         else
@@ -506,7 +507,7 @@ TEST(SOAuthorizationRedirect, NoInterceptions)
 TEST(SOAuthorizationRedirect, DisableSSO)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -531,9 +532,9 @@ TEST(SOAuthorizationRedirect, InterceptionError)
 {
     resetState();
     // This test relies on us not swizzling most of the SOAuthorizationClass methods.
-    ClassMethodSwizzler swizzler0(PAL::getSOAuthorizationClass(), @selector(canPerformAuthorizationWithURL:responseCode:callerBundleIdentifier:useInternalExtensions:completion:), reinterpret_cast<IMP>(overrideCanPerformAuthorizationWithURLCompletion));
-    ClassMethodSwizzler swizzler1(PAL::getSOAuthorizationClass(), @selector(canPerformAuthorizationWithURL:responseCode:), reinterpret_cast<IMP>(overrideCanPerformAuthorizationWithURL));
-    InstanceMethodSwizzler swizzler2(PAL::getSOAuthorizationClass(), @selector(getAuthorizationHintsWithURL:responseCode:completion:), reinterpret_cast<IMP>(overrideGetAuthorizationHintsWithURL));
+    ClassMethodSwizzler swizzler0(PAL::getSOAuthorizationClassSingleton(), @selector(canPerformAuthorizationWithURL:responseCode:callerBundleIdentifier:useInternalExtensions:completion:), reinterpret_cast<IMP>(overrideCanPerformAuthorizationWithURLCompletion));
+    ClassMethodSwizzler swizzler1(PAL::getSOAuthorizationClassSingleton(), @selector(canPerformAuthorizationWithURL:responseCode:), reinterpret_cast<IMP>(overrideCanPerformAuthorizationWithURL));
+    InstanceMethodSwizzler swizzler2(PAL::getSOAuthorizationClassSingleton(), @selector(getAuthorizationHintsWithURL:responseCode:completion:), reinterpret_cast<IMP>(overrideGetAuthorizationHintsWithURL));
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -551,7 +552,7 @@ TEST(SOAuthorizationRedirect, InterceptionError)
 TEST(SOAuthorizationRedirect, InterceptionDoNotHandle)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -573,7 +574,7 @@ TEST(SOAuthorizationRedirect, InterceptionDoNotHandle)
 TEST(SOAuthorizationRedirect, InterceptionCancel)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -596,7 +597,7 @@ TEST(SOAuthorizationRedirect, InterceptionCancel)
 TEST(SOAuthorizationRedirect, InterceptionCompleteWithoutData)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -618,7 +619,7 @@ TEST(SOAuthorizationRedirect, InterceptionCompleteWithoutData)
 TEST(SOAuthorizationRedirect, InterceptionUnexpectedCompletion)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -641,7 +642,7 @@ TEST(SOAuthorizationRedirect, InterceptionUnexpectedCompletion)
 TEST(SOAuthorizationRedirect, InterceptionSucceed1)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -688,7 +689,7 @@ static constexpr auto SimpleHtml =
 TEST(SOAuthorizationRedirect, InterceptionSucceed2)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationBasicDelegate alloc] init]);
@@ -721,7 +722,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceed2)
 TEST(SOAuthorizationRedirect, InterceptionSucceed3)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
@@ -755,7 +756,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceed3)
 TEST(SOAuthorizationRedirect, InterceptionSucceed4)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -784,7 +785,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceed4)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithOtherHttpStatusCode)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -807,7 +808,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithOtherHttpStatusCode)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWith302POST)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
@@ -849,7 +850,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWith302POST)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWith302AfterRedirection)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     TestWebKitAPI::HTTPServer server({
         { "/"_s, { SimpleHtml } },
@@ -894,7 +895,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWith302AfterRedirection)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWith307Simple)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
@@ -946,7 +947,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWith307Simple)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWith307CrossOrigin)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
@@ -1004,7 +1005,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWith307CrossOrigin)
 TEST(SOAuthorizationRedirect, InterceptionFailedWith307PUT)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
@@ -1058,7 +1059,7 @@ TEST(SOAuthorizationRedirect, InterceptionFailedWith307PUT)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithCookie)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1092,7 +1093,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithCookie)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithCookies)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1127,7 +1128,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithCookies)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithRedirectionAndCookie)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
@@ -1165,7 +1166,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithRedirectionAndCookie)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithDifferentOrigin)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1188,7 +1189,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithDifferentOrigin)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithWaitingSession)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1223,7 +1224,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithWaitingSession)
 TEST(SOAuthorizationRedirect, InterceptionAbortedWithWaitingSession)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL1 = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
     RetainPtr<NSURL> testURL2 = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
@@ -1252,7 +1253,7 @@ TEST(SOAuthorizationRedirect, InterceptionAbortedWithWaitingSession)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithActiveSessionDidMoveWindow)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1282,7 +1283,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithActiveSessionDidMoveWindow)
 TEST(SOAuthorizationRedirect, InterceptionSucceedTwice)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1314,7 +1315,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedTwice)
 TEST(SOAuthorizationRedirect, InterceptionSucceedSuppressActiveSession)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1350,7 +1351,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedSuppressActiveSession)
 TEST(SOAuthorizationRedirect, InterceptionSucceedSuppressWaitingSession)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1392,7 +1393,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedSuppressWaitingSession)
 TEST(SOAuthorizationRedirect, InterceptionSucceedSAML)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1423,7 +1424,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedSAML)
 TEST(SOAuthorizationRedirect, InterceptionSucceedSAMLWithPSON)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple3" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -1457,7 +1458,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedSAMLWithPSON)
 TEST(SOAuthorizationRedirect, AuthorizationOptions)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
@@ -1476,7 +1477,7 @@ TEST(SOAuthorizationRedirect, AuthorizationOptions)
 TEST(SOAuthorizationRedirect, InterceptionDidNotHandleTwice)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1496,7 +1497,7 @@ TEST(SOAuthorizationRedirect, InterceptionDidNotHandleTwice)
 TEST(SOAuthorizationRedirect, InterceptionCompleteTwice)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1518,7 +1519,7 @@ TEST(SOAuthorizationRedirect, InterceptionCompleteTwice)
 TEST(SOAuthorizationRedirect, SOAuthorizationLoadPolicyIgnore)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1537,7 +1538,7 @@ TEST(SOAuthorizationRedirect, SOAuthorizationLoadPolicyIgnore)
 TEST(SOAuthorizationRedirect, SOAuthorizationLoadPolicyAllowAsync)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1564,7 +1565,7 @@ TEST(SOAuthorizationRedirect, SOAuthorizationLoadPolicyAllowAsync)
 TEST(SOAuthorizationRedirect, SOAuthorizationLoadPolicyIgnoreAsync)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1587,7 +1588,7 @@ TEST(SOAuthorizationRedirect, SOAuthorizationLoadPolicyIgnoreAsync)
 TEST(SOAuthorizationRedirect, InterceptionSucceedWithUI)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1619,7 +1620,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWithUI)
 TEST(SOAuthorizationRedirect, InterceptionCancelWithUI)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1650,7 +1651,7 @@ TEST(SOAuthorizationRedirect, InterceptionCancelWithUI)
 TEST(SOAuthorizationRedirect, InterceptionErrorWithUI)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1680,7 +1681,7 @@ TEST(SOAuthorizationRedirect, InterceptionErrorWithUI)
 TEST(SOAuthorizationRedirect, InterceptionSucceedSuppressActiveSessionWithUI)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1719,7 +1720,7 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedSuppressActiveSessionWithUI)
 TEST(SOAuthorizationRedirect, ShowUITwice)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1755,7 +1756,7 @@ TEST(SOAuthorizationRedirect, ShowUITwice)
 TEST(SOAuthorizationRedirect, NSNotificationCenter)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1785,7 +1786,7 @@ TEST(SOAuthorizationRedirect, NSNotificationCenter)
 TEST(SOAuthorizationRedirect, DismissUIDuringMiniaturization)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1829,7 +1830,7 @@ TEST(SOAuthorizationRedirect, DismissUIDuringMiniaturization)
 TEST(SOAuthorizationRedirect, DismissUIDuringHiding)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1876,7 +1877,7 @@ TEST(SOAuthorizationRedirect, DismissUIDuringHiding)
 TEST(SOAuthorizationRedirect, DismissUIDuringMiniaturizationThenAnother)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -1930,7 +1931,7 @@ TEST(SOAuthorizationRedirect, DismissUIDuringMiniaturizationThenAnother)
 TEST(SOAuthorizationRedirect, DismissUIDuringHidingThenAnother)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
 
@@ -2010,7 +2011,7 @@ TEST(SOAuthorizationPopUp, NoInterceptions)
 TEST(SOAuthorizationPopUp, NoInterceptionsSubFrame)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
@@ -2035,7 +2036,7 @@ TEST(SOAuthorizationPopUp, NoInterceptionsSubFrame)
 TEST(SOAuthorizationPopUp, NoInterceptionsWithoutUserGesture)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     // The default value of javaScriptCanOpenWindowsAutomatically is NO on iOS, and YES on macOS.
     auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
@@ -2054,7 +2055,7 @@ TEST(SOAuthorizationPopUp, NoInterceptionsWithoutUserGesture)
 TEST(SOAuthorizationPopUp, InterceptionError)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
@@ -2091,7 +2092,7 @@ TEST(SOAuthorizationPopUp, InterceptionError)
 TEST(SOAuthorizationPopUp, InterceptionCancel)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
@@ -2127,7 +2128,7 @@ TEST(SOAuthorizationPopUp, InterceptionCancel)
 TEST(SOAuthorizationPopUp, InterceptionSucceedCloseByItself)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2165,7 +2166,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedCloseByItself)
 TEST(SOAuthorizationPopUp, InterceptionSucceedCloseByParent)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2203,7 +2204,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedCloseByParent)
 TEST(SOAuthorizationPopUp, InterceptionSucceedCloseByWebKit)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2241,7 +2242,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedCloseByWebKit)
 TEST(SOAuthorizationPopUp, InterceptionSucceedWithOtherHttpStatusCode)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
@@ -2282,7 +2283,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedWithOtherHttpStatusCode)
 TEST(SOAuthorizationPopUp, InterceptionSucceedWithCookie)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2320,7 +2321,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedWithCookie)
 TEST(SOAuthorizationPopUp, InterceptionSucceedTwice)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2364,7 +2365,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedTwice)
 TEST(SOAuthorizationPopUp, InterceptionSucceedSuppressActiveSession)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2430,7 +2431,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedSuppressActiveSession)
 TEST(SOAuthorizationPopUp, InterceptionSucceedNewWindowNavigation)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2468,7 +2469,7 @@ TEST(SOAuthorizationPopUp, InterceptionSucceedNewWindowNavigation)
 TEST(SOAuthorizationPopUp, AuthorizationOptions)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     URL testURL { "http://www.example.com"_str };
     auto testHtml = generateOpenerHTML(openerTemplate, testURL.string());
@@ -2493,7 +2494,7 @@ TEST(SOAuthorizationPopUp, AuthorizationOptions)
 TEST(SOAuthorizationPopUp, SOAuthorizationLoadPolicyIgnore)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     URL testURL { "http://www.example.com"_str };
     auto testHtml = generateOpenerHTML(openerTemplate, testURL.string());
@@ -2519,7 +2520,7 @@ TEST(SOAuthorizationPopUp, SOAuthorizationLoadPolicyIgnore)
 TEST(SOAuthorizationPopUp, SOAuthorizationLoadPolicyAllowAsync)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
     URL testURL { "http://www.example.com"_str };
@@ -2559,7 +2560,7 @@ TEST(SOAuthorizationPopUp, SOAuthorizationLoadPolicyAllowAsync)
 TEST(SOAuthorizationPopUp, SOAuthorizationLoadPolicyIgnoreAsync)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     URL testURL { "http://www.example.com"_str };
     auto testHtml = generateOpenerHTML(openerTemplate, testURL.string());
@@ -2606,7 +2607,7 @@ TEST(SOAuthorizationSubFrame, NoInterceptions)
 TEST(SOAuthorizationSubFrame, NoInterceptionsNonAppleFirstPartyMainFrame)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     auto testHtml = generateHTML(parentTemplate, URL { "http://www.example.com"_str }.string());
 
@@ -2625,7 +2626,7 @@ TEST(SOAuthorizationSubFrame, NoInterceptionsNonAppleFirstPartyMainFrame)
 TEST(SOAuthorizationSubFrame, InterceptionError)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
@@ -2657,7 +2658,7 @@ TEST(SOAuthorizationSubFrame, InterceptionError)
 TEST(SOAuthorizationSubFrame, InterceptionCancel)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
@@ -2689,7 +2690,7 @@ TEST(SOAuthorizationSubFrame, InterceptionCancel)
 TEST(SOAuthorizationSubFrame, InterceptionSuccess)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };
@@ -2720,7 +2721,7 @@ TEST(SOAuthorizationSubFrame, InterceptionSuccess)
 TEST(SOAuthorizationSubFrame, InterceptionSucceedWithOtherHttpStatusCode)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
@@ -2756,7 +2757,7 @@ TEST(SOAuthorizationSubFrame, InterceptionSucceedWithOtherHttpStatusCode)
 TEST(SOAuthorizationSubFrame, InterceptionSucceedWithCookie)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };
@@ -2786,7 +2787,7 @@ TEST(SOAuthorizationSubFrame, InterceptionSucceedWithCookie)
 TEST(SOAuthorizationSubFrame, InterceptionSucceedWithCookieButCSPDeny)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };
@@ -2817,7 +2818,7 @@ TEST(SOAuthorizationSubFrame, InterceptionSucceedWithCookieButCSPDeny)
 TEST(SOAuthorizationSubFrame, InterceptionSucceedWithCookieButXFrameDeny)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };
@@ -2848,7 +2849,7 @@ TEST(SOAuthorizationSubFrame, InterceptionSucceedWithCookieButXFrameDeny)
 TEST(SOAuthorizationSubFrame, InterceptionSuccessTwice)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };
@@ -2887,7 +2888,7 @@ TEST(SOAuthorizationSubFrame, InterceptionSuccessTwice)
 TEST(SOAuthorizationSubFrame, AuthorizationOptions)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };
@@ -2910,7 +2911,7 @@ TEST(SOAuthorizationSubFrame, AuthorizationOptions)
 TEST(SOAuthorizationSubFrame, SOAuthorizationLoadPolicyIgnore)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     URL testURL { "http://www.example.com"_str };
     auto testHtml = generateHTML(parentTemplate, testURL.string());
@@ -2935,7 +2936,7 @@ TEST(SOAuthorizationSubFrame, SOAuthorizationLoadPolicyAllowAsync)
 #endif
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };
@@ -2967,7 +2968,7 @@ TEST(SOAuthorizationSubFrame, SOAuthorizationLoadPolicyAllowAsync)
 TEST(SOAuthorizationSubFrame, SOAuthorizationLoadPolicyIgnoreAsync)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
 
     URL testURL { "http://www.example.com"_str };
     auto testHtml = generateHTML(parentTemplate, testURL.string());
@@ -2989,7 +2990,7 @@ TEST(SOAuthorizationSubFrame, SOAuthorizationLoadPolicyIgnoreAsync)
 TEST(SOAuthorizationSubFrame, InterceptionErrorWithReferrer)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     HTTPServer server([parentHtml = generateHTML(parentTemplate, "simple.html"_s), frameHtml = generateHTML(iframeTemplate, "parent.postMessage('Referrer: ' + document.referrer, '*');"_s)] (const Connection& connection) {
@@ -3038,7 +3039,7 @@ TEST(SOAuthorizationSubFrame, InterceptionErrorWithReferrer)
 TEST(SOAuthorizationSubFrame, InterceptionErrorMessageOrder)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     RetainPtr<NSURL> baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
@@ -3063,7 +3064,7 @@ TEST(SOAuthorizationSubFrame, InterceptionErrorMessageOrder)
 TEST(SOAuthorizationSubFrame, InterceptionSuccessMessageOrder)
 {
     resetState();
-    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClass());
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
     SWIZZLE_AKAUTH();
 
     URL testURL { "http://www.example.com"_str };

@@ -28,6 +28,7 @@
 #include "DOMTimer.h"
 
 #include "ContextDestructionObserverInlines.h"
+#include "DocumentInlines.h"
 #include "HTMLPlugInElement.h"
 #include "InspectorInstrumentation.h"
 #include "Logging.h"
@@ -424,7 +425,7 @@ Seconds DOMTimer::intervalClampedToMinimum() const
         return interval;
 
     // Apply two throttles - the global (per Page) minimum, and also a per-timer throttle.
-    interval = std::max(interval, scriptExecutionContext()->minimumDOMTimerInterval());
+    interval = std::max(interval, protectedScriptExecutionContext()->minimumDOMTimerInterval());
     if (m_throttleState == ShouldThrottle)
         interval = std::max(interval, minIntervalForNonUserObservableChangeTimers);
     return interval;

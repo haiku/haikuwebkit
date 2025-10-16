@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/html/semantics/forms/form-submission-0/resources/file-submission.py
 
 
 

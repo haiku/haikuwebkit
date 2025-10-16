@@ -5,7 +5,6 @@ WebKitBuild/Release/usr/local/include/wtf/unicode/Collator.h
 wtf/ParkingLot.h
 wtf/PrintStream.h
 wtf/RetainPtr.h
-wtf/URL.cpp
 wtf/URLParser.cpp
 wtf/cocoa/FileSystemCocoa.mm
 wtf/text/StringView.cpp

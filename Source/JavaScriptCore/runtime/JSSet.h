@@ -57,7 +57,7 @@ public:
     }
 
     static bool isAddFastAndNonObservable(Structure*);
-    JS_EXPORT_PRIVATE bool isIteratorProtocolFastAndNonObservable();
+    ALWAYS_INLINE bool isIteratorProtocolFastAndNonObservable();
     JSSet* clone(JSGlobalObject*, VM&, Structure*);
 
 private:

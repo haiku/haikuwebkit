@@ -31,6 +31,7 @@
 #include "Clipboard.h"
 #include "ClipboardItem.h"
 #include "CommonAtomStrings.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "ExceptionCode.h"

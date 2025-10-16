@@ -8,31 +8,31 @@ selectors = [
     { name = "minimizedLanguagesFromLanguages:", class = "?" },
 ]
 symbols = [
-    "_BOMCopierCopyWithOptions",
-    "_BOMCopierFree",
-    "_BOMCopierNew",
-    "_CFBundleCopyLocalizationForLocalizationInfo",
-    "_CFBundleGetLocalizationInfoForLocalization",
-    "_CFStringGetRangeOfCharacterClusterAtIndex",
-    "_SecTaskCopyValueForEntitlement",
-    "_SecTaskCreateFromSelf",
-    "_SecTaskCreateWithAuditToken",
-    "__CFProcessPath",
-    "__CFXPCCreateCFObjectFromXPCMessage",
-    "__CFXPCCreateXPCMessageWithCFObject",
-    "__dyld_get_dlopen_image_header",
-    "__dyld_get_image_uuid",
-    "__dyld_get_shared_cache_uuid",
-    "_cache_simulate_memory_warning_event",
-    "_dyld_image_header_containing_address",
-    "_dyld_shared_cache_file_path",
-    "_xpc_connection_copy_entitlement_value",
+    "BOMCopierCopyWithOptions",
+    "BOMCopierFree",
+    "BOMCopierNew",
+    "CFBundleCopyLocalizationForLocalizationInfo",
+    "CFBundleGetLocalizationInfoForLocalization",
+    "CFStringGetRangeOfCharacterClusterAtIndex",
+    "SecTaskCopyValueForEntitlement",
+    "SecTaskCreateFromSelf",
+    "SecTaskCreateWithAuditToken",
+    "_CFProcessPath",
+    "_CFXPCCreateCFObjectFromXPCMessage",
+    "_CFXPCCreateXPCMessageWithCFObject",
+    "_dyld_get_dlopen_image_header",
+    "_dyld_get_image_uuid",
+    "_dyld_get_shared_cache_uuid",
+    "cache_simulate_memory_warning_event",
+    "dyld_image_header_containing_address",
+    "dyld_shared_cache_file_path",
+    "xpc_connection_copy_entitlement_value",
 ]
 
 [[legacy]]
-symbols = ["_dyld_get_program_sdk_version"]
+symbols = ["dyld_get_program_sdk_version"]
 requires = ["!USE_APPLE_INTERNAL_SDK"]
 
 [[legacy]]
-symbols = ["_dyld_get_program_sdk_version"]
+symbols = ["dyld_get_program_sdk_version"]
 requires = ["!NDEBUG"]

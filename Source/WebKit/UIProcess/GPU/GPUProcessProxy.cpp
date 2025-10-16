@@ -84,6 +84,10 @@
 #include "MediaCapability.h"
 #endif
 
+#if HAVE(POWERLOG_TASK_MODE_QUERY)
+#include <wtf/darwin/DispatchExtras.h>
+#endif
+
 namespace WebKit {
 using namespace WebCore;
 
@@ -493,14 +497,6 @@ void GPUProcessProxy::cancelGetDisplayMediaPrompt()
 }
 #endif
 
-#if PLATFORM(COCOA)
-void GPUProcessProxy::didDrawRemoteToPDF(PageIdentifier pageID, RefPtr<SharedBuffer>&& data, SnapshotIdentifier snapshotIdentifier)
-{
-    if (auto page = WebProcessProxy::webPage(pageID))
-        page->didDrawRemoteToPDF(WTFMove(data), snapshotIdentifier);
-}
-#endif
-
 void GPUProcessProxy::getLaunchOptions(ProcessLauncher::LaunchOptions& launchOptions)
 {
     launchOptions.processType = ProcessLauncher::ProcessType::GPU;
@@ -657,7 +653,7 @@ void GPUProcessProxy::didFinishLaunching(ProcessLauncher* launcher, IPC::Connect
         processPool->gpuProcessDidFinishLaunching(processID());
 
 #if HAVE(POWERLOG_TASK_MODE_QUERY)
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr([weakThis = WeakPtr { *this }] () mutable {
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr([weakThis = WeakPtr { *this }] () mutable {
         if (!isPowerLoggingInTaskMode())
             return;
         RunLoop::mainSingleton().dispatch([weakThis = WTFMove(weakThis)] () {
@@ -926,6 +922,11 @@ void GPUProcessProxy::unregisterMemoryAttributionID(const String& attributionID,
 }
 #endif
 #endif
+
+void GPUProcessProxy::releaseSnapshot(RemoteSnapshotIdentifier identifier)
+{
+    send(Messages::GPUProcess::ReleaseSnapshot(identifier), 0);
+}
 
 } // namespace WebKit
 

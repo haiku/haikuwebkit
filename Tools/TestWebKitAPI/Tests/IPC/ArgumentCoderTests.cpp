@@ -41,7 +41,7 @@ namespace TestWebKitAPI {
 // the test to decode those objects.
 
 struct EncoderDecoderTest {
-    static constexpr IPC::MessageName name()  { return static_cast<IPC::MessageName>(123); }
+    static constexpr IPC::MessageName name()  { return IPC::MessageName::IPCTester_EmptyMessage; }
 };
 
 struct EncoderTypeNames {

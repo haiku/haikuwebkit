@@ -64,6 +64,7 @@ public:
     IntSize size() const { return m_size; }
     const DestinationColorSpace& colorSpace() const { return m_colorSpace ? *m_colorSpace : DestinationColorSpace::SRGB(); }
     PlatformColorSpaceValue platformColorSpace() const { return colorSpace().platformColorSpace(); }
+    PlatformColorSpace protectedPlatformColorSpace() const { return platformColorSpace(); }
     Headroom headroom() const { return m_headroom; }
     bool isOpaque() const { return m_isOpaque; }
 

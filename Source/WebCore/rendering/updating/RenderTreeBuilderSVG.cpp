@@ -29,6 +29,7 @@
 
 #include "LegacyRenderSVGContainer.h"
 #include "LegacyRenderSVGRoot.h"
+#include "RenderObjectDocument.h"
 #include "RenderSVGInline.h"
 #include "RenderSVGRoot.h"
 #include "RenderSVGText.h"
@@ -38,6 +39,7 @@
 #include "RenderTreeBuilderBlockFlow.h"
 #include "RenderTreeBuilderInline.h"
 #include "SVGResourcesCache.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

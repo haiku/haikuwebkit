@@ -31,13 +31,13 @@ Toml = b'''
 [[temporary-usage]]
 request = "rdar://123456789"
 cleanup = "rdar://123456790"
-symbols = ["_TemporarilyAllowedSymbol"]
+symbols = ["TemporarilyAllowedSymbol"]
 selectors = [{ name = "_initWithTemporarilyAllowedData:", class = "?" }]
 classes = ["NSTemporarilyAllowed"]
 
 [[not-web-essential]]
 request = "rdar://234567890"
-symbols = ["_Permanent1", "_Permanent2"]
+symbols = ["Permanent1", "Permanent2"]
 requires = ["ENABLE_FOO", "!ENABLE_BAR"]
 '''
 

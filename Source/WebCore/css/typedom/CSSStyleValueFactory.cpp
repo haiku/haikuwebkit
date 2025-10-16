@@ -30,12 +30,12 @@
 #include "config.h"
 #include "CSSStyleValueFactory.h"
 
-#include "CSSAppleColorFilterPropertyValue.h"
+#include "CSSAppleColorFilterValue.h"
 #include "CSSBoxShadowPropertyValue.h"
 #include "CSSCalcValue.h"
 #include "CSSCustomPropertyValue.h"
 #include "CSSEasingFunctionValue.h"
-#include "CSSFilterPropertyValue.h"
+#include "CSSFilterValue.h"
 #include "CSSKeywordValue.h"
 #include "CSSNumericFactory.h"
 #include "CSSParser.h"
@@ -314,7 +314,7 @@ ExceptionOr<Ref<CSSStyleValue>> CSSStyleValueFactory::reifyValue(Document& docum
         if (transformValue.hasException())
             return transformValue.releaseException();
         return Ref<CSSStyleValue> { transformValue.releaseReturnValue() };
-    } else if (RefPtr property = dynamicDowncast<CSSFilterPropertyValue>(cssValue)) {
+    } else if (RefPtr property = dynamicDowncast<CSSFilterValue>(cssValue)) {
         return WTF::switchOn(property->filter(),
             [&](CSS::Keyword::None) -> ExceptionOr<Ref<CSSStyleValue>> {
                 return static_reference_cast<CSSStyleValue>(CSSKeywordValue::rectifyKeywordish(nameLiteral(CSSValueNone)));
@@ -323,7 +323,7 @@ ExceptionOr<Ref<CSSStyleValue>> CSSStyleValueFactory::reifyValue(Document& docum
                 return CSSStyleValue::create(Ref(const_cast<CSSValue&>(cssValue)));
             }
         );
-    } else if (RefPtr property = dynamicDowncast<CSSAppleColorFilterPropertyValue>(cssValue)) {
+    } else if (RefPtr property = dynamicDowncast<CSSAppleColorFilterValue>(cssValue)) {
         return WTF::switchOn(property->filter(),
             [&](CSS::Keyword::None) -> ExceptionOr<Ref<CSSStyleValue>> {
                 return static_reference_cast<CSSStyleValue>(CSSKeywordValue::rectifyKeywordish(nameLiteral(CSSValueNone)));

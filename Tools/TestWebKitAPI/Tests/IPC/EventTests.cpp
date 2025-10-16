@@ -35,7 +35,7 @@ struct MockTestMessageWithSignal {
     static constexpr bool isSync = false;
     static constexpr bool canDispatchOutOfOrder = false;
     static constexpr bool replyCanDispatchOutOfOrder = false;
-    static constexpr IPC::MessageName name()  { return static_cast<IPC::MessageName>(123); }
+    static constexpr IPC::MessageName name()  { return IPC::MessageName::IPCTester_EmptyMessage; }
     MockTestMessageWithSignal(IPC::Signal&& signal)
         : m_signal(WTFMove(signal))
     {

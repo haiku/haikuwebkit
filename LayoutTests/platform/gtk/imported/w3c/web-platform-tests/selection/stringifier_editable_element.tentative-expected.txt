@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Error: assert_equals: expected "This is a text" but got ""
      Button Anchor Text
 
 Harness Error (FAIL), message = Error: assert_equals: expected "This is a text" but got ""

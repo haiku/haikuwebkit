@@ -142,12 +142,12 @@ void WebPopupMenu::setUpPlatformData(const WebCore::IntRect& pageCoordinates, Pl
             if (m_popupClient->menuStyle().textDirection() == TextDirection::LTR) {
                 textX = std::max<float>(0, m_popupClient->clientPaddingLeft() - m_popupClient->clientInsetLeft());
                 if (RenderTheme::singleton().popupOptionSupportsTextIndent())
-                    textX += minimumIntValueForLength(itemStyle.textIndent(), LayoutUnit::fromFloatRound(itemRect.width()));
+                    textX += minimumIntValueForLength(itemStyle.textIndent(), LayoutUnit::fromFloatRound(itemRect.width()), 1.0f /* FIXME FIND ZOOM */);
             } else {
                 textX = itemRect.width() - m_popupClient->menuStyle().font().width(textRun);
                 textX = std::min<float>(textX, textX - m_popupClient->clientPaddingRight() + m_popupClient->clientInsetRight());
                 if (RenderTheme::singleton().popupOptionSupportsTextIndent())
-                    textX -= minimumIntValueForLength(itemStyle.textIndent(), LayoutUnit::fromFloatRound(itemRect.width()));
+                    textX -= minimumIntValueForLength(itemStyle.textIndent(), LayoutUnit::fromFloatRound(itemRect.width()), 1.0f /* FIXME FIND ZOOM */);
             }
             float textY = itemRect.y() + itemFontCascade.metricsOfPrimaryFont().intAscent() + (itemRect.height() - itemFontCascade.metricsOfPrimaryFont().intHeight()) / 2;
 

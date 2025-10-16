@@ -172,16 +172,9 @@ public:
     bool canRunModal() const;
     void runModal();
 
-    void setToolbarsVisible(bool);
     bool toolbarsVisible() const;
-
-    void setStatusbarVisible(bool);
     bool statusbarVisible() const;
-
-    void setScrollbarsVisible(bool);
     bool scrollbarsVisible() const;
-
-    void setMenubarVisible(bool);
     bool menubarVisible() const;
 
     void setResizable(bool);

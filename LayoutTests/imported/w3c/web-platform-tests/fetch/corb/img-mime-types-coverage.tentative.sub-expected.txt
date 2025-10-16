@@ -1,36 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=x
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=x%2Fx
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=image%2Fgif
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=image%2Fpng
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=image%2Fpng%3Bblah
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=image%2Fsvg%2Bxml
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fjavascript
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fjsonp
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=image%2Fgif%3BHI%3DTHERE
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fx-json
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fjson%2Bblah
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fjson%2Bblah
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fxml%2Bblah
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fxml%2Bblah
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fblahjson
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fblahxml
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fhtml
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fjson
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fjson
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fxml
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fxml
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fblah%2Bjson
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fblah%2Bjson
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=application%2Fblah%2Bxml
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fblah%2Bxml
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=TEXT%2FHTML
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=TEXT%2FJSON
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=TEXT%2FBLAH%2BJSON
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=APPLICATION%2FBLAH%2BXML
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2Fjson%3Bdoes%3Dit%3Bmatter
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/nosniff/resources/image.py?type=text%2FHTML%3BNO%3Dit%3Bdoes%3DNOT
 
 FAIL CORB should allow the response if Content-Type is: 'null'.   assert_unreached: Unexpected error event Reached unreachable code
 FAIL CORB should allow the response if Content-Type is: ''.   assert_unreached: Unexpected error event Reached unreachable code

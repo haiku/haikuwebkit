@@ -25,10 +25,10 @@
 
 #include "CachedResourceLoader.h"
 #include "DocumentInlines.h"
+#include "FrameConsoleClient.h"
 #include "FrameDestructionObserverInlines.h"
 #include "LocalFrame.h"
 #include "Page.h"
-#include "PageConsoleClient.h"
 #include "TransformSource.h"
 #include "XMLDocumentParser.h"
 #include "XMLDocumentParserScope.h"
@@ -132,10 +132,9 @@ bool XSLStyleSheet::parseString(const String& string)
     const unsigned char BOMHighByte = *reinterpret_cast<const unsigned char*>(&byteOrderMark);
     clearXSLStylesheetDocument();
 
-    PageConsoleClient* console = nullptr;
-    RefPtr frame = ownerDocument()->frame();
-    if (frame && frame->page())
-        console = &frame->page()->console();
+    FrameConsoleClient* console = nullptr;
+    if (RefPtr frame = ownerDocument()->frame())
+        console = &frame->console();
 
     XMLDocumentParserScope scope(cachedResourceLoader(), XSLTProcessor::genericErrorFunc, XSLTProcessor::parseErrorFunc, console);
 

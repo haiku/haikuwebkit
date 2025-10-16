@@ -35,6 +35,10 @@
 #include <wtf/UUID.h>
 #include <wtf/text/MakeString.h>
 
+#if OS(DARWIN)
+#include <wtf/darwin/DispatchExtras.h>
+#endif
+
 namespace WebKit {
 
 #define MDNS_RELEASE_LOG(fmt, ...) RELEASE_LOG(Network, "%p - NetworkMDNSRegister::" fmt, this, ##__VA_ARGS__)
@@ -138,7 +142,7 @@ void NetworkMDNSRegister::registerMDNSName(WebCore::ScriptExecutionContextIdenti
             MDNS_RELEASE_LOG("registerMDNSName DNSServiceCreateConnection error %d", error);
             return completionHandler(name, WebCore::MDNSRegisterError::DNSSD);
         }
-        error = DNSServiceSetDispatchQueue(service, dispatch_get_main_queue());
+        error = DNSServiceSetDispatchQueue(service, mainDispatchQueueSingleton());
         if (error) {
             MDNS_RELEASE_LOG("registerMDNSName DNSServiceCreateConnection error %d", error);
             return completionHandler(name, WebCore::MDNSRegisterError::DNSSD);

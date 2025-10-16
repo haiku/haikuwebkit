@@ -77,7 +77,7 @@ RenderMarquee::~RenderMarquee() = default;
 
 int RenderMarquee::marqueeSpeed() const
 {
-    int result = m_layer->renderer().style().marqueeSpeed();
+    auto result = static_cast<int>(m_layer->renderer().style().marqueeSpeed().asMilliseconds());
     if (RefPtr marquee = dynamicDowncast<HTMLMarqueeElement>(m_layer->renderer().element()))
         result = std::max(result, marquee->minimumDelay());
     return result;
@@ -108,8 +108,8 @@ MarqueeDirection RenderMarquee::direction() const
 {
     // FIXME: Support the CSS3 "auto" value for determining the direction of the marquee.
     // For now just map MarqueeDirection::Auto to MarqueeDirection::Backward
-    MarqueeDirection result = m_layer->renderer().style().marqueeDirection();
-    WritingMode writingMode = m_layer->renderer().writingMode();
+    auto result = m_layer->renderer().style().marqueeDirection();
+    auto writingMode = m_layer->renderer().writingMode();
     if (result == MarqueeDirection::Auto)
         result = MarqueeDirection::Backward;
     if (result == MarqueeDirection::Forward)
@@ -119,8 +119,7 @@ MarqueeDirection RenderMarquee::direction() const
 
     // Now we have the real direction.  Next we check to see if the increment is negative.
     // If so, then we reverse the direction.
-    Length increment = m_layer->renderer().style().marqueeIncrement();
-    if (increment.isNegative())
+    if (auto& increment = m_layer->renderer().style().marqueeIncrement(); increment.isNegative())
         result = reverseDirection(result);
     
     return result;
@@ -224,20 +223,30 @@ void RenderMarquee::updateMarqueePosition()
 void RenderMarquee::updateMarqueeStyle()
 {
     CheckedRef style = m_layer->renderer().style();
-    
-    if (m_direction != style->marqueeDirection() || (m_totalLoops != style->marqueeLoopCount() && m_currentLoop >= m_totalLoops))
+
+    auto newDirection = style->marqueeDirection();
+    auto newTotalLoops = WTF::switchOn(style->marqueeRepetition(),
+        [&](const Style::WebkitMarqueeRepetition::Integer& finiteCount) {
+            return finiteCount.value;
+        },
+        [&](const CSS::Keyword::Infinite&) {
+            return -1;
+        }
+    );
+
+    if (m_direction != newDirection || (m_totalLoops != newTotalLoops && m_currentLoop >= m_totalLoops))
         m_currentLoop = 0; // When direction changes or our loopCount is a smaller number than our current loop, reset our loop.
-    
-    m_totalLoops = style->marqueeLoopCount();
-    m_direction = style->marqueeDirection();
-    
+
+    m_direction = newDirection;
+    m_totalLoops = newTotalLoops;
+
     if (m_layer->renderer().isHTMLMarquee()) {
         // Hack for WinIE.  In WinIE, a value of 0 or lower for the loop count for SLIDE means to only do
         // one loop.
         if (m_totalLoops <= 0 && style->marqueeBehavior() == MarqueeBehavior::Slide)
             m_totalLoops = 1;
     }
-    
+
     if (speed() != marqueeSpeed()) {
         m_speed = marqueeSpeed();
         if (m_timer.isActive())
@@ -288,7 +297,7 @@ void RenderMarquee::timerFired()
         }
         bool positive = range > 0;
         int clientSize = (isHorizontal() ? roundToInt(renderBox->clientWidth()) : roundToInt(renderBox->clientHeight()));
-        int increment = std::abs(intValueForLength(m_layer->renderer().style().marqueeIncrement(), clientSize));
+        int increment = std::abs(Style::evaluate(m_layer->renderer().style().marqueeIncrement(), clientSize, 1.0f /* FIXME FIND ZOOM */));
         int currentPos = (isHorizontal() ? scrollableArea->scrollOffset().x() : scrollableArea->scrollOffset().y());
         newPos =  currentPos + (addIncrement ? increment : -increment);
         if (positive)

@@ -219,7 +219,7 @@ JSValue JSTestOverloadedConstructorsWithSequence::getConstructor(VM& vm, const J
 
 void JSTestOverloadedConstructorsWithSequence::destroy(JSC::JSCell* cell)
 {
-    JSTestOverloadedConstructorsWithSequence* thisObject = static_cast<JSTestOverloadedConstructorsWithSequence*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestOverloadedConstructorsWithSequence* thisObject = static_cast<JSTestOverloadedConstructorsWithSequence*>(cell);
     thisObject->JSTestOverloadedConstructorsWithSequence::~JSTestOverloadedConstructorsWithSequence();
 }
 
@@ -262,7 +262,7 @@ bool JSTestOverloadedConstructorsWithSequenceOwner::isReachableFromOpaqueRoots(J
 
 void JSTestOverloadedConstructorsWithSequenceOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestOverloadedConstructorsWithSequence = static_cast<JSTestOverloadedConstructorsWithSequence*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestOverloadedConstructorsWithSequence = static_cast<JSTestOverloadedConstructorsWithSequence*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestOverloadedConstructorsWithSequence->protectedWrapped().ptr(), jsTestOverloadedConstructorsWithSequence);
 }

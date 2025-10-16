@@ -360,14 +360,14 @@ static RetainPtr<id> toNSObject(const AttributedString::AttributeValue& value, I
     }, [] (const TextAttachmentMissingImage& value) -> RetainPtr<id> {
         UNUSED_PARAM(value);
         RetainPtr<NSTextAttachment> attachment = adoptNS([[PlatformNSTextAttachment alloc] initWithData:nil ofType:nil]);
-        attachment.get().image = webCoreTextAttachmentMissingPlatformImage();
+        attachment.get().image = RetainPtr { webCoreTextAttachmentMissingPlatformImage() }.get();
         return attachment;
     }, [] (const TextAttachmentFileWrapper& value) -> RetainPtr<id> {
         RetainPtr<NSData> data = value.data ? bridge_cast((value.data).get()) : nil;
 
         RetainPtr fileWrapper = adoptNS([[NSFileWrapper alloc] initRegularFileWithContents:data.get()]);
         if (!value.preferredFilename.isNull())
-            [fileWrapper setPreferredFilename:filenameByFixingIllegalCharacters(value.preferredFilename.createNSString().get())];
+            [fileWrapper setPreferredFilename:RetainPtr { filenameByFixingIllegalCharacters(value.preferredFilename.createNSString().get()) }.get()];
 
         auto textAttachment = adoptNS([[PlatformNSTextAttachment alloc] initWithFileWrapper:fileWrapper.get()]);
         if (!value.accessibilityLabel.isNull())
@@ -383,7 +383,7 @@ static RetainPtr<id> toNSObject(const AttributedString::AttributeValue& value, I
     }, [] (const RetainPtr<NSDate>& value) -> RetainPtr<id> {
         return value;
     }, [] (const Ref<Font>& font) -> RetainPtr<id> {
-        return (__bridge PlatformFont *)(font->getCTFont());
+        return (__bridge PlatformFont *)font->ctFont();
     }, [] (const AttributedString::ColorFromPlatformColor& value) -> RetainPtr<id> {
         return cocoaColor(value.color);
     }, [] (const AttributedString::ColorFromCGColor& value) -> RetainPtr<id> {
@@ -443,8 +443,8 @@ static std::optional<AttributedString::AttributeValue> extractArray(NSArray *arr
         Vector<String> result;
         result.reserveInitialCapacity(arrayLength);
         for (id element in array) {
-            if (auto *string = dynamic_objc_cast<NSString>(element))
-                result.append(string);
+            if (RetainPtr string = dynamic_objc_cast<NSString>(element))
+                result.append(string.get());
             else
                 RELEASE_LOG_ERROR(Editing, "NSAttributedString extraction failed with array containing <%@>", NSStringFromClass([element class]));
         }
@@ -566,18 +566,18 @@ inline static ParagraphStyle extractParagraphStyle(NSParagraphStyle *style, Tabl
         if (![item isKindOfClass:PlatformNSTextTableBlock])
             return { };
 
-        auto tableBlock = static_cast<NSTextTableBlock *>(item);
-        if (!tableBlock.table)
+        RetainPtr tableBlock = static_cast<NSTextTableBlock *>(item);
+        if (![tableBlock table])
             return { };
 
-        auto tableBlockEnsureResult = tableBlockIDs.ensure(tableBlock, [&] {
+        auto tableBlockEnsureResult = tableBlockIDs.ensure(tableBlock.get(), [&] {
             return AttributedString::TextTableBlockID::generate();
         });
         auto tableBlockID = tableBlockEnsureResult.iterator->value;
 
         sentTextTableBlockIDs.append(tableBlockID);
 
-        auto nsTable = tableBlock.table;
+        auto nsTable = [tableBlock table];
         auto tableEnsureResults = tableIDs.ensure(nsTable, [&] {
             return AttributedString::TextTableID::generate();
         });

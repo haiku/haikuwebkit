@@ -27,10 +27,10 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "ArityCheckMode.h"
-#include "MacroAssemblerCodeRef.h"
-#include "WasmCallee.h"
-#include "WebAssemblyFunctionBase.h"
+#include <JavaScriptCore/ArityCheckMode.h>
+#include <JavaScriptCore/MacroAssemblerCodeRef.h>
+#include <JavaScriptCore/WasmCallee.h>
+#include <JavaScriptCore/WebAssemblyFunctionBase.h>
 #include <wtf/Noncopyable.h>
 
 namespace JSC {

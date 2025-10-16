@@ -34,6 +34,7 @@
 #include "WebAutomationSessionMacros.h"
 #include "WebDriverBidiProtocolObjects.h"
 #include "WebPageProxy.h"
+#include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {
 

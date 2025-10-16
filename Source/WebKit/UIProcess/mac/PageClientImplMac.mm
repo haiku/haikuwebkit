@@ -39,6 +39,7 @@
 #import "NavigationState.h"
 #import "PlatformWritingToolsUtilities.h"
 #import "RemoteLayerTreeNode.h"
+#import "TextExtractionFilter.h"
 #import "UndoOrRedo.h"
 #import "ViewGestureController.h"
 #import "ViewSnapshotStore.h"
@@ -296,6 +297,10 @@ void PageClientImpl::didCommitLoadForMainFrame(const String&, bool)
     impl->pageDidScroll({ 0, 0 });
 #if ENABLE(WRITING_TOOLS)
     impl->hideTextAnimationView();
+#endif
+#if ENABLE(TEXT_EXTRACTION_FILTER)
+    if (RefPtr filter = TextExtractionFilter::singletonIfCreated())
+        filter->resetCache();
 #endif
 }
 
@@ -966,7 +971,7 @@ void PageClientImpl::showPlatformContextMenu(NSMenu *menu, IntPoint location)
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
 WebCore::WebMediaSessionManager& PageClientImpl::mediaSessionManager()
 {
-    return WebMediaSessionManager::shared();
+    return WebMediaSessionManager::singleton();
 }
 #endif
 
@@ -1132,7 +1137,7 @@ void PageClientImpl::handleContextMenuWritingTools(WebCore::WritingTools::Reques
 {
     RetainPtr webView = this->webView();
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    [[PAL::getWTWritingToolsClass() sharedInstance] showTool:WebKit::convertToPlatformRequestedTool(tool) forSelectionRect:selectionRect ofView:m_view.get().get() forDelegate:webView.get()];
+    [[PAL::getWTWritingToolsClassSingleton() sharedInstance] showTool:WebKit::convertToPlatformRequestedTool(tool) forSelectionRect:selectionRect ofView:m_view.get().get() forDelegate:webView.get()];
 ALLOW_DEPRECATED_DECLARATIONS_END
 }
 

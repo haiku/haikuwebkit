@@ -29,6 +29,7 @@
 
 #if ENABLE(DRAG_SUPPORT)
 
+#include "MessageSenderInlines.h"
 #include "WebPage.h"
 #include "WebPageProxyMessages.h"
 #include <WebCore/DataTransfer.h>

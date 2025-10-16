@@ -49,6 +49,11 @@ static int clampGridIntegerPosition(int integerPosition)
     return clampTo(integerPosition, GridPosition::min(), GridPosition::max());
 }
 
+void add(Hasher& hasher, const GridPosition& gridPosition)
+{
+    addArgs(hasher, gridPosition.m_type, gridPosition.m_integerPosition, gridPosition.m_namedGridLine);
+}
+
 GridPosition::GridPosition(GridPosition::Explicit&& explicitPosition)
     : m_type { GridPositionType::Explicit }
     , m_integerPosition { clampGridIntegerPosition(explicitPosition.position.value) }

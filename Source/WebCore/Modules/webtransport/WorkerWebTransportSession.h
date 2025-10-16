@@ -35,13 +35,13 @@ class WebTransport;
 
 class WorkerWebTransportSession : public WebTransportSession, public WebTransportSessionClient {
 public:
-    static Ref<WorkerWebTransportSession> create(ScriptExecutionContextIdentifier, WebTransportSessionClient&);
+    WEBCORE_EXPORT static Ref<WorkerWebTransportSession> create(ScriptExecutionContextIdentifier, WebTransportSessionClient&);
     ~WorkerWebTransportSession();
 
     void ref() const { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
     void deref() const { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
 
-    void attachSession(Ref<WebTransportSession>&&);
+    WEBCORE_EXPORT void attachSession(Ref<WebTransportSession>&&);
 
 private:
     WorkerWebTransportSession(ScriptExecutionContextIdentifier, WebTransportSessionClient&);

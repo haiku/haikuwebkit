@@ -85,7 +85,6 @@ template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::DataLoadToke
 
 namespace WebCore {
 
-class ApplicationCacheHost;
 class ApplicationManifestLoader;
 class Archive;
 class ArchiveResource;
@@ -107,6 +106,7 @@ class SWClientConnection;
 class SharedBuffer;
 class SubresourceLoader;
 class SubstituteResource;
+class UserContentProvider;
 class UserContentURLPattern;
 
 struct IntegrityPolicy;
@@ -318,6 +318,8 @@ public:
 
     const NavigationAction& triggeringAction() const { return m_triggeringAction; }
     void setTriggeringAction(NavigationAction&&);
+    void setTriggeringNavigationAPIType(NavigationNavigationType type) { m_triggeringAction.setNavigationAPIType(type); };
+
     void setOverrideEncoding(const String& encoding) { m_overrideEncoding = encoding; }
     void setLastCheckedRequest(ResourceRequest&& request) { m_lastCheckedRequest = WTFMove(request); }
     const ResourceRequest& lastCheckedRequest()  { return m_lastCheckedRequest; }
@@ -381,6 +383,9 @@ public:
     void setAllowPrivacyProxy(bool allow) { m_allowPrivacyProxy = allow; }
     bool allowPrivacyProxy() const { return m_allowPrivacyProxy; }
 
+    void setAllowsJSHandleCreationInPageWorld(bool allow) { m_allowsJSHandleCreationInPageWorld = allow; }
+    bool allowsJSHandleCreationInPageWorld() const { return m_allowsJSHandleCreationInPageWorld; }
+
     void setCustomUserAgentAsSiteSpecificQuirks(String&& customUserAgent) { m_customUserAgentAsSiteSpecificQuirks = WTFMove(customUserAgent); }
     const String& customUserAgentAsSiteSpecificQuirks() const { return m_customUserAgentAsSiteSpecificQuirks; }
 
@@ -424,6 +429,16 @@ public:
     InlineMediaPlaybackPolicy inlineMediaPlaybackPolicy() const { return m_inlineMediaPlaybackPolicy; }
     void setInlineMediaPlaybackPolicy(InlineMediaPlaybackPolicy policy) { m_inlineMediaPlaybackPolicy = policy; }
 
+    struct WebpagePreferences {
+        WEBCORE_EXPORT WebpagePreferences();
+        WEBCORE_EXPORT ~WebpagePreferences();
+        WebpagePreferences& operator=(WebpagePreferences&&);
+
+        RefPtr<UserContentProvider> userContentProvider;
+    };
+    const WebpagePreferences& preferences() const { return m_preferences; }
+    WEBCORE_EXPORT void setPreferences(WebpagePreferences&&);
+
     void addSubresourceLoader(SubresourceLoader&);
     void removeSubresourceLoader(LoadCompletionType, SubresourceLoader&);
     void addPlugInStreamLoader(ResourceLoader&);
@@ -444,9 +459,6 @@ public:
 
     // The WebKit layer calls this function when it's ready for the data to actually be added to the document.
     WEBCORE_EXPORT void commitData(const SharedBuffer&);
-
-    ApplicationCacheHost& applicationCacheHost() const;
-    ApplicationCacheHost* applicationCacheHostUnlessBeingDestroyed() const;
 
     void checkLoadComplete();
 
@@ -617,9 +629,7 @@ private:
     bool isMultipartReplacingLoad() const;
     bool isPostOrRedirectAfterPost(const ResourceRequest&, const ResourceResponse&);
 
-    bool tryLoadingRequestFromApplicationCache();
     bool tryLoadingSubstituteData();
-    bool tryLoadingRedirectRequestFromApplicationCache(const ResourceRequest&);
     void continueAfterContentPolicy(PolicyAction);
 
     void stopLoadingForPolicyChange(LoadWillContinueInAnotherProcess = LoadWillContinueInAnotherProcess::No);
@@ -730,7 +740,6 @@ private:
 
     Vector<CustomHeaderFields> m_customHeaderFields;
 
-    std::unique_ptr<ApplicationCacheHost> m_applicationCacheHost;
     std::unique_ptr<ContentSecurityPolicy> m_contentSecurityPolicy;
     std::unique_ptr<IntegrityPolicy> m_integrityPolicy;
     std::unique_ptr<IntegrityPolicy> m_integrityPolicyReportOnly;
@@ -782,6 +791,7 @@ private:
     ShouldOpenExternalURLsPolicy m_shouldOpenExternalURLsPolicy { ShouldOpenExternalURLsPolicy::ShouldNotAllow };
     PushAndNotificationsEnabledPolicy m_pushAndNotificationsEnabledPolicy { PushAndNotificationsEnabledPolicy::UseGlobalPolicy };
     InlineMediaPlaybackPolicy m_inlineMediaPlaybackPolicy { InlineMediaPlaybackPolicy::Default };
+    WebpagePreferences m_preferences;
 
     Function<void(Document*)> m_whenDocumentIsCreatedCallback;
 
@@ -791,6 +801,7 @@ private:
     bool m_loadStartedDuringSwipeAnimation { false };
     bool m_lastNavigationWasAppInitiated { true };
     bool m_allowPrivacyProxy { true };
+    bool m_allowsJSHandleCreationInPageWorld : 1 { false };
 
     bool m_deferMainResourceDataLoad { true };
 
@@ -891,19 +902,6 @@ inline const String& DocumentLoader::currentContentType() const
 inline const URL& DocumentLoader::unreachableURL() const
 {
     return m_substituteData.failingURL();
-}
-
-inline ApplicationCacheHost& DocumentLoader::applicationCacheHost() const
-{
-    // For a short time while the document loader is being destroyed, m_applicationCacheHost is null.
-    // It's not acceptable to call this function during that time.
-    ASSERT(m_applicationCacheHost);
-    return *m_applicationCacheHost;
-}
-
-inline ApplicationCacheHost* DocumentLoader::applicationCacheHostUnlessBeingDestroyed() const
-{
-    return m_applicationCacheHost.get();
 }
 
 inline void DocumentLoader::didTellClientAboutLoad(const String& url)

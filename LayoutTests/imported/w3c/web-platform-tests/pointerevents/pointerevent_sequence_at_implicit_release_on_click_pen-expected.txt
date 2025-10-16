@@ -6,5 +6,5 @@ Click or tap on Black.
 Click or tap on Green.
 
 PASS pen Boundary events are emitted after lostpointercapture
-FAIL No extra events are emitted assert_equals: expected "" but got "pointerover, pointerenter, pointerout, pointerleave"
+PASS No extra events are emitted
 

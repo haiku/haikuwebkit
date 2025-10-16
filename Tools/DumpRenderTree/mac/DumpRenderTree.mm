@@ -309,23 +309,6 @@ void setPersistentUserStyleSheetLocation(CFStringRef url)
     persistentUserStyleSheetLocation() = url;
 }
 
-static bool shouldIgnoreWebCoreNodeLeaks(const std::string& urlString)
-{
-    static char* const ignoreSet[] = {
-        // Keeping this infrastructure around in case we ever need it again.
-    };
-    static const int ignoreSetCount = sizeof(ignoreSet) / sizeof(char*);
-
-    for (int i = 0; i < ignoreSetCount; i++) {
-        // FIXME: ignore case
-        std::string curIgnore(ignoreSet[i]);
-        // Match at the end of the urlString.
-        if (!urlString.compare(urlString.length() - curIgnore.length(), curIgnore.length(), curIgnore))
-            return true;
-    }
-    return false;
-}
-
 #if !PLATFORM(IOS_FAMILY)
 static NSSet *allowedFontFamilySet()
 {
@@ -2026,10 +2009,6 @@ static void runTest(const std::string& inputLine)
     workQueue.clear();
     workQueue.setFrozen(false);
 
-    bool ignoreWebCoreNodeLeaks = shouldIgnoreWebCoreNodeLeaks(testURL);
-    if (ignoreWebCoreNodeLeaks)
-        [WebCoreStatistics startIgnoringWebCoreNodeLeaks];
-
     @autoreleasepool {
         [mainFrame loadRequest:[NSURLRequest requestWithURL:url]];
     }
@@ -2095,9 +2074,6 @@ static void runTest(const std::string& inputLine)
 #if PLATFORM(MAC)
     [DumpRenderTreeDraggingInfo clearAllFilePromiseReceivers];
 #endif
-
-    if (ignoreWebCoreNodeLeaks)
-        [WebCoreStatistics stopIgnoringWebCoreNodeLeaks];
 
     if (gcBetweenTests)
         [WebCoreStatistics garbageCollectJavaScriptObjects];

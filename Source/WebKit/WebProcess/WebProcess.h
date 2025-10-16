@@ -160,6 +160,7 @@ class WebTransportSession;
 
 struct AccessibilityPreferences;
 struct AdditionalFonts;
+struct ContentWorldIdentifierType;
 struct RemoteWorkerInitializationData;
 struct UserMessage;
 struct WebProcessCreationParameters;
@@ -174,7 +175,8 @@ struct WebsiteDataStoreParameters;
 enum class RemoteWorkerType : uint8_t;
 enum class WebsiteDataType : uint32_t;
 
-using WebTransportSessionIdentifier = ObjectIdentifier<WebTransportSessionIdentifierType>;
+using ContentWorldIdentifier = ObjectIdentifier<ContentWorldIdentifierType>;
+using WebTransportSessionIdentifier = AtomicObjectIdentifier<WebTransportSessionIdentifierType>;
 
 #if PLATFORM(IOS_FAMILY)
 class LayerHostingContext;
@@ -242,6 +244,8 @@ public:
     WebCore::ThirdPartyCookieBlockingMode thirdPartyCookieBlockingMode() const { return m_thirdPartyCookieBlockingMode; }
 
     bool fullKeyboardAccessEnabled() const { return m_fullKeyboardAccessEnabled; }
+
+    void contentWorldDestroyed(ContentWorldIdentifier);
 
 #if HAVE(MOUSE_DEVICE_OBSERVATION)
     bool hasMouseDevice() const { return m_hasMouseDevice; }
@@ -323,8 +327,10 @@ public:
     ModelProcessConnection* existingModelProcessConnection() { return m_modelProcessConnection.get(); }
 #endif // ENABLE(MODEL_PROCESS)
 
+#if USE(LIBWEBRTC)
     LibWebRTCNetwork& libWebRTCNetwork();
     Ref<LibWebRTCNetwork> protectedLibWebRTCNetwork();
+#endif
 
     void setCacheModel(CacheModel);
 
@@ -438,6 +444,9 @@ public:
 
     void addServiceWorkerRegistration(WebCore::ServiceWorkerRegistrationIdentifier);
     bool removeServiceWorkerRegistration(WebCore::ServiceWorkerRegistrationIdentifier);
+
+    bool registerServiceWorker(WebCore::ServiceWorkerIdentifier);
+    bool unregisterServiceWorker(WebCore::ServiceWorkerIdentifier);
 
     void grantAccessToAssetServices(Vector<WebKit::SandboxExtensionHandle>&& assetServicesHandles);
     void revokeAccessToAssetServices();
@@ -823,7 +832,9 @@ private:
     const Ref<WebCookieJar> m_cookieJar;
     WebSocketChannelManager m_webSocketChannelManager;
 
+#if USE(LIBWEBRTC)
     const std::unique_ptr<LibWebRTCNetwork> m_libWebRTCNetwork;
+#endif
 
     HashSet<String> m_dnsPrefetchedHosts;
     PAL::HysteresisActivity m_dnsPrefetchHystereris;
@@ -886,6 +897,7 @@ private:
 #endif
 
     HashCountedSet<WebCore::ServiceWorkerRegistrationIdentifier> m_swRegistrationCounts;
+    HashCountedSet<WebCore::ServiceWorkerIdentifier> m_swServiceWorkerCounts;
 
     HashMap<StorageAreaMapIdentifier, WeakPtr<StorageAreaMap>> m_storageAreaMaps;
 
@@ -937,7 +949,8 @@ private:
     String m_mediaKeysStorageDirectory;
     FileSystem::Salt m_mediaKeysStorageSalt;
 
-    HashMap<WebTransportSessionIdentifier, ThreadSafeWeakPtr<WebTransportSession>> m_webTransportSessions;
+    Lock m_webTransportSessionsLock;
+    HashMap<WebTransportSessionIdentifier, ThreadSafeWeakPtr<WebTransportSession>> m_webTransportSessions WTF_GUARDED_BY_LOCK(m_webTransportSessionsLock);
     HashSet<WebCore::RegistrableDomain> m_domainsWithStorageAccessQuirks;
     std::unique_ptr<ScriptTrackingPrivacyFilter> m_scriptTrackingPrivacyFilter;
     bool m_mediaPlaybackEnabled { false };

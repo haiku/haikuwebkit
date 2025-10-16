@@ -34,13 +34,13 @@ namespace WebCore {
 class LibWebRTCPeerConnectionBackend;
 }
 
+namespace webrtc {
+class IceCandidate;
+}
+
 namespace WTF {
 template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
 template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::LibWebRTCPeerConnectionBackend> : std::true_type { };
-}
-
-namespace webrtc {
-class IceCandidateInterface;
 }
 
 namespace WebCore {
@@ -128,7 +128,7 @@ private:
     bool m_isLocalDescriptionSet { false };
     bool m_isRemoteDescriptionSet { false };
 
-    Vector<std::unique_ptr<webrtc::IceCandidateInterface>> m_pendingCandidates;
+    Vector<std::unique_ptr<webrtc::IceCandidate>> m_pendingCandidates;
     Vector<Ref<RTCRtpReceiver>> m_pendingReceivers;
 
     Function<void(String&&)> m_rtcStatsLogCallback;

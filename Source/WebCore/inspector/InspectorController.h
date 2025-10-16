@@ -78,6 +78,7 @@ public:
 
     WEBCORE_EXPORT bool enabled() const;
     Page& inspectedPage() const;
+    Ref<Page> protectedInspectedPage() const;
 
     WEBCORE_EXPORT void show();
 

@@ -53,7 +53,11 @@ class DarwinPort(ApplePort):
             # with MallocStackLogging enabled.
             self.set_option_default("batch_size", 1000)
 
-    def sharding_groups(self):
+    def sharding_groups(self, suite=None):
+        if suite == 'api-tests':
+            return {
+                'system': lambda shard: shard.name.startswith('TestWebKitAPI') or shard.name.startswith('TestWGSL') or shard.name.startswith('TestIPC'),
+            }
         return {
             'media': lambda shard: 'media' in shard.name or 'webaudio' in shard.name,
         }

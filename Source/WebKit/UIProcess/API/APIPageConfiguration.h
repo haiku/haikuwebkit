@@ -248,7 +248,7 @@ public:
     void setOverrideContentSecurityPolicy(const WTF::String& overrideContentSecurityPolicy) { m_data.overrideContentSecurityPolicy = overrideContentSecurityPolicy; }
 
 #if PLATFORM(COCOA)
-    ClassStructPtr attachmentFileWrapperClass() const { return m_data.attachmentFileWrapperClass.get(); }
+    ClassStructPtr attachmentFileWrapperClassSingleton() const { return m_data.attachmentFileWrapperClass.get(); }
     void setAttachmentFileWrapperClass(ClassStructPtr c) { m_data.attachmentFileWrapperClass = c; }
 
     const std::optional<Vector<WTF::String>>& additionalSupportedImageTypes() const { return m_data.additionalSupportedImageTypes; }
@@ -456,9 +456,6 @@ public:
     void setDelaysWebProcessLaunchUntilFirstLoad(bool);
     bool delaysWebProcessLaunchUntilFirstLoad() const;
 
-    void setAllowJSHandleInPageContentWorld(bool);
-    bool allowJSHandleInPageContentWorld() const;
-
     void setAllowPostingLegacySynchronousMessages(bool);
     bool allowPostingLegacySynchronousMessages() const;
 
@@ -646,7 +643,6 @@ private:
         bool scrollToTextFragmentMarkingEnabled { true };
         bool showsSystemScreenTimeBlockingView { true };
         bool shouldSendConsoleLogsToUIProcessForTesting { false };
-        bool allowJSHandleInPageContentWorld { false };
         bool allowPostingLegacySynchronousMessages { false };
 
 #if PLATFORM(VISION)

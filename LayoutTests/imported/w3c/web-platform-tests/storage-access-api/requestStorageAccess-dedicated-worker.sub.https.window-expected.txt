@@ -1,4 +1,4 @@
 
-FAIL Workers don't inherit storage access assert_false: Worker's fetch is uncredentialed. expected false got true
-FAIL Workers don't observe parent's storage access assert_false: Worker's second fetch is uncredentialed. expected false got true
+PASS Workers don't inherit storage access
+PASS Workers don't observe parent's storage access
 

@@ -27,6 +27,7 @@
 #pragma once
 
 #include <WebCore/LengthPoint.h>
+#include <WebCore/StyleAnimations.h>
 #include <WebCore/StyleAppearance.h>
 #include <WebCore/StyleAspectRatio.h>
 #include <WebCore/StyleBoxShadow.h>
@@ -37,6 +38,7 @@
 #include <WebCore/StyleOpacity.h>
 #include <WebCore/StyleOrder.h>
 #include <WebCore/StyleSelfAlignmentData.h>
+#include <WebCore/StyleTransitions.h>
 #include <memory>
 #include <wtf/DataRef.h>
 #include <wtf/FixedVector.h>
@@ -50,7 +52,6 @@ class TextStream;
 
 namespace WebCore {
 
-class AnimationList;
 class StyleDeprecatedFlexibleBoxData;
 class StyleFilterData;
 class StyleFlexibleBoxData;
@@ -85,8 +86,8 @@ public:
     DataRef<StyleVisitedLinkColorData> visitedLinkColor;
 
     Style::MaskLayers mask;
-    RefPtr<AnimationList> animations;
-    RefPtr<AnimationList> transitions;
+    Style::Animations animations;
+    Style::Transitions transitions;
     Style::Content content;
     Style::BoxShadows boxShadow;
     Style::AspectRatio aspectRatio;

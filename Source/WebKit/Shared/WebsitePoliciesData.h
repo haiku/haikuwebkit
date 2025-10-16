@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "UserContentControllerParameters.h"
 #include "WebContentMode.h"
 #include "WebsiteAutoplayPolicy.h"
 #include "WebsiteAutoplayQuirk.h"
@@ -88,9 +89,11 @@ public:
     bool allowPrivacyProxy { true };
     bool allowSiteSpecificQuirksToOverrideContentMode { false };
     bool allowSharedProcess { true };
+    bool allowsJSHandleCreationInPageWorld { false };
     WebsitePushAndNotificationsEnabledPolicy pushAndNotificationsEnabledPolicy { WebsitePushAndNotificationsEnabledPolicy::UseGlobalPolicy };
     WebsiteInlineMediaPlaybackPolicy inlineMediaPlaybackPolicy { WebsiteInlineMediaPlaybackPolicy::Default };
     WebCore::ResourceRequest alternateRequest;
+    std::optional<UserContentControllerParameters> userContentControllerParameters;
 };
 
 } // namespace WebKit

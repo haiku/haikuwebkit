@@ -184,7 +184,7 @@ CachedResourceRequest createPotentialAccessControlRequest(ResourceRequest&& requ
     }
 
     CachedResourceRequest cachedRequest { WTFMove(request), WTFMove(options) };
-    updateRequestForAccessControl(cachedRequest.resourceRequest(), document.securityOrigin(), options.storedCredentialsPolicy);
+    updateRequestForAccessControl(cachedRequest.resourceRequest(), document.protectedSecurityOrigin().get(), options.storedCredentialsPolicy);
     return cachedRequest;
 }
 

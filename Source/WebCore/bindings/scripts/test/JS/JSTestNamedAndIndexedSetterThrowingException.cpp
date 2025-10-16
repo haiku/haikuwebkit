@@ -150,7 +150,7 @@ JSValue JSTestNamedAndIndexedSetterThrowingException::getConstructor(VM& vm, con
 
 void JSTestNamedAndIndexedSetterThrowingException::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedAndIndexedSetterThrowingException* thisObject = static_cast<JSTestNamedAndIndexedSetterThrowingException*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedAndIndexedSetterThrowingException* thisObject = static_cast<JSTestNamedAndIndexedSetterThrowingException*>(cell);
     thisObject->JSTestNamedAndIndexedSetterThrowingException::~JSTestNamedAndIndexedSetterThrowingException();
 }
 
@@ -423,7 +423,7 @@ bool JSTestNamedAndIndexedSetterThrowingExceptionOwner::isReachableFromOpaqueRoo
 
 void JSTestNamedAndIndexedSetterThrowingExceptionOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedAndIndexedSetterThrowingException = static_cast<JSTestNamedAndIndexedSetterThrowingException*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedAndIndexedSetterThrowingException = static_cast<JSTestNamedAndIndexedSetterThrowingException*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedAndIndexedSetterThrowingException->protectedWrapped().ptr(), jsTestNamedAndIndexedSetterThrowingException);
 }

@@ -87,6 +87,7 @@
 #import "_WKWarningView.h"
 #import "_WKWebViewTextInputNotifications.h"
 #import <Carbon/Carbon.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <WebCore/AXObjectCache.h>
 #import <WebCore/ActivityState.h>
 #import <WebCore/AttributedString.h>
@@ -167,6 +168,7 @@
 #import <wtf/cf/TypeCastsCF.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/spi/darwin/OSVariantSPI.h>
 #import <wtf/text/MakeString.h>
 
@@ -455,7 +457,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     _didRegisterForLookupPopoverCloseNotifications = YES;
 #if !ENABLE(REVEAL)
     if (PAL::canLoad_Lookup_LUNotificationPopoverWillClose())
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_dictionaryLookupPopoverWillClose:) name:PAL::get_Lookup_LUNotificationPopoverWillClose() object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_dictionaryLookupPopoverWillClose:) name:PAL::get_Lookup_LUNotificationPopoverWillCloseSingleton() object:nil];
 #endif
 }
 
@@ -2815,10 +2817,10 @@ bool WebViewImpl::writeSelectionToPasteboard(NSPasteboard *pasteboard, NSArray *
         [pasteboard _setExpirationDate:[NSDate dateWithTimeIntervalSinceNow:pasteboardExpirationDelay.seconds()]];
     [pasteboard addTypes:types owner:nil];
     for (size_t i = 0; i < numTypes; ++i) {
-        BOOL wantsPlainText = [[types objectAtIndex:i] isEqualTo:WebCore::legacyStringPasteboardType()];
+        BOOL wantsPlainText = [[types objectAtIndex:i] isEqualTo:WebCore::legacyStringPasteboardTypeSingleton()];
         RELEASE_LOG(Pasteboard, "Synchronously requesting %{public}s for selected range", wantsPlainText ? "plain text" : "data");
         if (wantsPlainText)
-            [pasteboard setString:m_page->stringSelectionForPasteboard().createNSString().get() forType:WebCore::legacyStringPasteboardType()];
+            [pasteboard setString:m_page->stringSelectionForPasteboard().createNSString().get() forType:WebCore::legacyStringPasteboardTypeSingleton()];
         else {
             RefPtr<WebCore::SharedBuffer> buffer = m_page->dataSelectionForPasteboard([types objectAtIndex:i]);
             [pasteboard setData:buffer ? buffer->createNSData().get() : nil forType:[types objectAtIndex:i]];
@@ -2839,7 +2841,7 @@ id WebViewImpl::validRequestorForSendAndReturnTypes(NSString *sendType, NSString
 
     if (sendType && !editorState.selectionIsNone) {
         if (editorState.isInPlugin)
-            isValidSendType = [sendType isEqualToString:WebCore::legacyStringPasteboardType()];
+            isValidSendType = [sendType isEqualToString:WebCore::legacyStringPasteboardTypeSingleton()];
         else
             isValidSendType = [PasteboardTypes::forSelection() containsObject:sendType];
     }
@@ -2849,7 +2851,7 @@ id WebViewImpl::validRequestorForSendAndReturnTypes(NSString *sendType, NSString
         isValidReturnType = true;
     else if ([PasteboardTypes::forEditing() containsObject:returnType] && editorState.isContentEditable) {
         // We can insert strings in any editable context.  We can insert other types, like images, only in rich edit contexts.
-        isValidReturnType = editorState.isContentRichlyEditable || [returnType isEqualToString:WebCore::legacyStringPasteboardType()];
+        isValidReturnType = editorState.isContentRichlyEditable || [returnType isEqualToString:WebCore::legacyStringPasteboardTypeSingleton()];
     }
     if (isValidSendType && isValidReturnType)
         return m_view.getAutoreleased();
@@ -2883,7 +2885,7 @@ void WebViewImpl::selectionDidChange()
         auto selectionRect = isRange ? m_page->editorState().postLayoutData->selectionBoundingRect : IntRect { };
 
         // The affordance will only show up if the selected range consists of >= 50 characters.
-        [[PAL::getWTWritingToolsClass() sharedInstance] scheduleShowAffordanceForSelectionRect:selectionRect ofView:m_view.getAutoreleased() forDelegate:(NSObject<WTWritingToolsDelegate> *)m_view.getAutoreleased()];
+        [[PAL::getWTWritingToolsClassSingleton() sharedInstance] scheduleShowAffordanceForSelectionRect:selectionRect ofView:m_view.getAutoreleased() forDelegate:(NSObject<WTWritingToolsDelegate> *)m_view.getAutoreleased()];
     }
 #endif
 
@@ -2957,7 +2959,7 @@ void WebViewImpl::updateFontManagerIfNeeded()
         if (!attributes.font)
             return;
 
-        RetainPtr nsFont = (__bridge NSFont *)attributes.font->getCTFont();
+        RetainPtr nsFont = (__bridge NSFont *)attributes.font->ctFont();
         if (!nsFont)
             return;
 
@@ -3340,6 +3342,35 @@ void WebViewImpl::toggleAutomaticTextReplacement()
     m_page->protectedLegacyMainFrameProcess()->updateTextCheckerState();
 }
 
+bool WebViewImpl::isSmartListsEnabled()
+{
+    if (!m_page->protectedPreferences()->smartListsAvailable())
+        return false;
+
+    return TextChecker::state().contains(TextCheckerState::SmartListsEnabled);
+}
+
+void WebViewImpl::setSmartListsEnabled(bool flag)
+{
+    if (!m_page->protectedPreferences()->smartListsAvailable())
+        return;
+
+    if (flag == TextChecker::state().contains(TextCheckerState::SmartListsEnabled))
+        return;
+
+    TextChecker::setSmartListsEnabled(flag);
+    m_page->protectedLegacyMainFrameProcess()->updateTextCheckerState();
+}
+
+void WebViewImpl::toggleSmartLists()
+{
+    if (!m_page->protectedPreferences()->smartListsAvailable())
+        return;
+
+    TextChecker::setSmartListsEnabled(!TextChecker::state().contains(TextCheckerState::SmartListsEnabled));
+    m_page->protectedLegacyMainFrameProcess()->updateTextCheckerState();
+}
+
 void WebViewImpl::uppercaseWord()
 {
     m_page->uppercaseWord();
@@ -3529,7 +3560,7 @@ void WebViewImpl::dismissContentRelativeChildWindowsFromViewOnly()
         WebCore::DictionaryLookup::hidePopup();
 
         if (PAL::isDataDetectorsFrameworkAvailable())
-            [[PAL::getDDActionsManagerClass() sharedManager] requestBubbleClosureUnanchorOnFailure:YES];
+            [[PAL::getDDActionsManagerClassSingleton() sharedManager] requestBubbleClosureUnanchorOnFailure:YES];
     }
 
     m_page->clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation::FadeOut);
@@ -4252,10 +4283,10 @@ static void performDragWithLegacyFiles(WebPageProxy& page, Box<Vector<String>>&&
 
 static bool handleLegacyFilesPromisePasteboard(id<NSDraggingInfo> draggingInfo, Box<WebCore::DragData>&& dragData, WebPageProxy& page, RetainPtr<NSView<WebViewImplDelegate>> view)
 {
-    // FIXME: legacyFilesPromisePasteboardType() contains UTIs, not path names. Also, it's not
+    // FIXME: legacyFilesPromisePasteboardTypeSingleton() contains UTIs, not path names. Also, it's not
     // guaranteed that the count of UTIs equals the count of files, since some clients only write
     // unique UTIs.
-    RetainPtr files = dynamic_objc_cast<NSArray>([draggingInfo.draggingPasteboard propertyListForType:WebCore::legacyFilesPromisePasteboardType()]);
+    RetainPtr files = dynamic_objc_cast<NSArray>([draggingInfo.draggingPasteboard propertyListForType:WebCore::legacyFilesPromisePasteboardTypeSingleton()]);
     if (!files)
         return false;
 
@@ -4288,7 +4319,7 @@ static bool handleLegacyFilesPromisePasteboard(id<NSDraggingInfo> draggingInfo, 
 
 static bool handleLegacyFilesPasteboard(id<NSDraggingInfo> draggingInfo, Box<WebCore::DragData>&& dragData, WebPageProxy& page)
 {
-    RetainPtr files = dynamic_objc_cast<NSArray>([draggingInfo.draggingPasteboard propertyListForType:WebCore::legacyFilenamesPasteboardType()]);
+    RetainPtr files = dynamic_objc_cast<NSArray>([draggingInfo.draggingPasteboard propertyListForType:WebCore::legacyFilenamesPasteboardTypeSingleton()]);
     if (!files)
         return false;
 
@@ -4325,7 +4356,7 @@ static bool handleLegacyFilesPasteboard(id<NSDraggingInfo> draggingInfo, Box<Web
         RELEASE_LOG_ERROR_IF(prepareError, DragAndDrop, "Failed to prepare for reading files with error: %@.", prepareError.localizedDescription);
     });
 
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), task.get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), task.get());
     return true;
 }
 
@@ -4339,10 +4370,10 @@ bool WebViewImpl::performDragOperation(id<NSDraggingInfo> draggingInfo)
     SandboxExtension::Handle sandboxExtensionHandle;
     Vector<SandboxExtension::Handle> sandboxExtensionForUpload;
 
-    if (![types containsObject:PasteboardTypes::WebArchivePboardType] && [types containsObject:WebCore::legacyFilesPromisePasteboardType()])
+    if (![types containsObject:PasteboardTypes::WebArchivePboardType] && [types containsObject:WebCore::legacyFilesPromisePasteboardTypeSingleton()])
         return handleLegacyFilesPromisePasteboard(draggingInfo, WTFMove(dragData), page(), m_view.get());
 
-    if ([types containsObject:WebCore::legacyFilenamesPasteboardType()])
+    if ([types containsObject:WebCore::legacyFilenamesPasteboardTypeSingleton()])
         return handleLegacyFilesPasteboard(draggingInfo, WTFMove(dragData), page());
 
     String draggingPasteboardName = draggingInfo.draggingPasteboard.name;
@@ -4506,11 +4537,11 @@ void WebViewImpl::setFileAndURLTypes(NSString *filename, NSString *extension, NS
     else
         filenameWithExtension = [[filename stringByAppendingString:@"."] stringByAppendingString:extension];
 
-    [pasteboard setString:visibleURL forType:WebCore::legacyStringPasteboardType()];
+    [pasteboard setString:visibleURL forType:WebCore::legacyStringPasteboardTypeSingleton()];
     [pasteboard setString:visibleURL forType:PasteboardTypes::WebURLPboardType];
     [pasteboard setString:title forType:PasteboardTypes::WebURLNamePboardType];
     [pasteboard setPropertyList:@[@[visibleURL], @[title]] forType:PasteboardTypes::WebURLsWithTitlesPboardType];
-    [pasteboard setPropertyList:@[uti] forType:WebCore::legacyFilesPromisePasteboardType()];
+    [pasteboard setPropertyList:@[uti] forType:WebCore::legacyFilesPromisePasteboardTypeSingleton()];
     m_promisedFilename = filenameWithExtension.get();
     m_promisedURL = url;
 }
@@ -4518,7 +4549,7 @@ void WebViewImpl::setFileAndURLTypes(NSString *filename, NSString *extension, NS
 void WebViewImpl::setPromisedDataForImage(WebCore::Image& image, NSString *filename, NSString *extension, NSString *title, NSString *url, NSString *visibleURL, WebCore::FragmentedSharedBuffer* archiveBuffer, NSString *pasteboardName, NSString *originIdentifier)
 {
     RetainPtr pasteboard = [NSPasteboard pasteboardWithName:pasteboardName];
-    RetainPtr types = adoptNS([[NSMutableArray alloc] initWithObjects:WebCore::legacyFilesPromisePasteboardType(), nil]);
+    RetainPtr types = adoptNS([[NSMutableArray alloc] initWithObjects:WebCore::legacyFilesPromisePasteboardTypeSingleton(), nil]);
 
     auto uti = image.uti();
     if (!uti.isEmpty() && image.data() && !image.data()->isEmpty())
@@ -4542,9 +4573,7 @@ void WebViewImpl::setPromisedDataForImage(WebCore::Image& image, NSString *filen
 
     if (archiveBuffer) {
         auto nsData = archiveBuffer->makeContiguous()->createNSData();
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-        [pasteboard setData:nsData.get() forType:(__bridge NSString *)kUTTypeWebArchive];
-ALLOW_DEPRECATED_DECLARATIONS_END
+        [pasteboard setData:nsData.get() forType:UTTypeWebArchive.identifier];
         [pasteboard setData:nsData.get() forType:PasteboardTypes::WebArchivePboardType];
     }
 
@@ -4578,8 +4607,8 @@ void WebViewImpl::provideDataForPasteboard(NSPasteboard *pasteboard, NSString *t
     }
 
     // FIXME: Need to support NSRTFDPboardType.
-    if ([type isEqual:WebCore::legacyTIFFPasteboardType()])
-        [pasteboard setData:(__bridge NSData *)promisedImage->adapter().tiffRepresentation() forType:WebCore::legacyTIFFPasteboardType()];
+    if ([type isEqual:WebCore::legacyTIFFPasteboardTypeSingleton()])
+        [pasteboard setData:(__bridge NSData *)promisedImage->adapter().tiffRepresentation() forType:WebCore::legacyTIFFPasteboardTypeSingleton()];
 }
 
 static BOOL fileExists(NSString *path)
@@ -4840,7 +4869,7 @@ void WebViewImpl::showWritingTools(WTRequestedTool tool)
         selectionRect = page().selectionBoundingRectInRootViewCoordinates();
 
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    [[PAL::getWTWritingToolsClass() sharedInstance] showTool:tool forSelectionRect:selectionRect ofView:m_view.getAutoreleased() forDelegate:(NSObject<WTWritingToolsDelegate> *)m_view.getAutoreleased()];
+    [[PAL::getWTWritingToolsClassSingleton() sharedInstance] showTool:tool forSelectionRect:selectionRect ofView:m_view.getAutoreleased() forDelegate:(NSObject<WTWritingToolsDelegate> *)m_view.getAutoreleased()];
 ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
@@ -6770,7 +6799,7 @@ void WebViewImpl::setMediaSessionCoordinatorForTesting(MediaSessionCoordinatorPr
 
 bool WebViewImpl::canHandleContextMenuTranslation() const
 {
-    return PAL::isTranslationUIServicesFrameworkAvailable() && [PAL::getLTUITranslationViewControllerClass() isAvailable];
+    return PAL::isTranslationUIServicesFrameworkAvailable() && [PAL::getLTUITranslationViewControllerClassSingleton() isAvailable];
 }
 
 void WebViewImpl::handleContextMenuTranslation(const WebCore::TranslationContextMenuInfo& info)
@@ -6823,7 +6852,7 @@ void WebViewImpl::handleContextMenuTranslation(const WebCore::TranslationContext
 
 bool WebViewImpl::canHandleContextMenuWritingTools() const
 {
-    return PAL::isWritingToolsUIFrameworkAvailable() && [PAL::getWTWritingToolsViewControllerClass() isAvailable] && m_page->writingToolsBehavior() != WebCore::WritingTools::Behavior::None;
+    return PAL::isWritingToolsUIFrameworkAvailable() && [PAL::getWTWritingToolsViewControllerClassSingleton() isAvailable] && m_page->writingToolsBehavior() != WebCore::WritingTools::Behavior::None;
 }
 
 #endif
@@ -6947,11 +6976,12 @@ void WebViewImpl::computeHasVisualSearchResults(const URL& imageURL, ShareableBi
     auto startTime = MonotonicTime::now();
     [ensureImageAnalyzer() processRequest:request.get() progressHandler:nil completionHandler:makeBlockPtr([completion = WTFMove(completion), startTime] (CocoaImageAnalysis *analysis, NSError *) mutable {
         BOOL result = [analysis hasResultsForAnalysisTypes:VKAnalysisTypeVisualSearch];
-        CFRunLoopPerformBlock(CFRunLoopGetMain(), (__bridge CFStringRef)NSEventTrackingRunLoopMode, makeBlockPtr([completion = WTFMove(completion), result, startTime] () mutable {
+        RetainPtr loop = CFRunLoopGetMain();
+        CFRunLoopPerformBlock(loop.get(), (__bridge CFStringRef)NSEventTrackingRunLoopMode, makeBlockPtr([completion = WTFMove(completion), result, startTime] () mutable {
             RELEASE_LOG(ImageAnalysis, "Image analysis completed in %.0f ms (found visual search results? %d)", (MonotonicTime::now() - startTime).milliseconds(), result);
             completion(result);
         }).get());
-        CFRunLoopWakeUp(CFRunLoopGetMain());
+        CFRunLoopWakeUp(loop.get());
     }).get()];
 }
 

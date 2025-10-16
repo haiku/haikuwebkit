@@ -155,7 +155,7 @@ JSValue JSTestNamedGetterWithIdentifier::getConstructor(VM& vm, const JSGlobalOb
 
 void JSTestNamedGetterWithIdentifier::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedGetterWithIdentifier* thisObject = static_cast<JSTestNamedGetterWithIdentifier*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedGetterWithIdentifier* thisObject = static_cast<JSTestNamedGetterWithIdentifier*>(cell);
     thisObject->JSTestNamedGetterWithIdentifier::~JSTestNamedGetterWithIdentifier();
 }
 
@@ -389,7 +389,7 @@ bool JSTestNamedGetterWithIdentifierOwner::isReachableFromOpaqueRoots(JSC::Handl
 
 void JSTestNamedGetterWithIdentifierOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedGetterWithIdentifier = static_cast<JSTestNamedGetterWithIdentifier*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedGetterWithIdentifier = static_cast<JSTestNamedGetterWithIdentifier*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedGetterWithIdentifier->protectedWrapped().ptr(), jsTestNamedGetterWithIdentifier);
 }

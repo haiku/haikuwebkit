@@ -24,6 +24,7 @@
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
 #include "RenderElement.h"
+#include "RenderObjectDocument.h"
 #include "RenderStyle.h"
 #include "RenderView.h"
 #include "SVGRenderStyle.h"

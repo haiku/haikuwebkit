@@ -24,9 +24,12 @@
  */
 
 #import <WebKit/WebKit.h>
+
+#ifdef __cplusplus
 #import <wtf/Forward.h>
 #import <wtf/IterationStatus.h>
 #import <wtf/RetainPtr.h>
+#endif
 
 @class _WKFrameTreeNode;
 @class _WKProcessPoolConfiguration;
@@ -58,6 +61,8 @@
 #endif
 @end
 
+#ifdef __cplusplus
+
 namespace TestWebKitAPI {
 
 struct AutocorrectionContext {
@@ -85,7 +90,6 @@ class Color;
 #if HAVE(UI_WK_DOCUMENT_CONTEXT)
 - (void)synchronouslyAdjustSelectionWithDelta:(NSRange)range;
 #endif
-@property (nonatomic, readonly) UIView <UITextInputPrivate, UITextInputInternal, UITextInputMultiDocument, UIWKInteractionViewProtocol_Staging_95652872, UITextInputTokenizer> *textInputContentView;
 @property (nonatomic, readonly) TestWebKitAPI::AutocorrectionContext autocorrectionContext;
 @property (nonatomic, readonly) id<UITextInputTraits_Private> effectiveTextInputTraits;
 - (std::pair<CGRect, CGRect>)autocorrectionRectsForString:(NSString *)string;
@@ -148,6 +152,18 @@ class Color;
 - (CGRect)elementRectFromSelector:(NSString *)selector;
 - (CGPoint)elementMidpointFromSelector:(NSString *)selector;
 @end
+
+#endif // __cplusplus
+
+@interface WKWebView (TestWebKitAPI_NonCpp)
+
+#if PLATFORM(IOS_FAMILY)
+@property (nonatomic, readonly) UIView <UITextInputPrivate, UITextInputInternal, UITextInputMultiDocument, UIWKInteractionViewProtocol_Staging_95652872, UITextInputTokenizer> *textInputContentView;
+#endif
+
+@end
+
+#ifdef __cplusplus
 
 @interface TestMessageHandler : NSObject <WKScriptMessageHandler>
 - (void)addMessage:(NSString *)message withHandler:(dispatch_block_t)handler;
@@ -247,3 +263,4 @@ class Color;
 - (WKFindResult *)findStringAndWait:(NSString *)string withConfiguration:(WKFindConfiguration *)configuration;
 @end
 
+#endif // __cplusplus

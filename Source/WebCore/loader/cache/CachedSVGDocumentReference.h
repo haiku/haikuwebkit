@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/CachedResourceHandle.h>
+#include <WebCore/CachedSVGDocument.h>
 #include <WebCore/CachedSVGDocumentClient.h>
 #include <WebCore/LoaderMalloc.h>
 #include <WebCore/StyleURL.h>

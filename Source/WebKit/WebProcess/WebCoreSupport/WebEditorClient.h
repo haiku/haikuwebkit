@@ -142,6 +142,8 @@ private:
     bool isAutomaticLinkDetectionEnabled() final;
     void toggleAutomaticLinkDetection() final;
     bool isAutomaticDashSubstitutionEnabled() final;
+    bool isSmartListsEnabled() final;
+    void toggleSmartLists() final;
     void toggleAutomaticDashSubstitution() final;
     bool isAutomaticTextReplacementEnabled() final;
     void toggleAutomaticTextReplacement() final;
@@ -208,9 +210,7 @@ private:
     bool shouldDrawVisuallyContiguousBidiSelection() const final;
 #endif
 
-    Ref<WebPage> protectedPage() const;
-
-    const WeakRef<WebPage> m_page;
+    const WeakPtr<WebPage> m_page;
 };
 
 } // namespace WebKit

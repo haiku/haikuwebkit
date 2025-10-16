@@ -29,6 +29,10 @@
 #include <wtf/URL.h>
 #include <wtf/text/WTFString.h>
 
+#if PLATFORM(COCOA)
+#include <WebCore/AttributedString.h>
+#endif
+
 namespace WebCore {
 
 class SharedBuffer;
@@ -55,7 +59,7 @@ public:
         RefPtr<SharedBuffer> dataInWebArchiveFormat;
         RefPtr<SharedBuffer> dataInRTFDFormat;
         RefPtr<SharedBuffer> dataInRTFFormat;
-        RefPtr<SharedBuffer> dataInAttributedStringFormat;
+        std::optional<WebCore::AttributedString> dataInAttributedStringFormat;
         String dataInHTMLFormat;
         String dataInStringFormat;
         Vector<std::pair<String, RefPtr<WebCore::SharedBuffer>>> clientTypesAndData;

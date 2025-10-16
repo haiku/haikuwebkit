@@ -42,9 +42,11 @@
 #include "ProvisionalPageProxy.h"
 #include "RemotePageProxy.h"
 #include "WebBackForwardListFrameItem.h"
+#include "WebFrameInspectorTarget.h"
 #include "WebFrameMessages.h"
 #include "WebFramePolicyListenerProxy.h"
 #include "WebNavigationState.h"
+#include "WebPageInspectorController.h"
 #include "WebPageMessages.h"
 #include "WebPageProxy.h"
 #include "WebPageProxyMessages.h"
@@ -59,6 +61,8 @@
 #include <WebCore/Image.h>
 #include <WebCore/MIMETypeRegistry.h>
 #include <WebCore/NavigationScheduler.h>
+#include <WebCore/ShareableBitmapHandle.h>
+#include <WebCore/WebKitJSHandle.h>
 #include <stdio.h>
 #include <wtf/CallbackAggregator.h>
 #include <wtf/CheckedPtr.h>
@@ -114,10 +118,15 @@ WebFrameProxy::WebFrameProxy(WebPageProxy& page, FrameProcess& process, FrameIde
     ASSERT(!allFrames().contains(frameID));
     allFrames().set(frameID, *this);
     WebProcessPool::statistics().wkFrameCount++;
+
+    page.inspectorController().createWebFrameInspectorTarget(*this, WebFrameInspectorTarget::toTargetID(frameID));
 }
 
 WebFrameProxy::~WebFrameProxy()
 {
+    if (RefPtr page = m_page.get())
+        page->inspectorController().destroyInspectorTarget(WebFrameInspectorTarget::toTargetID(frameID()));
+
     WebProcessPool::statistics().wkFrameCount--;
 #if PLATFORM(GTK)
     WebPasteboardProxy::singleton().didDestroyFrame(this);
@@ -152,15 +161,15 @@ RefPtr<WebPageProxy> WebFrameProxy::protectedPage() const
     return m_page.get();
 }
 
-std::unique_ptr<ProvisionalFrameProxy> WebFrameProxy::takeProvisionalFrame()
+RefPtr<ProvisionalFrameProxy> WebFrameProxy::takeProvisionalFrame()
 {
     return std::exchange(m_provisionalFrame, nullptr);
 }
 
 WebProcessProxy& WebFrameProxy::provisionalLoadProcess()
 {
-    if (m_provisionalFrame)
-        return m_provisionalFrame->process();
+    if (RefPtr provisionalFrame = m_provisionalFrame)
+        return provisionalFrame->process();
     if (isMainFrame()) {
         if (WeakPtr provisionalPage = m_page ? m_page->provisionalPageProxy() : nullptr)
             return provisionalPage->process();
@@ -360,10 +369,13 @@ WebFramePolicyListenerProxy& WebFrameProxy::setUpPolicyListenerProxy(CompletionH
 
 void WebFrameProxy::getWebArchive(CompletionHandler<void(API::Data*)>&& callback)
 {
-    if (RefPtr page = m_page.get())
-        page->getWebArchiveOfFrame(this, WTFMove(callback));
-    else
-        callback(nullptr);
+#if PLATFORM(COCOA)
+    if (RefPtr page = m_page.get()) {
+        page->getWebArchiveDataWithFrame(*this, WTFMove(callback));
+        return;
+    }
+#endif
+    callback(nullptr);
 }
 
 void WebFrameProxy::getMainResourceData(CompletionHandler<void(API::Data*)>&& callback)
@@ -488,7 +500,7 @@ void WebFrameProxy::prepareForProvisionalLoadInProcess(WebProcessProxy& process,
     RegistrableDomain mainFrameDomain(page->mainFrame()->url());
 
     m_provisionalFrame = nullptr;
-    m_provisionalFrame = makeUnique<ProvisionalFrameProxy>(*this, group.ensureProcessForSite(navigationSite, process, page->protectedPreferences()));
+    m_provisionalFrame = adoptRef(*new ProvisionalFrameProxy(*this, group.ensureProcessForSite(navigationSite, process, page->protectedPreferences())));
     page->protectedWebsiteDataStore()->protectedNetworkProcess()->addAllowedFirstPartyForCookies(process, mainFrameDomain, LoadedWebArchive::No, [pageID = page->webPageIDInProcess(process), completionHandler = WTFMove(completionHandler)] mutable {
         completionHandler(pageID);
     });
@@ -813,6 +825,20 @@ void WebFrameProxy::findFocusableElementDescendingIntoRemoteFrame(WebCore::Focus
 std::optional<SharedPreferencesForWebProcess> WebFrameProxy::sharedPreferencesForWebProcess() const
 {
     return process().sharedPreferencesForWebProcess();
+}
+
+void WebFrameProxy::takeSnapshotOfNode(JSHandleIdentifier identifier, CompletionHandler<void(std::optional<ShareableBitmapHandle>&&)>&& completion)
+{
+    if (!m_page)
+        return completion({ });
+
+    sendWithAsyncReply(Messages::WebFrame::TakeSnapshotOfNode(identifier), WTFMove(completion));
+}
+
+void WebFrameProxy::sendMessageToInspectorFrontend(const String& targetId, const String& message)
+{
+    if (RefPtr page = m_page.get())
+        page->inspectorController().sendMessageToInspectorFrontend(targetId, message);
 }
 
 } // namespace WebKit

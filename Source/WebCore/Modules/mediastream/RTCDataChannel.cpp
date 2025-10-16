@@ -74,10 +74,10 @@ NetworkSendQueue RTCDataChannel::createMessageQueue(ScriptExecutionContext& cont
 {
     return { context, [&channel](auto& utf8) {
         if (!channel.m_handler->sendStringData(utf8))
-            channel.scriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, "Error sending string through RTCDataChannel."_s);
+            channel.protectedScriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, "Error sending string through RTCDataChannel."_s);
     }, [&channel](auto span) {
         if (!channel.m_handler->sendRawData(span))
-            channel.scriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, "Error sending binary data through RTCDataChannel."_s);
+            channel.protectedScriptExecutionContext()->addConsoleMessage(MessageSource::JS, MessageLevel::Error, "Error sending binary data through RTCDataChannel."_s);
     }, [&channel](ExceptionCode errorCode) {
         if (RefPtr context = channel.scriptExecutionContext()) {
             auto code = static_cast<int>(errorCode);

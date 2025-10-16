@@ -1,23 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8801/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8801/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://www2.localhost:8800/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://www2.localhost:8801/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://xn--lve-6lad.localhost:8800/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://xn--lve-6lad.localhost:8801/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://xn--n8j6ds53lwwkrqhv28a.localhost:8800/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://xn--n8j6ds53lwwkrqhv28a.localhost:8801/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://nonexistent.localhost:8800/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL http://nonexistent.localhost:8801/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL https://www2.localhost:9443/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL https://xn--lve-6lad.localhost:9443/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL https://xn--n8j6ds53lwwkrqhv28a.localhost:9443/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL https://nonexistent.localhost:8800/media/1x1-green.png
-CONSOLE MESSAGE: Blocked access to external URL https://nonexistent.localhost:8801/media/1x1-green.png
-CONSOLE MESSAGE: Blocked https://localhost:9443/media/1x1-green.png from asking for credentials because it is a cross-origin request.
 
 PASS HTTP protocol, no subdomain, port #1
 PASS HTTP protocol, no subdomain, port #2

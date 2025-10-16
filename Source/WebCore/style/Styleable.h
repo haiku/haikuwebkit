@@ -40,6 +40,9 @@ class RenderStyle;
 class WebAnimation;
 
 namespace Style {
+template<typename> struct CoordinatedValueList;
+struct Animation;
+using Animations = CoordinatedValueList<Animation>;
 enum class IsInDisplayNoneTree : bool;
 }
 
@@ -175,7 +178,7 @@ struct Styleable {
 
     void queryContainerDidChange() const;
 
-    bool animationListContainsNewlyValidAnimation(const AnimationList&) const;
+    bool animationListContainsNewlyValidAnimation(const Style::Animations&) const;
 
     void elementWasRemoved() const;
 

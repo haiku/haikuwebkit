@@ -48,16 +48,16 @@ do { \
     RELEASE_ASSERT_WITH_MESSAGE((char*)(untaggedPtr) - (char*)(untaggedBase) == opcode * width, #name); \
 } while (false);
 
-#define VALIDATE_IPINT_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_unreachable_validate, 256, opcode, name)
-#define VALIDATE_IPINT_GC_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_struct_new_validate, 256, opcode, name)
-#define VALIDATE_IPINT_CONVERSION_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_i32_trunc_sat_f32_s_validate, 256, opcode, name)
-#define VALIDATE_IPINT_SIMD_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_simd_v128_load_mem_validate, 256, opcode, name)
-#define VALIDATE_IPINT_ATOMIC_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_memory_atomic_notify_validate, 256, opcode, name)
-#define VALIDATE_IPINT_ARGUMINT_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_argumINT_a0_validate, 64, opcode, name)
-#define VALIDATE_IPINT_SLOW_PATH(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_local_get_slow_path_validate, 256, opcode, name)
-#define VALIDATE_IPINT_MINT_CALL_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_mint_a0_validate, 64, opcode, name)
-#define VALIDATE_IPINT_MINT_RETURN_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_mint_r0_validate, 64, opcode, name)
-#define VALIDATE_IPINT_UINT_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_uint_r0_validate, 64, opcode, name)
+#define VALIDATE_IPINT_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_unreachable_validate, alignIPInt, opcode, name)
+#define VALIDATE_IPINT_GC_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_struct_new_validate, alignIPInt, opcode, name)
+#define VALIDATE_IPINT_CONVERSION_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_i32_trunc_sat_f32_s_validate, alignIPInt, opcode, name)
+#define VALIDATE_IPINT_SIMD_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_simd_v128_load_mem_validate, alignIPInt, opcode, name)
+#define VALIDATE_IPINT_ATOMIC_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_memory_atomic_notify_validate, alignIPInt, opcode, name)
+#define VALIDATE_IPINT_ARGUMINT_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_argumINT_a0_validate, alignArgumInt, opcode, name)
+#define VALIDATE_IPINT_SLOW_PATH(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_local_get_slow_path_validate, alignIPInt, opcode, name)
+#define VALIDATE_IPINT_MINT_CALL_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_mint_a0_validate, alignMInt, opcode, name)
+#define VALIDATE_IPINT_MINT_RETURN_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_mint_r0_validate, alignMInt, opcode, name)
+#define VALIDATE_IPINT_UINT_OPCODE(opcode, name) VALIDATE_IPINT_OPCODE_FROM_BASE(ipint_uint_r0_validate, alignUInt, opcode, name)
 
 #define FOR_EACH_IPINT_BASE_POINTER(v) \
     v(ipint_dispatch_base, ipint_unreachable_validate) \

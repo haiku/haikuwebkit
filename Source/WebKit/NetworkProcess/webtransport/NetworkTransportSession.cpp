@@ -38,13 +38,6 @@ namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(NetworkTransportSession);
 
-#if !PLATFORM(COCOA)
-void NetworkTransportSession::initialize(NetworkConnectionToWebProcess&, URL&&, WebKit::WebPageProxyIdentifier&&, WebCore::ClientOrigin&&, CompletionHandler<void(RefPtr<NetworkTransportSession>&&)>&& completionHandler)
-{
-    completionHandler(nullptr);
-}
-#endif
-
 NetworkTransportSession::~NetworkTransportSession() = default;
 
 IPC::Connection* NetworkTransportSession::messageSenderConnection() const
@@ -54,15 +47,8 @@ IPC::Connection* NetworkTransportSession::messageSenderConnection() const
 
 uint64_t NetworkTransportSession::messageSenderDestinationID() const
 {
-    return identifier().toUInt64();
+    return m_identifier.toUInt64();
 }
-
-#if !PLATFORM(COCOA)
-void NetworkTransportSession::sendDatagram(std::span<const uint8_t>, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&& completionHandler)
-{
-    completionHandler(std::nullopt);
-}
-#endif
 
 void NetworkTransportSession::streamSendBytes(WebCore::WebTransportStreamIdentifier identifier, std::span<const uint8_t> bytes, bool withFin, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&& completionHandler)
 {
@@ -71,24 +57,6 @@ void NetworkTransportSession::streamSendBytes(WebCore::WebTransportStreamIdentif
     else
         completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
 }
-
-#if !PLATFORM(COCOA)
-void NetworkTransportSession::createOutgoingUnidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&& completionHandler)
-{
-    completionHandler(std::nullopt);
-}
-
-void NetworkTransportSession::createBidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&& completionHandler)
-{
-    completionHandler(std::nullopt);
-}
-#endif
-
-#if !PLATFORM(COCOA)
-void NetworkTransportSession::terminate(WebCore::WebTransportSessionErrorCode, CString&&)
-{
-}
-#endif
 
 void NetworkTransportSession::receiveDatagram(std::span<const uint8_t> datagram, bool withFin, std::optional<WebCore::Exception>&& exception)
 {
@@ -140,5 +108,41 @@ std::optional<SharedPreferencesForWebProcess> NetworkTransportSession::sharedPre
 
     return std::nullopt;
 }
+
+#if !PLATFORM(COCOA)
+RefPtr<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, URL&&, WebKit::WebPageProxyIdentifier&&, WebCore::ClientOrigin&&)
+{
+    return nullptr;
+}
+
+void NetworkTransportSession::initialize(CompletionHandler<void(bool)>&& completionHandler)
+{
+    completionHandler(false);
+}
+
+NetworkTransportSession::NetworkTransportSession()
+    : m_identifier(WebTransportSessionIdentifier::generate())
+{
+}
+
+void NetworkTransportSession::sendDatagram(std::span<const uint8_t>, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&& completionHandler)
+{
+    completionHandler(std::nullopt);
+}
+
+void NetworkTransportSession::createOutgoingUnidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&& completionHandler)
+{
+    completionHandler(std::nullopt);
+}
+
+void NetworkTransportSession::createBidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&& completionHandler)
+{
+    completionHandler(std::nullopt);
+}
+
+void NetworkTransportSession::terminate(WebCore::WebTransportSessionErrorCode, CString&&)
+{
+}
+#endif
 
 }

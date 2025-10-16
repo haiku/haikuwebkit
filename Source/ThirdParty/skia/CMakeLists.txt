@@ -124,7 +124,6 @@ add_library(Skia STATIC
     src/core/SkDistanceFieldGen.cpp
     src/core/SkDocument.cpp
     src/core/SkDraw.cpp
-    src/core/SkDrawBase.cpp
     src/core/SkDrawShadowInfo.cpp
     src/core/SkDraw_atlas.cpp
     src/core/SkDraw_text.cpp
@@ -186,7 +185,11 @@ add_library(Skia STATIC
     src/core/SkPath.cpp
     src/core/SkPathBuilder.cpp
     src/core/SkPathEffect.cpp
+    src/core/SkPathIter.cpp
     src/core/SkPathMeasure.cpp
+    src/core/SkPathPriv.cpp
+    src/core/SkPathRaw.cpp
+    src/core/SkPathRawShapes.cpp
     src/core/SkPathRef.cpp
     src/core/SkPathUtils.cpp
     src/core/SkPath_serial.cpp
@@ -833,7 +836,6 @@ else ()
             src/ports/SkFontConfigInterface_direct.cpp
             src/ports/SkFontConfigInterface_direct_factory.cpp
             src/ports/SkFontMgr_fontconfig.cpp
-            src/ports/SkFontMgr_fontconfig_freetype.cpp
         )
         target_link_libraries(Skia PRIVATE Fontconfig::Fontconfig)
     endif ()

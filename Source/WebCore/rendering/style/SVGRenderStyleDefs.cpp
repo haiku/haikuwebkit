@@ -276,7 +276,7 @@ StyleLayoutData::StyleLayoutData()
     , ry(RenderStyle::initialRy())
     , x(RenderStyle::initialX())
     , y(RenderStyle::initialY())
-    , d(nullptr)
+    , d(RenderStyle::initialD())
 {
 }
 
@@ -499,6 +499,7 @@ TextStream& operator<<(TextStream& ts, const StyleLayoutData& data)
     ts.dumpProperty("ry"_s, data.ry);
     ts.dumpProperty("x"_s, data.x);
     ts.dumpProperty("y"_s, data.y);
+    ts.dumpProperty("d"_s, data.d);
     return ts;
 }
 

@@ -184,7 +184,7 @@ void EventDispatcher::dispatchEvent(Node& node, Event& event)
         pendingEventTiming = window->initializeEventTimingEntry(event, typeInfo.type());
     auto finalizeEntry(WTF::makeScopeExit([&, event = Ref(event)] {
         if (pendingEventTiming)
-            window->finalizeEventTimingEntry(*pendingEventTiming, event);
+            window->finalizeEventTimingEntry(*pendingEventTiming, event, typeInfo.type());
     }));
 
     bool targetOrRelatedTargetIsInShadowTree = node.isInShadowTree() || isInShadowTree(event.relatedTarget());

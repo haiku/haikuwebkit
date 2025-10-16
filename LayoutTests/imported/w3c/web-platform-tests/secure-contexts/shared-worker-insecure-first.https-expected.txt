@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL https://xn--lve-6lad.localhost:9443/secure-contexts/support/https-subframe-shared.html
 
 Harness Error (TIMEOUT), message = null
 

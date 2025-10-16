@@ -26,7 +26,6 @@
 #include "config.h"
 #include "StyleMiscNonInheritedData.h"
 
-#include "AnimationList.h"
 #include "RenderStyleDifference.h"
 #include "RenderStyleInlines.h"
 #include "StyleDeprecatedFlexibleBoxData.h"
@@ -51,6 +50,8 @@ StyleMiscNonInheritedData::StyleMiscNonInheritedData()
     , transform(StyleTransformData::create())
     , visitedLinkColor(StyleVisitedLinkColorData::create())
     , mask(RenderStyle::initialMaskLayers())
+    , animations(RenderStyle::initialAnimations())
+    , transitions(RenderStyle::initialTransitions())
     , content(RenderStyle::initialContent())
     , boxShadow(RenderStyle::initialBoxShadow())
     , aspectRatio(RenderStyle::initialAspectRatio())
@@ -82,8 +83,8 @@ StyleMiscNonInheritedData::StyleMiscNonInheritedData(const StyleMiscNonInherited
     , transform(o.transform)
     , visitedLinkColor(o.visitedLinkColor)
     , mask(o.mask)
-    , animations(o.animations ? o.animations->copy() : o.animations)
-    , transitions(o.transitions ? o.transitions->copy() : o.transitions)
+    , animations(o.animations)
+    , transitions(o.transitions)
     , content(o.content)
     , boxShadow(o.boxShadow)
     , aspectRatio(o.aspectRatio)
@@ -129,8 +130,8 @@ bool StyleMiscNonInheritedData::operator==(const StyleMiscNonInheritedData& o) c
         && transform == o.transform
         && visitedLinkColor == o.visitedLinkColor
         && mask == o.mask
-        && arePointingToEqualData(animations, o.animations)
-        && arePointingToEqualData(transitions, o.transitions)
+        && animations == o.animations
+        && transitions == o.transitions
         && content == o.content
         && boxShadow == o.boxShadow
         && aspectRatio == o.aspectRatio
@@ -160,7 +161,7 @@ bool StyleMiscNonInheritedData::operator==(const StyleMiscNonInheritedData& o) c
 
 bool StyleMiscNonInheritedData::hasFilters() const
 {
-    return !filter->operations.isEmpty();
+    return !filter->filter.isNone();
 }
 
 #if !LOG_DISABLED

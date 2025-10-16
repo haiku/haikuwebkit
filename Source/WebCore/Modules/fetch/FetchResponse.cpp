@@ -30,6 +30,7 @@
 #include "config.h"
 #include "FetchResponse.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "FetchRequest.h"
 #include "FetchResponseBodyLoader.h"
 #include "HTTPParsers.h"

@@ -14,6 +14,8 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/active-pseudo-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/active-pseudo.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/auto-name-on-descendant.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/auto-name.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-view-transitions/scoped/callback-order.tentative.html

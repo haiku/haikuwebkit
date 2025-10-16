@@ -187,7 +187,7 @@ private:
     HashMap<IDBResourceIdentifier, Ref<IDBDatabaseNameAndVersionRequest>> m_databaseInfoCallbacks WTF_GUARDED_BY_LOCK(m_databaseInfoMapLock);
 
     CrossThreadQueue<CrossThreadTask> m_mainThreadQueue;
-    RefPtr<IDBConnectionToServer> m_mainThreadProtector WTF_GUARDED_BY_LOCK(m_mainThreadTaskLock);
+    bool m_hasScheduledMainThreadTasks WTF_GUARDED_BY_LOCK(m_mainThreadTaskLock) { false };
     PAL::SessionID m_sessionID;
 };
 

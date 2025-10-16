@@ -633,10 +633,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/streams/ByteLengthQueuingStrategy.idl \
     $(WebCore)/Modules/streams/CountQueuingStrategy.idl \
     $(WebCore)/Modules/streams/GenericTransformStream.idl \
-    $(WebCore)/Modules/streams/ReadableByteStreamController.idl \
     $(WebCore)/Modules/streams/ReadableStream.idl \
-    $(WebCore)/Modules/streams/ReadableStreamBYOBReader.idl \
-    $(WebCore)/Modules/streams/ReadableStreamBYOBRequest.idl \
     $(WebCore)/Modules/streams/ReadableStreamDefaultController.idl \
     $(WebCore)/Modules/streams/ReadableStreamDefaultReader.idl \
     $(WebCore)/Modules/streams/ReadableStreamSink.idl \
@@ -1197,7 +1194,6 @@ JS_BINDING_IDLS := \
     $(WebCore)/dom/NodeList.idl \
     $(WebCore)/dom/NonDocumentTypeChildNode.idl \
     $(WebCore)/dom/NonElementParentNode.idl \
-    $(WebCore)/dom/OverflowEvent.idl \
     $(WebCore)/dom/Observable.idl \
     $(WebCore)/dom/ObservableInspector.idl \
     $(WebCore)/dom/ObservableInspectorAbortCallback.idl \
@@ -2652,12 +2648,8 @@ WebCore_BUILTINS_SOURCES = \
     $(WebCore)/Modules/compression/DecompressionStream.js \
     $(WebCore)/Modules/streams/ByteLengthQueuingStrategy.js \
     $(WebCore)/Modules/streams/CountQueuingStrategy.js \
-    $(WebCore)/Modules/streams/ReadableByteStreamController.js \
-    $(WebCore)/Modules/streams/ReadableByteStreamInternals.js \
-    $(WebCore)/Modules/streams/ReadableStreamBYOBRequest.js \
     $(WebCore)/Modules/streams/ReadableStreamDefaultController.js \
     $(WebCore)/Modules/streams/ReadableStreamInternals.js \
-    $(WebCore)/Modules/streams/ReadableStreamBYOBReader.js \
     $(WebCore)/Modules/streams/ReadableStreamDefaultReader.js \
     $(WebCore)/Modules/streams/StreamInternals.js \
     $(WebCore)/Modules/streams/TransformStreamDefaultController.js \

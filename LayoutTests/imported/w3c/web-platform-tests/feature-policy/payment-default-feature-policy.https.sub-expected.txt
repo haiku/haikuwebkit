@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-payment.html
 
 
 Harness Error (TIMEOUT), message = null

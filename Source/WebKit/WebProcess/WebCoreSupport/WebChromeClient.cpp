@@ -78,6 +78,7 @@
 #include <WebCore/AXObjectCache.h>
 #include <WebCore/BarcodeDetectorInterface.h>
 #include <WebCore/ColorChooser.h>
+#include <WebCore/ColorChooserClient.h>
 #include <WebCore/ContentRuleListMatchedRule.h>
 #include <WebCore/ContentRuleListResults.h>
 #include <WebCore/CookieConsentDecisionResult.h>
@@ -94,7 +95,7 @@
 #include <WebCore/HTMLInputElement.h>
 #include <WebCore/HTMLNames.h>
 #include <WebCore/HTMLParserIdioms.h>
-#include <WebCore/HTMLPlugInImageElement.h>
+#include <WebCore/HTMLPlugInElement.h>
 #include <WebCore/Icon.h>
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/LocalFrame.h>
@@ -449,31 +450,12 @@ void WebChromeClient::reportProcessCPUTime(Seconds cpuTime, ActivityStateForCPUS
     WebProcess::singleton().send(Messages::WebProcessPool::ReportWebContentCPUTime(cpuTime, static_cast<uint64_t>(activityState)), 0);
 }
 
-void WebChromeClient::setToolbarsVisible(bool toolbarsAreVisible)
-{
-    if (RefPtr page = m_page.get())
-        page->send(Messages::WebPageProxy::SetToolbarsAreVisible(toolbarsAreVisible));
-}
-
 bool WebChromeClient::toolbarsVisible() const
 {
     RefPtr page = m_page.get();
     if (!page)
         return false;
-
-    API::InjectedBundle::PageUIClient::UIElementVisibility toolbarsVisibility = page->injectedBundleUIClient().toolbarsAreVisible(page.get());
-    if (toolbarsVisibility != API::InjectedBundle::PageUIClient::UIElementVisibility::Unknown)
-        return toolbarsVisibility == API::InjectedBundle::PageUIClient::UIElementVisibility::Visible;
-    
-    auto sendResult = WebProcess::singleton().parentProcessConnection()->sendSync(Messages::WebPageProxy::GetToolbarsAreVisible(), page->identifier());
-    auto [toolbarsAreVisible] = sendResult.takeReplyOr(true);
-    return toolbarsAreVisible;
-}
-
-void WebChromeClient::setStatusbarVisible(bool statusBarIsVisible)
-{
-    if (RefPtr page = m_page.get())
-        page->send(Messages::WebPageProxy::SetStatusBarIsVisible(statusBarIsVisible));
+    return page->toolbarsAreVisible();
 }
 
 bool WebChromeClient::statusbarVisible() const
@@ -481,19 +463,7 @@ bool WebChromeClient::statusbarVisible() const
     RefPtr page = m_page.get();
     if (!page)
         return false;
-
-    API::InjectedBundle::PageUIClient::UIElementVisibility statusbarVisibility = page->injectedBundleUIClient().statusBarIsVisible(page.get());
-    if (statusbarVisibility != API::InjectedBundle::PageUIClient::UIElementVisibility::Unknown)
-        return statusbarVisibility == API::InjectedBundle::PageUIClient::UIElementVisibility::Visible;
-
-    auto sendResult = WebProcess::singleton().parentProcessConnection()->sendSync(Messages::WebPageProxy::GetStatusBarIsVisible(), page->identifier());
-    auto [statusBarIsVisible] = sendResult.takeReplyOr(true);
-    return statusBarIsVisible;
-}
-
-void WebChromeClient::setScrollbarsVisible(bool)
-{
-    notImplemented();
+    return page->statusBarIsVisible();
 }
 
 bool WebChromeClient::scrollbarsVisible() const
@@ -502,25 +472,12 @@ bool WebChromeClient::scrollbarsVisible() const
     return true;
 }
 
-void WebChromeClient::setMenubarVisible(bool menuBarVisible)
-{
-    if (RefPtr page = m_page.get())
-        page->send(Messages::WebPageProxy::SetMenuBarIsVisible(menuBarVisible));
-}
-
 bool WebChromeClient::menubarVisible() const
 {
     RefPtr page = m_page.get();
     if (!page)
         return false;
-
-    API::InjectedBundle::PageUIClient::UIElementVisibility menubarVisibility = page->injectedBundleUIClient().menuBarIsVisible(page.get());
-    if (menubarVisibility != API::InjectedBundle::PageUIClient::UIElementVisibility::Unknown)
-        return menubarVisibility == API::InjectedBundle::PageUIClient::UIElementVisibility::Visible;
-    
-    auto sendResult = WebProcess::singleton().parentProcessConnection()->sendSync(Messages::WebPageProxy::GetMenuBarIsVisible(), page->identifier());
-    auto [menuBarIsVisible] = sendResult.takeReplyOr(true);
-    return menuBarIsVisible;
+    return page->menuBarIsVisible();
 }
 
 void WebChromeClient::setResizable(bool resizable)
@@ -925,20 +882,16 @@ void WebChromeClient::unavailablePluginButtonClicked(Element& element, PluginUna
 
 void WebChromeClient::mouseDidMoveOverElement(const HitTestResult& hitTestResult, OptionSet<WebCore::PlatformEventModifier> modifiers, const String& toolTip, TextDirection)
 {
-    RefPtr<API::Object> userData;
     auto wkModifiers = modifiersFromPlatformEventModifiers(modifiers);
 
-    // Notify the bundle client.
     RefPtr page = m_page.get();
     if (!page)
         return;
 
-    page->injectedBundleUIClient().mouseDidMoveOverElement(page.get(), hitTestResult, wkModifiers, userData);
-
     // Notify the UIProcess.
     WebHitTestResultData webHitTestResultData(hitTestResult, toolTip);
     webHitTestResultData.elementBoundingBox = webHitTestResultData.elementBoundingBox.toRectWithExtentsClippedToNumericLimits();
-    page->send(Messages::WebPageProxy::MouseDidMoveOverElement(webHitTestResultData, wkModifiers, UserData(WebProcess::singleton().transformObjectsToHandles(userData.get()).get())));
+    page->send(Messages::WebPageProxy::MouseDidMoveOverElement(webHitTestResultData, wkModifiers));
 }
 
 void WebChromeClient::print(LocalFrame& frame, const StringWithDirection& title)

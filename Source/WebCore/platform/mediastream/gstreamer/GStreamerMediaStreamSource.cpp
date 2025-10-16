@@ -423,10 +423,11 @@ public:
     {
         // appsrc delays (EOS) events until it has received the caps event.
         auto pad = adoptGRef(gst_element_get_static_pad(m_src.get(), "src"));
-        return adoptGRef(gst_pad_get_current_caps(pad.get()));
+        auto caps = adoptGRef(gst_pad_get_current_caps(pad.get()));
+        return !!caps;
     }
 
-    void pushSample(GRefPtr<GstSample>&& sample, [[maybe_unused]] const ASCIILiteral logMessage)
+    void pushSample(const GRefPtr<GstSample>& sample, [[maybe_unused]] const ASCIILiteral logMessage)
     {
         ASSERT(m_src);
         if (!m_src || !m_isObserving)
@@ -568,7 +569,7 @@ public:
         }
 
         if (m_track->enabled()) {
-            pushSample(WTFMove(sample), "Pushing video frame from enabled track"_s);
+            pushSample(sample, "Pushing video frame from enabled track"_s);
             return;
         }
 
@@ -589,7 +590,7 @@ public:
         const auto& data = static_cast<const GStreamerAudioData&>(audioData);
         if (m_track->enabled()) {
             GRefPtr<GstSample> sample = data.getSample();
-            pushSample(WTFMove(sample), "Pushing audio sample from enabled track"_s);
+            pushSample(sample, "Pushing audio sample from enabled track"_s);
             return;
         }
 
@@ -690,7 +691,7 @@ private:
         GST_BUFFER_DTS(buffer.get()) = GST_BUFFER_PTS(buffer.get()) = timestamp;
 
         auto sample = adoptGRef(gst_sample_new(buffer.get(), m_blackFrameCaps.get(), nullptr, nullptr));
-        pushSample(WTFMove(sample), "Pushing black video frame"_s);
+        pushSample(sample, "Pushing black video frame"_s);
     }
 
     void pushSilentSample()
@@ -711,7 +712,7 @@ private:
             webkitGstAudioFormatFillSilence(info.finfo, map.data(), map.size());
         }
         auto sample = adoptGRef(gst_sample_new(buffer.get(), m_silentSampleCaps.get(), nullptr, nullptr));
-        pushSample(WTFMove(sample), "Pushing audio silence from disabled track"_s);
+        pushSample(sample, "Pushing audio silence from disabled track"_s);
     }
 
     void createGstStream()
@@ -1275,7 +1276,7 @@ void webkitMediaStreamSrcAddTrack(WebKitMediaStreamSrc* self, MediaStreamTrackPr
     GST_DEBUG_OBJECT(self, "%s Ghosting %" GST_PTR_FORMAT, objectPath.get(), pad.get());
 #endif
 
-    auto* ghostPad = webkitGstGhostPadFromStaticTemplate(padTemplate, ASCIILiteral::fromLiteralUnsafe(padName.ascii().data()), pad.get());
+    auto* ghostPad = webkitGstGhostPadFromStaticTemplate(padTemplate, CStringView::unsafeFromUTF8(padName.utf8().data()), pad.get());
     gst_pad_store_sticky_event(ghostPad, stickyStreamStartEvent.get());
     gst_pad_set_active(ghostPad, TRUE);
     gst_element_add_pad(GST_ELEMENT_CAST(self), ghostPad);

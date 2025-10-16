@@ -38,6 +38,7 @@
 #include "RenderIterator.h"
 #include "RenderLayer.h"
 #include "RenderLayoutState.h"
+#include "RenderObjectInlines.h"
 #include "RenderTreeBuilder.h"
 #include "RenderView.h"
 #include "SVGElementTypeHelpers.h"
@@ -91,7 +92,7 @@ bool LegacyRenderSVGRoot::hasIntrinsicAspectRatio() const
 FloatSize LegacyRenderSVGRoot::computeIntrinsicSize() const
 {
     ASSERT_IMPLIES(view().frameView().layoutContext().isInRenderTreeLayout(), !shouldApplySizeContainment());
-    return FloatSize(floatValueForLength(svgSVGElement().intrinsicWidth(), 0), floatValueForLength(svgSVGElement().intrinsicHeight(), 0));
+    return { svgSVGElement().intrinsicWidth(), svgSVGElement().intrinsicHeight() };
 }
 
 FloatSize LegacyRenderSVGRoot::preferredAspectRatio() const
@@ -425,7 +426,7 @@ std::optional<FloatRect> LegacyRenderSVGRoot::computeFloatVisibleRectInContainer
 
     // Apply initial viewport clip
     if (shouldApplyViewportClip()) {
-        if (context.options.contains(VisibleRectContextOption::UseEdgeInclusiveIntersection)) {
+        if (context.options.contains(VisibleRectContext::Option::UseEdgeInclusiveIntersection)) {
             if (!adjustedRect.edgeInclusiveIntersect(snappedIntRect(borderBoxRect())))
                 return std::nullopt;
         } else
@@ -544,7 +545,7 @@ bool LegacyRenderSVGRoot::nodeAtPoint(const HitTestRequest& request, HitTestResu
 
 bool LegacyRenderSVGRoot::hasRelativeDimensions() const
 {
-    return svgSVGElement().intrinsicHeight().isPercentOrCalculated() || svgSVGElement().intrinsicWidth().isPercentOrCalculated();
+    return false;
 }
 
 void LegacyRenderSVGRoot::addResourceForClientInvalidation(LegacyRenderSVGResourceContainer* resource)

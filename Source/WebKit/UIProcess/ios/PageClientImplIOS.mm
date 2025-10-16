@@ -46,6 +46,7 @@
 #import "RemoteLayerTreeNode.h"
 #import "RunningBoardServicesSPI.h"
 #import "TapHandlingResult.h"
+#import "TextExtractionFilter.h"
 #import "UIKitSPI.h"
 #import "UIKitUtilities.h"
 #import "UndoOrRedo.h"
@@ -285,7 +286,12 @@ void PageClientImpl::modelProcessDidExit()
 
 void PageClientImpl::preferencesDidChange()
 {
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+    if (RetainPtr webView = this->webView())
+        [webView _updateOverlayRegions];
+#else
     notImplemented();
+#endif
 }
 
 void PageClientImpl::toolTipChanged(const String&, const String& newToolTip)
@@ -339,6 +345,10 @@ void PageClientImpl::didCommitLoadForMainFrame(const String& mimeType, bool useC
     [webView _hidePasswordView];
     [webView _setHasCustomContentView:useCustomContentProvider loadedMIMEType:mimeType];
     [contentView() _didCommitLoadForMainFrame];
+#if ENABLE(TEXT_EXTRACTION_FILTER)
+    if (RefPtr filter = TextExtractionFilter::singletonIfCreated())
+        filter->resetCache();
+#endif
 }
 
 void PageClientImpl::didChangeContentSize(const WebCore::IntSize&)

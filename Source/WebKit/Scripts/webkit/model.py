@@ -65,7 +65,7 @@ class MessageReceiver(object):
 
 
 class Message(object):
-    def __init__(self, name, parameters, reply_parameters, attributes, condition, validator=None, enabled_by=None, enabled_by_exception=False, enabled_by_conjunction=None, coalescing_key_indices=None):
+    def __init__(self, name, parameters, reply_parameters, attributes, condition, validator=None, enabled_by=None, enabled_by_exception=False, enabled_by_conjunction=None, coalescing_key_indices=None, is_async_reply=False):
         self.name = name
         self.parameters = parameters
         self.reply_parameters = reply_parameters
@@ -76,6 +76,7 @@ class Message(object):
         self.enabled_by_exception = enabled_by_exception
         self.enabled_by_conjunction = enabled_by_conjunction
         self.coalescing_key_indices = coalescing_key_indices
+        self.is_async_reply = is_async_reply
 
     def has_attribute(self, attribute):
         return attribute in self.attributes
@@ -130,11 +131,11 @@ def check_global_model_inputs(receivers):
 
 
 def generate_global_model(receivers):
-    async_reply_messages = []
     for receiver in receivers:
+        async_reply_messages = []
         for message in receiver.messages:
             if message.reply_parameters is not None and not message.has_attribute(SYNCHRONOUS_ATTRIBUTE):
-                async_reply_messages.append(Message(name='%s_%sReply' % (receiver.name, message.name), parameters=message.reply_parameters, reply_parameters=[], attributes=None, condition=message.condition))
-    async_reply_receiver = MessageReceiver(name='AsyncReply', superclass='None', attributes=[BUILTIN_ATTRIBUTE], receiver_enabled_by=None, receiver_enabled_by_exception=False, receiver_enabled_by_conjunction=None, receiver_dispatched_from=None, receiver_dispatched_from_exception=None, receiver_dispatched_to=None, receiver_dispatched_to_exception=None, shared_preferences_needs_connection=False, messages=async_reply_messages, condition=None, namespace='WebKit', wants_send_cancel_reply=False)
+                async_reply_messages.append(Message(name='%sReply' % message.name, parameters=message.reply_parameters, reply_parameters=None, attributes=None, condition=message.condition, enabled_by=message.enabled_by, enabled_by_exception=message.enabled_by_exception, enabled_by_conjunction=message.enabled_by_conjunction, coalescing_key_indices=message.coalescing_key_indices, is_async_reply=True))
+        receiver.messages = receiver.messages + async_reply_messages
 
-    return [ipc_receiver, async_reply_receiver] + receivers
+    return [ipc_receiver] + receivers

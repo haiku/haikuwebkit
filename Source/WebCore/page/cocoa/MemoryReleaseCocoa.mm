@@ -35,6 +35,7 @@
 #import "LocaleCocoa.h"
 #import <notify.h>
 #import <pal/spi/ios/GraphicsServicesSPI.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 #if PLATFORM(IOS_FAMILY)
 #import "LegacyTileCache.h"
@@ -105,10 +106,10 @@ void registerMemoryReleaseNotifyCallbacks()
     static std::once_flag onceFlag;
     std::call_once(onceFlag, [] {
         int dummy;
-        notify_register_dispatch("com.apple.WebKit.fullGC", &dummy, dispatch_get_main_queue(), ^(int) {
+        notify_register_dispatch("com.apple.WebKit.fullGC", &dummy, mainDispatchQueueSingleton(), ^(int) {
             GarbageCollectionController::singleton().garbageCollectNow();
         });
-        notify_register_dispatch("com.apple.WebKit.deleteAllCode", &dummy, dispatch_get_main_queue(), ^(int) {
+        notify_register_dispatch("com.apple.WebKit.deleteAllCode", &dummy, mainDispatchQueueSingleton(), ^(int) {
             GarbageCollectionController::singleton().deleteAllCode(JSC::PreventCollectionAndDeleteAllCode);
             GarbageCollectionController::singleton().garbageCollectNow();
         });

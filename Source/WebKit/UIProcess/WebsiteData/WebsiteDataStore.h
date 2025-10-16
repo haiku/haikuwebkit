@@ -379,7 +379,6 @@ public:
     static String defaultResourceLoadStatisticsDirectory(const String& baseDataDirectory = nullString());
     static String defaultNetworkCacheDirectory(const String& baseCacheDirectory = nullString());
     static String defaultAlternativeServicesDirectory(const String& baseCacheDirectory = nullString());
-    static String defaultApplicationCacheDirectory(const String& baseCacheDirectory = nullString());
     static String defaultWebSQLDatabaseDirectory(const String& baseDataDirectory = nullString());
     static String defaultHSTSStorageDirectory(const String& baseCacheDirectory = nullString());
 #if ENABLE(ARKIT_INLINE_PREVIEW)

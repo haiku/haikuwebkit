@@ -41,13 +41,13 @@ SourceAlpha::SourceAlpha(DestinationColorSpace colorSpace)
 {
 }
 
-OptionSet<FilterRenderingMode> SourceAlpha::supportedFilterRenderingModes() const
+OptionSet<FilterRenderingMode> SourceAlpha::supportedFilterRenderingModes(OptionSet<FilterRenderingMode> preferredFilterRenderingModes) const
 {
     OptionSet<FilterRenderingMode> modes = FilterRenderingMode::Software;
 #if USE(CORE_IMAGE)
     modes.add(FilterRenderingMode::Accelerated);
 #endif
-    return modes;
+    return modes & preferredFilterRenderingModes;
 }
 
 std::unique_ptr<FilterEffectApplier> SourceAlpha::createSoftwareApplier() const

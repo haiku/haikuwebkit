@@ -30,7 +30,10 @@
 #include "FontCache.h"
 #include "GraphicsContextSkia.h"
 #include "SurrogatePairAwareTextIterator.h"
+
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkTextBlob.h>
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #include <wtf/text/CharacterProperties.h>
 
 namespace WebCore {

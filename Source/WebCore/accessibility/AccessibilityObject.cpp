@@ -42,6 +42,7 @@
 #include "AXTextMarker.h"
 #include "AXUtilities.h"
 #include "AccessibilityMockObject.h"
+#include "AccessibilityObjectInlines.h"
 #include "AccessibilityRenderObject.h"
 #include "AccessibilityScrollView.h"
 #include "Chrome.h"
@@ -1361,7 +1362,7 @@ IntRect AccessibilityObject::boundingBoxForQuads(RenderObject* obj, const Vector
         FloatRect r = quad.enclosingBoundingBox();
         if (!r.isEmpty()) {
             if (obj->style().hasUsedAppearance())
-                obj->theme().inflateRectForControlRenderer(*obj, r);
+                obj->theme().inflateRectForControlRenderer(downcast<RenderElement>(*obj), r);
             result.unite(r);
         }
     }
@@ -4150,6 +4151,11 @@ AccessibilityObject* AccessibilityObject::containingWebArea() const
     CheckedPtr cache = axObjectCache();
     RefPtr root = cache ? dynamicDowncast<AccessibilityScrollView>(cache->getOrCreate(frameView.get())) : nullptr;
     return root ? root->webAreaObject() : nullptr;
+}
+
+bool AccessibilityObject::isVisible() const
+{
+    return !isHidden();
 }
 
 } // namespace WebCore

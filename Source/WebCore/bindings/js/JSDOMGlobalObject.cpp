@@ -31,8 +31,10 @@
 #include "DeprecatedGlobalSettings.h"
 #include "Document.h"
 #include "DocumentInlines.h"
+#include "DocumentLoader.h"
 #include "FetchResponse.h"
 #include "FrameDestructionObserverInlines.h"
+#include "FrameLoader.h"
 #include "InternalWritableStream.h"
 #include "JSAbortAlgorithm.h"
 #include "JSAbortSignal.h"
@@ -92,7 +94,6 @@ using namespace JSC;
 JSC_DECLARE_HOST_FUNCTION(makeThisTypeErrorForBuiltins);
 JSC_DECLARE_HOST_FUNCTION(makeGetterTypeErrorForBuiltins);
 JSC_DECLARE_HOST_FUNCTION(makeDOMExceptionForBuiltins);
-JSC_DECLARE_HOST_FUNCTION(isReadableByteStreamAPIEnabled);
 JSC_DECLARE_HOST_FUNCTION(createWritableStreamFromInternal);
 JSC_DECLARE_HOST_FUNCTION(getGlobalObject);
 JSC_DECLARE_HOST_FUNCTION(getInternalReadableStream);
@@ -179,11 +180,6 @@ JSC_DEFINE_HOST_FUNCTION(makeDOMExceptionForBuiltins, (JSGlobalObject* globalObj
     EXCEPTION_ASSERT(!scope.exception() || vm.hasPendingTerminationException());
 
     return JSValue::encode(value);
-}
-
-JSC_DEFINE_HOST_FUNCTION(isReadableByteStreamAPIEnabled, (JSGlobalObject*, CallFrame*))
-{
-    return JSValue::encode(jsBoolean(DeprecatedGlobalSettings::readableByteStreamAPIEnabled()));
 }
 
 JSC_DEFINE_HOST_FUNCTION(getInternalWritableStream, (JSGlobalObject*, CallFrame* callFrame))
@@ -307,7 +303,6 @@ SUPPRESS_ASAN void JSDOMGlobalObject::addBuiltinGlobals(VM& vm)
         JSDOMGlobalObject::GlobalPropertyInfo(builtinNames.streamReadablePrivateName(), jsNumber(4), PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly),
         JSDOMGlobalObject::GlobalPropertyInfo(builtinNames.streamWaitingPrivateName(), jsNumber(5), PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly),
         JSDOMGlobalObject::GlobalPropertyInfo(builtinNames.streamWritablePrivateName(), jsNumber(6), PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly),
-        JSDOMGlobalObject::GlobalPropertyInfo(builtinNames.readableByteStreamAPIEnabledPrivateName(), JSFunction::create(vm, this, 0, String(), isReadableByteStreamAPIEnabled, ImplementationVisibility::Public), PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly),
         JSDOMGlobalObject::GlobalPropertyInfo(builtinNames.isAbortSignalPrivateName(), JSFunction::create(vm, this, 1, String(), isAbortSignal, ImplementationVisibility::Public), PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly),
         JSDOMGlobalObject::GlobalPropertyInfo(builtinNames.getInternalReadableStreamPrivateName(), JSFunction::create(vm, this, 1, String(), getInternalReadableStream, ImplementationVisibility::Public), PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly),
         JSDOMGlobalObject::GlobalPropertyInfo(builtinNames.getInternalWritableStreamPrivateName(), JSFunction::create(vm, this, 1, String(), getInternalWritableStream, ImplementationVisibility::Public), PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly),
@@ -850,6 +845,25 @@ JSDOMGlobalObject& legacyActiveGlobalObjectForAccessor(JSC::JSGlobalObject& lexi
     constexpr bool skipFirstFrame = false;
     constexpr bool lookUpFromVMEntryScope = true;
     return callerGlobalObject(lexicalGlobalObject, callFrame, skipFirstFrame, lookUpFromVMEntryScope);
+}
+
+bool JSDOMGlobalObject::allowsJSHandleCreation() const
+{
+    if (m_world->allowsJSHandleCreation()) {
+        ASSERT_WITH_MESSAGE(!m_world->isNormal(), "Page world should only have JSHandle creation enabled by WebsitePolicies");
+        return true;
+    }
+    if (!m_world->isNormal())
+        return false;
+    if (!inherits<JSDOMWindow>())
+        return false;
+    RefPtr localFrame = dynamicDowncast<LocalFrame>(jsCast<const JSDOMWindow*>(this)->wrapped().frame());
+    if (!localFrame)
+        return false;
+    RefPtr documentLoader = localFrame->loader().loaderForWebsitePolicies();
+    if (!documentLoader)
+        return false;
+    return documentLoader->allowsJSHandleCreationInPageWorld();
 }
 
 } // namespace WebCore

@@ -442,7 +442,7 @@ static void av1DecompressionOutputCallback(void* decoderRef, void* params, OSSta
 #if PLATFORM(MAC) || PLATFORM(MACCATALYST)
         WebCore::kCVPixelBufferOpenGLCompatibilityKey,
 #elif PLATFORM(IOS_FAMILY)
-        WebCore::get_CoreVideo_kCVPixelBufferOpenGLESCompatibilityKey(),
+        WebCore::kCVPixelBufferExtendedPixelsRightKey,
 #endif
         WebCore::kCVPixelBufferIOSurfacePropertiesKey,
         WebCore::kCVPixelBufferPixelFormatTypeKey

@@ -235,7 +235,7 @@ void RenderListBox::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, L
 
     auto& logicalWidth = style().logicalWidth();
     if (logicalWidth.isCalculated())
-        minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu));
+        minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu, 1.0f /* FIXME ZOOM EFFECTED? */));
     else if (!logicalWidth.isPercent())
         minLogicalWidth = maxLogicalWidth;
 }
@@ -844,7 +844,7 @@ void RenderListBox::scrollTo(const ScrollPosition& position)
     computeFirstIndexesVisibleInPaddingBeforeAfterAreas();
 
     repaint();
-    document().addPendingScrollEventTarget(selectElement());
+    document().addPendingScrollEventTarget(selectElement(), ScrollEventType::Scroll);
 }
 
 LayoutUnit RenderListBox::itemLogicalHeight() const
@@ -1224,7 +1224,7 @@ void RenderListBox::scrollDidEnd()
 {
     if (ScrollAnimator* scrollAnimator = existingScrollAnimator(); scrollAnimator && !scrollAnimator->isUserScrollInProgress() && !isAwaitingScrollend()) {
         setIsAwaitingScrollend(false);
-        selectElement().protectedDocument()->addPendingScrollendEventTarget(selectElement());
+        selectElement().protectedDocument()->addPendingScrollEventTarget(selectElement(), ScrollEventType::Scrollend);
     }
 }
 

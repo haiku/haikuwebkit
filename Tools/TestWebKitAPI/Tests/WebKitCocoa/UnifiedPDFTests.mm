@@ -59,6 +59,7 @@
 #import <WebKit/_WKFeature.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 
 @interface WKWebView ()
@@ -658,7 +659,8 @@ UNIFIED_PDF_TEST(StablePresentationUpdateCallback)
 
 #endif
 
-UNIFIED_PDF_TEST(PasswordFormShouldDismissAfterNavigation)
+// FIXME: rdar://160728656
+UNIFIED_PDF_TEST(DISABLED_PasswordFormShouldDismissAfterNavigation)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 600, 600) configuration:configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
 
@@ -830,7 +832,7 @@ UNIFIED_PDF_TEST(PrintPDFUsingPrintInteractionController)
 
     [printInteractionController _setupPrintPanel:nil];
     [printInteractionController _generatePrintPreview:^(NSURL *pdfURL, BOOL shouldRenderOnChosenPaper) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(mainDispatchQueueSingleton(), ^{
             pdfData = adoptNS([[NSData alloc] initWithContentsOfURL:pdfURL]);
             [printInteractionController _cleanPrintState];
             done = true;
@@ -1007,7 +1009,7 @@ UNIFIED_PDF_TEST(WebViewResizeShouldNotCrash)
     webView = nil;
 
     __block bool finishedDispatch = false;
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(mainDispatchQueueSingleton(), ^{
         finishedDispatch = true;
     });
 
@@ -1203,7 +1205,7 @@ static void checkKeyboardScrollability(TestWKWebView *webView)
         RetainPtr secondWebEvent = adoptNS([[WebEvent alloc] initWithKeyEventType:WebEventKeyUp timeStamp:CFAbsoluteTimeGetCurrent() characters:@" " charactersIgnoringModifiers:@" " modifiers:0 isRepeating:NO withFlags:0 withInputManagerHint:nil keyCode:0 isTabKey:NO]);
 
         [webView handleKeyEvent:firstWebEvent.get() completion:^(WebEvent *theEvent, BOOL wasHandled) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), mainDispatchQueueSingleton(), ^{
                 [webView handleKeyEvent:secondWebEvent.get() completion:^(WebEvent *theEvent, BOOL wasHandled) {
                     completionHandler();
                 }];

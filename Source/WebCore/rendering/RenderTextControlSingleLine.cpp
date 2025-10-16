@@ -362,6 +362,13 @@ LayoutRect RenderTextControlSingleLine::controlClipRect(const LayoutPoint& addit
     return clipRect;
 }
 
+bool RenderTextControlSingleLine::innerTextElementHasNonVisibleOverflow() const
+{
+    if (RefPtr innerTextElement = this->innerTextElement(); innerTextElement && innerTextElement->renderer())
+        return innerTextElement->renderer()->hasNonVisibleOverflow();
+    return false;
+}
+
 float RenderTextControlSingleLine::getAverageCharWidth()
 {
 #if !PLATFORM(IOS_FAMILY)
@@ -471,6 +478,12 @@ void RenderTextControlSingleLine::setScrollTop(int newTop, const ScrollPositionC
 {
     if (innerTextElement())
         innerTextElement()->setScrollTop(newTop);
+}
+
+void RenderTextControlSingleLine::setScrollPosition(const ScrollPosition& position, const ScrollPositionChangeOptions& options)
+{
+    if (RefPtr innerTextElement = this->innerTextElement(); innerTextElement && innerTextElement->renderer())
+        innerTextElement->renderer()->setScrollPosition(position, options);
 }
 
 bool RenderTextControlSingleLine::scroll(ScrollDirection direction, ScrollGranularity granularity, unsigned stepCount, Element** stopElement, RenderBox* startBox, const IntPoint& wheelEventAbsolutePoint)

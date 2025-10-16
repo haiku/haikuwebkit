@@ -74,7 +74,7 @@
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/HTMLAttachmentElement.h>
 #import <WebCore/HTMLImageElement.h>
-#import <WebCore/HTMLPlugInImageElement.h>
+#import <WebCore/HTMLPlugInElement.h>
 #import <WebCore/HitTestResult.h>
 #import <WebCore/ImageOverlay.h>
 #import <WebCore/ImmediateActionStage.h>
@@ -827,7 +827,7 @@ void WebPage::performImmediateActionHitTestAtLocation(WebCore::FrameIdentifier f
     }
 
 #if ENABLE(PDF_PLUGIN)
-    if (RefPtr embedOrObject = dynamicDowncast<HTMLPlugInImageElement>(element)) {
+    if (RefPtr embedOrObject = dynamicDowncast<HTMLPlugInElement>(element)) {
         if (RefPtr pluginView = downcast<PluginView>(embedOrObject->pluginWidget())) {
             if (pluginView->performImmediateActionHitTestAtLocation(locationInViewCoordinates, immediateActionResult)) {
                 // FIXME (144030): Focus does not seem to get set to the PDF when invoking the menu.

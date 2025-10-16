@@ -60,7 +60,7 @@ namespace WebCore {
         static std::optional<PlatformKeyboardEvent> syntheticEventFromText(Type, const String&);
 
         PlatformKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code,
-        const String& keyIdentifier, int windowsVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
+        const String& keyIdentifier, int windowsVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, MonotonicTime timestamp)
             : PlatformEvent(type, modifiers, timestamp)
             , m_autoRepeat(isAutoRepeat)
             , m_isKeypad(isKeypad)
@@ -95,8 +95,9 @@ namespace WebCore {
 
         // Most compatible Windows virtual key code associated with the event.
         // Zero for Char events.
-        int windowsVirtualKeyCode() const { return m_windowsVirtualKeyCode; }
+        int windowsVirtualKeyCode() const { return m_type != Type::Char ? m_windowsVirtualKeyCode : 0; }
         void setWindowsVirtualKeyCode(int code) { m_windowsVirtualKeyCode = code; }
+        int windowsVirtualKeyCodeWithoutKeyPressOverride() const { return m_windowsVirtualKeyCode; }
 
 #if USE(APPKIT) || PLATFORM(IOS_FAMILY) || PLATFORM(GTK) || USE(LIBWPE)
         bool handledByInputMethod() const { return m_handledByInputMethod; }

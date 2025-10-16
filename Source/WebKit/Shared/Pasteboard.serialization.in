@@ -49,7 +49,7 @@ header: <WebCore/Pasteboard.h>
     RefPtr<WebCore::SharedBuffer> dataInWebArchiveFormat;
     RefPtr<WebCore::SharedBuffer> dataInRTFDFormat;
     RefPtr<WebCore::SharedBuffer> dataInRTFFormat;
-    RefPtr<WebCore::SharedBuffer> dataInAttributedStringFormat;
+    std::optional<WebCore::AttributedString> dataInAttributedStringFormat;
     String dataInHTMLFormat;
     String dataInStringFormat;
     Vector<std::pair<String, RefPtr<WebCore::SharedBuffer>>> clientTypesAndData;

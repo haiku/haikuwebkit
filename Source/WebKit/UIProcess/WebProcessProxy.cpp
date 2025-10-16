@@ -34,6 +34,7 @@
 #include "DownloadProxyMap.h"
 #include "GPUProcessConnectionParameters.h"
 #include "GoToBackForwardItemParameters.h"
+#include "JavaScriptEvaluationResult.h"
 #include "LoadParameters.h"
 #include "Logging.h"
 #include "ModelProcessConnectionParameters.h"
@@ -294,7 +295,7 @@ Ref<WebProcessProxy> WebProcessProxy::createForRemoteWorkers(RemoteWorkerType wo
 {
     Ref proxy = adoptRef(*new WebProcessProxy(processPool, &websiteDataStore, IsPrewarmed::No, CrossOriginMode::Shared, lockdownMode));
     proxy->m_site = WTFMove(site);
-    proxy->enableRemoteWorkers(workerType, processPool.userContentControllerIdentifierForRemoteWorkers());
+    proxy->enableRemoteWorkers(workerType, processPool.userContentControllerForRemoteWorkers());
     proxy->connect();
     return proxy;
 }
@@ -699,10 +700,6 @@ void WebProcessProxy::shutDown()
     for (Ref page : mainPages())
         page->disconnectFramesFromPage();
 
-    for (Ref webUserContentControllerProxy : m_webUserContentControllerProxies)
-        webUserContentControllerProxy->removeProcess(*this);
-    m_webUserContentControllerProxies.clear();
-
     m_userInitiatedActionMap.clear();
 
     if (RefPtr webLockRegistry = m_webLockRegistry.get())
@@ -911,18 +908,6 @@ void WebProcessProxy::removeVisitedLinkStoreUser(VisitedLinkStore& visitedLinkSt
         m_visitedLinkStoresWithUsers.remove(it);
         visitedLinkStore.removeProcess(*this);
     }
-}
-
-void WebProcessProxy::addWebUserContentControllerProxy(WebUserContentControllerProxy& proxy)
-{
-    m_webUserContentControllerProxies.add(proxy);
-    proxy.addProcess(*this);
-}
-
-void WebProcessProxy::didDestroyWebUserContentControllerProxy(WebUserContentControllerProxy& proxy)
-{
-    ASSERT(m_webUserContentControllerProxies.contains(proxy));
-    m_webUserContentControllerProxies.remove(proxy);
 }
 
 static bool networkProcessWillCheckBlobFileAccess()
@@ -2728,23 +2713,7 @@ void WebProcessProxy::disableRemoteWorkers(OptionSet<RemoteWorkerType> workerTyp
     maybeShutDown();
 }
 
-#if ENABLE(CONTENT_EXTENSIONS)
-static Vector<std::pair<WebCompiledContentRuleListData, URL>> contentRuleListsFromIdentifier(const std::optional<UserContentControllerIdentifier>& userContentControllerIdentifier)
-{
-    if (!userContentControllerIdentifier) {
-        ASSERT_NOT_REACHED();
-        return { };
-    }
-
-    RefPtr userContentController = WebUserContentControllerProxy::get(*userContentControllerIdentifier);
-    if (!userContentController)
-        return { };
-
-    return userContentController->contentRuleListData();
-}
-#endif
-
-void WebProcessProxy::enableRemoteWorkers(RemoteWorkerType workerType, const UserContentControllerIdentifier& userContentControllerIdentifier)
+void WebProcessProxy::enableRemoteWorkers(RemoteWorkerType workerType, const WebUserContentControllerProxy& userContentController)
 {
     WEBPROCESSPROXY_RELEASE_LOG(ServiceWorker, "enableWorkers: workerType=%u", static_cast<unsigned>(workerType));
     auto& workerInformation = workerType == RemoteWorkerType::SharedWorker ? m_sharedWorkerInformation : m_serviceWorkerInformation;
@@ -2753,12 +2722,7 @@ void WebProcessProxy::enableRemoteWorkers(RemoteWorkerType workerType, const Use
     workerInformation = RemoteWorkerInformation {
         WebPageProxyIdentifier::generate(),
         PageIdentifier::generate(),
-        RemoteWorkerInitializationData {
-            userContentControllerIdentifier,
-#if ENABLE(CONTENT_EXTENSIONS)
-            contentRuleListsFromIdentifier(userContentControllerIdentifier),
-#endif
-        },
+        RemoteWorkerInitializationData { userContentController.parametersForProcess(*this) },
         nullptr,
         { }
     };
@@ -3132,6 +3096,22 @@ void WebProcessProxy::addSandboxExtensionForFile(const String& fileName, Sandbox
 void WebProcessProxy::clearSandboxExtensions()
 {
     m_fileSandboxExtensions.clear();
+}
+
+void WebProcessProxy::didPostMessage(WebPageProxyIdentifier pageID, UserContentControllerIdentifier identifier, FrameInfoData&& frameInfo, ScriptMessageHandlerIdentifier handlerID, JavaScriptEvaluationResult&& message, CompletionHandler<void(Expected<WebKit::JavaScriptEvaluationResult, String>&&)>&& completionHandler)
+{
+    RefPtr page = WebPageProxy::fromIdentifier(pageID);
+    if (!page)
+        return completionHandler(makeUnexpected(String()));
+    RefPtr controller = WebUserContentControllerProxy::get(identifier);
+    if (!controller)
+        return completionHandler(makeUnexpected(String()));
+    controller->didPostMessage(*page, WTFMove(frameInfo), handlerID, WTFMove(message), WTFMove(completionHandler));
+}
+
+void WebProcessProxy::didPostLegacySynchronousMessage(WebPageProxyIdentifier pageID, UserContentControllerIdentifier identifier, FrameInfoData&& frameInfo, ScriptMessageHandlerIdentifier handlerID, JavaScriptEvaluationResult&& message, CompletionHandler<void(Expected<JavaScriptEvaluationResult, String>&&)>&& completionHandler)
+{
+    didPostMessage(pageID, identifier, WTFMove(frameInfo), handlerID, WTFMove(message), WTFMove(completionHandler));
 }
 
 } // namespace WebKit

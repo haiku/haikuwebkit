@@ -34,7 +34,7 @@ namespace Style {
 
 template<LengthWrapperBaseDerived T> struct CSSValueConversion<T> {
     template<typename K>
-    auto processKeyword(const K& keyword, CSSValueID valueID, std::optional<T>& result) -> bool
+    static auto processKeyword(const K& keyword, CSSValueID valueID, std::optional<T>& result) -> bool
     {
         if (valueID == keyword.value) {
             result = T { keyword };

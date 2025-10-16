@@ -28,6 +28,7 @@
 #include "ImageBuffer.h"
 #include "LegacyRenderSVGResourceClipper.h"
 #include "RenderElementInlines.h"
+#include "RenderObjectInlines.h"
 #include "RenderSVGResourceClipper.h"
 #include "RenderSVGText.h"
 #include "RenderStyleInlines.h"

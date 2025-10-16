@@ -1184,9 +1184,9 @@ namespace JSC {
         ExpressionNode* m_expr;
     };
 
-    class TypeOfResolveNode final : public ExpressionNode {
+    class TypeOfResolveNode final : public ExpressionNode, public ThrowableExpressionData {
     public:
-        TypeOfResolveNode(const JSTokenLocation&, const Identifier&);
+        TypeOfResolveNode(const JSTokenLocation&, const Identifier&, const JSTextPosition&, const JSTextPosition&, const JSTextPosition&);
 
         const Identifier& identifier() const { return m_ident; }
 

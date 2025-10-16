@@ -1,10 +1,6 @@
 
 PASS :resolve_attachment:
-FAIL :resolve_attachment:bindTextureResource=true assert_unreached:
-  - EXCEPTION: TypeError: Type error
-    beginRenderPass@[native code]
-    @http://127.0.0.1:8000/webgpu/webgpu/api/validation/render_pass/resolve.spec.js:188:41
- Reached unreachable code
+PASS :resolve_attachment:bindTextureResource=true
 PASS :resolve_attachment:colorAttachmentSamples=1
 PASS :resolve_attachment:resolveTargetSamples=4
 PASS :resolve_attachment:resolveTargetUsage=1

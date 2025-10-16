@@ -81,7 +81,7 @@ RemoteGPUProxy::~RemoteGPUProxy()
     disconnectGpuProcessIfNeeded();
 }
 
-void RemoteGPUProxy::initializeIPC(Ref<IPC::StreamClientConnection>&& streamConnection, RenderingBackendIdentifier renderingBackend, IPC::StreamServerConnection::Handle&& serverHandle)
+void RemoteGPUProxy::initializeIPC(Ref<IPC::StreamClientConnection>&& streamConnection, RemoteRenderingBackendIdentifier renderingBackend, IPC::StreamServerConnection::Handle&& serverHandle)
 {
     m_streamConnection = WTFMove(streamConnection);
     protectedStreamConnection()->open(*this, *this);

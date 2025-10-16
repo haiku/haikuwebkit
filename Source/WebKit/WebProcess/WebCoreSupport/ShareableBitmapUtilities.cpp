@@ -37,6 +37,7 @@
 #include <WebCore/PlatformScreen.h>
 #include <WebCore/RenderElementInlines.h>
 #include <WebCore/RenderImage.h>
+#include <WebCore/RenderObjectInlines.h>
 #include <WebCore/RenderVideo.h>
 #include <WebCore/ShareableBitmap.h>
 

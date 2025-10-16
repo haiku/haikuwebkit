@@ -104,11 +104,6 @@ framework module WebKit_Private [system] {
     export *
   }
 
-  explicit module WKApplicationCacheManager {
-    header "WKApplicationCacheManager.h"
-    export *
-  }
-
   explicit module WKArray {
     header "WKArray.h"
     export *

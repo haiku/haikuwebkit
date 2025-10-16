@@ -44,6 +44,7 @@ OBJC_CLASS NSString;
 #endif
 
 #if PLATFORM(COCOA)
+#include <WebCore/AttributedString.h>
 OBJC_CLASS NSArray;
 #endif
 
@@ -88,7 +89,7 @@ struct PasteboardWebContent {
     RefPtr<SharedBuffer> dataInWebArchiveFormat;
     RefPtr<SharedBuffer> dataInRTFDFormat;
     RefPtr<SharedBuffer> dataInRTFFormat;
-    RefPtr<SharedBuffer> dataInAttributedStringFormat;
+    std::optional<WebCore::AttributedString> dataInAttributedStringFormat;
     String dataInHTMLFormat;
     String dataInStringFormat;
     Vector<std::pair<String, RefPtr<WebCore::SharedBuffer>>> clientTypesAndData;

@@ -28,7 +28,10 @@
 
 #if ENABLE(WEBASSEMBLY)
 
+#include "JSWebAssemblyInstance.h"
 #include "WasmIPIntPlan.h"
+#include "WasmInstanceAnchor.h"
+#include "WasmMergedProfile.h"
 #include "WasmModuleInformation.h"
 #include "WasmWorklist.h"
 
@@ -127,6 +130,36 @@ void Module::copyInitialCalleeGroupToAllMemoryModes(MemoryMode initialMode)
         if (auto& group = m_calleeGroups[i]; !group)
             group = CalleeGroup::createFromExisting(static_cast<MemoryMode>(i), initialBlock);
     }
+}
+
+
+Ref<Wasm::InstanceAnchor> Module::registerAnchor(JSWebAssemblyInstance* instance)
+{
+    auto anchor = Wasm::InstanceAnchor::create(*this, instance);
+    WTF::storeStoreFence();
+    m_anchors.add(anchor.get());
+    return anchor;
+}
+
+std::unique_ptr<MergedProfile> Module::createMergedProfile(IPIntCallee& callee)
+{
+    auto result = makeUnique<MergedProfile>(callee);
+    for (Ref anchor : m_anchors) {
+        RefPtr<BaselineData> data;
+        {
+            Locker locker { anchor->m_lock };
+            if (JSWebAssemblyInstance* instance = anchor->instance())
+                data = instance->baselineData(callee.functionIndex());
+        }
+        if (!data)
+            continue;
+
+        auto span = result->mutableSpan();
+        RELEASE_ASSERT(data->size() == result->mutableSpan().size());
+        for (unsigned i = 0; i < data->size(); ++i)
+            span[i].merge(data->at(i));
+    }
+    return result;
 }
 
 } } // namespace JSC::Wasm

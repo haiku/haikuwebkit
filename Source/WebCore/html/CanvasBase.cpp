@@ -41,6 +41,7 @@
 #include "IntRect.h"
 #include "NoiseInjectionPolicy.h"
 #include "RenderElementInlines.h"
+#include "RenderStyleInlines.h"
 #include "ScriptTrackingPrivacyCategory.h"
 #include "StyleCanvasImage.h"
 #include "WebCoreOpaqueRoot.h"
@@ -408,6 +409,16 @@ void CanvasBase::resetGraphicsContextState() const
 WebCoreOpaqueRoot root(CanvasBase* canvas)
 {
     return WebCoreOpaqueRoot { canvas };
+}
+
+RefPtr<ScriptExecutionContext> CanvasBase::protectedCanvasBaseScriptExecutionContext() const
+{
+    return canvasBaseScriptExecutionContext();
+}
+
+RefPtr<ScriptExecutionContext> CanvasBase::protectedScriptExecutionContext() const
+{
+    return scriptExecutionContext();
 }
 
 } // namespace WebCore

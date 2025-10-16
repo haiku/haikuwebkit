@@ -31,7 +31,6 @@
 #include "AddEventListenerOptionsInlines.h"
 #include "AnimationTimeline.h"
 #include "AnimationTimelinesController.h"
-#include "ApplicationCacheStorage.h"
 #include "AudioSession.h"
 #include "AudioTrackPrivateMediaStream.h"
 #include "Autofill.h"
@@ -586,8 +585,7 @@ void Internals::resetToConsistentState(Page& page)
 
     page.setDefersLoading(false);
     page.setResourceCachingDisabledByWebInspector(false);
-
-    page.console().setConsoleMessageListener(nullptr);
+    page.setConsoleMessageListenerForTesting(nullptr);
 
     RefPtr localMainFrame = page.localMainFrame();
     if (!localMainFrame)
@@ -621,24 +619,22 @@ void Internals::resetToConsistentState(Page& page)
     if (localMainFrame->editor().isOverwriteModeEnabled())
         localMainFrame->editor().toggleOverwriteModeEnabled();
     localMainFrame->loader().clearTestingOverrides();
-    if (auto* applicationCacheStorage = page.applicationCacheStorage())
-        applicationCacheStorage->setDefaultOriginQuota(ApplicationCacheStorage::noQuota());
 
-    auto& sessionManager = page.mediaSessionManager();
+    RefPtr sessionManager = page.mediaSessionManager();
 #if ENABLE(VIDEO)
     page.group().ensureCaptionPreferences().setCaptionDisplayMode(CaptionUserPreferences::CaptionDisplayMode::ForcedOnly);
     page.group().ensureCaptionPreferences().setCaptionsStyleSheetOverride(emptyString());
 
-    sessionManager.resetHaveEverRegisteredAsNowPlayingApplicationForTesting();
-    sessionManager.resetRestrictions();
-    sessionManager.resetSessionState();
-    sessionManager.setWillIgnoreSystemInterruptions(true);
-    sessionManager.applicationWillEnterForeground(false);
+    sessionManager->resetHaveEverRegisteredAsNowPlayingApplicationForTesting();
+    sessionManager->resetRestrictions();
+    sessionManager->resetSessionState();
+    sessionManager->setWillIgnoreSystemInterruptions(true);
+    sessionManager->applicationWillEnterForeground(false);
     if (page.mediaPlaybackIsSuspended())
         page.resumeAllMediaPlayback();
 #endif
 #if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
-    sessionManager.setIsPlayingToAutomotiveHeadUnit(false);
+    sessionManager->setIsPlayingToAutomotiveHeadUnit(false);
 #endif
     AXObjectCache::setEnhancedUserInterfaceAccessibility(false);
     AXObjectCache::disableAccessibility();
@@ -951,7 +947,7 @@ static String responseSourceToString(const ResourceResponse& response)
         return "Memory cache"_s;
     case ResourceResponse::Source::MemoryCacheAfterValidation:
         return "Memory cache after validation"_s;
-    case ResourceResponse::Source::ApplicationCache:
+    case ResourceResponse::Source::LegacyApplicationCachePlaceholder:
         return "Application cache"_s;
     case ResourceResponse::Source::DOMCache:
         return "DOM cache"_s;
@@ -4087,15 +4083,6 @@ bool Internals::doesCanvasHavePendingCanvasNoiseInjection(HTMLCanvasElement& ele
     return element.havePendingCanvasNoiseInjection();
 }
 
-void Internals::setApplicationCacheOriginQuota(unsigned long long quota)
-{
-    Document* document = contextDocument();
-    if (!document || !document->page())
-        return;
-    if (auto* applicationCacheStorage = document->page()->applicationCacheStorage())
-        applicationCacheStorage->storeUpdatedQuotaForOrigin(&document->securityOrigin(), quota);
-}
-
 void Internals::registerURLSchemeAsBypassingContentSecurityPolicy(const String& scheme)
 {
     LegacySchemeRegistry::registerURLSchemeAsBypassingContentSecurityPolicy(scheme);
@@ -4875,7 +4862,7 @@ void Internals::initializeMockMediaSource()
     if (!document || (!document->settings().mediaSourceEnabled() && !document->settings().managedMediaSourceEnabled()))
         return;
 
-    platformStrategies()->mediaStrategy().enableMockMediaSource();
+    platformStrategies()->mediaStrategy()->enableMockMediaSource();
 }
 
 void Internals::setMaximumSourceBufferSize(SourceBuffer& buffer, uint64_t maximumSize, DOMPromiseDeferred<void>&& promise)
@@ -5914,7 +5901,7 @@ JSValue Internals::cloneArrayBuffer(JSC::JSGlobalObject& lexicalGlobalObject, JS
 
 String Internals::resourceLoadStatisticsForURL(const DOMURL& url)
 {
-    return ResourceLoadObserver::shared().statisticsForURL(url.href());
+    return ResourceLoadObserver::singleton().statisticsForURL(url.href());
 }
 
 void Internals::setTrackingPreventionEnabled(bool enable)
@@ -6663,11 +6650,11 @@ void Internals::updateQuotaBasedOnSpaceUsage()
 
 void Internals::setConsoleMessageListener(RefPtr<StringCallback>&& listener)
 {
-    RefPtr page = contextDocument() ? contextDocument()->page() : nullptr;
-    if (!page)
+    if (!contextDocument())
         return;
 
-    page->console().setConsoleMessageListener(WTFMove(listener));
+    if (RefPtr page = contextDocument()->page())
+        page->setConsoleMessageListenerForTesting(WTFMove(listener));
 }
 
 void Internals::setResponseSizeWithPadding(FetchResponse& response, uint64_t size)
@@ -6935,7 +6922,7 @@ ExceptionOr<unsigned> Internals::pluginScrollPositionY(Element& element)
 
 void Internals::notifyResourceLoadObserver()
 {
-    ResourceLoadObserver::shared().updateCentralStatisticsStore([] { });
+    ResourceLoadObserver::singleton().updateCentralStatisticsStore([] { });
 }
 
 unsigned Internals::primaryScreenDisplayID()
@@ -8034,7 +8021,7 @@ RefPtr<MediaSessionManagerInterface> Internals::sessionManager() const
     if (!page)
         return nullptr;
 
-    return &page->mediaSessionManager();
+    return page->mediaSessionManager();
 }
 
 #if ENABLE(MODEL_ELEMENT)

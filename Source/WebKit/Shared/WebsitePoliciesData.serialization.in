@@ -89,7 +89,9 @@ struct WebKit::WebsitePoliciesData {
     bool allowPrivacyProxy;
     bool allowSiteSpecificQuirksToOverrideContentMode;
     bool allowSharedProcess;
+    bool allowsJSHandleCreationInPageWorld;
     WebKit::WebsitePushAndNotificationsEnabledPolicy pushAndNotificationsEnabledPolicy;
     WebKit::WebsiteInlineMediaPlaybackPolicy inlineMediaPlaybackPolicy;
     WebCore::ResourceRequest alternateRequest;
+    std::optional<WebKit::UserContentControllerParameters> userContentControllerParameters;
 };

@@ -31,7 +31,8 @@
 #include <WebCore/LayoutBox.h>
 #include <WebCore/LayoutUnits.h>
 #include <WebCore/LengthFunctions.h>
-#include <WebCore/StyleTextEdge.h>
+#include <WebCore/StyleLineFitEdge.h>
+#include <WebCore/StyleTextBoxEdge.h>
 #include <wtf/OptionSet.h>
 
 namespace WebCore {
@@ -81,8 +82,8 @@ public:
     InlineLayoutUnit fontSize() const { return m_style.primaryFontSize; }
 
     TextBoxTrim textBoxTrim() const { return m_style.textBoxTrim; }
-    TextEdge textBoxEdge() const { return m_style.textBoxEdge; }
-    TextEdge lineFitEdge() const { return m_style.lineFitEdge; }
+    Style::TextBoxEdge textBoxEdge() const { return m_style.textBoxEdge; }
+    Style::LineFitEdge lineFitEdge() const { return m_style.lineFitEdge; }
     InlineLayoutUnit inlineBoxContentOffsetForTextBoxTrim() const { return m_inlineBoxContentOffsetForTextBoxTrim; }
 
     bool hasTextEmphasis() const { return (hasContent() || isAtomicInlineBox()) && m_textEmphasis.has_value(); };
@@ -165,8 +166,8 @@ private:
         const FontMetrics& primaryFontMetrics;
         const Length& lineHeight;
         TextBoxTrim textBoxTrim;
-        TextEdge textBoxEdge;
-        TextEdge lineFitEdge;
+        WebCore::Style::TextBoxEdge textBoxEdge;
+        WebCore::Style::LineFitEdge lineFitEdge;
         OptionSet<WebCore::Style::LineBoxContain> lineBoxContain;
         InlineLayoutUnit primaryFontSize { 0 };
         VerticalAlignment verticalAlignment { };
@@ -192,7 +193,7 @@ inline InlineLayoutUnit InlineLevelBox::preferredLineHeight() const
         return primarymetricsOfPrimaryFont().lineSpacing();
 
     if (m_style.lineHeight.isPercentOrCalculated())
-        return minimumValueForLength(m_style.lineHeight, fontSize());
+        return minimumValueForLength(m_style.lineHeight, fontSize(), 1.0f /* FIXME FIND ZOOM */);
     return m_style.lineHeight.value();
 }
 

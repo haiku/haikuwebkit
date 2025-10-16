@@ -87,7 +87,7 @@ inline bool operator==(const InteractionRegion& a, const InteractionRegion& b)
         && (!a.clipPath || &a.clipPath.value() == &b.clipPath.value());
 }
 
-WEBCORE_EXPORT std::optional<InteractionRegion> interactionRegionForRenderedRegion(RenderObject&, const FloatRect&, const FloatSize&, const std::optional<AffineTransform>&);
+WEBCORE_EXPORT std::optional<InteractionRegion> interactionRegionForRenderedRegion(const RenderObject&, const FloatRect&, const FloatSize&, const std::optional<AffineTransform>&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const InteractionRegion&);
 

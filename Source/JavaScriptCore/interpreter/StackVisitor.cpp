@@ -48,12 +48,15 @@ StackVisitor::StackVisitor(CallFrame* startFrame, VM& vm, bool skipFirstFrame)
 
         m_frame.m_entryFrame = vm.topEntryFrame;
         topFrame = vm.topCallFrame;
-
-        if (topFrame && (skipFirstFrame || topFrame->isPartiallyInitializedFrame())) {
-            topFrame = topFrame->callerFrame(m_frame.m_entryFrame);
-            m_topEntryFrameIsEmpty = (m_frame.m_entryFrame != vm.topEntryFrame);
-            if (startFrame == vm.topCallFrame)
-                startFrame = topFrame;
+        if (topFrame) {
+            m_previousReturnPC = vm.maybeReturnPC;
+            if (skipFirstFrame || topFrame->isPartiallyInitializedFrame()) {
+                m_previousReturnPC = topFrame->rawReturnPC();
+                topFrame = topFrame->callerFrame(m_frame.m_entryFrame);
+                m_topEntryFrameIsEmpty = (m_frame.m_entryFrame != vm.topEntryFrame);
+                if (startFrame == vm.topCallFrame)
+                    startFrame = topFrame;
+            }
         }
     }
     readFrame(topFrame);
@@ -209,6 +212,7 @@ void StackVisitor::readInlinableNativeCalleeFrame(CallFrame* callFrame)
         m_frame.m_callee = callFrame->callee();
         m_frame.m_codeBlock = nullptr;
         m_frame.m_wasmDistanceFromDeepestInlineFrame = 0;
+        m_frame.m_wasmCallSiteIndexBits = callFrame->callSiteIndex().bits();
 
         m_frame.m_wasmFunctionIndexOrName = wasmCallee.indexOrName();
         m_frame.m_wasmFunctionIndex = wasmCallee.index();
@@ -224,7 +228,9 @@ void StackVisitor::readInlinableNativeCalleeFrame(CallFrame* callFrame)
         // Because PC is just after the call instruction, to query to the origin for the call instruction, we decrease it by 1.
         // While it can be pointing at the broken offset (e.g. all ARM64 instructions are 4-byte aligned), it is still fine since map is controlling pc with range.
         auto callSiteIndexFromPC = omgCallee.tryGetCallSiteIndex(std::bit_cast<void*>(std::bit_cast<uintptr_t>(removeCodePtrTag<void*>(m_frame.m_returnPC)) - 1));
-        CallSiteIndex callSiteIndex = callSiteIndexFromPC.value_or(callFrame->callSiteIndex());
+        RELEASE_ASSERT(callSiteIndexFromPC);
+        CallSiteIndex callSiteIndex = callSiteIndexFromPC.value();
+        m_frame.m_wasmCallSiteIndexBits = callSiteIndex.bits();
 
         auto codeOrigin = omgCallee.getCodeOrigin(callSiteIndex.bits(), depth, isInlined);
         auto indexOrName = omgCallee.getIndexOrName(codeOrigin);
@@ -566,6 +572,11 @@ size_t StackVisitor::Frame::wasmFunctionIndex() const
     ASSERT(isNativeCalleeFrame());
     ASSERT(m_isWasmFrame);
     return m_wasmFunctionIndex;
+}
+
+CallSiteIndex StackVisitor::Frame::wasmCallSiteIndex() const
+{
+    return CallSiteIndex::fromBits(m_wasmCallSiteIndexBits);
 }
 
 void StackVisitor::Frame::dump(PrintStream& out, Indenter indent) const

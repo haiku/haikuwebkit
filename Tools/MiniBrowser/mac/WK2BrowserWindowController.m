@@ -549,6 +549,7 @@ static BOOL areEssentiallyEqual(double a, double b)
     preferences.siteSpecificQuirksModeEnabled = settings.siteSpecificQuirksModeEnabled;
     preferences._punchOutWhiteBackgroundsInDarkMode = settings.punchOutWhiteBackgroundsInDarkMode;
     preferences._mockCaptureDevicesEnabled = settings.useMockCaptureDevices;
+    preferences.tabFocusesLinks = settings.tabFocusesLinksEnabled;
 
     preferences._serviceControlsEnabled = settings.dataDetectorsEnabled;
     preferences._telephoneNumberDetectionIsEnabled = settings.dataDetectorsEnabled;

@@ -25,8 +25,8 @@
 #pragma once
 
 #include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleTransform.h>
 #include <WebCore/StyleTransformOrigin.h>
-#include <WebCore/TransformOperations.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 
@@ -45,9 +45,9 @@ public:
     void dumpDifferences(TextStream&, const StyleTransformData&) const;
 #endif
 
-    bool hasTransform() const { return operations.size(); }
+    bool hasTransform() const { return !transform.isNone(); }
 
-    TransformOperations operations;
+    Style::Transform transform;
     Style::TransformOrigin origin;
     TransformBox transformBox;
 

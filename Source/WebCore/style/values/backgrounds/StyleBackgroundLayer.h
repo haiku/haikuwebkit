@@ -26,7 +26,6 @@
 #pragma once
 
 #include "GraphicsTypes.h"
-#include "LengthSize.h"
 #include "RenderStyleConstants.h"
 #include "StyleBackgroundSize.h"
 #include "StyleFillLayers.h"
@@ -106,11 +105,11 @@ private:
     RepeatStyle m_repeat;
 
     PREFERRED_TYPE(FillAttachment) unsigned m_attachment : 2;
-    PREFERRED_TYPE(FillBox) unsigned m_clip : 3;
-    PREFERRED_TYPE(FillBox) unsigned m_origin : 2;
+    PREFERRED_TYPE(FillBox) unsigned m_clip : FillBoxBitWidth;
+    PREFERRED_TYPE(FillBox) unsigned m_origin : FillBoxBitWidth;
     PREFERRED_TYPE(BlendMode) unsigned m_blendMode : 5;
 
-    PREFERRED_TYPE(FillBox) mutable unsigned m_clipMax : 2; // maximum m_clip value from this to bottom layer
+    PREFERRED_TYPE(FillBox) mutable unsigned m_clipMax : FillBoxBitWidth; // maximum m_clip value from this to bottom layer
 };
 
 using BackgroundLayers = FillLayers<BackgroundLayer>;

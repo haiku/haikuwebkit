@@ -161,7 +161,7 @@ JSValue JSTestIterable::getConstructor(VM& vm, const JSGlobalObject* globalObjec
 
 void JSTestIterable::destroy(JSC::JSCell* cell)
 {
-    JSTestIterable* thisObject = static_cast<JSTestIterable*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestIterable* thisObject = static_cast<JSTestIterable*>(cell);
     thisObject->JSTestIterable::~JSTestIterable();
 }
 
@@ -296,7 +296,7 @@ bool JSTestIterableOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> h
 
 void JSTestIterableOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestIterable = static_cast<JSTestIterable*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestIterable = static_cast<JSTestIterable*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestIterable->protectedWrapped().ptr(), jsTestIterable);
 }

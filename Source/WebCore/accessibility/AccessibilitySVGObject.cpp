@@ -30,6 +30,7 @@
 
 #include "AXObjectCacheInlines.h"
 #include "AXUtilities.h"
+#include "AccessibilityObjectInlines.h"
 #include "ElementChildIteratorInlines.h"
 #include "ElementInlines.h"
 #include "EventTargetInlines.h"

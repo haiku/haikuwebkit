@@ -44,6 +44,7 @@
 #import <wtf/MonotonicTime.h>
 #import <wtf/TZoneMallocInlines.h>
 #import <wtf/cf/TypeCastsCF.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 #import <pal/cf/CoreMediaSoftLink.h>
 #import <pal/cocoa/AVFoundationSoftLink.h>
@@ -108,7 +109,7 @@ using namespace WebCore;
     UNUSED_PARAM(keyPath);
     UNUSED_PARAM(change);
 
-    if (![object isKindOfClass:PAL::getAVSampleBufferDisplayLayerClass()])
+    if (![object isKindOfClass:PAL::getAVSampleBufferDisplayLayerClassSingleton()])
         return;
 
     if ([keyPath isEqualToString:@"status"]) {
@@ -360,12 +361,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 static void setSampleBufferAsDisplayImmediately(CMSampleBufferRef sampleBuffer)
 {
-    CFArrayRef attachmentsArray = PAL::CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, true);
+    RetainPtr<CFArrayRef> attachmentsArray = PAL::CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, true);
     if (!attachmentsArray)
         return;
-    for (CFIndex i = 0; i < CFArrayGetCount(attachmentsArray); ++i) {
-        CFMutableDictionaryRef attachments = checked_cf_cast<CFMutableDictionaryRef>(CFArrayGetValueAtIndex(attachmentsArray, i));
-        CFDictionarySetValue(attachments, PAL::kCMSampleAttachmentKey_DisplayImmediately, kCFBooleanTrue);
+    for (CFIndex i = 0; i < CFArrayGetCount(attachmentsArray.get()); ++i) {
+        RetainPtr attachments = checked_cf_cast<CFMutableDictionaryRef>(CFArrayGetValueAtIndex(attachmentsArray.get(), i));
+        CFDictionarySetValue(attachments.get(), PAL::kCMSampleAttachmentKey_DisplayImmediately, kCFBooleanTrue);
     }
 }
 
@@ -496,7 +497,7 @@ void LocalSampleBufferDisplayLayer::requestNotificationWhenReadyForVideoData()
 
     ThreadSafeWeakPtr weakThis { *this };
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    [m_sampleBufferDisplayLayer requestMediaDataWhenReadyOnQueue:dispatch_get_main_queue() usingBlock:^{
+    [m_sampleBufferDisplayLayer requestMediaDataWhenReadyOnQueue:mainDispatchQueueSingleton() usingBlock:^{
         auto protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -514,7 +515,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
                     return;
                 }
                 auto videoFrame = protectedThis->m_pendingVideoFrameQueue.takeFirst();
-                protectedThis->enqueueBufferInternal(videoFrame->pixelBuffer(), videoFrame->presentationTime());
+                protectedThis->enqueueBufferInternal(videoFrame->protectedPixelBuffer().get(), videoFrame->presentationTime());
             }
         });
     }];

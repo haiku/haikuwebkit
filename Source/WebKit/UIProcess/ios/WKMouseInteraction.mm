@@ -296,7 +296,7 @@ inline static String pointerType(UITouchType type)
         0,
         static_cast<int>(currentTouch.tapCount),
         modifiers,
-        MonotonicTime::fromRawSeconds(currentTouch.timestamp).approximateWallTime(),
+        MonotonicTime::fromRawSeconds(currentTouch.timestamp),
         0,
         cancelled ? WebKit::GestureWasCancelled::Yes : WebKit::GestureWasCancelled::No,
         pointerType(currentTouch.type)
@@ -451,7 +451,7 @@ inline static String pointerType(UITouchType type)
         return;
 #endif
 
-    _pointerLockState.currentMouse = dynamic_objc_cast<GCMouse>([WebCore::getGCMouseClass() current]);
+    _pointerLockState.currentMouse = dynamic_objc_cast<GCMouse>([WebCore::getGCMouseClassSingleton() current]);
     if (!_pointerLockState.currentMouse)
         return;
 
@@ -499,7 +499,7 @@ inline static String pointerType(UITouchType type)
         0,
         0,
         WebKit::WebIOSEventFactory::webEventModifiersForUIKeyModifierFlags(0),
-        WallTime::now(),
+        MonotonicTime::now(),
         0,
         WebKit::GestureWasCancelled::No,
         WebCore::mousePointerEventType()
@@ -513,7 +513,7 @@ inline static String pointerType(UITouchType type)
     if (_pointerLockState.isObservingNotifications)
         return;
     // Only observe when current mouse stops being current - we'll exit pointer lock
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_mouseDidStopBeingCurrent:) name:WebCore::get_GameController_GCMouseDidStopBeingCurrentNotification() object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_mouseDidStopBeingCurrent:) name:WebCore::get_GameController_GCMouseDidStopBeingCurrentNotificationSingleton() object:nil];
     _pointerLockState.isObservingNotifications = true;
 }
 
@@ -521,7 +521,7 @@ inline static String pointerType(UITouchType type)
 {
     if (!_pointerLockState.isObservingNotifications)
         return;
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:WebCore::get_GameController_GCMouseDidStopBeingCurrentNotification() object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:WebCore::get_GameController_GCMouseDidStopBeingCurrentNotificationSingleton() object:nil];
     _pointerLockState.isObservingNotifications = false;
 }
 

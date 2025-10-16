@@ -149,7 +149,7 @@ JSValue JSTestNamedSetterThrowingException::getConstructor(VM& vm, const JSGloba
 
 void JSTestNamedSetterThrowingException::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedSetterThrowingException* thisObject = static_cast<JSTestNamedSetterThrowingException*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedSetterThrowingException* thisObject = static_cast<JSTestNamedSetterThrowingException*>(cell);
     thisObject->JSTestNamedSetterThrowingException::~JSTestNamedSetterThrowingException();
 }
 
@@ -381,7 +381,7 @@ bool JSTestNamedSetterThrowingExceptionOwner::isReachableFromOpaqueRoots(JSC::Ha
 
 void JSTestNamedSetterThrowingExceptionOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedSetterThrowingException = static_cast<JSTestNamedSetterThrowingException*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedSetterThrowingException = static_cast<JSTestNamedSetterThrowingException*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedSetterThrowingException->protectedWrapped().ptr(), jsTestNamedSetterThrowingException);
 }

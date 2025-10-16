@@ -95,8 +95,8 @@ static auto positionTryFallbackProperties(const BuilderContext& context)
     return context.positionTryFallback ? context.positionTryFallback->properties.get() : nullptr;
 }
 
-Builder::Builder(RenderStyle& style, BuilderContext&& context, const MatchResult& matchResult, CascadeLevel cascadeLevel, PropertyCascade::IncludedProperties&& includedProperties, const HashSet<AnimatableCSSProperty>* animatedPropertes)
-    : m_cascade(matchResult, cascadeLevel, WTFMove(includedProperties), animatedPropertes, positionTryFallbackProperties(context))
+Builder::Builder(RenderStyle& style, BuilderContext&& context, const MatchResult& matchResult, PropertyCascade::IncludedProperties&& includedProperties, const HashSet<AnimatableCSSProperty>* animatedPropertes)
+    : m_cascade(matchResult, WTFMove(includedProperties), animatedPropertes, positionTryFallbackProperties(context))
     , m_state(style, WTFMove(context))
 {
 }
@@ -276,7 +276,7 @@ inline void Builder::applyCascadeProperty(const PropertyCascade::Property& prope
     auto applyWithLinkMatch = [&](SelectorChecker::LinkMatchMask linkMatch) {
         if (property.cssValue[linkMatch]) {
             SetForScope scopedLinkMatchMutation(m_state.m_linkMatch, linkMatch);
-            applyProperty(property.id, *property.cssValue[linkMatch], linkMatch, property.cascadeLevels[linkMatch]);
+            applyProperty(property.id, *property.cssValue[linkMatch], linkMatch, property.origins[linkMatch]);
         }
     };
 
@@ -309,7 +309,7 @@ bool Builder::applyRollbackCascadeProperty(const PropertyCascade& rollbackCascad
 
     if (auto* value = rollbackProperty->cssValue[linkMatchMask]) {
         SetForScope levelScope(m_state.m_currentProperty, rollbackProperty);
-        applyProperty(propertyID, *value, linkMatchMask, rollbackProperty->cascadeLevel);
+        applyProperty(propertyID, *value, linkMatchMask, rollbackProperty->origin);
     }
     return true;
 }
@@ -331,7 +331,7 @@ bool Builder::applyRollbackCascadeCustomProperty(const PropertyCascade& rollback
     return true;
 }
 
-void Builder::applyProperty(CSSPropertyID id, CSSValue& value, SelectorChecker::LinkMatchMask linkMatchMask, CascadeLevel cascadeLevel)
+void Builder::applyProperty(CSSPropertyID id, CSSValue& value, SelectorChecker::LinkMatchMask linkMatchMask, PropertyCascade::Origin cascadeOrigin)
 {
     ASSERT_WITH_MESSAGE(!isShorthand(id), "Shorthand property id = %d wasn't expanded at parsing time", id);
     ASSERT_WITH_MESSAGE(id != CSSPropertyCustom, "Custom property should be handled by applyCustomProperty");
@@ -342,7 +342,7 @@ void Builder::applyProperty(CSSPropertyID id, CSSValue& value, SelectorChecker::
     if (CSSProperty::isDirectionAwareProperty(id)) {
         CSSPropertyID newId = CSSProperty::resolveDirectionAwareProperty(id, style.writingMode());
         ASSERT(newId != id);
-        return applyProperty(newId, valueToApply.get(), linkMatchMask, cascadeLevel);
+        return applyProperty(newId, valueToApply.get(), linkMatchMask, cascadeOrigin);
     }
 
     if (m_state.positionTryFallback())
@@ -418,7 +418,7 @@ void Builder::applyProperty(CSSPropertyID id, CSSValue& value, SelectorChecker::
     BuilderGenerated::applyProperty(id, m_state, valueToApply.get(), valueType);
 
     if (!isRevertOrRevertLayer)
-        m_state.disableNativeAppearanceIfNeeded(id, cascadeLevel);
+        m_state.disableNativeAppearanceIfNeeded(id, cascadeOrigin);
 
     if (!isUnset && !isRevertOrRevertLayer && m_state.isCurrentPropertyInvalidAtComputedValueTime()) {
         // https://drafts.csswg.org/css-variables-2/#invalid-variables
@@ -697,169 +697,39 @@ std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> Builder
     return CSSPropertyParser::parseTypedCustomPropertyValue(name, registered->syntax, resolvedData->tokens(), m_state, resolvedData->context());
 }
 
-static bool pageSizeFromName(const CSSPrimitiveValue& pageSizeName, const CSSPrimitiveValue* pageOrientation, WebCore::Length& width, WebCore::Length& height)
-{
-    auto mmLength = [](double mm) {
-        return WebCore::Length(CSS::pixelsPerMm * mm, LengthType::Fixed);
-    };
-
-    auto inchLength = [](double inch) {
-        return WebCore::Length(CSS::pixelsPerInch * inch, LengthType::Fixed);
-    };
-
-    static NeverDestroyed<WebCore::Length> a5Width(mmLength(148));
-    static NeverDestroyed<WebCore::Length> a5Height(mmLength(210));
-    static NeverDestroyed<WebCore::Length> a4Width(mmLength(210));
-    static NeverDestroyed<WebCore::Length> a4Height(mmLength(297));
-    static NeverDestroyed<WebCore::Length> a3Width(mmLength(297));
-    static NeverDestroyed<WebCore::Length> a3Height(mmLength(420));
-    static NeverDestroyed<WebCore::Length> b5Width(mmLength(176));
-    static NeverDestroyed<WebCore::Length> b5Height(mmLength(250));
-    static NeverDestroyed<WebCore::Length> b4Width(mmLength(250));
-    static NeverDestroyed<WebCore::Length> b4Height(mmLength(353));
-    static NeverDestroyed<WebCore::Length> jisB5Width(mmLength(182));
-    static NeverDestroyed<WebCore::Length> jisB5Height(mmLength(257));
-    static NeverDestroyed<WebCore::Length> jisB4Width(mmLength(257));
-    static NeverDestroyed<WebCore::Length> jisB4Height(mmLength(364));
-    static NeverDestroyed<WebCore::Length> letterWidth(inchLength(8.5));
-    static NeverDestroyed<WebCore::Length> letterHeight(inchLength(11));
-    static NeverDestroyed<WebCore::Length> legalWidth(inchLength(8.5));
-    static NeverDestroyed<WebCore::Length> legalHeight(inchLength(14));
-    static NeverDestroyed<WebCore::Length> ledgerWidth(inchLength(11));
-    static NeverDestroyed<WebCore::Length> ledgerHeight(inchLength(17));
-
-    switch (pageSizeName.valueID()) {
-    case CSSValueA5:
-        width = a5Width;
-        height = a5Height;
-        break;
-    case CSSValueA4:
-        width = a4Width;
-        height = a4Height;
-        break;
-    case CSSValueA3:
-        width = a3Width;
-        height = a3Height;
-        break;
-    case CSSValueB5:
-        width = b5Width;
-        height = b5Height;
-        break;
-    case CSSValueB4:
-        width = b4Width;
-        height = b4Height;
-        break;
-    case CSSValueJisB5:
-        width = jisB5Width;
-        height = jisB5Height;
-        break;
-    case CSSValueJisB4:
-        width = jisB4Width;
-        height = jisB4Height;
-        break;
-    case CSSValueLetter:
-        width = letterWidth;
-        height = letterHeight;
-        break;
-    case CSSValueLegal:
-        width = legalWidth;
-        height = legalHeight;
-        break;
-    case CSSValueLedger:
-        width = ledgerWidth;
-        height = ledgerHeight;
-        break;
-    default:
-        return false;
-    }
-
-    if (pageOrientation) {
-        switch (pageOrientation->valueID()) {
-        case CSSValueLandscape:
-            std::swap(width, height);
-            break;
-        case CSSValuePortrait:
-            // Nothing to do.
-            break;
-        default:
-            return false;
-        }
-    }
-    return true;
-}
-
 void Builder::applyPageSizeDescriptor(CSSValue& value)
 {
-    m_state.style().resetPageSizeType();
+    m_state.style().resetPageSize();
 
-    WebCore::Length width;
-    WebCore::Length height;
-    auto pageSizeType = PageSizeType::Auto;
+    auto convertedPageSize = toStyleFromCSSValue<PageSize>(m_state, value);
 
-    if (auto* pair = dynamicDowncast<CSSValuePair>(value)) {
-        // <length>{2} | <page-size> <orientation>
-        auto* first = dynamicDowncast<CSSPrimitiveValue>(pair->first());
-        auto* second = dynamicDowncast<CSSPrimitiveValue>(pair->second());
-        if (!first || !second)
-            return;
-        if (first->isLength()) {
-            // <length>{2}
-            if (!second->isLength())
-                return;
-            auto conversionData = m_state.cssToLengthConversionData().copyWithAdjustedZoom(1.0f);
-            width = first->resolveAsLength<WebCore::Length>(conversionData);
-            height = second->resolveAsLength<WebCore::Length>(conversionData);
-        } else {
-            // <page-size> <orientation>
-            // The value order is guaranteed. See CSSParser::parseSizeParameter.
-            if (!pageSizeFromName(*first, second, width, height))
-                return;
-        }
-        pageSizeType = PageSizeType::Resolved;
-    } else if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        // <length> | auto | <page-size> | [ portrait | landscape]
-        if (primitiveValue->isLength()) {
-            // <length>
-            pageSizeType = PageSizeType::Resolved;
-            width = height = primitiveValue->resolveAsLength<WebCore::Length>(m_state.cssToLengthConversionData().copyWithAdjustedZoom(1.0f));
-        } else {
-            switch (primitiveValue->valueID()) {
-            case CSSValueInvalid:
-                return;
-            case CSSValueAuto:
-                pageSizeType = PageSizeType::Auto;
-                break;
-            case CSSValuePortrait:
-                pageSizeType = PageSizeType::AutoPortrait;
-                break;
-            case CSSValueLandscape:
-                pageSizeType = PageSizeType::AutoLandscape;
-                break;
-            default:
-                // <page-size>
-                pageSizeType = PageSizeType::Resolved;
-                if (!pageSizeFromName(*primitiveValue, nullptr, width, height))
-                    return;
-            }
-        }
-    } else
+    if (m_state.isCurrentPropertyInvalidAtComputedValueTime())
         return;
 
-    m_state.style().setPageSizeType(pageSizeType);
-    m_state.style().setPageSize({ WTFMove(width), WTFMove(height) });
+    m_state.style().setPageSize(WTFMove(convertedPageSize));
 }
 
 const PropertyCascade* Builder::ensureRollbackCascadeForRevert()
 {
-    auto rollbackCascadeLevel = m_state.m_currentProperty->cascadeLevel;
-    if (rollbackCascadeLevel == CascadeLevel::UserAgent)
+    auto rollbackOrigin = m_state.m_currentProperty->origin;
+
+    switch (rollbackOrigin) {
+    case PropertyCascade::Origin::PositionFallback:
+        // "Similar to the Animation Origin, use of the revert value acts as if the property was part of the Author Origin."
+        // https://drafts.csswg.org/css-anchor-position-1/#fallback-rule
+    case PropertyCascade::Origin::Author:
+        rollbackOrigin = PropertyCascade::Origin::User;
+        break;
+    case PropertyCascade::Origin::User:
+        rollbackOrigin = PropertyCascade::Origin::UserAgent;
+        break;
+    case PropertyCascade::Origin::UserAgent:
         return nullptr;
+    }
 
-    --rollbackCascadeLevel;
-
-    auto key = makeRollbackCascadeKey(rollbackCascadeLevel);
+    auto key = makeRollbackCascadeKey(rollbackOrigin);
     return m_rollbackCascades.ensure(key, [&] {
-        return makeUnique<const PropertyCascade>(m_cascade, rollbackCascadeLevel);
+        return makeUnique<const PropertyCascade>(m_cascade, rollbackOrigin);
     }).iterator->value.get();
 }
 
@@ -876,15 +746,15 @@ const PropertyCascade* Builder::ensureRollbackCascadeForRevertLayer()
     if (property.fromStyleAttribute == FromStyleAttribute::No)
         --rollbackLayerPriority;
 
-    auto key = makeRollbackCascadeKey(property.cascadeLevel, property.styleScopeOrdinal, rollbackLayerPriority);
+    auto key = makeRollbackCascadeKey(property.origin, property.styleScopeOrdinal, rollbackLayerPriority);
     return m_rollbackCascades.ensure(key, [&] {
-        return makeUnique<const PropertyCascade>(m_cascade, property.cascadeLevel, property.styleScopeOrdinal, rollbackLayerPriority);
+        return makeUnique<const PropertyCascade>(m_cascade, property.origin, property.styleScopeOrdinal, rollbackLayerPriority);
     }).iterator->value.get();
 }
 
-auto Builder::makeRollbackCascadeKey(CascadeLevel cascadeLevel, ScopeOrdinal scopeOrdinal, CascadeLayerPriority cascadeLayerPriority) -> RollbackCascadeKey
+auto Builder::makeRollbackCascadeKey(PropertyCascade::Origin cascadeOrigin, ScopeOrdinal scopeOrdinal, CascadeLayerPriority cascadeLayerPriority) -> RollbackCascadeKey
 {
-    return { static_cast<unsigned>(cascadeLevel), static_cast<unsigned>(scopeOrdinal), static_cast<unsigned>(cascadeLayerPriority) };
+    return { static_cast<unsigned>(cascadeOrigin), static_cast<unsigned>(scopeOrdinal), static_cast<unsigned>(cascadeLayerPriority) };
 }
 
 }

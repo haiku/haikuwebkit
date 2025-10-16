@@ -443,6 +443,14 @@ RegisterSet RegisterSetBuilder::ipintCalleeSaveRegisters()
 #endif
     return registers;
 }
+
+RegisterSet RegisterSetBuilder::bbqCalleeSaveRegisters()
+{
+    RegisterSet registers;
+    registers.add(GPRInfo::jitDataRegister, IgnoreVectors);
+    ASSERT(!wasmPinnedRegisters().contains(GPRInfo::jitDataRegister, IgnoreVectors));
+    return registers;
+}
 #endif
 
 } // namespace JSC

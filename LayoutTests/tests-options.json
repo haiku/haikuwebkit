@@ -4352,6 +4352,9 @@
     "imported/w3c/web-platform-tests/html/syntax/parsing/template/creating-an-element-for-the-token/template-owner-document.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/html/syntax/speculative-parsing/expect-no-linked-resources/no-speculative-fetch.tentative.optional.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/html/syntax/xmldecl/xmldecl-3.html": [
         "slow"
     ],
@@ -6827,10 +6830,7 @@
     "imported/w3c/web-platform-tests/webrtc-encoded-transform/script-transform-sendKeyFrameRequest.https.html": [
         "slow"
     ],
-    "imported/w3c/web-platform-tests/webrtc-extensions/RTCRtpParameters-codec.html": [
-        "slow"
-    ],
-    "imported/w3c/web-platform-tests/webrtc-extensions/RTCRtpReceiver-jitterBufferTarget-stats.html": [
+    "imported/w3c/web-platform-tests/webrtc-extensions/RTCRtpEncodingParameters-scaleResolutionDownTo.https.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/webrtc-extensions/RTCRtpSynchronizationSource-captureTimestamp.html": [

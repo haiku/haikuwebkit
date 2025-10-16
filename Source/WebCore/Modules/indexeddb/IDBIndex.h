@@ -52,6 +52,7 @@ public:
     const String& name() const;
     ExceptionOr<void> setName(const String&);
     IDBObjectStore& objectStore();
+    Ref<IDBObjectStore> protectedObjectStore();
     const IDBKeyPath& keyPath() const;
     bool unique() const;
     bool multiEntry() const;
@@ -108,7 +109,7 @@ private:
 
     // IDBIndex objects are always owned by their referencing IDBObjectStore.
     // Indexes will never outlive ObjectStores so its okay to keep a raw C++ reference here.
-    CheckedRef<IDBObjectStore> m_objectStore;
+    const CheckedRef<IDBObjectStore> m_objectStore;
 };
 
 WebCoreOpaqueRoot root(IDBIndex*);

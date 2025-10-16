@@ -30,10 +30,10 @@
 #include "AudioMediaStreamTrackRendererInternalUnitIdentifier.h"
 #include "Connection.h"
 #include "GPUProcessConnectionIdentifier.h"
-#include "GraphicsContextGLIdentifier.h"
 #include "MediaOverridesForTesting.h"
 #include "MessageReceiverMap.h"
-#include "RenderingBackendIdentifier.h"
+#include "RemoteGraphicsContextGLIdentifier.h"
+#include "RemoteRenderingBackendIdentifier.h"
 #include "StreamServerConnection.h"
 #include "WebGPUIdentifier.h"
 #include <WebCore/AudioSession.h>
@@ -119,13 +119,13 @@ public:
 
     void configureLoggingChannel(const String&, WTFLogChannelState, WTFLogLevel);
 
-    void createRenderingBackend(RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
-    void releaseRenderingBackend(RenderingBackendIdentifier);
+    void createRenderingBackend(RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
+    void releaseRenderingBackend(RemoteRenderingBackendIdentifier);
 #if ENABLE(WEBGL)
-    void createGraphicsContextGL(GraphicsContextGLIdentifier, const WebCore::GraphicsContextGLAttributes&, RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
-    void releaseGraphicsContextGL(GraphicsContextGLIdentifier);
+    void createGraphicsContextGL(RemoteGraphicsContextGLIdentifier, const WebCore::GraphicsContextGLAttributes&, RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
+    void releaseGraphicsContextGL(RemoteGraphicsContextGLIdentifier);
 #endif
-    void createGPU(WebGPUIdentifier, RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
+    void createGPU(WebGPUIdentifier, RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&);
     void releaseGPU(WebGPUIdentifier);
 
     class Client : public AbstractThreadSafeRefCountedAndCanMakeWeakPtr {

@@ -26,6 +26,7 @@
 #include "LineBreaker.h"
 
 #include "BreakingContext.h"
+#include "RenderObjectStyle.h"
 
 namespace WebCore {
 

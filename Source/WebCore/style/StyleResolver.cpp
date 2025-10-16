@@ -79,6 +79,7 @@
 #include "StyleResolveForDocument.h"
 #include "StyleRule.h"
 #include "StyleSheetContents.h"
+#include "StyleSingleAnimationRangeName.h"
 #include "TimingFunction.h"
 #include "UserAgentParts.h"
 #include "UserAgentStyle.h"
@@ -426,7 +427,7 @@ std::unique_ptr<RenderStyle> Resolver::styleForKeyframe(Element& element, const 
         collector.matchUserRules();
     }
     collector.addAuthorKeyframeRules(keyframe);
-    Builder builder(*state.style(), builderContext(state), collector.matchResult(), CascadeLevel::Author);
+    Builder builder(*state.style(), builderContext(state), collector.matchResult());
     builder.state().setIsBuildingKeyframeStyle();
     builder.applyAllProperties();
 
@@ -548,7 +549,7 @@ void Resolver::keyframeStylesForAnimation(Element& element, const RenderStyle& e
     for (auto& keyframeRule : keyframeRules) {
         // Add this keyframe style to all the indicated key times
         for (auto& key : keyframeRule->keys()) {
-            BlendingKeyframe blendingKeyframe({ SingleTimelineRange::timelineName(key.rangeName), key.offset }, { nullptr });
+            BlendingKeyframe blendingKeyframe({ Style::convertCSSValueIDToSingleAnimationRangeName(key.rangeName), key.offset }, { nullptr });
             blendingKeyframe.setStyle(styleForKeyframe(element, elementStyle, context, keyframeRule.get(), blendingKeyframe));
             if (auto timingFunctionCSSValue = keyframeRule->properties().getPropertyCSSValue(CSSPropertyAnimationTimingFunction))
                 blendingKeyframe.setTimingFunction(createTimingFunctionDeprecated(*timingFunctionCSSValue));
@@ -620,7 +621,7 @@ std::unique_ptr<RenderStyle> Resolver::styleForPage(int pageIndex)
 
     auto& result = collector.matchResult();
 
-    Builder builder(*state.style(), builderContext(state), result, CascadeLevel::Author);
+    Builder builder(*state.style(), builderContext(state), result);
     builder.applyAllProperties();
 
     // Now return the style.
@@ -733,7 +734,7 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
             return;
     }
 
-    Builder builder(style, builderContext(state), matchResult, CascadeLevel::Author, WTFMove(includedProperties));
+    Builder builder(style, builderContext(state), matchResult, WTFMove(includedProperties));
 
     // Top priority properties may affect resolution of high priority ones.
     builder.applyTopPriorityProperties();

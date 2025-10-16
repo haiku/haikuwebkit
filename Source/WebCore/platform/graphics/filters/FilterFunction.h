@@ -31,7 +31,6 @@
 #include <WebCore/FilterRenderingMode.h>
 #include <WebCore/FilterStyle.h>
 #include <WebCore/FloatRect.h>
-#include <WebCore/LengthBox.h>
 #include <WebCore/RenderingResource.h>
 #include <wtf/text/AtomString.h>
 
@@ -53,8 +52,8 @@ enum class FilterRepresentation : uint8_t {
 class FilterFunction : public RenderingResource {
 public:
     enum class Type : uint8_t {
-        CSSFilter,
-        SVGFilter,
+        CSSFilterRenderer,
+        SVGFilterRenderer,
 
         // These are filter effects
         FEBlend,
@@ -83,9 +82,9 @@ public:
 
     Type filterType() const { return m_filterType; }
 
-    bool isCSSFilter() const { return m_filterType == Type::CSSFilter; }
-    bool isSVGFilter() const { return m_filterType == Type::SVGFilter; }
-    bool isFilter() const override { return m_filterType == Type::CSSFilter || m_filterType == Type::SVGFilter; }
+    bool isCSSFilterRenderer() const { return m_filterType == Type::CSSFilterRenderer; }
+    bool isSVGFilterRenderer() const { return m_filterType == Type::SVGFilterRenderer; }
+    bool isFilter() const override { return m_filterType == Type::CSSFilterRenderer || m_filterType == Type::SVGFilterRenderer; }
     bool isFilterEffect() const { return m_filterType >= Type::FEBlend && m_filterType <= Type::SourceGraphic; }
 
     static AtomString filterName(Type);
@@ -93,7 +92,7 @@ public:
     static AtomString sourceGraphicName() { return filterName(Type::SourceGraphic); }
     AtomString filterName() const { return filterName(m_filterType); }
 
-    virtual OptionSet<FilterRenderingMode> supportedFilterRenderingModes() const { return FilterRenderingMode::Software; }
+    virtual OptionSet<FilterRenderingMode> supportedFilterRenderingModes(OptionSet<FilterRenderingMode>) const { return FilterRenderingMode::Software; }
     virtual RefPtr<FilterImage> apply(const Filter&, FilterImage&, FilterResults&) { return nullptr; }
     virtual FilterStyleVector createFilterStyles(GraphicsContext&, const Filter&, const FilterStyle&) const { return { }; }
 

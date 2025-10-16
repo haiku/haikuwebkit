@@ -39,4 +39,25 @@ ALWAYS_INLINE void JSMap::set(JSGlobalObject* globalObject, JSValue key, JSValue
     add(globalObject, key, value);
 }
 
+ALWAYS_INLINE bool JSMap::isIteratorProtocolFastAndNonObservable()
+{
+    JSGlobalObject* globalObject = this->globalObject();
+    if (!globalObject->isMapPrototypeIteratorProtocolFastAndNonObservable())
+        return false;
+
+    VM& vm = globalObject->vm();
+    Structure* structure = this->structure();
+    // This is the fast case. Many maps will be an original map.
+    if (structure == globalObject->mapStructure())
+        return true;
+
+    if (getPrototypeDirect() != globalObject->mapPrototype())
+        return false;
+
+    if (getDirectOffset(vm, vm.propertyNames->iteratorSymbol) != invalidOffset)
+        return false;
+
+    return true;
+}
+
 } // namespace JSC

@@ -35,8 +35,8 @@
 #include "CSSSelectorList.h"
 #include "CSSStyleSheet.h"
 #include "CSSValueKeywords.h"
-#include "CascadeLevel.h"
 #include "ContainerQueryEvaluator.h"
+#include "DeclarationOrigin.h"
 #include "ElementInlines.h"
 #include "ElementRareData.h"
 #include "ElementTextDirection.h"
@@ -166,10 +166,10 @@ bool ElementRuleCollector::isFirstMatchModeAndHasMatchedAnyRules() const
     return m_mode == SelectorChecker::Mode::StyleInvalidation && !m_matchedRules.isEmpty();
 }
 
-void ElementRuleCollector::collectMatchingRules(CascadeLevel level)
+void ElementRuleCollector::collectMatchingRules(DeclarationOrigin origin)
 {
-    switch (level) {
-    case CascadeLevel::Author: {
+    switch (origin) {
+    case DeclarationOrigin::Author: {
         MatchRequest matchRequest(m_authorStyle);
         collectMatchingRules(matchRequest);
         if (isFirstMatchModeAndHasMatchedAnyRules())
@@ -177,7 +177,7 @@ void ElementRuleCollector::collectMatchingRules(CascadeLevel level)
         break;
     }
 
-    case CascadeLevel::User:
+    case DeclarationOrigin::User:
         if (m_userStyle) {
             MatchRequest matchRequest(*m_userStyle);
             collectMatchingRules(matchRequest);
@@ -186,29 +186,29 @@ void ElementRuleCollector::collectMatchingRules(CascadeLevel level)
         }
         break;
 
-    case CascadeLevel::UserAgent:
+    case DeclarationOrigin::UserAgent:
         ASSERT_NOT_REACHED();
         return;
     }
 
     auto* parent = element().parentElement();
     if (parent && parent->shadowRoot()) {
-        matchSlottedPseudoElementRules(level);
+        matchSlottedPseudoElementRules(origin);
         if (isFirstMatchModeAndHasMatchedAnyRules())
             return;
     }
 
     if (element().shadowRoot()) {
-        matchHostPseudoClassRules(level);
+        matchHostPseudoClassRules(origin);
         if (isFirstMatchModeAndHasMatchedAnyRules())
             return;
     }
 
     if (element().isInShadowTree()) {
-        matchUserAgentPartRules(level);
+        matchUserAgentPartRules(origin);
         if (isFirstMatchModeAndHasMatchedAnyRules())
             return;
-        matchPartPseudoElementRules(level);
+        matchPartPseudoElementRules(origin);
     }
 }
 
@@ -306,7 +306,7 @@ void ElementRuleCollector::matchAuthorRules()
 {
     clearMatchedRules();
 
-    collectMatchingRules(CascadeLevel::Author);
+    collectMatchingRules(DeclarationOrigin::Author);
 
     sortAndTransferMatchedRules(DeclarationOrigin::Author);
 }
@@ -315,12 +315,12 @@ bool ElementRuleCollector::matchesAnyAuthorRules()
 {
     clearMatchedRules();
 
-    collectMatchingRules(CascadeLevel::Author);
+    collectMatchingRules(DeclarationOrigin::Author);
 
     return !m_matchedRules.isEmpty();
 }
 
-void ElementRuleCollector::matchUserAgentPartRules(CascadeLevel level)
+void ElementRuleCollector::matchUserAgentPartRules(DeclarationOrigin origin)
 {
     ASSERT(element().isInShadowTree());
     auto* shadowRoot = element().containingShadowRoot();
@@ -328,7 +328,7 @@ void ElementRuleCollector::matchUserAgentPartRules(CascadeLevel level)
         return;
 
     // Look up user agent parts also from the host scope style as they are web-exposed.
-    auto* hostRules = Scope::forNode(*shadowRoot->host()).resolver().ruleSets().styleForCascadeLevel(level);
+    auto* hostRules = Scope::forNode(*shadowRoot->host()).resolver().ruleSets().styleForDeclarationOrigin(origin);
     if (!hostRules)
         return;
 
@@ -336,11 +336,11 @@ void ElementRuleCollector::matchUserAgentPartRules(CascadeLevel level)
     collectMatchingUserAgentPartRules(hostRequest);
 }
 
-void ElementRuleCollector::matchHostPseudoClassRules(CascadeLevel level)
+void ElementRuleCollector::matchHostPseudoClassRules(DeclarationOrigin origin)
 {
     ASSERT(element().shadowRoot());
 
-    auto* shadowRules = element().shadowRoot()->styleScope().resolver().ruleSets().styleForCascadeLevel(level);
+    auto* shadowRules = element().shadowRoot()->styleScope().resolver().ruleSets().styleForDeclarationOrigin(origin);
     if (!shadowRules)
         return;
 
@@ -360,7 +360,7 @@ void ElementRuleCollector::matchHostPseudoClassRules(CascadeLevel level)
     collect(shadowRules->hostPseudoClassRules());
 }
 
-void ElementRuleCollector::matchSlottedPseudoElementRules(CascadeLevel level)
+void ElementRuleCollector::matchSlottedPseudoElementRules(DeclarationOrigin origin)
 {
     auto* slot = element().assignedSlot();
     auto styleScopeOrdinal = ScopeOrdinal::FirstSlot;
@@ -370,7 +370,7 @@ void ElementRuleCollector::matchSlottedPseudoElementRules(CascadeLevel level)
         if (!styleScope.resolver().ruleSets().isAuthorStyleDefined())
             continue;
 
-        auto* scopeRules = styleScope.resolver().ruleSets().styleForCascadeLevel(level);
+        auto* scopeRules = styleScope.resolver().ruleSets().styleForDeclarationOrigin(origin);
         if (!scopeRules)
             continue;
 
@@ -382,7 +382,7 @@ void ElementRuleCollector::matchSlottedPseudoElementRules(CascadeLevel level)
     }
 }
 
-void ElementRuleCollector::matchPartPseudoElementRules(CascadeLevel level)
+void ElementRuleCollector::matchPartPseudoElementRules(DeclarationOrigin origin)
 {
     ASSERT(element().isInShadowTree());
     if (!element().containingShadowRoot())
@@ -394,10 +394,10 @@ void ElementRuleCollector::matchPartPseudoElementRules(CascadeLevel level)
     if (partMatchingElement.partNames().isEmpty() || !partMatchingElement.isInShadowTree())
         return;
 
-    matchPartPseudoElementRulesForScope(partMatchingElement, level);
+    matchPartPseudoElementRulesForScope(partMatchingElement, origin);
 }
 
-void ElementRuleCollector::matchPartPseudoElementRulesForScope(const Element& partMatchingElement, CascadeLevel level)
+void ElementRuleCollector::matchPartPseudoElementRulesForScope(const Element& partMatchingElement, DeclarationOrigin origin)
 {
     auto* element = &partMatchingElement;
     auto styleScopeOrdinal = ScopeOrdinal::Element;
@@ -407,7 +407,7 @@ void ElementRuleCollector::matchPartPseudoElementRulesForScope(const Element& pa
         if (!styleScope.resolver().ruleSets().isAuthorStyleDefined())
             continue;
 
-        auto* hostRules = styleScope.resolver().ruleSets().styleForCascadeLevel(level);
+        auto* hostRules = styleScope.resolver().ruleSets().styleForDeclarationOrigin(origin);
         if (!hostRules)
             continue;
 
@@ -442,7 +442,7 @@ void ElementRuleCollector::matchUserRules()
 {
     clearMatchedRules();
 
-    collectMatchingRules(CascadeLevel::User);
+    collectMatchingRules(DeclarationOrigin::User);
 
     sortAndTransferMatchedRules(DeclarationOrigin::User);
 }
@@ -877,7 +877,7 @@ void ElementRuleCollector::matchAllRules(bool matchAuthorAndUserStyles, bool inc
     if (matchAuthorAndUserStyles) {
         clearMatchedRules();
 
-        collectMatchingRules(CascadeLevel::Author);
+        collectMatchingRules(DeclarationOrigin::Author);
         sortMatchedRules();
 
         transferMatchedRules(DeclarationOrigin::Author, ScopeOrdinal::Element);

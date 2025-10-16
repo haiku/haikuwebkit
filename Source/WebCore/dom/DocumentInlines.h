@@ -166,11 +166,6 @@ inline void Document::invalidateAccessKeyCache()
         invalidateAccessKeyCacheSlowCase();
 }
 
-inline bool Document::hasMutationObserversOfType(MutationObserverOptionType type) const
-{
-    return m_mutationObserverTypes.containsAny(type);
-}
-
 inline ClientOrigin Document::clientOrigin() const { return { topOrigin().data(), securityOrigin().data() }; }
 
 inline bool Document::isSameOriginAsTopDocument() const { return protectedSecurityOrigin()->isSameOriginAs(protectedTopOrigin()); }

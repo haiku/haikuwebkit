@@ -177,7 +177,7 @@ void RenderListMarker::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffse
     GraphicsContext& context = paintInfo.context();
 
     if (isImage()) {
-        if (RefPtr markerImage = m_image->image(this, markerRect.size()))
+        if (RefPtr markerImage = m_image->image(this, markerRect.size(), context))
             context.drawImage(*markerImage, markerRect);
         if (selectionState() != HighlightState::None) {
             LayoutRect selectionRect = localSelectionRect();

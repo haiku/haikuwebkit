@@ -880,7 +880,7 @@ webkit.org/b/285098 imported/w3c/web-platform-tests/subresource-integrity/integr
 
 # WebKitLegacy is flaky on reporting API
 webkit.org/b/246350 imported/w3c/web-platform-tests/content-security-policy/reporting-api/reporting-api-sends-reports-on-violation.https.sub.html [ Pass Failure ]
-webkit.org/b/246350 imported/w3c/web-platform-tests/content-security-policy/reporting-api/report-to-directive-allowed-in-meta.https.sub.html [ Pass Failure DumpJSConsoleLogInStdErr ]
+webkit.org/b/246350 imported/w3c/web-platform-tests/content-security-policy/reporting-api/report-to-directive-allowed-in-meta.https.sub.html [ Pass Failure ]
 
 webkit.org/b/251618 imported/w3c/web-platform-tests/editing/other/exec-command-with-text-editor.tentative.html [ Failure ]
 webkit.org/b/251618 imported/w3c/web-platform-tests/editing/other/exec-command-without-editable-element.tentative.html [ Failure ]
@@ -1208,6 +1208,7 @@ media/media-vp8-webm-with-blob.html [ Skip ]
 media/media-vp8-webm-with-poster.html [ Skip ]
 media/media-vp8-webm-with-preload.html [ Skip ]
 media/media-vp9-dar-webm.html [ Skip ]
+media/media-vp9-reschange-webm.html [ Skip ]
 media/media-vp9-sar-webm.html [ Skip ]
 media/media-vp9-yuv422p10.html [ Skip ]
 media/video-src-webm-blob.html [ Failure ]
@@ -1298,8 +1299,6 @@ webkit.org/b/118269 compositing/geometry/fixed-position-flipped-writing-mode.htm
 webkit.org/b/132421 fast/multicol/fixed-stack.html [ ImageOnlyFailure ]
 
 webkit.org/b/104104 fast/overflow/scrollbar-click-retains-focus.html [ Failure ]
-
-webkit.org/b/82981 http/tests/misc/favicon-loads-with-icon-loading-override.html [ Failure ]
 
 webkit.org/b/138697 fast/events/overflow-scroll-fake-mouse-move.html [ Pass Failure ]
 
@@ -1781,6 +1780,10 @@ inspector/heap/getRemoteObject.html [ Skip ]
 inspector/unit-tests/heap-snapshot.html [ Skip ]
 inspector/unit-tests/heap-snapshot-collection-event.html [ Skip ]
 
+# Frame Targets are not supported in WK1.
+# FIXME: <https://webkit.org/b/299207> Add or rewrite tests to account for lack of frame targets in WK1.
+inspector/unit-tests/target-manager.html [ Skip ]
+
 # WK1 Inspector cannot leverage InspectorAdditions runtime enabled features
 inspector/canvas/recording-html-2d.html
 
@@ -1804,11 +1807,6 @@ imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/hist
 # Newly imported WPT tests that are flaky only on WK1.
 imported/w3c/web-platform-tests/html/browsers/history/the-location-interface/assign_after_load.html [ Pass Failure ]
 imported/w3c/web-platform-tests/html/browsers/history/the-location-interface/assign_before_load.html [ Pass Failure ]
-
-# Console logs are flaky.
-imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/module/integrity.html [ DumpJSConsoleLogInStdErr ]
-
-imported/w3c/web-platform-tests/secure-contexts/basic-dedicated-worker.html [ DumpJSConsoleLogInStdErr ]
 
 # testRunner.setShouldDownloadUndisplayableMIMETypes() is not supported on WK1.
 fast/dom/HTMLAnchorElement/anchor-file-blob-convert-to-download.html [ Skip ]
@@ -2647,7 +2645,6 @@ http/tests/security/basic-auth-subresource.html [ Failure Pass ]
 http/tests/security/contentSecurityPolicy/image-with-https-url-allowed-by-csp-img-src-star.html [ DumpJSConsoleLogInStdErr ]
 http/tests/security/contentSecurityPolicy/video-with-https-url-allowed-by-csp-media-src-star.html [ Failure Pass ]
 http/tests/security/contentSecurityPolicy/script-src-parsing-implicit-and-explicit-port-number.html [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webmessaging/broadcastchannel/cross-partition.https.tentative.html [ DumpJSConsoleLogInStdErr ]
 http/tests/security/mixedContent/secure-redirect-to-secure-redirect-to-basic-auth-secure-image.https.html [ DumpJSConsoleLogInStdErr ]
 
 # These tests have been flaky on WK1 since their import.
@@ -2747,7 +2744,6 @@ imported/w3c/web-platform-tests/pointerevents/pointerevent_after_target_removed.
 imported/w3c/web-platform-tests/pointerevents/pointerevent_contextmenu_is_a_pointerevent.html?mouse [ Skip ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_fractional_coordinates.html?mouse [ Skip ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_fractional_coordinates.html?pen [ Skip ]
-imported/w3c/web-platform-tests/pointerevents/pointerevent_pointerout_no_pointer_movement.html [ Skip ]
 
 # Lack of support for WPT custom domains.
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/sandbox-top-navigation-escalate-privileges.tentative.sub.window.html [ Failure ]
@@ -3224,3 +3220,9 @@ webkit.org/b/298211 accessibility/mac/media-query-values-change.html [ Skip ]
 webkit.org/b/298211 accessibility/mac/increase-contrast-system-color-changes.html [ Skip ]
 
 webkit.org/b/289382 fast/canvas/offscreen-no-script-context-crash.html [ Skip ]
+
+webkit.org/b/298748 css3/text-decoration/text-decoration-line-grammar-error-1.html [ Skip ]
+webkit.org/b/298748 css3/text-decoration/text-decoration-line-grammar-error-2.html [ Skip ]
+webkit.org/b/298748 css3/text-decoration/text-decoration-line-grammar-error-3.html [ Skip ]
+
+webkit.org/b/299137 imported/w3c/web-platform-tests/css/css-font-loading/fontfacesetloadevent-constructor.html [ Failure ]

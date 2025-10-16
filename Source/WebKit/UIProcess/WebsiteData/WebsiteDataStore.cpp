@@ -59,7 +59,6 @@
 #include "WebsiteDataFetchOption.h"
 #include "WebsiteDataStoreClient.h"
 #include "WebsiteDataStoreParameters.h"
-#include <WebCore/ApplicationCacheStorage.h>
 #include <WebCore/CredentialStorage.h>
 #include <WebCore/DatabaseTracker.h>
 #include <WebCore/HTMLMediaElement.h>
@@ -546,24 +545,10 @@ void WebsiteDataStore::handleResolvedDirectoriesAsynchronously(const WebsiteData
     }
 
     // Clear data of deprecated types.
-    m_queue->dispatch([webSQLDirectory = crossThreadCopy(directories.webSQLDatabaseDirectory), applicationCacheDirectory = crossThreadCopy(directories.applicationCacheDirectory), applicationCacheFlatFileSubdirectoryName = crossThreadCopy(directories.applicationCacheFlatFileSubdirectoryName), directoriesToExclude = WTFMove(allCacheDirectories)]() {
+    m_queue->dispatch([webSQLDirectory = crossThreadCopy(directories.webSQLDatabaseDirectory), directoriesToExclude = WTFMove(allCacheDirectories)]() {
         if (!webSQLDirectory.isEmpty()) {
             WebCore::DatabaseTracker::trackerWithDatabasePath(webSQLDirectory)->deleteAllDatabasesImmediately();
             FileSystem::deleteEmptyDirectory(webSQLDirectory);
-        }
-
-        if (!applicationCacheDirectory.isEmpty()) {
-            {
-                auto storage = WebCore::ApplicationCacheStorage::create(applicationCacheDirectory, applicationCacheFlatFileSubdirectoryName);
-                storage->deleteAllCaches();
-            }
-            if (!applicationCacheFlatFileSubdirectoryName.isEmpty()) {
-                auto applicationCacheFlatFileSubdirectory = FileSystem::pathByAppendingComponent(applicationCacheDirectory, applicationCacheFlatFileSubdirectoryName);
-                FileSystem::deleteEmptyDirectory(applicationCacheFlatFileSubdirectory);
-            }
-            auto applicationCacheDatabasePath = FileSystem::pathByAppendingComponent(applicationCacheDirectory, "ApplicationCache.db"_s);
-            WebCore::SQLiteFileSystem::deleteDatabaseFile(applicationCacheDatabasePath);
-            FileSystem::deleteEmptyDirectory(applicationCacheDirectory);
         }
 
         for (auto& directory : directoriesToExclude)
@@ -2329,15 +2314,6 @@ String WebsiteDataStore::defaultNetworkCacheDirectory(const String& baseCacheDir
 #endif
 }
 
-String WebsiteDataStore::defaultApplicationCacheDirectory(const String& baseCacheDirectory)
-{
-#if PLATFORM(PLAYSTATION) || USE(GLIB)
-    return cacheDirectoryFileSystemRepresentation("applications"_s, baseCacheDirectory);
-#else
-    return cacheDirectoryFileSystemRepresentation("ApplicationCache"_s, baseCacheDirectory);
-#endif
-}
-
 String WebsiteDataStore::defaultMediaCacheDirectory(const String& baseCacheDirectory)
 {
     return cacheDirectoryFileSystemRepresentation("MediaCache"_s, baseCacheDirectory);
@@ -2858,7 +2834,7 @@ RestrictedOpenerType WebsiteDataStore::openerTypeForDomain(const WebCore::Regist
     }
 
 #if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
-    return RestrictedOpenerDomainsController::shared().lookup(domain);
+    return RestrictedOpenerDomainsController::singleton().lookup(domain);
 #else
     return RestrictedOpenerType::Unrestricted;
 #endif

@@ -401,7 +401,7 @@ void FontCascade::drawGlyphs(GraphicsContext& context, const Font& font, std::sp
 bool FontCascade::primaryFontIsSystemFont() const
 {
     Ref fontData = primaryFont();
-    return isSystemFont(RetainPtr { fontData->getCTFont() }.get());
+    return isSystemFont(RetainPtr { fontData->ctFont() }.get());
 }
 
 RefPtr<const Font> FontCascade::fontForCombiningCharacterSequence(StringView stringView) const

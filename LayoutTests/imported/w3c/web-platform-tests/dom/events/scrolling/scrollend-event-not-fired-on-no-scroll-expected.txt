@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Unhandled Promise Rejection: Error: assert_true: no scroll, so no scrollend expected expected true got false
 target
 doc
 

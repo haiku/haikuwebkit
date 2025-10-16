@@ -27,7 +27,7 @@
 #include "config.h"
 #include "SpellChecker.h"
 
-#include "Document.h"
+#include "DocumentInlines.h"
 #include "DocumentMarkerController.h"
 #include "Editing.h"
 #include "Editor.h"

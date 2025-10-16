@@ -150,7 +150,7 @@ JSValue JSTestClassWithJSBuiltinConstructor::getConstructor(VM& vm, const JSGlob
 
 void JSTestClassWithJSBuiltinConstructor::destroy(JSC::JSCell* cell)
 {
-    JSTestClassWithJSBuiltinConstructor* thisObject = static_cast<JSTestClassWithJSBuiltinConstructor*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestClassWithJSBuiltinConstructor* thisObject = static_cast<JSTestClassWithJSBuiltinConstructor*>(cell);
     thisObject->JSTestClassWithJSBuiltinConstructor::~JSTestClassWithJSBuiltinConstructor();
 }
 
@@ -193,7 +193,7 @@ bool JSTestClassWithJSBuiltinConstructorOwner::isReachableFromOpaqueRoots(JSC::H
 
 void JSTestClassWithJSBuiltinConstructorOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestClassWithJSBuiltinConstructor = static_cast<JSTestClassWithJSBuiltinConstructor*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestClassWithJSBuiltinConstructor = static_cast<JSTestClassWithJSBuiltinConstructor*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestClassWithJSBuiltinConstructor->protectedWrapped().ptr(), jsTestClassWithJSBuiltinConstructor);
 }

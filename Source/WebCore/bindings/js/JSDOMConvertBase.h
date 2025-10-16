@@ -108,9 +108,9 @@ template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&
 template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&, JSDOMGlobalObject&, U&&);
 template<typename IDL, typename U> inline JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject&, JSDOMGlobalObject&, U&&);
 
-template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&, JSC::ThrowScope&, U&& valueOrFunctor);
-template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&, JSDOMGlobalObject&, JSC::ThrowScope&, U&& valueOrFunctor);
-template<typename IDL, typename U> inline JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject&, JSDOMGlobalObject&, JSC::ThrowScope&, U&& valueOrFunctor);
+template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&, JSC::ThrowScope&, NOESCAPE U&& valueOrFunctor);
+template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&, JSDOMGlobalObject&, JSC::ThrowScope&, NOESCAPE U&& valueOrFunctor);
+template<typename IDL, typename U> inline JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject&, JSDOMGlobalObject&, JSC::ThrowScope&, NOESCAPE U&& valueOrFunctor);
 
 template<typename IDL, bool needsState = JSConverter<IDL>::needsState, bool needsGlobalObject = JSConverter<IDL>::needsGlobalObject>
 struct JSConverterOverloader;
@@ -169,7 +169,7 @@ template<typename IDL, typename U> inline JSC::JSValue toJSNewlyCreated(JSC::JSG
     return JSConverter<IDL>::convertNewlyCreated(lexicalGlobalObject, globalObject, std::forward<U>(value));
 }
 
-template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& throwScope, U&& valueOrFunctor)
+template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& throwScope, NOESCAPE U&& valueOrFunctor)
 {
     if constexpr (std::is_invocable_v<U>) {
         using FunctorReturnType = std::invoke_result_t<U>;
@@ -199,7 +199,7 @@ template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&
     }
 }
 
-template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, JSC::ThrowScope& throwScope, U&& valueOrFunctor)
+template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, JSC::ThrowScope& throwScope, NOESCAPE U&& valueOrFunctor)
 {
     if constexpr (std::is_invocable_v<U>) {
         using FunctorReturnType = std::invoke_result_t<U>;
@@ -229,7 +229,7 @@ template<typename IDL, typename U> inline JSC::JSValue toJS(JSC::JSGlobalObject&
     }
 }
 
-template<typename IDL, typename U> inline JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, JSC::ThrowScope& throwScope, U&& valueOrFunctor)
+template<typename IDL, typename U> inline JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, JSC::ThrowScope& throwScope, NOESCAPE U&& valueOrFunctor)
 {
     if constexpr (std::is_invocable_v<U>) {
         using FunctorReturnType = std::invoke_result_t<U>;

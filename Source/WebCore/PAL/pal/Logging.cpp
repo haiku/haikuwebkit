@@ -31,6 +31,7 @@
 #if PLATFORM(COCOA)
 #include <notify.h>
 #include <wtf/BlockPtr.h>
+#include <wtf/darwin/DispatchExtras.h>
 #endif
 
 namespace PAL {
@@ -39,7 +40,7 @@ void registerNotifyCallback(ASCIILiteral notifyID, Function<void()>&& callback)
 {
 #if PLATFORM(COCOA)
     int token;
-    notify_register_dispatch(notifyID.characters(), &token, dispatch_get_main_queue(), makeBlockPtr([callback = WTFMove(callback)](int) {
+    notify_register_dispatch(notifyID.characters(), &token, mainDispatchQueueSingleton(), makeBlockPtr([callback = WTFMove(callback)](int) {
         callback();
     }).get());
 #else

@@ -39,6 +39,7 @@
 #include "WebExtensionContextIdentifier.h"
 #include "WebExtensionController.h"
 #include "WebExtensionDataType.h"
+#include "WebExtensionDeclarativeNetRequestSQLiteStore.h"
 #include "WebExtensionDynamicScripts.h"
 #include "WebExtensionEventListenerType.h"
 #include "WebExtensionFrameIdentifier.h"
@@ -112,7 +113,6 @@ OBJC_CLASS WKWebExtensionContext;
 OBJC_CLASS WKWebView;
 OBJC_CLASS WKWebViewConfiguration;
 OBJC_CLASS _WKWebExtensionContextDelegate;
-OBJC_CLASS _WKWebExtensionDeclarativeNetRequestSQLiteStore;
 OBJC_CLASS _WKWebExtensionRegisteredScriptsSQLiteStore;
 OBJC_PROTOCOL(WKWebExtensionTab);
 OBJC_PROTOCOL(WKWebExtensionWindow);
@@ -268,6 +268,18 @@ public:
         BaseURLAlreadyInUse,
         NoBackgroundContent,
         BackgroundContentFailedToLoad
+    };
+
+    enum class PermissionNotification : uint8_t {
+        None = 0,
+        PermissionsWereGranted,
+        PermissionsWereDenied,
+        GrantedPermissionsWereRemoved,
+        DeniedPermissionsWereRemoved,
+        PermissionMatchPatternsWereGranted,
+        PermissionMatchPatternsWereDenied,
+        GrantedPermissionMatchPatternsWereRemoved,
+        DeniedPermissionMatchPatternsWereRemoved,
     };
 
     enum class PermissionState : int8_t {
@@ -665,16 +677,14 @@ private:
     void determineInstallReasonDuringLoad();
     void moveLocalStorageIfNeeded(const URL& previousBaseURL, CompletionHandler<void()>&&);
 
-    void permissionsDidChange(NSString *notificationName, const PermissionsSet&);
-    void permissionsDidChange(NSString *notificationName, const MatchPatternSet&);
+    void permissionsDidChange(PermissionNotification, const PermissionsSet&);
+    void permissionsDidChange(PermissionNotification, const MatchPatternSet&);
 
-    bool removePermissions(PermissionsMap&, PermissionsSet&, WallTime& nextExpirationDate, NSString *notificationName);
-    bool removePermissionMatchPatterns(PermissionMatchPatternsMap&, MatchPatternSet&, EqualityOnly, WallTime& nextExpirationDate, NSString *notificationName);
+    bool removePermissions(PermissionsMap&, PermissionsSet&, WallTime& nextExpirationDate, PermissionNotification = PermissionNotification::None);
+    bool removePermissionMatchPatterns(PermissionMatchPatternsMap&, MatchPatternSet&, EqualityOnly, WallTime& nextExpirationDate, PermissionNotification = PermissionNotification::None);
 
-#if PLATFORM(COCOA)
-    PermissionsMap& removeExpired(PermissionsMap&, WallTime& nextExpirationDate, NSString *notificationName = nil);
-    PermissionMatchPatternsMap& removeExpired(PermissionMatchPatternsMap&, WallTime& nextExpirationDate, NSString *notificationName = nil);
-#endif
+    PermissionsMap& removeExpired(PermissionsMap&, WallTime& nextExpirationDate, PermissionNotification = PermissionNotification::None);
+    PermissionMatchPatternsMap& removeExpired(PermissionMatchPatternsMap&, WallTime& nextExpirationDate, PermissionNotification = PermissionNotification::None);
 
     void populateWindowsAndTabs();
 
@@ -758,9 +768,9 @@ private:
     void saveShouldDisplayBlockedResourceCountAsBadgeText(bool);
 
     // Session and dynamic rules.
-    _WKWebExtensionDeclarativeNetRequestSQLiteStore *declarativeNetRequestDynamicRulesStore();
-    _WKWebExtensionDeclarativeNetRequestSQLiteStore *declarativeNetRequestSessionRulesStore();
-    void updateDeclarativeNetRequestRulesInStorage(_WKWebExtensionDeclarativeNetRequestSQLiteStore *, NSString *storageType, NSString *apiName, NSArray *rulesToAdd, NSArray *ruleIDsToRemove, CompletionHandler<void(Expected<void, WebExtensionError>&&)>&&);
+    Ref<WebExtensionDeclarativeNetRequestSQLiteStore> declarativeNetRequestDynamicRulesStore();
+    Ref<WebExtensionDeclarativeNetRequestSQLiteStore> declarativeNetRequestSessionRulesStore();
+    void updateDeclarativeNetRequestRulesInStorage(RefPtr<WebExtensionDeclarativeNetRequestSQLiteStore>, const String& storageType, const String& apiName, Ref<JSON::Array> rulesToAdd, Vector<double> ruleIDsToRemove, CompletionHandler<void(Expected<void, WebExtensionError>&&)>&&);
 
     DeclarativeNetRequestMatchedRuleVector matchedRules() { return m_matchedRules; }
 
@@ -1079,8 +1089,8 @@ private:
     HashMap<Ref<WebExtensionMatchPattern>, UserScriptVector> m_injectedScriptsPerPatternMap;
     HashMap<Ref<WebExtensionMatchPattern>, UserStyleSheetVector> m_injectedStyleSheetsPerPatternMap;
 
-#if PLATFORM(COCOA)
     HashMap<String, Ref<WebExtensionDynamicScripts::WebExtensionRegisteredScript>> m_registeredScriptsMap;
+#if PLATFORM(COCOA)
     RetainPtr<_WKWebExtensionRegisteredScriptsSQLiteStore> m_registeredContentScriptsStorage;
 #endif
 
@@ -1120,10 +1130,8 @@ private:
 
     String m_declarativeNetRequestContentRuleListFilePath;
     DeclarativeNetRequestMatchedRuleVector m_matchedRules;
-#if PLATFORM(COCOA)
-    RetainPtr<_WKWebExtensionDeclarativeNetRequestSQLiteStore> m_declarativeNetRequestDynamicRulesStore;
-    RetainPtr<_WKWebExtensionDeclarativeNetRequestSQLiteStore> m_declarativeNetRequestSessionRulesStore;
-#endif
+    RefPtr<WebExtensionDeclarativeNetRequestSQLiteStore> m_declarativeNetRequestDynamicRulesStore;
+    RefPtr<WebExtensionDeclarativeNetRequestSQLiteStore> m_declarativeNetRequestSessionRulesStore;
     HashSet<String> m_enabledStaticRulesetIDs;
     HashSet<double> m_sessionRulesIDs;
     HashSet<double> m_dynamicRulesIDs;

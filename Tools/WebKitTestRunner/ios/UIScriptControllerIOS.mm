@@ -52,6 +52,7 @@
 #import <wtf/SoftLinking.h>
 #import <wtf/Vector.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 SOFT_LINK_FRAMEWORK(UIKit)
 SOFT_LINK_CLASS(UIKit, UIPhysicalKeyboardEvent)
@@ -648,7 +649,7 @@ enum class IsKeyDown : bool { No, Yes };
 
 static UIPhysicalKeyboardEvent *createUIPhysicalKeyboardEvent(NSString *hidInputString, NSString *uiEventInputString, UIKeyModifierFlags modifierFlags, UIKeyboardInputFlags inputFlags, IsKeyDown isKeyDown)
 {
-    auto* keyboardEvent = [getUIPhysicalKeyboardEventClass() _eventWithInput:uiEventInputString inputFlags:inputFlags];
+    auto* keyboardEvent = [getUIPhysicalKeyboardEventClassSingleton() _eventWithInput:uiEventInputString inputFlags:inputFlags];
     [keyboardEvent _setModifierFlags:modifierFlags];
     auto hidEvent = createHIDKeyEvent(hidInputString, keyboardEvent.timestamp, isKeyDown == IsKeyDown::Yes);
     [keyboardEvent _setHIDEvent:hidEvent.get() keyboard:nullptr];
@@ -885,7 +886,7 @@ void UIScriptControllerIOS::applyAutocorrection(JSStringRef newString, JSStringR
 #if USE(BROWSERENGINEKIT)
     if (auto asyncInput = asyncTextInput()) {
         auto completionWrapper = makeBlockPtr([this, protectedThis = Ref { *this }, callbackID](NSArray<UITextSelectionRect *> *) {
-            dispatch_async(dispatch_get_main_queue(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
+            dispatch_async(mainDispatchQueueSingleton(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
                 if (m_context)
                     m_context->asyncTaskComplete(callbackID);
             }).get());
@@ -898,7 +899,7 @@ void UIScriptControllerIOS::applyAutocorrection(JSStringRef newString, JSStringR
 
     auto contentView = static_cast<id<UIWKInteractionViewProtocol>>(platformContentView());
     [contentView applyAutocorrection:toWTFString(newString).createNSString().get() toString:toWTFString(oldString).createNSString().get() shouldUnderline:underline withCompletionHandler:makeBlockPtr([this, protectedThis = Ref { *this }, callbackID](UIWKAutocorrectionRects *) {
-        dispatch_async(dispatch_get_main_queue(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
+        dispatch_async(mainDispatchQueueSingleton(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
             // applyAutocorrection can call its completion handler synchronously,
             // which makes UIScriptController unhappy (see bug 172884).
             if (!m_context)
@@ -1420,7 +1421,7 @@ void UIScriptControllerIOS::activateDataListSuggestion(unsigned index, JSValueRe
     [webView() _selectDataListOption:index];
 
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-    dispatch_async(dispatch_get_main_queue(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
+    dispatch_async(mainDispatchQueueSingleton(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
         if (!m_context)
             return;
         m_context->asyncTaskComplete(callbackID);
@@ -1568,7 +1569,7 @@ void UIScriptControllerIOS::doAfterDoubleTapDelay(JSValueRef callback)
         maximumIntervalBetweenSuccessiveTaps += additionalDelayBetweenSuccessiveTaps;
     }
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(maximumIntervalBetweenSuccessiveTaps * NSEC_PER_SEC)), dispatch_get_main_queue(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(maximumIntervalBetweenSuccessiveTaps * NSEC_PER_SEC)), mainDispatchQueueSingleton(), makeBlockPtr([this, protectedThis = Ref { *this }, callbackID] {
         if (!m_context)
             return;
         m_context->asyncTaskComplete(callbackID);

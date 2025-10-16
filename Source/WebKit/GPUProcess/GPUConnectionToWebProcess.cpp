@@ -712,7 +712,7 @@ Ref<RemoteImageDecoderAVFProxy> GPUConnectionToWebProcess::protectedImageDecoder
 }
 #endif
 
-void GPUConnectionToWebProcess::createRenderingBackend(RenderingBackendIdentifier identifier, IPC::StreamServerConnection::Handle&& connectionHandle)
+void GPUConnectionToWebProcess::createRenderingBackend(RemoteRenderingBackendIdentifier identifier, IPC::StreamServerConnection::Handle&& connectionHandle)
 {
     IPC::StreamServerConnectionParameters params;
 #if ENABLE(IPC_TESTING_API)
@@ -730,7 +730,7 @@ void GPUConnectionToWebProcess::createRenderingBackend(RenderingBackendIdentifie
     }
 }
 
-void GPUConnectionToWebProcess::releaseRenderingBackend(RenderingBackendIdentifier renderingBackendIdentifier)
+void GPUConnectionToWebProcess::releaseRenderingBackend(RemoteRenderingBackendIdentifier renderingBackendIdentifier)
 {
     bool found = m_remoteRenderingBackendMap.remove(renderingBackendIdentifier);
     ASSERT_UNUSED(found, found);
@@ -738,7 +738,7 @@ void GPUConnectionToWebProcess::releaseRenderingBackend(RenderingBackendIdentifi
 }
 
 #if ENABLE(WEBGL)
-void GPUConnectionToWebProcess::createGraphicsContextGL(GraphicsContextGLIdentifier identifier, WebCore::GraphicsContextGLAttributes attributes, RenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& connectionHandle)
+void GPUConnectionToWebProcess::createGraphicsContextGL(RemoteGraphicsContextGLIdentifier identifier, WebCore::GraphicsContextGLAttributes attributes, RemoteRenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& connectionHandle)
 {
     MESSAGE_CHECK(!isLockdownModeEnabled());
 
@@ -760,7 +760,7 @@ void GPUConnectionToWebProcess::createGraphicsContextGL(GraphicsContextGLIdentif
     ASSERT_UNUSED(addResult, addResult.isNewEntry);
 }
 
-void GPUConnectionToWebProcess::releaseGraphicsContextGL(GraphicsContextGLIdentifier identifier)
+void GPUConnectionToWebProcess::releaseGraphicsContextGL(RemoteGraphicsContextGLIdentifier identifier)
 {
     MESSAGE_CHECK(!isLockdownModeEnabled());
 
@@ -769,13 +769,13 @@ void GPUConnectionToWebProcess::releaseGraphicsContextGL(GraphicsContextGLIdenti
         m_gpuProcess->tryExitIfUnusedAndUnderMemoryPressure();
 }
 
-void GPUConnectionToWebProcess::releaseGraphicsContextGLForTesting(GraphicsContextGLIdentifier identifier)
+void GPUConnectionToWebProcess::releaseGraphicsContextGLForTesting(RemoteGraphicsContextGLIdentifier identifier)
 {
     releaseGraphicsContextGL(identifier);
 }
 #endif
 
-RemoteRenderingBackend* GPUConnectionToWebProcess::remoteRenderingBackend(RenderingBackendIdentifier renderingBackendIdentifier)
+RemoteRenderingBackend* GPUConnectionToWebProcess::remoteRenderingBackend(RemoteRenderingBackendIdentifier renderingBackendIdentifier)
 {
     auto it = m_remoteRenderingBackendMap.find(renderingBackendIdentifier);
     if (it == m_remoteRenderingBackendMap.end())
@@ -803,7 +803,7 @@ void GPUConnectionToWebProcess::performWithMediaPlayerOnMainThread(MediaPlayerId
 }
 #endif
 
-void GPUConnectionToWebProcess::createGPU(WebGPUIdentifier identifier, RenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& connectionHandle)
+void GPUConnectionToWebProcess::createGPU(WebGPUIdentifier identifier, RemoteRenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& connectionHandle)
 {
     MESSAGE_CHECK(m_sharedPreferencesForWebProcess.webGPUEnabled);
 

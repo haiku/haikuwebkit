@@ -1,5 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/storage-access-api/resources/script-with-cookie-header.py?script=embedded_responder.js
-CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/storage-access-api/resources/set-document-cookie.html?initial-cookie=unpartitioned;Secure;SameSite=None;Path=/
 
 Harness Error (TIMEOUT), message = null
 

@@ -67,7 +67,7 @@ Color CanvasStyleColorResolutionDelegate::currentColor() const
         return Color::black;
 
     auto colorString = m_canvasElement->inlineStyle()->getPropertyValue(CSSPropertyColor);
-    auto color = CSSPropertyParserHelpers::parseColorRaw(colorString, m_canvasElement->cssParserContext(), m_canvasElement->document());
+    auto color = CSSPropertyParserHelpers::parseColorRaw(colorString, m_canvasElement->cssParserContext(), m_canvasElement->protectedDocument().get());
     if (color.isValid())
         return color;
     return Color::black;

@@ -152,7 +152,7 @@ JSValue JSTestReportExtraMemoryCost::getConstructor(VM& vm, const JSGlobalObject
 
 void JSTestReportExtraMemoryCost::destroy(JSC::JSCell* cell)
 {
-    JSTestReportExtraMemoryCost* thisObject = static_cast<JSTestReportExtraMemoryCost*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestReportExtraMemoryCost* thisObject = static_cast<JSTestReportExtraMemoryCost*>(cell);
     thisObject->JSTestReportExtraMemoryCost::~JSTestReportExtraMemoryCost();
 }
 
@@ -212,7 +212,7 @@ bool JSTestReportExtraMemoryCostOwner::isReachableFromOpaqueRoots(JSC::Handle<JS
 
 void JSTestReportExtraMemoryCostOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestReportExtraMemoryCost = static_cast<JSTestReportExtraMemoryCost*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestReportExtraMemoryCost = static_cast<JSTestReportExtraMemoryCost*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestReportExtraMemoryCost->protectedWrapped().ptr(), jsTestReportExtraMemoryCost);
 }

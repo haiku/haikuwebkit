@@ -360,12 +360,13 @@ public:
     WEBCORE_EXPORT IPCData toIPCData() const;
 
 #if USE(CORE_TEXT)
-    WEBCORE_EXPORT CTFontRef registeredFont() const; // Returns nullptr iff the font is not registered, such as web fonts (otherwise returns font()).
+    WEBCORE_EXPORT RetainPtr<CTFontRef> registeredFont() const; // Returns nullptr iff the font is not registered, such as web fonts (otherwise returns font()).
     static RetainPtr<CFTypeRef> objectForEqualityCheck(CTFontRef);
     RetainPtr<CFTypeRef> objectForEqualityCheck() const;
     bool hasCustomTracking() const { return isSystemFont(); }
 
     CTFontRef ctFont() const { return m_font.get(); }
+    RetainPtr<CTFontRef> protectedCTFont() const { return ctFont(); }
 #endif
 
 #if PLATFORM(COCOA)

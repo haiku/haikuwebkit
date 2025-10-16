@@ -108,6 +108,7 @@
 #include "RenderImage.h"
 #include "RenderInline.h"
 #include "RenderLayer.h"
+#include "RenderObjectStyle.h"
 #include "RenderTextControl.h"
 #include "RenderedDocumentMarker.h"
 #include "RenderedPosition.h"
@@ -1989,7 +1990,32 @@ void Editor::toggleAutomaticSpellingCorrection()
         client()->toggleAutomaticSpellingCorrection();
 }
 
+void Editor::toggleSmartLists()
+{
+    Ref document = this->document();
+    if (!document->settings().smartListsAvailable())
+        return;
+
+    if (client())
+        client()->toggleSmartLists();
+}
+
+#endif // USE(AUTOMATIC_TEXT_REPLACEMENT)
+
+#if PLATFORM(COCOA)
+bool Editor::isSmartListsEnabled()
+{
+    Ref document = this->document();
+    if (!document->settings().smartListsAvailable())
+        return false;
+
+#if PLATFORM(MAC)
+    return client() && client()->isSmartListsEnabled();
+#else
+    return true;
 #endif
+}
+#endif // PLATFORM(COCOA)
 
 bool Editor::shouldEndEditing(const SimpleRange& range)
 {

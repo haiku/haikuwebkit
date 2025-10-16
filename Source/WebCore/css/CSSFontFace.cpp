@@ -83,7 +83,7 @@ void CSSFontFace::appendSources(CSSFontFace& fontFace, CSSValueList& srcList, Sc
 
 Ref<CSSFontFace> CSSFontFace::create(CSSFontSelector& fontSelector, StyleRuleFontFace* cssConnection, FontFace* wrapper, bool isLocalFallback)
 {
-    auto* context = fontSelector.scriptExecutionContext();
+    RefPtr context = fontSelector.scriptExecutionContext();
     const auto* settings = context ? &context->settingsValues() : nullptr;
     auto result = adoptRef(*new CSSFontFace(settings, cssConnection, wrapper, isLocalFallback));
     result->addClient(fontSelector);

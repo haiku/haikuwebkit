@@ -38,6 +38,12 @@
 
 namespace WTF {
 
+#define USING_CAN_MAKE_CHECKEDPTR(BASE) \
+    using BASE::checkedPtrCount; \
+    using BASE::checkedPtrCountWithoutThreadCheck; \
+    using BASE::incrementCheckedPtrCount; \
+    using BASE::decrementCheckedPtrCount
+
 template<typename T, typename PtrTraits>
 class CheckedRef {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(CheckedRef);
@@ -228,7 +234,7 @@ inline ExpectedType& downcast(CheckedRef<ArgType, ArgPtrTraits>& source)
 }
 
 template<typename ExpectedType, typename ArgType, typename ArgPtrTraits>
-inline const ExpectedType& downcast(const CheckedRef<ArgType, ArgPtrTraits>& source)
+inline ExpectedType& downcast(const CheckedRef<ArgType, ArgPtrTraits>& source)
 {
     return downcast<ExpectedType>(source.get());
 }

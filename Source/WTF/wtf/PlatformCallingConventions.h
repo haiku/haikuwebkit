@@ -96,7 +96,7 @@
 
 #define JSC_ANNOTATE_JIT_OPERATION_INTERNAL(function, decltypeInfo) \
     static_assert(sizeof(JSC::JITOperationAnnotationInitializer<decltypeInfo>) == sizeof(JSC::JITOperationAnnotation)); \
-    constexpr JSC::JITOperationAnnotationInitializer<decltypeInfo> _JITTargetID_##function __attribute__((used, section("__DATA_CONST,__jsc_ops"))) = { function, JSC_ANNOTATE_JIT_OPERATION_EXTRAS(function##Validate) };
+    SUPPRESS_ASAN constexpr JSC::JITOperationAnnotationInitializer<decltypeInfo> _JITTargetID_##function __attribute__((used, section("__DATA_CONST,__jsc_ops"))) = { function, JSC_ANNOTATE_JIT_OPERATION_EXTRAS(function##Validate) };
 
 #define JSC_ANNOTATE_JIT_OPERATION(function) \
     JSC_ANNOTATE_JIT_OPERATION_WITH_DECLTYPE_INFO(function, decltype(function))

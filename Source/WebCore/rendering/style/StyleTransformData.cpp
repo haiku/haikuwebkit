@@ -31,7 +31,7 @@ namespace WebCore {
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleTransformData);
 
 StyleTransformData::StyleTransformData()
-    : operations(RenderStyle::initialTransform())
+    : transform(RenderStyle::initialTransform())
     , origin(RenderStyle::initialTransformOrigin())
     , transformBox(RenderStyle::initialTransformBox())
 {
@@ -39,7 +39,7 @@ StyleTransformData::StyleTransformData()
 
 inline StyleTransformData::StyleTransformData(const StyleTransformData& other)
     : RefCounted<StyleTransformData>()
-    , operations(other.operations)
+    , transform(other.transform)
     , origin(other.origin)
     , transformBox(other.transformBox)
 {
@@ -54,13 +54,13 @@ bool StyleTransformData::operator==(const StyleTransformData& other) const
 {
     return origin == other.origin
         && transformBox == other.transformBox
-        && operations == other.operations;
+        && transform == other.transform;
 }
 
 #if !LOG_DISABLED
 void StyleTransformData::dumpDifferences(TextStream& ts, const StyleTransformData& other) const
 {
-    LOG_IF_DIFFERENT(operations);
+    LOG_IF_DIFFERENT(transform);
     LOG_IF_DIFFERENT(origin);
     LOG_IF_DIFFERENT(transformBox);
 }

@@ -170,7 +170,7 @@ inline PresentationContext& fromAPI(WGPUSwapChain swapChain)
     return static_cast<PresentationContext&>(*swapChain);
 }
 
-inline Texture& fromAPI(WGPUTexture texture) SWIFT_RETURNS_UNRETAINED
+inline Texture& fromAPI(WGPUTexture texture)
 {
     return static_cast<Texture&>(*texture);
 }

@@ -28,6 +28,7 @@
 
 #if ENABLE(WEB_RTC)
 
+#include "ContextDestructionObserverInlines.h"
 #include "DedicatedWorkerGlobalScope.h"
 #include "EventLoop.h"
 #include "FrameRateMonitor.h"

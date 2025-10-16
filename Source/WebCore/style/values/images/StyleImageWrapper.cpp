@@ -69,10 +69,9 @@ static ImageWrapper crossfadeBlend(Ref<StyleCachedImage>&& fromStyleImage, Ref<S
     return ImageWrapper { StyleCrossfadeImage::create(WTFMove(fromStyleImage), WTFMove(toStyleImage), context.progress, false) };
 }
 
-static ImageWrapper filterBlend(RefPtr<StyleImage> inputImage, const FilterOperations& from, const FilterOperations& to, const BlendingContext& context)
+static ImageWrapper filterBlend(RefPtr<StyleImage> inputImage, const Style::Filter& from, const Style::Filter& to, const BlendingContext& context)
 {
-    auto filterResult = from.blend(to, context);
-    return ImageWrapper { StyleFilterImage::create(WTFMove(inputImage), WTFMove(filterResult)) };
+    return ImageWrapper { StyleFilterImage::create(WTFMove(inputImage), Style::blend(from, to, context)) };
 }
 
 auto Blending<ImageWrapper>::blend(const ImageWrapper& a, const ImageWrapper& b, const BlendingContext& context) -> ImageWrapper
@@ -104,7 +103,7 @@ auto Blending<ImageWrapper>::blend(const ImageWrapper& a, const ImageWrapper& b,
         // Interpolation of generated images is only possible if the input images are equal.
         // Otherwise fall back to cross fade animation.
         if (aFilter->equalInputImages(*bFilter) && is<StyleCachedImage>(aFilter->inputImage()))
-            return filterBlend(aFilter->inputImage(), aFilter->filterOperations(), bFilter->filterOperations(), context);
+            return filterBlend(aFilter->inputImage(), aFilter->filter(), bFilter->filter(), context);
     } else if (auto [aCrossfade, bCrossfade] = std::tuple { dynamicDowncast<StyleCrossfadeImage>(aSelected), dynamicDowncast<StyleCrossfadeImage>(bSelected) }; aCrossfade && bCrossfade) {
         if (aCrossfade->equalInputImages(*bCrossfade)) {
             if (RefPtr crossfadeBlend = bCrossfade->blend(*aCrossfade, context))
@@ -114,12 +113,12 @@ auto Blending<ImageWrapper>::blend(const ImageWrapper& a, const ImageWrapper& b,
         RefPtr aFilterInputImage = dynamicDowncast<StyleCachedImage>(aFilter->inputImage());
 
         if (aFilterInputImage && bCachedImage->equals(*aFilterInputImage))
-            return filterBlend(WTFMove(aFilterInputImage), aFilter->filterOperations(), FilterOperations(), context);
+            return filterBlend(WTFMove(aFilterInputImage), aFilter->filter(), Style::Filter { CSS::Keyword::None { } }, context);
     } else if (auto [aCachedImage, bFilter] = std::tuple { dynamicDowncast<StyleCachedImage>(aSelected), dynamicDowncast<StyleFilterImage>(bSelected) }; aCachedImage && bFilter) {
         RefPtr bFilterInputImage = dynamicDowncast<StyleCachedImage>(bFilter->inputImage());
 
         if (bFilterInputImage && aCachedImage->equals(*bFilterInputImage))
-            return filterBlend(WTFMove(bFilterInputImage), FilterOperations(), bFilter->filterOperations(), context);
+            return filterBlend(WTFMove(bFilterInputImage), Style::Filter { CSS::Keyword::None { } }, bFilter->filter(), context);
     }
 
     RefPtr aCachedImage = dynamicDowncast<StyleCachedImage>(aSelected);

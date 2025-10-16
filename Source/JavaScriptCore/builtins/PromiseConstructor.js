@@ -80,7 +80,9 @@ function promiseOnRejectedWithContext(argument, context)
 {
     "use strict";
 
-    return @rejectPromiseWithFirstResolvingFunctionCallCheck(context.globalContext.promise, argument);
+    @assert(@isPromiseAllContext(context));
+
+    return @rejectPromiseWithFirstResolvingFunctionCallCheck(@getPromiseAllContextInternalField(context, @promiseAllContextFieldPromise), argument);
 }
 
 @linkTimeConstant
@@ -88,13 +90,17 @@ function promiseAllOnFulfilled(argument, context)
 {
     "use strict";
 
-    var globalContext = context.globalContext;
-    var values = globalContext.values;
+    @assert(@isPromiseAllContext(context));
 
-    @putByValDirect(values, context.index, argument);
+    var promise = @getPromiseAllContextInternalField(context, @promiseAllContextFieldPromise);
+    var values = @getPromiseAllContextInternalField(context, @promiseAllContextFieldValues);
+    var remainingElementsCountObj = @getPromiseAllContextInternalField(context, @promiseAllContextFieldRemainingElementsCount);
+    var index = @getPromiseAllContextInternalField(context, @promiseAllContextFieldIndex);
 
-    if (!--globalContext.remainingElementsCount)
-        return @resolvePromiseWithFirstResolvingFunctionCallCheck(globalContext.promise, values);
+    @putByValDirect(values, index, argument);
+
+    if (!--remainingElementsCountObj.value)
+        return @resolvePromiseWithFirstResolvingFunctionCallCheck(promise, values);
 }
 
 @linkTimeConstant
@@ -108,9 +114,11 @@ function promiseNewOnRejected(promise)
 }
 
 @linkTimeConstant
-function promiseAllNewResolveElement(globalContext, index)
+function promiseAllNewResolveElement(context, index)
 {
     "use strict";
+
+    @assert(@isPromiseAllContext(context));
 
     var alreadyCalled = false;
     return (argument) => {
@@ -118,11 +126,14 @@ function promiseAllNewResolveElement(globalContext, index)
             return @undefined;
         alreadyCalled = true;
 
-        var values = globalContext.values;
+        var values = @getPromiseAllContextInternalField(context, @promiseAllContextFieldValues);
         @putByValDirect(values, index, argument);
 
-        if (!--globalContext.remainingElementsCount)
-            return @resolvePromiseWithFirstResolvingFunctionCallCheck(globalContext.promise, values);
+        var remainingElementsCount = @getPromiseAllContextInternalField(context, @promiseAllContextFieldRemainingElementsCount);
+        if (!--remainingElementsCount.value) {
+            var promise = @getPromiseAllContextInternalField(context, @promiseAllContextFieldPromise);
+            return @resolvePromiseWithFirstResolvingFunctionCallCheck(promise, values);
+        }
     };
 }
 
@@ -135,11 +146,7 @@ function all(iterable)
 
     var promise = @newPromise();
     var values = [];
-    var globalContext = {
-        promise,
-        values,
-        remainingElementsCount: 1,
-    };
+    var remainingElementsCountObj = { value: 1 };
     var index = 0;
     var onRejected;
 
@@ -151,23 +158,24 @@ function all(iterable)
         for (var value of iterable) {
             @putByValDirect(values, index, @undefined);
             var nextPromise = promiseResolve.@call(this, value);
-            ++globalContext.remainingElementsCount;
+            ++remainingElementsCountObj.value;
             var then = nextPromise.then;
+            var context = @promiseAllContextCreate(promise, values, remainingElementsCountObj, index);
             if (@isPromise(nextPromise) && then === @defaultPromiseThen) {
                 var constructor = @speciesConstructor(nextPromise, @Promise);
                 var promiseOrCapability;
                 if (constructor !== @Promise)
                     promiseOrCapability = @newPromiseCapabilitySlow(constructor);
-                @performPromiseThen(nextPromise, @promiseAllOnFulfilled, @promiseOnRejectedWithContext, promiseOrCapability, { globalContext, index });
+                @performPromiseThen(nextPromise, @promiseAllOnFulfilled, @promiseOnRejectedWithContext, promiseOrCapability, context);
             } else {
                 if (!onRejected)
                     onRejected = @promiseNewOnRejected(promise);
-                then.@call(nextPromise, @promiseAllNewResolveElement(globalContext, index), onRejected);
+                then.@call(nextPromise, @promiseAllNewResolveElement(context, index), onRejected);
             }
             ++index;
         }
 
-        if (!--globalContext.remainingElementsCount)
+        if (!--remainingElementsCountObj.value)
             @resolvePromiseWithFirstResolvingFunctionCallCheck(promise, values);
     } catch (error) {
         @rejectPromiseWithFirstResolvingFunctionCallCheck(promise, error);

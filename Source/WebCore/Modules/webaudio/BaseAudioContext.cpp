@@ -996,7 +996,7 @@ RefPtr<MediaSessionManagerInterface> BaseAudioContext::mediaSessionManager() con
     if (!page)
         return nullptr;
 
-    return &page->mediaSessionManager();
+    return page->mediaSessionManager();
 }
 
 

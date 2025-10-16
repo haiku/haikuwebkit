@@ -39,6 +39,7 @@
 #import <wtf/Assertions.h>
 #import <wtf/MainThread.h>
 #import <wtf/NeverDestroyed.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/spi/darwin/SandboxSPI.h>
 #import <wtf/spi/darwin/XPCSPI.h>
 #import <wtf/text/WTFString.h>
@@ -115,7 +116,7 @@ RemoteInspector& RemoteInspector::singleton()
             if ([NSThread isMainThread])
                 shared->initialize();
             else {
-                dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_async(mainDispatchQueueSingleton(), ^{
                     shared->initialize();
                 });
             }
@@ -126,7 +127,7 @@ RemoteInspector& RemoteInspector::singleton()
 }
 
 RemoteInspector::RemoteInspector()
-    : m_xpcQueue(dispatch_queue_create("com.apple.JavaScriptCore.remote-inspector-xpc", DISPATCH_QUEUE_SERIAL))
+    : m_xpcQueue(adoptOSObject(dispatch_queue_create("com.apple.JavaScriptCore.remote-inspector-xpc", DISPATCH_QUEUE_SERIAL)))
 {
 }
 
@@ -200,7 +201,7 @@ void RemoteInspector::updateAutomaticInspectionCandidate(RemoteInspectionTarget*
         // In case debuggers fail to respond, or we cannot connect to webinspectord, assume a rejection for
         // automatic inspection after a short period of time.
         int64_t debuggerTimeoutDelay = 10;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, debuggerTimeoutDelay * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, debuggerTimeoutDelay * NSEC_PER_SEC), globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             Locker locker { m_mutex };
             if (m_automaticInspectionCandidates.remove(targetIdentifier)) {
                 WTFLogAlways("Skipping Automatic Inspection Candidate with pageId(%u) because we failed to receive a response in time.", targetIdentifier);
@@ -281,7 +282,7 @@ void RemoteInspector::start()
 
     m_enabled = true;
 
-    notify_register_dispatch(WIRServiceAvailableNotification, &m_notifyToken, m_xpcQueue, ^(int) {
+    notify_register_dispatch(WIRServiceAvailableNotification, &m_notifyToken, m_xpcQueue.get(), ^(int) {
         RemoteInspector::singleton().setupXPCConnectionIfNeeded();
     });
 
@@ -335,13 +336,13 @@ void RemoteInspector::setupXPCConnectionIfNeeded()
         return;
     }
 
-    auto connection = adoptOSObject(xpc_connection_create_mach_service(WIRXPCMachPortName, m_xpcQueue, 0));
+    auto connection = adoptOSObject(xpc_connection_create_mach_service(WIRXPCMachPortName, m_xpcQueue.get(), 0));
     if (!connection) {
         WTFLogAlways("RemoteInspector failed to create XPC connection.");
         return;
     }
 
-    m_relayConnection = adoptRef(new RemoteInspectorXPCConnection(connection.get(), m_xpcQueue, this));
+    m_relayConnection = adoptRef(new RemoteInspectorXPCConnection(connection.get(), m_xpcQueue.get(), this));
     m_relayConnection->sendMessage(@"syn", nil); // Send a simple message to initialize the XPC connection.
 
     if (m_automaticInspectionCandidates.size()) {
@@ -356,7 +357,7 @@ void RemoteInspector::setupXPCConnectionIfNeeded()
 
 void RemoteInspector::connectToWebInspector()
 {
-    dispatch_async(m_xpcQueue, ^{
+    dispatch_async(m_xpcQueue.get(), ^{
         RemoteInspector::singleton().setupXPCConnectionIfNeeded();
     });
 }
@@ -456,7 +457,7 @@ void RemoteInspector::xpcConnectionFailed(RemoteInspectorXPCConnection* relayCon
     m_shouldReconnectToRelayOnFailure = false;
 
     // Schedule setting up a new connection, since we currently are holding a lock needed to create a new connection.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RemoteInspector::singleton().setupXPCConnectionIfNeeded();
     });
 }
@@ -596,7 +597,7 @@ void RemoteInspector::pushListingsSoon()
         return;
 
     m_pushScheduled = true;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC), globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         Locker locker { m_mutex };
         if (m_pushScheduled)
             pushListingsNow();
@@ -760,7 +761,7 @@ void RemoteInspector::receivedProxyApplicationSetupMessage(NSDictionary *)
         // We are a proxy application without parent process information.
         // Wait a bit for the information, but give up after a second.
         m_shouldSendParentProcessInformation = true;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             Locker locker { m_mutex };
             if (m_shouldSendParentProcessInformation)
                 stopInternal(StopSource::XPCMessage);

@@ -37,13 +37,14 @@
 #include <WebCore/StyleHyphenateLimitLines.h>
 #include <WebCore/StyleImageOrNone.h>
 #include <WebCore/StyleLineBoxContain.h>
+#include <WebCore/StyleLineFitEdge.h>
 #include <WebCore/StyleListStyleType.h>
 #include <WebCore/StyleOrphans.h>
 #include <WebCore/StyleQuotes.h>
 #include <WebCore/StyleScrollbarColor.h>
 #include <WebCore/StyleStrokeMiterlimit.h>
 #include <WebCore/StyleStrokeWidth.h>
-#include <WebCore/StyleTextEdge.h>
+#include <WebCore/StyleTextBoxEdge.h>
 #include <WebCore/StyleTextEmphasisStyle.h>
 #include <WebCore/StyleTextIndent.h>
 #include <WebCore/StyleTextShadow.h>
@@ -79,7 +80,7 @@ class TextStream;
 
 namespace WebCore {
 
-class StyleFilterData;
+class StyleAppleColorFilterData;
 class StyleImage;
 
 // This struct is for rarely used inherited CSS3, CSS2, and WebKit-specific properties.
@@ -134,9 +135,9 @@ public:
     Style::TextIndent textIndent;
     Style::TextUnderlineOffset textUnderlineOffset;
 
-    TextEdge textBoxEdge;
-    TextEdge lineFitEdge;
-    
+    Style::TextBoxEdge textBoxEdge;
+    Style::LineFitEdge lineFitEdge;
+
     Length wordSpacing;
     Style::StrokeMiterlimit miterLimit;
 
@@ -216,7 +217,7 @@ public:
 
     Style::Quotes quotes;
 
-    DataRef<StyleFilterData> appleColorFilter;
+    DataRef<StyleAppleColorFilterData> appleColorFilter;
 
     Style::WebkitLineGrid lineGrid;
     TabSize tabSize;

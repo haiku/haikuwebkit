@@ -29,6 +29,7 @@
 #include "AXObjectCache.h"
 #include "AccessibilityObject.h"
 #include "BorderShape.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "ElementInlines.h"
@@ -60,6 +61,7 @@
 #include "RenderImage.h"
 #include "RenderLayer.h"
 #include "RenderLayerBacking.h"
+#include "RenderObjectStyle.h"
 #include "RenderVideo.h"
 #include "SVGSVGElement.h"
 #include "SimpleRange.h"
@@ -287,20 +289,8 @@ static bool colorIsChallengingToHighlight(const Color& color)
 
 static bool styleIsChallengingToHighlight(const RenderStyle& style)
 {
-    auto fillPaintType = style.fill().type;
-
-    if (fillPaintType == Style::SVGPaintType::None) {
-        auto strokePaintType = style.stroke().type;
-        if (strokePaintType != Style::SVGPaintType::RGBColor && strokePaintType != Style::SVGPaintType::CurrentColor)
-            return false;
-
-        return colorIsChallengingToHighlight(style.colorResolvingCurrentColor(style.stroke().color));
-    }
-
-    if (fillPaintType != Style::SVGPaintType::RGBColor && fillPaintType != Style::SVGPaintType::CurrentColor)
-        return false;
-
-    return colorIsChallengingToHighlight(style.colorResolvingCurrentColor(style.fill().color));
+    auto color = (style.fill().isNone() ? style.stroke() : style.fill()).tryColor();
+    return color && colorIsChallengingToHighlight(style.colorResolvingCurrentColor(*color));
 }
 
 static bool isGuardContainer(const Element& element)
@@ -391,7 +381,7 @@ static String interactionRegionTextContentForNode(Node& node)
 }
 #endif
 
-std::optional<InteractionRegion> interactionRegionForRenderedRegion(RenderObject& regionRenderer, const FloatRect& bounds, const FloatSize& clipOffset, const std::optional<AffineTransform>& transform)
+std::optional<InteractionRegion> interactionRegionForRenderedRegion(const RenderObject& regionRenderer, const FloatRect& bounds, const FloatSize& clipOffset, const std::optional<AffineTransform>& transform)
 {
     if (bounds.isEmpty())
         return std::nullopt;
@@ -688,7 +678,7 @@ std::optional<InteractionRegion> interactionRegionForRenderedRegion(RenderObject
             }
 
             // Expand the interaction region by the width of the CSS border, if necessary.
-            const auto rectOffset = RenderThemeCocoa::inflateRectForInteractionRegion(regionRenderer, rect);
+            const auto rectOffset = RenderThemeCocoa::inflateRectForInteractionRegion(*regionRendererBox, rect);
             if (clipPath && !rectOffset.isZero())
                 clipPath->translate(rectOffset);
         } else

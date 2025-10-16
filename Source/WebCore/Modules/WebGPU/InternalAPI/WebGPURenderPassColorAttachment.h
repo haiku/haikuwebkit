@@ -41,11 +41,12 @@ class Texture;
 class TextureView;
 
 using RenderPassColorAttachmentView = Variant<const WeakRef<Texture>, const WeakRef<TextureView>>;
+using RenderPassResolveAttachmentView = Variant<WeakPtr<Texture>, WeakPtr<TextureView>>;
 
 struct RenderPassColorAttachment {
     RenderPassColorAttachmentView view;
     std::optional<IntegerCoordinate> depthSlice;
-    WeakPtr<TextureView> resolveTarget;
+    std::optional<RenderPassResolveAttachmentView> resolveTarget;
 
     std::optional<Color> clearValue;
     LoadOp loadOp { LoadOp::Load };
@@ -67,7 +68,28 @@ struct RenderPassColorAttachment {
             return view.ptr();
         });
     }
-    RefPtr<TextureView> protectedResolveTarget() const { return resolveTarget.get(); }
+    RefPtr<Texture> protectedResolveTexture() const
+    {
+        if (!resolveTarget)
+            return nullptr;
+
+        return WTF::switchOn(*resolveTarget, [&](const WeakPtr<Texture>& texture) -> const RefPtr<Texture> {
+            return texture.get();
+        }, [&](const WeakPtr<TextureView>&) -> const RefPtr<Texture> {
+            return nullptr;
+        });
+    }
+    RefPtr<TextureView> protectedResolveTarget() const
+    {
+        if (!resolveTarget)
+            return nullptr;
+
+        return WTF::switchOn(*resolveTarget, [&](const WeakPtr<Texture>&) -> const RefPtr<TextureView> {
+            return nullptr;
+        }, [&](const WeakPtr<TextureView>& view) -> const RefPtr<TextureView> {
+            return view.get();
+        });
+    }
 };
 
 } // namespace WebCore::WebGPU

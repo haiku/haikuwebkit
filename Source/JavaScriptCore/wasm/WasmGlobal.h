@@ -27,10 +27,10 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "SlotVisitorMacros.h"
-#include "WasmFormat.h"
-#include "WasmLimits.h"
-#include "WriteBarrier.h"
+#include <JavaScriptCore/SlotVisitorMacros.h>
+#include <JavaScriptCore/WasmFormat.h>
+#include <JavaScriptCore/WasmLimits.h>
+#include <JavaScriptCore/WriteBarrier.h>
 #include <wtf/Ref.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeRefCounted.h>

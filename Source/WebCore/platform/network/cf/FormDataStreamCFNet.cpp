@@ -369,7 +369,7 @@ RetainPtr<CFReadStreamRef> createHTTPBodyCFReadStream(FormData& formData)
     unsigned long long length = 0;
     for (auto& element : dataForUpload.data().elements()) {
         length += element.lengthInBytes([](auto& url) {
-            return blobRegistry().blobRegistryImpl()->blobSize(url);
+            return blobRegistry()->blobRegistryImpl()->blobSize(url);
         });
     }
     ASSERT(isMainThread());

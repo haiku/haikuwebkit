@@ -77,12 +77,12 @@ Ref<DOMAudioSession> DOMAudioSession::create(ScriptExecutionContext* context)
 DOMAudioSession::DOMAudioSession(ScriptExecutionContext* context)
     : ActiveDOMObject(context)
 {
-    AudioSession::singleton().addInterruptionObserver(*this);
+    AudioSession::addInterruptionObserver(*this);
 }
 
 DOMAudioSession::~DOMAudioSession()
 {
-    AudioSession::singleton().removeInterruptionObserver(*this);
+    AudioSession::removeInterruptionObserver(*this);
 }
 
 ExceptionOr<void> DOMAudioSession::setType(Type type)
@@ -103,8 +103,10 @@ ExceptionOr<void> DOMAudioSession::setType(Type type)
     auto categoryOverride = fromDOMAudioSessionType(type);
     AudioSession::singleton().setCategoryOverride(categoryOverride);
 
-    if (categoryOverride == AudioSessionCategory::None)
-        Ref { page->mediaSessionManager() }->updateAudioSessionCategoryIfNecessary();
+    if (categoryOverride == AudioSessionCategory::None) {
+        if (RefPtr manager = page->mediaSessionManager())
+            manager->updateAudioSessionCategoryIfNecessary();
+    }
 
     return { };
 }

@@ -43,7 +43,8 @@ public:
 
     WEBCORE_EXPORT const String& type() const;
     WEBCORE_EXPORT const String& url() const;
-    WEBCORE_EXPORT const RefPtr<ReportBody>& body() const;
+    ReportBody* body() const { return m_body.get(); }
+    RefPtr<ReportBody> protectedBody() const { return m_body; }
 
     static Ref<FormData> createReportFormDataForViolation(const String& type, const URL&, const String& userAgent, const String& destination, NOESCAPE const Function<void(JSON::Object&)>& populateBody);
 

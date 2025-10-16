@@ -29,27 +29,22 @@
 #include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
-
-class CSSValue;
-class RenderStyle;
-
 namespace Style {
-
-class BuilderState;
 
 // <'offset-position'> = auto | normal | <position>
 // https://drafts.fxtf.org/motion/#propdef-offset-position
 struct OffsetPosition {
-    OffsetPosition(CSS::Keyword::Auto) : value { WebCore::LengthType::Auto, WebCore::LengthType::Auto } { }
-    OffsetPosition(CSS::Keyword::Normal) : value { WebCore::LengthType::Normal, WebCore::LengthType::Normal } { }
-    OffsetPosition(Position&& position) : value { toPlatform(position) } { }
-    OffsetPosition(const Position& position) : value { toPlatform(position) } { }
-    explicit OffsetPosition(WebCore::LengthPoint&& point) : value { WTFMove(point) } { RELEASE_ASSERT(isValid(value)); }
-    explicit OffsetPosition(const WebCore::LengthPoint& point) : value { point } { RELEASE_ASSERT(isValid(value)); }
+    OffsetPosition(CSS::Keyword::Auto keyword) : m_value { keyword} { }
+    OffsetPosition(CSS::Keyword::Normal keyword) : m_value { keyword} { }
+    OffsetPosition(Position&& position) : m_value { WTFMove(position) } { }
+    OffsetPosition(const Position& position) : m_value { position } { }
+    explicit OffsetPosition(WebCore::LengthPoint&& point) : m_value { convert(point) } { }
+    explicit OffsetPosition(const WebCore::LengthPoint& point) : m_value { convert(point) } { }
 
-    ALWAYS_INLINE bool isAuto() const { return value.x.isAuto(); }
-    ALWAYS_INLINE bool isNormal() const { return value.x.isNormal(); }
-    ALWAYS_INLINE bool isPosition() const { return value.x.isSpecified(); }
+    ALWAYS_INLINE bool isAuto() const { return holdsAlternative<CSS::Keyword::Auto>(); }
+    ALWAYS_INLINE bool isNormal() const { return holdsAlternative<CSS::Keyword::Auto>(); }
+    ALWAYS_INLINE bool isPosition() const { return holdsAlternative<Position>(); }
+    std::optional<Position> tryPosition() const { return isPosition() ? std::make_optional(std::get<Position>(m_value)) : std::nullopt; }
 
     template<typename> bool holdsAlternative() const;
     template<typename... F> decltype(auto) switchOn(F&&...) const;
@@ -57,35 +52,31 @@ struct OffsetPosition {
     bool operator==(const OffsetPosition&) const = default;
 
 private:
-    friend struct Blending<OffsetPosition>;
-    friend struct ToPlatform<OffsetPosition>;
-
-    static bool isValid(const WebCore::LengthPoint& point)
+    static auto convert(const WebCore::LengthPoint& point) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position>
     {
-        return (point.x.isAuto() && point.y.isAuto())
-            || (point.x.isNormal() && point.y.isNormal())
-            || (point.x.isSpecified() && point.y.isSpecified());
+        if (point.x.isAuto() && point.y.isAuto())
+            return CSS::Keyword::Auto { };
+
+        if (point.x.isNormal() && point.y.isNormal())
+            return CSS::Keyword::Auto { };
+
+        if (point.x.isSpecified() && point.y.isSpecified())
+            return Position { point };
+
+        RELEASE_ASSERT_NOT_REACHED();
     }
 
-    WebCore::LengthPoint value;
+    Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position> m_value;
 };
 
 template<typename T> bool OffsetPosition::holdsAlternative() const
 {
-         if constexpr (std::same_as<T, CSS::Keyword::Auto>)     return isAuto();
-    else if constexpr (std::same_as<T, CSS::Keyword::Normal>)   return isNormal();
-    else if constexpr (std::same_as<T, Position>)               return isPosition();
+    return std::holds_alternative<T>(m_value);
 }
 
 template<typename... F> decltype(auto) OffsetPosition::switchOn(F&&... f) const
 {
-    auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
-
-    if (isAuto())
-        return visitor(CSS::Keyword::Auto { });
-    if (isNormal())
-        return visitor(CSS::Keyword::Normal { });
-    return visitor(Position { value });
+    return WTF::switchOn(m_value, std::forward<F>(f)...);
 }
 
 // MARK: - Conversion

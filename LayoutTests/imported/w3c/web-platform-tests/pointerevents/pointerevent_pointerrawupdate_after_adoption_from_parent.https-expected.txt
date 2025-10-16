@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Viewport argument key "initial-scale:1" not recognized and ignored.
 
 
 FAIL `pointerrawupdate` events should be fired after the element is moved from a child doc to the parent doc assert_true: expected true got false

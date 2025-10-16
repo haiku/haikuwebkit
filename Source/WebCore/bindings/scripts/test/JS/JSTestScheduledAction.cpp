@@ -154,7 +154,7 @@ JSValue JSTestScheduledAction::getConstructor(VM& vm, const JSGlobalObject* glob
 
 void JSTestScheduledAction::destroy(JSC::JSCell* cell)
 {
-    JSTestScheduledAction* thisObject = static_cast<JSTestScheduledAction*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestScheduledAction* thisObject = static_cast<JSTestScheduledAction*>(cell);
     thisObject->JSTestScheduledAction::~JSTestScheduledAction();
 }
 
@@ -218,7 +218,7 @@ bool JSTestScheduledActionOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unk
 
 void JSTestScheduledActionOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestScheduledAction = static_cast<JSTestScheduledAction*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestScheduledAction = static_cast<JSTestScheduledAction*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestScheduledAction->protectedWrapped().ptr(), jsTestScheduledAction);
 }

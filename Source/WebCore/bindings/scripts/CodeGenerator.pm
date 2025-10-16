@@ -1460,30 +1460,31 @@ sub GenerateConditionalString
     }
 }
 
+sub ConditionalComparator
+{
+    # Compare by feature name, with non-negated forms before negated ones,
+    # by moving any leading "!" to the end of the string (e.g. "!FOO" → "FOO!").
+    ($a =~ s/^(!?)(.+)/$2$1/r) cmp ($b =~ s/^(!?)(.+)/$2$1/r)
+}
+
 sub GenerateConditionalStringFromAttributeValue
 {
     my ($generator, $conditional) = @_;
 
-    my %disjunction;
-    map {
-        my $expression = $_;
-        my %conjunction;
-        map { $conjunction{$_} = 1; } split(/&/, $expression);
-        $expression = "ENABLE(" . join(") && ENABLE(", sort keys %conjunction) . ")";
-        $disjunction{$expression} = 1
+    # Unquote string literals if needed.
+    $conditional = UnquoteStringLiteral($generator, $conditional) if $conditional =~ /^['"]/;
+
+    my %disjunction = map {
+        my %conjunction = map {
+            s/^(!?)(.+)$/$1ENABLE($2)/r => 1
+        } split(/&/);
+
+        join(" && ", sort ConditionalComparator keys %conjunction) => 1
     } split(/\|/, $conditional);
 
-    return "1" if keys %disjunction == 0;
-    return (%disjunction)[0] if keys %disjunction == 1;
-
-    my @parenthesized;
-    map {
-        my $expression = $_;
-        $expression = "($expression)" if $expression =~ / /;
-        push @parenthesized, $expression;
-    } sort keys %disjunction;
-
-    return join(" || ", @parenthesized);
+    return "1" if %disjunction == 0;
+    return (keys %disjunction)[0] if %disjunction == 1;
+    return join(" || ", map { / / ? "($_)" : $_ } sort ConditionalComparator keys %disjunction);
 }
 
 sub GenerateCompileTimeCheckForEnumsIfNeeded

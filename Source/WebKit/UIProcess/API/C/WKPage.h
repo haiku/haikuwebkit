@@ -256,7 +256,7 @@ typedef void (*WKPageGetContentsAsMHTMLDataFunction)(WKDataRef, WKErrorRef, void
 WK_EXPORT void WKPageGetContentsAsMHTMLData(WKPageRef page, void* context, WKPageGetContentsAsMHTMLDataFunction function);
 
 typedef void (*WKPageGetSelectionAsWebArchiveDataFunction)(WKDataRef, WKErrorRef, void*);
-WK_EXPORT void WKPageGetSelectionAsWebArchiveData(WKPageRef page, void* context, WKPageGetSelectionAsWebArchiveDataFunction function);
+WK_EXPORT void WKPageGetSelectionAsWebArchiveData(WKPageRef page, void* context, WKPageGetSelectionAsWebArchiveDataFunction function) WK_C_API_DEPRECATED;
 
 typedef void (*WKPageForceRepaintFunction)(WKErrorRef, void*);
 WK_EXPORT void WKPageForceRepaint(WKPageRef page, void* context, WKPageForceRepaintFunction function);

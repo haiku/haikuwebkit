@@ -112,8 +112,7 @@ extension WebGPU.CommandEncoder {
         return nil
     }
     public func finish(descriptor: WGPUCommandBufferDescriptor) -> WebGPU_Internal.RefCommandBuffer {
-        let collection = CollectionOfOne(descriptor)
-        if wgpuGetCommandBufferDescriptorNextChainedStruct(collection.span) != nil ||  !isValid() || (m_existingCommandEncoder != nil && m_existingCommandEncoder !== m_blitCommandEncoder) {
+        if !isValid() || (m_existingCommandEncoder != nil && m_existingCommandEncoder !== m_blitCommandEncoder) {
             setEncoderState(WebGPU.CommandsMixin.EncoderState.Ended)
             discardCommandBuffer();
             protectedDevice().ptr().generateAValidationError(m_lastErrorString != nil ? m_lastErrorString! as String : String("Invalid CommandEncoder"))
@@ -309,7 +308,7 @@ extension WebGPU.CommandEncoder {
                 }
             }
 
-            mtlRenderPipelineDescriptor.vertexFunction = device.m_nopVertexFunction
+            mtlRenderPipelineDescriptor.vertexFunction = WebGPU.Device.nopVertexFunction(device.device())
             mtlRenderPipelineDescriptor.fragmentFunction = nil
 
             precondition(sampleCount != 0, "sampleCount must be non-zero")
@@ -844,7 +843,7 @@ extension WebGPU.CommandEncoder {
         if let wgpuTimestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)?[0] {
             let wgpuQuerySet = wgpuTimestampWrites.querySet
             let querySet = WebGPU.fromAPI(wgpuQuerySet)
-            counterSampleBuffer = querySet.counterSampleBufferWithOffset().first
+            counterSampleBuffer = unsafe querySet.counterSampleBufferWithOffset().first
         }
 
         if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
@@ -1219,17 +1218,6 @@ extension WebGPU.CommandEncoder {
     }
 
     public func copyTextureToBuffer(source: WGPUImageCopyTexture, destination: WGPUImageCopyBuffer, copySize: WGPUExtent3D) {
-        let sourceCollection = CollectionOfOne(source)
-        let destinationCollection = CollectionOfOne(destination)
-        let sourceSpan = sourceCollection.span
-        let destinationSpan = destinationCollection.span
-        let sourceNextInChain = wgpuGetImageCopyTextureNextInChain(sourceSpan)?[0]
-        let destinationNextInChain = wgpuGetImageCopyBufferNextInChain(destinationSpan)?[0]
-        let destinationLayoutNextInChain = wgpuGetTextureDataLayoutNextInChain(CollectionOfOne(destination.layout).span)?[0]
-        guard sourceNextInChain == nil && destinationNextInChain == nil && destinationLayoutNextInChain == nil else {
-            return
-        }
-
         // https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-copytexturetobuffer
 
         guard prepareTheEncoderState() else {
@@ -1352,7 +1340,6 @@ extension WebGPU.CommandEncoder {
                         return
                     }
                     let newSource = WGPUImageCopyTexture(
-                        nextInChain: nil,
                         texture: source.texture,
                         mipLevel: source.mipLevel,
                         origin: WGPUOrigin3D(x: source.origin.x, y: yPlusOriginY, z: zPlusOriginZ),
@@ -1368,9 +1355,7 @@ extension WebGPU.CommandEncoder {
                         return
                     }
                     let newDestination = WGPUImageCopyBuffer(
-                        nextInChain: nil,
                         layout: WGPUTextureDataLayout(
-                            nextInChain: nil,
                             offset: tripleSum,
                             bytesPerRow: UInt32(WGPU_COPY_STRIDE_UNDEFINED),
                             rowsPerImage: UInt32(WGPU_COPY_STRIDE_UNDEFINED)
@@ -1510,16 +1495,6 @@ extension WebGPU.CommandEncoder {
     }
 
     public func copyBufferToTexture(source: WGPUImageCopyBuffer, destination: WGPUImageCopyTexture, copySize: WGPUExtent3D) {
-        let sourceCollection = CollectionOfOne(source)
-        let destinationCollection = CollectionOfOne(destination)
-        let sourceSpan = sourceCollection.span
-        let destinationSpan = destinationCollection.span
-        let sourceNextInChain = wgpuGetImageCopyBufferNextInChain(sourceSpan)?[0]
-        let sourceLayoutNextInChain = wgpuGetTextureDataLayoutNextInChain(CollectionOfOne(source.layout).span)?[0]
-        let destinationNextInChain = wgpuGetImageCopyTextureNextInChain(destinationSpan)?[0]
-        guard sourceNextInChain == nil && sourceLayoutNextInChain == nil && destinationNextInChain == nil else {
-            return
-        }
         guard self.prepareTheEncoderState() else {
             self.generateInvalidEncoderStateError()
             return
@@ -1658,9 +1633,7 @@ extension WebGPU.CommandEncoder {
                         return
                     }
                     let newSource = WGPUImageCopyBuffer(
-                        nextInChain: nil,
                         layout: WGPUTextureDataLayout(
-                            nextInChain: nil,
                             offset: tripleSum,
                             bytesPerRow: UInt32(WGPU_COPY_STRIDE_UNDEFINED),
                             rowsPerImage: UInt32(WGPU_COPY_STRIDE_UNDEFINED)
@@ -1672,7 +1645,6 @@ extension WebGPU.CommandEncoder {
                         return
                     }
                     let newDestination = WGPUImageCopyTexture(
-                        nextInChain: nil,
                         texture: destination.texture,
                         mipLevel: destination.mipLevel,
                         origin: WGPUOrigin3D(
@@ -1909,16 +1881,6 @@ extension WebGPU.CommandEncoder {
     }
 
     public func copyTextureToTexture(source: WGPUImageCopyTexture, destination: WGPUImageCopyTexture, copySize: WGPUExtent3D) {
-        let sourceCollection = CollectionOfOne(source)
-        let destinationCollection = CollectionOfOne(destination)
-        let sourceSpan = sourceCollection.span
-        let destinationSpan = destinationCollection.span
-        let sourceNextInChain = wgpuGetImageCopyTextureNextInChain(sourceSpan)?[0]
-        let destinationNextInChain = wgpuGetImageCopyTextureNextInChain(destinationSpan)?[0]
-        guard sourceNextInChain == nil, destinationNextInChain == nil else {
-            return
-        }
-
         // https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-copytexturetotexture
 
         guard self.prepareTheEncoderState() else {
@@ -2098,9 +2060,6 @@ extension WebGPU.CommandEncoder {
 
     public func beginComputePass(descriptor: WGPUComputePassDescriptor) -> WebGPU_Internal.RefComputePassEncoder {
         let collection = CollectionOfOne(descriptor)
-        guard wgpuGetComputePassDescriptorNextChainedStruct(collection.span) == nil else {
-            return WebGPU.ComputePassEncoder.createInvalid(self, m_device.ptr(), "descriptor is corrupted")
-        }
 
         guard prepareTheEncoderState() else {
             self.generateInvalidEncoderStateError()
@@ -2126,8 +2085,8 @@ extension WebGPU.CommandEncoder {
         var counterSampleBuffer: MTLCounterSampleBuffer? = nil
         var counterSampleBufferOffset: UInt32 = 0
         if let wgpuTimestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0] {
-            counterSampleBuffer = WebGPU.fromAPI(wgpuTimestampWrites.querySet).counterSampleBufferWithOffset().first
-            counterSampleBufferOffset = WebGPU.fromAPI(wgpuTimestampWrites.querySet).counterSampleBufferWithOffset().second
+            counterSampleBuffer = unsafe WebGPU.fromAPI(wgpuTimestampWrites.querySet).counterSampleBufferWithOffset().first
+            counterSampleBufferOffset = unsafe WebGPU.fromAPI(wgpuTimestampWrites.querySet).counterSampleBufferWithOffset().second
         }
 
         if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {

@@ -135,7 +135,7 @@ static CFDictionaryRef pixelBufferCreationOptions(IOSurfaceRef surface)
 Expected<RetainPtr<CVPixelBufferRef>, CVReturn> createCVPixelBuffer(IOSurfaceRef surface)
 {
     CVPixelBufferRef pixelBuffer = nullptr;
-    auto status = CVPixelBufferCreateWithIOSurface(kCFAllocatorDefault, surface, pixelBufferCreationOptions(surface), &pixelBuffer);
+    auto status = CVPixelBufferCreateWithIOSurface(kCFAllocatorDefault, surface, RetainPtr { pixelBufferCreationOptions(surface) }.get(), &pixelBuffer);
     if (status != kCVReturnSuccess || !pixelBuffer) {
         RELEASE_LOG_ERROR(WebRTC, "createCVPixelBuffer failed with IOSurface status=%d, pixelBuffer=%p", (int)status, pixelBuffer);
         return makeUnexpected(status);
@@ -145,7 +145,7 @@ Expected<RetainPtr<CVPixelBufferRef>, CVReturn> createCVPixelBuffer(IOSurfaceRef
 
 RetainPtr<CGColorSpaceRef> createCGColorSpaceForCVPixelBuffer(CVPixelBufferRef buffer)
 {
-    if (CGColorSpaceRef colorSpace = dynamic_cf_cast<CGColorSpaceRef>(CVBufferGetAttachment(buffer, kCVImageBufferCGColorSpaceKey, nullptr)))
+    if (RetainPtr colorSpace = dynamic_cf_cast<CGColorSpaceRef>(CVBufferGetAttachment(buffer, kCVImageBufferCGColorSpaceKey, nullptr)))
         return colorSpace;
 
     RetainPtr<CFDictionaryRef> attachments;
@@ -168,9 +168,9 @@ RetainPtr<CGColorSpaceRef> createCGColorSpaceForCVPixelBuffer(CVPixelBufferRef b
 
 void setOwnershipIdentityForCVPixelBuffer(CVPixelBufferRef pixelBuffer, const ProcessIdentity& owner)
 {
-    auto surface = CVPixelBufferGetIOSurface(pixelBuffer);
+    RetainPtr surface = CVPixelBufferGetIOSurface(pixelBuffer);
     ASSERT(surface);
-    IOSurface::setOwnershipIdentity(surface, owner);
+    IOSurface::setOwnershipIdentity(surface.get(), owner);
 }
 
 RetainPtr<CVPixelBufferRef> createBlackPixelBuffer(size_t width, size_t height, bool shouldUseIOSurface)

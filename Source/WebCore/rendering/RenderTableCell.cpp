@@ -367,7 +367,7 @@ LayoutUnit RenderTableCell::logicalHeightForRowSizing() const
     auto specifiedSize = !isOrthogonal() ? style().logicalHeight() : style().logicalWidth();
     if (!specifiedSize.isSpecified())
         return usedLogicalSize;
-    auto computedLogicaSize = Style::evaluate(specifiedSize, 0_lu);
+    auto computedLogicaSize = Style::evaluate(specifiedSize, 0_lu, 1.0f /* FIXME FIND ZOOM */);
     // In strict mode, box-sizing: content-box do the right thing and actually add in the border and padding.
     // Call computedCSSPadding* directly to avoid including implicitPadding.
     if (!document().inQuirksMode() && style().boxSizing() != BoxSizing::BorderBox)
@@ -592,7 +592,7 @@ auto RenderTableCell::computeVisibleRectsInContainer(const RepaintRects& rects, 
         return rects;
 
     auto adjustedRects = rects;
-    if ((!view().frameView().layoutContext().isPaintOffsetCacheEnabled() || container || context.options.contains(VisibleRectContextOption::UseEdgeInclusiveIntersection)) && parent())
+    if ((!view().frameView().layoutContext().isPaintOffsetCacheEnabled() || container || context.options.contains(VisibleRectContext::Option::UseEdgeInclusiveIntersection)) && parent())
         adjustedRects.moveBy(-parentBox()->location()); // Rows are in the same coordinate space, so don't add their offset in.
 
     return RenderBlockFlow::computeVisibleRectsInContainer(adjustedRects, container, context);

@@ -31,6 +31,7 @@
 #include "MediaRecorderPrivateWriterAVFObjC.h"
 #include "MediaRecorderPrivateWriterWebM.h"
 #include "MediaSample.h"
+#include "MediaSamplesBlock.h"
 #include "MediaStrategy.h"
 #include "PlatformStrategies.h"
 #include <wtf/MediaTime.h>

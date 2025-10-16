@@ -39,7 +39,7 @@
 #include "Page.h"
 #include "PaintInfo.h"
 #include "RenderBox.h"
-#include "RenderObject.h"
+#include "RenderObjectInlines.h"
 #include "RenderProgress.h"
 #include "RenderStyleSetters.h"
 #include "StylePadding.h"
@@ -74,7 +74,7 @@ RenderTheme& RenderTheme::singleton()
 
 RenderThemeAdwaita::~RenderThemeAdwaita() = default;
 
-bool RenderThemeAdwaita::canCreateControlPartForRenderer(const RenderObject& renderer) const
+bool RenderThemeAdwaita::canCreateControlPartForRenderer(const RenderElement& renderer) const
 {
     switch (renderer.style().usedAppearance()) {
     case StyleAppearance::Button:
@@ -99,7 +99,7 @@ bool RenderThemeAdwaita::canCreateControlPartForRenderer(const RenderObject& ren
     return false;
 }
 
-bool RenderThemeAdwaita::canCreateControlPartForBorderOnly(const RenderObject& renderer) const
+bool RenderThemeAdwaita::canCreateControlPartForBorderOnly(const RenderElement& renderer) const
 {
     switch (renderer.style().usedAppearance()) {
     case StyleAppearance::Listbox:
@@ -112,12 +112,12 @@ bool RenderThemeAdwaita::canCreateControlPartForBorderOnly(const RenderObject& r
     return false;
 }
 
-bool RenderThemeAdwaita::canCreateControlPartForDecorations(const RenderObject& renderer) const
+bool RenderThemeAdwaita::canCreateControlPartForDecorations(const RenderElement& renderer) const
 {
     return renderer.style().usedAppearance() == StyleAppearance::MenulistButton;
 }
 
-bool RenderThemeAdwaita::supportsFocusRing(const RenderObject&, const RenderStyle& style) const
+bool RenderThemeAdwaita::supportsFocusRing(const RenderElement&, const RenderStyle& style) const
 {
     switch (style.usedAppearance()) {
     case StyleAppearance::PushButton:

@@ -191,6 +191,7 @@ protected:
     MediaStreamTrack(ScriptExecutionContext&, Ref<MediaStreamTrackPrivate>&&);
 
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ActiveDOMObject::protectedScriptExecutionContext;
 
 private:
     explicit MediaStreamTrack(MediaStreamTrack&);

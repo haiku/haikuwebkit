@@ -81,9 +81,7 @@ static String imageSuggestedFilenameFromHitTestResult(const HitTestResult& hitTe
     return webFrame->suggestedFilenameForResourceWithURL(hitTestResult.absoluteImageURL());
 }
 
-WebHitTestResultData::WebHitTestResultData()
-{
-}
+WebHitTestResultData::WebHitTestResultData() = default;
 
 WebHitTestResultData::WebHitTestResultData(const HitTestResult& hitTestResult, const String& tooltipText, bool includeImage)
     : absoluteImageURL(hitTestResult.absoluteImageURL().string())
@@ -105,6 +103,7 @@ WebHitTestResultData::WebHitTestResultData(const HitTestResult& hitTestResult, c
     , isActivePDFAnnotation(false)
     , elementType(elementTypeFromHitTestResult(hitTestResult))
     , frameInfo(frameInfoDataFromHitTestResult(hitTestResult))
+    , targetFrame(hitTestResult.targetFrame() ? std::optional(hitTestResult.targetFrame()->frameID()) : std::nullopt)
     , tooltipText(tooltipText)
     , hasEntireImage(hitTestResult.hasEntireImage())
     , allowsFollowingLink(hitTestResult.allowsFollowingLink())
@@ -149,7 +148,7 @@ WebHitTestResultData::WebHitTestResultData(const HitTestResult& hitTestResult, c
 WebHitTestResultData::WebHitTestResultData(const HitTestResult& hitTestResult, bool includeImage)
     : WebHitTestResultData(hitTestResult, String(), includeImage) { }
 
-WebHitTestResultData::WebHitTestResultData(const String& absoluteImageURL, const String& absolutePDFURL, const String& absoluteLinkURL, const String& absoluteMediaURL, const String& linkLabel, const String& linkTitle, const String& linkSuggestedFilename, const String& imageSuggestedFilename, bool isContentEditable, const WebCore::IntRect& elementBoundingBox, const WebKit::WebHitTestResultData::IsScrollbar& isScrollbar, bool isSelected, bool isTextNode, bool isOverTextInsideFormControlElement, bool isDownloadableMedia, bool mediaIsInFullscreen, bool isActivePDFAnnotation, const WebHitTestResultData::ElementType& elementType, std::optional<FrameInfoData>&& frameInfo, std::optional<WebCore::RemoteUserInputEventData> remoteUserInputEventData, const String& lookupText, const String& tooltipText, const String& imageText, std::optional<WebCore::SharedMemory::Handle>&& imageHandle, const RefPtr<WebCore::ShareableBitmap>& imageBitmap, const String& sourceImageMIMEType, bool hasEntireImage, bool allowsFollowingLink, bool allowsFollowingImageURL, std::optional<WebCore::ResourceResponse>&& linkLocalResourceResponse,
+WebHitTestResultData::WebHitTestResultData(const String& absoluteImageURL, const String& absolutePDFURL, const String& absoluteLinkURL, const String& absoluteMediaURL, const String& linkLabel, const String& linkTitle, const String& linkSuggestedFilename, const String& imageSuggestedFilename, bool isContentEditable, const WebCore::IntRect& elementBoundingBox, const WebKit::WebHitTestResultData::IsScrollbar& isScrollbar, bool isSelected, bool isTextNode, bool isOverTextInsideFormControlElement, bool isDownloadableMedia, bool mediaIsInFullscreen, bool isActivePDFAnnotation, const WebHitTestResultData::ElementType& elementType, std::optional<FrameInfoData>&& frameInfo, std::optional<WebCore::FrameIdentifier> targetFrame, std::optional<WebCore::RemoteUserInputEventData> remoteUserInputEventData, const String& lookupText, const String& tooltipText, const String& imageText, std::optional<WebCore::SharedMemory::Handle>&& imageHandle, const RefPtr<WebCore::ShareableBitmap>& imageBitmap, const String& sourceImageMIMEType, bool hasEntireImage, bool allowsFollowingLink, bool allowsFollowingImageURL, std::optional<WebCore::ResourceResponse>&& linkLocalResourceResponse,
 #if PLATFORM(MAC)
     const WebHitTestResultPlatformData& platformData,
 #endif
@@ -172,7 +171,8 @@ WebHitTestResultData::WebHitTestResultData(const String& absoluteImageURL, const
         , mediaIsInFullscreen(mediaIsInFullscreen)
         , isActivePDFAnnotation(isActivePDFAnnotation)
         , elementType(elementType)
-        , frameInfo(frameInfo)
+        , frameInfo(WTFMove(frameInfo))
+        , targetFrame(targetFrame)
         , remoteUserInputEventData(remoteUserInputEventData)
         , lookupText(lookupText)
         , tooltipText(tooltipText)

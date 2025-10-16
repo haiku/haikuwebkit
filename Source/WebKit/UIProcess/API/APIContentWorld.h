@@ -32,6 +32,7 @@
 #include <wtf/text/WTFString.h>
 
 namespace WebKit {
+class WebProcessProxy;
 class WebUserContentControllerProxy;
 }
 
@@ -48,7 +49,7 @@ public:
 
     WebKit::ContentWorldIdentifier identifier() const { return m_identifier; }
     const WTF::String& name() const { return m_name; }
-    WebKit::ContentWorldData worldData() const { return { m_identifier, m_name, m_options }; }
+    WebKit::ContentWorldData worldDataForProcess(WebKit::WebProcessProxy&) const;
 
     bool allowAccessToClosedShadowRoots() const { return m_options.contains(WebKit::ContentWorldOption::AllowAccessToClosedShadowRoots); }
     void setAllowAccessToClosedShadowRoots(bool value) { m_options.add(WebKit::ContentWorldOption::AllowAccessToClosedShadowRoots); }
@@ -69,7 +70,6 @@ public:
     void setAllowNodeSerialization() { m_options.add(WebKit::ContentWorldOption::AllowNodeSerialization); }
 
     void addAssociatedUserContentControllerProxy(WebKit::WebUserContentControllerProxy&);
-    void userContentControllerProxyDestroyed(WebKit::WebUserContentControllerProxy&);
 
 private:
     explicit ContentWorld(const WTF::String&, OptionSet<WebKit::ContentWorldOption>);
@@ -78,7 +78,7 @@ private:
     WebKit::ContentWorldIdentifier m_identifier;
     WTF::String m_name;
     OptionSet<WebKit::ContentWorldOption> m_options;
-    WeakHashSet<WebKit::WebUserContentControllerProxy> m_associatedContentControllerProxies;
+    mutable WeakHashSet<WebKit::WebProcessProxy> m_processes;
 };
 
 } // namespace API

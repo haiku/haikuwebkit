@@ -123,7 +123,7 @@ void InjectedBundleScriptWorld::setAllowAutofill()
 
 void InjectedBundleScriptWorld::setAllowJSHandleCreation()
 {
-    m_world->setAllowJSHandleCreation();
+    m_world->setAllowsJSHandleCreation();
 }
 
 void InjectedBundleScriptWorld::setAllowNodeSerialization()

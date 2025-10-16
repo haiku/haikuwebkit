@@ -26,6 +26,8 @@
 #include "config.h"
 #include "JSHandleInfo.h"
 
+#include <wtf/TZoneMallocInlines.h>
+
 namespace WebKit {
 
 WTF_MAKE_STRUCT_TZONE_ALLOCATED_IMPL(JSHandleInfo);

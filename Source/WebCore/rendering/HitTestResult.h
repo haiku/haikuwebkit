@@ -32,6 +32,7 @@
 namespace WebCore {
 
 class Element;
+class Frame;
 class HTMLImageElement;
 class HTMLMediaElement;
 class Image;
@@ -99,7 +100,7 @@ public:
     const HitTestLocation& hitTestLocation() const { return m_hitTestLocation; }
 
     WEBCORE_EXPORT LocalFrame* frame() const;
-    WEBCORE_EXPORT LocalFrame* targetFrame() const;
+    WEBCORE_EXPORT Frame* targetFrame() const;
     WEBCORE_EXPORT bool isSelected() const;
     WEBCORE_EXPORT bool allowsFollowingLink() const;
     WEBCORE_EXPORT bool allowsFollowingImageURL() const;

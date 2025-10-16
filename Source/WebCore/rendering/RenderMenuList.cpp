@@ -230,7 +230,7 @@ void RenderMenuList::updateOptionsWidth()
             // Add in the option's text indent.  We can't calculate percentage values for now.
             float optionWidth = 0;
             if (auto* optionStyle = option->computedStyleForEditability())
-                optionWidth += Style::evaluate(optionStyle->textIndent().length, 0);
+                optionWidth += Style::evaluate(optionStyle->textIndent().length, 0, 1.0f /* FIXME FIND ZOOM */);
             if (!text.isEmpty()) {
                 const FontCascade& font = style().fontCascade();
                 TextRun run = RenderBlock::constructTextRun(text, style());
@@ -339,8 +339,6 @@ LayoutRect RenderMenuList::controlClipRect(const LayoutPoint& additionalOffset) 
 
 void RenderMenuList::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const
 {
-    // FIXME: Fix field-sizing: content with size containment
-    // https://bugs.webkit.org/show_bug.cgi?id=269169
     if (style().fieldSizing() == FieldSizing::Content)
         return RenderFlexibleBox::computeIntrinsicLogicalWidths(minLogicalWidth, maxLogicalWidth);
 
@@ -352,7 +350,7 @@ void RenderMenuList::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, 
     }
     auto& logicalWidth = style().logicalWidth();
     if (logicalWidth.isCalculated())
-        minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu));
+        minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu, 1.0f /* FIXME FIND ZOOM */));
     else if (!logicalWidth.isPercent())
         minLogicalWidth = maxLogicalWidth;
 }

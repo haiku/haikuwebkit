@@ -109,7 +109,7 @@ ExceptionOr<void> RTCDTMFSender::insertDTMF(const String& tones, size_t duration
         return { };
 
     m_isPendingPlayoutTask = true;
-    scriptExecutionContext()->postTask([protectedThis = Ref { *this }](auto&) {
+    protectedScriptExecutionContext()->postTask([protectedThis = Ref { *this }](auto&) {
         protectedThis->playNextTone();
     });
     return { };

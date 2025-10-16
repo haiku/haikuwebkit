@@ -156,7 +156,7 @@ JSValue JSTestDelegateToSharedSyntheticAttribute::getConstructor(VM& vm, const J
 
 void JSTestDelegateToSharedSyntheticAttribute::destroy(JSC::JSCell* cell)
 {
-    JSTestDelegateToSharedSyntheticAttribute* thisObject = static_cast<JSTestDelegateToSharedSyntheticAttribute*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestDelegateToSharedSyntheticAttribute* thisObject = static_cast<JSTestDelegateToSharedSyntheticAttribute*>(cell);
     thisObject->JSTestDelegateToSharedSyntheticAttribute::~JSTestDelegateToSharedSyntheticAttribute();
 }
 
@@ -267,7 +267,7 @@ bool JSTestDelegateToSharedSyntheticAttributeOwner::isReachableFromOpaqueRoots(J
 
 void JSTestDelegateToSharedSyntheticAttributeOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestDelegateToSharedSyntheticAttribute = static_cast<JSTestDelegateToSharedSyntheticAttribute*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestDelegateToSharedSyntheticAttribute = static_cast<JSTestDelegateToSharedSyntheticAttribute*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestDelegateToSharedSyntheticAttribute->protectedWrapped().ptr(), jsTestDelegateToSharedSyntheticAttribute);
 }

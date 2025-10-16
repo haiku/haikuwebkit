@@ -367,16 +367,6 @@ bool PageConfiguration::lockdownModeEnabled() const
     return lockdownModeEnabledBySystem();
 }
 
-void PageConfiguration::setAllowJSHandleInPageContentWorld(bool allow)
-{
-    m_data.allowJSHandleInPageContentWorld = allow;
-}
-
-bool PageConfiguration::allowJSHandleInPageContentWorld() const
-{
-    return m_data.allowJSHandleInPageContentWorld;
-}
-
 void PageConfiguration::setAllowPostingLegacySynchronousMessages(bool allow)
 {
     m_data.allowPostingLegacySynchronousMessages = allow;

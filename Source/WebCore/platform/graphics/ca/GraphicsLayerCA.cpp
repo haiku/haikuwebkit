@@ -28,11 +28,11 @@
 
 #if USE(CA)
 
-#include "Animation.h"
 #include "DisplayList.h"
 #include "DisplayListRecorderImpl.h"
 #include "FloatConversion.h"
 #include "FloatRect.h"
+#include "GraphicsLayerAnimation.h"
 #include "GraphicsLayerAsyncContentsDisplayDelegateCocoa.h"
 #include "GraphicsLayerContentsDisplayDelegate.h"
 #include "GraphicsLayerFactory.h"
@@ -263,7 +263,7 @@ static bool animatedPropertyIsTransformOrRelated(AnimatedProperty property)
     return property == AnimatedProperty::Transform || property == AnimatedProperty::Translate || property == AnimatedProperty::Scale || property == AnimatedProperty::Rotate;
 }
 
-static bool animationHasStepsTimingFunction(const KeyframeValueList& valueList, const Animation* anim)
+static bool animationHasStepsTimingFunction(const KeyframeValueList& valueList, const GraphicsLayerAnimation* anim)
 {
     if (is<StepsTimingFunction>(anim->timingFunction()))
         return true;
@@ -1146,12 +1146,12 @@ static bool keyframeValueListHasSingleIntervalWithLinearOrEquivalentTimingFuncti
     return cubicBezierTimingFunction && cubicBezierTimingFunction->isLinear();
 }
 
-static bool animationCanBeAccelerated(const KeyframeValueList& valueList, const Animation* anim)
+static bool animationCanBeAccelerated(const KeyframeValueList& valueList, const GraphicsLayerAnimation* anim)
 {
     if (anim->playbackRate() != 1 || !anim->directionIsForwards())
         return false;
 
-    if (!anim || anim->isEmptyOrZeroDuration() || valueList.size() < 2)
+    if (!anim || anim->isZeroDuration() || valueList.size() < 2)
         return false;
 
     if (animationHasStepsTimingFunction(valueList, anim))
@@ -1160,7 +1160,7 @@ static bool animationCanBeAccelerated(const KeyframeValueList& valueList, const 
     return true;
 }
 
-bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const Animation* anim, const String& animationName, double timeOffset)
+bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const GraphicsLayerAnimation* anim, const String& animationName, double timeOffset)
 {
     LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " addAnimation " << anim << " " << animationName << " duration " << anim->duration() << " (can be accelerated " << animationCanBeAccelerated(valueList, anim) << ")");
 
@@ -1171,7 +1171,7 @@ bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const Flo
 
     bool keyframesShouldUseAnimationWideTimingFunction = false;
     // Core Animation clips values outside of the [0-1] range for animation-wide cubic timing functions.
-    if (timingFunctionIsCubicTimingFunctionWithYValueOutOfRange(anim->protectedTimingFunction().get())) {
+    if (timingFunctionIsCubicTimingFunctionWithYValueOutOfRange(anim->timingFunction().get())) {
         if (!keyframeValueListHasSingleIntervalWithLinearOrEquivalentTimingFunction(valueList))
             return false;
         keyframesShouldUseAnimationWideTimingFunction = true;
@@ -3756,7 +3756,7 @@ static bool isKeyframe(const KeyframeValueList& list)
     return list.size() > 1;
 }
 
-bool GraphicsLayerCA::createAnimationFromKeyframes(const KeyframeValueList& valueList, const Animation* animation, const String& animationName, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::createAnimationFromKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, const String& animationName, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     ASSERT(!animatedPropertyIsTransformOrRelated(valueList.property()) && (!supportsAcceleratedFilterAnimations() || valueList.property() != AnimatedProperty::Filter));
 
@@ -3771,7 +3771,7 @@ bool GraphicsLayerCA::createAnimationFromKeyframes(const KeyframeValueList& valu
         caAnimation = createKeyframeAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), additive, keyframesShouldUseAnimationWideTimingFunction);
         valuesOK = setAnimationKeyframes(valueList, animation, caAnimation.get(), keyframesShouldUseAnimationWideTimingFunction);
     } else {
-        if (animation->protectedTimingFunction()->isSpringTimingFunction())
+        if (animation->timingFunction()->isSpringTimingFunction())
             caAnimation = createSpringAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), additive, keyframesShouldUseAnimationWideTimingFunction);
         else
             caAnimation = createBasicAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), additive, keyframesShouldUseAnimationWideTimingFunction);
@@ -3786,7 +3786,7 @@ bool GraphicsLayerCA::createAnimationFromKeyframes(const KeyframeValueList& valu
     return true;
 }
 
-bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& valueList, TransformOperation::Type operationType, const Animation* animation, const String& animationName, const FloatSize& boxSize, unsigned animationIndex, Seconds timeOffset, bool isMatrixAnimation, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& valueList, TransformOperation::Type operationType, const GraphicsLayerAnimation* animation, const String& animationName, const FloatSize& boxSize, unsigned animationIndex, Seconds timeOffset, bool isMatrixAnimation, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     RefPtr<PlatformCAAnimation> caAnimation;
     bool validMatrices = true;
@@ -3794,7 +3794,7 @@ bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& val
         caAnimation = createKeyframeAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), false, keyframesShouldUseAnimationWideTimingFunction);
         validMatrices = setTransformAnimationKeyframes(valueList, animation, caAnimation.get(), animationIndex, operationType, isMatrixAnimation, boxSize, keyframesShouldUseAnimationWideTimingFunction);
     } else {
-        if (animation->protectedTimingFunction()->isSpringTimingFunction())
+        if (animation->timingFunction()->isSpringTimingFunction())
             caAnimation = createSpringAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), false, keyframesShouldUseAnimationWideTimingFunction);
         else
             caAnimation = createBasicAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), false, keyframesShouldUseAnimationWideTimingFunction);
@@ -3839,7 +3839,7 @@ static bool hasBig3DRotation(const KeyframeValueList& valueList, const Transform
     return false;
 }
 
-bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValueList& valueList, const Animation* animation, const String& animationName, Seconds timeOffset, const FloatSize& boxSize, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, const String& animationName, Seconds timeOffset, const FloatSize& boxSize, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     ASSERT(animatedPropertyIsTransformOrRelated(valueList.property()));
 
@@ -3881,7 +3881,7 @@ bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValue
     return appendToUncommittedAnimations(valueList, TransformOperation::Type::Matrix3D, animation, animationName, boxSize, primitives.size(), timeOffset, true /* isMatrixAnimation */, keyframesShouldUseAnimationWideTimingFunction);
 }
 
-bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& valueList, const FilterOperation& operation, const Animation* animation, const String& animationName, int animationIndex, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& valueList, const FilterOperation& operation, const GraphicsLayerAnimation* animation, const String& animationName, int animationIndex, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     auto filterOp = operation.type();
     if (!PlatformCAFilters::isAnimatedFilterProperty(filterOp))
@@ -3906,7 +3906,7 @@ bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& val
     return true;
 }
 
-bool GraphicsLayerCA::createFilterAnimationsFromKeyframes(const KeyframeValueList& valueList, const Animation* animation, const String& animationName, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::createFilterAnimationsFromKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, const String& animationName, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     ASSERT(valueList.property() == AnimatedProperty::Filter || valueList.property() == AnimatedProperty::WebkitBackdropFilter);
 
@@ -3935,58 +3935,58 @@ bool GraphicsLayerCA::createFilterAnimationsFromKeyframes(const KeyframeValueLis
     return true;
 }
 
-Ref<PlatformCAAnimation> GraphicsLayerCA::createBasicAnimation(const Animation* anim, const String& keyPath, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
+Ref<PlatformCAAnimation> GraphicsLayerCA::createBasicAnimation(const GraphicsLayerAnimation* anim, const String& keyPath, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     auto basicAnim = createPlatformCAAnimation(PlatformCAAnimation::AnimationType::Basic, keyPath);
     setupAnimation(basicAnim.ptr(), anim, additive, keyframesShouldUseAnimationWideTimingFunction);
     return basicAnim;
 }
 
-Ref<PlatformCAAnimation> GraphicsLayerCA::createKeyframeAnimation(const Animation* anim, const String& keyPath, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
+Ref<PlatformCAAnimation> GraphicsLayerCA::createKeyframeAnimation(const GraphicsLayerAnimation* anim, const String& keyPath, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     auto keyframeAnim = createPlatformCAAnimation(PlatformCAAnimation::AnimationType::Keyframe, keyPath);
     setupAnimation(keyframeAnim.ptr(), anim, additive, keyframesShouldUseAnimationWideTimingFunction);
     return keyframeAnim;
 }
 
-Ref<PlatformCAAnimation> GraphicsLayerCA::createSpringAnimation(const Animation* anim, const String& keyPath, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
+Ref<PlatformCAAnimation> GraphicsLayerCA::createSpringAnimation(const GraphicsLayerAnimation* anim, const String& keyPath, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     auto basicAnim = createPlatformCAAnimation(PlatformCAAnimation::AnimationType::Spring, keyPath);
     setupAnimation(basicAnim.ptr(), anim, additive, keyframesShouldUseAnimationWideTimingFunction);
     return basicAnim;
 }
 
-void GraphicsLayerCA::setupAnimation(PlatformCAAnimation* propertyAnim, const Animation* anim, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
+void GraphicsLayerCA::setupAnimation(PlatformCAAnimation* propertyAnim, const GraphicsLayerAnimation* anim, bool additive, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     double duration = anim->duration().value_or(0);
     if (duration <= 0)
         duration = cAnimationAlmostZeroDuration;
 
     float repeatCount = anim->iterationCount();
-    if (repeatCount == Animation::IterationCountInfinite)
+    if (repeatCount == GraphicsLayerAnimation::IterationCountInfinite)
         repeatCount = std::numeric_limits<float>::max();
-    else if (anim->direction() == Animation::Direction::Alternate || anim->direction() == Animation::Direction::AlternateReverse)
+    else if (anim->direction() == GraphicsLayerAnimation::Direction::Alternate || anim->direction() == GraphicsLayerAnimation::Direction::AlternateReverse)
         repeatCount /= 2;
 
     PlatformCAAnimation::FillModeType fillMode = PlatformCAAnimation::FillModeType::NoFillMode;
     switch (anim->fillMode()) {
-    case AnimationFillMode::None:
+    case GraphicsLayerAnimation::FillMode::None:
         fillMode = PlatformCAAnimation::FillModeType::Forwards; // Use "forwards" rather than "removed" because the style system will remove the animation when it is finished. This avoids a flash.
         break;
-    case AnimationFillMode::Backwards:
+    case GraphicsLayerAnimation::FillMode::Backwards:
         fillMode = PlatformCAAnimation::FillModeType::Both; // Use "both" rather than "backwards" because the style system will remove the animation when it is finished. This avoids a flash.
         break;
-    case AnimationFillMode::Forwards:
+    case GraphicsLayerAnimation::FillMode::Forwards:
         fillMode = PlatformCAAnimation::FillModeType::Forwards;
         break;
-    case AnimationFillMode::Both:
+    case GraphicsLayerAnimation::FillMode::Both:
         fillMode = PlatformCAAnimation::FillModeType::Both;
         break;
     }
 
     propertyAnim->setDuration(duration);
     propertyAnim->setRepeatCount(repeatCount);
-    propertyAnim->setAutoreverses(anim->direction() == Animation::Direction::Alternate || anim->direction() == Animation::Direction::AlternateReverse);
+    propertyAnim->setAutoreverses(anim->direction() == GraphicsLayerAnimation::Direction::Alternate || anim->direction() == GraphicsLayerAnimation::Direction::AlternateReverse);
     propertyAnim->setRemovedOnCompletion(false);
     propertyAnim->setAdditive(additive);
     propertyAnim->setFillMode(fillMode);
@@ -3996,10 +3996,10 @@ void GraphicsLayerCA::setupAnimation(PlatformCAAnimation* propertyAnim, const An
     // its mode set to SingleProperty. In this case, we don't set the animation-wide
     // timing function to work around a Core Animation limitation.
     if (!keyframesShouldUseAnimationWideTimingFunction)
-        propertyAnim->setTimingFunction(anim->protectedTimingFunction().get());
+        propertyAnim->setTimingFunction(anim->timingFunction().get());
 }
 
-const TimingFunction& GraphicsLayerCA::timingFunctionForAnimationValue(const AnimationValue& animValue, const Animation& anim, bool keyframesShouldUseAnimationWideTimingFunction)
+const TimingFunction& GraphicsLayerCA::timingFunctionForAnimationValue(const AnimationValue& animValue, const GraphicsLayerAnimation& anim, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     if (keyframesShouldUseAnimationWideTimingFunction && anim.timingFunction()) {
         // FIXME: https://bugs.webkit.org/show_bug.cgi?id=215918
@@ -4016,7 +4016,7 @@ const TimingFunction& GraphicsLayerCA::timingFunctionForAnimationValue(const Ani
     return LinearTimingFunction::identity();
 }
 
-bool GraphicsLayerCA::setAnimationEndpoints(const KeyframeValueList& valueList, const Animation* animation, PlatformCAAnimation* basicAnim)
+bool GraphicsLayerCA::setAnimationEndpoints(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* basicAnim)
 {
     bool forwards = animation->directionIsForwards();
 
@@ -4037,7 +4037,7 @@ bool GraphicsLayerCA::setAnimationEndpoints(const KeyframeValueList& valueList, 
     return true;
 }
 
-bool GraphicsLayerCA::setAnimationKeyframes(const KeyframeValueList& valueList, const Animation* animation, PlatformCAAnimation* keyframeAnim, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::setAnimationKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* keyframeAnim, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     Vector<float> keyTimes;
     Vector<float> values;
@@ -4072,7 +4072,7 @@ bool GraphicsLayerCA::setAnimationKeyframes(const KeyframeValueList& valueList, 
     return true;
 }
 
-bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& valueList, const Animation* animation, PlatformCAAnimation* basicAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation, const FloatSize& boxSize)
+bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* basicAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation, const FloatSize& boxSize)
 {
     ASSERT(valueList.size() == 2);
 
@@ -4130,7 +4130,7 @@ bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& va
     return true;
 }
 
-bool GraphicsLayerCA::setTransformAnimationKeyframes(const KeyframeValueList& valueList, const Animation* animation, PlatformCAAnimation* keyframeAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation, const FloatSize& boxSize, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::setTransformAnimationKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* keyframeAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation, const FloatSize& boxSize, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     Vector<float> keyTimes;
     Vector<float> floatValues;
@@ -4193,7 +4193,7 @@ bool GraphicsLayerCA::setTransformAnimationKeyframes(const KeyframeValueList& va
     return true;
 }
 
-bool GraphicsLayerCA::setFilterAnimationEndpoints(const KeyframeValueList& valueList, const Animation* animation, PlatformCAAnimation* basicAnim, int functionIndex)
+bool GraphicsLayerCA::setFilterAnimationEndpoints(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* basicAnim, int functionIndex)
 {
     ASSERT(valueList.size() == 2);
 
@@ -4229,7 +4229,7 @@ bool GraphicsLayerCA::setFilterAnimationEndpoints(const KeyframeValueList& value
     return true;
 }
 
-bool GraphicsLayerCA::setFilterAnimationKeyframes(const KeyframeValueList& valueList, const Animation* animation, PlatformCAAnimation* keyframeAnim, int functionIndex, FilterOperation::Type filterOp, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::setFilterAnimationKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* keyframeAnim, int functionIndex, FilterOperation::Type filterOp, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     Vector<float> keyTimes;
     Vector<Ref<FilterOperation>> values;

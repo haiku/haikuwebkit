@@ -305,7 +305,7 @@ private:
     std::optional<RemoteInspector::Client::Capabilities> m_clientCapabilities;
 
 #if PLATFORM(COCOA)
-    dispatch_queue_t m_xpcQueue;
+    OSObjectPtr<dispatch_queue_t> m_xpcQueue;
 #endif
     TargetID m_nextAvailableTargetIdentifier { 1 };
     int m_notifyToken { 0 };

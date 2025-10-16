@@ -1059,8 +1059,12 @@ RefPtr<CSSValue> CSSParserFastPaths::maybeParseValue(CSSPropertyID property, Str
         break;
     }
 
-    if (CSSProperty::isColorProperty(property))
-        return parseColor(string, state.context);
+    if (CSSProperty::isColorProperty(property)) {
+        auto context = state.context;
+        if (!CSSProperty::acceptsQuirkyColor(property))
+            context.mode = HTMLStandardMode;
+        return parseColor(string, context);
+    }
 
     if (auto valueRange = lengthValueRangeForPropertiesSupportingSimpleLengths(property)) {
         if (auto result = parseSimpleLengthValue(string, state.context.mode, *valueRange))

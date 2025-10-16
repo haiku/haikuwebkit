@@ -51,8 +51,7 @@ static void test_cubic() {
 
 static void test_cubic2() {
     const char* str = "M2242 -590088L-377758 9.94099e+07L-377758 9.94099e+07L2242 -590088Z";
-    SkPath path;
-    SkParsePath::FromSVGString(str, &path);
+    SkPath path = SkParsePath::FromSVGString(str).value_or(SkPath());
 
     {
         SkRect r = path.getBounds();
@@ -132,9 +131,7 @@ public:
         paint.setStrokeWidth(fStroke);
 
         if (fShowHairline) {
-            SkPath fill;
-
-            skpathutils::FillPathWithPaint(path, paint, &fill);
+            SkPath fill = skpathutils::FillPathWithPaint(path, paint);
             paint.setStrokeWidth(0);
             canvas->drawPath(fill, paint);
         } else {
@@ -363,8 +360,7 @@ public:
             canvas->drawPath(path, fStrokePaint);
         }
         if (fShowHidden) {
-            SkPath hidden;
-            skpathutils::FillPathWithPaint(path, fStrokePaint, &hidden);
+            SkPath hidden = skpathutils::FillPathWithPaint(path, fStrokePaint);
             canvas->drawPath(hidden, fHiddenPaint);
         }
         if (fShowSkeleton) {

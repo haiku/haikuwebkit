@@ -32,6 +32,7 @@
 #include "RenderBoxModelObject.h"
 #include "RenderInline.h"
 #include "RenderLineBreak.h"
+#include "RenderObjectDocument.h"
 #include "RenderStyleInlines.h"
 #include "RenderText.h"
 #include "RenderView.h"

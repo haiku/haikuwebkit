@@ -41,6 +41,7 @@
 #include "WebProcessPool.h"
 #include <JavaScriptCore/MathCommon.h>
 #include <wtf/Ref.h>
+#include <wtf/URL.h>
 #include <wtf/Unexpected.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
@@ -269,7 +270,7 @@ void BidiBrowsingContextAgent::handleUserPrompt(const BrowsingContext& browsingC
 
 // https://www.w3.org/TR/webdriver/#dfn-session-page-load-timeout
 static constexpr Seconds defaultPageLoadTimeout = 300_s;
-static constexpr ReadinessState defaultReadinessState = ReadinessState::None;
+static constexpr ReadinessState defaultReadinessState = ReadinessState::Interactive;
 
 static PageLoadStrategy pageLoadStrategyFromReadinessState(ReadinessState state)
 {
@@ -291,15 +292,23 @@ void BidiBrowsingContextAgent::navigate(const BrowsingContext& browsingContext, 
     RefPtr session = m_session.get();
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!session, InternalError);
 
-    auto pageLoadStrategy = pageLoadStrategyFromReadinessState(optionalReadinessState.value_or(defaultReadinessState));
-    session->navigateBrowsingContext(browsingContext, url, pageLoadStrategy, defaultPageLoadTimeout.milliseconds(), [url, callback = WTFMove(callback)](CommandResult<void>&& result) {
+    RefPtr webPageProxy = session->webPageProxyForHandle(browsingContext);
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!webPageProxy, WindowNotFound);
+
+    URL baseURL { webPageProxy->currentURL() };
+    URL urlRecord { baseURL, url };
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!urlRecord.isValid(), InvalidParameter);
+
+    auto waitCondition = optionalReadinessState.value_or(defaultReadinessState);
+    auto pageLoadStrategy = pageLoadStrategyFromReadinessState(waitCondition);
+    session->navigateBrowsingContext(browsingContext, urlRecord.string(), pageLoadStrategy, defaultPageLoadTimeout.milliseconds(), [urlRecord, callback = WTFMove(callback)](CommandResult<void>&& result) {
         if (!result) {
             callback(makeUnexpected(result.error()));
             return;
         }
 
         // FIXME: keep track of navigation IDs that we hand out.
-        callback({ { url, "placeholder_navigation"_s } });
+        callback({ { urlRecord.string(), "placeholder_navigation"_s } });
     });
 }
 

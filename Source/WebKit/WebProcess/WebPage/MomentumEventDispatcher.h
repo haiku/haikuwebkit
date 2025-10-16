@@ -145,7 +145,7 @@ private:
     HistoricalDeltas m_deltaHistoryX;
     HistoricalDeltas m_deltaHistoryY;
 
-    Markable<WallTime> m_lastScrollTimestamp;
+    Markable<MonotonicTime> m_lastScrollTimestamp;
     std::optional<WebWheelEvent> m_lastIncomingEvent;
     WebCore::RectEdges<WebCore::RubberBandingBehavior> m_lastRubberBandableEdges;
     bool m_isInOverriddenPlatformMomentumGesture { false };

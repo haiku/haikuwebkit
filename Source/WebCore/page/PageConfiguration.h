@@ -53,10 +53,13 @@
 #include <WebCore/ShouldRequireExplicitConsentForGamepadAccess.h>
 #endif
 
+#if ENABLE(IMAGE_ANALYSIS)
+#include <WebCore/ImageAnalysisQueue.h>
+#endif
+
 namespace WebCore {
 
 class AlternativeTextClient;
-class ApplicationCacheStorage;
 class AttachmentElementClient;
 class AuthenticatorCoordinatorClient;
 class BackForwardClient;
@@ -100,7 +103,7 @@ class WebRTCProvider;
 
 enum class SandboxFlag : uint16_t;
 using SandboxFlags = OptionSet<SandboxFlag>;
-using MediaSessionManagerFactory = Function<RefPtr<MediaSessionManagerInterface> (std::optional<PageIdentifier>)>;
+using MediaSessionManagerFactory = Function<RefPtr<MediaSessionManagerInterface> (PageIdentifier)>;
 
 class PageConfiguration {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(PageConfiguration, WEBCORE_EXPORT);
@@ -189,7 +192,6 @@ public:
     RefPtr<SpeechSynthesisClient> speechSynthesisClient;
 #endif
 
-    RefPtr<ApplicationCacheStorage> applicationCacheStorage;
     RefPtr<DatabaseProvider> databaseProvider;
     Ref<CacheStorageProvider> cacheStorageProvider;
     RefPtr<PluginInfoProvider> pluginInfoProvider;
@@ -249,6 +251,10 @@ public:
 #endif
 
     std::optional<MediaSessionManagerFactory> mediaSessionManagerFactory;
+
+#if ENABLE(IMAGE_ANALYSIS)
+    std::optional<ImageTranslationLanguageIdentifiers> imageTranslationLanguageIdentifiers;
+#endif
 };
 
 }

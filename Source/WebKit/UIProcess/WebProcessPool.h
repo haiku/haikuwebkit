@@ -87,6 +87,10 @@ OBJC_CLASS WKWebInspectorPreferenceObserver;
 #include "HardwareKeyboardState.h"
 #endif
 
+#if PLATFORM(COCOA)
+#include <wtf/cf/NotificationCenterCF.h>
+#endif
+
 namespace API {
 class AutomationClient;
 class DownloadClient;
@@ -419,7 +423,7 @@ public:
     void serviceWorkerProcessCrashed(WebProcessProxy&, ProcessTerminationReason);
 
     void updateRemoteWorkerUserAgent(const String& userAgent);
-    UserContentControllerIdentifier userContentControllerIdentifierForRemoteWorkers();
+    Ref<WebUserContentControllerProxy> userContentControllerForRemoteWorkers();
     static void establishRemoteWorkerContextConnectionToNetworkProcess(RemoteWorkerType, WebCore::Site&&, std::optional<WebCore::ProcessIdentifier> requestingProcessIdentifier, std::optional<WebCore::ScriptExecutionContextIdentifier> serviceWorkerPageIdentifier, PAL::SessionID, CompletionHandler<void(WebCore::ProcessIdentifier)>&&);
 
 #if PLATFORM(COCOA)
@@ -677,8 +681,8 @@ private:
     void didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&) override;
 
 #if PLATFORM(COCOA)
-    void addCFNotificationObserver(CFNotificationCallback, CFStringRef name, CFNotificationCenterRef = CFNotificationCenterGetDarwinNotifyCenter());
-    void removeCFNotificationObserver(CFStringRef name, CFNotificationCenterRef = CFNotificationCenterGetDarwinNotifyCenter());
+    void addCFNotificationObserver(CFNotificationCallback, CFStringRef name, CFNotificationCenterRef = CFNotificationCenterGetDarwinNotifyCenterSingleton());
+    void removeCFNotificationObserver(CFStringRef name, CFNotificationCenterRef = CFNotificationCenterGetDarwinNotifyCenterSingleton());
 
     void registerNotificationObservers();
     void unregisterNotificationObservers();
@@ -838,10 +842,12 @@ private:
     RetainPtr<NSObject> m_automaticSpellingCorrectionNotificationObserver;
     RetainPtr<NSObject> m_automaticQuoteSubstitutionNotificationObserver;
     RetainPtr<NSObject> m_automaticDashSubstitutionNotificationObserver;
+    RetainPtr<NSObject> m_smartListsNotificationObserver;
     RetainPtr<NSObject> m_accessibilityDisplayOptionsNotificationObserver;
     RetainPtr<NSObject> m_scrollerStyleNotificationObserver;
     RetainPtr<NSObject> m_deactivationObserver;
     RetainPtr<NSObject> m_didChangeScreenParametersNotificationObserver;
+    bool m_smartListsEnabled { false };
 #if HAVE(SUPPORT_HDR_DISPLAY_APIS)
     RetainPtr<NSObject> m_didBeginSuppressingHighDynamicRange;
     RetainPtr<NSObject> m_didEndSuppressingHighDynamicRange;

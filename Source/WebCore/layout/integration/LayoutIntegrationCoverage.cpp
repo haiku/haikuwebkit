@@ -31,6 +31,7 @@
 #include "RenderBlockFlow.h"
 #include "RenderDeprecatedFlexibleBox.h"
 #include "RenderFlexibleBox.h"
+#include "RenderGrid.h"
 #include "RenderImage.h"
 #include "RenderInline.h"
 #include "RenderLineBreak.h"
@@ -393,6 +394,11 @@ bool canUseForFlexLayout(const RenderFlexibleBox& flexBox)
     return canUseForFlexLayoutWithReason(flexBox, IncludeReasons::First).isEmpty();
 }
 
-}
+bool canUseForGridLayout(const RenderGrid&)
+{
+    // Grid integration is not enabled yet.
+    return false;
 }
 
+}
+}

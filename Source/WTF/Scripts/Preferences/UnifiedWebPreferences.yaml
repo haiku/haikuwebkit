@@ -1430,17 +1430,17 @@ CSSTextBoxTrimEnabled:
 
 CSSTextDecorationLineErrorValues:
   type: bool
-  status: testable
+  status: stable
   category: css
   humanReadableName: "CSS text-decoration-line: spelling-error/grammar-error"
   humanReadableDescription: "Enable support for spelling-error and grammar-error values on text-decoration-line"
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 CSSTextGroupAlignEnabled:
   type: bool
@@ -2710,7 +2710,7 @@ EventHandlerDrivenSmoothKeyboardScrollingEnabled:
 
 EventTimingEnabled:
   type: bool
-  status: testable
+  status: preview
   category: dom
   humanReadableName: "Event Timing API"
   humanReadableDescription: "Enable the Event Timing API and supporting instrumentation"
@@ -2760,6 +2760,21 @@ ExposeDefaultSpeakerAsSpecificDeviceEnabled:
       default: true
     WebCore:
       default: true
+
+ExposeRollAngleAsTwistEnabled:
+  type: bool
+  status: unstable
+  category: dom
+  humanReadableName: "Expose Apple Pencil rotation for twist PointerEvent Property"
+  humanReadableDescription: "Expose Apple Pencil rotation for the `twist` PointerEvent Property"
+  condition: HAVE(UITOUCH_ROLLANGLE)
+  defaultValue:
+    WebKitLegacy:
+     default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 ExposeSpeakersEnabled:
   type: bool
@@ -3250,6 +3265,22 @@ GoogleAntiFlickerOptimizationQuirkEnabled:
       default: true
     WebCore:
       default: true
+
+GraphicsContextBlurFilterEnabled:
+   type: bool
+   status: stable
+   category: media
+   webcoreOnChange: setNeedsRelayoutAllFrames
+   humanReadableName: "GraphicsContext Blur Filter Rendering"
+   humanReadableDescription: "GraphicsContext Blur Filter Rendering"
+   condition: USE(GRAPHICS_CONTEXT_FILTERS)
+   defaultValue:
+     WebKitLegacy:
+       default: true
+     WebKit:
+       default: true
+     WebCore:
+       default: true
 
 GraphicsContextFiltersEnabled:
    type: bool
@@ -5371,7 +5402,7 @@ MuteCameraOnMicrophoneInterruptionEnabled:
 
 NavigationAPIEnabled:
   type: bool
-  status: preview
+  status: stable
   category: dom
   humanReadableName: "Navigation API"
   humanReadableDescription: "Enable Navigation API"
@@ -5379,8 +5410,10 @@ NavigationAPIEnabled:
     WebKitLegacy:
       default: false
     WebKit:
+      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)": true
       default: false
     WebCore:
+      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)": true
       default: false
 
 NavigatorUserAgentDataJavaScriptAPIEnabled:
@@ -7320,6 +7353,20 @@ SmartInsertDeleteEnabled:
     WebCore:
       default: true
 
+SmartListsAvailable:
+  type: bool
+  status: embedder
+  category: dom
+  humanReadableName: "Smart Lists"
+  humanReadableDescription: "Allow Smart Lists to be enabled"
+  defaultValue:
+    WebKit:
+      default: false
+    WebKitLegacy:
+      default: false
+    WebCore:
+      default: false
+
 SourceBufferChangeTypeEnabled:
   type: bool
   status: embedder
@@ -7731,6 +7778,18 @@ TextExtractionEnabled:
       "HAVE(UIINTELLIGENCESUPPORT_FRAMEWORK)": true
       default: false
 
+TextExtractionFilterEnabled:
+  type: bool
+  status: internal
+  humanReadableName: "Text Extraction Filter"
+  humanReadableDescription: "Enable Text Extraction Filter"
+  webcoreBinding: none
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKit:
+      "ENABLE(TEXT_EXTRACTION_FILTER)": true
+      default: false
+
 TextInteractionEnabled:
   type: bool
   status: embedder
@@ -7763,6 +7822,20 @@ TextRecognitionInVideosEnabled:
       default: defaultTextRecognitionInVideosEnabled()
   sharedPreferenceForWebProcess: true
   mediaPlaybackRelated: true
+
+TextShapingAcrossInlineBoxes:
+  type: bool
+  status: unstable
+  category: css
+  humanReadableName: "Text Shaping Across Inline Boxes"
+  humanReadableDescription: "Enable Text Shaping Across Inline Boxes"
+  defaultValue:
+    WebCore:
+      default: false
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
 
 TextTracksInMSEEnabled:
   type: bool

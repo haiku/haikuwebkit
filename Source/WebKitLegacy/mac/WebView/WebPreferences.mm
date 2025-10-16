@@ -41,7 +41,6 @@
 #import "WebPreferenceKeysPrivate.h"
 #import "WebPreferencesDefinitions.h"
 #import <JavaScriptCore/InitializeThreading.h>
-#import <WebCore/ApplicationCacheStorage.h>
 #import <WebCore/AudioSession.h>
 #import <WebCore/MediaPlayerEnums.h>
 #import <WebCore/NetworkStorageSession.h>
@@ -401,7 +400,7 @@ public:
         @NO, WebKitPrivateBrowsingEnabledPreferenceKey,
         @(cacheModelForMainBundle([[NSBundle mainBundle] bundleIdentifier])), WebKitCacheModelPreferenceKey,
         @YES, WebKitZoomsTextOnlyPreferenceKey,
-        [NSNumber numberWithLongLong:ApplicationCacheStorage::noQuota()], WebKitApplicationCacheTotalQuota,
+        @0, WebKitApplicationCacheTotalQuota,
 
         // FIXME: Are these relevent to WebKitLegacy? If not, we should remove them.
         @NO, WebKitResourceLoadStatisticsEnabledPreferenceKey,

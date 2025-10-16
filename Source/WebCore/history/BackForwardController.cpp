@@ -180,17 +180,6 @@ Vector<Ref<HistoryItem>> BackForwardController::allItems()
     return m_client->allItems(m_page->mainFrame().frameID());
 }
 
-Vector<Ref<HistoryItem>> BackForwardController::itemsForFrame(FrameIdentifier frameID)
-{
-    Vector<Ref<HistoryItem>> historyItems;
-    for (Ref item : allItems()) {
-        if (item->frameID() == frameID)
-            historyItems.append(WTFMove(item));
-    }
-
-    return historyItems;
-}
-
 Vector<Ref<HistoryItem>> BackForwardController::reachableItemsForFrame(FrameIdentifier frameID)
 {
     // Returns only the frame items that correspond to the currently reachable session history.

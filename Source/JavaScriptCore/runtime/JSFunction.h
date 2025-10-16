@@ -106,10 +106,10 @@ public:
     }
 
     // To call any of these methods include JSFunctionInlines.h
-    bool isHostFunction() const;
-    bool isNonBoundHostFunction() const;
-    FunctionExecutable* jsExecutable() const;
-    Intrinsic intrinsic() const;
+    inline bool isHostFunction() const;
+    inline bool isNonBoundHostFunction() const;
+    inline FunctionExecutable* jsExecutable() const;
+    inline Intrinsic intrinsic() const;
 
     JS_EXPORT_PRIVATE const SourceCode* sourceCode() const;
 

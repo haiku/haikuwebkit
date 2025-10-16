@@ -149,7 +149,7 @@ JSValue JSTestNamedSetterWithLegacyOverrideBuiltIns::getConstructor(VM& vm, cons
 
 void JSTestNamedSetterWithLegacyOverrideBuiltIns::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedSetterWithLegacyOverrideBuiltIns* thisObject = static_cast<JSTestNamedSetterWithLegacyOverrideBuiltIns*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedSetterWithLegacyOverrideBuiltIns* thisObject = static_cast<JSTestNamedSetterWithLegacyOverrideBuiltIns*>(cell);
     thisObject->JSTestNamedSetterWithLegacyOverrideBuiltIns::~JSTestNamedSetterWithLegacyOverrideBuiltIns();
 }
 
@@ -357,7 +357,7 @@ bool JSTestNamedSetterWithLegacyOverrideBuiltInsOwner::isReachableFromOpaqueRoot
 
 void JSTestNamedSetterWithLegacyOverrideBuiltInsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedSetterWithLegacyOverrideBuiltIns = static_cast<JSTestNamedSetterWithLegacyOverrideBuiltIns*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedSetterWithLegacyOverrideBuiltIns = static_cast<JSTestNamedSetterWithLegacyOverrideBuiltIns*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedSetterWithLegacyOverrideBuiltIns->protectedWrapped().ptr(), jsTestNamedSetterWithLegacyOverrideBuiltIns);
 }

@@ -190,6 +190,16 @@ void WorkerSWClientConnection::removeServiceWorkerRegistrationInServer(ServiceWo
     });
 }
 
+void WorkerSWClientConnection::registerServiceWorkerInServer(ServiceWorkerIdentifier)
+{
+    ASSERT_NOT_REACHED();
+}
+
+void WorkerSWClientConnection::unregisterServiceWorkerInServer(ServiceWorkerIdentifier)
+{
+    ASSERT_NOT_REACHED();
+}
+
 void WorkerSWClientConnection::didResolveRegistrationPromise(const ServiceWorkerRegistrationKey& key)
 {
     callOnMainThread([key = crossThreadCopy(key)]() mutable {

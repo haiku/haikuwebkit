@@ -389,7 +389,8 @@ RefPtr<WebCore::GLDisplay> OpenXRCoordinator::createGLDisplay() const
         const auto& mainDevice = drmMainDevice();
         if (!mainDevice.isNull()) {
             m_gbmDevice = WebCore::GBMDevice::create(!mainDevice.renderNode.isNull() ? mainDevice.renderNode : mainDevice.primaryNode);
-            glDisplay = tryCreateDisplay(EGL_PLATFORM_GBM_KHR, m_gbmDevice->device());
+            if (m_gbmDevice)
+                glDisplay = tryCreateDisplay(EGL_PLATFORM_GBM_KHR, m_gbmDevice->device());
         }
     }
 #endif

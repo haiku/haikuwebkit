@@ -30,7 +30,7 @@
 #include <WebCore/AnimationTimeline.h>
 #include <WebCore/CSSKeywordValue.h>
 #include <WebCore/KeyframeEffectOptions.h>
-#include <WebCore/TimelineRangeOffset.h>
+#include <WebCore/TimelineRangeValue.h>
 
 namespace WebCore {
 

@@ -150,7 +150,8 @@ static Ref<BackgroundFetchRecord> createRecord(ScriptExecutionContext& context, 
     auto recordIdentifier = information.identifier;
     auto record = BackgroundFetchRecord::create(context, WTFMove(information));
     SWClientConnection::fromScriptExecutionContext(context)->retrieveRecordResponse(recordIdentifier, [weakContext = WeakPtr { context }, record, recordIdentifier](auto&& result) {
-        if (!weakContext)
+        RefPtr context = weakContext.get();
+        if (!context)
             return;
 
         if (result.hasException()) {
@@ -158,9 +159,9 @@ static Ref<BackgroundFetchRecord> createRecord(ScriptExecutionContext& context, 
             return;
         }
 
-        auto response = FetchResponse::create(weakContext.get(), { }, FetchHeaders::Guard::Immutable, { });
+        auto response = FetchResponse::create(context.get(), { }, FetchHeaders::Guard::Immutable, { });
         response->setReceivedInternalResponse(result.releaseReturnValue(), FetchOptions::Credentials::Omit);
-        response->setBodyLoader(makeUniqueRef<BackgroundFetchResponseBodyLoader>(*weakContext, response.get(), recordIdentifier));
+        response->setBodyLoader(makeUniqueRef<BackgroundFetchResponseBodyLoader>(*context, response.get(), recordIdentifier));
         record->settleResponseReadyPromise(WTFMove(response));
     });
     return record;

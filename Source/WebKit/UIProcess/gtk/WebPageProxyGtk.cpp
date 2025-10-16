@@ -125,17 +125,24 @@ void WebPageProxy::accentColorDidChange()
 
 OptionSet<WebCore::PlatformEvent::Modifier> WebPageProxy::currentStateOfModifierKeys()
 {
+    OptionSet<WebCore::PlatformEvent::Modifier> modifiers;
+
 #if USE(GTK4)
     auto* device = gdk_seat_get_keyboard(gdk_display_get_default_seat(gtk_widget_get_display(viewWidget())));
+    if (!device)
+        return modifiers;
+
     auto gdkModifiers = gdk_device_get_modifier_state(device);
     bool capsLockActive = gdk_device_get_caps_lock_state(device);
 #else
     auto* keymap = gdk_keymap_get_for_display(gtk_widget_get_display(viewWidget()));
+    if (!keymap)
+        return modifiers;
+
     auto gdkModifiers = gdk_keymap_get_modifier_state(keymap);
     bool capsLockActive = gdk_keymap_get_caps_lock_state(keymap);
 #endif
 
-    OptionSet<WebCore::PlatformEvent::Modifier> modifiers;
     if (gdkModifiers & GDK_SHIFT_MASK)
         modifiers.add(WebCore::PlatformEvent::Modifier::ShiftKey);
     if (gdkModifiers & GDK_CONTROL_MASK)
@@ -146,6 +153,7 @@ OptionSet<WebCore::PlatformEvent::Modifier> WebPageProxy::currentStateOfModifier
         modifiers.add(WebCore::PlatformEvent::Modifier::MetaKey);
     if (capsLockActive)
         modifiers.add(WebCore::PlatformEvent::Modifier::CapsLockKey);
+
     return modifiers;
 }
 

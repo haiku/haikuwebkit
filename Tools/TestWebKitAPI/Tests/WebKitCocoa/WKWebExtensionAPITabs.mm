@@ -31,6 +31,7 @@
 #import "TestWKWebView.h"
 #import "WebExtensionUtilities.h"
 #import <JavaScriptCore/MathCommon.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 namespace TestWebKitAPI {
 
@@ -830,7 +831,7 @@ TEST(WKWebExtensionAPITabs, QueryWithAccessPrompt)
             EXPECT_TRUE([requestedURLs containsObject:loopbackURL]);
 
             // Only approve localhost for the first request.
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_async(mainDispatchQueueSingleton(), ^{
                 completionHandler([NSSet setWithObject:localhostURL], nil);
             });
 
@@ -841,7 +842,7 @@ TEST(WKWebExtensionAPITabs, QueryWithAccessPrompt)
             EXPECT_TRUE([requestedURLs containsObject:loopbackURL]);
 
             // Approve nothing for the second request.
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_async(mainDispatchQueueSingleton(), ^{
                 completionHandler(NSSet.set, nil);
             });
         }
@@ -913,7 +914,7 @@ TEST(WKWebExtensionAPITabs, QueryWithPermissionBypass)
     [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionTabs];
 
     manager.get().internalDelegate.promptForPermissionToAccessURLs = ^(id<WKWebExtensionTab>, NSSet<NSURL *> *requestedURLs, void (^completionHandler)(NSSet<NSURL *> *allowedURLs, NSDate *)) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(mainDispatchQueueSingleton(), ^{
             completionHandler(NSSet.set, nil);
         });
     };

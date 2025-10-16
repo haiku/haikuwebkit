@@ -152,8 +152,7 @@ size_t MediaSampleAVFObjC::sizeInBytes() const
 
 PlatformSample MediaSampleAVFObjC::platformSample() const
 {
-    PlatformSample sample = { PlatformSample::CMSampleBufferType, { .cmSampleBuffer = m_sample.get() } };
-    return sample;
+    return PlatformSample { m_sample };
 }
 
 static bool isCMSampleBufferAttachmentRandomAccess(CFDictionaryRef attachmentDict)

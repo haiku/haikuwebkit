@@ -38,8 +38,22 @@
 namespace WebCore {
 
 using GPURenderPassColorAttachmentView = Variant<RefPtr<GPUTexture>, RefPtr<GPUTextureView>>;
+using GPURenderPassResolveAttachmentView = Variant<RefPtr<GPUTexture>, RefPtr<GPUTextureView>>;
 
 struct GPURenderPassColorAttachment {
+    std::optional<WebGPU::RenderPassResolveAttachmentView> parseResolveTarget() const
+    {
+        if (resolveTarget) {
+            return WTF::switchOn(*resolveTarget, [&](const RefPtr<GPUTexture>& texture) -> WebGPU::RenderPassResolveAttachmentView {
+                return texture ? &texture->backing() : nullptr;
+            }, [&](const RefPtr<GPUTextureView>& view) -> WebGPU::RenderPassResolveAttachmentView {
+                return view ? &view->backing() : nullptr;
+            });
+        }
+
+        return std::nullopt;
+    }
+
     WebGPU::RenderPassColorAttachment convertToBacking() const
     {
         return {
@@ -49,7 +63,7 @@ struct GPURenderPassColorAttachment {
                 return view->backing();
             }),
             .depthSlice = depthSlice,
-            .resolveTarget = resolveTarget ? &resolveTarget->backing() : nullptr,
+            .resolveTarget = parseResolveTarget(),
             .clearValue = clearValue ? std::optional { WebCore::convertToBacking(*clearValue) } : std::nullopt,
             .loadOp = WebCore::convertToBacking(loadOp),
             .storeOp = WebCore::convertToBacking(storeOp),
@@ -58,7 +72,7 @@ struct GPURenderPassColorAttachment {
 
     GPURenderPassColorAttachmentView view;
     std::optional<GPUIntegerCoordinate> depthSlice;
-    WeakPtr<GPUTextureView> resolveTarget;
+    std::optional<GPURenderPassResolveAttachmentView> resolveTarget;
 
     std::optional<GPUColor> clearValue;
     GPULoadOp loadOp { GPULoadOp::Load };

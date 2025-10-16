@@ -48,6 +48,7 @@
 #if PLATFORM(COCOA)
 #include <pal/spi/cocoa/NetworkSPI.h>
 #include <wtf/BlockPtr.h>
+#include <wtf/darwin/DispatchExtras.h>
 #endif
 
 namespace WebKit {
@@ -133,7 +134,7 @@ static NetworkRTCSharedMonitor& networkSharedMonitor()
 static RetainPtr<nw_path_monitor> createNWPathMonitor()
 {
     auto nwMonitor = adoptCF(nw_path_monitor_create());
-    nw_path_monitor_set_queue(nwMonitor.get(), dispatch_get_main_queue());
+    nw_path_monitor_set_queue(nwMonitor.get(), mainDispatchQueueSingleton());
     nw_path_monitor_set_update_handler(nwMonitor.get(), makeBlockPtr([](nw_path_t path) {
         networkSharedMonitor().updateNetworksFromPath(path);
     }).get());

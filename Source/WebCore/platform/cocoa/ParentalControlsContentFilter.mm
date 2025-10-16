@@ -69,7 +69,7 @@ bool ParentalControlsContentFilter::enabled() const
 #endif // HAVE(WEBCONTENTRESTRICTIONS)
 
 #if HAVE(WEBCONTENTANALYSIS_FRAMEWORK)
-    bool enabled = [getWebFilterEvaluatorClass() isManagedSession];
+    bool enabled = [getWebFilterEvaluatorClassSingleton() isManagedSession];
     LOG(ContentFiltering, "ParentalControlsContentFilter is %s.\n", enabled ? "enabled" : "not enabled");
     return enabled;
 #else

@@ -37,6 +37,7 @@ struct WorkerParameters;
 
 class SharedWorkerGlobalScope final : public WorkerGlobalScope {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(SharedWorkerGlobalScope);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(SharedWorkerGlobalScope);
 public:
     template<typename... Args> static Ref<SharedWorkerGlobalScope> create(Args&&... args)
     {

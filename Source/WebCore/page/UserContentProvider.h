@@ -75,7 +75,7 @@ public:
     virtual void forEachUserMessageHandler(NOESCAPE const Function<void(const UserMessageHandlerDescriptor&)>&) const = 0;
 #endif
 #if ENABLE(CONTENT_EXTENSIONS)
-    virtual ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() = 0;
+    virtual const ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() const = 0;
 #endif
 
     void registerForUserMessageHandlerInvalidation(UserContentProviderInvalidationClient&);
@@ -85,7 +85,7 @@ public:
     void removePage(Page&);
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    ContentRuleListResults processContentRuleListsForLoad(Page&, const URL&, OptionSet<ContentExtensions::ResourceType>, DocumentLoader& initiatingDocumentLoader, const URL& redirectFrom = { });
+    ContentRuleListResults processContentRuleListsForLoad(Page&, const URL&, OptionSet<ContentExtensions::ResourceType>, DocumentLoader& initiatingDocumentLoader, const URL& redirectFrom = { }) const;
 #endif
 
 protected:

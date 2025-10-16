@@ -19,8 +19,13 @@
 
 #pragma once
 
-#include <WebCore/RenderElement.h>
-#include <WebCore/RenderObjectInlines.h>
+#include <WebCore/PseudoElement.h>
+#include <WebCore/RenderBox.h>
+#include <WebCore/RenderObjectDocument.h>
+#include <WebCore/RenderObjectNode.h>
+#include <WebCore/StyleOpacity.h>
+#include <WebCore/StyleShapeOutside.h>
+#include <WebCore/WillChangeData.h>
 
 namespace WebCore {
 

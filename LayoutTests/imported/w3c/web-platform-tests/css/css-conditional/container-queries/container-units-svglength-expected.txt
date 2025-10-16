@@ -1,5 +1,3 @@
-CONSOLE MESSAGE: Error: Invalid value for <rect> attribute width="calc(10cqmin + 10cqmax)"
-CONSOLE MESSAGE: Error: Invalid value for <rect> attribute height="calc(10cqw + 3px)"
 
 PASS unitType with container-relative units
 PASS cqw,cqh can be resolved

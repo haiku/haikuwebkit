@@ -39,6 +39,7 @@
 namespace WebCore {
 
 class BlendingKeyframes;
+class GraphicsLayerAnimation;
 class PaintedContentsInfo;
 class RegionContext;
 class RenderLayerCompositor;
@@ -178,7 +179,7 @@ public:
     void contentChanged(ContentChangeType, const std::optional<FloatRect>&);
 
     // Interface to start, finish, suspend and resume animations
-    bool startAnimation(double timeOffset, const Animation&, const BlendingKeyframes&);
+    bool startAnimation(double timeOffset, const GraphicsLayerAnimation&, const BlendingKeyframes&);
     void animationPaused(double timeOffset, const String& name);
     void animationFinished(const String& name);
     void transformRelatedPropertyDidChange();

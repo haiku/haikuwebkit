@@ -25,29 +25,11 @@
 
 #pragma once
 
-#include <wtf/Markable.h>
-
 namespace WebCore {
 
 struct EventTimingInteractionID {
     uint64_t value { 0 };
-};
-
-}
-
-namespace WTF {
-
-template<>
-struct MarkableTraits<WebCore::EventTimingInteractionID> {
-    static bool isEmptyValue(WebCore::EventTimingInteractionID eventTimingInteractionID)
-    {
-        return !eventTimingInteractionID.value;
-    }
-
-    static constexpr WebCore::EventTimingInteractionID emptyValue()
-    {
-        return WebCore::EventTimingInteractionID();
-    }
+    bool isUnassigned() const { return !value; }
 };
 
 }

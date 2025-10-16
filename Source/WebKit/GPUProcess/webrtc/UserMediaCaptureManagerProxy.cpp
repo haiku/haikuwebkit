@@ -29,9 +29,11 @@
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
 
 #include "Connection.h"
+#include "Logging.h"
 #include "RemoteCaptureSampleManagerMessages.h"
 #include "RemoteVideoFrameObjectHeap.h"
 #include "SharedCARingBuffer.h"
+#include "SharedPreferencesForWebProcess.h"
 #include "UserMediaCaptureManagerMessages.h"
 #include "UserMediaCaptureManagerProxyMessages.h"
 #include <WebCore/AudioSession.h>
@@ -445,7 +447,6 @@ private:
     bool m_isObservingMedia { false };
     bool m_isStopped { false };
     bool m_isEnded { false };
-    bool m_shouldApplyRotation { false };
     std::atomic<bool> m_shouldReset { false };
 
     RealtimeMediaSourceIdentifier m_id;

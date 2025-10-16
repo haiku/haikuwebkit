@@ -49,6 +49,7 @@
 #include <WebCore/StyleOffsetPath.h>
 #include <WebCore/StyleOffsetPosition.h>
 #include <WebCore/StyleOffsetRotate.h>
+#include <WebCore/StylePageSize.h>
 #include <WebCore/StylePerspective.h>
 #include <WebCore/StylePerspectiveOrigin.h>
 #include <WebCore/StylePrimitiveNumericTypes.h>
@@ -67,7 +68,6 @@
 #include <WebCore/StyleShapeMargin.h>
 #include <WebCore/StyleShapeOutside.h>
 #include <WebCore/StyleTextDecorationThickness.h>
-#include <WebCore/StyleTextEdge.h>
 #include <WebCore/StyleTranslate.h>
 #include <WebCore/StyleViewTimelineInsets.h>
 #include <WebCore/StyleViewTimelines.h>
@@ -90,7 +90,6 @@ namespace WebCore {
 
 using namespace CSS::Literals;
 
-class AnimationList;
 class PathOperation;
 class StyleCustomPropertyData;
 class StyleDeprecatedFlexibleBoxData;
@@ -103,22 +102,11 @@ class StyleResolver;
 class StyleTransformData;
 class WillChangeData;
 
-struct LengthSize;
 struct StyleMarqueeData;
 
 namespace Style {
 class CustomPropertyData;
 }
-
-// Page size type.
-// StyleRareNonInheritedData::pageSize is meaningful only when
-// StyleRareNonInheritedData::pageSizeType is PAGE_SIZE_RESOLVED.
-enum class PageSizeType : uint8_t {
-    Auto, // size: auto
-    AutoLandscape, // size: landscape
-    AutoPortrait, // size: portrait
-    Resolved // Size is fully resolved.
-};
 
 // This struct is for rarely used non-inherited CSS3, CSS2, and WebKit-specific properties.
 // By grouping them together, we save space, and only allocate this object when someone
@@ -180,7 +168,7 @@ public:
 
     Style::MaskBorder maskBorder;
 
-    LengthSize pageSize;
+    Style::PageSize pageSize;
 
     Style::ShapeOutside shapeOutside;
     Style::ShapeMargin shapeMargin;
@@ -249,7 +237,6 @@ public:
     PREFERRED_TYPE(OverscrollBehavior) unsigned overscrollBehaviorX : 2;
     PREFERRED_TYPE(OverscrollBehavior) unsigned overscrollBehaviorY : 2;
 
-    PREFERRED_TYPE(PageSizeType) unsigned pageSizeType : 2;
     PREFERRED_TYPE(TransformStyle3D) unsigned transformStyle3D : 2;
     PREFERRED_TYPE(bool) unsigned transformStyleForcedToFlat : 1; // The used value for transform-style is forced to flat by a grouping property.
     PREFERRED_TYPE(BackfaceVisibility) unsigned backfaceVisibility : 1;

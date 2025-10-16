@@ -25,6 +25,8 @@
 
 #pragma once
 
+#if USE(LIBWEBRTC)
+
 #include "Connection.h"
 #include "LibWebRTCProvider.h"
 #include "LibWebRTCSocketFactory.h"
@@ -56,7 +58,6 @@ public:
 
     bool isActive() const { return m_isActive; }
 
-#if USE(LIBWEBRTC)
     WebRTCMonitor& monitor() { return m_webNetworkMonitor; }
     Ref<WebRTCMonitor> protectedMonitor() { return m_webNetworkMonitor; }
     LibWebRTCSocketFactory& socketFactory() { return m_socketFactory; }
@@ -64,17 +65,13 @@ public:
     void disableNonLocalhostConnections() { socketFactory().disableNonLocalhostConnections(); }
 
     Ref<WebRTCResolver> resolver(LibWebRTCResolverIdentifier identifier) { return WebRTCResolver::create(socketFactory(), identifier); }
-#endif
 
-#if ENABLE(WEB_RTC)
     WebMDNSRegister& mdnsRegister() { return m_mdnsRegister; }
     Ref<WebMDNSRegister> protectedMDNSRegister() { return m_mdnsRegister; }
-#endif
 
     void setAsActive();
 
 private:
-#if USE(LIBWEBRTC)
     void setSocketFactoryConnection();
 
     void signalReadPacket(WebCore::LibWebRTCSocketIdentifier, std::span<const uint8_t>, const RTCNetwork::IPAddress&, uint16_t port, int64_t, WebRTCNetwork::EcnMarking);
@@ -83,27 +80,24 @@ private:
     void signalConnect(WebCore::LibWebRTCSocketIdentifier);
     void signalClose(WebCore::LibWebRTCSocketIdentifier, int);
     void signalUsedInterface(WebCore::LibWebRTCSocketIdentifier, String&&);
-#endif
 
     // FunctionDispatcher
     void dispatch(Function<void()>&&) final;
 
-#if USE(LIBWEBRTC)
     // IPC::MessageReceiver
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
-#endif
 
     const CheckedRef<WebProcess> m_webProcess;
 
-#if USE(LIBWEBRTC)
     LibWebRTCSocketFactory m_socketFactory;
     WebRTCMonitor m_webNetworkMonitor;
-#endif
-#if ENABLE(WEB_RTC)
+
     WebMDNSRegister m_mdnsRegister;
-#endif
+
     bool m_isActive { false };
     RefPtr<IPC::Connection> m_connection;
 };
 
 } // namespace WebKit
+
+#endif // USE(LIBWEBRTC)

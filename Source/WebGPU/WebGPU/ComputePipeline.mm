@@ -88,9 +88,6 @@ static std::pair<Ref<ComputePipeline>, NSString*> returnInvalidComputePipeline(W
 
 std::pair<Ref<ComputePipeline>, NSString*> Device::createComputePipeline(const WGPUComputePipelineDescriptor& descriptor, bool isAsync)
 {
-    if (descriptor.nextInChain || descriptor.compute.nextInChain)
-        return returnInvalidComputePipeline(*this, isAsync);
-
     auto shaderModule = WebGPU::protectedFromAPI(descriptor.compute.module);
     if (!shaderModule->isValid() || &shaderModule->device() != this || !descriptor.layout)
         return returnInvalidComputePipeline(*this, isAsync);

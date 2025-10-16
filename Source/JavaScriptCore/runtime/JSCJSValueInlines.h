@@ -65,27 +65,34 @@ inline uint32_t JSValue::toUInt32(JSGlobalObject* globalObject) const
     return toInt32(globalObject);
 }
 
-inline uint32_t JSValue::toIndex(JSGlobalObject* globalObject, ASCIILiteral errorName) const
+// https://tc39.es/ecma262/#sec-toindex
+inline uint64_t JSValue::toIndex(JSGlobalObject* globalObject, ASCIILiteral errorName) const
 {
     VM& vm = getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    double d = toNumber(globalObject);
+    if (isInt32()) {
+        int32_t integer = asInt32();
+        if (integer < 0) [[unlikely]] {
+            throwException(globalObject, scope, createRangeError(globalObject, makeString(errorName, " cannot be negative"_s)));
+            return 0;
+        }
+        return integer;
+    }
+
+    double d = toIntegerOrInfinity(globalObject);
     RETURN_IF_EXCEPTION(scope, 0);
-    if (d <= -1) {
+    if (d < 0) [[unlikely]] {
         throwException(globalObject, scope, createRangeError(globalObject, makeString(errorName, " cannot be negative"_s)));
         return 0;
     }
 
-    if (isInt32())
-        return asInt32();
-
-    if (d > static_cast<double>(std::numeric_limits<unsigned>::max())) {
-        throwException(globalObject, scope, createRangeError(globalObject, makeString(errorName, " too large"_s)));
+    if (d > maxSafeInteger()) [[unlikely]] {
+        throwException(globalObject, scope, createRangeError(globalObject, makeString(errorName, " larger than (2 ** 53) - 1"_s)));
         return 0;
     }
 
-    RELEASE_AND_RETURN(scope, JSC::toInt32(d));
+    RELEASE_AND_RETURN(scope, d);
 }
 
 inline size_t JSValue::toTypedArrayIndex(JSGlobalObject* globalObject, ASCIILiteral errorName) const

@@ -48,7 +48,11 @@ std::optional<RenderPassColorAttachment> ConvertToBackingContext::convertToBacki
 
     std::optional<WebGPUIdentifier> resolveTarget;
     if (renderPassColorAttachment.resolveTarget) {
-        resolveTarget = convertToBacking(*renderPassColorAttachment.protectedResolveTarget());
+        RefPtr textureView = renderPassColorAttachment.protectedResolveTarget().get();
+        if (textureView)
+            resolveTarget = convertToBacking(*textureView);
+        else
+            resolveTarget = convertToBacking(*renderPassColorAttachment.protectedResolveTexture());
         if (!resolveTarget)
             return std::nullopt;
     }
@@ -66,15 +70,21 @@ std::optional<RenderPassColorAttachment> ConvertToBackingContext::convertToBacki
 std::optional<WebCore::WebGPU::RenderPassColorAttachment> ConvertFromBackingContext::convertFromBacking(const RenderPassColorAttachment& renderPassColorAttachment)
 {
     WeakPtr view = convertTextureViewFromBacking(renderPassColorAttachment.view);
-    WeakPtr texture = convertTextureFromBacking(renderPassColorAttachment.view);
+    WeakPtr texture = !view ? convertTextureFromBacking(renderPassColorAttachment.view) : nullptr;
     if (!view && !texture)
         return std::nullopt;
 
-    WeakPtr<WebCore::WebGPU::TextureView> resolveTarget;
+    std::optional<WebCore::WebGPU::RenderPassResolveAttachmentView> resolveTarget;
     if (renderPassColorAttachment.resolveTarget) {
-        resolveTarget = convertTextureViewFromBacking(renderPassColorAttachment.resolveTarget.value());
-        if (!resolveTarget)
-            return std::nullopt;
+        WeakPtr view = convertTextureViewFromBacking(renderPassColorAttachment.resolveTarget.value());
+        if (!view) {
+            WeakPtr texture = convertTextureFromBacking(renderPassColorAttachment.resolveTarget.value());
+            if (!texture)
+                return std::nullopt;
+
+            resolveTarget = texture;
+        } else
+            resolveTarget = view;
     }
 
     std::optional<WebCore::WebGPU::Color> clearValue;

@@ -46,7 +46,7 @@ enum class RenderingUpdateStep : uint32_t;
 
 struct GapRects;
 
-class ServicesOverlayController : private DataDetectorHighlightClient, private PageOverlayClient {
+class ServicesOverlayController : public DataDetectorHighlightClient, private PageOverlayClient {
     WTF_MAKE_TZONE_ALLOCATED(ServicesOverlayController);
 public:
     explicit ServicesOverlayController(Page&);

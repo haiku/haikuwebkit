@@ -74,7 +74,7 @@ public:
     virtual void updateCache(const UnlinkedFunctionExecutable*, const SourceCode&, CodeSpecializationKind, const UnlinkedFunctionCodeBlock*) const { }
     virtual void commitCachedBytecode() const { }
 
-    StringView getRange(int start, int end) const
+    StringView getRange(int start, int end) const LIFETIME_BOUND
     {
         return source().substring(start, end - start);
     }

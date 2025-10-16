@@ -47,149 +47,150 @@ namespace JSC { namespace FTL {
     macro(JSCellHeaderAndNamedProperties) \
     macro(OrderedHashTableData) \
 
+// macro(name, offset, mutability)
 #define FOR_EACH_ABSTRACT_FIELD(macro) \
-    macro(ArrayBuffer_data, ArrayBuffer::offsetOfData()) \
-    macro(ArrayStorage_numValuesInVector, ArrayStorage::numValuesInVectorOffset()) \
-    macro(Butterfly_arrayBuffer, Butterfly::offsetOfArrayBuffer()) \
-    macro(Butterfly_publicLength, Butterfly::offsetOfPublicLength()) \
-    macro(Butterfly_vectorLength, Butterfly::offsetOfVectorLength()) \
-    macro(CallFrame_callerFrame, CallFrame::callerFrameOffset()) \
-    macro(ClassInfo_parentClass, ClassInfo::offsetOfParentClass()) \
-    macro(ClonedArguments_callee, ClonedArguments::offsetOfCallee()) \
-    macro(ConcatKeyAtomStringCache_quickCache0_key, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey()) \
-    macro(ConcatKeyAtomStringCache_quickCache0_value, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue()) \
-    macro(ConcatKeyAtomStringCache_quickCache1_key, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey()) \
-    macro(ConcatKeyAtomStringCache_quickCache1_value, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue()) \
-    macro(DateInstance_internalNumber, DateInstance::offsetOfInternalNumber()) \
-    macro(DateInstance_data, DateInstance::offsetOfData()) \
-    macro(DateInstanceData_gregorianDateTimeCachedForMS, DateInstanceData::offsetOfGregorianDateTimeCachedForMS()) \
-    macro(DateInstanceData_gregorianDateTimeUTCCachedForMS, DateInstanceData::offsetOfGregorianDateTimeUTCCachedForMS()) \
-    macro(DateInstanceData_cachedGregorianDateTime_year, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfYear()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_year, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfYear()) \
-    macro(DateInstanceData_cachedGregorianDateTime_month, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfMonth()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_month, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfMonth()) \
-    macro(DateInstanceData_cachedGregorianDateTime_monthDay, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfMonthDay()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_monthDay, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfMonthDay()) \
-    macro(DateInstanceData_cachedGregorianDateTime_weekDay, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfWeekDay()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_weekDay, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfWeekDay()) \
-    macro(DateInstanceData_cachedGregorianDateTime_hour, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfHour()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_hour, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfHour()) \
-    macro(DateInstanceData_cachedGregorianDateTime_minute, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfMinute()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_minute, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfMinute()) \
-    macro(DateInstanceData_cachedGregorianDateTime_second, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfSecond()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_second, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfSecond()) \
-    macro(DateInstanceData_cachedGregorianDateTime_utcOffsetInMinute, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfUTCOffsetInMinute()) \
-    macro(DateInstanceData_cachedGregorianDateTimeUTC_utcOffsetInMinute, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfUTCOffsetInMinute()) \
-    macro(DirectArguments_callee, DirectArguments::offsetOfCallee()) \
-    macro(DirectArguments_length, DirectArguments::offsetOfLength()) \
-    macro(DirectArguments_minCapacity, DirectArguments::offsetOfMinCapacity()) \
-    macro(DirectArguments_mappedArguments, DirectArguments::offsetOfMappedArguments()) \
-    macro(DirectArguments_modifiedArgumentsDescriptor, DirectArguments::offsetOfModifiedArgumentsDescriptor()) \
-    macro(FunctionExecutable_rareData, FunctionExecutable::offsetOfRareData()) \
-    macro(FunctionExecutableRareData_asString, FunctionExecutable::RareData::offsetOfAsString()) \
-    macro(FunctionRareData_allocator, FunctionRareData::offsetOfObjectAllocationProfile() + ObjectAllocationProfileWithPrototype::offsetOfAllocator()) \
-    macro(FunctionRareData_structure, FunctionRareData::offsetOfObjectAllocationProfile() + ObjectAllocationProfileWithPrototype::offsetOfStructure()) \
-    macro(FunctionRareData_prototype, FunctionRareData::offsetOfObjectAllocationProfile() + ObjectAllocationProfileWithPrototype::offsetOfPrototype()) \
-    macro(FunctionRareData_allocationProfileWatchpointSet, FunctionRareData::offsetOfAllocationProfileWatchpointSet()) \
-    macro(FunctionRareData_executable, FunctionRareData::offsetOfExecutable()) \
-    macro(FunctionRareData_internalFunctionAllocationProfile_structureID, FunctionRareData::offsetOfInternalFunctionAllocationProfile() + InternalFunctionAllocationProfile::offsetOfStructureID()) \
-    macro(GetterSetter_getter, GetterSetter::offsetOfGetter()) \
-    macro(GetterSetter_setter, GetterSetter::offsetOfSetter()) \
-    macro(JSArrayBufferView_byteOffset, JSArrayBufferView::offsetOfByteOffset()) \
-    macro(JSArrayBufferView_length, JSArrayBufferView::offsetOfLength()) \
-    macro(JSArrayBufferView_mode, JSArrayBufferView::offsetOfMode()) \
-    macro(JSArrayBufferView_vector, JSArrayBufferView::offsetOfVector()) \
-    macro(JSBigInt_length, JSBigInt::offsetOfLength()) \
-    macro(JSBoundFunction_targetFunction, JSBoundFunction::offsetOfTargetFunction()) \
-    macro(JSBoundFunction_boundThis, JSBoundFunction::offsetOfBoundThis()) \
-    macro(JSBoundFunction_boundArg0, JSBoundFunction::offsetOfBoundArgs() + sizeof(WriteBarrier<Unknown>) * 0) \
-    macro(JSBoundFunction_boundArg1, JSBoundFunction::offsetOfBoundArgs() + sizeof(WriteBarrier<Unknown>) * 1) \
-    macro(JSBoundFunction_boundArg2, JSBoundFunction::offsetOfBoundArgs() + sizeof(WriteBarrier<Unknown>) * 2) \
-    macro(JSBoundFunction_nameMayBeNull, JSBoundFunction::offsetOfNameMayBeNull()) \
-    macro(JSBoundFunction_length, JSBoundFunction::offsetOfLength()) \
-    macro(JSBoundFunction_boundArgsLength, JSBoundFunction::offsetOfBoundArgsLength()) \
-    macro(JSBoundFunction_canConstruct, JSBoundFunction::offsetOfCanConstruct()) \
-    macro(JSCallee_scope, JSCallee::offsetOfScopeChain()) \
-    macro(JSCell_cellState, JSCell::cellStateOffset()) \
-    macro(JSCell_header, 0) \
-    macro(JSCell_indexingTypeAndMisc, JSCell::indexingTypeAndMiscOffset()) \
-    macro(JSCell_structureID, JSCell::structureIDOffset()) \
-    macro(JSCell_typeInfoFlags, JSCell::typeInfoFlagsOffset()) \
-    macro(JSCell_typeInfoType, JSCell::typeInfoTypeOffset()) \
-    macro(JSCell_usefulBytes, JSCell::indexingTypeAndMiscOffset()) \
-    macro(JSFunction_executableOrRareData, JSFunction::offsetOfExecutableOrRareData()) \
-    macro(JSGlobalObject_regExpGlobalData_cachedResult_lastRegExp, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfLastRegExp()) \
-    macro(JSGlobalObject_regExpGlobalData_cachedResult_lastInput, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfLastInput()) \
-    macro(JSGlobalObject_regExpGlobalData_cachedResult_result_start, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfResult() + OBJECT_OFFSETOF(MatchResult, start)) \
-    macro(JSGlobalObject_regExpGlobalData_cachedResult_result_end, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfResult() + OBJECT_OFFSETOF(MatchResult, end)) \
-    macro(JSGlobalObject_regExpGlobalData_cachedResult_reified, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfReified()) \
-    macro(JSGlobalObject_regExpGlobalData_cachedResult_oneCharacterMatch, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfOneCharacterMatch()) \
-    macro(JSGlobalProxy_target, JSGlobalProxy::targetOffset()) \
-    macro(JSObject_butterfly, JSObject::butterflyOffset()) \
-    macro(JSPropertyNameEnumerator_cachedInlineCapacity, JSPropertyNameEnumerator::cachedInlineCapacityOffset()) \
-    macro(JSPropertyNameEnumerator_cachedPropertyNamesVector, JSPropertyNameEnumerator::cachedPropertyNamesVectorOffset()) \
-    macro(JSPropertyNameEnumerator_cachedStructureID, JSPropertyNameEnumerator::cachedStructureIDOffset()) \
-    macro(JSPropertyNameEnumerator_endGenericPropertyIndex, JSPropertyNameEnumerator::endGenericPropertyIndexOffset()) \
-    macro(JSPropertyNameEnumerator_endStructurePropertyIndex, JSPropertyNameEnumerator::endStructurePropertyIndexOffset()) \
-    macro(JSPropertyNameEnumerator_indexLength, JSPropertyNameEnumerator::indexedLengthOffset()) \
-    macro(JSPropertyNameEnumerator_flags, JSPropertyNameEnumerator::flagsOffset()) \
-    macro(JSRopeString_flags, JSRopeString::offsetOfFlags()) \
-    macro(JSRopeString_length, JSRopeString::offsetOfLength()) \
-    macro(JSRopeString_fiber0, JSRopeString::offsetOfFiber0()) \
-    macro(JSRopeString_fiber1, JSRopeString::offsetOfFiber1()) \
-    macro(JSRopeString_fiber2, JSRopeString::offsetOfFiber2()) \
-    macro(JSScope_next, JSScope::offsetOfNext()) \
-    macro(JSSymbolTableObject_symbolTable, JSSymbolTableObject::offsetOfSymbolTable()) \
-    macro(JSWebAssemblyInstance_moduleRecord, JSWebAssemblyInstance::offsetOfModuleRecord()) \
-    macro(NativeExecutable_asString, NativeExecutable::offsetOfAsString()) \
-    macro(RegExpObject_regExpAndFlags, RegExpObject::offsetOfRegExpAndFlags()) \
-    macro(RegExpObject_lastIndex, RegExpObject::offsetOfLastIndex()) \
-    macro(ShadowChicken_Packet_callee, OBJECT_OFFSETOF(ShadowChicken::Packet, callee)) \
-    macro(ShadowChicken_Packet_frame, OBJECT_OFFSETOF(ShadowChicken::Packet, frame)) \
-    macro(ShadowChicken_Packet_callerFrame, OBJECT_OFFSETOF(ShadowChicken::Packet, callerFrame)) \
-    macro(ShadowChicken_Packet_thisValue, OBJECT_OFFSETOF(ShadowChicken::Packet, thisValue)) \
-    macro(ShadowChicken_Packet_scope, OBJECT_OFFSETOF(ShadowChicken::Packet, scope)) \
-    macro(ShadowChicken_Packet_codeBlock, OBJECT_OFFSETOF(ShadowChicken::Packet, codeBlock)) \
-    macro(ShadowChicken_Packet_callSiteIndex, OBJECT_OFFSETOF(ShadowChicken::Packet, callSiteIndex)) \
-    macro(ScopedArguments_overrodeThings, ScopedArguments::offsetOfOverrodeThings()) \
-    macro(ScopedArguments_scope, ScopedArguments::offsetOfScope()) \
-    macro(ScopedArguments_storage, ScopedArguments::offsetOfStorage()) \
-    macro(ScopedArguments_table, ScopedArguments::offsetOfTable()) \
-    macro(ScopedArguments_totalLength, ScopedArguments::offsetOfTotalLength()) \
-    macro(ScopedArgumentsTable_arguments, ScopedArgumentsTable::offsetOfArguments()) \
-    macro(ScopedArgumentsTable_length, ScopedArgumentsTable::offsetOfLength()) \
-    macro(StringImpl_data, StringImpl::dataOffset()) \
-    macro(StringImpl_hashAndFlags, StringImpl::flagsOffset()) \
-    macro(StringImpl_length, StringImpl::lengthMemoryOffset()) \
-    macro(Structure_bitField, Structure::bitFieldOffset()) \
-    macro(Structure_classInfo, Structure::classInfoOffset()) \
-    macro(Structure_globalObject, Structure::globalObjectOffset()) \
-    macro(Structure_indexingModeIncludingHistory, Structure::indexingModeIncludingHistoryOffset()) \
-    macro(Structure_inlineCapacity, Structure::inlineCapacityOffset()) \
-    macro(Structure_outOfLineTypeFlags, Structure::outOfLineTypeFlagsOffset()) \
-    macro(Structure_previousOrRareData, Structure::previousOrRareDataOffset()) \
-    macro(Structure_propertyHash, Structure::propertyHashOffset()) \
-    macro(Structure_prototype, Structure::prototypeOffset()) \
-    macro(Structure_seenProperties, Structure::seenPropertiesOffset()) \
-    macro(StructureRareData_cachedEnumerableStrings, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::EnumerableStrings)) \
-    macro(StructureRareData_cachedStrings, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::Strings)) \
-    macro(StructureRareData_cachedSymbols, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::Symbols)) \
-    macro(StructureRareData_cachedStringsAndSymbols, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::StringsAndSymbols)) \
-    macro(StructureRareData_cachedPropertyNameEnumeratorAndFlag, StructureRareData::offsetOfCachedPropertyNameEnumeratorAndFlag()) \
-    macro(StructureRareData_specialPropertyCache, StructureRareData::offsetOfSpecialPropertyCache()) \
-    macro(SpecialPropertyCache_cachedToStringTagValue, SpecialPropertyCache::offsetOfCache(CachedSpecialPropertyKey::ToStringTag) + SpecialPropertyCacheEntry::offsetOfValue()) \
-    macro(JSMap_storage, (JSMap::offsetOfStorage())) \
-    macro(JSSet_storage, (JSSet::offsetOfStorage())) \
-    macro(VM_heap_barrierThreshold, VM::offsetOfHeapBarrierThreshold()) \
-    macro(VM_heap_mutatorShouldBeFenced, VM::offsetOfHeapMutatorShouldBeFenced()) \
-    macro(VM_exception, VM::exceptionOffset()) \
-    macro(WatchpointSet_state, WatchpointSet::offsetOfState()) \
-    macro(WeakMapImpl_capacity, WeakMapImpl<WeakMapBucket<WeakMapBucketDataKey>>::offsetOfCapacity()) \
-    macro(WeakMapImpl_buffer,  WeakMapImpl<WeakMapBucket<WeakMapBucketDataKey>>::offsetOfBuffer()) \
-    macro(WeakMapBucket_value, WeakMapBucket<WeakMapBucketDataKeyValue>::offsetOfValue()) \
-    macro(WeakMapBucket_key, WeakMapBucket<WeakMapBucketDataKeyValue>::offsetOfKey()) \
-    macro(WebAssemblyModuleRecord_exportsObject, WebAssemblyModuleRecord::offsetOfExportsObject()) \
-    macro(Symbol_symbolImpl, Symbol::offsetOfSymbolImpl()) \
+    macro(ArrayBuffer_data, ArrayBuffer::offsetOfData(), B3::Mutability::Mutable) \
+    macro(ArrayStorage_numValuesInVector, ArrayStorage::numValuesInVectorOffset(), B3::Mutability::Mutable) \
+    macro(Butterfly_arrayBuffer, Butterfly::offsetOfArrayBuffer(), B3::Mutability::Mutable) \
+    macro(Butterfly_publicLength, Butterfly::offsetOfPublicLength(), B3::Mutability::Mutable) \
+    macro(Butterfly_vectorLength, Butterfly::offsetOfVectorLength(), B3::Mutability::Mutable) \
+    macro(CallFrame_callerFrame, CallFrame::callerFrameOffset(), B3::Mutability::Mutable) \
+    macro(ClassInfo_parentClass, ClassInfo::offsetOfParentClass(), B3::Mutability::Immutable) \
+    macro(ClonedArguments_callee, ClonedArguments::offsetOfCallee(), B3::Mutability::Mutable) \
+    macro(ConcatKeyAtomStringCache_quickCache0_key, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey(), B3::Mutability::Mutable) \
+    macro(ConcatKeyAtomStringCache_quickCache0_value, ConcatKeyAtomStringCache::offsetOfQuickCache0() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue(), B3::Mutability::Mutable) \
+    macro(ConcatKeyAtomStringCache_quickCache1_key, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfKey(), B3::Mutability::Mutable) \
+    macro(ConcatKeyAtomStringCache_quickCache1_value, ConcatKeyAtomStringCache::offsetOfQuickCache1() + ConcatKeyAtomStringCache::CacheEntry::offsetOfValue(), B3::Mutability::Mutable) \
+    macro(DateInstance_internalNumber, DateInstance::offsetOfInternalNumber(), B3::Mutability::Mutable) \
+    macro(DateInstance_data, DateInstance::offsetOfData(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_gregorianDateTimeCachedForMS, DateInstanceData::offsetOfGregorianDateTimeCachedForMS(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_gregorianDateTimeUTCCachedForMS, DateInstanceData::offsetOfGregorianDateTimeUTCCachedForMS(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_year, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfYear(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_year, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfYear(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_month, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfMonth(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_month, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfMonth(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_monthDay, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfMonthDay(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_monthDay, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfMonthDay(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_weekDay, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfWeekDay(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_weekDay, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfWeekDay(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_hour, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfHour(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_hour, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfHour(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_minute, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfMinute(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_minute, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfMinute(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_second, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfSecond(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_second, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfSecond(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTime_utcOffsetInMinute, DateInstanceData::offsetOfCachedGregorianDateTime() + GregorianDateTime::offsetOfUTCOffsetInMinute(), B3::Mutability::Mutable) \
+    macro(DateInstanceData_cachedGregorianDateTimeUTC_utcOffsetInMinute, DateInstanceData::offsetOfCachedGregorianDateTimeUTC() + GregorianDateTime::offsetOfUTCOffsetInMinute(), B3::Mutability::Mutable) \
+    macro(DirectArguments_callee, DirectArguments::offsetOfCallee(), B3::Mutability::Mutable) \
+    macro(DirectArguments_length, DirectArguments::offsetOfLength(), B3::Mutability::Mutable) \
+    macro(DirectArguments_minCapacity, DirectArguments::offsetOfMinCapacity(), B3::Mutability::Mutable) \
+    macro(DirectArguments_mappedArguments, DirectArguments::offsetOfMappedArguments(), B3::Mutability::Mutable) \
+    macro(DirectArguments_modifiedArgumentsDescriptor, DirectArguments::offsetOfModifiedArgumentsDescriptor(), B3::Mutability::Mutable) \
+    macro(FunctionExecutable_rareData, FunctionExecutable::offsetOfRareData(), B3::Mutability::Mutable) \
+    macro(FunctionExecutableRareData_asString, FunctionExecutable::RareData::offsetOfAsString(), B3::Mutability::Mutable) \
+    macro(FunctionRareData_allocator, FunctionRareData::offsetOfObjectAllocationProfile() + ObjectAllocationProfileWithPrototype::offsetOfAllocator(), B3::Mutability::Mutable) \
+    macro(FunctionRareData_structure, FunctionRareData::offsetOfObjectAllocationProfile() + ObjectAllocationProfileWithPrototype::offsetOfStructure(), B3::Mutability::Mutable) \
+    macro(FunctionRareData_prototype, FunctionRareData::offsetOfObjectAllocationProfile() + ObjectAllocationProfileWithPrototype::offsetOfPrototype(), B3::Mutability::Mutable) \
+    macro(FunctionRareData_allocationProfileWatchpointSet, FunctionRareData::offsetOfAllocationProfileWatchpointSet(), B3::Mutability::Mutable) \
+    macro(FunctionRareData_executable, FunctionRareData::offsetOfExecutable(), B3::Mutability::Mutable) \
+    macro(FunctionRareData_internalFunctionAllocationProfile_structureID, FunctionRareData::offsetOfInternalFunctionAllocationProfile() + InternalFunctionAllocationProfile::offsetOfStructureID(), B3::Mutability::Mutable) \
+    macro(GetterSetter_getter, GetterSetter::offsetOfGetter(), B3::Mutability::Mutable) \
+    macro(GetterSetter_setter, GetterSetter::offsetOfSetter(), B3::Mutability::Mutable) \
+    macro(JSArrayBufferView_byteOffset, JSArrayBufferView::offsetOfByteOffset(), B3::Mutability::Mutable) \
+    macro(JSArrayBufferView_length, JSArrayBufferView::offsetOfLength(), B3::Mutability::Mutable) \
+    macro(JSArrayBufferView_mode, JSArrayBufferView::offsetOfMode(), B3::Mutability::Mutable) \
+    macro(JSArrayBufferView_vector, JSArrayBufferView::offsetOfVector(), B3::Mutability::Mutable) \
+    macro(JSBigInt_length, JSBigInt::offsetOfLength(), B3::Mutability::Immutable) \
+    macro(JSBoundFunction_targetFunction, JSBoundFunction::offsetOfTargetFunction(), B3::Mutability::Mutable) \
+    macro(JSBoundFunction_boundThis, JSBoundFunction::offsetOfBoundThis(), B3::Mutability::Mutable) \
+    macro(JSBoundFunction_boundArg0, JSBoundFunction::offsetOfBoundArgs() + sizeof(WriteBarrier<Unknown>) * 0, B3::Mutability::Mutable) \
+    macro(JSBoundFunction_boundArg1, JSBoundFunction::offsetOfBoundArgs() + sizeof(WriteBarrier<Unknown>) * 1, B3::Mutability::Mutable) \
+    macro(JSBoundFunction_boundArg2, JSBoundFunction::offsetOfBoundArgs() + sizeof(WriteBarrier<Unknown>) * 2, B3::Mutability::Mutable) \
+    macro(JSBoundFunction_nameMayBeNull, JSBoundFunction::offsetOfNameMayBeNull(), B3::Mutability::Mutable) \
+    macro(JSBoundFunction_length, JSBoundFunction::offsetOfLength(), B3::Mutability::Mutable) \
+    macro(JSBoundFunction_boundArgsLength, JSBoundFunction::offsetOfBoundArgsLength(), B3::Mutability::Mutable) \
+    macro(JSBoundFunction_canConstruct, JSBoundFunction::offsetOfCanConstruct(), B3::Mutability::Mutable) \
+    macro(JSCallee_scope, JSCallee::offsetOfScopeChain(), B3::Mutability::Mutable) \
+    macro(JSCell_cellState, JSCell::cellStateOffset(), B3::Mutability::Mutable) \
+    macro(JSCell_header, 0, B3::Mutability::Mutable) \
+    macro(JSCell_indexingTypeAndMisc, JSCell::indexingTypeAndMiscOffset(), B3::Mutability::Mutable) \
+    macro(JSCell_structureID, JSCell::structureIDOffset(), B3::Mutability::Mutable) \
+    macro(JSCell_typeInfoFlags, JSCell::typeInfoFlagsOffset(), B3::Mutability::Mutable) \
+    macro(JSCell_typeInfoType, JSCell::typeInfoTypeOffset(), B3::Mutability::Immutable) \
+    macro(JSCell_usefulBytes, JSCell::indexingTypeAndMiscOffset(), B3::Mutability::Mutable) \
+    macro(JSFunction_executableOrRareData, JSFunction::offsetOfExecutableOrRareData(), B3::Mutability::Mutable) \
+    macro(JSGlobalObject_regExpGlobalData_cachedResult_lastRegExp, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfLastRegExp(), B3::Mutability::Mutable) \
+    macro(JSGlobalObject_regExpGlobalData_cachedResult_lastInput, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfLastInput(), B3::Mutability::Mutable) \
+    macro(JSGlobalObject_regExpGlobalData_cachedResult_result_start, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfResult() + OBJECT_OFFSETOF(MatchResult, start), B3::Mutability::Mutable) \
+    macro(JSGlobalObject_regExpGlobalData_cachedResult_result_end, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfResult() + OBJECT_OFFSETOF(MatchResult, end), B3::Mutability::Mutable) \
+    macro(JSGlobalObject_regExpGlobalData_cachedResult_reified, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfReified(), B3::Mutability::Mutable) \
+    macro(JSGlobalObject_regExpGlobalData_cachedResult_oneCharacterMatch, JSGlobalObject::regExpGlobalDataOffset() + RegExpGlobalData::offsetOfCachedResult() + RegExpCachedResult::offsetOfOneCharacterMatch(), B3::Mutability::Mutable) \
+    macro(JSGlobalProxy_target, JSGlobalProxy::targetOffset(), B3::Mutability::Mutable) \
+    macro(JSObject_butterfly, JSObject::butterflyOffset(), B3::Mutability::Mutable) \
+    macro(JSPropertyNameEnumerator_cachedInlineCapacity, JSPropertyNameEnumerator::cachedInlineCapacityOffset(), B3::Mutability::Mutable) \
+    macro(JSPropertyNameEnumerator_cachedPropertyNamesVector, JSPropertyNameEnumerator::cachedPropertyNamesVectorOffset(), B3::Mutability::Mutable) \
+    macro(JSPropertyNameEnumerator_cachedStructureID, JSPropertyNameEnumerator::cachedStructureIDOffset(), B3::Mutability::Mutable) \
+    macro(JSPropertyNameEnumerator_endGenericPropertyIndex, JSPropertyNameEnumerator::endGenericPropertyIndexOffset(), B3::Mutability::Mutable) \
+    macro(JSPropertyNameEnumerator_endStructurePropertyIndex, JSPropertyNameEnumerator::endStructurePropertyIndexOffset(), B3::Mutability::Mutable) \
+    macro(JSPropertyNameEnumerator_indexLength, JSPropertyNameEnumerator::indexedLengthOffset(), B3::Mutability::Mutable) \
+    macro(JSPropertyNameEnumerator_flags, JSPropertyNameEnumerator::flagsOffset(), B3::Mutability::Mutable) \
+    macro(JSRopeString_flags, JSRopeString::offsetOfFlags(), B3::Mutability::Mutable) \
+    macro(JSRopeString_length, JSRopeString::offsetOfLength(), B3::Mutability::Immutable) \
+    macro(JSRopeString_fiber0, JSRopeString::offsetOfFiber0(), B3::Mutability::Mutable) \
+    macro(JSRopeString_fiber1, JSRopeString::offsetOfFiber1(), B3::Mutability::Mutable) \
+    macro(JSRopeString_fiber2, JSRopeString::offsetOfFiber2(), B3::Mutability::Mutable) \
+    macro(JSScope_next, JSScope::offsetOfNext(), B3::Mutability::Immutable) \
+    macro(JSSymbolTableObject_symbolTable, JSSymbolTableObject::offsetOfSymbolTable(), B3::Mutability::Mutable) \
+    macro(JSWebAssemblyInstance_moduleRecord, JSWebAssemblyInstance::offsetOfModuleRecord(), B3::Mutability::Mutable) \
+    macro(NativeExecutable_asString, NativeExecutable::offsetOfAsString(), B3::Mutability::Mutable) \
+    macro(RegExpObject_regExpAndFlags, RegExpObject::offsetOfRegExpAndFlags(), B3::Mutability::Mutable) \
+    macro(RegExpObject_lastIndex, RegExpObject::offsetOfLastIndex(), B3::Mutability::Mutable) \
+    macro(ShadowChicken_Packet_callee, OBJECT_OFFSETOF(ShadowChicken::Packet, callee), B3::Mutability::Mutable) \
+    macro(ShadowChicken_Packet_frame, OBJECT_OFFSETOF(ShadowChicken::Packet, frame), B3::Mutability::Mutable) \
+    macro(ShadowChicken_Packet_callerFrame, OBJECT_OFFSETOF(ShadowChicken::Packet, callerFrame), B3::Mutability::Mutable) \
+    macro(ShadowChicken_Packet_thisValue, OBJECT_OFFSETOF(ShadowChicken::Packet, thisValue), B3::Mutability::Mutable) \
+    macro(ShadowChicken_Packet_scope, OBJECT_OFFSETOF(ShadowChicken::Packet, scope), B3::Mutability::Mutable) \
+    macro(ShadowChicken_Packet_codeBlock, OBJECT_OFFSETOF(ShadowChicken::Packet, codeBlock), B3::Mutability::Mutable) \
+    macro(ShadowChicken_Packet_callSiteIndex, OBJECT_OFFSETOF(ShadowChicken::Packet, callSiteIndex), B3::Mutability::Mutable) \
+    macro(ScopedArguments_overrodeThings, ScopedArguments::offsetOfOverrodeThings(), B3::Mutability::Mutable) \
+    macro(ScopedArguments_scope, ScopedArguments::offsetOfScope(), B3::Mutability::Mutable) \
+    macro(ScopedArguments_storage, ScopedArguments::offsetOfStorage(), B3::Mutability::Mutable) \
+    macro(ScopedArguments_table, ScopedArguments::offsetOfTable(), B3::Mutability::Mutable) \
+    macro(ScopedArguments_totalLength, ScopedArguments::offsetOfTotalLength(), B3::Mutability::Mutable) \
+    macro(ScopedArgumentsTable_arguments, ScopedArgumentsTable::offsetOfArguments(), B3::Mutability::Mutable) \
+    macro(ScopedArgumentsTable_length, ScopedArgumentsTable::offsetOfLength(), B3::Mutability::Mutable) \
+    macro(StringImpl_data, StringImpl::dataOffset(), B3::Mutability::Immutable) \
+    macro(StringImpl_hashAndFlags, StringImpl::flagsOffset(), B3::Mutability::Mutable) \
+    macro(StringImpl_length, StringImpl::lengthMemoryOffset(), B3::Mutability::Immutable) \
+    macro(Structure_bitField, Structure::bitFieldOffset(), B3::Mutability::Mutable) \
+    macro(Structure_classInfo, Structure::classInfoOffset(), B3::Mutability::Immutable) \
+    macro(Structure_globalObject, Structure::globalObjectOffset(), B3::Mutability::Immutable) \
+    macro(Structure_indexingModeIncludingHistory, Structure::indexingModeIncludingHistoryOffset(), B3::Mutability::Immutable) \
+    macro(Structure_inlineCapacity, Structure::inlineCapacityOffset(), B3::Mutability::Immutable) \
+    macro(Structure_outOfLineTypeFlags, Structure::outOfLineTypeFlagsOffset(), B3::Mutability::Immutable) \
+    macro(Structure_previousOrRareData, Structure::previousOrRareDataOffset(), B3::Mutability::Mutable) \
+    macro(Structure_propertyHash, Structure::propertyHashOffset(), B3::Mutability::Mutable) \
+    macro(Structure_prototype, Structure::prototypeOffset(), B3::Mutability::Immutable) \
+    macro(Structure_seenProperties, Structure::seenPropertiesOffset(), B3::Mutability::Mutable) \
+    macro(StructureRareData_cachedEnumerableStrings, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::EnumerableStrings), B3::Mutability::Mutable) \
+    macro(StructureRareData_cachedStrings, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::Strings), B3::Mutability::Mutable) \
+    macro(StructureRareData_cachedSymbols, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::Symbols), B3::Mutability::Mutable) \
+    macro(StructureRareData_cachedStringsAndSymbols, StructureRareData::offsetOfCachedPropertyNames(CachedPropertyNamesKind::StringsAndSymbols), B3::Mutability::Mutable) \
+    macro(StructureRareData_cachedPropertyNameEnumeratorAndFlag, StructureRareData::offsetOfCachedPropertyNameEnumeratorAndFlag(), B3::Mutability::Mutable) \
+    macro(StructureRareData_specialPropertyCache, StructureRareData::offsetOfSpecialPropertyCache(), B3::Mutability::Mutable) \
+    macro(SpecialPropertyCache_cachedToStringTagValue, SpecialPropertyCache::offsetOfCache(CachedSpecialPropertyKey::ToStringTag) + SpecialPropertyCacheEntry::offsetOfValue(), B3::Mutability::Mutable) \
+    macro(JSMap_storage, (JSMap::offsetOfStorage()), B3::Mutability::Mutable) \
+    macro(JSSet_storage, (JSSet::offsetOfStorage()), B3::Mutability::Mutable) \
+    macro(VM_heap_barrierThreshold, VM::offsetOfHeapBarrierThreshold(), B3::Mutability::Mutable) \
+    macro(VM_heap_mutatorShouldBeFenced, VM::offsetOfHeapMutatorShouldBeFenced(), B3::Mutability::Mutable) \
+    macro(VM_exception, VM::exceptionOffset(), B3::Mutability::Mutable) \
+    macro(WatchpointSet_state, WatchpointSet::offsetOfState(), B3::Mutability::Mutable) \
+    macro(WeakMapImpl_capacity, WeakMapImpl<WeakMapBucket<WeakMapBucketDataKey>>::offsetOfCapacity(), B3::Mutability::Mutable) \
+    macro(WeakMapImpl_buffer,  WeakMapImpl<WeakMapBucket<WeakMapBucketDataKey>>::offsetOfBuffer(), B3::Mutability::Mutable) \
+    macro(WeakMapBucket_value, WeakMapBucket<WeakMapBucketDataKeyValue>::offsetOfValue(), B3::Mutability::Mutable) \
+    macro(WeakMapBucket_key, WeakMapBucket<WeakMapBucketDataKeyValue>::offsetOfKey(), B3::Mutability::Mutable) \
+    macro(WebAssemblyModuleRecord_exportsObject, WebAssemblyModuleRecord::offsetOfExportsObject(), B3::Mutability::Mutable) \
+    macro(Symbol_symbolImpl, Symbol::offsetOfSymbolImpl(), B3::Mutability::Immutable) \
 
 #define FOR_EACH_INDEXED_ABSTRACT_HEAP(macro) \
     macro(ArrayStorage_vector, ArrayStorage::vectorOffset(), sizeof(WriteBarrier<Unknown>)) \
@@ -230,7 +231,7 @@ public:
     FOR_EACH_ABSTRACT_HEAP(ABSTRACT_HEAP_DECLARATION)
 #undef ABSTRACT_HEAP_DECLARATION
 
-#define ABSTRACT_FIELD_DECLARATION(name, offset) AbstractHeap name;
+#define ABSTRACT_FIELD_DECLARATION(name, offset, mutability) AbstractHeap name;
     FOR_EACH_ABSTRACT_FIELD(ABSTRACT_FIELD_DECLARATION)
 #undef ABSTRACT_FIELD_DECLARATION
     

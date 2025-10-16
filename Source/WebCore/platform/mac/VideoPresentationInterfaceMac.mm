@@ -231,7 +231,7 @@ enum class PIPState {
         if (!_canSkipAd)
             playbackState.prerollAttributes = nil;
         else
-            playbackState.prerollAttributes = [getPIPPrerollAttributesClass() prerollAttributesForAdContentWithRequiredLinearPlaybackEndTime:0 preferredTintColor:nil];
+            playbackState.prerollAttributes = [getPIPPrerollAttributesClassSingleton() prerollAttributesForAdContentWithRequiredLinearPlaybackEndTime:0 preferredTintColor:nil];
     }];
 }
 #endif
@@ -865,7 +865,7 @@ WTFLogChannel& VideoPresentationInterfaceMac::logChannel() const
 
 bool supportsPictureInPicture()
 {
-    return PIPLibrary() && getPIPViewControllerClass();
+    return PIPLibrary() && getPIPViewControllerClassSingleton();
 }
 
 }

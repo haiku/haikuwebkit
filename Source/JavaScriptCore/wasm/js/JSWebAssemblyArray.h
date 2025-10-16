@@ -88,6 +88,13 @@ public:
     void fill(VM&, uint32_t, v128_t, uint32_t);
     void copy(VM&, JSWebAssemblyArray&, uint32_t, uint32_t, uint32_t);
 
+#if ASSERT_ENABLED
+    // 'isUnpopulated' is a flag used by the 'array.new_elem' instruction implementation to indicate that the array contains nulls that have not yet been replaced
+    // with the expected elements. Validation should be skipped for this array because these transient nulls may disagree with the declared element type.
+    // NOTE: the caller should use a memory fence to order the store of the flag relative to the prior stores into the array.
+    void setIsUnpopulated(bool value) { m_isUnpopulated = value; }
+#endif
+
     // We add 8 bytes for v128 arrays since a non-PreciseAllocation will have the wrong alignment as the base pointer for a PreciseAllocation is shifted by 8.
     // Note: Technically this isn't needed since the GC/malloc always allocates 16 byte chunks so for non-precise v128 allocations
     // there will be a 8 spare bytes at the end. This is just a bit more explicit and shouldn't make a difference.
@@ -117,10 +124,16 @@ private:
 
     unsigned m_size;
 
+#if ASSERT_ENABLED
+    bool m_isUnpopulated { false };
+#else
     // FIXME: We shouldn't need this padding but otherwise all the calculations about v128AlignmentShifts are wrong.
+    // (With ASSERT_ENABLED, the necessary padding is added implicitly after 'm_isUnpopulated').
 #if USE(JSVALUE32_64)
     unsigned m_padding;
 #endif
+#endif
+
 };
 
 static_assert(std::is_final_v<JSWebAssemblyArray>, "JSWebAssemblyArray is a TrailingArray-like object so must know about all members");

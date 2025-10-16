@@ -276,6 +276,11 @@ public:
     }
 
     bool hasOneRef() const { return refCount() == 1; }
+
+    // Ideally this would have been private but AbstractRefCounted subclasses need to be able to access this function
+    // to provide its result to ThreadSafeWeakHashSet.
+    size_t weakRefCount() const { return !isStrongOnly(m_bits.loadRelaxed()) ? controlBlock().weakRefCount() : 0; }
+
 protected:
     ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr() = default;
     ThreadSafeWeakPtrControlBlock& controlBlock() const
@@ -309,10 +314,6 @@ protected:
         delete controlBlock;
         return *std::bit_cast<ThreadSafeWeakPtrControlBlock*>(m_bits.loadRelaxed());
     }
-
-    // Ideally this would have been private but AbstractRefCounted subclasses need to be able to access this function
-    // to provide its result to ThreadSafeWeakHashSet.
-    size_t weakRefCount() const { return !isStrongOnly(m_bits.loadRelaxed()) ? controlBlock().weakRefCount() : 0; }
 
 private:
     static bool isStrongOnly(uintptr_t bits) { return bits & strongOnlyFlag; }

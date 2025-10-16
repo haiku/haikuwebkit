@@ -1,5 +1,3 @@
-CONSOLE MESSAGE: Warning: feConvolveMatrix: problem parsing edgeMode="". Filtered element will not be displayed.
-CONSOLE MESSAGE: Warning: feConvolveMatrix: problem parsing edgeMode="foobar". Filtered element will not be displayed.
 
 FAIL SVGAnimatedEnumeration, initial values, SVGClipPathElement.prototype.clipPathUnits (remove) assert_equals: initial after expected 1 but got 2
 FAIL SVGAnimatedEnumeration, initial values, SVGClipPathElement.prototype.clipPathUnits (invalid value) assert_equals: initial after expected 1 but got 2

@@ -31,9 +31,10 @@
 #import "AudioStreamDescription.h"
 #import "CMUtilities.h"
 #import "Logging.h"
-#import "MediaSampleAVFObjC.h"
+#import "MediaSamplesBlock.h"
 #import <AVFoundation/AVAssetWriter.h>
 #import <AVFoundation/AVAssetWriterInput.h>
+#import <pal/avfoundation/MediaTimeAVFoundation.h>
 #import <pal/spi/cocoa/AVAssetWriterSPI.h>
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/BlockPtr.h>

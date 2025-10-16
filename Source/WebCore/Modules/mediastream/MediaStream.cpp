@@ -424,7 +424,7 @@ RefPtr<MediaSessionManagerInterface> MediaStream::mediaSessionManager() const
     if (!page)
         return nullptr;
 
-    return &page->mediaSessionManager();
+    return page->mediaSessionManager();
 }
 
 } // namespace WebCore

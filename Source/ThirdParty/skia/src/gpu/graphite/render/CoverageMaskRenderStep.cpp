@@ -68,7 +68,7 @@ CoverageMaskRenderStep::CoverageMaskRenderStep()
                      Flags::kAppendInstances,
                      /*uniforms=*/{{"maskToDeviceRemainder", SkSLType::kFloat3x3}},
                      PrimitiveType::kTriangleStrip,
-                     kDirectDepthGreaterPass,
+                     kDirectDepthLessPass,
                      /*staticAttrs=*/ {},
                      /*appendAttrs=*/
                      // Draw bounds and mask bounds are in normalized relative to the mask texture,
@@ -212,6 +212,7 @@ void CoverageMaskRenderStep::writeVertices(DrawWriter* dw,
 
 void CoverageMaskRenderStep::writeUniformsAndTextures(const DrawParams& params,
                                                       PipelineDataGatherer* gatherer) const {
+    SkDEBUGCODE(gatherer->checkRewind());
     SkDEBUGCODE(UniformExpectationsValidator uev(gatherer, this->uniforms());)
 
     const CoverageMaskShape& coverageMask = params.geometry().coverageMaskShape();

@@ -76,7 +76,7 @@ public:
     explicit NativeWebMouseEvent(const WebCore::DoublePoint&);
 #elif PLATFORM(IOS_FAMILY)
     NativeWebMouseEvent(::WebEvent *);
-    NativeWebMouseEvent(WebEventType, WebMouseEventButton, unsigned short buttons, const WebCore::DoublePoint& position, const WebCore::DoublePoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<WebEventModifier>, WallTime timestamp, double force, GestureWasCancelled, const String& pointerType);
+    NativeWebMouseEvent(WebEventType, WebMouseEventButton, unsigned short buttons, const WebCore::DoublePoint& position, const WebCore::DoublePoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<WebEventModifier>, MonotonicTime timestamp, double force, GestureWasCancelled, const String& pointerType);
     NativeWebMouseEvent(const NativeWebMouseEvent&, const WebCore::DoublePoint& position, const WebCore::DoublePoint& globalPosition, float deltaX, float deltaY, float deltaZ);
 #elif USE(LIBWPE)
     NativeWebMouseEvent(struct wpe_input_pointer_event*, float deviceScaleFactor, WebMouseEventSyntheticClickType = WebMouseEventSyntheticClickType::NoTap);

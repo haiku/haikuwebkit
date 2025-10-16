@@ -151,7 +151,7 @@ class Manager(object):
 
     def _initialize_devices(self):
         if 'simulator' in self._port.port_name:
-            SimulatedDeviceManager.initialize_devices(DeviceRequest(self._port.supported_device_types()[0], allow_incomplete_match=True), self.host, simulator_ui=False)
+            self._port.setup_test_run(device_type=self._port.supported_device_types()[0])
         elif 'device' in self._port.port_name:
             raise RuntimeError('Running api tests on {} is not supported'.format(self._port.port_name))
 
@@ -211,7 +211,7 @@ class Manager(object):
             runner = Runner(self._port, self._stream)
             for i in range(self._options.iterations):
                 _log.debug('\nIteration {}'.format(i + 1))
-                runner.run(test_names, int(self._options.child_processes) if self._options.child_processes else self._port.default_child_processes())
+                runner.run(test_names, int(self._options.child_processes) if self._options.child_processes else None)
         except KeyboardInterrupt:
             # If we receive a KeyboardInterrupt, print results.
             self._stream.writeln('')
@@ -220,7 +220,7 @@ class Manager(object):
 
         successful = runner.result_map_by_status(runner.STATUS_PASSED)
         disabled = len(runner.result_map_by_status(runner.STATUS_DISABLED))
-        _log.info('Ran {} tests of {} with {} successful'.format(len(runner.results) - disabled, len(test_names), len(successful)))
+        _log.info('Ran {} tests of {} with {} successful'.format(len(runner.results) - disabled, len(set(test_names)), len(successful)))
 
         result_dictionary = {
             'Skipped': [],
@@ -231,7 +231,7 @@ class Manager(object):
 
         self._stream.writeln('-' * 30)
         result = Manager.SUCCESS
-        if len(successful) * self._options.repeat_each + disabled == len(test_names):
+        if len(successful) + disabled == len(set(test_names)):
             self._stream.writeln('All tests successfully passed!')
             if json_output:
                 self.host.filesystem.write_text_file(json_output, json.dumps(result_dictionary, indent=4))

@@ -114,7 +114,7 @@ void WorkerInspectorController::frontendInitialized()
     }
 
     if (m_isAutomaticInspection && is<ServiceWorkerGlobalScope>(m_globalScope)) {
-        auto serviceWorkerIdentifier = downcast<ServiceWorkerGlobalScope>(m_globalScope.get()).thread().identifier();
+        auto serviceWorkerIdentifier = Ref { downcast<ServiceWorkerGlobalScope>(m_globalScope.get()) }->thread().identifier();
         SWContextManager::singleton().stopRunningDebuggerTasksOnServiceWorker(serviceWorkerIdentifier);
     }
 #endif
@@ -286,7 +286,7 @@ JSC::Debugger* WorkerInspectorController::debugger()
 
 VM& WorkerInspectorController::vm()
 {
-    return m_globalScope->vm();
+    return Ref { m_globalScope.get() }->vm();
 }
 
 } // namespace WebCore

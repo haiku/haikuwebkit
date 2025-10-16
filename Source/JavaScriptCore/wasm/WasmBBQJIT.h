@@ -39,6 +39,8 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 namespace JSC { namespace Wasm {
 
 class IPIntCallee;
+class MergedProfile;
+class Module;
 
 namespace BBQJITImpl {
 
@@ -328,6 +330,15 @@ public:
             val.m_type = TypeKind::F64;
             val.m_f64 = immediate;
             return val;
+        }
+
+        ALWAYS_INLINE static Value fromPointer(void* pointer)
+        {
+#if USE(JSVALUE64)
+            return fromI64(std::bit_cast<uintptr_t>(pointer));
+#else
+            return fromI32(std::bit_cast<uintptr_t>(pointer));
+#endif
         }
 
         ALWAYS_INLINE static Value fromRef(TypeKind refType, EncodedJSValue ref)
@@ -1073,7 +1084,7 @@ public:
     static constexpr bool tierSupportsSIMD() { return true; }
     static constexpr bool validateFunctionBodySize = true;
 
-    BBQJIT(CCallHelpers& jit, const TypeDefinition& signature, CalleeGroup&, IPIntCallee& profiledCallee, BBQCallee& callee, const FunctionData& function, FunctionCodeIndex functionIndex, const ModuleInformation& info, Vector<UnlinkedWasmToWasmCall>& unlinkedWasmToWasmCalls, MemoryMode mode, InternalFunction* compilation);
+    BBQJIT(CompilationContext&, const TypeDefinition& signature, Module&, CalleeGroup&, IPIntCallee& profiledCallee, BBQCallee& callee, const FunctionData& function, FunctionCodeIndex functionIndex, const ModuleInformation& info, Vector<UnlinkedWasmToWasmCall>& unlinkedWasmToWasmCalls, MemoryMode mode, InternalFunction* compilation);
 
     ALWAYS_INLINE static Value emptyExpression()
     {
@@ -1370,7 +1381,6 @@ public:
     FloatingPointRange lookupTruncationRange(TruncationKind truncationKind);
 
     void truncInBounds(TruncationKind truncationKind, Location operandLocation, Location resultLocation, FPRReg scratch1FPR, FPRReg scratch2FPR);
-    void truncInBounds(TruncationKind truncationKind, Location operandLocation, Value& result, Location resultLocation);
 
     PartialResult WARN_UNUSED_RETURN truncTrapping(OpType truncationOp, Value operand, Value& result, Type returnType, Type operandType);
     PartialResult WARN_UNUSED_RETURN truncSaturated(Ext1OpType truncationOp, Value operand, Value& result, Type returnType, Type operandType);
@@ -1439,7 +1449,8 @@ public:
 
     PartialResult WARN_UNUSED_RETURN addStructSet(TypedExpression structValue, const StructType& structType, uint32_t fieldIndex, Value value);
 
-    void emitRefTestOrCast(const TypedExpression&, GPRReg, bool allowNull, int32_t toHeapType, JumpList& failureCases);
+    enum class CastKind { Test, Cast };
+    void emitRefTestOrCast(CastKind, const TypedExpression&, GPRReg, bool allowNull, int32_t toHeapType, JumpList& failureCases);
 
     PartialResult WARN_UNUSED_RETURN addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
 
@@ -1601,7 +1612,7 @@ public:
     PartialResult WARN_UNUSED_RETURN addF64Mul(Value lhs, Value rhs, Value& result);
 
     template<typename Func>
-    void addLatePath(Func func);
+    void addLatePath(WasmOrigin, Func&&);
 
     void emitThrowException(ExceptionType type);
 
@@ -1609,6 +1620,7 @@ public:
     void recordJumpToThrowException(ExceptionType, const JumpList&);
 
     void emitThrowOnNullReference(ExceptionType type, Location ref);
+    void emitThrowOnNullReferenceBeforeAccess(Location ref, ptrdiff_t offset);
 
     template<typename IntType, bool IsMod>
     void emitModOrDiv(Value& lhs, Location lhsLocation, Value& rhs, Location rhsLocation, Value& result, Location resultLocation);
@@ -2035,7 +2047,7 @@ public:
     void emitTailCall(FunctionSpaceIndex, const TypeDefinition& signature, ArgumentList& arguments);
     PartialResult WARN_UNUSED_RETURN addCall(unsigned, FunctionSpaceIndex, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results, CallType = CallType::Call);
 
-    void emitIndirectCall(const char* opcode, const Value& callee, GPRReg calleeInstance, GPRReg calleeCode, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results);
+    void emitIndirectCall(const char* opcode, unsigned callProfileIndex, const Value& callee, GPRReg boxedCallee, GPRReg calleeInstance, GPRReg calleeCode, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results);
     void emitIndirectTailCall(const char* opcode, const Value& callee, GPRReg calleeInstance, GPRReg calleeCode, const TypeDefinition& signature, ArgumentList& arguments);
 
     PartialResult WARN_UNUSED_RETURN addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
@@ -2216,9 +2228,16 @@ private:
 
     bool canTierUpToOMG() const;
 
-    void emitIncrementCallSlotCount(unsigned callSlotIndex);
+    void emitIncrementCallProfileCount(unsigned callProfileIndex);
 
+    void emitSaveCalleeSaves();
+    void emitRestoreCalleeSaves();
+
+    WasmOrigin origin();
+
+    CompilationContext& m_context;
     CCallHelpers& m_jit;
+    Module& m_module;
     CalleeGroup& m_calleeGroup;
     IPIntCallee& m_profiledCallee;
     BBQCallee& m_callee;
@@ -2242,14 +2261,14 @@ private:
     GPRAllocator m_gprAllocator; // SimpleRegisterAllocator for GPRs
     FPRAllocator m_fprAllocator; // SimpleRegisterAllocator for FPRs
     SpillHint m_lastUseTimestamp; // Monotonically increasing integer incrementing with each register use.
-    Vector<Function<void(BBQJIT&, CCallHelpers&)>, 8> m_latePaths; // Late paths to emit after the rest of the function body.
-    Vector<std::tuple<MacroAssembler::JumpList, MacroAssembler::Label, RegisterBindings, Function<void(BBQJIT&, CCallHelpers&)>>> m_slowPaths; // Like a late path but for when we need to make a CCall thus need to restore our state.
+    Vector<std::tuple<WasmOrigin, Function<void(BBQJIT&, CCallHelpers&)>>, 8> m_latePaths; // Late paths to emit after the rest of the function body.
+    Vector<std::tuple<WasmOrigin, MacroAssembler::JumpList, MacroAssembler::Label, RegisterBindings, Function<void(BBQJIT&, CCallHelpers&)>>> m_slowPaths; // Like a late path but for when we need to make a CCall thus need to restore our state.
 
     // FIXME: All uses of this are to restore sp, so we should emit these as a patchable sub instruction rather than move.
     Vector<DataLabelPtr, 1> m_frameSizeLabels;
     int m_frameSize { 0 };
     int m_maxCalleeStackSize { 0 };
-    int m_localStorage { 0 }; // Stack offset pointing to the local with the lowest address.
+    int m_localAndCalleeSaveStorage { 0 }; // Stack offset pointing to the local and callee save with the lowest address.
     bool m_usesSIMD { false }; // Whether the function we are compiling uses SIMD instructions or not.
     bool m_usesExceptions { false };
     Checked<unsigned> m_tryCatchDepth { 0 };
@@ -2267,6 +2286,7 @@ private:
 
     PCToCodeOriginMapBuilder m_pcToCodeOriginMapBuilder;
     std::unique_ptr<BBQDisassembler> m_disassembler;
+    std::unique_ptr<MergedProfile> m_profile;
 
 #if ASSERT_ENABLED
     Vector<Value, 8> m_justPoppedStack;
@@ -2289,7 +2309,7 @@ using MinOrMax = BBQJIT::MinOrMax;
 } // namespace JSC::Wasm::BBQJITImpl
 
 using BBQJIT = BBQJITImpl::BBQJIT;
-Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileBBQ(CompilationContext&, IPIntCallee&, BBQCallee&, const FunctionData&, const TypeDefinition&, Vector<UnlinkedWasmToWasmCall>&, CalleeGroup&, const ModuleInformation&, MemoryMode, FunctionCodeIndex functionIndex);
+Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileBBQ(CompilationContext&, IPIntCallee&, BBQCallee&, const FunctionData&, const TypeDefinition&, Vector<UnlinkedWasmToWasmCall>&, Module&, CalleeGroup&, const ModuleInformation&, MemoryMode, FunctionCodeIndex functionIndex);
 
 } } // namespace JSC::Wasm
 

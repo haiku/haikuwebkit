@@ -185,10 +185,10 @@ void SVGResourcesCache::clientStyleChanged(RenderElement& renderer, StyleDiffere
         Ref oldSVGStyle = oldStyle->svgStyle();
         Ref newSVGStyle = newStyle.svgStyle();
 
-        if (oldSVGStyle->fill().url != newSVGStyle->fill().url)
+        if (oldSVGStyle->fill().urlDisregardingType() != newSVGStyle->fill().urlDisregardingType())
             return true;
 
-        if (oldSVGStyle->stroke().url != newSVGStyle->stroke().url)
+        if (oldSVGStyle->stroke().urlDisregardingType() != newSVGStyle->stroke().urlDisregardingType())
             return true;
 
         return false;

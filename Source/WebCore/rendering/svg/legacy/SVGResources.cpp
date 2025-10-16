@@ -186,26 +186,13 @@ static inline bool isChainableResource(const SVGElement& element, const SVGEleme
     return false;
 }
 
-static inline bool svgPaintTypeHasURL(const Style::SVGPaintType& paintType)
-{
-    switch (paintType) {
-    case Style::SVGPaintType::URI:
-    case Style::SVGPaintType::URINone:
-    case Style::SVGPaintType::URICurrentColor:
-    case Style::SVGPaintType::URIRGBColor:
-        return true;
-    default:
-        break;
-    }
-    return false;
-}
-
 static inline LegacyRenderSVGResourceContainer* paintingResourceFromSVGPaint(TreeScope& treeScope, const Style::SVGPaint& paint, AtomString& id, bool& hasPendingResource)
 {
-    if (!svgPaintTypeHasURL(paint.type))
+    auto paintURL = paint.tryAnyURL();
+    if (!paintURL)
         return nullptr;
 
-    id = SVGURIReference::fragmentIdentifierFromIRIString(paint.url, treeScope.protectedDocumentScope());
+    id = SVGURIReference::fragmentIdentifierFromIRIString(*paintURL, treeScope.protectedDocumentScope());
     CheckedPtr container = getRenderSVGResourceContainerById(treeScope, id);
     if (!container) {
         hasPendingResource = true;
@@ -257,9 +244,9 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
         );
 
         if (style.hasFilter()) {
-            const FilterOperations& filterOperations = style.filter();
+            const auto& filterOperations = style.filter();
             if (filterOperations.size() == 1) {
-                if (RefPtr referenceFilterOperation = dynamicDowncast<Style::ReferenceFilterOperation>(*filterOperations.at(0))) {
+                if (RefPtr referenceFilterOperation = dynamicDowncast<Style::ReferenceFilterOperation>(filterOperations[0].platform())) {
                     auto id = referenceFilterOperation->fragment();
                     if (auto* filter = getRenderSVGResourceById<LegacyRenderSVGResourceFilter>(treeScope, id))
                         ensureResources(foundResources).setFilter(filter);

@@ -104,6 +104,7 @@ private:
 
     enum EventTargetInterfaceType eventTargetInterface() const final { return EventTargetInterfaceType::RTCDataChannel; }
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ActiveDOMObject::protectedScriptExecutionContext;
 
     void refEventTarget() final { ref(); }
     void derefEventTarget() final { deref(); }

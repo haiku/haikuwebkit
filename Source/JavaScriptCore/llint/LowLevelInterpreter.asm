@@ -279,6 +279,136 @@ const VMTrapAwareSoftStackLimitOffset = VM::m_traps + VMTraps::m_stack + StackMa
 const VMCLoopStackLimitOffset = VM::m_traps + VMTraps::m_stack + StackManager::m_cloopStackLimit
 const VMSoftStackLimitOffset = VM::m_traps + VMTraps::m_stack + StackManager::m_softStackLimit
 
+# Registers
+
+if ARMv7
+    const a0 = t0
+    const a1 = t1
+    const a2 = t2
+    const a3 = t3
+    const a4 = invalidGPR
+    const a5 = invalidGPR
+    const a6 = invalidGPR
+    const a7 = invalidGPR
+
+    const wa0 = a0
+    const wa1 = a1
+    const wa2 = a2
+    const wa3 = a3
+    const wa4 = invalidGPR
+    const wa5 = invalidGPR
+    const wa6 = invalidGPR
+    const wa7 = invalidGPR
+
+    const ws0 = t5 # ws0 must be a non-argument/non-return GPR
+    const ws1 = t6
+    const ws2 = csr0
+    const ws3 = csr1
+
+    const r0 = a0
+    const r1 = a1
+
+    const fa0 = ft0
+    const fa1 = ft1
+    const fa2 = ft2
+    const fa3 = ft3
+
+    const wfa0 = fa0
+    const wfa1 = fa1
+    const wfa2 = fa2
+    const wfa3 = fa3
+    const wfa4 = ft4
+    const wfa5 = ft5
+    const wfa6 = ft6
+    const wfa7 = ft7
+
+    const fr = fa0
+elsif X86_64
+    const a0 = t6
+    const a1 = t1
+    const a2 = t2
+    const a3 = t3
+    const a4 = t4
+    const a5 = t7
+    const a6 = invalidGPR
+    const a7 = invalidGPR
+
+    const wa0 = a0
+    const wa1 = a1
+    const wa2 = a2
+    const wa3 = a3
+    const wa4 = a4
+    const wa5 = a5
+    const wa6 = a6
+    const wa7 = a7
+
+    const ws0 = t0
+    const ws1 = t5
+    const ws2 = invalidGPR
+    const ws3 = invalidGPR
+
+    const r0 = t0
+    const r1 = t2
+
+    const fa0 = ft0
+    const fa1 = ft1
+    const fa2 = ft2
+    const fa3 = ft3
+
+    const wfa0 = fa0
+    const wfa1 = fa1
+    const wfa2 = fa2
+    const wfa3 = fa3
+    const wfa4 = ft4
+    const wfa5 = ft5
+    const wfa6 = ft6
+    const wfa7 = ft7
+
+    const fr = fa0
+else
+    const a0 = t0
+    const a1 = t1
+    const a2 = t2
+    const a3 = t3
+    const a4 = t4
+    const a5 = t5
+    const a6 = t6
+    const a7 = t7
+
+    const wa0 = a0
+    const wa1 = a1
+    const wa2 = a2
+    const wa3 = a3
+    const wa4 = a4
+    const wa5 = a5
+    const wa6 = a6
+    const wa7 = a7
+
+    const ws0 = t9 # ws0 must be a non-argument/non-return GPR
+    const ws1 = t10
+    const ws2 = t11
+    const ws3 = t12
+
+    const r0 = a0
+    const r1 = a1
+
+    const fa0 = ft0
+    const fa1 = ft1
+    const fa2 = ft2
+    const fa3 = ft3
+
+    const wfa0 = fa0
+    const wfa1 = fa1
+    const wfa2 = fa2
+    const wfa3 = fa3
+    const wfa4 = ft4
+    const wfa5 = ft5
+    const wfa6 = ft6
+    const wfa7 = ft7
+
+    const fr = fa0
+end
+
 # Some register conventions.
 # - We use a pair of registers to represent the PC: one register for the
 #   base of the bytecodes, and one register for the index.

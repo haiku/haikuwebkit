@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Unhandled Promise Rejection: TypeError: audioContext.setSinkId is not a function. (In 'audioContext.setSinkId(silentSinkOption)', 'audioContext.setSinkId' is undefined)
 
 Harness Error (FAIL), message = Unhandled rejection: audioContext.setSinkId is not a function. (In 'audioContext.setSinkId(silentSinkOption)', 'audioContext.setSinkId' is undefined)
 

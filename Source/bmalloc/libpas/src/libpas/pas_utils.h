@@ -202,6 +202,9 @@ PAS_BEGIN_EXTERN_C;
 #ifndef PAS_PROFILE
 #define PAS_PROFILE(kind, ...) PAS_UNUSED_V(__VA_ARGS__)
 #endif
+#ifndef PAS_SHOULD_PROFILE_BASIC_HEAP_PAGE
+#define PAS_SHOULD_PROFILE_BASIC_HEAP_PAGE(size_category) (false)
+#endif
 
 static PAS_ALWAYS_INLINE void pas_zero_memory(void* memory, size_t size)
 {

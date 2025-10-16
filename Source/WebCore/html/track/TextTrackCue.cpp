@@ -36,6 +36,7 @@
 
 #include "CSSPropertyNames.h"
 #include "CSSValueKeywords.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DOMRect.h"
 #include "ElementInlines.h"
 #include "Event.h"

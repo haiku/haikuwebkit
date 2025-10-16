@@ -433,7 +433,7 @@ void RenderLayerScrollableArea::scrollTo(const ScrollPosition& position)
     // Schedule the scroll and scroll-related DOM events.
     if (RefPtr element = renderer.element()) {
         setIsAwaitingScrollend(true);
-        element->protectedDocument()->addPendingScrollEventTarget(*element);
+        element->protectedDocument()->addPendingScrollEventTarget(*element, ScrollEventType::Scroll);
     }
 
     if (scrollsOverflow())
@@ -449,7 +449,7 @@ void RenderLayerScrollableArea::scrollDidEnd()
         return;
     setIsAwaitingScrollend(false);
     if (RefPtr element = m_layer.renderer().element())
-        element->protectedDocument()->addPendingScrollendEventTarget(*element);
+        element->protectedDocument()->addPendingScrollEventTarget(*element, ScrollEventType::Scrollend);
 }
 
 void RenderLayerScrollableArea::updateCompositingLayersAfterScroll()
@@ -1710,9 +1710,9 @@ bool RenderLayerScrollableArea::hitTestResizerInFragments(const LayerFragments& 
 
     for (int i = layerFragments.size() - 1; i >= 0; --i) {
         const LayerFragment& fragment = layerFragments.at(i);
-        auto resizerRectInFragment = cornerRectInFragment(snappedIntRect(fragment.layerBounds), rects.resizer);
-        if (fragment.backgroundRect.intersects(hitTestLocation) && resizerRectInFragment.contains(hitTestLocation.roundedPoint())) {
-            pointInFragment = toLayoutPoint(hitTestLocation.point() - fragment.layerBounds.location());
+        auto resizerRectInFragment = cornerRectInFragment(snappedIntRect(fragment.layerBounds()), rects.resizer);
+        if (fragment.dirtyBackgroundRect().intersects(hitTestLocation) && resizerRectInFragment.contains(hitTestLocation.roundedPoint())) {
+            pointInFragment = toLayoutPoint(hitTestLocation.point() - fragment.layerBounds().location());
             return true;
         }
     }

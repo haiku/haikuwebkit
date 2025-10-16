@@ -26,10 +26,12 @@
 #include "src/gpu/graphite/vk/VulkanRenderPass.h"
 #include "src/gpu/graphite/vk/VulkanResourceProvider.h"
 #include "src/gpu/graphite/vk/VulkanSharedContext.h"
+#include "src/gpu/graphite/vk/VulkanSpirvTransforms.h"
 #include "src/gpu/vk/VulkanUtilsPriv.h"
 #include "src/sksl/SkSLProgramKind.h"
 #include "src/sksl/SkSLProgramSettings.h"
 #include "src/sksl/ir/SkSLProgram.h"
+#include "src/utils/SkShaderUtils.h"
 
 namespace skgpu::graphite {
 
@@ -868,7 +870,7 @@ sk_sp<VulkanGraphicsPipeline> VulkanGraphicsPipeline::Make(
 
     const std::string& fsSkSL = shaderInfo->fragmentSkSL();
     const bool hasFragmentSkSL = !fsSkSL.empty();
-    std::string vsSPIRV, fsSPIRV;
+    SkSL::NativeShader vsSPIRV, fsSPIRV;
     SkSL::Program::Interface vsInterface, fsInterface;
     if (hasFragmentSkSL) {
         if (!skgpu::SkSLToSPIRV(sharedContext->caps()->shaderCaps(),
@@ -880,6 +882,22 @@ sk_sp<VulkanGraphicsPipeline> VulkanGraphicsPipeline::Make(
                                 errorHandler)) {
             return nullptr;
         }
+
+        // Apply transformations to the fragment shader SPIR-V if needed.
+        //
+        // SkSL->SPIR-V compilations are relatively costly. In anticipation of caching those
+        // operations, we allow certain transformations to be applied directly on to compiled
+        // SPIR-V. This allows the SkSL to be compiled only once, and the SPIR-V from the cache can
+        // simply be directly modified afterwards as needed. This is why transform options exist
+        // independently from flags used in SkSL->SPIRV compilation.
+        SPIRVTransformOptions options;
+        options.fMultisampleInputLoad =
+                renderPassDesc.fSampleCount > 1 &&
+                shaderInfo->dstReadStrategy() == DstReadStrategy::kReadFromInput;
+        if (options.fMultisampleInputLoad) {
+            fsSPIRV = TransformSPIRV(fsSPIRV, options);
+        }
+
         if(!program->setFragmentShader(CreateVulkanShaderModule(
                 sharedContext, fsSPIRV, VK_SHADER_STAGE_FRAGMENT_BIT))) {
             return nullptr;
@@ -944,8 +962,8 @@ sk_sp<VulkanGraphicsPipeline> VulkanGraphicsPipeline::Make(
         PipelineInfo pipelineInfo{ *shaderInfo, pipelineCreationFlags,
                                     pipelineKey.hash(), compilationID };
 #if defined(GPU_TEST_UTILS)
-        pipelineInfo.fNativeVertexShader   = "SPIR-V disassembly not available";
-        pipelineInfo.fNativeFragmentShader = "SPIR-V disassmebly not available";
+        pipelineInfo.fNativeVertexShader = SkShaderUtils::SpirvAsHexStream(vsSPIRV.fBinary);
+        pipelineInfo.fNativeFragmentShader = SkShaderUtils::SpirvAsHexStream(fsSPIRV.fBinary);
 #endif
 
         pipeline = sk_sp<VulkanGraphicsPipeline>(
@@ -1020,7 +1038,7 @@ VkPipeline VulkanGraphicsPipeline::MakePipeline(
     setup_viewport_scissor_state(&viewportInfo);
 
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
-    setup_multisample_state(renderPassDesc.fColorAttachment.fSampleCount, &multisampleInfo);
+    setup_multisample_state(renderPassDesc.fSampleCount, &multisampleInfo);
 
     // We will only have one color blend attachment per pipeline.
     VkPipelineColorBlendAttachmentState attachmentStates[1];
@@ -1126,7 +1144,7 @@ std::unique_ptr<VulkanProgramInfo> VulkanGraphicsPipeline::CreateLoadMSAAProgram
         const VulkanSharedContext* sharedContext) {
     SkSL::ProgramSettings settings;
     settings.fForceNoRTFlip = true;
-    std::string vsSPIRV, fsSPIRV;
+    SkSL::NativeShader vsSPIRV, fsSPIRV;
     ShaderErrorHandler* errorHandler = sharedContext->caps()->shaderErrorHandler();
 
     std::string vertShaderText;

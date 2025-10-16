@@ -51,7 +51,7 @@ class RTCRtpTransceiver final : public RefCounted<RTCRtpTransceiver>, public Scr
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RTCRtpTransceiver);
 public:
     static Ref<RTCRtpTransceiver> create(Ref<RTCRtpSender>&& sender, Ref<RTCRtpReceiver>&& receiver, std::unique_ptr<RTCRtpTransceiverBackend>&& backend) { return adoptRef(*new RTCRtpTransceiver(WTFMove(sender), WTFMove(receiver), WTFMove(backend))); }
-    virtual ~RTCRtpTransceiver();
+    ~RTCRtpTransceiver();
 
     bool hasSendingDirection() const;
     void enableSendingDirection();

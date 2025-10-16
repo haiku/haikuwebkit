@@ -510,7 +510,7 @@ bool hasCapacityToUseLargeGigacage();
     \
     v(Unsigned, watchdog, 0, Normal, "watchdog timeout (0 = Disabled, N = a timeout period of N milliseconds)"_s) \
     v(Bool, usePollingTraps, false, Normal, "use polling (instead of signalling) VM traps"_s) \
-    v(Bool, forceTrapAwareStackChecks, false, Normal, "force trap ware stack checks to be taken for testing"_s) \
+    v(Bool, forceTrapAwareStackChecks, false, Normal, "force trap aware stack checks to be taken for testing"_s) \
     \
     v(Bool, useMachForExceptions, true, Normal, "Use mach exceptions rather than signals to handle faults and pass thread messages. (This does nothing on platforms without mach)"_s) \
     v(Bool, allowNonSPTagging, true, Normal, "allow use of the pacib instruction instead of just pacibsp (This can break lldb/posix signals as it puts live data below SP)"_s) \

@@ -29,8 +29,8 @@
 #include "DrawingArea.h"
 #include "WebInspectorInternal.h"
 #include "WebPage.h"
-#include <WebCore/Animation.h>
 #include <WebCore/GraphicsLayer.h>
+#include <WebCore/GraphicsLayerAnimation.h>
 #include <WebCore/GraphicsLayerFactory.h>
 #include <WebCore/InspectorController.h>
 #include <WebCore/LocalFrame.h>
@@ -216,7 +216,7 @@ void WebInspectorBackendClient::showPaintRect(const FloatRect& rect)
 
     fadeKeyframes.insert(makeUnique<FloatAnimationValue>(0.25, 0));
 
-    Ref opacityAnimation = Animation::create();
+    Ref opacityAnimation = GraphicsLayerAnimation::create();
     opacityAnimation->setDuration(0.25);
 
     paintLayer->addAnimation(fadeKeyframes, FloatSize(), opacityAnimation.ptr(), "opacity"_s, 0);

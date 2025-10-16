@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Unhandled Promise Rejection: TypeError: NetworkError: Load failed
 
 Harness Error (FAIL), message = Unhandled rejection: NetworkError: Load failed
 

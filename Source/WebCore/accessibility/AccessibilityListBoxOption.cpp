@@ -30,6 +30,7 @@
 #include "AccessibilityListBoxOption.h"
 
 #include "AXObjectCacheInlines.h"
+#include "AccessibilityObjectInlines.h"
 #include "ContainerNodeInlines.h"
 #include "ElementInlines.h"
 #include "HTMLNames.h"

@@ -316,8 +316,6 @@ WK_EXPORT void WKPreferencesSetDNSPrefetchingEnabled(WKPreferencesRef, bool) WK_
 WK_EXPORT bool WKPreferencesGetDNSPrefetchingEnabled(WKPreferencesRef) WK_C_API_DEPRECATED;
 WK_EXPORT bool WKPreferencesGetRestrictedHTTPResponseAccess(WKPreferencesRef) WK_C_API_DEPRECATED;
 WK_EXPORT void WKPreferencesSetRestrictedHTTPResponseAccess(WKPreferencesRef, bool) WK_C_API_DEPRECATED;
-WK_EXPORT void WKPreferencesSetOfflineWebApplicationCacheEnabled(WKPreferencesRef, bool) WK_C_API_DEPRECATED;
-WK_EXPORT bool WKPreferencesGetOfflineWebApplicationCacheEnabled(WKPreferencesRef) WK_C_API_DEPRECATED;
 WK_EXPORT void WKPreferencesSetXSSAuditorEnabled(WKPreferencesRef, bool) WK_C_API_DEPRECATED;
 WK_EXPORT bool WKPreferencesGetXSSAuditorEnabled(WKPreferencesRef) WK_C_API_DEPRECATED;
 WK_EXPORT void WKPreferencesSetPluginsEnabled(WKPreferencesRef, bool) WK_C_API_DEPRECATED;

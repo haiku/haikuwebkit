@@ -1020,7 +1020,7 @@ void MediaPlayerPrivateRemote::remoteVideoTrackConfigurationChanged(TrackID trac
 void MediaPlayerPrivateRemote::load(const URL& url, const LoadOptions& options, MediaSourcePrivateClient& client)
 {
     if (m_remoteEngineIdentifier == MediaPlayerEnums::MediaEngineIdentifier::AVFoundationMSE
-        || (platformStrategies()->mediaStrategy().mockMediaSourceEnabled() && m_remoteEngineIdentifier == MediaPlayerEnums::MediaEngineIdentifier::MockMSE)) {
+        || (platformStrategies()->mediaStrategy()->mockMediaSourceEnabled() && m_remoteEngineIdentifier == MediaPlayerEnums::MediaEngineIdentifier::MockMSE)) {
 
         RefPtr mediaSourcePrivate = downcast<MediaSourcePrivateRemote>(client.mediaSourcePrivate());
         RemoteMediaSourceIdentifier identifier = [&] {
@@ -1089,7 +1089,7 @@ PlatformLayer* MediaPlayerPrivateRemote::platformLayer() const
 #if PLATFORM(COCOA)
     if (!m_videoLayer && m_layerHostingContext.contextID) {
         auto expandedVideoLayerSize = expandedIntSize(videoLayerSize());
-        m_videoLayer = createVideoLayerRemote(const_cast<MediaPlayerPrivateRemote*>(this), m_layerHostingContext.contextID, m_videoFullscreenGravity, expandedVideoLayerSize);
+        m_videoLayer = createVideoLayerRemote(const_cast<MediaPlayerPrivateRemote&>(*this), m_layerHostingContext.contextID, m_videoFullscreenGravity, expandedVideoLayerSize);
         m_videoLayerManager->setVideoLayer(m_videoLayer.get(), expandedVideoLayerSize);
     }
     return m_videoLayerManager->videoInlineLayer();
@@ -1570,16 +1570,14 @@ void MediaPlayerPrivateRemote::notifyActiveSourceBuffersChanged()
     connection().send(Messages::RemoteMediaPlayerProxy::NotifyActiveSourceBuffersChanged(), m_id);
 }
 
-#if PLATFORM(COCOA)
 bool MediaPlayerPrivateRemote::inVideoFullscreenOrPictureInPicture() const
 {
-#if ENABLE(VIDEO_PRESENTATION_MODE)
+#if PLATFORM(COCOA) && ENABLE(VIDEO_PRESENTATION_MODE)
     return !!m_videoLayerManager->videoFullscreenLayer();
 #else
     return false;
 #endif
 }
-#endif
 
 void MediaPlayerPrivateRemote::applicationWillResignActive()
 {
@@ -1601,14 +1599,14 @@ void MediaPlayerPrivateRemote::setPlatformDynamicRangeLimit(WebCore::PlatformDyn
     connection().send(Messages::RemoteMediaPlayerProxy::SetPlatformDynamicRangeLimit(platformDynamicRangeLimit), m_id);
 }
 
-bool MediaPlayerPrivateRemote::performTaskAtTime(WTF::Function<void()>&& task, const MediaTime& mediaTime)
+bool MediaPlayerPrivateRemote::performTaskAtTime(WTF::Function<void(const MediaTime&)>&& task, const MediaTime& mediaTime)
 {
     auto asyncReplyHandler = [weakThis = ThreadSafeWeakPtr { *this }, task = WTFMove(task)](std::optional<MediaTime> currentTime) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !currentTime)
             return;
 
-        task();
+        task(*currentTime);
     };
 
     connection().sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::PerformTaskAtTime(mediaTime), WTFMove(asyncReplyHandler), m_id);

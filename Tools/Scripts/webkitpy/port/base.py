@@ -261,11 +261,11 @@ class Port(object):
 
         return paths
 
-    def sharding_groups(self):
+    def sharding_groups(self, suite=None):
         return {}
 
-    def group_for_shard(self, shard):
-        for group, filter_fn in self.sharding_groups().items():
+    def group_for_shard(self, shard, suite=None):
+        for group, filter_fn in self.sharding_groups(suite=suite).items():
             if filter_fn(shard):
                 return group
         return None

@@ -29,6 +29,7 @@
 #include "Document.h"
 #include "LocalFrameView.h"
 #include "RenderLayer.h"
+#include "RenderObjectStyle.h"
 #include "RenderStyleInlines.h"
 
 namespace WebCore {

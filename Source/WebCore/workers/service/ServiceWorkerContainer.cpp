@@ -143,7 +143,7 @@ auto ServiceWorkerContainer::ready() -> ReadyPromise&
 
         Ref context = *scriptExecutionContext();
         ensureSWClientConnection().whenRegistrationReady(context->topOrigin().data(), context->url(), [this, protectedThis = Ref { *this }](ServiceWorkerRegistrationData&& registrationData) mutable {
-            queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [registrationData = WTFMove(registrationData)](auto& container) mutable {
+            queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [registrationData = WTFMove(registrationData)](ServiceWorkerContainer& container) mutable {
                 RefPtr context = container.scriptExecutionContext();
                 if (!context || !container.m_readyPromise)
                     return;
@@ -164,7 +164,7 @@ ServiceWorker* ServiceWorkerContainer::controller() const
 
 void ServiceWorkerContainer::addRegistration(Variant<RefPtr<TrustedScriptURL>, String>&& relativeScriptURL, const RegistrationOptions& options, Ref<DeferredPromise>&& promise)
 {
-    auto stringValueHolder = trustedTypeCompliantString(*scriptExecutionContext(), WTFMove(relativeScriptURL), "ServiceWorkerContainer register"_s);
+    auto stringValueHolder = trustedTypeCompliantString(*protectedScriptExecutionContext(), WTFMove(relativeScriptURL), "ServiceWorkerContainer register"_s);
 
     if (stringValueHolder.hasException()) {
         promise->reject(stringValueHolder.releaseException());
@@ -331,7 +331,7 @@ void ServiceWorkerContainer::getRegistration(const String& clientURL, Ref<Deferr
     }
 
     ensureSWClientConnection().matchRegistration(SecurityOriginData { context->topOrigin().data() }, parsedURL, [this, protectedThis = Ref { *this }, promise = WTFMove(promise)](std::optional<ServiceWorkerRegistrationData>&& result) mutable {
-        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTFMove(promise), result = WTFMove(result)](auto& container) mutable {
+        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTFMove(promise), result = WTFMove(result)](ServiceWorkerContainer& container) mutable {
             if (!result) {
                 promise->resolve();
                 return;
@@ -346,7 +346,7 @@ void ServiceWorkerContainer::updateRegistrationState(ServiceWorkerRegistrationId
     if (m_isStopped)
         return;
 
-    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [identifier, state, serviceWorkerData = std::optional<ServiceWorkerData> { serviceWorkerData }](auto& container) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [identifier, state, serviceWorkerData = std::optional<ServiceWorkerData> { serviceWorkerData }](ServiceWorkerContainer& container) mutable {
         RefPtr<ServiceWorker> serviceWorker;
         if (serviceWorkerData)
             serviceWorker = ServiceWorker::getOrCreate(*container.protectedScriptExecutionContext(), WTFMove(*serviceWorkerData));
@@ -376,7 +376,7 @@ void ServiceWorkerContainer::getRegistrations(Ref<DeferredPromise>&& promise)
 
     Ref context = *scriptExecutionContext();
     ensureSWClientConnection().getRegistrations(SecurityOriginData { context->topOrigin().data() }, context->url(), [this, protectedThis = Ref { *this }, promise = WTFMove(promise)] (Vector<ServiceWorkerRegistrationData>&& registrationDatas) mutable {
-        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTFMove(promise), registrationDatas = WTFMove(registrationDatas)](auto& container) mutable {
+        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTFMove(promise), registrationDatas = WTFMove(registrationDatas)](ServiceWorkerContainer& container) mutable {
             auto registrations = WTF::map(WTFMove(registrationDatas), [&](auto&& registrationData) {
                 return ServiceWorkerRegistration::getOrCreate(*container.protectedScriptExecutionContext(), container, WTFMove(registrationData));
             });
@@ -461,7 +461,7 @@ void ServiceWorkerContainer::jobResolvedWithRegistration(ServiceWorkerJob& job, 
     if (!promise)
         return;
 
-    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTFMove(promise), jobIdentifier = job.identifier(), data = WTFMove(data), shouldNotifyWhenResolved, notifyIfExitEarly = WTFMove(notifyIfExitEarly)](auto& container) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTFMove(promise), jobIdentifier = job.identifier(), data = WTFMove(data), shouldNotifyWhenResolved, notifyIfExitEarly = WTFMove(notifyIfExitEarly)](ServiceWorkerContainer& container) mutable {
         notifyIfExitEarly.release();
 
         Ref registration = ServiceWorkerRegistration::getOrCreate(*container.protectedScriptExecutionContext(), container, WTFMove(data));

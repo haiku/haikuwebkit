@@ -271,7 +271,7 @@ JSValue JSTestTypedefs::getConstructor(VM& vm, const JSGlobalObject* globalObjec
 
 void JSTestTypedefs::destroy(JSC::JSCell* cell)
 {
-    JSTestTypedefs* thisObject = static_cast<JSTestTypedefs*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestTypedefs* thisObject = static_cast<JSTestTypedefs*>(cell);
     thisObject->JSTestTypedefs::~JSTestTypedefs();
 }
 
@@ -829,7 +829,7 @@ bool JSTestTypedefsOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> h
 
 void JSTestTypedefsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestTypedefs = static_cast<JSTestTypedefs*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestTypedefs = static_cast<JSTestTypedefs*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestTypedefs->protectedWrapped().ptr(), jsTestTypedefs);
 }

@@ -26,9 +26,7 @@
 #include "config.h"
 #include "WebAnimationUtilities.h"
 
-#include "Animation.h"
 #include "AnimationEventBase.h"
-#include "AnimationList.h"
 #include "AnimationPlaybackEvent.h"
 #include "CSSAnimation.h"
 #include "CSSAnimationEvent.h"
@@ -41,6 +39,7 @@
 #include "EventTargetInlines.h"
 #include "KeyframeEffectStack.h"
 #include "ScriptExecutionContext.h"
+#include "StyleAnimations.h"
 #include "StyleOriginatedAnimation.h"
 #include "ViewTransition.h"
 #include "WebAnimation.h"
@@ -165,16 +164,16 @@ static bool compareCSSAnimations(const CSSAnimation& a, const CSSAnimation& b)
         return compareStyleOriginatedAnimationOwningElementPositionsInDocumentTreeOrder(*aOwningElement, *bOwningElement);
 
     // Sort A and B based on their position in the computed value of the animation-name property of the (common) owning element.
-    RefPtr cssAnimationList = aOwningElement->ensureKeyframeEffectStack().cssAnimationList();
+    auto& cssAnimationList = aOwningElement->ensureKeyframeEffectStack().cssAnimationList();
     ASSERT(cssAnimationList);
-    ASSERT(!cssAnimationList->isEmpty());
+    ASSERT(!cssAnimationList->isNone());
 
-    Ref aBackingAnimation = a.backingAnimation();
-    Ref bBackingAnimation = b.backingAnimation();
+    auto& aBackingAnimation = a.backingStyleAnimation();
+    auto& bBackingAnimation = b.backingStyleAnimation();
     for (auto& animation : *cssAnimationList) {
-        if (animation.ptr() == aBackingAnimation.ptr())
+        if (animation.sortingIdentity() == aBackingAnimation.sortingIdentity())
             return true;
-        if (animation.ptr() == bBackingAnimation.ptr())
+        if (animation.sortingIdentity() == bBackingAnimation.sortingIdentity())
             return false;
     }
 

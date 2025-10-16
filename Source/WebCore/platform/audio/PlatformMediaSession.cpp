@@ -409,7 +409,6 @@ void PlatformMediaSession::setActiveNowPlayingSession(bool isActiveNowPlayingSes
         return;
 
     m_isActiveNowPlayingSession = isActiveNowPlayingSession;
-    client().isActiveNowPlayingSessionChanged();
 }
 
 #if !RELEASE_LOG_DISABLED

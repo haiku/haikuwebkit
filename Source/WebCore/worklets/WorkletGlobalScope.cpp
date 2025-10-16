@@ -27,10 +27,12 @@
 #include "config.h"
 #include "WorkletGlobalScope.h"
 
+#include "ContentSecurityPolicy.h"
+#include "DocumentInlines.h"
+#include "FrameConsoleClient.h"
 #include "InspectorInstrumentation.h"
 #include "JSWorkletGlobalScope.h"
 #include "LocalFrame.h"
-#include "PageConsoleClient.h"
 #include "SecurityOriginPolicy.h"
 #include "Settings.h"
 #include "WorkerMessagePortChannelProvider.h"
@@ -129,10 +131,10 @@ void WorkletGlobalScope::logExceptionToConsole(const String& errorMessage, const
     if (settingsValues().logsPageMessagesToSystemConsoleEnabled) [[unlikely]] {
         if (stack) {
             Inspector::ConsoleMessage message { MessageSource::JS, MessageType::Log, MessageLevel::Error, errorMessage, *stack };
-            PageConsoleClient::logMessageToSystemConsole(message);
+            FrameConsoleClient::logMessageToSystemConsole(message);
         } else {
             Inspector::ConsoleMessage message { MessageSource::JS, MessageType::Log, MessageLevel::Error, errorMessage, sourceURL, static_cast<unsigned>(lineNumber), static_cast<unsigned>(columnNumber) };
-            PageConsoleClient::logMessageToSystemConsole(message);
+            FrameConsoleClient::logMessageToSystemConsole(message);
         }
     }
 
@@ -144,7 +146,7 @@ void WorkletGlobalScope::logExceptionToConsole(const String& errorMessage, const
 void WorkletGlobalScope::addConsoleMessage(std::unique_ptr<Inspector::ConsoleMessage>&& message)
 {
     if (settingsValues().logsPageMessagesToSystemConsoleEnabled && message) [[unlikely]]
-        PageConsoleClient::logMessageToSystemConsole(*message);
+        FrameConsoleClient::logMessageToSystemConsole(*message);
 
     if (!m_document || isJSExecutionForbidden() || !message)
         return;

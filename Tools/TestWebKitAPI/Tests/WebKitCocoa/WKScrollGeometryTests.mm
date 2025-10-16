@@ -42,6 +42,8 @@
 - (void)_setNeedsScrollGeometryUpdates:(BOOL)needsScrollGeometryUpdates;
 @end
 
+@class WKScrollGeometry;
+
 @interface TestScrollGeometryDelegate : NSObject <WKUIDelegate>
 
 - (void)_webView:(WKWebView *)webView geometryDidChange:(WKScrollGeometry *)geometry;

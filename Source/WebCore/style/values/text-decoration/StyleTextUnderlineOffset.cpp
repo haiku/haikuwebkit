@@ -40,7 +40,7 @@ float TextUnderlineOffset::resolve(const RenderStyle& style, float autoValue) co
             return autoValue;
         },
         [&](const Fixed& fixed) -> float {
-            return fixed.value;
+            return fixed.evaluate(1.0f /* FIXME FIND ZOOM */);
         },
         [&](const auto& percentage) -> float {
             return Style::evaluate(percentage, style.computedFontSize());
@@ -55,7 +55,7 @@ float TextUnderlineOffset::resolve(float fontSize, float autoValue) const
             return autoValue;
         },
         [&](const Fixed& fixed) -> float {
-            return fixed.value;
+            return fixed.evaluate(1.0f /* FIXME FIND ZOOM */);
         },
         [&](const auto& percentage) -> float {
             return Style::evaluate(percentage, fontSize);

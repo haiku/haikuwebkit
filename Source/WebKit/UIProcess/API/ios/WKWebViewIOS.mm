@@ -224,6 +224,11 @@ static WebCore::IntDegrees deviceOrientationForUIInterfaceOrientation(UIInterfac
     [_contentView setFrame:bounds];
     [_scrollView addSubview:_contentView.get()];
     [_scrollView addSubview:[_contentView unscaledView]];
+
+#if PLATFORM(VISION)
+    if ([[CARemoteExternalEffect class] respondsToSelector:@selector(rcp_requiresTwoHandedInteractionProcessorEffect)])
+        [_scrollView _requestRemoteEffects:@[[CARemoteExternalEffect rcp_requiresTwoHandedInteractionProcessorEffect]] forKey:@"input"];
+#endif
 }
 
 - (void)_setObscuredInsetsInternal:(UIEdgeInsets)obscuredInsets
@@ -1037,11 +1042,6 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
     BOOL shouldUpdateContentOffsetForFittingScale = !shouldUpdateZoomScale && !CGSizeEqualToSize(oldContentSize, newContentSize) && (oldContentSize.height > 0) && self._isDisplayingPDF;
 
     if (shouldUpdateZoomScale || shouldUpdateContentOffsetForFittingScale) {
-        if (shouldUpdateZoomScale) {
-            LOG_WITH_STREAM(VisibleRects, stream << " updating scroll view with pageScaleFactor " << pageScaleFactor);
-            [_scrollView setZoomScale:pageScaleFactor];
-        }
-
         UIEdgeInsets contentInsets = [_scrollView adjustedContentInset];
         CGPoint minimumContentOffset = CGPointMake(-contentInsets.left, -contentInsets.top);
         CGPoint contentOffset = [_scrollView contentOffset];
@@ -1058,6 +1058,11 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
             contentOffsetX = minimumContentOffset.x + ((contentOffsetX - minimumContentOffset.x) * scaleRatio);
 
         CGFloat contentOffsetY = minimumContentOffset.y + ((contentOffset.y - minimumContentOffset.y) * scaleRatio);
+
+        if (shouldUpdateZoomScale) {
+            LOG_WITH_STREAM(VisibleRects, stream << " updating scroll view with pageScaleFactor " << pageScaleFactor);
+            [_scrollView setZoomScale:pageScaleFactor];
+        }
 
         changeContentOffsetBoundedInValidRange(_scrollView.get(), CGPointMake(contentOffsetX, contentOffsetY));
     }
@@ -1237,10 +1242,9 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
     }
 
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-    if (_page && _page->preferences().overlayRegionsEnabled())
-        [self _updateOverlayRegions:layerTreeTransaction.changedLayerProperties() destroyedLayers:layerTreeTransaction.destroyedLayers()];
-    else
-        [self _resetOverlayRegions];
+    [self _updateScrollCoordinatorProxyForOverlayRegions:layerTreeTransaction.destroyedLayers()];
+    if (layerTreeTransaction.changedLayerProperties().size() || layerTreeTransaction.destroyedLayers().size())
+        [self _updateOverlayRegions];
 #endif
 }
 
@@ -1475,36 +1479,21 @@ static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>
     return overlayRegionScrollView;
 }
 
-#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-- (void)_resetOverlayRegions
+- (void)_updateOverlayRegions
 {
     if (!_page)
         return;
 
-    CheckedPtr scrollingCoordinatorProxy = downcast<WebKit::RemoteScrollingCoordinatorProxyIOS>(_page->scrollingCoordinatorProxy());
-    if (!scrollingCoordinatorProxy)
+    if (!_page->preferences().overlayRegionsEnabled()) {
+        [self _resetOverlayRegions];
         return;
-
-    [_scrollView _updateOverlayRegionsBehavior:NO];
-
-    auto candidates = scrollingCoordinatorProxy->overlayRegionCandidates();
-    for (auto scrollView : candidates.keys())
-        [scrollView _updateOverlayRegionsBehavior:NO];
-}
-#endif
-
-- (void)_updateOverlayRegions:(const WebKit::LayerPropertiesMap&)changedLayerPropertiesMap destroyedLayers:(const Vector<WebCore::PlatformLayerIdentifier>&)destroyedLayers
-{
-    if (!changedLayerPropertiesMap.size() && !destroyedLayers.size())
-        return;
+    }
 
     auto& layerTreeProxy = downcast<WebKit::RemoteLayerTreeDrawingAreaProxy>(*_page->drawingArea());
     auto& layerTreeHost = layerTreeProxy.remoteLayerTreeHost();
     auto* scrollingCoordinatorProxy = downcast<WebKit::RemoteScrollingCoordinatorProxyIOS>(_page->scrollingCoordinatorProxy());
     if (!scrollingCoordinatorProxy)
         return;
-
-    scrollingCoordinatorProxy->removeDestroyedLayerIDs(destroyedLayers);
 
     auto candidatesMap = scrollingCoordinatorProxy->overlayRegionCandidates();
 
@@ -1521,19 +1510,35 @@ static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>
     configureScrollViewWithOverlayRegionsIDs(overlayRegionScrollView, layerTreeHost, overlayRegionsIDs, candidatesMap, [self _isInStableState:overlayRegionScrollView.get()]);
 }
 
-- (void)_updateOverlayRegionsForCustomContentView
+- (void)_resetOverlayRegions
 {
-    if (!_page || !_page->preferences().overlayRegionsEnabled())
+    if (!_page)
         return;
 
-    if (![self _scrollViewCanHaveOverlayRegions:_scrollView.get()]) {
-        [_scrollView _updateOverlayRegionsBehavior:NO];
+    CheckedPtr scrollingCoordinatorProxy = downcast<WebKit::RemoteScrollingCoordinatorProxyIOS>(_page->scrollingCoordinatorProxy());
+    if (!scrollingCoordinatorProxy)
         return;
-    }
 
-    [_scrollView _updateOverlayRegionsBehavior:YES];
-    [_scrollView _updateOverlayRegionRects: { } whileStable:YES];
+    [_scrollView _updateOverlayRegionsBehavior:NO];
+
+    auto candidates = scrollingCoordinatorProxy->overlayRegionCandidates();
+    for (auto scrollView : candidates.keys())
+        [scrollView _updateOverlayRegionsBehavior:NO];
 }
+
+- (void)_updateScrollCoordinatorProxyForOverlayRegions:(const Vector<WebCore::PlatformLayerIdentifier>&)destroyedLayers
+{
+    if (!_page || !destroyedLayers.size())
+        return;
+
+    CheckedPtr scrollingCoordinatorProxy = downcast<WebKit::RemoteScrollingCoordinatorProxyIOS>(_page->scrollingCoordinatorProxy());
+    if (!scrollingCoordinatorProxy)
+        return;
+
+    // We maintain this layerIDs list regardless of the current preference value.
+    scrollingCoordinatorProxy->removeDestroyedLayerIDs(destroyedLayers);
+}
+
 #endif // ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
 
 - (void)_layerTreeCommitComplete
@@ -4032,7 +4037,7 @@ static bool isLockdownModeWarningNeeded()
 #if PLATFORM(MACCATALYST)
         return NO;
 #else
-        return [(MCProfileConnection *)[PAL::getMCProfileConnectionClass() sharedConnection] isURLManaged:self.URL];
+        return [(MCProfileConnection *)[PAL::getMCProfileConnectionClassSingleton() sharedConnection] isURLManaged:self.URL];
 #endif
     };
 

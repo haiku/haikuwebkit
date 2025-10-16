@@ -139,7 +139,7 @@ To import a web-platform-tests suite from a local checkout in ~/dev/wpt:
                         help='Import into a specified directory relative to the LayoutTests root. By default, imports into imported/w3c')
 
     parser.add_argument('-s', '--src-dir', dest='source', default=None,
-                        help='Import from a specific web-platform-tests directory. If not provided, the script will clone the necessary repository.')
+                        help='Import from a specific web-platform-tests directory. If not provided, the script will clone the necessary repository. By default, the repository will be cloned into the parent directory of your WebKit checkout (e.g. ~/WebKit/../wpt).')
 
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='Print maximal log')
@@ -204,24 +204,20 @@ class TestImporter(object):
         }
 
     def do_import(self):
-        if self.source_directory:
-            directory = self._get_wpt_directory(self.source_directory)
-            _log.debug(f"Using {directory!r} for {self.source_directory!r}")
-            if directory is None:
-                return
+        finder = WebKitFinder(self.filesystem)
+        self.source_directory = self.source_directory or WPTPaths.ensure_wpt_repository(finder, self.source_directory)
 
-            self.source_directory = directory
-            source_path = self.filesystem.join(self.source_directory, 'web-platform-tests')
-            try:
-                self.upstream_revision = Git(source_path).find('HEAD').hash
-            except OSError:
-                self.upstream_revision = None
-        else:
-            _log.info('Downloading W3C test repositories')
-            self.filesystem.maybe_make_directory(self.tests_download_path)
-            self.test_downloader().download_tests(self.options.use_tip_of_tree)
-            self.upstream_revision = self.test_downloader().upstream_revision
-            self.source_directory = self.tests_download_path
+        directory = self._get_wpt_directory(self.source_directory)
+        _log.debug(f"Using {directory!r} for {self.source_directory!r}")
+        if directory is None:
+            return
+
+        self.source_directory = directory
+        source_path = self.filesystem.join(self.source_directory, 'web-platform-tests')
+        try:
+            self.upstream_revision = Git(source_path).find('HEAD').hash
+        except OSError:
+            self.upstream_revision = None
 
         for test_path in self.test_paths:
             if test_path != "web-platform-tests" and not test_path.startswith(

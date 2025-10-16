@@ -13,6 +13,7 @@ if (window.testRunner) {
 }
 
 if (window.IPC) {
+    // Check Standard Messages
     assert_equals(IPC.messages.IPCTester_AsyncOptionalExceptionData.dispatchedFrom, "Unknown");
     assert_equals(IPC.messages.IPCTester_AsyncOptionalExceptionData.dispatchedTo, "Unknown");
     assert_equals(IPC.messages.WebPageTesting_IsLayerTreeFrozen.dispatchedFrom, "UI");
@@ -23,6 +24,22 @@ if (window.IPC) {
     assert_equals(IPC.messages.NetworkProcessProxy_DidReceiveAuthenticationChallenge.dispatchedTo, "UI");
     assert_equals(IPC.messages.GPUConnectionToWebProcess_CreateRenderingBackend.dispatchedFrom, "WebContent");
     assert_equals(IPC.messages.GPUConnectionToWebProcess_CreateRenderingBackend.dispatchedTo, "GPU");
+    assert_equals(IPC.messages.NetworkProcessProxy_TestProcessIncomingSyncMessagesWhenWaitingForSyncReply.dispatchedFrom, "Networking");
+    assert_equals(IPC.messages.NetworkProcessProxy_TestProcessIncomingSyncMessagesWhenWaitingForSyncReply.dispatchedTo, "UI");
+    assert_equals(IPC.messages.RemoteMediaResourceManager_ResponseReceived.dispatchedFrom, "WebContent");
+    assert_equals(IPC.messages.RemoteMediaResourceManager_ResponseReceived.dispatchedTo, "GPU");
+
+    // Check Reply Messages
+    assert_equals(IPC.messages.IPCTester_AsyncOptionalExceptionDataReply.dispatchedFrom, "Unknown");
+    assert_equals(IPC.messages.IPCTester_AsyncOptionalExceptionDataReply.dispatchedTo, "Unknown");
+    assert_equals(IPC.messages.WebPageTesting_IsLayerTreeFrozenReply.dispatchedFrom, "WebContent");
+    assert_equals(IPC.messages.WebPageTesting_IsLayerTreeFrozenReply.dispatchedTo, "UI");
+    assert_equals(IPC.messages.WebPageProxy_DecidePolicyForNavigationActionAsyncReply.dispatchedFrom, "UI");
+    assert_equals(IPC.messages.WebPageProxy_DecidePolicyForNavigationActionAsyncReply.dispatchedTo, "WebContent");
+    assert_equals(IPC.messages.NetworkProcessProxy_TestProcessIncomingSyncMessagesWhenWaitingForSyncReply.dispatchedFrom, "Networking");
+    assert_equals(IPC.messages.NetworkProcessProxy_TestProcessIncomingSyncMessagesWhenWaitingForSyncReply.dispatchedTo, "UI");
+    assert_equals(IPC.messages.RemoteMediaResourceManager_ResponseReceivedReply.dispatchedFrom, "GPU");
+    assert_equals(IPC.messages.RemoteMediaResourceManager_ResponseReceivedReply.dispatchedTo, "WebContent");
 }
 
 document.write("PASS");

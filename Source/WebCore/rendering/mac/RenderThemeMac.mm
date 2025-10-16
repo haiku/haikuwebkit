@@ -43,7 +43,7 @@
 #import "HTMLInputElement.h"
 #import "HTMLMeterElement.h"
 #import "HTMLNames.h"
-#import "HTMLPlugInImageElement.h"
+#import "HTMLPlugInElement.h"
 #import "Icon.h"
 #import "Image.h"
 #import "ImageControlsButtonMac.h"
@@ -69,6 +69,7 @@
 #import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 #import <CoreServices/CoreServices.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <math.h>
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <pal/spi/mac/CoreUISPI.h>
@@ -212,7 +213,7 @@ RenderThemeMac::RenderThemeMac()
 {
 }
 
-bool RenderThemeMac::canCreateControlPartForRenderer(const RenderObject& renderer) const
+bool RenderThemeMac::canCreateControlPartForRenderer(const RenderElement& renderer) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled())
@@ -249,7 +250,7 @@ bool RenderThemeMac::canCreateControlPartForRenderer(const RenderObject& rendere
         || type == StyleAppearance::SwitchTrack;
 }
 
-bool RenderThemeMac::canCreateControlPartForBorderOnly(const RenderObject& renderer) const
+bool RenderThemeMac::canCreateControlPartForBorderOnly(const RenderElement& renderer) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled())
@@ -262,7 +263,7 @@ bool RenderThemeMac::canCreateControlPartForBorderOnly(const RenderObject& rende
         || appearance == StyleAppearance::TextField;
 }
 
-bool RenderThemeMac::canCreateControlPartForDecorations(const RenderObject& renderer) const
+bool RenderThemeMac::canCreateControlPartForDecorations(const RenderElement& renderer) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled())
@@ -1112,7 +1113,7 @@ static void inflateControlPaintRect(StyleAppearance appearance, FloatRect& zoome
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
-void RenderThemeMac::inflateRectForControlRenderer(const RenderObject& renderer, FloatRect& rect)
+void RenderThemeMac::inflateRectForControlRenderer(const RenderElement& renderer, FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
     if (renderer.settings().formControlRefreshEnabled()) {
@@ -1147,23 +1148,23 @@ void RenderThemeMac::inflateRectForControlRenderer(const RenderObject& renderer,
     }
 }
 
-bool RenderThemeMac::controlSupportsTints(const RenderObject& o) const
+bool RenderThemeMac::controlSupportsTints(const RenderElement& renderer) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
-    if (o.settings().formControlRefreshEnabled())
-        return RenderThemeCocoa::controlSupportsTints(o);
+    if (renderer.settings().formControlRefreshEnabled())
+        return RenderThemeCocoa::controlSupportsTints(renderer);
 #endif
     // An alternate way to implement this would be to get the appropriate cell object
     // and call the private _needRedrawOnWindowChangedKeyState method. An advantage of
     // that would be that we would match AppKit behavior more closely, but a disadvantage
     // would be that we would rely on an AppKit SPI method.
 
-    if (!isEnabled(o))
+    if (!isEnabled(renderer))
         return false;
 
     // Checkboxes only have tint when checked.
-    if (o.style().usedAppearance() == StyleAppearance::Checkbox)
-        return isChecked(o);
+    if (renderer.style().usedAppearance() == StyleAppearance::Checkbox)
+        return isChecked(renderer);
 
     // For now assume other controls have tint if enabled.
     return true;
@@ -1771,14 +1772,11 @@ static RefPtr<Icon> iconForAttachment(const String& fileName, const String& atta
 
     if (!attachmentType.isEmpty() && !equalLettersIgnoringASCIICase(attachmentType, "public.data"_s)) {
         if (equalLettersIgnoringASCIICase(attachmentType, "public.directory"_s) || equalLettersIgnoringASCIICase(attachmentType, "multipart/x-folder"_s) || equalLettersIgnoringASCIICase(attachmentType, "application/vnd.apple.folder"_s)) {
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-            auto type = kUTTypeFolder;
-ALLOW_DEPRECATED_DECLARATIONS_END
-            if (auto icon = Icon::createIconForUTI(type)) {
-                LOG_ATTACHMENT("-> Got icon for kUTTypeFolder");
+            if (auto icon = Icon::createIconForUTI(UTTypeFolder.identifier)) {
+                LOG_ATTACHMENT("-> Got icon for UTTypeFolder");
                 return icon;
             }
-            LOG_ATTACHMENT("-> No icon for kUTTypeFolder! Will fallback to filename or title...");
+            LOG_ATTACHMENT("-> No icon for UTTypeFolder! Will fallback to filename or title...");
         } else {
             String type;
             if (isDeclaredUTI(attachmentType))
@@ -1971,7 +1969,7 @@ static void paintAttachmentPlaceholderBorder(const RenderAttachment& attachment,
     context.strokePath(borderPath);
 }
 
-bool RenderThemeMac::paintAttachment(const RenderObject& renderer, const PaintInfo& paintInfo, const IntRect& paintRect)
+bool RenderThemeMac::paintAttachment(const RenderElement& renderer, const PaintInfo& paintInfo, const IntRect& paintRect)
 {
     auto* attachment = dynamicDowncast<RenderAttachment>(renderer);
     if (!attachment)

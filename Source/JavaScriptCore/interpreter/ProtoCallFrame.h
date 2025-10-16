@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "CodeBlock.h"
-#include "Register.h"
-#include "StackAlignment.h"
+#include <JavaScriptCore/CodeBlock.h>
+#include <JavaScriptCore/Register.h>
+#include <JavaScriptCore/StackAlignment.h>
 #include <wtf/ForbidHeapAllocation.h>
 
 #if ENABLE(WEBASSEMBLY)
-#include "JSWebAssemblyInstance.h"
+#include <JavaScriptCore/JSWebAssemblyInstance.h>
 #endif
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN

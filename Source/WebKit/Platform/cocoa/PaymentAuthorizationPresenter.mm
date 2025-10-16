@@ -175,13 +175,13 @@ static NSError *toNSError(const WebCore::ApplePayError& error)
     if (error.domain() == WebCore::ApplePayError::Domain::Disbursement) {
         switch (error.code()) {
         case WebCore::ApplePayErrorCode::UnsupportedCard:
-            return [PAL::getPKDisbursementRequestClass() disbursementCardUnsupportedError];
+            return [PAL::getPKDisbursementRequestClassSingleton() disbursementCardUnsupportedError];
         case WebCore::ApplePayErrorCode::RecipientContactInvalid:
             if (error.contactField())
-                return [PAL::getPKDisbursementRequestClass() disbursementContactInvalidErrorWithContactField:toPKContactField(error.contactField().value()) localizedDescription:error.message().createNSString().get()];
+                return [PAL::getPKDisbursementRequestClassSingleton() disbursementContactInvalidErrorWithContactField:toPKContactField(error.contactField().value()) localizedDescription:error.message().createNSString().get()];
             break;
         default:
-            return [NSError errorWithDomain:PAL::get_PassKitCore_PKDisbursementErrorDomain() code:PKDisbursementUnknownError userInfo:userInfo.get()];
+            return [NSError errorWithDomain:PKDisbursementErrorDomain code:PKDisbursementUnknownError userInfo:userInfo.get()];
         }
     }
 #endif

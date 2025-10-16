@@ -31,12 +31,14 @@
 #import "CAAudioStreamDescription.h"
 #import "Logging.h"
 #import "MediaSampleAVFObjC.h"
+#import "MediaSamplesBlock.h"
 #import "MediaUtilities.h"
 #import "SharedBuffer.h"
 #import "WebMAudioUtilitiesCocoa.h"
 #import <CoreMedia/CMFormatDescription.h>
 #import <pal/avfoundation/MediaTimeAVFoundation.h>
 #import <pal/spi/cocoa/AudioToolboxSPI.h>
+#import <wtf/Expected.h>
 #import <wtf/Scope.h>
 #import <wtf/TZoneMallocInlines.h>
 #import <wtf/cf/TypeCastsCF.h>
@@ -125,7 +127,7 @@ static CFStringRef convertToCMTransferFunction(PlatformVideoTransferCharacterist
     case PlatformVideoTransferCharacteristics::AribStdB67Hlg:
         return PAL::kCMFormatDescriptionTransferFunction_ITU_R_2100_HLG;
     case PlatformVideoTransferCharacteristics::Iec6196621:
-        return PAL::canLoad_CoreMedia_kCMFormatDescriptionTransferFunction_sRGB() ? PAL::get_CoreMedia_kCMFormatDescriptionTransferFunction_sRGB() : nullptr;
+        return PAL::canLoad_CoreMedia_kCMFormatDescriptionTransferFunction_sRGB() ? PAL::kCMFormatDescriptionTransferFunction_sRGB : nullptr;
     case PlatformVideoTransferCharacteristics::Linear:
         return PAL::kCMFormatDescriptionTransferFunction_Linear;
     default:
@@ -234,9 +236,9 @@ RetainPtr<CMFormatDescriptionRef> createFormatDescriptionFromTrackInfo(const Tra
     if (videoInfo.size != videoInfo.displaySize) {
         double horizontalRatio = videoInfo.displaySize.width() / videoInfo.size.width();
         double verticalRatio = videoInfo.displaySize.height() / videoInfo.size.height();
-        CFDictionaryAddValue(extensions.get(), PAL::get_CoreMedia_kCMFormatDescriptionExtension_PixelAspectRatio(), @{
-            (__bridge NSString*)PAL::get_CoreMedia_kCMFormatDescriptionKey_PixelAspectRatioHorizontalSpacing() : @(horizontalRatio),
-            (__bridge NSString*)PAL::get_CoreMedia_kCMFormatDescriptionKey_PixelAspectRatioVerticalSpacing() : @(verticalRatio)
+        CFDictionaryAddValue(extensions.get(), PAL::get_CoreMedia_kCMFormatDescriptionExtension_PixelAspectRatioSingleton(), @{
+            (__bridge NSString*)PAL::get_CoreMedia_kCMFormatDescriptionKey_PixelAspectRatioHorizontalSpacingSingleton() : @(horizontalRatio),
+            (__bridge NSString*)PAL::get_CoreMedia_kCMFormatDescriptionKey_PixelAspectRatioVerticalSpacingSingleton() : @(verticalRatio)
         });
     }
 
@@ -339,7 +341,7 @@ Expected<RetainPtr<CMSampleBufferRef>, CString> toCMSampleBuffer(const MediaSamp
 
     if (cumulativeTrimDuration > MediaTime::zeroTime()) {
         auto trimDurationDict = adoptCF(PAL::softLink_CoreMedia_CMTimeCopyAsDictionary(PAL::toCMTime(cumulativeTrimDuration), kCFAllocatorDefault));
-        PAL::CMSetAttachment(rawSampleBuffer, PAL::get_CoreMedia_kCMSampleBufferAttachmentKey_TrimDurationAtStart(), trimDurationDict.get(), kCMAttachmentMode_ShouldPropagate);
+        PAL::CMSetAttachment(rawSampleBuffer, PAL::kCMSampleBufferAttachmentKey_TrimDurationAtStart, trimDurationDict.get(), kCMAttachmentMode_ShouldPropagate);
     }
 
     return adoptCF(rawSampleBuffer);
@@ -361,10 +363,10 @@ UniqueRef<MediaSamplesBlock> samplesBlockFromCMSampleBuffer(CMSampleBufferRef cm
         MediaTime duration = sample->duration();
         RetainPtr blockBuffer = PAL::CMSampleBufferGetDataBuffer(sample->sampleBuffer());
         auto trimDurationAtStart = MediaTime::zeroTime();
-        if (auto* trimDurationDict = static_cast<CFDictionaryRef>(PAL::CMGetAttachment(sample->sampleBuffer(), PAL::get_CoreMedia_kCMSampleBufferAttachmentKey_TrimDurationAtStart(), nullptr)))
+        if (auto* trimDurationDict = static_cast<CFDictionaryRef>(PAL::CMGetAttachment(sample->sampleBuffer(), PAL::kCMSampleBufferAttachmentKey_TrimDurationAtStart, nullptr)))
             trimDurationAtStart = PAL::toMediaTime(PAL::CMTimeMakeFromDictionary(trimDurationDict));
         auto trimDurationAtEnd = MediaTime::zeroTime();
-        if (auto* trimDurationDict = static_cast<CFDictionaryRef>(PAL::CMGetAttachment(sample->sampleBuffer(), PAL::get_CoreMedia_kCMSampleBufferAttachmentKey_TrimDurationAtEnd(), nullptr)))
+        if (auto* trimDurationDict = static_cast<CFDictionaryRef>(PAL::CMGetAttachment(sample->sampleBuffer(), PAL::kCMSampleBufferAttachmentKey_TrimDurationAtEnd, nullptr)))
             trimDurationAtEnd = PAL::toMediaTime(PAL::CMTimeMakeFromDictionary(trimDurationDict));
         return MediaSamplesBlock::MediaSampleItem {
             .presentationTime = sample->presentationTime(),

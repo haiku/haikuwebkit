@@ -931,7 +931,7 @@ void WebPageProxy::startApplePayAMSUISession(URL&& originatingURL, ApplePayAMSUI
     RetainPtr amsRequest = adoptNS([allocAMSEngagementRequestInstance() initWithRequestDictionary:dynamic_objc_cast<NSDictionary>([NSJSONSerialization JSONObjectWithData:[request.engagementRequest.createNSString() dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil])]);
     [amsRequest setOriginatingURL:originatingURL.createNSURL().get()];
 
-    auto amsBag = retainPtr([getAMSUIEngagementTaskClass() createBagForSubProfile]);
+    auto amsBag = retainPtr([getAMSUIEngagementTaskClassSingleton() createBagForSubProfile]);
 
     m_applePayAMSUISession = adoptNS([allocAMSUIEngagementTaskInstance() initWithRequest:amsRequest.get() bag:amsBag.get() presentingViewController:presentingViewController.get()]);
     [m_applePayAMSUISession setRemotePresentation:YES];
@@ -1670,9 +1670,23 @@ void WebPageProxy::decodeImageData(Ref<WebCore::SharedBuffer>&& buffer, std::opt
 void WebPageProxy::getWebArchiveData(CompletionHandler<void(API::Data*)>&& completionHandler)
 {
     RefPtr mainFrame = m_mainFrame;
-    if (!mainFrame)
-        return completionHandler(nullptr);
+    if (!mainFrame) {
+        // Return blank page data for backforward compatibility; see rdar://127469660.
+        launchInitialProcessIfNecessary();
+        protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::GetWebArchiveData(), [completionHandler = WTFMove(completionHandler)](auto&& result) mutable {
+            if (!result)
+                return completionHandler(nullptr);
 
+            completionHandler(API::Data::create(result->span()).ptr());
+        }, webPageIDInMainFrameProcess());
+        return;
+    }
+
+    getWebArchiveDataWithFrame(*mainFrame, WTFMove(completionHandler));
+}
+
+void WebPageProxy::getWebArchiveDataWithFrame(WebFrameProxy& frame, CompletionHandler<void(API::Data*)>&& completionHandler)
+{
     class WebArchvieCallbackAggregator final : public ThreadSafeRefCounted<WebArchvieCallbackAggregator, WTF::DestructionThread::MainRunLoop> {
     public:
         using Callback = CompletionHandler<void(RefPtr<LegacyWebArchive>&&)>;
@@ -1719,7 +1733,7 @@ void WebPageProxy::getWebArchiveData(CompletionHandler<void(API::Data*)>&& compl
         HashMap<WebCore::FrameIdentifier, Ref<WebCore::LegacyWebArchive>> m_frameArchives;
     };
 
-    auto callbackAggregator = WebArchvieCallbackAggregator::create(mainFrame->frameID(), [completionHandler = WTFMove(completionHandler)](auto webArchive) mutable {
+    auto callbackAggregator = WebArchvieCallbackAggregator::create(frame.frameID(), [completionHandler = WTFMove(completionHandler)](auto webArchive) mutable {
         if (!webArchive)
             return completionHandler(nullptr);
 
@@ -1728,11 +1742,24 @@ void WebPageProxy::getWebArchiveData(CompletionHandler<void(API::Data*)>&& compl
             return completionHandler(nullptr);
         completionHandler(API::Data::create(span(data.get())).ptr());
     });
-    forEachWebContentProcess([&](auto& webProcess, auto pageID) {
-        webProcess.sendWithAsyncReply(Messages::WebPage::GetWebArchives(), [callbackAggregator](auto&& result) {
+    HashMap<Ref<WebProcessProxy>, Vector<WebCore::FrameIdentifier>> processFrames;
+    RefPtr currentFrame = &frame;
+    while (currentFrame) {
+        processFrames.ensure(currentFrame->protectedProcess(), [&] {
+            return Vector<WebCore::FrameIdentifier> { };
+        }).iterator->value.append(currentFrame->frameID());
+
+        currentFrame = currentFrame->traverseNext().frame;
+    }
+
+    for (auto& [process, frameIDs] : processFrames) {
+        Ref { process }->sendWithAsyncReply(Messages::WebPage::GetWebArchivesForFrames(frameIDs), [frameIDs, callbackAggregator](auto&& result) {
+            if (result.size() > frameIDs.size())
+                return;
+
             callbackAggregator->addResult(WTFMove(result));
-        }, pageID);
-    });
+        }, webPageIDInProcess(process.get()));
+    }
 }
 
 String WebPageProxy::presentingApplicationBundleIdentifier() const

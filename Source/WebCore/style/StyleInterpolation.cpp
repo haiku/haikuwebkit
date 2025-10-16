@@ -80,10 +80,8 @@ static std::optional<CustomProperty::Value> interpolateSyntaxValues(const Render
                 return blendFunc(fromStyle.colorResolvingCurrentColor(fromStyleColor), toStyle.colorResolvingCurrentColor(toStyleColor), context);
             return { };
         },
-        [&](const CustomProperty::Transform& fromTransform) -> std::optional<CustomProperty::Value> {
-            auto& fromTransformOperation = fromTransform.operation;
-            auto& toTransformOperation = std::get<CustomProperty::Transform>(to).operation;
-            return CustomProperty::Transform { blendFunc(fromTransformOperation, toTransformOperation, context) };
+        [&](const TransformFunction& fromTransform) -> std::optional<CustomProperty::Value> {
+            return blend(fromTransform, std::get<TransformFunction>(to), context);
         },
         [&](const auto&) -> std::optional<CustomProperty::Value> {
             return { };
@@ -114,22 +112,22 @@ static std::optional<CustomProperty::ValueList> interpolateSyntaxValueLists(cons
         return std::nullopt;
 
     // <transform-function> lists are special in that they don't require matching numbers of items.
-    if (std::holds_alternative<CustomProperty::Transform>(*firstValue)) {
-        auto transformOperationsFromSyntaxValueList = [](const CustomProperty::ValueList& list) {
-            return TransformOperations {
-                list.values.map([](auto& syntaxValue) {
-                    ASSERT(std::holds_alternative<CustomProperty::Transform>(syntaxValue));
-                    return std::get<CustomProperty::Transform>(syntaxValue).operation.copyRef();
+    if (std::holds_alternative<TransformFunction>(*firstValue)) {
+        auto transformListFromSyntaxValueList = [](const CustomProperty::ValueList& list) {
+            return TransformList {
+                TransformList::Container::map(list.values, [&](auto& syntaxValue) {
+                    ASSERT(std::holds_alternative<TransformFunction>(syntaxValue));
+                    return std::get<TransformFunction>(syntaxValue);
                 })
             };
         };
 
-        auto fromTransformOperations = transformOperationsFromSyntaxValueList(from);
-        auto toTransformOperations = transformOperationsFromSyntaxValueList(to);
-        auto interpolatedTransformOperations = blendFunc(fromTransformOperations, toTransformOperations, context);
+        auto fromTransformList = transformListFromSyntaxValueList(from);
+        auto toTransformList = transformListFromSyntaxValueList(to);
+        auto interpolatedTransformList = blend(fromTransformList, toTransformList, context);
 
-        auto interpolatedSyntaxValues = WTF::map(interpolatedTransformOperations, [](auto& transformOperation) -> CustomProperty::Value {
-            return CustomProperty::Transform { transformOperation.copyRef() };
+        auto interpolatedSyntaxValues = WTF::map(interpolatedTransformList, [](auto& transformFunction) -> CustomProperty::Value {
+            return transformFunction;
         });
 
         return CustomProperty::ValueList { WTFMove(interpolatedSyntaxValues), from.separator };
@@ -228,7 +226,7 @@ static bool typeOfSyntaxValueCanBeInterpolated(const CustomProperty::Value& synt
         [](const String&) {
             return false;
         },
-        [](const CustomProperty::Transform&) {
+        [](const TransformFunction&) {
             return true;
         }
     );
@@ -313,7 +311,7 @@ bool canInterpolate(const AnimatableCSSProperty& property, const RenderStyle& a,
                         return false;
                     if (auto firstValue = firstValueInSyntaxValueLists(aValueList, bValueList)) {
                         // List sizes must match except for transform lists.
-                        if (!std::holds_alternative<CustomProperty::Transform>(*firstValue)
+                        if (!std::holds_alternative<TransformFunction>(*firstValue)
                             && aValueList.values.size() != bValueList.values.size()) {
                             return false;
                         }

@@ -375,7 +375,7 @@ private:
     String titleForContextMenuItemTag(ContextMenuItemTag) const;
     bool isDisplayModeContextMenuItemTag(ContextMenuItemTag) const;
     PDFContextMenuItem separatorContextMenuItem() const;
-    Vector<PDFContextMenuItem> selectionContextMenuItems(const WebCore::IntPoint& contextMenuEventRootViewPoint) const;
+    Vector<PDFContextMenuItem> selectionContextMenuItems(const WebCore::IntPoint& contextMenuEventRootViewPoint, bool shouldPresentLookupAndSearchOptions) const;
     Vector<PDFContextMenuItem> displayModeContextMenuItems() const;
     Vector<PDFContextMenuItem> scaleContextMenuItems() const;
     Vector<PDFContextMenuItem> navigationContextMenuItemsForPageAtIndex(PDFDocumentLayout::PageIndex) const;

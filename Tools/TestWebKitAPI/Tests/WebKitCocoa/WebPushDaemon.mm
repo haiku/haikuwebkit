@@ -62,6 +62,7 @@
 #import <wtf/UUID.h>
 #import <wtf/UniqueRef.h>
 #import <wtf/cocoa/SpanCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/darwin/XPCExtras.h>
 #import <wtf/text/Base64.h>
 #import <wtf/text/MakeString.h>
@@ -442,7 +443,7 @@ OSObjectPtr<xpc_object_t> WebPushXPCConnectionMessageSender::messageDictionaryFr
 
     __block auto blockBytes = encoder.takeBytes();
     auto buffer = blockBytes.span();
-    auto dispatchData = adoptNS(dispatch_data_create(buffer.data(), buffer.size(), dispatch_get_main_queue(), ^{
+    auto dispatchData = adoptNS(dispatch_data_create(buffer.data(), buffer.size(), mainDispatchQueueSingleton(), ^{
         blockBytes.clear();
     }));
     auto encoderData = adoptOSObject(xpc_data_create_with_dispatch_data(dispatchData.get()));
@@ -469,7 +470,7 @@ void WebPushXPCConnectionMessageSender::sendWithAsyncReplyWithoutUsingIPCConnect
     encoder.encodeHeader<M>();
     message.encode(encoder);
     auto dictionary = messageDictionaryFromEncoder(WTFMove(encoder));
-    xpc_connection_send_message_with_reply(m_connection.get(), dictionary.get(), dispatch_get_main_queue(), makeBlockPtr([this, completionHandler = WTFMove(completionHandler)] (xpc_object_t reply) mutable {
+    xpc_connection_send_message_with_reply(m_connection.get(), dictionary.get(), mainDispatchQueueSingleton(), makeBlockPtr([this, completionHandler = WTFMove(completionHandler)] (xpc_object_t reply) mutable {
         if (xpc_get_type(reply) == XPC_TYPE_ERROR) {
             // We only expect an error if we were purposefully testing the wrong protocol version.
             RELEASE_ASSERT(m_shouldIncrementProtocolVersionForTesting);
@@ -509,7 +510,7 @@ static WebKit::WebPushD::WebPushDaemonConnectionConfiguration defaultWebPushDaem
 
 RetainPtr<xpc_connection_t> createAndConfigureConnectionToService(const char* serviceName, std::optional<WebKit::WebPushD::WebPushDaemonConnectionConfiguration> configuration = std::nullopt)
 {
-    auto connection = adoptNS(xpc_connection_create_mach_service(serviceName, dispatch_get_main_queue(), 0));
+    auto connection = adoptNS(xpc_connection_create_mach_service(serviceName, mainDispatchQueueSingleton(), 0));
     xpc_connection_set_event_handler(connection.get(), ^(xpc_object_t) { });
     xpc_connection_activate(connection.get());
     auto sender = WebPushXPCConnectionMessageSender { connection.get() };
@@ -525,7 +526,7 @@ TEST(WebPushD, BasicCommunication)
 {
     NSURL *tempDir = setUpTestWebPushD();
 
-    auto connection = adoptNS(xpc_connection_create_mach_service("org.webkit.webpushtestdaemon.service", dispatch_get_main_queue(), 0));
+    auto connection = adoptNS(xpc_connection_create_mach_service("org.webkit.webpushtestdaemon.service", mainDispatchQueueSingleton(), 0));
 
     __block bool done = false;
     __block bool interrupted = false;

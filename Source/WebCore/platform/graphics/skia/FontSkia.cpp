@@ -49,8 +49,7 @@ FloatRect Font::platformBoundsForGlyph(Glyph glyph) const
         return { };
 
     const auto& font = m_platformData.skFont();
-    SkRect bounds;
-    font.getBounds(&glyph, 1, &bounds, nullptr);
+    SkRect bounds = font.getBounds(glyph, nullptr);
     if (!font.isSubpixel()) {
         SkIRect rect;
         bounds.roundOut(&rect);
@@ -65,8 +64,7 @@ float Font::platformWidthForGlyph(Glyph glyph) const
         return 0;
 
     const auto& font = m_platformData.skFont();
-    SkScalar width;
-    font.getWidths(&glyph, 1, &width);
+    SkScalar width = font.getWidth(glyph);
 
     if (!font.isSubpixel())
         width = SkScalarRoundToInt(width);

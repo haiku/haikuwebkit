@@ -345,6 +345,11 @@ Color toStyleColor(const CSS::Color& value, Ref<const Document> document, const 
     return toStyleColor(value, resolutionState);
 }
 
+Color toStyleColor(const CSS::Color& value, const BuilderState& builderState, ForVisitedLink forVisitedLink)
+{
+    return toStyleColor(value, builderState.document(), builderState.style(), builderState.cssToLengthConversionData(), forVisitedLink);
+}
+
 auto ToCSS<Color>::operator()(const Color& value, const RenderStyle& style) -> CSS::Color
 {
     return CSS::Color { CSS::ResolvedColor { style.colorResolvingCurrentColor(value) } };

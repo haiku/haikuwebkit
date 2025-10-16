@@ -27,12 +27,14 @@
 #include "WebRemoteFrameClient.h"
 
 #include "MessageSenderInlines.h"
+#include "RemoteDisplayListRecorderProxy.h"
 #include "WebFrameProxyMessages.h"
 #include "WebPage.h"
 #include "WebPageProxyMessages.h"
 #include <WebCore/FrameInlines.h>
 #include <WebCore/FrameLoadRequest.h>
 #include <WebCore/FrameTree.h>
+#include <WebCore/GraphicsContext.h>
 #include <WebCore/HTMLFrameOwnerElement.h>
 #include <WebCore/HitTestResult.h>
 #include <WebCore/NodeInlines.h>
@@ -74,6 +76,14 @@ void WebRemoteFrameClient::sizeDidChange(IntSize size)
     m_frame->updateRemoteFrameSize(size);
 }
 
+void WebRemoteFrameClient::paintContents(GraphicsContext& context, const IntRect& rect)
+{
+    RefPtr page = m_frame->page();
+    if (!page)
+        return;
+    page->paintRemoteFrameContents(m_frame->frameID(), rect, context);
+}
+
 void WebRemoteFrameClient::postMessageToRemote(FrameIdentifier source, const String& sourceOrigin, FrameIdentifier target, std::optional<SecurityOriginData> targetOrigin, const MessageWithMessagePorts& message)
 {
     if (RefPtr page = m_frame->page())
@@ -82,8 +92,7 @@ void WebRemoteFrameClient::postMessageToRemote(FrameIdentifier source, const Str
 
 void WebRemoteFrameClient::changeLocation(FrameLoadRequest&& request)
 {
-    // FIXME: FrameLoadRequest and NavigationAction can probably be refactored to share more. <rdar://116202911>
-    NavigationAction action(request.requester(), request.resourceRequest(), request.initiatedByMainFrame(), request.isRequestFromClientOrUserInput());
+    NavigationAction action(request);
     // FIXME: action.request and request are probably duplicate information. <rdar://116203126>
     // FIXME: Get more parameters correct and add tests for each one. <rdar://116203354>
     dispatchDecidePolicyForNavigationAction(action, action.originalRequest(), ResourceResponse(), nullptr, { }, { }, { }, { }, IsPerformingHTTPFallback::No, { }, PolicyDecisionMode::Asynchronous, [protectedFrame = Ref { m_frame }, request = WTFMove(request)] (PolicyAction policyAction) mutable {

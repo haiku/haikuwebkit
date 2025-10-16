@@ -40,6 +40,10 @@ class Range;
 
 namespace WebCore {
 
+namespace LayoutIntegration {
+class GridLayout;
+}
+
 class GridArea;
 class GridLayoutState;
 class GridSpan;
@@ -302,6 +306,10 @@ private:
     bool m_baselineItemsCached {false};
 
     mutable std::optional<GridItemSizeCache> m_intrinsicLogicalHeightsForRowSizingFirstPass;
+
+    bool layoutUsingGridFormattingContext();
+
+    std::optional<bool> m_hasGridFormattingContextLayout;
 };
 
 } // namespace WebCore

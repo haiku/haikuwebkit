@@ -91,7 +91,6 @@ class AllowList:
         seen_clss: dict[Union[str, AllowedSPI.Selector], AllowedSPI] = {}
         for reason in AllowedReason:
             for entry in doc.pop(reason.value, []):
-                syms = entry.pop('symbols', [])
                 clss = entry.pop('classes', [])
                 reqs = entry.pop('requires', [])
                 sels = []
@@ -99,6 +98,13 @@ class AllowList:
                     receiver = sel.get('class')
                     sels.append(AllowedSPI.Selector(sel['name'],
                                                     None if receiver == '?' else receiver))
+                # Symbols use C-style name mangling rules (implicit leading
+                # underscore), so that the names of C symbols in allowlists
+                # match their spelling in code. Internally, symbols are tracked
+                # in their raw form.
+                syms = []
+                for sym in entry.pop('symbols', []):
+                    syms.append(f'_{sym}')
 
                 bugs = AllowedSPI.Bugs(entry.pop('request', None),
                                        entry.pop('cleanup', None))

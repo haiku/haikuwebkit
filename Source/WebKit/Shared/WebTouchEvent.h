@@ -64,7 +64,7 @@ public:
     {
     }
 #if ENABLE(IOS_TOUCH_EVENTS)
-    WebPlatformTouchPoint(unsigned identifier, WebCore::DoublePoint locationInRootView, WebCore::DoublePoint locationInViewport, State phase, double radiusX, double radiusY, double rotationAngle, double force, double altitudeAngle, double azimuthAngle, TouchType touchType)
+    WebPlatformTouchPoint(unsigned identifier, WebCore::DoublePoint locationInRootView, WebCore::DoublePoint locationInViewport, State phase, double radiusX, double radiusY, double rotationAngle, double twist, double force, double altitudeAngle, double azimuthAngle, TouchType touchType)
         : m_identifier(identifier)
         , m_locationInRootView(locationInRootView)
         , m_locationInViewport(locationInViewport)
@@ -72,6 +72,7 @@ public:
         , m_radiusX(radiusX)
         , m_radiusY(radiusY)
         , m_rotationAngle(rotationAngle)
+        , m_twist(twist)
         , m_force(force)
         , m_altitudeAngle(altitudeAngle)
         , m_azimuthAngle(azimuthAngle)
@@ -95,6 +96,8 @@ public:
     double radiusY() const { return m_radiusY; }
     void setRotationAngle(double rotationAngle) { m_rotationAngle = rotationAngle; }
     double rotationAngle() const { return m_rotationAngle; }
+    void setTwist(double twist) { m_twist = twist; }
+    double twist() const { return m_twist; }
     void setForce(double force) { m_force = force; }
     double force() const { return m_force; }
     void setAltitudeAngle(double altitudeAngle) { m_altitudeAngle = altitudeAngle; }
@@ -115,6 +118,7 @@ private:
     double m_radiusX { 0 };
     double m_radiusY { 0 };
     double m_rotationAngle { 0 };
+    double m_twist { std::numbers::pi };
     double m_force { 0 };
     double m_altitudeAngle { 0 };
     double m_azimuthAngle { 0 };

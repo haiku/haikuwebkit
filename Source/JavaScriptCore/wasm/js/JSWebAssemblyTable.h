@@ -27,11 +27,11 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "JSObject.h"
-#include "WasmLimits.h"
-#include "WasmTable.h"
-#include "WebAssemblyWrapperFunction.h"
-#include "WebAssemblyFunction.h"
+#include <JavaScriptCore/JSObject.h>
+#include <JavaScriptCore/WasmLimits.h>
+#include <JavaScriptCore/WasmTable.h>
+#include <JavaScriptCore/WebAssemblyFunction.h>
+#include <JavaScriptCore/WebAssemblyWrapperFunction.h>
 #include <wtf/Ref.h>
 
 namespace JSC {

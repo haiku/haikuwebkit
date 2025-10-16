@@ -926,9 +926,8 @@
             "spec": "https://www.w3.org/TR/permissions/#webdriver-command-set-permission",
             "parameters": [
                 { "name": "browsingContextHandle", "$ref": "BrowsingContextHandle", "description": "The handle for the targeted browsing context." },
-                { "name": "state", "$ref": "PermissionState", "description": "The new state to be applied to the permission." },
-                { "name": "topFrameDomain", "type": "string", "description": "Origin whose storage is being accessed." },
-                { "name": "subFrameDomain", "type": "string", "description": "Origin of the subframe that should be granted non-partitioned storage access to the top frame's origin." }
+                { "name": "frameHandle", "$ref": "FrameHandle", "description": "The handle for the frame to set storage access permission for." },
+                { "name": "state", "$ref": "PermissionState", "description": "The new state to be applied to the permission." }
             ],
             "async": true
         },

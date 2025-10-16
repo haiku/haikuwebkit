@@ -377,7 +377,7 @@ void ServiceWorkerRegistration::addCookieChangeSubscriptions(Vector<CookieStoreG
         if (subscription.url.isNull())
             url = scope();
         else {
-            url = scriptExecutionContext()->completeURL(subscription.url).string();
+            url = protectedScriptExecutionContext()->completeURL(subscription.url).string();
             if (!url.startsWith(scope())) {
                 promise->reject(Exception { ExceptionCode::TypeError, "The service worker cannot subcribe to cookie changes for URLs outside of its scope"_s });
                 return;
@@ -405,7 +405,7 @@ void ServiceWorkerRegistration::removeCookieChangeSubscriptions(Vector<CookieSto
         if (subscription.url.isNull())
             url = scope();
         else {
-            url = scriptExecutionContext()->completeURL(subscription.url).string();
+            url = protectedScriptExecutionContext()->completeURL(subscription.url).string();
             if (!url.startsWith(scope())) {
                 promise->reject(Exception { ExceptionCode::TypeError, "The service worker cannot unsubcribe from cookie changes for URLs outside of its scope"_s });
                 return;

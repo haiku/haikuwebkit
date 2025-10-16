@@ -112,7 +112,7 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(NSEvent *event, NSEvent *last
     float deltaZ = [event deltaZ];
     int clickCount = WebCore::clickCountForEvent(event);
     auto modifiers = kit(WebCore::modifiersForEvent(event));
-    auto timestamp = WebCore::eventTimeStampSince1970(event.timestamp);
+    auto timestamp = MonotonicTime::fromRawSeconds(event.timestamp);
     int eventNumber = [event eventNumber];
     int menuTypeForEvent = typeForEvent(event);
 
@@ -169,9 +169,10 @@ WebWheelEvent WebEventFactory::createWebWheelEvent(NSEvent *event, NSView *windo
     }
 
     auto modifiers = kit(WebCore::modifiersForEvent(event));
-    auto timestamp = WebCore::eventTimeStampSince1970(event.timestamp);
-    
-    auto ioHIDEventWallTime = timestamp;
+    auto timestamp = MonotonicTime::fromRawSeconds(event.timestamp);
+
+    auto ioHIDEventTimestamp = timestamp;
+
     std::optional<WebCore::FloatSize> rawPlatformDelta;
     auto momentumEndType = WebWheelEvent::MomentumEndType::Unknown;
     
@@ -184,9 +185,8 @@ WebWheelEvent WebEventFactory::createWebWheelEvent(NSEvent *event, NSView *windo
         if (!ioHIDEvent)
             return;
 
-        auto ioHIDEventTimestamp = IOHIDEventGetTimeStamp(ioHIDEvent.get()); // IOEventRef timestamp is mach_absolute_time units.
-        auto monotonicIOHIDEventTimestamp = MonotonicTime::fromMachAbsoluteTime(ioHIDEventTimestamp).secondsSinceEpoch().seconds();
-        ioHIDEventWallTime = WebCore::eventTimeStampSince1970(monotonicIOHIDEventTimestamp);
+        auto ioHIDEventTimestampMachAbsoluteTime = IOHIDEventGetTimeStamp(ioHIDEvent.get());
+        ioHIDEventTimestamp = MonotonicTime::fromMachAbsoluteTime(ioHIDEventTimestampMachAbsoluteTime);
         
         rawPlatformDelta = { WebCore::FloatSize(-IOHIDEventGetFloatValue(ioHIDEvent.get(), kIOHIDEventFieldScrollX), -IOHIDEventGetFloatValue(ioHIDEvent.get(), kIOHIDEventFieldScrollY)) };
 
@@ -210,7 +210,7 @@ WebWheelEvent WebEventFactory::createWebWheelEvent(NSEvent *event, NSView *windo
 
     return WebWheelEvent({ WebEventType::Wheel, modifiers, timestamp, WTF::UUID::createVersion4() }, WebCore::IntPoint(position), WebCore::IntPoint(globalPosition), WebCore::FloatSize(deltaX, deltaY), WebCore::FloatSize(wheelTicksX, wheelTicksY),
         granularity, directionInvertedFromDevice, phase, momentumPhase, hasPreciseScrollingDeltas,
-        scrollCount, unacceleratedScrollingDelta, ioHIDEventWallTime, rawPlatformDelta, momentumEndType);
+        scrollCount, unacceleratedScrollingDelta, ioHIDEventTimestamp, rawPlatformDelta, momentumEndType);
 }
 
 WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(NSEvent *event, bool handledByInputMethod, bool replacesSoftSpace, const Vector<WebCore::KeypressCommand>& commands)
@@ -228,7 +228,7 @@ WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(NSEvent *event, bool ha
     bool isKeypad = WebCore::isKeypadEvent(event);
     bool isSystemKey = false; // SystemKey is always false on the Mac.
     auto modifiers = kit(WebCore::modifiersForEvent(event));
-    auto timestamp = WebCore::eventTimeStampSince1970(event.timestamp);
+    auto timestamp = MonotonicTime::fromRawSeconds(event.timestamp);
 
     // Always use 13 for Enter/Return -- we don't want to use AppKit's different character for Enter.
     if (windowsVirtualKeyCode == VK_RETURN) {

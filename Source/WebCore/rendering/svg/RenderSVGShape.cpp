@@ -38,6 +38,7 @@
 #include "LayoutRepainter.h"
 #include "LegacyRenderSVGResourceMarker.h"
 #include "PointerEventsHitRules.h"
+#include "RenderObjectDocument.h"
 #include "RenderSVGShapeInlines.h"
 #include "RenderStyleInlines.h"
 #include "RenderView.h"

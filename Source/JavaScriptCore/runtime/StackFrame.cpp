@@ -30,6 +30,7 @@
 #include "DebuggerPrimitives.h"
 #include "FunctionExecutable.h"
 #include "JSCellInlines.h"
+#include "JSFunctionInlines.h"
 #include <wtf/text/MakeString.h>
 
 namespace JSC {

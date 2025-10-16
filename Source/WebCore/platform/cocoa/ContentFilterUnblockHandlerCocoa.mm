@@ -116,7 +116,7 @@ Vector<uint8_t> ContentFilterUnblockHandler::webFilterEvaluatorData() const
 static RetainPtr<WebFilterEvaluator> unpackWebFilterEvaluatorData(Vector<uint8_t>&& vector)
 {
     NSError *error { nil };
-    NSSet<Class> *classes = [NSSet setWithObjects:getWebFilterEvaluatorClass(), NSNumber.class, NSURL.class, NSString.class, NSMutableString.class, nil];
+    NSSet<Class> *classes = [NSSet setWithObjects:getWebFilterEvaluatorClassSingleton(), NSNumber.class, NSURL.class, NSString.class, NSMutableString.class, nil];
     RetainPtr data = toNSDataNoCopy(vector.span(), FreeWhenDone::No);
     return [NSKeyedUnarchiver _strictlyUnarchivedObjectOfClasses:classes fromData:data.get() error:&error];
 }

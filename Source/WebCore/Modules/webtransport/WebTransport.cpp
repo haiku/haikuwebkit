@@ -49,7 +49,6 @@
 #include "WebTransportReliabilityMode.h"
 #include "WebTransportSession.h"
 #include "WorkerGlobalScope.h"
-#include "WorkerWebTransportSession.h"
 #include "WritableStream.h"
 #include <JavaScriptCore/JSGlobalObject.h>
 #include <wtf/CompletionHandler.h>
@@ -114,22 +113,16 @@ void WebTransport::initializeOverHTTP(SocketProvider& provider, ScriptExecutionC
     // FIXME: Do origin checks as outlined in https://www.w3.org/TR/webtransport/#initialize-webtransport-over-http
 
     // FIXME: Rename SocketProvider to NetworkProvider or something to reflect that it provides a little more than just simple sockets. SocketAndTransportProvider?
-    RefPtr workerSession = is<WorkerGlobalScope>(context) ? WorkerWebTransportSession::create(context.identifier(), *this).ptr() : nullptr;
-    Ref client = workerSession ? static_cast<WebTransportSessionClient&>(*workerSession) : static_cast<WebTransportSessionClient&>(*this);
-    context.enqueueTaskWhenSettled(provider.initializeWebTransportSession(context, client.get(), url), TaskSource::Networking, [this, protectedThis = Ref { *this }, workerSession] (auto&& result) mutable {
+    auto [session, promise] = provider.initializeWebTransportSession(context, *this, url);
+    m_session = WTFMove(session);
+
+    context.enqueueTaskWhenSettled(WTFMove(promise), TaskSource::Networking, [this, protectedThis = Ref { *this }] (auto&& result) mutable {
         if (!result) {
             m_state = State::Failed;
             m_ready.second->reject();
             m_closed.second->reject();
             return;
         }
-
-        if (workerSession) {
-            workerSession->attachSession(WTFMove(*result));
-            m_session = WTFMove(workerSession);
-        } else
-            m_session = WTFMove(*result);
-
         m_state = State::Connected;
         m_ready.second->resolve();
     });

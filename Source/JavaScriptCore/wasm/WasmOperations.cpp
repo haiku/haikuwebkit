@@ -82,7 +82,7 @@ JSC_DEFINE_JIT_OPERATION(operationJSToWasmEntryWrapperBuildFrame, JSToWasmCallee
     if (function->taintedness() >= SourceTaintedOrigin::IndirectlyTainted)
         vm.setMightBeExecutingTaintedCode();
 
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto* callee = function->jsToWasmCallee();
     ASSERT(function);
     ASSERT(callee->compilationMode() == CompilationMode::JSToWasmMode);
@@ -153,7 +153,7 @@ JSC_DEFINE_JIT_OPERATION(operationJSToWasmEntryWrapperBuildReturnFrame, EncodedJ
     ASSERT(instance);
     ASSERT(instance->globalObject());
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
 
     uint64_t* registerSpace = reinterpret_cast<uint64_t*>(sp);
     auto* callee = static_cast<JSToWasmCallee*>(callFrame->callee().asNativeCallee());
@@ -458,7 +458,7 @@ JSC_DEFINE_JIT_OPERATION(operationWasmToJSExitMarshalReturnValues, void, (void* 
 
     void* registerSpace = sp;
 
-    NativeCallFrameTracer tracer(instance->vm(), cfr);
+    WasmOperationPrologueCallFrameTracer tracer(instance->vm(), cfr, OUR_RETURN_ADDRESS);
     auto scope = DECLARE_THROW_SCOPE(instance->vm());
 
     auto* importableFunction = *access.operator()<WasmOrJSImportableFunctionCallLinkInfo*>(cfr, WasmToJSCallableFunctionSlot);
@@ -632,7 +632,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmToJSExitIterateResults, bool, (JS
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     SUPPRESS_UNCOUNTED_LOCAL const FunctionSignature* signature = type->as<FunctionSignature>();
@@ -1007,15 +1007,11 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmTriggerOSREntryNow, void, (Probe:
         return returnWithoutOSREntry();
     }
 
-    OMGCallee* replacement;
-    {
-        Locker locker { calleeGroup.m_lock };
-        replacement = calleeGroup.omgCallee(locker, functionIndex);
-    }
-    dataLogLnIf(Options::verboseOSR(), callee, ": Consider OSREntryPlan for functionCodeIndex=", osrEntryData.functionIndex(),  " loopIndex#", loopIndex, " with executeCounter = ", tierUp, " ", RawPointer(replacement));
+    RefPtr<OMGCallee> replacement = calleeGroup.tryGetOMGCalleeConcurrently(functionIndex);
+    dataLogLnIf(Options::verboseOSR(), callee, ": Consider OSREntryPlan for functionCodeIndex=", osrEntryData.functionIndex(),  " loopIndex#", loopIndex, " with executeCounter = ", tierUp, " ", RawPointer(replacement.get()));
 
     if (!Options::useWasmOSR()) {
-        if (shouldTriggerOMGCompile(tierUp, replacement, functionIndex))
+        if (shouldTriggerOMGCompile(tierUp, replacement.get(), functionIndex))
             triggerOMGReplacementCompile(tierUp, instance, calleeGroup, functionIndex);
 
         // We already have an OMG replacement.
@@ -1081,7 +1077,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmTriggerOSREntryNow, void, (Probe:
         }
     }
 
-    if (!shouldTriggerOMGCompile(tierUp, replacement, functionIndex) && !triggeredSlowPathToStartCompilation)
+    if (!shouldTriggerOMGCompile(tierUp, replacement.get(), functionIndex) && !triggeredSlowPathToStartCompilation)
         return returnWithoutOSREntry();
 
     if (!triggeredSlowPathToStartCompilation) {
@@ -1250,6 +1246,20 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmLoopOSREnterBBQJIT, void, (Probe:
 
 #endif
 
+#if ENABLE(WEBASSEMBLY_BBQJIT)
+JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmMaterializeBaselineData, void, (CallFrame* callFrame, JSWebAssemblyInstance* instance))
+{
+    BBQCallee& callee = *static_cast<BBQCallee*>(callFrame->callee().asNativeCallee());
+    ASSERT(callee.compilationMode() == CompilationMode::BBQMode);
+
+    Wasm::CalleeGroup& calleeGroup = *instance->calleeGroup();
+    ASSERT(instance->memory()->mode() == calleeGroup.mode());
+
+    FunctionSpaceIndex functionIndexInSpace = callee.index();
+    FunctionCodeIndex functionIndex = calleeGroup.toCodeIndex(functionIndexInSpace);
+    instance->ensureBaselineData(functionIndex);
+}
+#endif
 
 JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmUnwind, void*, (JSWebAssemblyInstance* instance))
 {
@@ -1261,7 +1271,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmUnwind, void*, (JSWebAssemblyInst
         assertCalleeIsReferenced(callFrame, instance);
 #endif
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     genericUnwind(vm, callFrame);
     ASSERT(!!vm.callFrameForCatch);
     ASSERT(!!vm.targetMachinePCForThrow);
@@ -1274,7 +1284,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationConvertToI64, int64_t, (JSWebAssembly
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return JSValue::decode(v).toBigInt64(globalObject);
 }
 
@@ -1284,7 +1294,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationConvertToF64, double, (JSWebAssemblyI
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return JSValue::decode(v).toNumber(globalObject);
 }
 
@@ -1294,7 +1304,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationConvertToI32, UCPUStrictInt32, (JSWeb
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return toUCPUStrictInt32(JSValue::decode(v).toInt32(globalObject));
 }
 
@@ -1304,7 +1314,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationConvertToF32, float, (JSWebAssemblyIn
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return static_cast<float>(JSValue::decode(v).toNumber(globalObject));
 }
 
@@ -1314,7 +1324,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationConvertToFuncref, EncodedJSValue, (JS
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue value = JSValue::decode(v);
@@ -1344,7 +1354,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationConvertToAnyref, EncodedJSValue, (JSW
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     const FunctionSignature* signature = type->as<FunctionSignature>();
@@ -1366,7 +1376,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationConvertToBigInt, EncodedJSValue, (JSW
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return JSValue::encode(JSBigInt::makeHeapBigIntOrBigInt32(globalObject, value));
 }
 
@@ -1377,7 +1387,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationIterateResults, bool, (JSWebAssemblyI
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     const FunctionSignature* signature = type->as<FunctionSignature>();
@@ -1480,7 +1490,7 @@ JSC_DEFINE_JIT_OPERATION(operationAllocateResultsArray, JSArray*, (JSWebAssembly
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
     JSGlobalObject* globalObject = instance->globalObject();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     ObjectInitializationScope initializationScope(vm);
@@ -1533,7 +1543,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationGrowMemory, UCPUStrictInt32, (JSWebAs
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return toUCPUStrictInt32(growMemory(instance, delta));
 }
 
@@ -1592,7 +1602,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmStructNewEmpty, EncodedJSValue, (
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex);
     auto* result = JSWebAssemblyStruct::tryCreate(vm, structure);
     if (!result) [[unlikely]]
@@ -1635,7 +1645,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmThrow, void*, (JSWebAssemblyInsta
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
 
     JSGlobalObject* globalObject = instance->globalObject();
@@ -1661,7 +1671,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmRethrow, void*, (JSWebAssemblyIns
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
 
     JSGlobalObject* globalObject = instance->globalObject();
@@ -1680,7 +1690,17 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmToJSException, void*, (JSWebAssem
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
+    return throwWasmToJSException(callFrame, type, instance);
+}
+
+JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationThrowExceptionFromOMG, void*, (JSWebAssemblyInstance* instance, Wasm::ExceptionType type, void* returnAddress))
+{
+    CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
+    assertCalleeIsReferenced(callFrame, instance);
+    VM& vm = instance->vm();
+    // This operation is called from a thunk. Thus we need a return address from OMG callee.
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, removeCodePtrTag(returnAddress));
     return throwWasmToJSException(callFrame, type, instance);
 }
 
@@ -1750,7 +1770,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayNew, EncodedJSValue, (JSWebA
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto* structure = instance->gcObjectStructure(typeIndex);
     return JSValue::encode(arrayNew(instance, structure, size, value));
 }
@@ -1760,7 +1780,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayNewVector, EncodedJSValue, (
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     auto* structure = instance->gcObjectStructure(typeIndex);
     return JSValue::encode(arrayNew(instance, structure, size, v128_t { lane0, lane1 }));
 }
@@ -1770,7 +1790,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayNewData, EncodedJSValue, (JS
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return arrayNewData(instance, typeIndex, dataSegmentIndex, arraySize, offset);
 }
 
@@ -1779,7 +1799,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayNewElem, EncodedJSValue, (JS
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
 
     return arrayNewElem(instance, typeIndex, elemSegmentIndex, arraySize, offset);
 }
@@ -1789,7 +1809,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayNewEmpty, EncodedJSValue, (J
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
 
     ASSERT(typeIndex < instance->module().moduleInformation().typeCount());
     WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex);
@@ -1806,7 +1826,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayFill, UCPUStrictInt32, (JSWe
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return toUCPUStrictInt32(arrayFill(vm, arrayValue, offset, value, size));
 }
 
@@ -1815,7 +1835,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayFillVector, UCPUStrictInt32,
     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
     assertCalleeIsReferenced(callFrame, instance);
     VM& vm = instance->vm();
-    NativeCallFrameTracer tracer(vm, callFrame);
+    WasmOperationPrologueCallFrameTracer tracer(vm, callFrame, OUR_RETURN_ADDRESS);
     return toUCPUStrictInt32(arrayFill(vm, arrayValue, offset, v128_t { lane0, lane1 }, size));
 }
 

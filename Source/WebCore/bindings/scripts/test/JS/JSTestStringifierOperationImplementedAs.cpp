@@ -153,7 +153,7 @@ JSValue JSTestStringifierOperationImplementedAs::getConstructor(VM& vm, const JS
 
 void JSTestStringifierOperationImplementedAs::destroy(JSC::JSCell* cell)
 {
-    JSTestStringifierOperationImplementedAs* thisObject = static_cast<JSTestStringifierOperationImplementedAs*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestStringifierOperationImplementedAs* thisObject = static_cast<JSTestStringifierOperationImplementedAs*>(cell);
     thisObject->JSTestStringifierOperationImplementedAs::~JSTestStringifierOperationImplementedAs();
 }
 
@@ -226,7 +226,7 @@ bool JSTestStringifierOperationImplementedAsOwner::isReachableFromOpaqueRoots(JS
 
 void JSTestStringifierOperationImplementedAsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestStringifierOperationImplementedAs = static_cast<JSTestStringifierOperationImplementedAs*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestStringifierOperationImplementedAs = static_cast<JSTestStringifierOperationImplementedAs*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestStringifierOperationImplementedAs->protectedWrapped().ptr(), jsTestStringifierOperationImplementedAs);
 }

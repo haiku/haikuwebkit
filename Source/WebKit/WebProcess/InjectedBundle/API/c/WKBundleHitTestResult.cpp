@@ -51,14 +51,14 @@ WKBundleNodeHandleRef WKBundleHitTestResultCopyURLElementHandle(WKBundleHitTestR
     return toAPI(urlElementNodeHandle.leakRef());
 }
 
-WKBundleFrameRef WKBundleHitTestResultGetFrame(WKBundleHitTestResultRef hitTestResultRef)
+WKBundleFrameRef WKBundleHitTestResultGetFrame(WKBundleHitTestResultRef)
 {
-    return toAPI(WebKit::toImpl(hitTestResultRef)->frame().get());
+    return nullptr;
 }
 
-WKBundleFrameRef WKBundleHitTestResultGetTargetFrame(WKBundleHitTestResultRef hitTestResultRef)
+WKBundleFrameRef WKBundleHitTestResultGetTargetFrame(WKBundleHitTestResultRef)
 {
-    return toAPI(WebKit::toImpl(hitTestResultRef)->targetFrame().get());
+    return nullptr;
 }
 
 WKURLRef WKBundleHitTestResultCopyAbsoluteImageURL(WKBundleHitTestResultRef hitTestResultRef)
@@ -106,10 +106,9 @@ WKRect WKBundleHitTestResultGetImageRect(WKBundleHitTestResultRef hitTestResultR
     return WebKit::toAPI(WebKit::toImpl(hitTestResultRef)->imageRect());
 }
 
-WKImageRef WKBundleHitTestResultCopyImage(WKBundleHitTestResultRef hitTestResultRef)
+WKImageRef WKBundleHitTestResultCopyImage(WKBundleHitTestResultRef)
 {
-    RefPtr<WebKit::WebImage> webImage = WebKit::toImpl(hitTestResultRef)->image();
-    return toAPI(webImage.leakRef());
+    return nullptr;
 }
 
 bool WKBundleHitTestResultGetIsSelected(WKBundleHitTestResultRef hitTestResultRef)

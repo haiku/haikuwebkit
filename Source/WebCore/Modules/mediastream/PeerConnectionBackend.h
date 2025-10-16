@@ -116,6 +116,9 @@ public:
 
     void stop();
 
+#if USE(GSTREAMER_WEBRTC)
+    virtual void prepareForClose() = 0;
+#endif
     virtual void close() = 0;
 
     virtual void restartIce() = 0;

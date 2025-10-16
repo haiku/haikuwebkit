@@ -163,8 +163,7 @@ const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requ
         if (scopeOrdinal >= ScopeOrdinal::FirstSlot && scopeOrdinal <= ScopeOrdinal::SlotLimit)
             return assignedSlotForScopeOrdinal(element, scopeOrdinal);
 
-        // Unnamed queries query the composed tree, while named queries do not.
-        if (scopeOrdinal == ScopeOrdinal::Element && element.assignedSlot() && name.isEmpty())
+        if (scopeOrdinal == ScopeOrdinal::Element && element.assignedSlot())
             return element.assignedSlot();
 
         return nullptr;

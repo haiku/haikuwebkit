@@ -35,6 +35,7 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <WebCore/Document.h>
+#include <WebCore/DocumentInlines.h>
 #include <WebCore/LibWebRTCUtils.h>
 #include <WebCore/Page.h>
 #include <WebCore/Settings.h>

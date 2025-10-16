@@ -402,7 +402,9 @@ bool CocoaApplication::shouldOSFaultLogForAppleApplicationUsingWebKit1()
             String bundleIdentifier = applicationBundleIdentifier();
             if (bundleIdentifier.startsWith("com.apple.InstallerRemotePluginService."_s))
                 return false;
-            if (applicationBundleIsEqualTo("TestWebKitAPI"_s))
+            if (applicationBundleIsEqualTo("com.apple.WebKit.TestWebKitAPI"_s))
+                return false;
+            if (applicationBundleIsEqualTo("com.apple.ibtool"_s))
                 return false;
             if (CocoaApplication::isDumpRenderTree())
                 return false;

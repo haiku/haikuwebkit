@@ -54,10 +54,10 @@ static Ref<TransformOperation> createOperation(TransformationMatrix& to, Transfo
     return Matrix3DTransformOperation::create(to);
 }
 
-Ref<TransformOperation> Matrix3DTransformOperation::blend(const TransformOperation* from, const BlendingContext& context, bool blendToIdentity)
+Ref<TransformOperation> Matrix3DTransformOperation::blend(const TransformOperation* from, const BlendingContext& context, bool blendToIdentity) const
 {
     if (!sharedPrimitiveType(from))
-        return *this;
+        return const_cast<Matrix3DTransformOperation&>(*this);
 
     // Convert the TransformOperations into matrices
     FloatSize size;

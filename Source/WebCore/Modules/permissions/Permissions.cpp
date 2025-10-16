@@ -26,6 +26,7 @@
 #include "config.h"
 #include "Permissions.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DedicatedWorkerGlobalScope.h"
 #include "DocumentInlines.h"
 #include "Exception.h"

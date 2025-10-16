@@ -52,6 +52,7 @@ namespace WebCore {
     macro(ContentEditableAttributeChanged) \
     macro(ControlledObjectsChanged) \
     macro(CurrentStateChanged) \
+    macro(CursorTypeChanged) \
     macro(DatetimeChanged) \
     macro(DescribedByChanged) \
     macro(DisabledStateChanged) \

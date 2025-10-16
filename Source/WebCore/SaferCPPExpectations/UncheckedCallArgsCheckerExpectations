@@ -1,15 +1,5 @@
 Modules/applicationmanifest/ApplicationManifestParser.cpp
 Modules/credentialmanagement/CredentialsContainer.cpp
-Modules/indexeddb/IDBCursor.cpp
-Modules/indexeddb/IDBIndex.cpp
-Modules/indexeddb/IDBTransaction.cpp
-Modules/indexeddb/server/IDBConnectionToClient.cpp
-Modules/indexeddb/server/MemoryBackingStoreTransaction.cpp
-Modules/indexeddb/server/MemoryIndex.cpp
-Modules/indexeddb/server/MemoryObjectStore.cpp
-Modules/indexeddb/server/SQLiteIDBBackingStore.cpp
-Modules/indexeddb/server/SQLiteIDBCursor.cpp
-Modules/indexeddb/server/UniqueIDBDatabase.cpp
 Modules/mediacontrols/MediaControlsHost.cpp
 Modules/mediarecorder/MediaRecorder.cpp
 Modules/mediasession/MediaMetadata.cpp
@@ -30,6 +20,7 @@ Modules/webaudio/MediaStreamAudioDestinationNode.cpp
 Modules/webaudio/WaveShaperNode.cpp
 Modules/webdatabase/ChangeVersionWrapper.cpp
 Modules/webdatabase/Database.cpp
+Modules/webdatabase/DatabaseContext.cpp
 Modules/webdatabase/DatabaseManager.cpp
 Modules/webdatabase/DatabaseTracker.cpp
 Modules/webdatabase/LocalDOMWindowWebDatabase.cpp
@@ -48,7 +39,7 @@ accessibility/AccessibilityMenuListOption.cpp
 accessibility/AccessibilityMenuListPopup.cpp
 accessibility/AccessibilityNodeObject.cpp
 accessibility/AccessibilityObject.cpp
-accessibility/AccessibilityObject.h
+accessibility/AccessibilityObjectInlines.h
 accessibility/AccessibilityProgressIndicator.cpp
 accessibility/AccessibilityRenderObject.cpp
 accessibility/AccessibilityScrollView.cpp
@@ -160,7 +151,6 @@ dom/Range.cpp
 dom/RangeBoundaryPoint.h
 dom/ScriptElement.cpp
 dom/ScriptRunner.cpp
-dom/SecurityContext.cpp
 dom/SelectorQuery.cpp
 dom/ShadowRoot.cpp
 dom/SimpleRange.cpp
@@ -253,7 +243,6 @@ html/HTMLObjectElement.cpp
 html/HTMLOptionElement.cpp
 html/HTMLOptionsCollection.cpp
 html/HTMLPlugInElement.cpp
-html/HTMLPlugInImageElement.cpp
 html/HTMLSelectElement.cpp
 html/HTMLStyleElement.cpp
 html/HTMLTableCellElement.cpp
@@ -302,7 +291,6 @@ inspector/InspectorAuditAccessibilityObject.cpp
 inspector/InspectorCanvas.cpp
 inspector/InspectorController.cpp
 inspector/InspectorFrontendAPIDispatcher.cpp
-inspector/InspectorFrontendClientLocal.cpp
 inspector/InspectorFrontendHost.cpp
 inspector/InspectorInstrumentation.cpp
 inspector/InspectorInstrumentation.h
@@ -316,7 +304,6 @@ inspector/agents/InspectorCSSAgent.cpp
 inspector/agents/InspectorCSSAgent.h
 inspector/agents/InspectorCanvasAgent.cpp
 inspector/agents/InspectorDOMAgent.cpp
-inspector/agents/InspectorIndexedDBAgent.cpp
 inspector/agents/InspectorLayerTreeAgent.cpp
 inspector/agents/InspectorNetworkAgent.cpp
 inspector/agents/InspectorPageAgent.cpp
@@ -411,8 +398,6 @@ loader/SubframeLoader.cpp
 loader/SubresourceLoader.cpp
 loader/ThreadableLoaderClientWrapper.h
 loader/WorkerThreadableLoader.cpp
-loader/appcache/ApplicationCacheGroup.cpp
-loader/appcache/ApplicationCacheStorage.cpp
 loader/archive/cf/LegacyWebArchive.cpp
 loader/cache/CachedImage.cpp
 mathml/MathMLElement.cpp
@@ -428,6 +413,7 @@ page/DragController.cpp
 page/ElementTargetingController.cpp
 page/EventHandler.cpp
 page/FocusController.cpp
+page/FrameConsoleClient.cpp
 page/FrameSnapshotting.cpp
 page/ImageOverlayController.cpp
 page/IntelligenceTextEffectsSupport.cpp
@@ -441,9 +427,7 @@ page/Location.cpp
 page/MemoryRelease.cpp
 page/NavigateEvent.cpp
 page/Navigator.cpp
-page/Page.cpp
 page/PageColorSampler.cpp
-page/PageConsoleClient.cpp
 page/PageOverlay.cpp
 page/PageOverlayController.cpp
 page/PageSerializer.cpp
@@ -452,7 +436,6 @@ page/PerformanceMonitor.cpp
 page/PointerCaptureController.cpp
 page/PointerLockController.cpp
 page/PrintContext.cpp
-page/Quirks.cpp
 page/RemoteFrame.cpp
 page/ResizeObservation.cpp
 page/ResizeObserver.cpp
@@ -481,7 +464,6 @@ platform/ScrollView.cpp
 platform/Scrollbar.cpp
 platform/ScrollbarsController.cpp
 platform/ScrollingEffectsController.cpp
-platform/ThreadGlobalData.cpp
 platform/Widget.cpp
 platform/audio/PlatformMediaSession.cpp
 platform/audio/PlatformMediaSessionInterface.h
@@ -498,7 +480,6 @@ platform/graphics/ca/cocoa/WebTiledBackingLayer.mm
 platform/graphics/cg/CGSubimageCacheWithTimer.cpp
 platform/ios/PlaybackSessionInterfaceIOS.mm
 platform/ios/WebAVPlayerController.mm
-platform/mac/PlaybackSessionInterfaceMac.mm
 platform/mac/ScrollAnimatorMac.mm
 platform/mac/ScrollbarThemeMac.mm
 platform/mac/ScrollbarsControllerMac.mm
@@ -515,7 +496,7 @@ rendering/AttachmentLayout.mm
 rendering/AutoTableLayout.cpp
 rendering/BackgroundPainter.cpp
 rendering/BorderPainter.cpp
-rendering/CSSFilter.cpp
+rendering/CSSFilterRenderer.cpp
 rendering/CaretRectComputation.cpp
 rendering/ContentfulPaintChecker.cpp
 rendering/CounterNode.cpp
@@ -591,6 +572,7 @@ rendering/RenderMenuList.cpp
 rendering/RenderMultiColumnFlow.cpp
 rendering/RenderMultiColumnSet.cpp
 rendering/RenderObject.cpp
+rendering/RenderObjectNode.h
 rendering/RenderProgress.cpp
 rendering/RenderQuote.cpp
 rendering/RenderReplaced.cpp

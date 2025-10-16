@@ -78,14 +78,14 @@ static FilterOperations applyFilterAnimation(const FilterOperations& from, const
     return FilterOperations { WTFMove(operations) };
 }
 
-static bool shouldReverseAnimationValue(Animation::Direction direction, int loopCount)
+static bool shouldReverseAnimationValue(GraphicsLayerAnimation::Direction direction, int loopCount)
 {
-    return (direction == Animation::Direction::Alternate && loopCount & 1)
-        || (direction == Animation::Direction::AlternateReverse && !(loopCount & 1))
-        || direction == Animation::Direction::Reverse;
+    return (direction == GraphicsLayerAnimation::Direction::Alternate && loopCount & 1)
+        || (direction == GraphicsLayerAnimation::Direction::AlternateReverse && !(loopCount & 1))
+        || direction == GraphicsLayerAnimation::Direction::Reverse;
 }
 
-static double normalizedAnimationValue(double runningTime, double duration, Animation::Direction direction, double iterationCount)
+static double normalizedAnimationValue(double runningTime, double duration, GraphicsLayerAnimation::Direction direction, double iterationCount)
 {
     if (!duration)
         return 0;
@@ -99,11 +99,11 @@ static double normalizedAnimationValue(double runningTime, double duration, Anim
     return shouldReverseAnimationValue(direction, loopCount) ? 1 - normalized : normalized;
 }
 
-static double normalizedAnimationValueForFillsForwards(double iterationCount, Animation::Direction direction)
+static double normalizedAnimationValueForFillsForwards(double iterationCount, GraphicsLayerAnimation::Direction direction)
 {
-    if (direction == Animation::Direction::Normal)
+    if (direction == GraphicsLayerAnimation::Direction::Normal)
         return 1;
-    if (direction == Animation::Direction::Reverse)
+    if (direction == GraphicsLayerAnimation::Direction::Reverse)
         return 0;
     return shouldReverseAnimationValue(direction, iterationCount) ? 1 : 0;
 }
@@ -136,7 +136,7 @@ static TransformationMatrix applyTransformAnimation(const TransformOperations& f
         return matrix;
     }
 
-    to.blend(from, progress, LayoutSize { boxSize }).apply(matrix, boxSize);
+    blend(from, to, progress, LayoutSize { boxSize }).apply(matrix, boxSize);
     return matrix;
 }
 
@@ -174,7 +174,7 @@ static KeyframeValueList createThreadsafeKeyFrames(const KeyframeValueList& orig
     return keyframes;
 }
 
-TextureMapperAnimation::TextureMapperAnimation(const String& name, const KeyframeValueList& keyframes, const FloatSize& boxSize, const Animation& animation, MonotonicTime startTime, Seconds pauseTime, State state)
+TextureMapperAnimation::TextureMapperAnimation(const String& name, const KeyframeValueList& keyframes, const FloatSize& boxSize, const GraphicsLayerAnimation& animation, MonotonicTime startTime, Seconds pauseTime, State state)
     : m_name(name.isSafeToSendToAnotherThread() ? name : name.isolatedCopy())
     , m_keyframes(createThreadsafeKeyFrames(keyframes, boxSize))
     , m_boxSize(boxSize)
@@ -245,7 +245,7 @@ void TextureMapperAnimation::apply(ApplicationResult& applicationResults, Monoto
     Seconds totalRunningTime = computeTotalRunningTime(time);
     double normalizedValue = normalizedAnimationValue(totalRunningTime.seconds(), m_duration, m_direction, m_iterationCount);
 
-    if (m_iterationCount != Animation::IterationCountInfinite && totalRunningTime.seconds() >= m_duration * m_iterationCount) {
+    if (m_iterationCount != GraphicsLayerAnimation::IterationCountInfinite && totalRunningTime.seconds() >= m_duration * m_iterationCount) {
         m_state = State::Stopped;
         m_pauseTime = 0_s;
         normalizedValue = normalizedAnimationValueForFillsForwards(m_iterationCount, m_direction);

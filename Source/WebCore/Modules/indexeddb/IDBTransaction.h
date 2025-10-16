@@ -89,6 +89,7 @@ public:
 
     enum EventTargetInterfaceType eventTargetInterface() const final { return EventTargetInterfaceType::IDBTransaction; }
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ActiveDOMObject::protectedScriptExecutionContext;
     void refEventTarget() final { ThreadSafeRefCounted::ref(); }
     void derefEventTarget() final { ThreadSafeRefCounted::deref(); }
     using EventTarget::dispatchEvent;
@@ -147,6 +148,7 @@ public:
     bool didDispatchAbortOrCommit() const { return m_didDispatchAbortOrCommit; }
 
     IDBClient::IDBConnectionProxy& connectionProxy();
+    Ref<IDBClient::IDBConnectionProxy> protectedConnectionProxy();
     void connectionClosedFromServer(const IDBError&);
     void generateIndexKeyForRecord(const IDBResourceIdentifier& requestIdentifier, const IDBIndexInfo&, const std::optional<IDBKeyPath>&, const IDBKeyData&, const IDBValue&, std::optional<int64_t> recordID);
 
@@ -239,6 +241,8 @@ private:
     void trySchedulePendingOperationTimer();
     void addCursorRequest(IDBRequest&);
 
+    void assertCurrentThreadAccessThreadLocalData() const;
+
     const Ref<IDBDatabase> m_database;
     IDBTransactionInfo m_info;
 
@@ -292,5 +296,25 @@ public:
 private:
     RefPtr<IDBTransaction> m_transaction;
 };
+
+#if !ASSERT_ENABLED
+ALWAYS_INLINE void IDBTransaction::assertCurrentThreadAccessThreadLocalData() const
+{
+}
+#endif
+
+inline bool IDBTransaction::isActive() const
+{
+    assertCurrentThreadAccessThreadLocalData();
+    return m_state == IndexedDB::TransactionState::Active;
+}
+
+inline bool IDBTransaction::isFinishedOrFinishing() const
+{
+    assertCurrentThreadAccessThreadLocalData();
+    return m_state == IndexedDB::TransactionState::Committing
+        || m_state == IndexedDB::TransactionState::Aborting
+        || m_state == IndexedDB::TransactionState::Finished;
+}
 
 } // namespace WebCore

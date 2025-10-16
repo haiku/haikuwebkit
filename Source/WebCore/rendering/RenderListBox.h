@@ -109,7 +109,6 @@ private:
     void autoscroll(const IntPoint&) override;
     void stopAutoscroll() override;
 
-    virtual bool shouldPanScroll() const { return true; }
     void panScroll(const IntPoint&) override;
 
     int verticalScrollbarWidth() const override;

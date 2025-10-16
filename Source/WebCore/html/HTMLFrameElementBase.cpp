@@ -72,7 +72,7 @@ bool HTMLFrameElementBase::canLoadURL(const String& relativeURL) const
     return canLoadURL(document().completeURL(relativeURL));
 }
 
-// Note that unlike HTMLPlugInImageElement::canLoadURL this uses ScriptController::canAccessFromCurrentOrigin.
+// Note that unlike HTMLPlugInElement::canLoadURL this uses ScriptController::canAccessFromCurrentOrigin.
 bool HTMLFrameElementBase::canLoadURL(const URL& completeURL) const
 {
     if (completeURL.protocolIsJavaScript()) {

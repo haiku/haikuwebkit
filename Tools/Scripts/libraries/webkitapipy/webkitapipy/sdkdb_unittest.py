@@ -55,7 +55,7 @@ A = AllowList.from_dict({'temporary-usage': [
      'cleanup': 'rdar://12346',
      'classes': ['WKDoesntExist'],
      'selectors': [{'name': 'initWithData:', 'class': '?'}],
-     'symbols': ['_WKDoesntExistLibraryVersion']}
+     'symbols': ['WKDoesntExistLibraryVersion']}
 ]})
 A_File = Path('/allowed.toml')
 A_Hash = 23456
@@ -75,7 +75,7 @@ A_Conditional = AllowList.from_dict({'temporary-usage': [
      'cleanup': 'rdar://12346',
      'classes': ['WKDoesntExist'],
      'selectors': [{'name': 'initWithData:', 'class': '?'}],
-     'symbols': ['_WKDoesntExistLibraryVersion'],
+     'symbols': ['WKDoesntExistLibraryVersion'],
      'requires': ['ENABLE_FEATURE']}
 ]})
 
@@ -84,7 +84,7 @@ A_NegatedConditional = AllowList.from_dict({'temporary-usage': [
      'cleanup': 'rdar://12346',
      'classes': ['WKDoesntExist'],
      'selectors': [{'name': 'initWithData:', 'class': '?'}],
-     'symbols': ['_WKDoesntExistLibraryVersion'],
+     'symbols': ['WKDoesntExistLibraryVersion'],
      'requires': ['!ENABLE_FEATURE']}
 ]})
 
@@ -93,7 +93,7 @@ A_MultipleConditions = AllowList.from_dict({'temporary-usage': [
      'cleanup': 'rdar://12346',
      'classes': ['WKDoesntExist'],
      'selectors': [{'name': 'initWithData:', 'class': '?'}],
-     'symbols': ['_WKDoesntExistLibraryVersion'],
+     'symbols': ['WKDoesntExistLibraryVersion'],
      'requires': ['ENABLE_A', 'ENABLE_B', '!ENABLE_C']}
 ]})
 
@@ -102,7 +102,7 @@ A_QualifiedSelector = AllowList.from_dict({'temporary-usage': [
      'cleanup': 'rdar://12346',
      'classes': ['WKDoesntExist'],
      'selectors': [{'name': 'initWithData:', 'class': 'WKDoesntExist'}],
-     'symbols': ['_WKDoesntExistLibraryVersion']}
+     'symbols': ['WKDoesntExistLibraryVersion']}
 ]})
 
 S = {

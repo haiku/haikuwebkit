@@ -44,9 +44,10 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaSessionManagerInterface);
 
-MediaSessionManagerInterface::MediaSessionManagerInterface()
+MediaSessionManagerInterface::MediaSessionManagerInterface(PageIdentifier pageIdentifier)
+    : m_pageIdentifier(pageIdentifier)
 #if !RELEASE_LOG_DISABLED
-    : m_stateLogTimer(makeUniqueRef<Timer>(*this, &MediaSessionManagerInterface::dumpSessionStates))
+    , m_stateLogTimer(makeUniqueRef<Timer>(*this, &MediaSessionManagerInterface::dumpSessionStates))
     , m_logger(AggregateLogger::create(this))
 #endif
 {
@@ -577,11 +578,11 @@ int MediaSessionManagerInterface::countActiveAudioCaptureSources()
 void MediaSessionManagerInterface::processDidReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType command, const PlatformMediaSession::RemoteCommandArgument& argument)
 {
 #if ENABLE(VIDEO) || ENABLE(audio)
-    auto activeSession = firstSessionMatching([](auto& session) {
+    WeakPtr weakActiveSession = firstSessionMatching([](auto& session) {
         return session.canReceiveRemoteControlCommands();
     });
 
-    if (activeSession)
+    if (RefPtr activeSession = weakActiveSession.get())
         activeSession->didReceiveRemoteControlCommand(command, argument);
 #else
     UNUSED_PARAM(command);

@@ -62,6 +62,7 @@
 #include "SVGSVGElement.h"
 #include "SVGTitleElement.h"
 #include "SVGUseElement.h"
+#include "Settings.h"
 #include "ShadowRoot.h"
 #include "StyleAdjuster.h"
 #include "StyleExtractor.h"

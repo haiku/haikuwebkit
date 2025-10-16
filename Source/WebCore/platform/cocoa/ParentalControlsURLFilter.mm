@@ -34,6 +34,7 @@
 #import <wtf/CompletionHandler.h>
 #import <wtf/MainThread.h>
 #import <wtf/URL.h>
+#import <wtf/cf/NotificationCenterCF.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
 #import <pal/cocoa/WebContentRestrictionsSoftLink.h>
@@ -45,9 +46,9 @@ namespace WebCore {
 static bool wcrBrowserEngineClientEnabled(const String& path)
 {
     if (!path.isEmpty())
-        return [PAL::getWCRBrowserEngineClientClass() shouldEvaluateURLsForConfigurationAtPath:path.createNSString().get()];
+        return [PAL::getWCRBrowserEngineClientClassSingleton() shouldEvaluateURLsForConfigurationAtPath:path.createNSString().get()];
 
-    return [PAL::getWCRBrowserEngineClientClass() shouldEvaluateURLs];
+    return [PAL::getWCRBrowserEngineClientClassSingleton() shouldEvaluateURLs];
 }
 
 static HashMap<String, UniqueRef<ParentalControlsURLFilter>>& allFiltersWithConfigurationPath()
@@ -78,7 +79,7 @@ ParentalControlsURLFilter::ParentalControlsURLFilter(const String& configuration
 
 static bool wcrBrowserEngineClientEnabled()
 {
-    return [PAL::getWCRBrowserEngineClientClass() shouldEvaluateURLs];
+    return [PAL::getWCRBrowserEngineClientClassSingleton() shouldEvaluateURLs];
 }
 
 ParentalControlsURLFilter& ParentalControlsURLFilter::singleton()
@@ -111,7 +112,7 @@ static void registerNotificationForWebContentFilterTypeChange()
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), nullptr, &webContentFilterTypeDidChange, CFSTR("com.apple.ManagedConfiguration.webContentFilterTypeChanged"), nullptr, CFNotificationSuspensionBehaviorCoalesce);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenterSingleton(), nullptr, &webContentFilterTypeDidChange, CFSTR("com.apple.ManagedConfiguration.webContentFilterTypeChanged"), nullptr, CFNotificationSuspensionBehaviorCoalesce);
     });
 }
 

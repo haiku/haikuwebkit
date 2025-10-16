@@ -174,7 +174,7 @@ JSValue JSTestNamedSetterWithLegacyUnforgeableProperties::getConstructor(VM& vm,
 
 void JSTestNamedSetterWithLegacyUnforgeableProperties::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedSetterWithLegacyUnforgeableProperties* thisObject = static_cast<JSTestNamedSetterWithLegacyUnforgeableProperties*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedSetterWithLegacyUnforgeableProperties* thisObject = static_cast<JSTestNamedSetterWithLegacyUnforgeableProperties*>(cell);
     thisObject->JSTestNamedSetterWithLegacyUnforgeableProperties::~JSTestNamedSetterWithLegacyUnforgeableProperties();
 }
 
@@ -441,7 +441,7 @@ bool JSTestNamedSetterWithLegacyUnforgeablePropertiesOwner::isReachableFromOpaqu
 
 void JSTestNamedSetterWithLegacyUnforgeablePropertiesOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedSetterWithLegacyUnforgeableProperties = static_cast<JSTestNamedSetterWithLegacyUnforgeableProperties*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedSetterWithLegacyUnforgeableProperties = static_cast<JSTestNamedSetterWithLegacyUnforgeableProperties*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedSetterWithLegacyUnforgeableProperties->protectedWrapped().ptr(), jsTestNamedSetterWithLegacyUnforgeableProperties);
 }

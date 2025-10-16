@@ -98,7 +98,6 @@ public:
         Rect,
         
         // UIProcess types
-        ApplicationCacheManager,
 #if ENABLE(APPLICATION_MANIFEST)
         ApplicationManifest,
 #endif

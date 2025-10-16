@@ -167,7 +167,7 @@ public:
 
     Vector<AnchorScrollAdjuster>& anchorScrollAdjusters() { return m_anchorScrollAdjusters; }
     const AnchorScrollAdjuster* anchorScrollAdjusterFor(const RenderBox& anchored) const;
-    void registerAnchorScrollAdjuster(AnchorScrollAdjuster&&);
+    AnchorScrollAdjuster::Diff registerAnchorScrollAdjuster(AnchorScrollAdjuster&&);
     void unregisterAnchorScrollAdjusterFor(const RenderBox& anchored);
     void invalidateAnchorDependenciesForScroller(const RenderBox& scroller);
     void removeScrollerFromAnchorScrollAdjusters(const RenderBox& scroller);

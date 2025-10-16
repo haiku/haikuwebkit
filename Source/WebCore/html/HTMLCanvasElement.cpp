@@ -723,7 +723,7 @@ ExceptionOr<UncachedString> HTMLCanvasElement::toDataURL(const String& mimeType,
         return UncachedString { "data:,"_s };
     Ref document = this->document();
     if (document->settings().webAPIStatisticsEnabled())
-        ResourceLoadObserver::shared().logCanvasRead(document);
+        ResourceLoadObserver::singleton().logCanvasRead(document);
 
     auto encodingMIMEType = toEncodingMimeType(mimeType);
     auto quality = qualityFromJSValue(qualityValue);
@@ -744,7 +744,7 @@ ExceptionOr<UncachedString> HTMLCanvasElement::toDataURL(const String& mimeType,
     if (auto url = document->quirks().advancedPrivacyProtectionSubstituteDataURLForScriptWithFeatures(lastFillText(), width(), height()); !url.isNull()) {
         RELEASE_LOG(FingerprintingMitigation, "HTMLCanvasElement::toDataURL: Quirking returned URL for identified fingerprinting script");
         auto consoleMessage = "Detected fingerprinting script. Quirking value returned from HTMLCanvasElement.toDataURL()"_s;
-        canvasBaseScriptExecutionContext()->addConsoleMessage(MessageSource::Rendering, MessageLevel::Info, consoleMessage);
+        protectedCanvasBaseScriptExecutionContext()->addConsoleMessage(MessageSource::Rendering, MessageLevel::Info, consoleMessage);
         return UncachedString { url };
     }
     RefPtr buffer = makeRenderingResultsAvailable();
@@ -769,7 +769,7 @@ ExceptionOr<void> HTMLCanvasElement::toBlob(Ref<BlobCallback>&& callback, const 
         return { };
     }
     if (document->settings().webAPIStatisticsEnabled())
-        ResourceLoadObserver::shared().logCanvasRead(document);
+        ResourceLoadObserver::singleton().logCanvasRead(document);
 
     auto encodingMIMEType = toEncodingMimeType(mimeType);
     auto quality = qualityFromJSValue(qualityValue);
@@ -826,7 +826,7 @@ RefPtr<ImageData> HTMLCanvasElement::getImageData()
 
     Ref document = this->document();
     if (document->settings().webAPIStatisticsEnabled())
-        ResourceLoadObserver::shared().logCanvasRead(document.get());
+        ResourceLoadObserver::singleton().logCanvasRead(document.get());
 
     RefPtr pixelBuffer = context->drawingBufferToPixelBuffer();
     if (!pixelBuffer)
@@ -848,13 +848,13 @@ RefPtr<VideoFrame> HTMLCanvasElement::toVideoFrame()
 #if ENABLE(WEBGL)
     if (RefPtr context = dynamicDowncast<WebGLRenderingContextBase>(m_context.get())) {
         if (document->settings().webAPIStatisticsEnabled())
-            ResourceLoadObserver::shared().logCanvasRead(document.get());
+            ResourceLoadObserver::singleton().logCanvasRead(document.get());
         return context->surfaceBufferToVideoFrame(CanvasRenderingContext::SurfaceBuffer::DrawingBuffer);
     }
 #endif
 
     if (document->settings().webAPIStatisticsEnabled())
-        ResourceLoadObserver::shared().logCanvasRead(document.get());
+        ResourceLoadObserver::singleton().logCanvasRead(document.get());
 
     RefPtr imageBuffer = makeRenderingResultsAvailable();
     if (!imageBuffer)
@@ -884,7 +884,7 @@ ExceptionOr<Ref<MediaStream>> HTMLCanvasElement::captureStream(std::optional<dou
         return Exception(ExceptionCode::SecurityError, "Canvas is tainted"_s);
     Ref document = this->document();
     if (document->settings().webAPIStatisticsEnabled())
-        ResourceLoadObserver::shared().logCanvasRead(document.get());
+        ResourceLoadObserver::singleton().logCanvasRead(document.get());
 
     if (frameRequestRate && frameRequestRate.value() < 0)
         return Exception(ExceptionCode::NotSupportedError, "frameRequestRate is negative"_s);

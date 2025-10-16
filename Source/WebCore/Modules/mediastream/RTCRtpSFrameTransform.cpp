@@ -218,7 +218,7 @@ void transformFrame(Frame& frame, JSDOMGlobalObject& globalObject, RTCRtpSFrameT
 
 ExceptionOr<void> RTCRtpSFrameTransform::createStreams()
 {
-    auto* globalObject = scriptExecutionContext() ? JSC::jsCast<JSDOMGlobalObject*>(scriptExecutionContext()->globalObject()) : nullptr;
+    auto* globalObject = scriptExecutionContext() ? JSC::jsCast<JSDOMGlobalObject*>(protectedScriptExecutionContext()->globalObject()) : nullptr;
     if (!globalObject)
         return Exception { ExceptionCode::InvalidStateError };
 

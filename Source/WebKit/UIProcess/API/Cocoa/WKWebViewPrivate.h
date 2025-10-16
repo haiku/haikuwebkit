@@ -136,6 +136,7 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @class _WKJSHandle;
 @class _WKRemoteObjectRegistry;
 @class _WKSafeBrowsingWarning;
+@class _WKSerializedNode;
 @class _WKSessionState;
 @class _WKSpatialBackdropSource;
 @class _WKTargetedElementInfo;
@@ -356,6 +357,7 @@ for this property.
 - (void)_archiveWithConfiguration:(_WKArchiveConfiguration*)configuration completionHandler:(void (^)(NSError *error))completionHandler WK_API_AVAILABLE(macos(14.4), ios(17.4), visionos(1.1));
 - (void)_getMainResourceDataWithCompletionHandler:(void (^)(NSData *, NSError *))completionHandler;
 - (void)_getWebArchiveDataWithCompletionHandler:(void (^)(NSData *, NSError *))completionHandler;
+- (void)_createWebArchiveForFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSData *, NSError *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 - (void)_getContentsAsStringWithCompletionHandler:(void (^)(NSString *, NSError *))completionHandler WK_API_AVAILABLE(macos(10.13), ios(11.0));
 - (void)_getContentsAsStringWithCompletionHandlerKeepIPCConnectionAliveForTesting:(void (^)(NSString *, NSError *))completionHandler;
 - (void)_getContentsOfAllFramesAsStringWithCompletionHandler:(void (^)(NSString *))completionHandler WK_API_AVAILABLE(macos(11.0), ios(14.0));
@@ -412,9 +414,9 @@ for this property.
 @property (nonatomic, readonly) BOOL _isSuspended;
 
 #if TARGET_OS_IPHONE
-@property (nonatomic, readonly) UIColor *_sampledTopFixedPositionContentColor WK_API_AVAILABLE(ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+@property (nonatomic, readonly) UIColor *_sampledTopFixedPositionContentColor WK_API_AVAILABLE(ios(26.0), visionos(26.0));
 #else
-@property (nonatomic, readonly) NSColor *_sampledTopFixedPositionContentColor WK_API_AVAILABLE(macos(WK_MAC_TBA));
+@property (nonatomic, readonly) NSColor *_sampledTopFixedPositionContentColor WK_API_AVAILABLE(macos(26.0));
 #endif
 
 @property (nonatomic, readonly) BOOL _canTogglePictureInPicture;
@@ -435,8 +437,12 @@ for this property.
 
 - (void)_nowPlayingMediaTitleAndArtist:(void (^)(NSString *, NSString *))completionHandler;
 
-- (void)_convertPoint:(CGPoint)point fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGPoint, NSError *error))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
-- (void)_convertRect:(CGRect)rect fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGRect, NSError *error))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+- (void)_convertPoint:(CGPoint)point fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGPoint, NSError *error))completionHandler WK_API_AVAILABLE(macos(26.0), ios(26.0), visionos(26.0));
+- (void)_convertRect:(CGRect)rect fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGRect, NSError *error))completionHandler WK_API_AVAILABLE(macos(26.0), ios(26.0), visionos(26.0));
+
+@property (nonatomic, setter=_setStatusBarIsVisible:) BOOL _statusBarIsVisible WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+@property (nonatomic, setter=_setMenuBarIsVisible:) BOOL _menuBarIsVisible WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+@property (nonatomic, setter=_setToolbarsAreVisible:) BOOL _toolbarsAreVisible WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
 // If frame is nil, the main frame will be used if there is a main frame.
 // If frame is non-nil, not only will frame's coordinate space be used, but frame's subtree will be searched,
@@ -465,7 +471,7 @@ for this property.
 - (void)_addAppHighlight WK_API_AVAILABLE(macos(12.0), ios(15.0));
 - (void)_addAppHighlightInNewGroup:(BOOL)newGroup originatedInApp:(BOOL)originatedInApp WK_API_AVAILABLE(macos(12.0), ios(15.0));
 
-- (void)_textFragmentDirectiveFromSelectionWithCompletionHandler:(void(^)(NSURL *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+- (void)_textFragmentDirectiveFromSelectionWithCompletionHandler:(void(^)(NSURL *))completionHandler WK_API_AVAILABLE(macos(26.0), ios(26.0), visionos(26.0));
 
 #if TARGET_OS_IPHONE && !TARGET_OS_WATCH
 - (void)_targetedPreviewForElementWithID:(NSString *)elementID completionHandler:(WK_SWIFT_UI_ACTOR void (^)(UITargetedPreview *))completionHandler WK_API_AVAILABLE(ios(18.2), visionos(2.2));
@@ -480,7 +486,7 @@ for this property.
 @property (nonatomic, readonly) NSColor *_sampledPageTopColor WK_API_AVAILABLE(macos(12.0));
 #endif
 
-@property (nonatomic, readonly) _WKSpatialBackdropSource *_spatialBackdropSource WK_API_AVAILABLE(visionos(WK_XROS_TBA));
+@property (nonatomic, readonly) _WKSpatialBackdropSource *_spatialBackdropSource WK_API_AVAILABLE(visionos(26.0));
 
 - (void)_grantAccessToAssetServices WK_API_AVAILABLE(macos(12.0), ios(14.0));
 - (void)_revokeAccessToAssetServices WK_API_AVAILABLE(macos(12.0), ios(14.0));
@@ -628,13 +634,19 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 
 @property (nonatomic) audit_token_t presentingApplicationAuditToken WK_API_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4));
 
-@property (nonatomic, setter=_setShouldSuppressTopColorExtensionView:) BOOL _shouldSuppressTopColorExtensionView WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+@property (nonatomic, setter=_setShouldSuppressTopColorExtensionView:) BOOL _shouldSuppressTopColorExtensionView WK_API_AVAILABLE(macos(26.0), ios(26.0));
 
 #if TARGET_OS_OSX
 - (NSUInteger)accessibilityRemoteChildTokenHash;
 - (NSUInteger)accessibilityUIProcessLocalTokenHash;
 - (NSArray<NSNumber *> *)registeredRemoteAccessibilityPids;
 - (bool)hasRemoteAccessibilityChild;
+#endif
+
+#if TARGET_OS_IPHONE
+- (void)_takeSnapshotOfNode:(_WKJSHandle *)node completionHandler:(WK_SWIFT_UI_ACTOR void (^)(UIImage *, NSError *))completionHandler WK_SWIFT_ASYNC_NAME(_takeSnapshotOfNode(_:)) WK_API_AVAILABLE(ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+#else
+- (void)_takeSnapshotOfNode:(_WKJSHandle *)node completionHandler:(WK_SWIFT_UI_ACTOR void (^)(NSImage *, NSError *))completionHandler WK_SWIFT_ASYNC_NAME(_takeSnapshotOfNode(_:)) WK_API_AVAILABLE(macos(WK_MAC_TBA));
 #endif
 
 - (void)_debugTextWithConfiguration:(_WKTextExtractionConfiguration *)configuration completionHandler:(WK_SWIFT_UI_ACTOR void(^)(NSString *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA)) NS_SWIFT_NAME(_debugText(with:completionHandler:));
@@ -779,8 +791,8 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 @interface WKWebView (WKPrivateVision)
 @property (copy, setter=_setDefaultSTSLabel:) NSString *_defaultSTSLabel;
 
-- (void)_enterExternalPlaybackForNowPlayingMediaSessionWithEnterCompletionHandler:(void (^)(UIViewController *nowPlayingViewController, NSError *error))enterHandler exitCompletionHandler:(void (^)(NSError *error))exitHandler WK_API_AVAILABLE(visionos(WK_XROS_TBA));
-- (void)_exitExternalPlayback WK_API_AVAILABLE(visionos(WK_XROS_TBA));
+- (void)_enterExternalPlaybackForNowPlayingMediaSessionWithEnterCompletionHandler:(void (^)(UIViewController *nowPlayingViewController, NSError *error))enterHandler exitCompletionHandler:(void (^)(NSError *error))exitHandler WK_API_AVAILABLE(visionos(26.0));
+- (void)_exitExternalPlayback WK_API_AVAILABLE(visionos(26.0));
 @end
 #endif
 
@@ -875,7 +887,7 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 - (void)_setCustomSwipeViews:(NSArray *)customSwipeViews WK_API_AVAILABLE(macos(10.13.4));
 - (void)_setDidMoveSwipeSnapshotCallback:(void(^)(CGRect))callback WK_API_AVAILABLE(macos(10.13.4));
 - (void)_setCustomSwipeViewsTopContentInset:(float)topContentInset WK_API_AVAILABLE(macos(10.13.4));
-- (void)_setCustomSwipeViewsObscuredContentInsets:(NSEdgeInsets)contentInsets WK_API_AVAILABLE(macos(WK_MAC_TBA));
+- (void)_setCustomSwipeViewsObscuredContentInsets:(NSEdgeInsets)contentInsets WK_API_AVAILABLE(macos(26.0));
 
 - (NSView *)_fullScreenPlaceholderView WK_API_AVAILABLE(macos(10.13.4));
 - (NSWindow *)_fullScreenWindow WK_API_AVAILABLE(macos(10.13.4));
@@ -902,17 +914,21 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 - (void)_setFont:(NSFont *)font sender:(id)sender WK_API_AVAILABLE(macos(13.3));
 
 - (void)_setTopContentInset:(CGFloat)topContentInset immediate:(BOOL)immediate WK_API_AVAILABLE(macos(15.4));
-- (void)_setObscuredContentInsets:(NSEdgeInsets)insets immediate:(BOOL)immediate WK_API_AVAILABLE(macos(WK_MAC_TBA));
-@property (nonatomic, readonly) NSEdgeInsets _obscuredContentInsets WK_API_AVAILABLE(macos(WK_MAC_TBA));
-@property (nonatomic, setter=_setUsesAutomaticContentInsetBackgroundFill:) BOOL _usesAutomaticContentInsetBackgroundFill WK_API_AVAILABLE(macos(WK_MAC_TBA));
-@property (nonatomic, copy, setter=_setOverrideTopScrollEdgeEffectColor:) NSColor *_overrideTopScrollEdgeEffectColor WK_API_AVAILABLE(macos(WK_MAC_TBA));
-@property (nonatomic, setter=_setOverflowHeightForTopScrollEdgeEffect:) CGFloat _overflowHeightForTopScrollEdgeEffect WK_API_AVAILABLE(macos(WK_MAC_TBA));
+- (void)_setObscuredContentInsets:(NSEdgeInsets)insets immediate:(BOOL)immediate WK_API_AVAILABLE(macos(26.0));
+@property (nonatomic, readonly) NSEdgeInsets _obscuredContentInsets WK_API_AVAILABLE(macos(26.0));
+@property (nonatomic, setter=_setUsesAutomaticContentInsetBackgroundFill:) BOOL _usesAutomaticContentInsetBackgroundFill WK_API_AVAILABLE(macos(26.0));
+@property (nonatomic, copy, setter=_setOverrideTopScrollEdgeEffectColor:) NSColor *_overrideTopScrollEdgeEffectColor WK_API_AVAILABLE(macos(26.0));
+@property (nonatomic, setter=_setOverflowHeightForTopScrollEdgeEffect:) CGFloat _overflowHeightForTopScrollEdgeEffect WK_API_AVAILABLE(macos(26.0));
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
 @property (nonatomic, readonly) NSScrollPocket *_topScrollPocket WK_API_AVAILABLE(macos(26.0));
 #endif
 
 - (void)_showWritingTools WK_API_AVAILABLE(macos(15.2));
+
+- (BOOL)_isSmartListsEnabled WK_API_AVAILABLE(macos(WK_MAC_TBA));
+- (void)_setSmartListsEnabled:(BOOL)flag WK_API_AVAILABLE(macos(WK_MAC_TBA));
+- (void)_toggleSmartLists:(id)sender WK_API_AVAILABLE(macos(WK_MAC_TBA));
 
 @end
 

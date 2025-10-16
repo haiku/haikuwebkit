@@ -429,29 +429,29 @@ void GPUProcessConnection::setMediaEnvironment(WebCore::PageIdentifier pageIdent
 }
 #endif
 
-void GPUProcessConnection::createRenderingBackend(RenderingBackendIdentifier identifier, IPC::StreamServerConnection::Handle&& serverHandle)
+void GPUProcessConnection::createRenderingBackend(RemoteRenderingBackendIdentifier identifier, IPC::StreamServerConnection::Handle&& serverHandle)
 {
     m_connection->send(Messages::GPUConnectionToWebProcess::CreateRenderingBackend(identifier, WTFMove(serverHandle)), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
-void GPUProcessConnection::releaseRenderingBackend(RenderingBackendIdentifier identifier)
+void GPUProcessConnection::releaseRenderingBackend(RemoteRenderingBackendIdentifier identifier)
 {
     m_connection->send(Messages::GPUConnectionToWebProcess::ReleaseRenderingBackend(identifier), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
 #if ENABLE(WEBGL)
-void GPUProcessConnection::createGraphicsContextGL(GraphicsContextGLIdentifier identifier, const GraphicsContextGLAttributes& contextAttributes, RenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& serverHandle)
+void GPUProcessConnection::createGraphicsContextGL(RemoteGraphicsContextGLIdentifier identifier, const GraphicsContextGLAttributes& contextAttributes, RemoteRenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& serverHandle)
 {
     m_connection->send(Messages::GPUConnectionToWebProcess::CreateGraphicsContextGL(identifier, contextAttributes, renderingBackendIdentifier, WTFMove(serverHandle)), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
-void GPUProcessConnection::releaseGraphicsContextGL(GraphicsContextGLIdentifier identifier)
+void GPUProcessConnection::releaseGraphicsContextGL(RemoteGraphicsContextGLIdentifier identifier)
 {
     m_connection->send(Messages::GPUConnectionToWebProcess::ReleaseGraphicsContextGL(identifier), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 #endif
 
-void GPUProcessConnection::createGPU(WebGPUIdentifier identifier, RenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& serverHandle)
+void GPUProcessConnection::createGPU(WebGPUIdentifier identifier, RemoteRenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamServerConnection::Handle&& serverHandle)
 {
     m_connection->send(Messages::GPUConnectionToWebProcess::CreateGPU(identifier, renderingBackendIdentifier, WTFMove(serverHandle)), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }

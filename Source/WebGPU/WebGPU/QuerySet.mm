@@ -45,7 +45,7 @@ Ref<QuerySet> Device::createQuerySet(const WGPUQuerySetDescriptor& descriptor)
 
     auto count = descriptor.count;
     constexpr auto maxCountAllowed = 4096;
-    if (descriptor.nextInChain || count > maxCountAllowed || !isValid()) {
+    if (count > maxCountAllowed || !isValid()) {
         generateAValidationError("GPUQuerySetDescriptor.count must be <= 4096"_s);
         return QuerySet::createInvalid(*this);
     }

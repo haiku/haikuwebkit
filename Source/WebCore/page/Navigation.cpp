@@ -99,10 +99,10 @@ bool Navigation::canGoForward() const
 }
 
 // https://html.spec.whatwg.org/multipage/nav-history-apis.html#getting-the-navigation-api-entry-index
-static std::optional<size_t> getEntryIndexOfHistoryItem(const Vector<Ref<NavigationHistoryEntry>>& entries, const HistoryItem& item, size_t start = 0)
+static std::optional<size_t> getEntryIndexOfHistoryItem(const Vector<Ref<NavigationHistoryEntry>>& entries, const HistoryItem& item)
 {
     // FIXME: We could have a more efficient solution than iterating through a list.
-    for (size_t index = start; index < entries.size(); index++) {
+    for (size_t index = 0; index < entries.size(); index++) {
         if (entries[index]->associatedHistoryItem().itemSequenceNumber() == item.itemSequenceNumber())
             return index;
     }
@@ -126,8 +126,8 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
     RefPtr currentItem = frame()->loader().history().currentItem();
     if (!currentItem)
         return;
-    // For main frames we can still rely on the page b/f list. However for subframes we need below logic to not lose the bookkeeping done in the previous window.
-    if (previousWindow && !frame()->isMainFrame()) {
+
+    if (previousWindow) {
         Ref previousNavigation = previousWindow->navigation();
         bool shouldProcessPreviousNavigationEntries = [&]() {
             if (!previousNavigation->m_entries.size())
@@ -148,7 +148,7 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
                     setActivation(frame()->loader().history().protectedPreviousItem().get(), navigationType);
                     return;
                 }
-                // We are doing a cross document subframe traversal, we can't rely on previous window, so clear
+                // We are doing a cross document traversal, we can't rely on previous window, so clear
                 // m_entries and fall back to the normal algorithm for new windows.
                 m_entries = { };
             } else if (navigationType == NavigationNavigationType::Push)
@@ -161,6 +161,7 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
 
                 m_currentEntryIndex = getEntryIndexOfHistoryItem(m_entries, *currentItem);
 
+                ASSERT(navigationType);
                 m_activation = NavigationActivation::create(*navigationType, *currentEntry(), WTFMove(previousEntry));
 
                 return;
@@ -168,41 +169,9 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
         }
     }
 
-    // https://html.spec.whatwg.org/multipage/browsing-the-web.html#getting-session-history-entries-for-the-navigation-api
-    auto rawEntries = page->backForward().itemsForFrame(frame()->frameID());
-    auto startingIndex = rawEntries.find(*currentItem);
+    m_entries.append(NavigationHistoryEntry::create(*this, *currentItem));
+    m_currentEntryIndex = m_entries.size() - 1;
 
-    Vector<Ref<HistoryItem>> items;
-
-    if (startingIndex == notFound)
-        items.append(*currentItem);
-    else {
-        Ref startingOrigin = SecurityOrigin::create(Ref { rawEntries[startingIndex] }->url());
-
-        for (int i = (int)startingIndex - 1; i >= 0; i--) {
-            Ref item = rawEntries[i];
-            if (!SecurityOrigin::create(item->url())->isSameOriginAs(startingOrigin))
-                break;
-            items.append(WTFMove(item));
-        }
-
-        items.reverse();
-        items.append(*currentItem);
-
-        for (size_t i = startingIndex + 1; i < rawEntries.size(); i++) {
-            Ref item = rawEntries[i];
-            if (!SecurityOrigin::create(item->url())->isSameOriginAs(startingOrigin))
-                break;
-            items.append(WTFMove(item));
-        }
-    }
-
-    size_t start = m_entries.size();
-
-    for (Ref item : items)
-        m_entries.append(NavigationHistoryEntry::create(*this, WTFMove(item)));
-
-    m_currentEntryIndex = getEntryIndexOfHistoryItem(m_entries, *currentItem, start);
     setActivation(frame()->loader().history().protectedPreviousItem().get(), navigationType);
 }
 
@@ -738,7 +707,7 @@ void Navigation::updateForReactivation(Vector<Ref<HistoryItem>>&& newHistoryItem
 
         for (size_t entryIndex = 0; entryIndex < oldEntries.size(); entryIndex++) {
             auto& entry = oldEntries.at(entryIndex);
-            if (entry->associatedHistoryItem() == item) {
+            if (entry->associatedHistoryItem().itemSequenceNumber() == item->itemSequenceNumber()) {
                 newEntry = entry.ptr();
                 oldEntries.removeAt(entryIndex);
                 break;

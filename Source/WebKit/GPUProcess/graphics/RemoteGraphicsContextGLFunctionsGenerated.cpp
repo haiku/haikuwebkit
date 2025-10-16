@@ -26,6 +26,7 @@
 #include "config.h"
 #include "RemoteGraphicsContextGL.h"
 
+#include "Logging.h"
 #include <wtf/StdLibExtras.h>
 
 #if ENABLE(GPU_PROCESS) && ENABLE(WEBGL)

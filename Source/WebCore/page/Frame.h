@@ -39,9 +39,12 @@
 namespace WebCore {
 
 class DOMWindow;
-class FrameView;
+class Event;
+class FrameConsoleClient;
+class FrameInspectorController;
 class FrameLoaderClient;
 class FrameLoadRequest;
+class FrameView;
 class HTMLFrameOwnerElement;
 class NavigationScheduler;
 class Page;
@@ -111,6 +114,7 @@ public:
     virtual void frameDetached() = 0;
     virtual bool preventsParentFromBeingComplete() const = 0;
     virtual void changeLocation(FrameLoadRequest&&) = 0;
+    virtual void loadFrameRequest(FrameLoadRequest&&, Event*) = 0;
     virtual void didFinishLoadInAnotherProcess() = 0;
 
     virtual FrameView* virtualView() const = 0;
@@ -142,6 +146,11 @@ public:
     FrameTreeSyncData& frameTreeSyncData() const { return m_frameTreeSyncData.get(); }
     WEBCORE_EXPORT virtual RefPtr<SecurityOrigin> frameDocumentSecurityOrigin() const = 0;
 
+    FrameInspectorController& inspectorController() { return m_inspectorController.get(); }
+    WEBCORE_EXPORT Ref<FrameInspectorController> protectedInspectorController();
+    FrameConsoleClient& console() { return m_consoleClient.get(); }
+    const FrameConsoleClient& console() const { return m_consoleClient.get(); }
+
 protected:
     Frame(Page&, FrameIdentifier, FrameType, HTMLFrameOwnerElement*, Frame* parent, Frame* opener, Ref<FrameTreeSyncData>&&, AddToFrameTree = AddToFrameTree::Yes);
     void resetWindowProxy();
@@ -166,6 +175,9 @@ private:
     std::unique_ptr<OwnerPermissionsPolicyData> m_ownerPermisssionsPolicyOverride;
 
     Ref<FrameTreeSyncData> m_frameTreeSyncData;
+
+    const UniqueRef<FrameInspectorController> m_inspectorController;
+    const UniqueRef<FrameConsoleClient> m_consoleClient;
 };
 
 } // namespace WebCore

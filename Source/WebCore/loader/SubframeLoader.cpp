@@ -44,6 +44,7 @@
 #include "HTMLIFrameElement.h"
 #include "HTMLNames.h"
 #include "HTMLObjectElement.h"
+#include "HTMLPlugInElement.h"
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
 #include "MIMETypeRegistry.h"
@@ -143,7 +144,7 @@ bool FrameLoader::SubframeLoader::resourceWillUsePlugin(const String& url, const
     return shouldUsePlugin(completedURL, mimeType, false, useFallback);
 }
 
-bool FrameLoader::SubframeLoader::pluginIsLoadable(const URL& url, const HTMLPlugInImageElement& ownerElement, const String& mimeType) const
+bool FrameLoader::SubframeLoader::pluginIsLoadable(const URL& url, const HTMLPlugInElement& ownerElement, const String& mimeType) const
 {
     if (RefPtr document = m_frame->document()) {
         bool isFullMainFramePlugin = m_frame->isMainFrame() && is<PluginDocument>(m_frame->document());
@@ -187,7 +188,7 @@ static String findPluginMIMETypeFromURL(Page& page, const URL& url)
     return { };
 }
 
-bool FrameLoader::SubframeLoader::requestPlugin(HTMLPlugInImageElement& ownerElement, const URL& url, const String& explicitMIMEType, const Vector<AtomString>& paramNames, const Vector<AtomString>& paramValues, bool useFallback)
+bool FrameLoader::SubframeLoader::requestPlugin(HTMLPlugInElement& ownerElement, const URL& url, const String& explicitMIMEType, const Vector<AtomString>& paramNames, const Vector<AtomString>& paramValues, bool useFallback)
 {
     String mimeType = explicitMIMEType;
     if (mimeType.isEmpty()) {
@@ -226,7 +227,7 @@ static void logPluginRequest(Page* page, const String& mimeType, const URL& url)
     page->sawPlugin(description);
 }
 
-bool FrameLoader::SubframeLoader::requestObject(HTMLPlugInImageElement& ownerElement, const String& url, const AtomString& frameName, const String& mimeType, const Vector<AtomString>& paramNames, const Vector<AtomString>& paramValues)
+bool FrameLoader::SubframeLoader::requestObject(HTMLPlugInElement& ownerElement, const String& url, const AtomString& frameName, const String& mimeType, const Vector<AtomString>& paramNames, const Vector<AtomString>& paramValues)
 {
     if (url.isEmpty() && mimeType.isEmpty())
         return false;
@@ -348,9 +349,9 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
     frame->loader().loadURLIntoChildFrame(url, referrerToUse, *subFrame);
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    RefPtr subFramePage = subFrame->page();
-    if ((url.isAboutBlank() || url.isAboutSrcDoc()) && subFramePage) {
-        subFramePage->protectedUserContentProvider()->userContentExtensionBackend().forEach([&] (const String& identifier, ContentExtensions::ContentExtension& extension) {
+    RefPtr userContentProvider = frame->userContentProvider();
+    if ((url.isAboutBlank() || url.isAboutSrcDoc()) && userContentProvider) {
+        userContentProvider->userContentExtensionBackend().forEach([&] (const String& identifier, ContentExtensions::ContentExtension& extension) {
             if (RefPtr styleSheetContents = extension.globalDisplayNoneStyleSheet())
                 subFrame->protectedDocument()->extensionStyleSheets().maybeAddContentExtensionSheet(identifier, *styleSheetContents);
         });
@@ -412,7 +413,7 @@ bool FrameLoader::SubframeLoader::shouldUsePlugin(const URL& url, const String& 
     return objectType == ObjectContentType::None || objectType == ObjectContentType::PlugIn;
 }
 
-bool FrameLoader::SubframeLoader::loadPlugin(HTMLPlugInImageElement& pluginElement, const URL& url, const String& mimeType, const Vector<AtomString>& paramNames, const Vector<AtomString>& paramValues, bool useFallback)
+bool FrameLoader::SubframeLoader::loadPlugin(HTMLPlugInElement& pluginElement, const URL& url, const String& mimeType, const Vector<AtomString>& paramNames, const Vector<AtomString>& paramValues, bool useFallback)
 {
     if (useFallback)
         return false;

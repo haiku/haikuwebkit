@@ -762,7 +762,6 @@ http/tests/mime/mime-type-sniff.html [ Skip ]
 http/tests/mime/html-with-nosniff-html.html [ Skip ]
 
 http/tests/misc/authentication-redirect-3/authentication-sent-to-redirect-same-origin-with-location-credentials.html [ Failure ]
-http/tests/misc/favicon-loads-with-icon-loading-override.html [ Failure ]
 http/tests/misc/link-rel-icon-beforeload.html [ Failure ]
 http/tests/misc/timer-vs-loading.html [ Skip ]
 http/tests/misc/willCacheResponse-delegate-callback.html [ Failure ]
@@ -4567,3 +4566,10 @@ imported/w3c/web-platform-tests/css/css-mixins/function-attr.html [ Failure ]
 webgl/2.0.y/conformance2/wasm/teximage2d-2gb-in-4gb-wasm-memory.html [ Skip ]
 # Flaky crash due to running out of commit space
 workers/btoa-oom.html [ Skip ]
+
+webkit.org/b/298727 css3/text-decoration/text-decoration-line-spelling-error-1.html [ Skip ]
+webkit.org/b/298727 css3/text-decoration/text-decoration-line-spelling-error-2.html [ Skip ]
+webkit.org/b/298727 css3/text-decoration/text-decoration-line-spelling-error-3.html [ Skip ]
+webkit.org/b/298727 css3/text-decoration/text-decoration-line-grammar-error-1.html [ Skip ]
+webkit.org/b/298727 css3/text-decoration/text-decoration-line-grammar-error-2.html [ Skip ]
+webkit.org/b/298727 css3/text-decoration/text-decoration-line-grammar-error-3.html [ Skip ]

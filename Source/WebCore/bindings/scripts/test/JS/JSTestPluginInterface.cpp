@@ -148,7 +148,7 @@ JSValue JSTestPluginInterface::getConstructor(VM& vm, const JSGlobalObject* glob
 
 void JSTestPluginInterface::destroy(JSC::JSCell* cell)
 {
-    JSTestPluginInterface* thisObject = static_cast<JSTestPluginInterface*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestPluginInterface* thisObject = static_cast<JSTestPluginInterface*>(cell);
     thisObject->JSTestPluginInterface::~JSTestPluginInterface();
 }
 
@@ -295,7 +295,7 @@ bool JSTestPluginInterfaceOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unk
 
 void JSTestPluginInterfaceOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestPluginInterface = static_cast<JSTestPluginInterface*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestPluginInterface = static_cast<JSTestPluginInterface*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestPluginInterface->protectedWrapped().ptr(), jsTestPluginInterface);
 }

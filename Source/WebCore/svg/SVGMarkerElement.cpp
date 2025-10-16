@@ -30,6 +30,7 @@
 #include "RenderSVGResourceMarker.h"
 #include "SVGNames.h"
 #include "SVGParsingError.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

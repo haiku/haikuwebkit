@@ -136,12 +136,6 @@ enum class ServiceWorkersMode : uint8_t {
 };
 static constexpr unsigned bitWidthOfServiceWorkersMode = 2;
 
-enum class ApplicationCacheMode : uint8_t {
-    Use,
-    Bypass
-};
-static constexpr unsigned bitWidthOfApplicationCacheMode = 1;
-
 enum class ContentEncodingSniffingPolicy : bool {
     Default,
     Disable
@@ -186,7 +180,6 @@ struct ResourceLoaderOptions : public FetchOptions {
         , initiatorContext(InitiatorContext::Document)
         , initiator(Initiator::EmptyString)
         , serviceWorkersMode(ServiceWorkersMode::All)
-        , applicationCacheMode(ApplicationCacheMode::Use)
         , clientCredentialPolicy(ClientCredentialPolicy::CannotAskClientForCredentials)
         , preflightPolicy(PreflightPolicy::Consider)
         , loadedFromOpaqueSource(LoadedFromOpaqueSource::No)
@@ -211,7 +204,6 @@ struct ResourceLoaderOptions : public FetchOptions {
         , initiatorContext(InitiatorContext::Document)
         , initiator(Initiator::EmptyString)
         , serviceWorkersMode(ServiceWorkersMode::All)
-        , applicationCacheMode(ApplicationCacheMode::Use)
         , clientCredentialPolicy(credentialPolicy)
         , preflightPolicy(PreflightPolicy::Consider)
         , loadedFromOpaqueSource(LoadedFromOpaqueSource::No)
@@ -245,7 +237,6 @@ struct ResourceLoaderOptions : public FetchOptions {
     InitiatorContext initiatorContext : bitWidthOfInitiatorContext;
     Initiator initiator : bitWidthOfInitiator;
     ServiceWorkersMode serviceWorkersMode : bitWidthOfServiceWorkersMode;
-    ApplicationCacheMode applicationCacheMode : bitWidthOfApplicationCacheMode;
     ClientCredentialPolicy clientCredentialPolicy : bitWidthOfClientCredentialPolicy;
     PreflightPolicy preflightPolicy : bitWidthOfPreflightPolicy;
     LoadedFromOpaqueSource loadedFromOpaqueSource : bitWidthOfLoadedFromOpaqueSource;

@@ -128,8 +128,12 @@ static bool shouldRepaintOnSizeChange(RenderReplaced& renderer)
 {
     if (is<RenderHTMLCanvas>(renderer))
         return true;
+
+#if ENABLE(VIDEO)
     if (auto* renderImage = dynamicDowncast<RenderImage>(renderer); renderImage && !is<RenderMedia>(*renderImage) && !renderImage->isShowingMissingOrImageError())
         return true;
+#endif
+
     return false;
 }
 
@@ -552,8 +556,8 @@ LayoutRect RenderReplaced::replacedContentRect(const LayoutSize& intrinsicSize) 
 
     auto& objectPosition = style().objectPosition();
 
-    LayoutUnit xOffset = Style::evaluate(objectPosition.x, contentRect.width() - finalRect.width());
-    LayoutUnit yOffset = Style::evaluate(objectPosition.y, contentRect.height() - finalRect.height());
+    LayoutUnit xOffset = Style::evaluate(objectPosition.x, contentRect.width() - finalRect.width(), 1.0f /* FIXME FIND ZOOM */);
+    LayoutUnit yOffset = Style::evaluate(objectPosition.y, contentRect.height() - finalRect.height(), 1.0f /* FIXME FIND ZOOM */);
 
     finalRect.move(xOffset, yOffset);
 
@@ -606,11 +610,11 @@ LayoutUnit RenderReplaced::computeConstrainedLogicalWidth() const
     // 'padding-right' + 'border-right-width' + 'margin-right' = width of
     // containing block
     // see https://www.w3.org/TR/CSS22/visudet.html#blockwidth
-    LayoutUnit logicalWidth = containingBlock()->contentBoxLogicalWidth();
-    
+    LayoutUnit logicalWidth = isOutOfFlowPositioned() ? containingBlock()->clientLogicalWidth() : containingBlock()->contentBoxLogicalWidth();
+
     // This solves above equation for 'width' (== logicalWidth).
-    LayoutUnit marginStart = Style::evaluateMinimum(style().marginStart(), logicalWidth);
-    LayoutUnit marginEnd = Style::evaluateMinimum(style().marginEnd(), logicalWidth);
+    LayoutUnit marginStart = Style::evaluateMinimum(style().marginStart(), logicalWidth, 1.0f /* FIXME FIND ZOOM */);
+    LayoutUnit marginEnd = Style::evaluateMinimum(style().marginEnd(), logicalWidth, 1.0f /* FIXME FIND ZOOM */);
 
     return std::max(0_lu, (logicalWidth - (marginStart + marginEnd + borderLeft() + borderRight() + paddingLeft() + paddingRight())));
 }

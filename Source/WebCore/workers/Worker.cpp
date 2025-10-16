@@ -28,7 +28,7 @@
 #include "Worker.h"
 
 #include "ContentSecurityPolicy.h"
-#include "ContextDestructionObserver.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DedicatedWorkerGlobalScope.h"
 #include "ErrorEvent.h"
 #include "Event.h"

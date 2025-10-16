@@ -54,6 +54,7 @@
 
 #if PLATFORM(COCOA)
 #include <notify.h>
+#include <wtf/darwin/DispatchExtras.h>
 #endif
 
 namespace WebKit {
@@ -127,7 +128,7 @@ Cache::Cache(NetworkProcess& networkProcess, const String& storageDirectory, Ref
 #if PLATFORM(COCOA)
         // Triggers with "notifyutil -p com.apple.WebKit.Cache.dump".
         int token;
-        notify_register_dispatch("com.apple.WebKit.Cache.dump", &token, dispatch_get_main_queue(), ^(int) {
+        notify_register_dispatch("com.apple.WebKit.Cache.dump", &token, mainDispatchQueueSingleton(), ^(int) {
             dumpContentsToFile();
         });
 #endif

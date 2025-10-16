@@ -351,6 +351,9 @@ public:
         });
     }
 
+    bool hasEnabledInspector() const { return m_hasEnabledInspector; }
+    void setHasEnabledInspector(bool hasEnabledInspector) { m_hasEnabledInspector = hasEnabledInspector; }
+
 private:
     friend class AggregateLogger;
     friend class NativePromiseBase;
@@ -434,6 +437,7 @@ private:
     }
 
     bool m_enabled { true };
+    bool m_hasEnabledInspector { false };
     const void* m_owner;
 };
 

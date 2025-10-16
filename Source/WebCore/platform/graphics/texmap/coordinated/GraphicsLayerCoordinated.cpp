@@ -587,12 +587,12 @@ void GraphicsLayerCoordinated::setBackdropFiltersRect(const FloatRoundedRect& ba
     noteLayerPropertyChanged(Change::BackdropRect, ScheduleFlush::Yes);
 }
 
-bool GraphicsLayerCoordinated::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const Animation* animation, const String& animationName, double timeOffset)
+bool GraphicsLayerCoordinated::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const GraphicsLayerAnimation* animation, const String& animationName, double timeOffset)
 {
     ASSERT(!animationName.isEmpty());
     ASSERT(animation);
 
-    if (animation->isEmptyOrZeroDuration() || valueList.size() < 2)
+    if (animation->isZeroDuration() || valueList.size() < 2)
         return false;
 
     if (animation->playbackRate() != 1 || !animation->directionIsForwards())

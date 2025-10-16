@@ -71,7 +71,7 @@ char32_t String::characterStartingAt(unsigned i) const
 {
     if (!m_impl || i >= m_impl->length())
         return 0;
-    return m_impl->characterStartingAt(i);
+    SUPPRESS_UNCOUNTED_ARG return m_impl->characterStartingAt(i);
 }
 
 String makeStringByJoining(std::span<const String> strings, const String& separator)
@@ -108,67 +108,67 @@ String String::substringSharingImpl(unsigned offset, unsigned length) const
 
     if (!offset && length == stringLength)
         return *this;
-    return StringImpl::createSubstringSharingImpl(*m_impl, offset, length);
+    SUPPRESS_UNCOUNTED_ARG return StringImpl::createSubstringSharingImpl(*m_impl, offset, length);
 }
 
 String String::convertToASCIILowercase() const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->convertToASCIILowercase() : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToASCIILowercase() : String { };
 }
 
 String String::convertToASCIIUppercase() const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->convertToASCIIUppercase() : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToASCIIUppercase() : String { };
 }
 
 String String::convertToLowercaseWithoutLocale() const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->convertToLowercaseWithoutLocale() : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToLowercaseWithoutLocale() : String { };
 }
 
 String String::convertToLowercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned failingIndex) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->convertToLowercaseWithoutLocaleStartingAtFailingIndex8Bit(failingIndex) : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToLowercaseWithoutLocaleStartingAtFailingIndex8Bit(failingIndex) : String { };
 }
 
 String String::convertToUppercaseWithoutLocale() const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->convertToUppercaseWithoutLocale() : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToUppercaseWithoutLocale() : String { };
 }
 
 String String::convertToLowercaseWithLocale(const AtomString& localeIdentifier) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->convertToLowercaseWithLocale(localeIdentifier) : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToLowercaseWithLocale(localeIdentifier) : String { };
 }
 
 String String::convertToUppercaseWithLocale(const AtomString& localeIdentifier) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->convertToUppercaseWithLocale(localeIdentifier) : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToUppercaseWithLocale(localeIdentifier) : String { };
 }
 
 String String::trim(CodeUnitMatchFunction predicate) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->trim(predicate) : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->trim(predicate) : String { };
 }
 
 String String::simplifyWhiteSpace(CodeUnitMatchFunction isWhiteSpace) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->simplifyWhiteSpace(isWhiteSpace) : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->simplifyWhiteSpace(isWhiteSpace) : String { };
 }
 
 String String::foldCase() const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->foldCase() : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->foldCase() : String { };
 }
 
 Expected<Vector<char16_t>, UTF8ConversionError> String::charactersWithoutNullTermination() const
@@ -263,7 +263,7 @@ double String::toDouble(bool* ok) const
             *ok = false;
         return 0.0;
     }
-    return m_impl->toDouble(ok);
+    SUPPRESS_UNCOUNTED_ARG return m_impl->toDouble(ok);
 }
 
 float String::toFloat(bool* ok) const
@@ -273,13 +273,13 @@ float String::toFloat(bool* ok) const
             *ok = false;
         return 0.0f;
     }
-    return m_impl->toFloat(ok);
+    SUPPRESS_UNCOUNTED_ARG return m_impl->toFloat(ok);
 }
 
 String String::isolatedCopy() const &
 {
     // FIXME: Should this function, and the many others like it, be inlined?
-    return m_impl ? m_impl->isolatedCopy() : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->isolatedCopy() : String { };
 }
 
 String String::isolatedCopy() &&
@@ -290,7 +290,7 @@ String String::isolatedCopy() &&
         return { WTFMove(*this) };
     }
 
-    return m_impl ? m_impl->isolatedCopy() : String { };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->isolatedCopy() : String { };
 }
 
 bool String::isSafeToSendToAnotherThread() const
@@ -433,7 +433,7 @@ CString String::latin1() const
 
 Expected<CString, UTF8ConversionError> String::tryGetUTF8(ConversionMode mode) const
 {
-    return m_impl ? m_impl->tryGetUTF8(mode) : CString { ""_span };
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->tryGetUTF8(mode) : CString { ""_span };
 }
 
 Expected<CString, UTF8ConversionError> String::tryGetUTF8() const

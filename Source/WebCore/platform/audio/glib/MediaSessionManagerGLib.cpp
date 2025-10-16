@@ -115,7 +115,7 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaSessionManagerGLib);
 
-RefPtr<PlatformMediaSessionManager> PlatformMediaSessionManager::create(std::optional<PageIdentifier>)
+RefPtr<PlatformMediaSessionManager> PlatformMediaSessionManager::create(PageIdentifier pageIdentifier)
 {
     GUniqueOutPtr<GError> error;
     auto mprisInterface = adoptGRef(g_dbus_node_info_new_for_xml(s_mprisInterface, &error.outPtr()));
@@ -123,12 +123,13 @@ RefPtr<PlatformMediaSessionManager> PlatformMediaSessionManager::create(std::opt
         g_warning("Failed at parsing XML Interface definition: %s", error->message);
         return nullptr;
     }
-    return adoptRef(new MediaSessionManagerGLib(WTFMove(mprisInterface)));
+    return adoptRef(new MediaSessionManagerGLib(WTFMove(mprisInterface), pageIdentifier));
 }
 
-MediaSessionManagerGLib::MediaSessionManagerGLib(GRefPtr<GDBusNodeInfo>&& mprisInterface)
-    : m_mprisInterface(WTFMove(mprisInterface))
-    , m_nowPlayingManager(platformStrategies()->mediaStrategy().createNowPlayingManager())
+MediaSessionManagerGLib::MediaSessionManagerGLib(GRefPtr<GDBusNodeInfo>&& mprisInterface, PageIdentifier pageIdentifier)
+    : PlatformMediaSessionManager(pageIdentifier)
+    , m_mprisInterface(WTFMove(mprisInterface))
+    , m_nowPlayingManager(platformStrategies()->mediaStrategy()->createNowPlayingManager())
 {
 }
 

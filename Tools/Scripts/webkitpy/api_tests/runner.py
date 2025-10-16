@@ -51,7 +51,12 @@ def report_result(worker, test, status, output, elapsed=None):
     else:
         elapsed_log = ' (took {} seconds)'.format(round(elapsed, 1)) if elapsed > Runner.ELAPSED_THRESHOLD else ''
         Runner.instance.printer.writeln('{} {} {}{}'.format(worker, test, Runner.NAME_FOR_STATUS[status], elapsed_log))
-    Runner.instance.results[test] = status, output, elapsed
+    if test in Runner.instance.results:
+        existing_status = Runner.instance.results[test][0]
+        if status > existing_status or (status == existing_status and status != Runner.STATUS_PASSED):
+            Runner.instance.results[test] = status, output, elapsed
+    else:
+        Runner.instance.results[test] = status, output, elapsed
 
 
 def teardown_shard():
@@ -112,13 +117,17 @@ class Runner(object):
         return args
 
     @staticmethod
-    def _shard_tests(tests):
+    def _shard_tests(tests, fully_parallel):
         shards = {}
         for test in tests:
             shard_prefix = '.'.join(test.split('.')[:-1])
             if shard_prefix not in shards:
                 shards[shard_prefix] = []
             shards[shard_prefix].append(test)
+        if fully_parallel:
+            shards = {}
+            for i, test in enumerate(tests):
+                shards[f"{test}.{i}"] = [test]
         return shards
 
     def run(self, tests, num_workers):
@@ -126,7 +135,7 @@ class Runner(object):
             return
 
         self.printer.write_update('Sharding tests ...')
-        shards = Runner._shard_tests(tests)
+        shards = Runner._shard_tests(tests, self.port.get_option('fully_parallel'))
 
         original_level = server_process_logger.level
         server_process_logger.setLevel(logging.CRITICAL)
@@ -135,7 +144,9 @@ class Runner(object):
             if Runner.instance:
                 raise RuntimeError('Cannot nest API test runners')
             Runner.instance = self
-            self._num_workers = min(num_workers, len(shards))
+            mutually_exclusive_groups = list(self.port.sharding_groups(suite='api-tests').keys())
+            workers = (num_workers if num_workers and num_workers >= self._num_workers else max(self.port.default_child_processes() or self._num_workers, self._num_workers) if mutually_exclusive_groups else self._num_workers)
+            self._num_workers = min(workers, len(shards))
 
             devices = None
             if getattr(self.port, 'DEVICE_MANAGER', None):
@@ -146,10 +157,25 @@ class Runner(object):
 
             with TaskPool(
                 workers=self._num_workers,
+                mutually_exclusive_groups=mutually_exclusive_groups,
                 setup=setup_shard, setupkwargs=dict(port=self.port, devices=devices, log_limit=self.log_limit), teardown=teardown_shard,
             ) as pool:
+                was_sent = set()
+
+                # Dispatch shards from groups first, so we start dedicated groups running before all our other shards
                 for name, tests in iteritems(shards):
+                    group = self.port.group_for_shard(type('Shard', (), {'name': name})(), suite='api-tests')
+                    if not group or self.port.get_option('fully_parallel'):
+                        continue
+
+                    was_sent.add(name)
+                    pool.do(run_shard, name, *tests, group=group)
+
+                for name, tests in iteritems(shards):
+                    if name in was_sent:
+                        continue
                     pool.do(run_shard, name, *tests)
+
                 pool.wait()
 
         finally:

@@ -26,7 +26,6 @@
 #include "config.h"
 #include "DisplayListItems.h"
 
-#include "DecomposedGlyphs.h"
 #include "DisplayList.h"
 #include "Filter.h"
 #include "FilterResults.h"
@@ -288,32 +287,6 @@ void DrawGlyphs::dump(TextStream& ts, OptionSet<AsTextFlag>) const
     ts.dumpProperty("length"_s, glyphs().size());
 }
 
-void DrawDecomposedGlyphs::apply(GraphicsContext& context) const
-{
-    return context.drawDecomposedGlyphs(m_font, m_decomposedGlyphs);
-}
-
-void DrawDecomposedGlyphs::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const
-{
-    {
-        // Currently not much platform-agnostic to print for font.
-        TextStream::GroupScope decomposedGlyphsScope { ts };
-        ts << "font"_s << ' ';
-        if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
-            ts.dumpProperty("identifier"_s, font()->renderingResourceIdentifier());
-    }
-    {
-        TextStream::GroupScope decomposedGlyphsScope { ts };
-        ts << "decomposedGlyphs"_s << ' ';
-        Ref decomposedGlyphs = this->decomposedGlyphs();
-        ts.dumpProperty("glyph-count"_s, decomposedGlyphs->glyphs().size());
-        ts.dumpProperty("local-anchor"_s, decomposedGlyphs->localAnchor());
-        ts.dumpProperty("font-smoothing-mode"_s, decomposedGlyphs->fontSmoothingMode());
-        if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
-            ts.dumpProperty("identifier"_s, decomposedGlyphs->renderingResourceIdentifier());
-    }
-}
-
 DrawDisplayList::DrawDisplayList(Ref<const DisplayList>&& displayList)
     : m_displayList(WTFMove(displayList))
 {
@@ -335,6 +308,22 @@ void DrawDisplayList::dump(TextStream& ts, OptionSet<AsTextFlag>) const
 {
     Ref displayList = this->displayList();
     ts.dumpProperty("display-list"_s, displayList);
+}
+
+DrawPlaceholder::DrawPlaceholder(Function<void(GraphicsContext&)>&& function)
+    : m_function(FunctionHolder::create(WTFMove(function)))
+{
+}
+
+DrawPlaceholder::~DrawPlaceholder() = default;
+
+void DrawPlaceholder::apply(GraphicsContext& context) const
+{
+    return (*m_function)(context);
+}
+
+void DrawPlaceholder::dump(TextStream&, OptionSet<AsTextFlag>) const
+{
 }
 
 void DrawImageBuffer::apply(GraphicsContext& context) const
@@ -755,12 +744,12 @@ void ApplyDeviceScaleFactor::dump(TextStream& ts, OptionSet<AsTextFlag>) const
 
 void BeginPage::apply(GraphicsContext& context) const
 {
-    context.beginPage(m_pageSize);
+    context.beginPage(m_pageRect);
 }
 
 void BeginPage::dump(TextStream& ts, OptionSet<AsTextFlag>) const
 {
-    ts.dumpProperty("page-size"_s, pageSize());
+    ts.dumpProperty("page-rect"_s, pageRect());
 }
 
 void EndPage::apply(GraphicsContext& context) const

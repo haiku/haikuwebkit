@@ -3,6 +3,6 @@
 
 [[not-web-essential]]
 request = "rdar://157890653"
-symbols = ["_dyld_program_sdk_at_least"]
+symbols = ["dyld_program_sdk_at_least"]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 

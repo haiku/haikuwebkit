@@ -272,9 +272,9 @@ MediaStreamTrack::TrackSettings MediaStreamTrack::getSettings() const
 {
     auto& settings = m_private->settings();
     TrackSettings result;
-    if (settings.supportsWidth())
+    if (settings.supportsWidth() && settings.width())
         result.width = settings.width();
-    if (settings.supportsHeight())
+    if (settings.supportsHeight() && settings.height())
         result.height = settings.height();
     if (settings.supportsAspectRatio() && result.height && result.width)
         result.aspectRatio = *result.width / static_cast<double>(*result.height);
@@ -671,7 +671,7 @@ RefPtr<MediaSessionManagerInterface> MediaStreamTrack::mediaSessionManager() con
     if (!page)
         return nullptr;
 
-    return &page->mediaSessionManager();
+    return page->mediaSessionManager();
 }
 
 ScriptExecutionContext* MediaStreamTrack::scriptExecutionContext() const

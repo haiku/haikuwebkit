@@ -292,8 +292,8 @@ public:
     void finishedLoading();
 
     // EventTiming API
-    PerformanceEventTimingCandidate initializeEventTimingEntry(const Event&, EventType);
-    void finalizeEventTimingEntry(PerformanceEventTimingCandidate&, const Event&);
+    PerformanceEventTimingCandidate initializeEventTimingEntry(Event&, EventType);
+    void finalizeEventTimingEntry(PerformanceEventTimingCandidate&, const Event&, EventType);
     void dispatchPendingEventTimingEntries();
     uint64_t interactionCount() { return m_interactionCount; }
 
@@ -350,7 +350,7 @@ public:
 #endif
 
 #if ENABLE(USER_MESSAGE_HANDLERS)
-    bool shouldHaveWebKitNamespaceForWorld(DOMWrapperWorld&);
+    bool shouldHaveWebKitNamespaceForWorld(DOMWrapperWorld&, JSC::JSGlobalObject*);
     WebKitNamespace* webkitNamespace();
 #endif
 
@@ -393,6 +393,7 @@ private:
     explicit LocalDOMWindow(Document&);
 
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ContextDestructionObserver::protectedScriptExecutionContext;
 
     void closePage() final;
     void eventListenersDidChange() final;
@@ -408,7 +409,7 @@ private:
     void failedToRegisterDeviceMotionEventListener();
 #endif
 
-    EventTimingInteractionID computeInteractionID(const Event&, EventType);
+    EventTimingInteractionID computeInteractionID(Event&, EventType);
     EventTimingInteractionID currentInteractionID();
     EventTimingInteractionID& ensureUserInteractionValue();
     EventTimingInteractionID generateInteractionID();
@@ -458,15 +459,20 @@ private:
     // Equivalent to the list of PerformanceEventTiming objects mentioned in https://www.w3.org/TR/event-timing/#sec-modifications-HTML :
     Vector<PerformanceEventTimingCandidate, 6> m_performanceEventTimingCandidates;
 
-    // FIXME: support multiple pointers by replacing std::optional
-    // with map objects using PointerID as key:
-    Markable<EventTimingInteractionID> m_pointerMap;
+    // FIXME: support multiple pointers by implementing m_pointerMap
+    // as an actual map with PointerID as key:
+    EventTimingInteractionID m_pointerMap;
     std::optional<PerformanceEventTimingCandidate> m_pendingPointerDown;
 
     bool m_contextMenuTriggered { false };
 
-    HashMap<int64_t, PerformanceEventTimingCandidate, IntHash<int64_t>, WTF::SignedWithZeroKeyHashTraits<int64_t>> m_pendingKeyDowns;
-    std::optional<EventTimingInteractionID> m_userInteractionValue;
+    struct PendingKeyDownState {
+        PerformanceEventTimingCandidate keyDown;
+        std::optional<PerformanceEventTimingCandidate> keyPress { std::nullopt };
+    };
+    HashMap<int64_t, PendingKeyDownState, IntHash<int64_t>, WTF::SignedWithZeroKeyHashTraits<int64_t>> m_pendingKeyDowns;
+
+    EventTimingInteractionID m_userInteractionValue;
     uint64_t m_interactionCount { 0 };
 
     String m_status;

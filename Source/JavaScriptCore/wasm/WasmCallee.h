@@ -57,7 +57,8 @@ class PCToOriginMap;
 
 namespace Wasm {
 
-class CallSlot;
+class BaselineData;
+class CallProfile;
 class CalleeGroup;
 
 class Callee : public NativeCallee {
@@ -345,6 +346,7 @@ private:
 
 class BBQCallee final : public OptimizingJITCallee {
     WTF_MAKE_COMPACT_TZONE_ALLOCATED(BBQCallee);
+    friend class Callee;
 public:
     static constexpr unsigned extraOSRValuesForLoopIndex = 1;
 
@@ -406,6 +408,8 @@ private:
     {
     }
 
+    JS_EXPORT_PRIVATE const RegisterAtOffsetList* calleeSaveRegistersImpl();
+
     RefPtr<OMGOSREntryCallee> m_osrEntryCallee;
     TierUpCount m_tierUpCounter;
     std::optional<CodeLocationLabel<WasmEntryPtrTag>> m_sharedLoopEntrypoint;
@@ -438,8 +442,9 @@ public:
     unsigned localSizeToAlloc() const { return m_localSizeToAlloc; }
     unsigned rethrowSlots() const { return m_numRethrowSlotsToAlloc; }
 
-    FixedVector<CallSlot>& callSlots() { return m_callSlots; }
-    const FixedVector<CallSlot>& callSlots() const { return m_callSlots; }
+    unsigned numCallProfiles() const { return m_numCallProfiles; }
+
+    bool needsProfiling() const;
 
     IPIntTierUpCounter& tierUpCounter() { return m_tierUpCounter; }
 
@@ -468,8 +473,7 @@ private:
     unsigned m_numLocals;
     unsigned m_numArgumentsOnStack;
     unsigned m_maxFrameSizeInV128;
-
-    FixedVector<CallSlot> m_callSlots;
+    unsigned m_numCallProfiles;
 
     IPIntTierUpCounter m_tierUpCounter;
 };

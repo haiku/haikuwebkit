@@ -110,7 +110,7 @@ private:
         webkitWebViewRunJavaScriptBeforeUnloadConfirm(m_webView, message.utf8(), WTFMove(completionHandler));
     }
 
-    void mouseDidMoveOverElement(WebPageProxy&, const WebHitTestResultData& data, OptionSet<WebEventModifier> modifiers, API::Object*) final
+    void mouseDidMoveOverElement(WebPageProxy&, const WebHitTestResultData& data, OptionSet<WebEventModifier> modifiers) final
     {
         webkitWebViewMouseTargetChanged(m_webView, data, modifiers);
     }

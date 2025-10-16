@@ -27,6 +27,7 @@
 #import "MainThreadSharedTimer.h"
 
 #include <wtf/AutodrainedPool.h>
+#include <wtf/cf/NotificationCenterCF.h>
 
 #if PLATFORM(MAC)
 #import "PowerObserverMac.h"
@@ -73,8 +74,7 @@ static void setupPowerObserver()
     static bool registeredForApplicationNotification = false;
     if (!registeredForApplicationNotification) {
         registeredForApplicationNotification = true;
-        CFNotificationCenterRef notificationCenter = CFNotificationCenterGetLocalCenter();
-        CFNotificationCenterAddObserver(notificationCenter, nullptr, applicationDidBecomeActive, CFSTR("UIApplicationDidBecomeActiveNotification"), nullptr, CFNotificationSuspensionBehaviorCoalesce);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetLocalCenterSingleton(), nullptr, applicationDidBecomeActive, CFSTR("UIApplicationDidBecomeActiveNotification"), nullptr, CFNotificationSuspensionBehaviorCoalesce);
     }
 #endif
 }

@@ -147,9 +147,6 @@ public:
         DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20,
     };
 
-    WEBCORE_EXPORT static void startIgnoringLeaks();
-    WEBCORE_EXPORT static void stopIgnoringLeaks();
-
     static void dumpStatistics();
 
     virtual ~Node();

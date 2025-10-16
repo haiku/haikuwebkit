@@ -86,7 +86,7 @@ TrackBase::~TrackBase() = default;
 
 void TrackBase::didMoveToNewDocument(Document& newDocument)
 {
-    observeContext(&newDocument.contextDocument());
+    observeContext(newDocument.protectedContextDocument().ptr());
 }
 
 void TrackBase::setTrackList(TrackListBase& trackList)

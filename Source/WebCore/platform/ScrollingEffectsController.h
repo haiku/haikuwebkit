@@ -273,7 +273,7 @@ private:
     bool m_inScrollGesture { false };
 
 #if PLATFORM(MAC)
-    WallTime m_lastMomentumScrollTimestamp;
+    MonotonicTime m_lastMomentumScrollTimestamp;
     FloatSize m_unappliedOverscrollDelta;
     FloatSize m_stretchScrollForce;
     FloatSize m_momentumVelocity;

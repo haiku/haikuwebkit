@@ -211,7 +211,7 @@ std::optional<SharedPreferencesForWebProcess> RemoteLegacyCDMSessionProxy::share
     if (!m_factory)
         return std::nullopt;
 
-    return m_factory->sharedPreferencesForWebProcess();
+    return protectedFactory()->sharedPreferencesForWebProcess();
 }
 
 RefPtr<WebCore::LegacyCDMSession> RemoteLegacyCDMSessionProxy::protectedSession() const

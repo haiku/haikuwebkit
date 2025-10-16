@@ -512,8 +512,8 @@ void SystemPreviewController::loadStarted(const URL& localFileURL)
         m_localFileURL.setFragmentIdentifier(m_fragmentIdentifier);
 
 #if PLATFORM(VISION)
-    if ([getASVLaunchPreviewClass() respondsToSelector:@selector(beginPreviewApplicationWithURLs:is3DContent:websiteURL:completion:)])
-        [getASVLaunchPreviewClass() beginPreviewApplicationWithURLs:localFileURLs() is3DContent:YES websiteURL:m_downloadURL.createNSURL().get() completion:^(NSError *error) { }];
+    if ([getASVLaunchPreviewClassSingleton() respondsToSelector:@selector(beginPreviewApplicationWithURLs:is3DContent:websiteURL:completion:)])
+        [getASVLaunchPreviewClassSingleton() beginPreviewApplicationWithURLs:localFileURLs() is3DContent:YES websiteURL:m_downloadURL.createNSURL().get() completion:^(NSError *error) { }];
 #endif
 
     m_state = State::Loading;
@@ -526,8 +526,8 @@ void SystemPreviewController::loadCompleted(const URL& localFileURL)
     ASSERT(equalIgnoringFragmentIdentifier(m_localFileURL, localFileURL));
 
 #if PLATFORM(VISION)
-    if ([getASVLaunchPreviewClass() respondsToSelector:@selector(launchPreviewApplicationWithURLs:completion:)])
-        [getASVLaunchPreviewClass() launchPreviewApplicationWithURLs:localFileURLs() completion:^(NSError *error) { }];
+    if ([getASVLaunchPreviewClassSingleton() respondsToSelector:@selector(launchPreviewApplicationWithURLs:completion:)])
+        [getASVLaunchPreviewClassSingleton() launchPreviewApplicationWithURLs:localFileURLs() completion:^(NSError *error) { }];
     m_state = State::Initial;
 #else
     if (m_qlPreviewControllerDataSource)
@@ -545,8 +545,8 @@ void SystemPreviewController::loadFailed()
     RELEASE_LOG(SystemPreview, "SystemPreview load has failed on %lld", m_systemPreviewInfo.element.nodeIdentifier ? m_systemPreviewInfo.element.nodeIdentifier->toUInt64() : 0);
 
 #if PLATFORM(VISION)
-    if (m_state == State::Loading && [getASVLaunchPreviewClass() respondsToSelector:@selector(cancelPreviewApplicationWithURLs:error:completion:)])
-        [getASVLaunchPreviewClass() cancelPreviewApplicationWithURLs:localFileURLs() error:nil completion:^(NSError *error) { }];
+    if (m_state == State::Loading && [getASVLaunchPreviewClassSingleton() respondsToSelector:@selector(cancelPreviewApplicationWithURLs:error:completion:)])
+        [getASVLaunchPreviewClassSingleton() cancelPreviewApplicationWithURLs:localFileURLs() error:nil completion:^(NSError *error) { }];
 #else
     if (m_qlPreviewControllerDataSource)
         [m_qlPreviewControllerDataSource.get() failWithError:nil];

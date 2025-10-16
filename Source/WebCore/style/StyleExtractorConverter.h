@@ -31,12 +31,10 @@
 
 #pragma once
 
-#include "CSSAppleColorFilterPropertyValue.h"
 #include "CSSBorderImage.h"
 #include "CSSBorderImageSliceValue.h"
 #include "CSSCounterValue.h"
 #include "CSSEasingFunctionValue.h"
-#include "CSSFilterPropertyValue.h"
 #include "CSSFontFeatureValue.h"
 #include "CSSFontStyleWithAngleValue.h"
 #include "CSSFontValue.h"
@@ -62,7 +60,6 @@
 #include "CSSValuePool.h"
 #include "CSSViewValue.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "FontCascade.h"
 #include "FontSelectionValueInlines.h"
 #include "HTMLFrameOwnerElement.h"
@@ -74,12 +71,10 @@
 #include "RenderElementInlines.h"
 #include "RenderGrid.h"
 #include "RenderInline.h"
-#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
 #include "SVGRenderStyle.h"
 #include "ScrollTimeline.h"
 #include "SkewTransformOperation.h"
-#include "StyleAppleColorFilterProperty.h"
 #include "StyleClipPath.h"
 #include "StyleColor.h"
 #include "StyleColorScheme.h"
@@ -87,7 +82,6 @@
 #include "StyleDynamicRangeLimit.h"
 #include "StyleEasingFunction.h"
 #include "StyleExtractorState.h"
-#include "StyleFilterProperty.h"
 #include "StyleFlexBasis.h"
 #include "StyleInset.h"
 #include "StyleLineBoxContain.h"
@@ -96,7 +90,6 @@
 #include "StyleMinimumSize.h"
 #include "StyleOffsetPath.h"
 #include "StylePadding.h"
-#include "StylePathData.h"
 #include "StylePerspective.h"
 #include "StylePreferredSize.h"
 #include "StylePrimitiveKeyword+CSSValueCreation.h"
@@ -107,7 +100,6 @@
 #include "StyleScrollMargin.h"
 #include "StyleScrollPadding.h"
 #include "StyleTranslate.h"
-#include "TimelineRange.h"
 #include "TransformOperationData.h"
 #include "ViewTimeline.h"
 #include "WebAnimationUtilities.h"
@@ -136,13 +128,8 @@ public:
 
     static Ref<CSSPrimitiveValue> convertLength(ExtractorState&, const WebCore::Length&);
     static Ref<CSSPrimitiveValue> convertLength(const RenderStyle&, const WebCore::Length&);
-    static Ref<CSSPrimitiveValue> convertLengthAllowingNumber(ExtractorState&, const WebCore::Length&);
-    static Ref<CSSPrimitiveValue> convertLengthOrAuto(ExtractorState&, const WebCore::Length&);
 
-    template<typename T> static Ref<CSSPrimitiveValue> convertNumber(ExtractorState&, T);
     template<typename T> static Ref<CSSPrimitiveValue> convertNumberAsPixels(ExtractorState&, T);
-    template<typename T> static Ref<CSSPrimitiveValue> convertComputedLength(ExtractorState&, T);
-    template<typename T> static Ref<CSSPrimitiveValue> convertLineWidth(ExtractorState&, T lineWidth);
 
     template<CSSValueID> static Ref<CSSPrimitiveValue> convertCustomIdentAtomOrKeyword(ExtractorState&, const AtomString&);
 
@@ -154,25 +141,17 @@ public:
 
     static Ref<CSSValue> convertTransformationMatrix(ExtractorState&, const TransformationMatrix&);
     static Ref<CSSValue> convertTransformationMatrix(const RenderStyle&, const TransformationMatrix&);
-    static Ref<CSSValue> convertTransformOperation(ExtractorState&, const TransformOperation&);
-    static Ref<CSSValue> convertTransformOperation(const RenderStyle&, const TransformOperation&);
 
     // MARK: Shared conversions
 
     static Ref<CSSValue> convertGlyphOrientation(ExtractorState&, GlyphOrientation);
     static Ref<CSSValue> convertGlyphOrientationOrAuto(ExtractorState&, GlyphOrientation);
     static Ref<CSSValue> convertMarginTrim(ExtractorState&, OptionSet<MarginTrimType>);
-    static Ref<CSSValue> convertDPath(ExtractorState&, const StylePathData*);
-    static Ref<CSSValue> convertStrokeDashArray(ExtractorState&, const FixedVector<WebCore::Length>&);
-    static Ref<CSSValue> convertFilterOperations(ExtractorState&, const FilterOperations&);
-    static Ref<CSSValue> convertAppleColorFilterOperations(ExtractorState&, const FilterOperations&);
     static Ref<CSSValue> convertWebkitTextCombine(ExtractorState&, TextCombine);
     static Ref<CSSValue> convertImageOrientation(ExtractorState&, ImageOrientation);
     static Ref<CSSValue> convertContain(ExtractorState&, OptionSet<Containment>);
     static Ref<CSSValue> convertTextSpacingTrim(ExtractorState&, TextSpacingTrim);
     static Ref<CSSValue> convertTextAutospace(ExtractorState&, TextAutospace);
-    static Ref<CSSValue> convertLineFitEdge(ExtractorState&, const TextEdge&);
-    static Ref<CSSValue> convertTextBoxEdge(ExtractorState&, const TextEdge&);
     static Ref<CSSValue> convertPositionTryFallbacks(ExtractorState&, const FixedVector<PositionTryFallback>&);
     static Ref<CSSValue> convertWillChange(ExtractorState&, const WillChangeData*);
     static Ref<CSSValue> convertTabSize(ExtractorState&, const TabSize&);
@@ -216,28 +195,6 @@ public:
     static Ref<CSSValue> convertFontWidth(ExtractorState&, FontSelectionValue);
     static Ref<CSSValue> convertFontFeatureSettings(ExtractorState&, const FontFeatureSettings&);
     static Ref<CSSValue> convertFontVariationSettings(ExtractorState&, const FontVariationSettings&);
-
-    // MARK: Animation/Transition conversions
-
-    static Ref<CSSValue> convertAnimationName(ExtractorState&, const ScopedName&, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationProperty(ExtractorState&, const Animation::TransitionProperty&, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationAllowsDiscreteTransitions(ExtractorState&, bool, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationDuration(ExtractorState&, Markable<double>, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationDelay(ExtractorState&, double, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationIterationCount(ExtractorState&, double, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationDirection(ExtractorState&, Animation::Direction, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationFillMode(ExtractorState&, AnimationFillMode, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationCompositeOperation(ExtractorState&, CompositeOperation, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationPlayState(ExtractorState&, AnimationPlayState, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationTimeline(ExtractorState&, const Animation::Timeline&, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationTimingFunction(ExtractorState&, const TimingFunction&, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertAnimationTimingFunction(ExtractorState&, const TimingFunction*, const Animation*, const AnimationList*);
-    static Ref<CSSValueList> convertAnimationSingleRange(ExtractorState&, const SingleTimelineRange&, SingleTimelineRange::Type);
-    static Ref<CSSValueList> convertAnimationRangeStart(ExtractorState&, const SingleTimelineRange&, const Animation*, const AnimationList*);
-    static Ref<CSSValueList> convertAnimationRangeEnd(ExtractorState&, const SingleTimelineRange&, const Animation*, const AnimationList*);
-    static Ref<CSSValueList> convertAnimationRange(ExtractorState&, const TimelineRange&, const Animation*, const AnimationList*);
-    static Ref<CSSValue> convertSingleAnimation(ExtractorState&, const Animation&);
-    static Ref<CSSValue> convertSingleTransition(ExtractorState&, const Animation&);
 
     // MARK: Grid conversions
 
@@ -308,36 +265,9 @@ inline Ref<CSSPrimitiveValue> ExtractorConverter::convertLength(const RenderStyl
     return CSSPrimitiveValue::create(length, style);
 }
 
-inline Ref<CSSPrimitiveValue> ExtractorConverter::convertLengthAllowingNumber(ExtractorState& state, const WebCore::Length& length)
-{
-    return convertLength(state, length);
-}
-
-inline Ref<CSSPrimitiveValue> ExtractorConverter::convertLengthOrAuto(ExtractorState& state, const WebCore::Length& length)
-{
-    if (length.isAuto())
-        return CSSPrimitiveValue::create(CSSValueAuto);
-    return convertLength(state, length);
-}
-
-template<typename T> Ref<CSSPrimitiveValue> ExtractorConverter::convertNumber(ExtractorState& state, T number)
-{
-    return convert(state, number);
-}
-
 template<typename T> Ref<CSSPrimitiveValue> ExtractorConverter::convertNumberAsPixels(ExtractorState& state, T number)
 {
     return CSSPrimitiveValue::create(adjustFloatForAbsoluteZoom(number, state.style), CSSUnitType::CSS_PX);
-}
-
-template<typename T> Ref<CSSPrimitiveValue> ExtractorConverter::convertComputedLength(ExtractorState& state, T number)
-{
-    return convertNumberAsPixels(state, number);
-}
-
-template<typename T> Ref<CSSPrimitiveValue> ExtractorConverter::convertLineWidth(ExtractorState& state, T lineWidth)
-{
-    return convertNumberAsPixels(state, lineWidth);
 }
 
 template<CSSValueID keyword> Ref<CSSPrimitiveValue> ExtractorConverter::convertCustomIdentAtomOrKeyword(ExtractorState&, const AtomString& string)
@@ -384,106 +314,6 @@ inline Ref<CSSValue> ExtractorConverter::convertTransformationMatrix(const Rende
     for (auto value : values)
         arguments.append(CSSPrimitiveValue::create(value));
     return CSSFunctionValue::create(CSSValueMatrix3d, WTFMove(arguments));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertTransformOperation(ExtractorState& state, const TransformOperation& operation)
-{
-    return convertTransformOperation(state.style, operation);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertTransformOperation(const RenderStyle& style, const TransformOperation& operation)
-{
-    auto translateLength = [&](const auto& length) -> Ref<CSSPrimitiveValue> {
-        if (length.isZero())
-            return CSSPrimitiveValue::create(0, CSSUnitType::CSS_PX);
-        return convertLength(style, length);
-    };
-
-    auto includeLength = [](const auto& length) -> bool {
-        return !length.isZero() || length.isPercent();
-    };
-
-    switch (operation.type()) {
-    case TransformOperation::Type::TranslateX:
-        return CSSFunctionValue::create(CSSValueTranslateX, translateLength(uncheckedDowncast<TranslateTransformOperation>(operation).x()));
-    case TransformOperation::Type::TranslateY:
-        return CSSFunctionValue::create(CSSValueTranslateY, translateLength(uncheckedDowncast<TranslateTransformOperation>(operation).y()));
-    case TransformOperation::Type::TranslateZ:
-        return CSSFunctionValue::create(CSSValueTranslateZ, translateLength(uncheckedDowncast<TranslateTransformOperation>(operation).z()));
-    case TransformOperation::Type::Translate:
-    case TransformOperation::Type::Translate3D: {
-        auto& translate = uncheckedDowncast<TranslateTransformOperation>(operation);
-        if (!translate.is3DOperation()) {
-            if (!includeLength(translate.y()))
-                return CSSFunctionValue::create(CSSValueTranslate, translateLength(translate.x()));
-            return CSSFunctionValue::create(CSSValueTranslate, translateLength(translate.x()),
-                translateLength(translate.y()));
-        }
-        return CSSFunctionValue::create(CSSValueTranslate3d,
-            translateLength(translate.x()),
-            translateLength(translate.y()),
-            translateLength(translate.z()));
-    }
-    case TransformOperation::Type::ScaleX:
-        return CSSFunctionValue::create(CSSValueScaleX, CSSPrimitiveValue::create(uncheckedDowncast<ScaleTransformOperation>(operation).x()));
-    case TransformOperation::Type::ScaleY:
-        return CSSFunctionValue::create(CSSValueScaleY, CSSPrimitiveValue::create(uncheckedDowncast<ScaleTransformOperation>(operation).y()));
-    case TransformOperation::Type::ScaleZ:
-        return CSSFunctionValue::create(CSSValueScaleZ, CSSPrimitiveValue::create(uncheckedDowncast<ScaleTransformOperation>(operation).z()));
-    case TransformOperation::Type::Scale:
-    case TransformOperation::Type::Scale3D: {
-        auto& scale = uncheckedDowncast<ScaleTransformOperation>(operation);
-        if (!scale.is3DOperation()) {
-            if (scale.x() == scale.y())
-                return CSSFunctionValue::create(CSSValueScale, CSSPrimitiveValue::create(scale.x()));
-            return CSSFunctionValue::create(CSSValueScale, CSSPrimitiveValue::create(scale.x()),
-                CSSPrimitiveValue::create(scale.y()));
-        }
-        return CSSFunctionValue::create(CSSValueScale3d,
-            CSSPrimitiveValue::create(scale.x()),
-            CSSPrimitiveValue::create(scale.y()),
-            CSSPrimitiveValue::create(scale.z()));
-    }
-    case TransformOperation::Type::RotateX:
-        return CSSFunctionValue::create(CSSValueRotateX, CSSPrimitiveValue::create(uncheckedDowncast<RotateTransformOperation>(operation).angle(), CSSUnitType::CSS_DEG));
-    case TransformOperation::Type::RotateY:
-        return CSSFunctionValue::create(CSSValueRotateY, CSSPrimitiveValue::create(uncheckedDowncast<RotateTransformOperation>(operation).angle(), CSSUnitType::CSS_DEG));
-    case TransformOperation::Type::RotateZ:
-        return CSSFunctionValue::create(CSSValueRotateZ, CSSPrimitiveValue::create(uncheckedDowncast<RotateTransformOperation>(operation).angle(), CSSUnitType::CSS_DEG));
-    case TransformOperation::Type::Rotate:
-        return CSSFunctionValue::create(CSSValueRotate, CSSPrimitiveValue::create(uncheckedDowncast<RotateTransformOperation>(operation).angle(), CSSUnitType::CSS_DEG));
-    case TransformOperation::Type::Rotate3D: {
-        auto& rotate = uncheckedDowncast<RotateTransformOperation>(operation);
-        return CSSFunctionValue::create(CSSValueRotate3d, CSSPrimitiveValue::create(rotate.x()), CSSPrimitiveValue::create(rotate.y()), CSSPrimitiveValue::create(rotate.z()), CSSPrimitiveValue::create(rotate.angle(), CSSUnitType::CSS_DEG));
-    }
-    case TransformOperation::Type::SkewX:
-        return CSSFunctionValue::create(CSSValueSkewX, CSSPrimitiveValue::create(uncheckedDowncast<SkewTransformOperation>(operation).angleX(), CSSUnitType::CSS_DEG));
-    case TransformOperation::Type::SkewY:
-        return CSSFunctionValue::create(CSSValueSkewY, CSSPrimitiveValue::create(uncheckedDowncast<SkewTransformOperation>(operation).angleY(), CSSUnitType::CSS_DEG));
-    case TransformOperation::Type::Skew: {
-        auto& skew = uncheckedDowncast<SkewTransformOperation>(operation);
-        if (!skew.angleY())
-            return CSSFunctionValue::create(CSSValueSkew, CSSPrimitiveValue::create(skew.angleX(), CSSUnitType::CSS_DEG));
-        return CSSFunctionValue::create(CSSValueSkew, CSSPrimitiveValue::create(skew.angleX(), CSSUnitType::CSS_DEG),
-            CSSPrimitiveValue::create(skew.angleY(), CSSUnitType::CSS_DEG));
-    }
-    case TransformOperation::Type::Perspective:
-        if (auto perspective = uncheckedDowncast<PerspectiveTransformOperation>(operation).perspective())
-            return CSSFunctionValue::create(CSSValuePerspective, convertLength(style, *perspective));
-        return CSSFunctionValue::create(CSSValuePerspective, CSSPrimitiveValue::create(CSSValueNone));
-    case TransformOperation::Type::Matrix:
-    case TransformOperation::Type::Matrix3D: {
-        TransformationMatrix transform;
-        operation.apply(transform, { });
-        return convertTransformationMatrix(style, transform);
-    }
-    case TransformOperation::Type::Identity:
-    case TransformOperation::Type::None:
-        break;
-    }
-
-    ASSERT_NOT_REACHED();
-    return CSSPrimitiveValue::create(CSSValueNone);
 }
 
 // MARK: - Shared conversions
@@ -548,34 +378,6 @@ inline Ref<CSSValue> ExtractorConverter::convertMarginTrim(ExtractorState&, Opti
     if (marginTrim.contains(MarginTrimType::InlineEnd))
         list.append(CSSPrimitiveValue::create(CSSValueInlineEnd));
     return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-
-inline Ref<CSSValue> ExtractorConverter::convertDPath(ExtractorState& state, const StylePathData* path)
-{
-    if (!path)
-        return CSSPrimitiveValue::create(CSSValueNone);
-    return CSSPathValue::create(toCSS(Ref { *path }->path(), state.style, PathConversion::ForceAbsolute));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertStrokeDashArray(ExtractorState& state, const FixedVector<WebCore::Length>& dashes)
-{
-    if (dashes.isEmpty())
-        return CSSPrimitiveValue::create(CSSValueNone);
-    CSSValueListBuilder list;
-    for (auto& dash : dashes)
-        list.append(convertLength(state, dash));
-    return CSSValueList::createCommaSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFilterOperations(ExtractorState& state, const FilterOperations& filterOperations)
-{
-    return CSSFilterPropertyValue::create(toCSSFilterProperty(filterOperations, state.style));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAppleColorFilterOperations(ExtractorState& state, const FilterOperations& filterOperations)
-{
-    return CSSAppleColorFilterPropertyValue::create(toCSSAppleColorFilterProperty(filterOperations, state.style));
 }
 
 inline Ref<CSSValue> ExtractorConverter::convertWebkitTextCombine(ExtractorState& state, TextCombine textCombine)
@@ -648,43 +450,6 @@ inline Ref<CSSValue> ExtractorConverter::convertTextAutospace(ExtractorState&, T
     return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertLineFitEdge(ExtractorState& state, const TextEdge& textEdge)
-{
-    if (textEdge.over == TextEdgeType::Leading && textEdge.under == TextEdgeType::Leading)
-        return convert(state, textEdge.over);
-
-    // https://www.w3.org/TR/css-inline-3/#text-edges
-    // "If only one value is specified, both edges are assigned that same keyword if possible; else text is assumed as the missing value."
-    auto shouldSerializeUnderEdge = [&] {
-        if (textEdge.over == TextEdgeType::CapHeight || textEdge.over == TextEdgeType::ExHeight)
-            return textEdge.under != TextEdgeType::Text;
-        return textEdge.over != textEdge.under;
-    }();
-
-    if (!shouldSerializeUnderEdge)
-        return convert(state, textEdge.over);
-
-    return CSSValuePair::create(convert(state, textEdge.over), convert(state, textEdge.under));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertTextBoxEdge(ExtractorState& state, const TextEdge& textEdge)
-{
-    if (textEdge.over == TextEdgeType::Auto && textEdge.under == TextEdgeType::Auto)
-        return convert(state, textEdge.over);
-
-    // https://www.w3.org/TR/css-inline-3/#text-edges
-    // "If only one value is specified, both edges are assigned that same keyword if possible; else text is assumed as the missing value."
-    auto shouldSerializeUnderEdge = [&] {
-        if (textEdge.over == TextEdgeType::CapHeight || textEdge.over == TextEdgeType::ExHeight)
-            return textEdge.under != TextEdgeType::Text;
-        return textEdge.over != textEdge.under;
-    }();
-
-    if (!shouldSerializeUnderEdge)
-        return convert(state, textEdge.over);
-
-    return CSSValuePair::create(convert(state, textEdge.over), convert(state, textEdge.under));
-}
 
 inline Ref<CSSValue> ExtractorConverter::convertPositionTryFallbacks(ExtractorState& state, const FixedVector<PositionTryFallback>& fallbacks)
 {
@@ -1357,347 +1122,6 @@ inline Ref<CSSValue> ExtractorConverter::convertFontVariationSettings(ExtractorS
     for (auto& feature : fontVariationSettings)
         list.append(CSSFontVariationValue::create(feature.tag(), convert(state, feature.value())));
     return CSSValueList::createCommaSeparated(WTFMove(list));
-}
-
-// MARK: - Animation/Transition conversions
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationName(ExtractorState& state, const ScopedName& name, const Animation*, const AnimationList*)
-{
-    return convert(state, name);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationProperty(ExtractorState&, const Animation::TransitionProperty& property, const Animation*, const AnimationList*)
-{
-    switch (property.mode) {
-    case Animation::TransitionMode::None:
-        return CSSPrimitiveValue::create(CSSValueNone);
-    case Animation::TransitionMode::All:
-        return CSSPrimitiveValue::create(CSSValueAll);
-    case Animation::TransitionMode::SingleProperty:
-    case Animation::TransitionMode::UnknownProperty:
-        return CSSPrimitiveValue::createCustomIdent(animatablePropertyAsString(property.animatableProperty));
-    }
-    ASSERT_NOT_REACHED();
-    return CSSPrimitiveValue::create(CSSValueNone);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationAllowsDiscreteTransitions(ExtractorState&, bool allowsDiscreteTransitions, const Animation*, const AnimationList*)
-{
-    return CSSPrimitiveValue::create(allowsDiscreteTransitions ? CSSValueAllowDiscrete : CSSValueNormal);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationDuration(ExtractorState&, Markable<double> duration, const Animation* animation, const AnimationList* animationList)
-{
-    auto animationListHasMultipleExplicitTimelines = [&] {
-        if (!animationList || animationList->size() <= 1)
-            return false;
-        auto explicitTimelines = 0;
-        for (auto& animation : *animationList) {
-            if (animation->isTimelineSet())
-                ++explicitTimelines;
-            if (explicitTimelines > 1)
-                return true;
-        }
-        return false;
-    };
-
-    auto animationHasExplicitNonAutoTimeline = [&] {
-        if (!animation || !animation->isTimelineSet())
-            return false;
-        auto* timelineKeyword = std::get_if<Animation::TimelineKeyword>(&animation->timeline());
-        return !timelineKeyword || *timelineKeyword != Animation::TimelineKeyword::Auto;
-    };
-
-    // https://drafts.csswg.org/css-animations-2/#animation-duration
-    // For backwards-compatibility with Level 1, when the computed value of animation-timeline is auto
-    // (i.e. only one list value, and that value being auto), the resolved value of auto for
-    // animation-duration is 0s whenever its used value would also be 0s.
-    if (!duration && (animationListHasMultipleExplicitTimelines() || animationHasExplicitNonAutoTimeline()))
-        return CSSPrimitiveValue::create(CSSValueAuto);
-    return CSSPrimitiveValue::create(duration.value_or(0), CSSUnitType::CSS_S);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationDelay(ExtractorState&, double delay, const Animation*, const AnimationList*)
-{
-    return CSSPrimitiveValue::create(delay, CSSUnitType::CSS_S);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationIterationCount(ExtractorState&, double iterationCount, const Animation*, const AnimationList*)
-{
-    if (iterationCount == Animation::IterationCountInfinite)
-        return CSSPrimitiveValue::create(CSSValueInfinite);
-    return CSSPrimitiveValue::create(iterationCount);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationDirection(ExtractorState&, Animation::Direction direction, const Animation*, const AnimationList*)
-{
-    switch (direction) {
-    case Animation::Direction::Normal:
-        return CSSPrimitiveValue::create(CSSValueNormal);
-    case Animation::Direction::Alternate:
-        return CSSPrimitiveValue::create(CSSValueAlternate);
-    case Animation::Direction::Reverse:
-        return CSSPrimitiveValue::create(CSSValueReverse);
-    case Animation::Direction::AlternateReverse:
-        return CSSPrimitiveValue::create(CSSValueAlternateReverse);
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationFillMode(ExtractorState&, AnimationFillMode fillMode, const Animation*, const AnimationList*)
-{
-    switch (fillMode) {
-    case AnimationFillMode::None:
-        return CSSPrimitiveValue::create(CSSValueNone);
-    case AnimationFillMode::Forwards:
-        return CSSPrimitiveValue::create(CSSValueForwards);
-    case AnimationFillMode::Backwards:
-        return CSSPrimitiveValue::create(CSSValueBackwards);
-    case AnimationFillMode::Both:
-        return CSSPrimitiveValue::create(CSSValueBoth);
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationCompositeOperation(ExtractorState&, CompositeOperation operation, const Animation*, const AnimationList*)
-{
-    switch (operation) {
-    case CompositeOperation::Add:
-        return CSSPrimitiveValue::create(CSSValueAdd);
-    case CompositeOperation::Accumulate:
-        return CSSPrimitiveValue::create(CSSValueAccumulate);
-    case CompositeOperation::Replace:
-        return CSSPrimitiveValue::create(CSSValueReplace);
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationPlayState(ExtractorState&, AnimationPlayState playState, const Animation*, const AnimationList*)
-{
-    switch (playState) {
-    case AnimationPlayState::Playing:
-        return CSSPrimitiveValue::create(CSSValueRunning);
-    case AnimationPlayState::Paused:
-        return CSSPrimitiveValue::create(CSSValuePaused);
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationTimeline(ExtractorState& state, const Animation::Timeline& timeline, const Animation*, const AnimationList*)
-{
-    auto valueForAnonymousScrollTimeline = [&](auto& anonymousScrollTimeline) {
-        auto scroller = [&] {
-            switch (anonymousScrollTimeline.scroller) {
-            case Scroller::Nearest:
-                return CSSValueNearest;
-            case Scroller::Root:
-                return CSSValueRoot;
-            case Scroller::Self:
-                return CSSValueSelf;
-            default:
-                ASSERT_NOT_REACHED();
-                return CSSValueNearest;
-            }
-        }();
-        return CSSScrollValue::create(
-            CSSPrimitiveValue::create(scroller),
-            convert(state, anonymousScrollTimeline.axis)
-        );
-    };
-
-    auto valueForAnonymousViewTimeline = [&](auto& anonymousViewTimeline) {
-        auto insetCSSValue = [&](auto& inset) -> RefPtr<CSSValue> {
-            if (!inset)
-                return nullptr;
-            return CSSPrimitiveValue::create(*inset, state.style);
-        };
-        return CSSViewValue::create(
-            convert(state, anonymousViewTimeline.axis),
-            insetCSSValue(anonymousViewTimeline.insets.start),
-            insetCSSValue(anonymousViewTimeline.insets.end)
-        );
-    };
-
-    return WTF::switchOn(timeline,
-        [&](Animation::TimelineKeyword keyword) -> Ref<CSSValue> {
-            return CSSPrimitiveValue::create(keyword == Animation::TimelineKeyword::None ? CSSValueNone : CSSValueAuto);
-        },
-        [&](const AtomString& customIdent) -> Ref<CSSValue> {
-            return CSSPrimitiveValue::createCustomIdent(customIdent);
-        },
-        [&](const Animation::AnonymousScrollTimeline& anonymousScrollTimeline) -> Ref<CSSValue> {
-            return valueForAnonymousScrollTimeline(anonymousScrollTimeline);
-        },
-        [&](const Animation::AnonymousViewTimeline& anonymousViewTimeline) -> Ref<CSSValue> {
-            return valueForAnonymousViewTimeline(anonymousViewTimeline);
-        }
-    );
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationTimingFunction(ExtractorState& state, const TimingFunction& timingFunction, const Animation*, const AnimationList*)
-{
-    return CSSEasingFunctionValue::create(toCSSEasingFunction(timingFunction, state.style));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertAnimationTimingFunction(ExtractorState& state, const TimingFunction* timingFunction, const Animation*, const AnimationList*)
-{
-    return CSSEasingFunctionValue::create(toCSSEasingFunction(*timingFunction, state.style));
-}
-
-inline Ref<CSSValueList> ExtractorConverter::convertAnimationSingleRange(ExtractorState& state, const SingleTimelineRange& range, SingleTimelineRange::Type type)
-{
-    CSSValueListBuilder list;
-    if (range.name != SingleTimelineRange::Name::Omitted)
-        list.append(CSSPrimitiveValue::create(SingleTimelineRange::valueID(range.name)));
-    if (!SingleTimelineRange::isDefault(range.offset, type))
-        list.append(convertLength(state, range.offset));
-    return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValueList> ExtractorConverter::convertAnimationRangeStart(ExtractorState& state, const SingleTimelineRange& range, const Animation*, const AnimationList*)
-{
-    return convertAnimationSingleRange(state, range, SingleTimelineRange::Type::Start);
-}
-
-inline Ref<CSSValueList> ExtractorConverter::convertAnimationRangeEnd(ExtractorState& state, const SingleTimelineRange& range, const Animation*, const AnimationList*)
-{
-    return convertAnimationSingleRange(state, range, SingleTimelineRange::Type::End);
-}
-
-inline Ref<CSSValueList> ExtractorConverter::convertAnimationRange(ExtractorState& state, const TimelineRange& range, const Animation*, const AnimationList*)
-{
-    CSSValueListBuilder list;
-    auto rangeStart = range.start;
-    auto rangeEnd = range.end;
-
-    Ref startValue = convertAnimationSingleRange(state, rangeStart, SingleTimelineRange::Type::Start);
-    Ref endValue = convertAnimationSingleRange(state, rangeEnd, SingleTimelineRange::Type::End);
-    bool endValueEqualsStart = startValue->equals(endValue);
-
-    if (startValue->length())
-        list.append(WTFMove(startValue));
-
-    bool isNormal = rangeEnd.name == SingleTimelineRange::Name::Normal;
-    bool isDefaultAndSameNameAsStart = rangeStart.name == rangeEnd.name && SingleTimelineRange::isDefault(rangeEnd.offset, SingleTimelineRange::Type::End);
-    if (endValue->length() && !endValueEqualsStart && !isNormal && !isDefaultAndSameNameAsStart)
-        list.append(WTFMove(endValue));
-
-    return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertSingleAnimation(ExtractorState& state, const Animation& animation)
-{
-    static NeverDestroyed<Ref<TimingFunction>> initialTimingFunction(Animation::initialTimingFunction());
-    static NeverDestroyed<String> alternate { "alternate"_s };
-    static NeverDestroyed<String> alternateReverse { "alternate-reverse"_s };
-    static NeverDestroyed<String> backwards { "backwards"_s };
-    static NeverDestroyed<String> both { "both"_s };
-    static NeverDestroyed<String> ease { "ease"_s };
-    static NeverDestroyed<String> easeIn { "ease-in"_s };
-    static NeverDestroyed<String> easeInOut { "ease-in-out"_s };
-    static NeverDestroyed<String> easeOut { "ease-out"_s };
-    static NeverDestroyed<String> forwards { "forwards"_s };
-    static NeverDestroyed<String> infinite { "infinite"_s };
-    static NeverDestroyed<String> linear { "linear"_s };
-    static NeverDestroyed<String> normal { "normal"_s };
-    static NeverDestroyed<String> paused { "paused"_s };
-    static NeverDestroyed<String> reverse { "reverse"_s };
-    static NeverDestroyed<String> running { "running"_s };
-    static NeverDestroyed<String> stepEnd { "step-end"_s };
-    static NeverDestroyed<String> stepStart { "step-start"_s };
-
-    // If we have an animation-delay but no animation-duration set, we must serialize
-    // the animation-duration because they're both <time> values and animation-delay
-    // comes first.
-    auto showsDelay = animation.delay() != Animation::initialDelay();
-    auto showsDuration = showsDelay || animation.duration() != Animation::initialDuration();
-
-    auto showsTimingFunction = [&] {
-        RefPtr timingFunction = animation.timingFunction();
-        if (timingFunction && *timingFunction != initialTimingFunction.get())
-            return true;
-        auto& name = animation.name().name;
-        return name == ease || name == easeIn || name == easeInOut || name == easeOut || name == linear || name == stepEnd || name == stepStart;
-    };
-
-    auto showsIterationCount = [&] {
-        if (animation.iterationCount() != Animation::initialIterationCount())
-            return true;
-        return animation.name().name == infinite;
-    };
-
-    auto showsDirection = [&] {
-        if (animation.direction() != Animation::initialDirection())
-            return true;
-        auto& name = animation.name().name;
-        return name == normal || name == reverse || name == alternate || name == alternateReverse;
-    };
-
-    auto showsFillMode = [&] {
-        if (animation.fillMode() != Animation::initialFillMode())
-            return true;
-        auto& name = animation.name().name;
-        return name == forwards || name == backwards || name == both;
-    };
-
-    auto showsPlaysState = [&] {
-        if (animation.playState() != Animation::initialPlayState())
-            return true;
-        auto& name = animation.name().name;
-        return name == running || name == paused;
-    };
-
-    CSSValueListBuilder list;
-    if (showsDuration)
-        list.append(ExtractorConverter::convertAnimationDuration(state, animation.duration(), nullptr, nullptr));
-    if (showsTimingFunction())
-        list.append(ExtractorConverter::convertAnimationTimingFunction(state, *animation.timingFunction(), nullptr, nullptr));
-    if (showsDelay)
-        list.append(ExtractorConverter::convertAnimationDelay(state, animation.delay(), nullptr, nullptr));
-    if (showsIterationCount())
-        list.append(ExtractorConverter::convertAnimationIterationCount(state, animation.iterationCount(), nullptr, nullptr));
-    if (showsDirection())
-        list.append(ExtractorConverter::convertAnimationDirection(state, animation.direction(), nullptr, nullptr));
-    if (showsFillMode())
-        list.append(ExtractorConverter::convertAnimationFillMode(state, animation.fillMode(), nullptr, nullptr));
-    if (showsPlaysState())
-        list.append(ExtractorConverter::convertAnimationPlayState(state, animation.playState(), nullptr, nullptr));
-    if (animation.name() != Animation::initialName())
-        list.append(ExtractorConverter::convertAnimationName(state, animation.name(), nullptr, nullptr));
-    if (animation.timeline() != Animation::initialTimeline())
-        list.append(ExtractorConverter::convertAnimationTimeline(state, animation.timeline(), nullptr, nullptr));
-    if (animation.compositeOperation() != Animation::initialCompositeOperation())
-        list.append(ExtractorConverter::convertAnimationCompositeOperation(state, animation.compositeOperation(), nullptr, nullptr));
-    if (list.isEmpty())
-        return CSSPrimitiveValue::create(CSSValueNone);
-    return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertSingleTransition(ExtractorState& state, const Animation& transition)
-{
-    static NeverDestroyed<Ref<TimingFunction>> initialTimingFunction(Animation::initialTimingFunction());
-
-    // If we have a transition-delay but no transition-duration set, we must serialize
-    // the transition-duration because they're both <time> values and transition-delay
-    // comes first.
-    auto showsDelay = transition.delay() != Animation::initialDelay();
-    auto showsDuration = showsDelay || transition.duration() != Animation::initialDuration();
-
-    CSSValueListBuilder list;
-    if (transition.property() != Animation::initialProperty())
-        list.append(convertAnimationProperty(state, transition.property(), nullptr, nullptr));
-    if (showsDuration)
-        list.append(convertAnimationDuration(state, transition.duration(), nullptr, nullptr));
-    if (RefPtr timingFunction = transition.timingFunction(); *timingFunction != initialTimingFunction.get())
-        list.append(convertAnimationTimingFunction(state, *timingFunction, nullptr, nullptr));
-    if (showsDelay)
-        list.append(convertAnimationDelay(state, transition.delay(), nullptr, nullptr));
-    if (transition.allowsDiscreteTransitions() != Animation::initialAllowsDiscreteTransitions())
-        list.append(convertAnimationAllowsDiscreteTransitions(state, transition.allowsDiscreteTransitions(), nullptr, nullptr));
-    if (list.isEmpty())
-        return CSSPrimitiveValue::create(CSSValueAll);
-    return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
 // MARK: - Grid conversions

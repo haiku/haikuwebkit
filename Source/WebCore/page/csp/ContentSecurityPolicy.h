@@ -26,8 +26,10 @@
 
 #pragma once
 
+#include <WebCore/ContentSecurityPolicyClient.h>
 #include <WebCore/ContentSecurityPolicyHash.h>
 #include <WebCore/ContentSecurityPolicyResponseHeaders.h>
+#include <WebCore/ReportingClient.h>
 #include <WebCore/SecurityContext.h>
 #include <WebCore/SecurityOrigin.h>
 #include <WebCore/SecurityOriginHash.h>
@@ -65,8 +67,6 @@ class LocalFrame;
 class ResourceRequest;
 class ScriptExecutionContext;
 class SecurityOrigin;
-struct ContentSecurityPolicyClient;
-struct ReportingClient;
 
 enum class ParserInserted : bool { No, Yes };
 static constexpr unsigned bitWidthOfParserInserted = 1;

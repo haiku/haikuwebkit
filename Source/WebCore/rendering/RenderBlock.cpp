@@ -48,7 +48,6 @@
 #include "LocalFrameView.h"
 #include "Logging.h"
 #include "LogicalSelectionOffsetCaches.h"
-#include "OverflowEvent.h"
 #include "Page.h"
 #include "PaintInfo.h"
 #include "RenderBlockFlow.h"
@@ -268,48 +267,6 @@ public:
 using RenderBlockRareDataMap = SingleThreadWeakHashMap<const RenderBlock, std::unique_ptr<RenderBlockRareData>>;
 static RenderBlockRareDataMap* gRareDataMap;
 
-// This class helps dispatching the 'overflow' event on layout change. overflow can be set on RenderBoxes, yet the existing code
-// only works on RenderBlocks. If this change, this class should be shared with other RenderBoxes.
-class OverflowEventDispatcher {
-    WTF_MAKE_NONCOPYABLE(OverflowEventDispatcher);
-public:
-    OverflowEventDispatcher(const RenderBlock* block)
-        : m_block(block)
-        , m_hadHorizontalLayoutOverflow(false)
-        , m_hadVerticalLayoutOverflow(false)
-    {
-        m_shouldDispatchEvent = !m_block->isAnonymous() && m_block->hasNonVisibleOverflow() && m_block->document().hasListenerType(Document::ListenerType::OverflowChanged);
-        if (m_shouldDispatchEvent) {
-            m_hadHorizontalLayoutOverflow = m_block->hasHorizontalLayoutOverflow();
-            m_hadVerticalLayoutOverflow = m_block->hasVerticalLayoutOverflow();
-        }
-    }
-
-    ~OverflowEventDispatcher()
-    {
-        if (!m_shouldDispatchEvent)
-            return;
-
-        bool hasHorizontalLayoutOverflow = m_block->hasHorizontalLayoutOverflow();
-        bool hasVerticalLayoutOverflow = m_block->hasVerticalLayoutOverflow();
-
-        bool horizontalLayoutOverflowChanged = hasHorizontalLayoutOverflow != m_hadHorizontalLayoutOverflow;
-        bool verticalLayoutOverflowChanged = hasVerticalLayoutOverflow != m_hadVerticalLayoutOverflow;
-        if (!horizontalLayoutOverflowChanged && !verticalLayoutOverflowChanged)
-            return;
-
-        Ref<OverflowEvent> overflowEvent = OverflowEvent::create(horizontalLayoutOverflowChanged, hasHorizontalLayoutOverflow, verticalLayoutOverflowChanged, hasVerticalLayoutOverflow);
-        overflowEvent->setTarget(RefPtr { m_block->element() });
-        m_block->protectedDocument()->enqueueOverflowEvent(WTFMove(overflowEvent));
-    }
-
-private:
-    CheckedPtr<const RenderBlock> m_block;
-    bool m_shouldDispatchEvent;
-    bool m_hadHorizontalLayoutOverflow;
-    bool m_hadVerticalLayoutOverflow;
-};
-
 RenderBlock::RenderBlock(Type type, Element& element, RenderStyle&& style, OptionSet<TypeFlag> baseTypeFlags, TypeSpecificFlags typeSpecificFlags)
     : RenderBox(type, element, WTFMove(style), baseTypeFlags | TypeFlag::IsRenderBlock, typeSpecificFlags)
 {
@@ -509,7 +466,6 @@ void RenderBlock::updateScrollInfoAfterLayout()
 void RenderBlock::layout()
 {
     StackStats::LayoutCheckPoint layoutCheckPoint;
-    OverflowEventDispatcher dispatcher(this);
 
     // Table cells call layoutBlock directly, so don't add any logic here. Put code into layoutBlock().
     {
@@ -772,9 +728,6 @@ bool RenderBlock::simplifiedLayout()
     updateLayerTransform();
 
     updateScrollInfoAfterLayout();
-
-    if (Style::AnchorPositionEvaluator::isAnchorPositioned(style()))
-        Style::AnchorPositionEvaluator::captureScrollSnapshots(*this);
 
     clearNeedsLayout();
     return true;
@@ -1889,7 +1842,7 @@ LayoutUnit RenderBlock::textIndentOffset() const
     LayoutUnit cw;
     if (style().textIndent().length.isPercentOrCalculated())
         cw = contentBoxLogicalWidth();
-    return Style::evaluate(style().textIndent().length, cw);
+    return Style::evaluate(style().textIndent().length, cw, 1.0f /* FIXME ZOOM EFFECTED? */);
 }
 
 LayoutUnit RenderBlock::logicalLeftOffsetForContent() const

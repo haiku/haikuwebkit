@@ -109,7 +109,7 @@ public:
     std::span<const typename Adaptor::Type> typedSpan() const { return unsafeMakeSpan(typedVector(), length()); }
     std::span<typename Adaptor::Type> typedSpan() { return unsafeMakeSpan(typedVector(), length()); }
 
-    inline bool inBounds(size_t) const;
+    inline bool inBounds(uint64_t) const;
 
     // These methods are meant to match indexed access methods that JSObject
     // supports - hence the slight redundancy.

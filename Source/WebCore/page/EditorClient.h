@@ -183,6 +183,8 @@ public:
     virtual void toggleAutomaticTextReplacement() = 0;
     virtual bool isAutomaticSpellingCorrectionEnabled() = 0;
     virtual void toggleAutomaticSpellingCorrection() = 0;
+    virtual bool isSmartListsEnabled() = 0;
+    virtual void toggleSmartLists() = 0;
 #endif
     
 #if PLATFORM(GTK)

@@ -180,7 +180,7 @@ JSValue JSTestCEReactions::getConstructor(VM& vm, const JSGlobalObject* globalOb
 
 void JSTestCEReactions::destroy(JSC::JSCell* cell)
 {
-    JSTestCEReactions* thisObject = static_cast<JSTestCEReactions*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestCEReactions* thisObject = static_cast<JSTestCEReactions*>(cell);
     thisObject->JSTestCEReactions::~JSTestCEReactions();
 }
 
@@ -465,7 +465,7 @@ bool JSTestCEReactionsOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown
 
 void JSTestCEReactionsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestCEReactions = static_cast<JSTestCEReactions*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestCEReactions = static_cast<JSTestCEReactions*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestCEReactions->protectedWrapped().ptr(), jsTestCEReactions);
 }

@@ -324,7 +324,7 @@ void MockCDMInstanceSession::requestLicense(LicenseType licenseType, KeyGrouping
         return;
     }
 
-    auto keyIDs = InitDataRegistry::shared().extractKeyIDs(initDataType, initData);
+    auto keyIDs = InitDataRegistry::singleton().extractKeyIDs(initDataType, initData);
     if (!keyIDs || keyIDs.value().isEmpty()) {
         callback(SharedBuffer::create(), emptyString(), false, SuccessValue::Failed);
         return;

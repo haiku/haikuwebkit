@@ -30,6 +30,7 @@
 #include <WebCore/StyleValueTypes.h>
 #include <wtf/Variant.h>
 #include <wtf/text/AtomString.h>
+#include <wtf/text/TextStream.h>
 
 namespace WebCore {
 namespace Style {
@@ -61,6 +62,11 @@ struct ListStyleType {
     {
     }
 
+    ListStyleType(CSS::Keyword::Decimal keyword)
+        : ListStyleType { CounterStyle { { nameString(keyword.value) } } }
+    {
+    }
+
     ListStyleType(CSS::Keyword::Disc keyword)
         : ListStyleType { CounterStyle { { nameString(keyword.value) } } }
     {
@@ -79,6 +85,7 @@ struct ListStyleType {
 
     bool isCircle() const;
     bool isDisc() const;
+    bool isDecimal() const;
     bool isSquare() const;
 
     std::optional<CounterStyle> tryCounterStyle() const
@@ -135,6 +142,8 @@ private:
 // MARK: - Conversion
 
 template<> struct CSSValueConversion<ListStyleType> { auto operator()(BuilderState&, const CSSValue&) -> ListStyleType; };
+
+template<> struct CSSValueCreation<ListStyleType> { Ref<CSSValue> operator()(CSSValuePool&, const RenderStyle&, const ListStyleType&); };
 
 } // namespace Style
 } // namespace WebCore

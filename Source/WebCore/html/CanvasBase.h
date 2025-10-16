@@ -101,6 +101,7 @@ public:
 
     virtual SecurityOrigin* securityOrigin() const { return nullptr; }
     ScriptExecutionContext* scriptExecutionContext() const { return canvasBaseScriptExecutionContext();  }
+    RefPtr<ScriptExecutionContext> protectedScriptExecutionContext() const;
 
     virtual CanvasRenderingContext* renderingContext() const = 0;
 
@@ -155,6 +156,7 @@ protected:
     explicit CanvasBase(IntSize, ScriptExecutionContext&);
 
     virtual ScriptExecutionContext* canvasBaseScriptExecutionContext() const = 0;
+    RefPtr<ScriptExecutionContext> protectedCanvasBaseScriptExecutionContext() const;
     virtual std::unique_ptr<CSSParserContext> createCSSParserContext() const = 0;
 
     virtual void setSize(const IntSize&);

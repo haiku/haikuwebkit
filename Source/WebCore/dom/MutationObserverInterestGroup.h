@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "DocumentInlines.h"
+#include "Document.h"
 #include "MutationObserver.h"
 #include <memory>
 #include <wtf/HashMap.h>

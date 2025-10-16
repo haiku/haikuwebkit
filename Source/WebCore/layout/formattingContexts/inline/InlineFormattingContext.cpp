@@ -522,6 +522,8 @@ void InlineFormattingContext::initializeInlineLayoutState(const LayoutState& glo
     inlineLayoutState.setShouldNotSynthesizeInlineBlockBaseline();
     if (globalLayoutState.inStandardsMode())
         inlineLayoutState.setInStandardsMode();
+    if (globalLayoutState.isTextShapingAcrossInlineBoxesEnabled())
+        inlineLayoutState.setShouldShapeTextAcrossInlineBoxes();
 }
 
 #if ASSERT_ENABLED

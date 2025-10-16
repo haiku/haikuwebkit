@@ -31,6 +31,7 @@
 
 #if OS(DARWIN)
 #include <malloc/malloc.h>
+#include <wtf/darwin/DispatchExtras.h>
 #endif
 
 #if OS(WINDOWS)
@@ -411,7 +412,7 @@ MallocCallTracker& MallocCallTracker::singleton()
 MallocCallTracker::MallocCallTracker()
 {
     int token;
-    notify_register_dispatch("com.apple.WebKit.dumpUntrackedMallocs", &token, dispatch_get_main_queue(), ^(int) {
+    notify_register_dispatch("com.apple.WebKit.dumpUntrackedMallocs", &token, mainDispatchQueueSingleton(), ^(int) {
         MallocCallTracker::singleton().dumpStats();
     });
 }

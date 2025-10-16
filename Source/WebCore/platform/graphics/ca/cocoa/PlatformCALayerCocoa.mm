@@ -209,7 +209,7 @@ static NSString *toCAFilterType(PlatformCALayer::FilterType type)
 
 PlatformCALayer::LayerType PlatformCALayerCocoa::layerTypeForPlatformLayer(PlatformLayer* layer)
 {
-    if (PAL::isAVFoundationFrameworkAvailable() && [layer isKindOfClass:PAL::getAVPlayerLayerClass()])
+    if (PAL::isAVFoundationFrameworkAvailable() && [layer isKindOfClass:PAL::getAVPlayerLayerClassSingleton()])
         return LayerType::LayerTypeAVPlayerLayer;
 
     if ([layer isKindOfClass:WebVideoContainerLayer.class]
@@ -247,7 +247,7 @@ PlatformCALayerCocoa::PlatformCALayerCocoa(LayerType layerType, PlatformCALayerC
         break;
 #if HAVE(CORE_MATERIAL)
     case LayerType::LayerTypeMaterialLayer:
-        layerClass = PAL::getMTMaterialLayerClass();
+        layerClass = PAL::getMTMaterialLayerClassSingleton();
         break;
 #endif
 #if HAVE(MATERIAL_HOSTING)
@@ -261,7 +261,7 @@ PlatformCALayerCocoa::PlatformCALayerCocoa(LayerType layerType, PlatformCALayerC
         break;
     case LayerType::LayerTypeAVPlayerLayer:
         if (PAL::isAVFoundationFrameworkAvailable())
-            layerClass = PAL::getAVPlayerLayerClass();
+            layerClass = PAL::getAVPlayerLayerClassSingleton();
         break;
 #if ENABLE(MODEL_ELEMENT)
     case LayerType::LayerTypeModelLayer:
@@ -388,7 +388,7 @@ Ref<PlatformCALayer> PlatformCALayerCocoa::clone(PlatformCALayerClient* owner) c
     newLayer->updateCustomAppearance(customAppearance());
 
     if (type == PlatformCALayer::LayerType::LayerTypeAVPlayerLayer) {
-        ASSERT(PAL::isAVFoundationFrameworkAvailable() && [newLayer->platformLayer() isKindOfClass:PAL::getAVPlayerLayerClass()]);
+        ASSERT(PAL::isAVFoundationFrameworkAvailable() && [newLayer->platformLayer() isKindOfClass:PAL::getAVPlayerLayerClassSingleton()]);
 
         AVPlayerLayer *destinationPlayerLayer = newLayer->avPlayerLayer();
         AVPlayerLayer *sourcePlayerLayer = avPlayerLayer();
@@ -1369,7 +1369,7 @@ AVPlayerLayer *PlatformCALayerCocoa::avPlayerLayer() const
     if (layerType() != PlatformCALayer::LayerType::LayerTypeAVPlayerLayer)
         return nil;
 
-    if ([platformLayer() isKindOfClass:PAL::getAVPlayerLayerClass()])
+    if ([platformLayer() isKindOfClass:PAL::getAVPlayerLayerClassSingleton()])
         return static_cast<AVPlayerLayer *>(platformLayer());
 
     if (auto *layer = dynamic_objc_cast<WebVideoContainerLayer>(platformLayer()))

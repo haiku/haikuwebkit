@@ -95,7 +95,7 @@ private:
 
 inline RenderVideo* HTMLVideoElement::renderer() const
 {
-    return downcast<RenderVideo>(HTMLMediaElement::renderer());
+    return downcast<RenderVideo>(Node::renderer());
 }
 
 } // namespace WebCore

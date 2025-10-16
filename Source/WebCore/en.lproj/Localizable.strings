@@ -1393,6 +1393,9 @@
 /* Smart Quotes context menu item */
 "Smart Quotes" = "Smart Quotes";
 
+/* Smart Lists context menu item */
+"Smart Lists" = "Smart Lists";
+
 /* Speech context sub-menu item */
 "Speech" = "Speech";
 

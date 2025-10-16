@@ -30,9 +30,9 @@
 
 #include <CoreAudio/CoreAudioTypes.h>
 #include <WebCore/CAAudioStreamDescription.h>
-#include <WebCore/MediaSample.h>
+#include <WebCore/TrackInfo.h>
 #include <memory>
-#include <wtf/Expected.h>
+#include <wtf/Forward.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -46,9 +46,7 @@ namespace WebCore {
 
 class MediaSamplesBlock;
 class SharedBuffer;
-struct AudioInfo;
 struct PlatformVideoColorSpace;
-struct TrackInfo;
 
 WEBCORE_EXPORT RetainPtr<CMFormatDescriptionRef> createFormatDescriptionFromTrackInfo(const TrackInfo&);
 WEBCORE_EXPORT RefPtr<AudioInfo> createAudioInfoFromFormatDescription(CMFormatDescriptionRef);

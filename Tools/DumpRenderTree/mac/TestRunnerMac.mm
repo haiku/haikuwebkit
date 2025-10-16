@@ -79,6 +79,7 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/WallTime.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 #if PLATFORM(IOS_FAMILY)
 #import "UIKitSPIForTesting.h"
@@ -1145,7 +1146,7 @@ void TestRunner::simulateWebNotificationClick(JSValueRef jsNotification)
 {
     NSString *notificationID = [[mainFrame webView] _notificationIDForTesting:jsNotification];
     m_hasPendingWebNotificationClick = true;
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(mainDispatchQueueSingleton(), ^{
         if (!m_hasPendingWebNotificationClick)
             return;
 

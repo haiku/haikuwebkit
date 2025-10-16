@@ -133,7 +133,6 @@
 #import <JavaScriptCore/JSLock.h>
 #import <JavaScriptCore/JSValueRef.h>
 #import <WebCore/AlternativeTextUIController.h>
-#import <WebCore/ApplicationCacheStorage.h>
 #import <WebCore/BackForwardCache.h>
 #import <WebCore/BackForwardController.h>
 #import <WebCore/BroadcastChannelRegistry.h>
@@ -168,6 +167,7 @@
 #import <WebCore/FocusController.h>
 #import <WebCore/FontAttributes.h>
 #import <WebCore/FontCache.h>
+#import <WebCore/FrameDestructionObserverInlines.h>
 #import <WebCore/FrameLoader.h>
 #import <WebCore/FrameSelection.h>
 #import <WebCore/FrameTree.h>
@@ -274,7 +274,6 @@
 #import <wtf/MathExtras.h>
 #import <wtf/ProcessPrivilege.h>
 #import <wtf/RAMSize.h>
-#import <wtf/RefCountedLeakCounter.h>
 #import <wtf/RefPtr.h>
 #import <wtf/RunLoop.h>
 #import <wtf/RuntimeApplicationChecks.h>
@@ -1362,42 +1361,9 @@ static void WebKitInitializeGamepadProviderIfNecessary()
 }
 #endif
 
-static NSString *applicationCacheBundleIdentifier()
-{
-    NSString *appName = [[NSBundle mainBundle] bundleIdentifier];
-    if (!appName)
-        appName = [[NSProcessInfo processInfo] processName];
-
-    ASSERT(appName);
-    return appName;
-}
-
-static NSString *applicationCachePath()
-{
-    return [NSString _webkit_localCacheDirectoryWithBundleIdentifier:applicationCacheBundleIdentifier()];
-}
-
-static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
-{
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [] {
-        String applicationCacheDirectory = applicationCachePath();
-        auto applicationCacheDatabasePath = FileSystem::pathByAppendingComponent(applicationCacheDirectory, "ApplicationCache.db"_s);
-        WebCore::SQLiteFileSystem::deleteDatabaseFile(applicationCacheDatabasePath);
-        FileSystem::deleteNonEmptyDirectory(FileSystem::pathByAppendingComponent(applicationCacheDirectory, "ApplicationCache"_s));
-    });
-    static WebCore::ApplicationCacheStorage& storage = WebCore::ApplicationCacheStorage::create(emptyString(), emptyString()).leakRef();
-
-    return storage;
-}
-
 - (void)_commonInitializationWithFrameName:(NSString *)frameName groupName:(NSString *)groupName
 {
     WebCoreThreadViolationCheckRoundTwo();
-
-#ifndef NDEBUG
-    WTF::RefCountedLeakCounter::suppressMessages(webViewIsOpen);
-#endif
 
     WebPreferences *standardPreferences = [WebPreferences standardPreferences];
     [standardPreferences willAddToWebView];
@@ -1535,7 +1501,6 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 #endif
 
     pageConfiguration.alternativeTextClient = makeUnique<WebAlternativeTextClient>(self);
-    pageConfiguration.applicationCacheStorage = webApplicationCacheStorage();
     pageConfiguration.databaseProvider = WebDatabaseProvider::singleton();
     pageConfiguration.pluginInfoProvider = WebPluginInfoProvider::singleton();
     pageConfiguration.storageNamespaceProvider = _private->group->storageNamespaceProvider();
@@ -1726,10 +1691,6 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 
     _private = [[WebViewPrivate alloc] init];
 
-#ifndef NDEBUG
-    WTF::RefCountedLeakCounter::suppressMessages(webViewIsOpen);
-#endif
-
     if (!preferences)
         preferences = [WebPreferences standardPreferences];
     [preferences willAddToWebView];
@@ -1787,7 +1748,6 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 #endif
 
     pageConfiguration.inspectorBackendClient = makeUnique<WebInspectorClient>(self);
-    pageConfiguration.applicationCacheStorage = webApplicationCacheStorage();
     pageConfiguration.databaseProvider = WebDatabaseProvider::singleton();
     pageConfiguration.storageNamespaceProvider = _private->group->storageNamespaceProvider();
     pageConfiguration.visitedLinkStore = _private->group->visitedLinkStore();
@@ -2373,10 +2333,6 @@ static NSMutableSet *knownPluginMIMETypes()
 
 - (void)_closeWithFastTeardown
 {
-#ifndef NDEBUG
-    WTF::RefCountedLeakCounter::suppressMessages("At least one WebView was closed with fast teardown.");
-#endif
-
 #if !PLATFORM(IOS_FAMILY)
     [[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 #endif
@@ -2425,10 +2381,6 @@ static bool fastDocumentTeardownEnabled()
 
     _private->closed = YES;
     [self _removeFromAllWebViewsSet];
-
-#ifndef NDEBUG
-    WTF::RefCountedLeakCounter::cancelMessageSuppression(webViewIsOpen);
-#endif
 
     // To quit the apps fast we skip document teardown, except plugins
     // need to be destroyed and unloaded.
@@ -6370,12 +6322,12 @@ static bool needsWebViewInitThreadWorkaround()
     auto* dragData = new WebCore::DragData(draggingInfo, client, global, coreDragOperationMask([draggingInfo draggingSourceOperationMask]), [self _applicationFlagsForDrag:draggingInfo]);
 
     NSArray* types = draggingInfo.draggingPasteboard.types;
-    if (![types containsObject:WebArchivePboardType] && [types containsObject:WebCore::legacyFilesPromisePasteboardType()]) {
+    if (![types containsObject:WebArchivePboardType] && [types containsObject:WebCore::legacyFilesPromisePasteboardTypeSingleton()]) {
 
-        // FIXME: legacyFilesPromisePasteboardType() contains UTIs, not path names. Also, it's not
+        // FIXME: legacyFilesPromisePasteboardTypeSingleton() contains UTIs, not path names. Also, it's not
         // guaranteed that the count of UTIs equals the count of files, since some clients only write
         // unique UTIs.
-        NSArray *files = [draggingInfo.draggingPasteboard propertyListForType:WebCore::legacyFilesPromisePasteboardType()];
+        NSArray *files = [draggingInfo.draggingPasteboard propertyListForType:WebCore::legacyFilesPromisePasteboardTypeSingleton()];
         if (![files isKindOfClass:[NSArray class]]) {
             delete dragData;
             return false;
@@ -6542,7 +6494,7 @@ static WebFrame *incrementFrame(WebFrame *frame, WebFindOptions options = 0)
     if (!_private->page)
         return;
 
-    _private->page->setUserContentProvider(_private->group->userContentController());
+    _private->page->setUserContentProviderForWebKitLegacy(_private->group->userContentController());
     _private->page->setVisitedLinkStore(_private->group->visitedLinkStore());
     _private->page->setGroupName(groupName);
 }
@@ -8217,6 +8169,15 @@ static NSAppleEventDescriptor* aeDescFromJSValue(JSC::JSGlobalObject* lexicalGlo
     [self setAutomaticSpellingCorrectionEnabled:![self isAutomaticSpellingCorrectionEnabled]];
 }
 
+- (BOOL)isSmartListsEnabled
+{
+    return NO;
+}
+
+- (void)setSmartListsEnabled:(BOOL)flag
+{
+}
+
 #endif // !PLATFORM(IOS_FAMILY)
 
 @end
@@ -8626,12 +8587,12 @@ FORWARD(toggleUnderline)
     }
 
     NSPasteboard *pasteboard = [NSPasteboard pasteboardWithUniqueName];
-    [pasteboard declareTypes:@[WebCore::legacyStringPasteboardType()] owner:nil];
+    [pasteboard declareTypes:@[WebCore::legacyStringPasteboardTypeSingleton()] owner:nil];
     auto s = adoptNS([selectedString mutableCopy]);
     const unichar nonBreakingSpaceCharacter = 0xA0;
     NSString *nonBreakingSpaceString = [NSString stringWithCharacters:&nonBreakingSpaceCharacter length:1];
     [s replaceOccurrencesOfString:nonBreakingSpaceString withString:@" " options:0 range:NSMakeRange(0, [s length])];
-    [pasteboard setString:s.get() forType:WebCore::legacyStringPasteboardType()];
+    [pasteboard setString:s.get() forType:WebCore::legacyStringPasteboardTypeSingleton()];
 
     // FIXME: seems fragile to use the service by name, but this is what AppKit does
     NSPerformService(@"Search With Google", pasteboard);
@@ -9098,7 +9059,7 @@ FORWARD(toggleUnderline)
 
 #if !ENABLE(REVEAL)
     if (PAL::canLoad_Lookup_LUNotificationPopoverWillClose())
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_dictionaryLookupPopoverWillClose:) name:PAL::get_Lookup_LUNotificationPopoverWillClose() object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_dictionaryLookupPopoverWillClose:) name:PAL::get_Lookup_LUNotificationPopoverWillCloseSingleton() object:nil];
 #endif // !ENABLE(REVEAL)
 
 }
@@ -9588,7 +9549,7 @@ static NSTextAlignment nsTextAlignmentFromRenderStyle(const WebCore::RenderStyle
 
 + (BOOL)_canHandleContextMenuTranslation
 {
-    return PAL::isTranslationUIServicesFrameworkAvailable() && [PAL::getLTUITranslationViewControllerClass() isAvailable];
+    return PAL::isTranslationUIServicesFrameworkAvailable() && [PAL::getLTUITranslationViewControllerClassSingleton() isAvailable];
 }
 
 - (void)_handleContextMenuTranslation:(const WebCore::TranslationContextMenuInfo&)info

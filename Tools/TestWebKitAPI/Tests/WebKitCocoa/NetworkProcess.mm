@@ -52,6 +52,7 @@
 #import <wtf/StdLibExtras.h>
 #import <wtf/UUID.h>
 #import <wtf/Vector.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 
 TEST(NetworkProcess, Entitlements)
@@ -682,7 +683,7 @@ TEST(_WKDataTask, Cancel)
         task.delegate = delegate.get();
         delegate.get().didReceiveResponse = ^(_WKDataTask *task, NSURLResponse *response, void (^decisionHandler)(_WKDataTaskResponsePolicy)) {
             decisionHandler(_WKDataTaskResponsePolicyAllow);
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_async(mainDispatchQueueSingleton(), ^{
                 EXPECT_NOT_NULL(task.delegate);
                 [task cancel];
                 EXPECT_NULL(task.delegate);

@@ -42,13 +42,17 @@ struct Box {
     struct Text {
     public:
         Text() = default;
-        Text(size_t position, size_t length, const String& originalContent, String adjustedContentToRender = String(), bool hasHyphen = false);
+        enum ShapingBoundary : uint8_t { Start, Inside, End, NotApplicable };
+        Text(size_t position, size_t length, const String& originalContent, String adjustedContentToRender = String(), bool hasHyphen = false, ShapingBoundary = ShapingBoundary::NotApplicable);
 
         size_t start() const { return m_start; }
         size_t end() const { return start() + length(); }
         size_t length() const { return m_length; }
         StringView originalContent() const { return StringView(m_originalContent).substring(m_start, m_length); }
         StringView renderedContent() const { return m_adjustedContentToRender.isNull() ? originalContent() : m_adjustedContentToRender; }
+        bool isAtShapingBoundaryStart() const { return m_shapingBoundary == ShapingBoundary::Start; }
+        bool isAtShapingBoundaryEnd() const { return m_shapingBoundary == ShapingBoundary::End; }
+        bool isBetweenShapingBoundaries() const { return m_shapingBoundary == ShapingBoundary::Inside; }
         bool hasHyphen() const { return m_hasHyphen; }
         std::optional<size_t> partiallyVisibleContentLength() const;
         void setPartiallyVisibleContentLength(size_t truncatedLength);
@@ -61,6 +65,7 @@ struct Box {
 
         unsigned m_start { 0 };
         unsigned m_length { 0 };
+        ShapingBoundary m_shapingBoundary { ShapingBoundary::NotApplicable };
         unsigned m_partiallyVisibleContentLength : 30 { };
         bool m_hasPartiallyVisibleContentLength : 1 { false };
         bool m_hasHyphen : 1 { false };
@@ -158,8 +163,8 @@ struct Box {
     bool isFirstForLayoutBox() const { return m_isFirstForLayoutBox; }
     bool isLastForLayoutBox() const { return m_isLastForLayoutBox; }
 
-    void setIsFirstForLayoutBox(bool isFirstBox) { m_isFirstForLayoutBox = isFirstBox; }
-    void setIsLastForLayoutBox(bool isLastBox) { m_isLastForLayoutBox = isLastBox; }
+    void setIsFirstForLayoutBox() { m_isFirstForLayoutBox = true; }
+    void setIsLastForLayoutBox() { m_isLastForLayoutBox = true; }
 
     bool isInGlyphDisplayListCache() const { return m_isInGlyphDisplayListCache; }
     void setIsInGlyphDisplayListCache() { m_isInGlyphDisplayListCache = true; }
@@ -212,11 +217,12 @@ inline Box::~Box()
         removeBoxFromGlyphDisplayListCache(*this);
 }
 
-inline Box::Text::Text(size_t start, size_t length, const String& originalContent, String adjustedContentToRender, bool hasHyphen)
+inline Box::Text::Text(size_t start, size_t length, const String& originalContent, String adjustedContentToRender, bool hasHyphen, ShapingBoundary shapingBoundary)
     : m_originalContent(originalContent)
     , m_adjustedContentToRender(adjustedContentToRender)
     , m_start(start)
     , m_length(length)
+    , m_shapingBoundary(shapingBoundary)
     , m_hasHyphen(hasHyphen)
 {
 }

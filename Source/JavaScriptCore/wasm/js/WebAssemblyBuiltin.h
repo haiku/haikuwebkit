@@ -27,8 +27,8 @@
 
 #if ENABLE(WEBASSEMBLY)
 
-#include "JSCJSValue.h"
-#include "WasmCallee.h"
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/WasmCallee.h>
 #include <wtf/text/ASCIILiteral.h>
 #include <wtf/text/WTFString.h>
 

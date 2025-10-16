@@ -31,6 +31,7 @@
 #include <WebCore/AudioSampleDataSource.h>
 #include <WebCore/BaseAudioSharedUnit.h>
 #include <WebCore/CAAudioStreamDescription.h>
+#include <WebCore/CoreAudioCaptureSource.h>
 #include <WebCore/Timer.h>
 
 OBJC_CLASS WebCoreAudioInputMuteChangeListener;

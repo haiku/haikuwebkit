@@ -167,10 +167,10 @@ bool DatabaseContext::stopDatabases(DatabaseTaskSynchronizer* synchronizer)
         m_hasRequestedTermination = true;
     }
 
-    auto& context = *scriptExecutionContext();
-    if (context.databaseContext()) {
-        ASSERT(context.databaseContext() == this);
-        context.setDatabaseContext(nullptr);
+    Ref context = *scriptExecutionContext();
+    if (context->databaseContext()) {
+        ASSERT(context->databaseContext() == this);
+        context->setDatabaseContext(nullptr);
     }
 
     return result;

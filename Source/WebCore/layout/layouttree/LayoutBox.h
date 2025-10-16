@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/LayoutUnits.h>
+#include <WebCore/RenderObject.h>
 #include <WebCore/RenderStyle.h>
 #include <WebCore/RenderStyleConstants.h>
 #include <wtf/CheckedPtr.h>

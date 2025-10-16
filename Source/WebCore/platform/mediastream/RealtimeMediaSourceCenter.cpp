@@ -117,7 +117,7 @@ void RealtimeMediaSourceCenter::createMediaStream(Ref<const Logger>&& logger, Ne
 void RealtimeMediaSourceCenter::getMediaStreamDevices(CompletionHandler<void(Vector<CaptureDevice>&&)>&& completion)
 {
     auto shouldEnumerateDisplay = displayCaptureFactory().displayCaptureDeviceManager().requiresCaptureDevicesEnumeration();
-    enumerateDevices(true, shouldEnumerateDisplay, true, true, [this, completion = WTFMove(completion)]() mutable {
+    enumerateDevices(true, shouldEnumerateDisplay, true, true, [this, protectedThis = Ref { *this }, completion = WTFMove(completion)]() mutable {
         Vector<CaptureDevice> results;
 
         results.appendVector(audioCaptureFactory().audioCaptureDeviceManager().captureDevices());
@@ -229,7 +229,7 @@ void RealtimeMediaSourceCenter::getDisplayMediaDevices(const MediaStreamRequest&
         if (!sourceOrError)
             continue;
 
-        if (auto invalidConstraint = sourceOrError.captureSource->hasAnyInvalidConstraint(request.videoConstraints)) {
+        if (auto invalidConstraint = RefPtr { sourceOrError.captureSource }->hasAnyInvalidConstraint(request.videoConstraints)) {
             if (firstInvalidConstraint == MediaConstraintType::Unknown)
                 firstInvalidConstraint = *invalidConstraint;
             continue;
@@ -252,7 +252,7 @@ void RealtimeMediaSourceCenter::getUserMediaDevices(const MediaStreamRequest& re
             if (!sourceOrError)
                 continue;
 
-            if (auto invalidConstraint = sourceOrError.captureSource->hasAnyInvalidConstraint(request.audioConstraints)) {
+            if (auto invalidConstraint = RefPtr { sourceOrError.captureSource }->hasAnyInvalidConstraint(request.audioConstraints)) {
                 if (firstInvalidConstraint == MediaConstraintType::Unknown)
                     firstInvalidConstraint = *invalidConstraint;
                 continue;
@@ -282,7 +282,7 @@ void RealtimeMediaSourceCenter::getUserMediaDevices(const MediaStreamRequest& re
             if (!sourceOrError)
                 continue;
 
-            if (auto invalidConstraint = sourceOrError.captureSource->hasAnyInvalidConstraint(request.videoConstraints)) {
+            if (auto invalidConstraint = RefPtr { sourceOrError.captureSource }->hasAnyInvalidConstraint(request.videoConstraints)) {
                 if (firstInvalidConstraint == MediaConstraintType::Unknown)
                     firstInvalidConstraint = *invalidConstraint;
                 continue;
@@ -312,7 +312,7 @@ void RealtimeMediaSourceCenter::validateRequestConstraints(ValidateHandler&& val
     bool shouldEnumerateDisplay = displayCaptureFactory().displayCaptureDeviceManager().requiresCaptureDevicesEnumeration();
     bool shouldEnumerateMicrophone = request.audioConstraints.isValid;
     bool shouldEnumerateSpeakers = false;
-    enumerateDevices(shouldEnumerateCamera, shouldEnumerateDisplay, shouldEnumerateMicrophone, shouldEnumerateSpeakers, [this, validateHandler = WTFMove(validateHandler), request, deviceIdentifierHashSalts = WTFMove(deviceIdentifierHashSalts)]() mutable {
+    enumerateDevices(shouldEnumerateCamera, shouldEnumerateDisplay, shouldEnumerateMicrophone, shouldEnumerateSpeakers, [this, protectedThis = Ref { *this }, validateHandler = WTFMove(validateHandler), request, deviceIdentifierHashSalts = WTFMove(deviceIdentifierHashSalts)]() mutable {
         validateHandler(validateRequestConstraintsAfterEnumeration(request, deviceIdentifierHashSalts));
     });
 }

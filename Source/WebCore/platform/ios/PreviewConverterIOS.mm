@@ -147,7 +147,7 @@ static NSDictionary *optionsWithPassword(const String& password)
     if (password.isNull())
         return nil;
     
-    return @{ bridge_cast(PAL::get_QuickLook_kQLPreviewOptionPasswordKey()) : password.createNSString().get() };
+    return @{ bridge_cast(PAL::get_QuickLook_kQLPreviewOptionPasswordKeySingleton()) : password.createNSString().get() };
 }
 
 void PreviewConverter::platformUnlockWithPassword(const String& password)

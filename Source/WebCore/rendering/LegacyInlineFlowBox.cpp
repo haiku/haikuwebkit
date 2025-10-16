@@ -33,6 +33,7 @@
 #include "RenderElementInlines.h"
 #include "RenderInline.h"
 #include "RenderLayer.h"
+#include "RenderObjectInlines.h"
 #include "RenderTableCell.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
@@ -215,14 +216,6 @@ inline void LegacyInlineFlowBox::addTextBoxVisualOverflow(LegacyInlineTextBox& t
     auto bottomGlyphOverflow = strokeOverflow + bottomGlyphEdge;
     auto leftGlyphOverflow = -strokeOverflow - leftGlyphEdge;
     auto rightGlyphOverflow = strokeOverflow + rightGlyphEdge;
-
-    if (auto markExistsAndIsAbove = RenderText::emphasisMarkExistsAndIsAbove(textBox.renderer(), lineStyle)) {
-        LayoutUnit emphasisMarkHeight = lineStyle.fontCascade().emphasisMarkHeight(lineStyle.textEmphasisStyle().markString());
-        if (*markExistsAndIsAbove == !writingMode.isBlockFlipped())
-            topGlyphOverflow = std::min(topGlyphOverflow, -emphasisMarkHeight);
-        else
-            bottomGlyphOverflow = std::max(bottomGlyphOverflow, emphasisMarkHeight);
-    }
 
     // If letter-spacing is negative, we should factor that into right layout overflow. (Even in RTL, letter-spacing is
     // applied to the right, so this is not an issue with left overflow.

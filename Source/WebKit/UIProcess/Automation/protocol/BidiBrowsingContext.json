@@ -225,6 +225,29 @@
             ]
         },
         {
+            "name": "domContentLoaded",
+            "description": "Event fired when the DOMContentLoaded event occurs in a navigable.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-domContentLoaded",
+            "wpt": "https://github.com/web-platform-tests/wpt/tree/master/webdriver/tests/bidi/browsing_context/dom_content_loaded",
+            "parameters": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true },
+                { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
+                { "name": "url", "type": "string" }
+            ]
+        },
+        {
+            "name": "load",
+            "description": "Event fired when all resources have finished loading in a navigable.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-load",
+            "parameters": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true },
+                { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
+                { "name": "url", "type": "string" }
+            ]
+        },
+        {
             "name": "userPromptClosed",
             "description": "Event fired when a user prompt is dismissed in a navigable.",
             "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-userPromptClosed",

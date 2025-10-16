@@ -30,6 +30,7 @@
 #include "NavigationAction.h"
 
 #include "DocumentInlines.h"
+#include "FrameLoadRequest.h"
 #include "FrameLoader.h"
 #include "HistoryItem.h"
 #include "LocalFrame.h"
@@ -105,14 +106,14 @@ NavigationAction::NavigationAction(Document& requester, const ResourceRequest& o
     , m_originalRequest { originalRequest }
     , m_keyStateEventData { keyStateDataForFirstEventWithKeyState(event) }
     , m_mouseEventData { mouseEventDataForFirstMouseEvent(event) }
-    , m_downloadAttribute { downloadAttribute }
-    , m_sourceElement { sourceElement }
     , m_type { type }
-    , m_shouldOpenExternalURLsPolicy { shouldOpenExternalURLsPolicy }
-    , m_initiatedByMainFrame { initiatedByMainFrame }
     , m_treatAsSameOriginNavigation { shouldTreatAsSameOriginNavigation(requester, originalRequest.url()) }
-    , m_isRequestFromClientOrUserInput { isRequestFromClientOrUserInput }
 {
+    setDownloadAttribute(downloadAttribute);
+    setSourceElement(sourceElement);
+    setShouldOpenExternalURLsPolicy(shouldOpenExternalURLsPolicy);
+    setInitiatedByMainFrame(initiatedByMainFrame);
+    setIsRequestFromClientOrUserInput(isRequestFromClientOrUserInput);
 }
 
 NavigationAction::NavigationAction(Document& requester, const ResourceRequest& originalRequest, InitiatedByMainFrame initiatedByMainFrame, bool isRequestFromClientOrUserInput, FrameLoadType frameLoadType, bool isFormSubmission, Event* event, ShouldOpenExternalURLsPolicy shouldOpenExternalURLsPolicy, const AtomString& downloadAttribute, Element* sourceElement)
@@ -120,20 +121,31 @@ NavigationAction::NavigationAction(Document& requester, const ResourceRequest& o
     , m_originalRequest { originalRequest }
     , m_keyStateEventData { keyStateDataForFirstEventWithKeyState(event) }
     , m_mouseEventData { mouseEventDataForFirstMouseEvent(event) }
-    , m_downloadAttribute { downloadAttribute }
-    , m_sourceElement { sourceElement }
     , m_type { navigationType(frameLoadType, isFormSubmission, !!event) }
-    , m_shouldOpenExternalURLsPolicy { shouldOpenExternalURLsPolicy }
-    , m_initiatedByMainFrame { initiatedByMainFrame }
     , m_treatAsSameOriginNavigation { shouldTreatAsSameOriginNavigation(requester, originalRequest.url()) }
-    , m_isRequestFromClientOrUserInput { isRequestFromClientOrUserInput }
+{
+    setDownloadAttribute(downloadAttribute);
+    setSourceElement(sourceElement);
+    setShouldOpenExternalURLsPolicy(shouldOpenExternalURLsPolicy);
+    setInitiatedByMainFrame(initiatedByMainFrame);
+    setIsRequestFromClientOrUserInput(isRequestFromClientOrUserInput);
+}
+
+NavigationAction::NavigationAction(FrameLoadRequest& request, NavigationType type, Event* event)
+    : FrameLoadRequestBase(request)
+    , m_requester { NavigationRequester::from(request.protectedRequester().get()) }
+    , m_originalRequest { request.resourceRequest() }
+    , m_keyStateEventData { keyStateDataForFirstEventWithKeyState(event) }
+    , m_mouseEventData { mouseEventDataForFirstMouseEvent(event) }
+    , m_type { type }
+    , m_treatAsSameOriginNavigation { shouldTreatAsSameOriginNavigation(request.protectedRequester().get(), request.resourceRequest().url()) }
 {
 }
 
 NavigationAction NavigationAction::copyWithShouldOpenExternalURLsPolicy(ShouldOpenExternalURLsPolicy shouldOpenExternalURLsPolicy) const
 {
     NavigationAction result(*this);
-    result.m_shouldOpenExternalURLsPolicy = shouldOpenExternalURLsPolicy;
+    result.setShouldOpenExternalURLsPolicy(shouldOpenExternalURLsPolicy);
     return result;
 }
 

@@ -53,6 +53,7 @@
 #import <WebCore/LocalizedStrings.h>
 #import <WebCore/Page.h>
 #import <WebCore/RenderBoxInlines.h>
+#import <WebCore/RenderObjectInlines.h>
 #import <WebCore/SharedBuffer.h>
 #import <WebCore/SimpleRange.h>
 #import <WebKitLegacy/DOMPrivate.h>

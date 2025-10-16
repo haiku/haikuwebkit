@@ -63,7 +63,6 @@ WEBCORE_EXPORT String textFromEvent(NSEvent *, bool replacesSoftSpace = false);
 WEBCORE_EXPORT String unmodifiedTextFromEvent(NSEvent *, bool replacesSoftSpace = false);
 WEBCORE_EXPORT bool isKeypadEvent(NSEvent *);
 
-WEBCORE_EXPORT WallTime eventTimeStampSince1970(NSTimeInterval);
 WEBCORE_EXPORT DoublePoint unadjustedMovementForEvent(NSEvent *);
 
 WEBCORE_EXPORT OptionSet<PlatformEvent::Modifier> modifiersForEvent(NSEvent *);

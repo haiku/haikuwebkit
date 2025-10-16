@@ -122,6 +122,7 @@ Ref<WritableStreamPromise> WorkerWebTransportSession::createOutgoingUnidirection
     ASSERT(!RunLoop::isMain());
     if (RefPtr session = m_session)
         return session->createOutgoingUnidirectionalStream();
+    ASSERT_NOT_REACHED_WITH_MESSAGE("Session should be set up before use then never removed.");
     return WritableStreamPromise::createAndReject();
 }
 
@@ -130,6 +131,7 @@ Ref<BidirectionalStreamPromise> WorkerWebTransportSession::createBidirectionalSt
     ASSERT(!RunLoop::isMain());
     if (RefPtr session = m_session)
         return session->createBidirectionalStream();
+    ASSERT_NOT_REACHED_WITH_MESSAGE("Session should be set up before use then never removed.");
     return BidirectionalStreamPromise::createAndReject();
 }
 
@@ -138,6 +140,8 @@ void WorkerWebTransportSession::terminate(WebTransportSessionErrorCode code, CSt
     ASSERT(!RunLoop::isMain());
     if (RefPtr session = m_session)
         session->terminate(code, WTFMove(reason));
+    else
+        ASSERT_NOT_REACHED_WITH_MESSAGE("Session should be set up before use then never removed.");
 }
 
 void WorkerWebTransportSession::cancelReceiveStream(WebTransportStreamIdentifier identifier, std::optional<WebTransportStreamErrorCode> errorCode)
@@ -145,6 +149,8 @@ void WorkerWebTransportSession::cancelReceiveStream(WebTransportStreamIdentifier
     ASSERT(!RunLoop::isMain());
     if (RefPtr session = m_session)
         session->cancelReceiveStream(identifier, errorCode);
+    else
+        ASSERT_NOT_REACHED_WITH_MESSAGE("Session should be set up before use then never removed.");
 }
 
 void WorkerWebTransportSession::cancelSendStream(WebTransportStreamIdentifier identifier, std::optional<WebTransportStreamErrorCode> errorCode)
@@ -152,6 +158,8 @@ void WorkerWebTransportSession::cancelSendStream(WebTransportStreamIdentifier id
     ASSERT(!RunLoop::isMain());
     if (RefPtr session = m_session)
         session->cancelSendStream(identifier, errorCode);
+    else
+        ASSERT_NOT_REACHED_WITH_MESSAGE("Session should be set up before use then never removed.");
 }
 
 void WorkerWebTransportSession::destroyStream(WebTransportStreamIdentifier identifier, std::optional<WebTransportStreamErrorCode> errorCode)
@@ -159,6 +167,8 @@ void WorkerWebTransportSession::destroyStream(WebTransportStreamIdentifier ident
     ASSERT(!RunLoop::isMain());
     if (RefPtr session = m_session)
         session->destroyStream(identifier, errorCode);
+    else
+        ASSERT_NOT_REACHED_WITH_MESSAGE("Session should be set up before use then never removed.");
 }
 
 }

@@ -51,6 +51,11 @@ struct Interaction {
     bool replaceAll { false };
 };
 
+struct InteractionDescription {
+    String description;
+    Vector<String> stringsToValidate;
+};
+
 enum class EventListenerCategory : uint8_t {
     Click       = 1 << 0,
     Hover       = 1 << 1,
@@ -123,6 +128,7 @@ enum class ContainerType : uint8_t {
     Section,
     Nav,
     Button,
+    Canvas,
     Generic,
 };
 

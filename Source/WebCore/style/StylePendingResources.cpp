@@ -34,7 +34,6 @@
 #include "Settings.h"
 #include "StyleCursor.h"
 #include "StyleImage.h"
-#include "TransformOperationsBuilder.h"
 
 namespace WebCore {
 namespace Style {

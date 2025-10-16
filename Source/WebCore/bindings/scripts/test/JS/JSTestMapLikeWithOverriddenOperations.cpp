@@ -178,7 +178,7 @@ JSValue JSTestMapLikeWithOverriddenOperations::getConstructor(VM& vm, const JSGl
 
 void JSTestMapLikeWithOverriddenOperations::destroy(JSC::JSCell* cell)
 {
-    JSTestMapLikeWithOverriddenOperations* thisObject = static_cast<JSTestMapLikeWithOverriddenOperations*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestMapLikeWithOverriddenOperations* thisObject = static_cast<JSTestMapLikeWithOverriddenOperations*>(cell);
     thisObject->JSTestMapLikeWithOverriddenOperations::~JSTestMapLikeWithOverriddenOperations();
 }
 
@@ -403,7 +403,7 @@ bool JSTestMapLikeWithOverriddenOperationsOwner::isReachableFromOpaqueRoots(JSC:
 
 void JSTestMapLikeWithOverriddenOperationsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestMapLikeWithOverriddenOperations = static_cast<JSTestMapLikeWithOverriddenOperations*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestMapLikeWithOverriddenOperations = static_cast<JSTestMapLikeWithOverriddenOperations*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestMapLikeWithOverriddenOperations->protectedWrapped().ptr(), jsTestMapLikeWithOverriddenOperations);
 }

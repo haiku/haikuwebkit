@@ -43,16 +43,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(Instance);
 
 Ref<Instance> Instance::create(const WGPUInstanceDescriptor& descriptor)
 {
-    if (!descriptor.nextInChain)
-        return Instance::createInvalid();
-
-    if (descriptor.nextInChain->sType != static_cast<WGPUSType>(WGPUSTypeExtended_InstanceCocoaDescriptor))
-        return Instance::createInvalid();
-
-    const WGPUInstanceCocoaDescriptor& cocoaDescriptor = reinterpret_cast<const WGPUInstanceCocoaDescriptor&>(*descriptor.nextInChain);
-
-    if (cocoaDescriptor.chain.next)
-        return Instance::createInvalid();
+    const WGPUInstanceCocoaDescriptor& cocoaDescriptor = descriptor.cocoaDescriptor;
 
     return adoptRef(*new Instance(cocoaDescriptor.scheduleWorkBlock, reinterpret_cast<const WTF::MachSendRight*>(cocoaDescriptor.webProcessResourceOwner)));
 }
@@ -157,11 +148,6 @@ void Instance::requestAdapter(const WGPURequestAdapterOptions& options, Completi
     // FIXME: Deal with options.compatibleSurface.
 
     auto sortedDevices = WebGPU::sortedDevices(devices, options.powerPreference);
-
-    if (options.nextInChain) {
-        callback(WGPURequestAdapterStatus_Error, Adapter::createInvalid(*this), "Unknown descriptor type"_s);
-        return;
-    }
 
     if (options.forceFallbackAdapter) {
         callback(WGPURequestAdapterStatus_Unavailable, Adapter::createInvalid(*this), "No adapters present"_s);

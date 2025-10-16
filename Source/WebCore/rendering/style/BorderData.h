@@ -26,7 +26,6 @@
 #pragma once
 
 #include <WebCore/BorderValue.h>
-#include <WebCore/LengthSize.h>
 #include <WebCore/RectCorners.h>
 #include <WebCore/RectEdges.h>
 #include <WebCore/StyleBorderImage.h>

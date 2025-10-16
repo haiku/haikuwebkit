@@ -2070,15 +2070,6 @@ bool WKPreferencesGetLoadsSiteIconsIgnoringImageLoadingPreference(WKPreferencesR
     return false;
 }
 
-void WKPreferencesSetOfflineWebApplicationCacheEnabled(WKPreferencesRef, bool)
-{
-}
-
-bool WKPreferencesGetOfflineWebApplicationCacheEnabled(WKPreferencesRef)
-{
-    return false;
-}
-
 void WKPreferencesSetMenuItemElementEnabled(WKPreferencesRef, bool)
 {
 }

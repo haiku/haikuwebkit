@@ -52,7 +52,6 @@
 #include "Settings.h"
 #include <wtf/CompletionHandler.h>
 #include <wtf/Ref.h>
-#include <wtf/RefCountedLeakCounter.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/SystemTracing.h>
 #include <wtf/text/CString.h>
@@ -84,8 +83,6 @@
 #endif
 
 namespace WebCore {
-
-DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, subresourceLoaderCounter, ("SubresourceLoader"));
 
 SubresourceLoader::RequestCountTracker::RequestCountTracker(CachedResourceLoader& cachedResourceLoader, const CachedResource& resource)
     : m_cachedResourceLoader(&cachedResourceLoader)
@@ -121,9 +118,6 @@ SubresourceLoader::SubresourceLoader(LocalFrame& frame, CachedResource& resource
     , m_state(Uninitialized)
     , m_requestCountTracker(std::in_place, frame.protectedDocument()->cachedResourceLoader(), resource)
 {
-#ifndef NDEBUG
-    subresourceLoaderCounter.increment();
-#endif
 #if ENABLE(CONTENT_EXTENSIONS)
     m_resourceType = ContentExtensions::toResourceType(resource.type(), resource.resourceRequest().requester(), frame.isMainFrame());
 #endif
@@ -137,9 +131,6 @@ SubresourceLoader::~SubresourceLoader()
 {
     ASSERT(m_state != Initialized);
     ASSERT(reachedTerminalState());
-#ifndef NDEBUG
-    subresourceLoaderCounter.decrement();
-#endif
 }
 
 void SubresourceLoader::create(LocalFrame& frame, CachedResource& resource, ResourceRequest&& request, const ResourceLoaderOptions& options, CompletionHandler<void(RefPtr<SubresourceLoader>&&)>&& completionHandler)
@@ -218,7 +209,7 @@ void SubresourceLoader::willSendRequestInternal(ResourceRequest&& newRequest, co
     }
 
     if (newRequest.requester() != ResourceRequestRequester::Main) {
-        ResourceLoadObserver::shared().logSubresourceLoading(protectedFrame().get(), newRequest, redirectResponse,
+        ResourceLoadObserver::singleton().logSubresourceLoading(protectedFrame().get(), newRequest, redirectResponse,
             (isScriptLikeDestination(options().destination) ? ResourceLoadObserver::FetchDestinationIsScriptLike::Yes : ResourceLoadObserver::FetchDestinationIsScriptLike::No));
     }
 

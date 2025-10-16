@@ -49,7 +49,6 @@
 namespace WebCore {
 
 class AffineTransform;
-class DecomposedGlyphs;
 class Filter;
 class FilterResults;
 class FloatRoundedRect;
@@ -87,6 +86,12 @@ public:
 
     virtual bool hasPlatformContext() const { return false; }
     virtual PlatformGraphicsContext* platformContext() const { return nullptr; }
+#if USE(CG)
+    RetainPtr<CGContextRef> protectedPlatformContext() const { return platformContext(); }
+#else
+    // On other platforms, the PlatformGraphicsContext type is not refcounted.
+    PlatformGraphicsContext* protectedPlatformContext() const { return platformContext(); }
+#endif
 
     virtual const DestinationColorSpace& colorSpace() const { return DestinationColorSpace::SRGB(); }
 
@@ -309,8 +314,6 @@ public:
     WEBCORE_EXPORT virtual void drawBidiText(const FontCascade&, const TextRun&, const FloatPoint&, FontCascade::CustomFontNotReadyAction = FontCascade::CustomFontNotReadyAction::DoNotPaintIfFontNotReady);
 
     WEBCORE_EXPORT virtual void drawGlyphs(const Font&, std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, const FloatPoint&, FontSmoothingMode);
-    WEBCORE_EXPORT virtual void drawDecomposedGlyphs(const Font&, const DecomposedGlyphs&);
-
     WEBCORE_EXPORT void drawDisplayList(const DisplayList::DisplayList&);
     WEBCORE_EXPORT virtual void drawDisplayList(const DisplayList::DisplayList&, ControlFactory&);
     WEBCORE_EXPORT FloatRect computeUnderlineBoundsForText(const FloatRect&, bool printing);
@@ -354,7 +357,7 @@ public:
     WEBCORE_EXPORT FloatSize scaleFactorForDrawing(const FloatRect& destRect, const FloatRect& srcRect) const;
 
     // PDF, printing and snapshotting
-    virtual void beginPage(const IntSize&) { }
+    virtual void beginPage(const FloatRect&) { }
     virtual void endPage() { }
 
     // Links

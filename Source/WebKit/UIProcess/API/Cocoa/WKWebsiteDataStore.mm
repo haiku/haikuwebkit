@@ -71,6 +71,7 @@
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/cocoa/SpanCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/persistence/PersistentDecoder.h>
 #import <wtf/persistence/PersistentEncoder.h>
 
@@ -474,7 +475,6 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
             WKWebsiteDataTypeDiskCache,
             WKWebsiteDataTypeFetchCache,
             WKWebsiteDataTypeMemoryCache,
-            WKWebsiteDataTypeOfflineWebApplicationCache,
             WKWebsiteDataTypeCookies,
             WKWebsiteDataTypeSessionStorage,
             WKWebsiteDataTypeLocalStorage,
@@ -1625,7 +1625,7 @@ struct WKWebsiteData {
     if (!webPushAction)
         return NO;
 
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(mainDispatchQueueSingleton(), ^{
         WKWebsiteDataStore *dataStore = _WKWebsiteDataStoreBSActionHandler.shared->_webPushActionHandler.get()(webPushAction.get());
         [dataStore _handleWebPushAction:webPushAction.get()];
     });

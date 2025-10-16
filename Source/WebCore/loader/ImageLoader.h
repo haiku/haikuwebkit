@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <WebCore/CachedImage.h>
 #include <WebCore/CachedImageClient.h>
 #include <WebCore/CachedResourceHandle.h>
 #include <WebCore/Element.h>

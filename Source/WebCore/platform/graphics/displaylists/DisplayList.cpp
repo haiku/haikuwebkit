@@ -26,7 +26,6 @@
 #include "config.h"
 #include "DisplayList.h"
 
-#include "DecomposedGlyphs.h"
 #include "Filter.h"
 #include "Font.h"
 #include "ImageBuffer.h"
@@ -45,7 +44,11 @@ DisplayList::DisplayList(Vector<Item>&& items)
 {
 }
 
-DisplayList::~DisplayList() = default;
+DisplayList::~DisplayList()
+{
+    for (auto& observer : m_observers)
+        observer.willDestroyDisplayList(*this);
+}
 
 String DisplayList::asText(OptionSet<AsTextFlag> flags) const
 {

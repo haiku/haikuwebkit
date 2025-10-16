@@ -1,5 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/corb/resources/js-mislabeled-as-html-nosniff.js
-CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/fetch/corb/resources/js-mislabeled-as-html-nosniff.js
 
 PASS Untitled
 

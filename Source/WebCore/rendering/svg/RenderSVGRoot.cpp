@@ -49,6 +49,7 @@
 #include "SVGSVGElement.h"
 #include "SVGViewSpec.h"
 #include "TransformState.h"
+#include "VisibleRectContext.h"
 #include <wtf/SetForScope.h>
 #include <wtf/StackStats.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -101,7 +102,7 @@ FloatSize RenderSVGRoot::computeIntrinsicSize() const
 {
     ASSERT_IMPLIES(view().frameView().layoutContext().isInRenderTreeLayout(), !shouldApplySizeContainment());
     // https://www.w3.org/TR/SVG/coords.html#IntrinsicSizing
-    return FloatSize(floatValueForLength(svgSVGElement().intrinsicWidth(), 0), floatValueForLength(svgSVGElement().intrinsicHeight(), 0));
+    return FloatSize { svgSVGElement().intrinsicWidth(), svgSVGElement().intrinsicHeight() };
 }
 
 FloatSize RenderSVGRoot::preferredAspectRatio() const
@@ -399,9 +400,14 @@ bool RenderSVGRoot::paintingAffectedByExternalOffset() const
     return false;
 }
 
+std::optional<FloatRect> RenderSVGRoot::computeFloatVisibleRectInContainer(const FloatRect&, const RenderLayerModelObject*, VisibleRectContext) const
+{
+    return { };
+}
+
 bool RenderSVGRoot::needsHasSVGTransformFlags() const
 {
-    // Only mark us as transformed if really needed. Whenver a non-zero paintOffset could reach
+    // Only mark us as transformed if really needed. Whenever a non-zero paintOffset could reach
     // RenderSVGRoot from an ancestor, the pixel snapping logic needs to be applied. Since the rest
     // of the SVG subtree doesn't know anything about subpixel offsets, we'll have to stop use/set
     // 'adjustedSubpixelOffset' starting at the RenderSVGRoot boundary. This mostly affects inline
@@ -468,7 +474,7 @@ bool RenderSVGRoot::nodeAtPoint(const HitTestRequest& request, HitTestResult& re
 
 bool RenderSVGRoot::hasRelativeDimensions() const
 {
-    return svgSVGElement().intrinsicHeight().isPercentOrCalculated() || svgSVGElement().intrinsicWidth().isPercentOrCalculated();
+    return false;
 }
 
 FloatSize RenderSVGRoot::computeViewportSize() const

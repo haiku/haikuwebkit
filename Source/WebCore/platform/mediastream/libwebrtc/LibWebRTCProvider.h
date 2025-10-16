@@ -85,6 +85,8 @@ public:
     webrtc::PeerConnectionFactoryInterface* factory();
     LibWebRTCAudioModule* audioModule();
 
+    void setUseL4S(bool);
+
     // FIXME: Make these methods not static.
     static void callOnWebRTCNetworkThread(Function<void()>&&);
     static void callOnWebRTCSignalingThread(Function<void()>&&);
@@ -146,6 +148,7 @@ private:
     std::optional<MediaCapabilitiesDecodingInfo> videoDecodingCapabilitiesOverride(const VideoConfiguration&) final;
     std::optional<MediaCapabilitiesEncodingInfo> videoEncodingCapabilitiesOverride(const VideoConfiguration&) final;
 
+    bool m_useL4S { false };
     std::optional<bool> m_supportsVP9VTBForTesting { false };
     bool m_disableNonLocalhostConnections { false };
     bool m_enableEnumeratingAllNetworkInterfaces { false };

@@ -26,6 +26,7 @@
 #include "PluginDocument.h"
 
 #include "ContainerNodeInlines.h"
+#include "DocumentInlines.h"
 #include "DocumentLoader.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"

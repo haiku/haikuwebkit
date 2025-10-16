@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Warning: feConvolveMatrix: problem parsing order="-1.5". Filtered element will not be displayed.
 
 FAIL SVGAnimatedInteger interface - utilizing the targetX property of SVGFEConvolveMatrix assert_equals: expected 3 but got -1
 

@@ -66,7 +66,7 @@ static_assert(static_cast<unsigned>(IPAddressSpace::Local) <= ((1U << bitWidthOf
 
 enum class ResourceResponseBaseType : uint8_t { Basic, Cors, Default, Error, Opaque, Opaqueredirect };
 enum class ResourceResponseBaseTainting : uint8_t { Basic, Cors, Opaque, Opaqueredirect };
-enum class ResourceResponseSource : uint8_t { Unknown, Network, DiskCache, DiskCacheAfterValidation, MemoryCache, MemoryCacheAfterValidation, ServiceWorker, ApplicationCache, DOMCache, InspectorOverride };
+enum class ResourceResponseSource : uint8_t { Unknown, Network, DiskCache, DiskCacheAfterValidation, MemoryCache, MemoryCacheAfterValidation, ServiceWorker, LegacyApplicationCachePlaceholder, DOMCache, InspectorOverride };
 
 // Do not use this class directly, use the class ResourceResponse instead
 class ResourceResponseBase {
@@ -388,7 +388,7 @@ template<> struct EnumTraitsForPersistence<WebCore::ResourceResponseBase::Source
         WebCore::ResourceResponseBase::Source::MemoryCache,
         WebCore::ResourceResponseBase::Source::MemoryCacheAfterValidation,
         WebCore::ResourceResponseBase::Source::ServiceWorker,
-        WebCore::ResourceResponseBase::Source::ApplicationCache,
+        WebCore::ResourceResponseBase::Source::LegacyApplicationCachePlaceholder,
         WebCore::ResourceResponseBase::Source::DOMCache,
         WebCore::ResourceResponseBase::Source::InspectorOverride
     >;

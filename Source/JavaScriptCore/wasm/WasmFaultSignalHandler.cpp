@@ -79,13 +79,19 @@ static SignalAction trapHandler(Signal signal, SigInfo& sigInfo, PlatformRegiste
     // we might have crashed in code that is already holding one of the locks we want to aquire.
     assertIsNotTagged(faultingInstruction);
     if (isJITPC(faultingInstruction) || LLInt::isWasmIPIntPC(faultingInstruction)) {
-        bool faultedInActiveGrowableMemory = false;
+        std::optional<Wasm::ExceptionType> exception;
         {
             void* faultingAddress = sigInfo.faultingAddress;
             dataLogLnIf(WasmFaultSignalHandlerInternal::verbose, "checking faulting address: ", RawPointer(faultingAddress), " is in an active fast memory");
-            faultedInActiveGrowableMemory = Wasm::Memory::addressIsInGrowableOrFastMemory(faultingAddress);
+
+            // Trapping null access for WasmGC Array / Struct.
+            if (std::bit_cast<uintptr_t>(faultingAddress) < lowestAccessibleAddress())
+                exception = ExceptionType::NullAccess;
+            else if (Wasm::Memory::addressIsInGrowableOrFastMemory(faultingAddress))
+                exception = ExceptionType::OutOfBoundsMemoryAccess;
         }
-        if (faultedInActiveGrowableMemory) {
+
+        if (exception) {
             dataLogLnIf(WasmFaultSignalHandlerInternal::verbose, "found active fast memory for faulting address");
 
             auto didFaultInWasm = [](void* faultingInstruction) -> std::tuple<bool, Wasm::Callee*> {
@@ -110,7 +116,7 @@ static SignalAction trapHandler(Signal signal, SigInfo& sigInfo, PlatformRegiste
             auto [isWasm, callee] = didFaultInWasm(faultingInstruction);
             if (isWasm) {
                 auto* instance = jsSecureCast<JSWebAssemblyInstance*>(static_cast<JSCell*>(MachineContext::wasmInstancePointer(context)));
-                instance->setFaultPC(faultingInstruction);
+                instance->setFaultPC(exception.value(), faultingInstruction);
 #if CPU(ARM64E) && HAVE(HARDENED_MACH_EXCEPTIONS)
                 if (g_wtfConfig.signalHandlers.useHardenedHandler) {
                     MachineContext::setInstructionPointer(context, presignedTrampoline);
@@ -157,7 +163,24 @@ void prepareSignalingMemory()
         });
     });
 }
-    
+
+ptrdiff_t maxAcceptableOffsetForNullReference()
+{
+#if CPU(ADDRESS64)
+    if (!Options::useWasmFaultSignalHandler())
+        return 0;
+
+    ptrdiff_t address = lowestAccessibleAddress();
+    ptrdiff_t nullValue =JSValue::encode(jsNull());
+    ptrdiff_t accessed = sizeof(v128_t) * 2; // Paired v128_t access.
+    if (address < (nullValue + accessed))
+        return 0;
+    return address - nullValue - accessed;
+#else
+    return 0;
+#endif
+}
+
 } } // namespace JSC::Wasm
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

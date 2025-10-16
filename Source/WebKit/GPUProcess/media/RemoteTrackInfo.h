@@ -27,7 +27,7 @@
 
 #if ENABLE(GPU_PROCESS)
 
-#include <WebCore/MediaSample.h>
+#include <WebCore/TrackInfo.h>
 
 namespace WebKit {
 

@@ -63,7 +63,7 @@ sk_sp<SkImage> SkiaReplayCanvas::waitForRenderingCompletionAndRewrapImageIfNeede
     m_recording->waitForFenceIfNeeded(*image);
 
     auto* grContext = PlatformDisplay::sharedDisplay().skiaGrContext();
-    if (image->isValid(grContext))
+    if (image->isValid(grContext->asRecorder()))
         return nullptr;
 
     // FIXME: Add error reporting mechanism, a failure from GetBackendTextureFromImage() should be visible / reported.

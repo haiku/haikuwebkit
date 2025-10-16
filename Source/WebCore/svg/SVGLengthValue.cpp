@@ -43,14 +43,6 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGLengthValue);
 
-static float adjustValueForPercentageStorage(float value, SVGLengthType type)
-{
-    // 100% = 100.0 instead of 1.0 for historical reasons, this could eventually be changed
-    if (type == SVGLengthType::Percentage)
-        return value / 100;
-    return value;
-}
-
 static inline SVGLengthType cssLengthUnitToSVGLengthType(CSS::LengthPercentageUnit unit)
 {
     switch (unit) {
@@ -390,15 +382,19 @@ ExceptionOr<void> SVGLengthValue::convertToSpecifiedUnits(const SVGLengthContext
     if (valueInUserUnits.hasException())
         return valueInUserUnits.releaseException();
 
-    auto convertedValue = context.convertValueFromUserUnits(valueInUserUnits.releaseReturnValue(), targetType, m_lengthMode);
+    float userUnits = valueInUserUnits.releaseReturnValue();
+
+    if (targetType == SVGLengthType::Number) {
+        m_value = CSS::Number<>(userUnits);
+        return { };
+    }
+
+    auto convertedValue = context.resolveValueFromUserUnits(userUnits, svgLengthTypeToCSSLengthUnit(targetType), m_lengthMode);
 
     if (convertedValue.hasException())
         return convertedValue.releaseException();
 
-    float adjustedValue = adjustValueForPercentageStorage(convertedValue.releaseReturnValue(), targetType);
-
-    m_value = createVariantForLengthType(adjustedValue, targetType);
-
+    m_value = convertedValue.releaseReturnValue();
     return { };
 }
 

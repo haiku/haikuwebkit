@@ -31,6 +31,10 @@
 #include "JSObjectInlines.h"
 #include "ScriptProfilingScope.h"
 
+#if ASSERT_ENABLED
+#include "IntegrityInlines.h"
+#endif
+
 namespace JSC {
 
 JSValue call(JSGlobalObject* globalObject, JSValue functionObject, const ArgList& args, ASCIILiteral errorMessage)
@@ -53,7 +57,15 @@ JSValue call(JSGlobalObject* globalObject, JSValue functionObject, JSValue thisV
 JSValue call(JSGlobalObject* globalObject, JSValue functionObject, const CallData& callData, JSValue thisValue, const ArgList& args)
 {
     VM& vm = globalObject->vm();
-    ASSERT(callData.type == CallData::Type::JS || callData.type == CallData::Type::Native);
+    ASSERT_WITH_MESSAGE(callData.type == CallData::Type::JS || callData.type == CallData::Type::Native, "Expected object to be callable but received %d", static_cast<int>(callData.type));
+    ASSERT_WITH_MESSAGE(!thisValue.isEmpty(), "Expected thisValue to be non-empty. Use jsUndefined() if you meant to use undefined.");
+#if ASSERT_ENABLED
+    for (size_t i = 0; i < args.size(); ++i) {
+        ASSERT_WITH_MESSAGE(!args.at(i).isEmpty(), "arguments[%zu] is JSValue(). Use jsUndefined() if you meant to make it undefined.", i);
+        if (args.at(i).isCell())
+            Integrity::auditCell(vm, args.at(i).asCell());
+    }
+#endif
     return vm.interpreter.executeCall(asObject(functionObject), callData, thisValue, args);
 }
 

@@ -190,7 +190,7 @@ void CtapAuthenticator::continueMakeCredentialAfterCheckExcludedCredentials(bool
 {
     Vector<uint8_t> cborCmd;
     auto& options = std::get<PublicKeyCredentialCreationOptions>(requestData().options);
-    std::optional<Vector<PublicKeyCredentialDescriptor>> overrideExcludeCredentials;
+    Vector<PublicKeyCredentialDescriptor> overrideExcludeCredentials;
     if (includeCurrentBatch) {
         ASSERT(m_currentBatch < m_batches.size());
         overrideExcludeCredentials = m_batches[m_currentBatch];

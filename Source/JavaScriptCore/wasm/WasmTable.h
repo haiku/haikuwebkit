@@ -52,7 +52,7 @@ class Table : public ThreadSafeRefCounted<Table> {
     WTF_MAKE_NONCOPYABLE(Table);
     WTF_MAKE_TZONE_ALLOCATED(Table);
 public:
-    static RefPtr<Table> tryCreate(uint32_t initial, std::optional<uint32_t> maximum, TableElementType, Type);
+    static RefPtr<Table> tryCreate(VM&, uint32_t initial, std::optional<uint32_t> maximum, TableElementType, Type);
 
     JS_EXPORT_PRIVATE ~Table() = default;
 
@@ -128,6 +128,9 @@ class FuncRefTable final : public Table {
 public:
     friend class Table;
 
+    using JSWebAssemblyInstanceWeakCGSet = WeakGCSet<JSWebAssemblyInstance>;
+
+
     JS_EXPORT_PRIVATE ~FuncRefTable();
 
     struct Function {
@@ -145,6 +148,13 @@ public:
     static constexpr ptrdiff_t offsetOfTail() { return WTF::roundUpToMultipleOf<alignof(Function)>(sizeof(FuncRefTable)); }
     static constexpr ptrdiff_t offsetOfFunctionsForFixedSizedTable() { return offsetOfTail(); }
 
+    Function* functions()
+    {
+        if (isFixedSized())
+            return std::bit_cast<Function*>(std::bit_cast<uint8_t*>(this) + offsetOfFunctionsForFixedSizedTable());
+        return m_importableFunctions.get();
+    }
+
     static size_t allocationSize(uint32_t size)
     {
         return offsetOfTail() + sizeof(Function) * size;
@@ -154,14 +164,17 @@ public:
     void set(uint32_t, JSValue);
     JSValue get(uint32_t index) const { return m_importableFunctions.get()[index].m_value.get(); }
 
+    void registerInstance(JSWebAssemblyInstance&);
+
 private:
-    FuncRefTable(uint32_t initial, std::optional<uint32_t> maximum, Type wasmType);
+    FuncRefTable(VM&, uint32_t initial, std::optional<uint32_t> maximum, Type wasmType);
 
     Function* tailPointer() { return std::bit_cast<Function*>(std::bit_cast<uint8_t*>(this) + offsetOfTail()); }
 
-    static Ref<FuncRefTable> createFixedSized(uint32_t size, Type wasmType);
+    static Ref<FuncRefTable> createFixedSized(VM&, uint32_t size, Type wasmType);
 
     MallocPtr<Function, VMMalloc> m_importableFunctions;
+    JSWebAssemblyInstanceWeakCGSet m_instances;
 };
 
 } } // namespace JSC::Wasm

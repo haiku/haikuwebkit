@@ -37,6 +37,7 @@
 #include "AudioMediaStreamTrackRenderer.h"
 #include "AudioSession.h"
 #include "CaptureDeviceWithCapabilities.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "Event.h"
 #include "EventNames.h"

@@ -172,7 +172,7 @@ JSValue JSTestSetLike::getConstructor(VM& vm, const JSGlobalObject* globalObject
 
 void JSTestSetLike::destroy(JSC::JSCell* cell)
 {
-    JSTestSetLike* thisObject = static_cast<JSTestSetLike*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestSetLike* thisObject = static_cast<JSTestSetLike*>(cell);
     thisObject->JSTestSetLike::~JSTestSetLike();
 }
 
@@ -363,7 +363,7 @@ bool JSTestSetLikeOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> ha
 
 void JSTestSetLikeOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestSetLike = static_cast<JSTestSetLike*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestSetLike = static_cast<JSTestSetLike*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestSetLike->protectedWrapped().ptr(), jsTestSetLike);
 }

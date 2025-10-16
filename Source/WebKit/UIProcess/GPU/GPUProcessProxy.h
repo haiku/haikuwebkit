@@ -30,12 +30,13 @@
 #include "AuxiliaryProcessProxy.h"
 #include "ProcessLauncher.h"
 #include "ProcessThrottler.h"
+#include "RemoteSnapshotIdentifier.h"
 #include "WebPageProxyIdentifier.h"
+#include <WebCore/FrameIdentifier.h>
 #include <WebCore/IntDegrees.h>
 #include <WebCore/MediaPlayerIdentifier.h>
 #include <WebCore/PageIdentifier.h>
 #include <WebCore/ShareableBitmap.h>
-#include <WebCore/SnapshotIdentifier.h>
 #include <memory>
 #include <pal/SessionID.h>
 #include <wtf/TZoneMalloc.h>
@@ -121,10 +122,6 @@ public:
     void cancelGetDisplayMediaPrompt();
 #endif
 
-#if PLATFORM(COCOA)
-    void didDrawRemoteToPDF(WebCore::PageIdentifier, RefPtr<WebCore::SharedBuffer>&&, WebCore::SnapshotIdentifier);
-#endif
-
     void removeSession(PAL::SessionID);
 
 #if PLATFORM(MAC)
@@ -177,7 +174,10 @@ public:
 
 #if PLATFORM(COCOA)
     void postWillTakeSnapshotNotification(CompletionHandler<void()>&&);
+
+    void sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier, const WebCore::IntSize&, WebCore::FrameIdentifier root, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&&);
 #endif
+    void releaseSnapshot(RemoteSnapshotIdentifier);
 
 private:
     explicit GPUProcessProxy();

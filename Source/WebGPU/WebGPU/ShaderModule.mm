@@ -44,33 +44,19 @@
 namespace WebGPU {
 
 struct ShaderModuleParameters {
-    const WGPUShaderModuleWGSLDescriptor& wgsl;
+    const char* wgslCode;
     const WGPUShaderModuleCompilationHint* hints;
 };
 
 static std::optional<ShaderModuleParameters> findShaderModuleParameters(const WGPUShaderModuleDescriptor& descriptor)
 {
-    const WGPUShaderModuleWGSLDescriptor* wgsl = nullptr;
+    const char* wgslCode = descriptor.wgslDescriptor;
     const WGPUShaderModuleCompilationHint* hints = descriptor.hints;
 
-    for (const WGPUChainedStruct* ptr = descriptor.nextInChain; ptr; ptr = ptr->next) {
-        auto type = ptr->sType;
-
-        switch (static_cast<int>(type)) {
-        case WGPUSType_ShaderModuleWGSLDescriptor:
-            if (wgsl)
-                return std::nullopt;
-            wgsl = reinterpret_cast<const WGPUShaderModuleWGSLDescriptor*>(ptr);
-            break;
-        default:
-            return std::nullopt;
-        }
-    }
-
-    if (!wgsl)
+    if (!wgslCode)
         return std::nullopt;
 
-    return { { *wgsl, hints } };
+    return { { wgslCode, hints } };
 }
 
 id<MTLLibrary> ShaderModule::createLibrary(id<MTLDevice> device, const String& msl, String&& label, NSError** error, WGSL::DeviceState&& deviceState)
@@ -117,8 +103,6 @@ static RefPtr<ShaderModule> earlyCompileShaderModule(Device& device, Variant<WGS
     Vector<WGSL::PipelineLayout> wgslPipelineLayouts;
     wgslPipelineLayouts.reserveCapacity(suppliedHints.hintCount);
     for (const auto& hint : suppliedHints.hintsSpan()) {
-        if (hint.nextInChain)
-            return nullptr;
         auto hintKey = fromAPI(hint.entryPoint);
         Ref layout = WebGPU::protectedFromAPI(hint.layout);
         hints.add(hintKey, layout);
@@ -186,7 +170,7 @@ static Ref<ShaderModule> handleShaderSuccessOrFailure(WebGPU::Device &object, Va
 
 Ref<ShaderModule> Device::createShaderModule(const WGPUShaderModuleDescriptor& descriptor)
 {
-    if (!descriptor.nextInChain || !isValid())
+    if (!isValid())
         return ShaderModule::createInvalid(*this);
 
     auto shaderModuleParameters = findShaderModuleParameters(descriptor);
@@ -194,7 +178,7 @@ Ref<ShaderModule> Device::createShaderModule(const WGPUShaderModuleDescriptor& d
         return ShaderModule::createInvalid(*this);
 
     auto supportedFeatures = buildFeatureSet(m_capabilities.features);
-    auto checkResult = WGSL::staticCheck(fromAPI(shaderModuleParameters->wgsl.code), std::nullopt, WGSL::Configuration {
+    auto checkResult = WGSL::staticCheck(fromAPI(shaderModuleParameters->wgslCode), std::nullopt, WGSL::Configuration {
         .maxBuffersPlusVertexBuffersForVertexStage = maxBuffersPlusVertexBuffersForVertexStage(),
         .maxBuffersForFragmentStage = maxBuffersForFragmentStage(),
         .maxBuffersForComputeStage = maxBuffersForComputeStage(),
@@ -739,7 +723,6 @@ static CompilationMessageData convertMessages(const Messages& messages1, const s
         for (size_t i = 0; i < compilationMessages.messages.size(); ++i) {
             const auto& compilationMessage = compilationMessages.messages[i];
             flattenedCompilationMessages.append({
-                .nextInChain = nullptr,
                 .message = flattenedMessages[i + base],
                 .type = compilationMessages.type,
                 .lineNum = compilationMessage.lineNumber(),
@@ -765,9 +748,8 @@ void ShaderModule::getCompilationInfo(CompletionHandler<void(WGPUCompilationInfo
     WTF::switchOn(m_checkResult, [&](const WGSL::SuccessfulCheck& successfulCheck) {
         auto compilationMessageData(convertMessages({ successfulCheck.warnings, WGPUCompilationMessageType_Warning }));
         WGPUCompilationInfo compilationInfo {
-            nullptr,
-            static_cast<uint32_t>(compilationMessageData.compilationMessages.size()),
-            compilationMessageData.compilationMessages.span().data(),
+            .messageCount = static_cast<uint32_t>(compilationMessageData.compilationMessages.size()),
+            .messages = compilationMessageData.compilationMessages.span().data(),
         };
         callback(WGPUCompilationInfoRequestStatus_Success, compilationInfo);
     }, [&](const WGSL::FailedCheck& failedCheck) {
@@ -775,16 +757,14 @@ void ShaderModule::getCompilationInfo(CompletionHandler<void(WGPUCompilationInfo
             { failedCheck.errors, WGPUCompilationMessageType_Error },
             { { failedCheck.warnings, WGPUCompilationMessageType_Warning } }));
         WGPUCompilationInfo compilationInfo {
-            nullptr,
-            static_cast<uint32_t>(compilationMessageData.compilationMessages.size()),
-            compilationMessageData.compilationMessages.span().data(),
+            .messageCount = static_cast<uint32_t>(compilationMessageData.compilationMessages.size()),
+            .messages = compilationMessageData.compilationMessages.span().data(),
         };
         callback(WGPUCompilationInfoRequestStatus_Error, compilationInfo);
     }, [&](std::monostate) {
         WGPUCompilationInfo compilationInfo {
-            nullptr,
-            0u,
-            nullptr,
+            .messageCount = 0u,
+            .messages = nullptr,
         };
         callback(WGPUCompilationInfoRequestStatus_Error, compilationInfo);
     });

@@ -1334,6 +1334,7 @@ void PlatformKeyboardEvent::disambiguateKeyDownEvent(Type type, bool backwardCom
 {
     // Can only change type from KeyDown to RawKeyDown or Char, as we lack information for other conversions.
     ASSERT(m_type == PlatformEvent::Type::KeyDown);
+    ASSERT(type == Type::RawKeyDown || type == Type::Char);
     m_type = type;
 
     if (backwardCompatibilityMode || m_handledByInputMethod)
@@ -1344,7 +1345,6 @@ void PlatformKeyboardEvent::disambiguateKeyDownEvent(Type type, bool backwardCom
         m_unmodifiedText = String();
     } else {
         m_keyIdentifier = String();
-        m_windowsVirtualKeyCode = 0;
     }
 }
 

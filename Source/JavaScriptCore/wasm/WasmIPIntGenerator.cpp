@@ -692,25 +692,57 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDStore(ExpressionType, Ex
     return { };
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDSplat(SIMDLane, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDShuffle(v128_t, ExpressionType, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDShift(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDExtmul(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDSplat(SIMDLane, ExpressionType, ExpressionType&)
+{
+    return { };
+}
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDShuffle(v128_t, ExpressionType, ExpressionType, ExpressionType&)
+{
+    changeStackSize(-1);
+    return { };
+}
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDShift(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType&)
+{
+    changeStackSize(-1);
+    return { };
+}
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDExtmul(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType&)
+{
+    changeStackSize(-1);
+    return { };
+}
 
 PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDLoadSplat(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result)
 {
     return addSIMDLoad(pointer, offset, result);
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDLoadLane(SIMDLaneOperation, ExpressionType, ExpressionType, uint32_t, uint8_t, ExpressionType&) IPINT_UNIMPLEMENTED
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDStoreLane(SIMDLaneOperation, ExpressionType, ExpressionType, uint32_t, uint8_t) IPINT_UNIMPLEMENTED
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDLoadLane(SIMDLaneOperation, ExpressionType, ExpressionType, uint32_t offset, uint8_t, ExpressionType&)
+{
+    changeStackSize(-1);
+    m_metadata->addLEB128ConstantInt32AndLength(offset, getCurrentInstructionLength());
+    return { };
+}
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDStoreLane(SIMDLaneOperation, ExpressionType, ExpressionType, uint32_t offset, uint8_t)
+{
+    changeStackSize(-2);
+    m_metadata->addLEB128ConstantInt32AndLength(offset, getCurrentInstructionLength());
+    return { };
+}
 
 PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDLoadExtend(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result)
 {
     return addSIMDLoad(pointer, offset, result);
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDLoadPad(SIMDLaneOperation, ExpressionType, uint32_t, ExpressionType&) IPINT_UNIMPLEMENTED
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDLoadPad(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result)
+{
+    return addSIMDLoad(pointer, offset, result);
+}
 
 IPIntGenerator::ExpressionType IPIntGenerator::addConstant(v128_t)
 {
@@ -723,10 +755,27 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addExtractLane(SIMDInfo, uint8_
     return { };
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addReplaceLane(SIMDInfo, uint8_t, ExpressionType, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDI_V(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDV_V(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDBitwiseSelect(ExpressionType, ExpressionType, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addReplaceLane(SIMDInfo, uint8_t, ExpressionType, ExpressionType, ExpressionType&)
+{
+    changeStackSize(-1);
+    return { };
+}
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDI_V(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType&)
+{
+    return { };
+}
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDV_V(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType&)
+{
+    return { };
+}
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDBitwiseSelect(ExpressionType, ExpressionType, ExpressionType, ExpressionType&)
+{
+    changeStackSize(-2); // 3 operands, 1 result
+    return { };
+}
 
 #if ENABLE(B3_JIT)
 PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDRelOp(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, B3::Air::Arg, ExpressionType&)
@@ -2857,7 +2906,7 @@ void IPIntGenerator::addTailCallCommonData(const FunctionSignature& signature)
     m_metadata->appendMetadata(numStackValues);
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCall(unsigned callSlotIndex, FunctionSpaceIndex index, const TypeDefinition& type, ArgumentList&, ResultList& results, CallType callType)
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCall(unsigned callProfileIndex, FunctionSpaceIndex index, const TypeDefinition& type, ArgumentList&, ResultList& results, CallType callType)
 {
     const FunctionSignature& signature = *type.as<FunctionSignature>();
     if (callType == CallType::TailCall) {
@@ -2875,7 +2924,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCall(unsigned callSlotIndex,
 
         IPInt::TailCallMetadata functionIndexMetadata {
             .length = safeCast<uint8_t>(getCurrentInstructionLength()),
-            .callSlotIndex = callSlotIndex,
+            .callProfileIndex = callProfileIndex,
             .functionIndex = index,
             .callerStackArgSize = static_cast<int32_t>(callerStackArgs * sizeof(Register)),
             .argumentBytecode = { }
@@ -2891,7 +2940,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCall(unsigned callSlotIndex,
 
     IPInt::CallMetadata functionIndexMetadata {
         .length = safeCast<uint8_t>(getCurrentInstructionLength()),
-        .callSlotIndex = callSlotIndex,
+        .callProfileIndex = callProfileIndex,
         .functionIndex = index,
         .signature = {
             static_cast<uint32_t>(callConvention.headerAndArgumentStackSizeInBytes),
@@ -2905,7 +2954,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCall(unsigned callSlotIndex,
     return { };
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallIndirect(unsigned callSlotIndex, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList&, ResultList& results, CallType callType)
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList&, ResultList& results, CallType callType)
 {
     const FunctionSignature& signature = *originalSignature.expand().as<FunctionSignature>();
     if (callType == CallType::TailCall) {
@@ -2925,7 +2974,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallIndirect(unsigned callSl
 
         IPInt::TailCallIndirectMetadata functionIndexMetadata {
             .length = safeCast<uint8_t>(getCurrentInstructionLength()),
-            .callSlotIndex = callSlotIndex,
+            .callProfileIndex = callProfileIndex,
             .tableIndex = tableIndex,
             .rtt = m_metadata->addSignature(originalSignature),
             .callerStackArgSize = static_cast<int32_t>(callerStackArgs * sizeof(Register)),
@@ -2943,7 +2992,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallIndirect(unsigned callSl
 
     IPInt::CallIndirectMetadata functionIndexMetadata {
         .length = safeCast<uint8_t>(getCurrentInstructionLength()),
-        .callSlotIndex = callSlotIndex,
+        .callProfileIndex = callProfileIndex,
         .tableIndex = tableIndex,
         .rtt = m_metadata->addSignature(originalSignature),
         .signature = {
@@ -2959,7 +3008,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallIndirect(unsigned callSl
     return { };
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallRef(unsigned callSlotIndex, const TypeDefinition& originalSignature, ArgumentList&, ResultList& results, CallType callType)
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition& originalSignature, ArgumentList&, ResultList& results, CallType callType)
 {
     const FunctionSignature& signature = *originalSignature.expand().as<FunctionSignature>();
     if (callType == CallType::TailCall) {
@@ -2979,7 +3028,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallRef(unsigned callSlotInd
 
         IPInt::TailCallRefMetadata callMetadata {
             .length = safeCast<uint8_t>(getCurrentInstructionLength()),
-            .callSlotIndex = callSlotIndex,
+            .callProfileIndex = callProfileIndex,
             .callerStackArgSize = static_cast<int32_t>(callerStackArgs * sizeof(Register)),
             .argumentBytecode = { }
         };
@@ -2995,7 +3044,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallRef(unsigned callSlotInd
 
     IPInt::CallRefMetadata callMetadata {
         .length = safeCast<uint8_t>(getCurrentInstructionLength()),
-        .callSlotIndex = callSlotIndex,
+        .callProfileIndex = callProfileIndex,
         .signature = {
             static_cast<uint32_t>(callConvention.headerAndArgumentStackSizeInBytes),
             static_cast<uint16_t>(signature.returnCount() > signature.argumentCount() ? signature.returnCount() - signature.argumentCount() : 0),
@@ -3038,7 +3087,7 @@ std::unique_ptr<FunctionIPIntMetadataGenerator> IPIntGenerator::finalize()
     m_metadata->m_maxFrameSizeInV128 = roundUpToMultipleOf<2>(m_metadata->m_numLocals) / 2;
     m_metadata->m_maxFrameSizeInV128 += m_metadata->m_numAlignedRethrowSlots / 2;
     m_metadata->m_maxFrameSizeInV128 += m_maxStackSize;
-    m_metadata->m_numCallSlots = m_parser->numCallSlots();
+    m_metadata->m_numCallProfiles = m_parser->numCallProfiles();
 
     return WTFMove(m_metadata);
 }

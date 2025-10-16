@@ -102,8 +102,8 @@ public:
 
     bool hasIntrinsicWidth() const;
     bool hasIntrinsicHeight() const;
-    Length intrinsicWidth() const;
-    Length intrinsicHeight() const;
+    float intrinsicWidth() const;
+    float intrinsicHeight() const;
 
     FloatSize currentViewportSizeExcludingZoom() const;
     FloatRect currentViewBoxRect() const;

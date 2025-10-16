@@ -175,7 +175,7 @@ void CredentialRequestCoordinator::presentPicker(const Document& document, Crede
 
     setState(PickerState::Presenting);
     setCurrentPromise(WTFMove(promise));
-    observeContext(document.scriptExecutionContext());
+    observeContext(document.protectedScriptExecutionContext().get());
 
     auto validatedCredentialRequests = validatedRequestsOrException.releaseReturnValue();
     DigitalCredentialsRequestData requestData {

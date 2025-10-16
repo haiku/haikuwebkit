@@ -48,20 +48,17 @@ RemoteResourceCacheProxy::~RemoteResourceCacheProxy()
 {
 }
 
-void RemoteResourceCacheProxy::recordDecomposedGlyphsUse(DecomposedGlyphs& decomposedGlyphs)
+RemoteGradientIdentifier RemoteResourceCacheProxy::recordGradientUse(Gradient& gradient)
 {
-    if (m_decomposedGlyphs.add(decomposedGlyphs.renderingResourceIdentifier()).isNewEntry) {
-        decomposedGlyphs.addObserver(m_resourceObserverWeakFactory.createWeakPtr(static_cast<RenderingResourceObserver&>(*this)).releaseNonNull());
-        m_remoteRenderingBackendProxy->cacheDecomposedGlyphs(decomposedGlyphs);
-    }
-}
-
-void RemoteResourceCacheProxy::recordGradientUse(Gradient& gradient)
-{
-    if (m_gradients.add(gradient.renderingResourceIdentifier()).isNewEntry) {
+    auto result = m_gradients.ensure(&gradient, [] {
+        return RemoteGradientIdentifier::generate();
+    });
+    auto identifier = result.iterator->value;
+    if (result.isNewEntry) {
         gradient.addObserver(m_resourceObserverWeakFactory.createWeakPtr(static_cast<RenderingResourceObserver&>(*this)).releaseNonNull());
-        m_remoteRenderingBackendProxy->cacheGradient(gradient, gradient.renderingResourceIdentifier());
+        m_remoteRenderingBackendProxy->cacheGradient(gradient, identifier);
     }
+    return identifier;
 }
 
 void RemoteResourceCacheProxy::recordFilterUse(Filter& filter)
@@ -151,6 +148,22 @@ void RemoteResourceCacheProxy::recordFontCustomPlatformDataUse(const FontCustomP
     }
 }
 
+RemoteDisplayListIdentifier RemoteResourceCacheProxy::recordDisplayListUse(const DisplayList::DisplayList& displayList)
+{
+    auto result = m_displayLists.ensure(&displayList, [] {
+        return RemoteDisplayListIdentifier::generate();
+    });
+    auto identifier = result.iterator->value; // Stash the identifier since the next call will recurse.
+    if (result.isNewEntry) {
+        displayList.addObserver(m_resourceObserverWeakFactory.createWeakPtr(static_cast<RenderingResourceObserver&>(*this)).releaseNonNull());
+        // Note: this might recurse back to RemoteResourceCacheProxy::recordDisplayListUse().
+        // thus we must ensure that we are not in m_displayLists.ensure.. call stack.
+        m_remoteRenderingBackendProxy->cacheDisplayList(identifier, displayList);
+        // result.iterator is not valid anymore.
+    }
+    return identifier;
+}
+
 void RemoteResourceCacheProxy::willDestroyNativeImage(RenderingResourceIdentifier identifier)
 {
     bool removed = m_nativeImages.remove(identifier);
@@ -158,18 +171,11 @@ void RemoteResourceCacheProxy::willDestroyNativeImage(RenderingResourceIdentifie
     m_remoteRenderingBackendProxy->releaseNativeImage(identifier);
 }
 
-void RemoteResourceCacheProxy::willDestroyGradient(RenderingResourceIdentifier identifier)
+void RemoteResourceCacheProxy::willDestroyGradient(const Gradient& gradient)
 {
-    bool removed = m_gradients.remove(identifier);
-    RELEASE_ASSERT(removed);
-    m_remoteRenderingBackendProxy->releaseGradient(identifier);
-}
-
-void RemoteResourceCacheProxy::willDestroyDecomposedGlyphs(RenderingResourceIdentifier identifier)
-{
-    bool removed = m_decomposedGlyphs.remove(identifier);
-    RELEASE_ASSERT(removed);
-    m_remoteRenderingBackendProxy->releaseDecomposedGlyphs(identifier);
+    auto identifier = m_gradients.take(&gradient);
+    RELEASE_ASSERT(identifier);
+    m_remoteRenderingBackendProxy->releaseGradient(*identifier);
 }
 
 void RemoteResourceCacheProxy::willDestroyFilter(RenderingResourceIdentifier identifier)
@@ -177,6 +183,13 @@ void RemoteResourceCacheProxy::willDestroyFilter(RenderingResourceIdentifier ide
     bool removed = m_filters.remove(identifier);
     RELEASE_ASSERT(removed);
     m_remoteRenderingBackendProxy->releaseFilter(identifier);
+}
+
+void RemoteResourceCacheProxy::willDestroyDisplayList(const DisplayList::DisplayList& displayList)
+{
+    auto identifier = m_displayLists.take(&displayList);
+    RELEASE_ASSERT(identifier);
+    m_remoteRenderingBackendProxy->releaseDisplayList(*identifier);
 }
 
 void RemoteResourceCacheProxy::releaseNativeImages()
@@ -252,9 +265,9 @@ void RemoteResourceCacheProxy::didPaintLayers()
 void RemoteResourceCacheProxy::releaseMemory()
 {
     m_resourceObserverWeakFactory.revokeAll();
-    m_decomposedGlyphs.clear();
     m_filters.clear();
     m_gradients.clear();
+    m_displayLists.clear();
     releaseNativeImages();
     releaseFonts();
     releaseFontCustomPlatformDatas();

@@ -149,7 +149,7 @@ JSValue JSTestNamedDeleterThrowingException::getConstructor(VM& vm, const JSGlob
 
 void JSTestNamedDeleterThrowingException::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedDeleterThrowingException* thisObject = static_cast<JSTestNamedDeleterThrowingException*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedDeleterThrowingException* thisObject = static_cast<JSTestNamedDeleterThrowingException*>(cell);
     thisObject->JSTestNamedDeleterThrowingException::~JSTestNamedDeleterThrowingException();
 }
 
@@ -352,7 +352,7 @@ bool JSTestNamedDeleterThrowingExceptionOwner::isReachableFromOpaqueRoots(JSC::H
 
 void JSTestNamedDeleterThrowingExceptionOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedDeleterThrowingException = static_cast<JSTestNamedDeleterThrowingException*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedDeleterThrowingException = static_cast<JSTestNamedDeleterThrowingException*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedDeleterThrowingException->protectedWrapped().ptr(), jsTestNamedDeleterThrowingException);
 }

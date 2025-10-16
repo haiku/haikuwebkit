@@ -73,7 +73,7 @@ constexpr ContentsFormat convertToContentsFormat(PixelFormat format)
     }
 }
 
-constexpr bool imageBufferPixelFormatIsOpaque(PixelFormat format)
+constexpr bool pixelFormatIsOpaque(PixelFormat format)
 {
     switch (format) {
     case PixelFormat::BGRX8:

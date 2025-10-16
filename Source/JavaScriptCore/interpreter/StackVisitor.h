@@ -41,6 +41,7 @@ struct EntryFrame;
 struct InlineCallFrame;
 
 class CallFrame;
+class CallSiteIndex;
 class CodeBlock;
 class CodeOrigin;
 class JSCell;
@@ -90,6 +91,8 @@ public:
         }
         size_t wasmFunctionIndex() const;
 
+        CallSiteIndex wasmCallSiteIndex() const;
+
         JS_EXPORT_PRIVATE String functionName() const;
         JS_EXPORT_PRIVATE String sourceURL() const;
         JS_EXPORT_PRIVATE String preRedirectURL() const;
@@ -137,6 +140,7 @@ public:
         bool m_isWasmFrame : 1 { false };
         Wasm::IndexOrName m_wasmFunctionIndexOrName { };
         size_t m_wasmFunctionIndex { 0 };
+        uint32_t m_wasmCallSiteIndexBits { };
 
         friend class StackVisitor;
     };

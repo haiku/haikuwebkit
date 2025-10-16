@@ -57,6 +57,7 @@
 #import <wtf/URL.h>
 #import <wtf/WorkQueue.h>
 #import <wtf/cocoa/SpanCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/darwin/XPCExtras.h>
 #import <wtf/text/MakeString.h>
 
@@ -109,6 +110,8 @@ using WebCore::SecurityOriginData;
 
 namespace WebPushD {
 
+WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebPushDaemon);
+
 static unsigned s_protocolVersion = protocolVersionValue;
 
 static constexpr Seconds s_incomingPushTransactionTimeout { 10_s };
@@ -160,7 +163,7 @@ WebPushDaemon::WebPushDaemon()
 {
 #if PLATFORM(IOS)
     int token;
-    notify_register_dispatch("com.apple.webclip.uninstalled", &token, dispatch_get_main_queue(), ^(int) {
+    notify_register_dispatch("com.apple.webclip.uninstalled", &token, mainDispatchQueueSingleton(), ^(int) {
         updateSubscriptionSetState();
     });
 #endif

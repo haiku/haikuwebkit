@@ -31,6 +31,7 @@
 #import "TestNavigationDelegate.h"
 #import "TestWKWebView.h"
 #import <WebKit/WKContentWorldPrivate.h>
+#import <WebKit/WKWebpagePreferencesPrivate.h>
 #import <WebKit/_WKContentWorldConfiguration.h>
 #import <WebKit/_WKFeature.h>
 #import <WebKit/_WKJSHandle.h>
@@ -70,41 +71,136 @@ TEST(JSHandle, Basic)
     worldConfiguration.get().allowJSHandleCreation = YES;
     RetainPtr world = [WKContentWorld _worldWithConfiguration:worldConfiguration.get()];
 
-    RetainPtr<id> result = [webView objectByEvaluatingJavaScript:@"window.webkit.createJSHandle(onlyframe.contentWindow)" inFrame:nil inContentWorld:world.get()];
+    RetainPtr<id> result = [webView objectByEvaluatingJavaScript:@"window.webkit.jsHandle(onlyframe.contentWindow)" inFrame:nil inContentWorld:world.get()];
     EXPECT_WK_STREQ(getWindowFrameInfo(result).request.URL.absoluteString, "https://webkit.org/webkit");
-    RetainPtr<_WKJSHandle> iframeRef = [webView objectByEvaluatingJavaScript:@"window.webkit.createJSHandle(onlyframe)" inFrame:nil inContentWorld:world.get()];
+    RetainPtr<_WKJSHandle> iframeRef = [webView objectByEvaluatingJavaScript:@"window.webkit.jsHandle(onlyframe)" inFrame:nil inContentWorld:world.get()];
 
-    result = [webView objectByEvaluatingJavaScript:@"window.webkit.createJSHandle(onlydiv)" inFrame:nil inContentWorld:world.get()];
+    result = [webView objectByEvaluatingJavaScript:@"window.webkit.jsHandle(onlydiv)" inFrame:nil inContentWorld:world.get()];
     EXPECT_NULL(getWindowFrameInfo(result));
     {
         __block bool done { false };
-        [webView evaluateJavaScript:@"window.webkit.createJSHandle(5)" inFrame:nil inContentWorld:world.get() completionHandler:^(id result, NSError *error) {
+        [webView evaluateJavaScript:@"window.webkit.jsHandle(5)" inFrame:nil inContentWorld:world.get() completionHandler:^(id result, NSError *error) {
             EXPECT_NULL(result);
             EXPECT_NOT_NULL(error);
             done = true;
         }];
         Util::run(&done);
     }
-    result = [webView objectByEvaluatingJavaScript:@"window.webkit.createJSHandle(document.createTextNode('hi'))" inFrame:nil inContentWorld:world.get()];
+    result = [webView objectByEvaluatingJavaScript:@"window.webkit.jsHandle(document.createTextNode('hi'))" inFrame:nil inContentWorld:world.get()];
     EXPECT_NULL(getWindowFrameInfo(result));
     result = [webView objectByEvaluatingJavaScript:@"window.WebKitJSHandle"];
     EXPECT_NULL(result);
 
-    result = [webView objectByCallingAsyncFunction:@"return {'arg':window.webkit.createJSHandle(onlydiv)}" withArguments:nil inFrame:nil inContentWorld:world.get()];
-    result = [webView objectByCallingAsyncFunction:@"return arg.outerHTML" withArguments:result.get()];
+    result = [webView objectByCallingAsyncFunction:@"return {'arg':window.webkit.jsHandle(onlydiv)}" withArguments:nil inFrame:nil inContentWorld:world.get()];
+    result = [webView objectByCallingAsyncFunction:@"return arg.outerHTML" withArguments:result.get() inFrame:nil inContentWorld:world.get()];
     EXPECT_WK_STREQ(result.get(), "<div id=\"onlydiv\"></div>");
 
     result = [webView objectByCallingAsyncFunction:@"return n === undefined" withArguments:@{ @"n" : iframeRef.get() } inFrame:[webView firstChildFrame] inContentWorld:WKContentWorld.pageWorld];
     EXPECT_EQ(result.get(), @YES);
 
-    result = [webView objectByCallingAsyncFunction:@"return n.id" withArguments:@{ @"n" : iframeRef.get() }];
+    result = [webView objectByCallingAsyncFunction:@"return n.id" withArguments:@{ @"n" : iframeRef.get() } inFrame:nil inContentWorld:world.get()];
     EXPECT_WK_STREQ(result.get(), "onlyframe");
 
-    result = [webView objectByEvaluatingJavaScript:@"function returnThirty() { return '30'; }; window.webkit.createJSHandle(returnThirty)" inFrame:nil inContentWorld:world.get()];
+    result = [webView objectByEvaluatingJavaScript:@"function returnThirty() { return '30'; }; window.webkit.jsHandle(returnThirty)" inFrame:nil inContentWorld:world.get()];
     EXPECT_WK_STREQ([webView objectByCallingAsyncFunction:@"return n()" withArguments:@{ @"n" : result.get() } inFrame:nil inContentWorld:world.get()], "30");
 
-    result = [webView objectByEvaluatingJavaScript:@"window.webkit.createJSHandle(window.parent)" inFrame:[webView firstChildFrame] inContentWorld:world.get()];
+    result = [webView objectByEvaluatingJavaScript:@"window.webkit.jsHandle(window.parent)" inFrame:[webView firstChildFrame] inContentWorld:world.get()];
     EXPECT_WK_STREQ(getWindowFrameInfo(result).request.URL.absoluteString, "https://example.com/example");
+}
+
+TEST(JSHandle, Equality)
+{
+    RetainPtr worldConfiguration = adoptNS([_WKContentWorldConfiguration new]);
+    worldConfiguration.get().allowJSHandleCreation = YES;
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:worldConfiguration.get()];
+
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+    EXPECT_TRUE([[webView objectByEvaluatingJavaScript:@"let a = {'key':'value'}; let b = window.webkit.jsHandle(a); let c = window.webkit.jsHandle(a); b === c" inFrame:nil inContentWorld:world.get()] boolValue]);
+
+    _WKJSHandle *b = [webView objectByEvaluatingJavaScript:@"b" inFrame:nil inContentWorld:world.get()];
+    _WKJSHandle *c = [webView objectByEvaluatingJavaScript:@"c" inFrame:nil inContentWorld:world.get()];
+    _WKJSHandle *d = [webView objectByEvaluatingJavaScript:@"let d = {}; window.webkit.jsHandle(d)" inFrame:nil inContentWorld:world.get()];
+    EXPECT_TRUE([b isKindOfClass:_WKJSHandle.class]);
+    EXPECT_TRUE([c isKindOfClass:_WKJSHandle.class]);
+    EXPECT_TRUE([d isKindOfClass:_WKJSHandle.class]);
+    EXPECT_EQ(b, c);
+    EXPECT_NE(b, d);
+    EXPECT_TRUE([b isEqual:c]);
+    EXPECT_FALSE([b isEqual:d]);
+
+    NSMutableArray<_WKJSHandle *> *array = [NSMutableArray arrayWithCapacity:2];
+    [array addObject:b];
+    [array addObject:d];
+    [array addObject:c];
+    EXPECT_EQ(array.count, 3u);
+    [array removeObject:b];
+    EXPECT_EQ(array.count, 1u);
+
+    NSSet<_WKJSHandle *> *set = [NSSet setWithObjects:b, c, d, nil];
+    EXPECT_EQ(set.count, 2u);
+
+    NSDictionary<NSString *, _WKJSHandle *> *dictionary = @{
+        @"b" : b,
+        @"c" : c,
+        @"d" : d
+    };
+    EXPECT_EQ(dictionary[@"b"], b);
+    EXPECT_EQ(dictionary[@"c"], c);
+    EXPECT_EQ(dictionary[@"d"], d);
+    EXPECT_EQ(dictionary.count, 3u);
+
+    EXPECT_WK_STREQ([webView objectByCallingAsyncFunction:@"return b.key" withArguments:@{ @"b" : b } inFrame:nil inContentWorld:world.get()], "value");
+
+    worldConfiguration.get().name = @"otherworldly";
+    RetainPtr otherWorld = [WKContentWorld _worldWithConfiguration:worldConfiguration.get()];
+    EXPECT_NE(world.get(), otherWorld.get());
+    EXPECT_TRUE([[webView objectByCallingAsyncFunction:@"return b === undefined" withArguments:@{ @"b" : b } inFrame:nil inContentWorld:otherWorld.get()] boolValue]);
+}
+
+TEST(JSHandle, WebpagePreferences)
+{
+    HTTPServer server({
+        { "/example"_s, { "<iframe src='https://webkit.org/webkit'></iframe>"_s } },
+        { "/webkit"_s, { "hi"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:server.httpsProxyConfiguration()]);
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    webView.get().navigationDelegate = navigationDelegate.get();
+
+    __block bool allow = false;
+    navigationDelegate.get().decidePolicyForNavigationActionWithPreferences = ^(WKNavigationAction *, WKWebpagePreferences *preferences, void (^completionHandler)(WKNavigationActionPolicy, WKWebpagePreferences *)) {
+        preferences._allowsJSHandleCreationInPageWorld = allow;
+        completionHandler(WKNavigationActionPolicyAllow, preferences);
+    };
+
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]];
+    NSString *checkClass = @"window.WebKitJSHandle === undefined";
+    NSString *checkWindowWebKit = @"window.webkit === undefined || window.webkit.jsHandle === undefined";
+
+    [webView loadRequest:request];
+    [navigationDelegate waitForDidFinishNavigation];
+    EXPECT_TRUE([[webView objectByEvaluatingJavaScript:checkClass] boolValue]);
+    EXPECT_TRUE([[webView objectByEvaluatingJavaScript:checkWindowWebKit] boolValue]);
+
+    allow = true;
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.org/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    EXPECT_FALSE([[webView objectByEvaluatingJavaScript:checkClass] boolValue]);
+    EXPECT_FALSE([[webView objectByEvaluatingJavaScript:checkWindowWebKit] boolValue]);
+
+    allow = false;
+    [webView loadRequest:request];
+    [navigationDelegate waitForDidFinishNavigation];
+    EXPECT_TRUE([[webView objectByEvaluatingJavaScript:checkClass] boolValue]);
+    EXPECT_TRUE([[webView objectByEvaluatingJavaScript:checkWindowWebKit] boolValue]);
+
+    allow = true;
+    [webView loadRequest:request];
+    [navigationDelegate waitForDidFinishNavigation];
+    EXPECT_FALSE([[webView objectByEvaluatingJavaScript:checkClass] boolValue]);
+    EXPECT_FALSE([[webView objectByEvaluatingJavaScript:checkWindowWebKit] boolValue]);
 }
 
 }

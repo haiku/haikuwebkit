@@ -54,6 +54,7 @@
 #import <wtf/Vector.h>
 #import <wtf/WeakObjCPtr.h>
 #import <wtf/cocoa/SpanCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/StringHash.h>
 #import <wtf/text/StringToIntegerConversion.h>
@@ -129,7 +130,7 @@
 {
     int64_t deferredWaitTime = 100 * NSEC_PER_MSEC;
     dispatch_time_t when = dispatch_time(DISPATCH_TIME_NOW, deferredWaitTime);
-    dispatch_after(when, dispatch_get_main_queue(), ^{
+    dispatch_after(when, mainDispatchQueueSingleton(), ^{
         decisionHandler(WKNavigationActionPolicyAllow);
     });
 
@@ -139,7 +140,7 @@
 {
     int64_t deferredWaitTime = 100 * NSEC_PER_MSEC;
     dispatch_time_t when = dispatch_time(DISPATCH_TIME_NOW, deferredWaitTime);
-    dispatch_after(when, dispatch_get_main_queue(), ^{
+    dispatch_after(when, mainDispatchQueueSingleton(), ^{
         decisionHandler(WKNavigationResponsePolicyAllow);
     });
 }

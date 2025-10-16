@@ -109,6 +109,7 @@
 #import <WebCore/RenderLayer.h>
 #import <WebCore/RenderLayerCompositor.h>
 #import <WebCore/RenderLayerScrollableArea.h>
+#import <WebCore/RenderObjectStyle.h>
 #import <WebCore/RenderStyleInlines.h>
 #import <WebCore/RenderTextControl.h>
 #import <WebCore/RenderView.h>
@@ -968,7 +969,7 @@ static NSURL *createUniqueWebDataURL();
         return;
     // FIXME: These are fake modifier keys here, but they should be real ones instead.
     WebCore::PlatformMouseEvent event(WebCore::IntPoint(windowLoc), WebCore::IntPoint(WebCore::globalPoint(windowLoc, [view->platformWidget() window])),
-        WebCore::MouseButton::Left, WebCore::PlatformEvent::Type::MouseMoved, 0, { }, WallTime::now(), WebCore::ForceAtClick, WebCore::SyntheticClickType::NoTap);
+        WebCore::MouseButton::Left, WebCore::PlatformEvent::Type::MouseMoved, 0, { }, MonotonicTime::now(), WebCore::ForceAtClick, WebCore::SyntheticClickType::NoTap);
     _private->coreFrame->eventHandler().dragSourceEndedAt(event, coreDragOperationMask(dragOperationMask));
 }
 #endif // ENABLE(DRAG_SUPPORT) && PLATFORM(MAC)
@@ -1823,7 +1824,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
     CTFontRef font = nil;
     if (_private->coreFrame) {
         if (auto coreFont = _private->coreFrame->editor().fontForSelection(multipleFonts))
-            font = coreFont->getCTFont();
+            font = coreFont->ctFont();
     }
     
     if (hasMultipleFonts)

@@ -2432,8 +2432,8 @@ void NetworkSessionCocoa::removeNetworkWebsiteData(std::optional<WallTime> modif
     if (!SymptomAnalyticsLibrary()
         || !SymptomPresentationFeedLibrary()
         || !SymptomPresentationLiteLibrary()
-        || !getAnalyticsWorkspaceClass()
-        || !getUsageFeedClass()
+        || !getAnalyticsWorkspaceClassSingleton()
+        || !getUsageFeedClassSingleton()
         || !canLoadkSymptomAnalyticsServiceEndpoint()) {
         completionHandler();
         return;

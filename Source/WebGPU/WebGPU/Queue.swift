@@ -30,33 +30,37 @@ private let largeBufferSize = 32 * 1024 * 1024
 public func writeBuffer(
     queue: WebGPU.Queue, buffer: WebGPU.Buffer, bufferOffset: UInt64, data: SpanUInt8
 ) {
-    unsafe queue.writeBuffer(buffer, bufferOffset: bufferOffset, data: data)
+    unsafe queue.writeBuffer(buffer.buffer(), bufferOffset: bufferOffset, data: data)
 }
 
 extension WebGPU.Queue {
-    public func writeBuffer(_ buffer: WebGPU.Buffer, bufferOffset: UInt64, data: SpanUInt8) {
-        let device = unsafe self.device()
+    public func writeBuffer(_ buffer: MTLBuffer, bufferOffset: UInt64, data: SpanUInt8) {
+        guard let device = self.metalDevice() else {
+            return
+        }
+
         guard let blitCommandEncoder = ensureBlitCommandEncoder() else {
             return
         }
+
         let noCopy = unsafe data.size() >= largeBufferSize
-        guard device.device() != nil else {
+        let bufferWithOffset = unsafe newTemporaryBufferWithBytes(data, noCopy)
+        let temporaryBuffer = unsafe bufferWithOffset.first
+        let temporaryBufferOffset = unsafe bufferWithOffset.second
+
+        guard let temporaryBuffer = temporaryBuffer else {
+            assertionFailure("temporaryBuffer should not be nil")
             return
         }
-        guard
-            let tempBuffer =
-                unsafe noCopy
-                ? device.newBufferWithBytesNoCopy(
-                    data.__dataUnsafe(), data.size(), MTLResourceOptions.storageModeShared)
-                : device.newBufferWithBytes(
-                    data.__dataUnsafe(), data.size(), MTLResourceOptions.storageModeShared)
-        else {
-            return
-        }
+
         unsafe blitCommandEncoder.copy(
-            from: tempBuffer, sourceOffset: 0, to: buffer.buffer(),
+            from: temporaryBuffer,
+            sourceOffset: Int(temporaryBufferOffset),
+            to: buffer,
             destinationOffset: Int(bufferOffset),
-            size: data.size())
+            size: data.count
+        )
+
         if noCopy {
             finalizeBlitCommandEncoder()
         }

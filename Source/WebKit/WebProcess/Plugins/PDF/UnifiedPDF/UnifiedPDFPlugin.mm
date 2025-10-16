@@ -90,6 +90,7 @@
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/ImmediateActionStage.h>
 #include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
 #include <WebCore/LocalizedStrings.h>
 #include <WebCore/NotImplemented.h>
@@ -107,6 +108,7 @@
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/ScrollbarTheme.h>
 #include <WebCore/ScrollbarsController.h>
+#include <WebCore/Settings.h>
 #include <WebCore/ShadowRoot.h>
 #include <WebCore/StyleColorOptions.h>
 #include <WebCore/VoidCallback.h>
@@ -116,6 +118,7 @@
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/cocoa/TypeCastsCocoa.h>
+#include <wtf/spi/darwin/OSVariantSPI.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringToIntegerConversion.h>
 #include <wtf/text/TextStream.h>
@@ -275,7 +278,8 @@ void UnifiedPDFPlugin::teardown()
     m_annotationContainer = nullptr;
 
 #if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
-    frame->protectedPage()->removePDFPageNumberIndicator(*this);
+    if (RefPtr webPage = frame->page())
+        webPage->removePDFPageNumberIndicator(*this);
 #endif
 }
 
@@ -2262,7 +2266,7 @@ void UnifiedPDFPlugin::finishTrackingAnnotation(PDFAnnotation* annotationUnderMo
 
 void UnifiedPDFPlugin::revealPDFDestination(PDFDestination *destination)
 {
-    auto unspecifiedValue = get_PDFKit_kPDFDestinationUnspecifiedValue();
+    auto unspecifiedValue = get_PDFKit_kPDFDestinationUnspecifiedValueSingleton();
 
     auto pageIndex = [m_pdfDocument indexForPage:[destination page]];
     auto pointInPDFPageSpace = [destination point];
@@ -2467,6 +2471,11 @@ auto UnifiedPDFPlugin::toContextMenuItemTag(int tagValue) -> ContextMenuItemTag
     return isKnownContextMenuItemTag ? static_cast<ContextMenuItemTag>(tagValue) : ContextMenuItemTag::Unknown;
 }
 
+static bool isInRecoveryOS()
+{
+    return os_variant_is_basesystem("WebKit");
+}
+
 std::optional<PDFContextMenu> UnifiedPDFPlugin::createContextMenu(const WebMouseEvent& contextMenuEvent) const
 {
     ASSERT(isContextMenuEvent(contextMenuEvent));
@@ -2488,11 +2497,17 @@ std::optional<PDFContextMenu> UnifiedPDFPlugin::createContextMenu(const WebMouse
     };
 
     if ([m_pdfDocument allowsCopying] && hasSelection()) {
-        menuItems.appendVector(selectionContextMenuItems(contextMenuEventRootViewPoint));
+        bool shouldPresentLookupAndSearchOptions = !isInRecoveryOS();
+        menuItems.appendVector(selectionContextMenuItems(contextMenuEventRootViewPoint, shouldPresentLookupAndSearchOptions));
         addSeparator();
     }
 
-    menuItems.append(contextMenuItem(ContextMenuItemTag::OpenWithDefaultViewer));
+    std::optional<int> openInDefaultViewerTag;
+    bool shouldPresentOpenWithDefaultViewerOption = !isInRecoveryOS();
+    if (shouldPresentOpenWithDefaultViewerOption) {
+        menuItems.append(contextMenuItem(ContextMenuItemTag::OpenWithDefaultViewer));
+        openInDefaultViewerTag = enumToUnderlyingType(ContextMenuItemTag::OpenWithDefaultViewer);
+    }
 
     addSeparator();
 
@@ -2511,7 +2526,7 @@ std::optional<PDFContextMenu> UnifiedPDFPlugin::createContextMenu(const WebMouse
 
     auto contextMenuPoint = frameView->contentsToScreen(IntRect(frameView->windowToContents(contextMenuEventRootViewPoint), IntSize())).location();
 
-    return PDFContextMenu { contextMenuPoint, WTFMove(menuItems), { enumToUnderlyingType(ContextMenuItemTag::OpenWithDefaultViewer) } };
+    return PDFContextMenu { contextMenuPoint, WTFMove(menuItems), WTFMove(openInDefaultViewerTag) };
 }
 
 bool UnifiedPDFPlugin::isDisplayModeContextMenuItemTag(ContextMenuItemTag tag) const
@@ -2590,18 +2605,21 @@ PDFContextMenuItem UnifiedPDFPlugin::separatorContextMenuItem() const
     return { { }, 0, enumToUnderlyingType(ContextMenuItemTag::Invalid), ContextMenuItemTagNoAction, ContextMenuItemEnablement::Disabled, ContextMenuItemHasAction::No, ContextMenuItemIsSeparator::Yes };
 }
 
-Vector<PDFContextMenuItem> UnifiedPDFPlugin::selectionContextMenuItems(const IntPoint& contextMenuEventRootViewPoint) const
+Vector<PDFContextMenuItem> UnifiedPDFPlugin::selectionContextMenuItems(const IntPoint& contextMenuEventRootViewPoint, bool shouldPresentLookupAndSearchOptions) const
 {
     if (![m_pdfDocument allowsCopying] || !hasSelection())
         return { };
 
-    Vector<PDFContextMenuItem> items {
-        contextMenuItem(ContextMenuItemTag::DictionaryLookup),
-        separatorContextMenuItem(),
-        contextMenuItem(ContextMenuItemTag::WebSearch),
-        separatorContextMenuItem(),
-        contextMenuItem(ContextMenuItemTag::Copy),
-    };
+    Vector<PDFContextMenuItem> items { contextMenuItem(ContextMenuItemTag::Copy) };
+
+    if (shouldPresentLookupAndSearchOptions) {
+        items.insertVector(0, Vector<PDFContextMenuItem> {
+            contextMenuItem(ContextMenuItemTag::DictionaryLookup),
+            separatorContextMenuItem(),
+            contextMenuItem(ContextMenuItemTag::WebSearch),
+            separatorContextMenuItem(),
+        });
+    }
 
     if (RetainPtr annotation = annotationForRootViewPoint(contextMenuEventRootViewPoint); annotation && annotationIsExternalLink(annotation.get()))
         items.append(contextMenuItem(ContextMenuItemTag::CopyLink));
@@ -2761,7 +2779,7 @@ void UnifiedPDFPlugin::performContextMenuAction(ContextMenuItemTag tag, const In
 void UnifiedPDFPlugin::performCopyLinkOperation(const IntPoint& contextMenuEventRootViewPoint) const
 {
     if (![m_pdfDocument allowsCopying]) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:get_PDFKit_PDFViewCopyPermissionNotification() object:nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:get_PDFKit_PDFViewCopyPermissionNotificationSingleton() object:nil];
         return;
     }
 
@@ -2840,7 +2858,7 @@ bool UnifiedPDFPlugin::performCopyEditingOperation() const
         return false;
 
     if (![m_pdfDocument allowsCopying]) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:get_PDFKit_PDFViewCopyPermissionNotification() object:nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:get_PDFKit_PDFViewCopyPermissionNotificationSingleton() object:nil];
         return false;
     }
 

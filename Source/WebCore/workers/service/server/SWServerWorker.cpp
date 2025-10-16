@@ -349,11 +349,20 @@ void SWServerWorker::setState(ServiceWorkerState state)
 
     m_data.state = state;
 
+    HashSet<SWServerConnectionIdentifier> connectionIdentifiers;
+
     ASSERT(m_registration || state == ServiceWorkerState::Redundant);
     if (RefPtr registration = m_registration.get()) {
         registration->forEachConnection([&](auto& connection) {
-            connection.updateWorkerStateInClient(this->identifier(), state);
+            connectionIdentifiers.add(connection.identifier());
         });
+    }
+    for (auto connectionIdentifierWithServiceWorker : m_connectionsWithServiceWorker.values())
+        connectionIdentifiers.add(connectionIdentifierWithServiceWorker);
+
+    for (auto connectionIdentifier : connectionIdentifiers) {
+        if (RefPtr connection = protectedServer()->connection(connectionIdentifier))
+            connection->updateWorkerStateInClient(this->identifier(), state);
     }
 
     if (state == ServiceWorkerState::Activated || state == ServiceWorkerState::Redundant)
@@ -476,6 +485,16 @@ bool SWServerWorker::matchingImportedScripts(const Vector<std::pair<URL, ScriptB
             return false;
     }
     return true;
+}
+
+void SWServerWorker::registerServiceWorkerConnection(SWServerConnectionIdentifier connectionIdentifier)
+{
+    m_connectionsWithServiceWorker.add(connectionIdentifier);
+}
+
+void SWServerWorker::unregisterServiceWorkerConnection(SWServerConnectionIdentifier connectionIdentifier)
+{
+    m_connectionsWithServiceWorker.remove(connectionIdentifier);
 }
 
 std::optional<ExceptionData> SWServerWorker::addRoutes(Vector<ServiceWorkerRoute>&& routes)

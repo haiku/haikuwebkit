@@ -389,9 +389,11 @@ void RTCPeerConnection::setLocalDescription(std::optional<RTCLocalSessionDescrip
         return;
     }
 
+#if !RELEASE_LOG_DISABLED
     String sdp = localDescription.value_or(RTCLocalSessionDescriptionInit { }).sdp;
     logger().toObservers(LogWebRTC, WTFLogLevel::Always, LOGIDENTIFIER, "Setting local description to:\n", sdp);
-    RELEASE_LOG_FORWARDABLE(WebRTC, RTCPEERCONNECTION_SETLOCALDESCRIPTION, logIdentifier(), sdp.utf8().data());
+    RELEASE_LOG_FORWARDABLE(WebRTC, RTCPEERCONNECTION_SETLOCALDESCRIPTION, logIdentifier(), sdp.utf8());
+#endif
 
     chainOperation(WTFMove(promise), [this, localDescription = WTFMove(localDescription)](Ref<DeferredPromise>&& promise) mutable {
         auto type = typeForSetLocalDescription(localDescription, m_signalingState);
@@ -421,8 +423,10 @@ void RTCPeerConnection::setRemoteDescription(RTCSessionDescriptionInit&& remoteD
         return;
     }
 
+#if !RELEASE_LOG_DISABLED
     logger().toObservers(LogWebRTC, WTFLogLevel::Always, LOGIDENTIFIER, "Setting remote description to:\n", remoteDescription.sdp);
-    RELEASE_LOG_FORWARDABLE(WebRTC, RTCPEERCONNECTION_SETREMOTEDESCRIPTION, logIdentifier(), remoteDescription.sdp.utf8().data());
+    RELEASE_LOG_FORWARDABLE(WebRTC, RTCPEERCONNECTION_SETREMOTEDESCRIPTION, logIdentifier(), remoteDescription.sdp.utf8());
+#endif
 
     chainOperation(WTFMove(promise), [this, remoteDescription = WTFMove(remoteDescription)](Ref<DeferredPromise>&& promise) mutable {
         auto description = RTCSessionDescription::create(WTFMove(remoteDescription));
@@ -692,6 +696,11 @@ bool RTCPeerConnection::doClose()
 {
     if (isClosed())
         return false;
+
+#if USE(GSTREAMER_WEBRTC)
+    if (auto backend = protectedBackend())
+        backend->prepareForClose();
+#endif
 
     m_shouldDelayTasks = false;
     m_connectionState = RTCPeerConnectionState::Closed;
@@ -1236,6 +1245,12 @@ void RTCPeerConnection::startGatheringStatLogs(Function<void(String&&)>&& callba
 void RTCPeerConnection::stopGatheringStatLogs()
 {
     protectedBackend()->stopGatheringStatLogs();
+}
+
+void RTCPeerConnection::clearTransports()
+{
+    m_dtlsTransports.clear();
+    m_iceTransports.clear();
 }
 
 } // namespace WebCore

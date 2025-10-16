@@ -151,13 +151,8 @@
         (allow device-camera)))
 
 (define-once (accessibility-support)
-    (mobile-preferences-read "com.apple.Accessibility")
+    (mobile-preferences-read "com.apple.Accessibility"))
     
-    ;; <rdar://problem/10809394>
-    (deny file-write-create
-        (home-prefix "/Library/Preferences/com.apple.Accessibility.plist")
-        NO_REPORT))
-
 (define-once (media-accessibility-support)
     ;; <rdar://problem/12801477>
     (allow mach-lookup (with telemetry)
@@ -201,11 +196,7 @@
 
     (allow file-read* (with telemetry)
            (literal "/dev/random")
-           (literal "/dev/urandom"))
-    ;; <rdar://problem/14215718>
-    (deny file-write-data NO_REPORT
-          (literal "/dev/random")
-          (literal "/dev/urandom")))
+           (literal "/dev/urandom")))
 
 (define required-etc-files
   (literal "/private/etc/passwd"))
@@ -242,14 +233,8 @@
             (allow iokit-external-trap
                 (iokit-trap-number 0 1 2 3 4 5 8 9))
             (allow iokit-external-method
-                (iokit-method-number 0 4 5 9 10 11 12 13 20 27 32 34 35 36 38 39 41 44 54 58 59))))
+                (iokit-method-number 0 4 5 9 10 11 12 13 20 27 32 34 35 36 38 39 41 44 54 58 59)))))
 
-    ;; Silence sandbox violations from apps trying to create the empty plist if it doesn't exist.
-    ;; <rdar://problem/13796537>
-    (deny file-write-create
-        (home-prefix "/Library/Preferences/com.apple.UIKit.plist")
-        NO_REPORT))
- 
 (define (syscall-unix-allowed)
      (syscall-number
         SYS___disable_threadsignal
@@ -509,6 +494,7 @@
         "IOGVAScaler"
         "IOClassNameOverride"
         "IOPlatformUUID"
+        "IORegistryEntryPropertyKeys"
         "IOSurfaceAcceleratorCapabilitiesDict"
         "Protocol Characteristics"
         "als-colorCfg" ;; <rdar://problem/52903475>
@@ -572,3 +558,118 @@
         "machdep.ptrauth_enabled"
         "vm.footprint_suspend"
         "vm.malloc_ranges")) ;; <rdar://problem/105161083>
+
+(define (system-fcntl-allowed)
+    (fcntl-command
+        F_ADDFILESIGS_RETURN
+        F_CHECK_LV
+        F_GETFL
+        F_GETPATH
+        F_GETPROTECTIONCLASS
+        F_SETFD
+        F_SETFL
+        F_SETNOSIGPIPE))
+
+(define (darwin-notification-post-allowed)
+    (notification-name
+        "AppleDatePreferencesChangedNotification"
+        "AppleLanguagePreferencesChangedNotification"
+        "AppleMeasurementSystemPreferencesChangedNotification"
+        "AppleNumberPreferencesChangedNotification"
+        "AppleTemperatureUnitPreferencesChangedNotification"
+        "AppleTextBehaviorPreferencesChangedNotification"
+        "AppleTimePreferencesChangedNotification"
+        "com.apple.CFPreferences._domainsChangedExternally"
+        "com.apple.Metal.AGXEnableOSSignposts"
+        "com.apple.WebKit.LibraryPathDiagnostics"
+        "com.apple.gpumemd.check_in_request"
+        "com.apple.mobile.keybagd.user_changed"
+        "com.apple.system.logging.prefschanged"
+        "org.WebKit.lowMemory"
+        "org.WebKit.lowMemory.begin"
+        "org.WebKit.lowMemory.end"))
+
+(define (rules-with-elevated-precedence)
+    (with-elevated-precedence
+        (allow file-read*
+               (subpath "/usr/lib"
+                        "/usr/share"
+                        "/private/var/db/timezone"))
+        (allow-read-and-issue-generic-extensions
+            (subpath "/Library/RegionFeatures"
+                     "/System/Library"))
+        (allow file-issue-extension (with telemetry)
+            (require-all
+                (extension-class "com.apple.mediaserverd.read")
+                (subpath "/System/Library")))
+        
+        (allow file-map-executable
+               (subpath "/System/Library")
+               (subpath "/usr/lib"))
+        (allow file-read-metadata
+               (vnode-type SYMLINK))
+
+        ;;; <rdar://problem/24144418>
+        (allow file-read*
+               (subpath "/private/var/preferences/Logging"))
+
+        (allow user-preference-read (preference-domain "kCFPreferencesAnyApplication"))
+        (allow file-read*
+               (front-user-home-literal "/Library/Preferences/.GlobalPreferences.plist")
+               (front-user-home-literal "/Library/Preferences/.GlobalPreferences_m.plist"))
+
+        (allow file-read*
+               (literal "/private/var/Managed Preferences/mobile/.GlobalPreferences.plist"))
+        (allow managed-preference-read (preference-domain "kCFPreferencesAnyApplication"))
+
+        (allow-read-and-issue-generic-extensions (executable-bundle))
+
+        (unless (defined? 'restrictive-extension)
+            (with-filter
+                (extension
+                    "com.apple.app-sandbox.read"
+                    "com.apple.app-sandbox.read-write"
+                    "com.apple.sharing.airdrop.readonly")
+                (allow file-read* file-read-metadata)
+                (allow file-issue-extension
+                       (extension-class "com.apple.app-sandbox.read"
+                                        "com.apple.mediaserverd.read"
+                                        "com.apple.sharing.airdrop.readonly")))
+            (with-filter
+                (extension
+                    "com.apple.app-sandbox.read-write")
+                (allow file-write*)
+                (allow file-issue-extension
+                       (extension-class "com.apple.app-sandbox.read-write"
+                                        "com.apple.mediaserverd.read-write"))))
+
+        ;; <rdar://problem/16079361>
+        (allow managed-preference-read
+               (extension "com.apple.security.exception.managed-preference.read-only"))
+        (allow user-preference-read
+               (extension "com.apple.security.exception.shared-preference.read-only"))
+
+        (allow file-issue-extension (with telemetry)
+              (require-all
+                  (extension-class "com.apple.nsurlstorage.extension-cache")
+                  (extension "com.apple.security.exception.files.home-relative-path.read-write")
+                  (require-any
+                      (prefix "/private/var/root/Library/Caches/")
+                      (front-user-home-prefix "/Library/Caches/"))))))
+
+(define (mach-lookup-allowed)
+    (global-name
+        "com.apple.audio.AudioQueueServer"
+        "com.apple.logd"
+        "com.apple.logd.events"
+        "com.apple.runningboard"
+        "com.apple.system.notification_center"
+        "com.apple.systemstatus.activityattribution"
+        "com.apple.tccd"))
+
+(define (iokit-open-service-allowed)
+    (iokit-registry-entry-class
+        "AppleM2ScalerCSCDriver"
+        "AppleParavirtGPU"
+        "AppleVideoToolboxParavirtualizationDriver"
+        "IOSurfaceRoot"))

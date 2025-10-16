@@ -349,6 +349,8 @@ enum class FillBox : uint8_t {
     NoClip
 };
 
+constexpr unsigned FillBoxBitWidth = 3;
+
 constexpr inline FillBox clipMax(FillBox clipA, FillBox clipB)
 {
     if (clipA == FillBox::BorderBox || clipB == FillBox::BorderBox)
@@ -618,7 +620,7 @@ enum class AnimationFillMode : uint8_t {
 };
 
 enum class AnimationPlayState : bool {
-    Playing,
+    Running,
     Paused
 };
 
@@ -721,17 +723,19 @@ enum class MarginTrimType : uint8_t {
     InlineEnd = 1 << 3
 };
 
-enum class TextEdgeType : uint8_t {
-    // Note that TextEdgeType is shared between text-box-edge and line-fit-edge,
-    // where text-box-edge's default value is auto, and line-fit-edge has leading.
-    Auto,
-    Leading,
+enum class TextEdgeOver : uint8_t {
     Text,
-    CapHeight,
-    ExHeight,
+    Ideographic,
+    IdeographicInk,
+    Cap,
+    Ex
+};
+
+enum class TextEdgeUnder : uint8_t {
+    Text,
+    Ideographic,
+    IdeographicInk,
     Alphabetic,
-    CJKIdeographic,
-    CJKIdeographicInk
 };
 
 enum class TextZoom : bool {
@@ -1239,10 +1243,29 @@ enum class NinePieceImageRule : uint8_t {
     Repeat,
 };
 
+enum class AnimationDirection : uint8_t {
+    Normal,
+    Alternate,
+    Reverse,
+    AlternateReverse
+};
+
+enum class TransitionBehavior : bool {
+    Normal,
+    AllowDiscrete,
+};
+
+enum class Scroller : uint8_t {
+    Nearest,
+    Root,
+    Self
+};
+
 CSSBoxType transformBoxToCSSBoxType(TransformBox);
 
 constexpr float defaultMiterLimit = 4;
 
+WTF::TextStream& operator<<(WTF::TextStream&, AnimationDirection);
 WTF::TextStream& operator<<(WTF::TextStream&, AnimationFillMode);
 WTF::TextStream& operator<<(WTF::TextStream&, AnimationPlayState);
 WTF::TextStream& operator<<(WTF::TextStream&, AspectRatioType);
@@ -1332,6 +1355,7 @@ WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapAxis);
 WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapAxisAlignType);
 WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapStop);
 WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapStrictness);
+WTF::TextStream& operator<<(WTF::TextStream&, Scroller);
 WTF::TextStream& operator<<(WTF::TextStream&, SpeakAs);
 WTF::TextStream& operator<<(WTF::TextStream&, StyleDifference);
 WTF::TextStream& operator<<(WTF::TextStream&, StyleDifferenceContextSensitiveProperty);
@@ -1353,10 +1377,12 @@ WTF::TextStream& operator<<(WTF::TextStream&, TextUnderlinePosition);
 WTF::TextStream& operator<<(WTF::TextStream&, TextWrapMode);
 WTF::TextStream& operator<<(WTF::TextStream&, TextWrapStyle);
 WTF::TextStream& operator<<(WTF::TextStream&, TextBoxTrim);
-WTF::TextStream& operator<<(WTF::TextStream&, TextEdgeType);
+WTF::TextStream& operator<<(WTF::TextStream&, TextEdgeOver);
+WTF::TextStream& operator<<(WTF::TextStream&, TextEdgeUnder);
 WTF::TextStream& operator<<(WTF::TextStream&, TextZoom);
 WTF::TextStream& operator<<(WTF::TextStream&, TransformBox);
 WTF::TextStream& operator<<(WTF::TextStream&, TransformStyle3D);
+WTF::TextStream& operator<<(WTF::TextStream&, TransitionBehavior);
 WTF::TextStream& operator<<(WTF::TextStream&, UserDrag);
 WTF::TextStream& operator<<(WTF::TextStream&, UserModify);
 WTF::TextStream& operator<<(WTF::TextStream&, UserSelect);

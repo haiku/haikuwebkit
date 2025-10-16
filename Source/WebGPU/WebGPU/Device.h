@@ -266,6 +266,7 @@ public:
     uint32_t appleGPUFamily() const { return m_appleGPUFamily; }
     id<MTLRasterizationRateMap> rasterizationMapForTexture(MTLResourceID, uint32_t) const;
     void setRasterizationMapsForTexture(MTLResourceID, id<MTLRasterizationRateMap> left, id<MTLRasterizationRateMap> right);
+    static id<MTLFunction> nopVertexFunction(id<MTLDevice>);
 
 private:
     Device(id<MTLDevice>, id<MTLCommandQueue> defaultQueue, HardwareCapabilities&&, Adapter&);
@@ -293,11 +294,6 @@ private:
         std::optional<Error> error;
         const WGPUErrorFilter filter;
     };
-#if ENABLE(WEBGPU_SWIFT)
-private PUBLIC_IN_WEBGPU_SWIFT:
-    id<MTLFunction> m_nopVertexFunction;
-#endif
-private:
     id<MTLDevice> m_device { nil };
     const Ref<Queue> m_defaultQueue;
 
@@ -355,8 +351,7 @@ private:
     bool m_supressAllErrors { false };
     const uint32_t m_maxVerticesPerDrawCall { 0 };
     bool m_shaderValidationEnabled { true };
-// FIXME: remove @safe once rdar://151039766 lands
-} __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(refDevice, derefDevice);
+} SWIFT_SHARED_REFERENCE(refDevice, derefDevice);
 
 } // namespace WebGPU
 

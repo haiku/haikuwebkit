@@ -66,6 +66,7 @@
 #import <wtf/RunLoop.h>
 #import <wtf/Vector.h>
 #import <wtf/cocoa/SpanCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/StringHash.h>
 #import <wtf/text/WTFString.h>
@@ -352,7 +353,7 @@ static RetainPtr<WKWebView> createdWebView;
     auto doAsynchronouslyIfNecessary = [self, strongSelf = retainPtr(self), task = retainPtr(task)](Function<void(id <WKURLSchemeTask>)>&& f, double delay) {
         if (!_shouldRespondAsynchronously)
             return f(task.get());
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_SEC), dispatch_get_main_queue(), makeBlockPtr([self, strongSelf, task, f = WTFMove(f)] {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_SEC), mainDispatchQueueSingleton(), makeBlockPtr([self, strongSelf, task, f = WTFMove(f)] {
             if (_runningTasks.contains(task.get()))
                 f(task.get());
         }).get());
@@ -5721,7 +5722,7 @@ TEST(ProcessSwap, CommittedProcessCrashDuringCrossSiteNavigation)
         decisionHandler(WKNavigationActionPolicyAllow); // Will ask the load to proceed in a new provisional WebProcess since the navigation is cross-site.
 
         // Simulate a crash of the committed WebProcess while the provisional navigation starts in the new provisional WebProcess.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC), mainDispatchQueueSingleton(), ^{
             kill(pid1, 9);
             didKill = true;
         });

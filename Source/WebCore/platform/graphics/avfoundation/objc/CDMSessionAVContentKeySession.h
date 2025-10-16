@@ -92,8 +92,11 @@ protected:
     ASCIILiteral logClassName() const { return "CDMSessionAVContentKeySession"_s; }
 #endif
 
-    RetainPtr<AVContentKeySession> m_contentKeySession;
-    RetainPtr<WebCDMSessionAVContentKeySessionDelegate> m_contentKeySessionDelegate;
+private:
+    static RetainPtr<AVContentKeySession> createContentKeySession(NSURL *);
+
+    const RetainPtr<AVContentKeySession> m_contentKeySession;
+    const RetainPtr<WebCDMSessionAVContentKeySessionDelegate> m_contentKeySessionDelegate;
     const Ref<WTF::WorkQueue> m_delegateQueue;
     Semaphore m_hasKeyRequestSemaphore;
     mutable Lock m_keyRequestLock;
@@ -103,7 +106,6 @@ protected:
     RetainPtr<NSData> m_expiredSession;
     Vector<int> m_protocolVersions;
     int m_cdmVersion;
-    int32_t m_protectedTrackID { 1 };
     enum { Normal, KeyRelease } m_mode;
 
 #if !RELEASE_LOG_DISABLED

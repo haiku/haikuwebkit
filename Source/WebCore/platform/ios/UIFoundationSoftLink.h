@@ -45,7 +45,7 @@ SOFT_LINK_CLASS_FOR_HEADER(WebCore, NSTextTab)
 SOFT_LINK_CLASS_FOR_HEADER(WebCore, NSAdaptiveImageGlyph)
 
 SOFT_LINK_CONSTANT_FOR_HEADER(WebCore, UIFoundation, NSAdaptiveImageGlyphAttributeName, NSString *)
-#define NSAdaptiveImageGlyphAttributeName WebCore::get_UIFoundation_NSAdaptiveImageGlyphAttributeName()
+#define NSAdaptiveImageGlyphAttributeName WebCore::get_UIFoundation_NSAdaptiveImageGlyphAttributeNameSingleton()
 
 #endif
 

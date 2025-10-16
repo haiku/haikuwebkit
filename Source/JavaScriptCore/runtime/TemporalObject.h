@@ -127,6 +127,11 @@ enum class Inclusivity : bool {
     Exclusive
 };
 
+enum class DifferenceOperation : bool {
+    Since,
+    Until
+};
+
 double nonNegativeModulo(double x, double y);
 WTF::String ellipsizeAt(unsigned maxLength, const WTF::String&);
 PropertyName temporalUnitPluralPropertyName(VM&, TemporalUnit);

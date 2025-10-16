@@ -163,7 +163,6 @@ private:
     Reflection::EntryPointInformation* m_entryPointInformation { nullptr };
     HashMap<uint32_t, uint32_t, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_generateLayoutGroupMapping;
     PipelineLayout* m_generatedLayout { nullptr };
-    unsigned m_constantId { 0 };
     unsigned m_currentStatementIndex { 0 };
     unsigned m_entryPointID { 0 };
     Vector<Insertion> m_pendingInsertions;

@@ -23,13 +23,13 @@
 
 #include "CommonVM.h"
 #include "DOMWrapperWorld.h"
+#include "FrameConsoleClient.h"
 #include "FrameInlines.h"
 #include "GarbageCollectionController.h"
 #include "JSDOMWindowBase.h"
 #include "JSWindowProxy.h"
 #include "LocalFrame.h"
 #include "Page.h"
-#include "PageConsoleClient.h"
 #include "PageGroup.h"
 #include "RemoteFrame.h"
 #include "ScriptController.h"
@@ -199,11 +199,10 @@ void WindowProxy::setDOMWindow(DOMWindow* newDOMWindow)
         if (RefPtr cacheableBindingRootObject = scriptController ? scriptController->existingCacheableBindingRootObject() : nullptr)
             cacheableBindingRootObject->updateGlobalObject(windowProxy->window());
 
+        windowProxy->window()->setConsoleClient(m_frame->console());
         windowProxy->attachDebugger(page ? page->debugger() : nullptr);
-        if (page) {
+        if (page)
             windowProxy->window()->setProfileGroup(page->group().identifier());
-            windowProxy->window()->setConsoleClient(page->console());
-        }
     }
 }
 

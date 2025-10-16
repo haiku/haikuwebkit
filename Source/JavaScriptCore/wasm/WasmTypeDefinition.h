@@ -61,6 +61,7 @@ namespace JSC {
 namespace Wasm {
 
 class JSToWasmICCallee;
+class RTT;
 
 #define CREATE_ENUM_VALUE(name, id, ...) name = id,
 enum class ExtSIMDOpType : uint32_t {
@@ -363,6 +364,8 @@ class TypeDefinition : public ThreadSafeRefCounted<TypeDefinition> {
     WTF_DEPRECATED_MAKE_FAST_COMPACT_ALLOCATED(TypeDefinition);
     WTF_MAKE_NONCOPYABLE(TypeDefinition);
 public:
+    friend class TypeInformation;
+
     template <typename T>
     bool is() const { return m_kind == T::kind; }
 
@@ -427,6 +430,8 @@ protected:
     }
 
     TypeDefinitionKind m_kind;
+    mutable Lock m_rttLock;
+    mutable RefPtr<RTT> m_rtt;
     // Payload is stored after this header.
 };
 
@@ -947,7 +952,6 @@ public:
     // Every type definition that is in a module's signature list should have a canonical RTT registered for subtyping checks.
     static void registerCanonicalRTTForType(TypeIndex);
     // This will only return valid results for types in the type signature list and that have a registered canonical RTT.
-    static RefPtr<const RTT> tryGetCanonicalRTT(TypeIndex);
     static Ref<const RTT> getCanonicalRTT(TypeIndex);
 
     static bool isReferenceValueAssignable(JSValue, bool, TypeIndex, const RTT* = nullptr);
@@ -960,11 +964,10 @@ public:
 
     static void tryCleanup();
 private:
-    static Ref<RTT> createCanonicalRTTForType(TypeIndex);
+    static Ref<RTT> createCanonicalRTTForType(const AbstractLocker&, const TypeDefinition&);
 
     UncheckedKeyHashSet<Wasm::TypeHash> m_typeSet;
     UncheckedKeyHashMap<TypeIndex, RefPtr<const TypeDefinition>> m_unrollingCache;
-    UncheckedKeyHashMap<TypeIndex, Ref<RTT>> m_rttMap;
     UncheckedKeyHashSet<RefPtr<Projection>> m_placeholders;
     const FunctionSignature* thunkTypes[numTypes];
     RefPtr<FunctionSignature> m_I64_Void;

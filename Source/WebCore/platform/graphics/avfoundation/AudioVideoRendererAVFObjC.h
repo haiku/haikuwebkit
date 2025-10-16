@@ -28,6 +28,7 @@
 #include "AudioVideoRenderer.h"
 #include "PlatformDynamicRangeLimit.h"
 #include "ProcessIdentity.h"
+#include "TrackInfo.h"
 #include "WebAVSampleBufferListener.h"
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
@@ -42,9 +43,12 @@ OBJC_CLASS AVSampleBufferDisplayLayer;
 OBJC_CLASS AVSampleBufferRenderSynchronizer;
 OBJC_CLASS AVSampleBufferVideoRenderer;
 OBJC_PROTOCOL(WebSampleBufferVideoRendering);
+typedef struct CF_BRIDGED_TYPE(id) __CVBuffer *CVPixelBufferRef;
 
 namespace WebCore {
 
+class EffectiveRateChangedListener;
+class MediaSample;
 class PixelBufferConformerCV;
 class VideoLayerManagerObjC;
 class VideoMediaSampleRenderer;
@@ -61,6 +65,9 @@ public:
     ~AudioVideoRendererAVFObjC();
     WTF_ABSTRACT_THREAD_SAFE_REF_COUNTED_AND_CAN_MAKE_WEAK_PTR_IMPL;
 
+    void setPreferences(VideoMediaSampleRendererPreferences) final;
+    void setHasProtectedVideoContent(bool) final;
+
     // TracksRendererInterface
     TrackIdentifier addTrack(TrackType) final;
     void removeTrack(TrackIdentifier) final;
@@ -69,30 +76,40 @@ public:
     bool isReadyForMoreSamples(TrackIdentifier) final;
     void requestMediaDataWhenReady(TrackIdentifier, Function<void(TrackIdentifier)>&&) final;
     void stopRequestingMediaData(TrackIdentifier) final;
+    void notifyTrackNeedsReenqueuing(TrackIdentifier, Function<void(TrackIdentifier, const MediaTime&)>&&) final;
 
     bool timeIsProgressing() const final;
     MediaTime currentTime() const final;
+    void notifyTimeReachedAndStall(const MediaTime&, Function<void(const MediaTime&)>&&) final;
+    void cancelTimeReachedAction() final;
+    void performTaskAtTime(const MediaTime&, Function<void(const MediaTime&)>&&) final;
+    void setTimeObserver(Seconds, Function<void(const MediaTime&)>&&) final;
+    void cancelTimeObserver();
 
     void flush() final;
     void flushTrack(TrackIdentifier) final;
 
+    void applicationWillResignActive() final;
+
     void notifyWhenErrorOccurs(Function<void(PlatformMediaError)>&&) final;
 
     // SynchronizerInterface
-    void play() final;
-    void pause() final;
+    void play(std::optional<MonotonicTime>) final;
+    void pause(std::optional<MonotonicTime>) final;
     bool paused() const final;
     void setRate(double) final;
     double effectiveRate() const final;
-    void setDuration(MediaTime) final;
-    void notifyDurationReached(Function<void(const MediaTime&)>&&) final;
+    void stall() final;
     void prepareToSeek() final;
     Ref<MediaTimePromise> seekTo(const MediaTime&) final;
+    void notifyEffectiveRateChanged(Function<void(double)>&&) final;
+    bool seeking() const final;
 
     // AudioInterface
     void setVolume(float) final;
     void setMuted(bool) final;
-    void setPreservesPitch(bool) final;
+    void setPreservesPitchAndCorrectionAlgorithm(bool, std::optional<PitchCorrectionAlgorithm>) final;
+    void setAudioTimePitchAlgorithm(AVSampleBufferAudioRenderer *, NSString *) const;
 #if HAVE(AUDIO_OUTPUT_DEVICE_UNIQUE_ID)
     void setOutputDeviceId(const String&) final;
     void setOutputDeviceIdOnRenderer(AVSampleBufferAudioRenderer *);
@@ -108,7 +125,8 @@ public:
     void notifyWhenHasAvailableVideoFrame(Function<void(const MediaTime&, double)>&&) final;
     void notifyWhenRequiresFlushToResume(Function<void()>&&) final;
     void notifyRenderingModeChanged(Function<void()>&&) final;
-    void setMinimumUpcomingPresentationTime(const MediaTime&) final;
+    void expectMinimumUpcomingPresentationTime(const MediaTime&) final;
+    void notifySizeChanged(Function<void(const MediaTime&, FloatSize)>&&) final;
     void setShouldDisableHDR(bool) final;
     void setPlatformDynamicRangeLimit(const PlatformDynamicRangeLimit&) final;
     void setResourceOwner(const ProcessIdentity& resourceOwner) final { m_resourceOwner = resourceOwner; }
@@ -127,10 +145,13 @@ public:
 private:
     AudioVideoRendererAVFObjC(const Logger&, uint64_t);
 
-    bool seeking() const;
     MediaTime clampTimeToLastSeekTime(const MediaTime&) const;
     void maybeCompleteSeek();
     bool shouldBePlaying() const;
+    bool allRenderersHaveAvailableSamples() const { return m_allRenderersHaveAvailableSamples; }
+    void updateAllRenderersHaveAvailableSamples();
+    void setHasAvailableVideoFrame(bool);
+    void setHasAvailableAudioSample(TrackIdentifier, bool);
 
     std::optional<TrackType> typeOf(TrackIdentifier) const;
 
@@ -151,8 +172,10 @@ private:
     void ensureVideoRenderer();
     void destroyVideoRenderer();
     Ref<GenericPromise> setVideoRenderer(WebSampleBufferVideoRendering *);
+    void configureHasAvailableVideoFrameCallbackIfNeeded();
     void configureLayerOrVideoRenderer(WebSampleBufferVideoRendering *);
     Ref<GenericPromise> stageVideoRenderer(WebSampleBufferVideoRendering *);
+    void destroyVideoTrack();
 
     enum class AcceleratedVideoMode: uint8_t {
         Layer = 0,
@@ -163,21 +186,34 @@ private:
     void notifyError(PlatformMediaError);
     // WebAVSampleBufferListenerClient
     void audioRendererDidReceiveError(AVSampleBufferAudioRenderer *, NSError *) final;
+    void audioRendererWasAutomaticallyFlushed(AVSampleBufferAudioRenderer *, const CMTime&) final;
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
     void setSpatialTrackingInfo(bool prefersSpatialAudioExperience, SoundStageSize, const String& sceneIdentifier, const String& defaultLabel, const String& label) final;
     void updateSpatialTrackingLabel();
 #endif
 
+    void setSynchronizerRate(float, std::optional<MonotonicTime>);
+    bool updateLastPixelBuffer();
+    void maybePurgeLastPixelBuffer();
+    void setNeedsPlaceholderImage(bool);
+
     bool isEnabledVideoTrackId(TrackIdentifier) const;
     bool hasSelectedVideo() const;
     void flushVideo();
     void flushAudio();
     void flushAudioTrack(TrackIdentifier);
+    void notifyRequiresFlushToResume();
 
     void cancelSeekingPromiseIfNeeded();
 
     RefPtr<VideoMediaSampleRenderer> protectedVideoRenderer() const;
+    bool canUseDecompressionSession() const;
+    bool isUsingDecompressionSession() const;
+    bool willUseDecompressionSessionIfNeeded() const;
+
+    void sizeWillChangeAtTime(const MediaTime&, const FloatSize&);
+    void flushPendingSizeChanges();
 
     // Logger
     const Logger& logger() const final { return m_logger.get(); }
@@ -204,19 +240,26 @@ private:
     const Ref<WebAVSampleBufferListener> m_listener;
 
     Function<void(PlatformMediaError)> m_errorCallback;
-    Function<void(const MediaTime&)> m_durationReachedCallback;
     Function<void()> m_firstFrameAvailableCallback;
     Function<void(const MediaTime&, double)> m_hasAvailableVideoFrameCallback;
     Function<void()> m_notifyWhenRequiresFlushToResume;
     Function<void()> m_renderingModeChangedCallback;
+    Function<void(const MediaTime&, FloatSize)> m_sizeChangedCallback;
 
-    RetainPtr<id> m_durationObserver;
+    RetainPtr<id> m_currentTimeObserver;
+    RetainPtr<id> m_performTaskObserver;
+    RetainPtr<id> m_timeChangedObserver;
+    Function<void(const MediaTime&)> m_currentTimeDidChangeCallback;
+
     bool m_isPlaying { false };
     double m_rate { 1 };
+    RetainPtr<CVPixelBufferRef> m_lastPixelBuffer;
+    bool m_needsPlaceholderImage { false };
 
     float m_volume { 1 };
     bool m_muted { false };
-    bool m_preservePitch { true };
+    bool m_preservesPitch { true };
+    std::optional<PitchCorrectionAlgorithm> m_pitchCorrectionAlgorithm;
 #if HAVE(AUDIO_OUTPUT_DEVICE_UNIQUE_ID)
     String m_audioOutputDeviceId;
 #endif
@@ -228,11 +271,18 @@ private:
     RetainPtr<id> m_timeJumpedObserver;
     bool m_isSynchronizerSeeking { false };
     bool m_hasAvailableVideoFrame { false };
+    bool m_allRenderersHaveAvailableSamples { false };
+
+    struct AudioTrackProperties {
+        bool hasAudibleSample { false };
+        Function<void(TrackIdentifier, const MediaTime&)> callbackForReenqueuing;
+    };
+    HashMap<TrackIdentifier, AudioTrackProperties> m_audioTracksMap;
+    bool m_readyToRequestVideoData { true };
+    bool m_readyToRequestAudioData { true };
 
     HashMap<TrackIdentifier, TrackType> m_trackTypes;
     HashMap<TrackIdentifier, RetainPtr<AVSampleBufferAudioRenderer>> m_audioRenderers;
-    bool m_readyToRequestVideoData { true };
-    bool m_readyToRequestAudioData { true };
     RetainPtr<AVSampleBufferDisplayLayer> m_sampleBufferDisplayLayer;
     RetainPtr<AVSampleBufferVideoRenderer> m_sampleBufferVideoRenderer;
     RefPtr<VideoMediaSampleRenderer> m_videoRenderer;
@@ -241,9 +291,25 @@ private:
     IntSize m_presentationSize;
     bool m_shouldMaintainAspectRatio { true };
     std::optional<TrackIdentifier> m_enabledVideoTrackId;
+    std::optional<FloatSize> m_cachedSize;
+    Deque<RetainPtr<id>> m_sizeChangeObservers;
     bool m_shouldDisableHDR { false };
     PlatformDynamicRangeLimit m_dynamicRangeLimit { PlatformDynamicRangeLimit::initialValueForVideos() };
     ProcessIdentity m_resourceOwner;
+    VideoMediaSampleRendererPreferences m_preferences;
+    bool m_hasProtectedVideoContent { false };
+    struct RendererConfiguration {
+        bool canUseDecompressionSession = { false };
+        bool isProtected = { false };
+        bool operator==(const RendererConfiguration&) const = default;
+    };
+    RendererConfiguration m_previousRendererConfiguration;
+
+    // Video Frame metadata gathering
+    RetainPtr<id> m_videoFrameMetadataGatheringObserver;
+    MonotonicTime m_startupTime;
+
+    RefPtr<EffectiveRateChangedListener> m_effectiveRateChangedListener;
 
     std::unique_ptr<PixelBufferConformerCV> m_rgbConformer;
 

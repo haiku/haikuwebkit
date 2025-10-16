@@ -399,7 +399,7 @@ void IDBServer::establishTransaction(IDBDatabaseConnectionIdentifier databaseCon
     ASSERT(!isMainThread());
     ASSERT(m_lock.isHeld());
 
-    auto* databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
+    RefPtr databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
     if (!databaseConnection)
         return;
 
@@ -431,11 +431,8 @@ void IDBServer::didFinishHandlingVersionChangeTransaction(IDBDatabaseConnectionI
     ASSERT(!isMainThread());
     ASSERT(m_lock.isHeld());
 
-    auto* connection = m_databaseConnections.get(databaseConnectionIdentifier);
-    if (!connection)
-        return;
-
-    connection->didFinishHandlingVersionChange(transactionIdentifier);
+    if (RefPtr connection = m_databaseConnections.get(databaseConnectionIdentifier))
+        connection->didFinishHandlingVersionChange(transactionIdentifier);
 }
 
 void IDBServer::databaseConnectionPendingClose(IDBDatabaseConnectionIdentifier databaseConnectionIdentifier)
@@ -444,7 +441,7 @@ void IDBServer::databaseConnectionPendingClose(IDBDatabaseConnectionIdentifier d
     ASSERT(!isMainThread());
     ASSERT(m_lock.isHeld());
 
-    auto databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
+    RefPtr databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
     if (!databaseConnection)
         return;
 
@@ -457,7 +454,7 @@ void IDBServer::databaseConnectionClosed(IDBDatabaseConnectionIdentifier databas
     ASSERT(!isMainThread());
     ASSERT(m_lock.isHeld());
 
-    auto* databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
+    RefPtr databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
     if (!databaseConnection)
         return;
 
@@ -478,7 +475,7 @@ void IDBServer::abortOpenAndUpgradeNeeded(IDBDatabaseConnectionIdentifier databa
             transaction->abortWithoutCallback();
     }
 
-    auto databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
+    RefPtr databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier);
     if (!databaseConnection)
         return;
 
@@ -491,7 +488,7 @@ void IDBServer::didFireVersionChangeEvent(IDBDatabaseConnectionIdentifier databa
     ASSERT(!isMainThread());
     ASSERT(m_lock.isHeld());
 
-    if (auto databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier))
+    if (RefPtr databaseConnection = m_databaseConnections.get(databaseConnectionIdentifier))
         databaseConnection->didFireVersionChangeEvent(requestIdentifier, connectionClosed);
 }
 

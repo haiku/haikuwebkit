@@ -72,7 +72,7 @@
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/HTMLInputElement.h>
 #import <WebCore/HTMLNames.h>
-#import <WebCore/HTMLPlugInImageElement.h>
+#import <WebCore/HTMLPlugInElement.h>
 #import <WebCore/HTMLVideoElement.h>
 #import <WebCore/HitTestResult.h>
 #import <WebCore/Icon.h>
@@ -313,6 +313,15 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
         if (!features.wantsNoOpener()) {
             m_webView.page->protectedStorageNamespaceProvider()->cloneSessionStorageNamespaceForPage(*m_webView.page, *newPage);
             newPage->mainFrame().setOpenerForWebKitLegacy(&frame);
+
+            auto& newPageClient = static_cast<WebChromeClient&>(newPage->chrome().client());
+            setToolbarsVisible(features.toolBarVisible || features.locationBarVisible);
+            if (features.statusBarVisible)
+                newPageClient.setStatusbarVisible(*features.statusBarVisible);
+            if (features.scrollbarsVisible)
+                newPageClient.setScrollbarsVisible(*features.scrollbarsVisible);
+            if (features.menuBarVisible)
+                newPageClient.setMenubarVisible(*features.menuBarVisible);
             newPage->applyWindowFeatures(features);
         }
 

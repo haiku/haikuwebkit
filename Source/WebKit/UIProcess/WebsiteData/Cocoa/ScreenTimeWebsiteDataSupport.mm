@@ -77,8 +77,8 @@ void removeScreenTimeData(const HashSet<URL>& websitesToRemove, const WebsiteDat
 
     RetainPtr<NSMutableSet<NSString *>> websitesToRemoveDomains = [NSMutableSet set];
     for (auto& url : websitesToRemove)
-        if (RetainPtr nsURL = url.createNSURL())
-            [websitesToRemoveDomains addObject:[nsURL host]];
+        if (RetainPtr host = url.host().createNSString())
+            [websitesToRemoveDomains addObject:host.get()];
 
     [webHistory fetchAllHistoryWithCompletionHandler:^(NSSet<NSURL *> *urls, NSError *error) {
         if (error)

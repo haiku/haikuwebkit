@@ -33,6 +33,7 @@
 #include "CanvasRenderingContext.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "ContainerNodeInlines.h"
 #include "DocumentFullscreen.h"
 #include "GraphicsLayer.h"
 #include "HTMLCanvasElement.h"

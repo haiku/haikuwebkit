@@ -66,7 +66,7 @@ public:
 
     WEBCORE_EXPORT String cssText(const CSS::SerializationContext&) const;
 
-    bool isAppleColorFilterPropertyValue() const { return m_classType == ClassType::AppleColorFilterProperty; }
+    bool isAppleColorFilterValue() const { return m_classType == ClassType::AppleColorFilter; }
     bool isAttrValue() const { return m_classType == ClassType::Attr; }
     bool isBackgroundRepeatValue() const { return m_classType == ClassType::BackgroundRepeat; }
     bool isBasicShape() const { return m_classType == ClassType::BasicShape; }
@@ -87,7 +87,7 @@ public:
     bool isDynamicRangeLimitValue() const { return m_classType == ClassType::DynamicRangeLimit; }
     bool isEasingFunctionValue() const { return m_classType == ClassType::EasingFunction; }
     bool isFilterImageValue() const { return m_classType == ClassType::FilterImage; }
-    bool isFilterPropertyValue() const { return m_classType == ClassType::FilterProperty; }
+    bool isFilterValue() const { return m_classType == ClassType::Filter; }
     bool isFontFaceSrcLocalValue() const { return m_classType == ClassType::FontFaceSrcLocal; }
     bool isFontFaceSrcResourceValue() const { return m_classType == ClassType::FontFaceSrcResource; }
     bool isFontFeatureValue() const { return m_classType == ClassType::FontFeature; }
@@ -213,7 +213,7 @@ protected:
         Gradient,
 
         // Other non-list classes.
-        AppleColorFilterProperty,
+        AppleColorFilter,
         Attr,
         BackgroundRepeat,
         BasicShape,
@@ -230,7 +230,7 @@ protected:
         CustomProperty,
         DynamicRangeLimit,
         EasingFunction,
-        FilterProperty,
+        Filter,
         Font,
         FontFaceSrcLocal,
         FontFaceSrcResource,

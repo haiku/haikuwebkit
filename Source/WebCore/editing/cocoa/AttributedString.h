@@ -50,19 +50,19 @@
 #define PlatformNSTextTableBlock        NSTextTableBlock.class
 #else
 #define PlatformColor                   UIColor
-#define PlatformColorClass              PAL::getUIColorClass()
+#define PlatformColorClass              PAL::getUIColorClassSingleton()
 #define PlatformFont                    UIFont
-#define PlatformFontClass               PAL::getUIFontClass()
-#define PlatformImageClass              PAL::getUIImageClass()
-#define PlatformNSColorClass            getNSColorClass()
-#define PlatformNSParagraphStyle        PAL::getNSParagraphStyleClass()
-#define PlatformNSPresentationIntent    PAL::getNSPresentationIntentClass()
-#define PlatformNSShadow                PAL::getNSShadowClass()
-#define PlatformNSTextAttachment        getNSTextAttachmentClass()
-#define PlatformNSTextList              getNSTextListClass()
-#define PlatformNSTextTab               getNSTextTabClass()
-#define PlatformNSTextTable             getNSTextTableClass()
-#define PlatformNSTextTableBlock        getNSTextTableBlockClass()
+#define PlatformFontClass               PAL::getUIFontClassSingleton()
+#define PlatformImageClass              PAL::getUIImageClassSingleton()
+#define PlatformNSColorClass            getNSColorClassSingleton()
+#define PlatformNSParagraphStyle        PAL::getNSParagraphStyleClassSingleton()
+#define PlatformNSPresentationIntent    PAL::getNSPresentationIntentClassSingleton()
+#define PlatformNSShadow                PAL::getNSShadowClassSingleton()
+#define PlatformNSTextAttachment        getNSTextAttachmentClassSingleton()
+#define PlatformNSTextList              getNSTextListClassSingleton()
+#define PlatformNSTextTab               getNSTextTabClassSingleton()
+#define PlatformNSTextTable             getNSTextTableClassSingleton()
+#define PlatformNSTextTableBlock        getNSTextTableBlockClassSingleton()
 #endif
 
 OBJC_CLASS NSAttributedString;

@@ -29,13 +29,14 @@
 #include "config.h"
 #include "AccessibilityRenderObject.h"
 
+#include "AXImageMapHelpers.h"
 #include "AXListHelpers.h"
 #include "AXLogger.h"
 #include "AXLoggerBase.h"
 #include "AXNotifications.h"
 #include "AXObjectCacheInlines.h"
 #include "AXUtilities.h"
-#include "AccessibilityImageMapLink.h"
+#include "AccessibilityObjectInlines.h"
 #include "AccessibilityMediaHelpers.h"
 #include "AccessibilitySVGObject.h"
 #include "AccessibilitySpinButton.h"
@@ -934,7 +935,7 @@ Path AccessibilityRenderObject::elementPath() const
         if (!needsPath)
             return { };
 
-        float outlineOffset = Style::evaluate(style.outlineOffset());
+        float outlineOffset = Style::evaluate(style.outlineOffset(), 1.0f /* FIXME ZOOM EFFECTED? */);
         float deviceScaleFactor = renderText->document().deviceScaleFactor();
         Vector<FloatRect> pixelSnappedRects;
         for (auto rect : rects) {
@@ -1912,7 +1913,7 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityRenderObject::documentLin
                 RefPtr parentImage = parentMap->imageElement();
                 if (RefPtr parentImageAxObject = cache->getOrCreate(parentImage.get())) {
                     for (const auto& child : parentImageAxObject->unignoredChildren()) {
-                        if (is<AccessibilityImageMapLink>(child) && !result.contains(child))
+                        if (child->isImageMapLink() && !result.contains(child))
                             result.append(child);
                     }
                 }

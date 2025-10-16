@@ -24,51 +24,21 @@
 #include "Shared/Sandbox/iOS/common.sb"
 #include "Shared/Sandbox/iOS/gpu-defines.sb"
 
-#if USE(SANDBOX_VERSION_3)
 (allow system-fcntl
-    (fcntl-command
-        F_ADDFILESIGS_RETURN
-        F_CHECK_LV
-        F_GETFL
-        F_GETPATH
-        F_GETPROTECTIONCLASS
-        F_SETFD
-        F_SETFL
-        F_SETNOSIGPIPE))
+    (system-fcntl-allowed))
 
 (with-filter (mac-policy-name "Sandbox")
     (allow system-mac-syscall (mac-syscall-number 5 65)))
 
 (allow iokit-open-service
-    (iokit-registry-entry-class
-        "AppleM2ScalerCSCDriver"
-        "AppleParavirtGPU"
-        "AppleVideoToolboxParavirtualizationDriver"
-        "IOSurfaceRoot"))
+    (iokit-open-service-allowed))
 (allow iokit-open-service
     (iokit-registry-entry-class-prefix "AGXAcceleratorG"))
 
 (allow darwin-notification-post
-    (notification-name
-        "AppleDatePreferencesChangedNotification"
-        "AppleLanguagePreferencesChangedNotification"
-        "AppleMeasurementSystemPreferencesChangedNotification"
-        "AppleNumberPreferencesChangedNotification"
-        "AppleTemperatureUnitPreferencesChangedNotification"
-        "AppleTextBehaviorPreferencesChangedNotification"
-        "AppleTimePreferencesChangedNotification"
-        "com.apple.CFPreferences._domainsChangedExternally"
-        "com.apple.Metal.AGXEnableOSSignposts"
-        "com.apple.WebKit.LibraryPathDiagnostics"
-        "com.apple.gpumemd.check_in_request"
-        "com.apple.mobile.keybagd.user_changed"
-        "com.apple.system.logging.prefschanged"
-        "org.WebKit.lowMemory"
-        "org.WebKit.lowMemory.begin"
-        "org.WebKit.lowMemory.end"))
+    (darwin-notification-post-allowed))
 
 (allow process-info-codesignature (target others))
-#endif
 
 (deny file-map-executable)
 (allow file-map-executable (executable-bundle))
@@ -78,73 +48,7 @@
 (allow file-read-metadata
     (vnode-type DIRECTORY))
 
-(with-elevated-precedence
-    (allow file-read*
-           (subpath "/usr/lib"
-                    "/usr/share"
-                    "/private/var/db/timezone"))
-    (allow-read-and-issue-generic-extensions
-        (subpath "/Library/RegionFeatures"
-                 "/System/Library"))
-    (allow file-issue-extension (with telemetry)
-        (require-all
-            (extension-class "com.apple.mediaserverd.read")
-            (subpath "/System/Library")))
-    
-    (allow file-map-executable
-           (subpath "/System/Library")
-           (subpath "/usr/lib"))
-    (allow file-read-metadata
-           (vnode-type SYMLINK))
-
-    ;;; <rdar://problem/24144418>
-    (allow file-read*
-           (subpath "/private/var/preferences/Logging"))
-
-    (allow user-preference-read (preference-domain "kCFPreferencesAnyApplication"))
-    (allow file-read*
-           (front-user-home-literal "/Library/Preferences/.GlobalPreferences.plist")
-           (front-user-home-literal "/Library/Preferences/.GlobalPreferences_m.plist"))
-
-    (allow file-read*
-           (literal "/private/var/Managed Preferences/mobile/.GlobalPreferences.plist"))
-    (allow managed-preference-read (preference-domain "kCFPreferencesAnyApplication"))
-
-    (allow-read-and-issue-generic-extensions (executable-bundle))
-
-    (unless (defined? 'restrictive-extension)
-        (with-filter
-            (extension
-                "com.apple.app-sandbox.read"
-                "com.apple.app-sandbox.read-write"
-                "com.apple.sharing.airdrop.readonly")
-            (allow file-read* file-read-metadata)
-            (allow file-issue-extension
-                   (extension-class "com.apple.app-sandbox.read"
-                                    "com.apple.mediaserverd.read"
-                                    "com.apple.sharing.airdrop.readonly")))
-        (with-filter
-            (extension
-                "com.apple.app-sandbox.read-write")
-            (allow file-write*)
-            (allow file-issue-extension
-                   (extension-class "com.apple.app-sandbox.read-write"
-                                    "com.apple.mediaserverd.read-write"))))
-
-    ;; <rdar://problem/16079361>
-    (allow managed-preference-read
-           (extension "com.apple.security.exception.managed-preference.read-only"))
-    (allow user-preference-read
-           (extension "com.apple.security.exception.shared-preference.read-only"))
-
-    (allow file-issue-extension (with telemetry)
-          (require-all
-              (extension-class "com.apple.nsurlstorage.extension-cache")
-              (extension "com.apple.security.exception.files.home-relative-path.read-write")
-              (require-any
-                  (prefix "/private/var/root/Library/Caches/")
-                  (front-user-home-prefix "/Library/Caches/"))))
-)
+(rules-with-elevated-precedence)
 
 (with-filter (system-attribute apple-internal)
     (internal-debugging-support))
@@ -157,28 +61,43 @@
 
 (device-access)
 
+;; <rdar://problem/14215718>
+(deny file-write-data NO_REPORT
+      (literal "/dev/random")
+      (literal "/dev/urandom"))
+
 (allow file-issue-extension (with telemetry)
     (require-all
         (extension-class "com.apple.app-sandbox.read-write" "com.apple.app-sandbox.read")
         (extension "com.apple.fileprovider.read-write")))
 
 (allow mach-lookup
-    (global-name "com.apple.logd")
-    (global-name "com.apple.logd.events"))
-
-(allow mach-lookup
-    (global-name "com.apple.tccd"))
+    (mach-lookup-allowed))
 
 (allow mach-lookup
     (require-all
         (extension "com.apple.webkit.extension.mach")
         (global-name "com.apple.mobilegestalt.xpc")))
 
+(with-filter (system-attribute apple-internal)
+    (allow mach-lookup
+        (global-name "com.apple.analyticsd")))
+
+(deny mach-lookup NO_REPORT
+    (global-name
+        "com.apple.audio.AudioComponentRegistrar"
+        "com.apple.audioanalyticsd"
+        "com.apple.coremedia.mediaparserd.utilities"
+        "com.apple.fontservicesd"))
+
+(deny mach-lookup (xpc-service-name-prefix ""))
+
+(deny mach-lookup NO_REPORT
+    (xpc-service-name "com.apple.audio.toolbox.reporting.service"))
+
 ;; <rdar://problem/12413942>
 (allow file-read*
        (well-known-system-group-container-literal "/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"))
-(allow iokit-get-properties
-       (iokit-property "IORegistryEntryPropertyKeys"))
 
 (allow ipc-posix-sem-open (with telemetry)
        (ipc-posix-name "containermanagerd.fb_check"))
@@ -186,9 +105,6 @@
 (with-filter (ipc-posix-name "purplebuddy.sentinel")
     (deny ipc-posix-sem-create ipc-posix-sem-post ipc-posix-sem-unlink ipc-posix-sem-wait)
     (allow ipc-posix-sem-open (with telemetry)))
-
-(allow mach-lookup
-    (global-name "com.apple.runningboard")) ;; Needed by process assertion code (ProcessTaskStateObserver).
 
 (allow system-sched (with telemetry)
        (require-entitlement "com.apple.private.kernel.override-cpumon"))
@@ -201,16 +117,13 @@
 (with-filter (system-attribute apple-internal)
     (allow sysctl-read sysctl-write
            (sysctl-name "vm.footprint_suspend"))
-    (allow nvram-get (with telemetry) (nvram-variable "emu")) ;; <rdar://problem/78363040>
-)
+    (allow nvram-get (with telemetry) (nvram-variable "emu"))) ;; <rdar://problem/78363040>
 
 ;; ObjC map_images needs to send logging data to syslog. <rdar://problem/39778918>
 (with-filter (system-attribute apple-internal)
     (allow network-outbound
        (literal "/private/var/run/syslog")))
 
-(allow mach-lookup
-       (global-name "com.apple.system.notification_center"))
 (allow ipc-posix-shm-read*
        (ipc-posix-name "apple.shm.notification_center"))
 
@@ -233,7 +146,6 @@
 (allow process-info-rusage (target self))
 (allow process-info-codesignature (target self))
 
-(deny mach-lookup (xpc-service-name-prefix ""))
 (deny iokit-get-properties)
 (deny lsopen)
 
@@ -271,6 +183,12 @@
         (iokit-property "home-button-type")))
 
 (uikit-requirements)
+
+;; Silence sandbox violations from apps trying to create the empty plist if it doesn't exist.
+;; <rdar://problem/13796537>
+(deny file-write-create
+    (home-prefix "/Library/Preferences/com.apple.UIKit.plist")
+    NO_REPORT)
 
 ; Silently deny writes when CFData attempts to write to the cache directory.
 (deny file-write* NO_REPORT
@@ -319,37 +237,19 @@
 
 (accessibility-support)
 
+;; <rdar://problem/10809394>
+(deny file-write-create
+    (home-prefix "/Library/Preferences/com.apple.Accessibility.plist")
+    NO_REPORT)
+
 (media-accessibility-support)
 
 (log-streaming)
 
-(with-filter (system-attribute apple-internal)
-    (allow mach-lookup
-        (global-name "com.apple.analyticsd")))
-
-;; Silence reports about things we do not want access to:
-(deny mach-lookup NO_REPORT
-    (global-name
-        "com.apple.audioanalyticsd"
-        "com.apple.coremedia.mediaparserd.utilities"
-        "com.apple.fontservicesd"))
-
 (deny file-write-create (vnode-type SYMLINK))
 (deny file-read-xattr file-write-xattr (xattr-prefix "com.apple.security.private."))
 
-(deny mach-lookup NO_REPORT
-    (xpc-service-name "com.apple.audio.toolbox.reporting.service"))
-
-(deny mach-lookup NO_REPORT
-    (global-name "com.apple.audio.AudioComponentRegistrar"))
-
-(allow mach-lookup
-    (global-name "com.apple.systemstatus.activityattribution"))
-
 (media-capture-support)
-
-(allow mach-lookup
-    (global-name "com.apple.audio.AudioQueueServer"))
 
 (deny syscall-unix (with telemetry))
 (when (defined? 'SYS_crossarch_trap)

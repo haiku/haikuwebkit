@@ -31,6 +31,7 @@
 #include "KeyframeEffect.h"
 #include "KeyframeEffectStack.h"
 #include "StyleResolver.h"
+#include "StyleSingleAnimationRange.h"
 #include "Styleable.h"
 #include "WebAnimationUtilities.h"
 
@@ -110,6 +111,14 @@ void AnimationTimeline::resumeAnimations()
 bool AnimationTimeline::animationsAreSuspended() const
 {
     return controller() && controller()->animationsAreSuspended();
+}
+
+Style::SingleAnimationRange AnimationTimeline::defaultRange() const
+{
+    return {
+        .start = { CSS::Keyword::Normal { } },
+        .end = { CSS::Keyword::Normal { } },
+    };
 }
 
 } // namespace WebCore

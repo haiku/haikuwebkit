@@ -246,7 +246,7 @@ JSValue JSTestDefaultToJSON::getConstructor(VM& vm, const JSGlobalObject* global
 
 void JSTestDefaultToJSON::destroy(JSC::JSCell* cell)
 {
-    JSTestDefaultToJSON* thisObject = static_cast<JSTestDefaultToJSON*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestDefaultToJSON* thisObject = static_cast<JSTestDefaultToJSON*>(cell);
     thisObject->JSTestDefaultToJSON::~JSTestDefaultToJSON();
 }
 
@@ -305,7 +305,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsTestDefaultToJSON_enabledByConditionalAttribute, (JSG
 static inline JSValue jsTestDefaultToJSON_eventHandlerAttributeGetter(JSGlobalObject& lexicalGlobalObject, JSTestDefaultToJSON& thisObject)
 {
     UNUSED_PARAM(lexicalGlobalObject);
-    return eventHandlerAttribute(thisObject.protectedWrapped(), eventNames().entHandlerAttributeEvent, worldForDOMObject(thisObject));
+    return eventHandlerAttribute(thisObject.protectedWrapped(), eventNames().entHandlerAttributeEvent, protectedWorldForDOMObject(thisObject));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestDefaultToJSON_eventHandlerAttribute, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -854,7 +854,7 @@ bool JSTestDefaultToJSONOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unkno
 
 void JSTestDefaultToJSONOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestDefaultToJSON = static_cast<JSTestDefaultToJSON*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestDefaultToJSON = static_cast<JSTestDefaultToJSON*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestDefaultToJSON->protectedWrapped().ptr(), jsTestDefaultToJSON);
 }

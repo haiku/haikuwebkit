@@ -48,6 +48,7 @@
 #import <wtf/SoftLinking.h>
 #import <wtf/Threading.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/darwin/XPCExtras.h>
 #import <wtf/spi/cf/CFBundleSPI.h>
 #import <wtf/text/CString.h>
@@ -459,7 +460,7 @@ void ProcessLauncher::finishLaunchingProcess(ASCIILiteral name)
     }
 
     ref();
-    xpc_connection_send_message_with_reply(m_xpcConnection.get(), bootstrapMessage.get(), dispatch_get_main_queue(), ^(xpc_object_t reply) {
+    xpc_connection_send_message_with_reply(m_xpcConnection.get(), bootstrapMessage.get(), mainDispatchQueueSingleton(), ^(xpc_object_t reply) {
         // Errors are handled in the event handler.
         // It is possible for this block to be called after the error event handler, in which case we're no longer
         // launching and we already took care of cleaning things up.

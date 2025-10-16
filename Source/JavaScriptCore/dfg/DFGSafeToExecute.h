@@ -652,7 +652,8 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case NewAsyncGenerator:
     case NewArray:
     case NewArrayWithSize:
-    case NewArrayWithConstantSize:
+    case NewArrayWithButterfly:
+    case NewButterflyWithSize:
     case NewArrayWithSpecies:
     case NewArrayWithSizeAndStructure:
     case NewArrayBuffer:
@@ -733,7 +734,8 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case MultiDeleteByOffset:
     case GetPropertyEnumerator:
     case PhantomNewObject:
-    case PhantomNewArrayWithConstantSize:
+    case PhantomNewArrayWithButterfly:
+    case PhantomNewButterflyWithSize:
     case PhantomNewFunction:
     case PhantomNewGeneratorFunction:
     case PhantomNewAsyncGeneratorFunction:
@@ -743,7 +745,7 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case PhantomNewRegExp:
     case PutHint:
     case MaterializeNewObject:
-    case MaterializeNewArrayWithConstantSize:
+    case MaterializeNewArrayWithButterfly:
     case MaterializeCreateActivation:
     case MaterializeNewInternalFieldObject:
     case PhantomDirectArguments:

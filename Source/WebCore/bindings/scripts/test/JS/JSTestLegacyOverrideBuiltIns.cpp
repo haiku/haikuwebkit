@@ -158,7 +158,7 @@ JSValue JSTestLegacyOverrideBuiltIns::getConstructor(VM& vm, const JSGlobalObjec
 
 void JSTestLegacyOverrideBuiltIns::destroy(JSC::JSCell* cell)
 {
-    JSTestLegacyOverrideBuiltIns* thisObject = static_cast<JSTestLegacyOverrideBuiltIns*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestLegacyOverrideBuiltIns* thisObject = static_cast<JSTestLegacyOverrideBuiltIns*>(cell);
     thisObject->JSTestLegacyOverrideBuiltIns::~JSTestLegacyOverrideBuiltIns();
 }
 
@@ -386,7 +386,7 @@ bool JSTestLegacyOverrideBuiltInsOwner::isReachableFromOpaqueRoots(JSC::Handle<J
 
 void JSTestLegacyOverrideBuiltInsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestLegacyOverrideBuiltIns = static_cast<JSTestLegacyOverrideBuiltIns*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestLegacyOverrideBuiltIns = static_cast<JSTestLegacyOverrideBuiltIns*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestLegacyOverrideBuiltIns->protectedWrapped().ptr(), jsTestLegacyOverrideBuiltIns);
 }

@@ -27,6 +27,7 @@
 
 #include <JavaScriptCore/Strong.h>
 #include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInterfaces.h>
 #include <WebCore/IDBActiveDOMObject.h>
 #include <WebCore/IDBError.h>
 #include <WebCore/IDBGetAllResult.h>
@@ -104,6 +105,7 @@ public:
     IndexedDB::IndexRecordType requestedIndexRecordType() const;
 
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using IDBActiveDOMObject::protectedScriptExecutionContext;
 
     // ActiveDOMObject.
     void ref() const final { ThreadSafeRefCounted::ref(); }
@@ -153,7 +155,7 @@ private:
     IDBRequest(ScriptExecutionContext&, IDBObjectStore&, IndexedDB::ObjectStoreRecordType, IDBTransaction&);
     IDBRequest(ScriptExecutionContext&, IDBIndex&, IndexedDB::IndexRecordType, IDBTransaction&);
 
-    enum EventTargetInterfaceType eventTargetInterface() const override;
+    EventTargetInterfaceType eventTargetInterface() const override;
 
     // ActiveDOMObject.
     bool virtualHasPendingActivity() const final;
@@ -174,6 +176,8 @@ private:
     void clearWrappers();
 
 protected:
+    RefPtr<IDBTransaction> protectedTransaction() const;
+
     // FIXME: Protected data members aren't great for maintainability.
     // Consider adding protected helper functions and making these private.
     RefPtr<IDBTransaction> m_transaction;
@@ -211,3 +215,7 @@ private:
 WebCoreOpaqueRoot root(IDBRequest*);
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::IDBRequest)
+    static bool isType(const WebCore::EventTarget& eventTarget) { return eventTarget.eventTargetInterface() == WebCore::EventTargetInterfaceType::IDBRequest; }
+SPECIALIZE_TYPE_TRAITS_END()

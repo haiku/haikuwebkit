@@ -1170,13 +1170,13 @@ void RemoteMediaPlayerProxy::performTaskAtTime(const MediaTime& taskTime, Perfor
     }
 
     m_performTaskAtTimeCompletionHandler = WTFMove(completionHandler);
-    player->performTaskAtTime([weakThis = WeakPtr { *this }]() mutable {
+    player->performTaskAtTime([weakThis = WeakPtr { *this }](const MediaTime& time) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !protectedThis->m_performTaskAtTimeCompletionHandler)
             return;
 
         auto completionHandler = std::exchange(protectedThis->m_performTaskAtTimeCompletionHandler, nullptr);
-        completionHandler(protectedThis->protectedPlayer()->currentTime());
+        completionHandler(time);
     }, taskTime);
 }
 

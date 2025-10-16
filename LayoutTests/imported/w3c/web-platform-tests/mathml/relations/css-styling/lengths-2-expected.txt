@@ -1,6 +1,6 @@
 
-FAIL Units assert_equals: ex expected 500 but got 448.71875
-FAIL Trimming of space assert_equals: ex expected 500 but got 448.71875
+FAIL Units assert_equals: q expected 192 but got 0
+FAIL Trimming of space assert_equals: q expected 192 but got 0
 PASS Non-negative numbers
 PASS Non-positive numbers
 PASS Legacy namedspaces

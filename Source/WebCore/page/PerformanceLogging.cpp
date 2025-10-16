@@ -104,9 +104,9 @@ void PerformanceLogging::didReachPointOfInterest(PointOfInterest poi)
             return;
     }
 
-    RELEASE_LOG_FORWARDABLE(PerformanceLogging, PERFORMANCELOGGING_MEMORY_USAGE_INFO, toString(poi).characters());
+    RELEASE_LOG_FORWARDABLE(PerformanceLogging, PERFORMANCELOGGING_MEMORY_USAGE_INFO, toString(poi));
     for (auto& [key, value] : memoryUsageStatistics(ShouldIncludeExpensiveComputations::No))
-        RELEASE_LOG_FORWARDABLE(PerformanceLogging, PERFORMANCELOGGING_MEMORY_USAGE_FOR_KEY, key.characters(), static_cast<uint64_t>(value));
+        RELEASE_LOG_FORWARDABLE(PerformanceLogging, PERFORMANCELOGGING_MEMORY_USAGE_FOR_KEY, key, static_cast<uint64_t>(value));
 #endif
 }
 

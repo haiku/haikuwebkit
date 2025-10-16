@@ -44,6 +44,7 @@ class Node;
 
 class AccessibilityNodeObject : public AccessibilityObject {
 public:
+    static Ref<AccessibilityNodeObject> create(AXID, Node*, AXObjectCache&);
     virtual ~AccessibilityNodeObject();
 
     void init() override;
@@ -192,6 +193,11 @@ public:
     bool hasAccNameAttribute() const;
     bool hasAttributesRequiredForInclusion() const final;
     bool hasClickHandler() const final;
+    bool hasCursorPointer() const final
+    {
+        CheckedPtr style = this->style();
+        return style && style->cursorType() == CursorType::Pointer;
+    }
     void setIsExpanded(bool) final;
 
     Element* actionElement() const override;
@@ -218,6 +224,8 @@ public:
     void revealAncestors() final;
 
     LayoutRect elementRect() const override;
+    Path elementPath() const override;
+    bool supportsPath() const override { return isImageMapLink(); }
 
     bool isLabelContainingOnlyStaticText() const;
     bool isNativeLabel() const override;

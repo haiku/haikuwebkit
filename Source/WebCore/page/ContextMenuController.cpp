@@ -83,7 +83,6 @@
 #include "markup.h"
 #include <wtf/SetForScope.h>
 #include <wtf/TZoneMallocInlines.h>
-#include <wtf/WallTime.h>
 #include <wtf/unicode/CharacterNames.h>
 
 #if ENABLE(PDFJS)
@@ -526,7 +525,7 @@ void ContextMenuController::contextMenuItemSelected(ContextMenuAction action, co
             frameLoadRequest.setNewFrameOpenerPolicy(NewFrameOpenerPolicy::Suppress);
             if (targetFrame->isMainFrame())
                 frameLoadRequest.setShouldOpenExternalURLsPolicy(ShouldOpenExternalURLsPolicy::ShouldAllow);
-            targetFrame->loader().loadFrameRequest(WTFMove(frameLoadRequest), eventForLoadRequests.get(), { });
+            targetFrame->loadFrameRequest(WTFMove(frameLoadRequest), eventForLoadRequests.get());
         } else
             openNewWindow(m_context.hitTestResult().absoluteLinkURL(), *frame, eventForLoadRequests.get(), ShouldOpenExternalURLsPolicy::ShouldAllow);
         break;
@@ -614,6 +613,9 @@ void ContextMenuController::contextMenuItemSelected(ContextMenuAction action, co
         break;
     case ContextMenuItemTagSmartLinks:
         frame->protectedEditor()->toggleAutomaticLinkDetection();
+        break;
+    case ContextMenuItemTagSmartLists:
+        frame->protectedEditor()->toggleSmartLists();
         break;
     case ContextMenuItemTagTextReplacement:
         frame->protectedEditor()->toggleAutomaticTextReplacement();
@@ -866,12 +868,17 @@ void ContextMenuController::createAndAppendSubstitutionsSubMenu(ContextMenuItem&
     ContextMenuItem smartQuotes(ContextMenuItemType::CheckableAction, ContextMenuItemTagSmartQuotes, contextMenuItemTagSmartQuotes());
     ContextMenuItem smartDashes(ContextMenuItemType::CheckableAction, ContextMenuItemTagSmartDashes, contextMenuItemTagSmartDashes());
     ContextMenuItem smartLinks(ContextMenuItemType::CheckableAction, ContextMenuItemTagSmartLinks, contextMenuItemTagSmartLinks());
+    ContextMenuItem smartLists(ContextMenuItemType::CheckableAction, ContextMenuItemTagSmartLists, contextMenuItemTagSmartLists());
     ContextMenuItem textReplacement(ContextMenuItemType::CheckableAction, ContextMenuItemTagTextReplacement, contextMenuItemTagTextReplacement());
 
     appendItem(showSubstitutions, &substitutionsMenu);
     appendItem(*separatorItem(), &substitutionsMenu);
     appendItem(smartCopyPaste, &substitutionsMenu);
     appendItem(smartQuotes, &substitutionsMenu);
+
+    if (m_page->settings().smartListsAvailable())
+        appendItem(smartLists, &substitutionsMenu);
+
     appendItem(smartDashes, &substitutionsMenu);
     appendItem(smartLinks, &substitutionsMenu);
     appendItem(textReplacement, &substitutionsMenu);
@@ -1673,6 +1680,9 @@ void ContextMenuController::checkOrEnableIfNeeded(ContextMenuItem& item) const
         case ContextMenuItemTagSmartDashes:
             shouldCheck = frame->editor().isAutomaticDashSubstitutionEnabled();
             break;
+        case ContextMenuItemTagSmartLists:
+            shouldCheck = frame->editor().isSmartListsEnabled();
+            break;
         case ContextMenuItemTagSmartLinks:
             shouldCheck = frame->editor().isAutomaticLinkDetectionEnabled();
             break;
@@ -1864,7 +1874,7 @@ void ContextMenuController::showContextMenuAt(LocalFrame& frame, const IntPoint&
     clearContextMenu();
     
     // Simulate a click in the middle of the accessibility object.
-    PlatformMouseEvent mouseEvent(clickPoint, clickPoint, MouseButton::Right, PlatformEvent::Type::MousePressed, 1, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap);
+    PlatformMouseEvent mouseEvent(clickPoint, clickPoint, MouseButton::Right, PlatformEvent::Type::MousePressed, 1, { }, MonotonicTime::now(), ForceAtClick, SyntheticClickType::NoTap);
 
     frame.eventHandler().handleMousePressEvent(mouseEvent);
     bool handled = frame.eventHandler().sendContextMenuEvent(mouseEvent);

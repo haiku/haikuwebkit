@@ -48,6 +48,9 @@
 /Tools/Scripts/libraries @JonWBedard @briannafan @gsnedders
 /Tools/Scripts/libraries/webkitscmpy @facetothefate @JonWBedard @briannafan @gsnedders
 
+/Tools/Scripts/libraries/webkitapipy @emw-apple
+AllowedSPI*.toml @emw-apple
+
 /Tools/TestWebKitAPI
 /Tools/TestWebKitAPI/Tests/WebKitGLib/ @WebKit/glib-reviewers
 /Tools/TestWebKitAPI/Tests/WebKitGtk/ @WebKit/glib-reviewers

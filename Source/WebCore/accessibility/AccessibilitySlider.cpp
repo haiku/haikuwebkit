@@ -29,8 +29,10 @@
 #include "config.h"
 #include "AccessibilitySlider.h"
 
+#include "AccessibilityObjectInlines.h"
 #include "AXObjectCache.h"
 #include "ContainerNodeInlines.h"
+#include "FrameDestructionObserverInlines.h"
 #include "HTMLInputElement.h"
 #include "HTMLNames.h"
 #include "RenderSlider.h"

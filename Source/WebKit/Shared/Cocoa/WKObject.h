@@ -35,6 +35,7 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/spi/cocoa/objcSPI.h>
 
 namespace API {
@@ -122,7 +123,7 @@ using WebKit::wrapper;
     if (isMainRunLoop()) \
         _objc_deallocOnMainThreadHelper((__bridge void *)self); \
     else \
-        dispatch_async_f(dispatch_get_main_queue(), (__bridge void *)self, _objc_deallocOnMainThreadHelper); \
+        dispatch_async_f(mainDispatchQueueSingleton(), (__bridge void *)self, _objc_deallocOnMainThreadHelper); \
 } \
 \
 using __thisIsHereToForceASemicolonAfterThisMacro UNUSED_TYPE_ALIAS = int

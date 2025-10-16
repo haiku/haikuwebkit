@@ -209,7 +209,7 @@ JSValue JSTestLegacyFactoryFunction::getLegacyFactoryFunction(VM& vm, JSGlobalOb
 
 void JSTestLegacyFactoryFunction::destroy(JSC::JSCell* cell)
 {
-    JSTestLegacyFactoryFunction* thisObject = static_cast<JSTestLegacyFactoryFunction*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestLegacyFactoryFunction* thisObject = static_cast<JSTestLegacyFactoryFunction*>(cell);
     thisObject->JSTestLegacyFactoryFunction::~JSTestLegacyFactoryFunction();
 }
 
@@ -258,7 +258,7 @@ bool JSTestLegacyFactoryFunctionOwner::isReachableFromOpaqueRoots(JSC::Handle<JS
 
 void JSTestLegacyFactoryFunctionOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestLegacyFactoryFunction = static_cast<JSTestLegacyFactoryFunction*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestLegacyFactoryFunction = static_cast<JSTestLegacyFactoryFunction*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestLegacyFactoryFunction->protectedWrapped().ptr(), jsTestLegacyFactoryFunction);
 }

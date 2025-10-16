@@ -45,74 +45,10 @@
 (allow file-read-metadata
     (vnode-type DIRECTORY))
 
-(mobile-preferences-read "com.apple.security")
-
 (with-filter (system-attribute apple-internal)
   (mobile-preferences-read "com.apple.PrototypeTools"))
 
-(with-elevated-precedence
-    (allow file-read*
-           (subpath "/usr/lib"
-                    "/usr/share"
-                    "/private/var/db/timezone"))
-    (allow-read-and-issue-generic-extensions
-        (subpath "/Library/RegionFeatures"
-                 "/System/Library"))
-    (allow file-issue-extension
-        (require-all
-            (extension-class "com.apple.mediaserverd.read")
-            (subpath "/System/Library")))
-    
-    (allow file-map-executable
-           (subpath "/System/Library")
-           (subpath "/usr/lib"))
-    (allow file-read-metadata
-           (vnode-type SYMLINK))
-
-    ;;; <rdar://problem/24144418>
-    (allow file-read*
-           (subpath "/private/var/preferences/Logging"))
-
-    (allow user-preference-read (preference-domain "kCFPreferencesAnyApplication"))
-    (allow file-read*
-           (front-user-home-literal "/Library/Preferences/.GlobalPreferences.plist")
-           (front-user-home-literal "/Library/Preferences/.GlobalPreferences_m.plist"))
-
-    (allow file-read*
-           (literal "/private/var/Managed Preferences/mobile/.GlobalPreferences.plist"))
-    (allow managed-preference-read (preference-domain "kCFPreferencesAnyApplication"))
-
-    (allow file-read-metadata
-           (home-literal "/Library/Caches/powerlog.launchd"))
-
-    (allow-read-and-issue-generic-extensions (executable-bundle))
-    (allow file-map-executable (executable-bundle))
-
-    (unless (defined? 'restrictive-extension)
-        (with-filter
-            (extension
-                "com.apple.app-sandbox.read"
-                "com.apple.app-sandbox.read-write"
-                "com.apple.sharing.airdrop.readonly")
-            (allow file-read* file-read-metadata)
-            (allow file-issue-extension
-                   (extension-class "com.apple.app-sandbox.read"
-                                    "com.apple.mediaserverd.read"
-                                    "com.apple.sharing.airdrop.readonly")))
-        (with-filter
-            (extension
-                "com.apple.app-sandbox.read-write")
-            (allow file-write* (with report) (with telemetry))
-            (allow file-issue-extension
-                   (extension-class "com.apple.app-sandbox.read-write"
-                                    "com.apple.mediaserverd.read-write"))))
-
-    ;; <rdar://problem/16079361>
-    (allow managed-preference-read
-           (extension "com.apple.security.exception.managed-preference.read-only"))
-    (allow user-preference-read
-           (extension "com.apple.security.exception.shared-preference.read-only"))
-)
+(rules-with-elevated-precedence)
 
 (with-filter (system-attribute apple-internal)
     (internal-debugging-support))
@@ -132,6 +68,11 @@
 #endif
 
 (device-access)
+
+;; <rdar://problem/14215718>
+(deny file-write-data NO_REPORT
+    (literal "/dev/random")
+    (literal "/dev/urandom"))
 
 (allow file-issue-extension
     (require-all
@@ -174,9 +115,6 @@
 ;; <rdar://problem/12413942>
 (allow file-read*
    (well-known-system-group-container-literal "/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"))
-
-(allow iokit-get-properties
-       (iokit-property "IORegistryEntryPropertyKeys"))
 
 (allow system-sched
        (require-entitlement "com.apple.private.kernel.override-cpumon"))
@@ -236,8 +174,6 @@
 
 (url-translation)
 
-(mobile-preferences-read "com.apple.da")
-
 (speech-synthesis-and-voiceover)
 
 ;; Permit reading assets via MobileAsset framework.
@@ -251,16 +187,7 @@
 (allow file-read*
     (home-subpath "/Library/Caches/com.apple.keyboards"))
 
-(mobile-preferences-read
-    "com.apple.EmojiPreferences"
-    ; <rdar://problem/8477596> com.apple.InputModePreferences
-    "com.apple.InputModePreferences"
-    ; <rdar://problem/8206632> Weather(1038) deny file-read-data ~/Library/Preferences/com.apple.keyboard.plist
-    "com.apple.keyboard"
-    ; <rdar://problem/9384085>
-    "com.apple.Preferences"
-    "com.apple.lookup.shared" ; Needed for DataDetector (Spotlight) support
-)
+(mobile-preferences-read-allowed)
 
 ;; Silently deny unnecessary accesses caused by MessageUI framework.
 ;; This can be removed once <rdar://problem/47038102> is resolved.
@@ -284,6 +211,12 @@
 
 (uikit-requirements)
 
+;; Silence sandbox violations from apps trying to create the empty plist if it doesn't exist.
+;; <rdar://problem/13796537>
+(deny file-write-create
+    (home-prefix "/Library/Preferences/com.apple.UIKit.plist")
+    NO_REPORT)
+
 (dictionary-support)
 
 ; <rdar://problem/8440231>
@@ -304,11 +237,6 @@
 ; See <rdar://problem/9375027> for sample backtraces.
 (deny file-write* NO_REPORT
     (home-prefix "/Library/Preferences/com.apple.springboard.plist"))
-
-;; <rdar://problem/34986314>
-(mobile-preferences-read "com.apple.indigo")
-
-(mobile-preferences-read "com.apple.AdLib.plist")
 
 (deny file-read* NO_REPORT
     (home-literal
@@ -341,14 +269,6 @@
             "region-info" ;; <rdar://problem/52903475>
             "regulatory-model-number"))) ;; <rdar://problem/52903475>
 
-;; Read-only preferences and data
-(mobile-preferences-read
-    "com.apple.LaunchServices"
-    "com.apple.WebFoundation"
-    "com.apple.avfoundation.frecents" ;; <rdar://problem/33137029>
-    "com.apple.avfoundation.videoperformancehud" ;; <rdar://problem/31594568>
-    "com.apple.voiceservices.logging")
-
 ;; Sandbox extensions
 (read-only-and-issue-extensions (extension "com.apple.app-sandbox.read"))
 (define (read-write-extension-with-telemetry) (with report) (with telemetry) (extension "com.apple.app-sandbox.read-write"))
@@ -360,6 +280,11 @@
     (extension-class "com.apple.nsurlstorage.extension-cache")))
 
 (accessibility-support)
+
+;; <rdar://problem/10809394>
+(deny file-write-create
+    (home-prefix "/Library/Preferences/com.apple.Accessibility.plist")
+    NO_REPORT)
 
 (media-accessibility-support)
 
@@ -374,8 +299,7 @@
 (deny necp-client-open)
 
 (allow file-read-data
-    (literal "/usr/local/lib/log") ; <rdar://problem/36629495>
-)
+    (literal "/usr/local/lib/log")) ; <rdar://problem/36629495>
 
 ;; <rdar://problem/60983812>
 (deny file-write* NO_REPORT
@@ -481,12 +405,10 @@
     (allow process-codesigning-entitlements-blob-get) ;; WK reading entitlments via SecTaskCopyValueForEntitlement and _getSelfParsedEntitlements (accessibility)
     (allow process-codesigning-status-get) ;; _xpc_get_entitlements
     (allow process-codesigning-status-set (target self))
-    (deny process-info-codesignature NO_REPORT) ;; SecTaskCopyValueForEntitlement - granting this grants all the process-codesign-* checks
-)
+    (deny process-info-codesignature NO_REPORT)) ;; SecTaskCopyValueForEntitlement - granting this grants all the process-codesign-* checks
 
 (when (not (defined? 'process-codesigning*))
-    (allow process-info-codesignature (target self))
-)
+    (allow process-info-codesignature (target self)))
 
 (allow mach-bootstrap
     (apply-message-filter
@@ -588,22 +510,7 @@
 #undef WK_NOTIFICATION
 #undef WK_NOTIFICATION_COMMENT
 #endif
-        "_AXNotification_AXSClassicInvertColorsPreference"
-        "com.apple.WebContentFilter.remoteUI.WebContentAnalysisUI-com.apple.uikit.viewService.connectionRequest"
-        "com.apple.accessibility.AirPodsSpatialAudioLockToDeviceChanged"
-        "com.apple.accessibility.QuickSpeakEnabled"
-        "com.apple.accessibility.application.status"
-        "com.apple.accessibility.automation.enabled.status"
-        "com.apple.accessibility.darken.system.colors"
-        "com.apple.accessibility.enhance.background.contrast.status"
-        "com.apple.accessibility.monoaudio.status"
-        "com.apple.accessibility.reduce.motion.status"
-        "com.apple.accessibility.status"
-        "com.apple.accessibility.text.legibility.status"
-        "com.apple.accessibility.voiceovertouch.status"
-        "com.apple.accessibility.wob.status"
-        "com.apple.automation.stringlookupinfoenabled"
-        "com.apple.webinspectord.availability_check"))
+        (darwin-notification-post-allowed)))
 
 (with-filter (webcontent-process-launched)
     (deny mach-task-special-port-get (with telemetry))
@@ -625,8 +532,7 @@
     (require-all
         (extension-class "com.apple.mediaserverd.read")
         (require-any
-            (apply subpath issue-extension-secondary-paths)
-        )))
+            (apply subpath issue-extension-secondary-paths))))
 #endif
 
 #if __has_include(<WebKitAdditions/WebContentSandbox-ios.defs>)

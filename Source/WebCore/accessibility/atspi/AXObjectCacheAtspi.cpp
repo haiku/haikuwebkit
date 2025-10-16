@@ -26,7 +26,7 @@
 #include "AccessibilityObject.h"
 #include "AccessibilityObjectAtspi.h"
 #include "AccessibilityRenderObject.h"
-#include "Document.h"
+#include "DocumentInlines.h"
 #include "Element.h"
 #include "HTMLSelectElement.h"
 #include "Range.h"

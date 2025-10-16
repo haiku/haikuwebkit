@@ -35,6 +35,7 @@
 #include "Logging.h"
 #include "RenderBlock.h"
 #include "RenderListMarker.h"
+#include "RenderObjectInlines.h"
 #include "RenderText.h"
 #include "RenderTextFragment.h"
 #include "RenderTreeBuilder.h"
@@ -152,7 +153,7 @@ auto TextAutoSizingValue::adjustTextNodeSizes() -> StillHasNodes
 
         int specifiedLineHeight;
         if (lineHeightLength.isPercent())
-            specifiedLineHeight = minimumValueForLength(lineHeightLength, fontDescription.specifiedSize());
+            specifiedLineHeight = minimumValueForLength(lineHeightLength, fontDescription.specifiedSize(), 1.0f /* FIXME FIND ZOOM */);
         else
             specifiedLineHeight = lineHeightLength.value();
 

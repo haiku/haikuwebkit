@@ -31,11 +31,16 @@
 
 #include <gio/gio.h>
 #include <wtf/Function.h>
+#include <wtf/IsoMallocInlines.h>
 #include <wtf/MainThread.h>
+#include <wtf/NeverDestroyed.h>
+#include <wtf/TZoneMallocInlines.h>
 #include <wtf/glib/GUniquePtr.h>
 #include <wtf/text/CString.h>
 
 namespace WebCore {
+
+WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(DNSResolveQueueGLib);
 
 // Initially true to ensure prefetch stays disabled until we have proxy settings.
 static bool isUsingHttpProxy = true;

@@ -68,8 +68,8 @@ public:
 private:
     IDBKeyRange(RefPtr<IDBKey>&& lower, RefPtr<IDBKey>&& upper, bool isLowerOpen, bool isUpperOpen);
 
-    RefPtr<IDBKey> m_lower;
-    RefPtr<IDBKey> m_upper;
+    const RefPtr<IDBKey> m_lower;
+    const RefPtr<IDBKey> m_upper;
     bool m_isLowerOpen;
     bool m_isUpperOpen;
 };

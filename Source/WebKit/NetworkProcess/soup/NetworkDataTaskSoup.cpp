@@ -57,7 +57,7 @@ using namespace WebCore;
 static const size_t gDefaultReadBufferSize = 8192;
 
 NetworkDataTaskSoup::NetworkDataTaskSoup(NetworkSession& session, NetworkDataTaskClient& client, const NetworkLoadParameters& parameters)
-    : NetworkDataTask(session, client, parameters.request, parameters.storedCredentialsPolicy, parameters.shouldClearReferrerOnHTTPSToHTTPRedirect, parameters.isMainFrameNavigation)
+    : NetworkDataTask(session, client, parameters.request, parameters.storedCredentialsPolicy, parameters.shouldClearReferrerOnHTTPSToHTTPRedirect, parameters.isMainFrameNavigation, parameters.isInitiatedByDedicatedWorker)
     , m_frameID(parameters.webFrameID)
     , m_pageID(parameters.webPageID)
     , m_shouldContentSniff(parameters.contentSniffingPolicy)

@@ -172,7 +172,7 @@ void MomentumEventDispatcher::dispatchSyntheticMomentumEvent(WebWheelEvent::Phas
     auto appKitScrollMultiplier = appKitScrollMultiplierForEvent(*m_currentGesture.initiatingEvent);
     auto appKitAcceleratedDelta = delta * appKitScrollMultiplier;
     auto wheelTicks = appKitAcceleratedDelta / WebCore::Scrollbar::pixelsPerLineStep();
-    auto time = WallTime::now();
+    auto time = MonotonicTime::now();
 
     // FIXME: Ideally we would stick legitimate rawPlatformDeltas on the event,
     // but currently nothing will consume them, and we'd have to keep track of them separately.

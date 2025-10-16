@@ -26,7 +26,6 @@
 #pragma once
 
 #include "GraphicsTypes.h"
-#include "LengthSize.h"
 #include "RenderStyleConstants.h"
 #include "StyleImage.h"
 #include "StyleValueTypes.h"

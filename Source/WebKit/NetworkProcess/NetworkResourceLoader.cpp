@@ -466,7 +466,7 @@ ResourceLoadInfo NetworkResourceLoader::resourceLoadInfo()
         case ResourceResponse::Source::DiskCacheAfterValidation:
         case ResourceResponse::Source::MemoryCache:
         case ResourceResponse::Source::MemoryCacheAfterValidation:
-        case ResourceResponse::Source::ApplicationCache:
+        case ResourceResponse::Source::LegacyApplicationCachePlaceholder:
         case ResourceResponse::Source::DOMCache:
             return true;
         case ResourceResponse::Source::Unknown:
@@ -2037,8 +2037,7 @@ void NetworkResourceLoader::logSlowCacheRetrieveIfNeeded(const NetworkCache::Cac
 
 bool NetworkResourceLoader::isCrossOriginPrefetch() const
 {
-    auto& request = originalRequest();
-    return request.httpHeaderField(HTTPHeaderName::SecPurpose) == "prefetch"_s && !m_parameters.protectedSourceOrigin()->canRequest(request.url(), connectionToWebProcess().originAccessPatterns());
+    return parameters().isInitiatorPrefetch && !m_parameters.protectedSourceOrigin()->canRequest(originalRequest().url(), connectionToWebProcess().originAccessPatterns());
 }
 
 void NetworkResourceLoader::setWorkerStart(MonotonicTime value)

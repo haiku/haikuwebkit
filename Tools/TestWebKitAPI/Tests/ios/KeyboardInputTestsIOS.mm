@@ -51,8 +51,10 @@
 #import <WebKit/_WKProcessPoolConfiguration.h>
 #import <WebKitLegacy/WebEvent.h>
 #import <cmath>
-#import <pal/cocoa/CoreTelephonySoftLink.h>
 #import <pal/spi/cocoa/NSAttributedStringSPI.h>
+#import <wtf/darwin/DispatchExtras.h>
+
+#import <pal/cocoa/CoreTelephonySoftLink.h>
 
 namespace TestWebKitAPI {
 
@@ -472,7 +474,7 @@ TEST(KeyboardInputTests, HandleKeyEventsWhileSwappingWebProcess)
 
     bool done = false;
     auto keyEvent = adoptNS([[WebEvent alloc] initWithKeyEventType:WebEventKeyDown timeStamp:CFAbsoluteTimeGetCurrent() characters:@"a" charactersIgnoringModifiers:@"a" modifiers:0 isRepeating:NO withFlags:0 withInputManagerHint:nil keyCode:65 isTabKey:NO]);
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), [keyEvent, webView, &done] {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), mainDispatchQueueSingleton(), [keyEvent, webView, &done] {
         [webView handleKeyEvent:keyEvent.get() completion:[keyEvent, &done](WebEvent *event, BOOL handled) {
             EXPECT_TRUE([event isEqual:keyEvent.get()]);
             EXPECT_FALSE(handled);
@@ -1438,7 +1440,7 @@ TEST(KeyboardInputTests, DeviceEIDAndIMEIAutoFill)
 #if HAVE(DELAY_INIT_LINKING)
         CoreTelephonyClient.class,
 #else
-        PAL::getCoreTelephonyClientClass(),
+        PAL::getCoreTelephonyClientClassSingleton(),
 #endif
         @selector(isAutofilleSIMIdAllowedForDomain:error:),
         reinterpret_cast<IMP>(allowESIMAutoFillForWebKit)

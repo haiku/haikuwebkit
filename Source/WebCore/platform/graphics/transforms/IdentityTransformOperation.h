@@ -53,9 +53,9 @@ private:
         return false;
     }
 
-    Ref<TransformOperation> blend(const TransformOperation*, const BlendingContext&, bool = false) override
+    Ref<TransformOperation> blend(const TransformOperation*, const BlendingContext&, bool = false) const override
     {
-        return *this;
+        return const_cast<IdentityTransformOperation&>(*this);
     }
 
     void dump(WTF::TextStream&) const final;

@@ -87,7 +87,7 @@ bool checkUsageDescriptionStringForType(MediaPermissionType type)
 
     switch (type) {
     case MediaPermissionType::Audio:
-        static TCCAccessPreflightResult audioAccess = TCCAccessPreflight(get_TCC_kTCCServiceMicrophone(), NULL);
+        static TCCAccessPreflightResult audioAccess = TCCAccessPreflight(get_TCC_kTCCServiceMicrophoneSingleton(), NULL);
         if (audioAccess == kTCCAccessPreflightGranted)
             return true;
         std::call_once(audioDescriptionFlag, [] {
@@ -95,7 +95,7 @@ bool checkUsageDescriptionStringForType(MediaPermissionType type)
         });
         return hasMicrophoneDescriptionString;
     case MediaPermissionType::Video:
-        static TCCAccessPreflightResult videoAccess = TCCAccessPreflight(get_TCC_kTCCServiceCamera(), NULL);
+        static TCCAccessPreflightResult videoAccess = TCCAccessPreflight(get_TCC_kTCCServiceCameraSingleton(), NULL);
         if (videoAccess == kTCCAccessPreflightGranted)
             return true;
         std::call_once(videoDescriptionFlag, [] {
@@ -260,7 +260,7 @@ void requestAVCaptureAccessForType(MediaPermissionType type, CompletionHandler<v
             completionHandler(authorized);
         });
     });
-    [PAL::getAVCaptureDeviceClass() requestAccessForMediaType:mediaType.get() completionHandler:decisionHandler.get()];
+    [PAL::getAVCaptureDeviceClassSingleton() requestAccessForMediaType:mediaType.get() completionHandler:decisionHandler.get()];
 #else
     UNUSED_PARAM(type);
     completionHandler(false);
@@ -271,7 +271,7 @@ MediaPermissionResult checkAVCaptureAccessForType(MediaPermissionType type)
 {
 #if HAVE(AVCAPTUREDEVICE)
     RetainPtr mediaType = type == MediaPermissionType::Audio ? AVMediaTypeAudio : AVMediaTypeVideo;
-    auto authorizationStatus = [PAL::getAVCaptureDeviceClass() authorizationStatusForMediaType:mediaType.get()];
+    auto authorizationStatus = [PAL::getAVCaptureDeviceClassSingleton() authorizationStatusForMediaType:mediaType.get()];
     if (authorizationStatus == AVAuthorizationStatusDenied || authorizationStatus == AVAuthorizationStatusRestricted)
         return MediaPermissionResult::Denied;
     if (authorizationStatus == AVAuthorizationStatusNotDetermined)
@@ -295,12 +295,12 @@ void requestSpeechRecognitionAccess(CompletionHandler<void(bool authorized)>&& c
             completionHandler(authorized);
         });
     });
-    [PAL::getSFSpeechRecognizerClass() requestAuthorization:decisionHandler.get()];
+    [PAL::getSFSpeechRecognizerClassSingleton() requestAuthorization:decisionHandler.get()];
 }
 
 MediaPermissionResult checkSpeechRecognitionServiceAccess()
 {
-    auto authorizationStatus = [PAL::getSFSpeechRecognizerClass() authorizationStatus];
+    auto authorizationStatus = [PAL::getSFSpeechRecognizerClassSingleton() authorizationStatus];
 IGNORE_WARNINGS_BEGIN("deprecated-enum-compare")
     if (authorizationStatus == SFSpeechRecognizerAuthorizationStatusDenied || authorizationStatus == SFSpeechRecognizerAuthorizationStatusRestricted)
         return MediaPermissionResult::Denied;

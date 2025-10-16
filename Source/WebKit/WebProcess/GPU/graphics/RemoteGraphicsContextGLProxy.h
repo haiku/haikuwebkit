@@ -28,12 +28,12 @@
 #if ENABLE(GPU_PROCESS) && ENABLE(WEBGL)
 
 #include "GPUProcessConnection.h"
-#include "GraphicsContextGLIdentifier.h"
 #include "IPCSemaphore.h"
 #include "MessageReceiver.h"
+#include "RemoteGraphicsContextGLIdentifier.h"
 #include "RemoteGraphicsContextGLMessages.h"
+#include "RemoteRenderingBackendIdentifier.h"
 #include "RemoteResourceCacheProxy.h"
-#include "RenderingBackendIdentifier.h"
 #include "SharedVideoFrame.h"
 #include "StreamClientConnection.h"
 #include <WebCore/GCGLSpan.h>
@@ -398,10 +398,10 @@ protected:
         return protectedStreamConnection()->sendSync(std::forward<T>(message), m_identifier);
     }
 
-    GraphicsContextGLIdentifier m_identifier { GraphicsContextGLIdentifier::generate() };
+    RemoteGraphicsContextGLIdentifier m_identifier { RemoteGraphicsContextGLIdentifier::generate() };
 private:
     static Ref<RemoteGraphicsContextGLProxy> platformCreate(const WebCore::GraphicsContextGLAttributes&);
-    void initializeIPC(Ref<IPC::StreamClientConnection>&&, RenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&, SerialFunctionDispatcher&);
+    void initializeIPC(Ref<IPC::StreamClientConnection>&&, RemoteRenderingBackendIdentifier, IPC::StreamServerConnection::Handle&&, SerialFunctionDispatcher&);
     // Messages to be received.
     void wasCreated(IPC::Semaphore&&, IPC::Semaphore&&, std::optional<RemoteGraphicsContextGLInitializationState>&&);
     void wasLost();

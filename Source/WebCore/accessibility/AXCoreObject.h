@@ -244,8 +244,8 @@ struct AccessibilityTextOperation {
 
 enum class AccessibilityOrientation : uint8_t {
     Undefined,
-    Horizontal,
-    Vertical
+    Vertical,
+    Horizontal
 };
 
 enum class DidTimeout : bool { No, Yes };
@@ -535,6 +535,7 @@ public:
     virtual AXCoreObject* disclosedByRow() const = 0;
 
     virtual bool isFieldset() const = 0;
+    bool isImageMapLink() const;
     bool isGroup() const;
 #if PLATFORM(MAC)
     bool isEmptyGroup();
@@ -954,6 +955,7 @@ public:
     // which inherently are horizontal or vertical.
     virtual std::optional<AccessibilityOrientation> explicitOrientation() const = 0;
     AccessibilityOrientation orientation() const;
+    std::optional<AccessibilityOrientation> defaultOrientation() const;
 
     virtual void increment() = 0;
     virtual void decrement() = 0;
@@ -1199,6 +1201,8 @@ public:
 #endif
 
     virtual bool hasClickHandler() const = 0;
+    virtual bool hasCursorPointer() const = 0;
+    AXCoreObject* clickableSelfOrNonInteractiveAncestor();
     virtual AXCoreObject* clickableSelfOrAncestor(ClickHandlerFilter = ClickHandlerFilter::ExcludeBody) const = 0;
     virtual AXCoreObject* focusableAncestor() = 0;
     virtual AXCoreObject* editableAncestor() const = 0;
@@ -1690,6 +1694,7 @@ WTF::TextStream& operator<<(WTF::TextStream&, AccessibilityRole);
 WTF::TextStream& operator<<(WTF::TextStream&, AccessibilitySearchDirection);
 WTF::TextStream& operator<<(WTF::TextStream&, AccessibilityObjectInclusion);
 WTF::TextStream& operator<<(WTF::TextStream&, const AXCoreObject&);
+WTF::TextStream& operator<<(WTF::TextStream&, Vector<AccessibilityText>&);
 WTF::TextStream& operator<<(WTF::TextStream&, AccessibilityText);
 WTF::TextStream& operator<<(WTF::TextStream&, AccessibilityTextSource);
 WTF::TextStream& operator<<(WTF::TextStream&, AXRelation);

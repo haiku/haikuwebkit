@@ -905,28 +905,28 @@ static BOOL _PDFSelectionsAreEqual(PDFSelection *selectionA, PDFSelection *selec
 
 - (NSArray *)pasteboardTypesForSelection
 {
-    return @[WebCore::legacyRTFDPasteboardType(), WebCore::legacyRTFPasteboardType(), WebCore::legacyStringPasteboardType()];
+    return @[WebCore::legacyRTFDPasteboardTypeSingleton(), WebCore::legacyRTFPasteboardTypeSingleton(), WebCore::legacyStringPasteboardTypeSingleton()];
 }
 
 - (void)writeSelectionWithPasteboardTypes:(NSArray *)types toPasteboard:(NSPasteboard *)pasteboard
 {
     NSAttributedString *attributedString = [self selectedAttributedString];
     
-    if ([types containsObject:WebCore::legacyRTFDPasteboardType()]) {
+    if ([types containsObject:WebCore::legacyRTFDPasteboardTypeSingleton()]) {
         NSData *RTFDData = [attributedString RTFDFromRange:NSMakeRange(0, [attributedString length]) documentAttributes:@{ }];
-        [pasteboard setData:RTFDData forType:WebCore::legacyRTFDPasteboardType()];
+        [pasteboard setData:RTFDData forType:WebCore::legacyRTFDPasteboardTypeSingleton()];
     }        
     
-    if ([types containsObject:WebCore::legacyRTFPasteboardType()]) {
+    if ([types containsObject:WebCore::legacyRTFPasteboardTypeSingleton()]) {
         if ([attributedString containsAttachments])
             attributedString = WebCore::attributedStringByStrippingAttachmentCharacters(attributedString);
 
         NSData *RTFData = [attributedString RTFFromRange:NSMakeRange(0, [attributedString length]) documentAttributes:@{ }];
-        [pasteboard setData:RTFData forType:WebCore::legacyRTFPasteboardType()];
+        [pasteboard setData:RTFData forType:WebCore::legacyRTFPasteboardTypeSingleton()];
     }
     
-    if ([types containsObject:WebCore::legacyStringPasteboardType()])
-        [pasteboard setString:[self selectedString] forType:WebCore::legacyStringPasteboardType()];
+    if ([types containsObject:WebCore::legacyStringPasteboardTypeSingleton()])
+        [pasteboard setString:[self selectedString] forType:WebCore::legacyStringPasteboardTypeSingleton()];
 }
 
 // MARK: PDFView DELEGATE METHODS

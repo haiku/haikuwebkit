@@ -926,7 +926,7 @@ template<typename T> Error Connection::waitForAsyncReplyAndDispatchImmediately(A
     if (!decoderOrError.has_value())
         return decoderOrError.error();
 
-    ASSERT(decoderOrError.value()->messageReceiverName() == ReceiverName::AsyncReply);
+    ASSERT(decoderOrError.value()->isAsyncReplyMessage());
     ASSERT(decoderOrError.value()->destinationID() == replyID.toUInt64());
     ASSERT(!isAsyncReplyHandlerWithDispatcher(replyID), "Not supported with AsyncReplyHandlerWithDispatcher");
     auto handler = takeAsyncReplyHandler(AtomicObjectIdentifier<AsyncReplyIDType>(decoderOrError.value()->destinationID()));

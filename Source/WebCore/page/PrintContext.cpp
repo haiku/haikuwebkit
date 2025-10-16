@@ -28,7 +28,6 @@
 #include "ElementTraversal.h"
 #include "FrameDestructionObserverInlines.h"
 #include "GraphicsContext.h"
-#include "LengthBox.h"
 #include "LocalFrame.h"
 #include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
@@ -399,8 +398,22 @@ String PrintContext::pageProperty(LocalFrame* frame, const String& propertyName,
         return String::number(style->fontDescription().computedSize());
     if (propertyName == "font-family"_s)
         return style->fontDescription().firstFamily();
-    if (propertyName == "size"_s)
-        return makeString(style->pageSize().width.value(), ' ', style->pageSize().height.value());
+    if (propertyName == "size"_s) {
+        return WTF::switchOn(style->pageSize(),
+            [&](const CSS::Keyword::Auto&) -> String {
+                return "auto"_s;
+            },
+            [&](const CSS::Keyword::Landscape&) -> String {
+                return "landscape"_s;
+            },
+            [&](const CSS::Keyword::Portrait&) -> String {
+                return "portrait"_s;
+            },
+            [&](const Style::PageSize::Lengths& lengths) {
+                return makeString(lengths.width().value, ' ', lengths.height().value);
+            }
+        );
+    }
 
     return makeString("pageProperty() unimplemented for: "_s, propertyName);
 }

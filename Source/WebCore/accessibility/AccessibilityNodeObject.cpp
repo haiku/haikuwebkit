@@ -30,6 +30,7 @@
 #include "AccessibilityNodeObject.h"
 
 #include "AXAttachmentHelpers.h"
+#include "AXImageMapHelpers.h"
 #include "AXListHelpers.h"
 #include "AXLogger.h"
 #include "AXLoggerBase.h"
@@ -38,7 +39,6 @@
 #include "AXTableHelpers.h"
 #include "AXTreeStore.h"
 #include "AXUtilities.h"
-#include "AccessibilityImageMapLink.h"
 #include "AccessibilityMediaHelpers.h"
 #include "AccessibilityObjectInlines.h"
 #include "AccessibilityRenderObject.h"
@@ -57,6 +57,7 @@
 #include "FloatRect.h"
 #include "FrameLoader.h"
 #include "FrameSelection.h"
+#include "HTMLAreaElement.h"
 #include "HTMLAttachmentElement.h"
 #include "HTMLAudioElement.h"
 #include "HTMLButtonElement.h"
@@ -69,6 +70,7 @@
 #include "HTMLInputElement.h"
 #include "HTMLLabelElement.h"
 #include "HTMLLegendElement.h"
+#include "HTMLMapElement.h"
 #include "HTMLNames.h"
 #include "HTMLOptionElement.h"
 #include "HTMLParagraphElement.h"
@@ -127,6 +129,11 @@ AccessibilityNodeObject::AccessibilityNodeObject(AXID axID, Node* node, AXObject
     : AccessibilityObject(axID, cache)
     , m_node(node)
 {
+}
+
+Ref<AccessibilityNodeObject> AccessibilityNodeObject::create(AXID axID, Node* node, AXObjectCache& cache)
+{
+    return adoptRef(*new AccessibilityNodeObject(axID, node, cache));
 }
 
 AccessibilityNodeObject::~AccessibilityNodeObject()
@@ -224,15 +231,23 @@ AccessibilityObject* AccessibilityNodeObject::parentObject() const
     if (!node)
         return nullptr;
 
+    CheckedPtr cache = axObjectCache();
+    if (!cache)
+        return nullptr;
+
+    if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(*node)) {
+        RefPtr map = ancestorsOfType<HTMLMapElement>(*areaElement).first();
+        return map ? cache->getOrCreate(map->imageElement().get()) : nullptr;
+    }
+
     if (RefPtr ownerParent = ownerParentObject()) [[unlikely]]
         return ownerParent.get();
 
-    CheckedPtr cache = axObjectCache();
 #if USE(ATSPI)
     // FIXME: Consider removing this ATSPI-only branch with https://bugs.webkit.org/show_bug.cgi?id=282117.
-    return cache ? cache->getOrCreate(node->parentNode()) : nullptr;
+    return cache->getOrCreate(node->parentNode());
 #else
-    return cache ? cache->getOrCreate(composedParentIgnoringDocumentFragments(*node)) : nullptr;
+    return cache->getOrCreate(composedParentIgnoringDocumentFragments(*node));
 #endif // USE(ATSPI)
 }
 
@@ -271,10 +286,26 @@ LayoutRect AccessibilityNodeObject::checkboxOrRadioRect() const
 
 LayoutRect AccessibilityNodeObject::elementRect() const
 {
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(node()); input && (input->isCheckbox() || input->isRadioButton()))
+    RefPtr node = this->node();
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(node.get()); input && (input->isCheckbox() || input->isRadioButton()))
         return checkboxOrRadioRect();
 
+    if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(node.get())) {
+        CheckedPtr renderer = AXImageMapHelpers::rendererFromAreaElement(*areaElement);
+        return renderer ? areaElement->computeRect(renderer.get()) : LayoutRect();
+    }
+
     return boundingBoxRect();
+}
+
+Path AccessibilityNodeObject::elementPath() const
+{
+    if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(node())) {
+        CheckedPtr renderer = AXImageMapHelpers::rendererFromAreaElement(*areaElement);
+        return renderer ? areaElement->computePath(*renderer) : Path();
+    }
+
+    return Path();
 }
 
 LayoutRect AccessibilityNodeObject::boundingBoxRect() const
@@ -412,6 +443,10 @@ AccessibilityRole AccessibilityNodeObject::determineAccessibilityRole()
 
     if (isExposedTableRow())
         return AccessibilityRole::Row;
+
+    // FIXME: When the URL changes, we should recompute an object's role.
+    if (isImageMapLink())
+        return !url().isEmpty() ? AccessibilityRole::Link : AccessibilityRole::Generic;
 
     auto roleFromNode = determineAccessibilityRoleFromNode();
 
@@ -919,6 +954,9 @@ bool AccessibilityNodeObject::computeIsIgnored() const
     if (decision == AccessibilityObjectInclusion::IgnoreObject)
         return true;
 
+    if (isImageMapLink() && !url().isEmpty())
+        return false;
+
     auto role = this->role();
     if (role == AccessibilityRole::Ignored || role == AccessibilityRole::Unknown)
         return true;
@@ -1031,6 +1069,9 @@ bool AccessibilityNodeObject::isSecureField() const
 
 bool AccessibilityNodeObject::isEnabled() const
 {
+    if (isImageMapLink())
+        return true;
+
     // ARIA says that the disabled status applies to the current element and all descendant elements.
     for (AccessibilityObject* object = const_cast<AccessibilityNodeObject*>(this); object; object = object->parentObject()) {
         const AtomString& disabledStatus = object->getAttribute(aria_disabledAttr);
@@ -1379,6 +1420,9 @@ Element* AccessibilityNodeObject::anchorElement() const
     RefPtr node = this->node();
     if (!node)
         return nullptr;
+
+    if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(*node))
+        return areaElement.get();
 
     AXObjectCache* cache = axObjectCache();
     if (!cache)
@@ -2989,7 +3033,7 @@ AccessibilityObject* AccessibilityNodeObject::captionForFigure() const
 
 bool AccessibilityNodeObject::usesAltForTextComputation() const
 {
-    bool usesAltTag = isImage() || isInputImage() || isNativeImage() || isCanvas() || elementName() == ElementName::HTML_img;
+    bool usesAltTag = isImage() || isInputImage() || isNativeImage() || isCanvas() || elementName() == ElementName::HTML_img || isImageMapLink();
 #if ENABLE(MODEL_ELEMENT)
     usesAltTag |= isModel();
 #endif
@@ -3336,6 +3380,11 @@ void AccessibilityNodeObject::accessibilityText(Vector<AccessibilityText>& textO
     }
 #endif
 
+    if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(node())) {
+        AXImageMapHelpers::accessibilityText(*areaElement, description(), textOrder);
+        return;
+    }
+
     labelText(textOrder);
     alternativeText(textOrder);
     visibleText(textOrder);
@@ -3411,6 +3460,9 @@ String AccessibilityNodeObject::description() const
         // Otherwise, it should fallback to other methods, like the title attribute.
         if (String alt = altTextFromAttributeOrStyle(); !alt.isNull())
             return alt;
+        // Image map elements shouldn't fallback.
+        if (isImageMapLink())
+            return { };
     }
 
 #if ENABLE(MATHML)
@@ -3502,6 +3554,9 @@ URL AccessibilityNodeObject::url() const
 
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(node); input && isInputImage())
         return input->getURLAttribute(srcAttr);
+
+    if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(node))
+        return areaElement->href();
 
 #if ENABLE(VIDEO)
     if (RefPtr video = dynamicDowncast<HTMLVideoElement>(node); video && isVideo())

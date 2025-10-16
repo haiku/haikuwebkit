@@ -94,17 +94,10 @@ private:
     void runModal() final;
 
     void reportProcessCPUTime(Seconds, WebCore::ActivityStateForCPUSampling) final;
-    
-    void setToolbarsVisible(bool) final;
+
     bool toolbarsVisible() const final;
-    
-    void setStatusbarVisible(bool) final;
     bool statusbarVisible() const final;
-    
-    void setScrollbarsVisible(bool) final;
     bool scrollbarsVisible() const final;
-    
-    void setMenubarVisible(bool) final;
     bool menubarVisible() const final;
     
     void setResizable(bool) final;

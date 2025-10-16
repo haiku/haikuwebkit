@@ -66,10 +66,6 @@
     #include <unistd.h>
 #endif
 
-#if defined(SK_BUILD_FOR_ANDROID_FRAMEWORK) && defined(SK_HAS_HEIF_LIBRARY)
-    #include <binder/IPCThreadState.h>
-#endif
-
 #if defined(SK_BUILD_FOR_MAC)
     #include "include/utils/mac/SkCGUtils.h"
     #include "src/utils/mac/SkUniqueCFRef.h"
@@ -1360,6 +1356,12 @@ struct Task {
                 return SkStringPrintf("%.3g %.3g %.3g %.3g %.3g %.3g %.3g",
                                         tf.g, tf.a, tf.b, tf.c, tf.d, tf.e, tf.f);
 
+            case skcms_TFType_PQ:
+                return SkStringPrintf("PQ %.3g", tf.a);
+
+            case skcms_TFType_HLG:
+                return SkStringPrintf("HLGish %.3g %.3g %.3g", tf.a, tf.b, tf.c);
+
             case skcms_TFType_PQish:
                 if (eq(tf, SkNamedTransferFn::kPQ)) { return SkString("PQ"); }
                 return SkStringPrintf("PQish %.3g %.3g %.3g %.3g %.3g %.3g",
@@ -1572,9 +1574,6 @@ TestHarness CurrentTestHarness() {
 #endif // !SK_DISABLE_LEGACY_TESTS
 
 int main(int argc, char** argv) {
-#if defined(SK_BUILD_FOR_ANDROID_FRAMEWORK) && defined(SK_HAS_HEIF_LIBRARY)
-    android::ProcessState::self()->startThreadPool();
-#endif
     CommandLineFlags::Parse(argc, argv);
 
     initializeEventTracingForTools();

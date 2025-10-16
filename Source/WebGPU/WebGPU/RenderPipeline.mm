@@ -915,7 +915,6 @@ static auto makeBindingLayout(WGPUBindGroupLayoutEntry& newEntry, auto& bindingM
     using Result = BindGroupLayout::Entry::BindingLayout;
     return WTF::switchOn(bindingMember, [&](const WGSL::BufferBindingLayout& bufferBinding) -> Result {
         return newEntry.buffer = WGPUBufferBindingLayout {
-            .nextInChain = nullptr,
             .type = (bufferTypeOverride != WGPUBufferBindingType_Undefined) ? bufferTypeOverride : convertBindingType(bufferBinding.type),
             .hasDynamicOffset = bufferBinding.hasDynamicOffset,
             .minBindingSize = bufferBinding.minBindingSize,
@@ -923,26 +922,22 @@ static auto makeBindingLayout(WGPUBindGroupLayoutEntry& newEntry, auto& bindingM
         };
     }, [&](const WGSL::SamplerBindingLayout& sampler) -> Result {
         return newEntry.sampler = WGPUSamplerBindingLayout {
-            .nextInChain = nullptr,
             .type = convertSamplerBindingType(sampler.type)
         };
     }, [&](const WGSL::TextureBindingLayout& texture) -> Result {
         return newEntry.texture = WGPUTextureBindingLayout {
-            .nextInChain = nullptr,
             .sampleType = convertSampleType(texture.sampleType),
             .viewDimension = convertViewDimension(texture.viewDimension),
             .multisampled = texture.multisampled
         };
     }, [&](const WGSL::StorageTextureBindingLayout& storageTexture) -> Result {
         return newEntry.storageTexture = WGPUStorageTextureBindingLayout {
-            .nextInChain = nullptr,
             .access = convertAccess(storageTexture.access),
             .format = convertFormat(storageTexture.format),
             .viewDimension = convertViewDimension(storageTexture.viewDimension)
         };
     }, [&](const WGSL::ExternalTextureBindingLayout&) -> Result {
         return newEntry.texture = WGPUTextureBindingLayout {
-            .nextInChain = nullptr,
             .sampleType = static_cast<WGPUTextureSampleType>(WGPUTextureSampleType_ExternalTexture),
             .viewDimension = WGPUTextureViewDimension_2D,
             .multisampled = false
@@ -1054,7 +1049,6 @@ Ref<PipelineLayout> Device::generatePipelineLayout(const Vector<Vector<WGPUBindG
     }
 
     auto generatedPipelineLayout = createPipelineLayout(WGPUPipelineLayoutDescriptor {
-        .nextInChain = nullptr,
         .label = "generated pipeline layout",
         .bindGroupLayoutCount = static_cast<uint32_t>(bindGroupLayouts.size()),
         .bindGroupLayouts = bindGroupLayouts.size() ? &bindGroupLayouts[0] : nullptr
@@ -1496,9 +1490,6 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
     String vertexShaderSource, fragmentShaderSource;
     ShaderModule::VertexStageIn shaderLocations;
     {
-        if (descriptor.vertex.nextInChain)
-            return returnInvalidRenderPipeline(*this, isAsync, "Vertex module has an invalid chain"_s);
-
         Ref vertexModule = WebGPU::protectedFromAPI(descriptor.vertex.module);
         if (!vertexModule->isValid() || !vertexModule->ast())
             return returnInvalidRenderPipeline(*this, isAsync, "Vertex module is not valid"_s);
@@ -1536,9 +1527,6 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
     RefPtr<ShaderModule> fragmentModule;
     if (descriptor.fragment) {
         const auto& fragmentDescriptor = *descriptor.fragment;
-
-        if (fragmentDescriptor.nextInChain)
-            return returnInvalidRenderPipeline(*this, isAsync, "Fragment has extra chain"_s);
 
         fragmentModule = WebGPU::protectedFromAPI(fragmentDescriptor.module).ptr();
         if (!fragmentModule->isValid() || !fragmentModule->ast())
@@ -1705,14 +1693,11 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
         return returnInvalidRenderPipeline(*this, isAsync, @"Vertex descriptor passed zero buffers for stage_in but shader requires buffers for stage_in");
 
     MTLDepthClipMode mtlDepthClipMode = MTLDepthClipModeClip;
-    if (descriptor.primitive.nextInChain) {
-        if (!hasFeature(WGPUFeatureName_DepthClipControl) || descriptor.primitive.nextInChain->sType != WGPUSType_PrimitiveDepthClipControl || descriptor.primitive.nextInChain->next)
+    if (descriptor.primitive.unclippedDepth) {
+        if (!hasFeature(WGPUFeatureName_DepthClipControl))
             return returnInvalidRenderPipeline(*this, isAsync, "unclippedDepth used without enabling depth-clip-control feature"_s);
 
-        auto* depthClipControl = reinterpret_cast<const WGPUPrimitiveDepthClipControl*>(descriptor.primitive.nextInChain);
-
-        if (depthClipControl->unclippedDepth)
-            mtlDepthClipMode = MTLDepthClipModeClamp;
+        mtlDepthClipMode = MTLDepthClipModeClamp;
     }
 
     mtlRenderPipelineDescriptor.inputPrimitiveTopology = topologyType(descriptor.primitive.topology);

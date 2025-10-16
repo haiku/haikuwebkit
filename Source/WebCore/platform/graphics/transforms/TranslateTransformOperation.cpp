@@ -50,7 +50,7 @@ bool TranslateTransformOperation::operator==(const TransformOperation& other) co
     return m_x == t.m_x && m_y == t.m_y && m_z == t.m_z;
 }
 
-Ref<TransformOperation> TranslateTransformOperation::blend(const TransformOperation* from, const BlendingContext& context, bool blendToIdentity)
+Ref<TransformOperation> TranslateTransformOperation::blend(const TransformOperation* from, const BlendingContext& context, bool blendToIdentity) const
 {
     Length zeroLength(0, LengthType::Fixed);
     if (blendToIdentity)
@@ -58,7 +58,7 @@ Ref<TransformOperation> TranslateTransformOperation::blend(const TransformOperat
 
     auto outputType = sharedPrimitiveType(from);
     if (!outputType)
-        return *this;
+        return const_cast<TranslateTransformOperation&>(*this);
 
     const TranslateTransformOperation* fromOp = downcast<TranslateTransformOperation>(from);
     Length fromX = fromOp ? fromOp->m_x : zeroLength;

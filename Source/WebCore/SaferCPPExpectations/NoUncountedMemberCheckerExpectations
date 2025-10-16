@@ -27,7 +27,6 @@ css/values/primitives/CSSPrimitiveData.h
 dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
-dom/QualifiedName.h
 dom/TreeScope.h
 editing/cocoa/NodeHTMLConverter.mm
 html/FormListedElement.cpp
@@ -40,9 +39,7 @@ inspector/InspectorShaderProgram.h
 inspector/InspectorStyleSheet.cpp
 inspector/InspectorStyleSheet.h
 inspector/InspectorWebAgentBase.h
-inspector/agents/worker/WorkerAuditAgent.h
 layout/formattingContexts/inline/InlineItemsBuilder.h
-loader/appcache/ApplicationCacheStorage.cpp
 page/FrameSnapshotting.cpp
 page/PerformanceLogging.h
 page/PointerLockController.h
@@ -60,7 +57,6 @@ platform/graphics/avfoundation/objc/MediaSourcePrivateAVFObjC.h
 platform/graphics/avfoundation/objc/WebCoreAVFResourceLoader.mm
 platform/graphics/ca/TileController.h
 platform/graphics/controls/PlatformControl.h
-platform/graphics/coretext/DrawGlyphsRecorder.h
 platform/graphics/filters/software/FEConvolveMatrixSoftwareApplier.h
 platform/graphics/filters/software/FELightingSoftwareApplier.h
 platform/graphics/filters/software/FEMorphologySoftwareApplier.h

@@ -34,8 +34,9 @@
 #include <WebCore/EventTargetInterfaces.h>
 #include <WebCore/ExceptionOr.h>
 #include <WebCore/IDLTypes.h>
+#include <WebCore/StyleSingleAnimationRange.h>
 #include <WebCore/Styleable.h>
-#include <WebCore/TimelineRange.h>
+#include <WebCore/TimelineRangeValue.h>
 #include <WebCore/WebAnimationTypes.h>
 #include <wtf/Forward.h>
 #include <wtf/Markable.h>
@@ -143,13 +144,13 @@ public:
     virtual void setBindingsFrameRate(Variant<FramesPerSecond, AnimationFrameRatePreset>&&);
     std::optional<FramesPerSecond> frameRate() const { return m_effectiveFrameRate; }
 
-    TimelineRangeValue bindingsRangeStart() const { return m_timelineRange.start.serialize(); }
-    TimelineRangeValue bindingsRangeEnd() const { return m_timelineRange.end.serialize(); }
+    TimelineRangeValue bindingsRangeStart() const { return m_timelineRange.start.toTimelineRangeValue(); }
+    TimelineRangeValue bindingsRangeEnd() const { return m_timelineRange.end.toTimelineRangeValue(); }
     virtual void setBindingsRangeStart(TimelineRangeValue&&);
     virtual void setBindingsRangeEnd(TimelineRangeValue&&);
-    void setRangeStart(SingleTimelineRange);
-    void setRangeEnd(SingleTimelineRange);
-    const TimelineRange& range();
+    void setRangeStart(Style::SingleAnimationRangeStart&&);
+    void setRangeEnd(Style::SingleAnimationRangeEnd&&);
+    const Style::SingleAnimationRange& range();
 
     bool needsTick() const;
     virtual void tick();
@@ -182,6 +183,7 @@ public:
 
     // ContextDestructionObserver.
     ScriptExecutionContext* scriptExecutionContext() const final;
+    using ActiveDOMObject::protectedScriptExecutionContext;
     void contextDestroyed() final;
 
 protected:
@@ -263,7 +265,7 @@ private:
     TimeToRunPendingTask m_timeToRunPendingPauseTask { TimeToRunPendingTask::NotScheduled };
     ReplaceState m_replaceState { ReplaceState::Active };
     uint64_t m_globalPosition { 0 };
-    TimelineRange m_timelineRange;
+    Style::SingleAnimationRange m_timelineRange;
 };
 
 } // namespace WebCore

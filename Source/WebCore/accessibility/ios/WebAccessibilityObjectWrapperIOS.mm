@@ -3246,6 +3246,21 @@ static RenderObject* rendererForView(WAKView* view)
     return [NSString stringWithFormat:@"%@: %@", [self class], [self accessibilityLabel]];
 }
 
+- (AccessibilityOrientation)accessibilityOrientation
+{
+    if (![self _prepareAccessibilityCall])
+        return AccessibilityOrientation::Undefined;
+
+    std::optional defaultOrientation = self.axBackingObject->defaultOrientation();
+    // If we don't have a default orientation (unknown or otherwise), don't expose anything.
+    if (!defaultOrientation)
+        return AccessibilityOrientation::Undefined;
+
+    // If the orientation is the default, we don't need to share that with ATs.
+    std::optional orientation = self.axBackingObject->orientation();
+    return orientation && *orientation == *defaultOrientation ? AccessibilityOrientation::Undefined : *orientation;
+}
+
 @end
 
 #endif // PLATFORM(IOS_FAMILY)

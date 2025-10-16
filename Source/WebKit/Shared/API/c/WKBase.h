@@ -79,7 +79,6 @@ typedef const struct OpaqueWKWebArchiveResource* WKWebArchiveResourceRef;
 
 /* WebKit2 main API types */
 
-typedef const struct OpaqueWKApplicationCacheManager* WKApplicationCacheManagerRef;
 typedef const struct OpaqueWKAuthenticationChallenge* WKAuthenticationChallengeRef;
 typedef const struct OpaqueWKAuthenticationDecisionListener* WKAuthenticationDecisionListenerRef;
 typedef const struct OpaqueWKBackForwardList* WKBackForwardListRef;

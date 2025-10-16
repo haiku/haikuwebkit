@@ -20,7 +20,7 @@ selectors = [
 # Added in rdar://112101742.
 [[equivalent-api]]
 request = "rdar://157876115"
-symbols = ["_kSecAttrAlias"]
+symbols = ["kSecAttrAlias"]
 
 [[temporary-usage]]
 request = "rdar://147535351"
@@ -54,9 +54,9 @@ selectors = [
     { name = "webClips", class = "UIWebClip" },
 ]
 symbols = [
-    "_FBSOpenApplicationOptionKeyActions",
-    "_FBSOpenApplicationOptionKeyActivateSuspended",
-    "_SBSCreateOpenApplicationService",
+    "FBSOpenApplicationOptionKeyActions",
+    "FBSOpenApplicationOptionKeyActivateSuspended",
+    "SBSCreateOpenApplicationService",
 ]
 classes = [
     "BSAction",
@@ -77,12 +77,16 @@ selectors = [
     { name = "_setServerTrust:", class = "?" },
 ]
 symbols = [
-    "_nw_parameters_create_webtransport_http",
-    "_nw_protocol_copy_webtransport_definition",
-    "_nw_webtransport_create_options",
-    "_nw_webtransport_metadata_get_is_unidirectional",
-    "_nw_webtransport_options_set_is_datagram",
-    "_nw_webtransport_options_set_is_unidirectional",
+    "nw_parameters_create_webtransport_http",
+    "nw_protocol_copy_webtransport_definition",
+    "nw_webtransport_create_options",
+    "nw_webtransport_metadata_get_is_unidirectional",
+    "nw_webtransport_metadata_set_session_error_code",
+    "nw_webtransport_metadata_set_session_error_message",
+    "nw_webtransport_options_add_connect_request_header",
+    "nw_webtransport_options_set_allow_joining_before_ready",
+    "nw_webtransport_options_set_is_datagram",
+    "nw_webtransport_options_set_is_unidirectional",
 ]
 requires = ["HAVE_WEB_TRANSPORT"]
 
@@ -128,8 +132,8 @@ selectors = [
 [[not-web-essential]]
 request = "rdar://157886270"
 symbols = [
-    "_SecTrustCopyPropertyListRepresentation",
-    "_SecTrustCreateFromPropertyListRepresentation",
+    "SecTrustCopyPropertyListRepresentation",
+    "SecTrustCreateFromPropertyListRepresentation",
 ]
 requires = ["HAVE_WK_SECURE_CODING_SECTRUST"]
 
@@ -180,7 +184,7 @@ requires = ["HAVE_STRICT_FAIL_CLOSED"]
 request = "rdar://157889218"
 cleanup = "rdar://157889180"
 symbols = [
-    "_CASupportsFeature",
+    "CASupportsFeature",
 ]
 requires = [
     "HAVE_COREVIDEO_COMPRESSED_PIXEL_FORMAT_TYPES",
@@ -191,17 +195,17 @@ requires = [
 request = "rdar://158633667"
 cleanup = "rdar://158634037"
 symbols = [
-    "_CARenderServerSnapshot",
-    "_kCASnapshotContextId",
-    "_kCASnapshotDestination",
-    "_kCASnapshotDisplayName",
-    "_kCASnapshotLayerId",
-    "_kCASnapshotMode",
-    "_kCASnapshotModeLayer",
-    "_kCASnapshotOriginX",
-    "_kCASnapshotOriginY",
-    "_kCASnapshotTimeOffset",
-    "_kCASnapshotTransform",
+    "CARenderServerSnapshot",
+    "kCASnapshotContextId",
+    "kCASnapshotDestination",
+    "kCASnapshotDisplayName",
+    "kCASnapshotLayerId",
+    "kCASnapshotMode",
+    "kCASnapshotModeLayer",
+    "kCASnapshotOriginX",
+    "kCASnapshotOriginY",
+    "kCASnapshotTimeOffset",
+    "kCASnapshotTransform",
 ]
 
 

@@ -593,43 +593,6 @@ int windowsKeyCodeForKeyEvent(NSEvent* event)
     return windowsKeyCodeForKeyCode([event keyCode]);
 }
 
-static CFAbsoluteTime systemStartupTime;
-
-static void updateSystemStartupTimeIntervalSince1970()
-{
-    // CFAbsoluteTimeGetCurrent() provides the absolute time in seconds since 2001.
-    // mach_absolute_time() provides a relative system time since startup minus the time the computer was suspended.
-    mach_timebase_info_data_t timebase_info;
-    mach_timebase_info(&timebase_info);
-    double elapsedTimeSinceStartup = static_cast<double>(mach_absolute_time()) * timebase_info.numer / timebase_info.denom / 1e9;
-    systemStartupTime = kCFAbsoluteTimeIntervalSince1970 + CFAbsoluteTimeGetCurrent() - elapsedTimeSinceStartup;
-}
-
-static CFTimeInterval cachedStartupTimeIntervalSince1970()
-{
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        void (^updateBlock)(NSNotification *) = Block_copy(^(NSNotification *){ updateSystemStartupTimeIntervalSince1970(); });
-        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserverForName:NSWorkspaceDidWakeNotification
-                                                                        object:nil
-                                                                         queue:nil
-                                                                    usingBlock:updateBlock];
-        [[NSNotificationCenter defaultCenter] addObserverForName:NSSystemClockDidChangeNotification
-                                                          object:nil
-                                                           queue:nil
-                                                      usingBlock:updateBlock];
-        Block_release(updateBlock);
-
-        updateSystemStartupTimeIntervalSince1970();
-    });
-    return systemStartupTime;
-}
-
-WallTime eventTimeStampSince1970(NSTimeInterval timestamp)
-{
-    return WallTime::fromRawSeconds(static_cast<double>(cachedStartupTimeIntervalSince1970() + timestamp));
-}
-
 bool isKeyUpEvent(NSEvent *event)
 {
     if ([event type] != NSEventTypeFlagsChanged)
@@ -751,7 +714,7 @@ public:
         }
 
         m_modifiers = modifiersForEvent(event);
-        m_timestamp = eventTimeStampSince1970(event.timestamp);
+        m_timestamp = MonotonicTime::fromRawSeconds(event.timestamp);
 
         // PlatformMouseEvent
         m_position = pointForEvent(event, windowView);
@@ -790,7 +753,7 @@ public:
         // PlatformEvent
         m_type = PlatformEvent::Type::Wheel;
         m_modifiers = modifiersForEvent(event);
-        m_timestamp = eventTimeStampSince1970(event.timestamp);
+        m_timestamp = MonotonicTime::fromRawSeconds(event.timestamp);
 
         // PlatformWheelEvent
         m_position = IntPoint(pointForEvent(event, windowView));
@@ -829,7 +792,7 @@ public:
         // PlatformEvent
         m_type = isKeyUpEvent(event) ? PlatformEvent::Type::KeyUp : PlatformEvent::Type::KeyDown;
         m_modifiers = modifiersForEvent(event);
-        m_timestamp = eventTimeStampSince1970(event.timestamp);
+        m_timestamp = MonotonicTime::fromRawSeconds(event.timestamp);
 
         // PlatformKeyboardEvent
         m_text = textFromEvent(event);

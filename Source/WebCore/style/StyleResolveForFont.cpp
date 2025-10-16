@@ -46,7 +46,6 @@
 #include "FontCascade.h"
 #include "FontCascadeDescription.h"
 #include "FontSelectionValueInlines.h"
-#include "LengthFunctions.h"
 #include "RenderStyle.h"
 #include "ScriptExecutionContext.h"
 #include "Settings.h"
@@ -332,7 +331,7 @@ static ResolvedFontSize fontSizeFromUnresolvedFontSize(const CSSPropertyParserHe
                     return CSS::switchOnUnitType(lengthPercentage.unit,
                         [&](CSS::PercentageUnit) -> ResolvedFontSize {
                             return {
-                                .size = Style::evaluate(Style::Percentage<> { narrowPrecisionToFloat(lengthPercentage.value) }, parentSize),
+                                .size = Style::evaluate(Style::Percentage<> { narrowPrecisionToFloat(lengthPercentage.value) }, parentSize, 1.0f /* FIXME FIND ZOOM */),
                                 .keyword = CSSValueInvalid
                             };
                         },
@@ -361,7 +360,7 @@ static ResolvedFontSize fontSizeFromUnresolvedFontSize(const CSSPropertyParserHe
                         return { .size = 0.0f, .keyword = CSSValueInvalid };
 
                     return {
-                        .size = Style::evaluate(Style::toStyleNoConversionDataRequired(calc), parentSize),
+                        .size = Style::evaluate(Style::toStyleNoConversionDataRequired(calc), parentSize, 1.0f /* FIXME FIND ZOOM */),
                         .keyword = CSSValueInvalid
                     };
                 }

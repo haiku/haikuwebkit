@@ -37,6 +37,8 @@ public:
 
     RenderTextControlInnerBlock* innerTextRenderer() const;
 
+    bool innerTextElementHasNonVisibleOverflow() const;
+
 protected:
     HTMLElement* containerElement() const;
     HTMLElement* innerBlockElement() const;
@@ -62,6 +64,7 @@ private:
     int scrollHeight() const override;
     void setScrollLeft(int, const ScrollPositionChangeOptions&) override;
     void setScrollTop(int, const ScrollPositionChangeOptions&) override;
+    void setScrollPosition(const ScrollPosition&, const ScrollPositionChangeOptions&) override;
     bool scroll(ScrollDirection, ScrollGranularity, unsigned stepCount = 1, Element** stopElement = nullptr, RenderBox* startBox = nullptr, const IntPoint& wheelEventAbsolutePoint = IntPoint()) final;
     bool logicalScroll(ScrollLogicalDirection, ScrollGranularity, unsigned stepCount = 1, Element** stopElement = nullptr) final;
 

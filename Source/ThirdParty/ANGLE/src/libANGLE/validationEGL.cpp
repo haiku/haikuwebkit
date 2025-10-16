@@ -7087,7 +7087,7 @@ bool ValidateQuerySurface64KHR(const ValidationContext *val,
             break;
         default:
         {
-            EGLint querySurfaceValue;
+            EGLint querySurfaceValue = 0;
             ANGLE_VALIDATION_TRY(
                 ValidateQuerySurface(val, dpy, surfaceID, attribute, &querySurfaceValue));
         }

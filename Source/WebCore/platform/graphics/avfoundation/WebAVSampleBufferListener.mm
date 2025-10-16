@@ -179,7 +179,7 @@ static bool isSampleBufferVideoRenderer(id object)
             return;
         }
 
-        if ([object isKindOfClass:PAL::getAVSampleBufferAudioRendererClass()]) {
+        if ([object isKindOfClass:PAL::getAVSampleBufferAudioRendererClassSingleton()]) {
             RetainPtr renderer = (AVSampleBufferAudioRenderer *)object;
 
             ensureOnMainThread([self, protectedSelf = RetainPtr { self }, renderer = WTFMove(renderer), error = WTFMove(error)] {

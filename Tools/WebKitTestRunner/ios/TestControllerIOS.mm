@@ -322,7 +322,7 @@ bool TestController::platformResetStateToConsistentValues(const TestOptions& opt
     restorePortraitOrientationIfNeeded();
 
     // Ensures that only the UCB is on-screen when showing the keyboard, if the hardware keyboard is attached.
-    TIPreferencesController *textInputPreferences = [getTIPreferencesControllerClass() sharedPreferencesController];
+    TIPreferencesController *textInputPreferences = [getTIPreferencesControllerClassSingleton() sharedPreferencesController];
     if (!textInputPreferences.automaticMinimizationEnabled)
         textInputPreferences.automaticMinimizationEnabled = YES;
 

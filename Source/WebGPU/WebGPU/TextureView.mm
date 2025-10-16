@@ -189,7 +189,7 @@ void TextureView::setCommandEncoder(CommandEncoder& commandEncoder) const
         commandEncoder.makeSubmitInvalid();
 }
 
-id<MTLRasterizationRateMap> TextureView::rasterizationMapForSlice(uint32_t slice)
+id<MTLRasterizationRateMap> TextureView::rasterizationMapForSlice(uint32_t slice) const
 {
     return apiParentTexture().rasterizationMapForSlice(slice);
 }

@@ -26,8 +26,8 @@
 
 #pragma once
 
+#include <WebCore/BoxExtents.h>
 #include <WebCore/FloatPoint.h>
-#include <WebCore/LengthBox.h>
 #include <wtf/Platform.h>
 
 #if USE(CG)

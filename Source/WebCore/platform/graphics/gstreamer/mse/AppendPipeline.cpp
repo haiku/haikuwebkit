@@ -236,12 +236,12 @@ AppendPipeline::AppendPipeline(SourceBufferPrivateGStreamer& sourceBufferPrivate
             if (demuxerElementName.isNull()) {
                 GST_ELEMENT_ERROR(appendPipeline->pipeline(), STREAM, WRONG_TYPE,
                     ("Unsupported caps for audio/mpeg mimetype: %s",
-                    gstStructureGetName(capsStructure).toStringWithoutCopying().utf8().data()), (nullptr));
+                    gstStructureGetName(capsStructure).utf8()), (nullptr));
                 return;
             }
 
             GST_DEBUG_OBJECT(appendPipeline->pipeline(), "Creating %s demuxer for caps: %s",
-                demuxerElementName.characters(), gstStructureGetName(capsStructure).toStringWithoutCopying().utf8().data());
+                demuxerElementName.characters(), gstStructureGetName(capsStructure).utf8());
             appendPipeline->m_demux = makeGStreamerElement(demuxerElementName);
             ASSERT(appendPipeline->m_demux);
 
@@ -456,14 +456,10 @@ void AppendPipeline::appsinkCapsChanged(Track& track)
     // If this is not the first time we're parsing an initialization segment, fail if the track
     // has a different codec or type (e.g. if we were previously demuxing an audio stream and
     // someone appends a video stream).
-    auto currentMediaTypeView = capsMediaType(caps.get());
-    auto trackMediaTypeView = capsMediaType(track.finalCaps.get());
-    if (track.finalCaps && currentMediaTypeView != trackMediaTypeView) {
-#ifndef GST_DISABLE_GST_DEBUG
-        auto currentMediaType = currentMediaTypeView.utf8();
-        auto trackMediaType = trackMediaTypeView.utf8();
-        GST_WARNING_OBJECT(pipeline(), "Track received incompatible caps, received '%s' for a track previously handling '%s'. Erroring out.", currentMediaType.data(), trackMediaType.data());
-#endif
+    auto currentMediaType = capsMediaType(caps.get());
+    auto trackMediaType = capsMediaType(track.finalCaps.get());
+    if (track.finalCaps && currentMediaType != trackMediaType) {
+        GST_WARNING_OBJECT(pipeline(), "Track received incompatible caps, received '%s' for a track previously handling '%s'. Erroring out.", currentMediaType.utf8(), trackMediaType.utf8());
         m_sourceBufferPrivate.appendParsingFailed();
         return;
     }

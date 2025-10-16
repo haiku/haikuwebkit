@@ -62,7 +62,6 @@ public:
 
     static void destroy(JSC::JSCell*);
 
-public:
     Lock& gcLock() WTF_RETURNS_LOCK(m_gcLock) { return m_gcLock; }
 
     JSDOMStructureMap& structures() WTF_REQUIRES_LOCK(m_gcLock) { return m_structures; }
@@ -110,12 +109,13 @@ public:
     JSC::JSFunction* createCrossOriginFunction(JSC::JSGlobalObject*, JSC::PropertyName, JSC::NativeFunction, unsigned length);
     JSC::GetterSetter* createCrossOriginGetterSetter(JSC::JSGlobalObject*, JSC::PropertyName, JSC::GetValueFunc, JSC::PutValueFunc);
 
-public:
     ~JSDOMGlobalObject();
 
     static constexpr const JSC::ClassInfo* info() { return &s_info; }
 
     inline static JSC::Structure* createStructure(JSC::VM&, JSC::JSValue);
+
+    bool allowsJSHandleCreation() const;
 
 protected:
     JSDOMGlobalObject(JSC::VM&, JSC::Structure*, Ref<DOMWrapperWorld>&&, const JSC::GlobalObjectMethodTable* = nullptr);

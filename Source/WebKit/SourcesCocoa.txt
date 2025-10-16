@@ -90,6 +90,7 @@ ModelProcess/cocoa/WKModelProcessModelLayer.mm
 ModelProcess/cocoa/ModelProcessModelPlayerProxy.mm
 ModelProcess/ios/ModelProcessIOS.mm
 
+Platform/classifier/cocoa/TextExtractionFilter.mm
 Platform/classifier/cocoa/ResourceLoadStatisticsClassifierCocoa.cpp
 Platform/classifier/ResourceLoadStatisticsClassifier.cpp
 
@@ -168,6 +169,7 @@ Shared/Extensions/Cocoa/WebExtensionFrameIdentifierCocoa.mm
 Shared/Cocoa/APIDataCocoa.mm
 Shared/Cocoa/APIObject.mm
 Shared/Cocoa/ARKitSoftLink.mm
+Shared/Cocoa/AccessibilityPreferences.mm
 Shared/Cocoa/AuxiliaryProcessCocoa.mm
 Shared/Cocoa/CodeSigning.mm
 Shared/Cocoa/CompletionHandlerCallChecker.mm
@@ -932,4 +934,3 @@ WebSWContextManagerConnectionMessageReceiver.cpp
 WebSWServerConnectionMessageReceiver.cpp
 WebSWServerToContextConnectionMessageReceiver.cpp
 WebUserContentControllerMessageReceiver.cpp
-WebUserContentControllerProxyMessageReceiver.cpp

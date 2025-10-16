@@ -25,12 +25,11 @@
 #include "config.h"
 #include "NinePieceImagePainter.h"
 
+#include "BoxExtents.h"
 #include "GraphicsContext.h"
 #include "ImagePaintingOptions.h"
 #include "ImageQualityController.h"
 #include "LayoutRect.h"
-#include "LengthBox.h"
-#include "LengthFunctions.h"
 #include "RenderStyleConstants.h"
 #include "RenderStyleInlines.h"
 #include "StyleImage.h"
@@ -80,7 +79,7 @@ static LayoutUnit computeSlice(const WidthValue& length, LayoutUnit width, Layou
 {
     return WTF::switchOn(length,
         [&](const typename WidthValue::LengthPercentage& value) {
-            return Style::evaluate(value, extent);
+            return Style::evaluate(value, extent, 1.0f /* FIXME ZOOM EFFECTED? */);
         },
         [&](const typename WidthValue::Number& value) {
             return LayoutUnit { value.value * width };
@@ -106,10 +105,10 @@ template<typename SliceValues>
 static LayoutBoxExtent computeSlices(const LayoutSize& size, const SliceValues& slices, int scaleFactor)
 {
     return {
-        std::min(size.height(),  Style::evaluate(slices.values.top(),    size.height())) * scaleFactor,
-        std::min(size.width(),   Style::evaluate(slices.values.right(),  size.width()))  * scaleFactor,
-        std::min(size.height(),  Style::evaluate(slices.values.bottom(), size.height())) * scaleFactor,
-        std::min(size.width(),   Style::evaluate(slices.values.left(),   size.width()))  * scaleFactor,
+        std::min(size.height(),  Style::evaluate(slices.values.top(),    size.height(), 1.0f /* FIXME ZOOM EFFECTED? */)) * scaleFactor,
+        std::min(size.width(),   Style::evaluate(slices.values.right(),  size.width(), 1.0f /* FIXME ZOOM EFFECTED? */))  * scaleFactor,
+        std::min(size.height(),  Style::evaluate(slices.values.bottom(), size.height(), 1.0f /* FIXME ZOOM EFFECTED? */)) * scaleFactor,
+        std::min(size.width(),   Style::evaluate(slices.values.left(),   size.width(), 1.0f /* FIXME ZOOM EFFECTED? */))  * scaleFactor,
     };
 }
 
@@ -231,7 +230,7 @@ static void paintNinePieceImage(const T& ninePieceImage, GraphicsContext& graphi
     ASSERT(styleImage->isLoaded(renderer));
 
     auto sourceSlices      = computeSlices(source, ninePieceImage.slice(), styleImage->imageScaleFactor());
-    auto destinationSlices = computeSlices(destination.size(), ninePieceImage.width(), Style::evaluate(style.borderWidth()), sourceSlices);
+    auto destinationSlices = computeSlices(destination.size(), ninePieceImage.width(), Style::evaluate(style.borderWidth(), 1.0f /* FIXME ZOOM EFFECTED? */), sourceSlices);
 
     scaleSlicesIfNeeded(destination.size(), destinationSlices, deviceScaleFactor);
 
@@ -240,7 +239,7 @@ static void paintNinePieceImage(const T& ninePieceImage, GraphicsContext& graphi
 
     auto tileScales = computeTileScales(destinationRects, sourceRects, ninePieceImage.repeat().horizontalRule(), ninePieceImage.repeat().verticalRule());
 
-    RefPtr image = styleImage->image(renderer, source);
+    RefPtr image = styleImage->image(renderer, source, graphicsContext);
     if (!image)
         return;
 

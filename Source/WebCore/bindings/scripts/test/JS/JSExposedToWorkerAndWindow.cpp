@@ -215,7 +215,7 @@ JSValue JSExposedToWorkerAndWindow::getConstructor(VM& vm, const JSGlobalObject*
 
 void JSExposedToWorkerAndWindow::destroy(JSC::JSCell* cell)
 {
-    JSExposedToWorkerAndWindow* thisObject = static_cast<JSExposedToWorkerAndWindow*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSExposedToWorkerAndWindow* thisObject = static_cast<JSExposedToWorkerAndWindow*>(cell);
     thisObject->JSExposedToWorkerAndWindow::~JSExposedToWorkerAndWindow();
 }
 
@@ -273,7 +273,7 @@ bool JSExposedToWorkerAndWindowOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC
 
 void JSExposedToWorkerAndWindowOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsExposedToWorkerAndWindow = static_cast<JSExposedToWorkerAndWindow*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsExposedToWorkerAndWindow = static_cast<JSExposedToWorkerAndWindow*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsExposedToWorkerAndWindow->protectedWrapped().ptr(), jsExposedToWorkerAndWindow);
 }

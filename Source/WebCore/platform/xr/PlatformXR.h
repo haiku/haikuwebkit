@@ -326,6 +326,7 @@ struct FrameData {
         std::optional<ExternalTextureData> textureData;
         // FIXME: <rdar://134998122> Remove when new CC lands.
         bool requestDepth { false };
+        bool isForTesting { false };
     };
 
     struct InputSourceButton {

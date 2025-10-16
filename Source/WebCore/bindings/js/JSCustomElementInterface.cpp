@@ -33,6 +33,7 @@
 #include "DOMWrapperWorld.h"
 #include "ElementRareData.h"
 #include "EventLoop.h"
+#include "FrameDestructionObserverInlines.h"
 #include "HTMLFormElement.h"
 #include "HTMLMaybeFormAssociatedCustomElement.h"
 #include "HTMLUnknownElement.h"

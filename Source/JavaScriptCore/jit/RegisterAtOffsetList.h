@@ -71,6 +71,7 @@ public:
 #if ENABLE(WEBASSEMBLY)
     static const RegisterAtOffsetList& wasmPinnedRegisters();
     static const RegisterAtOffsetList& ipintCalleeSaveRegisters(); // Registers and Offsets saved and used by IPInt.
+    static const RegisterAtOffsetList& bbqCalleeSaveRegisters(); // Registers and Offsets saved and used by BBQ.
 #endif
 
 private:

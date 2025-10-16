@@ -121,11 +121,15 @@ class TestRunner(object):
             raise RuntimeError("Failed to check driver %s" % driver.__class__.__name__)
         return driver
 
-    def _setup_testing_environment(self):
-        self._test_env = self._driver._setup_environ_for_test()
-        self._test_env["TEST_WEBKIT_API_WEBKIT2_RESOURCES_PATH"] = common.top_level_path("Tools", "TestWebKitAPI", "Tests", "WebKit")
-        self._test_env["TEST_WEBKIT_API_WEBKIT2_INJECTED_BUNDLE_PATH"] = common.library_build_path(self._port)
-        self._test_env["WEBKIT_EXEC_PATH"] = self._programs_path
+    def _setup_testing_environment_for_driver(self, driver):
+        test_env = driver._setup_environ_for_test()
+        test_env["TEST_WEBKIT_API_WEBKIT2_RESOURCES_PATH"] = common.top_level_path("Tools", "TestWebKitAPI", "Tests", "WebKit")
+        test_env["TEST_WEBKIT_API_WEBKIT2_INJECTED_BUNDLE_PATH"] = common.library_build_path(self._port)
+        test_env["WEBKIT_EXEC_PATH"] = self._programs_path
+        # The python display-server driver may set WPE_DISPLAY, but we unset it here because it causes issues with
+        # some WPE API tests like WPEPlatform/TestDisplayDefault that check the default behaviour of the APIs.
+        test_env.pop("WPE_DISPLAY", None)
+        return test_env
 
     def _tear_down_testing_environment(self):
         if self._driver:
@@ -346,7 +350,7 @@ class TestRunner(object):
             self.list_tests()
             return 0
 
-        self._setup_testing_environment()
+        self._test_env = self._setup_testing_environment_for_driver(self._driver)
 
         number_of_total_tests = len(self._tests)
         # Remove skipped tests now instead of when we find them, because
@@ -369,7 +373,7 @@ class TestRunner(object):
         if number_of_wpe_platform_wayland_tests > 0:
             if WestonDriver.check_driver(self._port):
                 self._weston = WestonDriver(self._port, worker_number=0, pixel_tests=False, no_timeout=True)
-                self._weston_env = self._weston._setup_environ_for_test()
+                self._weston_env = self._setup_testing_environment_for_driver(self._weston)
             else:
                 # Skip tests if Weston is not available.
                 sys.stderr.write("WARNING: Skipping %d WPE Platform Wayland tests because Weston couldn't be found.\n" % number_of_wpe_platform_wayland_tests)

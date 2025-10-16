@@ -1,6 +1,3 @@
-CONSOLE MESSAGE: Error: assert_equals: pointerover deviceId is 1 expected (number) 1 but got (undefined) undefined
-CONSOLE MESSAGE: Error: assert_equals: pointermove deviceId is 1 expected (number) 1 but got (undefined) undefined
-CONSOLE MESSAGE: Error: assert_equals: pointerup deviceId is 1 expected (number) 1 but got (undefined) undefined
 
 Harness Error (FAIL), message = Error: assert_equals: pointerup deviceId is 1 expected (number) 1 but got (undefined) undefined
 

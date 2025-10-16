@@ -37,13 +37,13 @@
 #include "FloatRect.h"
 #include "KeyframeEffect.h"
 #include "LayoutSize.h"
+#include "Settings.h"
 #include "StyleInterpolation.h"
 #include "StyleOffsetRotate.h"
 #include "StyleOriginatedAnimation.h"
 #include "WebAnimation.h"
 #include "WebAnimationTypes.h"
 #include <wtf/TZoneMallocInlines.h>
-#include "Animation.h"
 
 namespace WebCore {
 
@@ -217,9 +217,9 @@ AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const IntRect
         ASSERT(animation->holdTime() || animation->startTime());
         m_holdTime = animation->holdTime() ? animation->holdTime()->time() : std::nullopt;
         m_startTime = animation->startTime() ? animation->startTime()->time() : std::nullopt;
-        if (auto* styleAnimation = dynamicDowncast<StyleOriginatedAnimation>(*animation)) {
-            if (auto* defaultKeyframeTimingFunction = styleAnimation->backingAnimation().timingFunction())
-                m_defaultKeyframeTimingFunction = defaultKeyframeTimingFunction;
+        if (RefPtr styleAnimation = dynamicDowncast<StyleOriginatedAnimation>(*animation)) {
+            if (RefPtr defaultKeyframeTimingFunction = styleAnimation->backingAnimationTimingFunction())
+                m_defaultKeyframeTimingFunction = WTFMove(defaultKeyframeTimingFunction);
         }
     }
 
@@ -265,6 +265,8 @@ AcceleratedEffect::AcceleratedEffect(AnimationEffectTiming timing, Vector<Keyfra
     , m_startTime(startTime)
     , m_holdTime(holdTime)
 {
+    // FIXME: pass in the timeline duration for scroll timelines.
+    m_timing.updateComputedProperties(std::nullopt, m_playbackRate);
 }
 
 AcceleratedEffect::AcceleratedEffect(const AcceleratedEffect& source, OptionSet<AcceleratedEffectProperty>& propertyFilter)
@@ -303,11 +305,9 @@ static void blend(AcceleratedEffectProperty property, AcceleratedEffectValues& o
     case AcceleratedEffectProperty::Opacity:
         output.opacity = blend(from.opacity, to.opacity, blendingContext);
         break;
-    case AcceleratedEffectProperty::Transform: {
-        LayoutSize boxSize { bounds.size() };
-        output.transform = to.transform.blend(from.transform, blendingContext, boxSize);
+    case AcceleratedEffectProperty::Transform:
+        output.transform = blend(from.transform, to.transform, blendingContext, LayoutSize { bounds.size() });
         break;
-    }
     case AcceleratedEffectProperty::Translate:
         if (auto& toTranslate = to.translate)
             output.translate = toTranslate->blend(from.translate.get(), blendingContext);

@@ -38,6 +38,7 @@
 #import "EditorClient.h"
 #import "Element.h"
 #import "File.h"
+#import "FrameDestructionObserverInlines.h"
 #import "HTMLAttachmentElement.h"
 #import "LocalFrame.h"
 #import "LocalFrameView.h"

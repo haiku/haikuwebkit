@@ -45,6 +45,7 @@
 #import <wtf/Deque.h>
 #import <wtf/MemoryPressureHandler.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 #if PLATFORM(IOS_FAMILY)
 #import <UIKitSPI.h>
@@ -491,7 +492,7 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
                 timeoutInterval = timeoutOption.doubleValue;
         }
 
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, timeoutInterval * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, timeoutInterval * NSEC_PER_SEC), mainDispatchQueueSingleton(), ^{
             if (finished)
                 return;
             cancel(WKErrorAttributedStringContentLoadTimedOut, nil);
@@ -508,7 +509,7 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
     if ([NSThread isMainThread])
         runConversion();
     else
-        dispatch_async(dispatch_get_main_queue(), runConversion);
+        dispatch_async(mainDispatchQueueSingleton(), runConversion);
 }
 
 @end

@@ -59,6 +59,7 @@ namespace WebCore {
 class MediaSourcePrivate;
 class SharedBuffer;
 class TrackBuffer;
+struct TrackInfo;
 class TimeRanges;
 
 #if ENABLE(ENCRYPTED_MEDIA)

@@ -111,8 +111,7 @@ private:
     std::array<uint32_t, 32> m_maxDynamicOffsetAtIndex;
     NSString *m_lastErrorString { nil };
     bool m_passEnded { false };
-// FIXME: remove @safe once rdar://151039766 lands
-} __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(refComputePassEncoder, derefComputePassEncoder);
+} SWIFT_SHARED_REFERENCE(refComputePassEncoder, derefComputePassEncoder);
 
 
 } // namespace WebGPU

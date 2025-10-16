@@ -92,6 +92,7 @@
 namespace WebCore {
 namespace Style {
 
+using namespace CSS::Literals;
 using namespace HTMLNames;
 
 Adjuster::Adjuster(const Document& document, const RenderStyle& parentStyle, const RenderStyle* parentBoxStyle, Element* element)
@@ -475,6 +476,15 @@ void Adjuster::adjustFromBuilder(RenderStyle& style)
     style.adjustViewTimelines();
 }
 
+void Adjuster::adjustFirstLetterStyle(RenderStyle& style)
+{
+    if (style.pseudoElementType() != PseudoId::FirstLetter)
+        return;
+
+    // Force inline display (except for floating first-letters).
+    style.setEffectiveDisplay(style.isFloating() ? DisplayType::Block : DisplayType::Inline);
+}
+
 void Adjuster::adjust(RenderStyle& style) const
 {
     if (style.display() == DisplayType::Contents)
@@ -514,6 +524,8 @@ void Adjuster::adjust(RenderStyle& style) const
         // Absolute/fixed positioned elements, floating elements and the document element need block-like outside display.
         if (style.hasOutOfFlowPosition() || style.isFloating() || (m_element && m_document->documentElement() == m_element.get()))
             style.setEffectiveDisplay(equivalentBlockDisplay(style));
+
+        adjustFirstLetterStyle(style);
 
         // FIXME: Don't support this mutation for pseudo styles like first-letter or first-line, since it's not completely
         // clear how that should work.
@@ -1046,15 +1058,13 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         //     animation-duration: 0.18s, 0.06s;
         //     animation-fill-mode: none, forwards;
         //     animation-name: menu-grow-left, menu-fade-in;
-        auto menuGrowLeftAnimation = Animation::create();
-        menuGrowLeftAnimation->setDuration(.18);
-        menuGrowLeftAnimation->setName({ "menu-grow-left"_s });
+        auto menuGrowLeftAnimation = Style::Animation { { ScopedName { "menu-grow-left"_s } } };
+        menuGrowLeftAnimation.setDuration(.18_css_s);
 
-        auto menuFadeInAnimation = Animation::create();
-        menuFadeInAnimation->setDelay(.06);
-        menuFadeInAnimation->setDuration(.06);
-        menuFadeInAnimation->setFillMode(AnimationFillMode::Forwards);
-        menuFadeInAnimation->setName({ "menu-fade-in"_s });
+        auto menuFadeInAnimation = Style::Animation { { ScopedName { "menu-fade-in"_s } } };
+        menuFadeInAnimation.setDelay(.06_css_s);
+        menuFadeInAnimation.setDuration(.06_css_s);
+        menuFadeInAnimation.setFillMode(AnimationFillMode::Forwards);
 
         auto& animations = style.ensureAnimations();
         animations.append(WTFMove(menuGrowLeftAnimation));
@@ -1065,6 +1075,11 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         static MainThreadNeverDestroyed<const AtomString> className("xnw9j1v"_s);
         if (is<HTMLDivElement>(*m_element) && m_element->hasClassName(className))
             style.setEffectiveDisplay(DisplayType::None);
+    }
+
+    if (m_document->quirks().needsTextInputBoxSizingBorderBoxQuirk()) {
+        if (RefPtr input = dynamicDowncast<HTMLInputElement>(m_element); input && input->isTextField())
+            style.setBoxSizing(BoxSizing::BorderBox);
     }
 }
 
@@ -1087,11 +1102,10 @@ void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& updat
     }();
 
     auto writingMode = [&] {
-        // FIXME: The spec says body should win.
-        if (documentElementStyle->hasExplicitlySetWritingMode())
-            return documentElementStyle->writingMode().computedWritingMode();
         if (shouldPropagateFromBody && bodyStyle && bodyStyle->hasExplicitlySetWritingMode())
             return bodyStyle->writingMode().computedWritingMode();
+        if (documentElementStyle->hasExplicitlySetWritingMode())
+            return documentElementStyle->writingMode().computedWritingMode();
         return RenderStyle::initialWritingMode();
     }();
 

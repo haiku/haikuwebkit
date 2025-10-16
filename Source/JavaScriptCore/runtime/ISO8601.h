@@ -327,6 +327,8 @@ std::optional<ExactTime> parseInstant(StringView);
 bool isDateTimeWithinLimits(int32_t year, uint8_t month, uint8_t day, unsigned hour, unsigned minute, unsigned second, unsigned millisecond, unsigned microsecond, unsigned nanosecond);
 bool isYearWithinLimits(double year);
 
+Int128 roundTimeDuration(JSGlobalObject*, Int128, unsigned, TemporalUnit, RoundingMode);
+
 } // namespace ISO8601
 
 using CheckedInt128 = Checked<Int128, RecordOverflow>;

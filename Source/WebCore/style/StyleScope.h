@@ -135,6 +135,7 @@ public:
     WEBCORE_EXPORT Resolver& resolver();
     Ref<Resolver> protectedResolver();
     Resolver* resolverIfExists() { return m_resolver.get(); }
+    const Resolver* resolverIfExists() const { return m_resolver.get(); }
     void clearResolver();
     void releaseMemory();
 
@@ -147,10 +148,15 @@ public:
     const ShadowRoot* shadowRoot() const { return m_shadowRoot; }
     ShadowRoot* shadowRoot() { return m_shadowRoot; }
 
+    CheckedPtr<const Scope> hostScope() const;
+
     static Scope& forNode(Node&);
     static const Scope& forNode(const Node&);
     static Scope* forOrdinal(Element&, ScopeOrdinal);
     static const Scope* forOrdinal(const Element&, ScopeOrdinal);
+
+    // The provided function is called for all the relevant scopes until it finds a name match from a scope and returns a truthy value.
+    template<typename F> static auto resolveTreeScopedReference(const Element&, const ScopedName&, const F&&);
 
     struct LayoutDependencyUpdateContext {
         HashSet<CheckedRef<const Element>> invalidatedContainers;
@@ -288,6 +294,29 @@ inline void Scope::flushPendingUpdate()
         flushPendingDescendantUpdates();
     if (m_pendingUpdate)
         flushPendingSelfUpdate();
+}
+
+template<typename F>
+auto Scope::resolveTreeScopedReference(const Element& element, const ScopedName& reference, const F&& function)
+{
+    using ReturnType = std::invoke_result_t<F, Scope, AtomString>;
+
+    // https://drafts.csswg.org/css-scoping-1/#shadow-names
+    // "Whenever a tree-scoped reference is dereferenced to find the CSS construct it is referencing,
+    // first search only the tree-scoped names associated with the same root as the tree-scoped reference must be searched."
+    CheckedPtr firstScope = Scope::forOrdinal(element, reference.scopeOrdinal);
+    if (!firstScope)
+        return ReturnType { };
+
+    if (auto result = function(*firstScope, reference.name))
+        return result;
+
+    // "If no relevant tree-scoped name is found, and the root is a shadow root, then repeat this search in the root’s host’s node tree."
+    for (CheckedPtr hostScope = firstScope->hostScope(); hostScope; hostScope = hostScope->hostScope()) {
+        if (auto result = function(*hostScope, reference.name))
+            return result;
+    }
+    return ReturnType { };
 }
 
 }

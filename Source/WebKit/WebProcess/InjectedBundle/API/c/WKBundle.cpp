@@ -208,15 +208,15 @@ void WKBundleSetTabKeyCyclesThroughElements(WKBundleRef bundleRef, WKBundlePageR
 
 void WKBundleClearResourceLoadStatistics(WKBundleRef)
 {
-    WebCore::ResourceLoadObserver::shared().clearState();
+    WebCore::ResourceLoadObserver::singleton().clearState();
 }
 
 void WKBundleResourceLoadStatisticsNotifyObserver(WKBundleRef, void* context, NotifyObserverCallback callback)
 {
-    if (!WebCore::ResourceLoadObserver::shared().hasStatistics())
+    if (!WebCore::ResourceLoadObserver::singleton().hasStatistics())
         return callback(context);
 
-    WebCore::ResourceLoadObserver::shared().updateCentralStatisticsStore([context, callback] {
+    WebCore::ResourceLoadObserver::singleton().updateCentralStatisticsStore([context, callback] {
         callback(context);
     });
 }

@@ -434,6 +434,18 @@ TextStream& operator<<(TextStream& stream, const AccessibilitySearchCriteria& cr
     return stream;
 }
 
+TextStream& operator<<(TextStream& stream, Vector<AccessibilityText>& texts)
+{
+    stream << "{"_s;
+    for (unsigned i = 0; i < texts.size(); i++) {
+        stream << texts[i];
+        if (i != texts.size() - 1)
+            stream << " ";
+    }
+    stream << "}"_s;
+    return stream;
+}
+
 TextStream& operator<<(TextStream& stream, AccessibilityText text)
 {
     stream << text.textSource << ": " << text.text;
@@ -799,6 +811,9 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::HasClickHandler:
         stream << "HasClickHandler";
+        break;
+    case AXProperty::HasCursorPointer:
+        stream << "HasCursorPointer";
         break;
     case AXProperty::HasItalicFont:
         stream << "HasItalicFont";

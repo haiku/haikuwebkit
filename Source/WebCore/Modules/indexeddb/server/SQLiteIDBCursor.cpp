@@ -99,7 +99,7 @@ SQLiteIDBCursor::SQLiteIDBCursor(SQLiteIDBTransaction& transaction, IDBObjectSto
 SQLiteIDBCursor::~SQLiteIDBCursor()
 {
     if (m_backingStoreCursor)
-        m_transaction->closeCursor(*this);
+        CheckedRef { *m_transaction }->closeCursor(*this);
 }
 
 SQLiteIDBTransaction* SQLiteIDBCursor::transaction() const
@@ -260,7 +260,7 @@ void SQLiteIDBCursor::resetAndRebindStatement()
         return;
     }
 
-    if (m_statement->reset() != SQLITE_OK) {
+    if (CheckedRef { *m_statement }->reset() != SQLITE_OK) {
         LOG_ERROR("Could not reset cursor statement to respond to object store changes");
         return;
     }
@@ -274,19 +274,20 @@ bool SQLiteIDBCursor::bindArguments()
 
     int currentBindArgument = 1;
 
-    if (m_statement->bindInt64(currentBindArgument++, boundIDValue()) != SQLITE_OK) {
+    CheckedRef statement = *m_statement;
+    if (statement->bindInt64(currentBindArgument++, boundIDValue()) != SQLITE_OK) {
         LOG_ERROR("Could not bind id argument (bound ID)");
         return false;
     }
 
     auto buffer = serializeIDBKeyData(m_currentLowerKey);
-    if (m_statement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
+    if (statement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
         LOG_ERROR("Could not create cursor statement (lower key)");
         return false;
     }
 
     buffer = serializeIDBKeyData(m_currentUpperKey);
-    if (m_statement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
+    if (statement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
         LOG_ERROR("Could not create cursor statement (upper key)");
         return false;
     }
@@ -312,7 +313,8 @@ bool SQLiteIDBCursor::resetAndRebindPreIndexStatementIfNecessary()
         m_preIndexStatement = preIndexStatement.value().moveToUniquePtr();
     }
 
-    if (m_preIndexStatement->reset() != SQLITE_OK) {
+    CheckedRef preIndexStatement = *m_preIndexStatement;
+    if (preIndexStatement->reset() != SQLITE_OK) {
         LOG_ERROR("Could not reset pre statement - '%s'", database->lastErrorMsg());
         return false;
     }
@@ -320,19 +322,19 @@ bool SQLiteIDBCursor::resetAndRebindPreIndexStatementIfNecessary()
     auto key = isDirectionNext() ? m_currentLowerKey : m_currentUpperKey;
     int currentBindArgument = 1;
 
-    if (m_preIndexStatement->bindInt64(currentBindArgument++, boundIDValue()) != SQLITE_OK) {
+    if (preIndexStatement->bindInt64(currentBindArgument++, boundIDValue()) != SQLITE_OK) {
         LOG_ERROR("Could not bind id argument to pre statement (bound ID)");
         return false;
     }
 
     auto buffer = serializeIDBKeyData(key);
-    if (m_preIndexStatement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
+    if (preIndexStatement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
         LOG_ERROR("Could not bind id argument to pre statement (key)");
         return false;
     }
 
     buffer = serializeIDBKeyData(m_currentIndexRecordValue);
-    if (m_preIndexStatement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
+    if (preIndexStatement->bindBlob(currentBindArgument++, buffer->span()) != SQLITE_OK) {
         LOG_ERROR("Could not bind id argument to pre statement (value)");
         return false;
     }
@@ -487,21 +489,21 @@ SQLiteIDBCursor::FetchResult SQLiteIDBCursor::internalFetchNextRecord(SQLiteCurs
     record.record.value = { };
 
     CheckedPtr database = m_transaction->sqliteDatabase();
-    SQLiteStatement* statement = nullptr;
+    CheckedPtr<SQLiteStatement> statement;
 
     int result;
-    if (m_preIndexStatement) {
+    if (CheckedPtr preIndexStatement = m_preIndexStatement.get()) {
         ASSERT(m_indexID);
 
-        result = m_preIndexStatement->step();
+        result = preIndexStatement->step();
         if (result == SQLITE_ROW)
-            statement = m_preIndexStatement.get();
+            statement = preIndexStatement.get();
         else if (result != SQLITE_DONE)
             LOG_ERROR("Error advancing with pre statement - (%i) %s", result, database->lastErrorMsg());
     }
     
     if (!statement) {
-        result = m_statement->step();
+        result = CheckedRef { *m_statement }->step();
         if (result == SQLITE_DONE) {
             record = { };
             record.completed = true;
@@ -548,23 +550,24 @@ SQLiteIDBCursor::FetchResult SQLiteIDBCursor::internalFetchNextRecord(SQLiteCurs
             return FetchResult::Failure;
         }
 
-        if (!m_cachedObjectStoreStatement || m_cachedObjectStoreStatement->reset() != SQLITE_OK) {
+        if (!m_cachedObjectStoreStatement || CheckedRef { *m_cachedObjectStoreStatement }->reset() != SQLITE_OK) {
             if (auto cachedObjectStoreStatement = database->prepareHeapStatement("SELECT rowid, value FROM Records WHERE key = CAST(? AS TEXT) and objectStoreID = ?;"_s))
                 m_cachedObjectStoreStatement = cachedObjectStoreStatement.value().moveToUniquePtr();
         }
 
-        if (!m_cachedObjectStoreStatement
-            || m_cachedObjectStoreStatement->bindBlob(1, keyData) != SQLITE_OK
-            || m_cachedObjectStoreStatement->bindInt64(2, m_objectStoreID.toRawValue()) != SQLITE_OK) {
+        CheckedPtr cachedObjectStoreStatement = m_cachedObjectStoreStatement.get();
+        if (!cachedObjectStoreStatement
+            || cachedObjectStoreStatement->bindBlob(1, keyData) != SQLITE_OK
+            || cachedObjectStoreStatement->bindInt64(2, m_objectStoreID.toRawValue()) != SQLITE_OK) {
             LOG_ERROR("Could not create index cursor statement into object store records (%i) '%s'", database->lastError(), database->lastErrorMsg());
             markAsErrored(record);
             return FetchResult::Failure;
         }
 
-        int result = m_cachedObjectStoreStatement->step();
+        int result = cachedObjectStoreStatement->step();
 
         if (result == SQLITE_ROW) {
-            auto recordsRowID = m_cachedObjectStoreStatement->columnInt64(0);
+            auto recordsRowID = cachedObjectStoreStatement->columnInt64(0);
             Vector<String> blobURLs, blobFilePaths;
             auto error = m_transaction->backingStore().getBlobRecordsForObjectStoreRecord(recordsRowID, blobURLs, blobFilePaths);
             if (!error.isNull()) {
@@ -573,7 +576,7 @@ SQLiteIDBCursor::FetchResult SQLiteIDBCursor::internalFetchNextRecord(SQLiteCurs
                 return FetchResult::Failure;
             }
 
-            record.record.value = { ThreadSafeDataBuffer::create(m_cachedObjectStoreStatement->columnBlob(1)), WTFMove(blobURLs), WTFMove(blobFilePaths) };
+            record.record.value = { ThreadSafeDataBuffer::create(cachedObjectStoreStatement->columnBlob(1)), WTFMove(blobURLs), WTFMove(blobFilePaths) };
         } else if (result == SQLITE_DONE) {
             // This indicates that the record we're trying to retrieve has been removed from the object store.
             // Skip over it.

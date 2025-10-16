@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,7 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/RuntimeApplicationChecks.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 #if ENABLE(CONTENT_FILTERING)
 #import <pal/spi/cocoa/NEFilterSourceSPI.h>
@@ -58,6 +59,8 @@
 #import "ExtensionKitSPI.h"
 #import "WKProcessExtension.h"
 #endif
+
+#import <pal/spi/cocoa/NetworkSPI.h>
 
 namespace WebKit {
 
@@ -117,6 +120,18 @@ void NetworkProcess::platformInitializeNetworkProcessCocoa(const NetworkProcessC
 #endif
     m_enableModernDownloadProgress = parameters.enableModernDownloadProgress;
 
+#if PLATFORM(IOS_SIMULATOR)
+    // See TestController::cocoaPlatformInitialize for supporting a local DNS resolver on Mac.
+    if (parameters.localhostAliasesForTesting.contains("web-platform.test"_s)) {
+        nw_resolver_config_t resolverConfig = nw_resolver_config_create();
+        nw_resolver_config_set_protocol(resolverConfig, nw_resolver_protocol_dns53);
+        nw_resolver_config_set_class(resolverConfig, nw_resolver_class_designated_direct);
+        nw_resolver_config_add_name_server(resolverConfig, "127.0.0.1:8053");
+        nw_resolver_config_add_match_domain(resolverConfig, "test");
+        nw_privacy_context_require_encrypted_name_resolution(NW_DEFAULT_PRIVACY_CONTEXT, true, resolverConfig);
+    }
+#endif
+
     increaseFileDescriptorLimit();
 }
 
@@ -174,7 +189,7 @@ void NetworkProcess::clearDiskCache(WallTime modifiedSince, CompletionHandler<vo
         m_clearCacheDispatchGroup = adoptOSObject(dispatch_group_create());
 
     RetainPtr group = m_clearCacheDispatchGroup.get();
-    dispatch_group_async(group.get(), RetainPtr { dispatch_get_main_queue() }.get(), makeBlockPtr([this, protectedThis = Ref { *this }, modifiedSince, completionHandler = WTFMove(completionHandler)] () mutable {
+    dispatch_group_async(group.get(), RetainPtr { mainDispatchQueueSingleton() }.get(), makeBlockPtr([this, protectedThis = Ref { *this }, modifiedSince, completionHandler = WTFMove(completionHandler)] () mutable {
         auto aggregator = CallbackAggregator::create(WTFMove(completionHandler));
         forEachNetworkSession([modifiedSince, &aggregator](NetworkSession& session) {
             if (RefPtr cache = session.cache())

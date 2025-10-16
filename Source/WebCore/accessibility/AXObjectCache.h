@@ -728,7 +728,7 @@ private:
     bool removeRelation(Element&, AXRelation);
     void removeAllRelations(AXID);
     void removeRelationByID(AXID originID, AXID targetID, AXRelation);
-    void updateLabelFor(HTMLLabelElement&);
+    bool updateLabelFor(HTMLLabelElement&);
     void updateLabeledBy(Element*);
     void updateRelationsIfNeeded();
     void updateRelationsForTree(ContainerNode&);

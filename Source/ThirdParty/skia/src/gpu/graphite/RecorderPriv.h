@@ -12,6 +12,7 @@
 #include "include/core/SkRefCnt.h"
 #include "include/gpu/graphite/Recorder.h"
 #include "include/private/base/SkDebug.h"
+#include "src/gpu/graphite/PipelineData.h"
 #include "src/gpu/graphite/ResourceProvider.h"
 #include "src/gpu/graphite/SharedContext.h"
 
@@ -34,9 +35,6 @@ class TextBlobRedrawCoordinator;
 
 namespace skgpu::graphite {
 
-class ShaderCodeDictionary;
-class TextureProxy;
-class UploadList;
 class AtlasProvider;
 class Caps;
 class Context;
@@ -46,8 +44,11 @@ class ProxyCache;
 class RendererProvider;
 class ResourceCache;
 class RuntimeEffectDictionary;
+class ShaderCodeDictionary;
 class Task;
+class TextureProxy;
 class UploadBufferManager;
+class UploadList;
 
 class RecorderPriv {
 public:
@@ -58,12 +59,8 @@ public:
 
     ResourceProvider* resourceProvider() { return fRecorder->fResourceProvider; }
 
-    const RuntimeEffectDictionary* runtimeEffectDictionary() const {
-        return fRecorder->fRuntimeEffectDict.get();
-    }
-    RuntimeEffectDictionary* runtimeEffectDictionary() {
-        return fRecorder->fRuntimeEffectDict.get();
-    }
+    sk_sp<RuntimeEffectDictionary> runtimeEffectDictionary();
+
     const ShaderCodeDictionary* shaderCodeDictionary() const {
         return fRecorder->fSharedContext->shaderCodeDictionary();
     }
@@ -80,9 +77,9 @@ public:
     }
 
     UploadList* rootUploadList() { return fRecorder->fRootUploads.get(); }
-    TextureDataCache* textureDataCache() { return fRecorder->fTextureDataCache.get(); }
     DrawBufferManager* drawBufferManager() { return fRecorder->fDrawBufferManager.get(); }
     UploadBufferManager* uploadBufferManager() { return fRecorder->fUploadBufferManager.get(); }
+    sk_sp<FloatStorageManager> refFloatStorageManager() { return fRecorder->fFloatStorageManager; }
 
     AtlasProvider* atlasProvider() { return fRecorder->fAtlasProvider.get(); }
     TokenTracker* tokenTracker() { return fRecorder->fTokenTracker.get(); }

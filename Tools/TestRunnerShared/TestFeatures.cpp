@@ -111,18 +111,10 @@ static std::optional<double> overrideDeviceScaleFactorForTest(const std::string&
 
 static bool shouldDumpJSConsoleLogInStdErr(const std::string& pathOrURL)
 {
-    if (auto url = URL { { }, String::fromUTF8(pathOrURL.c_str()) }; isWebPlatformTestURL(url)) {
-        auto path = url.path();
-        return path.startsWith("/beacon"_s)
-            || path.startsWith("/cors"_s)
-            || path.startsWith("/fetch"_s)
-            || path.startsWith("/service-workers"_s)
-            || path.startsWith("/streams/writable-streams"_s)
-            || path.startsWith("/streams/piping"_s)
-            || path.startsWith("/xhr"_s)
-            || path.startsWith("/webrtc"_s)
-            || path.startsWith("/websockets"_s);
-    }
+    // Disable console logging for WPT tests as it frequently causes flakiness.
+    if (auto url = URL { { }, String::fromUTF8(pathOrURL.c_str()) }; isWebPlatformTestURL(url))
+        return true;
+
     return false;
 }
 

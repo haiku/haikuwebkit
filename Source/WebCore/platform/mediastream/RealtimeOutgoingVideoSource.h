@@ -41,7 +41,7 @@
 namespace WebCore {
 
 class RealtimeOutgoingVideoSource
-    : public ThreadSafeRefCounted<RealtimeOutgoingVideoSource, WTF::DestructionThread::Main>
+    : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<RealtimeOutgoingVideoSource, WTF::DestructionThread::Main>
     , public webrtc::VideoTrackSourceInterface
     , private MediaStreamTrackPrivateObserver
     , private RealtimeMediaSource::VideoFrameObserver

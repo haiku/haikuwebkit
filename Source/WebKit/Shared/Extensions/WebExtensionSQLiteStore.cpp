@@ -320,7 +320,7 @@ void WebExtensionSQLiteStore::createSavepoint(CompletionHandler<void(Markable<WT
 
     m_queue->dispatch([protectedThis = Ref { *this }, savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
         String errorMessage;
-        if (protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
+        if (!protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
             WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), completionHandler = WTFMove(completionHandler)]() mutable {
                 completionHandler({ }, errorMessage);
             });
@@ -347,7 +347,7 @@ void WebExtensionSQLiteStore::commitSavepoint(WTF::UUID& savepointIdentifier, Co
 {
     m_queue->dispatch([protectedThis = Ref { *this }, savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
         String errorMessage;
-        if (protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
+        if (!protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
             WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), completionHandler = WTFMove(completionHandler)]() mutable {
                 completionHandler(errorMessage);
             });
@@ -374,7 +374,7 @@ void WebExtensionSQLiteStore::rollbackToSavepoint(WTF::UUID& savepointIdentifier
 {
     m_queue->dispatch([protectedThis = Ref { *this }, savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
         String errorMessage;
-        if (protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
+        if (!protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
             WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), completionHandler = WTFMove(completionHandler)]() mutable {
                 completionHandler(errorMessage);
             });

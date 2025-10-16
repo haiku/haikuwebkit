@@ -174,7 +174,7 @@ JSValue JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIn
 
 void JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns::destroy(JSC::JSCell* cell)
 {
-    JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns* thisObject = static_cast<JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns* thisObject = static_cast<JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns*>(cell);
     thisObject->JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns::~JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns();
 }
 
@@ -417,7 +417,7 @@ bool JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltInsOw
 
 void JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltInsOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns = static_cast<JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns = static_cast<JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns->protectedWrapped().ptr(), jsTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns);
 }

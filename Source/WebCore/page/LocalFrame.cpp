@@ -119,8 +119,8 @@
 #include <JavaScriptCore/APICast.h>
 #include <JavaScriptCore/RegularExpression.h>
 #include <wtf/HexNumber.h>
-#include <wtf/RefCountedLeakCounter.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/SystemTracing.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/TextStream.h>
@@ -143,8 +143,6 @@ using namespace HTMLNames;
 #if PLATFORM(IOS_FAMILY)
 static const Seconds scrollFrequency { 1000_s / 60. };
 #endif
-
-DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, frameCounter, ("Frame"));
 
 struct OverrideScreenSize {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(OverrideScreenSize);
@@ -198,10 +196,6 @@ LocalFrame::LocalFrame(Page& page, ClientCreator&& clientCreator, FrameIdentifie
     if (RefPtr localMainFrame = this->localMainFrame(); localMainFrame && parent)
         localMainFrame->selfOnlyRef();
 
-#ifndef NDEBUG
-    frameCounter.increment();
-#endif
-
     ASSERT(scrollingMode.has_value() ^ !!ownerElement);
     m_scrollingMode = scrollingMode ? *scrollingMode : ownerElement->scrollingMode();
 
@@ -247,10 +241,6 @@ LocalFrame::~LocalFrame()
     checkedScript()->updatePlatformScriptObjects();
 
     // FIXME: We should not be doing all this work inside the destructor
-
-#ifndef NDEBUG
-    frameCounter.decrement();
-#endif
 
     disconnectOwnerElement();
 
@@ -383,6 +373,11 @@ bool LocalFrame::preventsParentFromBeingComplete() const
 void LocalFrame::changeLocation(FrameLoadRequest&& request)
 {
     loader().changeLocation(WTFMove(request));
+}
+
+void LocalFrame::loadFrameRequest(FrameLoadRequest&& request, Event* event)
+{
+    loader().loadFrameRequest(WTFMove(request), event, { });
 }
 
 void LocalFrame::didFinishLoadInAnotherProcess()
@@ -739,16 +734,43 @@ FloatSize LocalFrame::resizePageRectsKeepingRatio(const FloatSize& originalSize,
     return resultSize;
 }
 
+const UserContentProvider* LocalFrame::userContentProvider() const
+{
+    RefPtr document = this->document();
+    RefPtr documentLoader = document ? document->loader() : nullptr;
+    if (RefPtr userContentProvider = documentLoader ? documentLoader->preferences().userContentProvider : nullptr)
+        return userContentProvider.get();
+    if (RefPtr page = this->page())
+        return page->protectedUserContentProviderForFrame().ptr();
+    return nullptr;
+}
+
+UserContentProvider* LocalFrame::userContentProvider()
+{
+    RefPtr document = this->document();
+    RefPtr documentLoader = document ? document->loader() : nullptr;
+    if (RefPtr userContentProvider = documentLoader ? documentLoader->preferences().userContentProvider : nullptr)
+        return userContentProvider.get();
+    if (RefPtr page = this->page())
+        return page->protectedUserContentProviderForFrame().ptr();
+    return nullptr;
+}
+
+bool LocalFrame::hasUserContentProvider(const UserContentProvider& provider)
+{
+    return userContentProvider() == &provider;
+}
+
 void LocalFrame::injectUserScripts(UserScriptInjectionTime injectionTime)
 {
-    if (!page())
-        return;
-
     if (loader().stateMachine().creatingInitialEmptyDocument() && !settings().shouldInjectUserScriptsInInitialEmptyDocument())
         return;
 
-    RefPtr page = this->page();
-    page->protectedUserContentProvider()->forEachUserScript([this, injectionTime](DOMWrapperWorld& world, const UserScript& script) {
+    RefPtr userContentProvider = this->userContentProvider();
+    if (!userContentProvider)
+        return;
+
+    userContentProvider->forEachUserScript([this, injectionTime](DOMWrapperWorld& world, const UserScript& script) {
         if (script.injectionTime() == injectionTime)
             injectUserScriptImmediately(world, script);
     });
@@ -805,7 +827,9 @@ void LocalFrame::injectUserScriptImmediately(DOMWrapperWorld& world, const UserS
     page->setHasInjectedUserScript();
     loader->client().willInjectUserScript(world);
 
+    WTFBeginSignpost(this, UserScript, "Loading user script: %u bytes, top frame only %d, doc start %d, %" PRIVATE_LOG_STRING, script.source().length(), script.injectedFrames() == UserContentInjectedFrames::InjectInTopFrameOnly, script.injectionTime() == UserScriptInjectionTime::DocumentStart, script.url().string().utf8().data());
     checkedScript()->evaluateInWorldIgnoringException(ScriptSourceCode(script.source(), JSC::SourceTaintedOrigin::Untainted, URL(script.url())), world);
+    WTFEndSignpost(this, UserScript);
 }
 
 RenderView* LocalFrame::contentRenderer() const

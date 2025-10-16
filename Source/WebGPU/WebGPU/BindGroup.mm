@@ -1043,7 +1043,7 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
 {
 #define INTERNAL_ERROR_STRING(x) [NSString stringWithFormat:@"GPUDevice.createBindGroup: %@", x]
 #define VALIDATION_ERROR(...) generateAValidationError(INTERNAL_ERROR_STRING((__VA_ARGS__)))
-    if (descriptor.nextInChain || !descriptor.layout || !isValid())
+    if (!descriptor.layout || !isValid())
         return BindGroup::createInvalid(*this);
 
     Ref bindGroupLayout = WebGPU::protectedFromAPI(descriptor.layout);
@@ -1072,19 +1072,7 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
     BindGroup::SamplersContainer samplersSet;
 
     for (const WGPUBindGroupEntry& entry : descriptor.entriesSpan()) {
-        WGPUExternalTexture wgpuExternalTexture = nullptr;
-        if (entry.nextInChain) {
-            if (entry.nextInChain->sType != static_cast<WGPUSType>(WGPUSTypeExtended_BindGroupEntryExternalTexture)) {
-                VALIDATION_ERROR(@"Unknown chain object in WGPUBindGroupEntry");
-                return BindGroup::createInvalid(*this);
-            }
-            if (entry.nextInChain->next) {
-                VALIDATION_ERROR(@"Unknown chain object in WGPUBindGroupEntry");
-                return BindGroup::createInvalid(*this);
-            }
-
-            wgpuExternalTexture = reinterpret_cast<const WGPUBindGroupExternalTextureEntry*>(entry.nextInChain)->externalTexture;
-        }
+        WGPUExternalTexture wgpuExternalTexture = entry.externalTexture;
 
         bool bufferIsPresent = WebGPU::bufferIsPresent(entry);
         bool samplerIsPresent = WebGPU::samplerIsPresent(entry);

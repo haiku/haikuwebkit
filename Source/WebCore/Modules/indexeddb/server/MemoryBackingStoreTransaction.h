@@ -83,7 +83,7 @@ private:
     MemoryBackingStoreTransaction(MemoryIDBBackingStore&, const IDBTransactionInfo&);
     void finish();
 
-    CheckedRef<MemoryIDBBackingStore> m_backingStore;
+    const CheckedRef<MemoryIDBBackingStore> m_backingStore;
     IDBTransactionInfo m_info;
 
     std::unique_ptr<IDBDatabaseInfo> m_originalDatabaseInfo;

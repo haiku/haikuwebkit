@@ -34,13 +34,14 @@
 #include "RenderCombineText.h"
 #include "RenderLayer.h"
 #include "RenderStyle.h"
+#include "StyleAppleColorFilter.h"
 #include "StyleTextShadow.h"
 #include "TextBoxPainter.h"
 #include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 
-ShadowApplier::ShadowApplier(const RenderStyle& style, GraphicsContext& context, const Style::TextShadow* shadow, const FilterOperations* colorFilter, const FloatRect& textRect, bool isLastShadowIteration, bool lastShadowIterationShouldDrawText, bool opaque, bool ignoreWritingMode)
+ShadowApplier::ShadowApplier(const RenderStyle& style, GraphicsContext& context, const Style::TextShadow* shadow, const Style::AppleColorFilter& colorFilter, const FloatRect& textRect, bool isLastShadowIteration, bool lastShadowIterationShouldDrawText, bool opaque, bool ignoreWritingMode)
     : m_context { context }
     , m_shadow { shadow }
     , m_onlyDrawsShadow { !isLastShadowIteration || !lastShadowIterationShouldDrawText }
@@ -56,8 +57,8 @@ ShadowApplier::ShadowApplier(const RenderStyle& style, GraphicsContext& context,
     auto shadowOffset = TextBoxPainter::rotateShadowOffset(shadow->location, ignoreWritingMode ? WritingMode() : style.writingMode());
     auto shadowRadius = shadow->blur.value;
     auto shadowColor = style.colorResolvingCurrentColor(shadow->color);
-    if (colorFilter)
-        colorFilter->transformColor(shadowColor);
+
+    colorFilter.transformColor(shadowColor);
 
     // When drawing shadows, we usually clip the context to the area the shadow will reside, and then
     // draw the text itself outside the clipped area (so only the shadow shows up). However, we can
@@ -96,7 +97,7 @@ ShadowApplier::~ShadowApplier()
         m_context.clearDropShadow();
 }
 
-TextPainter::TextPainter(GraphicsContext& context, const FontCascade& font, const RenderStyle& renderStyle, const TextPaintStyle& textPaintStyle, const Style::TextShadows& shadow, const FilterOperations* shadowColorFilter, const AtomString& emphasisMark, float emphasisMarkOffset, const RenderCombineText* combinedText)
+TextPainter::TextPainter(GraphicsContext& context, const FontCascade& font, const RenderStyle& renderStyle, const TextPaintStyle& textPaintStyle, const Style::TextShadows& shadow, const Style::AppleColorFilter& shadowColorFilter, const AtomString& emphasisMark, float emphasisMarkOffset, const RenderCombineText* combinedText)
     : m_context(context)
     , m_font(font)
     , m_renderStyle(renderStyle)
@@ -134,7 +135,7 @@ void TextPainter::paintTextOrEmphasisMarks(const FontCascade& font, const TextRu
     }
 }
 
-void TextPainter::paintTextWithShadows(const Style::TextShadows* shadows, const FilterOperations* colorFilter, const FontCascade& font, const TextRun& textRun, const FloatRect& boxRect, const FloatPoint& textOrigin, unsigned startOffset, unsigned endOffset, const AtomString& emphasisMark, float emphasisMarkOffset, bool stroked)
+void TextPainter::paintTextWithShadows(const Style::TextShadows* shadows, const Style::AppleColorFilter& colorFilter, const FontCascade& font, const TextRun& textRun, const FloatRect& boxRect, const FloatPoint& textOrigin, unsigned startOffset, unsigned endOffset, const AtomString& emphasisMark, float emphasisMarkOffset, bool stroked)
 {
     if (!shadows || shadows->isNone()) {
         paintTextOrEmphasisMarks(font, textRun, emphasisMark, emphasisMarkOffset, textOrigin, startOffset, endOffset);
@@ -160,7 +161,7 @@ void TextPainter::paintTextWithShadows(const Style::TextShadows* shadows, const 
 }
 
 void TextPainter::paintTextAndEmphasisMarksIfNeeded(const TextRun& textRun, const FloatRect& boxRect, const FloatPoint& textOrigin, unsigned startOffset, unsigned endOffset,
-    const TextPaintStyle& paintStyle, const Style::TextShadows& shadow, const FilterOperations* shadowColorFilter)
+    const TextPaintStyle& paintStyle, const Style::TextShadows& shadow, const Style::AppleColorFilter& shadowColorFilter)
 {
     if (paintStyle.paintOrder == PaintOrder::Normal) {
         // FIXME: Truncate right-to-left text correctly.

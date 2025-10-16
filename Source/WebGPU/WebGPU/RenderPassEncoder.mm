@@ -1083,8 +1083,10 @@ bool RenderPassEncoder::splitRenderPass()
         [m_renderCommandEncoder setStencilReferenceValue:*m_stencilReferenceValue];
     if (m_scissorRect)
         [m_renderCommandEncoder setScissorRect:*m_scissorRect];
-    if (RefPtr pipeline = m_pipeline)
+    if (RefPtr pipeline = m_pipeline) {
+        m_pipeline = nullptr;
         setPipeline(*pipeline);
+    }
     m_existingVertexBuffers.fill(ExistingBufferKey { });
     m_existingFragmentBuffers.fill(ExistingBufferKey { });
     m_bindGroupDynamicOffsetsChanged.fill(true);
@@ -1533,12 +1535,13 @@ void RenderPassEncoder::setPipeline(const RenderPipeline& pipeline)
         return;
     }
 
+    if (m_pipeline.get() == &pipeline)
+        return;
+
     m_primitiveType = pipeline.primitiveType();
-    if (m_pipeline.get() != &pipeline) {
-        m_pipeline = pipeline;
-        m_bindGroupDynamicOffsetsChanged.fill(true);
-        m_maxDynamicOffsetAtIndex.fill(0);
-    }
+    m_pipeline = pipeline;
+    m_bindGroupDynamicOffsetsChanged.fill(true);
+    m_maxDynamicOffsetAtIndex.fill(0);
 
     m_vertexDynamicOffsets.fill(0, pipeline.pipelineLayout().sizeOfVertexDynamicOffsets());
     m_fragmentDynamicOffsets.fill(0, pipeline.pipelineLayout().sizeOfFragmentDynamicOffsets() + RenderBundleEncoder::startIndexForFragmentDynamicOffsets);

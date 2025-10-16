@@ -48,6 +48,7 @@
 #include "RenderBlockFlow.h"
 #include "RenderImage.h"
 #include "RenderInline.h"
+#include "RenderObjectStyle.h"
 #include "SVGAElement.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImageElement.h"
@@ -208,7 +209,7 @@ LocalFrame* HitTestResult::frame() const
     return nullptr;
 }
 
-LocalFrame* HitTestResult::targetFrame() const
+Frame* HitTestResult::targetFrame() const
 {
     if (!m_innerURLElement)
         return nullptr;
@@ -217,7 +218,7 @@ LocalFrame* HitTestResult::targetFrame() const
     if (!frame)
         return nullptr;
 
-    return dynamicDowncast<LocalFrame>(frame->tree().findBySpecifiedName(m_innerURLElement->target(), *frame));
+    return frame->tree().findBySpecifiedName(m_innerURLElement->target(), *frame);
 }
 
 bool HitTestResult::isSelected() const
@@ -478,7 +479,7 @@ URL HitTestResult::absolutePDFURL() const
     if (!m_innerNonSharedNode)
         return URL();
 
-    RefPtr element = dynamicDowncast<HTMLPlugInImageElement>(*m_innerNonSharedNode);
+    RefPtr element = dynamicDowncast<HTMLPlugInElement>(*m_innerNonSharedNode);
     if (!element)
         return URL();
 

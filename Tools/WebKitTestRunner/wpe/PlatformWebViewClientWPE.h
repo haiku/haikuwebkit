@@ -41,8 +41,6 @@ public:
     PlatformWebViewClientWPE(WKPageConfigurationRef);
     ~PlatformWebViewClientWPE();
 
-    WPEDisplay* display() const { return m_display.get(); }
-
 private:
     void addToWindow() override;
     void removeFromWindow() override;
@@ -51,7 +49,6 @@ private:
 
     PlatformImage snapshot() override;
 
-    GRefPtr<WPEDisplay> m_display;
     GRefPtr<WPEBuffer> m_buffer;
 };
 

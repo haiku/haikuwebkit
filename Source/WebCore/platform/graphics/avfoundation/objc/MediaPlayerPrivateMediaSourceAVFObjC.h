@@ -290,7 +290,7 @@ private:
     bool wirelessVideoPlaybackDisabled() const override { return false; }
 #endif
 
-    bool performTaskAtTime(Function<void()>&&, const MediaTime&) final;
+    bool performTaskAtTime(Function<void(const MediaTime&)>&&, const MediaTime&) final;
     void audioOutputDeviceChanged() final;
 
     void ensureLayer();

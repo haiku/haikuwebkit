@@ -63,7 +63,10 @@ messages -> GPUProcess : AuxiliaryProcess {
     SetScreenProperties(struct WebCore::ScreenProperties screenProperties)
 #endif
 
+#if PLATFORM(COCOA)
+    SinkCompletedSnapshotToPDF(WebKit::RemoteSnapshotIdentifier identifier, WebCore::IntSize size, WebCore::FrameIdentifier rootFrameIdentifier) -> (RefPtr<WebCore::SharedBuffer> result)
 #endif
+    ReleaseSnapshot(WebKit::RemoteSnapshotIdentifier identifier)
 
 #if HAVE(SCREEN_CAPTURE_KIT)
     PromptForGetDisplayMedia(enum:uint8_t WebCore::DisplayCapturePromptType type) -> (std::optional<WebCore::CaptureDevice> device)

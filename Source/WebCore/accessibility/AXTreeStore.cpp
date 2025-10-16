@@ -27,6 +27,7 @@
 #include "AXTreeStore.h"
 
 #include "AXIsolatedTree.h"
+#include "AXTreeStoreInlines.h"
 
 namespace WebCore {
 

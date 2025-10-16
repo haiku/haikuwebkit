@@ -26,6 +26,7 @@
 
 #include "ContainerNodeInlines.h"
 #include "RenderLayer.h"
+#include "RenderObjectDocument.h"
 #include "RenderSVGModelObjectInlines.h"
 #include "RenderSVGRoot.h"
 #include "SVGContainerLayout.h"

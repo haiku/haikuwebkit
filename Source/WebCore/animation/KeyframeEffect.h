@@ -26,7 +26,6 @@
 #pragma once
 
 #include <WebCore/AcceleratedEffect.h>
-#include <WebCore/Animation.h>
 #include <WebCore/AnimationEffect.h>
 #include <WebCore/AnimationEffectPhase.h>
 #include "BlendingKeyframes.h"
@@ -50,6 +49,7 @@ namespace WebCore {
 
 class Element;
 class FilterOperations;
+class GraphicsLayerAnimation;
 class MutableStyleProperties;
 class RenderStyle;
 
@@ -231,7 +231,7 @@ private:
     void setAnimatedPropertiesInStyle(RenderStyle&, const ComputedEffectTiming&);
     const TimingFunction* timingFunctionForKeyframeAtIndex(size_t) const;
     const TimingFunction* timingFunctionForBlendingKeyframe(const BlendingKeyframe&) const;
-    Ref<const Animation> backingAnimationForCompositedRenderer();
+    Ref<const GraphicsLayerAnimation> backingAnimationForCompositedRenderer();
     void computedNeedsForcedLayout();
     void computeStackingContextImpact();
     void computeSomeKeyframesUseStepsOrLinearTimingFunctionWithPoints();
@@ -284,7 +284,7 @@ private:
     bool ticksContinuouslyWhileActive() const final;
     std::optional<double> progressUntilNextStep(double) const final;
     bool preventsAnimationReadiness() const final;
-    void animationProgressBasedTimelineSourceDidChangeMetrics(const TimelineRange&) final;
+    void animationProgressBasedTimelineSourceDidChangeMetrics(const Style::SingleAnimationRange&) final;
 
     const ViewTimeline* activeViewTimeline();
     void updateComputedKeyframeOffsetsIfNeeded();

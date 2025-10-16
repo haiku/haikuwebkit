@@ -78,8 +78,11 @@ std::optional<ThreadableWebSocketChannel::ValidatedURL> ThreadableWebSocketChann
             return { };
 
 #if ENABLE(CONTENT_EXTENSIONS)
-        if (RefPtr documentLoader = document.loader()) {
-            auto results = page->protectedUserContentProvider()->processContentRuleListsForLoad(*page, validatedURL.url, ContentExtensions::ResourceType::WebSocket, *documentLoader);
+        RefPtr frame = document.frame();
+        RefPtr userContentProvider = frame ? frame->userContentProvider() : nullptr;
+        RefPtr documentLoader = document.loader();
+        if (userContentProvider && documentLoader) {
+            auto results = userContentProvider->processContentRuleListsForLoad(*page, validatedURL.url, ContentExtensions::ResourceType::WebSocket, *documentLoader);
             if (results.shouldBlock())
                 return { };
 

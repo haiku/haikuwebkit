@@ -298,7 +298,7 @@ private:
     String toInternalEventName(const String&);
 
     // Actual event handlers
-    void doLogEntryAdded(RefPtr<JSON::Object>&&);
+    RefPtr<JSON::Object> processLogEntryAdded(RefPtr<JSON::Object>&&);
 #endif
 };
 

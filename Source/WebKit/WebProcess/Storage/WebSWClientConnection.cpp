@@ -114,6 +114,21 @@ void WebSWClientConnection::removeServiceWorkerRegistrationInServer(ServiceWorke
     }
 }
 
+void WebSWClientConnection::registerServiceWorkerInServer(ServiceWorkerIdentifier identifier)
+{
+    if (WebProcess::singleton().registerServiceWorker(identifier))
+        send(Messages::WebSWServerConnection::RegisterServiceWorkerInServer { identifier });
+}
+
+void WebSWClientConnection::unregisterServiceWorkerInServer(ServiceWorkerIdentifier identifier)
+{
+    if (WebProcess::singleton().unregisterServiceWorker(identifier)) {
+        RunLoop::mainSingleton().dispatch([identifier, connection = Ref { *this }]() {
+            connection->send(Messages::WebSWServerConnection::UnregisterServiceWorkerInServer { identifier });
+        });
+    }
+}
+
 void WebSWClientConnection::scheduleUnregisterJobInServer(ServiceWorkerRegistrationIdentifier registrationIdentifier, WebCore::ServiceWorkerOrClientIdentifier documentIdentifier, CompletionHandler<void(ExceptionOr<bool>&&)>&& completionHandler)
 {
     sendWithAsyncReply(Messages::WebSWServerConnection::ScheduleUnregisterJobInServer { ServiceWorkerJobIdentifier::generate(), registrationIdentifier, documentIdentifier }, [completionHandler = WTFMove(completionHandler)](auto&& result) mutable {
@@ -456,7 +471,8 @@ void WebSWClientConnection::focusServiceWorkerClient(ScriptExecutionContextIdent
                 }
 
                 page->focusController().setFocusedFrame(frame.get());
-                callback(ServiceWorkerClientData::from(*document));
+                // FIXME: This is a safer cpp false positive.
+                SUPPRESS_UNCOUNTED_ARG callback(ServiceWorkerClientData::from(*document));
             });
         };
 

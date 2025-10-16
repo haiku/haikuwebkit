@@ -34,6 +34,7 @@
 #include "NodeRenderStyle.h"
 #include "RenderStyleDifference.h"
 #include "SVGElement.h"
+#include "WebAnimationTypes.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/text/TextStream.h>
 
@@ -169,12 +170,12 @@ bool SVGRenderStyle::changeRequiresLayout(const SVGRenderStyle& other) const
         return true; 
 
     // Some stroke properties, requires relayouts, as the cached stroke boundaries need to be recalculated.
-    if (m_strokeData->paint.type != other.m_strokeData->paint.type
-        || m_strokeData->paint.url != other.m_strokeData->paint.url
+    if (!m_strokeData->paint.hasSameType(other.m_strokeData->paint)
+        || m_strokeData->paint.urlDisregardingType() != other.m_strokeData->paint.urlDisregardingType()
         || m_strokeData->dashArray != other.m_strokeData->dashArray
         || m_strokeData->dashOffset != other.m_strokeData->dashOffset
-        || m_strokeData->visitedLinkPaint.type != other.m_strokeData->visitedLinkPaint.type
-        || m_strokeData->visitedLinkPaint.url != other.m_strokeData->visitedLinkPaint.url)
+        || !m_strokeData->visitedLinkPaint.hasSameType(other.m_strokeData->visitedLinkPaint)
+        || m_strokeData->visitedLinkPaint.urlDisregardingType() != other.m_strokeData->visitedLinkPaint.urlDisregardingType())
         return true;
 
     // vector-effect changes require a re-layout.
@@ -188,16 +189,16 @@ bool SVGRenderStyle::changeRequiresRepaint(const SVGRenderStyle& other, bool cur
 {
     if (this == &other) {
         ASSERT(currentColorDiffers);
-        return containsCurrentColor(m_strokeData->paint.color)
-            || containsCurrentColor(m_strokeData->visitedLinkPaint.color)
+        return containsCurrentColor(m_strokeData->paint)
+            || containsCurrentColor(m_strokeData->visitedLinkPaint)
             || containsCurrentColor(m_miscData->floodColor)
             || containsCurrentColor(m_miscData->lightingColor)
-            || containsCurrentColor(m_fillData->paint.color); // FIXME: Should this be checking m_fillData->visitedLinkPaint.color as well?
+            || containsCurrentColor(m_fillData->paint); // FIXME: Should this be checking m_fillData->visitedLinkPaint.color as well?
     }
 
     if (m_strokeData->opacity != other.m_strokeData->opacity
-        || colorChangeRequiresRepaint(m_strokeData->paint.color, other.m_strokeData->paint.color, currentColorDiffers)
-        || colorChangeRequiresRepaint(m_strokeData->visitedLinkPaint.color, other.m_strokeData->visitedLinkPaint.color, currentColorDiffers))
+        || colorChangeRequiresRepaint(m_strokeData->paint.colorDisregardingType(), other.m_strokeData->paint.colorDisregardingType(), currentColorDiffers)
+        || colorChangeRequiresRepaint(m_strokeData->visitedLinkPaint.colorDisregardingType(), other.m_strokeData->visitedLinkPaint.colorDisregardingType(), currentColorDiffers))
         return true;
 
     // Painting related properties only need repaints. 
@@ -207,9 +208,9 @@ bool SVGRenderStyle::changeRequiresRepaint(const SVGRenderStyle& other, bool cur
         return true;
 
     // If fill data changes, we just need to repaint. Fill boundaries are not influenced by this, only by the Path, that RenderSVGPath contains.
-    if (m_fillData->paint.type != other.m_fillData->paint.type
-        || colorChangeRequiresRepaint(m_fillData->paint.color, other.m_fillData->paint.color, currentColorDiffers)
-        || m_fillData->paint.url != other.m_fillData->paint.url
+    if (!m_fillData->paint.hasSameType(other.m_fillData->paint)
+        || colorChangeRequiresRepaint(m_fillData->paint.colorDisregardingType(), other.m_fillData->paint.colorDisregardingType(), currentColorDiffers)
+        || m_fillData->paint.urlDisregardingType() != other.m_fillData->paint.urlDisregardingType()
         || m_fillData->opacity != other.m_fillData->opacity)
         return true;
 

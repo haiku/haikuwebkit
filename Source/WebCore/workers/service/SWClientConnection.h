@@ -90,6 +90,9 @@ public:
     virtual void removeServiceWorkerRegistrationInServer(ServiceWorkerRegistrationIdentifier) = 0;
     virtual void scheduleUnregisterJobInServer(ServiceWorkerRegistrationIdentifier, ServiceWorkerOrClientIdentifier, CompletionHandler<void(ExceptionOr<bool>&&)>&&) = 0;
 
+    virtual void registerServiceWorkerInServer(ServiceWorkerIdentifier) = 0;
+    virtual void unregisterServiceWorkerInServer(ServiceWorkerIdentifier) = 0;
+
     WEBCORE_EXPORT virtual void scheduleJob(ServiceWorkerOrClientIdentifier, const ServiceWorkerJobData&);
 
     virtual void didResolveRegistrationPromise(const ServiceWorkerRegistrationKey&) = 0;

@@ -94,6 +94,7 @@ private:
     // End table-related fields.
 
     // Begin tree-grid-item related fields.
+    // FIXME: This is not updated after dynamic page changes.
     bool m_isValidTreeItem;
     // End tree-grid-item related fields.
 

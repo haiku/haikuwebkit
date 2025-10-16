@@ -59,6 +59,7 @@
 #include "JSModuleRecord.h"
 #include "JSObject.h"
 #include "JSPromise.h"
+#include "JSPromiseAllContext.h"
 #include "JSRemoteFunction.h"
 #include "JSString.h"
 #include "JSWebAssemblyException.h"
@@ -461,20 +462,36 @@ void Interpreter::getAsyncStackTrace(JSCell* owner, Vector<StackFrame>& results,
 
     VM& vm = this->vm();
 
-    auto getParentGenerator = [&](JSGenerator* gen) -> JSGenerator* {
-        JSValue contextValue = gen->internalField(static_cast<unsigned>(JSGenerator::Field::Context)).get();
-        JSPromise* awaitedPromise = jsDynamicCast<JSPromise*>(contextValue);
-        if (awaitedPromise && awaitedPromise->status(vm) == JSPromise::Status::Pending) {
-            JSValue reactionsValue = awaitedPromise->internalField(JSPromise::Field::ReactionsOrResult).get();
+    auto getContextValueFromPromise = [&](JSPromise* promise) -> JSValue {
+        if (promise && promise->status(vm) == JSPromise::Status::Pending) {
+            JSValue reactionsValue = promise->internalField(JSPromise::Field::ReactionsOrResult).get();
             if (JSObject* reactions = jsDynamicCast<JSObject*>(reactionsValue)) {
-                Structure* structure = reactions->structure();
-                unsigned attributes;
-                PropertyOffset offset = structure->getConcurrently(vm.propertyNames->builtinNames().contextPrivateName().impl(), attributes);
-                if (offset != invalidOffset && !(attributes & (PropertyAttribute::Accessor | PropertyAttribute::CustomAccessorOrValue))) {
-                    JSValue contextFieldValue = reactions->getDirect(offset);
-                    if (auto* resultGenerator = jsDynamicCast<JSGenerator*>(contextFieldValue))
-                        return resultGenerator;
-                }
+                Structure* reactionsStructure = reactions->structure();
+                unsigned contextFieldAttributes;
+                PropertyOffset contextOffset = reactionsStructure->getConcurrently(vm.propertyNames->builtinNames().contextPrivateName().impl(), contextFieldAttributes);
+                if (contextOffset != invalidOffset && !(contextFieldAttributes & (PropertyAttribute::Accessor | PropertyAttribute::CustomAccessorOrValue)))
+                    return reactions->getDirect(contextOffset);
+            }
+        }
+        return JSValue();
+    };
+
+    auto getParentGenerator = [&](JSGenerator* gen) -> JSGenerator* {
+        JSValue generatorContext = gen->internalField(static_cast<unsigned>(JSGenerator::Field::Context)).get();
+        JSPromise* awaitedPromise = jsDynamicCast<JSPromise*>(generatorContext);
+        JSValue promiseContext = getContextValueFromPromise(awaitedPromise);
+
+        // handle simple `await`
+        if (auto* generator = jsDynamicCast<JSGenerator*>(promiseContext))
+            return generator;
+
+        // handle `Promise.all`
+        if (auto* promiseAllContext = jsDynamicCast<JSPromiseAllContext*>(promiseContext)) {
+            JSValue promiseValue = promiseAllContext->promise();
+            if (auto* promise = jsDynamicCast<JSPromise*>(promiseValue)) {
+                JSValue promiseContext = getContextValueFromPromise(promise);
+                if (auto* generator = jsDynamicCast<JSGenerator*>(promiseContext))
+                    return generator;
             }
         }
         return nullptr;
@@ -794,12 +811,13 @@ public:
                     auto* wasmCallee = static_cast<Wasm::Callee*>(nativeCallee);
                     if (wasmCallee->hasExceptionHandlers()) {
                         JSWebAssemblyInstance* instance = m_callFrame->wasmInstance();
-                        unsigned exceptionHandlerIndex = m_callFrame->callSiteIndex().bits();
+                        unsigned exceptionHandlerIndex = visitor->wasmCallSiteIndex().bits();
                         auto* wasmHandler = wasmCallee->handlerForIndex(*instance, exceptionHandlerIndex, m_wasmTag.get());
                         m_handler = { wasmHandler, wasmCallee };
                         if (m_handler.m_valid) {
                             if (m_wasmTag == &Wasm::Tag::jsExceptionTag())
                                 m_exception->wrapValueForJSTag(instance->globalObject());
+                            m_callFrame->setCallSiteIndex(visitor->wasmCallSiteIndex());
                             return IterationStatus::Done;
                         }
                     }
@@ -1164,7 +1182,7 @@ JSValue Interpreter::executeProgram(const SourceCode& source, JSGlobalObject*, J
                     PropertySlot slot(scope, PropertySlot::InternalMethodType::Get);
                     JSGlobalLexicalEnvironment::getOwnPropertySlot(scope, globalObject, ident, slot);
                     if (slot.getValue(globalObject, ident) == jsTDZValue())
-                        return throwException(globalObject, throwScope, createTDZError(globalObject));
+                        return throwException(globalObject, throwScope, createTDZError(globalObject, ident.string()));
                     baseObject = scope;
                 }
             }

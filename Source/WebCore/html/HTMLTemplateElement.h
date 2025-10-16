@@ -52,6 +52,8 @@ public:
 
     void setDeclarativeShadowRoot(ShadowRoot&);
 
+    void adoptDeserializedContent(Ref<TemplateContentDocumentFragment>&&);
+
 private:
     HTMLTemplateElement(const QualifiedName&, Document&);
 

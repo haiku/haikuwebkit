@@ -765,6 +765,8 @@ void EventSenderProxy::mouseScrollByWithWheelAndMomentumPhases(int x, int y, int
     CGEventSetIntegerValueField(cgScrollEvent.get(), kCGScrollWheelEventIsContinuous, 1);
     CGEventSetIntegerValueField(cgScrollEvent.get(), kCGScrollWheelEventScrollPhase, phase);
     CGEventSetIntegerValueField(cgScrollEvent.get(), kCGScrollWheelEventMomentumPhase, momentum);
+    // Set a value that won't be interpreted as a falsy timestamp:
+    CGEventSetTimestamp(cgScrollEvent.get(), 1);
 
     NSEvent* event = [NSEvent eventWithCGEvent:cgScrollEvent.get()];
 

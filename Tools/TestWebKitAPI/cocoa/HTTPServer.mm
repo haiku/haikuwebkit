@@ -35,6 +35,7 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/ThreadSafeRefCounted.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/Base64.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/ParsingUtilities.h>
@@ -144,7 +145,7 @@ RetainPtr<nw_parameters_t> HTTPServer::listenerParameters(Protocol protocol, Cer
             sec_protocol_options_set_peer_authentication_required(options.get(), true);
             sec_protocol_options_set_verify_block(options.get(), makeBlockPtr([verifier = WTFMove(verifier)](sec_protocol_metadata_t metadata, sec_trust_t trust, sec_protocol_verify_complete_t completion) {
                 verifier(metadata, trust, completion);
-            }).get(), dispatch_get_main_queue());
+            }).get(), mainDispatchQueueSingleton());
         }
         if (protocol == Protocol::Http2)
             sec_protocol_options_add_tls_application_protocol(options.get(), "h2");
@@ -211,10 +212,10 @@ HTTPServer::HTTPServer(std::initializer_list<std::pair<String, HTTPResponse>> re
     , m_listener(adoptNS(nw_listener_create(listenerParameters(protocol, WTFMove(verifier), identity, port).get())))
     , m_protocol(protocol)
 {
-    nw_listener_set_queue(m_listener.get(), dispatch_get_main_queue());
+    nw_listener_set_queue(m_listener.get(), mainDispatchQueueSingleton());
     nw_listener_set_new_connection_handler(m_listener.get(), makeBlockPtr([requestData = m_requestData](nw_connection_t connection) {
         requestData->connections.append(Connection(connection));
-        nw_connection_set_queue(connection, dispatch_get_main_queue());
+        nw_connection_set_queue(connection, mainDispatchQueueSingleton());
         nw_connection_start(connection);
         respondToRequests(Connection(connection), requestData);
     }).get());
@@ -226,10 +227,10 @@ HTTPServer::HTTPServer(Function<void(Connection)>&& connectionHandler, Protocol 
     , m_listener(adoptNS(nw_listener_create(listenerParameters(protocol, nullptr, nullptr, { }).get())))
     , m_protocol(protocol)
 {
-    nw_listener_set_queue(m_listener.get(), dispatch_get_main_queue());
+    nw_listener_set_queue(m_listener.get(), mainDispatchQueueSingleton());
     nw_listener_set_new_connection_handler(m_listener.get(), makeBlockPtr([requestData = m_requestData, connectionHandler = WTFMove(connectionHandler)] (nw_connection_t connection) {
         requestData->connections.append(Connection(connection));
-        nw_connection_set_queue(connection, dispatch_get_main_queue());
+        nw_connection_set_queue(connection, mainDispatchQueueSingleton());
         nw_connection_start(connection);
         connectionHandler(Connection(connection));
     }).get());
@@ -241,10 +242,10 @@ HTTPServer::HTTPServer(UseCoroutines, Function<ConnectionTask(Connection)>&& con
     , m_listener(adoptNS(nw_listener_create(listenerParameters(protocol, nullptr, nullptr, { }).get())))
     , m_protocol(protocol)
 {
-    nw_listener_set_queue(m_listener.get(), dispatch_get_main_queue());
+    nw_listener_set_queue(m_listener.get(), mainDispatchQueueSingleton());
     nw_listener_set_new_connection_handler(m_listener.get(), makeBlockPtr([requestData = m_requestData, connectionHandler = WTFMove(connectionHandler)] (nw_connection_t connection) {
         requestData->connections.append(Connection(connection));
-        nw_connection_set_queue(connection, dispatch_get_main_queue());
+        nw_connection_set_queue(connection, mainDispatchQueueSingleton());
         nw_connection_start(connection);
         requestData->coroutineHandles.append(connectionHandler(Connection(connection)).handle);
     }).get());

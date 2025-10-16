@@ -191,6 +191,9 @@
         "EnabledForContext": {
             "contextsAllowed": ["attribute", "interface"]
         },
+        "EnabledForGlobalObject": {
+            "contextsAllowed": ["attribute", "operation", "interface"]
+        },
         "EnabledForWorld": {
             "contextsAllowed": ["attribute", "operation", "interface"],
             "values": ["*"],

@@ -36,7 +36,9 @@
 #include "RenderChildIterator.h"
 #include "RenderCombineText.h"
 #include "RenderCounter.h"
+#include "RenderElementInlines.h"
 #include "RenderFlexibleBox.h"
+#include "RenderGrid.h"
 #include "RenderImage.h"
 #include "RenderLineBreak.h"
 #include "RenderListItem.h"
@@ -134,6 +136,8 @@ CheckedRef<Layout::ElementBox> BoxTreeUpdater::build()
         buildTreeForInlineContent();
     else if (is<RenderFlexibleBox>(m_rootRenderer))
         buildTreeForFlexContent();
+    else if (is<RenderGrid>(m_rootRenderer))
+        buildTreeForGridContent();
     else
         ASSERT_NOT_IMPLEMENTED_YET();
 
@@ -319,6 +323,19 @@ void BoxTreeUpdater::buildTreeForFlexContent()
         auto style = RenderStyle::clone(flexItemRenderer.style());
         auto flexItemBox = makeUniqueRef<Layout::ElementBox>(elementAttributes(flexItemRenderer), WTFMove(style));
         insertChild(WTFMove(flexItemBox), flexItemRenderer, flexItemRenderer.previousSibling());
+    }
+}
+
+void BoxTreeUpdater::buildTreeForGridContent()
+{
+    for (auto& gridItemRenderer : childrenOfType<RenderElement>(m_rootRenderer)) {
+        if (auto existingChildBox = gridItemRenderer.layoutBox()) {
+            insertChild(existingChildBox->removeFromParent(), gridItemRenderer, gridItemRenderer.previousSibling());
+            continue;
+        }
+        auto style = RenderStyle::clone(gridItemRenderer.style());
+        auto gridItemBox = makeUniqueRef<Layout::ElementBox>(elementAttributes(gridItemRenderer), WTFMove(style));
+        insertChild(WTFMove(gridItemBox), gridItemRenderer, gridItemRenderer.previousSibling());
     }
 }
 
@@ -549,5 +566,3 @@ void showInlineContent(TextStream& stream, const InlineContent& inlineContent, s
 
 }
 }
-
-

@@ -72,8 +72,6 @@ attributes_to_generate_validators = {
 def receiver_enumerator_order_key(receiver_name):
     if receiver_name == 'IPC':
         return 1
-    elif receiver_name == 'AsyncReply':
-        return 2
     return 0
 
 
@@ -85,8 +83,6 @@ class MessageEnumerator(object):
 
     def __str__(self):
         if self.messages[0].has_attribute(BUILTIN_ATTRIBUTE):
-            return self.messages[0].name
-        if self.receiver.name == 'AsyncReply':
             return self.messages[0].name
         return '%s_%s' % (self.receiver.name, self.messages[0].name)
 
@@ -342,20 +338,24 @@ def atomic_object_identifier(type):
         'WebCore::ServiceWorkerIdentifier',
         'WebCore::ServiceWorkerJobIdentifier',
         'WebCore::ServiceWorkerRegistrationIdentifier',
-        'WebCore::SnapshotIdentifier',
         'WebCore::WebSocketIdentifier',
         'WebKit::GPUProcessConnectionIdentifier',
         'WebKit::LibWebRTCResolverIdentifier',
         'WebKit::LogStreamIdentifier',
         'WebKit::QuotaIncreaseRequestIdentifier',
-        'WebKit::RenderingBackendIdentifier',
+        'WebKit::RemoteRenderingBackendIdentifier',
         'WebKit::RemoteGraphicsContextIdentifier',
+        'WebKit::RemoteGradientIdentifier',
+        'WebKit::RemoteDisplayListIdentifier',
+        'WebKit::RemoteDisplayListRecorderIdentifier',
         'WebKit::RemoteSerializedImageBufferIdentifier',
+        'WebKit::RemoteSnapshotIdentifier',
+        'WebKit::RemoteSnapshotRecorderIdentifier',
         'WebKit::RemoteVideoFrameIdentifier',
         'WebKit::StorageAreaIdentifier',
         'WebKit::WebGPUIdentifier',
-        'WebKit::RenderingBackendIdentifier',
-        'WebKit::GraphicsContextGLIdentifier',
+        'WebKit::RemoteRenderingBackendIdentifier',
+        'WebKit::RemoteGraphicsContextGLIdentifier',
         'WebKit::VideoEncoderIdentifier',
         'WebKit::VideoDecoderIdentifier',
     ]
@@ -438,7 +438,6 @@ def serialized_identifiers():
         'WebCore::SharedWorkerIdentifier',
         'WebCore::SharedWorkerObjectIdentifierID',
         'WebCore::SleepDisablerIdentifier',
-        'WebCore::SnapshotIdentifier',
         'WebCore::SpeechRecognitionConnectionClientIdentifier',
         'WebCore::TextCheckingRequestIdentifier',
         'WebCore::TextManipulationItemIdentifier',
@@ -461,7 +460,7 @@ def serialized_identifiers():
         'WebKit::DrawingAreaIdentifier',
         'WebKit::GeolocationIdentifier',
         'WebKit::GPUProcessConnectionIdentifier',
-        'WebKit::GraphicsContextGLIdentifier',
+        'WebKit::RemoteGraphicsContextGLIdentifier',
         'WebKit::IPCConnectionTesterIdentifier',
         'WebKit::IPCStreamTesterIdentifier',
         'WebKit::JSObjectID',
@@ -481,15 +480,20 @@ def serialized_identifiers():
         'WebKit::RemoteCDMInstanceIdentifier',
         'WebKit::RemoteCDMInstanceSessionIdentifier',
         'WebKit::RemoteGraphicsContextIdentifier',
+        'WebKit::RemoteGradientIdentifier',
+        'WebKit::RemoteDisplayListIdentifier',
+        'WebKit::RemoteDisplayListRecorderIdentifier',
         'WebKit::RemoteLegacyCDMIdentifier',
         'WebKit::RemoteLegacyCDMSessionIdentifier',
         'WebKit::RemoteMediaResourceIdentifier',
         'WebKit::RemoteMediaSourceIdentifier',
         'WebKit::RemoteRemoteCommandListenerIdentifier',
         'WebKit::RemoteSerializedImageBufferIdentifier',
+        'WebKit::RemoteSnapshotIdentifier',
+        'WebKit::RemoteSnapshotRecorderIdentifier',
         'WebKit::RemoteSourceBufferIdentifier',
         'WebKit::RemoteVideoFrameIdentifier',
-        'WebKit::RenderingBackendIdentifier',
+        'WebKit::RemoteRenderingBackendIdentifier',
         'WebKit::RenderingUpdateID',
         'WebKit::RetrieveRecordResponseBodyCallbackIdentifier',
         'WebKit::SampleBufferDisplayLayerIdentifier',
@@ -626,6 +630,7 @@ def types_that_cannot_be_forward_declared():
         'WebKit::WebExtensionTabParameters',
         'WebKit::WebExtensionTabQueryParameters',
         'WebKit::WebExtensionWindowParameters',
+        'WebKit::WebTransportSessionIdentifier',
         'WebKit::XRDeviceIdentifier',
         'WTF::SystemMemoryPressureStatus',
     ] + types_that_must_be_moved())
@@ -997,6 +1002,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::AttributedStringTextListID': ['<WebCore/AttributedString.h>'],
         'WebCore::AttributedStringTextTableID': ['<WebCore/AttributedString.h>'],
         'WebCore::AttributedStringTextTableBlockID': ['<WebCore/AttributedString.h>'],
+        'WebCore::AudioInfo': ['<WebCore/TrackInfo.h>'],
         'WebCore::AudioSessionCategory': ['<WebCore/AudioSession.h>'],
         'WebCore::AudioSessionMode': ['<WebCore/AudioSession.h>'],
         'WebCore::AudioSessionRoutingArbitrationClient::DefaultRouteChanged': ['<WebCore/AudioSession.h>'],
@@ -1240,9 +1246,10 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::TextManipulationTokenIdentifier': ['<WebCore/TextManipulationToken.h>'],
         'WebCore::ThirdPartyCookieBlockingMode': ['<WebCore/NetworkStorageSession.h>'],
         'WebCore::TrackID': ['<WebCore/TrackBase.h>'],
-        'WebCore::TrackInfo': ['<WebCore/MediaSample.h>'],
-        'WebCore::TrackInfo::TrackType': ['<WebCore/MediaSample.h>'],
+        'WebCore::TrackInfo::TrackType': ['<WebCore/TrackInfo.h>'],
+        'WebCore::TrackInfoTrackType': ['<WebCore/TrackInfo.h>'],
         'WebCore::UserGestureTokenIdentifierID': ['"GeneratedSerializers.h"'],
+        'WebCore::VideoInfo': ['<WebCore/TrackInfo.h>'],
         'WebCore::WindowIdentifier': ['<WebCore/GlobalWindowIdentifier.h>'],
         'WebCore::WritingTools::Context': ['<WebCore/WritingToolsTypes.h>'],
         'WebCore::WritingTools::ContextID': ['<WebCore/WritingToolsTypes.h>'],
@@ -1630,7 +1637,8 @@ def generate_message_handler(receiver):
             if condition:
                 result.append('#if %s\n' % condition)
             for message in messages:
-                result += message_statement_function(receiver, message)
+                if not message.is_async_reply:
+                    result += message_statement_function(receiver, message)
             if condition:
                 result.append('#endif\n')
         return result
@@ -1703,7 +1711,7 @@ def generate_message_handler(receiver):
         result.append('    ASSERT(decoder.messageReceiverName() == IPC::ReceiverName::%s);\n' % (receiver.name))
         result.append('    switch (decoder.messageName()) {\n')
         for message in receiver.messages:
-            if message.reply_parameters is None:
+            if message.reply_parameters is None or message.has_attribute(SYNCHRONOUS_ATTRIBUTE):
                 continue
             result.append('    case IPC::MessageName::%s_%s: {\n' % (receiver.name, message.name))
             result.append('        auto arguments = decoder.decode<typename Messages::%s::%s::Arguments>();\n' % (receiver.name, message.name))
@@ -1814,6 +1822,7 @@ def generate_message_names_header(receivers):
     result.append('    ReceiverName receiverName;\n')
     for fname, _ in sorted(attributes_to_generate_validators.items()):
         result.append('    bool %s : 1;\n' % fname)
+    result.append('    bool isAsyncReply : 1;\n')
     result.append('    ProcessName dispatchedFrom;\n')
     result.append('    ProcessName dispatchedTo;\n')
     result.append('};\n')
@@ -1831,6 +1840,12 @@ def generate_message_names_header(receivers):
         result.append('    return Detail::messageDescriptions[static_cast<size_t>(messageName)].%s;\n' % fname)
         result.append('}\n')
         result.append('\n')
+    result.append('inline bool isAsyncReply(MessageName messageName)\n')
+    result.append('{\n')
+    result.append('    messageName = std::min(messageName, MessageName::Last);\n')
+    result.append('    return Detail::messageDescriptions[static_cast<size_t>(messageName)].isAsyncReply;\n')
+    result.append('}\n')
+    result.append('\n')
     result.append('constexpr bool messageIsSync(MessageName name)\n')
     result.append('{\n')
     if seen_synchronous:
@@ -1875,14 +1890,19 @@ def generate_message_names_implementation(receivers):
         for enumerator in enumerators:
             result.append('    MessageDescription { "%s"_s, ReceiverName::%s' % (enumerator, enumerator.receiver.name))
             for attr_list in sorted(attributes_to_generate_validators.values()):
-                value = "true" if set(attr_list).intersection(set(enumerator.messages[0].attributes).union(set(enumerator.receiver.attributes))) else "false"
+                value = "true" if (set(attr_list).intersection(set(enumerator.messages[0].attributes).union(set(enumerator.receiver.attributes))) and not enumerator.messages[0].is_async_reply) else "false"
                 result.append(', %s' % value)
-            result.append(', ProcessName::%s' % (enumerator.receiver.receiver_dispatched_from or "Unknown"))
-            result.append(', ProcessName::%s' % (enumerator.receiver.receiver_dispatched_to or "Unknown"))
+            result.append(', %s' % ("true" if enumerator.messages[0].is_async_reply else "false"))
+            if enumerator.messages[0].is_async_reply:
+                result.append(', ProcessName::%s' % (enumerator.receiver.receiver_dispatched_to or "Unknown"))
+                result.append(', ProcessName::%s' % (enumerator.receiver.receiver_dispatched_from or "Unknown"))
+            else:
+                result.append(', ProcessName::%s' % (enumerator.receiver.receiver_dispatched_from or "Unknown"))
+                result.append(', ProcessName::%s' % (enumerator.receiver.receiver_dispatched_to or "Unknown"))
             result.append(' },\n')
         if condition:
             result.append('#endif\n')
-    result.append('    MessageDescription { "<invalid message name>"_s, ReceiverName::Invalid%s, ProcessName::Unknown, ProcessName::Unknown }\n' % (", false" * len(attributes_to_generate_validators)))
+    result.append('    MessageDescription { "<invalid message name>"_s, ReceiverName::Invalid%s, false, ProcessName::Unknown, ProcessName::Unknown }\n' % (", false" * len(attributes_to_generate_validators)))
     result.append('};\n')
     result.append('\n')
     result.append('} // namespace IPC::Detail\n')

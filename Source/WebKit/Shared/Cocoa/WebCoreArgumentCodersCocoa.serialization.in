@@ -153,7 +153,7 @@ header: <WebCore/AttributedString.h>
 [CustomHeader] struct WebCore::ParagraphStyleTextList {
     WebCore::AttributedStringTextListID thisID
     String markerFormat;
-    [Validator='startingItemNumber >= 0'] int64_t startingItemNumber;
+    int64_t startingItemNumber;
 }
 
 header: <WebCore/AttributedString.h>
@@ -367,19 +367,19 @@ class WebCore::PaymentSessionError {
 
 headers: <pal/cocoa/PassKitSoftLink.h>
 class WebCore::PaymentMethod {
-    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKPaymentMethodClass()], Validator='m_pkPaymentMethod'] RetainPtr<PKPaymentMethod> m_pkPaymentMethod;
+    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKPaymentMethodClassSingleton()], Validator='m_pkPaymentMethod'] RetainPtr<PKPaymentMethod> m_pkPaymentMethod;
 };
 
 class WebCore::Payment {
-    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKPaymentClass()]] RetainPtr<PKPayment> pkPayment();
+    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKPaymentClassSingleton()]] RetainPtr<PKPayment> pkPayment();
 };
 
 class WebCore::PaymentContact {
-    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKContactClass()]] RetainPtr<PKContact> pkContact();
+    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKContactClassSingleton()]] RetainPtr<PKContact> pkContact();
 };
 
 class WebCore::PaymentMerchantSession {
-    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKPaymentMerchantSessionClass()]] RetainPtr<PKPaymentMerchantSession> pkPaymentMerchantSession();
+    [Precondition='PAL::isPassKitCoreFrameworkAvailable()', SecureCodingAllowed=[PAL::getPKPaymentMerchantSessionClassSingleton()]] RetainPtr<PKPaymentMerchantSession> pkPaymentMerchantSession();
 };
 #endif
 

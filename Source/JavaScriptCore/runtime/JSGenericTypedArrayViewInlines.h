@@ -793,7 +793,7 @@ template<typename Adaptor> inline typename Adaptor::Type* JSGenericTypedArrayVie
     return std::bit_cast<typename Adaptor::Type*>(vector());
 }
 
-template<typename Adaptor> inline bool JSGenericTypedArrayView<Adaptor>::inBounds(size_t i) const
+template<typename Adaptor> inline bool JSGenericTypedArrayView<Adaptor>::inBounds(uint64_t i) const
 {
     if (canUseRawFieldsDirectly()) [[likely]]
         return i < lengthRaw();

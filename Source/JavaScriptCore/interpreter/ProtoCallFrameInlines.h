@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "ProtoCallFrame.h"
-#include "RegisterInlines.h"
+#include <JavaScriptCore/ProtoCallFrame.h>
+#include <JavaScriptCore/RegisterInlines.h>
 
 namespace JSC {
 

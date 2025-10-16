@@ -639,6 +639,9 @@ extern NSString * const UIPresentationControllerDismissalTransitionDidEndComplet
 @interface UIActivityViewController ()
 @property (nonatomic) BOOL allowsCustomPresentationStyle;
 @end
+@interface UIView ()
+- (void)_requestRemoteEffects:(NSArray *)effects forKey:(NSString *)key;
+@end
 #endif // PLATFORM(VISION)
 
 @interface UIView ()

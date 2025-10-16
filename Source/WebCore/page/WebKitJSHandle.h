@@ -29,31 +29,32 @@
 #include <WebCore/ProcessQualified.h>
 #include <wtf/Markable.h>
 #include <wtf/ObjectIdentifier.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 
 namespace JSC {
+class JSGlobalObject;
 class JSObject;
 }
 
 namespace WebCore {
 
-class Document;
 class Node;
 
 struct JSHandleIdentifierType;
 using WebProcessJSHandleIdentifier = ObjectIdentifier<JSHandleIdentifierType>;
 using JSHandleIdentifier = ProcessQualified<WebProcessJSHandleIdentifier>;
 
-class WebKitJSHandle : public RefCounted<WebKitJSHandle> {
+class WebKitJSHandle : public RefCountedAndCanMakeWeakPtr<WebKitJSHandle> {
 public:
-    static Ref<WebKitJSHandle> create(Document& document, JSC::JSObject* object) { return adoptRef(*new WebKitJSHandle(document, object)); }
-    WEBCORE_EXPORT static std::pair<RefPtr<Document>, JSC::JSObject*> objectForIdentifier(JSHandleIdentifier);
+    WEBCORE_EXPORT static Ref<WebKitJSHandle> getOrCreate(JSC::JSGlobalObject&, JSC::JSObject*);
+    WEBCORE_EXPORT static std::pair<JSC::JSGlobalObject*, JSC::JSObject*> objectForIdentifier(JSHandleIdentifier);
     WEBCORE_EXPORT static void jsHandleDestroyed(JSHandleIdentifier);
 
     JSHandleIdentifier identifier() const { return m_identifier; }
     Markable<FrameIdentifier> windowFrameIdentifier() const { return m_windowFrameIdentifier; }
 
 private:
-    WEBCORE_EXPORT WebKitJSHandle(Document&, JSC::JSObject*);
+    WebKitJSHandle(JSC::JSGlobalObject&, JSC::JSObject*);
 
     const JSHandleIdentifier m_identifier;
     const Markable<FrameIdentifier> m_windowFrameIdentifier;

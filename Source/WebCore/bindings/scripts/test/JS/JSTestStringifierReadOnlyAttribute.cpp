@@ -154,7 +154,7 @@ JSValue JSTestStringifierReadOnlyAttribute::getConstructor(VM& vm, const JSGloba
 
 void JSTestStringifierReadOnlyAttribute::destroy(JSC::JSCell* cell)
 {
-    JSTestStringifierReadOnlyAttribute* thisObject = static_cast<JSTestStringifierReadOnlyAttribute*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestStringifierReadOnlyAttribute* thisObject = static_cast<JSTestStringifierReadOnlyAttribute*>(cell);
     thisObject->JSTestStringifierReadOnlyAttribute::~JSTestStringifierReadOnlyAttribute();
 }
 
@@ -225,7 +225,7 @@ bool JSTestStringifierReadOnlyAttributeOwner::isReachableFromOpaqueRoots(JSC::Ha
 
 void JSTestStringifierReadOnlyAttributeOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestStringifierReadOnlyAttribute = static_cast<JSTestStringifierReadOnlyAttribute*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestStringifierReadOnlyAttribute = static_cast<JSTestStringifierReadOnlyAttribute*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestStringifierReadOnlyAttribute->protectedWrapped().ptr(), jsTestStringifierReadOnlyAttribute);
 }

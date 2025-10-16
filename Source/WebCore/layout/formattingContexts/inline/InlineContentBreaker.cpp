@@ -559,20 +559,19 @@ std::optional<InlineContentBreaker::PartialRun> InlineContentBreaker::tryBreakin
 
     if (breakRules.contains(WordBreakRule::AtHyphenationOpportunities)) {
         auto tryBreakingAtHyphenationOpportunity = [&]() -> std::optional<PartialRun> {
-            auto content = inlineTextItem.inlineTextBox().content().substring(inlineTextItem.start(), inlineTextItem.length());
             auto hyphenWidth = TextUtil::hyphenWidth(style);
             auto hyphenLocation = [&] {
                 if (!candidateTextRun.isOverflowingRun)
-                    return lastHyphenPosition(content, style);
+                    return lastHyphenPosition(inlineTextItem.content(), style);
 
                 auto availableWidthExcludingHyphen = availableWidth - hyphenWidth;
                 auto hasSomeRoomForContent = availableWidthExcludingHyphen > 0 && enoughWidthForHyphenation(availableWidthExcludingHyphen, fontCascade.size());
                 if (hasSomeRoomForContent && candidateRun.spaceRequired()) {
                     auto leftSideLength = TextUtil::breakWord(inlineTextItem, fontCascade, candidateRun.spaceRequired(), availableWidthExcludingHyphen, candidateTextRun.logicalLeft).length;
-                    if (auto position = hyphenPositionBefore(content, style, leftSideLength))
+                    if (auto position = hyphenPositionBefore(inlineTextItem.content(), style, leftSideLength))
                         return position;
                 }
-                return !lineStatus.hasContent && *firstTextRunIndex(runs) == candidateTextRun.index ? firstHyphenPosition(content, style) : std::nullopt;
+                return !lineStatus.hasContent && *firstTextRunIndex(runs) == candidateTextRun.index ? firstHyphenPosition(inlineTextItem.content(), style) : std::nullopt;
             };
 
             if (auto position = hyphenLocation()) {
@@ -743,7 +742,7 @@ std::optional<InlineContentBreaker::OverflowingTextContent::BreakingPosition> In
             return { };
         if (inlineTextItem->isWhitespace())
             return { };
-        content.append(inlineTextItem->inlineTextBox().content().substring(inlineTextItem->start(), inlineTextItem->length()));
+        content.append(inlineTextItem->content());
         overflowingRunStartPosition += index < overflowingRunIndex ? inlineTextItem->length() : 0;
     }
     // Only non-whitespace text runs with same style.
@@ -982,6 +981,7 @@ void InlineContentBreaker::ContinuousContent::reset()
     m_isFullyTrimmable = false;
     m_hasTrailingWordSeparator = false;
     m_hasTrailingSoftHyphen = false;
+    m_hasShapedContent = false;
 }
 
 }

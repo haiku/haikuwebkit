@@ -35,7 +35,7 @@
 
 namespace WebCore {
 
-UserMessageHandler::UserMessageHandler(LocalFrame& frame, UserMessageHandlerDescriptor& descriptor)
+UserMessageHandler::UserMessageHandler(LocalFrame& frame, const UserMessageHandlerDescriptor& descriptor)
     : FrameDestructionObserver(&frame)
     , m_descriptor(&descriptor)
 {

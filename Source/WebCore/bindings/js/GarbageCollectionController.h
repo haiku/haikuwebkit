@@ -37,10 +37,11 @@ class VM;
 
 namespace WebCore {
 
-class GarbageCollectionController {
+class GarbageCollectionController final : public CanMakeCheckedPtr<GarbageCollectionController> {
     WTF_MAKE_TZONE_ALLOCATED(GarbageCollectionController);
     WTF_MAKE_NONCOPYABLE(GarbageCollectionController);
     friend class WTF::NeverDestroyed<GarbageCollectionController>;
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(GarbageCollectionController);
 public:
     WEBCORE_EXPORT static GarbageCollectionController& singleton();
     WEBCORE_EXPORT static void dumpHeapForVM(JSC::VM&);

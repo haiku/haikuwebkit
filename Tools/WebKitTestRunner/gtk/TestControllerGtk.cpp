@@ -41,11 +41,10 @@
 #include <wtf/text/WTFString.h>
 
 #if USE(SKIA)
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkData.h>
-
-IGNORE_CLANG_WARNINGS_BEGIN("cast-align")
 #include <skia/encode/SkPngEncoder.h>
-IGNORE_CLANG_WARNINGS_END
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
 namespace WTR {

@@ -56,11 +56,13 @@ ImageTransferSessionVT::ImageTransferSessionVT(uint32_t pixelFormat, bool should
     if (status != kCVReturnSuccess)
         RELEASE_LOG(Media, "ImageTransferSessionVT::ImageTransferSessionVT: VTSessionSetProperty(kVTPixelTransferPropertyKey_ScalingMode) failed with error %d", static_cast<int>(status));
 
-    status = VTSessionSetProperty(transferSession, kVTPixelTransferPropertyKey_EnableHighSpeedTransfer, @YES);
+    // FIXME: This is a safer cpp false positive (rdar://160851489).
+    SUPPRESS_UNRETAINED_ARG status = VTSessionSetProperty(transferSession, kVTPixelTransferPropertyKey_EnableHighSpeedTransfer, @YES);
     if (status != kCVReturnSuccess)
         RELEASE_LOG(Media, "ImageTransferSessionVT::ImageTransferSessionVT: VTSessionSetProperty(kVTPixelTransferPropertyKey_EnableHighSpeedTransfer) failed with error %d", static_cast<int>(status));
 
-    status = VTSessionSetProperty(transferSession, kVTPixelTransferPropertyKey_RealTime, @YES);
+    // FIXME: This is a safer cpp false positive (rdar://160851489).
+    SUPPRESS_UNRETAINED_ARG status = VTSessionSetProperty(transferSession, kVTPixelTransferPropertyKey_RealTime, @YES);
     if (status != kCVReturnSuccess)
         RELEASE_LOG(Media, "ImageTransferSessionVT::ImageTransferSessionVT: VTSessionSetProperty(kVTPixelTransferPropertyKey_RealTime) failed with error %d", static_cast<int>(status));
 
@@ -140,16 +142,16 @@ RetainPtr<CMSampleBufferRef> ImageTransferSessionVT::convertCMSampleBuffer(CMSam
     if (!sourceBuffer)
         return nullptr;
 
-    auto description = PAL::CMSampleBufferGetFormatDescription(sourceBuffer);
-    auto sourceSize = FloatSize(PAL::CMVideoFormatDescriptionGetPresentationDimensions(description, true, true));
-    auto pixelBuffer = static_cast<CVPixelBufferRef>(PAL::CMSampleBufferGetImageBuffer(sourceBuffer));
-    if (size == expandedIntSize(sourceSize) && m_pixelFormat == CVPixelBufferGetPixelFormatType(pixelBuffer))
+    RetainPtr description = PAL::CMSampleBufferGetFormatDescription(sourceBuffer);
+    auto sourceSize = FloatSize(PAL::CMVideoFormatDescriptionGetPresentationDimensions(description.get(), true, true));
+    RetainPtr pixelBuffer = static_cast<CVPixelBufferRef>(PAL::CMSampleBufferGetImageBuffer(sourceBuffer));
+    if (size == expandedIntSize(sourceSize) && m_pixelFormat == CVPixelBufferGetPixelFormatType(pixelBuffer.get()))
         return retainPtr(sourceBuffer);
 
     if (!setSize(size))
         return nullptr;
 
-    auto convertedPixelBuffer = convertPixelBuffer(pixelBuffer, size);
+    auto convertedPixelBuffer = convertPixelBuffer(pixelBuffer.get(), size);
     if (!convertedPixelBuffer)
         return nullptr;
 
@@ -286,7 +288,7 @@ RefPtr<VideoFrame> ImageTransferSessionVT::convertVideoFrame(VideoFrame& videoFr
     if (size == expandedIntSize(videoFrame.presentationSize()))
         return &videoFrame;
 
-    auto resizedBuffer = convertPixelBuffer(videoFrame.pixelBuffer(), size);
+    auto resizedBuffer = convertPixelBuffer(videoFrame.protectedPixelBuffer().get(), size);
     if (!resizedBuffer)
         return nullptr;
 

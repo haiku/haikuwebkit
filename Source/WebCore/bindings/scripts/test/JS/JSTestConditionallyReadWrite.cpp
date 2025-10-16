@@ -232,7 +232,7 @@ JSValue JSTestConditionallyReadWrite::getConstructor(VM& vm, const JSGlobalObjec
 
 void JSTestConditionallyReadWrite::destroy(JSC::JSCell* cell)
 {
-    JSTestConditionallyReadWrite* thisObject = static_cast<JSTestConditionallyReadWrite*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestConditionallyReadWrite* thisObject = static_cast<JSTestConditionallyReadWrite*>(cell);
     thisObject->JSTestConditionallyReadWrite::~JSTestConditionallyReadWrite();
 }
 
@@ -485,7 +485,7 @@ bool JSTestConditionallyReadWriteOwner::isReachableFromOpaqueRoots(JSC::Handle<J
 
 void JSTestConditionallyReadWriteOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestConditionallyReadWrite = static_cast<JSTestConditionallyReadWrite*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestConditionallyReadWrite = static_cast<JSTestConditionallyReadWrite*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestConditionallyReadWrite->protectedWrapped().ptr(), jsTestConditionallyReadWrite);
 }

@@ -107,6 +107,7 @@ public:
     bool shouldUseFullySynchronousModeForTesting() const;
     bool shouldMaintainOrderingWithAsyncMessages() const;
     void setIsAllowedWhenWaitingForSyncReplyOverride(bool value) { m_isAllowedWhenWaitingForSyncReplyOverride = value; }
+    bool isAsyncReplyMessage() const { return isAsyncReply(messageName()); }
 
 #if PLATFORM(MAC)
     void setImportanceAssertion(ImportanceAssertion&&);

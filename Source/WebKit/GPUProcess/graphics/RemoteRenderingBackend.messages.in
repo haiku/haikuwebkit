@@ -30,6 +30,9 @@
 messages -> RemoteRenderingBackend Stream {
     CreateImageBuffer(WebCore::FloatSize logicalSize, WebCore::RenderingMode renderingMode, WebCore::RenderingPurpose renderingPurpose, float resolutionScale, WebCore::DestinationColorSpace colorSpace, struct WebCore::ImageBufferFormat bufferFormat, WebCore::RenderingResourceIdentifier identifier, WebKit::RemoteGraphicsContextIdentifier contextIdentifier)
     ReleaseImageBuffer(WebCore::RenderingResourceIdentifier identifier)
+    CreateDisplayListRecorder(WebKit::RemoteDisplayListRecorderIdentifier identifier)
+    SinkDisplayListRecorderIntoDisplayList(WebKit::RemoteDisplayListRecorderIdentifier identifier, WebKit::RemoteDisplayListIdentifier displayListIdentifier)
+    ReleaseDisplayList(WebKit::RemoteDisplayListIdentifier identifier)
     GetImageBufferResourceLimitsForTesting() -> (struct WebCore::ImageBufferResourceLimits limits) Async
     DestroyGetPixelBufferSharedMemory()
     CacheNativeImage(WebCore::ShareableBitmapHandle handle, WebCore::RenderingResourceIdentifier renderingResourceIdentifier) NotStreamEncodable
@@ -38,10 +41,8 @@ messages -> RemoteRenderingBackend Stream {
     ReleaseFont(WebCore::RenderingResourceIdentifier identifier)
     CacheFontCustomPlatformData(struct WebCore::FontCustomPlatformSerializedData fontCustomPlatformData) NotStreamEncodable
     ReleaseFontCustomPlatformData(WebCore::RenderingResourceIdentifier identifier)
-    CacheDecomposedGlyphs(IPC::ArrayReferenceTuple<WebCore::GlyphBufferGlyph, WebCore::FloatSize> glyphsAdvances, WebCore::FloatPoint localAnchor, enum:uint8_t WebCore::FontSmoothingMode smoothingMode, WebCore::RenderingResourceIdentifier identifier)
-    ReleaseDecomposedGlyphs(WebCore::RenderingResourceIdentifier identifier) StreamBatched
-    CacheGradient(Ref<WebCore::Gradient> gradient, WebCore::RenderingResourceIdentifier identifier)
-    ReleaseGradient(WebCore::RenderingResourceIdentifier identifier)
+    CacheGradient(Ref<WebCore::Gradient> gradient, WebKit::RemoteGradientIdentifier identifier)
+    ReleaseGradient(WebKit::RemoteGradientIdentifier identifier)
     CacheFilter(Ref<WebCore::Filter> filter) NotStreamEncodable
     ReleaseFilter(WebCore::RenderingResourceIdentifier identifier)
     ReleaseMemory()
@@ -67,9 +68,8 @@ messages -> RemoteRenderingBackend Stream {
     MoveToSerializedBuffer(WebCore::RenderingResourceIdentifier identifier, WebKit::RemoteSerializedImageBufferIdentifier serializedIdentifier)
     MoveToImageBuffer(WebKit::RemoteSerializedImageBufferIdentifier identifier, WebCore::RenderingResourceIdentifier imageBufferIdentifier, WebKit::RemoteGraphicsContextIdentifier contextIdentifier)
 
-#if PLATFORM(COCOA)
-    DidDrawRemoteToPDF(WebCore::PageIdentifier pageID, WebCore::RenderingResourceIdentifier imageBufferIdentifier, WebCore::SnapshotIdentifier snapshotIdentifier)
-#endif
+    CreateSnapshotRecorder(WebKit::RemoteSnapshotRecorderIdentifier identifier, WebKit::RemoteSnapshotIdentifier snapshotIdentifier)
+    SinkSnapshotRecorderIntoSnapshotFrame(WebKit::RemoteSnapshotRecorderIdentifier identifier, WebCore::FrameIdentifier frameIdentifer) -> (bool success)
 
     [EnabledBy=ShapeDetection] CreateRemoteBarcodeDetector(WebKit::ShapeDetectionIdentifier identifier, WebCore::ShapeDetection::BarcodeDetectorOptions barcodeDetectorOptions) AllowedWhenWaitingForSyncReply
     [EnabledBy=ShapeDetection] ReleaseRemoteBarcodeDetector(WebKit::ShapeDetectionIdentifier identifier) AllowedWhenWaitingForSyncReply

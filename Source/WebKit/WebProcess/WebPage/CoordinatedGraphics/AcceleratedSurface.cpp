@@ -466,6 +466,13 @@ AcceleratedSurface::RenderTargetWPEBackend::RenderTargetWPEBackend(uint64_t surf
 
 AcceleratedSurface::RenderTargetWPEBackend::~RenderTargetWPEBackend()
 {
+#if WPE_CHECK_VERSION(1, 9, 1)
+    // libwpe 1.9.1 introduced an additional ::deinitialize function, which
+    // may be called some time before destruction. As there is no better place
+    // to invoke it at the moment, do it right before destroying the object.
+    wpe_renderer_backend_egl_target_deinitialize(m_backend);
+#endif
+
     wpe_renderer_backend_egl_target_destroy(m_backend);
 }
 

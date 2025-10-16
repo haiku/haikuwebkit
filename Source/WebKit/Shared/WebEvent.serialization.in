@@ -31,7 +31,7 @@
 class WebKit::WebEvent {
     WebKit::WebEventType type();
     OptionSet<WebKit::WebEventModifier> modifiers();
-    WallTime timestamp();
+    MonotonicTime timestamp();
     WTF::UUID authorizationToken();
 };
 
@@ -131,6 +131,7 @@ class WebKit::WebTouchEvent : WebKit::WebEvent {
     double radiusX()
     double radiusY()
     double rotationAngle()
+    double twist()
     double force()
     double altitudeAngle()
     double azimuthAngle()
@@ -241,7 +242,7 @@ class WebKit::WebWheelEvent : WebKit::WebEvent {
 #if PLATFORM(COCOA)
     uint32_t scrollCount();
     WebCore::FloatSize unacceleratedScrollingDelta();
-    WallTime ioHIDEventTimestamp();
+    MonotonicTime ioHIDEventTimestamp();
     std::optional<WebCore::FloatSize> rawPlatformDelta();
     WebKit::WebWheelEvent::MomentumEndType momentumEndType();
 #endif

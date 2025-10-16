@@ -51,13 +51,15 @@ bool hasEntitlement(audit_token_t token, ASCIILiteral entitlement)
 
 bool hasEntitlement(xpc_connection_t connection, StringView entitlement)
 {
-    auto value = adoptOSObject(xpc_connection_copy_entitlement_value(connection, entitlement.utf8().data()));
+    // FIXME: This is a false positive. <rdar://160953958>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto value = adoptOSObject(xpc_connection_copy_entitlement_value(connection, entitlement.utf8().data()));
     return value && xpc_get_type(value.get()) == XPC_TYPE_BOOL && xpc_bool_get_value(value.get());
 }
 
 bool hasEntitlement(xpc_connection_t connection, ASCIILiteral entitlement)
 {
-    auto value = adoptOSObject(xpc_connection_copy_entitlement_value(connection, entitlement.characters()));
+    // FIXME: This is a false positive. <rdar://160953958>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto value = adoptOSObject(xpc_connection_copy_entitlement_value(connection, entitlement.characters()));
     return value && xpc_get_type(value.get()) == XPC_TYPE_BOOL && xpc_bool_get_value(value.get());
 }
 

@@ -135,7 +135,7 @@ id<MTLBuffer> Device::safeCreateBuffer(NSUInteger length, bool skipAttribution) 
 
 Ref<Buffer> Device::createBuffer(const WGPUBufferDescriptor& descriptor)
 {
-    if (descriptor.nextInChain || !isValid())
+    if (!isValid())
         return Buffer::createInvalid(*this);
 
     // https://gpuweb.github.io/gpuweb/#dom-gpudevice-createbuffer

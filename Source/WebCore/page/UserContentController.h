@@ -56,7 +56,7 @@ private:
     void forEachUserMessageHandler(NOESCAPE const Function<void(const UserMessageHandlerDescriptor&)>&) const final;
 #endif
 #if ENABLE(CONTENT_EXTENSIONS)
-    ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() override { return m_contentExtensionBackend; }
+    const ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() const override { return m_contentExtensionBackend; }
 #endif
 
     UserScriptMap m_userScripts;

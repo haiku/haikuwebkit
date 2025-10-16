@@ -33,7 +33,6 @@
 #include "WebPermissionControllerMessages.h"
 #include "WebPermissionControllerProxyMessages.h"
 #include "WebProcess.h"
-#include <WebCore/DeprecatedGlobalSettings.h>
 #include <WebCore/Document.h>
 #include <WebCore/Page.h>
 #include <WebCore/PermissionObserver.h>
@@ -47,6 +46,7 @@
 #if ENABLE(WEB_PUSH_NOTIFICATIONS)
 #include "NetworkProcessConnection.h"
 #include "NotificationManagerMessageHandlerMessages.h"
+#include <WebCore/DeprecatedGlobalSettings.h>
 #include <WebCore/PushPermissionState.h>
 #endif
 
@@ -70,7 +70,7 @@ WebPermissionController::~WebPermissionController()
 void WebPermissionController::query(WebCore::ClientOrigin&& origin, WebCore::PermissionDescriptor descriptor, const WeakPtr<WebCore::Page>& page, WebCore::PermissionQuerySource source, CompletionHandler<void(std::optional<WebCore::PermissionState>)>&& completionHandler)
 {
 #if ENABLE(WEB_PUSH_NOTIFICATIONS)
-    if (DeprecatedGlobalSettings::builtInNotificationsEnabled() && (descriptor.name == PermissionName::Notifications || descriptor.name == PermissionName::Push)) {
+    if (WebCore::DeprecatedGlobalSettings::builtInNotificationsEnabled() && (descriptor.name == WebCore::PermissionName::Notifications || descriptor.name == WebCore::PermissionName::Push)) {
         Ref connection = WebProcess::singleton().ensureNetworkProcessConnection().connection();
         auto notificationPermissionHandler = [completionHandler = WTFMove(completionHandler)](WebCore::PushPermissionState pushPermissionState) mutable {
             auto state = [pushPermissionState]() -> WebCore::PermissionState {

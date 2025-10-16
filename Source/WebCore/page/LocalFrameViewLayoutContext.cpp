@@ -825,15 +825,21 @@ const AnchorScrollAdjuster* LocalFrameViewLayoutContext::anchorScrollAdjusterFor
     return &m_anchorScrollAdjusters[index];
 }
 
-void LocalFrameViewLayoutContext::registerAnchorScrollAdjuster(AnchorScrollAdjuster&& scrollAdjuster)
+AnchorScrollAdjuster::Diff LocalFrameViewLayoutContext::registerAnchorScrollAdjuster(AnchorScrollAdjuster&& scrollAdjuster)
 {
     auto index = m_anchorScrollAdjusters.findIf([&](auto& item) {
         return item.anchored() == scrollAdjuster.anchored();
     });
-    if (WTF::notFound == index)
+
+    bool recaptureDiffers = false;
+    if (WTF::notFound == index) {
         m_anchorScrollAdjusters.append(WTFMove(scrollAdjuster));
-    else
-        m_anchorScrollAdjusters[index] = WTFMove(scrollAdjuster);
+        return AnchorScrollAdjuster::New;
+    }
+
+    recaptureDiffers = m_anchorScrollAdjusters[index].recaptureDiffers(scrollAdjuster);
+    m_anchorScrollAdjusters[index] = WTFMove(scrollAdjuster);
+    return recaptureDiffers ? AnchorScrollAdjuster::SnapshotsDiffer : AnchorScrollAdjuster::SnapshotsMatch;
 }
 
 void LocalFrameViewLayoutContext::unregisterAnchorScrollAdjusterFor(const RenderBox& anchored)

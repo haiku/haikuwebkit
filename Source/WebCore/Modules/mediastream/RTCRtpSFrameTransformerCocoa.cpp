@@ -29,6 +29,7 @@
 #if ENABLE(WEB_RTC)
 
 #include "CryptoUtilitiesCocoa.h"
+#include "ExceptionOr.h"
 #include "SFrameUtils.h"
 #include <CommonCrypto/CommonCrypto.h>
 

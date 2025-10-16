@@ -68,7 +68,7 @@ class DummyServiceWorkerThreadProxy final : public WorkerObjectProxy, public Can
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(DummyServiceWorkerThreadProxy);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(DummyServiceWorkerThreadProxy);
 public:
-    static DummyServiceWorkerThreadProxy& shared()
+    static DummyServiceWorkerThreadProxy& singleton()
     {
         static NeverDestroyed<DummyServiceWorkerThreadProxy> proxy;
         return proxy;
@@ -129,12 +129,12 @@ static WorkerThreadStartMode threadStartModeFromSettings()
 }
 
 ServiceWorkerThread::ServiceWorkerThread(ServiceWorkerContextData&& contextData, ServiceWorkerData&& workerData, String&& userAgent, WorkerThreadMode workerThreadMode, const SettingsValues& settingsValues, WorkerLoaderProxy& loaderProxy, WorkerDebuggerProxy& debuggerProxy, WorkerBadgeProxy& badgeProxy, IDBClient::IDBConnectionProxy* idbConnectionProxy, SocketProvider* socketProvider, std::unique_ptr<NotificationClient>&& notificationClient, PAL::SessionID sessionID, std::optional<uint64_t> noiseInjectionHashSalt, OptionSet<AdvancedPrivacyProtections> advancedPrivacyProtections)
-    : WorkerThread(generateWorkerParameters(contextData, WTFMove(userAgent), workerThreadMode, settingsValues, sessionID, advancedPrivacyProtections, noiseInjectionHashSalt), contextData.script, loaderProxy, debuggerProxy, DummyServiceWorkerThreadProxy::shared(), badgeProxy, threadStartModeFromSettings(), contextData.registration.key.topOrigin().securityOrigin().get(), idbConnectionProxy, socketProvider, JSC::RuntimeFlags::createAllEnabled())
+    : WorkerThread(generateWorkerParameters(contextData, WTFMove(userAgent), workerThreadMode, settingsValues, sessionID, advancedPrivacyProtections, noiseInjectionHashSalt), contextData.script, loaderProxy, debuggerProxy, DummyServiceWorkerThreadProxy::singleton(), badgeProxy, threadStartModeFromSettings(), contextData.registration.key.topOrigin().securityOrigin().get(), idbConnectionProxy, socketProvider, JSC::RuntimeFlags::createAllEnabled())
     , m_serviceWorkerIdentifier(contextData.serviceWorkerIdentifier)
     , m_jobDataIdentifier(contextData.jobDataIdentifier)
     , m_contextData(crossThreadCopy(WTFMove(contextData)))
     , m_workerData(crossThreadCopy(WTFMove(workerData)))
-    , m_workerObjectProxy(DummyServiceWorkerThreadProxy::shared())
+    , m_workerObjectProxy(DummyServiceWorkerThreadProxy::singleton())
     , m_heartBeatTimeout(settingsValues.shouldUseServiceWorkerShortTimeout ? heartBeatTimeoutForTest : heartBeatTimeout)
     , m_heartBeatTimer { *this, &ServiceWorkerThread::heartBeatTimerFired }
     , m_notificationClient(WTFMove(notificationClient))

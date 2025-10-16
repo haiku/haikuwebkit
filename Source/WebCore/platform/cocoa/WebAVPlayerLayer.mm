@@ -152,7 +152,7 @@ private:
 
 - (void)setPlayerController:(AVPlayerController *)playerController
 {
-    ASSERT(!playerController || [playerController isKindOfClass:webAVPlayerControllerClass()]);
+    ASSERT(!playerController || [playerController isKindOfClass:webAVPlayerControllerClassSingleton()]);
     _playerController = (WebAVPlayerController *)playerController;
 }
 

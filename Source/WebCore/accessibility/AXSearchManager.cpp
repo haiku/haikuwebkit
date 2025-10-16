@@ -25,12 +25,16 @@
 #include "config.h"
 #include "AXSearchManager.h"
 
+#include "AccessibilityObjectInlines.h"
 #include "AXLogger.h"
 #include "AXLoggerBase.h"
 #include "AXObjectCacheInlines.h"
+#include "AXTreeStoreInlines.h"
 #include "AXUtilities.h"
 #include "AccessibilityObject.h"
+#include "FrameDestructionObserverInlines.h"
 #include "Logging.h"
+#include "LocalFrameInlines.h"
 #include "TextIterator.h"
 
 namespace WebCore {

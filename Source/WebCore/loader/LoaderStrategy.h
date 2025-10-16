@@ -32,6 +32,7 @@
 #include <WebCore/ResourceLoaderIdentifier.h>
 #include <WebCore/ResourceLoaderOptions.h>
 #include <WebCore/StoredCredentialsPolicy.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 
 namespace WebCore {
@@ -56,7 +57,9 @@ class SubresourceLoader;
 
 struct FetchOptions;
 
-class WEBCORE_EXPORT LoaderStrategy {
+class WEBCORE_EXPORT LoaderStrategy : public CanMakeCheckedPtr<LoaderStrategy> {
+    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(LoaderStrategy);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(LoaderStrategy);
 public:
     virtual void loadResource(LocalFrame&, CachedResource&, ResourceRequest&&, const ResourceLoaderOptions&, CompletionHandler<void(RefPtr<SubresourceLoader>&&)>&&) = 0;
     virtual void loadResourceSynchronously(FrameLoader&, ResourceLoaderIdentifier, const ResourceRequest&, ClientCredentialPolicy, const FetchOptions&, const HTTPHeaderMap&, ResourceError&, ResourceResponse&, Vector<uint8_t>& data) = 0;

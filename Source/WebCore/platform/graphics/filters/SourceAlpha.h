@@ -35,7 +35,7 @@ public:
 private:
     explicit SourceAlpha(DestinationColorSpace);
 
-    OptionSet<FilterRenderingMode> supportedFilterRenderingModes() const override;
+    OptionSet<FilterRenderingMode> supportedFilterRenderingModes(OptionSet<FilterRenderingMode> preferredFilterRenderingModes) const override;
     std::unique_ptr<FilterEffectApplier> createSoftwareApplier() const override;
     std::unique_ptr<FilterEffectApplier> createAcceleratedApplier() const override;
 

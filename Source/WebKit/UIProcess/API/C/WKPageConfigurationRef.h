@@ -55,6 +55,9 @@ WK_EXPORT void WKPageConfigurationSetRelatedPage(WKPageConfigurationRef configur
 WK_EXPORT WKWebsiteDataStoreRef WKPageConfigurationGetWebsiteDataStore(WKPageConfigurationRef configuration);
 WK_EXPORT void WKPageConfigurationSetWebsiteDataStore(WKPageConfigurationRef configuration, WKWebsiteDataStoreRef websiteDataStore);
 
+WK_EXPORT WKWebsitePoliciesRef WKPageConfigurationGetDefaultWebsitePolicies(WKPageConfigurationRef configuration);
+WK_EXPORT void WKPageConfigurationSetDefaultWebsitePolicies(WKPageConfigurationRef configuration, WKWebsitePoliciesRef policies);
+
 WK_EXPORT void WKPageConfigurationSetInitialCapitalizationEnabled(WKPageConfigurationRef configuration, bool enabled);
 WK_EXPORT void WKPageConfigurationSetBackgroundCPULimit(WKPageConfigurationRef configuration, double cpuLimit); // Terminates process if it uses more than CPU limit over an extended period of time while in the background.
 
@@ -62,9 +65,6 @@ WK_EXPORT void WKPageConfigurationSetAllowTestOnlyIPC(WKPageConfigurationRef con
 WK_EXPORT void WKPageConfigurationSetShouldSendConsoleLogsToUIProcessForTesting(WKPageConfigurationRef configuration, bool should);
 
 WK_EXPORT void WKPageConfigurationSetPortsForUpgradingInsecureSchemeForTesting(WKPageConfigurationRef configuration, uint16_t upgradeFromInsecurePort, uint16_t upgradeToSecurePort);
-
-WK_EXPORT void WKPageConfigurationSetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration, bool allow);
-WK_EXPORT bool WKPageConfigurationGetAllowJSHandleInPageContentWorld(WKPageConfigurationRef configuration);
 
 #ifdef __cplusplus
 }

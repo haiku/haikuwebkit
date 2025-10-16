@@ -270,7 +270,15 @@ inline EncodedJSValue arrayNewElem(JSWebAssemblyInstance* instance, uint32_t typ
     auto* array = JSWebAssemblyArray::tryCreate(vm, structure, arraySize);
     if (!array) [[unlikely]]
         return JSValue::encode(jsNull());
+#if ASSERT_ENABLED
+    array->setIsUnpopulated(true);
+    WTF::storeLoadFence();
+#endif
     instance->copyElementSegment(array, instance->module().moduleInformation().elements[elemSegmentIndex], offset, arraySize, array->span<uint64_t>().data());
+#if ASSERT_ENABLED
+    WTF::storeStoreFence();
+    array->setIsUnpopulated(false);
+#endif
     ASSERT(Wasm::isRefType(element->elementType));
     vm.writeBarrier(array);
     return JSValue::encode(array);
@@ -661,12 +669,34 @@ inline bool memoryInit(JSWebAssemblyInstance* instance, unsigned dataSegmentInde
 
 inline bool memoryFill(JSWebAssemblyInstance* instance, uint32_t dstAddress, uint32_t targetValue, uint32_t count)
 {
-    return instance->memory()->memory().fill(dstAddress, static_cast<uint8_t>(targetValue), count);
+    auto* base = std::bit_cast<uint8_t*>(instance->cachedMemory());
+    uint64_t size = instance->cachedMemorySize();
+
+    uint64_t lastDstAddress = static_cast<uint64_t>(dstAddress) + count;
+    if (lastDstAddress > size)
+        return false;
+
+    memset(base + dstAddress, targetValue, count);
+    return true;
 }
 
 inline bool memoryCopy(JSWebAssemblyInstance* instance, uint32_t dstAddress, uint32_t srcAddress, uint32_t count)
 {
-    return instance->memory()->memory().copy(dstAddress, srcAddress, count);
+    auto* base = std::bit_cast<uint8_t*>(instance->cachedMemory());
+    uint64_t size = instance->cachedMemorySize();
+
+    uint64_t lastDstAddress = static_cast<uint64_t>(dstAddress) + count;
+    uint64_t lastSrcAddress = static_cast<uint64_t>(srcAddress) + count;
+
+    if (lastDstAddress > size || lastSrcAddress > size)
+        return false;
+
+    if (!count)
+        return true;
+
+    // Source and destination areas might overlap, so using memmove.
+    memmove(base + dstAddress, base + srcAddress, count);
+    return true;
 }
 
 inline void dataDrop(JSWebAssemblyInstance* instance, unsigned dataSegmentIndex)

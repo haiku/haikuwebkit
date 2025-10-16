@@ -30,6 +30,7 @@
 #include "CompiledContentExtension.h"
 #include "ContentExtensionParser.h"
 #include "ContentExtensionsBackend.h"
+#include "ProcessWarming.h"
 #include "StyleSheetContents.h"
 #include <wtf/text/StringBuilder.h>
 
@@ -74,6 +75,8 @@ StyleSheetContents* ContentExtension::globalDisplayNoneStyleSheet()
 
 void ContentExtension::compileGlobalDisplayNoneStyleSheet()
 {
+    ProcessWarming::initializeNames();
+
     uint32_t firstIgnoreRule = findFirstIgnoreRule();
 
     auto serializedActions = m_compiledExtension->serializedActions();

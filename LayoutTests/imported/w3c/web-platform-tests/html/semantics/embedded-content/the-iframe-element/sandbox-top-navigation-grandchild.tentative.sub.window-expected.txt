@@ -1,6 +1,3 @@
-CONSOLE MESSAGE: Blocked access to external URL https://google.com/
-CONSOLE MESSAGE: Blocked access to external URL https://google.com/
-CONSOLE MESSAGE: Blocked access to external URL https://google.com/
 
 PASS A fully sandboxed same-origin grandchild can't navigate top
 PASS An unsandboxed same-origin grandchild can navigate top

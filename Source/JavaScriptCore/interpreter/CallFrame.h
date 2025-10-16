@@ -430,6 +430,10 @@ JS_EXPORT_PRIVATE bool isFromJSCode(void* returnAddress);
 #define DECLARE_WASM_CALL_FRAME(instance) ((instance)->temporaryCallFrame())
 #endif
 
+// FIXME (see rdar://72897291): Work around a Clang bug where __builtin_return_address()
+// sometimes gives us a signed pointer, and sometimes does not.
+#define OUR_RETURN_ADDRESS removeCodePtrTag(__builtin_return_address(0))
+
 } // namespace JSC
 
 namespace WTF {

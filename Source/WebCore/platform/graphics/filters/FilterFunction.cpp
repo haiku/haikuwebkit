@@ -47,8 +47,8 @@ FilterFunction::~FilterFunction()
 AtomString FilterFunction::filterName(Type filterType)
 {
     static constexpr std::pair<FilterFunction::Type, ASCIILiteral> namesArray[] = {
-        { FilterFunction::Type::CSSFilter,           "CSSFilter"_s           },
-        { FilterFunction::Type::SVGFilter,           "SVGFilter"_s           },
+        { FilterFunction::Type::CSSFilterRenderer,   "CSSFilterRenderer"_s   },
+        { FilterFunction::Type::SVGFilterRenderer,   "SVGFilterRenderer"_s   },
         
         { FilterFunction::Type::FEBlend,             "FEBlend"_s             },
         { FilterFunction::Type::FEColorMatrix,       "FEColorMatrix"_s       },

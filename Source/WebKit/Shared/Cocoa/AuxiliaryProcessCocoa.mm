@@ -53,6 +53,7 @@
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/cocoa/SoftLinking.h>
 #import <wtf/cocoa/SpanCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 
 #if ENABLE(CFPREFS_DIRECT_MODE)
@@ -68,7 +69,6 @@
 #import <pal/cf/AudioToolboxSoftLink.h>
 
 #if HAVE(UPDATE_WEB_ACCESSIBILITY_SETTINGS) && ENABLE(CFPREFS_DIRECT_MODE)
-SOFT_LINK_LIBRARY_OPTIONAL(libAccessibility)
 SOFT_LINK_OPTIONAL(libAccessibility, _AXSUpdateWebAccessibilitySettings, void, (), ());
 #endif
 
@@ -145,7 +145,7 @@ void AuxiliaryProcess::platformStopRunLoop()
 
 void AuxiliaryProcess::registerWithStateDumper(ASCIILiteral title)
 {
-    os_state_add_handler(dispatch_get_main_queue(), [this, title] (os_state_hints_t hints) {
+    os_state_add_handler(mainDispatchQueueSingleton(), [this, title] (os_state_hints_t hints) {
         @autoreleasepool {
             os_state_data_t os_state = nullptr;
 

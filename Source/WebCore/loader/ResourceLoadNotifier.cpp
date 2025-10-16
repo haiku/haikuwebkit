@@ -32,6 +32,7 @@
 #include "ResourceLoadNotifier.h"
 
 #include "DocumentLoader.h"
+#include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "InspectorInstrumentation.h"
 #include "LocalFrame.h"
@@ -97,7 +98,7 @@ void ResourceLoadNotifier::didFinishLoad(ResourceLoader& loader, ResourceLoaderI
     if (RefPtr page = m_frame->page())
         page->checkedProgress()->completeProgress(identifier);
 
-    dispatchDidFinishLoading(loader.protectedDocumentLoader().get(), loader.options().mode == FetchOptions::Mode::Navigate ? IsMainResourceLoad::Yes : IsMainResourceLoad::No, identifier, networkLoadMetrics, &loader);
+    dispatchDidFinishLoading(loader.protectedDocumentLoader().get(), identifier, networkLoadMetrics, &loader);
 }
 
 void ResourceLoadNotifier::didFailToLoad(ResourceLoader& loader, ResourceLoaderIdentifier identifier, const ResourceError& error)
@@ -108,12 +109,12 @@ void ResourceLoadNotifier::didFailToLoad(ResourceLoader& loader, ResourceLoaderI
     // Notifying the LocalFrameLoaderClient may cause the frame to be destroyed.
     Ref frame = m_frame.get();
     if (!error.isNull())
-        frame->loader().client().dispatchDidFailLoading(loader.protectedDocumentLoader().get(), loader.options().mode == FetchOptions::Mode::Navigate ? IsMainResourceLoad::Yes : IsMainResourceLoad::No, identifier, error);
+        frame->loader().client().dispatchDidFailLoading(loader.protectedDocumentLoader().get(), identifier, error);
 
     InspectorInstrumentation::didFailLoading(frame.ptr(), loader.protectedDocumentLoader().get(), identifier, error);
 }
 
-void ResourceLoadNotifier::assignIdentifierToInitialRequest(ResourceLoaderIdentifier identifier, IsMainResourceLoad isMainResourceLoad, DocumentLoader* loader, const ResourceRequest& request)
+void ResourceLoadNotifier::assignIdentifierToInitialRequest(ResourceLoaderIdentifier identifier, DocumentLoader* loader, const ResourceRequest& request)
 {
     bool pageIsProvisionallyLoading = false;
     if (RefPtr frameLoader = loader ? loader->frameLoader() : nullptr)
@@ -122,7 +123,7 @@ void ResourceLoadNotifier::assignIdentifierToInitialRequest(ResourceLoaderIdenti
     if (pageIsProvisionallyLoading)
         m_initialRequestIdentifier = identifier;
 
-    protectedFrame()->loader().client().assignIdentifierToInitialRequest(identifier, isMainResourceLoad, loader, request);
+    protectedFrame()->loader().client().assignIdentifierToInitialRequest(identifier, loader, request);
 }
 
 void ResourceLoadNotifier::dispatchWillSendRequest(DocumentLoader* loader, ResourceLoaderIdentifier identifier, ResourceRequest& request, const ResourceResponse& redirectResponse, const CachedResource* cachedResource, ResourceLoader* resourceLoader)
@@ -169,31 +170,31 @@ void ResourceLoadNotifier::dispatchDidReceiveData(DocumentLoader* loader, Resour
     InspectorInstrumentation::didReceiveData(frame.ptr(), identifier, buffer, encodedDataLength);
 }
 
-void ResourceLoadNotifier::dispatchDidFinishLoading(DocumentLoader* loader, IsMainResourceLoad isMainResourceLoad, ResourceLoaderIdentifier identifier, const NetworkLoadMetrics& networkLoadMetrics, ResourceLoader* resourceLoader)
+void ResourceLoadNotifier::dispatchDidFinishLoading(DocumentLoader* loader, ResourceLoaderIdentifier identifier, const NetworkLoadMetrics& networkLoadMetrics, ResourceLoader* resourceLoader)
 {
     // Notifying the LocalFrameLoaderClient may cause the frame to be destroyed.
     Ref frame = m_frame.get();
-    frame->loader().client().dispatchDidFinishLoading(loader, isMainResourceLoad, identifier);
+    frame->loader().client().dispatchDidFinishLoading(loader, identifier);
 
     InspectorInstrumentation::didFinishLoading(frame.ptr(), loader, identifier, networkLoadMetrics, resourceLoader);
 }
 
-void ResourceLoadNotifier::dispatchDidFailLoading(DocumentLoader* loader, IsMainResourceLoad isMainResourceLoad, ResourceLoaderIdentifier identifier, const ResourceError& error)
+void ResourceLoadNotifier::dispatchDidFailLoading(DocumentLoader* loader, ResourceLoaderIdentifier identifier, const ResourceError& error)
 {
     // Notifying the LocalFrameLoaderClient may cause the frame to be destroyed.
     Ref frame = m_frame.get();
-    frame->loader().client().dispatchDidFailLoading(loader, isMainResourceLoad, identifier, error);
+    frame->loader().client().dispatchDidFailLoading(loader, identifier, error);
 
     InspectorInstrumentation::didFailLoading(frame.ptr(), loader, identifier, error);
 }
 
-void ResourceLoadNotifier::sendRemainingDelegateMessages(DocumentLoader* loader, IsMainResourceLoad isMainResourceLoad, ResourceLoaderIdentifier identifier, const ResourceRequest& request, const ResourceResponse& response, const SharedBuffer* buffer, int expectedDataLength, int encodedDataLength, const ResourceError& error)
+void ResourceLoadNotifier::sendRemainingDelegateMessages(DocumentLoader* loader, ResourceLoaderIdentifier identifier, const ResourceRequest& request, const ResourceResponse& response, const SharedBuffer* buffer, int expectedDataLength, int encodedDataLength, const ResourceError& error)
 {
     // If the request is null, willSendRequest cancelled the load. We should
     // only dispatch didFailLoading in this case.
     if (request.isNull()) {
         ASSERT(error.isCancellation() || error.isAccessControl());
-        dispatchDidFailLoading(loader, isMainResourceLoad, identifier, error);
+        dispatchDidFailLoading(loader, identifier, error);
         return;
     }
 
@@ -205,9 +206,9 @@ void ResourceLoadNotifier::sendRemainingDelegateMessages(DocumentLoader* loader,
 
     if (error.isNull()) {
         NetworkLoadMetrics emptyMetrics;
-        dispatchDidFinishLoading(loader, isMainResourceLoad, identifier, emptyMetrics, nullptr);
+        dispatchDidFinishLoading(loader, identifier, emptyMetrics, nullptr);
     } else
-        dispatchDidFailLoading(loader, isMainResourceLoad, identifier, error);
+        dispatchDidFailLoading(loader, identifier, error);
 }
 
 } // namespace WebCore

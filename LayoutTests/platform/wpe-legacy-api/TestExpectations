@@ -39,6 +39,10 @@ fast/events/touch/touch-target-limited.html [ Skip ] # Timeout.
 fast/events/touch/multi-touch-inside-nested-iframes.html [ Skip ] # Timeout.
 fast/events/touch/multi-touch-grouped-targets.html [ Skip ] # Timeout.
 
+# These failures appear to be bugs in the EventSender
+fast/html/transient-activation.html [ Skip ] # Timeout
+fast/html/history-action-user-activation.html [ Skip ] # Timeout
+
 webkit.org/b/296369 editing/deleting/paste-with-transparent-background-color-live-range.html [ Failure ]
 webkit.org/b/296369 editing/deleting/paste-with-transparent-background-color.html [ Failure ]
 webkit.org/b/296369 editing/deleting/smart-delete-004.html [ Failure ]
@@ -61,6 +65,12 @@ webkit.org/b/296677 fast/media/mq-resolution.html [ Skip ]
 
 # Doesn't support inspector. Needs WebInspectorUIProxy::platformCreateFrontendPage implementation.
 http/tests/websocket/tests/hybi/inspector [ Skip ]
+
+http/tests/security/clipboard/copy-paste-html-across-origin-sanitizes-html.html [ Skip ] # Failure
+http/tests/security/clipboard/copy-paste-html-across-origin-strips-mso-list.html [ Skip ] # Failure
+http/tests/security/clipboard/copy-paste-url-across-origin-sanitizes-url.html [ Skip ] # Failure
+
+http/tests/security/isolatedWorld/userGestureEvents.html [ Skip ] # Timeout
 
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End of Triaged Expectations

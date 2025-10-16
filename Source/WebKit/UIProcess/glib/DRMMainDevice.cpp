@@ -90,6 +90,9 @@ static std::optional<std::pair<CString, CString>> drmFirstDeviceWithRenderNode()
 
 static CString drmPrimaryNodeDeviceForRenderNodeDevice(const CString& renderNode)
 {
+    if (renderNode.isNull())
+        return { };
+
 #if USE(LIBDRM)
     CString primaryNode;
     drmForeachDevice([&](drmDevice* device) {
@@ -107,6 +110,33 @@ static CString drmPrimaryNodeDeviceForRenderNodeDevice(const CString& renderNode
     return primaryNode;
 #else
     UNUSED_PARAM(renderNode);
+    return { };
+#endif
+}
+
+static CString drmRenderNodeDeviceFromPrimaryNodeDevice(const CString& primaryNode)
+{
+    if (primaryNode.isNull())
+        return { };
+
+#if USE(LIBDRM)
+    CString renderNode;
+    drmForeachDevice([&](drmDevice* device) {
+        if (!(device->available_nodes & (1 << DRM_NODE_PRIMARY)))
+            return true;
+
+        auto node = CString(device->nodes[DRM_NODE_PRIMARY]);
+        if (node == primaryNode) {
+            if (device->available_nodes & (1 << DRM_NODE_RENDER))
+                renderNode = CString(device->nodes[DRM_NODE_RENDER]);
+            return false;
+        }
+
+        return true;
+    });
+    return renderNode;
+#else
+    UNUSED_PARAM(primaryNode);
     return { };
 #endif
 }
@@ -137,38 +167,18 @@ static EGLDeviceEXT eglDisplayDevice(EGLDisplay eglDisplay)
     return nullptr;
 }
 
-static CString drmPrimaryNodeDevice()
+static std::optional<CString> drmPrimaryNodeDevice(EGLDeviceEXT device)
 {
-    auto eglDisplay = currentEGLDisplay();
-    if (eglDisplay == EGL_NO_DISPLAY)
-        return { };
-
-    EGLDeviceEXT device = eglDisplayDevice(eglDisplay);
-    if (!device)
-        return { };
-
     if (!WebCore::GLContext::isExtensionSupported(eglQueryDeviceStringEXT(device, EGL_EXTENSIONS), "EGL_EXT_device_drm"))
-        return { };
+        return std::nullopt;
 
     return CString(eglQueryDeviceStringEXT(device, EGL_DRM_DEVICE_FILE_EXT));
 }
 
-static CString drmRenderNodeDevice()
+static std::optional<CString> drmRenderNodeDevice(EGLDeviceEXT device)
 {
-    const char* envDeviceFile = getenv("WEBKIT_WEB_RENDER_DEVICE_FILE");
-    if (envDeviceFile && *envDeviceFile)
-        return CString(envDeviceFile);
-
-    auto eglDisplay = currentEGLDisplay();
-    if (eglDisplay == EGL_NO_DISPLAY)
-        return { };
-
-    EGLDeviceEXT device = eglDisplayDevice(eglDisplay);
-    if (!device)
-        return { };
-
     if (!WebCore::GLContext::isExtensionSupported(eglQueryDeviceStringEXT(device, EGL_EXTENSIONS), "EGL_EXT_device_drm_render_node"))
-        return { };
+        return std::nullopt;
 
     return CString(eglQueryDeviceStringEXT(device, EGL_DRM_RENDER_NODE_FILE_EXT));
 }
@@ -189,19 +199,47 @@ const WebCore::DRMDevice& drmMainDevice()
             return;
         }
 #endif
-        mainDevice->renderNode = drmRenderNodeDevice();
-        if (mainDevice->renderNode.isNull()) {
-            auto primaryNode = drmPrimaryNodeDevice();
-            auto renderNode = drmPrimaryNodeDeviceForRenderNodeDevice(primaryNode);
-            if (!renderNode.isNull()) {
-                mainDevice->primaryNode = WTFMove(primaryNode);
-                mainDevice->renderNode = WTFMove(renderNode);
-            } else if (auto device = drmFirstDeviceWithRenderNode()) {
-                mainDevice->primaryNode = WTFMove(device->first);
-                mainDevice->renderNode = WTFMove(device->second);
-            }
-        } else
+
+        const char* envDeviceFile = getenv("WEBKIT_WEB_RENDER_DEVICE_FILE");
+        if (envDeviceFile && *envDeviceFile) {
+            mainDevice->renderNode = CString(envDeviceFile);
             mainDevice->primaryNode = drmPrimaryNodeDeviceForRenderNodeDevice(mainDevice->renderNode);
+            return;
+        }
+
+        auto eglDisplay = currentEGLDisplay();
+        if (eglDisplay == EGL_NO_DISPLAY)
+            return;
+
+        if (auto device = eglDisplayDevice(eglDisplay)) {
+            if (auto renderNode = drmRenderNodeDevice(device)) {
+                // If we can get the render node from EGL we should use that even if it's nullptr (which is the case
+                // with software rasterization). Then, we try to get the primary node using EGL first and DRM as fallback..
+                mainDevice->renderNode = WTFMove(*renderNode);
+                if (!mainDevice->renderNode.isNull()) {
+                    auto primaryNode = drmPrimaryNodeDevice(device);
+                    if (primaryNode && !primaryNode->isNull())
+                        mainDevice->primaryNode = WTFMove(*primaryNode);
+                    else
+                        mainDevice->primaryNode = drmPrimaryNodeDeviceForRenderNodeDevice(mainDevice->renderNode);
+                }
+                return;
+            }
+
+            // If EGL device doesn't support querying the render node, try with the primary node and then use DRM to
+            // get the associated render node.
+            if (auto primaryNode = drmPrimaryNodeDevice(device)) {
+                mainDevice->primaryNode = WTFMove(*primaryNode);
+                mainDevice->renderNode = drmRenderNodeDeviceFromPrimaryNodeDevice(mainDevice->primaryNode);
+                return;
+            }
+        }
+
+        // If EGL device is not supported fallback to use DRM to find the first device with a render node.
+        if (auto device = drmFirstDeviceWithRenderNode()) {
+            mainDevice->primaryNode = WTFMove(device->first);
+            mainDevice->renderNode = WTFMove(device->second);
+        }
     });
     return mainDevice.get();
 }

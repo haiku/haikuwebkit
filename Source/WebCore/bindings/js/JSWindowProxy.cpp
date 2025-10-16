@@ -31,6 +31,7 @@
 
 #include "CommonVM.h"
 #include "Document.h"
+#include "DocumentInlines.h"
 #include "Frame.h"
 #include "FrameLoaderTypes.h"
 #include "GarbageCollectionController.h"

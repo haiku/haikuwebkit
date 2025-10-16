@@ -288,15 +288,18 @@ public:
     Type& ensureSideData(void* key, const Functor&);
 
     bool hasTerminationRequest() const { return m_hasTerminationRequest; }
+    // While setHasTerminationRequest() needs to be CONCURRENT_SAFE (called for stopping worker
+    // threads), clearHasTerminationRequest() should only be called by the owner mutator thread
+    // after servicing the requests. Hence, it should not be concurrent.
     void clearHasTerminationRequest()
     {
         m_hasTerminationRequest = false;
-        clearEntryScopeService(EntryScopeService::ResetTerminationRequest);
+        clearEntryScopeService(ConcurrentEntryScopeService::ResetTerminationRequest);
     }
-    void setHasTerminationRequest()
+    CONCURRENT_SAFE void setHasTerminationRequest()
     {
         m_hasTerminationRequest = true;
-        requestEntryScopeService(EntryScopeService::ResetTerminationRequest);
+        requestEntryScopeService(ConcurrentEntryScopeService::ResetTerminationRequest);
     }
 
     bool executionForbidden() const { return m_executionForbidden; }
@@ -333,20 +336,28 @@ public:
         TracePoints = 1 << 1,
         Watchdog = 1 << 2,
 
-        // Transient services i.e. these will never be cleared after they are serviced once, and can be set again later.
+        // Transient services i.e. these will be cleared after they are serviced once, and can be set again later.
         ClearScratchBuffers = 1 << 3,
         FirePrimitiveGigacageEnabled = 1 << 4,
         PopListeners = 1 << 5,
-        ResetTerminationRequest = 1 << 6,
     };
 
-    bool hasAnyEntryScopeServiceRequest() { return !m_entryScopeServices.isEmpty(); }
+    enum class ConcurrentEntryScopeService : uint8_t {
+        // Transient services i.e. these will be cleared after they are serviced once, and can be set again later.
+        ResetTerminationRequest = 1 << 0,
+    };
+
+    bool hasAnyEntryScopeServiceRequest() { return m_entryScopeServicesRawBits; }
     void executeEntryScopeServicesOnEntry();
     void executeEntryScopeServicesOnExit();
 
     void requestEntryScopeService(EntryScopeService service)
     {
-        m_entryScopeServices.add(service);
+        entryScopeServices().add(service);
+    }
+    CONCURRENT_SAFE void requestEntryScopeService(ConcurrentEntryScopeService service)
+    {
+        concurrentEntryScopeServices().add(service);
     }
 
     enum class SchedulerOptions : uint8_t {
@@ -369,8 +380,28 @@ public:
     // https://bugs.webkit.org/show_bug.cgi?id=160441
     CallFrame* topCallFrame { nullptr };
     EntryFrame* topEntryFrame { nullptr };
+    void* maybeReturnPC { nullptr };
 private:
-    OptionSet<EntryScopeService> m_entryScopeServices;
+
+    struct EntryScopeServicesBits {
+        OptionSet<EntryScopeService> m_entryScopeServices;
+        OptionSet<ConcurrentEntryScopeService, ConcurrencyTag::Atomic> m_concurrentEntryScopeServices;
+    };
+
+    uint16_t m_entryScopeServicesRawBits;
+    static_assert(sizeof(EntryScopeServicesBits) == sizeof(m_entryScopeServicesRawBits));
+
+    OptionSet<EntryScopeService>& entryScopeServices()
+    {
+        auto& services = *std::bit_cast<EntryScopeServicesBits*>(&m_entryScopeServicesRawBits);
+        return services.m_entryScopeServices;
+    }
+    OptionSet<ConcurrentEntryScopeService, ConcurrencyTag::Atomic>& concurrentEntryScopeServices()
+    {
+        auto& services = *std::bit_cast<EntryScopeServicesBits*>(&m_entryScopeServicesRawBits);
+        return services.m_concurrentEntryScopeServices;
+    }
+
 public:
     bool didEnterVM { false };
 private:
@@ -386,12 +417,17 @@ private:
 
     bool hasEntryScopeServiceRequest(EntryScopeService service)
     {
-        return m_entryScopeServices.contains(service);
+        return entryScopeServices().contains(service);
     }
 
     void clearEntryScopeService(EntryScopeService service)
     {
-        m_entryScopeServices.remove(service);
+        entryScopeServices().remove(service);
+    }
+
+    void clearEntryScopeService(ConcurrentEntryScopeService service)
+    {
+        concurrentEntryScopeServices().remove(service);
     }
 
     WriteBarrier<Structure>& rawImmutableButterflyStructure(IndexingType indexingType) { return cellButterflyStructures[arrayIndexFromIndexingType(indexingType) - NumberOfIndexingShapes]; }
@@ -829,7 +865,7 @@ public:
     bool isCollectorBusyOnCurrentThread() { return heap.currentThreadIsDoingGCWork(); }
 
 #if ENABLE(GC_VALIDATION)
-    bool isInitializingObject() const; 
+    bool isInitializingObject() const;
     void setInitializingObjectClass(const ClassInfo*);
 #endif
 
@@ -921,15 +957,14 @@ public:
 
     JS_EXPORT_PRIVATE bool hasExceptionsAfterHandlingTraps();
 
-    // These may be called concurrently from another thread.
-    void notifyNeedDebuggerBreak() { m_traps.fireTrap(VMTraps::NeedDebuggerBreak); }
-    void notifyNeedShellTimeoutCheck() { m_traps.fireTrap(VMTraps::NeedShellTimeoutCheck); }
-    void notifyNeedTermination()
+    CONCURRENT_SAFE void notifyNeedDebuggerBreak() { m_traps.fireTrap(VMTraps::NeedDebuggerBreak); }
+    CONCURRENT_SAFE void notifyNeedShellTimeoutCheck() { m_traps.fireTrap(VMTraps::NeedShellTimeoutCheck); }
+    CONCURRENT_SAFE void notifyNeedTermination()
     {
         setHasTerminationRequest();
         m_traps.fireTrap(VMTraps::NeedTermination);
     }
-    void notifyNeedWatchdogCheck() { m_traps.fireTrap(VMTraps::NeedWatchdogCheck); }
+    CONCURRENT_SAFE void notifyNeedWatchdogCheck() { m_traps.fireTrap(VMTraps::NeedWatchdogCheck); }
 
     void promiseRejected(JSPromise*);
 

@@ -103,7 +103,6 @@ mac/WebView/WebFullScreenController.mm
 mac/WebView/WebHTMLRepresentation.mm
 mac/WebView/WebHTMLView.mm
 mac/WebView/WebImmediateActionController.mm
-mac/WebView/WebMediaPlaybackTargetPicker.mm
 mac/WebView/WebPDFView.mm
 mac/WebView/WebPreferences.mm
 mac/WebView/WebScriptDebugger.mm

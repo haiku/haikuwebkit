@@ -35,6 +35,7 @@
 #if ENABLE(VIDEO)
 
 #include "ContainerNodeInlines.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DOMRect.h"
 #include "DOMTokenList.h"
 #include "ElementChildIteratorInlines.h"

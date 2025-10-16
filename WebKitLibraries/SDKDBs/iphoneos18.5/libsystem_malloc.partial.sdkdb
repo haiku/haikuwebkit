@@ -21,6 +21,15 @@
       {"access": "public", "name": "MALLOC_TYPE_KIND_V0_CXX"}
      ],
      "name": "malloc_type_kind_v0_t"
+    },
+    {
+     "access": "public",
+     "constants": [
+      {"access": "public", "name": "MALLOC_ZONE_MALLOC_OPTION_NONE"},
+      {"access": "public", "name": "MALLOC_ZONE_MALLOC_OPTION_CLEAR"},
+      {"access": "public", "name": "MALLOC_ZONE_MALLOC_OPTION_CANONICAL_TAG"}
+     ],
+     "name": "malloc_zone_malloc_options_t"
     }
    ],
    "globals": [
@@ -50,6 +59,7 @@
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_calloc"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_free"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_malloc"},
+    {"access": "public", "introduced": "26", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_malloc_with_options"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_memalign"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_realloc"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_valloc"},
@@ -65,6 +75,7 @@
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_from_ptr"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_log"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_malloc"},
+    {"access": "public", "introduced": "26", "kind": "function", "linkage": "exported", "name": "_malloc_zone_malloc_with_options"},
     {"access": "public", "introduced": "3", "kind": "function", "linkage": "exported", "name": "_malloc_zone_memalign"},
     {"access": "public", "introduced": "4.3", "kind": "function", "linkage": "exported", "name": "_malloc_zone_pressure_relief"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_print"},
@@ -80,7 +91,7 @@
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_reallocf"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_valloc"}
    ],
-   "target": "arm64-apple-ios18.5",
+   "target": "arm64-apple-ios26",
    "typedefs": [
     {"access": "public", "name": "malloc_introspection_t"},
     {"access": "public", "name": "malloc_statistics_t"},
@@ -90,6 +101,7 @@
     {"access": "public", "name": "malloc_type_kind_v0_t"},
     {"access": "public", "name": "malloc_type_layout_semantics_v0_t"},
     {"access": "public", "name": "malloc_type_summary_v0_t"},
+    {"access": "public", "name": "malloc_zone_malloc_options_t"},
     {"access": "public", "name": "malloc_zone_t"},
     {"access": "public", "name": "memory_reader_t"},
     {"access": "public", "name": "print_task_printer_t"},
@@ -117,6 +129,15 @@
       {"access": "public", "name": "MALLOC_TYPE_KIND_V0_CXX"}
      ],
      "name": "malloc_type_kind_v0_t"
+    },
+    {
+     "access": "public",
+     "constants": [
+      {"access": "public", "name": "MALLOC_ZONE_MALLOC_OPTION_NONE"},
+      {"access": "public", "name": "MALLOC_ZONE_MALLOC_OPTION_CLEAR"},
+      {"access": "public", "name": "MALLOC_ZONE_MALLOC_OPTION_CANONICAL_TAG"}
+     ],
+     "name": "malloc_zone_malloc_options_t"
     }
    ],
    "globals": [
@@ -146,6 +167,7 @@
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_calloc"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_free"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_malloc"},
+    {"access": "public", "introduced": "26", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_malloc_with_options"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_memalign"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_realloc"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_malloc_type_zone_valloc"},
@@ -161,6 +183,7 @@
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_from_ptr"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_log"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_malloc"},
+    {"access": "public", "introduced": "26", "kind": "function", "linkage": "exported", "name": "_malloc_zone_malloc_with_options"},
     {"access": "public", "introduced": "3", "kind": "function", "linkage": "exported", "name": "_malloc_zone_memalign"},
     {"access": "public", "introduced": "4.3", "kind": "function", "linkage": "exported", "name": "_malloc_zone_pressure_relief"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_malloc_zone_print"},
@@ -176,7 +199,7 @@
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_reallocf"},
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_valloc"}
    ],
-   "target": "arm64e-apple-ios18.5",
+   "target": "arm64e-apple-ios26",
    "typedefs": [
     {"access": "public", "name": "malloc_introspection_t"},
     {"access": "public", "name": "malloc_statistics_t"},
@@ -186,6 +209,7 @@
     {"access": "public", "name": "malloc_type_kind_v0_t"},
     {"access": "public", "name": "malloc_type_layout_semantics_v0_t"},
     {"access": "public", "name": "malloc_type_summary_v0_t"},
+    {"access": "public", "name": "malloc_zone_malloc_options_t"},
     {"access": "public", "name": "malloc_zone_t"},
     {"access": "public", "name": "memory_reader_t"},
     {"access": "public", "name": "print_task_printer_t"},

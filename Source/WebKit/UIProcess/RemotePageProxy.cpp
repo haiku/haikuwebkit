@@ -108,13 +108,14 @@ void RemotePageProxy::injectPageIntoNewProcess()
 #endif
     m_visitedLinkStoreRegistration = makeUnique<RemotePageVisitedLinkStoreRegistration>(*page, m_process);
 
+    RefPtr websitePolicies = page->mainFrameWebsitePolicies();
     m_process->send(
         Messages::WebProcess::CreateWebPage(
             m_webPageID,
             page->creationParametersForRemotePage(m_process, drawingArea.get(), RemotePageParameters {
                 URL(page->pageLoadState().url()),
                 page->protectedMainFrame()->frameTreeCreationParameters(),
-                page->mainFrameWebsitePoliciesData() ? std::make_optional(*page->mainFrameWebsitePoliciesData()) : std::nullopt
+                websitePolicies ? std::make_optional(websitePolicies->dataForProcess(m_process)) : std::nullopt
             })
         ), 0
     );
@@ -210,13 +211,14 @@ void RemotePageProxy::setDrawingArea(DrawingAreaProxy* drawingArea)
     }
 
     m_drawingArea = RemotePageDrawingAreaProxy::create(*drawingArea, m_process);
+    RefPtr websitePolicies = page->mainFrameWebsitePolicies();
     m_process->send(
         Messages::WebProcess::CreateWebPage(
             m_webPageID,
             page->creationParametersForRemotePage(m_process, *drawingArea, RemotePageParameters {
                 URL(page->pageLoadState().url()),
                 mainFrame->frameTreeCreationParameters(),
-                page->mainFrameWebsitePoliciesData() ? std::make_optional(*page->mainFrameWebsitePoliciesData()) : std::nullopt
+                websitePolicies ? std::make_optional(websitePolicies->dataForProcess(m_process)) : std::nullopt
             })
         ), 0
     );

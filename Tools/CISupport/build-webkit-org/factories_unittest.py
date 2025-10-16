@@ -629,6 +629,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'prune-coresymbolicationd-cache-if-too-large',
             'install-cmake',
             'install-ninja',
+            'get-llvm-version',
             'print-clang-version',
             'checkout-llvm-project',
             'update-clang',

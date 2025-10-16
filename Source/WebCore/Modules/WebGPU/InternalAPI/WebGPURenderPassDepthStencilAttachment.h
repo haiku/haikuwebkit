@@ -35,9 +35,12 @@
 namespace WebCore::WebGPU {
 
 class TextureView;
+class Texture;
+
+using RenderPassDepthAttachmentView = Variant<const WeakRef<Texture>, const WeakRef<TextureView>>;
 
 struct RenderPassDepthStencilAttachment {
-    WeakRef<TextureView> view;
+    RenderPassDepthAttachmentView view;
 
     float depthClearValue { 0 };
     std::optional<LoadOp> depthLoadOp;
@@ -49,7 +52,22 @@ struct RenderPassDepthStencilAttachment {
     std::optional<StoreOp> stencilStoreOp;
     bool stencilReadOnly { false };
 
-    Ref<TextureView> protectedView() const { return view.get(); }
+    RefPtr<Texture> protectedTexture() const
+    {
+        return WTF::switchOn(view, [&](const WeakRef<Texture>& texture) -> const RefPtr<Texture> {
+            return texture.ptr();
+        }, [&](const WeakRef<TextureView>&) -> const RefPtr<Texture> {
+            return nullptr;
+        });
+    }
+    RefPtr<TextureView> protectedView() const
+    {
+        return WTF::switchOn(view, [&](const WeakRef<Texture>&) -> const RefPtr<TextureView> {
+            return nullptr;
+        }, [&](const WeakRef<TextureView>& view) -> const RefPtr<TextureView> {
+            return view.ptr();
+        });
+    }
 };
 
 } // namespace WebCore::WebGPU

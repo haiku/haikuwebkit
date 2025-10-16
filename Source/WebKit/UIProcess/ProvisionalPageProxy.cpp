@@ -252,13 +252,13 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
     Ref page = *m_page;
     RefPtr drawingArea = page->protectedPageClient()->createDrawingAreaProxy(protectedProcess());
     m_drawingArea = drawingArea.copyRef();
+    Ref process = this->process();
+    Ref preferences = page->preferences();
 
     bool registerWithInspectorController { true };
     if (websitePolicies)
-        m_mainFrameWebsitePoliciesData = makeUnique<WebsitePoliciesData>(websitePolicies->data());
+        m_mainFrameWebsitePolicies = websitePolicies->copy();
 
-    Ref process = this->process();
-    Ref preferences = page->preferences();
     if (preferences->siteIsolationEnabled()) {
         if (RefPtr existingRemotePageProxy = m_browsingContextGroup->takeRemotePageInProcessForProvisionalPage(page, process)) {
             if (m_isProcessSwappingForNewWindow) {
@@ -280,12 +280,12 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
     }
 
     RefPtr mainFrame = m_mainFrame;
-    auto creationParameters = page->creationParametersForProvisionalPage(process, *drawingArea, websitePolicies.copyRef(), mainFrame->frameID());
+    auto creationParameters = page->creationParametersForProvisionalPage(process, *drawingArea, mainFrame->frameID());
     if (preferences->siteIsolationEnabled()) {
         creationParameters.remotePageParameters = RemotePageParameters {
             m_request.url(),
             mainFrame->frameTreeCreationParameters(),
-            websitePolicies ? std::optional(websitePolicies->data()) : std::nullopt
+            websitePolicies ? std::optional(websitePolicies->dataForProcess(process)) : std::nullopt
         };
         creationParameters.provisionalFrameCreationParameters = ProvisionalFrameCreationParameters {
             m_mainFrame->frameID(),
@@ -307,7 +307,7 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
         page->inspectorController().didCreateProvisionalPage(*this);
 }
 
-void ProvisionalPageProxy::loadData(API::Navigation& navigation, Ref<WebCore::SharedBuffer>&& data, const String& mimeType, const String& encoding, const String& baseURL, API::Object* userData, WebCore::ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad, std::optional<NavigatingToAppBoundDomain> isNavigatingToAppBoundDomain, std::optional<WebsitePoliciesData>&& websitePolicies, SubstituteData::SessionHistoryVisibility sessionHistoryVisibility)
+void ProvisionalPageProxy::loadData(API::Navigation& navigation, Ref<WebCore::SharedBuffer>&& data, const String& mimeType, const String& encoding, const String& baseURL, API::Object* userData, WebCore::ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad, std::optional<NavigatingToAppBoundDomain> isNavigatingToAppBoundDomain, RefPtr<API::WebsitePolicies>&& websitePolicies, SubstituteData::SessionHistoryVisibility sessionHistoryVisibility)
 {
     PROVISIONALPAGEPROXY_RELEASE_LOG(ProcessSwapping, "loadData:");
     ASSERT(shouldTreatAsContinuingLoad != WebCore::ShouldTreatAsContinuingLoad::No);
@@ -316,7 +316,7 @@ void ProvisionalPageProxy::loadData(API::Navigation& navigation, Ref<WebCore::Sh
         page->loadDataWithNavigationShared(protectedProcess(), m_webPageID, navigation, WTFMove(data), mimeType, encoding, baseURL, userData, shouldTreatAsContinuingLoad, isNavigatingToAppBoundDomain, WTFMove(websitePolicies), navigation.shouldOpenExternalURLsPolicy(), sessionHistoryVisibility);
 }
 
-void ProvisionalPageProxy::loadRequest(API::Navigation& navigation, WebCore::ResourceRequest&& request, API::Object* userData, WebCore::ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad, std::optional<NavigatingToAppBoundDomain> isNavigatingToAppBoundDomain, std::optional<WebsitePoliciesData>&& websitePolicies, std::optional<NetworkResourceLoadIdentifier> existingNetworkResourceLoadIdentifierToResume, IsPerformingHTTPFallback isPerformingHTTPFallback)
+void ProvisionalPageProxy::loadRequest(API::Navigation& navigation, WebCore::ResourceRequest&& request, API::Object* userData, WebCore::ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad, std::optional<NavigatingToAppBoundDomain> isNavigatingToAppBoundDomain, RefPtr<API::WebsitePolicies>&& websitePolicies, std::optional<NetworkResourceLoadIdentifier> existingNetworkResourceLoadIdentifierToResume, IsPerformingHTTPFallback isPerformingHTTPFallback)
 {
     PROVISIONALPAGEPROXY_RELEASE_LOG(ProcessSwapping, "loadRequest: existingNetworkResourceLoadIdentifierToResume=%" PRIu64, existingNetworkResourceLoadIdentifierToResume ? existingNetworkResourceLoadIdentifierToResume->toUInt64() : 0);
     ASSERT(shouldTreatAsContinuingLoad != WebCore::ShouldTreatAsContinuingLoad::No);
@@ -350,14 +350,15 @@ void ProvisionalPageProxy::goToBackForwardItem(API::Navigation& navigation, WebB
         return &item != targetItem.ptr();
     });
 
+    Ref process { this->process() };
     std::optional<WebsitePoliciesData> websitePoliciesData;
     if (websitePolicies)
-        websitePoliciesData = websitePolicies->data();
+        websitePoliciesData = websitePolicies->dataForProcess(process);
 
     SandboxExtension::Handle sandboxExtensionHandle;
     URL itemURL { item.url() };
     Ref frameState = navigation.targetFrameItem() ? navigation.targetFrameItem()->copyFrameStateWithChildren() : item.mainFrameState();
-    page->maybeInitializeSandboxExtensionHandle(protectedProcess(), itemURL, item.resourceDirectoryURL(), true, [
+    page->maybeInitializeSandboxExtensionHandle(process, itemURL, item.resourceDirectoryURL(), true, [
         weakThis = WeakPtr { *this },
         itemURL,
         frameState = WTFMove(frameState),

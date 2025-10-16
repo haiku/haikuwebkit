@@ -72,16 +72,16 @@ private:
     bool canRunModal() const final;
     void runModal() final;
 
-    void setToolbarsVisible(bool) final;
+    void setToolbarsVisible(bool);
     bool toolbarsVisible() const final;
 
-    void setStatusbarVisible(bool) final;
+    void setStatusbarVisible(bool);
     bool statusbarVisible() const final;
 
-    void setScrollbarsVisible(bool) final;
+    void setScrollbarsVisible(bool);
     bool scrollbarsVisible() const final;
 
-    void setMenubarVisible(bool) final;
+    void setMenubarVisible(bool);
     bool menubarVisible() const final;
 
     void setResizable(bool) final;

@@ -26,6 +26,8 @@
 #include "config.h"
 #include "AccessibilityMockObject.h"
 
+#include "AccessibilityObjectInlines.h"
+
 namespace WebCore {
 
 AccessibilityMockObject::AccessibilityMockObject(AXID axID, AXObjectCache& cache)

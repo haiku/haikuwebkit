@@ -468,12 +468,6 @@ void HTMLFormElement::attributeChanged(const QualifiedName& name, const AtomStri
     switch (name.nodeName()) {
     case AttributeNames::actionAttr:
         m_attributes.parseAction(newValue);
-        if (!m_attributes.action().isEmpty()) {
-            if (RefPtr f = document().frame()) {
-                if (auto* topFrame = dynamicDowncast<LocalFrame>(f->tree().top()))
-                    MixedContentChecker::checkFormForMixedContent(*topFrame, document().completeURL(m_attributes.action()));
-            }
-        }
         break;
     case AttributeNames::targetAttr:
         m_attributes.setTarget(newValue);

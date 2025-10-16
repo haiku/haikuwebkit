@@ -1048,7 +1048,7 @@ void Connection::processIncomingMessage(UniqueRef<Decoder> message)
     if (!m_syncState)
         return;
 
-    if (message->messageReceiverName() == ReceiverName::AsyncReply) {
+    if (message->isAsyncReplyMessage()) {
         if (auto replyHandlerWithDispatcher = takeAsyncReplyHandlerWithDispatcherWithLockHeld(AtomicObjectIdentifier<AsyncReplyIDType>(message->destinationID()))) {
             replyHandlerWithDispatcher(this, message.moveToUniquePtr());
             return;
@@ -1351,7 +1351,7 @@ void Connection::dispatchMessage(Decoder& decoder)
     assertIsCurrent(dispatcher());
     RefPtr client = m_client.get();
     RELEASE_ASSERT(client);
-    if (decoder.messageReceiverName() == ReceiverName::AsyncReply) {
+    if (decoder.isAsyncReplyMessage()) {
         auto handler = takeAsyncReplyHandler(AtomicObjectIdentifier<AsyncReplyIDType>(decoder.destinationID()));
         if (!handler) {
             markCurrentlyDispatchedMessageAsInvalid();

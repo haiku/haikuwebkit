@@ -28,6 +28,7 @@
 
 #include "AXObjectCacheInlines.h"
 #include "AccessibilityMenuListPopup.h"
+#include "AccessibilityObjectInlines.h"
 #include "Document.h"
 #include "HTMLNames.h"
 #include "HTMLOptionElement.h"

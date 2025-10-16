@@ -30,7 +30,7 @@
 #include "SMILTime.h"
 #include "Timer.h"
 #include <wtf/HashMap.h>
-#include <wtf/RefCounted.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/text/StringHash.h>
 #include <wtf/text/WTFString.h>
 
@@ -42,7 +42,7 @@ class SVGSVGElement;
 class WeakPtrImplWithEventTargetData;
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(SMILTimeContainer);
-class SMILTimeContainer final : public RefCounted<SMILTimeContainer>  {
+class SMILTimeContainer final : public RefCountedAndCanMakeWeakPtr<SMILTimeContainer>  {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(SMILTimeContainer, SMILTimeContainer);
 public:
     static Ref<SMILTimeContainer> create(SVGSVGElement& owner) { return adoptRef(*new SMILTimeContainer(owner)); }

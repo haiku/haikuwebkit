@@ -81,7 +81,7 @@
     JSValueProtect([mainFrame globalContext], m_notificationFunctionCallback);
 }
 
-static Class webAccessibilityObjectWrapperClass()
+static Class webAccessibilityObjectWrapperClassSingleton()
 {
     static Class cls = objc_getClass("WebAccessibilityObjectWrapper");
     ASSERT(cls);
@@ -93,7 +93,7 @@ static Class webAccessibilityObjectWrapperClass()
     // Once we start requesting notifications, it's on for the duration of the program.
     // This is to avoid any race conditions between tests turning this flag on and off. Instead
     // AccessibilityNotificationHandler can ignore events it doesn't care about.
-    [webAccessibilityObjectWrapperClass() accessibilitySetShouldRepostNotifications:YES];
+    [webAccessibilityObjectWrapperClassSingleton() accessibilitySetShouldRepostNotifications:YES];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_notificationReceived:) name:@"AXDRTNotification" object:nil];
 }
 
@@ -111,7 +111,7 @@ static JSValueRef makeValueRefForValue(JSContextRef context, id value)
             return JSValueMakeBoolean(context, [value boolValue]);
         return JSValueMakeNumber(context, [value doubleValue]);
     }
-    if ([value isKindOfClass:webAccessibilityObjectWrapperClass()])
+    if ([value isKindOfClass:webAccessibilityObjectWrapperClassSingleton()])
         return AccessibilityUIElement::makeJSAccessibilityUIElement(context, value);
     if ([value isKindOfClass:[NSDictionary class]])
         return makeObjectRefForDictionary(context, value);

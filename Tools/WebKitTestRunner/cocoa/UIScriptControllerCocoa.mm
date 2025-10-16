@@ -43,6 +43,7 @@
 #import <WebKit/_WKTargetedElementRequest.h>
 #import <WebKit/_WKTextExtraction.h>
 #import <wtf/BlockPtr.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 @interface WKWebView (WKWebViewInternal)
 - (void)paste:(id)sender;
@@ -79,7 +80,7 @@ void UIScriptControllerCocoa::doAsyncTask(JSValueRef callback)
 {
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
 
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(mainDispatchQueueSingleton(), ^{
         if (!m_context)
             return;
         m_context->asyncTaskComplete(callbackID);
@@ -98,7 +99,7 @@ void UIScriptControllerCocoa::doAfterPresentationUpdate(JSValueRef callback)
 
 void UIScriptControllerCocoa::completeTaskAsynchronouslyAfterActivityStateUpdate(unsigned callbackID)
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(mainDispatchQueueSingleton(), ^{
         auto* mainWebView = TestController::singleton().mainWebView();
         ASSERT(mainWebView);
 

@@ -109,6 +109,7 @@ typedef struct WGPUCommandEncoderImpl* WGPUCommandEncoder WGPU_OBJECT_ATTRIBUTE;
 typedef struct WGPUComputePassEncoderImpl* WGPUComputePassEncoder WGPU_OBJECT_ATTRIBUTE;
 typedef struct WGPUComputePipelineImpl* WGPUComputePipeline WGPU_OBJECT_ATTRIBUTE;
 typedef struct WGPUDeviceImpl* WGPUDevice WGPU_OBJECT_ATTRIBUTE;
+typedef struct WGPUExternalTextureImpl* WGPUExternalTexture;
 typedef struct WGPUInstanceImpl* WGPUInstance WGPU_OBJECT_ATTRIBUTE;
 typedef struct WGPUPipelineLayoutImpl* WGPUPipelineLayout WGPU_OBJECT_ATTRIBUTE;
 typedef struct WGPUQuerySetImpl* WGPUQuerySet WGPU_OBJECT_ATTRIBUTE;
@@ -146,7 +147,6 @@ struct WGPULimits;
 struct WGPUMultisampleState;
 struct WGPUOrigin3D;
 struct WGPUPipelineLayoutDescriptor;
-struct WGPUPrimitiveDepthClipControl;
 struct WGPUPrimitiveState;
 struct WGPUQuerySetDescriptor;
 struct WGPUQueueDescriptor;
@@ -159,7 +159,6 @@ struct WGPUSamplerBindingLayout;
 struct WGPUSamplerDescriptor;
 struct WGPUShaderModuleCompilationHint;
 struct WGPUShaderModuleSPIRVDescriptor;
-struct WGPUShaderModuleWGSLDescriptor;
 struct WGPUStencilFaceState;
 struct WGPUStorageTextureBindingLayout;
 struct WGPUSurfaceDescriptor;
@@ -791,7 +790,7 @@ typedef void (*WGPURequestDeviceCallback)(WGPURequestDeviceStatus status, WGPUDe
 typedef struct WGPUChainedStruct {
     struct WGPUChainedStruct const * next;
     WGPUSType sType;
-} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPUChainedStruct WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPUChainedStruct WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUChainedStructOut {
     struct WGPUChainedStructOut * next;
@@ -799,7 +798,6 @@ typedef struct WGPUChainedStructOut {
 } SWIFT_ESCAPABLE WGPUChainedStructOut WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUAdapterProperties {
-    WGPUChainedStructOut * nextInChain;
     uint32_t vendorID;
     char const * vendorName;
     char const * architecture;
@@ -811,7 +809,6 @@ typedef struct WGPUAdapterProperties {
 } WGPUAdapterProperties WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUBindGroupEntry {
-    WGPUChainedStruct const * nextInChain;
     uint32_t binding;
     WGPU_NULLABLE WGPUBuffer buffer;
     uint64_t offset;
@@ -819,6 +816,7 @@ typedef struct WGPUBindGroupEntry {
     WGPU_NULLABLE WGPUSampler sampler;
     WGPU_NULLABLE WGPUTexture texture;
     WGPU_NULLABLE WGPUTextureView textureView;
+    WGPU_NULLABLE WGPUExternalTexture externalTexture;
 } WGPUBindGroupEntry WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUBlendComponent {
@@ -828,7 +826,6 @@ typedef struct WGPUBlendComponent {
 } WGPUBlendComponent WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUBufferBindingLayout {
-    WGPUChainedStruct const * nextInChain;
     WGPUBufferBindingType type;
     WGPUBool hasDynamicOffset;
     uint64_t minBindingSize;
@@ -836,7 +833,6 @@ typedef struct WGPUBufferBindingLayout {
 } WGPUBufferBindingLayout WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUBufferDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPUBufferUsageFlags usage;
     uint64_t size;
@@ -851,21 +847,14 @@ typedef struct WGPUColor {
 } WGPUColor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUCommandBufferDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE WTF::String label;
-} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPUCommandBufferDescriptor WGPU_STRUCTURE_ATTRIBUTE;
-
-static inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetCommandBufferDescriptorNextChainedStruct(const WGPUCommandBufferDescriptor * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
-    return descriptor->nextInChain;
-}
+} SWIFT_ESCAPABLE WGPUCommandBufferDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUCommandEncoderDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
 } WGPUCommandEncoderDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUCompilationMessage {
-    WGPUChainedStruct const * nextInChain;
     WTF::String message;
     WGPUCompilationMessageType type;
     uint64_t lineNum;
@@ -884,7 +873,6 @@ typedef struct WGPUComputePassTimestampWrites {
 } SWIFT_ESCAPABLE WGPUComputePassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUConstantEntry {
-    WGPUChainedStruct const * nextInChain;
     char const * key;
     double value;
 } WGPUConstantEntry WGPU_STRUCTURE_ATTRIBUTE;
@@ -895,8 +883,28 @@ typedef struct WGPUExtent3D {
     uint32_t depthOrArrayLayers;
 } WGPUExtent3D WGPU_STRUCTURE_ATTRIBUTE;
 
+typedef void (^WGPUWorkItem)(void);
+typedef void (^WGPUScheduleWorkBlock)(WGPUWorkItem workItem);
+typedef void (^WGPUDeviceLostBlockCallback)(WGPUDeviceLostReason reason, char const * message);
+
+typedef void (^WGPURenderBuffersWereRecreatedBlockCallback)(CFArrayRef ioSurfaces);
+typedef void (^WGPUOnSubmittedWorkScheduledCallback)(WGPUWorkItem);
+typedef void (^WGPUCompositorIntegrationRegisterBlockCallback)(WGPURenderBuffersWereRecreatedBlockCallback renderBuffersWereRecreated, WGPUOnSubmittedWorkScheduledCallback onSubmittedWorkScheduledCallback);
+
+typedef struct WGPUInstanceCocoaDescriptor {
+    // The API contract is: callers must call WebGPU's functions in a non-racey way with respect
+    // to each other. This scheduleWorkBlock will execute on a background thread, and it must
+    // schedule the block it's passed to be run in a non-racey way with regards to all the other
+    // WebGPU calls. If calls to scheduleWorkBlock are ordered (e.g. multiple calls on the same
+    // thread), then the work that is scheduled must also be ordered in the same order.
+    // It's fine to pass NULL here, but if you do, you must periodically call
+    // wgpuInstanceProcessEvents() to synchronously run the queued callbacks.
+    __unsafe_unretained WGPUScheduleWorkBlock scheduleWorkBlock;
+    const void* webProcessResourceOwner;
+} WGPUInstanceCocoaDescriptor;
+
 typedef struct WGPUInstanceDescriptor {
-    WGPUChainedStruct const * nextInChain;
+    WGPUInstanceCocoaDescriptor cocoaDescriptor;
 } WGPUInstanceDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPULimits {
@@ -939,7 +947,6 @@ typedef struct WGPULimits {
 } WGPULimits WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUMultisampleState {
-    WGPUChainedStruct const * nextInChain;
     uint32_t count;
     uint32_t mask;
     WGPUBool alphaToCoverageEnabled;
@@ -952,7 +959,6 @@ typedef struct WGPUOrigin3D {
 } WGPUOrigin3D WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUPipelineLayoutDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     size_t bindGroupLayoutCount;
     WGPUBindGroupLayout const * bindGroupLayouts;
@@ -960,39 +966,29 @@ typedef struct WGPUPipelineLayoutDescriptor {
     auto bindGroupLayoutsSpan() const { return unsafeMakeSpan(bindGroupLayouts, bindGroupLayoutCount); }
 } WGPUPipelineLayoutDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
-// Can be chained in WGPUPrimitiveState
-typedef struct WGPUPrimitiveDepthClipControl {
-    WGPUChainedStruct chain;
-    WGPUBool unclippedDepth;
-} WGPUPrimitiveDepthClipControl WGPU_STRUCTURE_ATTRIBUTE;
-
 typedef struct WGPUPrimitiveState {
-    WGPUChainedStruct const * nextInChain;
     WGPUPrimitiveTopology topology;
     WGPUIndexFormat stripIndexFormat;
     WGPUFrontFace frontFace;
     WGPUCullMode cullMode;
+    WGPUBool unclippedDepth;
 } WGPUPrimitiveState WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUQuerySetDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPUQueryType type;
     uint32_t count;
 } WGPUQuerySetDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUQueueDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
 } WGPUQueueDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderBundleDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
 } WGPURenderBundleDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderBundleEncoderDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     size_t colorFormatCount;
     WGPUTextureFormat const * colorFormats;
@@ -1005,6 +1001,7 @@ typedef struct WGPURenderBundleEncoderDescriptor {
 } WGPURenderBundleEncoderDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderPassDepthStencilAttachment {
+    WGPUTexture texture;
     WGPUTextureView view;
     WGPULoadOp depthLoadOp;
     WGPUStoreOp depthStoreOp;
@@ -1023,7 +1020,6 @@ typedef struct WGPURenderPassTimestampWrites {
 } SWIFT_ESCAPABLE WGPURenderPassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURequestAdapterOptions {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE WGPUSurface compatibleSurface;
     WGPUPowerPreference powerPreference;
     WGPUBackendType backendType;
@@ -1032,12 +1028,10 @@ typedef struct WGPURequestAdapterOptions {
 } WGPURequestAdapterOptions WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUSamplerBindingLayout {
-    WGPUChainedStruct const * nextInChain;
     WGPUSamplerBindingType type;
 } WGPUSamplerBindingLayout WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUSamplerDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WTF::String label;
     WGPUAddressMode addressModeU;
     WGPUAddressMode addressModeV;
@@ -1052,23 +1046,9 @@ typedef struct WGPUSamplerDescriptor {
 } WGPUSamplerDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUShaderModuleCompilationHint {
-    WGPUChainedStruct const * nextInChain;
     char const * entryPoint;
     WGPUPipelineLayout layout;
 } WGPUShaderModuleCompilationHint WGPU_STRUCTURE_ATTRIBUTE;
-
-// Can be chained in WGPUShaderModuleDescriptor
-typedef struct WGPUShaderModuleSPIRVDescriptor {
-    WGPUChainedStruct chain;
-    uint32_t codeSize;
-    uint32_t const * code;
-} WGPUShaderModuleSPIRVDescriptor WGPU_STRUCTURE_ATTRIBUTE;
-
-// Can be chained in WGPUShaderModuleDescriptor
-typedef struct WGPUShaderModuleWGSLDescriptor {
-    WGPUChainedStruct chain;
-    char const * code;
-} WGPUShaderModuleWGSLDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUStencilFaceState {
     WGPUCompareFunction compare;
@@ -1078,15 +1058,18 @@ typedef struct WGPUStencilFaceState {
 } WGPUStencilFaceState WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUStorageTextureBindingLayout {
-    WGPUChainedStruct const * nextInChain;
     WGPUStorageTextureAccess access;
     WGPUTextureFormat format;
     WGPUTextureViewDimension viewDimension;
 } WGPUStorageTextureBindingLayout WGPU_STRUCTURE_ATTRIBUTE;
 
+typedef struct WGPUSurfaceDescriptorCocoaCustomSurface {
+    WGPUCompositorIntegrationRegisterBlockCallback compositorIntegrationRegister;
+} WGPUSurfaceDescriptorCocoaCustomSurface;
+
 typedef struct WGPUSurfaceDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
+    WGPUSurfaceDescriptorCocoaCustomSurface cocoaDescriptor;
 } WGPUSurfaceDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 // Can be chained in WGPUSurfaceDescriptor
@@ -1136,7 +1119,6 @@ typedef struct WGPUSurfaceDescriptorFromXlibWindow {
 } WGPUSurfaceDescriptorFromXlibWindow WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUSwapChainDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPUTextureUsageFlags usage;
     WGPUTextureFormat format;
@@ -1151,25 +1133,18 @@ typedef struct WGPUSwapChainDescriptor {
 } WGPUSwapChainDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUTextureBindingLayout {
-    WGPUChainedStruct const * nextInChain;
     WGPUTextureSampleType sampleType;
     WGPUTextureViewDimension viewDimension;
     WGPUBool multisampled;
 } WGPUTextureBindingLayout WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUTextureDataLayout {
-    WGPUChainedStruct const * nextInChain;
     uint64_t offset;
     uint32_t bytesPerRow;
     uint32_t rowsPerImage;
 } SWIFT_ESCAPABLE WGPUTextureDataLayout WGPU_STRUCTURE_ATTRIBUTE;
 
-inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetTextureDataLayoutNextInChain(const WGPUTextureDataLayout * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
-    return descriptor->nextInChain;
-}
-
 typedef struct WGPUTextureViewDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPUTextureFormat format;
     WGPUTextureViewDimension dimension;
@@ -1188,7 +1163,6 @@ typedef struct WGPUVertexAttribute {
 } WGPUVertexAttribute WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUBindGroupDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPUBindGroupLayout layout;
     size_t entryCount;
@@ -1198,7 +1172,6 @@ typedef struct WGPUBindGroupDescriptor {
 } WGPUBindGroupDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUBindGroupLayoutEntry {
-    WGPUChainedStruct const * nextInChain;
     uint32_t binding;
     std::array<uint32_t, WGPUShaderStage_Compute / 2 + 1> metalBinding;
     WGPUShaderStageFlags visibility;
@@ -1214,7 +1187,6 @@ typedef struct WGPUBlendState {
 } WGPUBlendState WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUCompilationInfo {
-    WGPUChainedStruct const * nextInChain;
     size_t messageCount;
     WGPUCompilationMessage const * messages;
 } WGPUCompilationInfo WGPU_STRUCTURE_ATTRIBUTE;
@@ -1225,21 +1197,15 @@ inline std::span<const WGPUCompilationMessage> messagesSpan(const WGPUCompilatio
 }
 
 typedef struct WGPUComputePassDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE WTF::String label;
     WGPU_NULLABLE WGPUComputePassTimestampWrites const * timestampWrites;
-} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPUComputePassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPUComputePassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
-static inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetComputePassDescriptorNextChainedStruct(const WGPUComputePassDescriptor * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
-    return descriptor->nextInChain;
-}
-
-static inline WGPU_NULLABLE WGPUComputePassTimestampWrites const * _Nullable __counted_by(1) wgpuGetComputePassDescriptorTimestampWrites(const WGPUComputePassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor) {
+static inline WGPU_NULLABLE WGPUComputePassTimestampWrites const * _Nullable __counted_by(1) wgpuGetComputePassDescriptorTimestampWrites(const WGPUComputePassDescriptor * __counted_by(1) descriptor LIFETIME_BOUND) {
     return descriptor->timestampWrites;
 }
 
 typedef struct WGPUDepthStencilState {
-    WGPUChainedStruct const * nextInChain;
     WGPUTextureFormat format;
     std::optional<WGPUBool> depthWriteEnabled;
     WGPUCompareFunction depthCompare;
@@ -1253,29 +1219,18 @@ typedef struct WGPUDepthStencilState {
 } WGPUDepthStencilState WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUImageCopyBuffer {
-    WGPUChainedStruct const * nextInChain;
     WGPUTextureDataLayout layout;
     WGPUBuffer buffer;
 } SWIFT_ESCAPABLE WGPUImageCopyBuffer WGPU_STRUCTURE_ATTRIBUTE;
 
-inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetImageCopyBufferNextInChain(const WGPUImageCopyBuffer * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
-    return descriptor->nextInChain;
-}
-
 typedef struct WGPUImageCopyTexture {
-    WGPUChainedStruct const * nextInChain;
     WGPUTexture texture;
     uint32_t mipLevel;
     WGPUOrigin3D origin;
     WGPUTextureAspect aspect;
 } SWIFT_ESCAPABLE WGPUImageCopyTexture WGPU_STRUCTURE_ATTRIBUTE;
 
-inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetImageCopyTextureNextInChain(const WGPUImageCopyTexture * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
-    return descriptor->nextInChain;
-}
-
 typedef struct WGPUProgrammableStageDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPUShaderModule module;
     char const * entryPoint;
     size_t constantCount;
@@ -1285,10 +1240,10 @@ typedef struct WGPUProgrammableStageDescriptor {
 } WGPUProgrammableStageDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderPassColorAttachment {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE WGPUTexture texture;
     WGPU_NULLABLE WGPUTextureView view;
     std::optional<uint32_t> depthSlice;
+    WGPU_NULLABLE WGPUTexture resolveTexture;
     WGPU_NULLABLE WGPUTextureView resolveTarget;
     WGPULoadOp loadOp;
     WGPUStoreOp storeOp;
@@ -1296,12 +1251,11 @@ typedef struct WGPURenderPassColorAttachment {
 } SWIFT_ESCAPABLE WGPURenderPassColorAttachment WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURequiredLimits {
-    WGPUChainedStruct const * nextInChain;
     WGPULimits limits;
 } WGPURequiredLimits WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUShaderModuleDescriptor {
-    WGPUChainedStruct const * nextInChain;
+    char const * wgslDescriptor;
     WGPU_NULLABLE char const * label;
     size_t hintCount;
     WGPUShaderModuleCompilationHint const * hints;
@@ -1310,12 +1264,10 @@ typedef struct WGPUShaderModuleDescriptor {
 } WGPUShaderModuleDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUSupportedLimits {
-    WGPUChainedStructOut * nextInChain;
     WGPULimits limits;
 } WGPUSupportedLimits WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUTextureDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPUTextureUsageFlags usage;
     WGPUTextureDimension dimension;
@@ -1339,7 +1291,6 @@ typedef struct WGPUVertexBufferLayout {
 } WGPUVertexBufferLayout WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUBindGroupLayoutDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     size_t entryCount;
     WGPUBindGroupLayoutEntry const * entries;
@@ -1348,21 +1299,18 @@ typedef struct WGPUBindGroupLayoutDescriptor {
 } WGPUBindGroupLayoutDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUColorTargetState {
-    WGPUChainedStruct const * nextInChain;
     WGPUTextureFormat format;
     WGPU_NULLABLE WGPUBlendState const * blend;
     WGPUColorWriteMaskFlags writeMask;
 } WGPUColorTargetState WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUComputePipelineDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPU_NULLABLE WGPUPipelineLayout layout;
     WGPUProgrammableStageDescriptor compute;
 } WGPUComputePipelineDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUDeviceDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     size_t requiredFeatureCount;
     WGPUFeatureName const * requiredFeatures;
@@ -1384,23 +1332,22 @@ typedef struct WGPURenderPassDescriptor {
     WGPU_NULLABLE WGPURenderPassTimestampWrites const * timestampWrites;
 
     auto colorAttachmentsSpan() const { return unsafeMakeSpan(colorAttachments, colorAttachmentCount); }
-} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPURenderPassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPURenderPassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
-inline WGPURenderPassTimestampWrites const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorTimestampWrites(const WGPURenderPassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor) {
+inline WGPURenderPassTimestampWrites const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorTimestampWrites(const WGPURenderPassDescriptor * __counted_by(1) descriptor LIFETIME_BOUND) {
     return descriptor->timestampWrites;
 }
 
-inline WGPURenderPassColorAttachment const * __counted_by(count) wgpuGetRenderPassDescriptorColorAttachments(const WGPURenderPassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor, size_t count) {
+inline WGPURenderPassColorAttachment const * __counted_by(count) wgpuGetRenderPassDescriptorColorAttachments(const WGPURenderPassDescriptor * __counted_by(1) descriptor LIFETIME_BOUND, size_t count) {
     ((void)count);
     return descriptor->colorAttachments;
 }
 
-inline WGPURenderPassDepthStencilAttachment const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorDepthSencilAttachment(const WGPURenderPassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor) {
+inline WGPURenderPassDepthStencilAttachment const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorDepthSencilAttachment(const WGPURenderPassDescriptor * __counted_by(1) descriptor LIFETIME_BOUND) {
     return descriptor->depthStencilAttachment;
 }
 
 typedef struct WGPUVertexState {
-    WGPUChainedStruct const * nextInChain;
     WGPUShaderModule module;
     char const * entryPoint;
     size_t constantCount;
@@ -1413,7 +1360,6 @@ typedef struct WGPUVertexState {
 } WGPUVertexState WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUFragmentState {
-    WGPUChainedStruct const * nextInChain;
     WGPUShaderModule module;
     char const * entryPoint;
     size_t constantCount;
@@ -1426,7 +1372,6 @@ typedef struct WGPUFragmentState {
 } WGPUFragmentState WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderPipelineDescriptor {
-    WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
     WGPU_NULLABLE WGPUPipelineLayout layout;
     WGPUVertexState vertex;

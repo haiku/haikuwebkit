@@ -113,11 +113,13 @@ HTMLMEDIAELEMENT_PLAYINTERNAL, "HTMLMediaElement::playInternal(%" PRIX64 ")", (u
 HTMLMEDIAELEMENT_ADDAUDIOTRACK, "HTMLMediaElement::addAudioTrack(%" PRIX64 ") id: %s, %s", (uint64_t, CString, CString), DEFAULT, Media
 HTMLMEDIAELEMENT_ADDVIDEOTRACK, "HTMLMediaElement::addVideoTrack(%" PRIX64 ") id: %s, %s", (uint64_t, CString, CString), DEFAULT, Media
 HTMLMEDIAELEMENT_CANPLAYTYPE, "HTMLMediaElement::canPlayType(%" PRIX64 ") %s: %s", (uint64_t, CString, CString), DEFAULT, Media
-HTMLMEDIAELEMENT_CANTRANSITIONFROMAUTOPLAYTOPLAY, "HTMLMediaElement::canTransitionFromAutoplayToPlay(%" PRIX64 ") %s", (uint64_t, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_CANTRANSITIONFROMAUTOPLAYTOPLAY_NOT_ENOUGH_DATA, "HTMLMediaElement::canTransitionFromAutoplayToPlay(%" PRIX64 ") not enough data", (uint64_t), DEFAULT, Media
+HTMLMEDIAELEMENT_CANTRANSITIONFROMAUTOPLAYTOPLAY_NOT_AUTOPLAYING, "HTMLMediaElement::canTransitionFromAutoplayToPlay(%" PRIX64 ") not autoplaying", (uint64_t), DEFAULT, Media
 HTMLMEDIAELEMENT_CONFIGURETEXTTRACKDISPLAY, "HTMLMediaElement::configureTextTrackDisplay(%" PRIX64 ") %s", (uint64_t, CString), DEFAULT, Media
 HTMLMEDIAELEMENT_CONFIGURETEXTTRACKGROUP, "HTMLMediaElement::configureTextTrackGroup(%" PRIX64 ") %s track with language %s and BCP 47 language %s has score %d", (uint64_t, CString, CString, CString, int), DEFAULT, Media
 HTMLMEDIAELEMENT_MEDIAENGINEWASUPDATED, "HTMLMediaElement::mediaEngineWasUpdated(%" PRIX64 ")", (uint64_t), DEFAULT, Media
 HTMLMEDIAELEMENT_MEDIAPLAYERCHARACTERISTICSCHANGED, "HTMLMediaElement::mediaPlayerCharacteristicChanged(%" PRIX64 ") %s", (uint64_t, CString), DEFAULT, Media
+HTMLMEDIAELEMENT_MEDIAPLAYERCHARACTERISTICSCHANGED_NO_MEDIASESSION, "HTMLMediaElement::mediaPlayerCharacteristicChanged(%" PRIX64 ") no media session", (uint64_t), DEFAULT, Media
 HTMLMEDIAELEMENT_MEDIAPLAYERDURATIONCHANGED, "HTMLMediaElement::mediaPlayerDurationChanged(%" PRIX64 ") duration = %f, current time = %f", (uint64_t, float, float), DEFAULT, Media
 HTMLMEDIAELEMENT_MEDIAPLAYERSIZECHANGED, "HTMLMediaElement::mediaPlayerSizeChanged(%" PRIX64 ") w = %f, h = %f", (uint64_t, float, float), DEFAULT, Media
 HTMLMEDIAELEMENT_PAUSE, "HTMLMediaElement::pause(%" PRIX64 ")", (uint64_t), DEFAULT, Media

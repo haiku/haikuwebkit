@@ -43,6 +43,7 @@
 #import <wtf/ProcessPrivilege.h>
 #import <wtf/URL.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/StringBuilder.h>
 #import <wtf/text/cf/StringConcatenateCF.h>
@@ -99,7 +100,7 @@ void NetworkStorageSession::deleteCookie(const Cookie& cookie, CompletionHandler
 
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
 }
 
 static Vector<Cookie> nsCookiesToCookieVector(NSArray<NSHTTPCookie *> *nsCookies, NOESCAPE const Function<bool(NSHTTPCookie *)>& filter = { })
@@ -264,7 +265,7 @@ void NetworkStorageSession::deleteHTTPCookie(CFHTTPCookieStorageRef cookieStorag
 
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
 }
 
 static RetainPtr<NSDictionary> policyProperties(const SameSiteInfo& sameSiteInfo, NSURL *url, NSString *partition, ThirdPartyCookieBlockingDecision thirdPartyCookieBlockingDecision)
@@ -663,7 +664,7 @@ void NetworkStorageSession::deleteAllCookies(CompletionHandler<void()>&& complet
     
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
 }
 
 void NetworkStorageSession::deleteCookiesMatching(NOESCAPE const Function<bool(NSHTTPCookie *)>& matches, CompletionHandler<void()>&& completionHandler)
@@ -747,7 +748,7 @@ void NetworkStorageSession::deleteAllCookiesModifiedSince(WallTime timePoint, Co
 
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
 }
 
 Vector<Cookie> NetworkStorageSession::domCookiesForHost(const URL& firstParty)
@@ -827,7 +828,7 @@ void NetworkStorageSession::registerCookieChangeListenersIfNecessary()
             return;
         for (Ref observer : it->value)
             observer->cookiesAdded(host, cookies);
-    }).get() onQueue:dispatch_get_main_queue()];
+    }).get() onQueue:mainDispatchQueueSingleton()];
 
     [nsCookieStorage() _setCookiesRemovedHandler:makeBlockPtr([this, weakThis = WeakPtr { *this }](NSArray<NSHTTPCookie *> *removedCookies, NSString *domainForRemovedCookies, bool removeAllCookies) {
         if (!weakThis)
@@ -850,7 +851,7 @@ void NetworkStorageSession::registerCookieChangeListenersIfNecessary()
             return;
         for (Ref observer : it->value)
             observer->cookiesDeleted(host, cookies);
-    }).get() onQueue:dispatch_get_main_queue()];
+    }).get() onQueue:mainDispatchQueueSingleton()];
 }
 
 void NetworkStorageSession::unregisterCookieChangeListenersIfNecessary()

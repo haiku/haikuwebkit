@@ -29,8 +29,10 @@
 #include "Attr.h"
 #include "CDATASection.h"
 #include "Comment.h"
+#include "CustomElementRegistry.h"
 #include "DocumentInlines.h"
 #include "Document.h"
+#include "DocumentFragment.h"
 #include "DocumentType.h"
 #include "HTMLAttachmentElement.h"
 #include "HTMLScriptElement.h"
@@ -40,6 +42,8 @@
 #include "QualifiedName.h"
 #include "SVGScriptElement.h"
 #include "SecurityOriginPolicy.h"
+#include "ShadowRoot.h"
+#include "TemplateContentDocumentFragment.h"
 #include "Text.h"
 #include "TextResourceDecoder.h"
 #include "WebVTTElement.h"
@@ -55,7 +59,25 @@ static void setAttributes(Element& element, Vector<SerializedNode::Element::Attr
     }).span());
 }
 
-RefPtr<Node> SerializedNode::deserialize(SerializedNode&& serializedNode, WebCore::Document& document)
+static void addShadowRootIfNecessary(Element& element, std::optional<SerializedNode::ShadowRoot>&& serializedRoot)
+{
+    if (!serializedRoot)
+        return;
+
+    element.addShadowRoot(WebCore::ShadowRoot::create(
+        Ref { element.document() }.get(),
+        serializedRoot->openMode ? ShadowRootMode::Open : ShadowRootMode::Closed,
+        serializedRoot->slotAssignmentMode,
+        serializedRoot->delegatesFocus,
+        WebCore::ShadowRoot::Clonable::Yes,
+        serializedRoot->serializable,
+        serializedRoot->availableToElementInternals,
+        nullptr,
+        serializedRoot->hasScopedCustomElementRegistry
+    ));
+}
+
+Ref<Node> SerializedNode::deserialize(SerializedNode&& serializedNode, WebCore::Document& document)
 {
     auto serializedChildren = WTF::switchOn(serializedNode.data, [&] (SerializedNode::ContainerNode& containerNode) {
         return std::exchange(containerNode.children, { });
@@ -63,20 +85,19 @@ RefPtr<Node> SerializedNode::deserialize(SerializedNode&& serializedNode, WebCor
         return Vector<SerializedNode> { };
     });
 
-    // FIXME: Support other kinds of nodes and change RefPtr to Ref.
-    RefPtr node = WTF::switchOn(WTFMove(serializedNode.data), [&] (SerializedNode::Text&& text) -> RefPtr<Node> {
+    Ref node = WTF::switchOn(WTFMove(serializedNode.data), [&] (SerializedNode::Text&& text) -> Ref<Node> {
         return WebCore::Text::create(document, WTFMove(text.data));
-    }, [&] (SerializedNode::ProcessingInstruction&& instruction) -> RefPtr<Node> {
+    }, [&] (SerializedNode::ProcessingInstruction&& instruction) -> Ref<Node> {
         return WebCore::ProcessingInstruction::create(document, WTFMove(instruction.target), WTFMove(instruction.data));
-    }, [&] (SerializedNode::DocumentType&& type) -> RefPtr<Node> {
+    }, [&] (SerializedNode::DocumentType&& type) -> Ref<Node> {
         return WebCore::DocumentType::create(document, type.name, type.publicId, type.systemId);
-    }, [&] (SerializedNode::Comment&& comment) -> RefPtr<Node> {
+    }, [&] (SerializedNode::Comment&& comment) -> Ref<Node> {
         return WebCore::Comment::create(document, WTFMove(comment.data));
-    }, [&] (SerializedNode::CDATASection&& section) -> RefPtr<Node> {
+    }, [&] (SerializedNode::CDATASection&& section) -> Ref<Node> {
         return WebCore::CDATASection::create(document, WTFMove(section.data));
-    }, [&] (SerializedNode::Attr&& attr) -> RefPtr<Node> {
+    }, [&] (SerializedNode::Attr&& attr) -> Ref<Node> {
         return WebCore::Attr::create(document, WTFMove(attr.name).qualifiedName(), AtomString(WTFMove(attr.value)));
-    }, [&] (SerializedNode::Document&& serializedDocument) -> RefPtr<Node> {
+    }, [&] (SerializedNode::Document&& serializedDocument) -> Ref<Node> {
         return WebCore::Document::createCloned(
             serializedDocument.type,
             document.settings(),
@@ -90,25 +111,39 @@ RefPtr<Node> SerializedNode::deserialize(SerializedNode&& serializedNode, WebCor
             serializedDocument.contentType,
             document.protectedDecoder().get()
         );
-    }, [&] (SerializedNode::Element&& element) -> RefPtr<Node> {
+    }, [&] (SerializedNode::Element&& element) -> Ref<Node> {
         constexpr bool createdByParser { false };
         Ref result = document.createElement(WTFMove(element.name).qualifiedName(), createdByParser);
         setAttributes(result, WTFMove(element.attributes));
+        addShadowRootIfNecessary(result, WTFMove(element.shadowRoot));
         return result;
-    }, [&] (SerializedNode::HTMLTemplateElement&& element) -> RefPtr<Node> {
+    }, [&] (SerializedNode::HTMLTemplateElement&& element) -> Ref<Node> {
         Ref result = WebCore::HTMLTemplateElement::create(WTFMove(element.name).qualifiedName(), document);
         setAttributes(result, WTFMove(element.attributes));
+        addShadowRootIfNecessary(result, WTFMove(element.shadowRoot));
+        if (element.content) {
+            Ref content = TemplateContentDocumentFragment::create(Ref { document.ensureTemplateDocument() }.get(), result);
+            for (auto&& child : std::exchange(element.content->children, { })) {
+                if (RefPtr childNode = deserialize(WTFMove(child), document)) {
+                    childNode->setTreeScopeRecursively(content->protectedTreeScope());
+                    content->appendChildCommon(*childNode);
+                }
+            }
+            result->adoptDeserializedContent(WTFMove(content));
+        }
         return result;
-    }, [] (auto&&) -> RefPtr<Node> {
-        return nullptr;
+    }, [&] (SerializedNode::DocumentFragment&&) -> Ref<Node> {
+        return WebCore::DocumentFragment::create(document);
+    }, [&] (SerializedNode::ShadowRoot&&) -> Ref<Node> {
+        // FIXME: Remove from variant and change the shape of the node cloning code to match.
+        RELEASE_ASSERT_NOT_REACHED(); // ShadowRoot is never serialized directly on its own.
     });
 
     RefPtr containerNode = dynamicDowncast<WebCore::ContainerNode>(node);
     for (auto&& child : WTFMove(serializedChildren)) {
-        if (RefPtr childNode = deserialize(WTFMove(child), document)) {
-            childNode->setTreeScopeRecursively(containerNode->protectedTreeScope());
-            containerNode->appendChildCommon(*childNode);
-        }
+        Ref childNode = deserialize(WTFMove(child), document);
+        childNode->setTreeScopeRecursively(containerNode->protectedTreeScope());
+        containerNode->appendChildCommon(childNode);
     }
 
     return node;

@@ -227,7 +227,7 @@ RTCStatsReport::TransportStats::TransportStats(const GstStructure* structure)
     // stats.srtpCipher =
 }
 
-static inline RTCIceCandidateType iceCandidateType(StringView type)
+static inline RTCIceCandidateType iceCandidateType(CStringView type)
 {
     if (type == "host"_s)
         return RTCIceCandidateType::Host;

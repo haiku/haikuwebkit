@@ -408,7 +408,7 @@ public:
 WebKit2PlatformTouchPoint(const WebPlatformTouchPoint& webTouchPoint)
     : PlatformTouchPoint(webTouchPoint.identifier(), DoublePoint(webTouchPoint.locationInRootView()), DoublePoint(webTouchPoint.locationInViewport()), touchEventType(webTouchPoint)
 #if ENABLE(IOS_TOUCH_EVENTS)
-        , webTouchPoint.radiusX(), webTouchPoint.radiusY(), webTouchPoint.rotationAngle(), webTouchPoint.force(), webTouchPoint.altitudeAngle(), webTouchPoint.azimuthAngle(), webPlatformTouchTypeToPlatform(webTouchPoint.touchType())
+        , webTouchPoint.radiusX(), webTouchPoint.radiusY(), webTouchPoint.rotationAngle(), webTouchPoint.twist(), webTouchPoint.force(), webTouchPoint.altitudeAngle(), webTouchPoint.azimuthAngle(), webPlatformTouchTypeToPlatform(webTouchPoint.touchType())
 #endif
     )
 {
@@ -519,22 +519,24 @@ WebCore::PlatformGestureEvent platform(const WebGestureEvent& webEvent)
 #endif
 
 #if PLATFORM(GTK) || PLATFORM(WPE) || USE(LIBWPE)
-WallTime wallTimeForEventTimeInMilliseconds(uint64_t timestamp)
+MonotonicTime monotonicTimeForEventTimeInMilliseconds(uint64_t timestamp)
 {
+    // This function corrects a fixed offset between GTK and WPE timestamps and
+    // MonotonicTime, but it also introduces an error. It will break if the
+    // aforementioned offset is not constant, which could happen if timestamps
+    // are based on anything other than CLOCK_MONOTONIC.
     if (!timestamp)
-        return WallTime::now();
+        return MonotonicTime::now();
 
-    // GTK and WPE events provide a timestamp as uint32_t, which is too small for full millisecond timestamps since
-    // the epoch. They are expected to be just timestamps with monotonic behavior to be compared among themselves,
-    // not against WallTime-like measurements. Thus the need to define a reference origin based on the first event
-    // received.
-    static WallTime firstEventWallTime;
+    static MonotonicTime firstEventMonotonicTime;
     static uint64_t firstEventTimestamp = 0;
     if (!firstEventTimestamp) {
         firstEventTimestamp = timestamp;
-        firstEventWallTime = WallTime::now();
+        // The introduced error is the mismatch between the generation of the
+        // first timestamp and this call:
+        firstEventMonotonicTime = MonotonicTime::now();
     }
-    return firstEventWallTime + Seconds::fromMilliseconds(timestamp - firstEventTimestamp);
+    return firstEventMonotonicTime + Seconds::fromMilliseconds(timestamp - firstEventTimestamp);
 }
 #endif
 

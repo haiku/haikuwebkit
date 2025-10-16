@@ -30,10 +30,10 @@
 
 #import "CAAudioStreamDescription.h"
 #import "Logging.h"
-#import "MediaSample.h"
 #import "MediaUtilities.h"
 #import "PlatformMediaSessionManager.h"
 #import "SharedBuffer.h"
+#import "TrackInfo.h"
 #import <AudioToolbox/AudioCodec.h>
 #import <AudioToolbox/AudioComponent.h>
 #import <AudioToolbox/AudioFormat.h>

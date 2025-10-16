@@ -167,7 +167,7 @@ using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffs
         JSValue executeCallImpl(VM&, JSObject*, const CallData&, JSValue, const ArgList&);
 
 #if CPU(ARM64) && CPU(ADDRESS64) && !ENABLE(C_LOOP)
-        template<typename... Args>
+        template<typename... Args> requires (std::is_convertible_v<Args, JSValue> && ...)
         JSValue tryCallWithArguments(CachedCall&, JSValue, Args...);
 #endif
 

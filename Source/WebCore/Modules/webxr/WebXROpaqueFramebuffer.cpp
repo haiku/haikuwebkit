@@ -150,6 +150,8 @@ void WebXROpaqueFramebuffer::startFrame(PlatformXR::FrameData::LayerData& data)
         tracePoint(WebXRLayerStartFrameEnd);
     });
 
+    m_isForTesting = data.isForTesting;
+
     auto [textureTarget, textureTargetBinding] = gl->externalImageTextureBindingPoint();
 
     ScopedWebGLRestoreFramebuffer restoreFramebuffer { m_context };
@@ -274,7 +276,7 @@ void WebXROpaqueFramebuffer::blitShared(GraphicsContextGL& gl)
     ASSERT(!m_resolvedFBO, "blitShared should not require intermediate resolve buffers");
 
     auto displayAttachmentSet = reusableDisplayAttachmentsAtIndex(m_currentDisplayAttachmentIndex);
-    ASSERT(displayAttachmentSet);
+    ASSERT_IMPLIES(!m_isForTesting, displayAttachmentSet);
     if (!displayAttachmentSet) {
         RELEASE_LOG_ERROR(XR, "WebXROpaqueFramebuffer::blitShared(): unable to find display attachments at index: %zu", m_currentDisplayAttachmentIndex);
         return;
@@ -297,7 +299,7 @@ void WebXROpaqueFramebuffer::blitSharedToLayered(GraphicsContextGL& gl)
     ASSERT(drawFBO, "drawFBO shouldn't be the default framebuffer");
 
     auto displayAttachmentSet = reusableDisplayAttachmentsAtIndex(m_currentDisplayAttachmentIndex);
-    ASSERT(displayAttachmentSet);
+    ASSERT_IMPLIES(!m_isForTesting, displayAttachmentSet);
     if (!displayAttachmentSet) {
         RELEASE_LOG_ERROR(XR, "WebXROpaqueFramebuffer::blitSharedToLayered(): unable to find display attachments at index: %zu", m_currentDisplayAttachmentIndex);
         return;
@@ -403,7 +405,7 @@ bool WebXROpaqueFramebuffer::setupFramebuffer(GraphicsContextGL& gl, const Platf
 
         gl.bindFramebuffer(GL::FRAMEBUFFER, m_drawFramebuffer->object());
         bindAttachments(gl, m_drawAttachments);
-        ASSERT(gl.checkFramebufferStatus(GL::FRAMEBUFFER) == GL::FRAMEBUFFER_COMPLETE);
+        ASSERT_IMPLIES(!m_isForTesting, gl.checkFramebufferStatus(GL::FRAMEBUFFER) == GL::FRAMEBUFFER_COMPLETE);
     }
 
     // Calculate viewports of each eye
@@ -424,7 +426,7 @@ bool WebXROpaqueFramebuffer::setupFramebuffer(GraphicsContextGL& gl, const Platf
         ensure(gl, m_resolvedFBO);
         gl.bindFramebuffer(GL::FRAMEBUFFER, m_resolvedFBO);
         bindAttachments(gl, m_resolveAttachments);
-        ASSERT(gl.checkFramebufferStatus(GL::FRAMEBUFFER) == GL::FRAMEBUFFER_COMPLETE);
+        ASSERT(!m_isForTesting, gl.checkFramebufferStatus(GL::FRAMEBUFFER) == GL::FRAMEBUFFER_COMPLETE);
         if (gl.checkFramebufferStatus(GL::FRAMEBUFFER) != GL::FRAMEBUFFER_COMPLETE)
             return false;
     }

@@ -52,6 +52,7 @@
 #import "WebProcessProxy.h"
 #import <WebCore/LocalizedStrings.h>
 #import <wtf/BlockPtr.h>
+#import <wtf/darwin/DispatchExtras.h>
 
 #if PLATFORM(IOS_FAMILY)
 #import "UIKitSPI.h"
@@ -657,7 +658,7 @@ void WebExtensionAction::propertiesDidChange()
 
     m_updatePending = true;
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, updateThrottleDuration.nanosecondsAs<int64_t>()), dispatch_get_main_queue(), makeBlockPtr([this, protectedThis = Ref { *this }]() {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, updateThrottleDuration.nanosecondsAs<int64_t>()), mainDispatchQueueSingleton(), makeBlockPtr([this, protectedThis = Ref { *this }]() {
         m_updatePending = false;
 
         RefPtr extensionContext = m_extensionContext.get();
@@ -1061,7 +1062,7 @@ void WebExtensionAction::popupDidFinishDocumentLoad()
         return;
 
     // Delay showing the popup until a minimum size or a timeout is reached.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, popoverShowTimeout.nanosecondsAs<int64_t>()), dispatch_get_main_queue(), makeBlockPtr([this, protectedThis = Ref { *this }] {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, popoverShowTimeout.nanosecondsAs<int64_t>()), mainDispatchQueueSingleton(), makeBlockPtr([this, protectedThis = Ref { *this }] {
         if (popupPresented() || !hasPopupWebView() || !presentsPopupWhenReady() || !extensionContext())
             return;
 
@@ -1091,7 +1092,7 @@ void WebExtensionAction::readyToPresentPopup()
     if (RefPtr extensionController = extensionContext()->extensionController())
         extensionController->setShowingActionPopup(true);
 
-    dispatch_async(dispatch_get_main_queue(), makeBlockPtr([this, protectedThis = Ref { *this }]() {
+    dispatch_async(mainDispatchQueueSingleton(), makeBlockPtr([this, protectedThis = Ref { *this }]() {
         if (!extensionContext() || !popupPresented())
             return;
 

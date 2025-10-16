@@ -130,6 +130,8 @@ struct GridPosition {
     WEBCORE_EXPORT static void setMaxPositionForTesting(unsigned);
 
 private:
+    friend void add(Hasher&, const GridPosition&);
+
     enum class GridPositionType : uint8_t {
         Auto,
         Explicit,

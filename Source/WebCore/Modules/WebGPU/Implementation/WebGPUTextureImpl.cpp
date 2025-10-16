@@ -56,7 +56,6 @@ RefPtr<TextureView> TextureImpl::createView(const std::optional<TextureViewDescr
     Ref convertToBackingContext = m_convertToBackingContext;
 
     WGPUTextureViewDescriptor backingDescriptor {
-        .nextInChain = nullptr,
         .label = label.data(),
         .format = descriptor && descriptor->format ? convertToBackingContext->convertToBacking(*descriptor->format) : WGPUTextureFormat_Undefined,
         .dimension = descriptor && descriptor->dimension ? convertToBackingContext->convertToBacking(*descriptor->dimension) : WGPUTextureViewDimension_Undefined,

@@ -195,7 +195,7 @@ public:
         return result;
     }
 
-    uint32_t numCallSlots() const { return m_callSlotIndex; }
+    uint32_t numCallProfiles() const { return m_callProfileIndex; }
 
 private:
     static constexpr bool verbose = false;
@@ -388,7 +388,7 @@ private:
 
     unsigned m_unreachableBlocks { 0 };
     unsigned m_loopIndex { 0 };
-    unsigned m_callSlotIndex { 0 };
+    unsigned m_callProfileIndex { 0 };
 };
 
 WTF_MAKE_TZONE_ALLOCATED_TEMPLATE_IMPL(template<typename Context>, FunctionParser<Context>);
@@ -3068,14 +3068,14 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             for (unsigned i = 0; i < calleeSignature.returnCount(); ++i)
                 WASM_VALIDATOR_FAIL_IF(!isSubtype(calleeSignature.returnType(i), callerSignature.returnType(i)), "tail call function index "_s, functionIndex, " return type mismatch: "_s , "expected "_s, callerSignature.returnType(i), ", got "_s, calleeSignature.returnType(i));
 
-            WASM_TRY_ADD_TO_CONTEXT(addCall(m_callSlotIndex++, functionIndex, typeDefinition, args, results, CallType::TailCall));
+            WASM_TRY_ADD_TO_CONTEXT(addCall(m_callProfileIndex++, functionIndex, typeDefinition, args, results, CallType::TailCall));
 
             m_unreachableBlocks = 1;
 
             return { };
         }
 
-        WASM_TRY_ADD_TO_CONTEXT(addCall(m_callSlotIndex++, functionIndex, typeDefinition, args, results));
+        WASM_TRY_ADD_TO_CONTEXT(addCall(m_callProfileIndex++, functionIndex, typeDefinition, args, results));
         RELEASE_ASSERT(calleeSignature.returnCount() == results.size());
 
         for (unsigned i = 0; i < calleeSignature.returnCount(); ++i) {
@@ -3136,14 +3136,14 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             for (unsigned i = 0; i < calleeSignature.returnCount(); ++i)
                 WASM_VALIDATOR_FAIL_IF(!isSubtype(calleeSignature.returnType(i), callerSignature.returnType(i)), "tail call indirect return type mismatch: "_s , "expected "_s, callerSignature.returnType(i), ", got "_s, calleeSignature.returnType(i));
 
-            WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(m_callSlotIndex++, tableIndex, typeDefinition, args, results, CallType::TailCall));
+            WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(m_callProfileIndex++, tableIndex, typeDefinition, args, results, CallType::TailCall));
 
             m_unreachableBlocks = 1;
 
             return { };
         }
 
-        WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(m_callSlotIndex++, tableIndex, typeDefinition, args, results));
+        WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(m_callProfileIndex++, tableIndex, typeDefinition, args, results));
 
         for (unsigned i = 0; i < calleeSignature.returnCount(); ++i) {
             Type returnType = calleeSignature.returnType(i);
@@ -3201,14 +3201,14 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             for (unsigned i = 0; i < calleeSignature.returnCount(); ++i)
                 WASM_VALIDATOR_FAIL_IF(!isSubtype(calleeSignature.returnType(i), callerSignature.returnType(i)), "tail call ref return type mismatch: "_s , "expected "_s, callerSignature.returnType(i), ", got "_s, calleeSignature.returnType(i));
 
-            WASM_TRY_ADD_TO_CONTEXT(addCallRef(m_callSlotIndex++, typeDefinition, args, results, CallType::TailCall));
+            WASM_TRY_ADD_TO_CONTEXT(addCallRef(m_callProfileIndex++, typeDefinition, args, results, CallType::TailCall));
 
             m_unreachableBlocks = 1;
 
             return { };
         }
 
-        WASM_TRY_ADD_TO_CONTEXT(addCallRef(m_callSlotIndex++, typeDefinition, args, results));
+        WASM_TRY_ADD_TO_CONTEXT(addCallRef(m_callProfileIndex++, typeDefinition, args, results));
 
         for (unsigned i = 0; i < calleeSignature.returnCount(); ++i) {
             Type returnType = calleeSignature.returnType(i);

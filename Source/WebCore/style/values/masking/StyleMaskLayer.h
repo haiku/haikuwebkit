@@ -26,7 +26,6 @@
 #pragma once
 
 #include "GraphicsTypes.h"
-#include "LengthSize.h"
 #include "RenderStyleConstants.h"
 #include "StyleBackgroundSize.h"
 #include "StyleFillLayers.h"
@@ -109,12 +108,12 @@ private:
     BackgroundSize m_size;
     RepeatStyle m_repeat;
 
-    PREFERRED_TYPE(FillBox) unsigned m_clip : 3;
-    PREFERRED_TYPE(FillBox) unsigned m_origin : 2;
+    PREFERRED_TYPE(FillBox) unsigned m_clip : FillBoxBitWidth;
+    PREFERRED_TYPE(FillBox) unsigned m_origin : FillBoxBitWidth;
     PREFERRED_TYPE(CompositeOperator) unsigned m_composite : 4;
     PREFERRED_TYPE(MaskMode) unsigned m_maskMode : 2;
 
-    PREFERRED_TYPE(FillBox) mutable unsigned m_clipMax : 2; // maximum m_clip value from this to bottom layer
+    PREFERRED_TYPE(FillBox) mutable unsigned m_clipMax : FillBoxBitWidth; // maximum m_clip value from this to bottom layer
 };
 
 using MaskLayers = FillLayers<MaskLayer>;

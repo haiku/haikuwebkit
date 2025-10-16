@@ -34,6 +34,11 @@ struct BlendingContext;
 
 class MatrixTransformOperation final : public TransformOperation {
 public:
+    static Ref<MatrixTransformOperation> createIdentity()
+    {
+        return adoptRef(*new MatrixTransformOperation(1, 0, 0, 1, 0, 0));
+    }
+
     static Ref<MatrixTransformOperation> create(double a, double b, double c, double d, double e, double f)
     {
         return adoptRef(*new MatrixTransformOperation(a, b, c, d, e, f));
@@ -62,7 +67,7 @@ private:
         return false;
     }
 
-    Ref<TransformOperation> blend(const TransformOperation* from, const BlendingContext&, bool blendToIdentity = false) override;
+    Ref<TransformOperation> blend(const TransformOperation* from, const BlendingContext&, bool blendToIdentity = false) const override;
 
     void dump(WTF::TextStream&) const final;
 

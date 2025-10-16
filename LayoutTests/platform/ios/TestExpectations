@@ -172,14 +172,13 @@ webkit.org/b/212975 http/tests/ssl/applepay/PaymentRequest.https.html [ Pass Tim
 http/tests/paymentrequest/ApplePayModifier-disbursementRequest.https.html [ Skip ]
 http/tests/paymentrequest [ Pass ]
 imported/w3c/web-platform-tests/payment-request [ Pass ]
-imported/w3c/web-platform-tests/payment-request/show-method-optional-promise-rejects.https.html [ DumpJSConsoleLogInStdErr ]
 
 # This test is failing due to lack of user activation.
 imported/w3c/web-platform-tests/payment-request/payment-is-showing.https.html [ Skip ]
 
 # Timeouts
 imported/w3c/web-platform-tests/payment-request/payment-request-canmakepayment-method.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-request-hasenrolledinstrument-method.tentative.https.html [ Skip DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/payment-request/payment-request-hasenrolledinstrument-method.tentative.https.html [ Skip ]
 imported/w3c/web-platform-tests/digital-credentials/allow-attribute-with-create.https.html [ Skip ]
 
 # skip in favor of tests in http/tests/paymentrequest
@@ -389,6 +388,7 @@ platform/ios/ios/fast/forms/range-input-container-touches.html [ Skip ]
 platform/ios/ios/fast/forms/range-input-readonly-and-disabled.html [ Skip ]
 platform/ios/ios/fast/forms/range-input-touches.html [ Skip ]
 platform/ios/ios/touch [ Skip ]
+pointerevents/pointer-event-twist-on-tap-or-click.html [ Skip ]
 media/modern-media-controls/css/pointer-events-none.html [ Skip ]
 
 # Calls into the Opportunistic Task Scheduler which is currently disabled on IOS
@@ -440,6 +440,7 @@ storage/storagequota-request-quota.html
 # iOS doesn't have a local inspector
 inspector/ [ Skip ]
 http/tests/inspector/ [ Skip ]
+http/tests/site-isolation/inspector/ [ Skip ]
 http/tests/websocket/tests/hybi/inspector/ [ Skip ]
 
 # Needs testRunner.enableAutoResizeMode()
@@ -1419,6 +1420,7 @@ imported/w3c/web-platform-tests/css/css-view-transitions/inline-with-offset-from
 
 # Needs special fuzziness on iOS.
 imported/w3c/web-platform-tests/css/css-view-transitions/rotated-cat-off-top-edge.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/table-caption.html [ ImageOnlyFailure ]
 
 # Site isolation testing infrastructure for accessibility doesn't exist on iOS.
 http/tests/site-isolation/accessibility/ [ Skip ]
@@ -1454,7 +1456,6 @@ http/tests/local/formdata/send-form-data-with-sliced-file.html [ Failure ]
 http/tests/local/formdata/send-form-data.html [ Failure ]
 http/tests/local/link-stylesheet-load-order-preload.html [ Failure ]
 http/tests/local/link-stylesheet-load-order.html [ Failure ]
-http/tests/misc/favicon-loads-with-icon-loading-override.html [ Failure ]
 http/tests/misc/link-rel-icon-beforeload.html [ Failure ]
 http/tests/misc/object-embedding-svg-delayed-size-negotiation.xhtml [ Failure ]
 http/tests/misc/willCacheResponse-delegate-callback.html [ Failure ]
@@ -2040,7 +2041,6 @@ fast/dom/DeviceOrientation/updates.html
 fast/dom/MutationObserver/inline-event-listener.html
 fast/dom/Window/open-window-min-size.html
 fast/dom/rtl-scroll-to-leftmost-and-resize.html
-fast/dynamic/paused-event-dispatch.html
 fast/events/resize-subframe.html
 fast/files/read-blob-async.html
 fast/files/read-file-async.html
@@ -2868,7 +2868,6 @@ imported/w3c/web-platform-tests/storage-access-api/requestStorageAccess-cross-or
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.BlobURLDedicatedWorker.sub.https.tentative.window.html [ Skip ]
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.BlobURLSharedWorker.sub.https.tentative.window.html [ Skip ]
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.thirdPartyBlobStorage.sub.https.window.html [ Skip ]
-imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.blobStorage.sub.https.window.html [ DumpJSConsoleLogInStdErr ]
 
 # Enable on appropriate platforms: rdar://140222322
 http/tests/storageAccess/grant-with-prompt-under-general-third-party-cookie-blocking-with-partitioned-cookies.https.html [ Skip ]
@@ -2965,7 +2964,6 @@ fast/mediastream/getDisplayMedia-size.html [ Skip ]
 webkit.org/b/177401 webrtc/captureCanvas-webrtc.html [ Pass Timeout Failure ]
 
 webkit.org/b/210173 webrtc/h265.html [ Skip ]
-webrtc/video-rotation-black.html [ Slow ]
 
 webkit.org/b/209878 [ Debug ] webrtc/datachannel/multiple-connections.html [ Slow ]
 
@@ -3307,10 +3305,7 @@ webkit.org/b/207767 http/wpt/service-workers/online.https.html [ Pass Failure ]
 
 webkit.org/b/207768 http/wpt/service-workers/useragent.https.html [ Pass Failure ]
 
-webkit.org/b/254706 [ Release ] imported/w3c/web-platform-tests/html/dom/idlharness.https.html [ Pass Failure ]
-webkit.org/b/254706 [ Debug ] imported/w3c/web-platform-tests/html/dom/idlharness.https.html [ Slow Pass Failure ]
-
-webkit.org/b/205216 imported/w3c/web-platform-tests/content-security-policy/reporting/report-same-origin-with-cookies.html [ Pass Failure DumpJSConsoleLogInStdErr ]
+webkit.org/b/205216 imported/w3c/web-platform-tests/content-security-policy/reporting/report-same-origin-with-cookies.html [ Pass Failure ]
 
 webkit.org/b/207769 crypto/subtle/rsa-indexeddb-non-exportable.html [ Pass Timeout ]
 
@@ -3511,8 +3506,9 @@ fast/text/line-break-with-locale.html [ ImageOnlyFailure ]
 
 webkit.org/b/229154 webrtc/peer-connection-audio-mute2.html [ Pass Failure ]
 
-# WebM is not supported on iOS
+# WebM with vp9 is not supported on iOS (lacking decoder)
 http/tests/media/video-webm-stall.html [ Skip ]
+media/media-vp9-reschange-webm.html [ Skip ]
 
 # webkit.org/b/277760 [ iOS ] 2x imported/w3c/web-platform-tests/html/rendering/widgets/input-checkbox-switch-rtl.tentative.html (layout-tests) are ref mismatch
 webkit.org/b/229291 imported/w3c/web-platform-tests/html/rendering/replaced-elements/images/revoked-blob-print.html [ Pass ImageOnlyFailure ]
@@ -3733,7 +3729,7 @@ webkit.org/b/240069 fast/css/continuationCrash.html [ Pass Failure ]
 
 webkit.org/b/240123 imported/w3c/web-platform-tests/webrtc/protocol/rtp-clockrate.html [ Pass Failure ]
 
-webkit.org/b/239568 imported/w3c/web-platform-tests/content-security-policy/inheritance/blob-url-in-main-window-self-navigate-inherits.sub.html [ Pass Failure DumpJSConsoleLogInStdErr ]
+webkit.org/b/239568 imported/w3c/web-platform-tests/content-security-policy/inheritance/blob-url-in-main-window-self-navigate-inherits.sub.html [ Pass Failure ]
 
 webkit.org/b/240148 fast/images/exif-orientation-background-image-repeat.html [ Pass Failure ImageOnlyFailure ]
 
@@ -3832,8 +3828,6 @@ imported/w3c/web-platform-tests/css/css-pseudo/highlight-cascade/highlight-casca
 imported/w3c/web-platform-tests/css/css-pseudo/highlight-styling-001.html [ Pass ]
 imported/w3c/web-platform-tests/css/css-pseudo/highlight-styling-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-pseudo/highlight-custom-properties-dynamic-001.html [ Pass ]
-
-webkit.org/b/248100 imported/w3c/web-platform-tests/css/css-masking/clip-path-svg-content/clip-path-content-use-007.svg [ DumpJSConsoleLogInStdErr ]
 
 imported/w3c/web-platform-tests/css/css-transforms/ttwf-css-3d-polygon-cycle.html [ ImageOnlyFailure ]
 
@@ -4026,9 +4020,9 @@ imported/w3c/web-platform-tests/css/css-ui/compute-kind-widget-generated/kind-of
 imported/w3c/web-platform-tests/css/css-ui/compute-kind-widget-generated/kind-of-widget-fallback-textarea-border-top-width-001.html [ Pass ]
 
 # These tests are flaky due to "Blocked access to external URL" messages because we don't support WPT domains.
-imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-allowed-for-self.https.sub.html [ DumpJSConsoleLogInStdErr Failure Pass ]
-imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-allowed-for-some.https.sub.html [ DumpJSConsoleLogInStdErr Failure Pass ]
-imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-disallowed-for-all.https.sub.html [ DumpJSConsoleLogInStdErr Failure Pass ]
+imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-allowed-for-self.https.sub.html [ Failure Pass ]
+imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-allowed-for-some.https.sub.html [ Failure Pass ]
+imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-disallowed-for-all.https.sub.html [ Failure Pass ]
 
 # Close Watcher tests rely on sending escape keys from test_driver which doesn't work on iOS webkit.org/b/274832
 webkit.org/b/274832 imported/w3c/web-platform-tests/close-watcher/esc-key [ Skip ]
@@ -4515,6 +4509,9 @@ webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interaction-cou
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interaction-count-press-key.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-auxclick.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-click.html [ Skip ]
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-keyboard-event-simulated-click-button-space.html [ Skip ]
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-keyboard-event-simulated-click-checkbox-space.html [ Skip ]
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-keyboard-event-simulated-click-link-enter.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-keypress.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-press-key-as-input.html [ Skip ]
@@ -5876,9 +5873,6 @@ fast/viewport/ios/ignore-minimum-device-width-for-page-with-viewport-device-widt
 # problem with blur handling
 mathml/focus-event-handling.html [ Failure ]
 
-# <rdar://problem/56512107> [ iOS ] Three editing/pasteboard/smart-paste-paragraph tests have been flaky since they landed in r243124 (203264)
-webkit.org/b/203264 [ Release ] editing/pasteboard/smart-paste-paragraph-001.html [ Pass Failure ]
-
 webkit.org/b/253708 editing/pasteboard/copy-paste-text-with-trailing-colon.html [ Failure ]
 
 # Timeout running prompt() because mock implementation is absent.
@@ -6292,6 +6286,7 @@ webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-i
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-indent-vrl-012.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-indent-vrl-014.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-indent-vrl-016.xht [ ImageOnlyFailure ]
+webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/wm-propagation-body-scroll-offset-vertical-rl.html [ Failure ]
 
 # webkit.org/b/275710 (REGRESSION (iOS 14): [ iOS ] 8 quicklook tests are constantly failing.)
 quicklook/keynote-09.html [ Failure ]
@@ -6647,7 +6642,7 @@ webkit.org/b/237348 pointerevents/mouse [ Skip ]
 webkit.org/b/275768 imported/w3c/web-platform-tests/inert/inert-iframe-hittest.html [ Skip ]
 
 # webkit.org/b/234410 Multiple semantics web-platform-tests have become flaky after r286944
-imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe_sandbox_anchor_download_allow_downloads.tentative.html [ DumpJSConsoleLogInStdErr Pass Failure ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe_sandbox_anchor_download_allow_downloads.tentative.html [ Pass Failure ]
 imported/w3c/web-platform-tests/html/semantics/text-level-semantics/the-a-element/a-download-click-404.html [ Pass Failure ]
 http/wpt/html/semantics/text-level-semantics/the-a-element/a-download-click-404.html [ Pass Failure ]
 
@@ -7058,7 +7053,7 @@ webgl/2.0.y/conformance/textures/image_bitmap_from_video/tex-2d-rgba-rgba-unsign
 webgl/2.0.y/conformance/textures/image_bitmap_from_video/tex-2d-rgba-rgba-unsigned_short_4_4_4_4.html
 webgl/2.0.y/conformance/textures/image_bitmap_from_video/tex-2d-rgba-rgba-unsigned_short_5_5_5_1.html
 
-webkit.org/b/269086 [ Release ] imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-allowed-for-all.https.sub.html [ Pass Failure ]
+webkit.org/b/269086 imported/w3c/web-platform-tests/feature-policy/feature-policy-frame-policy-allowed-for-all.https.sub.html [ Pass Failure ]
 
 webkit.org/b/269760 mathml/presentation/scripts-underover.html [ Failure ]
 
@@ -7500,10 +7495,10 @@ imported/w3c/web-platform-tests/intersection-observer/svg-clipped-rect-target.ht
 imported/w3c/web-platform-tests/intersection-observer/svg-intersection-with-fractional-bounds.html [ Skip ]
 
 # webkit.org/b/276562 ([ iOS18 ] 3 wpt/webcodecs/* layout tests are constantly failing.)
-imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_annexb [ Failure DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_avc [ Failure DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.worker.html?h264_annexb [ Failure DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/videoDecoder-codec-specific.https.any.html?h264_annexb [ Failure DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_annexb [ Failure ]
+imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_avc [ Failure ]
+imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.worker.html?h264_annexb [ Failure ]
+imported/w3c/web-platform-tests/webcodecs/videoDecoder-codec-specific.https.any.html?h264_annexb [ Failure ]
 
 webkit.org/b/276624 fast/dynamic/layer-hit-test-crash.html [ Pass Failure ]
 
@@ -7546,8 +7541,6 @@ imported/w3c/web-platform-tests/screen-orientation/lock-unlock-check.html [ Pass
 # webkit.org/b/277896 ([ iOS ] fast/forms/ios/time-picker-value-change.html is a flaky text failure (277896))
 fast/forms/ios/time-picker-value-change.html [ Pass Failure ]
 
-# webkit.org/b/277897 (Regression: 282030@main? [ iOS 17 Release ] imported/w3c/web-platform-tests/css/css-anchor-position/anchor-position-inline-004.html is a flaky text failure (277897))
-imported/w3c/web-platform-tests/css/css-anchor-position/anchor-position-inline-004.html [ Pass Failure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-try-cascade-layer-reorder.html [ Failure ]
 
 # FAIL results are platform dependent
@@ -7738,8 +7731,6 @@ webkit.org/b/286594 http/wpt/cache-storage/quota-third-party.https.html [ Pass F
 
 # webkit.org/b/286934 [ Debug ] ipc/create-media-source-with-invalid-constraints-crash.html [ Skip ]
 
-webkit.org/b/287291 http/tests/site-isolation/selection-focus.html [ ImageOnlyFailure ]
-
 webkit.org/b/287672 imported/w3c/web-platform-tests/css/css-cascade/all-prop-initial-xml.html [ Failure ]
 
 webkit.org/b/287741 fast/viewport/ios/non-responsive-viewport-after-changing-view-scale.html [ Pass Failure ]
@@ -7912,8 +7903,6 @@ fast/forms/ios/file-upload-panel-dismiss-when-view-removed-from-window.html [ Pa
 webkit.org/b/292294 webgl/2.0.y/conformance2/extensions/webgl-stencil-texturing.html [ Failure ]
 
 webkit.org/b/292402 http/tests/site-isolation/draw-after-cross-origin-navigation-between-two-remote-frames.html [ ImageOnlyFailure ]
-
-webkit.org/b/292650 http/tests/iframe-monitor/throttler.html [ Timeout ]
 
 webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/border-collapse-dynamic-column-001.xht [ ImageOnlyFailure ]
 
@@ -8130,7 +8119,6 @@ imported/w3c/web-platform-tests/digital-credentials/user-activation.https.html [
 imported/w3c/web-platform-tests/shadow-dom/reference-target/tentative/interesttarget.tentative.html [ Failure ]
 imported/w3c/web-platform-tests/uievents/mouse/mousemove_after_mouseover_target_removed.html [ Failure ]
 platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport.html [ Failure ]
-editing/selection/ios/selection-handles-in-readonly-input.html [ Timeout ]
 fast/css/accent-color/button.html [ ImageOnlyFailure ]
 fast/css/accent-color/date.html [ ImageOnlyFailure ]
 fast/css/accent-color/select.html [ ImageOnlyFailure ]
@@ -8140,6 +8128,9 @@ imported/w3c/web-platform-tests/css/css-view-transitions/fractional-translation-
 
 # <rdar://156470462> RTL inputs with type=password have larger logical width than RTL inputs with type number, url, tel, & text
 fast/forms/input-password-logical-widths.html [ Failure ]
+
+# <rdar://160314418> Tap-and-half selection gesture is broken in WebKit
+editing/selection/ios/select-text-using-tap-and-half.html [ Skip ]
 
 webkit.org/b/296338 http/tests/site-isolation/fullscreen.html [ Pass Failure ]
 
@@ -8166,8 +8157,6 @@ webkit.org/b/296566 [ Release ] imported/w3c/web-platform-tests/screen-orientati
 [ Release ] http/tests/webcodecs/video-decoder-callbacks-do-not-leak.html [ Pass Failure ]
 
 webkit.org/b/296637 [ Release ] http/tests/dom/noopener-window-not-targetable.html [ Pass Failure ]
-
-webkit.org/b/296639 [ Release ] imported/w3c/web-platform-tests/html/browsers/browsing-the-web/overlapping-navigations-and-traversals/cross-document-traversal-cross-document-traversal.html [ Pass Failure ]
 
 webkit.org/b/296657 fast/scrolling/ios/scroll-anchoring-when-revealing-focused-element.html [ Pass Failure ]
 
@@ -8211,13 +8200,9 @@ webkit.org/b/297144 fast/forms/state-restore-to-non-edited-controls.html [ Pass 
 
 webkit.org/b/297240 http/tests/site-isolation/edge-sampling-commit-root-frame-load.html [ Failure ]
 
-webkit.org/b/297131 [ Debug ] imported/w3c/web-platform-tests/web-locks/storage-buckets.tentative.https.any.worker.html [ Pass Failure ]
-
 webkit.org/b/295751 [ Release ] http/tests/geolocation/geolocation-get-current-position-does-not-leak.https.html [ Pass Failure ]
 
 webkit.org/b/297251 [ Release ] fast/mediastream/getUserMedia-echoCancellation.html [ Pass Failure ]
-
-webkit.org/b/297346 workers/message-port-gc.html [ Crash ]
 
 # webkit.org/b/297405 2x imported/w3c/web-platform-tests/css/css-flexbox/ (layout-tests) tests are constant image failures 
 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-align-self-vert-rtl-002.xhtml [ Failure ]
@@ -8226,7 +8211,6 @@ imported/w3c/web-platform-tests/css/css-flexbox/flexbox-align-self-vert-rtl-001.
 webkit.org/b/297462 imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visibility-size-containment-001.html [ Failure ]
 
 webkit.org/b/295599 [ Release ] http/tests/webcodecs/audio-decoder-callbacks-do-not-leak.html [ Pass Failure ]
-webkit.org/b/286318 http/tests/iframe-monitor [ Pass ]
 
 webkit.org/b/294931 ipc/LocalSampleBufferDisplayLayer-LogIdentifier-data-race-uaf.html [ Skip ]
 
@@ -8234,14 +8218,6 @@ webkit.org/b/289010 imported/w3c/web-platform-tests/html/semantics/disabled-elem
 
 # Clicking/tapping within a selection on iOS is not supposed to clear the selection.
 fast/events/selection-clear-on-click-fractional-coordinates.html [ Skip ]
-
-# webkit.org/b/297599 [ iOS ] 6x http/tests/iframe-monitor (layout-tests) tests are constantly timing out 
-http/tests/iframe-monitor/workers/shared-worker.html [ Timeout ]
-http/tests/iframe-monitor/workers/service-worker.html [ Timeout ]
-http/tests/iframe-monitor/workers/service-worker-not-count-twice.html [ Timeout ]
-http/tests/iframe-monitor/iframe-unload.html [ Timeout ]
-http/tests/iframe-monitor/eligibility.html [ Timeout ]
-http/tests/iframe-monitor/dark-mode.html [ Timeout ]
 
 webkit.org/b/261344 [ Release ] requestidlecallback/requestidlecallback-does-not-block-timer.html [ Pass Failure ]
 
@@ -8252,8 +8228,6 @@ webkit.org/b/297674 [ Release ] http/wpt/mediarecorder/MediaRecorder-matroska-AV
 webkit.org/b/295435 compositing/layer-creation/overlap-animation-container.html [ Pass Failure ]
 
 webkit.org/b/298042 [ Release ] http/tests/security/clipboard/copy-paste-html-cross-origin-iframe-across-origin.html [ Pass Failure ]
-
-webkit.org/b/298125 imported/w3c/web-platform-tests/mediacapture-streams/parallel-capture-requests.https.html [ Pass Failure ]
 
 imported/w3c/web-platform-tests/css/css-break/block-in-inline-012.html [ ImageOnlyFailure ]
 
@@ -8267,3 +8241,25 @@ webkit.org/b/298278 imported/w3c/web-platform-tests/html/anonymous-iframe/local-
 
 # webkit.org/b/298330 REGRESSION(299282@main): [macOS iOS Debug] ASSERTION FAILED: WebCore::HTMLDocumentParser::attemptToRunDeferredScriptsAndEnd
 [ Debug ] imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/on-dialog-behavior.html [ Pass Crash ]
+
+webkit.org/b/298555 imported/w3c/web-platform-tests/selection/stringifier_editable_element.tentative.html [ Failure ]
+
+webkit.org/b/298557 [ Debug ] imported/w3c/web-platform-tests/scroll-to-text-fragment/percent-encoding.html [ Pass Failure ]
+
+webkit.org/b/298560 [ Debug ] editing/selection/ios/clear-selection-after-tapping-on-element-with-click-handler.html [ Pass Failure ]
+
+# webkit.org/b/298556 [iOS] Two tests in fast/images are flaky timeouts
+fast/images/async-image-intersect-different-size-for-drawing.html [ Pass Timeout ]
+fast/images/low-memory-decode.html [ Pass Timeout ]
+
+webkit.org/b/298608 imported/w3c/web-platform-tests/digital-credentials/create.tentative.https.html [ Pass Failure ]
+
+webkit.org/b/298905 imported/w3c/web-platform-tests/html/semantics/popovers/label-in-invoker.html [ Pass Failure ]
+
+webkit.org/b/298962 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/overlapping-navigations-and-traversals/cross-document-traversal-cross-document-traversal.html [ Pass Failure ]
+
+webkit.org/b/298974 fast/forms/ios/keyboard-restoration-after-element-replacement.html [ Timeout ]
+
+webkit.org/b/280234 imported/w3c/web-platform-tests/html/dom/idlharness.https.html [ Skip ]
+
+webkit.org/b/299110 webrtc/calling-peerconnection-once-closed.html? [ Pass Failure ]

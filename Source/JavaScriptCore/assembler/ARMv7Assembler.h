@@ -619,6 +619,8 @@ private:
         OP_VLDR         = 0xED10,
         OP_VMOV_CtoS    = 0xEE00,
         OP_VMOV_StoC    = 0xEE10,
+        OP_VMLA_T2      = 0xEE00,
+        OP_VMLS_T2      = 0xEE10,
         OP_VMUL_T2      = 0xEE20,
         OP_VADD_T2      = 0xEE30,
         OP_VSUB_T2      = 0xEE30,
@@ -713,6 +715,8 @@ private:
         OP_VLDRb         = 0x0A00,
         OP_VMOV_IMM_T2b  = 0x0A00,
         OP_VMOV_T2b      = 0x0A40,
+        OP_VMLA_T2b      = 0x0A00,
+        OP_VMLS_T2b      = 0x0A00,
         OP_VMUL_T2b      = 0x0A00,
         OP_FSTSb         = 0x0A00,
         OP_VSTRb         = 0x0A00,
@@ -2232,6 +2236,11 @@ public:
         m_formatter.vfpOp(OP_VCMP, OP_VCMPb, true, VFPOperand(4), rd, rm);
     }
 
+    void vcmpz(FPSingleRegisterID rd)
+    {
+        m_formatter.vfpOp(OP_VCMP, OP_VCMPb, false, VFPOperand(5), rd, VFPOperand(0));
+    }
+
     void vcmpz(FPDoubleRegisterID rd)
     {
         m_formatter.vfpOp(OP_VCMP, OP_VCMPb, true, VFPOperand(5), rd, VFPOperand(0));
@@ -2344,6 +2353,11 @@ public:
     void vmul(FPDoubleRegisterID rd, FPDoubleRegisterID rn, FPDoubleRegisterID rm)
     {
         m_formatter.vfpOp(OP_VMUL_T2, OP_VMUL_T2b, true, rn, rd, rm);
+    }
+
+    void vmla(FPDoubleRegisterID rd, FPDoubleRegisterID rn, FPDoubleRegisterID rm)
+    {
+        m_formatter.vfpOp(OP_VMLA_T2, OP_VMLA_T2b, true, rn, rd, rm);
     }
 
     void vstr(FPDoubleRegisterID rd, RegisterID rn, int32_t imm)

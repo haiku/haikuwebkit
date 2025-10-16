@@ -251,19 +251,9 @@ void Chrome::runModal()
     m_client->runModal();
 }
 
-void Chrome::setToolbarsVisible(bool b)
-{
-    m_client->setToolbarsVisible(b);
-}
-
 bool Chrome::toolbarsVisible() const
 {
     return m_client->toolbarsVisible();
-}
-
-void Chrome::setStatusbarVisible(bool b)
-{
-    m_client->setStatusbarVisible(b);
 }
 
 bool Chrome::statusbarVisible() const
@@ -271,19 +261,9 @@ bool Chrome::statusbarVisible() const
     return m_client->statusbarVisible();
 }
 
-void Chrome::setScrollbarsVisible(bool b)
-{
-    m_client->setScrollbarsVisible(b);
-}
-
 bool Chrome::scrollbarsVisible() const
 {
     return m_client->scrollbarsVisible();
-}
-
-void Chrome::setMenubarVisible(bool b)
-{
-    m_client->setMenubarVisible(b);
 }
 
 bool Chrome::menubarVisible() const

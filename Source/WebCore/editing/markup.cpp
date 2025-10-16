@@ -86,6 +86,7 @@
 #include "Range.h"
 #include "RenderBlock.h"
 #include "RenderElementInlines.h"
+#include "RenderObjectStyle.h"
 #include "ScriptWrappableInlines.h"
 #include "Settings.h"
 #include "SocketProvider.h"

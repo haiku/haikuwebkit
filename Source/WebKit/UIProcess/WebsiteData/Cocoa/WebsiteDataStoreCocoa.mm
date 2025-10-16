@@ -394,26 +394,6 @@ String WebsiteDataStore::defaultSearchFieldHistoryDirectory(const String& baseDi
     return websiteDataDirectoryFileSystemRepresentation("SearchHistory"_s);
 }
 
-String WebsiteDataStore::defaultApplicationCacheDirectory(const String& baseDirectory)
-{
-    if (!baseDirectory.isEmpty())
-        return FileSystem::pathByAppendingComponent(baseDirectory, "ApplicationCache"_s);
-
-#if PLATFORM(IOS_FAMILY)
-    // This quirk used to make these apps share application cache storage, but doesn't accomplish that any more.
-    // Preserving it avoids the need to migrate data when upgrading.
-    // FIXME: Ideally we should just have Safari, WebApp, and webbookmarksd create a data store with
-    // this application cache path.
-    if (WTF::IOSApplication::isMobileSafari() || WTF::IOSApplication::isWebBookmarksD()) {
-        NSString *cachePath = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Caches/com.apple.WebAppCache"];
-
-        return WebKit::stringByResolvingSymlinksInPath(String { cachePath.stringByStandardizingPath });
-    }
-#endif
-
-    return cacheDirectoryFileSystemRepresentation("OfflineWebApplicationCache"_s, { }, ShouldCreateDirectory::No);
-}
-
 String WebsiteDataStore::defaultCacheStorageDirectory(const String& baseDirectory)
 {
     if (!baseDirectory.isEmpty())
@@ -848,14 +828,14 @@ void WebsiteDataStore::initializeManagedDomains(ForceReinitialization forceReini
         crossSiteTrackingPreventionRelaxedApps = [managedSitesPrefs objectForKey:kCrossSiteTrackingPreventionRelaxedAppsKey];
 #elif !PLATFORM(MACCATALYST)
         isSafari = WTF::IOSApplication::isMobileSafari();
-        if ([PAL::getMCProfileConnectionClass() instancesRespondToSelector:@selector(crossSiteTrackingPreventionRelaxedDomains)])
-            crossSiteTrackingPreventionRelaxedDomains = [(MCProfileConnection *)[PAL::getMCProfileConnectionClass() sharedConnection] crossSiteTrackingPreventionRelaxedDomains];
+        if ([PAL::getMCProfileConnectionClassSingleton() instancesRespondToSelector:@selector(crossSiteTrackingPreventionRelaxedDomains)])
+            crossSiteTrackingPreventionRelaxedDomains = [(MCProfileConnection *)[PAL::getMCProfileConnectionClassSingleton() sharedConnection] crossSiteTrackingPreventionRelaxedDomains];
         else
             crossSiteTrackingPreventionRelaxedDomains = @[];
 
         auto relaxedAppsSelector = NSSelectorFromString(@"crossSiteTrackingPreventionRelaxedApps");
-        if ([PAL::getMCProfileConnectionClass() instancesRespondToSelector:relaxedAppsSelector])
-            crossSiteTrackingPreventionRelaxedApps = [[PAL::getMCProfileConnectionClass() sharedConnection] performSelector:relaxedAppsSelector];
+        if ([PAL::getMCProfileConnectionClassSingleton() instancesRespondToSelector:relaxedAppsSelector])
+            crossSiteTrackingPreventionRelaxedApps = [[PAL::getMCProfileConnectionClassSingleton() sharedConnection] performSelector:relaxedAppsSelector];
         else
             crossSiteTrackingPreventionRelaxedApps = @[];
 #endif

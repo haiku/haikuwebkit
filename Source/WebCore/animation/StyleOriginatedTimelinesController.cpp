@@ -224,8 +224,8 @@ void StyleOriginatedTimelinesController::updateCSSAnimationsAssociatedWithNamedT
             if (RefPtr cssAnimation = dynamicDowncast<CSSAnimation>(animation.get())) {
                 if (!cssAnimation->owningElement())
                     continue;
-                if (auto* timelineName = std::get_if<AtomString>(&cssAnimation->backingAnimation().timeline())) {
-                    if (*timelineName == name)
+                if (auto timelineName = cssAnimation->backingStyleAnimation().timeline().tryCustomIdentifier()) {
+                    if (timelineName->value == name)
                         cssAnimationsWithMatchingTimelineName.add(*cssAnimation);
                 }
             }
@@ -263,7 +263,7 @@ void StyleOriginatedTimelinesController::documentDidResolveStyle()
     m_removedTimelines.clear();
 }
 
-void StyleOriginatedTimelinesController::registerNamedViewTimeline(const AtomString& name, const Styleable& subject, ScrollAxis axis, const ViewTimelineInsetItem& insets)
+void StyleOriginatedTimelinesController::registerNamedViewTimeline(const AtomString& name, const Styleable& subject, ScrollAxis axis, const Style::ViewTimelineInsetItem& insets)
 {
     LOG_WITH_STREAM(Animations, stream << "StyleOriginatedTimelinesController::registerNamedViewTimeline: " << name << " subject: " << subject);
 
@@ -342,13 +342,13 @@ void StyleOriginatedTimelinesController::attachAnimation(CSSAnimation& animation
     if (!target)
         return;
 
-    auto* timelineName = std::get_if<AtomString>(&protectedAnimation->backingAnimation().timeline());
+    auto timelineName = protectedAnimation->backingStyleAnimation().timeline().tryCustomIdentifier();
     if (!timelineName)
         return;
 
-    LOG_WITH_STREAM(Animations, stream << "StyleOriginatedTimelinesController::attachAnimation: " << *timelineName << " target: " << *target);
+    LOG_WITH_STREAM(Animations, stream << "StyleOriginatedTimelinesController::attachAnimation: " << timelineName->value << " target: " << *target);
 
-    auto it = m_nameToTimelineMap.find(*timelineName);
+    auto it = m_nameToTimelineMap.find(timelineName->value);
     auto hasNamedTimeline = it != m_nameToTimelineMap.end() && it->value.containsIf([](auto& timeline) {
         return !timeline->isInactiveStyleOriginatedTimeline();
     });
@@ -361,7 +361,7 @@ void StyleOriginatedTimelinesController::attachAnimation(CSSAnimation& animation
         return;
     }
 
-    auto timelineScopeElements = relatedTimelineScopeElements(*timelineName);
+    auto timelineScopeElements = relatedTimelineScopeElements(timelineName->value);
 
     if (!hasNamedTimeline) {
         // First, determine whether the name is within scope, ie. whether a parent element
@@ -383,13 +383,13 @@ void StyleOriginatedTimelinesController::attachAnimation(CSSAnimation& animation
         //        scroll timeline, or,
         //     2. the name is not within scope and the timeline is null.
         if (nameIsWithinScope)
-            protectedAnimation->setTimeline(&inactiveNamedTimeline(*timelineName));
+            protectedAnimation->setTimeline(&inactiveNamedTimeline(timelineName->value));
         else
             protectedAnimation->setTimeline(nullptr);
     } else {
         auto& timelines = it->value;
         RefPtr timeline = determineTimelineForElement(timelines, *target, timelineScopeElements);
-        LOG_WITH_STREAM(Animations, stream << "StyleOriginatedTimelinesController::attachAnimation: " << *timelineName << " styleable: " << *target << " attaching to timeline of element: " << originatingElement(*timeline));
+        LOG_WITH_STREAM(Animations, stream << "StyleOriginatedTimelinesController::attachAnimation: " << timelineName->value << " styleable: " << *target << " attaching to timeline of element: " << originatingElement(*timeline));
         // A deferred inactive timeline means there was a conflict with multiple timelines existing within
         // a parent element with a "timeline-scope" property. In that case, we must reconsider timeline attachment
         // once style resolution completes as further updates may occur that would yield a different timeline

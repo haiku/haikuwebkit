@@ -23,7 +23,6 @@
 #include "config.h"
 #include "TextDecorationPainter.h"
 
-#include "FilterOperations.h"
 #include "FontCascade.h"
 #include "GraphicsContext.h"
 #include "HTMLAnchorElement.h"
@@ -31,8 +30,10 @@
 #include "InlineTextBoxStyle.h"
 #include "RenderBlock.h"
 #include "RenderElementInlines.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
 #include "RenderText.h"
+#include "StyleAppleColorFilter.h"
 #include "StyleTextDecorationLine.h"
 #include "TextBoxPainter.h"
 #include "TextRun.h"
@@ -179,7 +180,7 @@ bool TextDecorationPainter::Styles::operator==(const Styles& other) const
         && underline.decorationStyle == other.underline.decorationStyle && overline.decorationStyle == other.overline.decorationStyle && linethrough.decorationStyle == other.linethrough.decorationStyle;
 }
 
-TextDecorationPainter::TextDecorationPainter(GraphicsContext& context, const FontCascade& font, const Style::TextShadows& shadow, const FilterOperations* colorFilter, bool isPrinting, WritingMode writingMode)
+TextDecorationPainter::TextDecorationPainter(GraphicsContext& context, const FontCascade& font, const Style::TextShadows& shadow, const Style::AppleColorFilter& colorFilter, bool isPrinting, WritingMode writingMode)
     : m_context(context)
     , m_isPrinting(isPrinting)
     , m_writingMode(writingMode)
@@ -275,8 +276,8 @@ void TextDecorationPainter::paintBackgroundDecorations(const RenderStyle& style,
                 extraOffset = 0;
             }
             auto shadowColor = style.colorResolvingCurrentColor(shadow.color);
-            if (m_shadowColorFilter)
-                m_shadowColorFilter->transformColor(shadowColor);
+
+            m_shadowColorFilter.transformColor(shadowColor);
 
             auto shadowOffset = TextBoxPainter::rotateShadowOffset(shadow.location, m_writingMode);
             shadowOffset.expand(0, -extraOffset);

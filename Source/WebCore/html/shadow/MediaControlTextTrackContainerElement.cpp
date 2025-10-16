@@ -32,6 +32,7 @@
 
 #if ENABLE(VIDEO)
 
+#include "ContainerNodeInlines.h"
 #include "DOMTokenList.h"
 #include "DocumentFullscreen.h"
 #include "ElementChildIteratorInlines.h"

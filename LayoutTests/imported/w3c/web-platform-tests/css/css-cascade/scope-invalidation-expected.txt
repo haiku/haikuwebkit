@@ -24,5 +24,5 @@ PASS :nth-child() in scope root
 PASS :nth-child() in scope limit
 PASS Modifying selectorText invalidates affected elements
 PASS Modifying selectorText invalidates affected elements (>)
-PASS Relative selectors set with selectorText are relative to :scope, not &
+PASS Relative selectors set with selectorText are relative to :scope and &
 

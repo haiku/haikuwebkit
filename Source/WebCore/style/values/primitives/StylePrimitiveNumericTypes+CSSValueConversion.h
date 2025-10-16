@@ -114,6 +114,12 @@ template<auto R, typename V> struct CSSValueConversion<Length<R, V>> {
             : builderState.cssToLengthConversionData();
         return { CSS::clampToRange<R, V>(protectedValue->resolveAsLength<V>(conversionData)) };
     }
+
+    auto operator()(const CSSToLengthConversionData& conversionData, const CSSPrimitiveValue& value) -> Length<R, V>
+    {
+        Ref protectedValue = value;
+        return { CSS::clampToRange<R, V>(protectedValue->resolveAsLength<V>(conversionData)) };
+    }
 };
 
 template<auto R, typename V> struct CSSValueConversion<Time<R, V>> {

@@ -74,7 +74,7 @@ protected:
     bool isClientSandboxed();
 
     OSObjectPtr<xpc_connection_t> m_connection;
-    xpc_object_t m_initializerMessage;
+    OSObjectPtr<xpc_object_t> m_initializerMessage;
 };
 
 template<typename XPCServiceType>
@@ -101,7 +101,9 @@ void XPCServiceInitializer(OSObjectPtr<xpc_connection_t> connection, xpc_object_
     // so ensure that we have an outstanding transaction here. This is not needed when using
     // RunningBoard because the UIProcess takes process assertions on behalf of its child processes.
 #if !USE(RUNNINGBOARD)
-    setOSTransaction(adoptOSObject(os_transaction_create("WebKit XPC Service")));
+    // Supress this warning for when this header file is included in WKWebProcess.cpp
+    // since os_transaction_create's annotation is only effective in Objective-C files.
+    SUPPRESS_RETAINPTR_CTOR_ADOPT setOSTransaction(adoptOSObject(os_transaction_create("WebKit XPC Service")));
 #endif
 
     AuxiliaryProcessInitializationParameters parameters;

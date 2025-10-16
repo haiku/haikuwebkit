@@ -66,6 +66,11 @@ Recorder::~Recorder()
     ASSERT(m_stateStack.size() == 1); // If this fires, it indicates mismatched save/restore.
 }
 
+void Recorder::appendDisplayList(const DisplayList& displayList)
+{
+    GraphicsContext::drawDisplayList(displayList, Ref { ControlFactory::singleton() });
+}
+
 const GraphicsContextState& Recorder::state() const
 {
     return currentState().state;
@@ -87,11 +92,9 @@ void Recorder::didUpdateSingleState(GraphicsContextState& state, GraphicsContext
 bool Recorder::decomposeDrawGlyphsIfNeeded(const Font& font, std::span<const GlyphBufferGlyph> glyphs, std::span<const GlyphBufferAdvance> advances, const FloatPoint& localAnchor, FontSmoothingMode smoothingMode)
 {
 #if USE(CORE_TEXT)
-    if (m_drawGlyphsMode == DrawGlyphsMode::Deconstruct || m_drawGlyphsMode == DrawGlyphsMode::DeconstructAndRetain) {
-        if (!m_drawGlyphsRecorder) {
-            auto shouldDrawDecomposedGlyphs = m_drawGlyphsMode == DrawGlyphsMode::DeconstructAndRetain ? DrawGlyphsRecorder::DrawDecomposedGlyphs::Yes : DrawGlyphsRecorder::DrawDecomposedGlyphs::No;
-            m_drawGlyphsRecorder = makeUnique<DrawGlyphsRecorder>(*this, m_initialScale, DrawGlyphsRecorder::DeriveFontFromContext::No, shouldDrawDecomposedGlyphs);
-        }
+    if (m_drawGlyphsMode == DrawGlyphsMode::Deconstruct) {
+        if (!m_drawGlyphsRecorder)
+            m_drawGlyphsRecorder = makeUnique<DrawGlyphsRecorder>(*this, m_initialScale, DrawGlyphsRecorder::DeriveFontFromContext::No);
         m_drawGlyphsRecorder->drawGlyphs(font, glyphs, advances, localAnchor, smoothingMode);
         return true;
     }

@@ -26,7 +26,7 @@
 #include "config.h"
 #include "WebMDNSRegister.h"
 
-#if ENABLE(WEB_RTC)
+#if ENABLE(WEB_RTC) && USE(LIBWEBRTC)
 
 #include "LibWebRTCNetwork.h"
 #include "NetworkMDNSRegisterMessages.h"
@@ -96,4 +96,4 @@ void WebMDNSRegister::registerMDNSName(ScriptExecutionContextIdentifier identifi
 
 } // namespace WebKit
 
-#endif // ENABLE(WEB_RTC)
+#endif // ENABLE(WEB_RTC) && USE(LIBWEBRTC)

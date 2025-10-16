@@ -115,6 +115,7 @@ namespace WebKit {
 
 class AudioSessionRoutingArbitratorProxy;
 class FrameState;
+class JavaScriptEvaluationResult;
 class ModelProcessProxy;
 class PageClient;
 class ProvisionalPageProxy;
@@ -134,9 +135,12 @@ class WebPreferences;
 class WebProcessPool;
 class WebUserContentControllerProxy;
 class WebsiteDataStore;
+
 struct CoreIPCAuditToken;
 struct GPUProcessConnectionParameters;
 struct ModelProcessConnectionParameters;
+struct ScriptMessageHandlerIdentifierType;
+struct UserContentControllerIdentifierType;
 struct UserMessage;
 struct WebNavigationDataStore;
 struct WebPageCreationParameters;
@@ -152,6 +156,8 @@ enum class WebsiteDataType : uint32_t;
 class SpeechRecognitionRemoteRealtimeMediaSourceManager;
 #endif
 
+using ScriptMessageHandlerIdentifier = ObjectIdentifier<ScriptMessageHandlerIdentifierType>;
+using UserContentControllerIdentifier = ObjectIdentifier<UserContentControllerIdentifierType>;
 enum ForegroundWebProcessCounterType { };
 typedef RefCounter<ForegroundWebProcessCounterType> ForegroundWebProcessCounter;
 typedef ForegroundWebProcessCounter::Token ForegroundWebProcessToken;
@@ -216,7 +222,7 @@ public:
     void setIsInProcessCache(bool, WillShutDown = WillShutDown::No);
     bool isInProcessCache() const { return m_isInProcessCache; }
 
-    void enableRemoteWorkers(RemoteWorkerType, const UserContentControllerIdentifier&);
+    void enableRemoteWorkers(RemoteWorkerType, const WebUserContentControllerProxy&);
     void disableRemoteWorkers(OptionSet<RemoteWorkerType>);
 
     WebsiteDataStore* websiteDataStore() const { ASSERT(m_websiteDataStore); return m_websiteDataStore.get(); }
@@ -276,9 +282,6 @@ public:
     void addVisitedLinkStoreUser(VisitedLinkStore&, WebPageProxyIdentifier);
     void removeVisitedLinkStoreUser(VisitedLinkStore&, WebPageProxyIdentifier);
 
-    void addWebUserContentControllerProxy(WebUserContentControllerProxy&);
-    void didDestroyWebUserContentControllerProxy(WebUserContentControllerProxy&);
-
     void recordUserGestureAuthorizationToken(WebCore::PageIdentifier, WTF::UUID);
     RefPtr<API::UserInitiatedAction> userInitiatedActivity(std::optional<WebCore::UserGestureTokenIdentifier>);
     RefPtr<API::UserInitiatedAction> userInitiatedActivity(WebCore::PageIdentifier, std::optional<WTF::UUID>, std::optional<WebCore::UserGestureTokenIdentifier>);
@@ -320,6 +323,9 @@ public:
 #if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     void setOptInCookiePartitioningEnabled(bool);
 #endif
+
+    void didPostMessage(WebPageProxyIdentifier, UserContentControllerIdentifier, FrameInfoData&&, ScriptMessageHandlerIdentifier, JavaScriptEvaluationResult&&, CompletionHandler<void(Expected<WebKit::JavaScriptEvaluationResult, String>&&)>&&);
+    void didPostLegacySynchronousMessage(WebPageProxyIdentifier, UserContentControllerIdentifier, FrameInfoData&&, ScriptMessageHandlerIdentifier, JavaScriptEvaluationResult&&, CompletionHandler<void(Expected<JavaScriptEvaluationResult, String>&&)>&&);
 
     void enableSuddenTermination();
     void disableSuddenTermination();
@@ -743,7 +749,6 @@ private:
     HashMap<WebCore::PageIdentifier, UserInitiatedActionByAuthorizationTokenMap> m_userInitiatedActionByAuthorizationTokenMap;
 
     WeakHashMap<VisitedLinkStore, HashSet<WebPageProxyIdentifier>> m_visitedLinkStoresWithUsers;
-    WeakHashSet<WebUserContentControllerProxy> m_webUserContentControllerProxies;
 
     int m_numberOfTimesSuddenTerminationWasDisabled;
     ForegroundWebProcessToken m_foregroundToken;

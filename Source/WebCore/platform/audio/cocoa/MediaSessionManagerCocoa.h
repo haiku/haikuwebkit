@@ -48,7 +48,7 @@ class MediaSessionManagerCocoa
     , private AudioHardwareListener::Client {
     WTF_MAKE_TZONE_ALLOCATED(MediaSessionManagerCocoa);
 public:
-    MediaSessionManagerCocoa();
+    MediaSessionManagerCocoa(PageIdentifier);
     
     void updateSessionState() final;
     void beginInterruption(PlatformMediaSession::InterruptionType) final;

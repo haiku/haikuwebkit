@@ -36,15 +36,12 @@
 #include <JavaScriptCore/IdentifierInlines.h>
 #include <JavaScriptCore/SourceProvider.h>
 #include <wtf/NeverDestroyed.h>
-#include <wtf/RefCountedLeakCounter.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
 using namespace JSC;
-
-DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, eventListenerCounter, ("JSLazyEventListener"));
 
 struct JSLazyEventListener::CreationArguments {
     const QualifiedName& attributeName;
@@ -81,9 +78,6 @@ JSLazyEventListener::JSLazyEventListener(CreationArguments&& arguments, const UR
     , m_originalNode(WTFMove(arguments.node))
     , m_sourceTaintedOrigin(JSC::computeNewSourceTaintedOriginFromStack(arguments.document.vm(), arguments.document.vm().topCallFrame))
 {
-#ifndef NDEBUG
-    eventListenerCounter.increment();
-#endif
 }
 
 #if ASSERT_ENABLED
@@ -110,9 +104,6 @@ void JSLazyEventListener::checkValidityForEventTarget(EventTarget& eventTarget)
 
 JSLazyEventListener::~JSLazyEventListener()
 {
-#ifndef NDEBUG
-    eventListenerCounter.decrement();
-#endif
 }
 
 JSObject* JSLazyEventListener::initializeJSFunction(ScriptExecutionContext& executionContext) const

@@ -34,7 +34,7 @@
 #include "ImageBufferRemotePDFDocumentBackend.h"
 #include "ImageBufferShareableBitmapBackend.h"
 #include "Logging.h"
-#include "RemoteGraphicsContextProxy.h"
+#include "RemoteDisplayListRecorderProxy.h"
 #include "RemoteImageBufferMessages.h"
 #include "RemoteImageBufferProxy.h"
 #include "RemoteImageBufferProxyMessages.h"
@@ -43,6 +43,7 @@
 #include "RemoteRenderingBackendMessages.h"
 #include "RemoteRenderingBackendProxyMessages.h"
 #include "RemoteSharedResourceCacheProxy.h"
+#include "RemoteSnapshotRecorderProxy.h"
 #include "SwapBuffersDisplayRequirement.h"
 #include "WebPage.h"
 #include "WebProcess.h"
@@ -334,12 +335,17 @@ Ref<RemoteImageBufferProxy> RemoteRenderingBackendProxy::moveToImageBuffer(Remot
     return result;
 }
 
-#if PLATFORM(COCOA)
-void RemoteRenderingBackendProxy::didDrawRemoteToPDF(PageIdentifier pageID, RenderingResourceIdentifier imageBufferIdentifier, SnapshotIdentifier snapshotIdentifier)
+UniqueRef<RemoteSnapshotRecorderProxy> RemoteRenderingBackendProxy::createSnapshotRecorder(RemoteSnapshotIdentifier snapshotIdentifier)
 {
-    send(Messages::RemoteRenderingBackend::DidDrawRemoteToPDF(pageID, imageBufferIdentifier, snapshotIdentifier));
+    auto recorder = makeUniqueRef<RemoteSnapshotRecorderProxy>(*this);
+    send(Messages::RemoteRenderingBackend::CreateSnapshotRecorder(recorder->identifier(), snapshotIdentifier));
+    return recorder;
 }
-#endif
+
+void RemoteRenderingBackendProxy::sinkSnapshotRecorderIntoSnapshotFrame(UniqueRef<RemoteSnapshotRecorderProxy>&& recorder, FrameIdentifier frameIdentifier, CompletionHandler<void(bool)>&& completionHandler)
+{
+    sendWithAsyncReply(Messages::RemoteRenderingBackend::SinkSnapshotRecorderIntoSnapshotFrame(recorder->identifier(), frameIdentifier), WTFMove(completionHandler));
+}
 
 bool RemoteRenderingBackendProxy::getPixelBufferForImageBuffer(RenderingResourceIdentifier imageBuffer, const PixelBufferFormat& destinationFormat, const IntRect& srcRect, std::span<uint8_t> result)
 {
@@ -438,24 +444,12 @@ void RemoteRenderingBackendProxy::releaseFontCustomPlatformData(RenderingResourc
     send(Messages::RemoteRenderingBackend::ReleaseFontCustomPlatformData(identifier));
 }
 
-void RemoteRenderingBackendProxy::cacheDecomposedGlyphs(const DecomposedGlyphs& glyphs)
-{
-    send(Messages::RemoteRenderingBackend::CacheDecomposedGlyphs({ glyphs.glyphs().data(), Vector<FloatSize>(glyphs.advances()).span().data(), glyphs.glyphs().size() }, glyphs.localAnchor(), glyphs.fontSmoothingMode(), glyphs.renderingResourceIdentifier()));
-}
-
-void RemoteRenderingBackendProxy::releaseDecomposedGlyphs(RenderingResourceIdentifier identifier)
-{
-    if (!m_connection)
-        return;
-    send(Messages::RemoteRenderingBackend::ReleaseDecomposedGlyphs(identifier));
-}
-
-void RemoteRenderingBackendProxy::cacheGradient(Ref<Gradient>&& gradient, RenderingResourceIdentifier identifier)
+void RemoteRenderingBackendProxy::cacheGradient(Ref<Gradient>&& gradient, RemoteGradientIdentifier identifier)
 {
     send(Messages::RemoteRenderingBackend::CacheGradient(WTFMove(gradient), identifier));
 }
 
-void RemoteRenderingBackendProxy::releaseGradient(RenderingResourceIdentifier identifier)
+void RemoteRenderingBackendProxy::releaseGradient(RemoteGradientIdentifier identifier)
 {
     if (!m_connection)
         return;
@@ -472,6 +466,22 @@ void RemoteRenderingBackendProxy::releaseFilter(RenderingResourceIdentifier iden
     if (!m_connection)
         return;
     send(Messages::RemoteRenderingBackend::ReleaseFilter(identifier));
+}
+
+void RemoteRenderingBackendProxy::cacheDisplayList(RemoteDisplayListIdentifier identifier, const DisplayList::DisplayList& displayList)
+{
+    RemoteDisplayListRecorderProxy recorder(*this);
+    auto recorderIdentifier = recorder.identifier();
+    send(Messages::RemoteRenderingBackend::CreateDisplayListRecorder(recorderIdentifier));
+    recorder.appendDisplayList(displayList);
+    send(Messages::RemoteRenderingBackend::SinkDisplayListRecorderIntoDisplayList(recorderIdentifier, identifier));
+}
+
+void RemoteRenderingBackendProxy::releaseDisplayList(RemoteDisplayListIdentifier identifier)
+{
+    if (!m_connection)
+        return;
+    send(Messages::RemoteRenderingBackend::ReleaseDisplayList(identifier));
 }
 
 void RemoteRenderingBackendProxy::releaseMemory()
@@ -619,12 +629,12 @@ void RemoteRenderingBackendProxy::didFinalizeRenderingUpdate(RenderingUpdateID d
     m_didRenderingUpdateID = std::min(didRenderingUpdateID, m_renderingUpdateID);
 }
 
-RenderingBackendIdentifier RemoteRenderingBackendProxy::renderingBackendIdentifier() const
+RemoteRenderingBackendIdentifier RemoteRenderingBackendProxy::renderingBackendIdentifier() const
 {
     return m_identifier;
 }
 
-RenderingBackendIdentifier RemoteRenderingBackendProxy::ensureBackendCreated()
+RemoteRenderingBackendIdentifier RemoteRenderingBackendProxy::ensureBackendCreated()
 {
     ensureGPUProcessConnection();
     return m_identifier;

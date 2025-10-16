@@ -3874,6 +3874,61 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RemoveAllContentRuleListsDoesNotRem
     Util::run(&receivedActionNotification);
 }
 
+TEST(WKWebExtensionAPIDeclarativeNetRequest, MigrateDeclarativeNetRequestDataToNewFormat)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"var expectedResults = [{",
+        @"  'id': 1,",
+        @"  'condition': {",
+        @"      'urlFilter': 'blocksub'",
+        @"  },",
+        @"  'action': {",
+        @"      'type': 'block'",
+        @"  }",
+        @"}]",
+
+        @"var results",
+        @"results = await browser.declarativeNetRequest.getDynamicRules()",
+
+        @"browser.test.assertDeepEq(results, expectedResults)",
+
+        @"browser.test.notifyPass()",
+    ]);
+
+    static auto *resources = @{
+        @"background.js": backgroundScript,
+    };
+
+    auto *declarativeNetRequestManifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+    };
+
+    auto manager = Util::parseExtension(declarativeNetRequestManifest, resources, WKWebExtensionControllerConfiguration._temporaryConfiguration);
+
+    // Give the extension a unique identifier so it opts into saving data in the temporary configuration.
+    manager.get().context.uniqueIdentifier = @"org.webkit.test.extension (76C788B8)";
+
+    [manager load];
+
+    auto *storageDirectory = manager.get().controller.configuration._storageDirectoryPath;
+    storageDirectory = [storageDirectory stringByAppendingPathComponent:manager.get().context.uniqueIdentifier];
+
+    static auto *files = @[
+        [NSBundle.test_resourcesBundle URLForResource:@"DeclarativeNetRequestRules" withExtension:@"db"],
+        [NSBundle.test_resourcesBundle URLForResource:@"DeclarativeNetRequestRules" withExtension:@"db-shm"],
+        [NSBundle.test_resourcesBundle URLForResource:@"DeclarativeNetRequestRules" withExtension:@"db-wal"]
+    ];
+
+    for (NSURL *file in files) {
+        NSString *combinedPath = [storageDirectory stringByAppendingPathComponent:[file lastPathComponent]];
+        [NSFileManager.defaultManager copyItemAtURL:file toURL:[NSURL fileURLWithPath:combinedPath] error:nil];
+    }
+
+    [manager run];
+}
+
 } // namespace TestWebKitAPI
 
 #endif // ENABLE(WK_WEB_EXTENSIONS)

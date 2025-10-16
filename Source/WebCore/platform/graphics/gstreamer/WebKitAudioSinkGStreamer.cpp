@@ -92,7 +92,7 @@ static bool webKitAudioSinkConfigure(WebKitAudioSink* sink)
                 return GST_PAD_PROBE_OK;
 
             auto structure = gst_caps_get_structure(caps, 0);
-            auto sampleRate = gstStructureGet<int>(structure, "rate");
+            auto sampleRate = gstStructureGet<int>(structure, "rate"_s);
             if (!sampleRate) [[unlikely]]
                 return GST_PAD_PROBE_OK;
 

@@ -109,6 +109,18 @@ public:
     }
 };
 
+class WasmOperationPrologueCallFrameTracer {
+public:
+    ALWAYS_INLINE WasmOperationPrologueCallFrameTracer(VM& vm, CallFrame* callFrame, void* returnPC)
+    {
+        ASSERT(callFrame);
+        ASSERT(reinterpret_cast<void*>(callFrame) < reinterpret_cast<void*>(vm.topEntryFrame));
+        assertStackPointerIsAligned();
+        vm.topCallFrame = callFrame;
+        vm.maybeReturnPC = returnPC;
+    }
+};
+
 class JITOperationPrologueCallFrameTracer {
 public:
     ALWAYS_INLINE JITOperationPrologueCallFrameTracer(VM& vm, CallFrame* callFrame)

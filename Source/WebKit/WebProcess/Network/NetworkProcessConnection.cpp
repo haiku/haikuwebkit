@@ -88,8 +88,10 @@ NetworkProcessConnection::NetworkProcessConnection(IPC::Connection::Identifier&&
 {
     m_connection->open(*this);
 
+#if USE(LIBWEBRTC)
     if (WebRTCProvider::webRTCAvailable())
         WebProcess::singleton().protectedLibWebRTCNetwork()->setConnection(m_connection.copyRef());
+#endif
 }
 
 NetworkProcessConnection::~NetworkProcessConnection()

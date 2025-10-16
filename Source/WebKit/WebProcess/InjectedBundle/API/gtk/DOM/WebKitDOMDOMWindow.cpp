@@ -27,6 +27,7 @@
 #include "GObjectEventListener.h"
 #include <JavaScriptCore/APICast.h>
 #include <JavaScriptCore/JSRetainPtr.h>
+#include <WebCore/ContextDestructionObserverInlines.h>
 #include <WebCore/HTMLFrameOwnerElement.h>
 #include <WebCore/JSDOMGlobalObject.h>
 #include <WebCore/JSDOMPromiseDeferred.h>

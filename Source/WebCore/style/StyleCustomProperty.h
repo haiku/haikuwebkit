@@ -30,8 +30,8 @@
 #include <WebCore/StyleColor.h>
 #include <WebCore/StyleImageWrapper.h>
 #include <WebCore/StylePrimitiveNumeric.h>
+#include <WebCore/StyleTransformFunction.h>
 #include <WebCore/StyleURL.h>
-#include <WebCore/TransformOperation.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Variant.h>
@@ -50,11 +50,6 @@ public:
     // https://drafts.csswg.org/css-variables-2/#guaranteed-invalid
     struct GuaranteedInvalid { };
 
-    struct Transform {
-        Ref<TransformOperation> operation;
-        bool operator==(const Transform& other) const { return arePointingToEqualData(operation, other.operation); }
-    };
-
     using Value = Variant<
         LengthPercentage<>,
         Length<>,
@@ -68,7 +63,7 @@ public:
         URL,
         CustomIdentifier,
         String,
-        Transform
+        TransformFunction
     >;
 
     struct ValueList {

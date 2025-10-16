@@ -27,7 +27,6 @@
 
 #if ENABLE(CONTENT_CHANGE_OBSERVER)
 
-#include "Animation.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "ContainerNodeInlines.h"
@@ -250,34 +249,6 @@ static bool isObservedPropertyForTransition(AnimatableCSSProperty property)
             return false;
         }
     );
-}
-
-void ContentChangeObserver::didAddTransition(const Element& element, const Animation& transition)
-{
-    if (!isContentChangeObserverEnabled())
-        return;
-    if (hasVisibleChangeState())
-        return;
-    if (!isObservingContentChanges())
-        return;
-    if (!isObservingTransitions())
-        return;
-    if (!transition.isDurationSet() || !transition.isPropertySet())
-        return;
-    if (!isObservedPropertyForTransition(transition.property().animatableProperty))
-        return;
-    auto transitionEnd = Seconds { transition.duration().value_or(0) + std::max<double>(0, transition.isDelaySet() ? transition.delay() : 0) };
-    if (transitionEnd > maximumDelayForTransitions)
-        return;
-    if (!isVisuallyHidden(element))
-        return;
-    // In case of multiple transitions, the first tranistion wins (and it has to produce a visible content change in order to show up as hover).
-    if (m_elementsWithTransition.contains(element))
-        return;
-    LOG_WITH_STREAM(ContentObservation, stream << "didAddTransition: transition created on " << &element << " (" << transitionEnd.milliseconds() << "ms).");
-
-    m_elementsWithTransition.add(element);
-    adjustObservedState(Event::AddedTransition);
 }
 
 void ContentChangeObserver::didFinishTransition(const Element& element, CSSPropertyID propertyID)

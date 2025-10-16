@@ -56,7 +56,7 @@ static DoublePoint scaledLocation(LocalFrame* frame, const DoublePoint& pagePosi
     return pagePosition.scaled(scaleFactor);
 }
 
-Touch::Touch(LocalFrame* frame, EventTarget* target, int identifier, const DoublePoint& screenPosition, const DoublePoint& pagePosition, const DoubleSize& radius, float rotationAngle, float force)
+Touch::Touch(LocalFrame* frame, EventTarget* target, int identifier, const DoublePoint& screenPosition, const DoublePoint& pagePosition, const DoubleSize& radius, float rotationAngle, double twist, float force)
     : m_target(target)
     , m_identifier(identifier)
     , m_clientPosition(DoublePoint(pagePosition - contentsOffset(frame)))
@@ -64,12 +64,13 @@ Touch::Touch(LocalFrame* frame, EventTarget* target, int identifier, const Doubl
     , m_pagePosition(pagePosition)
     , m_radius(radius)
     , m_rotationAngle(rotationAngle)
+    , m_twist(twist)
     , m_force(force)
     , m_absoluteLocation(scaledLocation(frame, pagePosition))
 {
 }
 
-Touch::Touch(EventTarget* target, int identifier, const DoublePoint& clientPosition, const DoublePoint& screenPosition, const DoublePoint& pagePosition, const DoubleSize& radius, float rotationAngle, float force, DoublePoint absoluteLocation)
+Touch::Touch(EventTarget* target, int identifier, const DoublePoint& clientPosition, const DoublePoint& screenPosition, const DoublePoint& pagePosition, const DoubleSize& radius, float rotationAngle, double twist, float force, DoublePoint absoluteLocation)
     : m_target(target)
     , m_identifier(identifier)
     , m_clientPosition(clientPosition)
@@ -77,6 +78,7 @@ Touch::Touch(EventTarget* target, int identifier, const DoublePoint& clientPosit
     , m_pagePosition(pagePosition)
     , m_radius(radius)
     , m_rotationAngle(rotationAngle)
+    , m_twist(twist)
     , m_force(force)
     , m_absoluteLocation(absoluteLocation)
 {
@@ -86,7 +88,7 @@ Touch::~Touch() = default;
 
 Ref<Touch> Touch::cloneWithNewTarget(EventTarget* eventTarget) const
 {
-    return adoptRef(*new Touch(eventTarget, m_identifier, m_clientPosition, m_screenPosition, m_pagePosition, m_radius, m_rotationAngle, m_force, m_absoluteLocation));
+    return adoptRef(*new Touch(eventTarget, m_identifier, m_clientPosition, m_screenPosition, m_pagePosition, m_radius, m_rotationAngle, m_twist, m_force, m_absoluteLocation));
 }
 
 } // namespace WebCore

@@ -163,27 +163,13 @@ void AbstractInterpreter<AbstractStateType>::startExecuting()
 }
 
 template<typename AbstractStateType>
-class AbstractInterpreterExecuteEdgesFunc {
-public:
-    AbstractInterpreterExecuteEdgesFunc(AbstractInterpreter<AbstractStateType>& interpreter)
-        : m_interpreter(interpreter)
-    {
-    }
-    
-    // This func is manually written out so that we can put ALWAYS_INLINE on it.
-    ALWAYS_INLINE void operator()(Edge& edge) const
-    {
-        m_interpreter.filterEdgeByUse(edge);
-    }
-    
-private:
-    AbstractInterpreter<AbstractStateType>& m_interpreter;
-};
-
-template<typename AbstractStateType>
 void AbstractInterpreter<AbstractStateType>::executeEdges(Node* node)
 {
-    m_graph.doToChildren(node, AbstractInterpreterExecuteEdgesFunc<AbstractStateType>(*this));
+    m_graph.doToChildren(
+        node,
+        [&](Edge& edge) {
+            filterEdgeByUse(edge);
+        });
 }
 
 template<typename AbstractStateType>
@@ -196,7 +182,7 @@ void AbstractInterpreter<AbstractStateType>::executeKnownEdgeTypes(Node* node)
     // and FTL backends may emit checks in a node that lacks a valid exit origin.
     m_graph.doToChildren(
         node,
-        [&] (Edge& edge) {
+        [&](Edge& edge) {
             if (mayHaveTypeCheck(edge.useKind()))
                 return;
             
@@ -205,15 +191,18 @@ void AbstractInterpreter<AbstractStateType>::executeKnownEdgeTypes(Node* node)
 }
 
 template<typename AbstractStateType>
-ALWAYS_INLINE void AbstractInterpreter<AbstractStateType>::filterByType(Edge& edge, SpeculatedType type)
+ALWAYS_INLINE FiltrationResult AbstractInterpreter<AbstractStateType>::filterByType(Edge& edge, SpeculatedType type)
 {
     AbstractValue& value = m_state.forNodeWithoutFastForward(edge);
     if (value.isType(type)) {
         m_state.setProofStatus(edge, IsProved);
-        return;
+        return FiltrationOK;
     }
     m_state.setProofStatus(edge, NeedsCheck);
-    m_state.fastForwardAndFilterUnproven(value, type);
+    if (m_state.fastForwardAndFilterUnproven(value, type) == FiltrationOK)
+        return FiltrationOK;
+    m_state.setIsValid(false);
+    return Contradiction;
 }
 
 template<typename AbstractStateType>
@@ -3725,10 +3714,31 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
     }
 
-    case NewArrayWithConstantSize:
-    case MaterializeNewArrayWithConstantSize:
+
+    case NewButterflyWithSize:
+        // We don't represent storage/butterflies in AI.
+        clearForNode(node);
+        break;
+
+    case MaterializeNewArrayWithButterfly: {
+        SpeculatedType validTypes = [&]() {
+            switch (node->indexingType()) {
+            case ALL_INT32_INDEXING_TYPES: return SpecInt32Only;
+            case ALL_DOUBLE_INDEXING_TYPES: return SpecBytecodeNumber;
+            case ALL_CONTIGUOUS_INDEXING_TYPES: return SpecBytecodeTop;
+            default: break;
+            }
+            RELEASE_ASSERT_NOT_REACHED();
+        }();
+        for (unsigned i = 2; i < node->numChildren(); ++i)
+            RELEASE_ASSERT(isSubtypeSpeculation(forNode(m_graph.varArgChild(node, i)).m_type, validTypes));
+
+        [[fallthrough]];
+    }
+    case NewArrayWithButterfly: {
         setForNode(node, m_graph.globalObjectFor(node->origin.semantic)->arrayStructureForIndexingTypeDuringAllocation(node->indexingMode()));
         break;
+    }
 
     case NewTypedArray: {
         switch (node->child1().useKind()) {
@@ -3990,7 +4000,8 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
     }
 
     case PhantomNewObject:
-    case PhantomNewArrayWithConstantSize:
+    case PhantomNewButterflyWithSize:
+    case PhantomNewArrayWithButterfly:
     case PhantomNewFunction:
     case PhantomNewGeneratorFunction:
     case PhantomNewAsyncGeneratorFunction:

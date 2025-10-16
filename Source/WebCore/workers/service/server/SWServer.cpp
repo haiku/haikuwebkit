@@ -417,6 +417,18 @@ void SWServer::Connection::removeServiceWorkerRegistrationInServer(ServiceWorker
         server->removeClientServiceWorkerRegistration(*this, identifier);
 }
 
+void SWServer::Connection::registerServiceWorkerInServer(ServiceWorkerIdentifier identifier)
+{
+    if (RefPtr server = m_server.get())
+        server->registerServiceWorkerConnection(*this, identifier);
+}
+
+void SWServer::Connection::unregisterServiceWorkerInServer(ServiceWorkerIdentifier identifier)
+{
+    if (RefPtr server = m_server.get())
+        server->unregisterServiceWorkerConnection(*this, identifier);
+}
+
 SWServer::SWServer(SWServerDelegate& delegate, UniqueRef<SWOriginStore>&& originStore, bool processTerminationDelayEnabled, String&& registrationDatabaseDirectory, PAL::SessionID sessionID, bool shouldRunServiceWorkersOnMainThreadForTesting, bool hasServiceWorkerEntitlement, std::optional<unsigned> overrideServiceWorkerRegistrationCountTestingValue, ServiceWorkerIsInspectable inspectable)
     : m_delegate(delegate)
     , m_originStore(WTFMove(originStore))
@@ -848,6 +860,18 @@ void SWServer::removeClientServiceWorkerRegistration(Connection& connection, Ser
 {
     if (RefPtr registration = m_registrations.get(identifier))
         registration->removeClientServiceWorkerRegistration(connection.identifier());
+}
+
+void SWServer::registerServiceWorkerConnection(Connection& connection, ServiceWorkerIdentifier identifier)
+{
+    if (RefPtr worker = m_runningOrTerminatingWorkers.get(identifier))
+        worker->registerServiceWorkerConnection(connection.identifier());
+}
+
+void SWServer::unregisterServiceWorkerConnection(Connection& connection, ServiceWorkerIdentifier identifier)
+{
+    if (RefPtr worker = m_runningOrTerminatingWorkers.get(identifier))
+        worker->unregisterServiceWorkerConnection(connection.identifier());
 }
 
 void SWServer::updateWorker(const ServiceWorkerJobDataIdentifier& jobDataIdentifier, const std::optional<ProcessIdentifier>& requestingProcessIdentifier, SWServerRegistration& registration, const URL& url, const ScriptBuffer& script, const CertificateInfo& certificateInfo, const ContentSecurityPolicyResponseHeaders& contentSecurityPolicy, const CrossOriginEmbedderPolicy& coep, const String& referrerPolicy, WorkerType type, MemoryCompactRobinHoodHashMap<URL, ServiceWorkerContextData::ImportedScript>&& scriptResourceMap, std::optional<ScriptExecutionContextIdentifier> serviceWorkerPageIdentifier)
@@ -1311,37 +1335,38 @@ void SWServer::unregisterServiceWorkerClientInternal(const ClientOrigin& clientO
 
     auto iterator = m_clientIdentifiersPerOrigin.find(clientOrigin);
     ASSERT(iterator != m_clientIdentifiersPerOrigin.end());
+    if (iterator != m_clientIdentifiersPerOrigin.end()) {
+        auto& clientIdentifiers = iterator->value.identifiers;
+        clientIdentifiers.removeFirst(clientIdentifier);
 
-    auto& clientIdentifiers = iterator->value.identifiers;
-    clientIdentifiers.removeFirst(clientIdentifier);
+        if (clientIdentifiers.isEmpty() && shouldUpdateRegistrations == ShouldUpdateRegistrations::Yes) {
+            ASSERT(!iterator->value.terminateServiceWorkersTimer);
+            iterator->value.terminateServiceWorkersTimer = makeUnique<Timer>([clientOrigin, clientRegistrableDomain, weakThis = WeakPtr { *this }] {
+                RefPtr protectedThis = weakThis.get();
+                if (!protectedThis)
+                    return;
 
-    if (clientIdentifiers.isEmpty() && shouldUpdateRegistrations == ShouldUpdateRegistrations::Yes) {
-        ASSERT(!iterator->value.terminateServiceWorkersTimer);
-        iterator->value.terminateServiceWorkersTimer = makeUnique<Timer>([clientOrigin, clientRegistrableDomain, weakThis = WeakPtr { *this }] {
-            RefPtr protectedThis = weakThis.get();
-            if (!protectedThis)
-                return;
+                Vector<Ref<SWServerWorker>> workersToTerminate;
+                for (auto& worker : protectedThis->m_runningOrTerminatingWorkers.values()) {
+                    if (worker->isRunning() && worker->origin() == clientOrigin && !worker->shouldContinue())
+                        workersToTerminate.append(worker);
+                }
+                for (auto& worker : workersToTerminate)
+                    worker->terminate();
 
-            Vector<Ref<SWServerWorker>> workersToTerminate;
-            for (auto& worker : protectedThis->m_runningOrTerminatingWorkers.values()) {
-                if (worker->isRunning() && worker->origin() == clientOrigin && !worker->shouldContinue())
-                    workersToTerminate.append(worker);
-            }
-            for (auto& worker : workersToTerminate)
-                worker->terminate();
+                if (protectedThis->removeContextConnectionIfPossible(clientRegistrableDomain) == ShouldDelayRemoval::Yes) {
+                    auto iterator = protectedThis->m_clientIdentifiersPerOrigin.find(clientOrigin);
+                    ASSERT(iterator != protectedThis->m_clientIdentifiersPerOrigin.end());
+                    iterator->value.terminateServiceWorkersTimer->startOneShot(protectedThis->m_isProcessTerminationDelayEnabled ? defaultTerminationDelay : defaultFunctionalEventDuration);
+                    return;
+                }
 
-            if (protectedThis->removeContextConnectionIfPossible(clientRegistrableDomain) == ShouldDelayRemoval::Yes) {
-                auto iterator = protectedThis->m_clientIdentifiersPerOrigin.find(clientOrigin);
-                ASSERT(iterator != protectedThis->m_clientIdentifiersPerOrigin.end());
-                iterator->value.terminateServiceWorkersTimer->startOneShot(protectedThis->m_isProcessTerminationDelayEnabled ? defaultTerminationDelay : defaultFunctionalEventDuration);
-                return;
-            }
-
-            protectedThis->m_clientIdentifiersPerOrigin.remove(clientOrigin);
-        });
-        RefPtr contextConnection = contextConnectionForRegistrableDomain(clientRegistrableDomain);
-        bool shouldContextConnectionBeTerminatedWhenPossible = contextConnection && contextConnection->shouldTerminateWhenPossible();
-        iterator->value.terminateServiceWorkersTimer->startOneShot(m_isProcessTerminationDelayEnabled && !MemoryPressureHandler::singleton().isUnderMemoryPressure() && !shouldContextConnectionBeTerminatedWhenPossible && !didUnregister ? defaultTerminationDelay : 0_s);
+                protectedThis->m_clientIdentifiersPerOrigin.remove(clientOrigin);
+            });
+            RefPtr contextConnection = contextConnectionForRegistrableDomain(clientRegistrableDomain);
+            bool shouldContextConnectionBeTerminatedWhenPossible = contextConnection && contextConnection->shouldTerminateWhenPossible();
+            iterator->value.terminateServiceWorkersTimer->startOneShot(m_isProcessTerminationDelayEnabled && !MemoryPressureHandler::singleton().isUnderMemoryPressure() && !shouldContextConnectionBeTerminatedWhenPossible && !didUnregister ? defaultTerminationDelay : 0_s);
+        }
     }
 
     if (shouldUpdateRegistrations == ShouldUpdateRegistrations::Yes) {

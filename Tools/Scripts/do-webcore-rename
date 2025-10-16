@@ -114,10 +114,10 @@ my %renames = (
 );
 
 my %renamesContemplatedForTheFuture = (
-    "HTMLPlugInImageElement" => "HTMLEmbeddedObjectElement",
-    "isPlugInImageElement" => "isEmbeddedObjectElement",
-    "isHTMLPlugInImageElement" => "isHTMLEmbeddedObjectElement",
-    "toHTMLPlugInImageElement" => "toHTMLEmbeddedObjectElement",
+    "HTMLPlugInElement" => "HTMLEmbeddedObjectElement",
+    "isPlugInElement" => "isEmbeddedObjectElement",
+    "isHTMLPlugInElement" => "isHTMLEmbeddedObjectElement",
+    "toHTMLPlugInElement" => "toHTMLEmbeddedObjectElement",
 
     "DOMObject" => "JSDOMObject",
 

@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: Cancelled load to https://127.0.0.1:9443/html/infrastructure/safe-passing-of-structured-data/shared-array-buffers/resources/iframe-messagechannel-site-failure.html because it violates the resource's Cross-Origin-Resource-Policy response header.
 
 Harness Error (TIMEOUT), message = null
 

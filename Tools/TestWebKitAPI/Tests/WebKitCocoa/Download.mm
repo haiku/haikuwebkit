@@ -62,6 +62,7 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/WeakObjCPtr.h>
+#import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/WTFString.h>
 
@@ -932,7 +933,7 @@ TEST(_WKDownload, DownloadMonitorCancel)
 TEST(_WKDownload, DISABLED_DownloadMonitorSurvive)
 {
     __block BOOL timeoutReached = NO;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.5 * NSEC_PER_SEC), mainDispatchQueueSingleton(), ^{
         [monitorDelegate() stopWaitingForDidFail];
         timeoutReached = YES;
     });
@@ -951,7 +952,7 @@ TEST(_WKDownload, DownloadMonitorReturnToForeground)
 #endif
 {
     __block BOOL timeoutReached = NO;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.5 * NSEC_PER_SEC), mainDispatchQueueSingleton(), ^{
         [monitorDelegate() stopWaitingForDidFail];
         timeoutReached = YES;
     });

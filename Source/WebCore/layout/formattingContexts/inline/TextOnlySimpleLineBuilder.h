@@ -55,10 +55,8 @@ private:
     size_t revertToTrailingItem(const RenderStyle&, const InlineItemRange&, const InlineTextItem&);
     size_t revertToLastNonOverflowingItem(const RenderStyle&, const InlineItemRange&);
     InlineLayoutUnit availableWidth() const;
-    bool isWrappingAllowed() const { return m_isWrappingAllowed; }
 
 private:
-    bool m_isWrappingAllowed { false };
     InlineLayoutUnit m_trimmedTrailingWhitespaceWidth { 0.f };
     std::optional<InlineLayoutUnit> m_overflowContentLogicalWidth { };
 };

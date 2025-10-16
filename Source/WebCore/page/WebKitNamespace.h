@@ -32,6 +32,10 @@
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 
+namespace JSC {
+class JSGlobalObject;
+}
+
 namespace WebCore {
 
 class Node;
@@ -50,12 +54,12 @@ public:
     virtual ~WebKitNamespace();
 
     UserMessageHandlersNamespace* messageHandlers();
-    Ref<WebKitJSHandle> createJSHandle(Document&, JSC::Strong<JSC::JSObject>);
+    Ref<WebKitJSHandle> jsHandle(JSC::JSGlobalObject&, JSC::Strong<JSC::JSObject>);
 
     struct SerializedNodeInit {
         bool deep { false };
     };
-    Ref<WebKitSerializedNode> serializeNode(Node&, SerializedNodeInit&&);
+    ExceptionOr<Ref<WebKitSerializedNode>> serializeNode(Node&, SerializedNodeInit&&);
 
 private:
     explicit WebKitNamespace(LocalDOMWindow&, UserContentProvider&);

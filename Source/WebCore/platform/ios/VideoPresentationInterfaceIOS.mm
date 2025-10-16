@@ -69,17 +69,17 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(VideoPresentationInterfaceIOS);
 
 static UIColor *clearUIColor()
 {
-    return (UIColor *)[PAL::getUIColorClass() clearColor];
+    return (UIColor *)[PAL::getUIColorClassSingleton() clearColor];
 }
 
 static UIColor *blackUIColor()
 {
-    return (UIColor *)[PAL::getUIColorClass() blackColor];
+    return (UIColor *)[PAL::getUIColorClassSingleton() blackColor];
 }
 
 static UIColor *greyUIColor()
 {
-    return (UIColor *)[PAL::getUIColorClass() colorWithRed:164.0 / 255.0 green:164.0 / 255.0 blue:164.0 / 255.0 alpha:1];
+    return (UIColor *)[PAL::getUIColorClassSingleton() colorWithRed:164.0 / 255.0 green:164.0 / 255.0 blue:164.0 / 255.0 alpha:1];
 }
 
 #if !LOG_DISABLED
@@ -163,7 +163,7 @@ void VideoPresentationInterfaceIOS::ensurePipPlacardIsShowing()
         [pipPlacard setBackgroundColor:blackUIColor()];
         [pipPlacard setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-        RetainPtr image = [[[PAL::getUIImageClass() systemImageNamed:@"pip"] imageWithTintColor:greyUIColor() renderingMode:UIImageRenderingModeAlwaysOriginal] imageWithConfiguration:[PAL::getUIImageSymbolConfigurationClass() configurationWithWeight:UIImageSymbolWeightThin]];
+        RetainPtr image = [[[PAL::getUIImageClassSingleton() systemImageNamed:@"pip"] imageWithTintColor:greyUIColor() renderingMode:UIImageRenderingModeAlwaysOriginal] imageWithConfiguration:[PAL::getUIImageSymbolConfigurationClassSingleton() configurationWithWeight:UIImageSymbolWeightThin]];
 
         RetainPtr imageView = adoptNS([PAL::allocUIImageViewInstance() initWithImage:image.get()]);
         [imageView setContentMode:UIViewContentModeScaleAspectFit];
@@ -175,7 +175,7 @@ void VideoPresentationInterfaceIOS::ensurePipPlacardIsShowing()
         [pipLabel setText:@"This video is playing in picture in picture."];
         [pipLabel setTextAlignment:NSTextAlignmentCenter];
         [pipLabel setTextColor:greyUIColor()];
-        [pipLabel setFont:[PAL::getUIFontClass() systemFontOfSize:16]];
+        [pipLabel setFont:[PAL::getUIFontClassSingleton() systemFontOfSize:16]];
         [pipLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
 
         [pipPlacard addSubview:pipLabel.get()];
@@ -327,8 +327,8 @@ void VideoPresentationInterfaceIOS::doSetup()
         [m_viewController _setIgnoreAppSupportedOrientations:YES];
         [m_window setRootViewController:m_viewController.get()];
         auto textEffectsWindowLevel = [&] {
-            auto *textEffectsWindow = [PAL::getUITextEffectsWindowClass() sharedTextEffectsWindowForWindowScene:[m_window windowScene]];
-            return textEffectsWindow ? textEffectsWindow.windowLevel : PAL::get_UIKit_UITextEffectsBeneathStatusBarWindowLevel();
+            auto *textEffectsWindow = [PAL::getUITextEffectsWindowClassSingleton() sharedTextEffectsWindowForWindowScene:[m_window windowScene]];
+            return textEffectsWindow ? textEffectsWindow.windowLevel : PAL::get_UIKit_UITextEffectsBeneathStatusBarWindowLevelSingleton();
         }();
         [m_window setWindowLevel:textEffectsWindowLevel - 1];
         [m_window makeKeyAndVisible];

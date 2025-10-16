@@ -27,6 +27,7 @@
 #include "WebKitNamespace.h"
 
 #include "Element.h"
+#include "ExceptionOr.h"
 #include "FrameLoader.h"
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
@@ -68,13 +69,15 @@ UserMessageHandlersNamespace* WebKitNamespace::messageHandlers()
     return &m_messageHandlerNamespace.get();
 }
 
-Ref<WebKitJSHandle> WebKitNamespace::createJSHandle(Document& document, JSC::Strong<JSC::JSObject> object)
+Ref<WebKitJSHandle> WebKitNamespace::jsHandle(JSC::JSGlobalObject& globalObject, JSC::Strong<JSC::JSObject> object)
 {
-    return WebKitJSHandle::create(document, object.get());
+    return WebKitJSHandle::getOrCreate(globalObject, object.get());
 }
 
-Ref<WebKitSerializedNode> WebKitNamespace::serializeNode(Node& node, SerializedNodeInit&& init)
+ExceptionOr<Ref<WebKitSerializedNode>> WebKitNamespace::serializeNode(Node& node, SerializedNodeInit&& init)
 {
+    if (node.isShadowRoot()) [[unlikely]]
+        return Exception { ExceptionCode::NotSupportedError };
     return WebKitSerializedNode::create(node, init.deep);
 }
 

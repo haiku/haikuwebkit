@@ -166,7 +166,6 @@ template: struct WebKit::WebExtensionPortChannelIdentifierType
 template: struct WebKit::WebExtensionTabIdentifierType
 template: struct WebKit::WebExtensionWindowIdentifierType
 template: struct WebKit::WebPageProxyIdentifierType
-template: struct WebKit::WebTransportSessionIdentifierType
 template: struct WebKit::WebURLSchemeHandlerIdentifierType
 [WebKitPlatform, AdditionalEncoder=StreamConnectionEncoder] class WTF::ObjectIdentifier {
     [Validator='WTF::ObjectIdentifierGenericBase<uint64_t>::isValidIdentifier(*toUInt64)'] uint64_t toUInt64()
@@ -203,8 +202,15 @@ template: struct WebKit::GPUProcessConnectionIdentifierType
 template: enum class WebKit::LegacyCustomProtocolIDType
 template: struct WebKit::LibWebRTCResolverIdentifierType
 template: struct WebKit::LogStreamIdentifierType
+template: struct WebKit::RemoteGradientIdentifierType
 template: struct WebKit::RemoteGraphicsContextIdentifierType
+template: struct WebKit::RemoteDisplayListIdentifierType
+template: struct WebKit::RemoteDisplayListRecorderIdentifierType
+template: struct WebKit::RemoteGraphicsContextGLIdentifierType
+template: struct WebKit::RemoteRenderingBackendIdentifierType
 template: struct WebKit::RemoteSerializedImageBufferIdentifierType
+template: struct WebKit::RemoteSnapshotIdentifierType
+template: struct WebKit::RemoteSnapshotRecorderIdentifierType
 template: struct WebKit::RemoteVideoFrameIdentifierType
 template: struct WebKit::VideoDecoderIdentifierType
 template: struct WebKit::VideoEncoderIdentifierType
@@ -213,11 +219,10 @@ template: struct IPC::AsyncReplyIDType
 template: struct WebCore::FileSystemHandleIdentifierType
 template: struct WebCore::FileSystemSyncAccessHandleIdentifierType
 template: struct WebCore::WebSocketIdentifierType
-template: struct WebKit::GraphicsContextGLIdentifierType
 template: struct WebKit::QuotaIncreaseRequestIdentifierType
-template: struct WebKit::RenderingBackendIdentifierType
 template: struct WebKit::StorageAreaIdentifierType
 template: struct WebKit::WebGPUIdentifierType
+template: struct WebKit::WebTransportSessionIdentifierType
 [WebKitPlatform, CustomHeader, AdditionalEncoder=StreamConnectionEncoder] class WTF::AtomicObjectIdentifier {
     [Validator='WTF::ObjectIdentifierGenericBase<uint64_t>::isValidIdentifier(*toUInt64)'] uint64_t toUInt64()
 }

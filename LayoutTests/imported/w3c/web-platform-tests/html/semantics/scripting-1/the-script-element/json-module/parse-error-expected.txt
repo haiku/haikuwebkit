@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: SyntaxError: JSON Parse error: Expected '}'
 
 PASS JSON modules: parse error
 

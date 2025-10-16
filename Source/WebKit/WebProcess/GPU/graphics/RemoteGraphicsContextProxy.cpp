@@ -32,6 +32,7 @@
 #include "RemoteGraphicsContextMessages.h"
 #include "RemoteImageBufferProxy.h"
 #include "RemoteRenderingBackendProxy.h"
+#include "RemoteSnapshotRecorderMessages.h"
 #include "SharedVideoFrame.h"
 #include "StreamClientConnection.h"
 #include "WebProcess.h"
@@ -43,9 +44,10 @@
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/MediaPlayer.h>
 #include <WebCore/NotImplemented.h>
-#include <WebCore/SVGFilter.h>
+#include <WebCore/SVGFilterRenderer.h>
 #include <wtf/MathExtras.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/URL.h>
 #include <wtf/text/TextStream.h>
 
 #if USE(SYSTEM_PREVIEW)
@@ -58,15 +60,17 @@ using namespace WebCore;
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteGraphicsContextProxy);
 
 RemoteGraphicsContextProxy::RemoteGraphicsContextProxy(const DestinationColorSpace& colorSpace, RenderingMode renderingMode, const FloatRect& initialClip, const AffineTransform& initialCTM, RemoteRenderingBackendProxy& renderingBackend)
-    : DisplayList::Recorder(IsDeferred::No, { }, initialClip, initialCTM, colorSpace, DrawGlyphsMode::Deconstruct)
-    , m_renderingMode(renderingMode)
-    , m_identifier(RemoteGraphicsContextIdentifier::generate())
-    , m_renderingBackend(renderingBackend)
+    : RemoteGraphicsContextProxy(colorSpace, std::nullopt, renderingMode, initialClip, initialCTM, DrawGlyphsMode::Deconstruct, RemoteGraphicsContextIdentifier::generate(), renderingBackend)
 {
 }
 
 RemoteGraphicsContextProxy::RemoteGraphicsContextProxy(const DestinationColorSpace& colorSpace, WebCore::ContentsFormat contentsFormat, RenderingMode renderingMode, const FloatRect& initialClip, const AffineTransform& initialCTM, RemoteGraphicsContextIdentifier identifier, RemoteRenderingBackendProxy& renderingBackend)
-    : DisplayList::Recorder(IsDeferred::No, { }, initialClip, initialCTM, colorSpace, DrawGlyphsMode::Deconstruct)
+    : RemoteGraphicsContextProxy(colorSpace, contentsFormat, renderingMode, initialClip, initialCTM, DrawGlyphsMode::Deconstruct, identifier, renderingBackend)
+{
+}
+
+RemoteGraphicsContextProxy::RemoteGraphicsContextProxy(const DestinationColorSpace& colorSpace, std::optional<ContentsFormat> contentsFormat, RenderingMode renderingMode, const FloatRect& initialClip, const AffineTransform& initialCTM, DrawGlyphsMode drawGlyphsMode, RemoteGraphicsContextIdentifier identifier, RemoteRenderingBackendProxy& renderingBackend)
+    : DisplayList::Recorder(IsDeferred::No, { }, initialClip, initialCTM, colorSpace, drawGlyphsMode)
     , m_renderingMode(renderingMode)
     , m_identifier(identifier)
     , m_renderingBackend(renderingBackend)
@@ -243,7 +247,7 @@ void RemoteGraphicsContextProxy::drawFilteredImageBuffer(ImageBuffer* sourceImag
         }
     }
 
-    RefPtr svgFilter = dynamicDowncast<SVGFilter>(filter);
+    RefPtr svgFilter = dynamicDowncast<SVGFilterRenderer>(filter);
     if (svgFilter && svgFilter->hasValidRenderingResourceIdentifier())
         recordResourceUse(filter);
 
@@ -274,12 +278,13 @@ void RemoteGraphicsContextProxy::drawGlyphsImmediate(const Font& font, std::span
     send(Messages::RemoteGraphicsContext::DrawGlyphs(font.renderingResourceIdentifier(), { glyphs.data(), Vector<FloatSize>(advances).span().data(), glyphs.size() }, localAnchor, smoothingMode));
 }
 
-void RemoteGraphicsContextProxy::drawDecomposedGlyphs(const Font& font, const DecomposedGlyphs& decomposedGlyphs)
+void RemoteGraphicsContextProxy::drawDisplayList(const DisplayList::DisplayList& displayList, ControlFactory&)
 {
+    auto identifier = recordResourceUse(displayList);
+    if (!identifier)
+        return;
     appendStateChangeItemIfNecessary();
-    recordResourceUse(const_cast<Font&>(font));
-    recordResourceUse(const_cast<DecomposedGlyphs&>(decomposedGlyphs));
-    send(Messages::RemoteGraphicsContext::DrawDecomposedGlyphs(font.renderingResourceIdentifier(), decomposedGlyphs.renderingResourceIdentifier()));
+    send(Messages::RemoteGraphicsContext::DrawDisplayList(*identifier));
 }
 
 void RemoteGraphicsContextProxy::drawImageBuffer(ImageBuffer& imageBuffer, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
@@ -605,10 +610,10 @@ void RemoteGraphicsContextProxy::applyDeviceScaleFactor(float scaleFactor)
     send(Messages::RemoteGraphicsContext::ApplyDeviceScaleFactor(scaleFactor));
 }
 
-void RemoteGraphicsContextProxy::beginPage(const IntSize& pageSize)
+void RemoteGraphicsContextProxy::beginPage(const FloatRect& pageRect)
 {
     appendStateChangeItemIfNecessary();
-    send(Messages::RemoteGraphicsContext::BeginPage(pageSize));
+    send(Messages::RemoteGraphicsContext::BeginPage(pageRect));
 }
 
 void RemoteGraphicsContextProxy::endPage()
@@ -687,28 +692,17 @@ bool RemoteGraphicsContextProxy::recordResourceUse(Font& font)
     return true;
 }
 
-bool RemoteGraphicsContextProxy::recordResourceUse(DecomposedGlyphs& decomposedGlyphs)
+std::optional<RemoteGradientIdentifier> RemoteGraphicsContextProxy::recordResourceUse(Gradient& gradient)
 {
+    if (gradient.isTransient())
+        return std::nullopt;
     RefPtr renderingBackend = m_renderingBackend.get();
     if (!renderingBackend) [[unlikely]] {
         ASSERT_NOT_REACHED();
-        return false;
+        return std::nullopt;
     }
 
-    renderingBackend->remoteResourceCacheProxy().recordDecomposedGlyphsUse(decomposedGlyphs);
-    return true;
-}
-
-bool RemoteGraphicsContextProxy::recordResourceUse(Gradient& gradient)
-{
-    RefPtr renderingBackend = m_renderingBackend.get();
-    if (!renderingBackend) [[unlikely]] {
-        ASSERT_NOT_REACHED();
-        return false;
-    }
-
-    renderingBackend->remoteResourceCacheProxy().recordGradientUse(gradient);
-    return true;
+    return renderingBackend->remoteResourceCacheProxy().recordGradientUse(gradient);
 }
 
 bool RemoteGraphicsContextProxy::recordResourceUse(Filter& filter)
@@ -721,6 +715,16 @@ bool RemoteGraphicsContextProxy::recordResourceUse(Filter& filter)
 
     renderingBackend->remoteResourceCacheProxy().recordFilterUse(filter);
     return true;
+}
+
+std::optional<RemoteDisplayListIdentifier> RemoteGraphicsContextProxy::recordResourceUse(const DisplayList::DisplayList& displayList)
+{
+    RefPtr renderingBackend = m_renderingBackend.get();
+    if (!renderingBackend) [[unlikely]] {
+        ASSERT_NOT_REACHED();
+        return { };
+    }
+    return renderingBackend->remoteResourceCacheProxy().recordDisplayListUse(displayList);
 }
 
 RefPtr<ImageBuffer> RemoteGraphicsContextProxy::createImageBuffer(const FloatSize& size, float resolutionScale, const DestinationColorSpace& colorSpace, std::optional<RenderingMode> renderingMode, std::optional<RenderingMethod> renderingMethod, WebCore::ImageBufferFormat pixelFormat) const
@@ -762,13 +766,17 @@ void RemoteGraphicsContextProxy::appendStateChangeItemIfNecessary()
         if (auto packedColor = fillBrush.packedColor())
             send(Messages::RemoteGraphicsContext::SetFillPackedColor(*packedColor));
         else if (RefPtr pattern = fillBrush.pattern()) {
-            recordResourceUse(pattern->tileImage());
-            send(Messages::RemoteGraphicsContext::SetFillPattern(pattern->tileImage().imageIdentifier(), pattern->parameters()));
+            if (RefPtr image = pattern->tileNativeImage()) {
+                if (recordResourceUse(*image))
+                    send(Messages::RemoteGraphicsContext::SetFillPatternNativeImage(image->renderingResourceIdentifier(), pattern->parameters()));
+            } else if (RefPtr buffer = pattern->tileImageBuffer()) {
+                if (recordResourceUse(*buffer))
+                    send(Messages::RemoteGraphicsContext::SetFillPatternImageBuffer(buffer->renderingResourceIdentifier(), pattern->parameters()));
+            }
         } else if (RefPtr gradient = fillBrush.gradient()) {
-            if (gradient->hasValidRenderingResourceIdentifier()) {
-                recordResourceUse(*gradient);
-                send(Messages::RemoteGraphicsContext::SetFillCachedGradient(gradient->renderingResourceIdentifier(), fillBrush.gradientSpaceTransform()));
-            } else
+            if (auto identifier = recordResourceUse(*gradient))
+                send(Messages::RemoteGraphicsContext::SetFillCachedGradient(*identifier, fillBrush.gradientSpaceTransform()));
+            else
                 send(Messages::RemoteGraphicsContext::SetFillGradient(*gradient, fillBrush.gradientSpaceTransform()));
         } else
             send(Messages::RemoteGraphicsContext::SetFillColor(fillBrush.color()));
@@ -782,13 +790,17 @@ void RemoteGraphicsContextProxy::appendStateChangeItemIfNecessary()
             } else
                 send(Messages::RemoteGraphicsContext::SetStrokePackedColor(*packedColor));
         } else if (RefPtr pattern = strokeBrush.pattern()) {
-            recordResourceUse(pattern->tileImage());
-            send(Messages::RemoteGraphicsContext::SetStrokePattern(pattern->tileImage().imageIdentifier(), pattern->parameters()));
+            if (RefPtr image = pattern->tileNativeImage()) {
+                if (recordResourceUse(*image))
+                    send(Messages::RemoteGraphicsContext::SetStrokePatternNativeImage(image->renderingResourceIdentifier(), pattern->parameters()));
+            } else if (RefPtr buffer = pattern->tileImageBuffer()) {
+                if (recordResourceUse(*buffer))
+                    send(Messages::RemoteGraphicsContext::SetStrokePatternImageBuffer(buffer->renderingResourceIdentifier(), pattern->parameters()));
+            }
         } else if (RefPtr gradient = strokeBrush.gradient()) {
-            if (gradient->hasValidRenderingResourceIdentifier()) {
-                recordResourceUse(*gradient);
-                send(Messages::RemoteGraphicsContext::SetStrokeCachedGradient(gradient->renderingResourceIdentifier(), strokeBrush.gradientSpaceTransform()));
-            } else
+            if (auto identifier = recordResourceUse(*gradient))
+                send(Messages::RemoteGraphicsContext::SetStrokeCachedGradient(*identifier, strokeBrush.gradientSpaceTransform()));
+            else
                 send(Messages::RemoteGraphicsContext::SetStrokeGradient(*gradient, strokeBrush.gradientSpaceTransform()));
         } else
             send(Messages::RemoteGraphicsContext::SetStrokeColor(strokeBrush.color()));
@@ -884,6 +896,9 @@ void RemoteGraphicsContextProxy::abandon()
     m_renderingBackend = nullptr;
 }
 
-} // namespace WebCore
+// Instantiate the send() helper for the few subclass messages here to avoid listing it in the header.
+template void RemoteGraphicsContextProxy::send<Messages::RemoteSnapshotRecorder::DrawSnapshotFrame>(Messages::RemoteSnapshotRecorder::DrawSnapshotFrame&&);
 
-#endif // ENABLE(GPU_PROCESS)
+}
+
+#endif

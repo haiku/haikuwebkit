@@ -35,6 +35,7 @@
 #include "RenderLayerScrollableArea.h"
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
+#include "StyleSingleAnimationRange.h"
 #include "WebAnimation.h"
 
 namespace WebCore {
@@ -321,12 +322,12 @@ float ScrollTimeline::floatValueForOffset(const Length& offset, float maxValue)
 {
     if (offset.isNormal() || offset.isAuto())
         return 0.f;
-    return floatValueForLength(offset, maxValue);
+    return floatValueForLength(offset, maxValue, 1.0f /* FIXME FIND ZOOM */);
 }
 
-TimelineRange ScrollTimeline::defaultRange() const
+Style::SingleAnimationRange ScrollTimeline::defaultRange() const
 {
-    return TimelineRange::defaultForScrollTimeline();
+    return Style::SingleAnimationRange::defaultForScrollTimeline();
 }
 
 ScrollTimeline::Data ScrollTimeline::computeTimelineData() const
@@ -340,7 +341,7 @@ ScrollTimeline::Data ScrollTimeline::computeTimelineData() const
     };
 }
 
-std::pair<WebAnimationTime, WebAnimationTime> ScrollTimeline::intervalForAttachmentRange(const TimelineRange& attachmentRange) const
+std::pair<WebAnimationTime, WebAnimationTime> ScrollTimeline::intervalForAttachmentRange(const Style::SingleAnimationRange& attachmentRange) const
 {
     auto maxScrollOffset = m_cachedCurrentTimeData.maxScrollOffset;
     if (!maxScrollOffset)
@@ -348,15 +349,15 @@ std::pair<WebAnimationTime, WebAnimationTime> ScrollTimeline::intervalForAttachm
 
     auto attachmentRangeOrDefault = attachmentRange.isDefault() ? defaultRange() : attachmentRange;
 
-    auto computedPercentageIfNecessary = [&](const Length& length) {
-        if (length.isPercent())
-            return length.value();
-        return floatValueForOffset(length, maxScrollOffset) / maxScrollOffset * 100;
+    auto computedPercentageIfNecessary = [&](const auto& rangeOffset) {
+        if (auto percentage = rangeOffset.tryPercentage())
+            return percentage->value;
+        return Style::evaluate(rangeOffset, maxScrollOffset, 1.0f /* FIXME FIND ZOOM */) / maxScrollOffset * 100;
     };
 
     return {
-        WebAnimationTime::fromPercentage(computedPercentageIfNecessary(attachmentRangeOrDefault.start.offset)),
-        WebAnimationTime::fromPercentage(computedPercentageIfNecessary(attachmentRangeOrDefault.end.offset))
+        WebAnimationTime::fromPercentage(computedPercentageIfNecessary(attachmentRangeOrDefault.start.offset())),
+        WebAnimationTime::fromPercentage(computedPercentageIfNecessary(attachmentRangeOrDefault.end.offset()))
     };
 }
 

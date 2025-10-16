@@ -39,32 +39,15 @@
 
 namespace JSC { namespace Wasm {
 
-struct PatchpointExceptionHandleBase {
-    static constexpr unsigned s_invalidCallSiteIndex = std::numeric_limits<unsigned>::max();
-};
+static constexpr unsigned wasmInvalidCallSiteIndex = std::numeric_limits<unsigned>::max();
 
 #if ENABLE(WEBASSEMBLY_OMGJIT)
 
-struct PatchpointExceptionHandle : public PatchpointExceptionHandleBase {
-    PatchpointExceptionHandle(bool hasExceptionHandlers, unsigned callSiteIndex)
-        : m_hasExceptionHandlers(hasExceptionHandlers)
-        , m_callSiteIndex(callSiteIndex)
-    { }
-
-    PatchpointExceptionHandle(bool hasExceptionHandlers, unsigned callSiteIndex, unsigned numLiveValues, unsigned firstStackmapParamOffset, unsigned firstStackmapChildOffset)
-        : m_hasExceptionHandlers(hasExceptionHandlers)
-        , m_callSiteIndex(callSiteIndex)
-        , m_numLiveValues(numLiveValues)
-        , m_firstStackmapParamOffset(firstStackmapParamOffset)
-        , m_firstStackmapChildOffset(firstStackmapChildOffset)
-    { }
-
+class PatchpointExceptionHandle final : public RefCounted<PatchpointExceptionHandle> {
+public:
     template <typename Generator>
-    void generate(CCallHelpers& jit, const B3::StackmapGenerationParams& params, Generator* generator) const
+    void collectStackMap(Generator* generator, const B3::StackmapGenerationParams& params) const
     {
-        JIT_COMMENT(jit, "Store call site index ", m_callSiteIndex, " at throw or call site.");
-        jit.store32(CCallHelpers::TrustedImm32(m_callSiteIndex), CCallHelpers::tagFor(CallFrameSlot::argumentCountIncludingThis));
-
         if (!m_hasExceptionHandlers)
             return;
         if (!m_numLiveValues)
@@ -77,19 +60,28 @@ struct PatchpointExceptionHandle : public PatchpointExceptionHandleBase {
         generator->addStackMap(m_callSiteIndex, WTFMove(values));
     }
 
+    static Ref<PatchpointExceptionHandle> create(bool hasExceptionHandlers, unsigned callSiteIndex, unsigned numLiveValues, unsigned firstStackmapParamOffset, unsigned firstStackmapChildOffset)
+    {
+        return adoptRef(*new PatchpointExceptionHandle(hasExceptionHandlers, callSiteIndex, numLiveValues, firstStackmapParamOffset, firstStackmapChildOffset));
+    }
+
+private:
+    PatchpointExceptionHandle(bool hasExceptionHandlers, unsigned callSiteIndex, unsigned numLiveValues, unsigned firstStackmapParamOffset, unsigned firstStackmapChildOffset)
+        : m_hasExceptionHandlers(hasExceptionHandlers)
+        , m_callSiteIndex(callSiteIndex)
+        , m_numLiveValues(numLiveValues)
+        , m_firstStackmapParamOffset(firstStackmapParamOffset)
+        , m_firstStackmapChildOffset(firstStackmapChildOffset)
+    { }
+
     bool m_hasExceptionHandlers;
-    unsigned m_callSiteIndex { s_invalidCallSiteIndex };
+    unsigned m_callSiteIndex { wasmInvalidCallSiteIndex };
     std::optional<unsigned> m_numLiveValues { };
     unsigned m_firstStackmapParamOffset { };
     unsigned m_firstStackmapChildOffset { };
 };
 
-#else
-
-using PatchpointExceptionHandle = PatchpointExceptionHandleBase;
-
 #endif
-
 
 static inline void computeExceptionHandlerAndLoopEntrypointLocations(Vector<CodeLocationLabel<ExceptionHandlerPtrTag>>& handlers, Vector<CodeLocationLabel<WasmEntryPtrTag>>& loopEntrypoints, const InternalFunction* function, const CompilationContext& context, LinkBuffer& linkBuffer)
 {

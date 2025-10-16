@@ -170,7 +170,7 @@ void RemoteAudioMediaStreamTrackRendererInternalUnitManager::setLastDeviceUsed(c
 #if PLATFORM(IOS_FAMILY) && USE(AUDIO_SESSION)
     RefPtr connection = m_gpuConnectionToWebProcess.get();
     Ref audioSession = connection->audioSessionProxy();
-    audioSession->setPreferredSpeakerID(deviceID != AudioMediaStreamTrackRenderer::defaultDeviceID() ? deviceID : emptyString());
+    audioSession->setPreferredSpeakerID(deviceID != WebCore::AudioMediaStreamTrackRenderer::defaultDeviceID() ? deviceID : emptyString());
 #endif
 }
 
@@ -188,9 +188,9 @@ RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::RemoteAudioMediaStre
     : m_identifier(identifier)
     , m_connection(connection)
     , m_localUnit(WebCore::AudioMediaStreamTrackRendererInternalUnit::create(deviceID, *this))
-    , m_canUseCaptureUnit(deviceID == AudioMediaStreamTrackRenderer::defaultDeviceID())
+    , m_canUseCaptureUnit(deviceID == WebCore::AudioMediaStreamTrackRenderer::defaultDeviceID())
 {
-    WebCore::AudioSession::singleton().addInterruptionObserver(*this);
+    WebCore::AudioSession::addInterruptionObserver(*this);
     protectedLocalUnit()->retrieveFormatDescription([weakThis = WeakPtr { *this }, this, callback = WTFMove(callback)](auto&& description) mutable {
         if (!weakThis || !description) {
             RELEASE_LOG_IF(!description, WebRTC, "RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit unable to get format description");
@@ -206,7 +206,7 @@ RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::RemoteAudioMediaStre
 
 RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::~RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit()
 {
-    WebCore::AudioSession::singleton().removeInterruptionObserver(*this);
+    WebCore::AudioSession::removeInterruptionObserver(*this);
     stop();
 }
 

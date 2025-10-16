@@ -51,10 +51,6 @@ messages -> GPUProcessProxy {
 
     ProcessIsReadyToExit()
     TerminateWebProcess(WebCore::ProcessIdentifier webProcessIdentifier)
-
-#if PLATFORM(COCOA)
-    DidDrawRemoteToPDF(WebCore::PageIdentifier pageID, RefPtr<WebCore::SharedBuffer> data, WebCore::SnapshotIdentifier snapshotIdentifier)
-#endif
 }
 
 #endif // ENABLE(GPU_PROCESS)

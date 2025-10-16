@@ -26,6 +26,8 @@
 #include "config.h"
 #include "LibWebRTCNetwork.h"
 
+#if USE(LIBWEBRTC)
+
 #include "LibWebRTCNetworkMessages.h"
 #include "Logging.h"
 #include "NetworkConnectionToWebProcessMessages.h"
@@ -40,12 +42,8 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(LibWebRTCNetwork);
 
 LibWebRTCNetwork::LibWebRTCNetwork(WebProcess& webProcess)
     : m_webProcess(webProcess)
-#if USE(LIBWEBRTC)
     , m_webNetworkMonitor(*this)
-#endif
-#if ENABLE(WEB_RTC)
     , m_mdnsRegister(*this)
-#endif
 {
 }
 
@@ -68,37 +66,30 @@ void LibWebRTCNetwork::setAsActive()
 {
     ASSERT(!m_isActive);
     m_isActive = true;
-#if USE(LIBWEBRTC)
     if (m_connection)
         setSocketFactoryConnection();
-#endif
 }
 
 void LibWebRTCNetwork::networkProcessCrashed()
 {
     setConnection(nullptr);
 
-#if USE(LIBWEBRTC)
     protectedMonitor()->networkProcessCrashed();
-#endif
 }
 
 void LibWebRTCNetwork::setConnection(RefPtr<IPC::Connection>&& connection)
 {
-#if USE(LIBWEBRTC)
     if (RefPtr connection = m_connection)
         connection->removeMessageReceiver(Messages::LibWebRTCNetwork::messageReceiverName());
-#endif
+
     m_connection = WTFMove(connection);
-#if USE(LIBWEBRTC)
+
     if (m_isActive)
         setSocketFactoryConnection();
     if (RefPtr connection = m_connection)
         connection->addMessageReceiver(*this, *this, Messages::LibWebRTCNetwork::messageReceiverName());
-#endif
 }
 
-#if USE(LIBWEBRTC)
 void LibWebRTCNetwork::setSocketFactoryConnection()
 {
     RefPtr connection = m_connection;
@@ -117,7 +108,6 @@ void LibWebRTCNetwork::setSocketFactoryConnection()
         });
     }, 0);
 }
-#endif
 
 void LibWebRTCNetwork::dispatch(Function<void()>&& callback)
 {
@@ -126,14 +116,9 @@ void LibWebRTCNetwork::dispatch(Function<void()>&& callback)
         return;
     }
 
-#if USE(LIBWEBRTC)
     WebCore::LibWebRTCProvider::callOnWebRTCNetworkThread(WTFMove(callback));
-#else
-    UNUSED_PARAM(callback);
-#endif
 }
 
-#if USE(LIBWEBRTC)
 static webrtc::EcnMarking convertToWebRTCEcnMarking(WebRTCNetwork::EcnMarking ecn)
 {
     switch (ecn) {
@@ -193,6 +178,6 @@ void LibWebRTCNetwork::signalUsedInterface(WebCore::LibWebRTCSocketIdentifier id
         socket->signalUsedInterface(WTFMove(interfaceName));
 }
 
-#endif
-
 } // namespace WebKit
+
+#endif // USE(LIBWEBRTC)

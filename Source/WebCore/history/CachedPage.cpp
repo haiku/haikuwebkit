@@ -47,7 +47,6 @@
 #include "SelectionRestorationMode.h"
 #include "Settings.h"
 #include "VisitedLinkState.h"
-#include <wtf/RefCountedLeakCounter.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -61,8 +60,6 @@ using namespace JSC;
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(CachedPage);
 
-DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, cachedPageCounter, ("CachedPage"));
-
 CachedPage::CachedPage(Page& page)
     : m_page(page)
     , m_expirationTime(MonotonicTime::now() + page.settings().backForwardCacheExpirationInterval())
@@ -72,17 +69,10 @@ CachedPage::CachedPage(Page& page)
         return localFrame ? localFrame->loader().client().loadedSubresourceDomains() : Vector<RegistrableDomain>();
     }())
 {
-#ifndef NDEBUG
-    cachedPageCounter.increment();
-#endif
 }
 
 CachedPage::~CachedPage()
 {
-#ifndef NDEBUG
-    cachedPageCounter.decrement();
-#endif
-
     if (m_cachedMainFrame)
         m_cachedMainFrame->destroy();
 }

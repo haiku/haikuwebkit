@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: NetworkError:  A network error occurred.
 Description
 
 This test validates that connectStart and connectEnd are the same when a connection is reused (e.g. when a persistent connection is used).

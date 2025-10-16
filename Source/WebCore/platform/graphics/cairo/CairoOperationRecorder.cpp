@@ -32,7 +32,6 @@
 
 #if USE(CAIRO)
 #include "CairoOperations.h"
-#include "DecomposedGlyphs.h"
 #include "Filter.h"
 #include "FilterResults.h"
 #include "FloatRoundedRect.h"
@@ -557,11 +556,6 @@ void OperationRecorder::drawGlyphs(const Font& font, std::span<const GlyphBuffer
         RefPtr<cairo_scaled_font_t>(font.platformData().scaledFont()),
         font.syntheticBoldOffset(), WTFMove(cairoGlyphs), xOffset, state.textDrawingMode(),
         state.strokeThickness(), state.dropShadow(), fontSmoothing));
-}
-
-void OperationRecorder::drawDecomposedGlyphs(const Font& font, const DecomposedGlyphs& decomposedGlyphs)
-{
-    return drawGlyphs(font, decomposedGlyphs.glyphs(), decomposedGlyphs.advances(), decomposedGlyphs.localAnchor(), decomposedGlyphs.fontSmoothingMode());
 }
 
 void OperationRecorder::drawImageBuffer(ImageBuffer& buffer, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)

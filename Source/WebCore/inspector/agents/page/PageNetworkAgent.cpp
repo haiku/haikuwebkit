@@ -26,14 +26,15 @@
 #include "config.h"
 #include "PageNetworkAgent.h"
 
-#include "Document.h"
+#include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "FrameConsoleClient.h"
 #include "FrameDestructionObserverInlines.h"
 #include "InspectorBackendClient.h"
 #include "InstrumentingAgents.h"
-#include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "Page.h"
-#include "PageConsoleClient.h"
+#include "Settings.h"
 #include "ThreadableWebSocketChannel.h"
 #include "WebSocket.h"
 #include <wtf/TZoneMallocInlines.h>
@@ -139,7 +140,10 @@ ScriptExecutionContext* PageNetworkAgent::scriptExecutionContext(Inspector::Prot
 
 void PageNetworkAgent::addConsoleMessage(std::unique_ptr<Inspector::ConsoleMessage>&& message)
 {
-    m_inspectedPage->console().addMessage(WTFMove(message));
+    RefPtr localMainFrame = m_inspectedPage->localMainFrame();
+    if (!localMainFrame)
+        return;
+    localMainFrame->console().addMessage(WTFMove(message));
 }
 
 } // namespace WebCore

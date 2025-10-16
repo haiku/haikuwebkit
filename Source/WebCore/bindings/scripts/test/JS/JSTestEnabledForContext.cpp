@@ -158,7 +158,7 @@ JSValue JSTestEnabledForContext::getConstructor(VM& vm, const JSGlobalObject* gl
 
 void JSTestEnabledForContext::destroy(JSC::JSCell* cell)
 {
-    JSTestEnabledForContext* thisObject = static_cast<JSTestEnabledForContext*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestEnabledForContext* thisObject = static_cast<JSTestEnabledForContext*>(cell);
     thisObject->JSTestEnabledForContext::~JSTestEnabledForContext();
 }
 
@@ -212,7 +212,7 @@ bool JSTestEnabledForContextOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::U
 
 void JSTestEnabledForContextOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestEnabledForContext = static_cast<JSTestEnabledForContext*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestEnabledForContext = static_cast<JSTestEnabledForContext*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestEnabledForContext->protectedWrapped().ptr(), jsTestEnabledForContext);
 }

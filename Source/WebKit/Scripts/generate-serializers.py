@@ -110,22 +110,24 @@ class SerializedType(object):
                     key, value = attribute.split('=')
                     if key == 'AdditionalEncoder':
                         self.encoders.append(value)
-                    if key == 'ConstructSubclass':
+                    elif key == 'ConstructSubclass':
                         self.construct_subclass = value
-                    if key == 'CreateUsing':
+                    elif key == 'CreateUsing':
                         self.create_using = value
-                    if key == 'Alias':
+                    elif key == 'Alias':
                         self.alias = value
-                    if key == 'ToCFMethod':
+                    elif key == 'ToCFMethod':
                         self.to_cf_method = value
-                    if key == 'FromCFMethod':
+                    elif key == 'FromCFMethod':
                         self.from_cf_method = value
-                    if key == 'ForwardDeclaration':
+                    elif key == 'ForwardDeclaration':
                         self.forward_declaration = value
-                    if key == 'WebKitSecureCodingClass':
+                    elif key == 'WebKitSecureCodingClass':
                         self.custom_secure_coding_class = value
-                    if key == 'Wrapper':
+                    elif key == 'Wrapper':
                         self.generic_wrapper = value
+                    else:
+                        raise Exception(f'Invalid attribute ({key}={value}) found on struct: {self.namespace}::{self.name}')
                 else:
                     if attribute == 'Nested':
                         self.nested = True
@@ -145,6 +147,10 @@ class SerializedType(object):
                         self.support_wkkeyedcoder = True
                     elif attribute == 'DebugDecodingFailure':
                         self.debug_decoding_failure = True
+                    elif attribute in ['CustomHeader']:
+                        pass
+                    else:
+                        raise Exception(f'Invalid attribute ({attribute}) found on struct: {self.namespace}::{self.name}')
         self.templates = templates
         if other_metadata:
             if other_metadata == 'subclasses':

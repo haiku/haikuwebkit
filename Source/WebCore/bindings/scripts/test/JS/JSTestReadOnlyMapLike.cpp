@@ -168,7 +168,7 @@ JSValue JSTestReadOnlyMapLike::getConstructor(VM& vm, const JSGlobalObject* glob
 
 void JSTestReadOnlyMapLike::destroy(JSC::JSCell* cell)
 {
-    JSTestReadOnlyMapLike* thisObject = static_cast<JSTestReadOnlyMapLike*>(cell);
+    SUPPRESS_MEMORY_UNSAFE_CAST JSTestReadOnlyMapLike* thisObject = static_cast<JSTestReadOnlyMapLike*>(cell);
     thisObject->JSTestReadOnlyMapLike::~JSTestReadOnlyMapLike();
 }
 
@@ -325,7 +325,7 @@ bool JSTestReadOnlyMapLikeOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unk
 
 void JSTestReadOnlyMapLikeOwner::finalize(JSC::Handle<JSC::Unknown> handle, void* context)
 {
-    auto* jsTestReadOnlyMapLike = static_cast<JSTestReadOnlyMapLike*>(handle.slot()->asCell());
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* jsTestReadOnlyMapLike = static_cast<JSTestReadOnlyMapLike*>(handle.slot()->asCell());
     auto& world = *static_cast<DOMWrapperWorld*>(context);
     uncacheWrapper(world, jsTestReadOnlyMapLike->protectedWrapped().ptr(), jsTestReadOnlyMapLike);
 }

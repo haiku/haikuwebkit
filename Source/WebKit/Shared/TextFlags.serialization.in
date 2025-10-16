@@ -125,7 +125,8 @@ enum class WebCore::FontSmoothingMode : uint8_t {
     AutomaticSpellingCorrectionEnabled,
     AutomaticQuoteSubstitutionEnabled,
     AutomaticDashSubstitutionEnabled,
-    AutomaticLinkDetectionEnabled
+    AutomaticLinkDetectionEnabled,
+    SmartListsEnabled
 #endif
 };
 

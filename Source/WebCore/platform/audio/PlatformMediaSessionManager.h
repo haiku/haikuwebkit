@@ -26,7 +26,6 @@
 #pragma once
 
 #include <WebCore/MediaSessionManagerInterface.h>
-#include <WebCore/PageIdentifier.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakListHashSet.h>
 
@@ -40,12 +39,12 @@ class PlatformMediaSessionManager : public MediaSessionManagerInterface
 {
     WTF_MAKE_TZONE_ALLOCATED(PlatformMediaSessionManager);
 public:
-    static RefPtr<PlatformMediaSessionManager> create(std::optional<PageIdentifier>);
+    static RefPtr<PlatformMediaSessionManager> create(PageIdentifier);
 
     void forEachMatchingSession(NOESCAPE const Function<bool(const PlatformMediaSessionInterface&)>& predicate, NOESCAPE const Function<void(PlatformMediaSessionInterface&)>& matchingCallback) final;
 
 protected:
-    PlatformMediaSessionManager();
+    PlatformMediaSessionManager(PageIdentifier);
 
     void addSession(PlatformMediaSessionInterface&) override;
     void removeSession(PlatformMediaSessionInterface&) override;

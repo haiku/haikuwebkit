@@ -208,12 +208,6 @@ void RecorderImpl::drawGlyphsImmediate(const Font& font, std::span<const GlyphBu
     m_items.append(DrawGlyphs(Ref { font }, Vector(glyphs), Vector(advances), localAnchor, smoothingMode));
 }
 
-void RecorderImpl::drawDecomposedGlyphs(const Font& font, const DecomposedGlyphs& decomposedGlyphs)
-{
-    appendStateChangeItemIfNecessary();
-    m_items.append(DrawDecomposedGlyphs(Ref { font }, Ref { decomposedGlyphs }));
-}
-
 void RecorderImpl::drawDisplayList(const DisplayList& displayList, ControlFactory&)
 {
     appendStateChangeItemIfNecessary();
@@ -430,10 +424,10 @@ void RecorderImpl::applyDeviceScaleFactor(float scaleFactor)
     m_items.append(ApplyDeviceScaleFactor(scaleFactor));
 }
 
-void RecorderImpl::beginPage(const IntSize& pageSize)
+void RecorderImpl::beginPage(const FloatRect& pageRect)
 {
     appendStateChangeItemIfNecessary();
-    m_items.append(BeginPage({ pageSize }));
+    m_items.append(BeginPage({ pageRect }));
 }
 
 void RecorderImpl::endPage()
@@ -492,6 +486,11 @@ void RecorderImpl::appendStateChangeItemIfNecessary()
 
     state.didApplyChanges();
     currentState().lastDrawingState = state;
+}
+
+void RecorderImpl::drawPlaceholder(Function<void(GraphicsContext&)>&& function)
+{
+    m_items.append(DrawPlaceholder(WTFMove(function)));
 }
 
 } // namespace DisplayList

@@ -21,8 +21,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
+#if ENABLE_SWIFTUI
+
 public import SwiftUI
-public import WebKit
+@_spi(CrossImportOverlay) public import WebKit
 
 /// A view that displays some web content.
 ///
@@ -241,6 +243,17 @@ extension WebView {
         /// The URL of the link that the user clicked.
         public let linkURL: URL?
     }
+
+    // SPI for testing.
+    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+    @_spi(Testing)
+    public struct WebPreferenceFeature<Value>: Sendable where Value: Sendable, Value: Codable {
+        public static var allowSmartLists: WebPreferenceFeature<Bool> {
+            .init(rawValue: "SmartListsAvailable")
+        }
+
+        let rawValue: String
+    }
 }
 
 extension WebView {
@@ -263,3 +276,5 @@ extension WebView {
         }
     }
 }
+
+#endif

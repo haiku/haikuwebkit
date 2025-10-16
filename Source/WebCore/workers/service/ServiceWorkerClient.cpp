@@ -26,6 +26,7 @@
 #include "config.h"
 #include "ServiceWorkerClient.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "ExceptionOr.h"
 #include "MessagePort.h"
 #include "SWContextManager.h"

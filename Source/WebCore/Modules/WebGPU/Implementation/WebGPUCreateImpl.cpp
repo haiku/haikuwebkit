@@ -53,19 +53,17 @@ RefPtr<GPU> create(ScheduleWorkFunction&& scheduleWorkFunction, const WebCore::P
     {
         scheduleWorkFunction(Function<void()>(makeBlockPtr(WTFMove(workItem))));
     });
-    WGPUInstanceCocoaDescriptor cocoaDescriptor {
-        {
-            nullptr,
-            static_cast<WGPUSType>(WGPUSTypeExtended_InstanceCocoaDescriptor),
-        },
-        scheduleWorkBlock.get(),
+
+    WGPUInstanceDescriptor descriptor = {
+        .cocoaDescriptor = WGPUInstanceCocoaDescriptor {
+            .scheduleWorkBlock = scheduleWorkBlock.get(),
 #if HAVE(TASK_IDENTITY_TOKEN)
-        webProcessIdentity ? &webProcessIdentity->taskId() : nullptr,
+            .webProcessResourceOwner = webProcessIdentity ? &webProcessIdentity->taskId() : nullptr,
 #else
-        nullptr,
+            .webProcessResourceOwner = nullptr,
 #endif
+        }
     };
-    WGPUInstanceDescriptor descriptor = { &cocoaDescriptor.chain };
 
     if (!&wgpuCreateInstance)
         return nullptr;
