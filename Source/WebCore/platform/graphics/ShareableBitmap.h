@@ -189,8 +189,6 @@ public:
     // This is only safe to use when we know that the contents of the shareable bitmap won't change.
     WEBCORE_EXPORT RefPtr<cairo_surface_t> createPersistentCairoSurface();
     WEBCORE_EXPORT RefPtr<cairo_surface_t> createCairoSurface();
-#elif USE(HAIKU)
-    WebCore::PlatformImagePtr createPlatformImage(WebCore::BackingStoreCopy = WebCore::CopyBackingStore, WebCore::ShouldInterpolate = WebCore::ShouldInterpolate::No);
 #endif
 
 private:
