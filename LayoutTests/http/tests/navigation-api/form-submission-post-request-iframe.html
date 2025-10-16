@@ -21,14 +21,12 @@ iframe.onload = async () => {
     let fr = iframe.getBoundingClientRect(), br = button.getBoundingClientRect();
     let x = Math.round(fr.left + br.left + br.width / 2), y = Math.round(fr.top + br.top + br.height / 2);
 
-    for (let i = 0; i < 10; ++i) {
-        if (testRunner.isIOSFamily && window.eventSender)
-            await UIHelper.activateAt(x, y);
-        else {
-            await eventSender?.asyncMouseMoveTo(x, y);
-            await eventSender?.asyncMouseDown();
-            await eventSender?.asyncMouseUp();
-        }
+    if (testRunner.isIOSFamily && window.eventSender)
+        await UIHelper.activateAt(x, y);
+    else {
+        await eventSender?.asyncMouseMoveTo(x, y);
+        await eventSender?.asyncMouseDown();
+        await eventSender?.asyncMouseUp();
     }
 };
 </script>

@@ -27,7 +27,6 @@
 #pragma once
 
 #include <WebCore/ActiveDOMObject.h>
-#include <WebCore/ContextDestructionObserverInlines.h>
 #include <WebCore/EventTarget.h>
 #include <WebCore/EventTargetInterfaces.h>
 #include <WebCore/MessagePortChannel.h>
@@ -90,7 +89,7 @@ public:
 
     // EventTarget.
     enum EventTargetInterfaceType eventTargetInterface() const final { return EventTargetInterfaceType::MessagePort; }
-    ScriptExecutionContext* scriptExecutionContext() const final { return ActiveDOMObject::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
     void refEventTarget() final { ref(); }
     void derefEventTarget() final { deref(); }
 

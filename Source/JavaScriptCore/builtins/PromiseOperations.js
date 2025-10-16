@@ -308,6 +308,7 @@ function createResolvingFunctions(promise)
 }
 
 @linkTimeConstant
+@neverInline
 function promiseReactionJobWithoutPromise(handler, argument, context)
 {
     "use strict";
@@ -423,6 +424,7 @@ function createResolvingFunctionsWithoutPromise(onFulfilled, onRejected, context
 }
 
 @linkTimeConstant
+@neverInline
 function promiseReactionJob(promiseOrCapability, handler, argument, contextOrState)
 {
     // Promise Reaction has four types.
@@ -452,7 +454,15 @@ function promiseReactionJob(promiseOrCapability, handler, argument, contextOrSta
 
     // Case (4).
     if (!promiseOrCapability) {
-        @promiseReactionJobWithoutPromise(handler, argument, contextOrState);
+        // inlined promiseReactionJobWithPromise
+        try {
+            if (contextOrState)
+                handler(argument, contextOrState);
+            else
+                handler(argument);
+        } catch {
+            // This is user-uncatchable promise. We just ignore the error here.
+        }
         return;
     }
 

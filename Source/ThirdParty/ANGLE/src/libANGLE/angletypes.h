@@ -9,6 +9,10 @@
 #ifndef LIBANGLE_ANGLETYPES_H_
 #define LIBANGLE_ANGLETYPES_H_
 
+#ifdef UNSAFE_BUFFERS_BUILD
+#    pragma allow_unsafe_buffers
+#endif
+
 #include <anglebase/sha1.h>
 #include "common/Color.h"
 #include "common/FixedVector.h"
@@ -1483,6 +1487,9 @@ class DestroyThenDelete
 
 template <typename ObjT, typename ContextT>
 using UniqueObjectPointer = std::unique_ptr<ObjT, DestroyThenDelete<ObjT, ContextT>>;
+
+using ShadingRateSet = PackedEnumBitSet<gl::ShadingRate, uint16_t>;
+using ShadingRateMap = PackedEnumMap<gl::ShadingRate, uint16_t>;
 
 }  // namespace angle
 

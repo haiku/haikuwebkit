@@ -271,7 +271,6 @@ void SliderThumbElement::setPositionFromPoint(const LayoutPoint& absolutePoint)
         position -= !isInlineFlipped ? thumbRenderer->marginLeft() : thumbRenderer->marginRight();
     }
 
-    inputRenderer = nullptr;
     thumbRenderer = nullptr;
     trackRenderer = nullptr;
 
@@ -298,8 +297,17 @@ void SliderThumbElement::setPositionFromPoint(const LayoutPoint& absolutePoint)
 
     // FIXME: This is no longer being set from renderer. Consider updating the method name.
     input->setValueFromRenderer(valueString);
-    if (CheckedPtr renderer = this->renderer())
+    if (CheckedPtr renderer = this->renderer()) {
+        // FIXME: The position of repaint rects is incorrect for non-horizontal
+        // block flipped writing modes during layout. Repaint beforehand to
+        // avoid this. The root cause is suspected to be related to
+        // https://webkit.org/b/70762
+        auto writingMode = renderer->writingMode();
+        if (writingMode.isBlockFlipped() && !writingMode.isHorizontal())
+            inputRenderer->repaint();
+
         renderer->setNeedsLayout();
+    }
 }
 
 void SliderThumbElement::startDragging()

@@ -33,6 +33,7 @@
 
 #include "MutationObserver.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "GCReachableRef.h"
 #include "HTMLSlotElement.h"

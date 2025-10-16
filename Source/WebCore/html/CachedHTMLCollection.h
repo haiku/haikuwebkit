@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/CollectionTraversal.h>
+#include <WebCore/Document.h>
 #include <WebCore/HTMLCollection.h>
 #include <WebCore/HTMLElement.h>
 #include <wtf/TZoneMalloc.h>

@@ -77,7 +77,7 @@ struct LineLayoutResult {
     Directionality directionality { };
 
     struct IsFirstLast {
-        bool isFirstFormattedLine { true };
+        IsFirstFormattedLine isFirstFormattedLine { IsFirstFormattedLine::Yes };
         bool isLastLineWithInlineContent { true };
     };
     IsFirstLast isFirstLast { };

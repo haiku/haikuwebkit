@@ -99,8 +99,8 @@ PASS gotten_imageData_float16.data.constructor is expected_imageData_float16.dat
 PASS gotten_imageData_float16.data.BYTES_PER_ELEMENT is expected_imageData_float16.data.BYTES_PER_ELEMENT
 PASS gotten_imageData_float16.data.length is expected_imageData_float16.data.length
 PASS gotten_imageData_float16.data.byteLength is expected_imageData_float16.data.byteLength
-PASS context.createImageData(1, 1, { storageFormat: "foo" }) threw exception TypeError: Type error.
-PASS context.getImageData(0, 0, 1, 1, { storageFormat: "foo" }) threw exception TypeError: Type error.
+PASS context.createImageData(1, 1, { pixelFormat: "foo" }) threw exception TypeError: Type error.
+PASS context.getImageData(0, 0, 1, 1, { pixelFormat: "foo" }) threw exception TypeError: Type error.
 PASS successfullyParsed is true
 
 TEST COMPLETE

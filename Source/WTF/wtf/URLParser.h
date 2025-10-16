@@ -30,8 +30,6 @@
 #include <wtf/Forward.h>
 #include <wtf/URL.h>
 
-struct UIDNA;
-
 namespace WTF {
 
 template<typename CharacterType> class CodePointIterator;

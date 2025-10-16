@@ -175,7 +175,8 @@ std::optional<LibraryCreationResult> createLibrary(id<MTLDevice> device, const S
 
     auto library = ShaderModule::createLibrary(device, msl, label, error, WGSL::DeviceState {
         .appleGPUFamily = shaderModule.device().appleGPUFamily(),
-        .shaderValidationEnabled = shaderModule.device().isShaderValidationEnabled()
+        .shaderValidationEnabled = shaderModule.device().isShaderValidationEnabled(),
+        .usesInvariant = entryPointInformation.usesInvariant
     });
     if (error && *error)
         return { };
@@ -266,6 +267,34 @@ static Vector<void (*)(int)>& existingSigabortHandlers()
     return handlers;
 }
 
+static String psoPreamble()
+{
+    return R"(
+    // Compile and run with:
+    //
+    //  clang++ -fobjc-arc -O3 psoRepro.mm -o repro -framework Metal -fsanitize=address -framework Cocoa -std=c++20 && AGC_ENABLE_STATUS_FILE=1 FS_CACHE_SIZE=0 MTL_MONOLITHIC_COMPILER=1 ./repro
+#import <Foundation/Foundation.h>
+#import <Metal/Metal.h>
+
+    static uint32_t computeAppleGPUFamily(id<MTLDevice> device)
+    {
+        if ([device supportsFamily:MTLGPUFamilyApple9])
+            return 9;
+        if ([device supportsFamily:MTLGPUFamilyApple8])
+            return 8;
+        if ([device supportsFamily:MTLGPUFamilyApple7])
+            return 7;
+        if ([device supportsFamily:MTLGPUFamilyApple6])
+            return 6;
+        if ([device supportsFamily:MTLGPUFamilyApple5])
+            return 5;
+        if ([device supportsFamily:MTLGPUFamilyApple4])
+            return 4;
+        return 0xFF;
+    }
+)"_s;
+}
+
 static void printPsoOnProgramExit(int sig)
 {
     if (psoReproStringBuilder().length())
@@ -329,14 +358,8 @@ void dumpMetalReproCaseComputePSO(String&& shaderSource, String&& functionName)
 
     auto& sb = psoReproStringBuilder();
     sb.clear();
+    sb.append(psoPreamble());
     /* NOLINT */ sb.append(R"(
-    //
-    // Compile with:
-    //     clang -framework Foundation -fsanitize=address -framework Metal psoRepro.mm -o repro && AGC_ENABLE_STATUS_FILE=1 FS_CACHE_SIZE=0 MTL_MONOLITHIC_COMPILER=1 ./repro
-    //
-#import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
-
     int main(int argc, const char * argv[])
     {
         @autoreleasepool {
@@ -349,13 +372,18 @@ void dumpMetalReproCaseComputePSO(String&& shaderSource, String&& functionName)
             return 1;
         }
 
+        MTLCompileOptions* options = [MTLCompileOptions new];
+        options.mathMode = MTLMathModeRelaxed;
+        options.mathFloatingPointFunctions = MTLMathFloatingPointFunctionsFast;
+        options.preprocessorMacros = @{ @"__wgslMetalAppleGPUFamily" : [NSString stringWithFormat:@"%u", computeAppleGPUFamily(device)] };
+
         // 2. Load the shader source.
         NSString *shaderSource = @R"(
     )"_s); /* NOLINT */
     sb.append(shaderSource);
     sb.append(")\";"_s);
     /* NOLINT */ sb.append(R"(
-    id<MTLLibrary> library = [device newLibraryWithSource:shaderSource options:nil error:&error];
+    id<MTLLibrary> library = [device newLibraryWithSource:shaderSource options:options error:&error];
     if (!library || error) {
         NSLog(@"Failed to create library");
         return 1;
@@ -391,27 +419,25 @@ void dumpMetalReproCaseComputePSO(String&& shaderSource, String&& functionName)
         printToFileForPsoRepro();
 }
 
-void dumpMetalReproCaseRenderPSO(String&& vertexShaderSource, String&& vertexFunctionName, String&& fragmentShaderSource, String&& fragmentFunctionName, MTLRenderPipelineDescriptor* descriptor, ShaderModule::VertexStageIn& shaderLocations, const Device& device)
+bool dumpMetalReproCaseRenderPSO(String&& vertexShaderSource, String&& vertexFunctionName, String&& fragmentShaderSource, String&& fragmentFunctionName, MTLRenderPipelineDescriptor* descriptor, ShaderModule::VertexStageIn& shaderLocations, const Device& device)
 {
     if (!enablePsoLogging())
-        return;
+        return false;
 
     bool printToFile = !registerPsoExitHandlers();
 
     const auto maxVertexBuffers = device.limits().maxVertexBuffers;
 
     auto& sb = psoReproStringBuilder();
+    sb.append(psoPreamble());
     /* NOLINT */ sb.append(R"(
-    // Compile and run with:
-    //
-    //  clang++ -fobjc-arc -O3 psoRepro.mm -o repro -framework Metal -fsanitize=address -framework Cocoa -std=c++20 && AGC_ENABLE_STATUS_FILE=1 FS_CACHE_SIZE=0 MTL_MONOLITHIC_COMPILER=1 ./repro
-#import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
-
     static id<MTLRenderPipelineState> makePso(id<MTLDevice> device)
     {
         MTLRenderPipelineDescriptor* mtlRenderPipelineDescriptor = [MTLRenderPipelineDescriptor new];
         MTLCompileOptions* options = [MTLCompileOptions new];
+        options.mathMode = MTLMathModeRelaxed;
+        options.mathFloatingPointFunctions = MTLMathFloatingPointFunctionsFast;
+        options.preprocessorMacros = @{ @"__wgslMetalAppleGPUFamily" : [NSString stringWithFormat:@"%u", computeAppleGPUFamily(device)] };
         const auto& mtlColorAttachment = mtlRenderPipelineDescriptor.colorAttachments[0];
 
         id<MTLFunction> functionVS = nil;
@@ -535,6 +561,7 @@ void dumpMetalReproCaseRenderPSO(String&& vertexShaderSource, String&& vertexFun
     if (printToFile)
         printToFileForPsoRepro();
 
+    return true;
 }
 
 void clearMetalPSORepro()

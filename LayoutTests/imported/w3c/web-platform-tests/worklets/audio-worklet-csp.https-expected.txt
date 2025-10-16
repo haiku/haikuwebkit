@@ -1,13 +1,13 @@
 CONSOLE MESSAGE: Refused to load https://127.0.0.1:9443/worklets/resources/empty-worklet-script-with-cors-header.js because it does not appear in the script-src directive of the Content Security Policy.
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
 CONSOLE MESSAGE: Refused to load https://127.0.0.1:9443/worklets/resources/import-empty-worklet-script-with-cors-header.js because it does not appear in the script-src directive of the Content Security Policy.
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
-Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/worklets/resources/empty-worklet-script-with-cors-header.js
 CONSOLE MESSAGE: [blocked] The page at https://localhost:9443/worklets/resources/addmodule-window.html requested insecure content from http://localhost:8800/worklets/resources/empty-worklet-script-with-cors-header.js. This content was blocked and must be served over HTTPS.
 
 CONSOLE MESSAGE: [blocked] The page at https://localhost:9443/worklets/resources/addmodule-window.html requested insecure content from http://localhost:8800/worklets/resources/empty-worklet-script-with-cors-header.js. This content was blocked and must be served over HTTPS.

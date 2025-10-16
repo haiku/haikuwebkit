@@ -65,6 +65,8 @@ bool hasAccNameAttribute(Element&);
 
 bool isNodeFocused(Node&);
 
+bool needsLayoutOrStyleRecalc(const Document&);
+
 bool isRenderHidden(const RenderStyle*);
 // Checks both CSS display properties, and CSS visibility properties.
 bool isRenderHidden(const RenderStyle&);

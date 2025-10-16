@@ -78,6 +78,7 @@
 #include "JITSubGenerator.h"
 #include "JITThunks.h"
 #include "JSArrayIterator.h"
+#include "JSAsyncFromSyncIterator.h"
 #include "JSAsyncFunction.h"
 #include "JSAsyncGenerator.h"
 #include "JSAsyncGeneratorFunction.h"
@@ -9392,6 +9393,9 @@ IGNORE_CLANG_WARNINGS_END
         case JSWrapForValidIteratorType:
             compileNewInternalFieldObjectImpl<JSWrapForValidIterator>(operationNewWrapForValidIterator);
             break;
+        case JSAsyncFromSyncIteratorType:
+            compileNewInternalFieldObjectImpl<JSAsyncFromSyncIterator>(operationNewAsyncFromSyncIterator);
+            break;
         case JSPromiseType:
             if (m_node->structure()->classInfoForCells() == JSInternalPromise::info())
                 compileNewInternalFieldObjectImpl<JSInternalPromise>(operationNewInternalPromise);
@@ -13829,7 +13833,7 @@ IGNORE_CLANG_WARNINGS_END
                     }
                 }
 
-                jit.storeWasmCalleeToCalleeCallFrame(wasmFunction->boxedWasmCalleeLoadLocation());
+                jit.storeWasmCalleeToCalleeCallFrame(wasmFunction->boxedCallee());
 
                 // FIXME: Currently we just do an indirect jump. But we should teach the Module
                 // how to repatch us:
@@ -15127,7 +15131,7 @@ IGNORE_CLANG_WARNINGS_END
         LValue hash = lowInt32(m_node->child3());
 
         // Get the JSCellButterfly first.
-        LValue mapStorage = m_out.loadPtr(map, m_heaps.JSSet_butterfly);
+        LValue mapStorage = m_out.loadPtr(map, m_heaps.JSSet_storage);
         m_out.branch(m_out.isNull(mapStorage), unsure(notPresentInTable), unsure(indexSetUp));
 
         // Compute the bucketCount = Capacity / LoadFactor and bucketIndex = hashTableStartIndex + (hash & bucketCount - 1).
@@ -18055,7 +18059,7 @@ IGNORE_CLANG_WARNINGS_END
         LBasicBlock lastNext = m_out.insertNewBlocksBefore(slowCase);
 
         LValue object = allocateObject<JSMap>(m_node->structure(), m_out.intPtrZero, slowCase);
-        m_out.storePtr(m_out.constIntPtr(0), object, m_heaps.JSMap_butterfly);
+        m_out.storePtr(m_out.constIntPtr(0), object, m_heaps.JSMap_storage);
         mutatorFence();
         ValueFromBlock fastResult = m_out.anchor(object);
         m_out.jump(continuation);
@@ -18076,7 +18080,7 @@ IGNORE_CLANG_WARNINGS_END
         LBasicBlock lastNext = m_out.insertNewBlocksBefore(slowCase);
 
         LValue object = allocateObject<JSSet>(m_node->structure(), m_out.intPtrZero, slowCase);
-        m_out.storePtr(m_out.constIntPtr(0), object, m_heaps.JSSet_butterfly);
+        m_out.storePtr(m_out.constIntPtr(0), object, m_heaps.JSSet_storage);
         mutatorFence();
         ValueFromBlock fastResult = m_out.anchor(object);
         m_out.jump(continuation);

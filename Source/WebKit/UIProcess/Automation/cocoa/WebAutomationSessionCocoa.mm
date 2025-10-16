@@ -62,7 +62,7 @@ std::optional<String> WebAutomationSession::platformGetBase64EncodedPNGData(Shar
     if (!bitmap)
         return std::nullopt;
 
-    return getBase64EncodedPNGData(bitmap->makeCGImage());
+    return getBase64EncodedPNGData(bitmap->createPlatformImage(DontCopyBackingStore));
 }
 
 std::optional<String> WebAutomationSession::platformGetBase64EncodedPNGData(const ViewSnapshot& snapshot)

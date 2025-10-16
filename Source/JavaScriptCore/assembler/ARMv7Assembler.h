@@ -1497,10 +1497,8 @@ public:
     }
     
 #if OS(LINUX)
-    template <RepatchingInfo repatch>
     static void revertJumpTo_movT3movtcmpT2(void* instructionStart, RegisterID left, RegisterID right, uintptr_t imm)
     {
-        static_assert(repatch->contains(RepatchingFlag::Flush));
         uint16_t* address = static_cast<uint16_t*>(instructionStart);
         ARMThumbImmediate lo16 = ARMThumbImmediate::makeUInt16(static_cast<uint16_t>(imm));
         ARMThumbImmediate hi16 = ARMThumbImmediate::makeUInt16(static_cast<uint16_t>(imm >> 16));
@@ -1511,18 +1509,16 @@ public:
             twoWordOp5i6Imm4Reg4EncodedImmSecond(right, hi16),
             static_cast<uint16_t>(static_cast<uint16_t>(OP_CMP_reg_T2) | static_cast<uint16_t>(left))
         };
-        performJITMemcpy<noFlush(repatch)>(address, instruction, sizeof(uint16_t) * 5);
+        performJITMemcpy<jitMemcpyRepatch>(address, instruction, sizeof(uint16_t) * 5);
         cacheFlush(address, sizeof(uint16_t) * 5);
     }
 #else
-    template <RepatchingInfo repatch>
     static void revertJumpTo_movT3(void* instructionStart, RegisterID rd, ARMThumbImmediate imm)
     {
         ASSERT(imm.isValid());
         ASSERT(!imm.isEncodedImm());
         ASSERT(!BadReg(rd));
-        static_assert(repatch->contains(RepatchingFlag::Flush));
-
+        
         uint16_t* address = static_cast<uint16_t*>(instructionStart);
         uint16_t instruction[] = {
             twoWordOp5i6Imm4Reg4EncodedImmFirst(OP_MOV_imm_T3, imm),
@@ -2434,7 +2430,7 @@ public:
     ALWAYS_INLINE static void fillNops(void* base, size_t size)
     {
         RELEASE_ASSERT(!(size % sizeof(int16_t)));
-        static_assert(!repatch->contains(RepatchingFlag::Flush));
+        static_assert(!(*repatch).contains(RepatchingFlag::Flush));
 
         char* ptr = static_cast<char*>(base);
         const size_t num32s = size / sizeof(int32_t);
@@ -2456,7 +2452,7 @@ public:
     template<RepatchingInfo repatch>
     ALWAYS_INLINE static void fillNearTailCall(void* from, void* to)
     {
-        static_assert(repatch->contains(RepatchingFlag::Flush));
+        static_assert((*repatch).contains(RepatchingFlag::Flush));
         uint16_t* ptr = reinterpret_cast<uint16_t*>(from) + 2;
         linkJumpT4<noFlush(repatch)>(ptr, ptr, to, BranchWithLink::No);
         cacheFlush(from, sizeof(uint16_t) * 2);
@@ -2670,7 +2666,7 @@ public:
         ASSERT(from.isSet());
         
         uint16_t* location = reinterpret_cast<uint16_t*>(reinterpret_cast<intptr_t>(code) + from.offset());
-        linkJumpAbsolute<jitMemcpyRepatch>(location, location, to);
+        linkJumpAbsolute(location, location, to);
     }
 
     static void linkTailCall(void* code, AssemblerLabel from, void* to)
@@ -2678,7 +2674,7 @@ public:
         ASSERT(from.isSet());
 
         uint16_t* location = reinterpret_cast<uint16_t*>(reinterpret_cast<intptr_t>(code) + from.offset());
-        linkBranch<jitMemcpyRepatch>(location, location, makeEven(to), BranchWithLink::No);
+        linkBranch(location, location, makeEven(to), BranchWithLink::No);
     }
 
     static void linkCall(void* code, AssemblerLabel from, void* to)
@@ -2686,52 +2682,49 @@ public:
         ASSERT(from.isSet());
 
         uint16_t* location = reinterpret_cast<uint16_t*>(reinterpret_cast<intptr_t>(code) + from.offset());
-        linkBranch<jitMemcpyRepatch>(location, location, makeEven(to), BranchWithLink::Yes);
+        linkBranch(location, location, makeEven(to), BranchWithLink::Yes);
     }
 
     static void linkPointer(void* code, AssemblerLabel where, void* value)
     {
-        setPointer<jitMemcpyRepatchFlush>(reinterpret_cast<char*>(code) + where.offset(), value);
+        setPointer<jitMemcpyRepatch>(reinterpret_cast<char*>(code) + where.offset(), value);
     }
 
     // The static relink and replace methods can use can use |from| for both
     // the write and executable address for call and jump patching
     // as they're modifying existing (linked) code, so the address being
     // provided is correct for relative address computation.
-    template <RepatchingInfo repatch>
     static void relinkJump(void* from, void* to)
     {
         ASSERT(!(reinterpret_cast<intptr_t>(from) & 1));
         ASSERT(!(reinterpret_cast<intptr_t>(to) & 1));
-        static_assert(repatch->contains(RepatchingFlag::Flush));
 
-        linkJumpAbsolute<noFlush(repatch)>(reinterpret_cast<uint16_t*>(from), reinterpret_cast<uint16_t*>(from), to);
+        linkJumpAbsolute(reinterpret_cast<uint16_t*>(from), reinterpret_cast<uint16_t*>(from), to);
+
         cacheFlush(reinterpret_cast<uint16_t*>(from) - 5, 5 * sizeof(uint16_t));
     }
 
-    template <RepatchingInfo repatch>
     static void relinkCall(void* from, void* to)
     {
         ASSERT(isEven(from));
+
         uint16_t* location = reinterpret_cast<uint16_t*>(from);
         if (isBL(location - 2)) {
-            linkBranch<noFlush(repatch)>(location, location, makeEven(to), BranchWithLink::Yes);
-            if constexpr (repatch->contains(RepatchingFlag::Flush))
-                cacheFlush(location - 2, 2 * sizeof(uint16_t));
+            linkBranch(location, location, makeEven(to), BranchWithLink::Yes);
+            cacheFlush(location - 2, 2 * sizeof(uint16_t));
             return;
         }
 
-        setPointer<repatch>(location - 1, to);
+        setPointer<jitMemcpyRepatchFlush>(location - 1, to);
     }
 
-    template <RepatchingInfo repatch>
     static void relinkTailCall(void* from, void* to)
     {
         ASSERT(isEven(from));
+
         uint16_t* location = reinterpret_cast<uint16_t*>(from);
-        linkBranch<noFlush(repatch)>(location, location, to, BranchWithLink::No);
-        if constexpr (repatch->contains(RepatchingFlag::Flush))
-            cacheFlush(location - 2, 2 * sizeof(uint16_t));
+        linkBranch(location, location, to, BranchWithLink::No);
+        cacheFlush(location - 2, 2 * sizeof(uint16_t));
     }
 
 #if ENABLE(JUMP_ISLANDS)
@@ -2766,7 +2759,7 @@ public:
     {
         ASSERT(!(reinterpret_cast<intptr_t>(where) & 1));
         
-        setPointer<jitMemcpyRepatchAtomicFlush>(where, value);
+        setPointer<jitMemcpyRepatchFlush>(where, value);
     }
 
     static void* readPointer(void* where)
@@ -2782,25 +2775,23 @@ public:
 #if OS(LINUX)
         if (canBeJumpT4(reinterpret_cast<uint16_t*>(instructionStart), to)) {
             uint16_t* ptr = reinterpret_cast<uint16_t*>(instructionStart) + 2;
-            linkJumpT4<jitMemcpyRepatch>(ptr, ptr, to, BranchWithLink::No);
+            linkJumpT4(ptr, ptr, to, BranchWithLink::No);
             cacheFlush(ptr - 2, sizeof(uint16_t) * 2);
         } else {
             uint16_t* ptr = reinterpret_cast<uint16_t*>(instructionStart) + 5;
-            linkBX<jitMemcpyRepatch>(ptr, ptr, to);
+            linkBX(ptr, ptr, to);
             cacheFlush(ptr - 5, sizeof(uint16_t) * 5);
         }
 #else
         uint16_t* ptr = reinterpret_cast<uint16_t*>(instructionStart) + 2;
-        linkJumpT4<jitMemcpyRepatch>(ptr, ptr, to, BranchWithLink::No);
+        linkJumpT4(ptr, ptr, to, BranchWithLink::No);
         cacheFlush(ptr - 2, sizeof(uint16_t) * 2);
 #endif
     }
 
-    template<RepatchingInfo repatch>
     static void replaceWithNops(void* instructionStart, size_t memoryToFillWithNopsInBytes)
     {
-        static_assert(repatch->contains(RepatchingFlag::Flush));
-        fillNops<noFlush(repatch)>(instructionStart, memoryToFillWithNopsInBytes);
+        fillNops<jitMemcpyRepatch>(instructionStart, memoryToFillWithNopsInBytes);
         cacheFlush(instructionStart, memoryToFillWithNopsInBytes);
     }
 
@@ -2954,7 +2945,7 @@ private:
         instructions[3] = twoWordOp5i6Imm4Reg4EncodedImmSecond((location[-1] >> 8) & 0xf, hi16);
 
         performJITMemcpy<noFlush(repatch)>(location - 4, instructions, 4 * sizeof(uint16_t));
-        if constexpr (repatch->contains(RepatchingFlag::Flush))
+        if constexpr ((*repatch).contains(RepatchingFlag::Flush))
             cacheFlush(location - 4, 4 * sizeof(uint16_t));
     }
     
@@ -2975,18 +2966,16 @@ private:
         return static_cast<int32_t>(result);
     }
 
-    template<RepatchingInfo repatch>
     static void setUInt7ForLoad(void* code, ARMThumbImmediate imm)
     {
         // Requires us to have planted a LDR_imm_T1
         ASSERT(imm.isValid());
         ASSERT(imm.isUInt7());
-        static_assert(repatch->contains(RepatchingFlag::Flush));
         uint16_t* location = reinterpret_cast<uint16_t*>(code);
         uint16_t instruction;
         instruction = location[0] & ~((static_cast<uint16_t>(0x7f) >> 2) << 6);
         instruction |= (imm.getUInt7() >> 2) << 6;
-        performJITMemcpy<noFlush(repatch)>(location, &instruction, sizeof(uint16_t));
+        performJITMemcpy<jitMemcpyRepatch>(location, &instruction, sizeof(uint16_t));
         cacheFlush(location, sizeof(uint16_t));
     }
 
@@ -3082,7 +3071,7 @@ private:
         return ((relative << 7) >> 7) == relative;
     }
 
-    template <RepatchingInfo repatch>
+    template <RepatchingInfo repatch = jitMemcpyRepatch>
     static void linkJumpT1(Condition cond, uint16_t* writeTarget, const uint16_t* instruction, void* target)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(        
@@ -3102,7 +3091,7 @@ private:
         machineCodeCopy<repatch>(writeTarget - 1, &newInstruction, sizeof(uint16_t));
     }
 
-    template <RepatchingInfo repatch>
+    template <RepatchingInfo repatch = jitMemcpyRepatch>
     static void linkJumpT2(uint16_t* writeTarget, const uint16_t* instruction, void* target)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(        
@@ -3122,7 +3111,7 @@ private:
         machineCodeCopy<repatch>(writeTarget - 1, &newInstruction, sizeof(uint16_t));
     }
     
-    template <RepatchingInfo repatch>
+    template <RepatchingInfo repatch = jitMemcpyRepatch>
     static void linkJumpT3(Condition cond, uint16_t* writeTarget, const uint16_t* instruction, void* target)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(
@@ -3140,7 +3129,7 @@ private:
         machineCodeCopy<repatch>(writeTarget - 2, instructions, 2 * sizeof(uint16_t));
     }
     
-    template <RepatchingInfo repatch>
+    template <RepatchingInfo repatch = jitMemcpyRepatch>
     static void linkJumpT4(uint16_t* writeTarget, const uint16_t* instruction, void* target, BranchWithLink link)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(        
@@ -3161,7 +3150,7 @@ private:
         machineCodeCopy<repatch>(writeTarget - 2, instructions, 2 * sizeof(uint16_t));
     }
 
-    template <RepatchingInfo repatch>
+    template <RepatchingInfo repatch = jitMemcpyRepatch>
     static void linkConditionalJumpT4(Condition cond, uint16_t* writeTarget, const uint16_t* instruction, void* target)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(        
@@ -3173,7 +3162,7 @@ private:
         linkJumpT4<repatch>(writeTarget, instruction, target, BranchWithLink::No);
     }
 
-    template <RepatchingInfo repatch>
+    template <RepatchingInfo repatch = jitMemcpyRepatch>
     static void linkBX(uint16_t* writeTarget, const uint16_t* instruction, void* target)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(
@@ -3194,7 +3183,7 @@ private:
         machineCodeCopy<repatch>(writeTarget - 5, instructions, 5 * sizeof(uint16_t));
     }
 
-    template <RepatchingInfo repatch>
+    template <RepatchingInfo repatch = jitMemcpyRepatch>
     static void linkConditionalBX(Condition cond, uint16_t* writeTarget, const uint16_t* instruction, void* target)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(        
@@ -3206,7 +3195,6 @@ private:
         machineCodeCopy<repatch>(writeTarget - 6, &newInstruction, sizeof(uint16_t));
     }
 
-    template <RepatchingInfo repatch>
     static void linkJumpAbsolute(uint16_t* writeTarget, const uint16_t* instruction, void* target)
     {
         // FIMXE: this should be up in the MacroAssembler layer. :-(
@@ -3226,8 +3214,8 @@ private:
             instructions[0] = OP_NOP_T1;
             instructions[1] = OP_NOP_T2a;
             instructions[2] = OP_NOP_T2b;
-            performJITMemcpy<repatch>(writeTarget - 5, instructions, 3 * sizeof(uint16_t));
-            linkJumpT4<repatch>(writeTarget, instruction, target, BranchWithLink::No);
+            performJITMemcpy<jitMemcpyRepatch>(writeTarget - 5, instructions, 3 * sizeof(uint16_t));
+            linkJumpT4(writeTarget, instruction, target, BranchWithLink::No);
         } else {
             const uint16_t JUMP_TEMPORARY_REGISTER = ARMRegisters::ip;
             ARMThumbImmediate lo16 = ARMThumbImmediate::makeUInt16(static_cast<uint16_t>(reinterpret_cast<uint32_t>(target) + 1));
@@ -3239,11 +3227,10 @@ private:
             instructions[2] = twoWordOp5i6Imm4Reg4EncodedImmFirst(OP_MOVT, hi16);
             instructions[3] = twoWordOp5i6Imm4Reg4EncodedImmSecond(JUMP_TEMPORARY_REGISTER, hi16);
             instructions[4] = OP_BX | (JUMP_TEMPORARY_REGISTER << 3);
-            performJITMemcpy<repatch>(writeTarget - 5, instructions, 5 * sizeof(uint16_t));
+            performJITMemcpy<jitMemcpyRepatch>(writeTarget - 5, instructions, 5 * sizeof(uint16_t));
         }
     }
 
-    template <RepatchingInfo repatch>
     static void linkBranch(uint16_t* from, const uint16_t* fromInstruction, void* to, BranchWithLink link)
     {
         ASSERT(isEven(fromInstruction));
@@ -3260,7 +3247,7 @@ private:
 #endif
         RELEASE_ASSERT(isInt<25>(offset));
 
-        linkJumpT4<repatch>(from, fromInstruction, to, link);
+        linkJumpT4(from, fromInstruction, to, link);
     }
 
     static uint16_t twoWordOp5i6Imm4Reg4EncodedImmFirst(uint16_t op, ARMThumbImmediate imm)

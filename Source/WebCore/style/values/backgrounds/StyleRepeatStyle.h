@@ -26,6 +26,7 @@
 #pragma once
 
 #include "RenderStyleConstants.h"
+#include "StyleValueTypes.h"
 
 namespace WebCore {
 namespace Style {

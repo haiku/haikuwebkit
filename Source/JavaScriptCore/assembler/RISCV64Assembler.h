@@ -1638,7 +1638,6 @@ public:
         cacheFlush(location, sizeof(uint32_t) * 2);
     }
 
-    template <RepatchingInfo repatch>
     static void relinkCall(void* from, void* to)
     {
         uint32_t* location = static_cast<uint32_t*>(from);
@@ -1646,7 +1645,6 @@ public:
         cacheFlush(location, sizeof(uint32_t) * 2);
     }
 
-    template <RepatchingInfo repatch>
     static void relinkTailCall(void* from, void* to)
     {
         relinkJump(from, to);
@@ -1678,12 +1676,9 @@ public:
         cacheFlush(from, sizeof(uint32_t) * 2);
     }
 
-    template<RepatchingInfo repatch>
     static void replaceWithNops(void* from, size_t memoryToFillWithNopsInBytes)
     {
-        static_assert(repatch->contains(RepatchingFlag::Flush));
-        static_assert(repatch->contains(RepatchingFlag::Atomic));
-        fillNops<repatch>(from, memoryToFillWithNopsInBytes);
+        fillNops(from, memoryToFillWithNopsInBytes);
         cacheFlush(from, memoryToFillWithNopsInBytes);
     }
 

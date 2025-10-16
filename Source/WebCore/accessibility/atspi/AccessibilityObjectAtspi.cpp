@@ -24,8 +24,9 @@
 #include "AXCoreObject.h"
 #include "AXObjectCache.h"
 #include "AccessibilityAtspiInterfaces.h"
+#include "AccessibilityObjectInlines.h"
+#include "AccessibilityNodeObject.h"
 #include "AccessibilityRootAtspi.h"
-#include "AccessibilityTableCell.h"
 #include "ElementInlines.h"
 #include "HTMLSpanElement.h"
 #include "RenderAncestorIterator.h"
@@ -885,7 +886,7 @@ HashMap<String, String> AccessibilityObjectAtspi::attributes() const
     if (std::optional columnIndex = m_coreObject->axColumnIndex())
         map.add("colindex"_s, String::number(*columnIndex));
 
-    if (auto* cell = dynamicDowncast<AccessibilityTableCell>(m_coreObject.get())) {
+    if (auto* cell = dynamicDowncast<AccessibilityNodeObject>(m_coreObject.get()); cell && cell->isTableCell()) {
         int rowSpan = cell->axRowSpan();
         if (rowSpan != -1)
             map.add("rowspan"_s, String::number(rowSpan));

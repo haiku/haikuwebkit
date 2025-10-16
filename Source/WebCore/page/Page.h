@@ -41,6 +41,7 @@
 #include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <WebCore/ScriptTrackingPrivacyCategory.h>
 #include <WebCore/ScrollTypes.h>
+#include <WebCore/SimpleRange.h>
 #include <WebCore/Supplementable.h>
 #include <WebCore/Timer.h>
 #include <WebCore/UserInterfaceLayoutDirection.h>
@@ -230,7 +231,6 @@ struct ClientOrigin;
 struct FixedContainerEdges;
 struct NavigationAPIMethodTracker;
 struct ProcessSyncData;
-struct SimpleRange;
 struct SpatialBackdropSource;
 struct SystemPreviewInfo;
 struct TextRecognitionResult;
@@ -374,6 +374,7 @@ public:
     WEBCORE_EXPORT static Ref<Page> create(PageConfiguration&&);
     WEBCORE_EXPORT ~Page();
 
+    static void updateControlTintsForAllPages();
     WEBCORE_EXPORT static void updateStyleForAllPagesAfterGlobalChangeInEnvironment();
     WEBCORE_EXPORT static void clearPreviousItemFromAllPages(BackForwardItemIdentifier);
 
@@ -554,7 +555,11 @@ public:
     void setTabKeyCyclesThroughElements(bool b) { m_tabKeyCyclesThroughElements = b; }
     bool tabKeyCyclesThroughElements() const { return m_tabKeyCyclesThroughElements; }
 
-    WEBCORE_EXPORT std::optional<FrameIdentifier> findString(const String&, FindOptions, DidWrap* = nullptr);
+    struct FindStringData {
+        std::optional<FrameIdentifier> frameIdentifier;
+        std::optional<SimpleRange> range;
+    };
+    WEBCORE_EXPORT FindStringData findString(const String&, FindOptions, DidWrap* = nullptr);
     WEBCORE_EXPORT uint32_t replaceRangesWithText(const Vector<SimpleRange>& rangesToReplace, const String& replacementText, bool selectionOnly);
     WEBCORE_EXPORT uint32_t replaceSelectionWithText(const String& replacementText);
 
@@ -1445,6 +1450,8 @@ private:
     void clearSampledPageTopColor();
 
     bool hasLocalMainFrame();
+
+    void updateControlTints();
 
     struct Internals;
     const UniqueRef<Internals> m_internals;

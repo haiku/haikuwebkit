@@ -28,6 +28,7 @@
 
 #include "CacheQueryOptions.h"
 #include "CachedResourceRequestInitiatorTypes.h"
+#include "ContextDestructionObserverInlines.h"
 #include "EventLoop.h"
 #include "FetchResponse.h"
 #include "HTTPParsers.h"

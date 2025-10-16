@@ -63,6 +63,8 @@ public:
 
     Color controlTintColor(const RenderStyle&, OptionSet<StyleColorOptions>) const;
 
+    void adjustRepaintRect(const RenderBox&, FloatRect&) override;
+
 #if ENABLE(FORM_CONTROL_REFRESH)
     Color controlTintColorWithContrast(const RenderStyle&, OptionSet<StyleColorOptions>) const;
     static std::optional<RoundedShape> shapeForInteractionRegion(const RenderBox&, const FloatRect&, ShouldComputePath);

@@ -180,6 +180,7 @@ protected:
 
 #if PLATFORM(COCOA)
     void increaseFileDescriptorLimit();
+    static const WTF::String& increaseContrastPreferenceKey();
 #endif
 
 private:

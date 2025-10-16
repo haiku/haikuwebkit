@@ -72,6 +72,13 @@ bool StringView::startsWith(StringView prefix) const
     return ::WTF::startsWith(*this, prefix);
 }
 
+bool StringView::hasInfixStartingAt(StringView prefix, unsigned start) const
+{
+    if (start > length())
+        return false;
+    return ::WTF::startsWith(substring(start), prefix);
+}
+
 bool StringView::startsWithIgnoringASCIICase(StringView prefix) const
 {
     return ::WTF::startsWithIgnoringASCIICase(*this, prefix);
@@ -85,6 +92,14 @@ bool StringView::endsWith(char16_t character) const
 bool StringView::endsWith(StringView suffix) const
 {
     return ::WTF::endsWith(*this, suffix);
+}
+
+bool StringView::hasInfixEndingAt(StringView suffix, unsigned end) const
+{
+    if (end < suffix.length())
+        return false;
+    size_t start = end - suffix.length();
+    return hasInfixStartingAt(suffix, start);
 }
 
 bool StringView::endsWithIgnoringASCIICase(StringView suffix) const

@@ -29,6 +29,7 @@
 #include "ClipboardImageReader.h"
 #include "ClipboardItem.h"
 #include "CommonAtomStrings.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "Editor.h"
 #include "EventTargetInterfaces.h"

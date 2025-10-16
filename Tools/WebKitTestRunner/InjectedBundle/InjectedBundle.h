@@ -60,6 +60,7 @@ public:
 
     InjectedBundlePage* page() const;
     WKBundlePageRef pageRef() const;
+    uint64_t testIdentifier() const { return m_testIdentifier; }
     size_t pageCount() const { return m_pages.size(); }
 
     void dumpBackForwardListsForAllPages(StringBuilder&);
@@ -187,6 +188,7 @@ private:
     bool m_dumpPixels { false };
     bool m_pixelResultIsPending { false };
     bool m_accessibilityIsolatedTreeMode { false };
+    uint64_t m_testIdentifier { 0 };
 
     WTF::Seconds m_timeout;
 

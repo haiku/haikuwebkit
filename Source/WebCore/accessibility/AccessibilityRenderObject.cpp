@@ -1034,6 +1034,43 @@ AccessibilityObject* AccessibilityRenderObject::titleUIElement() const
 {
     if (m_renderer && isFieldset())
         return axObjectCache()->getOrCreate(dynamicDowncast<RenderBlock>(*m_renderer)->findFieldsetLegend(RenderBlock::FieldsetIncludeFloatingOrOutOfFlow));
+
+    if (is<RenderTableCell>(m_renderer.get())) {
+        // Try to find if the first cell in this row is a <th>. If it is,
+        // then it can act as the title ui element. (This is only in the
+        // case when the table is not appearing as an AXTable.)
+        if (isExposedTableCell())
+            return nullptr;
+
+        // Table cells that are th cannot have title ui elements, since by definition
+        // they are title ui elements
+        if (WebCore::elementName(checkedNode().get()) == ElementName::HTML_th)
+            return nullptr;
+
+        CheckedRef renderCell = downcast<RenderTableCell>(*m_renderer);
+
+        // If this cell is in the first column, there is no need to continue.
+        int col = renderCell->col();
+        if (!col)
+            return nullptr;
+
+        CheckedPtr section = renderCell->section();
+        if (!section)
+            return nullptr;
+
+        int row = renderCell->rowIndex();
+        CheckedPtr headerCell = section->primaryCellAt(row, 0);
+        if (!headerCell || headerCell.get() == renderCell.ptr())
+            return nullptr;
+
+        RefPtr element = headerCell->element();
+        if (!element || element->elementName() != ElementName::HTML_th)
+            return nullptr;
+
+        CheckedPtr cache = axObjectCache();
+        return cache ? cache->getOrCreate(*headerCell) : nullptr;
+    }
+
     return downcast<AccessibilityObject>(AccessibilityNodeObject::titleUIElement());
 }
 
@@ -1060,6 +1097,13 @@ bool AccessibilityRenderObject::isAllowedChildOfTree() const
             return false;
     }
     return true;
+}
+
+AccessibilityObject* AccessibilityRenderObject::containingTree() const
+{
+    return Accessibility::findAncestor<AccessibilityObject>(*this, false, [] (const auto& ancestor) {
+        return ancestor.isTree();
+    });
 }
 
 static AccessibilityObjectInclusion objectInclusionFromAltText(const String& altText)
@@ -1094,6 +1138,9 @@ bool AccessibilityRenderObject::computeIsIgnored() const
     if (!m_renderer)
         return AccessibilityNodeObject::computeIsIgnored();
 
+    if (isTree())
+        return isIgnoredByDefault();
+
     // Check first if any of the common reasons cause this element to be ignored.
     // Then process other use cases that need to be applied to all the various roles
     // that AccessibilityRenderObjects take on.
@@ -1105,6 +1152,19 @@ bool AccessibilityRenderObject::computeIsIgnored() const
 
     if (role() == AccessibilityRole::Ignored)
         return true;
+
+    // Needs to happen before the presentational role check, since we want to expose table cells if they are in an exposable table (even if within a presentational role).
+    if (isTableCell()) {
+        // Ignore anonymous table cells as long as they're not in a table (ie. when display:table is used).
+        RefPtr parentTable = this->parentTable();
+        RefPtr parentElement = parentTable ? parentTable->element() : nullptr;
+        bool inTable = parentElement && (parentElement->elementName() == ElementName::HTML_table || hasTableRole(*parentElement));
+        if (!inTable && !element())
+            return true;
+
+        if (isExposedTableCell())
+            return false;
+    }
 
     if (ignoredFromPresentationalRole())
         return true;
@@ -1390,6 +1450,9 @@ bool AccessibilityRenderObject::computeIsIgnored() const
     RefPtr controlObject = controlForLabelElement();
     if (controlObject && controlObject->isCheckboxOrRadio() && !controlObject->titleUIElement())
         return true;
+
+    if (isExposedTableRow())
+        return isRenderHidden() || ignoredFromPresentationalRole();
 
     // By default, objects should be ignored so that the AX hierarchy is not
     // filled with unnecessary items.
@@ -2267,6 +2330,10 @@ bool AccessibilityRenderObject::renderObjectIsObservable(RenderObject& renderer)
 
 AccessibilityObject* AccessibilityRenderObject::observableObject() const
 {
+    // This allows the table to be the one who sends notifications about tables.
+    if (RefPtr parentTable = parentTableIfExposedTableRow())
+        return dynamicDowncast<AccessibilityObject>(parentTable.get());
+
     // Find the object going up the parent chain that is used in accessibility to monitor certain notifications.
     for (RenderObject* renderer = this->renderer(); renderer && renderer->node(); renderer = renderer->parent()) {
         if (renderObjectIsObservable(*renderer)) {
@@ -2280,6 +2347,9 @@ AccessibilityObject* AccessibilityRenderObject::observableObject() const
 
 bool AccessibilityRenderObject::shouldIgnoreAttributeRole() const
 {
+    if (hasTreeItemRole())
+        return hasRareData() && !rareData()->isTreeItemValid();
+
     return m_ariaRole == AccessibilityRole::Document && hasContentEditableAttributeSet();
 }
 
@@ -2291,6 +2361,12 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
             return determineListRoleWithCleanChildren();
         return isDescriptionList() ? AccessibilityRole::DescriptionList : AccessibilityRole::List;
     }
+
+    if (hasTreeItemRole())
+        ensureRareData().setIsTreeItemValid(containingTree());
+
+    if (hasTreeRole())
+        return isValidTree() ? AccessibilityRole::Tree : AccessibilityRole::Generic;
 
     if (!m_renderer)
         return AccessibilityNodeObject::determineAccessibilityRole();
@@ -2315,6 +2391,9 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
 
     if (isExposableTable())
         return AccessibilityRole::Table;
+
+    if (isExposedTableRow())
+        return AccessibilityRole::Row;
 
     RefPtr node = m_renderer->node();
     if (m_renderer->isRenderListItem()) {
@@ -2380,13 +2459,20 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
         return AccessibilityRole::Ignored;
 #endif // USE(ATSPI)
 
-    if (is<RenderTableCell>(m_renderer.get()))
-        return AXTableHelpers::layoutTableCellRole;
     if (m_renderer->isRenderTableSection())
         return AccessibilityRole::Ignored;
 
     auto treatStyleFormatGroupAsInline = is<RenderInline>(*m_renderer) ? TreatStyleFormatGroupAsInline::Yes : TreatStyleFormatGroupAsInline::No;
     auto roleFromNode = determineAccessibilityRoleFromNode(treatStyleFormatGroupAsInline);
+
+    // Table cells (by default) return a TextGroup role from determineAccessibilityRoleFromNode.
+    // Before returning that role, check if the table cell is within a valid table, so that the a cell role can be returned.
+    if (isTableCell()) {
+        RefPtr parentTable = this->parentTable();
+        if (parentTable && parentTable->isExposableTable())
+            return parentTable->hasGridRole() ? AccessibilityRole::GridCell : AccessibilityRole::Cell;
+    }
+
     if (roleFromNode != AccessibilityRole::Unknown)
         return roleFromNode;
 
@@ -2881,7 +2967,19 @@ void AccessibilityRenderObject::addChildren()
 #if PLATFORM(MAC)
     updateAttachmentViewParents();
 #endif
-    updateOwnedChildren();
+    updateOwnedChildrenIfNecessary();
+
+    // Handle aria-colindex for all table rows (whether using owned objects or not).
+    if (isExposedTableRow()) {
+        if (std::optional colIndex = axColumnIndex()) {
+            unsigned index = 0;
+            for (const auto& child : unignoredChildren()) {
+                if (RefPtr rowChild = dynamicDowncast<AccessibilityNodeObject>(child); rowChild && rowChild->isTableCell())
+                    rowChild->setAXColIndexFromRow(*colIndex + index);
+                index++;
+            }
+        }
+    }
 
     updateRoleAfterChildrenCreation();
 

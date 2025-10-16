@@ -284,6 +284,33 @@ std::optional<IOSurface::Locker<Mode>> IOSurface::lock()
     return IOSurface::Locker<Mode>::adopt(m_surface);
 }
 
+constexpr IOSurface::Format convertToIOSurfaceFormat(PixelFormat format)
+{
+    switch (format) {
+    case PixelFormat::RGBA8:
+        return IOSurface::Format::RGBA;
+    case PixelFormat::BGRX8:
+        return IOSurface::Format::BGRX;
+    case PixelFormat::BGRA8:
+        return IOSurface::Format::BGRA;
+#if ENABLE(PIXEL_FORMAT_RGB10)
+    case PixelFormat::RGB10:
+        return IOSurface::Format::RGB10;
+#endif
+#if ENABLE(PIXEL_FORMAT_RGB10A8)
+    case PixelFormat::RGB10A8:
+        return IOSurface::Format::RGB10A8;
+#endif
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+    case PixelFormat::RGBA16F:
+        return IOSurface::Format::RGBA16F;
+#endif
+    default:
+        RELEASE_ASSERT_NOT_REACHED();
+        return IOSurface::Format::BGRA;
+    }
+}
+
 WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, WebCore::IOSurface::Format);
 
 } // namespace WebCore

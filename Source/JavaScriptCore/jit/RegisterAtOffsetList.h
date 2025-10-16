@@ -68,6 +68,10 @@ public:
 
     static const RegisterAtOffsetList& llintBaselineCalleeSaveRegisters(); // Registers and Offsets saved and used by the LLInt.
     static const RegisterAtOffsetList& dfgCalleeSaveRegisters(); // Registers and Offsets saved and used by DFG.
+#if ENABLE(WEBASSEMBLY)
+    static const RegisterAtOffsetList& wasmPinnedRegisters();
+    static const RegisterAtOffsetList& ipintCalleeSaveRegisters(); // Registers and Offsets saved and used by IPInt.
+#endif
 
 private:
     FixedVector<RegisterAtOffset> m_registers;

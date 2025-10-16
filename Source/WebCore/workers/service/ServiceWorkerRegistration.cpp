@@ -29,6 +29,7 @@
 #include "CookieChangeSubscription.h"
 #include "CookieStoreGetOptions.h"
 #include "CookieStoreManager.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "Event.h"
 #include "EventLoop.h"

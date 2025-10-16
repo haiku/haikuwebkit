@@ -157,7 +157,7 @@ private:
     CommandEncoder(Device&);
 
     bool validatePopDebugGroup() const;
-#if !ENABLE(WEBGPU_SWIFT)
+
     NSString* validateFinishError() const;
     NSString* errorValidatingCopyBufferToBuffer(const Buffer& source, uint64_t sourceOffset, const Buffer& destination, uint64_t destinationOffset, uint64_t size);
     NSString* errorValidatingComputePassDescriptor(const WGPUComputePassDescriptor&) const;
@@ -166,7 +166,7 @@ private:
     NSString* errorValidatingCopyBufferToTexture(const WGPUImageCopyBuffer&, const WGPUImageCopyTexture&, const WGPUExtent3D&) const;
     NSString* errorValidatingCopyTextureToBuffer(const WGPUImageCopyTexture&, const WGPUImageCopyBuffer&, const WGPUExtent3D&) const;
     NSString* errorValidatingCopyTextureToTexture(const WGPUImageCopyTexture& source, const WGPUImageCopyTexture& destination, const WGPUExtent3D& copySize) const;
-#endif
+
 private PUBLIC_IN_WEBGPU_SWIFT:
     void discardCommandBuffer();
 private:

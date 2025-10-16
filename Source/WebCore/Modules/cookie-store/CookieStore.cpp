@@ -26,6 +26,7 @@
 #include "config.h"
 #include "CookieStore.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Cookie.h"
 #include "CookieChangeEvent.h"
 #include "CookieChangeEventInit.h"

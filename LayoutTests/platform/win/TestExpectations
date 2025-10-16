@@ -381,6 +381,7 @@ fast/canvas/offscreen-enabled.html [ Skip ]
 fast/canvas/offscreen-giant-transfer-to-imagebitmap.html [ Skip ]
 fast/canvas/offscreen-giant.html [ Skip ]
 fast/canvas/offscreen-nested-worker-serialization.html [ Skip ]
+fast/canvas/offscreen-no-script-context-crash.html [ Skip ]
 fast/canvas/offscreen-scaling.html [ Skip ]
 fast/canvas/offscreen-toggle-display.html [ Skip ]
 fast/canvas/offscreen-visibility-change.html [ Skip ]
@@ -815,6 +816,7 @@ http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-wit
 http/tests/resourceLoadStatistics/website-data-removal-for-site-without-user-interaction-js-cookie-checking.html [ Failure ]
 http/tests/resourceLoadStatistics/website-data-removal-for-site-without-user-interaction.html [ Failure ]
 
+http/tests/resourceLoadStatistics/only-accept-first-party-cookies-with-third-party-cookie-blocking.html [ Skip ] 
 http/tests/resourceLoadStatistics/only-partitioned-third-party-cookies.https.html [ Skip ]
 http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect.https.html [ Skip ]
 http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect-fetch.https.html [ Skip ]
@@ -1120,6 +1122,7 @@ compositing/text-on-scaled-surface.html [ ImageOnlyFailure ]
 compositing/clipping/cached-cliprect-with-compositing-boundary.html [ ImageOnlyFailure ]
 compositing/filters/opacity-change-on-filtered-paints-into-ancestor.html [ ImageOnlyFailure ]
 compositing/transforms/perspective-with-scrolling.html [ ImageOnlyFailure ]
+compositing/transforms/transformed-replaced-with-shadow-children.html [ ImageOnlyFailure ] # Might just need Windows-specific expectation, minor 0.01% difference on rounded corners
 
 # ImageOnlyFailure only on local PC. Depends on the graphis driver?
 compositing/overlap-blending/reflection-opacity-huge.html [ ImageOnlyFailure Pass ]
@@ -1305,7 +1308,7 @@ webkit.org/b/151759 fast/dom/Window/property-access-on-cached-window-after-frame
 
 fast/dom/HTMLInputElement/change-type-in-input-event-listener.html [ Skip ]
 
-webkit.org/b/227753 fast/dom/Window/post-message-large-array-buffer-should-not-crash.html [ Pass Failure ]
+webkit.org/b/227753 fast/dom/Window/post-message-large-array-buffer-should-not-crash.html [ Skip ] # Pass Failure
 
 fast/editing/recursive-reapply-edit-command-crash.html [ Pass Failure ]
 
@@ -1864,6 +1867,7 @@ streams/readable-stream-byob-request-worker.html [ Skip ]
 imported/w3c/web-platform-tests/cookiestore [ Skip ]
 imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies.tentative.https.html [ Skip ]
 http/tests/cookies/cookie-store-set-secure.https.html [ Skip ]
+http/tests/navigation/ping-attribute/anchor-cookie.html [ Skip ]
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie-preexisting-cookie.html [ Skip ]
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie.html [ Skip ]
 http/tests/resourceLoadStatistics/only-partitioned-cookies-after-redirect.html [ Skip ]
@@ -4547,3 +4551,19 @@ imported/w3c/web-platform-tests/focus/iframe-focus-with-different-site-intermedi
 # Now that partial fonts are working, two characters previously rendered as a square are now showing correctly, which makes the test fail. 
 # Probably the test should be updated.
 fast/text/text-combine-placement.html [ Failure ]
+
+fast/css/vertical-align-rem-on-root.html [ Skip ] # [ Timeout Pass ]
+
+css3/filters/drop-shadow-current-color.html [ Failure ] # Two missing right boxes
+
+# There's some extra properties on our event handlers here, which might just be Windows-specific. Need to verify before adding win-specific expectation.
+imported/w3c/web-platform-tests/trusted-types/TrustedTypePolicyFactory-getAttributeType-event-handler-content-attributes.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/trusted-types/set-event-handlers-content-attributes.tentative.html [ Failure ]
+
+# Expected localhost URLs but got web-platform.test URLs
+imported/w3c/web-platform-tests/css/css-mixins/function-attr.html [ Failure ]
+
+# Flaky crash due to running out of commit space due to 4GB wasm memory
+webgl/2.0.y/conformance2/wasm/teximage2d-2gb-in-4gb-wasm-memory.html [ Skip ]
+# Flaky crash due to running out of commit space
+workers/btoa-oom.html [ Skip ]

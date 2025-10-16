@@ -28,6 +28,7 @@
 
 #include "ClientOrigin.h"
 #include "ContentSecurityPolicy.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "EventNames.h"

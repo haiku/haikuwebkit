@@ -696,7 +696,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationCompileFTLOSRExit, void*, (CallFrame*
 
     compileStub(vm, exitID, jitCode, exit, codeBlock);
 
-    MacroAssembler::repatchJump<jitMemcpyRepatchFlush>(
+    MacroAssembler::repatchJump(
         exit.codeLocationForRepatch(codeBlock), CodeLocationLabel<OSRExitPtrTag>(exit.m_code.code()));
     
     return exit.m_code.code().taggedPtr();

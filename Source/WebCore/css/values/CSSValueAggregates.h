@@ -723,6 +723,37 @@ template<typename T, size_t N> inline constexpr auto SerializationSeparator<Spac
 // Convenience for representing a two element array.
 template<typename T> using SpaceSeparatedPair = SpaceSeparatedArray<T, 2>;
 
+// Wraps a pair of elements of a single type, semantically marking them as serializing as "space separated" and "minimally serializing".
+template<typename T> struct MinimallySerializingSpaceSeparatedPair {
+    using Array = SpaceSeparatedPair<T>;
+    using value_type = T;
+
+    constexpr MinimallySerializingSpaceSeparatedPair(T p1, T p2)
+        : value { WTFMove(p1), WTFMove(p2) }
+    {
+    }
+
+    constexpr MinimallySerializingSpaceSeparatedPair(SpaceSeparatedPair<T>&& array)
+        : value { WTFMove(array) }
+    {
+    }
+
+    constexpr bool operator==(const MinimallySerializingSpaceSeparatedPair<T>&) const = default;
+
+    constexpr const T& first() const { return get<0>(value); }
+    constexpr const T& second() const { return get<1>(value); }
+
+    SpaceSeparatedPair<T> value;
+};
+
+template<size_t I, typename T> decltype(auto) get(const MinimallySerializingSpaceSeparatedPair<T>& size)
+{
+    return get<I>(size.value);
+}
+
+template<typename T> inline constexpr auto TreatAsTupleLike<MinimallySerializingSpaceSeparatedPair<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<MinimallySerializingSpaceSeparatedPair<T>> = SerializationSeparatorType::Space;
+
 // Wraps a fixed size list of elements of a single type, semantically marking them as serializing as "comma separated".
 template<typename T, size_t N> struct CommaSeparatedArray {
     using Array = std::array<T, N>;
@@ -1218,6 +1249,12 @@ template<typename T, size_t N> TextStream& operator<<(TextStream& ts, const Comm
     return ts;
 }
 
+template<typename T> TextStream& operator<<(TextStream& ts, const MinimallySerializingSpaceSeparatedPair<T>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<MinimallySerializingSpaceSeparatedPair<T>>);
+    return ts;
+}
+
 template<typename T> WTF::TextStream& operator<<(WTF::TextStream& ts, const SpaceSeparatedPoint<T>& value)
 {
     logForCSSOnTupleLike(ts, value, SerializationSeparatorString<SpaceSeparatedPoint<T>>);
@@ -1289,6 +1326,12 @@ public:
     using type = tuple_element_t<I, tuple<Ts...>>;
 };
 
+template<typename T> class tuple_size<WebCore::MinimallySerializingSpaceSeparatedPair<T>> : public std::integral_constant<size_t, 2> { };
+template<size_t I, typename T> class tuple_element<I, WebCore::MinimallySerializingSpaceSeparatedPair<T>> {
+public:
+    using type = T;
+};
+
 template<typename T> class tuple_size<WebCore::SpaceSeparatedPoint<T>> : public std::integral_constant<size_t, 2> { };
 template<size_t I, typename T> class tuple_element<I, WebCore::SpaceSeparatedPoint<T>> {
 public:
@@ -1358,6 +1401,9 @@ struct supports_text_stream_insertion<WebCore::SpaceSeparatedRefCountedFixedVect
 
 template<typename T>
 struct supports_text_stream_insertion<WebCore::CommaSeparatedRefCountedFixedVector<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparatedPair<T>> : supports_text_stream_insertion<T> { };
 
 template<typename T>
 struct supports_text_stream_insertion<WebCore::SpaceSeparatedPoint<T>> : supports_text_stream_insertion<T> { };

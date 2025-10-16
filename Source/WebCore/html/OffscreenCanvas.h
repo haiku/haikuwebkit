@@ -157,8 +157,8 @@ private:
 
     bool isOffscreenCanvas() const final { return true; }
 
-    ScriptExecutionContext* scriptExecutionContext() const final { return ContextDestructionObserver::scriptExecutionContext(); }
-    ScriptExecutionContext* canvasBaseScriptExecutionContext() const final { return ContextDestructionObserver::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
+    ScriptExecutionContext* canvasBaseScriptExecutionContext() const final;
 
     enum EventTargetInterfaceType eventTargetInterface() const final { return EventTargetInterfaceType::OffscreenCanvas; }
     void refEventTarget() final { RefCounted::ref(); }

@@ -139,7 +139,9 @@ static Vector<WGPUFeatureName> baseFeatures(id<MTLDevice> device, const Hardware
     features.append(WGPUFeatureName_RG11B10UfloatRenderable);
     features.append(WGPUFeatureName_ShaderF16);
     features.append(WGPUFeatureName_BGRA8UnormStorage);
+#if CPU(ARM64)
     features.append(WGPUFeatureName_TextureFormatsTier1);
+#endif
 
 #if !PLATFORM(WATCHOS)
     if (device.supports32BitFloatFiltering)
@@ -163,6 +165,16 @@ bool isShaderValidationEnabled(id<MTLDevice> device)
             WTFLogAlways("WebGPU: Using DEBUG Metal device: retaining references"); // NOLINT
     });
     return result;
+}
+
+bool isWebGPUSwiftEnabled()
+{
+    static std::once_flag onceFlag;
+    static bool isWebGPUSwiftEnabled;
+    std::call_once(onceFlag, [&] {
+        isWebGPUSwiftEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"WebKitWebGPUSwiftEnabled"];
+    });
+    return isWebGPUSwiftEnabled;
 }
 
 static HardwareCapabilities apple4(id<MTLDevice> device)

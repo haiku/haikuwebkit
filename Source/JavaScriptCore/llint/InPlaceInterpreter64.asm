@@ -24,31 +24,27 @@
 # Callee save
 
 macro saveIPIntRegisters()
-    # NOTE: We intentionally don't restore memoryBase and boundsCheckingSize here. These are saved
+    # NOTE: We intentionally don't restore pinned wasm registers here. These are saved
     # and restored when entering Wasm by the JSToWasm wrapper and changes to them are meant
     # to be observable within the same Wasm module.
     subp IPIntCalleeSaveSpaceStackAligned, sp
     if ARM64 or ARM64E
-        storepairq MC, PC, -0x10[cfr]
-        storeq wasmInstance, -0x18[cfr]
+        storepairq MC, PC, -2 * SlotSize[cfr]
     elsif X86_64 or RISCV64
-        storep PC, -0x8[cfr]
-        storep MC, -0x10[cfr]
-        storep wasmInstance, -0x18[cfr]
+        storep PC, -1 * SlotSize[cfr]
+        storep MC, -2 * SlotSize[cfr]
     end
 end
 
 macro restoreIPIntRegisters()
-    # NOTE: We intentionally don't restore memoryBase and boundsCheckingSize here. These are saved
+    # NOTE: We intentionally don't restore pinned wasm registers here. These are saved
     # and restored when entering Wasm by the JSToWasm wrapper and changes to them are meant
     # to be observable within the same Wasm module.
     if ARM64 or ARM64E
-        loadpairq -0x10[cfr], MC, PC
-        loadq -0x18[cfr], wasmInstance
+        loadpairq -2 * SlotSize[cfr], MC, PC
     elsif X86_64 or RISCV64
-        loadp -0x8[cfr], PC
-        loadp -0x10[cfr], MC
-        loadp -0x18[cfr], wasmInstance
+        loadp -1 * SlotSize[cfr], PC
+        loadp -2 * SlotSize[cfr], MC
     end
     addp IPIntCalleeSaveSpaceStackAligned, sp
 end
@@ -113,11 +109,11 @@ macro popQuad(reg)
 end
 
 macro pushVec(reg)
-    push reg
+    pushv reg
 end
 
 macro popVec(reg)
-    pop reg
+    popv reg
 end
 
 # Typed push/pop to make code pretty
@@ -3259,7 +3255,7 @@ reservedOpcode(0xff)
     #####################
 
 ipintOp(_struct_new, macro()
-    loadp IPInt::StructNewMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::StructNewMetadata::type[MC], a1  # type
     move sp, a2
     operationCallMayThrow(macro() cCall3(_ipint_extern_struct_new) end)
     loadh IPInt::StructNewMetadata::params[MC], t1  # number of parameters popped
@@ -3273,7 +3269,7 @@ ipintOp(_struct_new, macro()
 end)
 
 ipintOp(_struct_new_default, macro()
-    loadp IPInt::StructNewDefaultMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::StructNewDefaultMetadata::type[MC], a1  # type
     operationCallMayThrow(macro() cCall2(_ipint_extern_struct_new_default) end)
     pushQuad(r0)
     loadb IPInt::StructNewDefaultMetadata::length[MC], t0
@@ -3332,7 +3328,7 @@ ipintOp(_struct_set, macro()
 end)
 
 ipintOp(_array_new, macro()
-    loadi IPInt::ArrayNewMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::ArrayNewMetadata::type[MC], a1  # type
     popInt32(a3, t0)  # length
     popQuad(a2)  # default value
     operationCallMayThrow(macro() cCall4(_ipint_extern_array_new) end)
@@ -3346,7 +3342,7 @@ ipintOp(_array_new, macro()
 end)
 
 ipintOp(_array_new_default, macro()
-    loadi IPInt::ArrayNewMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::ArrayNewMetadata::type[MC], a1  # type
     popInt32(a2, t0)  # length
     operationCallMayThrow(macro() cCall3(_ipint_extern_array_new_default) end)
 
@@ -3359,7 +3355,7 @@ ipintOp(_array_new_default, macro()
 end)
 
 ipintOp(_array_new_fixed, macro()
-    loadi IPInt::ArrayNewFixedMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::ArrayNewFixedMetadata::type[MC], a1  # type
     loadi IPInt::ArrayNewFixedMetadata::arraySize[MC], a2  # array length
     move sp, a3  # arguments
     operationCallMayThrow(macro() cCall4(_ipint_extern_array_new_fixed) end)
@@ -3406,7 +3402,7 @@ ipintOp(_array_new_elem, macro()
 end)
 
 ipintOp(_array_get, macro()
-    loadi IPInt::ArrayGetSetMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::ArrayGetSetMetadata::type[MC], a1  # type
     popInt32(a3, a0)  # index
     popQuad(a2)  # array
     operationCallMayThrow(macro() cCall4(_ipint_extern_array_get) end)
@@ -3420,7 +3416,7 @@ ipintOp(_array_get, macro()
 end)
 
 ipintOp(_array_get_s, macro()
-    loadi IPInt::ArrayGetSetMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::ArrayGetSetMetadata::type[MC], a1  # type
     popInt32(a3, a0)  # index
     popQuad(a2)  # array
     operationCallMayThrow(macro() cCall4(_ipint_extern_array_get_s) end)
@@ -3434,7 +3430,7 @@ ipintOp(_array_get_s, macro()
 end)
 
 ipintOp(_array_get_u, macro()
-    loadi IPInt::ArrayGetSetMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::ArrayGetSetMetadata::type[MC], a1  # type
     popInt32(a3, a0)  # index
     popQuad(a2)  # array
     operationCallMayThrow(macro() cCall4(_ipint_extern_array_get) end)
@@ -3448,11 +3444,11 @@ ipintOp(_array_get_u, macro()
 end)
 
 ipintOp(_array_set, macro()
-    loadi IPInt::ArrayGetSetMetadata::typeIndex[MC], a1  # type index
+    loadi IPInt::ArrayGetSetMetadata::type[MC], a1  # type
     move sp, a2  # stack pointer with all the arguments
     operationCallMayThrow(macro() cCall3(_ipint_extern_array_set) end)
 
-    addq StackValueSize*3, sp
+    addq StackValueSize * 3, sp
 
     loadb IPInt::ArrayGetSetMetadata::length[MC], t0
     advancePCByReg(t0)
@@ -3476,7 +3472,7 @@ ipintOp(_array_fill, macro()
     move sp, a1
     operationCallMayThrow(macro() cCall2(_ipint_extern_array_fill) end)
 
-    addp 4*StackValueSize, sp
+    addp StackValueSize * 4, sp
 
     loadb IPInt::ArrayFillMetadata::length[MC], t0
     advancePCByReg(t0)
@@ -3488,7 +3484,7 @@ ipintOp(_array_copy, macro()
     move sp, a1
     operationCallMayThrow(macro() cCall2(_ipint_extern_array_copy) end)
 
-    addp 5*StackValueSize, sp
+    addp StackValueSize * 5, sp
 
     loadb IPInt::ArrayFillMetadata::length[MC], t0
     advancePCByReg(t0)
@@ -3501,7 +3497,7 @@ ipintOp(_array_init_data, macro()
     move sp, a2
     operationCallMayThrow(macro() cCall3(_ipint_extern_array_init_data) end)
 
-    addp 4*StackValueSize, sp
+    addp StackValueSize * 4, sp
 
     loadb IPInt::ArrayInitDataMetadata::length[MC], t0
     advancePCByReg(t0)
@@ -3514,7 +3510,7 @@ ipintOp(_array_init_elem, macro()
     move sp, a2
     operationCallMayThrow(macro() cCall3(_ipint_extern_array_init_elem) end)
 
-    addp 4*StackValueSize, sp
+    addp StackValueSize * 4, sp
 
     loadb IPInt::ArrayInitElemMetadata::length[MC], t0
     advancePCByReg(t0)
@@ -3523,7 +3519,7 @@ ipintOp(_array_init_elem, macro()
 end)
 
 ipintOp(_ref_test, macro()
-    loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
+    loadi IPInt::RefTestCastMetadata::toHeapType[MC], a1
     move 0, a2  # allowNull
     popQuad(a3)
     operationCall(macro() cCall3(_ipint_extern_ref_test) end)
@@ -3537,7 +3533,7 @@ ipintOp(_ref_test, macro()
 end)
 
 ipintOp(_ref_test_nullable, macro()
-    loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
+    loadi IPInt::RefTestCastMetadata::toHeapType[MC], a1
     move 1, a2  # allowNull
     popQuad(a3)
     operationCall(macro() cCall3(_ipint_extern_ref_test) end)
@@ -3551,7 +3547,7 @@ ipintOp(_ref_test_nullable, macro()
 end)
 
 ipintOp(_ref_cast, macro()
-    loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
+    loadi IPInt::RefTestCastMetadata::toHeapType[MC], a1
     move 0, a2  # allowNull
     popQuad(a3)
     operationCallMayThrow(macro() cCall3(_ipint_extern_ref_cast) end)
@@ -3565,7 +3561,7 @@ ipintOp(_ref_cast, macro()
 end)
 
 ipintOp(_ref_cast_nullable, macro()
-    loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
+    loadi IPInt::RefTestCastMetadata::toHeapType[MC], a1
     move 1, a2  # allowNull
     popQuad(a3)
     operationCallMayThrow(macro() cCall3(_ipint_extern_ref_cast) end)
@@ -3580,7 +3576,7 @@ end)
 
 ipintOp(_br_on_cast, macro()
     validateOpcodeConfig(a1)
-    loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
+    loadi IPInt::RefTestCastMetadata::toHeapType[MC], a1
     # fb 18 FLAGS
     loadb 2[PC], a2
     rshifti 1, a2  # bit 1 = null2
@@ -3598,7 +3594,7 @@ end)
 
 ipintOp(_br_on_cast_fail, macro()
     validateOpcodeConfig(a1)
-    loadi IPInt::RefTestCastMetadata::typeIndex[MC], a1
+    loadi IPInt::RefTestCastMetadata::toHeapType[MC], a1
     loadb 2[PC], a2
     # fb 19 FLAGS
     rshifti 1, a2  # bit 1 = null2
@@ -4024,7 +4020,7 @@ ipintOp(_table_grow, macro()
     move sp, a1
     move MC, a2 # IPInt::tableGrowMetadata
     operationCall(macro() cCall3(_ipint_extern_table_grow) end)
-    addp 2*StackValueSize, sp
+    addp StackValueSize * 2, sp
     pushQuad(r0)
     loadb IPInt::TableGrowMetadata::instructionLength[MC], t0
     advancePCByReg(t0)
@@ -4059,26 +4055,192 @@ end)
     ## SIMD Instructions ##
     #######################
 
+const ImmLaneIdxOffset = 2 # Offset in bytecode
+const ImmLaneIdx16Mask = 0xf
+const ImmLaneIdx8Mask = 0x7
+const ImmLaneIdx4Mask = 0x3
+const ImmLaneIdx2Mask = 0x1
+
 # 0xFD 0x00 - 0xFD 0x0B: memory
 
-unimplementedInstruction(_simd_v128_load_mem)
-unimplementedInstruction(_simd_v128_load_8x8s_mem)
-unimplementedInstruction(_simd_v128_load_8x8u_mem)
-unimplementedInstruction(_simd_v128_load_16x4s_mem)
-unimplementedInstruction(_simd_v128_load_16x4u_mem)
-unimplementedInstruction(_simd_v128_load_32x2s_mem)
-unimplementedInstruction(_simd_v128_load_32x2u_mem)
-unimplementedInstruction(_simd_v128_load8_splat_mem)
-unimplementedInstruction(_simd_v128_load16_splat_mem)
-unimplementedInstruction(_simd_v128_load32_splat_mem)
-unimplementedInstruction(_simd_v128_load64_splat_mem)
-unimplementedInstruction(_simd_v128_store_mem)
+# Wrapper for SIMD load/store operations. Places linear address in t0 for memOp()
+macro simdMemoryOp(accessSize, memOp)
+    popMemoryIndex(t0, t2)
+    loadi IPInt::Const32Metadata::value[MC], t2
+    addp t2, t0
+    ipintCheckMemoryBound(t0, t2, accessSize)
+
+    memOp()
+
+    loadb IPInt::Const32Metadata::instructionLength[MC], t0
+    advancePCByReg(t0)
+    advanceMC(constexpr (sizeof(IPInt::Const32Metadata)))
+    nextIPIntInstruction()
+end
+
+ipintOp(_simd_v128_load_mem, macro()
+    # v128.load
+    simdMemoryOp(16, macro()
+        loadv [memoryBase, t0], v0
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load_8x8s_mem, macro()
+    # v128.load8x8_s - load 8 8-bit values, sign-extend each to i16
+    simdMemoryOp(8, macro()
+        loadd [memoryBase, t0], ft0
+        if ARM64 or ARM64E
+            # offlineasm ft0 = ARM v0
+            # offlineasm v0 = ARM v16
+            emit "sxtl v16.8h, v0.8b"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load_8x8u_mem, macro()
+    # v128.load8x8_u - load 8 8-bit values, zero-extend each to i16
+    simdMemoryOp(8, macro()
+        loadd [memoryBase, t0], ft0
+        if ARM64 or ARM64E
+            # offlineasm ft0 = ARM v0
+            # offlineasm v0 = ARM v16
+            emit "uxtl v16.8h, v0.8b"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load_16x4s_mem, macro()
+    # v128.load16x4_s - load 4 16-bit values, sign-extend each to i32
+    simdMemoryOp(8, macro()
+        loadd [memoryBase, t0], ft0
+        if ARM64 or ARM64E
+            # offlineasm ft0 = ARM v0
+            # offlineasm v0 = ARM v16
+            emit "sxtl v16.4s, v0.4h"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load_16x4u_mem, macro()
+    # v128.load16x4_u - load 4 16-bit values, zero-extend each to i32
+    simdMemoryOp(8, macro()
+        loadd [memoryBase, t0], ft0
+        if ARM64 or ARM64E
+            # offlineasm ft0 = ARM v0
+            # offlineasm v0 = ARM v16
+            emit "uxtl v16.4s, v0.4h"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load_32x2s_mem, macro()
+    # v128.load32x2_s - load 2 32-bit values, sign-extend each to i64
+    simdMemoryOp(8, macro()
+        loadd [memoryBase, t0], ft0
+        if ARM64 or ARM64E
+            # offlineasm ft0 = ARM v0
+            # offlineasm v0 = ARM v16
+            emit "sxtl v16.2d, v0.2s"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load_32x2u_mem, macro()
+    # v128.load32x2_u - load 2 32-bit values, zero-extend each to i64
+    simdMemoryOp(8, macro()
+        loadd [memoryBase, t0], ft0
+        if ARM64 or ARM64E
+            # offlineasm ft0 = ARM v0
+            # offlineasm v0 = ARM v16
+            emit "uxtl v16.2d, v0.2s"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load8_splat_mem, macro()
+    # v128.load8_splat - load 1 8-bit value and splat to all 16 lanes
+    simdMemoryOp(1, macro()
+        loadb [memoryBase, t0], t1
+        if ARM64 or ARM64E
+            emit "dup v16.16b, w1"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load16_splat_mem, macro()
+    # v128.load16_splat - load 1 16-bit value and splat to all 8 lanes
+    simdMemoryOp(2, macro()
+        loadh [memoryBase, t0], t1
+        if ARM64 or ARM64E
+            emit "dup v16.8h, w1"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load32_splat_mem, macro()
+    # v128.load32_splat - load 1 32-bit value and splat to all 4 lanes
+    simdMemoryOp(4, macro()
+        loadi [memoryBase, t0], t1
+        if ARM64 or ARM64E
+            emit "dup v16.4s, w1"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_load64_splat_mem, macro()
+    # v128.load64_splat - load 1 64-bit value and splat to all 2 lanes
+    simdMemoryOp(8, macro()
+        loadq [memoryBase, t0], t1
+        if ARM64 or ARM64E
+            emit "dup v16.2d, x1"
+        else
+            break # Not implemented
+        end
+        pushVec(v0)
+    end)
+end)
+
+ipintOp(_simd_v128_store_mem, macro()
+    # v128.store
+    popVec(v0)
+    simdMemoryOp(16, macro()
+        storev v0, [memoryBase, t0]
+    end)
+end)
 
 # 0xFD 0x0C: v128.const
 ipintOp(_simd_v128_const, macro()
     # v128.const
     loadv 2[PC], v0
-    pushv v0
+    pushVec(v0)
     advancePC(18)
     nextIPIntInstruction()
 end)
@@ -4094,99 +4256,720 @@ unimplementedInstruction(_simd_f32x4_splat)
 unimplementedInstruction(_simd_f64x2_splat)
 
 # 0xFD 0x15 - 0xFD 0x22: extract and replace lanes
-unimplementedInstruction(_simd_i8x16_extract_lane_s)
-unimplementedInstruction(_simd_i8x16_extract_lane_u)
+ipintOp(_simd_i8x16_extract_lane_s, macro()
+    # i8x16.extract_lane_s (lane)
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx16Mask, t0
+    loadbsi [sp, t0], t0
+    addp V128ISize, sp
+    pushInt32(t0)
+    advancePC(3)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_extract_lane_u, macro()
+    # i8x16.extract_lane_u (lane)
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx16Mask, t0
+    loadb [sp, t0], t0
+    addp V128ISize, sp
+    pushInt32(t0)
+    advancePC(3)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_i8x16_replace_lane)
-unimplementedInstruction(_simd_i16x8_extract_lane_s)
-unimplementedInstruction(_simd_i16x8_extract_lane_u)
+
+ipintOp(_simd_i16x8_extract_lane_s, macro()
+    # i16x8.extract_lane_s (lane)
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx8Mask, t0
+    loadhsi [sp, t0, 2], t0
+    addp V128ISize, sp
+    pushInt32(t0)
+    advancePC(3)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_extract_lane_u, macro()
+    # i16x8.extract_lane_u (lane)
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx8Mask, t0
+    loadh [sp, t0, 2], t0
+    addp V128ISize, sp
+    pushInt32(t0)
+    advancePC(3)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_i16x8_replace_lane)
 
 ipintOp(_simd_i32x4_extract_lane, macro()
     # i32x4.extract_lane (lane)
-    loadb 2[PC], t0  # lane index
-    andi 0x3, t0
-    popv v0
-    if ARM64 or ARM64E
-        pcrtoaddr _simd_i32x4_extract_lane_0, t1
-        leap [t1, t0, 8], t0
-        emit "br x0"
-        _simd_i32x4_extract_lane_0:
-        umovi t0, v0_i, 0
-        jmp _simd_i32x4_extract_lane_end
-        umovi t0, v0_i, 1
-        jmp _simd_i32x4_extract_lane_end
-        umovi t0, v0_i, 2
-        jmp _simd_i32x4_extract_lane_end
-        umovi t0, v0_i, 3
-        jmp _simd_i32x4_extract_lane_end
-    elsif X86_64
-        # FIXME: implement SIMD instructions for x86 and finish this implementation!
-    end
-_simd_i32x4_extract_lane_end:
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx4Mask, t0
+    loadi [sp, t0, 4], t0
+    addp V128ISize, sp
     pushInt32(t0)
     advancePC(3)
     nextIPIntInstruction()
 end)
 
 unimplementedInstruction(_simd_i32x4_replace_lane)
-unimplementedInstruction(_simd_i64x2_extract_lane)
+
+ipintOp(_simd_i64x2_extract_lane, macro()
+    # i64x2.extract_lane (lane)
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx2Mask, t0
+    loadq [sp, t0, 8], t0
+    addp V128ISize, sp
+    pushInt64(t0)
+    advancePC(3)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_i64x2_replace_lane)
-unimplementedInstruction(_simd_f32x4_extract_lane)
+
+ipintOp(_simd_f32x4_extract_lane, macro()
+    # f32x4.extract_lane (lane)
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx4Mask, t0
+    loadf [sp, t0, 4], ft0
+    addp V128ISize, sp
+    pushFloat32(ft0)
+    advancePC(3)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_f32x4_replace_lane)
-unimplementedInstruction(_simd_f64x2_extract_lane)
+
+ipintOp(_simd_f64x2_extract_lane, macro()
+    # f64x2.extract_lane (lane)
+    loadb ImmLaneIdxOffset[PC], t0
+    andi ImmLaneIdx2Mask, t0
+    loadd [sp, t0, 8], ft0
+    addp V128ISize, sp
+    pushFloat64(ft0)
+    advancePC(3)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_f64x2_replace_lane)
 
 # 0xFD 0x23 - 0xFD 0x2C: i8x16 operations
-unimplementedInstruction(_simd_i8x16_eq)
-unimplementedInstruction(_simd_i8x16_ne)
-unimplementedInstruction(_simd_i8x16_lt_s)
-unimplementedInstruction(_simd_i8x16_lt_u)
-unimplementedInstruction(_simd_i8x16_gt_s)
-unimplementedInstruction(_simd_i8x16_gt_u)
-unimplementedInstruction(_simd_i8x16_le_s)
-unimplementedInstruction(_simd_i8x16_le_u)
-unimplementedInstruction(_simd_i8x16_ge_s)
-unimplementedInstruction(_simd_i8x16_ge_u)
+ipintOp(_simd_i8x16_eq, macro()
+    # i8x16.eq - compare 16 8-bit integers for equality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmeq v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_ne, macro()
+    # i8x16.ne - compare 16 8-bit integers for inequality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # Compare 16 bytes for equality, then invert the result
+        emit "cmeq v16.16b, v16.16b, v17.16b"
+        emit "mvn v16.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_lt_s, macro()
+    # i8x16.lt_s - compare 16 8-bit signed integers for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmgt v17, v16 gives us v1 > v0, which is equivalent to v0 < v1
+        emit "cmgt v16.16b, v17.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_lt_u, macro()
+    # i8x16.lt_u - compare 16 8-bit unsigned integers for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmhi v17, v16 gives us v1 > v0 (unsigned), which is equivalent to v0 < v1
+        emit "cmhi v16.16b, v17.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_gt_s, macro()
+    # i8x16.gt_s - compare 16 8-bit signed integers for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmgt v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_gt_u, macro()
+    # i8x16.gt_u - compare 16 8-bit unsigned integers for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmhi v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_le_s, macro()
+    # i8x16.le_s - compare 16 8-bit signed integers for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmge v17, v16 gives us v1 >= v0, which is equivalent to v0 <= v1
+        emit "cmge v16.16b, v17.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_le_u, macro()
+    # i8x16.le_u - compare 16 8-bit unsigned integers for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmhs v17, v16 gives us v1 >= v0 (unsigned), which is equivalent to v0 <= v1
+        emit "cmhs v16.16b, v17.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_ge_s, macro()
+    # i8x16.ge_s - compare 16 8-bit signed integers for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmge v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_ge_u, macro()
+    # i8x16.ge_u - compare 16 8-bit unsigned integers for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmhs v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
 
 # 0xFD 0x2D - 0xFD 0x36: i8x16 operations
-unimplementedInstruction(_simd_i16x8_eq)
-unimplementedInstruction(_simd_i16x8_ne)
-unimplementedInstruction(_simd_i16x8_lt_s)
-unimplementedInstruction(_simd_i16x8_lt_u)
-unimplementedInstruction(_simd_i16x8_gt_s)
-unimplementedInstruction(_simd_i16x8_gt_u)
-unimplementedInstruction(_simd_i16x8_le_s)
-unimplementedInstruction(_simd_i16x8_le_u)
-unimplementedInstruction(_simd_i16x8_ge_s)
-unimplementedInstruction(_simd_i16x8_ge_u)
+ipintOp(_simd_i16x8_eq, macro()
+    # i16x8.eq - compare 8 16-bit integers for equality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmeq v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_ne, macro()
+    # i16x8.ne - compare 8 16-bit integers for inequality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmeq v16.8h, v16.8h, v17.8h"
+        emit "mvn v16.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_lt_s, macro()
+    # i16x8.lt_s - compare 8 16-bit signed integers for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmgt v17, v16 gives us v1 > v0, which is equivalent to v0 < v1
+        emit "cmgt v16.8h, v17.8h, v16.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_lt_u, macro()
+    # i16x8.lt_u - compare 8 16-bit unsigned integers for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmhi v17, v16 gives us v1 > v0 (unsigned), which is equivalent to v0 < v1
+        emit "cmhi v16.8h, v17.8h, v16.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_gt_s, macro()
+    # i16x8.gt_s - compare 8 16-bit signed integers for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmgt v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_gt_u, macro()
+    # i16x8.gt_u - compare 8 16-bit unsigned integers for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmhi v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_le_s, macro()
+    # i16x8.le_s - compare 8 16-bit signed integers for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmge v17, v16 gives us v1 >= v0, which is equivalent to v0 <= v1
+        emit "cmge v16.8h, v17.8h, v16.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_le_u, macro()
+    # i16x8.le_u - compare 8 16-bit unsigned integers for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmhs v17, v16 gives us v1 >= v0 (unsigned), which is equivalent to v0 <= v1
+        emit "cmhs v16.8h, v17.8h, v16.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_ge_s, macro()
+    # i16x8.ge_s - compare 8 16-bit signed integers for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmge v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_ge_u, macro()
+    # i16x8.ge_u - compare 8 16-bit unsigned integers for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmhs v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
 
 # 0xFD 0x37 - 0xFD 0x40: i32x4 operations
-unimplementedInstruction(_simd_i32x4_eq)
-unimplementedInstruction(_simd_i32x4_ne)
-unimplementedInstruction(_simd_i32x4_lt_s)
-unimplementedInstruction(_simd_i32x4_lt_u)
-unimplementedInstruction(_simd_i32x4_gt_s)
-unimplementedInstruction(_simd_i32x4_gt_u)
-unimplementedInstruction(_simd_i32x4_le_s)
-unimplementedInstruction(_simd_i32x4_le_u)
-unimplementedInstruction(_simd_i32x4_ge_s)
-unimplementedInstruction(_simd_i32x4_ge_u)
+ipintOp(_simd_i32x4_eq, macro()
+    # i32x4.eq - compare 4 32-bit integers for equality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmeq v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_ne, macro()
+    # i32x4.ne - compare 4 32-bit integers for inequality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmeq v16.4s, v16.4s, v17.4s"
+        emit "mvn v16.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_lt_s, macro()
+    # i32x4.lt_s - compare 4 32-bit signed integers for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmgt v17, v16 gives us v1 > v0, which is equivalent to v0 < v1
+        emit "cmgt v16.4s, v17.4s, v16.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_lt_u, macro()
+    # i32x4.lt_u - compare 4 32-bit unsigned integers for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmhi v17, v16 gives us v1 > v0 (unsigned), which is equivalent to v0 < v1
+        emit "cmhi v16.4s, v17.4s, v16.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_gt_s, macro()
+    # i32x4.gt_s - compare 4 32-bit signed integers for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmgt v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_gt_u, macro()
+    # i32x4.gt_u - compare 4 32-bit unsigned integers for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmhi v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_le_s, macro()
+    # i32x4.le_s - compare 4 32-bit signed integers for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmge v17, v16 gives us v1 >= v0, which is equivalent to v0 <= v1
+        emit "cmge v16.4s, v17.4s, v16.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_le_u, macro()
+    # i32x4.le_u - compare 4 32-bit unsigned integers for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # cmhs v17, v16 gives us v1 >= v0 (unsigned), which is equivalent to v0 <= v1
+        emit "cmhs v16.4s, v17.4s, v16.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_ge_s, macro()
+    # i32x4.ge_s - compare 4 32-bit signed integers for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmge v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i32x4_ge_u, macro()
+    # i32x4.ge_u - compare 4 32-bit unsigned integers for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "cmhs v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
 
 # 0xFD 0x41 - 0xFD 0x46: f32x4 operations
-unimplementedInstruction(_simd_f32x4_eq)
-unimplementedInstruction(_simd_f32x4_ne)
-unimplementedInstruction(_simd_f32x4_lt)
-unimplementedInstruction(_simd_f32x4_gt)
-unimplementedInstruction(_simd_f32x4_le)
-unimplementedInstruction(_simd_f32x4_ge)
+ipintOp(_simd_f32x4_eq, macro()
+    # f32x4.eq - compare 4 32-bit floats for equality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmeq v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f32x4_ne, macro()
+    # f32x4.ne - compare 4 32-bit floats for inequality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmeq v16.4s, v16.4s, v17.4s"
+        emit "mvn v16.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f32x4_lt, macro()
+    # f32x4.lt - compare 4 32-bit floats for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # fcmgt v17, v16 gives us v1 > v0, which is equivalent to v0 < v1
+        emit "fcmgt v16.4s, v17.4s, v16.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f32x4_gt, macro()
+    # f32x4.gt - compare 4 32-bit floats for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmgt v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f32x4_le, macro()
+    # f32x4.le - compare 4 32-bit floats for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # fcmge v17, v16 gives us v1 >= v0, which is equivalent to v0 <= v1
+        emit "fcmge v16.4s, v17.4s, v16.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f32x4_ge, macro()
+    # f32x4.ge - compare 4 32-bit floats for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmge v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
 
 # 0xFD 0x47 - 0xFD 0x4c: f64x2 operations
-unimplementedInstruction(_simd_f64x2_eq)
-unimplementedInstruction(_simd_f64x2_ne)
-unimplementedInstruction(_simd_f64x2_lt)
-unimplementedInstruction(_simd_f64x2_gt)
-unimplementedInstruction(_simd_f64x2_le)
-unimplementedInstruction(_simd_f64x2_ge)
+ipintOp(_simd_f64x2_eq, macro()
+    # f64x2.eq - compare 2 64-bit floats for equality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmeq v16.2d, v16.2d, v17.2d"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f64x2_ne, macro()
+    # f64x2.ne - compare 2 64-bit floats for inequality
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmeq v16.2d, v16.2d, v17.2d"
+        emit "mvn v16.16b, v16.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f64x2_lt, macro()
+    # f64x2.lt - compare 2 64-bit floats for less than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # fcmgt v17, v16 gives us v1 > v0, which is equivalent to v0 < v1
+        emit "fcmgt v16.2d, v17.2d, v16.2d"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f64x2_gt, macro()
+    # f64x2.gt - compare 2 64-bit floats for greater than
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmgt v16.2d, v16.2d, v17.2d"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f64x2_le, macro()
+    # f64x2.le - compare 2 64-bit floats for less than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        # fcmge v17, v16 gives us v1 >= v0, which is equivalent to v0 <= v1
+        emit "fcmge v16.2d, v17.2d, v16.2d"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_f64x2_ge, macro()
+    # f64x2.ge - compare 2 64-bit floats for greater than or equal
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "fcmge v16.2d, v16.2d, v17.2d"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
 
 # 0xFD 0x4D - 0xFD 0x53: v128 operations
 unimplementedInstruction(_simd_v128_not)
@@ -4232,12 +5015,90 @@ unimplementedInstruction(_simd_f32x4_nearest)
 unimplementedInstruction(_simd_i8x16_shl)
 unimplementedInstruction(_simd_i8x16_shr_s)
 unimplementedInstruction(_simd_i8x16_shr_u)
-unimplementedInstruction(_simd_i8x16_add)
-unimplementedInstruction(_simd_i8x16_add_sat_s)
-unimplementedInstruction(_simd_i8x16_add_sat_u)
-unimplementedInstruction(_simd_i8x16_sub)
-unimplementedInstruction(_simd_i8x16_sub_sat_s)
-unimplementedInstruction(_simd_i8x16_sub_sat_u)
+
+ipintOp(_simd_i8x16_add, macro()
+    # i8x16.add - add 16 8-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "add v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_add_sat_s, macro()
+    # i8x16.add_sat_s - add 16 8-bit signed integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sqadd v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_add_sat_u, macro()
+    # i8x16.add_sat_u - add 16 8-bit unsigned integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "uqadd v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_sub, macro()
+    # i8x16.sub - subtract 16 8-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sub v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_sub_sat_s, macro()
+    # i8x16.sub_sat_s - subtract 16 8-bit signed integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sqsub v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i8x16_sub_sat_u, macro()
+    # i8x16.sub_sat_u - subtract 16 8-bit unsigned integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "uqsub v16.16b, v16.16b, v17.16b"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
 
 # 0xFD 0x74 - 0xFD 0x75: f64x2 operations
 unimplementedInstruction(_simd_f64x2_ceil)
@@ -4277,12 +5138,90 @@ unimplementedInstruction(_simd_i16x8_extend_high_i8x16_u)
 unimplementedInstruction(_simd_i16x8_shl)
 unimplementedInstruction(_simd_i16x8_shr_s)
 unimplementedInstruction(_simd_i16x8_shr_u)
-unimplementedInstruction(_simd_i16x8_add)
-unimplementedInstruction(_simd_i16x8_add_sat_s)
-unimplementedInstruction(_simd_i16x8_add_sat_u)
-unimplementedInstruction(_simd_i16x8_sub)
-unimplementedInstruction(_simd_i16x8_sub_sat_s)
-unimplementedInstruction(_simd_i16x8_sub_sat_u)
+
+ipintOp(_simd_i16x8_add, macro()
+    # i16x8.add - add 8 16-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "add v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_add_sat_s, macro()
+    # i16x8.add_sat_s - add 8 16-bit signed integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sqadd v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_add_sat_u, macro()
+    # i16x8.add_sat_u - add 8 16-bit unsigned integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "uqadd v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_sub, macro()
+    # i16x8.sub - subtract 8 16-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sub v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_sub_sat_s, macro()
+    # i16x8.sub_sat_s - subtract 8 16-bit signed integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sqsub v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
+ipintOp(_simd_i16x8_sub_sat_u, macro()
+    # i16x8.sub_sat_u - subtract 8 16-bit unsigned integers with saturation
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "uqsub v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
 
 # 0xFD 0x94 0x01: f64x2.nearest
 
@@ -4290,7 +5229,20 @@ unimplementedInstruction(_simd_f64x2_nearest)
 
 # 0xFD 0x95 0x01 - 0xFD 0x9F 0x01: i16x8 operations
 
-unimplementedInstruction(_simd_i16x8_mul)
+ipintOp(_simd_i16x8_mul, macro()
+    # i16x8.mul - multiply 8 16-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "mul v16.8h, v16.8h, v17.8h"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_i16x8_min_s)
 unimplementedInstruction(_simd_i16x8_min_u)
 unimplementedInstruction(_simd_i16x8_max_s)
@@ -4318,14 +5270,56 @@ unimplementedInstruction(_simd_i32x4_extend_high_i16x8_u)
 unimplementedInstruction(_simd_i32x4_shl)
 unimplementedInstruction(_simd_i32x4_shr_s)
 unimplementedInstruction(_simd_i32x4_shr_u)
-unimplementedInstruction(_simd_i32x4_add)
+
+ipintOp(_simd_i32x4_add, macro()
+    # i32x4.add - add 4 32-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "add v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
 reservedOpcode(0xfdaf01)
 reservedOpcode(0xfdb001)
-unimplementedInstruction(_simd_i32x4_sub)
+
+ipintOp(_simd_i32x4_sub, macro()
+    # i32x4.sub - subtract 4 32-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sub v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
 reservedOpcode(0xfdb201)
 reservedOpcode(0xfdb301)
 reservedOpcode(0xfdb401)
-unimplementedInstruction(_simd_i32x4_mul)
+
+ipintOp(_simd_i32x4_mul, macro()
+    # i32x4.mul - multiply 4 32-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "mul v16.4s, v16.4s, v17.4s"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_i32x4_min_s)
 unimplementedInstruction(_simd_i32x4_min_u)
 unimplementedInstruction(_simd_i32x4_max_s)
@@ -4353,14 +5347,63 @@ unimplementedInstruction(_simd_i64x2_extend_high_i32x4_u)
 unimplementedInstruction(_simd_i64x2_shl)
 unimplementedInstruction(_simd_i64x2_shr_s)
 unimplementedInstruction(_simd_i64x2_shr_u)
-unimplementedInstruction(_simd_i64x2_add)
+
+ipintOp(_simd_i64x2_add, macro()
+    # i64x2.add - add 2 64-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "add v16.2d, v16.2d, v17.2d"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
 reservedOpcode(0xfdcf01)
 reservedOpcode(0xfdd001)
-unimplementedInstruction(_simd_i64x2_sub)
+
+ipintOp(_simd_i64x2_sub, macro()
+    # i64x2.sub - subtract 2 64-bit integers
+    popVec(v1)
+    popVec(v0)
+    if ARM64 or ARM64E
+        emit "sub v16.2d, v16.2d, v17.2d"
+    else
+        break # Not implemented
+    end
+    pushVec(v0)
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
 reservedOpcode(0xfdd201)
 reservedOpcode(0xfdd301)
 reservedOpcode(0xfdd401)
-unimplementedInstruction(_simd_i64x2_mul)
+
+ipintOp(_simd_i64x2_mul, macro()
+    # i64x2.mul - multiply 2 64-bit integers (low 64 bits of result)
+
+    # Extract and multiply lane 0 (first 64-bit element)
+    loadq [sp], t0            # Load lane 0 of vector1
+    loadq 16[sp], t1          # Load lane 0 of vector0
+    mulq t1, t0               # Multiply: t0 = t0 * t1
+    storeq t0, 16[sp]         # Store result back to vector0
+
+    # Extract and multiply lane 1 (second 64-bit element)
+    loadq 8[sp], t0           # Load lane 1 of vector1
+    loadq 24[sp], t1          # Load lane 1 of vector0
+    mulq t1, t0               # Multiply: t0 = t0 * t1
+    storeq t0, 24[sp]         # Store result back to vector0
+
+    # Pop vector1, result in vector0
+    addp V128ISize, sp        # Remove first vector from stack, leaving result
+    advancePC(2)
+    nextIPIntInstruction()
+end)
+
 unimplementedInstruction(_simd_i64x2_eq)
 unimplementedInstruction(_simd_i64x2_ne)
 unimplementedInstruction(_simd_i64x2_lt_s)
@@ -6354,9 +7397,9 @@ _wasm_ipint_call_return_location_wide32:
     leap [sp, mintRetSrc], mintRetSrc
 
 if ARM64 or ARM64E
-    loadp 2*SlotSize[sc3], mintRetDst
+    loadp (2 * SlotSize)[sc3], mintRetDst
 elsif X86_64
-    loadp 3*SlotSize[sc3], mintRetDst
+    loadp (3 * SlotSize)[sc3], mintRetDst
 end
 
     # on x86, we'll use PC again for our PC base
@@ -6519,7 +7562,7 @@ end
 if X86_64
     move sc2, wasmInstance
     loadq 8[sc3], PL
-    loadp 2*SlotSize[sc3], PC
+    loadp (2 * SlotSize)[sc3], PC
 end
 
     # Restore memory

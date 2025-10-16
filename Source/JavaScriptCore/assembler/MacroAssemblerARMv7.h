@@ -2425,10 +2425,10 @@ public:
         ARMv7Assembler::replaceWithJump(instructionStart.dataLocation(), destination.dataLocation());
     }
 
-    template<RepatchingInfo repatch, PtrTag startTag>
+    template<PtrTag startTag>
     static void replaceWithNops(CodeLocationLabel<startTag> instructionStart, size_t memoryToFillWithNopsInBytes)
     {
-        ARMv7Assembler::replaceWithNops<repatch>(instructionStart.dataLocation(), memoryToFillWithNopsInBytes);
+        ARMv7Assembler::replaceWithNops(instructionStart.dataLocation(), memoryToFillWithNopsInBytes);
     }
     
     static ptrdiff_t maxJumpReplacementSize()
@@ -3445,13 +3445,13 @@ public:
     template<PtrTag callTag, PtrTag destTag>
     static void repatchCall(CodeLocationCall<callTag> call, CodeLocationLabel<destTag> destination)
     {
-        ARMv7Assembler::relinkCall<jitMemcpyRepatchAtomicFlush>(call.dataLocation(), destination.taggedPtr());
+        ARMv7Assembler::relinkCall(call.dataLocation(), destination.taggedPtr());
     }
 
     template<PtrTag callTag, PtrTag destTag>
     static void repatchCall(CodeLocationCall<callTag> call, CodePtr<destTag> destination)
     {
-        ARMv7Assembler::relinkCall<jitMemcpyRepatchFlush>(call.dataLocation(), destination.taggedPtr());
+        ARMv7Assembler::relinkCall(call.dataLocation(), destination.taggedPtr());
     }
 
     void convertDoubleToFloat16(FPRegisterID src, FPRegisterID dest)

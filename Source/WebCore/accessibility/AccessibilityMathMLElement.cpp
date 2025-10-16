@@ -32,6 +32,7 @@
 
 #include "AXObjectCacheInlines.h"
 #include "AXUtilities.h"
+#include "AccessibilityObjectInlines.h"
 #include "MathMLNames.h"
 #include "NodeInlines.h"
 #include "RenderStyleInlines.h"

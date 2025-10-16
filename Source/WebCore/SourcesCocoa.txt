@@ -85,7 +85,7 @@ Modules/ShapeDetection/Implementation/Cocoa/BarcodeDetectorImplementation.mm
 Modules/ShapeDetection/Implementation/Cocoa/FaceDetectorImplementation.mm
 Modules/ShapeDetection/Implementation/Cocoa/TextDetectorImplementation.mm
 Modules/ShapeDetection/Implementation/Cocoa/VisionUtilities.mm
-Modules/airplay/WebMediaSessionManager.cpp
+Modules/airplay/WebMediaSessionManager.mm
 Modules/applepay/ApplePayCouponCodeChangedEvent.cpp
 Modules/applepay/ApplePayCancelEvent.cpp
 Modules/applepay/ApplePayContactField.cpp

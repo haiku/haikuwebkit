@@ -27,7 +27,6 @@
 
 #include <WebCore/ActiveDOMCallback.h>
 #include <WebCore/CallbackResult.h>
-#include <WebCore/ContextDestructionObserverInlines.h>
 #include <wtf/RefCounted.h>
 
 namespace WebCore {

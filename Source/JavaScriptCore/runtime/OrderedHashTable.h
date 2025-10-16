@@ -46,7 +46,7 @@ public:
     {
     }
 
-    static ptrdiff_t offsetOfButterfly() { return OBJECT_OFFSETOF(OrderedHashTable, m_storage); }
+    static ptrdiff_t offsetOfStorage() { return OBJECT_OFFSETOF(OrderedHashTable, m_storage); }
 
     void finishCreation(VM& vm) { Base::finishCreation(vm); }
     void finishCreation(JSGlobalObject* globalObject, VM& vm, HashTable* base)

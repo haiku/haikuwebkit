@@ -26,6 +26,7 @@
 #include "config.h"
 #include "IDBDatabase.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DOMStringList.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
@@ -139,6 +140,11 @@ void IDBDatabase::renameIndex(IDBIndex& index, const String& newName)
     m_info.infoForExistingObjectStore(index.objectStore().info().name())->infoForExistingIndex(index.info().identifier())->rename(newName);
 
     m_versionChangeTransaction->renameIndex(index, newName);
+}
+
+ScriptExecutionContext* IDBDatabase::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 ExceptionOr<Ref<IDBObjectStore>> IDBDatabase::createObjectStore(const String& name, ObjectStoreParameters&& parameters)

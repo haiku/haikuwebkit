@@ -529,7 +529,7 @@ AcceleratedSurface::SwapChain::SwapChain(uint64_t surfaceID)
 #if USE(GBM) && (PLATFORM(GTK) || ENABLE(WPE_PLATFORM))
 void AcceleratedSurface::SwapChain::setupBufferFormat(const Vector<RendererBufferFormat>& preferredFormats, bool isOpaque)
 {
-    auto isOpaqueFormat = [](uint32_t fourcc) -> bool {
+    auto isOpaqueFormat = [](FourCC fourcc) -> bool {
         return fourcc != DRM_FORMAT_ARGB8888
             && fourcc != DRM_FORMAT_RGBA8888
             && fourcc != DRM_FORMAT_ABGR8888
@@ -543,7 +543,7 @@ void AcceleratedSurface::SwapChain::setupBufferFormat(const Vector<RendererBuffe
     // The preferred formats vector is sorted by usage, but all formats for the same usage has the same priority.
     Locker locker { m_bufferFormatLock };
     BufferFormat newBufferFormat;
-    const auto& supportedFormats = PlatformDisplay::sharedDisplay().dmabufFormats();
+    const auto& supportedFormats = PlatformDisplay::sharedDisplay().bufferFormats();
     for (const auto& bufferFormat : preferredFormats) {
 
         auto matchesOpacity = false;

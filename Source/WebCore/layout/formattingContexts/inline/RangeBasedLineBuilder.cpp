@@ -64,7 +64,7 @@ LineLayoutResult RangeBasedLineBuilder::layoutInlineContent(const LineInput& lin
             , { lineRect.topLeft(), lineRect.width(), lineRect.left() }
             , { }
             , { }
-            , { isFirstFormattedLineCandidate, { } }
+            , { isFirstFormattedLineCandidate ? IsFirstFormattedLine::Yes : IsFirstFormattedLine::No, { } }
             , { }
             , { LineLayoutResult::InlineContentEnding::Generic }
             , m_inlineBoxCount

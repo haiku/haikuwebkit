@@ -1521,13 +1521,6 @@ inline void InspectorInstrumentation::didCreateWebGLProgram(WebGLRenderingContex
         didCreateWebGLProgramImpl(*agents, contextWebGLBase, program);
 }
 
-inline void InspectorInstrumentation::willDestroyWebGLProgram(WebGLProgram& program)
-{
-    FAST_RETURN_IF_NO_FRONTENDS(void());
-    if (auto* agents = instrumentingAgents(program.scriptExecutionContext()))
-        willDestroyWebGLProgramImpl(*agents, program);
-}
-
 inline bool InspectorInstrumentation::isWebGLProgramDisabled(WebGLRenderingContextBase& contextWebGLBase, WebGLProgram& program)
 {
     FAST_RETURN_IF_NO_FRONTENDS(false);

@@ -465,6 +465,8 @@ CG_LOCAL bool CGIsInLockdownModeForPDF();
 CG_EXTERN void CGEnterLockdownModeForFonts();
 #endif
 
+extern CGDataProviderRef __nullable CGDataProviderCreateWithCopyOfData(const void *, size_t);
+
 WTF_EXTERN_C_END
 
 #ifdef __cplusplus

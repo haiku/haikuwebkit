@@ -31,7 +31,11 @@
 #import "TestWKWebView.h"
 #import <WebKit/WKWebViewPrivate.h>
 
+#if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
+TEST(WebKit, DISABLED_MobileAssetSandboxCheck)
+#else
 TEST(WebKit, MobileAssetSandboxCheck)
+#endif
 {
     auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
     auto context = adoptWK(TestWebKitAPI::Util::createContextForInjectedBundleTest("InternalsInjectedBundleTest"));

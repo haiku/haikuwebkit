@@ -115,6 +115,11 @@ ExceptionOr<void> RTCDTMFSender::insertDTMF(const String& tones, size_t duration
     return { };
 }
 
+ScriptExecutionContext* RTCDTMFSender::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void RTCDTMFSender::playNextTone()
 {
     if (m_tones.isEmpty()) {

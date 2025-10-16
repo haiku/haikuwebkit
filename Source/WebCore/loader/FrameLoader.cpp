@@ -2962,9 +2962,6 @@ void FrameLoader::checkLoadCompleteForThisFrame(LoadWillContinueInAnotherProcess
             }
         }
 
-        if (RefPtr window = m_frame->document() ? m_frame->document()->window() : nullptr)
-            window->protectedPerformance()->scheduleNavigationObservationTaskIfNeeded();
-
         auto& error = documentLoader->mainDocumentError();
 
         auto loadingEvent = AXLoadingEvent::Failed;

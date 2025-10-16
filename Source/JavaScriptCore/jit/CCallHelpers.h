@@ -914,12 +914,10 @@ public:
 #endif
     }
 
-    void storeWasmCalleeToCalleeCallFrame(const CalleeBits* boxedWasmCalleeLoadLocation)
+    void storeWasmCalleeToCalleeCallFrame(CalleeBits boxedCallee)
     {
-        ASSERT(boxedWasmCalleeLoadLocation);
-        JIT_COMMENT(*this, "> ", RawPointer(boxedWasmCalleeLoadLocation->asNativeCallee()));
-        move(TrustedImmPtr(boxedWasmCalleeLoadLocation->rawPtr()), scratchRegister());
-        storeWasmCalleeToCalleeCallFrame(scratchRegister());
+        JIT_COMMENT(*this, "> ", RawPointer(boxedCallee.asNativeCallee()));
+        storeWasmCalleeToCalleeCallFrame(TrustedImmPtr(boxedCallee.rawPtr()));
     }
 
     void storeWasmCalleeToCalleeCallFrame(TrustedImmPtr imm, int offset = 0)

@@ -521,7 +521,7 @@ void DirectCallLinkInfo::initialize()
         RELEASE_ASSERT(fastPathStart());
         CCallHelpers::replaceWithJump(fastPathStart(), slowPathStart());
     } else
-        MacroAssembler::repatchNearCall<jitMemcpyRepatchFlush>(m_callLocation, slowPathStart());
+        MacroAssembler::repatchNearCall(m_callLocation, slowPathStart());
 }
 
 void DirectCallLinkInfo::setCallTarget(CodeBlock* codeBlock, CodeLocationLabel<JSEntryPtrTag> target)
@@ -534,10 +534,10 @@ void DirectCallLinkInfo::setCallTarget(CodeBlock* codeBlock, CodeLocationLabel<J
             RELEASE_ASSERT(fastPathStart());
             // We reserved this many bytes for the jump at fastPathStart(). Make that
             // code nops now so we fall through to the jump to the fast path.
-            CCallHelpers::replaceWithNops<jitMemcpyRepatchFlush>(fastPathStart(), CCallHelpers::patchableJumpSize());
+            CCallHelpers::replaceWithNops(fastPathStart(), CCallHelpers::patchableJumpSize());
         }
 
-        MacroAssembler::repatchNearCall<jitMemcpyRepatchFlush>(m_callLocation, target);
+        MacroAssembler::repatchNearCall(m_callLocation, target);
         MacroAssembler::repatchPointer(m_codeBlockLocation, codeBlock);
     }
 }

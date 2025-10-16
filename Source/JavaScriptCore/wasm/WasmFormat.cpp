@@ -32,13 +32,18 @@
 #include "HeapVerifier.h"
 #include "JSWebAssemblyArray.h"
 #include "JSWebAssemblyStruct.h"
+#include "WasmCallee.h"
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/text/MakeString.h>
 
 namespace JSC { namespace Wasm {
 
-constexpr CalleeBits NullWasmCallee = CalleeBits::nullCallee();
+
+bool WasmCallableFunction::isJS() const
+{
+    return boxedCallee == CalleeBits { &WasmToJSCallee::singleton() };
+}
 
 std::unique_ptr<Segment> Segment::tryCreate(std::optional<I32InitExpr> offset, uint32_t sizeInBytes, Kind kind)
 {

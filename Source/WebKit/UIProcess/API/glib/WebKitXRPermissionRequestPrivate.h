@@ -25,6 +25,6 @@
 
 #if ENABLE(WEBXR)
 
-WebKitXRPermissionRequest* webkitXRPermissionRequestCreate(const WebCore::SecurityOriginData&, PlatformXR::SessionMode, const PlatformXR::Device::FeatureList& granted, CompletionHandler<void(std::optional<PlatformXR::Device::FeatureList>&&)>&&);
+WebKitXRPermissionRequest* webkitXRPermissionRequestCreate(const WebCore::SecurityOriginData&, PlatformXR::SessionMode, const PlatformXR::Device::FeatureList& granted, const PlatformXR::Device::FeatureList& consentRequired, const PlatformXR::Device::FeatureList& consentOptional, const PlatformXR::Device::FeatureList& requiredFeaturesRequested, const PlatformXR::Device::FeatureList& optionalFeaturesRequested, CompletionHandler<void(std::optional<PlatformXR::Device::FeatureList>&&)>&&);
 
 #endif // ENABLE(WEBXR)

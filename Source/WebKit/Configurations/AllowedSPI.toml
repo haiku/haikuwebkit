@@ -94,6 +94,23 @@ selectors = [
 ]
 requires = ["HAVE_ALLOW_ONLY_PARTITIONED_COOKIES"]
 
+[[temporary-usage]]
+request = "rdar://157886016"
+cleanup = "rdar://157886056"
+selectors = [
+    { name = "_cookieTransformCallback", class = "NSURLSessionTask" },
+]
+requires = ["ENABLE_OPT_IN_PARTITIONED_COOKIES", "ASSERT_ENABLED"]
+
+[[temporary-usage]]
+request = "rdar://157886016"
+cleanup = "rdar://157886056"
+selectors = [
+    { name = "_setAllowOnlyPartitionedCookies:", class = "NSMutableURLRequest" },
+    { name = "set_storagePartitionIdentifier:", class = "NSURLSessionTask" },
+]
+requires = ["ENABLE_OPT_IN_PARTITIONED_COOKIES"]
+
 [[equivalent-api]]
 request = "rdar://157885997"
 selectors = [

@@ -962,6 +962,7 @@ set(WebKit_WEBDRIVER_BIDI_PROTOCOL_GENERATOR_INPUTS
     ${WEBKIT_DIR}/UIProcess/Automation/protocol/BidiBrowser.json
     ${WEBKIT_DIR}/UIProcess/Automation/protocol/BidiBrowsingContext.json
     ${WEBKIT_DIR}/UIProcess/Automation/protocol/BidiLog.json
+    ${WEBKIT_DIR}/UIProcess/Automation/protocol/BidiPermissions.json
     ${WEBKIT_DIR}/UIProcess/Automation/protocol/BidiScript.json
     ${WEBKIT_DIR}/UIProcess/Automation/protocol/BidiSession.json
     ${WEBKIT_DIR}/UIProcess/Automation/protocol/BidiStorage.json
@@ -1099,9 +1100,10 @@ endif ()
 if ("${PORT}" STREQUAL "Mac")
     WEBKIT_DEFINE_XPC_SERVICES()
 else ()
-    WEBKIT_POPULATE_LIBRARY_VERSION(WEBKIT)
-
-    set_target_properties(WebKit PROPERTIES VERSION ${WEBKIT_VERSION} SOVERSION ${WEBKIT_VERSION_MAJOR})
+    if (NOT ANDROID)
+        WEBKIT_POPULATE_LIBRARY_VERSION(WEBKIT)
+        set_target_properties(WebKit PROPERTIES VERSION ${WEBKIT_VERSION} SOVERSION ${WEBKIT_VERSION_MAJOR})
+    endif ()
 
     install(TARGETS WebKit WebProcess NetworkProcess
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}"

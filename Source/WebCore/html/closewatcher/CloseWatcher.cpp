@@ -26,6 +26,7 @@
 #include "config.h"
 #include "CloseWatcher.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "CloseWatcherManager.h"
 #include "DocumentInlines.h"
 #include "Event.h"
@@ -80,7 +81,13 @@ Ref<CloseWatcher> CloseWatcher::establish(Document& document)
 
 CloseWatcher::CloseWatcher(Document& document)
     : ActiveDOMObject(document)
-{ }
+{
+}
+
+ScriptExecutionContext* CloseWatcher::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
 
 void CloseWatcher::requestClose()
 {

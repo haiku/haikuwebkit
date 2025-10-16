@@ -24,6 +24,7 @@
 
 #include "RenderStyleDifference.h"
 #include "RenderStyleInlines.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 
 namespace WebCore {
 
@@ -59,9 +60,13 @@ Ref<StyleDeprecatedFlexibleBoxData> StyleDeprecatedFlexibleBoxData::copy() const
 
 bool StyleDeprecatedFlexibleBoxData::operator==(const StyleDeprecatedFlexibleBoxData& other) const
 {
-    return flex == other.flex && flexGroup == other.flexGroup
-        && ordinalGroup == other.ordinalGroup && align == other.align
-        && pack == other.pack && orient == other.orient && lines == other.lines;
+    return flex == other.flex
+        && flexGroup == other.flexGroup
+        && ordinalGroup == other.ordinalGroup
+        && align == other.align
+        && pack == other.pack
+        && orient == other.orient
+        && lines == other.lines;
 }
 
 #if !LOG_DISABLED

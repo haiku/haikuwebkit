@@ -153,7 +153,7 @@ public:
     bool isReplacedBox() const { return m_nodeType == NodeType::ReplacedElement || m_nodeType == NodeType::Image || m_nodeType == NodeType::ListMarker; }
 
     bool isInlineIntegrationRoot() const { return m_isInlineIntegrationRoot; }
-    bool isFirstChildForIntegration() const { return m_isFirstChildForIntegration; }
+    bool isAnonymousTextIndentCandidateForIntegration() const { return m_isAnonymousTextIndentCandidateForIntegration; }
 
     const ElementBox& parent() const { return *m_parent; }
     const Box* nextSibling() const { return m_nextSibling.get(); }
@@ -192,7 +192,7 @@ public:
     std::optional<LayoutUnit> columnWidth() const;
 
     void setIsInlineIntegrationRoot() { m_isInlineIntegrationRoot = true; }
-    void setIsFirstChildForIntegration(bool value) { m_isFirstChildForIntegration = value; }
+    void setIsAnonymousTextIndentCandidateForIntegration(bool value) { m_isAnonymousTextIndentCandidateForIntegration = value; }
 
     const LayoutShape* shape() const;
     void setShape(RefPtr<const LayoutShape>);
@@ -241,7 +241,7 @@ private:
     unsigned m_baseTypeFlags : 4; // OptionSet<BaseTypeFlag>
     bool m_hasRareData : 1 { false };
     bool m_isInlineIntegrationRoot : 1 { false };
-    bool m_isFirstChildForIntegration : 1 { false };
+    bool m_isAnonymousTextIndentCandidateForIntegration : 1 { false }; // Either first anonymous block box child or simple anonymous block container (e.g flex item).
 
     RenderStyle m_style;
 

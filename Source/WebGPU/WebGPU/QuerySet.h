@@ -83,7 +83,6 @@ public:
     WGPUQueryType type() const { return m_type; }
     id<MTLBuffer> visibilityBuffer() const { return m_visibilityBuffer; }
     CounterSampleBuffer counterSampleBufferWithOffset() const;
-    [[noreturn]] id<MTLCounterSampleBuffer> counterSampleBuffer() const { RELEASE_ASSERT_NOT_REACHED(); }
 
     void setCommandEncoder(CommandEncoder&) const;
     bool isDestroyed() const;

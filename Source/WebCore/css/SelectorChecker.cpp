@@ -1040,12 +1040,19 @@ bool SelectorChecker::checkOne(CheckingContext& checkingContext, LocalContext& c
         case CSSSelector::PseudoClass::Link:
             // :visited and :link matches are separated later when applying the style. Here both classes match all links...
             return element.isLink();
-        case CSSSelector::PseudoClass::Visited:
+        case CSSSelector::PseudoClass::Visited: {
             // ...except if :visited matching is disabled for ancestor/sibling matching.
             // Inside functional pseudo class except for :not, :visited never matches.
             if (context.inFunctionalPseudoClass)
                 return false;
-            return element.isLink() && context.visitedMatchType == VisitedMatchType::Enabled;
+            auto match = element.isLink() && context.visitedMatchType == VisitedMatchType::Enabled;
+            if (!match)
+                return false;
+            // Track that :visited matched during scoping root evaluation
+            if (checkingContext.isEvaluatingScopingRoot)
+                checkingContext.scopingRootMatchesVisited = true;
+            return true;
+        }
         case CSSSelector::PseudoClass::WebKitDrag:
             return element.isBeingDragged();
         case CSSSelector::PseudoClass::Focus:
@@ -1145,9 +1152,19 @@ bool SelectorChecker::checkOne(CheckingContext& checkingContext, LocalContext& c
 
             const Node* contextualReferenceNode = !checkingContext.scope ? element.document().documentElement() : checkingContext.scope.get();
             auto match = &element == contextualReferenceNode;
-            if (match && element.shadowRoot())
+            if (!match)
+                return false;
+
+            if (element.shadowRoot())
                 context.matchedHostPseudoClass = true;
-            return match;
+
+            // Prevent double :visited matching when scoping root matched :visited
+            if (checkingContext.scopingRootMatchesVisited && context.visitedMatchType == VisitedMatchType::Disabled)
+                return false;
+            if (checkingContext.scopingRootMatchesVisited)
+                context.visitedMatchType = VisitedMatchType::Disabled;
+
+            return true;
         }
         case CSSSelector::PseudoClass::State:
             return element.hasCustomState(selector.argument());
@@ -1632,9 +1649,20 @@ bool SelectorChecker::checkViewTransitionPseudoClass(const CheckingContext& chec
     }
 }
 
-unsigned SelectorChecker::determineLinkMatchType(const CSSSelector* selector)
+unsigned SelectorChecker::determineLinkMatchType(const CSSSelector* selector, const StyleRuleScope* scopeRule)
 {
     unsigned linkMatchType = MatchAll;
+
+    auto scopingRootLinkMatchType = [&] -> unsigned {
+        if (!scopeRule || scopeRule->scopeStart().isEmpty())
+            return SelectorChecker::MatchAll;
+
+        // FIXME: Support multiple selectors
+        auto scopingRootLinkMatchType = SelectorChecker::determineLinkMatchType(scopeRule->scopeStart().first());
+        if (!scopeRule->scopeEnd().isEmpty())
+            scopingRootLinkMatchType &= SelectorChecker::determineLinkMatchType(scopeRule->scopeEnd().first());
+        return scopingRootLinkMatchType;
+    };
 
     // Statically determine if this selector will match a link in visited, unvisited or any state, or never.
     // :visited never matches other elements than the innermost link element.
@@ -1646,6 +1674,10 @@ unsigned SelectorChecker::determineLinkMatchType(const CSSSelector* selector)
                 break;
             case CSSSelector::PseudoClass::Visited:
                 linkMatchType &= ~SelectorChecker::MatchLink;
+                break;
+            case CSSSelector::PseudoClass::Scope:
+                // :scope refers to the scoping root, so it should inherit the link matching constraints from it.
+                linkMatchType &= scopingRootLinkMatchType();
                 break;
             default:
                 break;

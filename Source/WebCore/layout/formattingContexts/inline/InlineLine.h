@@ -209,6 +209,7 @@ public:
         RunList runs;
         InlineLayoutUnit contentLogicalWidth { 0.f };
         InlineLayoutUnit contentLogicalRight { 0.f };
+        bool isContentful { false };
         bool isHangingTrailingContentWhitespace { false };
         InlineLayoutUnit hangingTrailingContentWidth { 0.f };
         InlineLayoutUnit hangablePunctuationStartWidth { 0.f };

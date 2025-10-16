@@ -237,25 +237,26 @@ static int getGDKKeySymForKeyRef(WKStringRef keyRef, unsigned location, guint* m
     return gdk_unicode_to_keyval(static_cast<guint32>(buffer.get()[0]));
 }
 
-void EventSenderProxy::keyDown(WKStringRef keyRef, WKEventModifiers wkModifiers, unsigned location)
+static inline void processKeyEvent(WebKitWebViewBase* webViewBase, WKStringRef keyRef, WKEventModifiers wkModifiers, unsigned location, KeyEventType type)
 {
     guint modifiers = webkitModifiersToGDKModifiers(wkModifiers);
     int gdkKeySym = getGDKKeySymForKeyRef(keyRef, location, &modifiers);
-    webkitWebViewBaseSynthesizeKeyEvent(toWebKitGLibAPI(m_testController->mainWebView()->platformView()), KeyEventType::Insert, gdkKeySym, modifiers, ShouldTranslateKeyboardState::No);
+    webkitWebViewBaseSynthesizeKeyEvent(webViewBase, type, gdkKeySym, modifiers, ShouldTranslateKeyboardState::No);
+}
+
+void EventSenderProxy::keyDown(WKStringRef keyRef, WKEventModifiers wkModifiers, unsigned location)
+{
+    processKeyEvent(toWebKitGLibAPI(m_testController->mainWebView()->platformView()), keyRef, wkModifiers, location, KeyEventType::Insert);
 }
 
 void EventSenderProxy::rawKeyDown(WKStringRef key, WKEventModifiers wkModifiers, unsigned keyLocation)
 {
-    guint modifiers = webkitModifiersToGDKModifiers(wkModifiers);
-    int gdkKeySym = getGDKKeySymForKeyRef(key, keyLocation, &modifiers);
-    webkitWebViewBaseSynthesizeKeyEvent(toWebKitGLibAPI(m_testController->mainWebView()->platformView()), KeyEventType::Press, gdkKeySym, modifiers, ShouldTranslateKeyboardState::No);
+    processKeyEvent(toWebKitGLibAPI(m_testController->mainWebView()->platformView()), key, wkModifiers, keyLocation, KeyEventType::Press);
 }
 
 void EventSenderProxy::rawKeyUp(WKStringRef key, WKEventModifiers wkModifiers, unsigned keyLocation)
 {
-    guint modifiers = webkitModifiersToGDKModifiers(wkModifiers);
-    int gdkKeySym = getGDKKeySymForKeyRef(key, keyLocation, &modifiers);
-    webkitWebViewBaseSynthesizeKeyEvent(toWebKitGLibAPI(m_testController->mainWebView()->platformView()), KeyEventType::Release, gdkKeySym, modifiers, ShouldTranslateKeyboardState::No);
+    processKeyEvent(toWebKitGLibAPI(m_testController->mainWebView()->platformView()), key, wkModifiers, keyLocation, KeyEventType::Release);
 }
 
 void EventSenderProxy::mouseDown(unsigned button, WKEventModifiers wkModifiers, WKStringRef pointerType)

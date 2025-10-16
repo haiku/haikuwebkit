@@ -32,6 +32,7 @@
 #include <WebCore/IDBResourceIdentifier.h>
 #include <WebCore/IDBResultData.h>
 #include <WebCore/IDBTransaction.h>
+#include <WebCore/ScriptExecutionContext.h>
 #include <optional>
 #include <wtf/Function.h>
 #include <wtf/MainThread.h>
@@ -71,18 +72,7 @@ public:
         m_transaction->operationCompletedOnServer(data, *this);
     }
 
-    void transitionToComplete(const IDBResultData& data, RefPtr<TransactionOperation>&& lastRef)
-    {
-        ASSERT(isMainThread());
-
-        if (canCurrentThreadAccessThreadLocalData(originThread()))
-            transitionToCompleteOnThisThread(data);
-        else {
-            m_transaction->performCallbackOnOriginThread(*this, &TransactionOperation::transitionToCompleteOnThisThread, data);
-            m_transaction->callFunctionOnOriginThread([lastRef = WTFMove(lastRef)]() {
-            });
-        }
-    }
+    void transitionToComplete(const IDBResultData&, RefPtr<TransactionOperation>&&);
 
     void doComplete(const IDBResultData& data)
     {

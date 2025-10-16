@@ -67,7 +67,7 @@ private:
 
     Ref<const Wasm::RTT> m_rtt;
     Ref<const Wasm::TypeDefinition> m_type;
-    std::array<const Wasm::RTT*, inlinedTypeDisplaySize> m_inlinedTypeDisplay { };
+    std::array<RefPtr<const Wasm::RTT>, inlinedTypeDisplaySize> m_inlinedTypeDisplay { };
 };
 
 } // namespace JSC

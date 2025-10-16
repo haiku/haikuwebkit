@@ -26,8 +26,6 @@
 #pragma once
 
 #include <WebCore/ActiveDOMObject.h>
-#include <WebCore/ContextDestructionObserverInlines.h>
-#include <WebCore/ScriptExecutionContextInlines.h>
 #include <wtf/Threading.h>
 
 namespace WebCore {
@@ -44,39 +42,9 @@ public:
     }
 
     template<typename T, typename... Parameters, typename... Arguments>
-    void performCallbackOnOriginThread(T& object, void (T::*method)(Parameters...), Arguments&&... arguments)
-    {
-        ASSERT(&originThread() == &object.originThread());
+    inline void performCallbackOnOriginThread(T&, void (T::*)(Parameters...), Arguments&&...);
 
-        if (canCurrentThreadAccessThreadLocalData(object.originThread())) {
-            (object.*method)(std::forward<Arguments>(arguments)...);
-            return;
-        }
-
-        Locker<Lock> lock(m_scriptExecutionContextLock);
-
-        ScriptExecutionContext* context = scriptExecutionContext();
-        if (!context)
-            return;
-
-        context->postCrossThreadTask(object, method, arguments...);
-    }
-
-    void callFunctionOnOriginThread(Function<void()>&& function)
-    {
-        if (canCurrentThreadAccessThreadLocalData(originThread())) {
-            function();
-            return;
-        }
-
-        Locker<Lock> lock(m_scriptExecutionContextLock);
-
-        ScriptExecutionContext* context = scriptExecutionContext();
-        if (!context)
-            return;
-
-        context->postTask(WTFMove(function));
-    }
+    inline void callFunctionOnOriginThread(Function<void()>&&);
 
 protected:
     IDBActiveDOMObject(ScriptExecutionContext* context)

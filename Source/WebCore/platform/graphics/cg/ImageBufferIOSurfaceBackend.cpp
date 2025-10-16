@@ -58,7 +58,7 @@ IntSize ImageBufferIOSurfaceBackend::calculateSafeBackendSize(const Parameters& 
     return backendSize;
 }
 
-unsigned ImageBufferIOSurfaceBackend::calculateBytesPerRow(const IntSize& backendSize, ImageBufferPixelFormat imageBufferPixelFormat)
+unsigned ImageBufferIOSurfaceBackend::calculateBytesPerRow(const IntSize& backendSize, PixelFormat imageBufferPixelFormat)
 {
     unsigned bytesPerRow = ImageBufferCGBackend::calculateBytesPerRow(backendSize, imageBufferPixelFormat);
     size_t alignmentMask = IOSurface::bytesPerRowAlignment() - 1;

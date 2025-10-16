@@ -102,11 +102,6 @@ webkit.org/b/285993 imported/w3c/web-platform-tests/html/canvas/offscreen/manual
 # Times out, possibly missing automation:
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-auxclick.html [ Skip ]
 
-# Crash mentioning WTR::UIScriptController::notImplemented() with the EventTimingEnabled feature flag
-webkit.org/b/296246 imported/w3c/web-platform-tests/event-timing/first-input-interactionid-key.html [ Crash ]
-webkit.org/b/296246 imported/w3c/web-platform-tests/event-timing/interaction-count-tap.html [ Crash ]
-webkit.org/b/296246 imported/w3c/web-platform-tests/event-timing/TapToStopFling.html [ Crash ]
-
 # GStreamer - GTK-Only. Most GStreamer issues probably will go in the glib expectations
 webkit.org/b/210528 media/video-supports-fullscreen.html [ Pass ]
 
@@ -791,12 +786,9 @@ webkit.org/b/286466 imported/w3c/web-platform-tests/css/css-text/hyphens/hyphens
 webkit.org/b/286466 imported/w3c/web-platform-tests/css/css-text/hyphens/i18n/hyphens-i18n-auto-002.html [ Crash ]
 webkit.org/b/286466 imported/w3c/web-platform-tests/css/css-text/hyphens/i18n/hyphens-i18n-auto-001.html [ Crash ]
 
-webkit.org/b/286930 media/modern-media-controls/scrubber-support/scrubber-support-seek-back.html [ Crash ]
-
 # Tests crashing due to failing assertions
 
 webkit.org/b/286127 editing/pasteboard/copy-paste-across-shadow-boundaries-with-style-2.html [ Crash ]
-webkit.org/b/286130 imported/w3c/web-platform-tests/css/css-multicol/crashtests/inline-float-parallel-flow.html [ Crash ]
 webkit.org/b/286132 inspector/debugger/breakpoints/resolved-dump-all-inline-script-pause-locations.html [ Crash ]
 
 imported/w3c/web-platform-tests/selection/shadow-dom/cross-shadow-boundary-6.html [ Skip ]
@@ -1170,6 +1162,32 @@ editing/selection/select-bidi-run.html [ Skip ]
 
 # Fails on 32-bit release and 64-bit debug builders
 webkit.org/b/83560 fast/events/drop-with-file-paths.html [ Failure ]
+
+# Tests passing in GTK3 (begin).
+# These two tests print console messages in GTK4.
+http/tests/xmlhttprequest/response-access-on-error.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/css/css-masking/inheritance.sub.html [ DumpJSConsoleLogInStdErr ]
+
+webkit.org/b/277166 fast/dom/Window/window-focus-self.html [ Failure ]
+webkit.org/b/277166 fast/dom/Window/window-resize-and-move-arguments.html [ Failure ]
+webkit.org/b/277166 fast/dom/Window/window-resize.html [ Failure ]
+webkit.org/b/277166 imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open-features-non-integer-left.html [ Failure ]
+webkit.org/b/277166 imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open-features-non-integer-screenx.html [ Failure ]
+webkit.org/b/277166 imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open-features-non-integer-top.html [ Failure ]
+webkit.org/b/277166 imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open-features-tokenization-screenx-screeny.html [ Failure ]
+webkit.org/b/277166 imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open-features-tokenization-top-left.html [ Failure ]
+
+webkit.org/b/277401 editing/pasteboard/data-transfer-set-data-sanitize-url-when-copying-in-null-origin.html [ Failure ]
+webkit.org/b/277402 fast/events/context-activated-by-key-event.html [ Failure ]
+webkit.org/b/277414 imported/w3c/web-platform-tests/html/interaction/focus/document-level-focus-apis/document-has-system-focus.html [ Failure ]
+
+webkit.org/b/277426 editing/async-clipboard/clipboard-read-text-same-origin.html [ Skip ] # Timeout
+
+webkit.org/b/277427 fast/events/drag-and-drop-link-fast-multiple-times-does-not-crash.html [ Skip ] # Timeout
+
+webkit.org/b/279016 gamepad/ [ Skip ] # Timing out, see bug for details.
+
+# Tests passing in GTK3 (end).
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of tests with architecture-specific results

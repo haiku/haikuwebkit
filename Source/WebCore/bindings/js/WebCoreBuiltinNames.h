@@ -134,6 +134,9 @@ namespace WebCore {
     macro(CSSCounterStyleRule) \
     macro(CSSColor) \
     macro(CSSColorValue) \
+    macro(CSSFunctionDeclarations) \
+    macro(CSSFunctionDescriptors) \
+    macro(CSSFunctionRule) \
     macro(CSSHSL) \
     macro(CSSHWB) \
     macro(CSSImageValue) \
@@ -293,6 +296,7 @@ namespace WebCore {
     macro(InstallEvent) \
     macro(IntersectionObserver) \
     macro(IntersectionObserverEntry) \
+    macro(LargestContentfulPaint) \
     macro(KeyframeEffect) \
     macro(Lock) \
     macro(LockManager) \

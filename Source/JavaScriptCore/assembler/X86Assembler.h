@@ -6215,19 +6215,16 @@ public:
         setPointer(static_cast<char*>(code) + where.offset(), value);
     }
 
-    template<RepatchingInfo repatch = memcpyRepatch>
     static void relinkJump(void* from, void* to)
     {
         setRel32(from, to);
     }
     
-    template <RepatchingInfo repatch = memcpyRepatch>
     static void relinkCall(void* from, void* to)
     {
         setRel32(from, to);
     }
 
-    template <RepatchingInfo repatch = memcpyRepatch>
     static void relinkTailCall(void* from, void* to)
     {
         relinkJump(from, to);

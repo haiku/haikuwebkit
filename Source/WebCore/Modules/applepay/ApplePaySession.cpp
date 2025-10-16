@@ -45,6 +45,7 @@
 #include "ApplePayShippingMethodSelectedEvent.h"
 #include "ApplePayShippingMethodUpdate.h"
 #include "ApplePayValidateMerchantEvent.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
 #include "EventNames.h"
@@ -1216,6 +1217,11 @@ bool ApplePaySession::isFinalState() const
 bool ApplePaySession::virtualHasPendingActivity() const
 {
     return m_state != State::Idle && !isFinalState();
+}
+
+ScriptExecutionContext* ApplePaySession::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 } // namespace WebCore

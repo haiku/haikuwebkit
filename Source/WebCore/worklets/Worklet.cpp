@@ -27,6 +27,7 @@
 #include "Worklet.h"
 
 #include "ContentSecurityPolicy.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "JSDOMPromiseDeferred.h"

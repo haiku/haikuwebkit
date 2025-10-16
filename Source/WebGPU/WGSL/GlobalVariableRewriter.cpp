@@ -1022,6 +1022,18 @@ std::optional<Error> RewriteGlobalVariables::visitEntryPoint(const CallGraph::En
     }
     case ShaderStage::Vertex:
         m_entryPointInformation->typedEntryPoint = Reflection::Vertex { false };
+        if (entryPoint.function.returnTypeInvariant())
+            m_entryPointInformation->usesInvariant = true;
+        else if (auto* returnType = entryPoint.function.maybeReturnType()) {
+            if (auto* structType = std::get_if<Types::Struct>(returnType->inferredType())) {
+                for (const auto& member : structType->structure.members()) {
+                    if (member.invariant()) {
+                        m_entryPointInformation->usesInvariant = true;
+                        break;
+                    }
+                }
+            }
+        }
         break;
     case ShaderStage::Fragment:
         m_entryPointInformation->typedEntryPoint = Reflection::Fragment { };

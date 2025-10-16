@@ -95,20 +95,20 @@ WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(table_copy, IPIntStackEntry* sp, TableCopyMeta
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(table_size, int32_t);
 
 // Wasm-GC
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(struct_new, Wasm::TypeIndex, IPIntStackEntry* sp);
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(struct_new_default, Wasm::TypeIndex);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(struct_new, uint32_t, IPIntStackEntry* sp);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(struct_new_default, uint32_t);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(struct_get, EncodedJSValue, uint32_t);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(struct_get_s, EncodedJSValue, uint32_t);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(struct_set, EncodedJSValue, uint32_t, IPIntStackEntry*);
 
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new, Wasm::TypeIndex, EncodedJSValue, uint32_t);
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new_default, Wasm::TypeIndex, uint32_t);
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new_fixed, Wasm::TypeIndex, uint32_t, IPIntStackEntry*);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new, uint32_t, EncodedJSValue, uint32_t);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new_default, uint32_t, uint32_t);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new_fixed, uint32_t, uint32_t, IPIntStackEntry*);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new_data, IPInt::ArrayNewDataMetadata*, uint32_t, uint32_t);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_new_elem, IPInt::ArrayNewElemMetadata*, uint32_t, uint32_t);
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_get, Wasm::TypeIndex, EncodedJSValue, uint32_t);
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_get_s, Wasm::TypeIndex, EncodedJSValue, uint32_t);
-WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_set, Wasm::TypeIndex, IPIntStackEntry*);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_get, uint32_t, EncodedJSValue, uint32_t);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_get_s, uint32_t, EncodedJSValue, uint32_t);
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_set, uint32_t, IPIntStackEntry*);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_fill, IPIntStackEntry* sp);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_copy, IPIntStackEntry* sp);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(array_init_data, uint32_t, IPIntStackEntry* sp);

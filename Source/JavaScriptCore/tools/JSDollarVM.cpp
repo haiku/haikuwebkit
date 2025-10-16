@@ -2150,6 +2150,7 @@ static JSC_DECLARE_HOST_FUNCTION(functionCpuClflush);
 static JSC_DECLARE_HOST_FUNCTION(functionLLintTrue);
 static JSC_DECLARE_HOST_FUNCTION(functionBaselineJITTrue);
 static JSC_DECLARE_HOST_FUNCTION(functionNoInline);
+static JSC_DECLARE_HOST_FUNCTION(functionIsNeverInline);
 static JSC_DECLARE_HOST_FUNCTION(functionTriggerMemoryPressure);
 static JSC_DECLARE_HOST_FUNCTION(functionGC);
 static JSC_DECLARE_HOST_FUNCTION(functionEdenGC);
@@ -2613,6 +2614,24 @@ JSC_DEFINE_HOST_FUNCTION(functionNoInline, (JSGlobalObject*, CallFrame* callFram
         executable->setNeverInline(true);
     
     return JSValue::encode(jsUndefined());
+}
+
+// Check that the argument function is never inlined (set by $vm.noInline or the @neverInline attribute)
+// Usage:
+// function f() {}
+// $vm.isNeverInline(f);
+JSC_DEFINE_HOST_FUNCTION(functionIsNeverInline, (JSGlobalObject*, CallFrame* callFrame))
+{
+    DollarVMAssertScope assertScope;
+    if (callFrame->argumentCount() < 1)
+        return JSValue::encode(jsBoolean(false));
+
+    JSValue theFunctionValue = callFrame->uncheckedArgument(0);
+
+    if (FunctionExecutable* executable = getExecutableForFunction(theFunctionValue))
+        return JSValue::encode(jsBoolean(executable->neverInline()));
+
+    return JSValue::encode(jsBoolean(false));
 }
 
 // Runs a full GC synchronously.
@@ -4354,6 +4373,7 @@ void JSDollarVM::finishCreation(VM& vm)
     addFunction(vm, "baselineJITTrue"_s, functionBaselineJITTrue, 0);
 
     addFunction(vm, "noInline"_s, functionNoInline, 1);
+    addFunction(vm, "isNeverInline"_s, functionIsNeverInline, 1);
 
     addFunction(vm, "triggerMemoryPressure"_s, functionTriggerMemoryPressure, 0);
     addFunction(vm, "gc"_s, functionGC, 0);

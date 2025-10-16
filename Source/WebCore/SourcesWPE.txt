@@ -65,6 +65,8 @@ platform/graphics/PlatformDisplay.cpp @no-unify
 
 platform/graphics/angle/PlatformDisplayANGLE.cpp @no-unify
 
+platform/graphics/glib/ImageAdapterGLib.cpp
+
 platform/graphics/wpe/SystemFontDatabaseWPE.cpp
 
 platform/graphics/egl/GLContext.cpp @no-unify

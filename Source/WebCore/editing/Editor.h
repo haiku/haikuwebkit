@@ -506,7 +506,7 @@ public:
 
     WEBCORE_EXPORT String selectedText() const;
     String selectedTextForDataTransfer() const;
-    WEBCORE_EXPORT bool findString(const String&, FindOptions);
+    WEBCORE_EXPORT std::optional<SimpleRange> findString(const String&, FindOptions);
 
     WEBCORE_EXPORT std::optional<SimpleRange> rangeOfString(const String&, const std::optional<SimpleRange>& searchRange, FindOptions);
 

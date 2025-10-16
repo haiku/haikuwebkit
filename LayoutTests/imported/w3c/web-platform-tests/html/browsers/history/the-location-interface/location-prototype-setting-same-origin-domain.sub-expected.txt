@@ -1,4 +1,4 @@
-Blocked access to external URL http://www.localhost:8801/common/domain-setter.sub.html
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8801/common/domain-setter.sub.html
 
 
 PASS Same-origin-domain prerequisite check: the original prototype is accessible

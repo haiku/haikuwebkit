@@ -88,16 +88,16 @@ void WebPermissionController::query(WebCore::ClientOrigin&& origin, WebCore::Per
     }
 #endif
 
-    if (descriptor.name == WebCore::PermissionName::StorageAccess) {
-        Ref networkProcess = WebProcess::singleton().ensureNetworkProcessConnection().connection();
-        networkProcess->sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::QueryStorageAccessPermission(WebCore::RegistrableDomain { origin.clientOrigin }, WebCore::RegistrableDomain { origin.topOrigin }), WTFMove(completionHandler));
-        return;
-    }
-
     std::optional<WebPageProxyIdentifier> proxyIdentifier;
     if (source == WebCore::PermissionQuerySource::Window || source == WebCore::PermissionQuerySource::DedicatedWorker) {
         ASSERT(page);
         proxyIdentifier = WebPage::fromCorePage(*page)->webPageProxyIdentifier();
+    }
+
+    if (descriptor.name == WebCore::PermissionName::StorageAccess) {
+        Ref networkProcess = WebProcess::singleton().ensureNetworkProcessConnection().connection();
+        networkProcess->sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::QueryStorageAccessPermission(WebCore::RegistrableDomain { origin.clientOrigin }, WebCore::RegistrableDomain { origin.topOrigin }, proxyIdentifier), WTFMove(completionHandler));
+        return;
     }
 
     WebProcess::singleton().sendWithAsyncReply(Messages::WebPermissionControllerProxy::Query(origin, descriptor, proxyIdentifier, source), WTFMove(completionHandler));

@@ -371,6 +371,11 @@ bool SpeechSynthesis::virtualHasPendingActivity() const
     return m_voiceList && m_hasEventListener;
 }
 
+ScriptExecutionContext* SpeechSynthesis::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void SpeechSynthesis::eventListenersDidChange()
 {
     m_hasEventListener = hasEventListeners(eventNames().voiceschangedEvent);

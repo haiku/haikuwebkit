@@ -1266,7 +1266,7 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
                 return;
             }
 
-            auto image = bitmap->makeCGImageCopy();
+            RetainPtr image = bitmap->createPlatformImage();
             [printFormatter _setPrintPreviewImage:image.get()];
         });
 

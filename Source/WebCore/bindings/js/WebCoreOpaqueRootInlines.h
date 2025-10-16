@@ -25,8 +25,6 @@
 
 #pragma once
 
-#include <WebCore/DocumentInlines.h>
-#include <WebCore/ElementInlines.h>
 #include <WebCore/JSNodeCustomInlines.h>
 #include <WebCore/WebCoreOpaqueRoot.h>
 

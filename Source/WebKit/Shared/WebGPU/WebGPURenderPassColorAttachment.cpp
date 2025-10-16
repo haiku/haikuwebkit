@@ -35,9 +35,16 @@
 
 namespace WebKit::WebGPU {
 
+static WebGPUIdentifier getIdentifier(ConvertToBackingContext& convertToBacking, const WebCore::WebGPU::RenderPassColorAttachment& renderPassColorAttachment)
+{
+    if (RefPtr view = renderPassColorAttachment.protectedView().get())
+        return convertToBacking.convertToBacking(*view);
+
+    return convertToBacking.convertToBacking(*renderPassColorAttachment.protectedTexture().get());
+}
 std::optional<RenderPassColorAttachment> ConvertToBackingContext::convertToBacking(const WebCore::WebGPU::RenderPassColorAttachment& renderPassColorAttachment)
 {
-    auto view = convertToBacking(renderPassColorAttachment.protectedView().get());
+    auto identifier = getIdentifier(*this, renderPassColorAttachment);
 
     std::optional<WebGPUIdentifier> resolveTarget;
     if (renderPassColorAttachment.resolveTarget) {
@@ -53,13 +60,14 @@ std::optional<RenderPassColorAttachment> ConvertToBackingContext::convertToBacki
             return std::nullopt;
     }
 
-    return { { view, renderPassColorAttachment.depthSlice, resolveTarget, WTFMove(clearValue), renderPassColorAttachment.loadOp, renderPassColorAttachment.storeOp } };
+    return { { identifier, renderPassColorAttachment.depthSlice, resolveTarget, WTFMove(clearValue), renderPassColorAttachment.loadOp, renderPassColorAttachment.storeOp } };
 }
 
 std::optional<WebCore::WebGPU::RenderPassColorAttachment> ConvertFromBackingContext::convertFromBacking(const RenderPassColorAttachment& renderPassColorAttachment)
 {
     WeakPtr view = convertTextureViewFromBacking(renderPassColorAttachment.view);
-    if (!view)
+    WeakPtr texture = convertTextureFromBacking(renderPassColorAttachment.view);
+    if (!view && !texture)
         return std::nullopt;
 
     WeakPtr<WebCore::WebGPU::TextureView> resolveTarget;
@@ -76,7 +84,13 @@ std::optional<WebCore::WebGPU::RenderPassColorAttachment> ConvertFromBackingCont
             return std::nullopt;
     }
 
-    return { { *view, renderPassColorAttachment.depthSlice, resolveTarget, WTFMove(clearValue), renderPassColorAttachment.loadOp, renderPassColorAttachment.storeOp } };
+    WebCore::WebGPU::RenderPassColorAttachmentView viewTextureVariant = [&] -> WebCore::WebGPU::RenderPassColorAttachmentView {
+        if (view)
+            return *view;
+
+        return *texture;
+    }();
+    return { { viewTextureVariant, renderPassColorAttachment.depthSlice, resolveTarget, WTFMove(clearValue), renderPassColorAttachment.loadOp, renderPassColorAttachment.storeOp } };
 }
 
 } // namespace WebKit

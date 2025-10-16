@@ -299,6 +299,8 @@ public:
     WriteBarrier<JSFunction> m_performProxyObjectSetSloppyFunction;
     WriteBarrier<JSFunction> m_performProxyObjectSetByValStrictFunction;
     WriteBarrier<JSFunction> m_performProxyObjectSetByValSloppyFunction;
+    WriteBarrier<JSFunction> m_promiseReactionJobFunction;
+    WriteBarrier<JSFunction> m_promiseReactionJobWithoutPromiseFunction;
     WriteBarrier<JSObject> m_regExpProtoSymbolReplace;
     LazyProperty<JSGlobalObject, GetterSetter> m_throwTypeErrorArgumentsCalleeGetterSetter;
 
@@ -369,7 +371,7 @@ public:
     WriteBarrierStructureID m_regExpStructure;
 
     WriteBarrierStructureID m_asyncFunctionStructure;
-    LazyProperty<JSGlobalObject, Structure> m_asyncFromSyncIteratorStructure;
+    WriteBarrierStructureID m_asyncFromSyncIteratorStructure;
     WriteBarrierStructureID m_asyncGeneratorFunctionStructure;
     WriteBarrierStructureID m_generatorFunctionStructure;
     WriteBarrierStructureID m_generatorStructure;
@@ -437,6 +439,7 @@ public:
     WriteBarrier<GetterSetter> m_typedArraySpeciesGetterSetter;
     WriteBarrier<GetterSetter> m_arrayBufferSpeciesGetterSetter;
     WriteBarrier<GetterSetter> m_sharedArrayBufferSpeciesGetterSetter;
+    WriteBarrier<JSObject> m_unhandledRejectionCallback;
 
     LazyProperty<JSGlobalObject, JSTypedArrayViewPrototype> m_typedArrayProto;
     LazyProperty<JSGlobalObject, JSTypedArrayViewConstructor> m_typedArraySuperConstructor;
@@ -452,8 +455,6 @@ public:
     StructureCache m_structureCache;
 
     String m_name;
-
-    Strong<JSObject> m_unhandledRejectionCallback;
 
     Debugger* m_debugger;
 
@@ -726,6 +727,8 @@ public:
     JSFunction* parseIntFunction() const { return m_parseIntFunction.get(this); }
     JSFunction* parseFloatFunction() const { return m_parseFloatFunction.get(this); }
 
+    JSFunction* promiseReactionJobFunction() const { return m_promiseReactionJobFunction.get(); }
+    JSFunction* promiseReactionJobWithoutPromiseFunction() const { return m_promiseReactionJobWithoutPromiseFunction.get(); }
     JSFunction* evalFunction() const;
     JSFunction* throwTypeErrorFunction() const;
     JSFunction* objectProtoToStringFunction() const { return m_objectProtoToStringFunction.get(this); }
@@ -893,7 +896,7 @@ public:
     Structure* regExpStructure() const { return m_regExpStructure.get(); }
     Structure* shadowRealmStructure() const { return m_shadowRealmObjectStructure.get(); }
     Structure* generatorStructure() const { return m_generatorStructure.get(); }
-    Structure* asyncFromSyncIteratorStructure() const { return m_asyncFromSyncIteratorStructure.get(this); }
+    Structure* asyncFromSyncIteratorStructure() const { return m_asyncFromSyncIteratorStructure.get(); }
     Structure* asyncGeneratorStructure() const { return m_asyncGeneratorStructure.get(); }
     Structure* generatorFunctionStructure() const { return m_generatorFunctionStructure.get(); }
     Structure* asyncFunctionStructure() const { return m_asyncFunctionStructure.get(); }

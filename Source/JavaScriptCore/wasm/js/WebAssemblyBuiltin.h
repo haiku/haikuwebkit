@@ -119,15 +119,15 @@ public:
     using WasmTrampolinePtr = EncodedJSValue (*)();
     friend class WebAssemblyBuiltinSet;
 
-    template <typename WasmEntryPoint>
-    WebAssemblyBuiltin(uint32_t id, ASCIILiteral name, WebAssemblyBuiltinSignature&& sig, WasmEntryPoint wasmEntryPoint, WasmTrampolinePtr wasmTrampoline, NativeFunction jsEntryPoint)
+    template <typename WasmEntrypoint>
+    WebAssemblyBuiltin(uint32_t id, ASCIILiteral name, WebAssemblyBuiltinSignature&& sig, WasmEntrypoint wasmEntrypoint, WasmTrampolinePtr wasmTrampoline, NativeFunction jsHostFunction)
         : m_id(id)
         , m_name(name)
         , m_signature(WTFMove(sig))
-        , m_jsEntryPoint(jsEntryPoint)
+        , m_jsHostFunction(jsHostFunction)
     {
         ASSERT(sig.numParams() <= 4); // see generateWasmBuiltinTrampoline() for why this is the limit
-        m_wasmEntryPoint = CodePtr<CFunctionPtrTag>::fromTaggedPtr(std::bit_cast<void*>(wasmEntryPoint));
+        m_wasmEntrypoint = CodePtr<CFunctionPtrTag>::fromTaggedPtr(std::bit_cast<void*>(wasmEntrypoint));
         m_wasmTrampoline = CodePtr<CFunctionPtrTag>::fromTaggedPtr(std::bit_cast<void*>(wasmTrampoline)).template retagged<WasmEntryPtrTag>();
     }
 
@@ -142,9 +142,9 @@ public:
     // The signature that a valid import of this builtin must match.
     const WebAssemblyBuiltinSignature& signature() const { return m_signature; }
 
-    CodePtr<CFunctionPtrTag> wasmEntryPoint() const { return m_wasmEntryPoint; }
+    CodePtr<CFunctionPtrTag> wasmEntrypoint() const { return m_wasmEntrypoint; }
     CodePtr<WasmEntryPtrTag> wasmTrampoline() const { return m_wasmTrampoline; }
-    // Return a JSFunction wrapping m_jsEntryPoint.
+    // Return a JSFunction wrapping m_jsHostFunction.
     JSObject* jsWrapper(JSGlobalObject*) const;
 
     Wasm::WasmBuiltinCallee* callee() const { return m_callee.get(); }
@@ -155,9 +155,9 @@ private:
     uint32_t m_id;
     ASCIILiteral m_name;
     WebAssemblyBuiltinSignature m_signature;
-    CodePtr<CFunctionPtrTag> m_wasmEntryPoint;
+    CodePtr<CFunctionPtrTag> m_wasmEntrypoint;
     CodePtr<WasmEntryPtrTag> m_wasmTrampoline;
-    NativeFunction m_jsEntryPoint;
+    NativeFunction m_jsHostFunction;
     // The following are set by WasmBuiltinSet::finalizeCreation()
     const Wasm::Name* m_wasmName;
     RefPtr<Wasm::NameSection> m_nameSection;

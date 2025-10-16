@@ -132,7 +132,8 @@ RefPtr<LocalFrame> FindController::frameWithSelection(Page* page)
         auto* localFrame = dynamicDowncast<LocalFrame>(frame.get());
         if (!localFrame)
             continue;
-        if (localFrame->selection().isRange())
+
+        if (localFrame->selection().isCaretOrRange())
             return localFrame;
     }
     return nullptr;
@@ -301,6 +302,7 @@ void FindController::findString(const String& string, OptionSet<FindOptions> opt
 
     bool found;
     std::optional<FrameIdentifier> idOfFrameContainingString;
+    std::optional<SimpleRange> foundRange;
     auto didWrap = WebCore::DidWrap::No;
 #if ENABLE(PDF_PLUGIN)
     if (pluginView) {
@@ -310,8 +312,16 @@ void FindController::findString(const String& string, OptionSet<FindOptions> opt
     } else
 #endif
     {
-        idOfFrameContainingString = webPage->protectedCorePage()->findString(string, coreOptions, &didWrap);
+        auto [frameID, range] = webPage->protectedCorePage()->findString(string, coreOptions, &didWrap);
+        idOfFrameContainingString = frameID;
+        foundRange = range;
         found = idOfFrameContainingString.has_value();
+
+        RefPtr selectedFrame = frameWithSelection(webPage->protectedCorePage().get());
+        if (foundRange && selectedFrame) {
+            m_lastFoundRange = foundRange;
+            m_lastSelection = selectedFrame->checkedSelection()->selection().toNormalizedRange();
+        }
     }
 
     if (found && !options.contains(FindOptions::DoNotSetSelection)) {
@@ -438,6 +448,9 @@ void FindController::hideFindUI()
     hideFindIndicator();
     resetMatchIndex();
 
+    m_lastFoundRange = std::nullopt;
+    m_lastSelection = std::nullopt;
+
 #if ENABLE(IMAGE_ANALYSIS)
     if (RefPtr imageAnalysisQueue = m_webPage->corePage()->imageAnalysisQueueIfExists())
         imageAnalysisQueue->clearDidBecomeEmptyCallback();
@@ -458,8 +471,12 @@ bool FindController::updateFindIndicator(bool isShowingOverlay, bool shouldAnima
             return { webPage->mainFrame(), pluginView->textIndicatorForCurrentSelection(textIndicatorOptions, presentationTransition) };
 #endif
         if (RefPtr selectedFrame = frameWithSelection(webPage->protectedCorePage().get())) {
-            if (auto selectedRange = selectedFrame->checkedSelection()->selection().range(); selectedRange && ImageOverlay::isInsideOverlay(*selectedRange))
+            auto selectedRange = selectedFrame->checkedSelection()->selection().toNormalizedRange();
+            if (selectedRange && ImageOverlay::isInsideOverlay(*selectedRange))
                 textIndicatorOptions.add({ TextIndicatorOption::PaintAllContent, TextIndicatorOption::PaintBackgrounds });
+
+            if (selectedRange && selectedRange->collapsed() && selectedRange == m_lastSelection)
+                return { selectedFrame, TextIndicator::createWithRange(*m_lastFoundRange, textIndicatorOptions, presentationTransition) };
 
             return { selectedFrame, TextIndicator::createWithSelectionInFrame(*selectedFrame, textIndicatorOptions, presentationTransition) };
         }

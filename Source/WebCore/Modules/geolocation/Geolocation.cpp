@@ -30,6 +30,7 @@
 
 #if ENABLE(GEOLOCATION)
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "EventLoop.h"

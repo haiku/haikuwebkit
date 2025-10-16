@@ -231,14 +231,9 @@ void JSWebAssemblyInstance::finalizeCreation(VM& vm, JSGlobalObject* globalObjec
     for (unsigned importFunctionNum = 0; importFunctionNum < numImportFunctions(); ++importFunctionNum) {
         auto functionSpaceIndex = FunctionSpaceIndex(importFunctionNum);
         auto* info = importFunctionInfo(importFunctionNum);
-        if (!info->targetInstance) {
+        if (!info->boxedCallee || info->isJS()) {
             // the import is a JS function
             info->importFunctionStub = module().importFunctionStub(functionSpaceIndex);
-            importCallees.append(adoptRef(*new WasmToJSCallee(functionSpaceIndex, { nullptr, nullptr })));
-            ASSERT(*info->boxedWasmCalleeLoadLocation == CalleeBits::nullCallee());
-            info->boxedCallee = CalleeBits::encodeNativeCallee(importCallees.last().ptr());
-            info->boxedWasmCalleeLoadLocation = &info->boxedCallee;
-
             auto callLinkInfo = makeUnique<DataOnlyCallLinkInfo>();
             callLinkInfo->initialize(vm, nullptr, CallLinkInfo::CallType::Call, CodeOrigin { });
             WTF::storeStoreFence(); // CallLinkInfo is visited by concurrent GC already, thus, when we add it, we must ensure that it is fully initialized.
@@ -246,14 +241,12 @@ void JSWebAssemblyInstance::finalizeCreation(VM& vm, JSGlobalObject* globalObjec
             vm.writeBarrier(this); // Materialized CallLinkInfo and we need rescan of JSWebAssemblyInstance.
         } else {
             // the import is a Wasm function or a builtin
-            auto calleeBits = *info->boxedWasmCalleeLoadLocation;
+            auto calleeBits = info->boxedCallee;
             if (calleeBits.isNativeCallee()) {
                 auto* callee = std::bit_cast<Callee*>(calleeBits.asNativeCallee());
                 // if the callee is a builtin, info->importFunctionStub has already been set
-                if (callee->compilationMode() != CompilationMode::WasmBuiltinMode) {
+                if (callee->compilationMode() != CompilationMode::WasmBuiltinMode)
                     info->importFunctionStub = wasmCalleeGroup->wasmToWasmExitStub(functionSpaceIndex);
-                    ASSERT(info->boxedWasmCalleeLoadLocation && *info->boxedWasmCalleeLoadLocation);
-                }
             }
         }
     }
@@ -542,7 +535,7 @@ void JSWebAssemblyInstance::initElementSegment(uint32_t tableIndex, const Elemen
                 continue;
             }
 
-            auto& jsEntrypointCallee = calleeGroup()->jsEntrypointCalleeFromFunctionIndexSpace(functionIndex);
+            auto& jsToWasmCallee = calleeGroup()->jsToWasmCalleeFromFunctionIndexSpace(functionIndex);
             auto wasmCallee = calleeGroup()->wasmCalleeFromFunctionIndexSpace(functionIndex);
             ASSERT(wasmCallee);
             WasmToWasmImportableFunction::LoadLocation entrypointLoadLocation = calleeGroup()->entrypointLoadLocationFromFunctionIndexSpace(functionIndex);
@@ -558,7 +551,7 @@ void JSWebAssemblyInstance::initElementSegment(uint32_t tableIndex, const Elemen
                 signature.argumentCount(),
                 WTF::makeString(functionIndex.rawIndex()),
                 this,
-                jsEntrypointCallee,
+                jsToWasmCallee,
                 *wasmCallee,
                 entrypointLoadLocation,
                 typeIndex,

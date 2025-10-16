@@ -37,7 +37,7 @@
 #import "SwapBuffersDisplayRequirement.h"
 #import <WebCore/GraphicsContext.h>
 #import <WebCore/IOSurfacePool.h>
-#import <WebCore/ImageBufferPixelFormat.h>
+#import <WebCore/PixelFormat.h>
 #import <WebCore/PlatformCALayerClient.h>
 #import <wtf/Scope.h>
 #import <wtf/TZoneMalloc.h>

@@ -39,6 +39,7 @@
 #include "AudioTrackPrivate.h"
 #include "ContentType.h"
 #include "ContentTypeUtilities.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "Event.h"
 #include "EventNames.h"

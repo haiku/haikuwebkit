@@ -153,7 +153,6 @@ struct WGPUQueueDescriptor;
 struct WGPURenderBundleDescriptor;
 struct WGPURenderBundleEncoderDescriptor;
 struct WGPURenderPassDepthStencilAttachment;
-struct WGPURenderPassDescriptorMaxDrawCount;
 struct WGPURenderPassTimestampWrites;
 struct WGPURequestAdapterOptions;
 struct WGPUSamplerBindingLayout;
@@ -491,7 +490,6 @@ typedef enum WGPUSType {
     WGPUSType_SurfaceDescriptorFromWaylandSurface = 0x00000008,
     WGPUSType_SurfaceDescriptorFromAndroidNativeWindow = 0x00000009,
     WGPUSType_SurfaceDescriptorFromXcbWindow = 0x0000000A,
-    WGPUSType_RenderPassDescriptorMaxDrawCount = 0x0000000F,
     WGPUSType_Force32 = 0x7FFFFFFF
 } WGPUSType WGPU_ENUM_ATTRIBUTE;
 
@@ -1018,12 +1016,6 @@ typedef struct WGPURenderPassDepthStencilAttachment {
     WGPUBool stencilReadOnly;
 } SWIFT_ESCAPABLE WGPURenderPassDepthStencilAttachment WGPU_STRUCTURE_ATTRIBUTE;
 
-// Can be chained in WGPURenderPassDescriptor
-typedef struct WGPURenderPassDescriptorMaxDrawCount {
-    WGPUChainedStruct chain;
-    uint64_t maxDrawCount;
-} SWIFT_ESCAPABLE WGPURenderPassDescriptorMaxDrawCount WGPU_STRUCTURE_ATTRIBUTE;
-
 typedef struct WGPURenderPassTimestampWrites {
     WGPUQuerySet querySet;
     uint32_t beginningOfPassWriteIndex;
@@ -1294,6 +1286,7 @@ typedef struct WGPUProgrammableStageDescriptor {
 
 typedef struct WGPURenderPassColorAttachment {
     WGPUChainedStruct const * nextInChain;
+    WGPU_NULLABLE WGPUTexture texture;
     WGPU_NULLABLE WGPUTextureView view;
     std::optional<uint32_t> depthSlice;
     WGPU_NULLABLE WGPUTextureView resolveTarget;
@@ -1382,7 +1375,7 @@ typedef struct WGPUDeviceDescriptor {
 } WGPUDeviceDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderPassDescriptor {
-    WGPUChainedStruct const * nextInChain;
+    uint64_t maxDrawCount;
     WGPU_NULLABLE char const * label;
     size_t colorAttachmentCount;
     WGPURenderPassColorAttachment const * colorAttachments;
@@ -1392,10 +1385,6 @@ typedef struct WGPURenderPassDescriptor {
 
     auto colorAttachmentsSpan() const { return unsafeMakeSpan(colorAttachments, colorAttachmentCount); }
 } __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPURenderPassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
-
-inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorNextChainedStruct(const WGPURenderPassDescriptor * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
-    return descriptor->nextInChain;
-}
 
 inline WGPURenderPassTimestampWrites const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorTimestampWrites(const WGPURenderPassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor) {
     return descriptor->timestampWrites;

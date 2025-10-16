@@ -27,6 +27,7 @@
 #include "BroadcastChannel.h"
 
 #include "BroadcastChannelRegistry.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "EventNames.h"
@@ -265,6 +266,11 @@ void BroadcastChannel::dispatchMessage(Ref<SerializedScriptValue>&& message)
 
         channel.dispatchEvent(event.event);
     });
+}
+
+ScriptExecutionContext* BroadcastChannel::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void BroadcastChannel::eventListenersDidChange()

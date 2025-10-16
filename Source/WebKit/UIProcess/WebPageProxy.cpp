@@ -289,6 +289,7 @@
 #include <wtf/SystemTracing.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/URL.h>
+#include <wtf/URLHash.h>
 #include <wtf/URLParser.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/MakeString.h>
@@ -1944,7 +1945,11 @@ void WebPageProxy::maybeInitializeSandboxExtensionHandle(WebProcessProxy& proces
     if (!url.protocolIsFile())
         return completionHandler(std::nullopt);
 
-    WEBPAGEPROXY_RELEASE_LOG(Sandbox, "maybeInitializeSandboxExtensionHandle: url = %{private}s, resourceDirectoryURL = %{private}s, checkAssumedReadAccessToResourceURL = %d", url.string().utf8().data(),  resourceDirectoryURL.string().utf8().data(), checkAssumedReadAccessToResourceURL);
+#if !RELEASE_LOG_DISABLED
+    auto urlHash = url.isValid() ? WTF::URLHash::hash(url) : 0;
+    auto resourceDirectoryURLHash = resourceDirectoryURL.isValid() ? WTF::URLHash::hash(resourceDirectoryURL) : 0;
+#endif
+    WEBPAGEPROXY_RELEASE_LOG(Sandbox, "maybeInitializeSandboxExtensionHandle: url(%u) = %{private}s, resourceDirectoryURL(%u) = %{private}s, checkAssumedReadAccessToResourceURL = %d", urlHash, url.string().utf8().data(), resourceDirectoryURLHash, resourceDirectoryURL.string().utf8().data(), checkAssumedReadAccessToResourceURL);
 
 #if HAVE(AUDIT_TOKEN)
     // If the process is still launching then it does not have a PID yet. We will take care of creating the sandbox extension
@@ -1974,6 +1979,9 @@ void WebPageProxy::maybeInitializeSandboxExtensionHandle(WebProcessProxy& proces
     };
 
     if (!resourceDirectoryURL.isEmpty()) {
+        if (!url.string().startsWith(resourceDirectoryURL.string()))
+            WEBPAGEPROXY_RELEASE_LOG_ERROR(Sandbox, "maybeInitializeSandboxExtensionHandle: url is not inside resource directory url");
+
         if (checkAssumedReadAccessToResourceURL && process.hasAssumedReadAccessToURL(resourceDirectoryURL)) {
 #if PLATFORM(COCOA)
             // Check the actual access to this directory in the WebContent process, since a sandbox extension created earlier could have been revoked in the WebContent process by now.
@@ -7285,8 +7293,7 @@ void WebPageProxy::didCommitLoadForFrame(IPC::Connection& connection, FrameIdent
     if (frame->isMainFrame()) {
         protectedPageLoadState->didCommitLoad(transaction, certificateInfo, markPageInsecure, usedLegacyTLS, wasPrivateRelayed, WTFMove(proxyName), source, frameInfo.securityOrigin);
         m_shouldSuppressNextAutomaticNavigationSnapshot = false;
-        if (preferences->siteIsolationEnabled())
-            m_framesWithSubresourceLoadingForPageLoadTiming.clear();
+        m_framesWithSubresourceLoadingForPageLoadTiming.clear();
     }
 
 #if USE(APPKIT)
@@ -13884,7 +13891,7 @@ void WebPageProxy::takeSnapshot(const IntRect& rect, const IntSize& bitmapSize, 
         WTF::switchOn(*imageHandle,
             [&image] (WebCore::ShareableBitmap::Handle& handle) {
                 if (RefPtr bitmap = WebCore::ShareableBitmap::create(WTFMove(handle), WebCore::SharedMemory::Protection::ReadOnly))
-                    image = bitmap->makeCGImage();
+                    image = bitmap->createPlatformImage(DontCopyBackingStore);
             }
             , [&image] (MachSendRight& machSendRight) {
                 if (auto surface = WebCore::IOSurface::createFromSendRight(WTFMove(machSendRight)))

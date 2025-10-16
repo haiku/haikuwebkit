@@ -26,6 +26,7 @@
 #include "Subscriber.h"
 
 #include "AbortSignal.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "InternalObserver.h"
 #include "JSDOMExceptionHandling.h"

@@ -237,13 +237,15 @@ void AuxiliaryProcess::preferenceDidUpdate(const String& domain, const String& k
     handlePreferenceChange(domain, key, value.get());
 }
 
-#if !HAVE(UPDATE_WEB_ACCESSIBILITY_SETTINGS) && PLATFORM(IOS_FAMILY)
-static const WTF::String& increaseContrastPreferenceKey()
+const WTF::String& AuxiliaryProcess::increaseContrastPreferenceKey()
 {
+#if PLATFORM(MAC)
+    static NeverDestroyed<WTF::String> key(MAKE_STATIC_STRING_IMPL("increaseContrast"));
+#else
     static NeverDestroyed<WTF::String> key(MAKE_STATIC_STRING_IMPL("DarkenSystemColors"));
+#endif
     return key;
 }
-#endif
 
 #if USE(APPKIT)
 static const WTF::String& invertColorsPreferenceKey()

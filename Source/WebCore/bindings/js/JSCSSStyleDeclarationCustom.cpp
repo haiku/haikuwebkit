@@ -27,11 +27,13 @@
 #include "JSCSSStyleDeclaration.h"
 
 #include "CSSFontFaceDescriptors.h"
+#include "CSSFunctionDescriptors.h"
 #include "CSSPageDescriptors.h"
 #include "CSSPositionTryDescriptors.h"
 #include "CSSStyleProperties.h"
 #include "DOMWrapperWorld.h"
 #include "JSCSSFontFaceDescriptors.h"
+#include "JSCSSFunctionDescriptors.h"
 #include "JSCSSPageDescriptors.h"
 #include "JSCSSPositionTryDescriptors.h"
 #include "JSCSSRuleCustom.h"
@@ -78,6 +80,8 @@ JSValue toJSNewlyCreated(JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<C
         return createWrapper<CSSPageDescriptors>(globalObject, WTFMove(declaration));
     case StyleDeclarationType::PositionTry:
         return createWrapper<CSSPositionTryDescriptors>(globalObject, WTFMove(declaration));
+    case StyleDeclarationType::Function:
+        return createWrapper<CSSFunctionDescriptors>(globalObject, WTFMove(declaration));
     }
     RELEASE_ASSERT_NOT_REACHED();
 }

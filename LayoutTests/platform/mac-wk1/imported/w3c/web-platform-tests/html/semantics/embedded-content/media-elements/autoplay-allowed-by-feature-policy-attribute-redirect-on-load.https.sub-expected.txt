@@ -1,4 +1,4 @@
-Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-autoplay.html
+CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-autoplay.html
 
 
 Harness Error (TIMEOUT), message = null

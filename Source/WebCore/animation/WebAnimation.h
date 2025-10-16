@@ -30,7 +30,6 @@
 #include <WebCore/AnimationFrameRatePreset.h>
 #include <WebCore/CSSKeywordValue.h>
 #include <WebCore/CSSNumericValue.h>
-#include <WebCore/ContextDestructionObserverInlines.h>
 #include <WebCore/EventTarget.h>
 #include <WebCore/EventTargetInterfaces.h>
 #include <WebCore/ExceptionOr.h>
@@ -182,7 +181,7 @@ public:
     void progressBasedTimelineSourceDidChangeMetrics();
 
     // ContextDestructionObserver.
-    ScriptExecutionContext* scriptExecutionContext() const final { return ActiveDOMObject::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
     void contextDestroyed() final;
 
 protected:

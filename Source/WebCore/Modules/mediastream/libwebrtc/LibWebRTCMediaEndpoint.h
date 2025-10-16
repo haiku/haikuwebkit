@@ -73,7 +73,7 @@ class RTCSessionDescription;
 
 struct LibWebRTCMediaEndpointTransceiverState;
 
-class LibWebRTCMediaEndpoint
+class LibWebRTCMediaEndpoint final
     : public ThreadSafeRefCounted<LibWebRTCMediaEndpoint, WTF::DestructionThread::Main>
     , private webrtc::PeerConnectionObserver
     , private webrtc::RTCStatsCollectorCallback
@@ -83,7 +83,7 @@ class LibWebRTCMediaEndpoint
 {
 public:
     static RefPtr<LibWebRTCMediaEndpoint> create(RTCPeerConnection&, LibWebRTCProvider&, Document&, webrtc::PeerConnectionInterface::RTCConfiguration&&);
-    virtual ~LibWebRTCMediaEndpoint() = default;
+    ~LibWebRTCMediaEndpoint();
 
     void restartIce();
     bool setConfiguration(webrtc::PeerConnectionInterface::RTCConfiguration&&);
@@ -102,7 +102,7 @@ public:
 
     void close();
     void stop();
-    bool isStopped() const { return !m_backend; }
+    bool isStopped() const { return m_isStopped; }
 
     bool addTrack(LibWebRTCRtpSenderBackend&, MediaStreamTrack&, const FixedVector<String>&);
     void removeTrack(LibWebRTCRtpSenderBackend&);
@@ -186,10 +186,11 @@ private:
 #endif
 
     RefPtr<LibWebRTCPeerConnectionBackend> protectedPeerConnectionBackend() const;
+    RefPtr<webrtc::PeerConnectionInterface> createBackend(LibWebRTCProvider&, webrtc::PeerConnectionInterface::RTCConfiguration&&);
 
     WeakPtr<LibWebRTCPeerConnectionBackend> m_peerConnectionBackend;
     const Ref<webrtc::PeerConnectionFactoryInterface> m_peerConnectionFactory;
-    RefPtr<webrtc::PeerConnectionInterface> m_backend;
+    const RefPtr<webrtc::PeerConnectionInterface> m_backend;
 
     friend CreateSessionDescriptionObserver<LibWebRTCMediaEndpoint>;
     friend SetLocalSessionDescriptionObserver<LibWebRTCMediaEndpoint>;
@@ -214,6 +215,8 @@ private:
 #endif
     bool m_isGatheringRTCLogs { false };
     bool m_shouldIgnoreNegotiationNeededSignal { false };
+    bool m_isClosed { false };
+    bool m_isStopped { false };
 };
 
 } // namespace WebCore

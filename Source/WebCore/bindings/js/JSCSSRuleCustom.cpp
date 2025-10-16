@@ -31,6 +31,8 @@
 #include "CSSFontFaceRule.h"
 #include "CSSFontFeatureValuesRule.h"
 #include "CSSFontPaletteValuesRule.h"
+#include "CSSFunctionDeclarations.h"
+#include "CSSFunctionRule.h"
 #include "CSSImportRule.h"
 #include "CSSKeyframeRule.h"
 #include "CSSKeyframesRule.h"
@@ -52,6 +54,8 @@
 #include "JSCSSFontFaceRule.h"
 #include "JSCSSFontFeatureValuesRule.h"
 #include "JSCSSFontPaletteValuesRule.h"
+#include "JSCSSFunctionDeclarations.h"
+#include "JSCSSFunctionRule.h"
 #include "JSCSSImportRule.h"
 #include "JSCSSKeyframeRule.h"
 #include "JSCSSKeyframesRule.h"
@@ -131,11 +135,13 @@ JSValue toJSNewlyCreated(JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<C
         return createWrapper<CSSViewTransitionRule>(globalObject, WTFMove(rule));
     case StyleRuleType::PositionTry:
         return createWrapper<CSSPositionTryRule>(globalObject, WTFMove(rule));
+    case StyleRuleType::Function:
+        return createWrapper<CSSFunctionRule>(globalObject, WTFMove(rule));
+    case StyleRuleType::FunctionDeclarations:
+        return createWrapper<CSSFunctionDeclarations>(globalObject, WTFMove(rule));
     case StyleRuleType::Charset:
     case StyleRuleType::Margin:
     case StyleRuleType::FontFeatureValuesBlock:
-    case StyleRuleType::Function:
-    case StyleRuleType::FunctionDeclarations:
         return createWrapper<CSSRule>(globalObject, WTFMove(rule));
     }
     RELEASE_ASSERT_NOT_REACHED();

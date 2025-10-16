@@ -276,8 +276,8 @@ ALWAYS_INLINE void jitMemcpyChecks(void *dst, const void *src, size_t n)
 template<RepatchingInfo repatch>
 ALWAYS_INLINE void* performJITMemcpy(void *dst, const void *src, size_t n)
 {
-    static_assert(!repatch->contains(RepatchingFlag::Memcpy));
-    static_assert(!repatch->contains(RepatchingFlag::Flush));
+    static_assert(!(*repatch).contains(RepatchingFlag::Memcpy));
+    static_assert(!(*repatch).contains(RepatchingFlag::Flush));
     jitMemcpyChecks(dst, src, n);
     if (isJITPC(dst)) {
 #if ENABLE(MPROTECT_RX_TO_RWX)
@@ -288,10 +288,10 @@ ALWAYS_INLINE void* performJITMemcpy(void *dst, const void *src, size_t n)
 
         if (g_jscConfig.useFastJITPermissions) {
             threadSelfRestrict<MemoryRestriction::kRwxToRw>();
-            if constexpr (repatch->contains(RepatchingFlag::Atomic))
+            if constexpr ((*repatch).contains(RepatchingFlag::Atomic))
                 memcpyAtomic(dst, src, n);
             else
-                memcpyTearing(dst, src, n);
+                memcpyAtomicIfPossible(dst, src, n);
             threadSelfRestrict<MemoryRestriction::kRwxToRx>();
             jitMemcpyCheckForZeros(dst, src, n);
             return dst;
@@ -308,16 +308,12 @@ ALWAYS_INLINE void* performJITMemcpy(void *dst, const void *src, size_t n)
             return dst;
         }
 #endif
-
-        if constexpr (repatch->contains(RepatchingFlag::Atomic))
-            memcpyAtomic(dst, src, n);
-        else
-            memcpyTearing(dst, src, n);
+        memcpyAtomicIfPossible(dst, src, n);
+        jitMemcpyCheckForZeros(dst, src, n);
         return dst;
     }
 
-    RELEASE_ASSERT_NOT_REACHED();
-    return nullptr;
+    return memcpyAtomicIfPossible(dst, src, n);
 }
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
@@ -387,7 +383,6 @@ private:
     ~ExecutableAllocator() = default;
 };
 
-template<RepatchingInfo repatch>
 inline void* performJITMemcpy(void *dst, const void *src, size_t n)
 {
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN

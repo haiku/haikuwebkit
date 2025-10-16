@@ -43,6 +43,7 @@
 #include "ImageBuffer.h"
 #include "InlineIteratorInlineBox.h"
 #include "LayoutRepainter.h"
+#include "LayoutScope.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
@@ -472,27 +473,36 @@ void RenderBlock::endAndCommitUpdateScrollInfoAfterLayoutTransaction()
     transaction->blocks.clear();
 
     for (auto block : blocksToUpdate) {
-        ASSERT(block->hasNonVisibleOverflow());
-        block->layer()->updateScrollInfoAfterLayout();
+        if (block->hasControlClip() && block->hasRenderOverflow())
+            block->clearLayoutOverflow();
+        if (block->hasNonVisibleOverflow())
+            block->layer()->updateScrollInfoAfterLayout();
     }
 }
 
-void RenderBlock::updateScrollInfoAfterLayout()
+static inline bool isDelayingUpdateScrollInfoAfterLayout(const RenderBlock& renderer)
 {
-    if (!hasNonVisibleOverflow())
-        return;
-    
+    auto* transaction = renderer.view().frameView().layoutContext().updateScrollInfoAfterLayoutTransactionIfExists();
     // FIXME: https://bugs.webkit.org/show_bug.cgi?id=97937
     // Workaround for now. We cannot delay the scroll info for overflow
     // for items with opposite writing directions, as the contents needs
     // to overflow in that direction
-    if (!writingMode().isBlockFlipped()) {
-        if (auto* transaction = view().frameView().layoutContext().updateScrollInfoAfterLayoutTransactionIfExists(); transaction && transaction->nestedCount) {
-            transaction->blocks.add(*this);
+    return transaction && transaction->nestedCount && !renderer.writingMode().isBlockFlipped();
+};
+
+void RenderBlock::updateScrollInfoAfterLayout()
+{
+    auto hasNonVisibleOverflow = this->hasNonVisibleOverflow();
+
+    if (isDelayingUpdateScrollInfoAfterLayout(*this)) {
+        auto shouldUpdate = hasNonVisibleOverflow || hasControlClip();
+        if (shouldUpdate) {
+            view().frameView().layoutContext().updateScrollInfoAfterLayoutTransactionIfExists()->blocks.add(*this);
             return;
         }
     }
-    if (layer())
+
+    if (hasNonVisibleOverflow && layer())
         layer()->updateScrollInfoAfterLayout();
 }
 
@@ -501,15 +511,15 @@ void RenderBlock::layout()
     StackStats::LayoutCheckPoint layoutCheckPoint;
     OverflowEventDispatcher dispatcher(this);
 
-    // Table cells call layoutBlock directly, so don't add any logic here.  Put code into
-    // layoutBlock().
-    layoutBlock(RelayoutChildren::No);
+    // Table cells call layoutBlock directly, so don't add any logic here. Put code into layoutBlock().
+    {
+        auto scope = LayoutScope { *this };
+        layoutBlock(RelayoutChildren::No);
+    }
     
     // It's safe to check for control clip here, since controls can never be table cells.
     // If we have a lightweight clip, there can never be any overflow from children.
-    auto* transaction = view().frameView().layoutContext().updateScrollInfoAfterLayoutTransactionIfExists();
-    bool isDelayingUpdateScrollInfoAfterLayoutInView = transaction && transaction->nestedCount;
-    if (hasControlClip() && m_overflow && !isDelayingUpdateScrollInfoAfterLayoutInView)
+    if (hasControlClip() && m_overflow && !isDelayingUpdateScrollInfoAfterLayout(*this))
         clearLayoutOverflow();
 
     invalidateBackgroundObscurationStatus();
@@ -556,7 +566,6 @@ bool RenderBlock::recomputeLogicalWidth()
 void RenderBlock::layoutBlock(RelayoutChildren, LayoutUnit)
 {
     ASSERT_NOT_REACHED();
-    clearNeedsLayout();
 }
 
 void RenderBlock::addOverflowFromChildren()

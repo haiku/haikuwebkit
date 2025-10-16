@@ -5211,7 +5211,7 @@ public:
 
     static void reemitInitialMoveWithPatch(void* address, void* value)
     {
-        Assembler::setPointer<jitMemcpyRepatchAtomicFlush>(static_cast<int*>(address), value, dataTempRegister);
+        Assembler::setPointer<jitMemcpyRepatchFlush>(static_cast<int*>(address), value, dataTempRegister);
     }
 
     // Miscellaneous operations:
@@ -6452,10 +6452,10 @@ public:
         Assembler::replaceWithJump(instructionStart.dataLocation(), destination.dataLocation());
     }
 
-    template<RepatchingInfo repatch, PtrTag startTag>
+    template<PtrTag startTag>
     static void replaceWithNops(CodeLocationLabel<startTag> instructionStart, size_t memoryToFillWithNopsInBytes)
     {
-        Assembler::replaceWithNops<repatch>(instructionStart.dataLocation(), memoryToFillWithNopsInBytes);
+        Assembler::replaceWithNops(instructionStart.dataLocation(), memoryToFillWithNopsInBytes);
     }
 
     static ptrdiff_t maxJumpReplacementSize()

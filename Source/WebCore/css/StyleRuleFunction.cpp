@@ -26,6 +26,7 @@
 #include "config.h"
 #include "StyleRuleFunction.h"
 
+#include "MutableStyleProperties.h"
 #include "StylePropertiesInlines.h"
 
 namespace WebCore {
@@ -52,5 +53,15 @@ StyleRuleFunctionDeclarations::StyleRuleFunctionDeclarations(Ref<StyleProperties
 }
 
 StyleRuleFunctionDeclarations::StyleRuleFunctionDeclarations(const StyleRuleFunctionDeclarations&) = default;
+
+MutableStyleProperties& StyleRuleFunctionDeclarations::mutableProperties()
+{
+    Ref properties = m_properties;
+
+    if (!is<MutableStyleProperties>(properties))
+        m_properties = properties->mutableCopy();
+
+    return downcast<MutableStyleProperties>(m_properties.get());
+}
 
 }

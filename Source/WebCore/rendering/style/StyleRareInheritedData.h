@@ -35,6 +35,7 @@
 #include <WebCore/StyleHyphenateCharacter.h>
 #include <WebCore/StyleHyphenateLimitEdge.h>
 #include <WebCore/StyleHyphenateLimitLines.h>
+#include <WebCore/StyleImageOrNone.h>
 #include <WebCore/StyleLineBoxContain.h>
 #include <WebCore/StyleListStyleType.h>
 #include <WebCore/StyleOrphans.h>
@@ -102,7 +103,7 @@ public:
 
     float usedZoom;
 
-    RefPtr<StyleImage> listStyleImage;
+    Style::ImageOrNone listStyleImage;
 
     Style::WebkitTextStrokeWidth textStrokeWidth;
     Style::Color textStrokeColor;

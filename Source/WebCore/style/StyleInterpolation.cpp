@@ -42,7 +42,7 @@
 
 namespace WebCore::Style::Interpolation {
 
-DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(Animation);
+DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleInterpolationWrapperBase);
 // MARK: - Standard property interpolation support
 
 static void interpolateStandardProperty(CSSPropertyID property, RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, double progress, CompositeOperation compositeOperation, IterationCompositeOperation iterationCompositeOperation, double currentIteration, const Client& client)

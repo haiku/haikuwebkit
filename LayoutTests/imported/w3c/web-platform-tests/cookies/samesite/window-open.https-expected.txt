@@ -1,4 +1,4 @@
-Blocked access to external URL https://www1.localhost:9443/cookies/samesite/resources/puppet.html
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/cookies/samesite/resources/puppet.html
 
 Harness Error (TIMEOUT), message = null
 

@@ -262,9 +262,14 @@ void CanvasRenderingContext2DBase::unwindStateStack()
     size_t stackSize = m_stateStack.size();
     if (stackSize <= 1)
         return;
+
     // We need to keep the last state because it is tracked by CanvasBase::m_contextStateSaver.
-    if (auto* context = existingDrawingContext())
-        context->unwindStateStack(stackSize - 1);
+    auto* context = existingDrawingContext();
+    while (m_stateStack.size() > 1) {
+        m_stateStack.removeLast();
+        if (context)
+            context->restore();
+    }
 }
 
 CanvasRenderingContext2DBase::~CanvasRenderingContext2DBase()
@@ -316,7 +321,7 @@ void CanvasRenderingContext2DBase::reset()
 {
     unwindStateStack();
 
-    m_stateStack.resize(1);
+    ASSERT(m_stateStack.size() == 1);
     m_stateStack.first() = State();
 
     m_path.clear();
@@ -2516,7 +2521,7 @@ RefPtr<ByteArrayPixelBuffer> CanvasRenderingContext2DBase::cacheImageDataIfPossi
     if (imageData.colorSpace() != m_settings.colorSpace)
         return nullptr;
 
-    if (imageData.storageFormat() != ImageDataStorageFormat::Uint8)
+    if (imageData.pixelFormat() != ImageDataPixelFormat::RgbaUnorm8)
         return nullptr;
 
     // Consider:
@@ -2607,8 +2612,8 @@ ExceptionOr<Ref<ImageData>> CanvasRenderingContext2DBase::getImageData(int sx, i
     }
 
     IntRect imageDataRect { sx, sy, sw, sh };
-    auto outputStorageFormat = settings ? settings->storageFormat : ImageDataStorageFormat::Uint8;
-    auto outputPixelFormat = toPixelFormat(outputStorageFormat);
+    auto outputImageDataPixelFormat = settings ? settings->pixelFormat : ImageDataPixelFormat::RgbaUnorm8;
+    auto outputPixelFormat = toPixelFormat(outputImageDataPixelFormat);
 
     if (scriptContext && scriptContext->requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::Canvas)) {
         RefPtr buffer = canvasBase().createImageForNoiseInjection();
@@ -2620,12 +2625,12 @@ ExceptionOr<Ref<ImageData>> CanvasRenderingContext2DBase::getImageData(int sx, i
         if (!pixelBuffer)
             return Exception { ExceptionCode::InvalidStateError };
 
-        return { { ImageData::create(pixelBuffer.releaseNonNull(), outputStorageFormat) } };
+        return { { ImageData::create(pixelBuffer.releaseNonNull(), outputImageDataPixelFormat) } };
     }
 
     auto computedColorSpace = ImageData::computeColorSpace(settings, m_settings.colorSpace);
 
-    if (outputStorageFormat == ImageDataStorageFormat::Uint8) {
+    if (outputImageDataPixelFormat == ImageDataPixelFormat::RgbaUnorm8) {
         if (auto imageData = makeImageDataIfContentsCached(imageDataRect, computedColorSpace))
             return imageData.releaseNonNull();
     }
@@ -2644,7 +2649,7 @@ ExceptionOr<Ref<ImageData>> CanvasRenderingContext2DBase::getImageData(int sx, i
 
     ASSERT(pixelBuffer->format().colorSpace == toDestinationColorSpace(computedColorSpace));
 
-    if (RefPtr imageData = ImageData::create(pixelBuffer.releaseNonNull(), outputStorageFormat))
+    if (RefPtr imageData = ImageData::create(pixelBuffer.releaseNonNull(), outputImageDataPixelFormat))
         return { { imageData.releaseNonNull() } };
 
     return Exception { ExceptionCode::InvalidStateError };
@@ -3059,17 +3064,17 @@ FloatPoint CanvasRenderingContext2DBase::textOffset(float width, TextDirection d
     return offset;
 }
 
-ImageBufferPixelFormat CanvasRenderingContext2DBase::pixelFormat() const
+PixelFormat CanvasRenderingContext2DBase::pixelFormat() const
 {
     // FIXME: Take m_settings.alpha into account here and add PixelFormat::BGRX8.
-    switch (m_settings.pixelFormat) {
-    case CanvasRenderingContext2DSettings::PixelFormat::Uint8:
-        return ImageBufferPixelFormat::BGRA8;
-    case CanvasRenderingContext2DSettings::PixelFormat::Float16:
+    switch (m_settings.colorType) {
+    case CanvasRenderingContext2DSettings::ColorType::Unorm8:
+        return PixelFormat::BGRA8;
+    case CanvasRenderingContext2DSettings::ColorType::Float16:
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
-        return ImageBufferPixelFormat::RGBA16F;
+        return PixelFormat::RGBA16F;
 #else
-        return ImageBufferPixelFormat::BGRA8;
+        return PixelFormat::BGRA8;
 #endif
     }
 }

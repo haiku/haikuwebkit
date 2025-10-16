@@ -559,6 +559,14 @@ LayoutRect RenderThemeCocoa::adjustedPaintRect(const RenderBox& box, const Layou
     return paintRect;
 }
 
+void RenderThemeCocoa::adjustRepaintRect(const RenderBox& renderer, FloatRect& rect)
+{
+    auto repaintRect = rect;
+    inflateRectForControlRenderer(renderer, repaintRect);
+    renderer.flipForWritingMode(repaintRect);
+    rect = repaintRect;
+}
+
 #if ENABLE(FORM_CONTROL_REFRESH)
 
 bool RenderThemeCocoa::controlSupportsTints(const RenderObject& box) const

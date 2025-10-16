@@ -86,6 +86,11 @@ bool FileReader::virtualHasPendingActivity() const
     return m_state == LOADING;
 }
 
+ScriptExecutionContext* FileReader::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 ExceptionOr<void> FileReader::readAsArrayBuffer(Blob& blob)
 {
     LOG(FileAPI, "FileReader: reading as array buffer: %s %s\n", blob.url().string().utf8().data(), is<File>(blob) ? downcast<File>(blob).path().utf8().data() : "");

@@ -1,4 +1,4 @@
-Blocked access to external URL https://www1.localhost:9443/cookiestore/resources/helper_iframe.sub.html
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/cookiestore/resources/helper_iframe.sub.html
 CONSOLE MESSAGE: Unable to post message to https://www1.localhost:9443. Recipient has origin https://localhost:9443.
 
 

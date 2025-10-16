@@ -93,6 +93,7 @@ public:
     uint32_t parentRelativeSlice() const;
     uint32_t parentRelativeMipLevel() const;
     bool is2DTexture() const { return dimension() == WGPUTextureViewDimension_2D; }
+    id<MTLRasterizationRateMap> rasterizationMapForSlice(uint32_t slice);
 
 private:
     TextureView(id<MTLTexture>, const WGPUTextureViewDescriptor&, const std::optional<WGPUExtent3D>&, Texture&, Device&);

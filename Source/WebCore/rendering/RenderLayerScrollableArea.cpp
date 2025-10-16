@@ -61,6 +61,7 @@
 #include "HTMLHtmlElement.h"
 #include "HitTestResult.h"
 #include "InspectorInstrumentation.h"
+#include "LayoutScope.h"
 #include "Logging.h"
 #include "NodeInlines.h"
 #include "RenderBoxInlines.h"
@@ -1348,6 +1349,8 @@ void RenderLayerScrollableArea::updateScrollbarsAfterLayout()
                 SetForScope inOverflowRelayoutScope(m_inOverflowRelayout, true);
                 renderer.setNeedsLayout(MarkOnlyThis);
                 if (CheckedPtr block = dynamicDowncast<RenderBlock>(renderer)) {
+                    // FIXME: Calling layoutBlock here is a bit of a layering violation.
+                    auto scope = LayoutScope { *block };
                     block->scrollbarsChanged(autoHorizontalScrollBarChanged, autoVerticalScrollBarChanged);
                     block->layoutBlock(RelayoutChildren::Yes);
                 } else

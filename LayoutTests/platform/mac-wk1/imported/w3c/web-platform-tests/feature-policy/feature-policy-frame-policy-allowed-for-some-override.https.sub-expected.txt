@@ -1,11 +1,11 @@
-Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
-Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
-Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
-Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
-Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
-Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
-Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
-Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
+CONSOLE MESSAGE: Blocked access to external URL https://www1.localhost:9443/feature-policy/resources/feature-policy-allowedfeatures.html
 CONSOLE MESSAGE: TypeError: undefined is not an object (evaluating 'document.featurePolicy.allowedFeatures')
 CONSOLE MESSAGE: TypeError: undefined is not an object (evaluating 'document.featurePolicy.allowedFeatures')
 CONSOLE MESSAGE: TypeError: undefined is not an object (evaluating 'document.featurePolicy.allowedFeatures')

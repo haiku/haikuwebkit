@@ -33,6 +33,7 @@
 
 #include "AXObjectCacheInlines.h"
 #include "AccessibilityNodeObject.h"
+#include "AccessibilityObjectInlines.h"
 #include "AddEventListenerOptionsInlines.h"
 #include "Attr.h"
 #include "AudioTrack.h"

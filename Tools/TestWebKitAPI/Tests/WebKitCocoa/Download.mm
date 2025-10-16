@@ -38,6 +38,7 @@
 #import "TestWKWebView.h"
 #import <Foundation/NSURLResponse.h>
 #import <WebKit/WKDownload.h>
+#import <WebKit/WKDownloadDelegate.h>
 #import <WebKit/WKErrorPrivate.h>
 #import <WebKit/WKNavigationDelegatePrivate.h>
 #import <WebKit/WKNavigationResponsePrivate.h>
@@ -854,38 +855,6 @@ static RetainPtr<NSString> destination;
 }
 
 @end
-
-#if HAVE(MODERN_DOWNLOADPROGRESS)
-@interface ProgressObserver : NSObject
-- (instancetype)init;
-@end
-
-@implementation ProgressObserver {
-    bool receivedProgress;
-}
-
-- (instancetype)init
-{
-    if (!(self = [super init]))
-        return nil;
-    receivedProgress = false;
-    return self;
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    if (![keyPath isEqualToString:@"fractionCompleted"])
-        return;
-    receivedProgress = true;
-}
-
-- (void)waitForProgress
-{
-    while (!receivedProgress)
-        TestWebKitAPI::Util::spinRunLoop();
-}
-@end
-#endif
 
 namespace TestWebKitAPI {
 
@@ -2374,8 +2343,8 @@ TEST(WKDownload, PlaceholderPolicyEnable)
         delegate.get().decideDestinationUsingResponse = ^(WKDownload *, NSURLResponse *, NSString *, void (^completionHandler)(NSURL *)) {
             completionHandler(expectedDownloadFile);
         };
-        delegate.get().decidePlaceholderPolicy = ^(WKDownload *, void (^completionHandler)(_WKPlaceholderPolicy, NSURL *)) {
-            completionHandler(_WKPlaceholderPolicyEnable, nil);
+        delegate.get().decidePlaceholderPolicy = ^(WKDownload *, void (^completionHandler)(WKDownloadPlaceholderPolicy, NSURL *)) {
+            completionHandler(WKDownloadPlaceholderPolicyEnable, nil);
         };
         delegate.get().downloadDidFinish = ^(WKDownload *download) {
             didFinish = true;
@@ -2406,14 +2375,11 @@ TEST(WKDownload, PlaceholderPolicyDisable)
     auto webView = adoptNS([WKWebView new]);
     [webView setNavigationDelegate:delegate.get()];
 
-    NSURL *tempFile = tempFileThatDoesNotExist();
-
-    auto progressObserver = adoptNS([[ProgressObserver alloc] init]);
-    auto progress = adoptNS([[NSProgress alloc] init]);
-    [progress addObserver:progressObserver.get() forKeyPath:@"fractionCompleted" options:NSKeyValueObservingOptionNew context:NULL];
-    progress.get().kind = NSProgressKindFile;
-    progress.get().fileOperationKind = NSProgressFileOperationKindDownloading;
-    progress.get().fileURL = tempFile;
+    // manually create a placeholder file
+    NSURL *tempDir = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"DownloadTëst"] isDirectory:YES];
+    [[NSFileManager defaultManager] createDirectoryAtURL:tempDir withIntermediateDirectories:YES attributes:nil error:nil];
+    NSURL *placeholderFile = [tempDir URLByAppendingPathComponent:@"placeholder.txt"];
+    [[NSFileManager defaultManager] removeItemAtURL:placeholderFile error:nil];
 
     __block bool didFinish = false;
     [webView startDownloadUsingRequest:server.request() completionHandler:^(WKDownload *download) {
@@ -2421,8 +2387,8 @@ TEST(WKDownload, PlaceholderPolicyDisable)
         delegate.get().decideDestinationUsingResponse = ^(WKDownload *, NSURLResponse *, NSString *, void (^completionHandler)(NSURL *)) {
             completionHandler(expectedDownloadFile);
         };
-        delegate.get().decidePlaceholderPolicy = ^(WKDownload *, void (^completionHandler)(_WKPlaceholderPolicy, NSURL *)) {
-            completionHandler(_WKPlaceholderPolicyDisable, tempFile);
+        delegate.get().decidePlaceholderPolicy = ^(WKDownload *, void (^completionHandler)(WKDownloadPlaceholderPolicy, NSURL *)) {
+            completionHandler(WKDownloadPlaceholderPolicyDisable, placeholderFile);
         };
         delegate.get().downloadDidFinish = ^(WKDownload *download) {
             didFinish = true;
@@ -2430,10 +2396,9 @@ TEST(WKDownload, PlaceholderPolicyDisable)
     }];
     Util::run(&didFinish);
 
-    [progressObserver waitForProgress];
-    EXPECT_GT(progress.get().fractionCompleted, 0);
-
     checkFileContents(expectedDownloadFile, "http body"_s);
+    // The placeholder file is deleted once the file is succesfully downloaded.
+    EXPECT_FALSE([[NSFileManager defaultManager] fileExistsAtPath:[placeholderFile path]]);
 
     checkCallbackRecord(delegate.get(), {
         DownloadCallback::DecideDestination,

@@ -1,4 +1,4 @@
-Blocked access to external URL http://www1.web-platform.test:8000/html/semantics/embedded-content/the-iframe-element/cross_origin_child.html
+CONSOLE MESSAGE: Blocked access to external URL http://www1.web-platform.test:8000/html/semantics/embedded-content/the-iframe-element/cross_origin_child.html
 
 
 Harness Error (TIMEOUT), message = null

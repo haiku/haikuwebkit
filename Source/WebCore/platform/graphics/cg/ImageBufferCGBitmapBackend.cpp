@@ -49,7 +49,7 @@ size_t ImageBufferCGBitmapBackend::calculateMemoryCost(const Parameters& paramet
 
 std::unique_ptr<ImageBufferCGBitmapBackend> ImageBufferCGBitmapBackend::create(const Parameters& parameters, const ImageBufferCreationContext&)
 {
-    ASSERT(parameters.bufferFormat.pixelFormat == ImageBufferPixelFormat::BGRA8);
+    ASSERT(parameters.bufferFormat.pixelFormat == PixelFormat::BGRA8);
 
     IntSize backendSize = calculateSafeBackendSize(parameters);
     if (backendSize.isEmpty())

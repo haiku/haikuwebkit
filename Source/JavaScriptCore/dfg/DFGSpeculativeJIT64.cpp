@@ -2488,7 +2488,7 @@ void SpeculativeJIT::compileMapGetImpl(Node* node)
 
     JumpList notPresentInTable;
     JIT_COMMENT(*this, "Get the JSCellButterfly first.");
-    loadPtr(Address(mapGPR, MapOrSet::offsetOfButterfly()), mapStorageOrDataGPR);
+    loadPtr(Address(mapGPR, MapOrSet::offsetOfStorage()), mapStorageOrDataGPR);
     notPresentInTable.append(branchTestPtr(Zero, mapStorageOrDataGPR));
 
     JIT_COMMENT(*this, "Compute the bucketCount = Capacity / LoadFactor and bucketIndex = hashTableStartIndex + (hash & bucketCount - 1).");

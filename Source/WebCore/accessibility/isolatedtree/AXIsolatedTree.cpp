@@ -38,8 +38,7 @@
 #include "AXTreeStoreInlines.h"
 #include "AXUtilities.h"
 #include "AccessibilityImageMapLink.h"
-#include "AccessibilityTableCell.h"
-#include "AccessibilityTableRow.h"
+#include "AccessibilityObjectInlines.h"
 #include "DocumentInlines.h"
 #include "FrameSelection.h"
 #include "HTMLNames.h"
@@ -568,16 +567,14 @@ void AXIsolatedTree::objectChangedIgnoredState(const AccessibilityObject& object
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     ASSERT(isMainThread());
 
-    if (RefPtr cell = dynamicDowncast<AccessibilityTableCell>(object)) {
-        if (RefPtr parentTable = cell->parentTable()) {
-            // FIXME: This should be as simple as:
-            //     queueNodeUpdate(*parentTable->objectID(), { { AXProperty::Cells, AXProperty::CellSlots, AXProperty::Columns } });
-            // As these are the table properties that depend on cells. But we can't do that, because we compute "new" column accessibility objects
-            // every time we clearChildren() and addChildren(), so just re-computing AXProperty::Columns means that we won't have AXIsolatedObjects
-            // for the columns. Instead we have to do a significantly more wasteful children update.
-            queueNodeUpdate(parentTable->objectID(), NodeUpdateOptions::childrenUpdate());
-            queueNodeUpdate(parentTable->objectID(), { { AXProperty::Cells, AXProperty::CellSlots } });
-        }
+    if (RefPtr parentTable = object.parentTableIfTableCell()) {
+        // FIXME: This should be as simple as:
+        //     queueNodeUpdate(*parentTable->objectID(), { { AXProperty::Cells, AXProperty::CellSlots, AXProperty::Columns } });
+        // As these are the table properties that depend on cells. But we can't do that, because we compute "new" column accessibility objects
+        // every time we clearChildren() and addChildren(), so just re-computing AXProperty::Columns means that we won't have AXIsolatedObjects
+        // for the columns. Instead we have to do a significantly more wasteful children update.
+        queueNodeUpdate(parentTable->objectID(), NodeUpdateOptions::childrenUpdate());
+        queueNodeUpdate(parentTable->objectID(), { { AXProperty::Cells, AXProperty::CellSlots } });
     }
 
     if (object.isLink()) {
@@ -731,6 +728,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::IsExpanded:
             properties.append({ AXProperty::IsExpanded, axObject.isExpanded() });
             break;
+        case AXProperty::IsHiddenUntilFoundContainer:
+            properties.append({ AXProperty::IsHiddenUntilFoundContainer, axObject.isHiddenUntilFoundContainer() });
+            break;
         case AXProperty::IsIgnored:
             properties.append({ AXProperty::IsIgnored, axObject.isIgnored() });
             break;
@@ -786,6 +786,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
             break;
         case AXProperty::CellScope:
             properties.append({ AXProperty::CellScope, axObject.cellScope().isolatedCopy() });
+            break;
+        case AXProperty::RadioButtonGroupMembers:
+            properties.append({ AXProperty::RadioButtonGroupMembers, axIDs(axObject.radioButtonGroup()) });
             break;
         case AXProperty::ScreenRelativePosition:
             properties.append({ AXProperty::ScreenRelativePosition, axObject.screenRelativePosition() });
@@ -859,6 +862,12 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::LinethroughColor:
             properties.append({ AXProperty::LinethroughColor, axObject.lineDecorationStyle().linethroughColor });
             break;
+        case AXProperty::RevealableText:
+            // We should only cache this property for ignored objects.
+            ASSERT(axObject.isIgnored());
+            if (String text = axObject.revealableText(); !text.isEmpty())
+                properties.append({ AXProperty::RevealableText, WTFMove(text).isolatedCopy() });
+            break;
         case AXProperty::TextColor: {
             if (RefPtr parent = axObject.parentObject()) {
                 auto color = axObject.textColor();
@@ -927,7 +936,7 @@ void AXIsolatedTree::updateDependentProperties(AccessibilityObject& axObject)
     updateRelatedObjects(axObject);
 
     // When a row gains or loses cells, or a table changes rows in a row group, the column count of the table can change.
-    bool updateTableAncestorColumns = is<AccessibilityTableRow>(axObject);
+    bool updateTableAncestorColumns = axObject.isExposedTableRow();
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     updateTableAncestorColumns = updateTableAncestorColumns || isRowGroup(axObject.node());
 #endif
@@ -1696,6 +1705,8 @@ std::optional<AXPropertyFlag> convertToPropertyFlag(AXProperty property)
         return AXPropertyFlag::IsExposedTableCell;
     case AXProperty::IsGrabbed:
         return AXPropertyFlag::IsGrabbed;
+    case AXProperty::IsHiddenUntilFoundContainer:
+        return AXPropertyFlag::IsHiddenUntilFoundContainer;
     case AXProperty::IsIgnored:
         return AXPropertyFlag::IsIgnored;
     case AXProperty::IsInlineText:
@@ -1704,8 +1715,8 @@ std::optional<AXPropertyFlag> convertToPropertyFlag(AXProperty property)
         return AXPropertyFlag::IsKeyboardFocusable;
     case AXProperty::IsNonLayerSVGObject:
         return AXPropertyFlag::IsNonLayerSVGObject;
-    case AXProperty::IsTableRow:
-        return AXPropertyFlag::IsTableRow;
+    case AXProperty::IsExposedTableRow:
+        return AXPropertyFlag::IsExposedTableRow;
     case AXProperty::IsVisited:
         return AXPropertyFlag::IsVisited;
     case AXProperty::SupportsCheckedState:
@@ -1868,14 +1879,19 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
         if (!language.isEmpty())
             setProperty(AXProperty::Language, WTFMove(language).isolatedCopy());
         setProperty(AXProperty::IsEnabled, object.isEnabled());
+        setProperty(AXProperty::IsHiddenUntilFoundContainer, object.isHiddenUntilFoundContainer());
         appendBasePlatformProperties(properties, propertyFlags, axObject);
     };
 
     bool needsAllProperties = true;
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
+    bool isIgnored = true;
     if (object.includeIgnoredInCoreTree()) {
-        bool isIgnored = object.isIgnored();
+        isIgnored = object.isIgnored();
         setProperty(AXProperty::IsIgnored, isIgnored);
+
+        // Do not set any properties in this block, as this is before we reserve capacity for the property vector.
+
         // Maintain full properties for objects meeting this criteria:
         //   - Unconnected objects, which are involved in relations or outgoing notifications
         //   - Static text. We sometimes ignore static text (e.g. because it descends from a text field),
@@ -2049,9 +2065,9 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
             setProperty(AXProperty::Abbreviation, object.abbreviation().isolatedCopy());
         }
 
-        bool isTableRow = object.isTableRow();
-        if (isTableRow) {
-            setProperty(AXProperty::IsTableRow, true);
+        bool isExposedTableRow = object.isExposedTableRow();
+        if (isExposedTableRow) {
+            setProperty(AXProperty::IsExposedTableRow, true);
             setProperty(AXProperty::RowIndex, object.rowIndex());
         } else if (object.isTableColumn())
             setProperty(AXProperty::ColumnIndex, object.columnIndex());
@@ -2072,8 +2088,7 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
         setProperty(AXProperty::IsTree, object.isTree());
         if (object.isRadioButton()) {
             setProperty(AXProperty::NameAttribute, object.nameAttribute().isolatedCopy());
-            // FIXME: This property doesn't get updated when a page changes dynamically.
-            setObjectVectorProperty(AXProperty::RadioButtonGroup, object.radioButtonGroup());
+            setObjectVectorProperty(AXProperty::RadioButtonGroupMembers, object.radioButtonGroup());
         }
 
         if (object.isImage())
@@ -2177,7 +2192,7 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
             setProperty(AXProperty::CanBeMultilineTextField, canBeMultilineTextField(object));
         }
 
-        if (object.isHeading() || isTableRow || isTreeItem)
+        if (object.isHeading() || isExposedTableRow || isTreeItem)
             setProperty(AXProperty::ARIALevel, object.ariaLevel());
 
         // These properties are only needed on the AXCoreObject interface due to their use in ATSPI,
@@ -2200,6 +2215,16 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
 
     RefPtr axParent = object.parentInCoreTree();
     Markable<AXID> parentID = axParent ? std::optional(axParent->objectID()) : std::nullopt;
+
+#if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
+    if (isIgnored) {
+        if (String text = axObject->revealableText(); !text.isEmpty()) {
+            // We only need to cache this for ignored objects, as unignored objects
+            // have no need to be revealed.
+            setProperty(AXProperty::RevealableText, WTFMove(text).isolatedCopy());
+        }
+    }
+#endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
 
     properties.shrinkToFit();
     return {

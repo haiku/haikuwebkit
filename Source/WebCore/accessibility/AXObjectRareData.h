@@ -58,7 +58,30 @@ public:
     void resetChildrenDependentTableFields();
     // End table-related methods.
 
+    // Begin table-row-related methods.
+    unsigned rowIndex() const { return m_rowIndex; }
+    void setRowIndex(unsigned rowIndex) { m_rowIndex = rowIndex; }
+    // End table-row-related methods.
+
+    // Begin table-cell-related methods.
+    unsigned columnIndex() const { return m_columnIndex; }
+    void setColumnIndex(unsigned columnIndex) { m_columnIndex = columnIndex; }
+    int axColIndexFromRow() const { return m_axColIndexFromRow; }
+    void setAXColIndexFromRow(int index) { m_axColIndexFromRow = index; }
+    unsigned effectiveRowSpan() const { return m_effectiveRowSpan; }
+    void incrementEffectiveRowSpan() { ++m_effectiveRowSpan; }
+    void resetEffectiveRowSpan() { m_effectiveRowSpan = 1; }
+    // End table-cell-related methods.
+
+    // Begin tree-grid-item related fields.
+    bool isTreeItemValid() const { return m_isValidTreeItem; }
+    void setIsTreeItemValid(bool isValid) { m_isValidTreeItem = isValid; }
+    // End tree-grid-item related fields.
 private:
+    // Begin table-row-related fields.
+    unsigned m_rowIndex;
+    // End table-row-related fields.
+
     // Begin table-related fields.
     AXCoreObject::AccessibilityChildrenVector m_tableRows;
     AXCoreObject::AccessibilityChildrenVector m_tableColumns;
@@ -70,6 +93,15 @@ private:
     bool m_isExposableTable { false };
     // End table-related fields.
 
+    // Begin tree-grid-item related fields.
+    bool m_isValidTreeItem;
+    // End tree-grid-item related fields.
+
+    // Begin table-cell-related fields.
+    unsigned m_columnIndex { 0 };
+    int m_axColIndexFromRow { -1 };
+    unsigned m_effectiveRowSpan { 1 };
+    // End table-cell-related fields.
 }; // class AXObjectRareData
 
 } // namespace WebCore

@@ -168,6 +168,10 @@ ADD_WK2_TEST(TestDOMElement ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestDOME
 ADD_WK2_TEST(TestGeolocationManager ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestGeolocationManager.cpp)
 ADD_WK2_TEST(TestInputMethodContext ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestInputMethodContext.cpp)
 
+if (ENABLE_WEBXR AND USE_OPENXR)
+    ADD_WK2_TEST(TestWebKitImmersiveMode ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitImmersiveMode.cpp)
+endif ()
+
 if (ENABLE_WK_WEB_EXTENSIONS)
     ADD_WK2_TEST(TestWebKitWebExtensionMatchPattern ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitWebExtensionMatchPattern.cpp)
 endif ()

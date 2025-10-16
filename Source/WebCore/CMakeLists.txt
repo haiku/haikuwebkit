@@ -1015,6 +1015,9 @@ set(WebCore_NON_SVG_IDL_FILES
     css/CSSFontFaceRule.idl
     css/CSSFontFeatureValuesRule.idl
     css/CSSFontPaletteValuesRule.idl
+    css/CSSFunctionDeclarations.idl
+    css/CSSFunctionDescriptors.idl
+    css/CSSFunctionRule.idl
     css/CSSGroupingRule.idl
     css/CSSImportRule.idl
     css/CSSKeyframeRule.idl
@@ -1396,8 +1399,8 @@ set(WebCore_NON_SVG_IDL_FILES
     html/ImageBitmap.idl
     html/ImageBitmapOptions.idl
     html/ImageData.idl
+    html/ImageDataPixelFormat.idl
     html/ImageDataSettings.idl
-    html/ImageDataStorageFormat.idl
     html/MediaController.idl
     html/MediaEncryptedEvent.idl
     html/MediaError.idl
@@ -1502,6 +1505,7 @@ set(WebCore_NON_SVG_IDL_FILES
     page/IntersectionObserver.idl
     page/IntersectionObserverCallback.idl
     page/IntersectionObserverEntry.idl
+    page/LargestContentfulPaint.idl
     page/Location.idl
     page/NavigateEvent.idl
     page/Navigation.idl
@@ -1525,6 +1529,7 @@ set(WebCore_NON_SVG_IDL_FILES
     page/NavigatorUA.idl
     page/NavigatorUABrandVersion.idl
     page/NavigatorUAData.idl
+    page/PaintTimingMixin.idl
     page/Performance+EventCounts.idl
     page/Performance+NavigationTiming.idl
     page/Performance+PerformanceTimeline.idl

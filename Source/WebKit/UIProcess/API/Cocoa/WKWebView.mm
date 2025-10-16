@@ -4588,9 +4588,9 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
         }
         Ref bitmap = result.value();
 #if PLATFORM(MAC)
-        completionHandler(adoptNS([[NSImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get() size:bitmap->size()]).get(), nil);
+        completionHandler(adoptNS([[NSImage alloc] initWithCGImage:bitmap->createPlatformImage().get() size:bitmap->size()]).get(), nil);
 #else
-        completionHandler(adoptNS([[UIImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get()]).get(), nil);
+        completionHandler(adoptNS([[UIImage alloc] initWithCGImage:bitmap->createPlatformImage().get()]).get(), nil);
 #endif
     });
 }
@@ -4655,9 +4655,9 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
         }
 
 #if PLATFORM(MAC)
-        RetainPtr cocoaImage = adoptNS([[NSImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get() size:bitmap->size()]);
+        RetainPtr cocoaImage = adoptNS([[NSImage alloc] initWithCGImage:bitmap->createPlatformImage().get() size:bitmap->size()]);
 #else
-        RetainPtr cocoaImage = adoptNS([[UIImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get()]);
+        RetainPtr cocoaImage = adoptNS([[UIImage alloc] initWithCGImage:bitmap->createPlatformImage().get()]);
 #endif
         completionHandler(cocoaImage.autorelease(), nil);
     });

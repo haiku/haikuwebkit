@@ -141,11 +141,14 @@ void UIScriptContext::fireCallback(unsigned callbackID)
     JSValueRef exception = nullptr;
     JSObjectRef callbackObject = JSValueToObject(m_context.get(), task.callback, &exception);
 
-    m_currentScriptCallbackID = task.parentScriptCallbackID;
+    auto currentScriptCallbackID = task.parentScriptCallbackID;
+    m_currentScriptCallbackID = currentScriptCallbackID;
 
     exception = nullptr;
     JSObjectCallAsFunction(m_context.get(), callbackObject, JSContextGetGlobalObject(m_context.get()), 0, nullptr, &exception);
-    
+
+    m_currentScriptCallbackID = currentScriptCallbackID;
+
     tryToCompleteUIScriptForCurrentParentCallback();
     m_currentScriptCallbackID = 0;
 }

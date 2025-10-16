@@ -792,6 +792,16 @@ static NSString *defaultApplicationNameForUserAgent()
     return _pageConfiguration->overrideReferrerForAllRequests().createNSString().autorelease();
 }
 
+- (void)_setShouldSendConsoleLogsToUIProcessForTesting:(BOOL)should
+{
+    _pageConfiguration->setShouldSendConsoleLogsToUIProcessForTesting(should);
+}
+
+- (BOOL)_shouldSendConsoleLogsToUIProcessForTesting
+{
+    return _pageConfiguration->shouldSendConsoleLogsToUIProcessForTesting();
+}
+
 - (BOOL)_allowTopNavigationToDataURLs
 {
     return _pageConfiguration->allowTopNavigationToDataURLs();

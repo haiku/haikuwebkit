@@ -47,7 +47,7 @@ namespace Wasm {
 class BBQCallee;
 class IPIntCallee;
 class CalleeGroup;
-class JSEntrypointCallee;
+class JSToWasmCallee;
 
 class BBQPlan final : public Plan {
 public:

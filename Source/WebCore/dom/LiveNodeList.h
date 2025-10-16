@@ -25,16 +25,16 @@
 
 #include <WebCore/CollectionIndexCache.h>
 #include <WebCore/CollectionTraversal.h>
-#include <WebCore/Document.h>
-#include <WebCore/HTMLNames.h>
-#include <WebCore/NodeInlines.h>
+#include <WebCore/DocumentEnums.h>
 #include <WebCore/NodeList.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
 
+class Document;
 class Element;
+class QualifiedName;
 
 inline bool shouldInvalidateTypeOnAttributeChange(NodeListInvalidationType, const QualifiedName&);
 
@@ -50,7 +50,7 @@ public:
     ContainerNode& ownerNode() const { return m_ownerNode; }
     void invalidateCacheForAttribute(const QualifiedName& attributeName) const;
     virtual void invalidateCacheForDocument(Document&) const = 0;
-    void invalidateCache() const { invalidateCacheForDocument(protectedDocument().get()); }
+    inline void invalidateCache() const;
 
     bool isRegisteredForInvalidationAtDocument() const { return m_isRegisteredForInvalidationAtDocument; }
     void setRegisteredForInvalidationAtDocument(bool isRegistered) { m_isRegisteredForInvalidationAtDocument = isRegistered; }
@@ -58,8 +58,8 @@ public:
 protected:
     LiveNodeList(ContainerNode& ownerNode, NodeListInvalidationType);
 
-    Document& document() const { return m_ownerNode->document(); }
-    Ref<Document> protectedDocument() const { return document(); }
+    inline Document& document() const;
+    inline Ref<Document> protectedDocument() const;
     ContainerNode& rootNode() const;
 
 private:
@@ -75,7 +75,7 @@ template <class NodeListType>
 class CachedLiveNodeList : public LiveNodeList {
     WTF_MAKE_TZONE_OR_ISO_NON_HEAP_ALLOCATABLE(CachedLiveNodeList);
 public:
-    virtual ~CachedLiveNodeList();
+    inline virtual ~CachedLiveNodeList();
 
     inline unsigned length() const final;
     inline Node* item(unsigned offset) const final;
@@ -108,18 +108,5 @@ private:
 
     mutable CollectionIndexCache<NodeListType, Iterator> m_indexCache;
 };
-
-template <class NodeListType>
-CachedLiveNodeList<NodeListType>::CachedLiveNodeList(ContainerNode& ownerNode, NodeListInvalidationType invalidationType)
-    : LiveNodeList(ownerNode, invalidationType)
-{
-}
-
-template <class NodeListType>
-CachedLiveNodeList<NodeListType>::~CachedLiveNodeList()
-{
-    if (m_indexCache.hasValidCache())
-        protectedDocument()->unregisterNodeListForInvalidation(*this);
-}
 
 } // namespace WebCore

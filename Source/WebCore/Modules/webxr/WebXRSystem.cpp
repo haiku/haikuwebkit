@@ -31,6 +31,7 @@
 
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "IDLTypes.h"
 #include "JSDOMPromiseDeferred.h"
@@ -571,6 +572,11 @@ void WebXRSystem::requestSession(Document& document, XRSessionMode mode, const X
             // 5.4.10 is handled in WebXRSession::sessionDidInitializeInputSources.
         });
     });
+}
+
+ScriptExecutionContext* WebXRSystem::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void WebXRSystem::stop()

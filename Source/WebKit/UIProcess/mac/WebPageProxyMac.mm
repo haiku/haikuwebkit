@@ -918,7 +918,7 @@ void WebPageProxy::showImageInQuickLookPreviewPanel(ShareableBitmap& imageBitmap
     if (!PAL::isQuickLookUIFrameworkAvailable() || !PAL::getQLPreviewPanelClass() || ![PAL::getQLItemClass() instancesRespondToSelector:@selector(initWithDataProvider:contentType:previewTitle:)])
         return;
 
-    auto image = imageBitmap.makeCGImage();
+    RetainPtr image = imageBitmap.createPlatformImage(DontCopyBackingStore);
     if (!image)
         return;
 

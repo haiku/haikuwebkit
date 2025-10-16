@@ -146,7 +146,7 @@ InlineRect InlineFormattingUtils::flipVisualRectToLogicalForWritingMode(const In
     return visualRect;
 }
 
-InlineLayoutUnit InlineFormattingUtils::computedTextIndent(IsIntrinsicWidthMode isIntrinsicWidthMode, std::optional<LineEndsWithLineBreak> previousLineEndsWithLineBreak, InlineLayoutUnit availableWidth) const
+InlineLayoutUnit InlineFormattingUtils::computedTextIndent(IsIntrinsicWidthMode isIntrinsicWidthMode, IsFirstFormattedLine isFirstFormattedLine, std::optional<LineEndsWithLineBreak> previousLineEndsWithLineBreak, InlineLayoutUnit availableWidth) const
 {
     auto& root = formattingContext().root();
 
@@ -156,17 +156,13 @@ InlineLayoutUnit InlineFormattingUtils::computedTextIndent(IsIntrinsicWidthMode 
     // is only affected if it is the first child of its parent element.
     // If 'each-line' is specified, indentation also applies to all lines where the previous line ends with a hard break.
     // [Integration] root()->parent() would normally produce a valid layout box.
-    bool shouldIndent = false;
-    if (!previousLineEndsWithLineBreak) {
-        shouldIndent = !root.isAnonymous();
-        if (root.isAnonymous()) {
-            if (!root.isInlineIntegrationRoot())
-                shouldIndent = root.parent().firstInFlowChild() == &root;
-            else
-                shouldIndent = root.isFirstChildForIntegration();
-        }
-    } else if (*previousLineEndsWithLineBreak == LineEndsWithLineBreak::Yes)
-        shouldIndent = root.style().textIndent().eachLine.has_value();
+    auto shouldIndent = false;
+    if (root.style().textIndent().eachLine.has_value())
+        shouldIndent = isFirstFormattedLine == IsFirstFormattedLine::Yes || (previousLineEndsWithLineBreak && *previousLineEndsWithLineBreak == LineEndsWithLineBreak::Yes);
+    else if (root.isAnonymousTextIndentCandidateForIntegration()
+        || !root.isAnonymous()
+        || (!root.isInlineIntegrationRoot() && root.parent().firstInFlowChild() == &root))
+            shouldIndent = isFirstFormattedLine == IsFirstFormattedLine::Yes;
 
     // Specifying 'hanging' inverts whether the line should be indented or not.
     if (root.style().textIndent().hanging.has_value())

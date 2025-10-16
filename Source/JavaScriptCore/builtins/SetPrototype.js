@@ -152,38 +152,6 @@ function symmetricDifference(other)
     return result;
 }
 
-function isSupersetOf(other)
-{
-    "use strict";
-
-    if (!@isSet(this))
-        @throwTypeError("Set operation called on non-Set object");
-
-    // Get Set Record
-    var size = @getSetSizeAsInt(other);
-
-    var has = other.has;
-    if (!@isCallable(has))
-        @throwTypeError("Set.prototype.isSupersetOf expects other.has to be callable");
-
-    var keys = other.keys;
-    if (!@isCallable(keys))
-        @throwTypeError("Set.prototype.isSupersetOf expects other.keys to be callable");
-
-    if (this.@size < size)
-        return false;
-
-    var iterator = keys.@call(other);
-    var wrapper = {
-        @@iterator: function () { return iterator; }
-    };
-
-    for (var key of wrapper) {
-        if (!this.@has(key))
-            return false;
-    }
-    return true;
-}
 
 function isDisjointFrom(other)
 {

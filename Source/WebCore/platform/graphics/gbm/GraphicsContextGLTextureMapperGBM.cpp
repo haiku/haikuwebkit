@@ -63,7 +63,7 @@ GraphicsContextGLTextureMapperGBM::~GraphicsContextGLTextureMapperGBM()
 
 bool GraphicsContextGLTextureMapperGBM::platformInitialize()
 {
-    auto isOpaqueFormat = [](uint32_t fourcc) -> bool {
+    auto isOpaqueFormat = [](FourCC fourcc) -> bool {
         return fourcc != DRM_FORMAT_ARGB8888
             && fourcc != DRM_FORMAT_RGBA8888
             && fourcc != DRM_FORMAT_ABGR8888
@@ -75,13 +75,13 @@ bool GraphicsContextGLTextureMapperGBM::platformInitialize()
     };
 
     bool isOpaque = !contextAttributes().alpha;
-    const auto& supportedFormats = PlatformDisplay::sharedDisplay().dmabufFormats();
+    const auto& supportedFormats = PlatformDisplay::sharedDisplay().bufferFormats();
     for (const auto& format : supportedFormats) {
         bool matchesOpacity = isOpaqueFormat(format.fourcc) == isOpaque;
         if (!matchesOpacity && m_drawingBufferFormat.fourcc)
             continue;
 
-        m_drawingBufferFormat.fourcc = format.fourcc;
+        m_drawingBufferFormat.fourcc = format.fourcc.value;
         m_drawingBufferFormat.modifiers = format.modifiers;
         if (matchesOpacity)
             break;

@@ -86,10 +86,10 @@ private:
     {
         // FIXME: Use imageBufferPixelFormatIsOpaque().
 #if ENABLE(PIXEL_FORMAT_RGB10)
-        if (m_configuration.bufferFormat.pixelFormat == WebCore::ImageBufferPixelFormat::RGB10)
+        if (m_configuration.bufferFormat.pixelFormat == WebCore::PixelFormat::RGB10)
             return true;
 #endif
-        return m_configuration.bufferFormat.pixelFormat == WebCore::ImageBufferPixelFormat::BGRX8;
+        return m_configuration.bufferFormat.pixelFormat == WebCore::PixelFormat::BGRX8;
     }
 
     const RemoteImageBufferSetIdentifier m_identifier;

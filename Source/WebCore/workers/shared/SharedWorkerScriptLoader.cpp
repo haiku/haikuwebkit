@@ -26,6 +26,7 @@
 #include "config.h"
 #include "SharedWorkerScriptLoader.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "EventNames.h"
 #include "InspectorInstrumentation.h"
 #include "SharedWorker.h"

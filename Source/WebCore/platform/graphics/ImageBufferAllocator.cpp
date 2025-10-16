@@ -40,7 +40,7 @@ ImageBufferAllocator::~ImageBufferAllocator() = default;
 
 RefPtr<ImageBuffer> ImageBufferAllocator::createImageBuffer(const FloatSize& size, const DestinationColorSpace& colorSpace, RenderingMode renderingMode) const
 {
-    return ImageBuffer::create(size, renderingMode, RenderingPurpose::Unspecified, 1, colorSpace, ImageBufferPixelFormat::BGRA8);
+    return ImageBuffer::create(size, renderingMode, RenderingPurpose::Unspecified, 1, colorSpace, PixelFormat::BGRA8);
 }
 
 RefPtr<PixelBuffer> ImageBufferAllocator::createPixelBuffer(const PixelBufferFormat& format, const IntSize& size) const

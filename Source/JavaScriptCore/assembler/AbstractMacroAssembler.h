@@ -1014,21 +1014,21 @@ public:
         return AssemblerType::getCallReturnOffset(call.m_label);
     }
 
-    template<RepatchingInfo repatch, PtrTag jumpTag, PtrTag destTag>
+    template<PtrTag jumpTag, PtrTag destTag>
     static void repatchJump(CodeLocationJump<jumpTag> jump, CodeLocationLabel<destTag> destination)
     {
-        AssemblerType::template relinkJump<repatch>(jump.dataLocation(), destination.dataLocation());
+        AssemblerType::relinkJump(jump.dataLocation(), destination.dataLocation());
     }
     
-    template<RepatchingInfo repatch, PtrTag callTag, PtrTag destTag>
+    template<PtrTag callTag, PtrTag destTag>
     static void repatchNearCall(CodeLocationNearCall<callTag> nearCall, CodeLocationLabel<destTag> destination)
     {
         switch (nearCall.callMode()) {
         case NearCallMode::Tail:
-            AssemblerType::template relinkTailCall<repatch>(nearCall.dataLocation(), destination.dataLocation());
+            AssemblerType::relinkTailCall(nearCall.dataLocation(), destination.dataLocation());
             return;
         case NearCallMode::Regular:
-            AssemblerType::template relinkCall<repatch>(nearCall.dataLocation(), destination.untaggedPtr());
+            AssemblerType::relinkCall(nearCall.dataLocation(), destination.untaggedPtr());
             return;
         }
         RELEASE_ASSERT_NOT_REACHED();
@@ -1086,9 +1086,8 @@ public:
     void emitNops(size_t memoryToFillWithNopsInBytes)
     {
 #if CPU(ARM64) || CPU(ARM)
-        size_t nopSize = is32Bit() ? 2 : 4;
-        RELEASE_ASSERT(memoryToFillWithNopsInBytes % nopSize == 0);
-        for (unsigned i = 0; i < memoryToFillWithNopsInBytes / nopSize; ++i)
+        RELEASE_ASSERT(memoryToFillWithNopsInBytes % 4 == 0);
+        for (unsigned i = 0; i < memoryToFillWithNopsInBytes / 4; ++i)
             m_assembler.nop();
 #else
         AssemblerBuffer& buffer = m_assembler.buffer();

@@ -48,6 +48,7 @@ namespace WebCore {
 
 class Document;
 class Page;
+class StringCallback;
 
 class WEBCORE_EXPORT PageConsoleClient final : public JSC::ConsoleClient, public CanMakeCheckedPtr<PageConsoleClient> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(PageConsoleClient, WEBCORE_EXPORT);
@@ -56,12 +57,18 @@ public:
     explicit PageConsoleClient(Page&);
     virtual ~PageConsoleClient();
 
+    PageConsoleClient(const PageConsoleClient&) = delete;
+    PageConsoleClient& operator=(const PageConsoleClient&) = delete;
+    PageConsoleClient(PageConsoleClient&&) = delete;
+    PageConsoleClient& operator=(PageConsoleClient&&) = delete;
+
     static bool shouldPrintExceptions();
     static void setShouldPrintExceptions(bool);
 
     static void mute();
     static void unmute();
 
+    void setConsoleMessageListener(RefPtr<StringCallback>&&); // For testing.
     void addMessage(std::unique_ptr<Inspector::ConsoleMessage>&&);
 
     // The following addMessage function are deprecated.
@@ -90,6 +97,7 @@ private:
     Ref<Page> protectedPage() const;
 
     WeakRef<Page> m_page;
+    RefPtr<StringCallback> m_consoleMessageListener;
 };
 
 } // namespace WebCore

@@ -48,7 +48,7 @@
 #include "WebProcess.h"
 #include <JavaScriptCore/TypedArrayInlines.h>
 #include <WebCore/FontCustomPlatformData.h>
-#include <WebCore/ImageBufferPixelFormat.h>
+#include <WebCore/PixelFormat.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/TextStream.h>
 

@@ -102,7 +102,6 @@
 #include "StylePrimitiveKeyword+CSSValueCreation.h"
 #include "StylePrimitiveNumericTypes+CSSValueCreation.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
-#include "StyleReflection.h"
 #include "StyleRotate.h"
 #include "StyleScale.h"
 #include "StyleScrollMargin.h"
@@ -160,7 +159,6 @@ public:
 
     // MARK: Shared conversions
 
-    static Ref<CSSValue> convertImageOrNone(ExtractorState&, const StyleImage*);
     static Ref<CSSValue> convertGlyphOrientation(ExtractorState&, GlyphOrientation);
     static Ref<CSSValue> convertGlyphOrientationOrAuto(ExtractorState&, GlyphOrientation);
     static Ref<CSSValue> convertMarginTrim(ExtractorState&, OptionSet<MarginTrimType>);
@@ -171,10 +169,8 @@ public:
     static Ref<CSSValue> convertWebkitTextCombine(ExtractorState&, TextCombine);
     static Ref<CSSValue> convertImageOrientation(ExtractorState&, ImageOrientation);
     static Ref<CSSValue> convertContain(ExtractorState&, OptionSet<Containment>);
-    static Ref<CSSValue> convertInitialLetter(ExtractorState&, FloatSize);
     static Ref<CSSValue> convertTextSpacingTrim(ExtractorState&, TextSpacingTrim);
     static Ref<CSSValue> convertTextAutospace(ExtractorState&, TextAutospace);
-    static Ref<CSSValue> convertReflection(ExtractorState&, const StyleReflection*);
     static Ref<CSSValue> convertLineFitEdge(ExtractorState&, const TextEdge&);
     static Ref<CSSValue> convertTextBoxEdge(ExtractorState&, const TextEdge&);
     static Ref<CSSValue> convertPositionTryFallbacks(ExtractorState&, const FixedVector<PositionTryFallback>&);
@@ -492,13 +488,6 @@ inline Ref<CSSValue> ExtractorConverter::convertTransformOperation(const RenderS
 
 // MARK: - Shared conversions
 
-inline Ref<CSSValue> ExtractorConverter::convertImageOrNone(ExtractorState& state, const StyleImage* image)
-{
-    if (image)
-        return image->computedStyleValue(state.style);
-    return CSSPrimitiveValue::create(CSSValueNone);
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertGlyphOrientation(ExtractorState&, GlyphOrientation orientation)
 {
     switch (orientation) {
@@ -625,14 +614,6 @@ inline Ref<CSSValue> ExtractorConverter::convertContain(ExtractorState&, OptionS
     return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertInitialLetter(ExtractorState&, FloatSize initialLetter)
-{
-    return CSSValuePair::create(
-        !initialLetter.width() ? CSSPrimitiveValue::create(CSSValueNormal) : CSSPrimitiveValue::create(initialLetter.width()),
-        !initialLetter.height() ? CSSPrimitiveValue::create(CSSValueNormal) : CSSPrimitiveValue::create(initialLetter.height())
-    );
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertTextSpacingTrim(ExtractorState&, TextSpacingTrim textSpacingTrim)
 {
     switch (textSpacingTrim.type()) {
@@ -665,34 +646,6 @@ inline Ref<CSSValue> ExtractorConverter::convertTextAutospace(ExtractorState&, T
         list.append(CSSPrimitiveValue::create(CSSValueIdeographNumeric));
 
     return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertReflection(ExtractorState& state, const StyleReflection* reflection)
-{
-    if (!reflection)
-        return CSSPrimitiveValue::create(CSSValueNone);
-
-    // FIXME: Consider omitting 0px when the mask is null.
-
-    auto offset = [&] -> Ref<CSSPrimitiveValue> {
-        auto& reflectionOffset = reflection->offset();
-        if (reflectionOffset.isPercentOrCalculated())
-            return CSSPrimitiveValue::create(reflectionOffset.percent(), CSSUnitType::CSS_PERCENTAGE);
-        return convertNumberAsPixels(state, reflectionOffset.value());
-    }();
-
-    auto mask = [&] -> RefPtr<CSSValue> {
-        auto& reflectionMask = reflection->mask();
-        if (reflectionMask.source().isNone())
-            return CSSPrimitiveValue::create(CSSValueNone);
-        return createCSSValue(state.pool, state.style, reflectionMask);
-    }();
-
-    return CSSReflectValue::create(
-        toCSSValueID(reflection->direction()),
-        WTFMove(offset),
-        WTFMove(mask)
-    );
 }
 
 inline Ref<CSSValue> ExtractorConverter::convertLineFitEdge(ExtractorState& state, const TextEdge& textEdge)

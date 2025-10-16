@@ -1215,8 +1215,8 @@ void LineLayout::shiftLinesBy(LayoutUnit blockShift)
     for (auto& line : m_inlineContent->displayContent().lines)
         line.moveInBlockDirection(blockShift, isHorizontalWritingMode);
 
-    LayoutUnit deltaX = isHorizontalWritingMode ? 0_lu : blockShift;
-    LayoutUnit deltaY = isHorizontalWritingMode ? blockShift : 0_lu;
+    auto deltaX = isHorizontalWritingMode ? 0_lu : blockShift;
+    auto deltaY = isHorizontalWritingMode ? blockShift : 0_lu;
     for (auto& box : m_inlineContent->displayContent().boxes) {
         if (isHorizontalWritingMode)
             box.moveVertically(blockShift);
@@ -1231,12 +1231,12 @@ void LineLayout::shiftLinesBy(LayoutUnit blockShift)
 
     for (auto& layoutBox : formattingContextBoxes(rootLayoutBox())) {
         if (layoutBox.isOutOfFlowPositioned() && layoutBox.style().hasStaticBlockPosition(isHorizontalWritingMode)) {
-            CheckedRef renderer = downcast<RenderLayerModelObject>(*layoutBox.rendererForIntegration());
-            if (!renderer->layer())
-                continue;
-            CheckedRef layer = *renderer->layer();
-            layer->setStaticBlockPosition(layer->staticBlockPosition() + blockShift);
-            renderer->setChildNeedsLayout(MarkOnlyThis);
+            if (CheckedPtr layerRenderer = dynamicDowncast<RenderLayerModelObject>(layoutBox.rendererForIntegration())) {
+                if (CheckedPtr layer = layerRenderer->layer())
+                    layer->setStaticBlockPosition(layer->staticBlockPosition() + blockShift);
+            }
+            if (CheckedPtr renderBox = dynamicDowncast<RenderBox>(layoutBox.rendererForIntegration()))
+                renderBox->move(deltaX, deltaY);
         }
     }
 }

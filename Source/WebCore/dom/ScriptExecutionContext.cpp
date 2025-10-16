@@ -32,6 +32,7 @@
 #include "CachedScript.h"
 #include "CommonVM.h"
 #include "ContentSecurityPolicy.h"
+#include "ContextDestructionObserverInlines.h"
 #include "CrossOriginMode.h"
 #include "CrossOriginOpenerPolicy.h"
 #include "DocumentInlines.h"

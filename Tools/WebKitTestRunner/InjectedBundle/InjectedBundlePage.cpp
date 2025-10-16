@@ -932,7 +932,10 @@ WKURLRequestRef InjectedBundlePage::willSendRequestForFrame(WKBundlePageRef page
             replace(blockedURL, JSC::Yarr::RegularExpression("%253Fkey%253D[-0123456789abcdefABCDEF]+"_s), "%253Fkey%253DGENERATED_KEY"_s);
             replace(blockedURL, JSC::Yarr::RegularExpression("%2526key%253D[-0123456789abcdefABCDEF]+"_s), "%2526key%253DGENERATED_KEY"_s);
             replace(blockedURL, JSC::Yarr::RegularExpression("reportID=[-0123456789abcdefABCDEF]+"_s), "reportID=GENERATED_REPORT_ID"_s);
-            injectedBundle.outputText(makeString("Blocked access to external URL "_s, blockedURL, '\n'));
+            auto script = makeString("console.log('Blocked access to external URL "_s, blockedURL, "');"_s);
+            auto scriptRef = adopt(JSStringCreateWithUTF8CString(script.utf8().data()));
+            JSGlobalContextRef jsContext = WKBundleFrameGetJavaScriptContext(frame);
+            JSEvaluateScript(jsContext, scriptRef.get(), 0, 0, 0, 0);
             return nullptr;
         }
     }

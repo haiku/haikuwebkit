@@ -1499,7 +1499,7 @@ String addAudioTrackKindCommentarySuffix(const String& text)
 
 String contextMenuItemTagShowMediaStats()
 {
-    return WEB_UI_STRING("Show Media Stats", "Media stats context menu item");
+    return WEB_UI_STRING("Show Media Statistics", "Media statistics context menu item");
 }
 
 #endif // ENABLE(VIDEO)

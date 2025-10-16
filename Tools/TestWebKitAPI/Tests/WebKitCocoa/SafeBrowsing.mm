@@ -41,6 +41,7 @@
 #import <WebKit/WKPreferencesPrivate.h>
 #import <WebKit/WKUIDelegatePrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
+#import <WebKit/_WKFeature.h>
 #import <WebKit/_WKResourceLoadDelegate.h>
 #import <WebKit/_WKResourceLoadInfo.h>
 #import <wtf/RetainPtr.h>
@@ -819,5 +820,48 @@ TEST(SafeBrowsing, PostTimeout)
     while (![webView _safeBrowsingWarning])
         TestWebKitAPI::Util::spinRunLoop();
 }
+
+TEST(SafeBrowsing, PhishingInFrame)
+{
+    phishingResourceName = @"simple";
+    ClassMethodSwizzler swizzler(objc_getClass("SSBLookupContext"), @selector(sharedLookupContext), [SimpleLookupContext methodForSelector:@selector(sharedLookupContext)]);
+
+    auto delegate = adoptNS([TestNavigationDelegate new]);
+    auto webView = adoptNS([WKWebView new]);
+    auto configuration = webView.get().configuration;
+    auto preferences = configuration.preferences;
+    preferences._safeBrowsingEnabled = YES;
+
+    for (_WKFeature *feature in [WKPreferences _features]) {
+        if ([feature.key isEqualToString:@"SiteIsolationEnabled"]) {
+            [preferences _setEnabled:YES forFeature:feature];
+            break;
+        }
+    }
+
+    __block bool navigationFailed = false;
+    __block bool navigationFinished = false;
+    delegate.get().didFailProvisionalLoadInSubframeWithError = ^(WKWebView *, WKFrameInfo *frame, NSError *error) {
+        EXPECT_NOT_NULL(error);
+        auto failingURL = (NSURL *)[error.userInfo valueForKey:NSURLErrorFailingURLErrorKey];
+        EXPECT_TRUE([failingURL.lastPathComponent isEqualToString:@"simple.html"]);
+#if USE(NSURL_ERROR_FAILING_URL_STRING_KEY)
+        auto failingURLString = (NSString *)[error.userInfo valueForKey:NSURLErrorFailingURLStringErrorKey];
+        EXPECT_TRUE([failingURLString hasSuffix:@"/simple.html"]);
+#endif
+        navigationFailed = true;
+    };
+    delegate.get().didFinishNavigation = ^(WKWebView *, WKNavigation *navigation) {
+        navigationFinished = true;
+    };
+
+    [webView setNavigationDelegate:delegate.get()];
+    [webView loadRequest:[NSURLRequest requestWithURL:resourceURL(@"simple-iframe")]];
+    TestWebKitAPI::Util::run(&navigationFinished);
+    TestWebKitAPI::Util::run(&navigationFailed);
+    EXPECT_TRUE(navigationFailed);
+    EXPECT_TRUE(navigationFinished);
+}
+
 
 #endif // HAVE(SAFE_BROWSING)

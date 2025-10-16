@@ -238,6 +238,12 @@ class GLibTestRunner(object):
         self._subtest = None
         self._subtest_messages = []
 
+    def _is_failure_return_code(self, code):
+        # 0 on success, 1 on failure (assuming it returns at all),
+        # 0 or 77 if all tests were skipped or marked as incomplete
+        # See https://gitlab.gnome.org/GNOME/glib/-/blob/main/glib/gtestutils.c#L2361
+        return code not in (0, 77)
+
     def run(self, subtests=[], skipped=[], env=None):
         pipe_r, pipe_w = os.pipe()
         command = [self._test_binary, '--quiet', '--keep-going', '--GTestLogFD=%d' % pipe_w]
@@ -278,7 +284,7 @@ class GLibTestRunner(object):
             need_restart = True
 
         # Check for errors before any test is run
-        if not self._results and p.returncode != 0:
+        if not self._results and self._is_failure_return_code(p.returncode):
             errors = self._read_from_stderr(self._stderr_fd)
             sys.stdout.write('Test program setup failed.\n')
             self._subtest_stderr(errors)
@@ -286,11 +292,11 @@ class GLibTestRunner(object):
             return self._results
 
         # Try to read errors from afterAll
-        if p.returncode != 0 and not need_restart:
+        if self._is_failure_return_code(p.returncode) and not need_restart:
             errors = self._read_from_stderr(self._stderr_fd)
             sys.stdout.write('Test program shutdown failed.')
             self._subtest_stderr(errors)
-            self._results[SHUTDOWN_SUBTEST_STR] = 'CRASH'
+            self._results[SHUTDOWN_FAILED_STR] = 'CRASH'
             return self._results
 
         if len(self._results) == 0:

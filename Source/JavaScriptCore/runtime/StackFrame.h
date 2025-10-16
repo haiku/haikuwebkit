@@ -44,6 +44,7 @@ struct JSFrameData {
     WriteBarrier<JSCell> callee;
     WriteBarrier<CodeBlock> codeBlock;
     BytecodeIndex bytecodeIndex;
+    bool m_isAsyncFrame { false };
 };
 
 struct WasmFrameData {
@@ -57,7 +58,9 @@ public:
 
     StackFrame(VM&, JSCell* owner, JSCell* callee);
     StackFrame(VM&, JSCell* owner, JSCell* callee, CodeBlock*, BytecodeIndex);
+    StackFrame(VM&, JSCell* owner, JSCell* callee, CodeBlock*, BytecodeIndex, bool isAsyncFrame);
     StackFrame(VM&, JSCell* owner, CodeBlock*, BytecodeIndex);
+    StackFrame(VM&, JSCell* owner, JSCell* callee, bool isAsyncFrame);
     StackFrame(Wasm::IndexOrName);
     StackFrame(Wasm::IndexOrName, size_t functionIndex);
     StackFrame() = default;
@@ -74,6 +77,13 @@ public:
         if (auto* jsFrame = std::get_if<JSFrameData>(&m_frameData))
             return jsFrame->codeBlock.get();
         return nullptr;
+    }
+
+    bool isAsyncFrameWithoutCodeBlock() const
+    {
+        if (auto* jsFrame = std::get_if<JSFrameData>(&m_frameData))
+            return jsFrame->m_isAsyncFrame && !codeBlock();
+        return false;
     }
 
     LineColumn computeLineAndColumn() const;
@@ -96,4 +106,3 @@ private:
 };
 
 } // namespace JSC
-

@@ -1446,6 +1446,457 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugDynamicRules)
 
     [manager run];
 }
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, DuplicatedRuleIDs)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"let enabledRulesets = await browser.declarativeNetRequest.getEnabledRulesets()",
+        @"browser.test.assertEq(enabledRulesets.length, 1, 'The static ruleset should be enabled.')",
+
+        @"browser.test.sendMessage('Load Tab')"
+    ]);
+
+    auto *declarativeNetRequestManifest = @{
+        @"name": @"Test",
+        @"description": @"Test dNR extension",
+        @"version": @"1",
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"duplicated_rule_id",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto *rules = @"[ { \"id\" : 1, \"priority\": 1, \"action\" : { \"type\" : \"block\" }, \"condition\" : { \"urlFilter\" : \"foo\" } }, { \"id\" : 1, \"priority\": 1, \"action\" : { \"type\" : \"block\" }, \"condition\" : { \"urlFilter\" : \"bar\" } } ]";
+
+    auto manager = Util::loadExtension(declarativeNetRequestManifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    NSArray<NSError *> *errors = manager.get().context.errors;
+    ASSERT_EQ(errors.count, 1ul);
+    ASSERT_TRUE([errors.firstObject.localizedDescription isEqualToString:@"`declarative_net_request` ruleset with id `duplicated_rule_id` duplicates the rule id `1`."]);
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, DuplicatedRuleIDsInDifferentRulesets)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"let enabledRulesets = await browser.declarativeNetRequest.getEnabledRulesets()",
+        @"browser.test.assertEq(enabledRulesets.length, 2, 'The static rulesets should be enabled.')",
+
+        @"browser.test.sendMessage('Load Tab')"
+    ]);
+
+    auto *declarativeNetRequestManifest = @{
+        @"name": @"Test",
+        @"description": @"Test dNR extension",
+        @"version": @"1",
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"ruleset_1",
+                    @"enabled": @YES,
+                    @"path": @"rules1.json"
+                },
+                @{
+                    @"id": @"ruleset_2",
+                    @"enabled": @YES,
+                    @"path": @"rules2.json"
+                }
+            ]
+        }
+    };
+
+    auto *rules1 = @"[ { \"id\" : 1, \"priority\": 1, \"action\" : { \"type\" : \"block\" }, \"condition\" : { \"urlFilter\" : \"foo\" } } ]";
+    auto *rules2 = @"[ { \"id\" : 1, \"priority\": 1, \"action\" : { \"type\" : \"block\" }, \"condition\" : { \"urlFilter\" : \"bar\" } } ]";
+
+    auto manager = Util::loadExtension(declarativeNetRequestManifest, @{ @"background.js": backgroundScript, @"rules1.json": rules1, @"rules2.json": rules2 });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+
+    [manager runUntilTestMessage:@"Load Tab"];
+    ASSERT_EQ(manager.get().context.errors.count, 0ul);
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugExcludedRequestDomains)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.notifyFail('onRuleMatchedDebug should not be called for an excluded request domain.')",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab')",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"frame\",\"excludedRequestDomains\":[\"localhost\"],\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager.get().defaultTab.webView _test_waitForDidFinishNavigation];
+    [manager done];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugExcludedRequestMethods)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.notifyFail('onRuleMatchedDebug should not be called for an excluded request method.')",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab')",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"frame\",\"excludedRequestMethods\":[\"get\"],\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager.get().defaultTab.webView _test_waitForDidFinishNavigation];
+    [manager done];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugExcludedRequestDomainsAndExcludedRequestMethods)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.notifyFail('onRuleMatchedDebug should not be called for an excluded request domain or an excluded request method.')",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab')",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"frame\",\"excludedRequestDomains\":[\"localhost\"],\"excludedRequestMethods\":[\"get\"],\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager.get().defaultTab.webView _test_waitForDidFinishNavigation];
+    [manager done];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugRequestDomains)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.assertEq(info.rule.rulesetId, 'rules');",
+        @"  browser.test.assertEq(info.rule.ruleId, 1);",
+        @"  browser.test.assertEq(info.request.type, 'sub_frame');",
+        @"  browser.test.notifyPass();",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab');",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"frame\",\"requestDomains\":[\"localhost\"],\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager run];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugRequestMethods)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.assertEq(info.rule.rulesetId, 'rules');",
+        @"  browser.test.assertEq(info.rule.ruleId, 1);",
+        @"  browser.test.assertEq(info.request.type, 'sub_frame');",
+        @"  browser.test.assertEq(info.request.method, 'GET');",
+        @"  browser.test.notifyPass();",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab');",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"frame\",\"requestMethods\":[\"get\"],\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager run];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugRequestDomainsAndRequestMethods)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.assertEq(info.rule.rulesetId, 'rules');",
+        @"  browser.test.assertEq(info.rule.ruleId, 1);",
+        @"  browser.test.assertEq(info.request.type, 'sub_frame');",
+        @"  browser.test.assertEq(info.request.method, 'GET');",
+        @"  browser.test.notifyPass();",
+        @"})",
+        @"browser.test.sendMessage('Load Tab');",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"frame\",\"requestDomains\":[\"localhost\"],\"requestMethods\":[\"get\"],\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager run];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugRequestInitiatorDomainsAndExcludedInitiatorDomains)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  browser.test.notifyFail('onRuleMatchedDebug should not be called for an excluded initiator domain.')",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab')",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"block\"},\"condition\":{\"urlFilter\":\"frame\",\"initiatorDomains\":[\"example.com\"],\"excludedInitiatorDomains\":[\"localhost\"],\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager.get().defaultTab.webView _test_waitForDidFinishNavigation];
+    [manager done];
+}
+
+TEST(WKWebExtensionAPIDeclarativeNetRequest, OnRuleMatchedDebugRequestUpgradeScheme)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
+        { "/frame.html"_s, { { { "Content-Type"_s, "text/html"_s } }, "<h1>Hello, world!</h1>"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"var onRuleMatchedDebugCount = 0",
+
+        @"browser.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {",
+        @"  onRuleMatchedDebugCount++",
+        @"  browser.test.assertEq(onRuleMatchedDebugCount, 1, 'onRuleMatchedDebug should only be called once an upgrade action type.')",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab')",
+    ]);
+
+    auto *rules = @"[{\"id\":1,\"priority\":1,\"action\":{\"type\":\"upgradeScheme\"},\"condition\":{\"urlFilter\":\"frame\",\"resourceTypes\":[\"sub_frame\"]}}]";
+    auto *manifest = @{
+        @"manifest_version": @3,
+        @"permissions": @[ @"declarativeNetRequest", @"declarativeNetRequestFeedback" ],
+        @"background": @{ @"scripts": @[ @"background.js" ], @"type": @"module", @"persistent": @NO },
+        @"declarative_net_request": @{
+            @"rule_resources": @[
+                @{
+                    @"id": @"rules",
+                    @"enabled": @YES,
+                    @"path": @"rules.json"
+                }
+            ]
+        }
+    };
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript, @"rules.json": rules });
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequest];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forPermission:WKWebExtensionPermissionDeclarativeNetRequestFeedback];
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    auto *urlRequest = server.requestWithLocalhost();
+    NSURL *requestURL = urlRequest.URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:requestURL];
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:[requestURL URLByAppendingPathComponent:@"frame.html"]];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+    [manager.get().defaultTab.webView _test_waitForDidFinishNavigation];
+    [manager done];
+}
 #endif
 
 // MARK: Rule translation tests

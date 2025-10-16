@@ -31,6 +31,8 @@
 #include "config.h"
 #include "PerformanceEntry.h"
 
+#include <wtf/NeverDestroyed.h>
+
 namespace WebCore {
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(PerformanceEntry);
@@ -66,6 +68,9 @@ std::optional<PerformanceEntry::Type> PerformanceEntry::parseEntryTypeString(con
 
     if (entryType == "first-input"_s)
         return std::optional<Type>(Type::FirstInput);
+
+    if (entryType == "largest-contentful-paint"_s)
+        return std::optional<Type>(Type::LargestContentfulPaint);
 
     return std::nullopt;
 }

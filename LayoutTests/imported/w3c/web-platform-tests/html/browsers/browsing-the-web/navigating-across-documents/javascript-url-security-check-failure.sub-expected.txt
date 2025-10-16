@@ -1,5 +1,5 @@
-Blocked access to external URL http://www.localhost:8800/common/blank.html
-Blocked access to external URL http://www.localhost:8800/common/blank.html
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/common/blank.html
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/common/blank.html
 CONSOLE MESSAGE: Blocked a frame with origin "http://localhost:8800" from accessing a frame with origin "http://localhost:8800". The frame being accessed set "document.domain" to "localhost", but the frame requesting access did not. Both must set "document.domain" to the same value to allow access.
 CONSOLE MESSAGE: Blocked a frame with origin "http://localhost:8800" from accessing a frame with origin "http://localhost:8800". The frame being accessed set "document.domain" to "localhost", but the frame requesting access did not. Both must set "document.domain" to the same value to allow access.
 

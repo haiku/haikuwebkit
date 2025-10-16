@@ -569,9 +569,9 @@
 		08FB7794FE84155DC02AAC07 /* WebKitTestRunner */ = {
 			isa = PBXGroup;
 			children = (
-				00E43E3F2D977FC70060461A /* WebContentCaptivePortalExtension.appex */,
 				E3E17D412CC4445D0077C3AE /* WebKitEligibilityUtil */,
 				E372BC392C08F323006DFE67 /* WebContentExtension.appex */,
+				00E43E3F2D977FC70060461A /* WebContentCaptivePortalExtension.appex */,
 				E372BC372C08EB01006DFE67 /* GPUExtension.appex */,
 				E372BC352C08E29C006DFE67 /* NetworkingExtension.appex */,
 				49AEEF692407278200C87E4C /* Info.plist */,

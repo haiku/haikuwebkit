@@ -31,6 +31,7 @@
 
 namespace WebCore {
 
+class LayoutScope;
 class LogicalSelectionOffsetCaches;
 class RenderInline;
 class RenderText;
@@ -57,6 +58,7 @@ class RenderBlock : public RenderBox {
 public:
     // FIXME: This is temporary to allow us to move code from RenderBlock into RenderBlockFlow that accesses member variables that we haven't moved out of
     // RenderBlock yet.
+    friend class LayoutScope;
     friend class RenderBlockFlow;
     virtual ~RenderBlock();
 

@@ -4437,7 +4437,7 @@ void WebViewImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Hand
         return;
     }
 
-    auto dragCGImage = dragImageAsBitmap->makeCGImage();
+    RetainPtr dragCGImage = dragImageAsBitmap->createPlatformImage(DontCopyBackingStore);
     auto dragNSImage = adoptNS([[NSImage alloc] initWithCGImage:dragCGImage.get() size:dragImageAsBitmap->size()]);
 
     WebCore::IntSize size([dragNSImage size]);
@@ -6916,7 +6916,7 @@ void WebViewImpl::requestTextRecognition(const URL& imageURL, ShareableBitmap::H
         return;
     }
 
-    auto cgImage = imageBitmap->makeCGImage();
+    RetainPtr cgImage = imageBitmap->createPlatformImage(DontCopyBackingStore);
 
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
     if (!targetLanguageIdentifier.isEmpty())
@@ -6942,7 +6942,7 @@ void WebViewImpl::computeHasVisualSearchResults(const URL& imageURL, ShareableBi
         return;
     }
 
-    auto cgImage = imageBitmap.makeCGImage();
+    RetainPtr cgImage = imageBitmap.createPlatformImage(DontCopyBackingStore);
     auto request = createImageAnalyzerRequest(cgImage.get(), imageURL, [NSURL _web_URLWithWTFString:m_page->currentURL()], VKAnalysisTypeVisualSearch);
     auto startTime = MonotonicTime::now();
     [ensureImageAnalyzer() processRequest:request.get() progressHandler:nil completionHandler:makeBlockPtr([completion = WTFMove(completion), startTime] (CocoaImageAnalysis *analysis, NSError *) mutable {
@@ -6974,7 +6974,7 @@ void WebViewImpl::beginTextRecognitionForVideoInElementFullscreen(ShareableBitma
     if (!imageBitmap)
         return;
 
-    auto image = imageBitmap->makeCGImage();
+    RetainPtr image = imageBitmap->createPlatformImage(DontCopyBackingStore);
     if (!image)
         return;
 

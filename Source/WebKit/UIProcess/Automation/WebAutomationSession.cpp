@@ -51,6 +51,7 @@
 #include <WebCore/MIMETypeRegistry.h>
 #include <WebCore/PointerEventTypeNames.h>
 #include <algorithm>
+#include <wtf/CallbackAggregator.h>
 #include <wtf/FileSystem.h>
 #include <wtf/HashMap.h>
 #include <wtf/MainThread.h>
@@ -1814,6 +1815,37 @@ CommandResult<void> WebAutomationSession::generateTestReport(const String& brows
     page->generateTestReport(message, group);
 
     return { };
+}
+
+void WebAutomationSession::setStorageAccessPermissionState(const String& browsingContextHandle, Inspector::Protocol::Automation::PermissionState state, const String& topFrameOrigin, const String& subFrameOrigin, CommandCallback<void>&& callback)
+{
+    auto page = webPageProxyForHandle(browsingContextHandle);
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!page, WindowNotFound);
+
+    Ref callbackAggregator = CallbackAggregator::create([callback = WTFMove(callback)] {
+        callback({ });
+    });
+
+    Ref store = page->websiteDataStore();
+    bool granted = state == Inspector::Protocol::Automation::PermissionState::Granted;
+    if (!granted)
+        store->clearResourceLoadStatisticsInWebProcesses([callbackAggregator] { });
+    store->setStorageAccessPermissionForTesting(granted, page->identifier(), topFrameOrigin, subFrameOrigin, [callbackAggregator] { });
+}
+
+void WebAutomationSession::setStorageAccessPolicy(const String& browsingContextHandle, bool blocked, CommandCallback<void>&& callback)
+{
+    auto page = webPageProxyForHandle(browsingContextHandle);
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!page, WindowNotFound);
+
+    Ref callbackAggregator = CallbackAggregator::create([callback = WTFMove(callback)] {
+        callback({ });
+    });
+
+    Ref store = page->websiteDataStore();
+    if (blocked)
+        store->clearStorageAccessForTesting([callbackAggregator] { });
+    store->setResourceLoadStatisticsShouldBlockThirdPartyCookiesForTesting(blocked, WebCore::ThirdPartyCookieBlockingMode::All, [callbackAggregator] { });
 }
 
 #if ENABLE(WEBDRIVER_BIDI)

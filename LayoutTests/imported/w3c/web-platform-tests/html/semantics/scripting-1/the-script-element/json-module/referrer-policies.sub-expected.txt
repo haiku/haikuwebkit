@@ -1,7 +1,7 @@
-Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteNoReferrerPolicy
-Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteReferrerPolicyOrigin
-Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteReferrerPolicyNoReferrer
-Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteNoReferrerPolicyUnsafeUrl
+CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteNoReferrerPolicy
+CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteReferrerPolicyOrigin
+CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteReferrerPolicyNoReferrer
+CONSOLE MESSAGE: Blocked access to external URL http://www1.localhost:8800/html/semantics/scripting-1/the-script-element/json-module/referrer-checker.py?name=remoteNoReferrerPolicyUnsafeUrl
 
 Harness Error (TIMEOUT), message = null
 

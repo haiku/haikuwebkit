@@ -65,9 +65,9 @@ class NetworkLoadMetrics;
 class ResourceMonitor;
 #endif
 
-DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(ResourceLoader);
+DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(CoreResourceLoader);
 class ResourceLoader : public RefCountedAndCanMakeWeakPtr<ResourceLoader>, protected ResourceHandleClient {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(ResourceLoader, ResourceLoader);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(ResourceLoader, CoreResourceLoader);
 public:
     virtual ~ResourceLoader() = 0;
 

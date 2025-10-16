@@ -26,6 +26,7 @@
 #include "config.h"
 #include "IDBConnectionToServer.h"
 
+#include "IDBActiveDOMObjectInlines.h"
 #include "IDBConnectionProxy.h"
 #include "IDBDatabase.h"
 #include "IDBDatabaseNameAndVersion.h"

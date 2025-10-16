@@ -180,7 +180,7 @@ Ref<const LayoutShape> LayoutShape::createRasterShape(Image* image, float thresh
     auto snappedLogicalMarginRect = snappedIntRect(logicalMarginRect);
     auto intervals = makeUnique<RasterShapeIntervals>(snappedLogicalMarginRect.height(), -snappedLogicalMarginRect.y());
     // FIXME (149420): This buffer should not be unconditionally unaccelerated.
-    auto imageBuffer = ImageBuffer::create(snappedPhysicalImageSize, RenderingMode::Unaccelerated, RenderingPurpose::Unspecified, 1, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8);
+    auto imageBuffer = ImageBuffer::create(snappedPhysicalImageSize, RenderingMode::Unaccelerated, RenderingPurpose::Unspecified, 1, DestinationColorSpace::SRGB(), PixelFormat::BGRA8);
 
     auto createShape = [&]() {
         auto rasterShape = adoptRef(*new RasterLayoutShape(WTFMove(intervals), snappedLogicalMarginRect.size()));

@@ -26,6 +26,7 @@
 #include "config.h"
 #include "IDBIndex.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "ExceptionOr.h"
 #include "IDBBindingUtilities.h"
 #include "IDBCursor.h"

@@ -48,7 +48,7 @@ NSString* errorValidatingBindGroup(const BindGroup&, const BufferBindingSizesFor
 
 #if !defined(NDEBUG) || (defined(ENABLE_LIBFUZZER) && ENABLE_LIBFUZZER && defined(ASAN_ENABLED) && ASAN_ENABLED)
 void dumpMetalReproCaseComputePSO(String&& shaderSource, String&& functionName);
-void dumpMetalReproCaseRenderPSO(String&& vertexShaderSource, String&& vertexFunctionName, String&& fragmentShaderSource, String&& fragmentFunctionName, MTLRenderPipelineDescriptor*, ShaderModule::VertexStageIn& shaderLocations, const Device&);
+bool dumpMetalReproCaseRenderPSO(String&& vertexShaderSource, String&& vertexFunctionName, String&& fragmentShaderSource, String&& fragmentFunctionName, MTLRenderPipelineDescriptor*, ShaderModule::VertexStageIn& shaderLocations, const Device&);
 void clearMetalPSORepro();
 #endif
 

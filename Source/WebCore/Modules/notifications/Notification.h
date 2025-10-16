@@ -34,7 +34,6 @@
 #if ENABLE(NOTIFICATIONS)
 
 #include <WebCore/ActiveDOMObject.h>
-#include <WebCore/ContextDestructionObserverInlines.h>
 #include <WebCore/EventTarget.h>
 #include <WebCore/EventTargetInterfaces.h>
 #include <WebCore/NotificationDirection.h>
@@ -117,7 +116,7 @@ public:
     static Permission permission(ScriptExecutionContext&);
     static void requestPermission(Document&, RefPtr<NotificationPermissionCallback>&&, Ref<DeferredPromise>&&);
 
-    ScriptExecutionContext* scriptExecutionContext() const final { return ActiveDOMObject::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
 
     WEBCORE_EXPORT NotificationData data() const;
     RefPtr<NotificationResources> resources() const { return m_resources; }

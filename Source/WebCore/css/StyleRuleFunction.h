@@ -31,6 +31,8 @@
 
 namespace WebCore {
 
+class MutableStyleProperties;
+
 class StyleRuleFunction final : public StyleRuleGroup {
 public:
     struct Parameter {
@@ -67,12 +69,13 @@ public:
 
     // Only contains property "result" and custom properties.
     const StyleProperties& properties() const { return m_properties.get(); }
+    MutableStyleProperties& mutableProperties();
 
 private:
     StyleRuleFunctionDeclarations(Ref<StyleProperties>&&);
     StyleRuleFunctionDeclarations(const StyleRuleFunctionDeclarations&);
 
-    const Ref<StyleProperties> m_properties;
+    Ref<StyleProperties> m_properties;
 };
 
 }

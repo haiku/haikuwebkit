@@ -388,7 +388,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && strokeColor == o.strokeColor
         && visitedLinkStrokeColor == o.visitedLinkStrokeColor
         && customProperties == o.customProperties
-        && arePointingToEqualData(listStyleImage, o.listStyleImage)
+        && listStyleImage == o.listStyleImage
         && listStyleType == o.listStyleType
         && blockEllipsis == o.blockEllipsis;
 }

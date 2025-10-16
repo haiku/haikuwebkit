@@ -1524,6 +1524,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     _selectionInteractionType = SelectionInteractionType::None;
 
+    _editingEndedByUser = YES;
+
     _hasSetUpInteractions = YES;
 }
 
@@ -2059,6 +2061,8 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
 
 - (void)endEditingAndUpdateFocusAppearanceWithReason:(EndEditingReason)reason
 {
+    _editingEndedByUser = YES;
+
     if (!self.webView._retainingActiveFocusedState) {
         // We need to complete the editing operation before we blur the element.
         [self _endEditing];
@@ -5688,7 +5692,7 @@ static void selectionChangedWithTouch(WKTextInteractionWrapper *interaction, con
                 return;
             }
 
-            auto cgImage = imageBitmap->makeCGImage();
+            RetainPtr cgImage = imageBitmap->createPlatformImage(WebCore::DontCopyBackingStore);
             if (!cgImage) {
                 completion();
                 return;
@@ -6154,6 +6158,9 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 #endif
 
     [_textInteractionWrapper reset];
+
+    _keyboardDismissedInCurrentPresentationUpdate = NO;
+    _editingEndedByUser = YES;
 }
 
 - (void)_nextAccessoryTabForWebView:(id)sender
@@ -8168,6 +8175,12 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 {
     SetForScope isHidingKeyboardScope { _isHidingKeyboard, YES };
 
+    _keyboardDismissedInCurrentPresentationUpdate = YES;
+    _page->callAfterNextPresentationUpdate([weakSelf = WeakObjCPtr<WKContentView>(self)] {
+        if (RetainPtr strongSelf = weakSelf.get())
+            strongSelf->_keyboardDismissedInCurrentPresentationUpdate = NO;
+    });
+
     self.inputDelegate = nil;
     [self setUpTextSelectionAssistant];
     
@@ -8365,6 +8378,9 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
             if (userIsInteracting)
                 return YES;
 
+            if (_keyboardDismissedInCurrentPresentationUpdate && !_editingEndedByUser)
+                return YES;
+
             if (self.isFirstResponder || _becomingFirstResponder) {
                 // When the software keyboard is being used to enter an url, only the focus activity state is changing.
                 // In this case, auto focus on the page being navigated to should be disabled, unless a hardware
@@ -8404,6 +8420,9 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
         [self startDeferringInputViewUpdates:WebKit::InputViewUpdateDeferralSource::ChangingFocusedElement];
         [self _elementDidBlur];
     }
+
+    if (shouldShowInputView)
+        _editingEndedByUser = NO;
 
     if (!shouldShowInputView || information.elementType == WebKit::InputType::None) {
         _page->setIsShowingInputViewForFocusedElement(false);
@@ -11761,7 +11780,7 @@ static RetainPtr<UITargetedPreview> createFallbackTargetedPreview(UIView *rootVi
 
         targetedPreview = [self _createTargetedPreviewFromTextIndicator:WTFMove(textIndicator) previewContainer:self.containerForContextMenuHintPreviews];
     } else if ((_positionInformation.isAttachment || _positionInformation.isImage) && _positionInformation.image) {
-        auto cgImage = _positionInformation.image->makeCGImageCopy();
+        RetainPtr cgImage = _positionInformation.image->createPlatformImage();
         auto image = adoptNS([[UIImage alloc] initWithCGImage:cgImage.get()]);
         targetedPreview = createTargetedPreview(image.get(), self, self.containerForContextMenuHintPreviews, _positionInformation.bounds, { }, nil);
     }
@@ -13008,7 +13027,7 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
         return;
     }
 
-    auto cgImage = imageBitmap->makeCGImage();
+    RetainPtr cgImage = imageBitmap->createPlatformImage(WebCore::DontCopyBackingStore);
     if (!cgImage) {
         completion({ });
         return;
@@ -13077,7 +13096,7 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
             return;
         }
 
-        auto cgImage = information.image->makeCGImageCopy();
+        RetainPtr cgImage = information.image->createPlatformImage();
         if (!cgImage) {
             [strongSelf _invokeAllActionsToPerformAfterPendingImageAnalysis:WebKit::ProceedWithTextSelectionInImage::No];
             return;
@@ -13333,7 +13352,7 @@ static BOOL shouldUseMachineReadableCodeMenuFromImageAnalysisResult(CocoaImageAn
     if (!imageBitmap)
         return;
 
-    auto cgImage = imageBitmap->makeCGImage();
+    RetainPtr cgImage = imageBitmap->createPlatformImage(WebCore::DontCopyBackingStore);
     if (!cgImage)
         return;
 
@@ -13379,7 +13398,7 @@ static BOOL shouldUseMachineReadableCodeMenuFromImageAnalysisResult(CocoaImageAn
     if (!imageBitmap)
         return;
 
-    auto image = imageBitmap->makeCGImage();
+    RetainPtr image = imageBitmap->createPlatformImage(WebCore::DontCopyBackingStore);
     if (!image)
         return;
 
@@ -14899,7 +14918,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     } else if (_positionInformation.isImage && _positionInformation.image) {
         RetainPtr nsURL = url.createNSURL();
         RetainPtr<NSDictionary> imageInfo;
-        auto cgImage = _positionInformation.image->makeCGImageCopy();
+        RetainPtr cgImage = _positionInformation.image->createPlatformImage();
         auto uiImage = adoptNS([[UIImage alloc] initWithCGImage:cgImage.get()]);
 
         if ([uiDelegate respondsToSelector:@selector(_webView:alternateURLFromImage:userInfo:)]) {
@@ -15109,7 +15128,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
         ASSERT_IMPLIES(strongSelf->_positionInformation.isImage, strongSelf->_positionInformation.image);
         if (strongSelf->_positionInformation.isImage && strongSelf->_positionInformation.image && !canShowHTTPLinkOrDataDetectorPreview) {
-            auto cgImage = strongSelf->_positionInformation.image->makeCGImageCopy();
+            RetainPtr cgImage = strongSelf->_positionInformation.image->createPlatformImage();
 
             strongSelf->_contextMenuActionProviderDelegateNeedsOverride = NO;
 
@@ -15627,7 +15646,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
         RetainPtr<NSURL> alternateURL = targetURL;
         RetainPtr<NSDictionary> imageInfo;
-        RetainPtr<CGImageRef> cgImage = _positionInformation.image->makeCGImageCopy();
+        RetainPtr<CGImageRef> cgImage = _positionInformation.image->createPlatformImage();
         RetainPtr<UIImage> uiImage = adoptNS([[UIImage alloc] initWithCGImage:cgImage.get()]);
         if ([uiDelegate respondsToSelector:@selector(_webView:alternateURLFromImage:userInfo:)]) {
             NSDictionary *userInfo;

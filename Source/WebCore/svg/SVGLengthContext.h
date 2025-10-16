@@ -97,6 +97,7 @@ private:
 
     std::optional<FloatSize> computeViewportSize() const;
     float computeNonCalcLength(float, CSS::LengthUnit) const;
+    float removeZoomFromFontOrRootFontRelativeLength(float value, CSS::LengthUnit) const;
 
     std::optional<CSSToLengthConversionData> cssConversionData() const;
     RefPtr<const SVGElement> protectedContext() const;

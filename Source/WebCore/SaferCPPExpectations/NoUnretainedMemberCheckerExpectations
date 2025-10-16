@@ -1,6 +1,5 @@
 PAL/pal/graphics/cocoa/WebAVContentKeyGrouping.h
 accessibility/cocoa/AXCoreObjectCocoa.mm
-accessibility/mac/WebAccessibilityObjectWrapperBase.mm
 bridge/objc/WebScriptObject.h
 page/EventHandler.h
 platform/MediaSample.h

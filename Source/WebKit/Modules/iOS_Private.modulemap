@@ -1041,6 +1041,11 @@ framework module WebKit_Private [system] {
     export *
   }
 
+  explicit module WKCast {
+    header "WKCast.h"
+    export *
+  }
+  
   explicit module WKCertificateInfo {
     header "WKCertificateInfo.h"
     export *

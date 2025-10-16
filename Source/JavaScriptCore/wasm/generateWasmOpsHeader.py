@@ -268,7 +268,7 @@ struct Type {
 
     bool operator==(const Type& other) const
     {
-        return other.kind == kind && other.isNullable() == isNullable() && other.index == index;
+        return other.kind == kind && other.index == index;
     }
 
     bool isNullable() const
@@ -283,7 +283,7 @@ struct Type {
     void dump(PrintStream& out) const;
     Width width() const;
 
-    // Use Wasm::isFuncref and Wasm::isExternref instead because they check againts all kind of representations of function referenes and external references.
+    // Use Wasm::isFuncref and Wasm::isExternref instead because they check against all kinds of representations of function references and external references.
 
     #define CREATE_PREDICATE(name, ...) bool is ## name() const { return kind == TypeKind::name; }
     FOR_EACH_WASM_TYPE_EXCEPT_FUNCREF_AND_EXTERNREF(CREATE_PREDICATE)

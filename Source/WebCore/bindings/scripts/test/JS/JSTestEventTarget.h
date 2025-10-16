@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "EventTargetInlines.h"
+#include "EventTarget.h"
 #include "JSEventTarget.h"
 #include "TestEventTarget.h"
 #include <WebCore/JSDOMWrapper.h>

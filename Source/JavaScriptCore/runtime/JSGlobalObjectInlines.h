@@ -111,7 +111,7 @@ ALWAYS_INLINE bool JSGlobalObject::stringPrototypeChainIsSane()
 
 inline void JSGlobalObject::setUnhandledRejectionCallback(VM& vm, JSObject* function)
 {
-    m_unhandledRejectionCallback.set(vm, function);
+    m_unhandledRejectionCallback.set(vm, this, function);
 }
 
 ALWAYS_INLINE bool JSGlobalObject::isArrayPrototypeIteratorProtocolFastAndNonObservable()

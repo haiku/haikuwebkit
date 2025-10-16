@@ -74,6 +74,11 @@ bool WakeLockSentinel::virtualHasPendingActivity() const
     return m_hasReleaseEventListener && !m_wasReleased;
 }
 
+ScriptExecutionContext* WakeLockSentinel::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void WakeLockSentinel::eventListenersDidChange()
 {
     m_hasReleaseEventListener = hasEventListeners(eventNames().releaseEvent);

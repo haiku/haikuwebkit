@@ -74,6 +74,33 @@ static unsigned wkEventModifiersToWPE(WKEventModifiers wkModifiers)
     return modifiers;
 }
 
+static unsigned applyKeyvalModifiers(unsigned keyval, unsigned modifiers)
+{
+    unsigned updatedModifiers = modifiers;
+    switch (keyval) {
+    case WPE_KEY_Control_L:
+    case WPE_KEY_Control_R:
+        updatedModifiers |= WPE_MODIFIER_KEYBOARD_CONTROL;
+        break;
+    case WPE_KEY_Shift_L:
+    case WPE_KEY_Shift_R:
+        updatedModifiers |= WPE_MODIFIER_KEYBOARD_SHIFT;
+        break;
+    case WPE_KEY_Alt_L:
+    case WPE_KEY_Alt_R:
+        updatedModifiers |= WPE_MODIFIER_KEYBOARD_ALT;
+        break;
+    case WPE_KEY_Meta_L:
+    case WPE_KEY_Meta_R:
+        updatedModifiers |= WPE_MODIFIER_KEYBOARD_META;
+        break;
+    case WPE_KEY_Caps_Lock:
+        updatedModifiers |= WPE_MODIFIER_KEYBOARD_CAPS_LOCK;
+        break;
+    }
+    return updatedModifiers;
+}
+
 static unsigned eventSenderButtonToWPEButton(unsigned button)
 {
     int mouseButton = 3;
@@ -264,28 +291,7 @@ void EventSenderProxyClientWPE::keyDown(WKStringRef keyRef, double time, WKEvent
 {
     unsigned modifiers = wkEventModifiersToWPE(wkModifiers);
     auto keyval = wpeKeyvalForKeyRef(keyRef, location, modifiers);
-    unsigned downModifiers = modifiers;
-    switch (keyval) {
-    case WPE_KEY_Control_L:
-    case WPE_KEY_Control_R:
-        downModifiers |= WPE_MODIFIER_KEYBOARD_CONTROL;
-        break;
-    case WPE_KEY_Shift_L:
-    case WPE_KEY_Shift_R:
-        downModifiers |= WPE_MODIFIER_KEYBOARD_SHIFT;
-        break;
-    case WPE_KEY_Alt_L:
-    case WPE_KEY_Alt_R:
-        downModifiers |= WPE_MODIFIER_KEYBOARD_ALT;
-        break;
-    case WPE_KEY_Meta_L:
-    case WPE_KEY_Meta_R:
-        downModifiers |= WPE_MODIFIER_KEYBOARD_META;
-        break;
-    case WPE_KEY_Caps_Lock:
-        downModifiers |= WPE_MODIFIER_KEYBOARD_CAPS_LOCK;
-        break;
-    }
+    unsigned downModifiers = applyKeyvalModifiers(keyval, modifiers);
 
     auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
     unsigned keycode = 0;
@@ -307,27 +313,7 @@ void EventSenderProxyClientWPE::rawKeyDown(WKStringRef keyRef, WKEventModifiers 
 {
     unsigned modifiers = wkEventModifiersToWPE(wkModifiers);
     auto keyval = wpeKeyvalForKeyRef(keyRef, location, modifiers);
-    switch (keyval) {
-    case WPE_KEY_Control_L:
-    case WPE_KEY_Control_R:
-        modifiers |= WPE_MODIFIER_KEYBOARD_CONTROL;
-        break;
-    case WPE_KEY_Shift_L:
-    case WPE_KEY_Shift_R:
-        modifiers |= WPE_MODIFIER_KEYBOARD_SHIFT;
-        break;
-    case WPE_KEY_Alt_L:
-    case WPE_KEY_Alt_R:
-        modifiers |= WPE_MODIFIER_KEYBOARD_ALT;
-        break;
-    case WPE_KEY_Meta_L:
-    case WPE_KEY_Meta_R:
-        modifiers |= WPE_MODIFIER_KEYBOARD_META;
-        break;
-    case WPE_KEY_Caps_Lock:
-        modifiers |= WPE_MODIFIER_KEYBOARD_CAPS_LOCK;
-        break;
-    }
+    modifiers = applyKeyvalModifiers(keyval, modifiers);
 
     auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
     unsigned keycode = 0;

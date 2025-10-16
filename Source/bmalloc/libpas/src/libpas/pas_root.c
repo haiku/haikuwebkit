@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Apple Inc. All rights reserved.
+ * Copyright (c) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,6 +39,7 @@
 #include "pas_large_sharing_pool.h"
 #include "pas_payload_reservation_page_list.h"
 #include "pas_probabilistic_guard_malloc_allocator.h"
+#include "pas_report_crash_pgm_report.h"
 #include "pas_scavenger.h"
 #include "pas_thread_local_cache_layout.h"
 #include "pas_thread_local_cache_node.h"
@@ -147,6 +148,9 @@ void pas_root_construct(pas_root* root)
 
     root->baseline_allocator_table = &pas_baseline_allocator_table;
     root->num_baseline_allocators = PAS_NUM_BASELINE_ALLOCATORS;
+#ifdef __APPLE__
+    root->pas_crash_report_version = pas_crash_report_version;
+#endif
 }
 
 pas_root* pas_root_create(void)

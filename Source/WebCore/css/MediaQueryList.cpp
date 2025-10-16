@@ -21,6 +21,7 @@
 #include "MediaQueryList.h"
 
 #include "AddEventListenerOptionsInlines.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "EventNames.h"
@@ -139,6 +140,11 @@ bool MediaQueryList::matches()
         setMatches(m_matcher->evaluate(m_mediaQueries));
 
     return m_matches;
+}
+
+ScriptExecutionContext* MediaQueryList::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
 }
 
 void MediaQueryList::eventListenersDidChange()

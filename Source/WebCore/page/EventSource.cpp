@@ -35,6 +35,7 @@
 
 #include "CachedResourceRequestInitiatorTypes.h"
 #include "ContentSecurityPolicy.h"
+#include "ContextDestructionObserverInlines.h"
 #include "EventLoop.h"
 #include "EventNames.h"
 #include "ExceptionOr.h"
@@ -91,6 +92,11 @@ EventSource::~EventSource()
 {
     ASSERT(m_state == CLOSED);
     ASSERT(!m_requestInFlight);
+}
+
+ScriptExecutionContext* EventSource::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void EventSource::connect()

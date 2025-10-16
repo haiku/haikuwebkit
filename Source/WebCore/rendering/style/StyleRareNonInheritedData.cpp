@@ -30,7 +30,6 @@
 #include "ScaleTransformOperation.h"
 #include "StyleImage.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
-#include "StyleReflection.h"
 #include "StyleResolver.h"
 #include "StyleTextEdge.h"
 #include <wtf/PointerComparison.h>
@@ -61,7 +60,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     // scrollPadding
     // counterDirectives
     , willChange(RenderStyle::initialWillChange())
-    // boxReflect
+    , boxReflect(RenderStyle::initialBoxReflect())
     , maskBorder(RenderStyle::initialMaskBorder())
     // pageSize
     , shapeOutside(RenderStyle::initialShapeOutside())
@@ -282,7 +281,7 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && scrollPadding == o.scrollPadding
         && counterDirectives == o.counterDirectives
         && arePointingToEqualData(willChange, o.willChange)
-        && arePointingToEqualData(boxReflect, o.boxReflect)
+        && boxReflect == o.boxReflect
         && maskBorder == o.maskBorder
         && pageSize == o.pageSize
         && shapeOutside == o.shapeOutside

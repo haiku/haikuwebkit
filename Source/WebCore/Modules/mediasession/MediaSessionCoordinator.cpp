@@ -28,6 +28,7 @@
 
 #if ENABLE(MEDIA_SESSION_COORDINATOR)
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "Event.h"
 #include "EventNames.h"
@@ -90,6 +91,11 @@ MediaSessionCoordinator::~MediaSessionCoordinator() = default;
 void MediaSessionCoordinator::eventListenersDidChange()
 {
     m_hasCoordinatorsStateChangeEventListener = hasEventListeners(eventNames().coordinatorstatechangeEvent);
+}
+
+ScriptExecutionContext* MediaSessionCoordinator::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
 }
 
 bool MediaSessionCoordinator::virtualHasPendingActivity() const

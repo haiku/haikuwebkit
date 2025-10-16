@@ -395,7 +395,16 @@ extension WebGPU.CommandEncoder {
         return writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? 0 : writeIndex
     }
 
-    private func errorValidatingCopyBufferToBuffer(source: WebGPU.Buffer, sourceOffset: UInt64, destination: WebGPU.Buffer, destinationOffset: UInt64, size: UInt64) -> String? {
+    private func timestampWriteIndex(writeIndex: UInt32, defaultValue: UInt32, offset: UInt32) -> UInt32 {
+        writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? defaultValue : (writeIndex + offset)
+    }
+
+    private func errorValidatingCopyBufferToBuffer(
+        source: WebGPU.Buffer,
+        sourceOffset: UInt64,
+        destination: WebGPU.Buffer,
+        destinationOffset: UInt64,
+        size: UInt64) -> String? {
         func errorString(_ format: String) -> String {
             return "GPUCommandEncoder.copyBufferToBuffer: \(format)"
         }
@@ -813,16 +822,9 @@ extension WebGPU.CommandEncoder {
 
 
     public func beginRenderPass(descriptor: WGPURenderPassDescriptor) -> WebGPU_Internal.RefRenderPassEncoder {
-        var maxDrawCount = UInt64.max
         let collection = CollectionOfOne(descriptor)
         let descriptorSpan = collection.span
-        if let nextInChain = wgpuGetRenderPassDescriptorNextChainedStruct(descriptorSpan)?[0] {
-            if nextInChain.sType != WGPUSType_RenderPassDescriptorMaxDrawCount {
-                return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "descriptor is corrupted")
-            }
-            let renderPassDescriptorMaxDrawCount = unsafe unsafeBitCast(nextInChain, to: WGPURenderPassDescriptorMaxDrawCount.self)
-            maxDrawCount = renderPassDescriptorMaxDrawCount.maxDrawCount
-        }
+        var maxDrawCount = descriptorSpan[0].maxDrawCount
 
         guard prepareTheEncoderState() else {
             self.generateInvalidEncoderStateError()
@@ -877,137 +879,162 @@ extension WebGPU.CommandEncoder {
 
         var depthSlices: [UInt64: Set<UInt64>] = [:]
         // FIXME: it shouldn't be necessary to pass colorAttachmentCount here
-        let attachments = wgpuGetRenderPassDescriptorColorAttachments(descriptorSpan, descriptor.colorAttachmentCount)
-        for i in 0..<attachments.count {
-            let attachment = attachments[i]
+        var compositorTextureSlice: UInt32 = 0
+        if descriptor.colorAttachmentCount != 0 {
+            let attachments = wgpuGetRenderPassDescriptorColorAttachments(descriptorSpan, descriptor.colorAttachmentCount)
+            for i in 0..<attachments.count {
+                let attachment = attachments[i]
 
-            if attachment.view == nil {
-                continue
-            }
-
-            // MTLRenderPassColorAttachmentDescriptorArray is bounds-checked internally.
-            let mtlAttachment = mtlDescriptor.colorAttachments[i]!;
-
-            mtlAttachment.clearColor = MTLClearColorMake(attachment.clearValue.r,
-                attachment.clearValue.g,
-                attachment.clearValue.b,
-                attachment.clearValue.a)
-
-            let texture = WebGPU.fromAPI(attachment.view)
-            if !WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(texture, self) {
-                return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "device mismatch")
-            }
-            if textureWidth != 0 && (texture.width() != textureWidth || texture.height() != textureHeight || sampleCount != texture.sampleCount()) {
-                return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "texture size does not match")
-            }
-
-            textureWidth = texture.width()
-            textureHeight = texture.height()
-            sampleCount = texture.sampleCount()
-            let textureFormat = texture.format()
-            bytesPerSample = WebGPU_Internal.roundUpToMultipleOfNonPowerOfTwoUInt32UInt32(WebGPU.Texture.renderTargetPixelByteAlignment(textureFormat), bytesPerSample)
-            bytesPerSample += WebGPU.Texture.renderTargetPixelByteCost(textureFormat)
-            if bytesPerSample > maxColorAttachmentBytesPerSample {
-                return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "total bytes per sample exceeds limit")
-            }
-
-            let textureIsDestroyed = texture.isDestroyed()
-            if !textureIsDestroyed {
-                if (texture.usage() & WGPUTextureUsage_RenderAttachment.rawValue) == 0 || !WebGPU.Texture.isColorRenderableFormat(textureFormat, m_device.ptr()) {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "color attachment is not renderable")
+                if attachment.view == nil {
+                    continue
                 }
 
-                if !isRenderableTextureView(texture: texture) {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "texture view is not renderable")
-                }
-            }
-            texture.setCommandEncoder(self)
+                // MTLRenderPassColorAttachmentDescriptorArray is bounds-checked internally.
+                let mtlAttachment = mtlDescriptor.colorAttachments[i]!
 
-            let mtlTexture = texture.texture()
-            mtlAttachment.texture = mtlTexture
-            if mtlAttachment.texture == nil {
+                mtlAttachment.clearColor = MTLClearColorMake(attachment.clearValue.r,
+                    attachment.clearValue.g,
+                    attachment.clearValue.b,
+                    attachment.clearValue.a)
+
+                let texture = WebGPU.fromAPI(attachment.view)
+                if !WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(texture, self) {
+                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "device mismatch")
+                }
+                if textureWidth != 0 &&
+                    (texture.width() != textureWidth || texture.height() != textureHeight || sampleCount != texture.sampleCount()) {
+                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "texture size does not match")
+                }
+
+                textureWidth = texture.width()
+                textureHeight = texture.height()
+                sampleCount = texture.sampleCount()
+                let textureFormat = texture.format()
+                bytesPerSample = WebGPU_Internal.roundUpToMultipleOfNonPowerOfTwoUInt32UInt32(WebGPU.Texture.renderTargetPixelByteAlignment(textureFormat), bytesPerSample)
+                bytesPerSample += WebGPU.Texture.renderTargetPixelByteCost(textureFormat)
+                if bytesPerSample > maxColorAttachmentBytesPerSample {
+                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "total bytes per sample exceeds limit")
+                }
+
+                let textureIsDestroyed = texture.isDestroyed()
                 if !textureIsDestroyed {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "color attachment's texture is nil")
-                }
-                continue
-            }
-            mtlAttachment.level = 0
-            mtlAttachment.slice = 0
-            var depthSliceOrArrayLayer: UInt64 = 0
-            let textureDimension = texture.dimension()
-            if attachment.depthSlice.hasValue {
-                if textureDimension != WGPUTextureViewDimension_3D {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depthSlice specified on 2D texture")
-                }
-                depthSliceOrArrayLayer = textureIsDestroyed ? 0 : UInt64(attachment.depthSlice.value!)
-                if depthSliceOrArrayLayer >= texture.depthOrArrayLayers() {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depthSlice is greater than texture's depth or array layers")
-                }
-            } else {
-                if textureDimension == WGPUTextureViewDimension_3D {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "textureDimension is 3D and no depth slice is specified")
-                }
-                depthSliceOrArrayLayer = UInt64(textureIsDestroyed ? 0 : texture.baseArrayLayer())
-            }
-            let bridgedTexture = texture.parentTexture().gpuResourceID._impl
-            let baseMipLevel = textureIsDestroyed ? 0 : texture.baseMipLevel()
-            let depthAndMipLevel: UInt64 = depthSliceOrArrayLayer | (UInt64(baseMipLevel) << 32)
-            if depthSlices[bridgedTexture] != nil {
-                if depthSlices[bridgedTexture]!.contains(depthAndMipLevel) {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "attempting to render to overlapping color attachment")
-                }
-                depthSlices[bridgedTexture]!.insert(depthAndMipLevel)
-            } else {
-                depthSlices[bridgedTexture] = [ depthAndMipLevel ]
-            }
+                    if (texture.usage() & WGPUTextureUsage_RenderAttachment.rawValue) == 0
+                        || !WebGPU.Texture.isColorRenderableFormat(textureFormat, m_device.ptr()) {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "color attachment is not renderable")
+                    }
 
-            mtlAttachment.depthPlane = Int(textureDimension == WGPUTextureViewDimension_3D ? depthSliceOrArrayLayer : 0)
-            mtlAttachment.slice = 0
-            mtlAttachment.loadAction = loadAction(loadOp: attachment.loadOp)
-            mtlAttachment.storeAction = storeAction(storeOp: attachment.storeOp, hasResolveTarget: attachment.resolveTarget != nil)
-
-            zeroColorTargets = false
-            var textureToClear: MTLTexture? = nil
-            if mtlAttachment.loadAction == MTLLoadAction.load && !texture.previouslyCleared() {
-                textureToClear = mtlAttachment.texture
-            }
-
-            if attachment.resolveTarget != nil {
-                let resolveTarget = WebGPU.fromAPI(attachment.resolveTarget)
-                if !WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(resolveTarget, self) {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target created from different device")
+                    if !isRenderableTextureView(texture: texture) {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "texture view is not renderable")
+                    }
                 }
-                resolveTarget.setCommandEncoder(self)
-                let resolveTexture = resolveTarget.texture()
-                if resolveTexture == nil || mtlTexture == nil {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolveTexture/mtlTexture is nil")
+                texture.setCommandEncoder(self)
+
+                let mtlTexture = texture.texture()
+                mtlAttachment.texture = mtlTexture
+                if mtlAttachment.texture == nil {
+                    if !textureIsDestroyed {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "color attachment's texture is nil")
+                    }
+                    continue
                 }
-                if mtlTexture!.sampleCount == 1 || resolveTexture!.sampleCount != 1 || isMultisampleTexture(texture: resolveTexture!) || !isMultisampleTexture(texture: mtlTexture!) || !isRenderableTextureView(texture: resolveTarget) || mtlTexture!.pixelFormat != resolveTexture!.pixelFormat || !WebGPU.Texture.supportsResolve(resolveTarget.format(), m_device.ptr()) {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target is invalid")
+                mtlAttachment.level = 0
+                mtlAttachment.slice = 0
+                var depthSliceOrArrayLayer: UInt64 = 0
+                let textureDimension = texture.dimension()
+                if attachment.depthSlice.hasValue {
+                    if textureDimension != WGPUTextureViewDimension_3D {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depthSlice specified on 2D texture")
+                    }
+                    depthSliceOrArrayLayer = textureIsDestroyed ? 0 : UInt64(attachment.depthSlice.value!)
+                    if depthSliceOrArrayLayer >= texture.depthOrArrayLayers() {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depthSlice is greater than texture's depth or array layers")
+                    }
+                } else {
+                    if textureDimension == WGPUTextureViewDimension_3D {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "textureDimension is 3D and no depth slice is specified")
+                    }
+                    depthSliceOrArrayLayer = UInt64(textureIsDestroyed ? 0 : texture.baseArrayLayer())
+                }
+                let bridgedTexture = texture.parentTexture().gpuResourceID._impl
+                let baseMipLevel = textureIsDestroyed ? 0 : texture.baseMipLevel()
+                let depthAndMipLevel: UInt64 = depthSliceOrArrayLayer | (UInt64(baseMipLevel) << 32)
+                if depthSlices[bridgedTexture] != nil {
+                    if depthSlices[bridgedTexture]!.contains(depthAndMipLevel) {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "attempting to render to overlapping color attachment")
+                    }
+                    depthSlices[bridgedTexture]!.insert(depthAndMipLevel)
+                } else {
+                    depthSlices[bridgedTexture] = [depthAndMipLevel]
                 }
 
-                mtlAttachment.resolveTexture = resolveTexture
-                mtlAttachment.resolveLevel = 0
-                mtlAttachment.resolveSlice = 0
-                mtlAttachment.resolveDepthPlane = 0
-                if resolveTarget.width() != texture.width() || resolveTarget.height() != texture.height() {
-                    return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target dimensions are invalid")
+                mtlAttachment.depthPlane = Int(textureDimension == WGPUTextureViewDimension_3D ? depthSliceOrArrayLayer : 0)
+                mtlAttachment.slice = 0
+                mtlAttachment.loadAction = loadAction(loadOp: attachment.loadOp)
+                mtlAttachment.storeAction = storeAction(storeOp: attachment.storeOp, hasResolveTarget: attachment.resolveTarget != nil)
+
+                zeroColorTargets = false
+                var textureToClear: MTLTexture? = nil
+                if mtlAttachment.loadAction == MTLLoadAction.load && !texture.previouslyCleared() {
+                    textureToClear = mtlAttachment.texture
                 }
-            }
-            if textureToClear != nil {
-                let textureWithResolve = TextureAndClearColor(texture: textureToClear!)
-                attachmentsToClear[i as NSNumber] = textureWithResolve
-                if textureToClear != nil {
-                    // FIXME: rdar://138042799 remove default argument.
-                    texture.setPreviouslyCleared(0, 0)
+
+                if let rateMap = texture.rasterizationMapForSlice(texture.parentRelativeSlice()) {
+                    mtlDescriptor.rasterizationRateMap = rateMap
                 }
+
+                var compositorTexture = texture
                 if attachment.resolveTarget != nil {
-                    // FIXME: rdar://138042799 remove default argument.
-                    WebGPU.fromAPI(attachment.resolveTarget).setPreviouslyCleared(0, 0)
+                    let resolveTarget = WebGPU.fromAPI(attachment.resolveTarget)
+                    compositorTexture = resolveTarget
+
+                    if !WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(resolveTarget, self) {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target created from different device")
+                    }
+                    resolveTarget.setCommandEncoder(self)
+                    let resolveTexture = resolveTarget.texture()
+                    if resolveTexture == nil || mtlTexture == nil {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolveTexture/mtlTexture is nil")
+                    }
+
+                    if mtlTexture!.sampleCount == 1
+                        || resolveTexture!.sampleCount != 1
+                        || isMultisampleTexture(texture: resolveTexture!)
+                        || !isMultisampleTexture(texture: mtlTexture!)
+                        || !isRenderableTextureView(texture: resolveTarget)
+                        || mtlTexture!.pixelFormat != resolveTexture!.pixelFormat
+                        || !WebGPU.Texture.supportsResolve(resolveTarget.format(), m_device.ptr()) {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target is invalid")
+                    }
+
+                    mtlAttachment.resolveTexture = resolveTexture
+                    mtlAttachment.resolveLevel = 0
+                    mtlAttachment.resolveSlice = 0
+                    mtlAttachment.resolveDepthPlane = 0
+                    if resolveTarget.width() != texture.width() || resolveTarget.height() != texture.height() {
+                        return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target dimensions are invalid")
+                    }
+                }
+
+                if let rateMap = compositorTexture.rasterizationMapForSlice(compositorTexture.parentRelativeSlice()) {
+                    mtlDescriptor.rasterizationRateMap = rateMap
+                    compositorTextureSlice = compositorTexture.parentRelativeSlice()
+                }
+
+                if textureToClear != nil {
+                    let textureWithResolve = TextureAndClearColor(texture: textureToClear!)
+                    attachmentsToClear[i as NSNumber] = textureWithResolve
+                    if textureToClear != nil {
+                        // FIXME: rdar://138042799 remove default argument.
+                        texture.setPreviouslyCleared(0, 0)
+                    }
+                    if attachment.resolveTarget != nil {
+                        // FIXME: rdar://138042799 remove default argument.
+                        WebGPU.fromAPI(attachment.resolveTarget).setPreviouslyCleared(0, 0)
+                    }
                 }
             }
-
         }
+
         var depthReadOnly = false, stencilReadOnly = false
         var hasStencilComponent = false
         var depthStencilAttachmentToClear: MTLTexture? = nil
@@ -1044,6 +1071,14 @@ extension WebGPU.CommandEncoder {
                 mtlAttachment!.level = 0
                 mtlAttachment!.loadAction = loadAction(loadOp: attachment.depthLoadOp)
                 mtlAttachment!.storeAction = storeAction(storeOp: attachment.depthStoreOp)
+
+                if mtlDescriptor.rasterizationRateMap != nil && metalDepthStencilTexture?.sampleCount ?? 1 > 1 {
+                    if let depthTexture = m_device.ptr().getXRViewSubImageDepthTexture() {
+                        mtlAttachment?.resolveTexture = depthTexture
+                        mtlAttachment?.storeAction = storeAction(storeOp: attachment.depthStoreOp, hasResolveTarget: true)
+                        mtlAttachment?.resolveSlice = Int(compositorTextureSlice)
+                    }
+                }
 
                 if mtlAttachment!.loadAction == MTLLoadAction.load && mtlAttachment!.storeAction == MTLStoreAction.dontCare && !textureView.previouslyCleared() {
                     depthStencilAttachmentToClear = mtlAttachment!.texture
@@ -1142,8 +1177,8 @@ extension WebGPU.CommandEncoder {
         }
         setExistingEncoder(mtlRenderCommandEncoder)
         return WebGPU.RenderPassEncoder.create(mtlRenderCommandEncoder, descriptor, visibilityResultBufferSize, depthReadOnly, stencilReadOnly, self, visibilityResultBuffer, maxDrawCount, m_device.ptr(), mtlDescriptor)
-
     }
+
     static func hasValidDimensions(dimension: WGPUTextureDimension, width: UInt, height: UInt, depth: UInt) -> Bool {
         switch (dimension.rawValue) {
             case WGPUTextureDimension_1D.rawValue:
@@ -2089,15 +2124,17 @@ extension WebGPU.CommandEncoder {
         let computePassDescriptor = MTLComputePassDescriptor()
         computePassDescriptor.dispatchType = MTLDispatchType.serial
         var counterSampleBuffer: MTLCounterSampleBuffer? = nil
+        var counterSampleBufferOffset: UInt32 = 0
         if let wgpuTimestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0] {
             counterSampleBuffer = WebGPU.fromAPI(wgpuTimestampWrites.querySet).counterSampleBufferWithOffset().first
+            counterSampleBufferOffset = WebGPU.fromAPI(wgpuTimestampWrites.querySet).counterSampleBufferWithOffset().second
         }
 
         if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
             let timestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0]
             computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer != nil ? computePassDescriptor.sampleBufferAttachments[0].sampleBuffer : m_device.ptr().timestampsBuffer(m_commandBuffer, 2)
-            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWrites != nil ? Int(timestampWrites!.beginningOfPassWriteIndex) : 0
-            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWrites != nil ? Int(timestampWrites!.endOfPassWriteIndex) : 1
+            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = Int(timestampWriteIndex(writeIndex: timestampWrites!.beginningOfPassWriteIndex, defaultValue: UInt32(MTLCounterDontSample), offset: counterSampleBufferOffset))
+            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = Int(timestampWriteIndex(writeIndex: timestampWrites!.endOfPassWriteIndex, defaultValue: UInt32(MTLCounterDontSample), offset: counterSampleBufferOffset))
             if counterSampleBuffer != nil {
                 m_device.ptr().trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
             }

@@ -117,6 +117,7 @@ set(WebKit_PUBLIC_FRAMEWORK_HEADERS
     UIProcess/API/C/WKWindowFeaturesRef.h
     UIProcess/API/C/WebKit2_C.h
 
+    UIProcess/API/cpp/WKCast.h
     UIProcess/API/cpp/WKRetainPtr.h
 
     WebProcess/InjectedBundle/API/c/WKBundle.h

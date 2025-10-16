@@ -41,6 +41,7 @@
 #include "DFGSSACalculator.h"
 #include "DFGValidate.h"
 #include "JSArrayIterator.h"
+#include "JSAsyncFromSyncIterator.h"
 #include "JSInternalPromise.h"
 #include "JSIteratorHelper.h"
 #include "JSMapIterator.h"
@@ -1140,6 +1141,9 @@ private:
                 break;
             case JSWrapForValidIteratorType:
                 target = handleInternalFieldClass<JSWrapForValidIterator>(node, writes);
+                break;
+            case JSAsyncFromSyncIteratorType:
+                target = handleInternalFieldClass<JSAsyncFromSyncIterator>(node, writes);
                 break;
             case JSPromiseType:
                 if (node->structure()->classInfoForCells() == JSInternalPromise::info())

@@ -572,10 +572,12 @@ void Queue::writeBuffer(Buffer& buffer, uint64_t bufferOffset, std::span<uint8_t
         }
     }
 #if ENABLE(WEBGPU_SWIFT)
-    WebGPU::writeBuffer(this, &buffer, bufferOffset, data);
-#else
-    writeBuffer(buffer.buffer(), bufferOffset, data);
+    if (isWebGPUSwiftEnabled()) {
+        WebGPU::writeBuffer(this, &buffer, bufferOffset, data);
+        return;
+    }
 #endif
+    writeBuffer(buffer.buffer(), bufferOffset, data);
 }
 
 static std::span<uint8_t> span(id<MTLBuffer> buffer)

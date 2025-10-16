@@ -79,6 +79,9 @@ inline constexpr auto All = Range { -Range::infinity, Range::infinity, RangeOpti
 // Constant value for `[0,∞]`.
 inline constexpr auto Nonnegative = Range { 0, Range::infinity, RangeOptions::Default };
 
+// Constant value for `[1,∞]`.
+inline constexpr auto Positive = Range { 1, Range::infinity, RangeOptions::Default };
+
 // Constant value for `[0,1]`.
 inline constexpr auto ClosedUnitRange = Range { 0, 1 };
 

@@ -42,6 +42,7 @@ class NotificationResources;
 class ResourceError;
 class ResourceResponse;
 
+DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(ResourceLoader);
 class NotificationResourcesLoader {
     WTF_MAKE_TZONE_ALLOCATED(NotificationResourcesLoader);
 public:

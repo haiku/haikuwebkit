@@ -450,7 +450,7 @@ void DocumentLoader::notifyFinished(CachedResource& resource, const NetworkLoadM
 
     if (RefPtr document = this->document()) {
         if (RefPtr window = document->window())
-            window->protectedPerformance()->navigationFinished(metrics);
+            window->protectedPerformance()->documentLoadFinished(metrics);
     }
 
     ASSERT_UNUSED(resource, m_mainResource == &resource);

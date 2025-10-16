@@ -1066,7 +1066,7 @@ void PageClientImpl::startDrag(const DragItem& item, ShareableBitmap::Handle&& i
     auto bitmap = ShareableBitmap::create(WTFMove(image));
     if (!bitmap)
         return;
-    [contentView() _startDrag:bitmap->makeCGImageCopy() item:item nodeID:nodeID];
+    [contentView() _startDrag:bitmap->createPlatformImage() item:item nodeID:nodeID];
 }
 
 void PageClientImpl::willReceiveEditDragSnapshot()

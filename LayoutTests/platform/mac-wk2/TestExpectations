@@ -774,7 +774,6 @@ webkit.org/b/160042 accessibility/mac/value-change/value-change-user-info-conten
 webkit.org/b/160309 fast/dom/Window/child-window-focus.html [ Pass Failure ]
 
 webkit.org/b/161148 gamepad/gamepad-timestamp.html [ Pass Failure ]
-webkit.org/b/167517 gamepad/gamepad-visibility-1.html [ Pass Failure ]
 
 webkit.org/b/161633 [ Debug ] storage/indexeddb/objectstore-cursor.html [ Pass Timeout ]
 
@@ -1075,8 +1074,6 @@ webkit.org/b/214478 [ Debug ] tiled-drawing/scrolling/fast-scroll-iframe-latched
 webkit.org/b/214661 [ Debug ] imported/w3c/web-platform-tests/webrtc/RTCSctpTransport-events.html [ Pass Crash Failure ]
 
 webkit.org/b/230485 [ Release ] imported/w3c/web-platform-tests/webrtc/RTCSctpTransport-events.html [ Pass Failure ]
-
-webkit.org/b/214682 imported/w3c/web-platform-tests/css/cssom/stylesheet-same-origin.sub.html [ Pass Failure ]
 
 webkit.org/b/214683 [ Debug ] imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-implicit.html [ Pass Failure ]
 
@@ -2132,7 +2129,7 @@ webkit.org/b/291710 swipe/basic-cached-back-swipe.html [ Pass Timeout ]
 
 webkit.org/b/291878 [ Sequoia ] http/tests/webgpu/webgpu/shader/validation/expression/call/builtin/textureSampleBias.html [ Pass Failure Timeout ]
 
-webkit.org/b/291966 [ Sequoia+ ] http/tests/webgpu/webgpu/api/validation/render_pipeline/fragment_state.html [ Pass Timeout Crash ]
+webkit.org/b/291966 [ Sequoia+ ] http/tests/webgpu/webgpu/api/validation/render_pipeline/fragment_state.html [ Pass Timeout ]
 
 # webkit.org/b/292111 REGRESSION ( 294024@main): [ MacOS iOS WK2 Debug ] ASSERTION FAILED: bytecodeCanIgnoreNegativeZero(node->arithNodeFlags())
 [ Sonoma+ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?av1 [ Skip ]
@@ -2399,8 +2396,6 @@ webkit.org/b/297674 [ Sonoma Release ] http/wpt/mediarecorder/MediaRecorder-matr
 [ Debug ] ipc/send-filter.html [ Skip ]
 [ Debug ] ipc/send-ignored-network-message.html [ Skip ]
 
-webkit.org/b/297806 http/tests/permissions/storage-access-permissions-query.html [ Pass Timeout ]
-
 webkit.org/b/297860 http/tests/site-isolation/edge-sampling-viewport-constrained-object.html [ Skip ]
 
 webkit.org/b/297006 [ Debug ] http/tests/media/media-element-frame-destroyed-crash.html [ Skip ]
@@ -2409,8 +2404,14 @@ webkit.org/b/297006 [ Debug ] http/tests/media/media-element-frame-destroyed-cra
 [ Release ] http/wpt/service-workers/service-worker-spinning-install.https.html [ Failure ]
 http/wpt/service-workers/service-worker-spinning-activate.https.html [ Failure ]
 
-webkit.org/b/297428 http/tests/navigation/ping-attribute/anchor-cookie.html [ Pass Failure ]
-
 webkit.org/b/267778 [ Release ] fast/forms/listbox-padding-clip-selected.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/298044 [ arm64 ] fast/scrolling/mac/scrollbars/overflow-in-iframe-overlay-scrollbar-reveal.html [ Pass Failure ]
+webkit.org/b/298256 [ Debug ] fast/dom/document-all.html [ Pass Timeout ]
+
+webkit.org/b/298269 imported/w3c/web-platform-tests/html/anonymous-iframe/session-storage.tentative.https.window.html [ Pass Failure ]
+
+webkit.org/b/298278 imported/w3c/web-platform-tests/html/anonymous-iframe/local-storage.tentative.https.window.html [ Pass Failure ]
+
+webkit.org/b/298292 [ Sequoia ] http/tests/webgpu/webgpu/api/operation/sampling/sampler_texture.html [ Pass ]
+
+webkit.org/b/298416 [ Debug ] http/tests/websocket/web-socket-loads-captured-in-per-page-domains.html [ Pass Crash ]

@@ -59,6 +59,7 @@ class Image;
 class ImageBuffer;
 class RenderTextFragment;
 class StickyPositionViewportConstraints;
+class StyleImage;
 class TransformationMatrix;
 
 namespace InlineIterator {

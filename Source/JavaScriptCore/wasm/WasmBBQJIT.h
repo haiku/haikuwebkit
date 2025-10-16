@@ -1070,7 +1070,7 @@ public:
     // FIXME: Support fused branch compare on 32-bit platforms.
     static constexpr bool shouldFuseBranchCompare = is64Bit();
 
-    static constexpr bool tierSupportsSIMD = true;
+    static constexpr bool tierSupportsSIMD() { return true; }
     static constexpr bool validateFunctionBodySize = true;
 
     BBQJIT(CCallHelpers& jit, const TypeDefinition& signature, CalleeGroup&, IPIntCallee& profiledCallee, BBQCallee& callee, const FunctionData& function, FunctionCodeIndex functionIndex, const ModuleInformation& info, Vector<UnlinkedWasmToWasmCall>& unlinkedWasmToWasmCalls, MemoryMode mode, InternalFunction* compilation);

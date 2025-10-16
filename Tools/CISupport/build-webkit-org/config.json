@@ -56,6 +56,14 @@
                   { "name": "bot1021", "platform": "mac-sequoia" },
                   { "name": "bot1025", "platform": "mac-sequoia" },
                   { "name": "bot1026", "platform": "mac-sequoia" },
+                  { "name": "bot605", "platform": "mac-sequoia" },
+                  { "name": "bot616", "platform": "mac-sequoia" },
+                  { "name": "bot621", "platform": "*" },
+                  { "name": "bot665", "platform": "mac-sequoia" },
+                  { "name": "bot669", "platform": "mac-sequoia" },
+                  { "name": "bot675", "platform": "mac-sequoia" },
+                  { "name": "bot676", "platform": "mac-sequoia" },
+                  { "name": "bot678", "platform": "*" },
                   { "name": "bot1027", "platform": "*" },
                   { "name": "bot1028", "platform": "*" },
 
@@ -180,12 +188,12 @@
                       "sequoia-applesilicon-release-tests-test262", "sequoia-release-tests-wk2-accessibility-isolated-tree", 
                       "sequoia-release-tests-wk2-site-isolation-tree", "sequoia-release-world-leaks-tests"
                   ],
-                  "workernames": ["bot279", "bot198"]
+                  "workernames": ["bot605", "bot279", "bot198"]
                   },
                   { "name": "Apple-Sequoia-Release-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
                   "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot1026"]
+                  "workernames": ["bot669", "bot1026"]
                   },
                   { "name": "Apple-Sequoia-Release-World-Leaks-Tests", "factory": "TestWorldLeaksFactory",
                   "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
@@ -205,7 +213,7 @@
                   { "name": "Apple-Sequoia-Release-WK2-Tests", "factory": "TestAllButJSCFactory",
                   "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot1025"]
+                  "workernames": ["bot616", "bot1025"]
                   },
                   { "name": "Apple-Sequoia-AppleSilicon-Release-Test262-Tests", "factory": "Test262Factory",
                   "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
@@ -231,17 +239,17 @@
                       "sequoia-debug-tests-wk1", "sequoia-debug-tests-wk2", "sequoia-debug-applesilicon-tests-wk1",
                       "sequoia-debug-applesilicon-tests-wk2"
                   ],
-                  "workernames": ["bot131", "bot141"]
+                  "workernames": ["bot665", "bot131", "bot141"]
                   },
                   { "name": "Apple-Sequoia-Debug-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
                   "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot1021"]
+                  "workernames": ["bot676", "bot1021"]
                   },
                   { "name": "Apple-Sequoia-Debug-WK2-Tests", "factory": "TestAllButJSCFactory",
                   "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot614"]
+                  "workernames": ["bot675", "bot614"]
                   },
                   { "name": "Apple-Sequoia-Debug-AppleSilicon-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
                   "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],

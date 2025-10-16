@@ -167,7 +167,6 @@ wasm/WasmBBQJIT64.cpp
 wasm/WasmBBQPlan.cpp
 wasm/WasmCallee.cpp
 wasm/WasmCalleeGroup.cpp
-wasm/WasmConstExprGenerator.cpp
 wasm/WasmEntryPlan.cpp
 wasm/WasmFormat.h
 wasm/WasmFunctionParser.h

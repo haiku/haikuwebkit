@@ -68,8 +68,8 @@ Expected<MacroAssemblerCodeRef<WasmEntryPtrTag>, BindingFailure> generateWasmBui
 
     // Add wasmInstance as the extra arg
     jit.move(GPRInfo::wasmContextInstancePointer, extraArgGPR);
-    CodePtr<OperationPtrTag> entryPointAsOperation = builtin.wasmEntryPoint().template retagged<OperationPtrTag>();
-    jit.callOperation<OperationPtrTag>(entryPointAsOperation);
+    CodePtr<OperationPtrTag> entrypointAsOperation = builtin.wasmEntrypoint().template retagged<OperationPtrTag>();
+    jit.callOperation<OperationPtrTag>(entrypointAsOperation);
 
     // Check for an exception and branch if present
     jit.loadPtr(JIT::Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfVM()), scratch);

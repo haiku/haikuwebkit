@@ -58,7 +58,7 @@ private:
     void adjustOutsideListMarkersPosition(LineBox&);
     void expandAboveRootInlineBox(LineBox&, InlineLayoutUnit) const;
 
-    bool isFirstFormattedLine() const { return lineLayoutResult().isFirstLast.isFirstFormattedLine; }
+    bool isFirstFormattedLine() const { return lineLayoutResult().isFirstLast.isFirstFormattedLine == IsFirstFormattedLine::Yes; }
     bool isLastLine() const { return lineLayoutResult().isFirstLast.isLastLineWithInlineContent; }
     const InlineFormattingContext& formattingContext() const { return m_inlineFormattingContext; }
     const LineLayoutResult& lineLayoutResult() const { return m_lineLayoutResult; }

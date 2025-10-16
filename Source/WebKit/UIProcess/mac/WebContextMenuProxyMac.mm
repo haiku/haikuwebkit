@@ -278,7 +278,7 @@ void WebContextMenuProxyMac::setupServicesMenu()
             RefPtr<ShareableBitmap> image = m_context.controlledImage();
             if (!image)
                 return;
-            auto cgImage = image->makeCGImage();
+            RetainPtr cgImage = image->createPlatformImage(DontCopyBackingStore);
             auto nsImage = adoptNS([[NSImage alloc] initWithCGImage:cgImage.get() size:image->size()]);
 
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
@@ -365,7 +365,7 @@ void WebContextMenuProxyMac::appendRemoveBackgroundItemToControlledImageMenuIfNe
         if (!imageBitmap)
             return;
 
-        auto image = imageBitmap->makeCGImage();
+        RetainPtr image = imageBitmap->createPlatformImage(DontCopyBackingStore);
         if (!image)
             return;
 
@@ -553,7 +553,7 @@ bool WebContextMenuProxyMac::showAfterPostProcessingContextData()
         return false;
 
     if (auto bitmap = hitTestData.imageBitmap) {
-        auto image = bitmap->makeCGImage();
+        RetainPtr image = bitmap->createPlatformImage(DontCopyBackingStore);
         requestPayloadForQRCode(image.get(), [this, protectedThis = Ref { *this }](NSString *result) mutable {
             m_context.setQRCodePayloadString(result);
             WebContextMenuProxy::show();
@@ -563,7 +563,7 @@ bool WebContextMenuProxyMac::showAfterPostProcessingContextData()
     }
 
     if (RefPtr potentialQRCodeNodeSnapshotImage = m_context.potentialQRCodeNodeSnapshotImage()) {
-        auto image = potentialQRCodeNodeSnapshotImage->makeCGImage();
+        RetainPtr image = potentialQRCodeNodeSnapshotImage->createPlatformImage(DontCopyBackingStore);
         requestPayloadForQRCode(image.get(), [this, protectedThis = Ref { *this }](NSString *result) mutable {
             RefPtr potentialQRCodeViewportSnapshotImage = m_context.potentialQRCodeViewportSnapshotImage();
             if (!potentialQRCodeViewportSnapshotImage || result.length) {
@@ -572,7 +572,7 @@ bool WebContextMenuProxyMac::showAfterPostProcessingContextData()
                 return;
             }
 
-            auto fallbackImage = potentialQRCodeViewportSnapshotImage->makeCGImage();
+            RetainPtr fallbackImage = potentialQRCodeViewportSnapshotImage->createPlatformImage(DontCopyBackingStore);
             requestPayloadForQRCode(fallbackImage.get(), [this, protectedThis = Ref { *this }](NSString *result) mutable {
                 m_context.setQRCodePayloadString(result);
                 WebContextMenuProxy::show();
@@ -849,7 +849,7 @@ void WebContextMenuProxyMac::getContextMenuFromItems(const Vector<WebContextMenu
 #endif
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
             if (copySubjectItem) {
-                if (auto image = imageBitmap->makeCGImageCopy()) {
+                if (RetainPtr image = imageBitmap->createPlatformImage()) {
                     protectedThis->m_copySubjectResult = nullptr;
                     requestBackgroundRemoval(image.get(), [weakPage, protectedThis, copySubjectItem = WTFMove(*copySubjectItem)](auto result) {
                         if (!result)

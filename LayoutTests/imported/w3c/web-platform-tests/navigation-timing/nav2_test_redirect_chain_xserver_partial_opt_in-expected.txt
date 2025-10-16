@@ -1,4 +1,4 @@
-Blocked access to external URL http://www.localhost:8800/common/redirect.py?location=http://www.localhost:8800/common/redirect-opt-in.py?location=http://localhost:8800/navigation-timing/resources/blank_page_green.html
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/common/redirect.py?location=http://www.localhost:8800/common/redirect-opt-in.py?location=http://localhost:8800/navigation-timing/resources/blank_page_green.html
 CONSOLE MESSAGE: TypeError: undefined is not an object (evaluating 'frame_performance.getEntriesByType("navigation")[0].type')
 Description
 

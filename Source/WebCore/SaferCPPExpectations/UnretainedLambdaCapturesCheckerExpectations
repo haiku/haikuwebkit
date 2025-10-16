@@ -1,4 +1,3 @@
-accessibility/mac/WebAccessibilityObjectWrapperMac.mm
 platform/cocoa/SharedVideoFrameInfo.mm
 platform/graphics/avfoundation/objc/MediaPlayerPrivateAVFoundationObjC.mm
 platform/graphics/cv/VideoFrameCV.mm

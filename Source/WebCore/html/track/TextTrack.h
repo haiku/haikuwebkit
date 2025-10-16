@@ -28,7 +28,6 @@
 
 #if ENABLE(VIDEO)
 
-#include <WebCore/ContextDestructionObserverInlines.h>
 #include <WebCore/EventTargetInterfaces.h>
 #include <WebCore/PlatformTimeRanges.h>
 #include <WebCore/TextTrackCue.h>
@@ -142,7 +141,7 @@ public:
     virtual bool shouldPurgeCuesFromUnbufferedRanges() const { return false; }
     virtual void removeCuesNotInTimeRanges(const PlatformTimeRanges&);
 
-    ScriptExecutionContext* scriptExecutionContext() const final { return ActiveDOMObject::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
 
 protected:
     TextTrack(ScriptExecutionContext*, const AtomString& kind, TrackID, const AtomString& label, const AtomString& language, TextTrackType);

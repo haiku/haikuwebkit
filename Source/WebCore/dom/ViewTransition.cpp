@@ -465,7 +465,7 @@ static RefPtr<ImageBuffer> snapshotElementVisualOverflowClippedToViewport(LocalF
         return nullptr;
     auto hostWindow = frameView->root() ? RefPtr { frameView->root() }->hostWindow() : nullptr;
 
-    auto buffer = ImageBuffer::create(paintRect.size(), RenderingMode::Accelerated, RenderingPurpose::Snapshot, scaleFactor, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8, hostWindow);
+    auto buffer = ImageBuffer::create(paintRect.size(), RenderingMode::Accelerated, RenderingPurpose::Snapshot, scaleFactor, DestinationColorSpace::SRGB(), PixelFormat::BGRA8, hostWindow);
     if (!buffer)
         return nullptr;
 
@@ -490,6 +490,9 @@ static ExceptionOr<void> forEachRendererInPaintOrder(NOESCAPE const std::functio
     auto result = function(layer.renderer());
     if (result.hasException())
         return result.releaseException();
+
+    if (auto* renderBox = dynamicDowncast<RenderBox>(layer.renderer()); renderBox && isSkippedContentRoot(*renderBox))
+        return { };
 
     layer.updateLayerListsIfNeeded();
 
@@ -541,8 +544,8 @@ ExceptionOr<void> ViewTransition::captureOldState()
     ListHashSet<AtomString> usedTransitionNames;
     Vector<CheckedRef<RenderLayerModelObject>> captureRenderers;
 
-    // Ensure style & render tree are up-to-date.
-    protectedDocument()->updateStyleIfNeededIgnoringPendingStylesheets();
+    // Ensure style & layout are up-to-date.
+    protectedDocument()->updateLayoutIgnorePendingStylesheets();
 
     if (CheckedPtr view = document()->renderView()) {
         Ref frame = CheckedRef { view->frameView() }->frame();
@@ -756,8 +759,8 @@ void ViewTransition::activateViewTransition()
 
     protectedDocument()->clearRenderingIsSuppressedForViewTransition();
 
-    // Ensure style & render tree are up-to-date.
-    protectedDocument()->updateStyleIfNeededIgnoringPendingStylesheets();
+    // Ensure style & layout are up-to-date.
+    protectedDocument()->updateLayoutIgnorePendingStylesheets();
 
     auto checkSize = checkForViewportSizeChange();
     if (checkSize.hasException()) {
@@ -981,7 +984,7 @@ ExceptionOr<void> ViewTransition::updatePseudoElementStylesRead()
     if (!document)
         return { };
 
-    document->updateStyleIfNeededIgnoringPendingStylesheets();
+    document->updateLayoutIgnorePendingStylesheets();
 
     for (auto& [name, capturedElement] : m_namedElements.map()) {
         if (auto newStyleable = capturedElement->newElement.styleable()) {

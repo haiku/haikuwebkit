@@ -119,7 +119,16 @@ CheckedRef<Layout::ElementBox> BoxTreeUpdater::build()
 
     if (is<RenderBlockFlow>(m_rootRenderer))
         rootBox->setIsInlineIntegrationRoot();
-    rootBox->setIsFirstChildForIntegration(!m_rootRenderer.parent() || m_rootRenderer.parent()->firstChild() == &m_rootRenderer);
+
+    auto isAnonymousTextIndentCandidateForIntegration = [&] {
+        if (!m_rootRenderer.isAnonymousBlock())
+            return false;
+        if (m_rootRenderer.isBlockBox())
+            return !m_rootRenderer.parent() || m_rootRenderer.parent()->firstChild() == &m_rootRenderer;
+        // E.g. flex and grid items are not block boxes (they are block containers though).
+        return m_rootRenderer.isBlockContainer();
+    };
+    rootBox->setIsAnonymousTextIndentCandidateForIntegration(isAnonymousTextIndentCandidateForIntegration());
 
     if (is<RenderBlockFlow>(m_rootRenderer))
         buildTreeForInlineContent();

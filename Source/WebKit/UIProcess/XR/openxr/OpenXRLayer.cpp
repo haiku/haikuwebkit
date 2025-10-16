@@ -27,6 +27,7 @@
 #endif
 
 #include "XRDeviceLayer.h"
+#include <WebCore/FourCC.h>
 #include <WebCore/GLContext.h>
 #include <WebCore/GLDisplay.h>
 #include <wtf/Scope.h>
@@ -129,23 +130,23 @@ void OpenXRLayer::setGBMDevice(RefPtr<WebCore::GBMDevice> gbmDevice)
 
 std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRTextureGBM(WebCore::GLDisplay& display, PlatformGLObject openxrTexture)
 {
-    auto preferredDMABufFormat = m_swapchain->format() == GL_RGBA8 ? DRM_FORMAT_ARGB8888 : DRM_FORMAT_XRGB8888;
-    WebCore::GLDisplay::DMABufFormat format;
-    const auto& supportedFormats = display.dmabufFormats();
+    WebCore::FourCC preferredDMABufFormat = m_swapchain->format() == GL_RGBA8 ? DRM_FORMAT_ARGB8888 : DRM_FORMAT_XRGB8888;
+    WebCore::GLDisplay::BufferFormat format;
+    const auto& supportedFormats = display.bufferFormats();
     for (const auto& supportedFormat : supportedFormats) {
         if (supportedFormat.fourcc == preferredDMABufFormat) {
             format = supportedFormat;
             break;
         }
     }
-    if (!format.fourcc) {
+    if (!format.fourcc.value) {
         RELEASE_LOG(XR, "OpenXR texture format not supported");
         return std::nullopt;
     }
 
-    auto* buffer = gbm_bo_create_with_modifiers2(m_gbmDevice->device(), m_swapchain->width(), m_swapchain->height(), format.fourcc, format.modifiers.span().data(), format.modifiers.size(), GBM_BO_USE_RENDERING);
+    auto* buffer = gbm_bo_create_with_modifiers2(m_gbmDevice->device(), m_swapchain->width(), m_swapchain->height(), format.fourcc.value, format.modifiers.span().data(), format.modifiers.size(), GBM_BO_USE_RENDERING);
     if (!buffer)
-        buffer = gbm_bo_create(m_gbmDevice->device(), m_swapchain->width(), m_swapchain->height(), format.fourcc, GBM_BO_USE_RENDERING);
+        buffer = gbm_bo_create(m_gbmDevice->device(), m_swapchain->width(), m_swapchain->height(), format.fourcc.value, GBM_BO_USE_RENDERING);
     if (!buffer) {
         RELEASE_LOG(XR, "Failed to allocate GBM buffer for OpenXR texture");
         return std::nullopt;

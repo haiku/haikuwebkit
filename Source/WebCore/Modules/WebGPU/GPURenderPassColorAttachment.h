@@ -29,6 +29,7 @@
 #include "GPUIntegralTypes.h"
 #include "GPULoadOp.h"
 #include "GPUStoreOp.h"
+#include "GPUTexture.h"
 #include "GPUTextureView.h"
 #include "WebGPURenderPassColorAttachment.h"
 #include <wtf/RefPtr.h>
@@ -36,12 +37,17 @@
 
 namespace WebCore {
 
+using GPURenderPassColorAttachmentView = Variant<RefPtr<GPUTexture>, RefPtr<GPUTextureView>>;
+
 struct GPURenderPassColorAttachment {
     WebGPU::RenderPassColorAttachment convertToBacking() const
     {
-        ASSERT(view);
         return {
-            .view = view->backing(),
+            .view = WTF::switchOn(view, [&](const RefPtr<GPUTexture>& texture) -> WebGPU::RenderPassColorAttachmentView {
+                return texture->backing();
+            }, [&](const RefPtr<GPUTextureView>& view) -> WebGPU::RenderPassColorAttachmentView {
+                return view->backing();
+            }),
             .depthSlice = depthSlice,
             .resolveTarget = resolveTarget ? &resolveTarget->backing() : nullptr,
             .clearValue = clearValue ? std::optional { WebCore::convertToBacking(*clearValue) } : std::nullopt,
@@ -50,7 +56,7 @@ struct GPURenderPassColorAttachment {
         };
     }
 
-    WeakPtr<GPUTextureView> view;
+    GPURenderPassColorAttachmentView view;
     std::optional<GPUIntegerCoordinate> depthSlice;
     WeakPtr<GPUTextureView> resolveTarget;
 

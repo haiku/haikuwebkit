@@ -38,9 +38,7 @@
 #import "AccessibilityRenderObject.h"
 #import "AccessibilityScrollView.h"
 #import "AccessibilitySpinButton.h"
-#import "AccessibilityTableCell.h"
 #import "AccessibilityTableColumn.h"
-#import "AccessibilityTableRow.h"
 #import "BoundaryPointInlines.h"
 #import "ColorMac.h"
 #import "ContextMenuController.h"
@@ -265,8 +263,8 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
         // We want to return the attachment view instead of the object representing the attachment,
         // otherwise, we get palindrome errors in the AX hierarchy.
         if (child->isAttachment()) {
-            if (id attachmentView = wrapper.attachmentView)
-                return attachmentView;
+            if (RetainPtr<id> attachmentView = wrapper.attachmentView)
+                return attachmentView.get();
         } else if (child->isRemoteFrame() && returnPlatformElements)
             return child->remoteFramePlatformElement().get();
 
@@ -370,8 +368,8 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
 - (NSString *)description
 {
     if (RefPtr<AXCoreObject> backingObject = self.axBackingObject) {
-        NSString *backingDescription = backingObject->debugDescription().createNSString().autorelease();
-        return [NSString stringWithFormat:@"wrapper %p { object %@ }", self, backingDescription];
+        RetainPtr<NSString> backingDescription = backingObject->debugDescription().createNSString().autorelease();
+        return [NSString stringWithFormat:@"wrapper %p { object %@ }", self, backingDescription.get()];
     }
     return [NSString stringWithFormat:@"%@ (null backing object)", [super description]];
 }
@@ -412,7 +410,10 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
 
 - (NSArray<NSString *> *)baseAccessibilitySpeechHint
 {
-    return [self.axBackingObject->speechHint().createNSString() componentsSeparatedByString:@" "];
+    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
+    if (!backingObject)
+        return nil;
+    return [backingObject->speechHint().createNSString() componentsSeparatedByString:@" "];
 }
 
 #if HAVE(ACCESSIBILITY_FRAMEWORK)
@@ -426,7 +427,8 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
     auto extendedDescription = backingObject->extendedDescription();
     if (extendedDescription.length()) {
         accessibilityCustomContent = adoptNS([[NSMutableArray alloc] init]);
-        AXCustomContent *contentItem = [PAL::getAXCustomContentClass() customContentWithLabel:WEB_UI_STRING("description", "description detail").createNSString().get() value:extendedDescription.createNSString().get()];
+        Class customContentClass = PAL::getAXCustomContentClass();
+        AXCustomContent *contentItem = [customContentClass customContentWithLabel:WEB_UI_STRING("description", "description detail").createNSString().get() value:extendedDescription.createNSString().get()];
         // Set this to high, so that it's always spoken.
         [contentItem setImportance:AXCustomContentImportanceHigh];
         [accessibilityCustomContent addObject:contentItem];
@@ -438,55 +440,56 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
 
 - (NSString *)baseAccessibilityHelpText
 {
-    return self.axBackingObject->helpTextAttributeValue().createNSString().autorelease();
+    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
+    return backingObject ? backingObject->helpTextAttributeValue().createNSString().autorelease() : nil;
 }
 
 struct PathConversionInfo {
-    WebAccessibilityObjectWrapperBase *wrapper;
-    CGMutablePathRef path;
+    RetainPtr<WebAccessibilityObjectWrapperBase> wrapper;
+    RetainPtr<CGMutablePathRef> path;
 };
 
 static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, const PathElement& element)
 {
-    WebAccessibilityObjectWrapperBase *wrapper = conversion.wrapper;
-    CGMutablePathRef newPath = conversion.path;
+    RetainPtr<WebAccessibilityObjectWrapperBase> wrapper = conversion.wrapper;
+    RetainPtr newPath = conversion.path;
     FloatRect rect;
     switch (element.type) {
     case PathElement::Type::MoveToPoint: {
         rect = FloatRect(element.points[0], FloatSize());
-        CGPoint newPoint = [wrapper convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
-        CGPathMoveToPoint(newPath, nil, newPoint.x, newPoint.y);
+        CGPoint newPoint = [wrapper.get() convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
+        CGPathMoveToPoint(newPath.get(), nil, newPoint.x, newPoint.y);
         break;
     }
     case PathElement::Type::AddLineToPoint: {
         rect = FloatRect(element.points[0], FloatSize());
-        CGPoint newPoint = [wrapper convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
-        CGPathAddLineToPoint(newPath, nil, newPoint.x, newPoint.y);
+        CGPoint newPoint = [wrapper.get() convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
+        CGPathAddLineToPoint(newPath.get(), nil, newPoint.x, newPoint.y);
         break;
     }
     case PathElement::Type::AddQuadCurveToPoint: {
         rect = FloatRect(element.points[0], FloatSize());
-        CGPoint newPoint1 = [wrapper convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
+        CGPoint newPoint1 = [wrapper.get() convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
 
         rect = FloatRect(element.points[1], FloatSize());
-        CGPoint newPoint2 = [wrapper convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
-        CGPathAddQuadCurveToPoint(newPath, nil, newPoint1.x, newPoint1.y, newPoint2.x, newPoint2.y);
+        CGPoint newPoint2 = [wrapper.get() convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
+        CGPathAddQuadCurveToPoint(newPath.get(), nil, newPoint1.x, newPoint1.y, newPoint2.x, newPoint2.y);
         break;
     }
     case PathElement::Type::AddCurveToPoint: {
         rect = FloatRect(element.points[0], FloatSize());
-        CGPoint newPoint1 = [wrapper convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
+        CGPoint newPoint1 = [wrapper.get() convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
 
         rect = FloatRect(element.points[1], FloatSize());
-        CGPoint newPoint2 = [wrapper convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
+        CGPoint newPoint2 = [wrapper.get() convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
 
         rect = FloatRect(element.points[2], FloatSize());
-        CGPoint newPoint3 = [wrapper convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
-        CGPathAddCurveToPoint(newPath, nil, newPoint1.x, newPoint1.y, newPoint2.x, newPoint2.y, newPoint3.x, newPoint3.y);
+        CGPoint newPoint3 = [wrapper.get() convertRectToSpace:rect space:AccessibilityConversionSpace::Screen].origin;
+        CGPathAddCurveToPoint(newPath.get(), nil, newPoint1.x, newPoint1.y, newPoint2.x, newPoint2.y, newPoint3.x, newPoint3.y);
         break;
     }
     case PathElement::Type::CloseSubpath: {
-        CGPathCloseSubpath(newPath);
+        CGPathCloseSubpath(newPath.get());
         break;
     }
     }
@@ -495,7 +498,7 @@ static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, con
 - (CGPathRef)convertPathToScreenSpace:(const Path&)path
 {
     auto convertedPath = adoptCF(CGPathCreateMutable());
-    PathConversionInfo conversion = { self, convertedPath.get() };
+    PathConversionInfo conversion = { retainPtr(self), convertedPath };
     path.applyElements([&conversion](const PathElement& pathElement) {
         convertPathToScreenSpaceFunction(conversion, pathElement);
     });
@@ -638,9 +641,9 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
             if ([item isKindOfClass:NSAttributedString.class])
                 [text appendAttributedString:item];
             else if ([item isKindOfClass:WebAccessibilityObjectWrapper.class]) {
+                RetainPtr wrapper = static_cast<WebAccessibilityObjectWrapper *>(item);
 #if PLATFORM(MAC)
-                auto *wrapper = static_cast<WebAccessibilityObjectWrapper *>(item);
-                RefPtr<AXCoreObject> object = wrapper.axBackingObject;
+                RefPtr<AXCoreObject> object = [wrapper axBackingObject];
                 if (!object)
                     continue;
 
@@ -660,8 +663,8 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
                     break;
                 }
 #else
-                RetainPtr<NSString> label = static_cast<WebAccessibilityObjectWrapper *>(item).accessibilityLabel;
-#endif
+                RetainPtr<NSString> label = [wrapper accessibilityLabel];
+#endif // PLATFORM(MAC)
                 if (!label)
                     continue;
 
@@ -699,7 +702,8 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
 
 - (NSString *)ariaLandmarkRoleDescription
 {
-    return self.axBackingObject->ariaLandmarkRoleDescription().createNSString().autorelease();
+    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
+    return backingObject ? backingObject->ariaLandmarkRoleDescription().createNSString().autorelease() : nil;
 }
 
 - (NSString *)accessibilityPlatformMathSubscriptKey
@@ -716,15 +720,23 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
 
 - (NSArray *)accessibilityMathPostscriptPairs
 {
+    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
+    if (!backingObject)
+        return nil;
+
     AccessibilityObject::AccessibilityMathMultiscriptPairs pairs;
-    self.axBackingObject->mathPostscripts(pairs);
+    backingObject->mathPostscripts(pairs);
     return convertMathPairsToNSArray(pairs, [self accessibilityPlatformMathSubscriptKey], [self accessibilityPlatformMathSuperscriptKey]);
 }
 
 - (NSArray *)accessibilityMathPrescriptPairs
 {
+    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
+    if (!backingObject)
+        return nil;
+
     AccessibilityObject::AccessibilityMathMultiscriptPairs pairs;
-    self.axBackingObject->mathPrescripts(pairs);
+    backingObject->mathPrescripts(pairs);
     return convertMathPairsToNSArray(pairs, [self accessibilityPlatformMathSubscriptKey], [self accessibilityPlatformMathSuperscriptKey]);
 }
 

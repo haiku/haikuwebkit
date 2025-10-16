@@ -48,7 +48,6 @@ platform/mock/DeviceOrientationClientMock.h
 rendering/BackgroundPainter.h
 rendering/GlyphDisplayListCache.cpp
 rendering/GridTrackSizingAlgorithm.h
-rendering/ImageQualityController.h
 rendering/InlineBoxPainter.h
 rendering/LayerOverlapMap.cpp
 rendering/LayerOverlapMap.h

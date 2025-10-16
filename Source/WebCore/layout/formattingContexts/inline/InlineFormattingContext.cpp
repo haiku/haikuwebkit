@@ -158,7 +158,7 @@ InlineLayoutResult InlineFormattingContext::layout(const ConstraintsForInlineCon
         }
         auto lastLineIndex = lineDamage->layoutStartPosition()->lineIndex - 1;
         // FIXME: We should be able to extract the last line information and provide it to layout as "previous line" (ends in line break and inline direction).
-        return PreviousLine { lastLineIndex, { }, { }, true, { }, { } };
+        return PreviousLine { lastLineIndex, { }, { }, { }, { } };
     };
 
     auto textWrapStyle = root().style().textWrapStyle();
@@ -307,7 +307,6 @@ InlineLayoutResult InlineFormattingContext::lineLayout(AbstractLineBuilder& line
     auto leadingInlineItemPosition = needsLayoutRange.start;
     auto partialLayoutStartIndex = previousLine ? std::make_optional(previousLine->lineIndex) : std::nullopt;
     auto isFirstFormattedLineCandidate = true;
-    auto hasEverSeenInlineContent = false;
     size_t numberOfContentfulLines = partialLayoutStartIndex ? *partialLayoutStartIndex + 1 : 0lu;
     while (true) {
 
@@ -341,10 +340,9 @@ InlineLayoutResult InlineFormattingContext::lineLayout(AbstractLineBuilder& line
             break;
         }
 
-        hasEverSeenInlineContent = hasEverSeenInlineContent || lineLayoutResult.hasInlineContent();
-        previousLine = PreviousLine { lineIndex, lineLayoutResult.contentGeometry.trailingOverflowingContentWidth, lineLayoutResult.endsWithLineBreak(), hasEverSeenInlineContent, lineLayoutResult.directionality.inlineBaseDirection, WTFMove(lineLayoutResult.floatContent.suspendedFloats) };
+        previousLine = PreviousLine { lineIndex, lineLayoutResult.contentGeometry.trailingOverflowingContentWidth, lineLayoutResult.endsWithLineBreak(), lineLayoutResult.directionality.inlineBaseDirection, WTFMove(lineLayoutResult.floatContent.suspendedFloats) };
         previousLineEnd = lineContentEnd;
-        isFirstFormattedLineCandidate = !hasEverSeenInlineContent;
+        isFirstFormattedLineCandidate &= !lineLayoutResult.hasInlineContent();
         lineLogicalTop = formattingUtils().logicalTopForNextLine(lineLayoutResult, lineLogicalRect, floatingContext);
     }
     InlineDisplayLineBuilder::addLegacyLineClampTrailingLinkBoxIfApplicable(*this, layoutState(), layoutResult.displayContent);

@@ -175,15 +175,15 @@ bool PlatformDisplay::destroyEGLImage(EGLImage image) const
 }
 
 #if USE(GBM)
-const Vector<GLDisplay::DMABufFormat>& PlatformDisplay::dmabufFormats()
+const Vector<GLDisplay::BufferFormat>& PlatformDisplay::bufferFormats()
 {
-    return m_eglDisplay->dmabufFormats();
+    return m_eglDisplay->bufferFormats();
 }
 
 #if USE(GSTREAMER)
-const Vector<GLDisplay::DMABufFormat>& PlatformDisplay::dmabufFormatsForVideo()
+const Vector<GLDisplay::BufferFormat>& PlatformDisplay::bufferFormatsForVideo()
 {
-    return m_eglDisplay->dmabufFormatsForVideo();
+    return m_eglDisplay->bufferFormatsForVideo();
 }
 #endif
 #endif // USE(GBM)

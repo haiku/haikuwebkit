@@ -131,6 +131,7 @@ static inline bool needsDesktopUserAgentInternal(const URL&) { return false; }
 static inline bool shouldPreventOrientationMediaQueryFromEvaluatingToLandscapeInternal(const URL&) { return false; }
 static inline String standardUserAgentWithApplicationNameIncludingCompatOverridesInternal(const String&, const String&, UserAgentType) { return { }; }
 static inline bool shouldNotAutoUpgradeToHTTPSNavigationInternal(const URL&) { return false; }
+static inline bool shouldDisableBlobFileAccessEnforcementInternal() { return false; }
 #endif
 
 Quirks::Quirks(Document& document)
@@ -149,6 +150,11 @@ inline bool Quirks::needsQuirks() const
 bool Quirks::shouldIgnoreInvalidSignal() const
 {
     return needsQuirks();
+}
+
+bool Quirks::shouldDisableBlobFileAccessEnforcement()
+{
+    return shouldDisableBlobFileAccessEnforcementInternal();
 }
 
 // FIXME: Add more options to the helper to cover more patterns.

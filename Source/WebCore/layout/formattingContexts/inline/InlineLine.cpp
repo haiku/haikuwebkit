@@ -95,9 +95,11 @@ Line::Result Line::close()
     }();
 
     auto contentLogicalRight = this->contentLogicalRight() + m_rubyAlignContentRightOffset;
+    auto isContentful = lineHasVisuallyNonEmptyContent();
     return { WTFMove(m_runs)
         , contentLogicalWidth() + trailingClonedDecorationWidth
         , contentLogicalRight + trailingClonedDecorationWidth
+        , isContentful
         , !!m_hangingContent.trailingWhitespaceLength()
         , m_hangingContent.trailingWidth()
         , m_hangingContent.leadingPunctuationWidth()

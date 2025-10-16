@@ -722,6 +722,16 @@ static _WKStorageBlockingPolicy toAPI(WebCore::StorageBlockingPolicy policy)
     _preferences->setInactiveMediaCaptureStreamRepromptIntervalInMinutes(interval);
 }
 
+- (double)_inactiveMediaCaptureStreamRepromptWithoutUserGestureIntervalInMinutes
+{
+    return _preferences->inactiveMediaCaptureStreamRepromptWithoutUserGestureIntervalInMinutes();
+}
+
+- (void)_setInactiveMediaCaptureStreamRepromptWithoutUserGestureIntervalInMinutes:(double)interval
+{
+    _preferences->setInactiveMediaCaptureStreamRepromptWithoutUserGestureIntervalInMinutes(interval);
+}
+
 - (BOOL)_interruptAudioOnPageVisibilityChangeEnabled
 {
     return _preferences->interruptAudioOnPageVisibilityChangeEnabled();

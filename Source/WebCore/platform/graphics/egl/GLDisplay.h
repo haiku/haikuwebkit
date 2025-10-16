@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "FourCC.h"
 #include <optional>
 #include <wtf/Lock.h>
 #include <wtf/Noncopyable.h>
@@ -63,13 +64,13 @@ public:
     const Extensions& extensions() const { return m_extensions; }
 
 #if USE(GBM)
-    struct DMABufFormat {
-        uint32_t fourcc { 0 };
+    struct BufferFormat {
+        FourCC fourcc { 0 };
         Vector<uint64_t, 1> modifiers;
     };
-    const Vector<DMABufFormat>& dmabufFormats();
+    const Vector<BufferFormat>& bufferFormats();
 #if USE(GSTREAMER)
-    const Vector<DMABufFormat>& dmabufFormatsForVideo();
+    const Vector<BufferFormat>& bufferFormatsForVideo();
 #endif
 #endif
 
@@ -84,13 +85,13 @@ private:
     Extensions m_extensions;
 
 #if USE(GBM)
-    Lock m_dmabufFormatsLock;
-    bool m_dmabufFormatsInitialized WTF_GUARDED_BY_LOCK(m_dmabufFormatsLock) { false };
-    Vector<DMABufFormat> m_dmabufFormats;
+    Lock m_bufferFormatsLock;
+    bool m_bufferFormatsInitialized WTF_GUARDED_BY_LOCK(m_bufferFormatsLock) { false };
+    Vector<BufferFormat> m_bufferFormats;
 #if USE(GSTREAMER)
-    Lock m_dmabufFormatsForVideoLock;
-    bool m_dmabufFormatsForVideoInitialized WTF_GUARDED_BY_LOCK(m_dmabufFormatsForVideoLock) { false };
-    Vector<DMABufFormat> m_dmabufFormatsForVideo;
+    Lock m_bufferFormatsForVideoLock;
+    bool m_bufferFormatsForVideoInitialized WTF_GUARDED_BY_LOCK(m_bufferFormatsForVideoLock) { false };
+    Vector<BufferFormat> m_bufferFormatsForVideo;
 #endif
 #endif
 };

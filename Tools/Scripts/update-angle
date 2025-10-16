@@ -38,6 +38,7 @@ generate_changes_diff() {
         ':(exclude)WebKit' \
         ':(exclude)WebKitBuild' \
         ':(exclude)third_party/r8/custom_d8.jar' \
+        ':(exclude)third_party/googletest' \
         ':(exclude)parsetab.py' \
         > changes.diff
 }

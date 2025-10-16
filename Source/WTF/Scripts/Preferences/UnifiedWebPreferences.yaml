@@ -1646,6 +1646,22 @@ CanvasColorSpaceEnabled:
     WebCore:
       default: false
 
+CanvasColorTypeEnabled:
+  type: bool
+  status: testable
+  category: dom
+  humanReadableName: "Canvas Color Types and ImageData Pixel Formats"
+  humanReadableDescription: "Allow different color types and pixel formats in 2D canvas"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+  disableInLockdownMode: true
+  sharedPreferenceForWebProcess: true
+
 CanvasFiltersEnabled:
   type: bool
   status: testable
@@ -1687,22 +1703,6 @@ CanvasLayersEnabled:
       default: false
     WebCore:
       default: false
-
-CanvasPixelFormatEnabled:
-  type: bool
-  status: testable
-  category: dom
-  humanReadableName: "CanvasRenderingContext2DSettings.pixelFormat"
-  humanReadableDescription: "Allow different pixel formats in 2D canvas"
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: false
-    WebCore:
-      default: false
-  disableInLockdownMode: true
-  sharedPreferenceForWebProcess: true
 
 CanvasUsesAcceleratedDrawing:
   type: bool
@@ -3572,12 +3572,22 @@ InWindowFullscreenEnabled:
 InactiveMediaCaptureStreamRepromptIntervalInMinutes:
   type: double
   status: embedder
+  condition: ENABLE(MEDIA_STREAM)
   webcoreBinding: none
   exposed: [ WebKit ]
   defaultValue:
     WebKit:
-      "PLATFORM(IOS_FAMILY)": 1
       default: 10
+
+InactiveMediaCaptureStreamRepromptWithoutUserGestureIntervalInMinutes:
+  type: double
+  status: embedder
+  condition: ENABLE(MEDIA_STREAM)
+  webcoreBinding: none
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKit:
+      default: defaultInactiveMediaCaptureStreamRepromptWithoutUserGestureIntervalInMinutes()
 
 IncludeIgnoredInCoreAXTree:
   type: bool
@@ -5830,7 +5840,7 @@ PermissionsAPIEnabled:
     WebKitLegacy:
       default: false
     WebKit:
-      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)" : true
+      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(WIN)" : true
       default: false
     WebCore:
       default: false

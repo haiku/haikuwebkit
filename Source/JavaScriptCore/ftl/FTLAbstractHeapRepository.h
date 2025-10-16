@@ -178,8 +178,8 @@ namespace JSC { namespace FTL {
     macro(StructureRareData_cachedPropertyNameEnumeratorAndFlag, StructureRareData::offsetOfCachedPropertyNameEnumeratorAndFlag()) \
     macro(StructureRareData_specialPropertyCache, StructureRareData::offsetOfSpecialPropertyCache()) \
     macro(SpecialPropertyCache_cachedToStringTagValue, SpecialPropertyCache::offsetOfCache(CachedSpecialPropertyKey::ToStringTag) + SpecialPropertyCacheEntry::offsetOfValue()) \
-    macro(JSMap_butterfly, (JSMap::offsetOfButterfly())) \
-    macro(JSSet_butterfly, (JSSet::offsetOfButterfly())) \
+    macro(JSMap_storage, (JSMap::offsetOfStorage())) \
+    macro(JSSet_storage, (JSSet::offsetOfStorage())) \
     macro(VM_heap_barrierThreshold, VM::offsetOfHeapBarrierThreshold()) \
     macro(VM_heap_mutatorShouldBeFenced, VM::offsetOfHeapMutatorShouldBeFenced()) \
     macro(VM_exception, VM::exceptionOffset()) \

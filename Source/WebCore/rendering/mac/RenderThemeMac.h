@@ -47,7 +47,6 @@ public:
     bool supportsControlTints() const final { return true; }
 
     void inflateRectForControlRenderer(const RenderObject&, FloatRect&) final;
-    void adjustRepaintRect(const RenderBox&, FloatRect&) final;
 
     bool isControlStyled(const RenderStyle&) const final;
 

@@ -28,6 +28,7 @@
 
 #if ENABLE(WEBGL)
 
+#include "ContextDestructionObserverInlines.h"
 #include "InspectorInstrumentation.h"
 #include "ScriptExecutionContext.h"
 #include "WebCoreOpaqueRootInlines.h"

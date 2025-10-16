@@ -1,4 +1,3 @@
-Blocked access to external URL http://www.localhost:8800/content-security-policy/support/pass.png
 
 PASS img-src for relative path should load
 PASS img-src from unapproved domains should not load

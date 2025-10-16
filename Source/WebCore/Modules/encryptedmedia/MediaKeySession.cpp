@@ -34,6 +34,7 @@
 #include "CDM.h"
 #include "CDMInstance.h"
 #include "CDMKeyGroupingStrategy.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DOMPromiseProxy.h"
 #include "DocumentInlines.h"
 #include "EventLoop.h"
@@ -814,6 +815,11 @@ CDMKeyGroupingStrategy MediaKeySession::keyGroupingStrategy() const
 #else
     return CDMKeyGroupingStrategy::Platform;
 #endif
+}
+
+ScriptExecutionContext* MediaKeySession::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 bool MediaKeySession::virtualHasPendingActivity() const

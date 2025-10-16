@@ -26,6 +26,7 @@
 #include "config.h"
 #include "IDBRequest.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DOMException.h"
 #include "Event.h"
 #include "EventDispatcher.h"
@@ -242,6 +243,11 @@ IndexedDB::IndexRecordType IDBRequest::requestedIndexRecordType() const
     ASSERT(std::holds_alternative<RefPtr<IDBIndex>>(m_source.value()));
 
     return m_requestedIndexRecordType;
+}
+
+ScriptExecutionContext* IDBRequest::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 enum EventTargetInterfaceType IDBRequest::eventTargetInterface() const

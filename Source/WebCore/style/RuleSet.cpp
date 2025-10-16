@@ -160,6 +160,17 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
     storeIdentifier(scopeRuleIdentifier, m_scopeRuleIdentifierForRulePosition);
 
     const auto& scopeRules = scopeRulesFor(ruleData);
+
+    auto computeLinkMatchType = [&] {
+        // General case: no @scope rule or current rule selector is not :scope.
+        if (scopeRules.isEmpty() || !ruleData.selector()->hasScope())
+            return SelectorChecker::determineLinkMatchType(ruleData.selector());
+        // When current rule is :scope, we need to take into account the @scope selectors to determine the link match type.
+        Ref scopeRule = scopeRules.last();
+        return SelectorChecker::determineLinkMatchType(ruleData.selector(), scopeRule.ptr());
+    };
+    ruleData.setLinkMatchType(computeLinkMatchType());
+
     m_features.collectFeatures(ruleData, scopeRules);
 
     unsigned classBucketSize = 0;

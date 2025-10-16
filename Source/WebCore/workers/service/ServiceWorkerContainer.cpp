@@ -27,6 +27,7 @@
 #include "ServiceWorkerContainer.h"
 
 #include "ContentSecurityPolicy.h"
+#include "ContextDestructionObserverInlines.h"
 #include "CookieChangeSubscription.h"
 #include "CookieStoreGetOptions.h"
 #include "DOMPromiseProxy.h"
@@ -105,6 +106,11 @@ ServiceWorkerContainer::ServiceWorkerContainer(ScriptExecutionContext* context, 
 ServiceWorkerContainer::~ServiceWorkerContainer()
 {
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
+}
+
+ScriptExecutionContext* ServiceWorkerContainer::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void ServiceWorkerContainer::refEventTarget()

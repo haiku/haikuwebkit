@@ -1,3 +1,4 @@
+//@ skip if $addressBits <= 32
 //@ runDefaultWasm("-m", "--wasmFunctionIndexRangeToCompile=0:5", "--useOMGJIT=0")
 
 import { instantiate } from "../wabt-wrapper.js"

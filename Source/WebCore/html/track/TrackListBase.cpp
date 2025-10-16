@@ -29,6 +29,7 @@
 
 #include "TrackListBase.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "EventNames.h"
 #include "ScriptExecutionContext.h"
 #include "TrackEvent.h"

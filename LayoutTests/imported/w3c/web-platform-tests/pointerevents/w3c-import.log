@@ -16,6 +16,7 @@ None
 List of files:
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/META.yml
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/README.md
+/LayoutTests/imported/w3c/web-platform-tests/pointerevents/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/capturing_boundary_event_handler_at_ua_shadowdom.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes.https.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes_on_redispatch.https.html
@@ -38,6 +39,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_attributes.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_auxclick_is_a_pointerevent.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_boundary_events_at_implicit_release_hoverable_pointers.html
+/LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_boundary_events_attributes_during_drag.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_boundary_events_before_pointerrawupdate.https.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_boundary_events_in_capturing.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_boundary_events_modifier_no_pointer_movement.html

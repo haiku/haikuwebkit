@@ -655,30 +655,6 @@ public:
 
 #endif
 
-class StyleImageWrapper final : public RefCountedWrapper<StyleImage> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleImageWrapper, Animation);
-public:
-    StyleImageWrapper(CSSPropertyID property, StyleImage* (RenderStyle::*getter)() const, void (RenderStyle::*setter)(RefPtr<StyleImage>&&))
-        : RefCountedWrapper(property, getter, setter)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        if (&a == &b)
-            return true;
-
-        auto* imageA = value(a);
-        auto* imageB = value(b);
-        return arePointingToEqualData(imageA, imageB);
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        return value(from) && value(to);
-    }
-};
-
 class TransformOperationsWrapper final : public WrapperWithGetter<const TransformOperations&> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(TransformOperationsWrapper, Animation);
 public:

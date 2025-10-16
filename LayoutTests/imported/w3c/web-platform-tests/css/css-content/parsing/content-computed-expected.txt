@@ -1,7 +1,7 @@
-Blocked access to external URL https://www.example.com/picture.svg
-Blocked access to external URL https://www.example.com/picture.svg
-Blocked access to external URL https://www.example.com/picture.svg
-Blocked access to external URL https://www.example.com/picture.svg
+CONSOLE MESSAGE: Blocked access to external URL https://www.example.com/picture.svg
+CONSOLE MESSAGE: Blocked access to external URL https://www.example.com/picture.svg
+CONSOLE MESSAGE: Blocked access to external URL https://www.example.com/picture.svg
+CONSOLE MESSAGE: Blocked access to external URL https://www.example.com/picture.svg
 
 PASS Property content value 'open-quote'
 PASS Property content value 'open-quote / "alt text"'

@@ -111,7 +111,7 @@ private:
     };
 
     bool performDMABufSyncSystemCall(OptionSet<DMABufSyncFlag> flags);
-    bool allocate(struct gbm_device*, const GLDisplay::DMABufFormat&);
+    bool allocate(struct gbm_device*, const GLDisplay::BufferFormat&);
     bool createDMABufFromGBMBufferObject();
     UnixFileDescriptor exportGBMBufferObjectAsDMABuf(unsigned planeIndex);
 

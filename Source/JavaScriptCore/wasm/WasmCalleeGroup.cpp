@@ -52,9 +52,9 @@ CalleeGroup::CalleeGroup(MemoryMode mode, const CalleeGroup& other)
     : m_calleeCount(other.m_calleeCount)
     , m_mode(mode)
     , m_ipintCallees(other.m_ipintCallees)
-    , m_jsEntrypointCallees(other.m_jsEntrypointCallees)
+    , m_jsToWasmCallees(other.m_jsToWasmCallees)
     , m_callers(m_calleeCount)
-    , m_wasmIndirectCallEntryPoints(other.m_wasmIndirectCallEntryPoints)
+    , m_wasmIndirectCallEntrypoints(other.m_wasmIndirectCallEntrypoints)
     , m_wasmIndirectCallWasmCallees(other.m_wasmIndirectCallWasmCallees)
     , m_wasmToWasmExitStubs(other.m_wasmToWasmExitStubs)
 {
@@ -77,16 +77,16 @@ CalleeGroup::CalleeGroup(VM& vm, MemoryMode mode, ModuleInformation& moduleInfor
             return;
         }
 
-        m_wasmIndirectCallEntryPoints = FixedVector<CodePtr<WasmEntryPtrTag>>(m_calleeCount);
+        m_wasmIndirectCallEntrypoints = FixedVector<CodePtr<WasmEntryPtrTag>>(m_calleeCount);
         m_wasmIndirectCallWasmCallees = FixedVector<RefPtr<Wasm::IPIntCallee>>(m_calleeCount);
 
         for (unsigned i = 0; i < m_calleeCount; ++i) {
-            m_wasmIndirectCallEntryPoints[i] = m_ipintCallees->at(i)->entrypoint();
+            m_wasmIndirectCallEntrypoints[i] = m_ipintCallees->at(i)->entrypoint();
             m_wasmIndirectCallWasmCallees[i] = m_ipintCallees->at(i).ptr();
         }
 
         m_wasmToWasmExitStubs = m_plan->takeWasmToWasmExitStubs();
-        m_jsEntrypointCallees = static_cast<IPIntPlan*>(m_plan.get())->takeJSCallees();
+        m_jsToWasmCallees = static_cast<IPIntPlan*>(m_plan.get())->takeJSToWasmCallees();
 
         setCompilationFinished();
     })));
@@ -260,11 +260,14 @@ void CalleeGroup::updateCallsitesToCallUs(const AbstractLocker& locker, CodeLoca
     resetInstructionCacheOnAllThreads();
     WTF::storeStoreFence(); // This probably isn't necessary but it's good to be paranoid.
 
-    m_wasmIndirectCallEntryPoints[functionIndex] = entrypoint;
+    m_wasmIndirectCallEntrypoints[functionIndex] = entrypoint;
 
+    // FIXME: This does an icache flush for each repatch but we
+    // 1) only need one at the end.
+    // 2) probably don't need one at all because we don't compile wasm on mutator threads so we don't have to worry about cache coherency.
     for (auto& callsite : callsites) {
         dataLogLnIf(verbose, "Repatching call at: ", RawPointer(callsite.callLocation.dataLocation()), " to ", RawPointer(entrypoint.taggedPtr()));
-        MacroAssembler::repatchNearCall<jitMemcpyRepatchAtomic>(callsite.callLocation, callsite.target);
+        MacroAssembler::repatchNearCall(callsite.callLocation, callsite.target);
     }
 }
 
@@ -331,7 +334,7 @@ TriState CalleeGroup::calleeIsReferenced(const AbstractLocker&, Wasm::Callee* ca
     }
 #endif
     // FIXME: This doesn't record the index its associated with so we can't validate anything here.
-    case CompilationMode::JSToWasmEntrypointMode:
+    case CompilationMode::JSToWasmMode:
     // FIXME: These are owned by JS, it's not clear how to verify they're still alive here.
     case CompilationMode::JSToWasmICMode:
     case CompilationMode::WasmToJSMode:

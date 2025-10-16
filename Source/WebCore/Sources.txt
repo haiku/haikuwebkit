@@ -590,12 +590,8 @@ accessibility/AccessibilityScrollbar.cpp
 accessibility/AccessibilitySlider.cpp
 accessibility/AccessibilitySpinButton.cpp
 accessibility/AccessibilitySpinButtonPart.cpp
-accessibility/AccessibilityTableCell.cpp
 accessibility/AccessibilityTableColumn.cpp
 accessibility/AccessibilityTableHeaderContainer.cpp
-accessibility/AccessibilityTableRow.cpp
-accessibility/AccessibilityTree.cpp
-accessibility/AccessibilityTreeItem.cpp
 accessibility/isolatedtree/AXIsolatedObject.cpp
 accessibility/isolatedtree/AXIsolatedTree.cpp
 animation/AcceleratedEffectStackUpdater.cpp
@@ -907,6 +903,9 @@ css/CSSFontStyleRangeValue.cpp
 css/CSSFontStyleWithAngleValue.cpp
 css/CSSFontValue.cpp
 css/CSSFontVariationValue.cpp
+css/CSSFunctionDeclarations.cpp
+css/CSSFunctionDescriptors.cpp
+css/CSSFunctionRule.cpp
 css/CSSFunctionValue.cpp
 css/CSSGradientValue.cpp
 css/CSSGridAutoRepeatValue.cpp
@@ -2135,6 +2134,7 @@ page/IntelligenceTextEffectsSupport.cpp
 page/InteractionRegion.cpp
 page/IntersectionObserver.cpp
 page/IntersectionObserverEntry.cpp
+page/LargestContentfulPaint.cpp
 page/LocalDOMWindow.cpp
 page/LocalDOMWindowProperty.cpp
 page/LocalFrame.cpp
@@ -2821,6 +2821,7 @@ rendering/ImageQualityController.cpp
 rendering/InlineBoxPainter.cpp
 rendering/LayerAncestorClippingStack.cpp
 rendering/LayerOverlapMap.cpp
+rendering/LayoutScope.cpp
 rendering/LayoutDisallowedScope.cpp
 rendering/LayoutRepainter.cpp
 rendering/LegacyInlineBox.cpp
@@ -3214,6 +3215,7 @@ style/values/images/StyleGradient.cpp
 style/values/images/StyleImageOrNone.cpp
 style/values/images/StyleImageWrapper.cpp
 style/values/inline/StyleVerticalAlign.cpp
+style/values/inline/StyleWebKitInitialLetter.cpp
 style/values/lists/StyleListStyleType.cpp
 style/values/masking/StyleClip.cpp
 style/values/masking/StyleClipPath.cpp
@@ -3231,6 +3233,7 @@ style/values/motion/StyleOffsetRotate.cpp
 style/values/motion/StyleRayFunction.cpp
 style/values/multicol/StyleColumnCount.cpp
 style/values/multicol/StyleColumnWidth.cpp
+style/values/non-standard/StyleWebKitBoxReflect.cpp
 style/values/non-standard/StyleWebKitLineClamp.cpp
 style/values/non-standard/StyleWebKitOverflowScrolling.cpp
 style/values/non-standard/StyleWebKitTextStrokeWidth.cpp
@@ -3674,6 +3677,9 @@ JSCSSFontFaceDescriptors.cpp
 JSCSSFontFaceRule.cpp
 JSCSSFontFeatureValuesRule.cpp
 JSCSSFontPaletteValuesRule.cpp
+JSCSSFunctionDeclarations.cpp
+JSCSSFunctionDescriptors.cpp
+JSCSSFunctionRule.cpp
 JSCSSGroupingRule.cpp
 JSCSSHSL.cpp
 JSCSSHWB.cpp
@@ -4272,7 +4278,7 @@ JSImageBitmapRenderingContextSettings.cpp
 JSImageCapture.cpp
 JSImageData.cpp
 JSImageDataSettings.cpp
-JSImageDataStorageFormat.cpp
+JSImageDataPixelFormat.cpp
 JSImageResource.cpp
 JSImageSmoothingQuality.cpp
 JSImportNodeOptions.cpp
@@ -4297,6 +4303,7 @@ JSKeyframeEffect.cpp
 JSKeyframeEffectOptions.cpp
 JSLandmark.cpp
 JSLandmarkType.cpp
+JSLargestContentfulPaint.cpp
 JSLatencyMode.cpp
 JSLocation.cpp
 JSLongRange.cpp

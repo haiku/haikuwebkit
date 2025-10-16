@@ -55,7 +55,7 @@ public:
     void close();
     void destroy();
 
-    ScriptExecutionContext* scriptExecutionContext() const { return ActiveDOMObject::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
 
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }

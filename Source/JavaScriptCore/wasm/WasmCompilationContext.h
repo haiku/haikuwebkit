@@ -62,7 +62,7 @@ class OptimizingJITCallee;
 class TierUpCount;
 
 struct CompilationContext {
-    std::unique_ptr<CCallHelpers> jsEntrypointJIT;
+    std::unique_ptr<CCallHelpers> jsToWasmJIT;
     std::unique_ptr<CCallHelpers> wasmEntrypointJIT;
     std::unique_ptr<OpaqueByproducts> wasmEntrypointByproducts;
     std::unique_ptr<B3::Procedure> procedure;

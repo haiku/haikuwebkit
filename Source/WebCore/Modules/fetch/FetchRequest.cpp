@@ -30,6 +30,7 @@
 #include "config.h"
 #include "FetchRequest.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "HTTPParsers.h"

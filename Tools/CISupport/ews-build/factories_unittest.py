@@ -43,20 +43,6 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'checkout-pull-request',
             'check-webkit-style'
         ],
-        'Apply-WatchList-EWS': [
-            'configure-build',
-            'validate-change',
-            'configuration',
-            'clean-up-git-repo',
-            'set-credential-helper',
-            'checkout-source',
-            'fetch-branch-references',
-            'update-working-directory',
-            'show-identifier',
-            'apply-patch',
-            'checkout-pull-request',
-            'apply-watch-list'
-        ],
         'GTK-Build-EWS': [
             'configure-build',
             'validate-change',

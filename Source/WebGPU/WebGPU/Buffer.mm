@@ -38,7 +38,6 @@
 #import "WebGPUSwiftInternal.h"
 
 DEFINE_SWIFTCXX_THUNK(WebGPU::Buffer, copyFrom, void, const std::span<const uint8_t>, const size_t);
-DEFINE_SWIFTCXX_THUNK(WebGPU::Buffer, getMappedRange, std::span<uint8_t>, size_t, size_t);
 #endif
 
 namespace WebGPU {
@@ -292,9 +291,13 @@ static size_t computeRangeSize(uint64_t size, size_t offset)
     return result.value();
 }
   
-#if !ENABLE(WEBGPU_SWIFT)
 std::span<uint8_t> Buffer::getMappedRange(size_t offset, size_t size)
 {
+#if ENABLE(WEBGPU_SWIFT)
+    if (isWebGPUSwiftEnabled())
+        return Buffer_getMappedRange_thunk(this, offset, size);
+#endif
+
     // https://gpuweb.github.io/gpuweb/#dom-gpubuffer-getmappedrange
     if (!isValid())
         return std::span<uint8_t> { };
@@ -313,7 +316,6 @@ std::span<uint8_t> Buffer::getMappedRange(size_t offset, size_t size)
         return { };
     return getBufferContents().subspan(offset);
 }
-#endif
 
 std::span<uint8_t> Buffer::getBufferContents()
 {

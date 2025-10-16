@@ -830,7 +830,7 @@ static bool rareDataChangeRequiresLayout(const StyleRareNonInheritedData& first,
     if (first.columnGap != second.columnGap || first.rowGap != second.rowGap)
         return true;
 
-    if (!arePointingToEqualData(first.boxReflect, second.boxReflect))
+    if (first.boxReflect != second.boxReflect)
         return true;
 
     // If the counter directives change, trigger a relayout to re-calculate counter values and rebuild the counter node tree.
@@ -2162,7 +2162,7 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyStrokeLinejoin);
         if (first.hasSetStrokeWidth != second.hasSetStrokeWidth || first.strokeWidth != second.strokeWidth)
             changingProperties.m_properties.set(CSSPropertyStrokeWidth);
-        if (!arePointingToEqualData(first.listStyleImage, second.listStyleImage))
+        if (first.listStyleImage != second.listStyleImage)
             changingProperties.m_properties.set(CSSPropertyListStyleImage);
         if (first.scrollbarColor != second.scrollbarColor)
             changingProperties.m_properties.set(CSSPropertyScrollbarColor);
@@ -2373,17 +2373,6 @@ void RenderStyle::setPageScaleTransform(float scale)
     setTransform(TransformOperations { ScaleTransformOperation::create(scale, scale, TransformOperation::Type::Scale) });
     setTransformOriginX(0_css_px);
     setTransformOriginY(0_css_px);
-}
-
-StyleImage* RenderStyle::listStyleImage() const
-{
-    return m_rareInheritedData->listStyleImage.get();
-}
-
-void RenderStyle::setListStyleImage(RefPtr<StyleImage>&& v)
-{
-    if (m_rareInheritedData->listStyleImage != v)
-        m_rareInheritedData.access().listStyleImage = WTFMove(v);
 }
 
 const Color& RenderStyle::color() const

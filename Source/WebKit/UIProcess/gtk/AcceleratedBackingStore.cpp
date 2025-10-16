@@ -185,8 +185,8 @@ Vector<RendererBufferFormat> AcceleratedBackingStore::preferredBufferFormats()
     RendererBufferFormat format;
     format.usage = RendererBufferFormat::Usage::Rendering;
     format.drmDevice = drmMainDevice();
-    format.formats = display.glDisplay()->dmabufFormats().map([](const auto& format) -> RendererBufferFormat::Format {
-        return { format.fourcc, format.modifiers };
+    format.formats = display.glDisplay()->bufferFormats().map([](const auto& format) -> RendererBufferFormat::Format {
+        return { format.fourcc.value, format.modifiers };
     });
     return { WTFMove(format) };
 }

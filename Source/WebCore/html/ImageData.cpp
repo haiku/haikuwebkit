@@ -37,9 +37,9 @@
 
 namespace WebCore {
 
-static CheckedUint32 computeDataSize(const IntSize& size, ImageDataStorageFormat storageFormat)
+static CheckedUint32 computeDataSize(const IntSize& size, ImageDataPixelFormat pixelFormat)
 {
-    return PixelBuffer::computePixelComponentCount(toPixelFormat(storageFormat), size);
+    return PixelBuffer::computePixelComponentCount(toPixelFormat(pixelFormat), size);
 }
 
 PredefinedColorSpace ImageData::computeColorSpace(std::optional<ImageDataSettings> settings, PredefinedColorSpace defaultColorSpace)
@@ -49,58 +49,58 @@ PredefinedColorSpace ImageData::computeColorSpace(std::optional<ImageDataSetting
     return defaultColorSpace;
 }
 
-static ImageDataStorageFormat computeStorageFormat(std::optional<ImageDataSettings> settings, ImageDataStorageFormat defaultStorageFormat = ImageDataStorageFormat::Uint8)
+static ImageDataPixelFormat computePixelFormat(std::optional<ImageDataSettings> settings, ImageDataPixelFormat defaultPixelFormat = ImageDataPixelFormat::RgbaUnorm8)
 {
-    return settings ? settings->storageFormat : defaultStorageFormat;
+    return settings ? settings->pixelFormat : defaultPixelFormat;
 }
 
-Ref<ImageData> ImageData::create(Ref<ByteArrayPixelBuffer>&& pixelBuffer, std::optional<ImageDataStorageFormat> overridingStorageFormat)
+Ref<ImageData> ImageData::create(Ref<ByteArrayPixelBuffer>&& pixelBuffer, std::optional<ImageDataPixelFormat> overridingPixelFormat)
 {
     auto colorSpace = toPredefinedColorSpace(pixelBuffer->format().colorSpace);
-    return adoptRef(*new ImageData(pixelBuffer->size(), pixelBuffer->takeData(), *colorSpace, overridingStorageFormat));
+    return adoptRef(*new ImageData(pixelBuffer->size(), pixelBuffer->takeData(), *colorSpace, overridingPixelFormat));
 }
 
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
-Ref<ImageData> ImageData::create(Ref<Float16ArrayPixelBuffer>&& pixelBuffer, std::optional<ImageDataStorageFormat> overridingStorageFormat)
+Ref<ImageData> ImageData::create(Ref<Float16ArrayPixelBuffer>&& pixelBuffer, std::optional<ImageDataPixelFormat> overridingPixelFormat)
 {
     auto colorSpace = toPredefinedColorSpace(pixelBuffer->format().colorSpace);
     auto size = pixelBuffer->size();
-    return adoptRef(*new ImageData(size, WTFMove(pixelBuffer.get()).takeData(), *colorSpace, overridingStorageFormat));
+    return adoptRef(*new ImageData(size, WTFMove(pixelBuffer.get()).takeData(), *colorSpace, overridingPixelFormat));
 }
 #endif // ENABLE(PIXEL_FORMAT_RGBA16F)
 
-RefPtr<ImageData> ImageData::create(RefPtr<ByteArrayPixelBuffer>&& pixelBuffer, std::optional<ImageDataStorageFormat> overridingStorageFormat)
+RefPtr<ImageData> ImageData::create(RefPtr<ByteArrayPixelBuffer>&& pixelBuffer, std::optional<ImageDataPixelFormat> overridingPixelFormat)
 {
     if (!pixelBuffer)
         return nullptr;
-    return create(pixelBuffer.releaseNonNull(), overridingStorageFormat);
+    return create(pixelBuffer.releaseNonNull(), overridingPixelFormat);
 }
 
-RefPtr<ImageData> ImageData::create(Ref<PixelBuffer>&& pixelBuffer, std::optional<ImageDataStorageFormat> overridingStorageFormat)
+RefPtr<ImageData> ImageData::create(Ref<PixelBuffer>&& pixelBuffer, std::optional<ImageDataPixelFormat> overridingPixelFormat)
 {
     if (is<ByteArrayPixelBuffer>(pixelBuffer))
-        return create(uncheckedDowncast<ByteArrayPixelBuffer>(WTFMove(pixelBuffer)), overridingStorageFormat);
+        return create(uncheckedDowncast<ByteArrayPixelBuffer>(WTFMove(pixelBuffer)), overridingPixelFormat);
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
     if (is<Float16ArrayPixelBuffer>(pixelBuffer))
-        return create(uncheckedDowncast<Float16ArrayPixelBuffer>(WTFMove(pixelBuffer)), overridingStorageFormat);
+        return create(uncheckedDowncast<Float16ArrayPixelBuffer>(WTFMove(pixelBuffer)), overridingPixelFormat);
 #endif // ENABLE(PIXEL_FORMAT_RGBA16F)
     return nullptr;
 }
 
-RefPtr<ImageData> ImageData::create(const IntSize& size, PredefinedColorSpace colorSpace, ImageDataStorageFormat imageDataStorageFormat)
+RefPtr<ImageData> ImageData::create(const IntSize& size, PredefinedColorSpace colorSpace, ImageDataPixelFormat imageDataPixelFormat)
 {
-    auto dataSize = computeDataSize(size, ImageDataStorageFormat::Uint8);
+    auto dataSize = computeDataSize(size, ImageDataPixelFormat::RgbaUnorm8);
     if (dataSize.hasOverflowed())
         return nullptr;
-    auto array = ImageDataArray::tryCreate(dataSize, ImageDataStorageFormat::Uint8);
+    auto array = ImageDataArray::tryCreate(dataSize, ImageDataPixelFormat::RgbaUnorm8);
     if (!array)
         return nullptr;
-    return adoptRef(*new ImageData(size, WTFMove(*array), colorSpace, imageDataStorageFormat));
+    return adoptRef(*new ImageData(size, WTFMove(*array), colorSpace, imageDataPixelFormat));
 }
 
 RefPtr<ImageData> ImageData::create(const IntSize& size, ImageDataArray&& array, PredefinedColorSpace colorSpace)
 {
-    auto dataSize = computeDataSize(size, array.storageFormat());
+    auto dataSize = computeDataSize(size, array.pixelFormat());
     if (dataSize.hasOverflowed() || dataSize != array.length())
         return nullptr;
     return adoptRef(*new ImageData(size, WTFMove(array), colorSpace));
@@ -113,12 +113,12 @@ ExceptionOr<Ref<ImageData>> ImageData::create(unsigned sw, unsigned sh, Predefin
         return Exception { ExceptionCode::IndexSizeError };
 
     IntSize size(sw, sh);
-    auto storageFormat = computeStorageFormat(settings);
-    auto dataSize = computeDataSize(size, storageFormat);
+    auto pixelFormat = computePixelFormat(settings);
+    auto dataSize = computeDataSize(size, pixelFormat);
     if (dataSize.hasOverflowed())
         return Exception { ExceptionCode::RangeError, "Cannot allocate a buffer of this size"_s };
 
-    auto array = ImageDataArray::tryCreate(dataSize, storageFormat, optionalBytes);
+    auto array = ImageDataArray::tryCreate(dataSize, pixelFormat, optionalBytes);
     if (!array) {
         // FIXME: Does this need to be a "real" out of memory error with setOutOfMemoryError called on it?
         return Exception { ExceptionCode::RangeError, "Out of memory"_s };
@@ -151,7 +151,7 @@ ExceptionOr<Ref<ImageData>> ImageData::create(ImageDataArray&& array, unsigned s
         return Exception { ExceptionCode::IndexSizeError, "sh value is not equal to height"_s };
 
     IntSize size(sw, height.value());
-    auto dataSize = computeDataSize(size, computeStorageFormat(settings));
+    auto dataSize = computeDataSize(size, computePixelFormat(settings));
     if (dataSize.hasOverflowed() || dataSize != length)
         return Exception { ExceptionCode::RangeError };
 
@@ -166,9 +166,9 @@ ImageData::ImageData(const IntSize& size, ImageDataArray&& data, PredefinedColor
 {
 }
 
-ImageData::ImageData(const IntSize& size, ImageDataArray&& data, PredefinedColorSpace colorSpace, std::optional<ImageDataStorageFormat> overridingStorageFormat)
+ImageData::ImageData(const IntSize& size, ImageDataArray&& data, PredefinedColorSpace colorSpace, std::optional<ImageDataPixelFormat> overridingPixelFormat)
     : m_size(size)
-    , m_data(WTFMove(data), overridingStorageFormat)
+    , m_data(WTFMove(data), overridingPixelFormat)
     , m_colorSpace(colorSpace)
 {
 }
@@ -193,17 +193,17 @@ Ref<Float16ArrayPixelBuffer> ImageData::float16ArrayPixelBuffer() const
 
 Ref<PixelBuffer> ImageData::pixelBuffer() const
 {
-    switch (m_data.storageFormat()) {
-    case ImageDataStorageFormat::Uint8:
+    switch (m_data.pixelFormat()) {
+    case ImageDataPixelFormat::RgbaUnorm8:
         return byteArrayPixelBuffer();
-    case ImageDataStorageFormat::Float16:
+    case ImageDataPixelFormat::RgbaFloat16:
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
         return float16ArrayPixelBuffer();
 #else
-        RELEASE_ASSERT_NOT_REACHED("Unexpected ImageDataStorageFormat::Float16");
+        RELEASE_ASSERT_NOT_REACHED("Unexpected ImageDataPixelFormat::RgbaFloat16");
 #endif
     }
-    RELEASE_ASSERT_NOT_REACHED("Unexpected ImageDataStorageFormat value");
+    RELEASE_ASSERT_NOT_REACHED("Unexpected ImageDataPixelFormat value");
 }
 
 TextStream& operator<<(TextStream& ts, const ImageData& imageData)

@@ -898,9 +898,8 @@ bool CSSSelector::hasExplicitNestingParent() const
 bool CSSSelector::hasExplicitPseudoClassScope() const
 {
     return visitSimpleSelectors([] (const CSSSelector& selector) {
-        if (selector.match() == Match::PseudoClass && selector.pseudoClass() == PseudoClass::Scope)
+        if (selector.isScopePseudoClass())
             return true;
-
         return false;
     }, VisitFunctionalPseudoClasses::Yes);
 }
@@ -913,6 +912,15 @@ bool CSSSelector::isHostPseudoClass() const
 bool CSSSelector::isScopePseudoClass() const
 {
     return match() == Match::PseudoClass && pseudoClass() == PseudoClass::Scope;
+}
+
+bool CSSSelector::hasScope() const
+{
+    return visitSimpleSelectors([] (auto& selector) {
+        if (selector.isScopePseudoClass())
+            return true;
+        return false;
+    });
 }
 
 } // namespace WebCore

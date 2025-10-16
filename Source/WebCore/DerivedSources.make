@@ -984,6 +984,9 @@ JS_BINDING_IDLS := \
     $(WebCore)/css/CSSFontFaceRule.idl \
     $(WebCore)/css/CSSFontFeatureValuesRule.idl \
     $(WebCore)/css/CSSFontPaletteValuesRule.idl \
+    $(WebCore)/css/CSSFunctionDeclarations.idl \
+    $(WebCore)/css/CSSFunctionDescriptors.idl \
+    $(WebCore)/css/CSSFunctionRule.idl \
     $(WebCore)/css/CSSGroupingRule.idl \
     $(WebCore)/css/CSSImportRule.idl \
     $(WebCore)/css/CSSLayerBlockRule.idl \
@@ -1356,7 +1359,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/html/ImageBitmapOptions.idl \
     $(WebCore)/html/ImageData.idl \
     $(WebCore)/html/ImageDataSettings.idl \
-    $(WebCore)/html/ImageDataStorageFormat.idl \
+    $(WebCore)/html/ImageDataPixelFormat.idl \
     $(WebCore)/html/MediaController.idl \
     $(WebCore)/html/MediaEncryptedEvent.idl \
     $(WebCore)/html/MediaError.idl \
@@ -1531,6 +1534,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/page/IntersectionObserver.idl \
     $(WebCore)/page/IntersectionObserverCallback.idl \
     $(WebCore)/page/IntersectionObserverEntry.idl \
+    $(WebCore)/page/LargestContentfulPaint.idl \
     $(WebCore)/page/Location.idl \
     $(WebCore)/page/NavigateEvent.idl \
     $(WebCore)/page/Navigation.idl \
@@ -1555,6 +1559,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/page/NavigatorServiceWorker.idl \
     $(WebCore)/page/NavigatorShare.idl \
     $(WebCore)/page/NavigatorStorage.idl \
+    $(WebCore)/page/PaintTimingMixin.idl \
     $(WebCore)/page/Performance+EventCounts.idl \
     $(WebCore)/page/Performance+NavigationTiming.idl \
     $(WebCore)/page/Performance+PerformanceTimeline.idl \

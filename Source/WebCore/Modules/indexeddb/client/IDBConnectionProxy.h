@@ -31,6 +31,7 @@
 #include <WebCore/IDBObjectStoreIdentifier.h>
 #include <WebCore/IDBResourceIdentifier.h>
 #include <WebCore/IndexKey.h>
+#include <WebCore/ScriptExecutionContext.h>
 #include <WebCore/TransactionOperation.h>
 #include <pal/SessionID.h>
 #include <wtf/CrossThreadQueue.h>

@@ -27,6 +27,7 @@
 
 #if ENABLE(ENCRYPTED_MEDIA)
 
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "FrameInlines.h"
 #include "JSDOMPromiseDeferred.h"

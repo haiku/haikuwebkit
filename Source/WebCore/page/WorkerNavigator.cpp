@@ -28,6 +28,7 @@
 #include "WorkerNavigator.h"
 
 #include "Chrome.h"
+#include "ContextDestructionObserverInlines.h"
 #include "GPU.h"
 #include "JSDOMPromiseDeferred.h"
 #include "NavigatorUAData.h"

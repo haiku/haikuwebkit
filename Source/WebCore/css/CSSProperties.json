@@ -5046,9 +5046,9 @@
                 "none"
             ],
             "codegen-properties": {
-                "animation-wrapper": "StyleImageWrapper",
-                "style-converter": "ImageOrNone",
-                "parser-grammar": "none | <image>"
+                "animation-wrapper": "StyleTypeWrapper",
+                "style-converter": "StyleType<ImageOrNone>",
+                "parser-grammar": "<image> | none"
             },
             "specification": {
                 "category": "css-lists",
@@ -8913,6 +8913,7 @@
             "animation-type": "not animatable (legacy)",
             "initial": "0",
             "codegen-properties": {
+                "style-converter": "StyleType<WebkitBoxFlex>",
                 "parser-grammar": "<number>"
             },
             "status": "obsolete",
@@ -8925,6 +8926,7 @@
             "animation-type": "not animatable (legacy)",
             "initial": "1",
             "codegen-properties": {
+                "style-converter": "StyleType<WebkitBoxFlexGroup>",
                 "parser-grammar": "<integer [0,inf]>"
             },
             "status": "obsolete",
@@ -8953,6 +8955,7 @@
             "animation-type": "not animatable (legacy)",
             "initial": "1",
             "codegen-properties": {
+                "style-converter": "StyleType<WebkitBoxOrdinalGroup>",
                 "parser-grammar": "<integer [1,inf]>"
             },
             "status": "obsolete",
@@ -9001,7 +9004,7 @@
             "animation-type": "not animatable (legacy)",
             "initial": "none",
             "codegen-properties": {
-                "style-converter": "Reflection",
+                "style-converter": "StyleType<WebkitBoxReflect>",
                 "parser-function": "consumeWebkitBoxReflect",
                 "parser-grammar-unused": "none | [ [ above | below | left | right ] <length-percentage>? <border-image>? ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals and property references."
@@ -10222,7 +10225,7 @@
                 "normal"
             ],
             "codegen-properties": {
-                "style-converter": "InitialLetter",
+                "style-converter": "StyleType<WebkitInitialLetter>",
                 "parser-grammar": "normal | <number [0,inf]>{1,2}@(type=CSSValuePair default=previous)",
                 "parser-grammar-comment": "Spec does not match our implementation. Spec is 'normal | [ <number [1,inf]> <integer [1,inf]> ] | [ <number [1,inf]> && [ drop | raise ]? ]'"
             },
@@ -10794,17 +10797,15 @@
                     "value": "blink",
                     "comment": "The value is parsed and computed but ignored for rendering."
                 },
-                {
-                    "value": "spelling-error",
-                    "settings-flag": "cssTextDecorationLineErrorValues"
-                }
+                "spelling-error",
+                "grammar-error"
             ],
             "codegen-properties": {
                 "style-converter": "StyleType<TextDecorationLine>",
                 "aliases": [
                     "-webkit-text-decoration-line"
                 ],
-                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt) | spelling-error@(settings-flag=cssTextDecorationLineErrorValues)",
+                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt) | spelling-error@(settings-flag=cssTextDecorationLineErrorValues) | grammar-error@(settings-flag=cssTextDecorationLineErrorValues)",
                 "parser-exported": true
             },
             "specification": {

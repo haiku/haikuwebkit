@@ -46,7 +46,6 @@
 #include "CSSPrimitiveValue.h"
 #include "CSSPrimitiveValueMappings.h"
 #include "CSSPropertyParserConsumer+Font.h"
-#include "CSSReflectValue.h"
 #include "CSSSubgridValue.h"
 #include "CSSURLValue.h"
 #include "CSSValuePair.h"
@@ -93,7 +92,6 @@
 #include "StylePrimitiveNumericTypes+CSSValueConversion.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StyleRayFunction.h"
-#include "StyleReflection.h"
 #include "StyleResolveForFont.h"
 #include "StyleRotate.h"
 #include "StyleSVGPaint.h"
@@ -134,7 +132,6 @@ public:
     template<typename T> static T convertLineWidth(BuilderState&, const CSSValue&);
     static OptionSet<TextTransform> convertTextTransform(BuilderState&, const CSSValue&);
     template<typename T> static T convertNumber(BuilderState&, const CSSValue&);
-    static RefPtr<StyleImage> convertImageOrNone(BuilderState&, CSSValue&);
     static ImageOrientation convertImageOrientation(BuilderState&, const CSSValue&);
     static TransformOperations convertTransform(BuilderState&, const CSSValue&);
     template<CSSValueID> static AtomString convertCustomIdentAtomOrKeyword(BuilderState&, const CSSValue&);
@@ -147,9 +144,7 @@ public:
     static int convertMarqueeRepetition(BuilderState&, const CSSValue&);
     static int convertMarqueeSpeed(BuilderState&, const CSSValue&);
     static OptionSet<TextUnderlinePosition> convertTextUnderlinePosition(BuilderState&, const CSSValue&);
-    static RefPtr<StyleReflection> convertReflection(BuilderState&, const CSSValue&);
     static TextEdge convertTextEdge(BuilderState&, const CSSValue&);
-    static FloatSize convertInitialLetter(BuilderState&, const CSSValue&);
     static OptionSet<LineBoxContain> convertLineBoxContain(BuilderState&, const CSSValue&);
     static ScrollSnapType convertScrollSnapType(BuilderState&, const CSSValue&);
     static ScrollSnapAlign convertScrollSnapAlign(BuilderState&, const CSSValue&);
@@ -349,11 +344,6 @@ inline T BuilderConverter::convertNumber(BuilderState& builderState, const CSSVa
     if (!primitiveValue)
         return { };
     return primitiveValue->resolveAsNumber<T>(builderState.cssToLengthConversionData());
-}
-
-inline RefPtr<StyleImage> BuilderConverter::convertImageOrNone(BuilderState& builderState, CSSValue& value)
-{
-    return builderState.createStyleImage(value);
 }
 
 inline ImageOrientation BuilderConverter::convertImageOrientation(BuilderState& builderState, const CSSValue& value)
@@ -563,32 +553,6 @@ inline OptionSet<TextUnderlinePosition> BuilderConverter::convertTextUnderlinePo
     return position;
 }
 
-inline RefPtr<StyleReflection> BuilderConverter::convertReflection(BuilderState& builderState, const CSSValue& value)
-{
-    if (is<CSSPrimitiveValue>(value)) {
-        ASSERT(value.valueID() == CSSValueNone);
-        return nullptr;
-    }
-
-    auto* reflectValue = requiredDowncast<CSSReflectValue>(builderState, value);
-    if (!reflectValue)
-        return { };
-
-    Style::MaskBorder mask { };
-    if (RefPtr maskValue = reflectValue->mask())
-        mask = toStyleFromCSSValue<Style::MaskBorder>(builderState, *maskValue);
-
-    auto maskSlice = mask.slice();
-    maskSlice.fill = CSS::Keyword::Fill { };
-    mask.setSlice(WTFMove(maskSlice));
-
-    auto reflection = StyleReflection::create();
-    reflection->setDirection(fromCSSValueID<ReflectionDirection>(reflectValue->direction()));
-    reflection->setOffset(convertLength(builderState, reflectValue->offset()));
-    reflection->setMask(WTFMove(mask));
-    return reflection;
-}
-
 inline TextEdge BuilderConverter::convertTextEdge(BuilderState& builderState, const CSSValue& value)
 {
     auto overValue = [&](CSSValueID valueID) {
@@ -650,23 +614,6 @@ inline TextEdge BuilderConverter::convertTextEdge(BuilderState& builderState, co
     return {
         overValue(pair->first->valueID()),
         underValue(pair->second->valueID())
-    };
-}
-
-inline FloatSize BuilderConverter::convertInitialLetter(BuilderState& builderState, const CSSValue& value)
-{
-    if (value.valueID() == CSSValueNormal)
-        return { };
-
-    auto& conversionData = builderState.cssToLengthConversionData();
-
-    auto pair = requiredPairDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!pair)
-        return { };
-
-    return {
-        pair->second->resolveAsNumber<float>(conversionData),
-        pair->first->resolveAsNumber<float>(conversionData)
     };
 }
 

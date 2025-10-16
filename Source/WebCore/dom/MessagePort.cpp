@@ -27,6 +27,7 @@
 #include "config.h"
 #include "MessagePort.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
@@ -379,6 +380,11 @@ bool MessagePort::removeEventListener(const AtomString& eventType, EventListener
         m_hasMessageEventListener = false;
 
     return result;
+}
+
+ScriptExecutionContext* MessagePort::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 WebCoreOpaqueRoot root(MessagePort* port)

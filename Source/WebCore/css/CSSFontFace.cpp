@@ -36,6 +36,7 @@
 #include "CSSValue.h"
 #include "CSSValueList.h"
 #include "CachedFont.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "Font.h"

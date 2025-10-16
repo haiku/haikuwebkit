@@ -28,6 +28,7 @@
 #include "JSWrappable.h"
 #include <WebKit/WKEvent.h>
 #include <WebKit/WKGeometry.h>
+#include <WebKit/WKRetainPtr.h>
 #include <wtf/Ref.h>
 
 typedef const struct OpaqueJSContext* JSContextRef;
@@ -44,7 +45,7 @@ MonitorWheelEventsOptions* toMonitorWheelEventsOptions(JSContextRef, JSValueRef)
 
 class EventSendingController final : public JSWrappable {
 public:
-    static Ref<EventSendingController> create();
+    static Ref<EventSendingController> create(uint64_t testIdentifier);
 
     void makeWindowObject(JSContextRef);
 
@@ -105,14 +106,28 @@ public:
     void scaleGestureEnd(double scale);
 #endif
 
+    void disable() { m_isDisabled = true; }
+
 private:
-    EventSendingController() = default;
+    EventSendingController(uint64_t testIdentifier)
+        : m_testIdentifier(testIdentifier)
+    { }
+
+    WKRetainPtr<WKMutableDictionaryRef> createEventSenderDictionary(const char* submessage);
+    WKRetainPtr<WKMutableDictionaryRef> createKeyDownMessageBody(JSStringRef key, WKEventModifiers, int location);
+    WKRetainPtr<WKMutableDictionaryRef> createRawKeyDownMessageBody(JSStringRef key, WKEventModifiers, int location);
+    WKRetainPtr<WKMutableDictionaryRef> createRawKeyUpMessageBody(JSStringRef key, WKEventModifiers, int location);
+
+    enum MouseState { MouseUp, MouseDown };
+    WKRetainPtr<WKDictionaryRef> createMouseMessageBody(MouseState, int button, WKEventModifiers, JSStringRef pointerType);
 
     JSClassRef wrapperClass() final;
 
+    uint64_t m_testIdentifier { 0 };
     WKPoint m_position;
     bool m_sentWheelPhaseEndOrCancel { false };
     bool m_sentWheelMomentumPhaseEnd { false };
+    bool m_isDisabled { false };
 };
 
 } // namespace WTR

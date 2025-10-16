@@ -27,6 +27,8 @@
 #include "CSSFontFaceRule.h"
 #include "CSSFontFeatureValuesRule.h"
 #include "CSSFontPaletteValuesRule.h"
+#include "CSSFunctionDeclarations.h"
+#include "CSSFunctionRule.h"
 #include "CSSGroupingRule.h"
 #include "CSSImportRule.h"
 #include "CSSKeyframeRule.h"
@@ -240,11 +242,11 @@ Ref<CSSRule> StyleRuleBase::createCSSOMWrapper(CSSStyleSheet* parentSheet, CSSRu
         [&](StyleRulePositionTry& rule) -> Ref<CSSRule> {
             return CSSPositionTryRule::create(rule, parentSheet);
         },
-        [&](StyleRuleFunction&) -> Ref<CSSRule> {
-            RELEASE_ASSERT_NOT_REACHED();
+        [&](StyleRuleFunction& rule) -> Ref<CSSRule> {
+            return CSSFunctionRule::create(rule, parentSheet);
         },
-        [&](StyleRuleFunctionDeclarations&) -> Ref<CSSRule> {
-            RELEASE_ASSERT_NOT_REACHED();
+        [&](StyleRuleFunctionDeclarations& rule) -> Ref<CSSRule> {
+            return CSSFunctionDeclarations::create(rule, parentSheet);
         },
         [](StyleRuleCharset&) -> Ref<CSSRule> {
             RELEASE_ASSERT_NOT_REACHED();

@@ -100,7 +100,7 @@ TextOnlySimpleLineBuilder::TextOnlySimpleLineBuilder(InlineFormattingContext& in
 
 LineLayoutResult TextOnlySimpleLineBuilder::layoutInlineContent(const LineInput& lineInput, const std::optional<PreviousLine>& previousLine, bool isFirstFormattedLineCandidate)
 {
-    if (auto lineLayoutResult = placeSingleCharacterContentIfApplicable(lineInput)) {
+    if (auto lineLayoutResult = placeSingleCharacterContentIfApplicable(lineInput, isFirstFormattedLineCandidate)) {
         ASSERT(!previousLine);
         return *lineLayoutResult;
     }
@@ -111,7 +111,7 @@ LineLayoutResult TextOnlySimpleLineBuilder::layoutInlineContent(const LineInput&
     auto result = m_line.close();
 
     auto isLastInlineContent = isLastLineWithInlineContent(placedContentEnd, lineInput.needsLayoutRange.endIndex());
-    auto inlineContentEnding = InlineFormattingUtils::inlineContentEnding(result);
+    auto inlineContentEnding = result.isContentful ? InlineFormattingUtils::inlineContentEnding(result) : std::nullopt;
     auto contentLogicalLeft = InlineFormattingUtils::horizontalAlignmentOffset(rootStyle, result.contentLogicalRight, m_lineLogicalRect.width(), result.hangingTrailingContentWidth, result.runs, isLastInlineContent);
 
     return { { lineInput.needsLayoutRange.start, placedContentEnd }
@@ -121,7 +121,7 @@ LineLayoutResult TextOnlySimpleLineBuilder::layoutInlineContent(const LineInput&
         , { m_lineLogicalRect.topLeft(), m_lineLogicalRect.width(), m_lineLogicalRect.left() }
         , { !result.isHangingTrailingContentWhitespace, result.hangingTrailingContentWidth }
         , { }
-        , { isFirstFormattedLineCandidate && inlineContentEnding.has_value(), isLastInlineContent }
+        , { isFirstFormattedLineCandidate && inlineContentEnding.has_value() ? IsFirstFormattedLine::Yes : IsFirstFormattedLine::No, isLastInlineContent }
         , { }
         , inlineContentEnding
         , { }
@@ -159,7 +159,7 @@ void TextOnlySimpleLineBuilder::initialize(const InlineItemRange& layoutRange, c
     m_overflowContentLogicalWidth = { };
 }
 
-std::optional<LineLayoutResult> TextOnlySimpleLineBuilder::placeSingleCharacterContentIfApplicable(const LineInput& lineInput)
+std::optional<LineLayoutResult> TextOnlySimpleLineBuilder::placeSingleCharacterContentIfApplicable(const LineInput& lineInput, bool isFirstFormattedLineCandidate)
 {
     if (m_inlineItemList.size() != 1)
         return { };
@@ -181,6 +181,15 @@ std::optional<LineLayoutResult> TextOnlySimpleLineBuilder::placeSingleCharacterC
         , { }
         , { contentLeft, contentWidth, contentRight, std::max(0.f, contentRight - lineRect.right()) }
         , { lineRect.topLeft(), lineRect.width(), lineRect.left() }
+        , { }
+        , { }
+        , { isFirstFormattedLineCandidate ? IsFirstFormattedLine::Yes : IsFirstFormattedLine::No, true }
+        , { }
+        , { LineLayoutResult::InlineContentEnding::Generic }
+        , { }
+        , { }
+        , { }
+        , { }
     };
 }
 

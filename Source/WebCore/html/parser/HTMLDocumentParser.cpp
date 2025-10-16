@@ -599,6 +599,8 @@ void HTMLDocumentParser::notifyFinished(PendingScript& pendingScript)
         RefPtr document = this->document();
         if (document->eventLoop().microtaskQueue().isPerformingCheckpoint()) {
             document->eventLoop().queueTask(TaskSource::InternalAsyncTask, [protectedThis = Ref { *this }] {
+                if (protectedThis->isStopped())
+                    return;
                 protectedThis->attemptToRunDeferredScriptsAndEnd();
             });
             return;

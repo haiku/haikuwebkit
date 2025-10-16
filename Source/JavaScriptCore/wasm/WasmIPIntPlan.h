@@ -37,7 +37,7 @@ namespace Wasm {
 
 class IPIntCallee;
 
-using JSEntrypointCalleeMap = UncheckedKeyHashMap<uint32_t, RefPtr<JSEntrypointCallee>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
+using JSToWasmCalleeMap = UncheckedKeyHashMap<uint32_t, RefPtr<JSToWasmCallee>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
 
 using TailCallGraph = UncheckedKeyHashMap<uint32_t, UncheckedKeyHashSet<uint32_t, IntHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>, IntHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
 
@@ -56,10 +56,10 @@ public:
         return WTFMove(m_calleesVector);
     }
 
-    JSEntrypointCalleeMap&& takeJSCallees()
+    JSToWasmCalleeMap&& takeJSToWasmCallees()
     {
         RELEASE_ASSERT(!failed() && !hasWork());
-        return WTFMove(m_jsEntrypointCallees);
+        return WTFMove(m_jsToWasmCallees);
     }
 
     bool hasWork() const final
@@ -91,8 +91,8 @@ private:
     Vector<std::unique_ptr<FunctionIPIntMetadataGenerator>> m_wasmInternalFunctions;
     const Ref<IPIntCallee>* m_callees { nullptr };
     Vector<Ref<IPIntCallee>> m_calleesVector;
-    Vector<RefPtr<JSEntrypointCallee>> m_entrypoints;
-    JSEntrypointCalleeMap m_jsEntrypointCallees;
+    Vector<RefPtr<JSToWasmCallee>> m_entrypoints;
+    JSToWasmCalleeMap m_jsToWasmCallees;
     TailCallGraph m_tailCallGraph;
 };
 

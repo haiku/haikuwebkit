@@ -61,8 +61,10 @@
 if ARM64 or ARM64E
     const PC = csr7
     const MC = csr6
-    const WI = csr0
     const PL = t6
+
+    # Wasm Pinned Registers
+    const WI = csr0
     const MB = csr3
     const BC = csr4
 
@@ -73,8 +75,10 @@ if ARM64 or ARM64E
 elsif X86_64
     const PC = csr2
     const MC = csr1
-    const WI = csr0
     const PL = t5
+
+    # Wasm Pinned Registers
+    const WI = csr0
     const MB = csr3
     const BC = csr4
 
@@ -85,8 +89,10 @@ elsif X86_64
 elsif RISCV64
     const PC = csr7
     const MC = csr6
-    const WI = csr0
     const PL = csr10
+
+    # Wasm Pinned Registers
+    const WI = csr0
     const MB = csr3
     const BC = csr4
 
@@ -97,8 +103,10 @@ elsif RISCV64
 elsif ARMv7
     const PC = csr1
     const MC = t6
-    const WI = csr0
     const PL = t7
+
+    # Wasm Pinned Registers
+    const WI = csr0
     const MB = invalidGPR
     const BC = invalidGPR
 
@@ -109,8 +117,10 @@ elsif ARMv7
 else
     const PC = invalidGPR
     const MC = invalidGPR
-    const WI = invalidGPR
     const PL = invalidGPR
+
+    # Wasm Pinned Registers
+    const WI = invalidGPR
     const MB = invalidGPR
     const BC = invalidGPR
 
@@ -151,7 +161,6 @@ const UnboxedWasmCalleeStackSlot = CallerFrame - constexpr Wasm::numberOfIPIntCa
 const WasmToJSScratchSpaceSize = constexpr Wasm::WasmToJSScratchSpaceSize
 const WasmToJSCallableFunctionSlot = constexpr Wasm::WasmToJSCallableFunctionSlot
 
-# FIXME: This happens to work because UnboxedWasmCalleeStackSlot sits in the extra space we should be more precise in case we want to use an even number of callee saves in the future.
 const IPIntCalleeSaveSpaceAsVirtualRegisters = constexpr Wasm::numberOfIPIntCalleeSaveRegisters + constexpr Wasm::numberOfIPIntInternalRegisters
 const IPIntCalleeSaveSpaceStackAligned = (IPIntCalleeSaveSpaceAsVirtualRegisters * SlotSize + StackAlignment - 1) & ~StackAlignmentMask
 
@@ -764,8 +773,8 @@ op(js_to_wasm_wrapper_entry, macro ()
         f(29)
     end
 
-    macro saveJSEntrypointRegisters()
-        subp constexpr Wasm::JSEntrypointCallee::SpillStackSpaceAligned, sp
+    macro saveJSToWasmRegisters()
+        subp constexpr Wasm::JSToWasmCallee::SpillStackSpaceAligned, sp
         if ARM64 or ARM64E
             storepairq memoryBase, boundsCheckingSize, -2 * SlotSize[cfr]
             storep wasmInstance, -3 * SlotSize[cfr]
@@ -779,7 +788,7 @@ op(js_to_wasm_wrapper_entry, macro ()
         end
     end
 
-    macro restoreJSEntrypointRegisters()
+    macro restoreJSToWasmRegisters()
         if ARM64 or ARM64E
             loadpairq -2 * SlotSize[cfr], memoryBase, boundsCheckingSize
             loadp -3 * SlotSize[cfr], wasmInstance
@@ -790,7 +799,7 @@ op(js_to_wasm_wrapper_entry, macro ()
         else
             loadi -1 * SlotSize[cfr], wasmInstance
         end
-        addp constexpr Wasm::JSEntrypointCallee::SpillStackSpaceAligned, sp
+        addp constexpr Wasm::JSToWasmCallee::SpillStackSpaceAligned, sp
     end
 
     macro getWebAssemblyFunctionAndSetNativeCalleeAndInstance(webAssemblyFunctionOut, scratch)
@@ -813,12 +822,12 @@ end
 
     tagReturnAddress sp
     preserveCallerPCAndCFR()
-    saveJSEntrypointRegisters()
+    saveJSToWasmRegisters()
 
     # Load data from the entry callee
     # This was written by doVMEntry
     loadp Callee[cfr], ws0 # WebAssemblyFunction*
-    loadp WebAssemblyFunction::m_instance[ws0], wasmInstance
+    loadp WebAssemblyFunction::m_importableFunction + Wasm::WasmOrJSImportableFunction::targetInstance[ws0], wasmInstance
 
     # Allocate stack space
     loadi WebAssemblyFunction::m_frameSize[ws0], wa0
@@ -835,7 +844,7 @@ end
 
 if ASSERT_ENABLED
     repeat(wa0, macro (i)
-        storep wa0, -i * SlotSize + constexpr Wasm::JSEntrypointCallee::RegisterStackSpaceAligned[sp]
+        storep wa0, -i * SlotSize + constexpr Wasm::JSToWasmCallee::RegisterStackSpaceAligned[sp]
     end)
 end
 
@@ -907,7 +916,7 @@ end
     end)
 
     # Pop argument space values
-    addp constexpr Wasm::JSEntrypointCallee::RegisterStackSpaceAligned, sp
+    addp constexpr Wasm::JSToWasmCallee::RegisterStackSpaceAligned, sp
 
 if ASSERT_ENABLED
     repeat(ws1, macro (i)
@@ -923,10 +932,10 @@ end
 
     # Set the callee's interpreter Wasm::Callee
 if JSVALUE64
-    transferp WebAssemblyFunction::m_boxedWasmCallee[ws1], constexpr (CallFrameSlot::callee - CallerFrameAndPC::sizeInRegisters) * 8[sp]
+    transferp WebAssemblyFunction::m_importableFunction + Wasm::WasmOrJSImportableFunction::boxedCallee[ws1], constexpr (CallFrameSlot::callee - CallerFrameAndPC::sizeInRegisters) * 8[sp]
 else
-    transferp WebAssemblyFunction::m_boxedWasmCallee + PayloadOffset[ws1], constexpr (CallFrameSlot::callee - CallerFrameAndPC::sizeInRegisters) * 8 + PayloadOffset[sp]
-    transferp WebAssemblyFunction::m_boxedWasmCallee + TagOffset[ws1], constexpr (CallFrameSlot::callee - CallerFrameAndPC::sizeInRegisters) * 8 + TagOffset[sp]
+    transferp WebAssemblyFunction::m_importableFunction + Wasm::WasmOrJSImportableFunction::boxedCallee + PayloadOffset[ws1], constexpr (CallFrameSlot::callee - CallerFrameAndPC::sizeInRegisters) * 8 + PayloadOffset[sp]
+    transferp WebAssemblyFunction::m_importableFunction + Wasm::WasmOrJSImportableFunction::boxedCallee + TagOffset[ws1], constexpr (CallFrameSlot::callee - CallerFrameAndPC::sizeInRegisters) * 8 + TagOffset[sp]
 end
 
     call ws0, WasmEntryPtrTag
@@ -936,17 +945,17 @@ if ASSERT_ENABLED
 end
 
     # Restore SP
-    loadp Callee[cfr], ws0 # CalleeBits(JSEntrypointCallee*)
+    loadp Callee[cfr], ws0 # CalleeBits(JSToWasmCallee*)
     unboxWasmCallee(ws0, ws1)
 
-    loadi Wasm::JSEntrypointCallee::m_frameSize[ws0], ws1
+    loadi Wasm::JSToWasmCallee::m_frameSize[ws0], ws1
     subp cfr, ws1, ws1
     move ws1, sp
-    subp constexpr Wasm::JSEntrypointCallee::SpillStackSpaceAligned, sp
+    subp constexpr Wasm::JSToWasmCallee::SpillStackSpaceAligned, sp
 
 if ASSERT_ENABLED
     repeat(ws0, macro (i)
-        storep ws0, -i * SlotSize + constexpr Wasm::JSEntrypointCallee::RegisterStackSpaceAligned[sp]
+        storep ws0, -i * SlotSize + constexpr Wasm::JSToWasmCallee::RegisterStackSpaceAligned[sp]
     end)
 end
 
@@ -984,7 +993,7 @@ else
 end
 
     # Clean up and return
-    restoreJSEntrypointRegisters()
+    restoreJSToWasmRegisters()
 if ASSERT_ENABLED
     clobberVolatileRegisters()
 end

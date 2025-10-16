@@ -495,6 +495,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/identity/protocols/openid/OpenID4VPRequest.h
 
     Modules/indexeddb/IDBActiveDOMObject.h
+    Modules/indexeddb/IDBActiveDOMObjectInlines.h
     Modules/indexeddb/IDBCursor.h
     Modules/indexeddb/IDBDatabase.h
     Modules/indexeddb/IDBDatabaseIdentifier.h
@@ -844,6 +845,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     accessibility/AXNotifications.h
     accessibility/AXObjectCache.h
     accessibility/AXObjectCacheInlines.h
+    accessibility/AXObjectRareData.h
     accessibility/AXSearchManager.h
     accessibility/AXTextMarker.h
     accessibility/AXTextRun.h
@@ -855,6 +857,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     accessibility/AccessibilityMockObject.h
     accessibility/AccessibilityNodeObject.h
     accessibility/AccessibilityObject.h
+    accessibility/AccessibilityObjectInlines.h
     accessibility/AccessibilityRenderObject.h
     accessibility/AccessibilityRole.h
     accessibility/AccessibilityScrollView.h
@@ -1665,8 +1668,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     html/ImageBitmap.h
     html/ImageData.h
     html/ImageDataArray.h
+    html/ImageDataPixelFormat.h
     html/ImageDataSettings.h
-    html/ImageDataStorageFormat.h
     html/ImageDocument.h
     html/InputMode.h
     html/InputType.h
@@ -2572,7 +2575,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/ImageBufferBackendParameters.h
     platform/graphics/ImageBufferDisplayListBackend.h
     platform/graphics/ImageBufferFormat.h
-    platform/graphics/ImageBufferPixelFormat.h
     platform/graphics/ImageBufferPlatformBackend.h
     platform/graphics/ImageBufferResourceLimits.h
     platform/graphics/ImageDecoder.h
@@ -3137,7 +3139,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/StylePathData.h
     rendering/style/StyleRareInheritedData.h
     rendering/style/StyleRareNonInheritedData.h
-    rendering/style/StyleReflection.h
     rendering/style/StyleScrollSnapPoints.h
     rendering/style/StyleSelfAlignmentData.h
     rendering/style/StyleSurroundData.h
@@ -3237,6 +3238,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/flexbox/StyleFlexBasis.h
     style/values/flexbox/StyleFlexGrow.h
     style/values/flexbox/StyleFlexShrink.h
+    style/values/flexbox/StyleWebKitBoxFlex.h
+    style/values/flexbox/StyleWebKitBoxFlexGroup.h
+    style/values/flexbox/StyleWebKitBoxOrdinalGroup.h
 
     style/values/grid/StyleGridNamedAreaMap.h
     style/values/grid/StyleGridNamedLinesMap.h
@@ -3258,6 +3262,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/inline/StyleLineBoxContain.h
     style/values/inline/StyleVerticalAlign.h
+    style/values/inline/StyleWebKitInitialLetter.h
 
     style/values/line-grid/StyleWebKitLineGrid.h
 
@@ -3284,6 +3289,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/multicol/StyleColumnWidth.h
 
     style/values/non-standard/StyleWebKitBorderSpacing.h
+    style/values/non-standard/StyleWebKitBoxReflect.h
     style/values/non-standard/StyleWebKitLineClamp.h
     style/values/non-standard/StyleWebKitOverflowScrolling.h
     style/values/non-standard/StyleWebKitTextStrokeWidth.h

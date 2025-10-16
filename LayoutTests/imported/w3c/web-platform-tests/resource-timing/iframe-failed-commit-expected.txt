@@ -1,5 +1,5 @@
-Blocked access to external URL https://nonexistent.localhost:9443/
-Blocked access to external URL https://nonexistent.localhost:9443/
+CONSOLE MESSAGE: Blocked access to external URL https://nonexistent.localhost:9443/
+CONSOLE MESSAGE: Blocked access to external URL https://nonexistent.localhost:9443/
 
 
 PASS Precondition

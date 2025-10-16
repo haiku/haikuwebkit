@@ -99,19 +99,28 @@
     if (!self)
         return nil;
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
-        selector:@selector(systemColorsDidChange:) name:NSSystemColorsDidChangeNotification object:nil];
+    RetainPtr systemColorsChangedNotification = NSSystemColorsDidChangeNotification;
+    RetainPtr accessibilityDisplayOptionsChangedNotification = NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification;
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+        selector:@selector(systemColorsDidChange:) name:systemColorsChangedNotification.get() object:nil];
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-        selector:@selector(systemColorsDidChange:) name:NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification object:nil];
+        selector:@selector(accessibilityDisplayOptionsDidChange:) name:accessibilityDisplayOptionsChangedNotification.get() object:nil];
 
     return self;
+}
+
+- (void)accessibilityDisplayOptionsDidChange:(NSNotification *)notification
+{
+    UNUSED_PARAM(notification);
+    WebCore::RenderTheme::singleton().platformColorsDidChange();
 }
 
 - (void)systemColorsDidChange:(NSNotification *)notification
 {
     UNUSED_PARAM(notification);
     WebCore::RenderTheme::singleton().platformColorsDidChange();
+    WebCore::Page::updateControlTintsForAllPages();
 }
 
 @end
@@ -1021,26 +1030,17 @@ static const std::span<const IntSize, 4> switchSizes()
     return sizes;
 }
 
-static std::span<const int, 4> switchMargins(NSControlSize controlSize)
-{
-    static constexpr std::array margins {
-        // top right bottom left
-        std::array { 2, 2, 1, 2 },
-        std::array { 2, 2, 1, 2 },
-        std::array { 1, 1, 0, 1 },
-        std::array { 2, 2, 1, 2 },
-    };
-    return margins[controlSize];
-}
-
 static std::span<const int, 4> visualSwitchMargins(NSControlSize controlSize, bool isVertical)
 {
-    auto margins = switchMargins(controlSize);
-    if (isVertical) {
-        static const std::array verticalMargins { margins[3], margins[0], margins[1], margins[2] };
-        return verticalMargins;
-    }
-    return margins;
+    static constexpr std::array switchMarginsNonMini { 2, 2, 1, 2 };
+    static constexpr std::array switchMarginsMini { 1, 1, 0, 1 };
+    static constexpr std::array switchMarginsNonMiniVertical { switchMarginsNonMini[3], switchMarginsNonMini[0], switchMarginsNonMini[1], switchMarginsNonMini[2] };
+    static constexpr std::array switchMarginsMiniVertical { switchMarginsMini[3], switchMarginsMini[0], switchMarginsMini[1], switchMarginsMini[2] };
+
+    if (controlSize == NSControlSizeMini)
+        return isVertical ? switchMarginsMiniVertical : switchMarginsMini;
+
+    return isVertical ? switchMarginsNonMiniVertical : switchMarginsNonMini;
 }
 
 static Style::PreferredSizePair switchSize(const Style::PreferredSizePair& zoomedSize, float zoomFactor)
@@ -1145,14 +1145,6 @@ void RenderThemeMac::inflateRectForControlRenderer(const RenderObject& renderer,
     default:
         break;
     }
-}
-
-void RenderThemeMac::adjustRepaintRect(const RenderBox& renderer, FloatRect& rect)
-{
-    auto repaintRect = rect;
-    inflateRectForControlRenderer(renderer, repaintRect);
-    renderer.flipForWritingMode(repaintRect);
-    rect = repaintRect;
 }
 
 bool RenderThemeMac::controlSupportsTints(const RenderObject& o) const

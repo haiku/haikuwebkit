@@ -58,7 +58,6 @@ class AXRemoteFrame;
 class AccessibilityNodeObject;
 class AccessibilityObject;
 class AccessibilityRenderObject;
-class AccessibilityTableCell;
 class Document;
 class HTMLAreaElement;
 class HTMLDetailsElement;
@@ -302,6 +301,7 @@ public:
     void onFocusChange(Element* oldElement, Element* newElement);
     void onInertOrVisibilityChange(RenderElement&);
     void onPopoverToggle(const HTMLElement&);
+    void onRadioGroupMembershipChanged(HTMLElement&);
     void onScrollbarFrameRectChange(const Scrollbar&);
     void onSelectedOptionChanged(Element&);
     void onSelectedOptionChanged(RenderObject&, int);
@@ -368,7 +368,6 @@ public:
         , WeakHashSet<HTMLTableElement, WeakPtrImplWithEventTargetData>
         , WeakHashSet<AccessibilityObject>
         , WeakHashSet<AccessibilityNodeObject>
-        , WeakHashSet<AccessibilityTableCell>
         , WeakListHashSet<Node, WeakPtrImplWithEventTargetData>
         , WeakListHashSet<Element, WeakPtrImplWithEventTargetData>
         , WeakHashMap<Element, String, WeakPtrImplWithEventTargetData>>;
@@ -707,7 +706,7 @@ private:
     void handleTextChanged(AccessibilityObject*);
     void handleRecomputeCellSlots(AccessibilityNodeObject&);
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    void handleRowspanChanged(AccessibilityTableCell&);
+    void handleRowspanChanged(AccessibilityNodeObject&);
 #endif
 
     // aria-modal or modal <dialog> related
@@ -826,7 +825,7 @@ private:
     WeakHashSet<Element, WeakPtrImplWithEventTargetData> m_deferredRecomputeIsIgnoredList;
     WeakHashSet<HTMLTableElement, WeakPtrImplWithEventTargetData> m_deferredRecomputeTableIsExposedList;
     WeakHashSet<AccessibilityNodeObject> m_deferredRecomputeTableCellSlotsList;
-    WeakHashSet<AccessibilityTableCell> m_deferredRowspanChanges;
+    WeakHashSet<AccessibilityNodeObject> m_deferredRowspanChanges;
     WeakListHashSet<Node, WeakPtrImplWithEventTargetData> m_deferredTextChangedList;
     WeakHashSet<Element, WeakPtrImplWithEventTargetData> m_deferredSelectedChildredChangedList;
     ListHashSet<Ref<AccessibilityObject>> m_deferredChildrenChangedList;

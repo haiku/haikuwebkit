@@ -1026,14 +1026,12 @@ IGNORE_WARNINGS_END
 
 GstElement* /* (transfer floating) */ createPlatformAudioSink(const String& role)
 {
-    GstElement* audioSink = webkitAudioSinkNew();
+    GstElement* audioSink = webkitAudioSinkNew(role);
     if (!audioSink) {
         // This means the WebKit audio sink configuration failed. It can happen for the following reasons:
         // - audio mixing was not requested using the WEBKIT_GST_ENABLE_AUDIO_MIXER
         // - audio mixing was requested using the WEBKIT_GST_ENABLE_AUDIO_MIXER but the audio mixer
         //   runtime requirements are not fullfilled.
-        // - the sink was created for the WPE port, audio mixing was not requested and no
-        //   WPEBackend-FDO audio receiver has been registered at runtime.
         audioSink = createAutoAudioSink(role);
     }
 
@@ -1958,26 +1956,26 @@ GRefPtr<GstCaps> buildDMABufCaps()
 
     GValue supportedFormats = G_VALUE_INIT;
     g_value_init(&supportedFormats, GST_TYPE_LIST);
-    const auto& dmabufFormats = PlatformDisplay::sharedDisplay().dmabufFormatsForVideo();
-    for (const auto& format : dmabufFormats) {
+    const auto& bufferFormats = PlatformDisplay::sharedDisplay().bufferFormatsForVideo();
+    for (const auto& format : bufferFormats) {
 #if GST_CHECK_VERSION(1, 24, 0)
         if (format.modifiers.isEmpty() || format.modifiers[0] == DRM_FORMAT_MOD_INVALID) {
             GValue value = G_VALUE_INIT;
             g_value_init(&value, G_TYPE_STRING);
-            g_value_take_string(&value, gst_video_dma_drm_fourcc_to_string(format.fourcc, DRM_FORMAT_MOD_LINEAR));
+            g_value_take_string(&value, gst_video_dma_drm_fourcc_to_string(format.fourcc.value, DRM_FORMAT_MOD_LINEAR));
             gst_value_list_append_and_take_value(&supportedFormats, &value);
         } else {
             for (auto modifier : format.modifiers) {
                 GValue value = G_VALUE_INIT;
                 g_value_init(&value, G_TYPE_STRING);
-                g_value_take_string(&value, gst_video_dma_drm_fourcc_to_string(format.fourcc, modifier));
+                g_value_take_string(&value, gst_video_dma_drm_fourcc_to_string(format.fourcc.value, modifier));
                 gst_value_list_append_and_take_value(&supportedFormats, &value);
             }
         }
 #else
         GValue value = G_VALUE_INIT;
         g_value_init(&value, G_TYPE_STRING);
-        g_value_set_string(&value, gst_video_format_to_string(drmFourccToGstVideoFormat(format.fourcc)));
+        g_value_set_string(&value, gst_video_format_to_string(drmFourccToGstVideoFormat(format.fourcc.value)));
         gst_value_list_append_and_take_value(&supportedFormats, &value);
 #endif
     }

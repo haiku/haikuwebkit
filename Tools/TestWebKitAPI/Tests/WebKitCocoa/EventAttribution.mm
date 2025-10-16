@@ -524,36 +524,28 @@ TEST(PrivateClickMeasurement, DaemonBasicFunctionality)
 }
 
 #if PLATFORM(MAC)
-static void setInjectedBundleClient(WKWebView *webView, Vector<String>& consoleMessages)
-{
-    WKPageInjectedBundleClientV0 injectedBundleClient = {
-        { 0, &consoleMessages },
-        [] (WKPageRef, WKStringRef messageName, WKTypeRef message, const void* clientInfo) {
-            auto& consoleMessages = *reinterpret_cast<Vector<String>*>(const_cast<void*>(clientInfo));
-            if (WKStringIsEqualToUTF8CString(messageName, "ConsoleMessage"))
-                consoleMessages.append(Util::toNS((WKStringRef)message));
-        },
-        nullptr,
-    };
-    WKPageSetPageInjectedBundleClient(webView._pageForTesting, &injectedBundleClient.base);
-};
-
-static RetainPtr<TestWKWebView> webViewWithOpenInspector(WKWebViewConfiguration *configuration)
+static RetainPtr<TestWKWebView> webViewWithOpenInspector(WKWebViewConfiguration *configuration, id<WKUIDelegate> uiDelegate)
 {
     configuration.preferences._developerExtrasEnabled = YES;
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSZeroRect configuration:configuration]);
     [webView synchronouslyLoadHTMLString:@"start processes"];
     [[webView _inspector] show];
     [webView _test_waitForInspectorToShow];
+    [webView setUIDelegate:uiDelegate];
     return webView;
 }
 
 TEST(PrivateClickMeasurement, DaemonDebugMode)
 {
-    auto [tempDir, configuration] = setUpDaemon([WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"BundlePageConsoleMessage"]);
-    Vector<String> consoleMessages;
-    auto webView = webViewWithOpenInspector(configuration);
-    setInjectedBundleClient(webView.get(), consoleMessages);
+    auto [tempDir, configuration] = setUpDaemon(adoptNS([WKWebViewConfiguration new]).autorelease());
+    configuration._shouldSendConsoleLogsToUIProcessForTesting = YES;
+    __block Vector<String> consoleMessages;
+    auto delegate = adoptNS([TestUIDelegate new]);
+    delegate.get().didReceiveConsoleLogForTesting = ^(NSString *log) {
+        consoleMessages.append(log);
+    };
+    auto webView = webViewWithOpenInspector(configuration, delegate.get());
+
     [configuration.websiteDataStore _setPrivateClickMeasurementDebugModeEnabled:YES];
     while (consoleMessages.isEmpty())
         Util::spinRunLoop();
@@ -565,7 +557,7 @@ TEST(PrivateClickMeasurement, DaemonDebugMode)
     cleanUpDaemon(tempDir);
 }
 
-static void setupSKAdNetworkTest(Vector<String>& consoleMessages, id<WKNavigationDelegate> navigationDelegate, NSString *html, id<WKUIDelegate> uiDelegate = nil)
+static void setupSKAdNetworkTest(Vector<String>& consoleMessages, id<WKNavigationDelegate> navigationDelegate, NSString *html, id<WKUIDelegate> uiDelegate)
 {
     HTTPServer server({ { "/app/id1234567890"_s, { "hello"_s } } }, HTTPServer::Protocol::HttpsProxy);
 
@@ -575,9 +567,10 @@ static void setupSKAdNetworkTest(Vector<String>& consoleMessages, id<WKNavigatio
         (NSString *)kCFStreamPropertyHTTPSProxyPort: @(server.port())
     }];
 
-    WKWebViewConfiguration *viewConfiguration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"BundlePageConsoleMessage"];
-    viewConfiguration.websiteDataStore = adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]).get();
-    auto webView = webViewWithOpenInspector(viewConfiguration);
+    auto viewConfiguration = adoptNS([WKWebViewConfiguration new]);
+    viewConfiguration.get().websiteDataStore = adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]).get();
+    viewConfiguration.get()._shouldSendConsoleLogsToUIProcessForTesting = YES;
+    auto webView = webViewWithOpenInspector(viewConfiguration.get(), uiDelegate);
 
     for (_WKFeature *feature in [WKPreferences _features]) {
         if ([feature.key isEqualToString:@"SKAttributionEnabled"]) {
@@ -586,8 +579,7 @@ static void setupSKAdNetworkTest(Vector<String>& consoleMessages, id<WKNavigatio
         }
     }
 
-    setInjectedBundleClient(webView.get(), consoleMessages);
-    [viewConfiguration.websiteDataStore _setPrivateClickMeasurementDebugModeEnabled:YES];
+    [viewConfiguration.get().websiteDataStore _setPrivateClickMeasurementDebugModeEnabled:YES];
 
     [webView synchronouslyLoadHTMLString:html baseURL:[NSURL URLWithString:@"https://example.com/"]];
 
@@ -597,7 +589,6 @@ static void setupSKAdNetworkTest(Vector<String>& consoleMessages, id<WKNavigatio
     consoleMessages.clear();
 
     webView.get().navigationDelegate = navigationDelegate;
-    webView.get().UIDelegate = uiDelegate;
 
     [webView clickOnElementID:@"anchorid"];
 }
@@ -612,13 +603,17 @@ TEST(PrivateClickMeasurement, DISABLED_SKAdNetwork)
 TEST(PrivateClickMeasurement, SKAdNetwork)
 #endif
 {
-    Vector<String> consoleMessages;
+    __block Vector<String> consoleMessages;
     auto delegate = adoptNS([TestNavigationDelegate new]);
     [delegate allowAnyTLSCertificate];
     delegate.get().decidePolicyForNavigationAction = ^(WKNavigationAction *navigationAction, void (^decisionHandler)(WKNavigationActionPolicy)) {
         decisionHandler(_WKNavigationActionPolicyAllowWithoutTryingAppLink);
     };
-    setupSKAdNetworkTest(consoleMessages, delegate.get(), linkToAppStoreHTML);
+    auto uiDelegate = adoptNS([TestUIDelegate new]);
+    uiDelegate.get().didReceiveConsoleLogForTesting = ^(NSString *log) {
+        consoleMessages.append(log);
+    };
+    setupSKAdNetworkTest(consoleMessages, delegate.get(), linkToAppStoreHTML, uiDelegate.get());
     while (consoleMessages.isEmpty())
         Util::spinRunLoop();
     EXPECT_WK_STREQ(consoleMessages[0], expectedSKAdNetworkConsoleMessage);
@@ -631,7 +626,7 @@ TEST(PrivateClickMeasurement, DISABLED_SKAdNetworkAboutBlank)
 TEST(PrivateClickMeasurement, SKAdNetworkAboutBlank)
 #endif
 {
-    Vector<String> consoleMessages;
+    __block Vector<String> consoleMessages;
     auto delegate = adoptNS([TestNavigationDelegate new]);
     auto uiDelegate = adoptNS([TestUIDelegate new]);
     __block RetainPtr<TestWKWebView> openedWebView;
@@ -639,6 +634,9 @@ TEST(PrivateClickMeasurement, SKAdNetworkAboutBlank)
         openedWebView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:configuration]);
         openedWebView.get().navigationDelegate = delegate.get();
         return openedWebView.get();
+    };
+    uiDelegate.get().didReceiveConsoleLogForTesting = ^(NSString *log) {
+        consoleMessages.append(log);
     };
     [delegate allowAnyTLSCertificate];
     delegate.get().decidePolicyForNavigationAction = ^(WKNavigationAction *navigationAction, void (^decisionHandler)(WKNavigationActionPolicy)) {
@@ -660,7 +658,7 @@ TEST(PrivateClickMeasurement, DISABLED_SKAdNetworkWithoutNavigatingToAppStoreLin
 TEST(PrivateClickMeasurement, SKAdNetworkWithoutNavigatingToAppStoreLink)
 #endif
 {
-    Vector<String> consoleMessages;
+    __block Vector<String> consoleMessages;
     auto delegate = adoptNS([TestNavigationDelegate new]);
     [delegate allowAnyTLSCertificate];
     delegate.get().decidePolicyForNavigationAction = ^(WKNavigationAction *navigationAction, void (^decisionHandler)(WKNavigationActionPolicy)) {
@@ -669,7 +667,11 @@ TEST(PrivateClickMeasurement, SKAdNetworkWithoutNavigatingToAppStoreLink)
         EXPECT_EQ(0u, consoleMessages.size());
         [navigationAction _storeSKAdNetworkAttribution];
     };
-    setupSKAdNetworkTest(consoleMessages, delegate.get(), linkToAppStoreHTML);
+    auto uiDelegate = adoptNS([TestUIDelegate new]);
+    uiDelegate.get().didReceiveConsoleLogForTesting = ^(NSString *log) {
+        consoleMessages.append(log);
+    };
+    setupSKAdNetworkTest(consoleMessages, delegate.get(), linkToAppStoreHTML, uiDelegate.get());
 
     while (consoleMessages.isEmpty())
         Util::spinRunLoop();
@@ -678,15 +680,19 @@ TEST(PrivateClickMeasurement, SKAdNetworkWithoutNavigatingToAppStoreLink)
 
 TEST(PrivateClickMeasurement, NetworkProcessDebugMode)
 {
-    auto configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"BundlePageConsoleMessage"];
-    Vector<String> consoleMessages;
-    auto webView = webViewWithOpenInspector(configuration);
-    setInjectedBundleClient(webView.get(), consoleMessages);
-    [configuration.websiteDataStore _setPrivateClickMeasurementDebugModeEnabled:YES];
+    auto configuration = adoptNS([WKWebViewConfiguration new]);
+    configuration.get()._shouldSendConsoleLogsToUIProcessForTesting = YES;
+    __block Vector<String> consoleMessages;
+    auto uiDelegate = adoptNS([TestUIDelegate new]);
+    uiDelegate.get().didReceiveConsoleLogForTesting = ^(NSString *log) {
+        consoleMessages.append(log);
+    };
+    auto webView = webViewWithOpenInspector(configuration.get(), uiDelegate.get());
+    [configuration.get().websiteDataStore _setPrivateClickMeasurementDebugModeEnabled:YES];
     while (consoleMessages.isEmpty())
         Util::spinRunLoop();
     EXPECT_WK_STREQ(consoleMessages[0], "[Private Click Measurement] Turned Debug Mode on.");
-    [configuration.websiteDataStore _setPrivateClickMeasurementDebugModeEnabled:NO];
+    [configuration.get().websiteDataStore _setPrivateClickMeasurementDebugModeEnabled:NO];
     while (consoleMessages.size() < 2)
         Util::spinRunLoop();
     EXPECT_WK_STREQ(consoleMessages[1], "[Private Click Measurement] Turned Debug Mode off.");

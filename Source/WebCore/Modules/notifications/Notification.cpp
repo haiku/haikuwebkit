@@ -35,6 +35,7 @@
 
 #include "Notification.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DedicatedWorkerGlobalScope.h"
 #include "Document.h"
 #include "DocumentInlines.h"
@@ -470,6 +471,11 @@ NotificationData Notification::data() const
         m_dataForBindings->wireBytes(),
         m_silent
     };
+}
+
+ScriptExecutionContext* Notification::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void Notification::ensureOnNotificationThread(ScriptExecutionContextIdentifier contextIdentifier, WTF::UUID notificationIdentifier, Function<void(Notification*)>&& task)

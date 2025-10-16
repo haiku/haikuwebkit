@@ -24,7 +24,7 @@
  */
 
 #import "config.h"
-#import "AccessibilityObject.h"
+#import "AccessibilityObjectInlines.h"
 
 #if PLATFORM(IOS_FAMILY)
 

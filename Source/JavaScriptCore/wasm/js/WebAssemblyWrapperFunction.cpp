@@ -39,8 +39,8 @@ const ClassInfo WebAssemblyWrapperFunction::s_info = { "WebAssemblyWrapperFuncti
 static JSC_DECLARE_HOST_FUNCTION(callWebAssemblyWrapperFunction);
 static JSC_DECLARE_HOST_FUNCTION(callWebAssemblyWrapperFunctionIncludingInvalidValues);
 
-WebAssemblyWrapperFunction::WebAssemblyWrapperFunction(VM& vm, NativeExecutable* executable, JSGlobalObject* globalObject, Structure* structure, JSWebAssemblyInstance* instance, JSObject* function, Wasm::WasmOrJSImportableFunction&& importableFunction, WasmOrJSImportableFunctionCallLinkInfo* callLinkInfo)
-    : Base(vm, executable, globalObject, structure, instance, WTFMove(importableFunction), callLinkInfo)
+WebAssemblyWrapperFunction::WebAssemblyWrapperFunction(VM& vm, NativeExecutable* executable, JSGlobalObject* globalObject, Structure* structure, JSObject* function, Wasm::WasmOrJSImportableFunction&& importableFunction, WasmOrJSImportableFunctionCallLinkInfo* callLinkInfo)
+    : Base(vm, executable, globalObject, structure, WTFMove(importableFunction), callLinkInfo)
     , m_function(function, WriteBarrierEarlyInit)
 { }
 
@@ -57,16 +57,16 @@ WebAssemblyWrapperFunction* WebAssemblyWrapperFunction::create(VM& vm, JSGlobalO
         executable = vm.getHostFunction(callWebAssemblyWrapperFunction, ImplementationVisibility::Public, NoIntrinsic, callHostFunctionAsConstructor, nullptr, name);
 
     RELEASE_ASSERT(JSValue(function).isCallable());
-    WebAssemblyWrapperFunction* result = new (NotNull, allocateCell<WebAssemblyWrapperFunction>(vm)) WebAssemblyWrapperFunction(vm, executable, globalObject, structure, instance, function,
+    WebAssemblyWrapperFunction* result = new (NotNull, allocateCell<WebAssemblyWrapperFunction>(vm)) WebAssemblyWrapperFunction(vm, executable, globalObject, structure, function,
         Wasm::WasmOrJSImportableFunction {
             {
                 {
-                    &Wasm::NullWasmCallee,
-                    { },
+                    CalleeBits::encodeNativeCallee(&Wasm::WasmToJSCallee::singleton()),
+                    { instance, WriteBarrierEarlyInit },
                     &instance->importFunctionInfo(importIndex)->importFunctionStub
                 },
-                typeIndex,
-                rtt.ptr()
+                rtt.ptr(),
+                typeIndex
             },
             { },
             { }

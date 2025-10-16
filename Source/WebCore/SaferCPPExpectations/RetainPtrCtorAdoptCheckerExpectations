@@ -1,5 +1,4 @@
 PAL/pal/mac/DataDetectorsSoftLink.h
-accessibility/mac/WebAccessibilityObjectWrapperMac.mm
 platform/audio/cocoa/AudioSampleBufferConverter.mm
 platform/cocoa/FileMonitorCocoa.mm
 platform/cocoa/NetworkExtensionContentFilter.mm

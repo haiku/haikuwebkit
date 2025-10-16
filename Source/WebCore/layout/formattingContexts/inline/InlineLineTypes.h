@@ -42,6 +42,11 @@ struct TextSpacingContext {
     TrimmableTextSpacings trimmableTextSpacings;
 };
 
+enum class IsFirstFormattedLine : bool {
+    No,
+    Yes
+};
+
 enum class LineEndingTruncationPolicy : uint8_t {
     NoTruncation,
     WhenContentOverflowsInInlineDirection,
@@ -80,7 +85,6 @@ struct PreviousLine {
     // Content width measured during line breaking (avoid double-measuring).
     std::optional<InlineLayoutUnit> trailingOverflowingContentWidth { };
     bool endsWithLineBreak { false };
-    bool hasInlineContent { false };
     TextDirection inlineBaseDirection { TextDirection::LTR };
     Vector<const Box*> suspendedFloats;
 };

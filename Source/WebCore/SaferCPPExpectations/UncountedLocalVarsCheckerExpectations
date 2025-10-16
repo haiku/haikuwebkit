@@ -1,5 +1,5 @@
 Modules/applicationmanifest/ApplicationManifestParser.cpp
-Modules/indexeddb/IDBActiveDOMObject.h
+Modules/indexeddb/IDBActiveDOMObjectInlines.h
 Modules/indexeddb/IDBCursor.cpp
 Modules/indexeddb/IDBIndex.cpp
 Modules/indexeddb/IDBObjectStore.cpp
@@ -51,7 +51,6 @@ Modules/webdatabase/DatabaseManager.cpp
 Modules/webdatabase/SQLCallbackWrapper.h
 StyleBuilderGenerated.cpp
 accessibility/AXObjectCache.cpp
-accessibility/mac/WebAccessibilityObjectWrapperMac.mm
 animation/KeyframeEffect.cpp
 bindings/js/CommonVM.cpp
 bindings/js/DOMWrapperWorld.cpp
@@ -507,7 +506,6 @@ style/StyleExtractorCustom.h
 style/StyleInterpolationWrappers.h
 style/StyleInvalidationFunctions.h
 style/StyleInvalidator.cpp
-style/StylePendingResources.cpp
 style/StyleRelations.cpp
 style/StyleResolver.cpp
 style/StyleScope.cpp

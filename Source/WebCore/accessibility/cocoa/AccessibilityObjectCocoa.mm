@@ -25,7 +25,7 @@
  */
 
 #import "config.h"
-#import "AccessibilityObject.h"
+#import "AccessibilityObjectInlines.h"
 
 #if PLATFORM(COCOA)
 

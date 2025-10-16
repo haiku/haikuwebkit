@@ -3933,7 +3933,7 @@ void Editor::applyEditingStyleToBodyElement() const
     body->setInlineStyleProperty(CSSPropertyLineBreak, CSSValueAfterWhiteSpace);
 }
 
-bool Editor::findString(const String& target, FindOptions options)
+std::optional<SimpleRange> Editor::findString(const String& target, FindOptions options)
 {
     Ref document = this->document();
     std::optional<SimpleRange> resultRange;
@@ -3945,7 +3945,7 @@ bool Editor::findString(const String& target, FindOptions options)
     }
 
     if (!resultRange)
-        return false;
+        return std::nullopt;
 
     if (!options.contains(FindOption::DoNotSetSelection))
         document->selection().setSelection(VisibleSelection(*resultRange));
@@ -3953,7 +3953,7 @@ bool Editor::findString(const String& target, FindOptions options)
     if (!(options.contains(FindOption::DoNotRevealSelection)))
         document->selection().revealSelection();
 
-    return true;
+    return resultRange;
 }
 
 template<typename T> static auto& start(T& range, FindOptions options)

@@ -40,18 +40,7 @@ async function denyTest()
     navigator.permissions.query({ name: "storage-access" }).then((status) => {
         window.state = status.state;
         postTestResult("state", "prompt", state);
-        changeListenerTest();
-    });
-}
-
-function changeListenerTest()
-{
-    navigator.permissions.query({ name: "storage-access" }).then((permissionStatus) => {
-        permissionStatus.onchange = () => {
-            postTestComplete();
-        };
-
-        testRunner.setStorageAccessPermission(true, location.href);
+        postTestComplete();
     });
 }
 

@@ -445,19 +445,13 @@ void RenderFlexibleBox::layoutBlock(RelayoutChildren relayoutChildren, LayoutUni
 
         updateDescendantTransformsAfterLayout();
     }
-    updateLayerTransform();
 
     // We have to reset this, because changes to our ancestors' style can affect
     // this value. Also, this needs to be before we call updateAfterLayout, as
     // that function may re-enter this one.
     resetHasDefiniteHeight();
 
-    // Update our scroll information if we're overflow:auto/scroll/hidden now that we know if we overflow or not.
-    updateScrollInfoAfterLayout();
-
     repainter.repaintAfterLayout();
-
-    clearNeedsLayout();
     
     m_inLayout = oldInLayout;
 }

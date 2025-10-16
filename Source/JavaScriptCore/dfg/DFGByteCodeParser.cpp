@@ -63,6 +63,7 @@
 #include "InstanceOfStatus.h"
 #include "JSArrayBufferConstructor.h"
 #include "JSArrayIterator.h"
+#include "JSAsyncFromSyncIterator.h"
 #include "JSBoundFunction.h"
 #include "JSCInlines.h"
 #include "JSCellButterfly.h"
@@ -4479,6 +4480,21 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
             addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSWrapForValidIterator::Field::IteratedIterator)), wrapperObject, iterator);
             addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSWrapForValidIterator::Field::IteratedNextMethod)), wrapperObject, nextMethod);
             setResult(wrapperObject);
+            return CallOptimizationResult::Inlined;
+        }
+
+        case AsyncFromSyncIteratorCreateIntrinsic: {
+            if (argumentCountIncludingThis < 3)
+                return CallOptimizationResult::DidNothing;
+
+            insertChecks();
+            JSGlobalObject* globalObject = m_graph.globalObjectFor(currentNodeOrigin().semantic);
+            Node* syncIterator = get(virtualRegisterForArgumentIncludingThis(1, registerOffset));
+            Node* nextMethod = get(virtualRegisterForArgumentIncludingThis(2, registerOffset));
+            Node* asyncIteratorObject = addToGraph(NewInternalFieldObject, OpInfo(m_graph.registerStructure(globalObject->asyncFromSyncIteratorStructure())));
+            addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSAsyncFromSyncIterator::Field::SyncIterator)), asyncIteratorObject, syncIterator);
+            addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSAsyncFromSyncIterator::Field::NextMethod)), asyncIteratorObject, nextMethod);
+            setResult(asyncIteratorObject);
             return CallOptimizationResult::Inlined;
         }
 

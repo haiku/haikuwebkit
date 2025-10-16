@@ -1,7 +1,7 @@
-Blocked access to external URL http://www.localhost:8800/images/green.png?pipe=header(Access-Control-Allow-Origin,*)
-Blocked access to external URL http://www.localhost:8800/images/green.png?pipe=header(Access-Control-Allow-Origin,*)
-Blocked access to external URL http://www.localhost:8800/images/green.png?pipe=header(Access-Control-Allow-Origin,*)
-Blocked access to external URL http://www.localhost:8800/images/green.png
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/images/green.png?pipe=header(Access-Control-Allow-Origin,*)
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/images/green.png?pipe=header(Access-Control-Allow-Origin,*)
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/images/green.png?pipe=header(Access-Control-Allow-Origin,*)
+CONSOLE MESSAGE: Blocked access to external URL http://www.localhost:8800/images/green.png
 
 PASS Can get pixels of canvas with same origin image drawn
 FAIL Can get pixels of canvas with CORS enabled cross origin image drawn assert_unreached: Reached unreachable code

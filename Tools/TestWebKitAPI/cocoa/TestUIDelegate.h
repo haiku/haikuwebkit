@@ -46,6 +46,7 @@
 @property (nonatomic, copy) void (^takeFocus)(WKWebView *, _WKFocusDirection);
 @property (nonatomic, copy) void (^webViewDidClose)(WKWebView *);
 @property (nonatomic, copy) void (^webViewDidAdjustVisibilityWithSelectors)(WKWebView *, NSArray<NSString *> *);
+@property (nonatomic, copy) void (^didReceiveConsoleLogForTesting)(NSString *);
 @property (nonatomic, copy) void (^runOpenPanelWithParameters)(WKWebView *, WKOpenPanelParameters *, WKFrameInfo *, void (^)(NSArray<NSURL *> *));
 #if HAVE(UI_CONVERSATION_CONTEXT)
 @property (nonatomic, copy) void (^insertInputSuggestion)(WKWebView *, UIInputSuggestion *);

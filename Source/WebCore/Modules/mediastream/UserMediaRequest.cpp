@@ -37,6 +37,7 @@
 #if ENABLE(MEDIA_STREAM)
 
 #include "AudioSession.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "ExceptionCode.h"
 #include "JSDOMPromiseDeferred.h"

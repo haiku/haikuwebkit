@@ -114,6 +114,7 @@
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/URL.h>
+#include <wtf/URLHash.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakListHashSet.h>
 #include <wtf/text/CString.h>
@@ -941,8 +942,9 @@ void WebProcessProxy::assumeReadAccessToBaseURL(WebPageProxy& page, const String
 
     // There's a chance that urlString does not point to a directory.
     // Get url's base URL to add to m_localPathsWithAssumedReadAccess.
-    auto path = url.truncatedForUseAsBase().fileSystemPath();
-    WEBPROCESSPROXY_RELEASE_LOG_ERROR(Sandbox, "assumeReadAccessToBaseURL: path = %{private}s", path.utf8().data());
+    auto baseURL = url.truncatedForUseAsBase();
+    auto path = baseURL.fileSystemPath();
+    WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "assumeReadAccessToBaseURL(%u): path = %{private}s", baseURL.isValid() ? WTF::URLHash::hash(baseURL) : 0, path.utf8().data());
     if (path.isNull())
         return completionHandler();
 
@@ -1014,24 +1016,28 @@ bool WebProcessProxy::hasAssumedReadAccessToURL(const URL& url) const
         return false;
     }
 
+    auto urlHash = url.isValid() ? WTF::URLHash::hash(url) : 0;
+    ASSERT_UNUSED(urlHash, urlHash > 0);
+
     String path = url.fileSystemPath();
-    auto startsWithURLPath = [&path](const String& assumedAccessPath) {
+    auto startsWithURLPath = [&path, protectedThis = RefPtr { this }](const String& assumedAccessPath) {
         // There are no ".." components, because URL removes those.
+        WEBPROCESSPROXY_RELEASE_LOG_WITH_THIS(Sandbox, protectedThis, "hasAssumedReadAccessToURL: checking if url is contained in url(%u) with assumed access", WTF::URLHash::hash(URL::fileURLWithFileSystemPath(assumedAccessPath)));
         return path.startsWith(assumedAccessPath);
     };
 
     auto& platformPaths = platformPathsWithAssumedReadAccess();
     if (std::ranges::find_if(platformPaths, startsWithURLPath) != platformPaths.end()) {
-        WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "hasAssumedReadAccessToURL: has assumed access to platform path");
+        WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "hasAssumedReadAccessToURL(%u): has assumed access to platform path", urlHash);
         return true;
     }
 
     if (std::ranges::find_if(m_localPathsWithAssumedReadAccess, startsWithURLPath) != m_localPathsWithAssumedReadAccess.end()) {
-        WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "hasAssumedReadAccessToURL: has assumed access to local path");
+        WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "hasAssumedReadAccessToURL(%u): has assumed access to local path", urlHash);
         return true;
     }
 
-    WEBPROCESSPROXY_RELEASE_LOG_ERROR(Sandbox, "hasAssumedReadAccessToURL: no access");
+    WEBPROCESSPROXY_RELEASE_LOG_ERROR(Sandbox, "hasAssumedReadAccessToURL(%u): no access", urlHash);
     return false;
 }
 

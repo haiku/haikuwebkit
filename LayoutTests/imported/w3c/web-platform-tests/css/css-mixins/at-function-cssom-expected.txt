@@ -1,36 +1,36 @@
 
-FAIL Empty CSSFunctionRule assert_equals: expected 1 but got 0
-FAIL Single CSSFunctionDeclarations assert_equals: expected 1 but got 0
-FAIL CSSFunctionDescriptors (result) Can't find variable: CSSFunctionDescriptors
-FAIL CSSFunctionDescriptors (result, repeated) Can't find variable: CSSFunctionDescriptors
-FAIL CSSFunctionDescriptors (local variables) Can't find variable: CSSFunctionDescriptors
-FAIL CSSFunctionDescriptors (local variables, repeated) Can't find variable: CSSFunctionDescriptors
-FAIL CSSFunctionDescriptors (local variables and result) Can't find variable: CSSFunctionDescriptors
-FAIL CSSFunctionDescriptors serialization Can't find variable: CSSFunctionDescriptors
-FAIL Unknown descriptors Can't find variable: CSSFunctionDescriptors
-FAIL Unknown descriptors (mutation) Can't find variable: CSSFunctionDescriptors
-FAIL item() Can't find variable: CSSFunctionDescriptors
-FAIL Indexed property getter Can't find variable: CSSFunctionDescriptors
-FAIL @supports in body assert_equals: expected 1 but got 0
-FAIL CSSFunctionRule.name assert_equals: expected 1 but got 0
-FAIL CSSFunctionRule.getParameters() assert_equals: expected 6 but got 0
-FAIL CSSFunctionRule.returnType assert_equals: expected 5 but got 0
-FAIL CSSFunctionRule escapes assert_equals: expected 1 but got 0
-FAIL CSSFunctionRule.cssText (--empty) assert_equals: expected (string) "@function --empty() { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--ret-length) assert_equals: expected (string) "@function --ret-length() returns <length> { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--ret-length-auto) assert_equals: expected (string) "@function --ret-length-auto() returns type(<length> | auto) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-single) assert_equals: expected (string) "@function --param-single(--x) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-typed) assert_equals: expected (string) "@function --param-typed(--x <length>) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-typed-default) assert_equals: expected (string) "@function --param-typed-default(--x <length>: 10px) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-default) assert_equals: expected (string) "@function --param-default(--x: 10px) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-multi) assert_equals: expected (string) "@function --param-multi(--x, --y) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-multi-mixed) assert_equals: expected (string) "@function --param-multi-mixed(--x: 10px, --y, --z <length>) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--body-result) assert_equals: expected (string) "@function --body-result() { result: 10px; }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--body-locals) assert_equals: expected (string) "@function --body-locals() { --x: 1px; --y: 2px; result: 10px; }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-type-fn) assert_equals: expected (string) "@function --param-type-fn(--x <length>) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--param-type-fn-uni) assert_equals: expected (string) "@function --param-type-fn-uni(--x) { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--ret-type-fn) assert_equals: expected (string) "@function --ret-type-fn() { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--ret-type-fn-uni) assert_equals: expected (string) "@function --ret-type-fn-uni() { }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--body-result-multi) assert_equals: expected (string) "@function --body-result-multi() { result: 20px; }" but got (undefined) undefined
-FAIL CSSFunctionRule.cssText (--escaped-) assert_equals: expected (string) "@function --escaped-\\9 -tab(--param-\\9 -tab) { --local-\\9 -tab: 1px; }" but got (undefined) undefined
+PASS Empty CSSFunctionRule
+PASS Single CSSFunctionDeclarations
+PASS CSSFunctionDescriptors (result)
+PASS CSSFunctionDescriptors (result, repeated)
+PASS CSSFunctionDescriptors (local variables)
+PASS CSSFunctionDescriptors (local variables, repeated)
+PASS CSSFunctionDescriptors (local variables and result)
+PASS CSSFunctionDescriptors serialization
+PASS Unknown descriptors
+FAIL Unknown descriptors (mutation) assert_equals: expected 3 but got 1
+PASS item()
+PASS Indexed property getter
+PASS @supports in body
+PASS CSSFunctionRule.name
+FAIL CSSFunctionRule.getParameters() assert_object_equals: property "type" expected "<length>" got "*"
+FAIL CSSFunctionRule.returnType assert_equals: expected "<length>" but got "*"
+PASS CSSFunctionRule escapes
+PASS CSSFunctionRule.cssText (--empty)
+FAIL CSSFunctionRule.cssText (--ret-length) assert_equals: expected "@function --ret-length() returns <length> { }" but got "@function --ret-length() { }"
+FAIL CSSFunctionRule.cssText (--ret-length-auto) assert_equals: expected "@function --ret-length-auto() returns type(<length> | auto) { }" but got "@function --ret-length-auto() { }"
+PASS CSSFunctionRule.cssText (--param-single)
+FAIL CSSFunctionRule.cssText (--param-typed) assert_equals: expected "@function --param-typed(--x <length>) { }" but got "@function --param-typed(--x) { }"
+FAIL CSSFunctionRule.cssText (--param-typed-default) assert_equals: expected "@function --param-typed-default(--x <length>: 10px) { }" but got "@function --param-typed-default(--x: 10px) { }"
+PASS CSSFunctionRule.cssText (--param-default)
+PASS CSSFunctionRule.cssText (--param-multi)
+FAIL CSSFunctionRule.cssText (--param-multi-mixed) assert_equals: expected "@function --param-multi-mixed(--x: 10px, --y, --z <length>) { }" but got "@function --param-multi-mixed(--x: 10px, --y, --z) { }"
+PASS CSSFunctionRule.cssText (--body-result)
+PASS CSSFunctionRule.cssText (--body-locals)
+FAIL CSSFunctionRule.cssText (--param-type-fn) assert_equals: expected "@function --param-type-fn(--x <length>) { }" but got "@function --param-type-fn(--x) { }"
+PASS CSSFunctionRule.cssText (--param-type-fn-uni)
+PASS CSSFunctionRule.cssText (--ret-type-fn)
+PASS CSSFunctionRule.cssText (--ret-type-fn-uni)
+PASS CSSFunctionRule.cssText (--body-result-multi)
+FAIL CSSFunctionRule.cssText (--escaped-) assert_equals: expected "@function --escaped-\\9 -tab(--param-\\9 -tab) { --local-\\9 -tab: 1px; }" but got "@function --escaped-\\9 -tab(--param-\\9 -tab) { --local-\t-tab: 1px; }"
 

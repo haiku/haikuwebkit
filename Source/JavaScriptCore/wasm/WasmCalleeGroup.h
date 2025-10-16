@@ -89,13 +89,13 @@ public:
 
     // These two callee getters are only valid once the callees have been populated.
 
-    JSEntrypointCallee& jsEntrypointCalleeFromFunctionIndexSpace(FunctionSpaceIndex functionIndexSpace)
+    JSToWasmCallee& jsToWasmCalleeFromFunctionIndexSpace(FunctionSpaceIndex functionIndexSpace)
     {
         ASSERT(runnable());
         ASSERT(functionIndexSpace >= functionImportCount());
         unsigned calleeIndex = functionIndexSpace - functionImportCount();
 
-        auto callee = m_jsEntrypointCallees.get(calleeIndex);
+        auto callee = m_jsToWasmCallees.get(calleeIndex);
         RELEASE_ASSERT(callee);
         return *callee;
     }
@@ -182,7 +182,7 @@ public:
     {
         RELEASE_ASSERT(functionIndexSpace >= functionImportCount());
         unsigned calleeIndex = functionIndexSpace - functionImportCount();
-        return &m_wasmIndirectCallEntryPoints[calleeIndex];
+        return &m_wasmIndirectCallEntrypoints[calleeIndex];
     }
 
     RefPtr<Wasm::IPIntCallee> wasmCalleeFromFunctionIndexSpace(FunctionSpaceIndex functionIndexSpace)
@@ -233,7 +233,7 @@ private:
     FixedVector<ThreadSafeWeakOrStrongPtr<BBQCallee>> m_bbqCallees WTF_GUARDED_BY_LOCK(m_lock);
 #endif
     RefPtr<IPIntCallees> m_ipintCallees WTF_GUARDED_BY_LOCK(m_lock);
-    UncheckedKeyHashMap<uint32_t, RefPtr<JSEntrypointCallee>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_jsEntrypointCallees;
+    UncheckedKeyHashMap<uint32_t, RefPtr<JSToWasmCallee>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_jsToWasmCallees;
 #if ENABLE(WEBASSEMBLY_BBQJIT) || ENABLE(WEBASSEMBLY_OMGJIT)
     // FIXME: We should probably find some way to prune dead entries periodically.
     UncheckedKeyHashMap<uint32_t, ThreadSafeWeakPtr<OMGOSREntryCallee>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_osrEntryCallees WTF_GUARDED_BY_LOCK(m_lock);
@@ -246,7 +246,7 @@ private:
     using SparseCallers = UncheckedKeyHashSet<uint32_t, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
     using DenseCallers = BitVector;
     FixedVector<Variant<SparseCallers, DenseCallers>> m_callers WTF_GUARDED_BY_LOCK(m_lock);
-    FixedVector<CodePtr<WasmEntryPtrTag>> m_wasmIndirectCallEntryPoints;
+    FixedVector<CodePtr<WasmEntryPtrTag>> m_wasmIndirectCallEntrypoints;
     FixedVector<RefPtr<Wasm::IPIntCallee>> m_wasmIndirectCallWasmCallees;
     FixedVector<MacroAssemblerCodeRef<WasmEntryPtrTag>> m_wasmToWasmExitStubs;
     RefPtr<EntryPlan> m_plan;

@@ -53,6 +53,7 @@ class ScriptExecutionContext;
 class TextResourceDecoder;
 class ThreadableLoader;
 
+DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(FileReaderLoader);
 class FileReaderLoader final : public ThreadableLoaderClient {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FileReaderLoader, FileReaderLoader);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FileReaderLoader);

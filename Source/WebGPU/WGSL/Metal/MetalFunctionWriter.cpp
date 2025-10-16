@@ -156,6 +156,7 @@ public:
     void visit(AST::SizeAttribute&) override;
     void visit(AST::AlignAttribute&) override;
     void visit(AST::InterpolateAttribute&) override;
+    void visit(AST::InvariantAttribute&) override;
 
     void visit(AST::Function&) override;
     void visit(AST::Structure&) override;
@@ -789,7 +790,7 @@ void FunctionDefinitionWriter::visit(AST::Structure& structDecl)
                 }
             }
             m_body.append(m_indent, "{ }\n"_s);
-        } else if (structDecl.role() == AST::StructureRole::FragmentOutputWrapper) {
+        } else if (structDecl.role() == AST::StructureRole::FragmentOutputWrapper || structDecl.role() == AST::StructureRole::VertexOutputWrapper) {
             ASSERT(structDecl.members().size() == 1);
             auto& member = structDecl.members()[0];
 
@@ -983,7 +984,7 @@ void FunctionDefinitionWriter::visit(AST::BuiltinAttribute& builtin)
     // Built-in attributes are only valid for parameters. If a struct member originally
     // had a built-in attribute it must have already been hoisted into a parameter, but
     // we keep the original struct so we can reconstruct it.
-    if (m_structRole.has_value() && *m_structRole != AST::StructureRole::VertexOutput && *m_structRole != AST::StructureRole::FragmentOutput && *m_structRole != AST::StructureRole::FragmentOutputWrapper)
+    if (m_structRole.has_value() && *m_structRole != AST::StructureRole::VertexOutput && *m_structRole != AST::StructureRole::VertexOutputWrapper && *m_structRole != AST::StructureRole::FragmentOutput && *m_structRole != AST::StructureRole::FragmentOutputWrapper)
         return;
 
     switch (builtin.builtin()) {
@@ -998,6 +999,7 @@ void FunctionDefinitionWriter::visit(AST::BuiltinAttribute& builtin)
         break;
     case Builtin::InstanceIndex:
         m_body.append("[[instance_id]]"_s);
+        break;
         break;
     case Builtin::LocalInvocationId:
         m_body.append("[[thread_position_in_threadgroup]]"_s);
@@ -1065,6 +1067,7 @@ void FunctionDefinitionWriter::visit(AST::LocationAttribute& location)
         switch (role) {
         case AST::StructureRole::VertexOutput:
         case AST::StructureRole::FragmentInput:
+        case AST::StructureRole::VertexOutputWrapper:
             m_body.append("[[user(loc"_s, location.location().constantValue()->integerValue(), ")]]"_s);
             return;
         case AST::StructureRole::BindGroup:
@@ -1074,7 +1077,6 @@ void FunctionDefinitionWriter::visit(AST::LocationAttribute& location)
         case AST::StructureRole::PackedResource:
             return;
         case AST::StructureRole::FragmentOutputWrapper:
-            RELEASE_ASSERT_NOT_REACHED();
         case AST::StructureRole::FragmentOutput:
             m_body.append("[[color("_s, location.location().constantValue()->integerValue(), ")]]"_s);
             return;
@@ -1139,6 +1141,14 @@ static ASCIILiteral convertToSampleMode(InterpolationType type, InterpolationSam
 void FunctionDefinitionWriter::visit(AST::InterpolateAttribute& attribute)
 {
     m_body.append("[["_s, convertToSampleMode(attribute.type(), attribute.sampling()), "]]"_s);
+}
+
+void FunctionDefinitionWriter::visit(AST::InvariantAttribute&)
+{
+    if (!m_structRole.has_value() || (*m_structRole != AST::StructureRole::VertexOutput && *m_structRole != AST::StructureRole::VertexOutputWrapper))
+        return;
+
+    m_body.append("[[invariant]]"_s);
 }
 
 // Types

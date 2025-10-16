@@ -98,6 +98,7 @@ public:
         RegularRules,
         KeyframeRules,
         FontFeatureValuesRules,
+        ConditionalGroupRules,
         NoRules, // For parsing at-rules inside declaration lists (without nesting support)
     };
 
@@ -178,14 +179,16 @@ private:
     RefPtr<StyleRuleKeyframe> consumeKeyframeStyleRule(CSSParserTokenRange prelude, CSSParserTokenRange block);
     RefPtr<StyleRuleBase> consumeStyleRule(CSSParserTokenRange prelude, CSSParserTokenRange block);
     ParsedPropertyVector consumeDeclarationListInNewNestingContext(CSSParserTokenRange, StyleRuleType);
+    Vector<Ref<StyleRuleBase>> consumeDeclarationRuleListInNewNestingContext(CSSParserTokenRange, StyleRuleType);
 
-    enum class OnlyDeclarations : bool { No, Yes };
+    enum class BlockAllowedRule : uint8_t { QualifiedRules = 1 << 0, Declarations = 1 << 1, AtRules = 1 << 2, };
 
     enum class ParsingStyleDeclarationsInRuleList : bool { No, Yes };
 
     // FIXME: We should return value for all those functions instead of using class member attributes.
-    void consumeBlockContent(CSSParserTokenRange, StyleRuleType, OnlyDeclarations, ParsingStyleDeclarationsInRuleList = ParsingStyleDeclarationsInRuleList::No);
+    void consumeBlockContent(CSSParserTokenRange, StyleRuleType, OptionSet<BlockAllowedRule>, ParsingStyleDeclarationsInRuleList = ParsingStyleDeclarationsInRuleList::No);
     void consumeDeclarationList(CSSParserTokenRange, StyleRuleType);
+    void consumeDeclarationRuleList(CSSParserTokenRange, StyleRuleType);
     void consumeStyleBlock(CSSParserTokenRange, StyleRuleType, ParsingStyleDeclarationsInRuleList = ParsingStyleDeclarationsInRuleList::No);
     bool consumeDeclaration(CSSParserTokenRange, StyleRuleType);
     void consumeDeclarationValue(CSSParserTokenRange, CSSPropertyID, IsImportant, StyleRuleType);
@@ -203,7 +206,12 @@ private:
 
     bool isStyleNestedContext() const
     {
-        return !m_ancestorRuleTypeStack.isEmpty();
+        return !m_ancestorRuleTypeStack.isEmpty() && m_ancestorRuleTypeStack.last() != CSSParserEnum::NestedContextType::Function;
+    }
+
+    bool isFunctionNestedContext() const
+    {
+        return !m_ancestorRuleTypeStack.isEmpty() && m_ancestorRuleTypeStack.last() == CSSParserEnum::NestedContextType::Function;
     }
 
     bool hasStyleRuleAncestor() const

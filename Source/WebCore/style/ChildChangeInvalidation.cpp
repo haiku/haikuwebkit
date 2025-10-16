@@ -56,6 +56,7 @@ void ChildChangeInvalidation::invalidateForChangedElement(Element& changedElemen
             return isChild;
         case MatchElement::HasDescendant:
         case MatchElement::HasSiblingDescendant:
+        case MatchElement::HasDescendantParent:
         case MatchElement::HasNonSubject:
         case MatchElement::HasScopeBreaking:
             return true;

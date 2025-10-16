@@ -59,6 +59,9 @@ webkit.org/b/173419 fast/events/mouseover-button.html [ Failure ]
 
 webkit.org/b/296677 fast/media/mq-resolution.html [ Skip ]
 
+# Doesn't support inspector. Needs WebInspectorUIProxy::platformCreateFrontendPage implementation.
+http/tests/websocket/tests/hybi/inspector [ Skip ]
+
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End of Triaged Expectations
 #//////////////////////////////////////////////////////////////////////////////////////////

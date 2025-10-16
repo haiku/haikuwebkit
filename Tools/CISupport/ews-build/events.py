@@ -62,7 +62,7 @@ class Events(service.BuildbotService):
         'build-webkit-org-unit-tests', 'buildbot-check-config', 'buildbot-check-config-for-build-webkit', 'buildbot-check-config-for-ews',
         'ews-unit-tests', 'resultsdbpy-unit-tests',
         'upload-built-product', 'upload-test-results',
-        'apply-watch-list', 'bindings-tests', 'check-webkit-style',
+        'bindings-tests', 'check-webkit-style',
         'webkitperl-tests', 're-run-webkitperl-tests', 'webkitpy-tests'
     ]
 

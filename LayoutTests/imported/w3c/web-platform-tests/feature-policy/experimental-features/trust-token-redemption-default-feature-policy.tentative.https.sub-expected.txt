@@ -1,4 +1,4 @@
-Blocked access to external URL https://www.localhost:9443/feature-policy/experimental-features/resources/feature-policy-trust-token-redemption.html
+CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/feature-policy/experimental-features/resources/feature-policy-trust-token-redemption.html
 
 
 Harness Error (TIMEOUT), message = null

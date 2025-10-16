@@ -85,7 +85,7 @@ private:
     void refEventTarget() final { ref(); }
     void derefEventTarget() final { deref(); }
     enum EventTargetInterfaceType eventTargetInterface() const final { return EventTargetInterfaceType::MediaSessionCoordinator; }
-    ScriptExecutionContext* scriptExecutionContext() const final { return ContextDestructionObserver::scriptExecutionContext(); }
+        ScriptExecutionContext* scriptExecutionContext() const final;
     void eventListenersDidChange() final;
 
     // ActiveDOMObject.

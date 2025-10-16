@@ -40,11 +40,10 @@ namespace Wasm {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(FunctionIPIntMetadataGenerator);
 
-unsigned FunctionIPIntMetadataGenerator::addSignature(const TypeDefinition& signature)
+const RTT* FunctionIPIntMetadataGenerator::addSignature(const TypeDefinition& signature)
 {
-    unsigned index = m_signatures.size();
-    m_signatures.append(&signature);
-    return index;
+    // This is held by wasm module.
+    return TypeInformation::getCanonicalRTT(signature.index()).ptr();
 }
 
 void FunctionIPIntMetadataGenerator::setTailCall(uint32_t functionIndex, bool isImportedFunctionFromFunctionIndexSpace)

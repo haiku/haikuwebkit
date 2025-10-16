@@ -31,7 +31,7 @@
 
 #include <WebCore/Color.h>
 #include <WebCore/DestinationColorSpace.h>
-#include <WebCore/ImageBufferPixelFormat.h>
+#include <WebCore/PixelFormat.h>
 #include <WebCore/SimpleRange.h>
 #include <memory>
 #include <wtf/OptionSet.h>
@@ -63,7 +63,7 @@ enum class SnapshotFlags : uint16_t {
 
 struct SnapshotOptions {
     OptionSet<SnapshotFlags> flags;
-    ImageBufferPixelFormat pixelFormat;
+    PixelFormat pixelFormat;
     DestinationColorSpace colorSpace;
 };
 

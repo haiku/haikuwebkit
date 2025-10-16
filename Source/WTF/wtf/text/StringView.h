@@ -186,10 +186,12 @@ public:
     WTF_EXPORT_PRIVATE bool startsWith(char16_t) const;
     WTF_EXPORT_PRIVATE bool startsWith(StringView) const;
     WTF_EXPORT_PRIVATE bool startsWithIgnoringASCIICase(StringView) const;
+    WTF_EXPORT_PRIVATE bool hasInfixStartingAt(StringView prefix, unsigned start) const;
 
     WTF_EXPORT_PRIVATE bool endsWith(char16_t) const;
     WTF_EXPORT_PRIVATE bool endsWith(StringView) const;
     WTF_EXPORT_PRIVATE bool endsWithIgnoringASCIICase(StringView) const;
+    WTF_EXPORT_PRIVATE bool hasInfixEndingAt(StringView suffix, unsigned end) const;
 
     float toFloat(bool& isValid) const;
     double toDouble(bool& isValid) const;

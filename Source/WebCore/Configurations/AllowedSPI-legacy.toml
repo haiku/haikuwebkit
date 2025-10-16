@@ -364,7 +364,6 @@ selectors = [
     { name = "pictureInPicturePlayerLayerView", class = "?" },
     { name = "pointValue", class = "?" },
     { name = "preferredExtensionForMIMEType:", class = "?" },
-    { name = "prerollDecodeWithCompletionHandler:", class = "?" },
     { name = "previewFileName", class = "?" },
     { name = "previewRequest", class = "?" },
     { name = "previewResponse", class = "?" },

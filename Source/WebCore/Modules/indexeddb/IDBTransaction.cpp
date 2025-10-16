@@ -26,6 +26,7 @@
 #include "config.h"
 #include "IDBTransaction.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DOMException.h"
 #include "DOMStringList.h"
 #include "Event.h"
@@ -617,6 +618,11 @@ void IDBTransaction::enqueueEvent(Ref<Event>&& event)
         return;
 
     queueTaskToDispatchEvent(*this, TaskSource::DatabaseAccess, WTFMove(event));
+}
+
+ScriptExecutionContext* IDBTransaction::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void IDBTransaction::dispatchEvent(Event& event)

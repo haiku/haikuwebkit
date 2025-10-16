@@ -69,7 +69,7 @@ public:
     CompilationMode compilationMode() const { return m_compilationMode; }
 
     CodePtr<WasmEntryPtrTag> entrypoint() const;
-    RegisterAtOffsetList* calleeSaveRegisters();
+    const RegisterAtOffsetList* calleeSaveRegisters();
     // Used by Wasm's fault signal handler to determine if the fault came from Wasm.
     std::tuple<void*, void*> range() const;
 
@@ -125,11 +125,11 @@ protected:
 
     CodePtr<WasmEntryPtrTag> entrypointImpl() const { return m_entrypoint.compilation->code().retagged<WasmEntryPtrTag>(); }
 
-    RegisterAtOffsetList* calleeSaveRegistersImpl() { return &m_entrypoint.calleeSaveRegisters; }
+    const RegisterAtOffsetList* calleeSaveRegistersImpl() { return &m_entrypoint.calleeSaveRegisters; }
 #else
     std::tuple<void*, void*> rangeImpl() const { return { nullptr, nullptr }; }
     CodePtr<WasmEntryPtrTag> entrypointImpl() const { return { }; }
-    RegisterAtOffsetList* calleeSaveRegistersImpl() { return nullptr; }
+    const RegisterAtOffsetList* calleeSaveRegistersImpl() { return nullptr; }
 #endif
 
     FixedVector<UnlinkedWasmToWasmCall> m_wasmToWasmCallsites;
@@ -138,25 +138,22 @@ protected:
 #endif
 };
 
-class JSEntrypointCallee final : public Callee {
-    WTF_MAKE_COMPACT_TZONE_ALLOCATED(JSEntrypointCallee);
+class JSToWasmCallee final : public Callee {
+    WTF_MAKE_COMPACT_TZONE_ALLOCATED(JSToWasmCallee);
 public:
     friend class Callee;
     friend class JSC::LLIntOffsetsExtractor;
 
-    static inline Ref<JSEntrypointCallee> create(TypeIndex typeIndex, bool usesSIMD)
+    static inline Ref<JSToWasmCallee> create(TypeIndex typeIndex, bool usesSIMD)
     {
-        return adoptRef(*new JSEntrypointCallee(typeIndex, usesSIMD));
+        return adoptRef(*new JSToWasmCallee(typeIndex, usesSIMD));
     }
 
     CodePtr<WasmEntryPtrTag> entrypointImpl() const;
-    static JS_EXPORT_PRIVATE RegisterAtOffsetList* calleeSaveRegistersImpl();
+    static JS_EXPORT_PRIVATE const RegisterAtOffsetList* calleeSaveRegistersImpl();
     std::tuple<void*, void*> rangeImpl() const { return { nullptr, nullptr }; }
-#if ASSERT_ENABLED
-    static constexpr ptrdiff_t offsetOfIdent() { return OBJECT_OFFSETOF(JSEntrypointCallee, m_ident); }
-#endif
-    static constexpr ptrdiff_t offsetOfWasmCallee() { return OBJECT_OFFSETOF(JSEntrypointCallee, m_wasmCallee); }
-    static constexpr ptrdiff_t offsetOfFrameSize() { return OBJECT_OFFSETOF(JSEntrypointCallee, m_frameSize); }
+    static constexpr ptrdiff_t offsetOfWasmCallee() { return OBJECT_OFFSETOF(JSToWasmCallee, m_wasmCallee); }
+    static constexpr ptrdiff_t offsetOfFrameSize() { return OBJECT_OFFSETOF(JSToWasmCallee, m_frameSize); }
 
     // Space for callee-saves; Not included in frameSize
     static constexpr unsigned SpillStackSpaceAligned = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(3 * sizeof(UCPURegister));
@@ -164,9 +161,6 @@ public:
     static constexpr unsigned RegisterStackSpaceAligned = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(
         FPRInfo::numberOfArgumentRegisters * bytesForWidth(Width::Width64) + GPRInfo::numberOfArgumentRegisters * sizeof(UCPURegister));
 
-#if ASSERT_ENABLED
-    unsigned ident() const { return m_ident; }
-#endif
     unsigned frameSize() const { return m_frameSize; }
     CalleeBits wasmCallee() const { return m_wasmCallee; }
     TypeIndex typeIndex() const { return m_typeIndex; }
@@ -177,11 +171,8 @@ public:
     }
 
 private:
-    JSEntrypointCallee(TypeIndex, bool);
+    JSToWasmCallee(TypeIndex, bool);
 
-#if ASSERT_ENABLED
-    const unsigned m_ident { 0xBF };
-#endif
     unsigned m_frameSize { };
     // This must be initialized after the callee is created unfortunately.
     CalleeBits m_wasmCallee;
@@ -194,18 +185,13 @@ public:
     friend class Callee;
     friend class JSC::LLIntOffsetsExtractor;
 
-    WasmToJSCallee(FunctionSpaceIndex, std::pair<const Name*, RefPtr<NameSection>>&&);
     static WasmToJSCallee& singleton();
-
-    CalleeBits* boxedWasmCalleeLoadLocation() { return &m_boxedThis; }
 
 private:
     WasmToJSCallee();
     std::tuple<void*, void*> rangeImpl() const { return { nullptr, nullptr }; }
     CodePtr<WasmEntryPtrTag> entrypointImpl() const { return { }; }
-    RegisterAtOffsetList* calleeSaveRegistersImpl() { return nullptr; }
-
-    CalleeBits m_boxedThis;
+    const RegisterAtOffsetList* calleeSaveRegistersImpl() { return nullptr; }
 };
 
 #if ENABLE(JIT)
@@ -218,8 +204,8 @@ public:
         return adoptRef(*new JSToWasmICCallee(WTFMove(calleeSaves)));
     }
 
-    RegisterAtOffsetList* calleeSaveRegistersImpl() { return &m_calleeSaves; }
-    CodePtr<JSEntryPtrTag> jsEntrypoint() { return m_jsToWasmICEntrypoint.code(); }
+    const RegisterAtOffsetList* calleeSaveRegistersImpl() { return &m_calleeSaves; }
+    CodePtr<JSEntryPtrTag> jsToWasm() { return m_jsToWasmICEntrypoint.code(); }
 
     void setEntrypoint(MacroAssemblerCodeRef<JSEntryPtrTag>&&);
 
@@ -452,11 +438,6 @@ public:
     unsigned localSizeToAlloc() const { return m_localSizeToAlloc; }
     unsigned rethrowSlots() const { return m_numRethrowSlotsToAlloc; }
 
-    const TypeDefinition& signature(unsigned index) const
-    {
-        return *m_signatures[index];
-    }
-
     FixedVector<CallSlot>& callSlots() { return m_callSlots; }
     const FixedVector<CallSlot>& callSlots() const { return m_callSlots; }
 
@@ -469,11 +450,10 @@ private:
 
     CodePtr<WasmEntryPtrTag> entrypointImpl() const { return m_entrypoint; }
     std::tuple<void*, void*> rangeImpl() const { return { nullptr, nullptr }; };
-    JS_EXPORT_PRIVATE RegisterAtOffsetList* calleeSaveRegistersImpl();
+    JS_EXPORT_PRIVATE const RegisterAtOffsetList* calleeSaveRegistersImpl();
 
     FunctionCodeIndex m_functionIndex;
     CodePtr<WasmEntryPtrTag> m_entrypoint;
-    FixedVector<const TypeDefinition*> m_signatures;
 
     const uint8_t* m_bytecode;
     const uint8_t* m_bytecodeEnd;
@@ -517,7 +497,7 @@ public:
 
 protected:
     std::tuple<void*, void*> rangeImpl() const { return { nullptr, nullptr }; }
-    RegisterAtOffsetList* calleeSaveRegistersImpl() { return nullptr; }
+    const RegisterAtOffsetList* calleeSaveRegistersImpl() { return nullptr; }
 
 private:
     MacroAssemblerCodeRef<WasmEntryPtrTag> m_code;

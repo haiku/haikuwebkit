@@ -112,6 +112,9 @@ static bool consumeViewTransitionDescriptor(CSSParserTokenRange&, const CSSParse
 // @position-try descriptors.
 static bool consumePositionTryDescriptor(CSSParserTokenRange&, const CSSParserContext&, CSSPropertyID, IsImportant, CSS::PropertyParserResult&);
 
+// @function descriptors.
+static bool consumeFunctionDescriptor(CSSParserTokenRange&, const CSSParserContext&, CSSPropertyID, CSS::PropertyParserResult&);
+
 // MARK: - CSSPropertyID parsing
 
 template<typename CharacterType> static CSSPropertyID cssPropertyID(std::span<const CharacterType> characters)
@@ -258,6 +261,9 @@ bool CSSPropertyParser::parseValue(CSSPropertyID property, IsImportant important
         break;
     case StyleRuleType::PositionTry:
         parseSuccess = consumePositionTryDescriptor(range, context, property, important, result);
+        break;
+    case StyleRuleType::Function:
+        parseSuccess = consumeFunctionDescriptor(range, context, property, result);
         break;
     default:
         parseSuccess = consumeStyleProperty(range, context, property, important, ruleType, result);
@@ -805,6 +811,25 @@ bool consumePositionTryDescriptor(CSSParserTokenRange& range, const CSSParserCon
         return false;
 
     return consumeStyleProperty(range, context, property, important, StyleRuleType::PositionTry, result);
+}
+
+bool consumeFunctionDescriptor(CSSParserTokenRange& range, const CSSParserContext& context, CSSPropertyID property, CSS::PropertyParserResult& result)
+{
+    ASSERT(context.propertySettings.cssFunctionAtRuleEnabled);
+
+    auto state = CSS::PropertyParserState {
+        .context = context,
+        .currentRule = StyleRuleType::Function,
+        .currentProperty = property,
+        .important = IsImportant::No,
+    };
+
+    RefPtr parsedValue = CSSPropertyParsing::parseFunctionDescriptor(range, property, state);
+    if (!parsedValue || !range.atEnd())
+        return false;
+
+    result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+    return true;
 }
 
 } // namespace WebCore

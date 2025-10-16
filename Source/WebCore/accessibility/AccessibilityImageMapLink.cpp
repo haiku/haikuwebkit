@@ -30,6 +30,7 @@
 #include "AccessibilityImageMapLink.h"
 
 #include "AXObjectCacheInlines.h"
+#include "AccessibilityObjectInlines.h"
 #include "ContainerNodeInlines.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "HTMLImageElement.h"

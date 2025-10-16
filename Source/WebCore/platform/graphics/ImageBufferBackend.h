@@ -182,7 +182,7 @@ protected:
     IntSize size() const { return m_parameters.backendSize; };
     float resolutionScale() const { return m_parameters.resolutionScale; }
     const DestinationColorSpace& colorSpace() const { return m_parameters.colorSpace; }
-    ImageBufferPixelFormat pixelFormat() const { return m_parameters.bufferFormat.pixelFormat; }
+    PixelFormat pixelFormat() const { return m_parameters.bufferFormat.pixelFormat; }
 
     WEBCORE_EXPORT void getPixelBuffer(const IntRect& srcRect, std::span<const uint8_t> data, PixelBuffer& destination);
     WEBCORE_EXPORT void putPixelBuffer(const PixelBufferSourceView&, const IntRect& srcRect, const IntPoint& destPoint, AlphaPremultiplication destFormat, std::span<uint8_t> destination);

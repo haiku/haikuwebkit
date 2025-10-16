@@ -38,6 +38,7 @@ NSString * const dynamicRulesetID = @"_dynamic";
 #import "CocoaHelpers.h"
 #import "WKContentRuleListInternal.h"
 #import "WebExtensionUtilities.h"
+#import <WebCore/LocalizedStrings.h>
 
 // If any changes are made to the rule translation logic here, make sure to increment currentDeclarativeNetRequestRuleTranslatorVersion in WebExtensionContextCocoa.
 
@@ -133,7 +134,6 @@ using namespace WebKit;
         declarativeNetRequestRuleConditionKey: NSDictionary.class,
     };
 
-    // FIXME: <rdar://72159785> Make sure every rule ID is unique.
     _ruleID = objectForKey<NSNumber>(ruleDictionary, declarativeNetRequestRuleIDKey).integerValue;
     if (!_ruleID) {
         if (outErrorString)
@@ -822,13 +822,13 @@ static BOOL isArrayOfRequestMethodsValid(NSArray<NSString *> *requestMethods)
 
             if (excludedRequestMethods && !isRuleForAllowAllRequests) {
                 for (NSString *excludedRequestMethod in excludedRequestMethods)
-                    [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(modifiedConditionsForURLFilter, excludedRequestMethod) webKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType]];
+                    [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(modifiedConditionsForURLFilter, excludedRequestMethod) webKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType includeIdentifier:NO]];
             } else
-                [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:modifiedConditionsForURLFilter webKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType]];
+                [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:modifiedConditionsForURLFilter webKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType includeIdentifier:NO]];
         }
     } else if (excludedRequestMethods && !isRuleForAllowAllRequests) {
         for (NSString *excludedRequestMethod in excludedRequestMethods)
-            [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(_condition, excludedRequestMethod) webKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType]];
+            [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(_condition, excludedRequestMethod) webKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType includeIdentifier:NO]];
     }
 
     // ... and we also have to create one rule per request domain (unless we have a regex filter) and request method.
@@ -839,20 +839,20 @@ static BOOL isArrayOfRequestMethodsValid(NSArray<NSString *> *requestMethods)
 
             if (requestMethods && !isRuleForAllowAllRequests) {
                 for (NSString *requestMethod in requestMethods)
-                    [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(modifiedConditionsForURLFilter, requestMethod) webKitActionType:webKitActionType chromeActionType:chromeActionType]];
+                    [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(modifiedConditionsForURLFilter, requestMethod) webKitActionType:webKitActionType chromeActionType:chromeActionType includeIdentifier:YES]];
             } else
-                [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:modifiedConditionsForURLFilter webKitActionType:webKitActionType chromeActionType:chromeActionType]];
+                [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:modifiedConditionsForURLFilter webKitActionType:webKitActionType chromeActionType:chromeActionType includeIdentifier:YES]];
         }
     } else if (requestMethods && !isRuleForAllowAllRequests) {
         for (NSString *requestMethod in requestMethods)
-            [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(_condition, requestMethod) webKitActionType:webKitActionType chromeActionType:chromeActionType]];
+            [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:createModifiedConditionsForRequestMethod(_condition, requestMethod) webKitActionType:webKitActionType chromeActionType:chromeActionType includeIdentifier:YES]];
     } else
-        [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:_condition webKitActionType:webKitActionType chromeActionType:chromeActionType]];
+        [convertedRules addObjectsFromArray:[self _convertRulesWithModifiedCondition:_condition webKitActionType:webKitActionType chromeActionType:chromeActionType includeIdentifier:YES]];
 
     return convertedRules;
 }
 
-- (NSArray<NSDictionary *> *)_convertRulesWithModifiedCondition:(NSDictionary *)condition webKitActionType:(NSString *)webKitActionType chromeActionType:(NSString *)chromeActionType
+- (NSArray<NSDictionary *> *)_convertRulesWithModifiedCondition:(NSDictionary *)condition webKitActionType:(NSString *)webKitActionType chromeActionType:(NSString *)chromeActionType includeIdentifier:(BOOL)includeIdentifier
 {
     NSMutableArray<NSDictionary<NSString *, id> *> *convertedRules = [NSMutableArray array];
 
@@ -863,30 +863,33 @@ static BOOL isArrayOfRequestMethodsValid(NSArray<NSString *> *requestMethods)
         NSMutableDictionary *modifiedCondition = [condition mutableCopy];
         modifiedCondition[ruleConditionInitiatorDomainsKey] = modifiedCondition[ruleConditionExcludedInitiatorDomainsKey];
         modifiedCondition[ruleConditionExcludedInitiatorDomainsKey] = nil;
-        [convertedRules addObject:[self _webKitRuleWithWebKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType condition:modifiedCondition]];
+        [convertedRules addObject:[self _webKitRuleWithWebKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType condition:modifiedCondition includeIdentifier:NO]];
     }
 
-    [convertedRules addObject:[self _webKitRuleWithWebKitActionType:webKitActionType chromeActionType:chromeActionType condition:condition]];
+    [convertedRules addObject:[self _webKitRuleWithWebKitActionType:webKitActionType chromeActionType:chromeActionType condition:condition includeIdentifier:includeIdentifier]];
 
     if ([webKitActionType isEqualToString:@"make-https"])
-        [convertedRules addObject:[self _webKitRuleWithWebKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType condition:condition]];
+        [convertedRules addObject:[self _webKitRuleWithWebKitActionType:@"ignore-following-rules" chromeActionType:chromeActionType condition:condition includeIdentifier:NO]];
 
     return [convertedRules copy];
 }
 
-- (NSDictionary *)_webKitRuleWithWebKitActionType:(NSString *)webKitActionType chromeActionType:(NSString *)chromeActionType condition:(NSDictionary *)condition
+- (NSDictionary *)_webKitRuleWithWebKitActionType:(NSString *)webKitActionType chromeActionType:(NSString *)chromeActionType condition:(NSDictionary *)condition includeIdentifier:(BOOL)includeIdentifier
 {
     NSMutableDictionary *actionDictionary = [@{ @"type": webKitActionType } mutableCopy];
     NSMutableDictionary *triggerDictionary = [NSMutableDictionary dictionary];
     NSNumber *isCaseSensitive = condition[declarativeNetRequestRuleConditionCaseSensitiveKey] ?: @NO;
-    NSDictionary<NSString *, id> *convertedRule = @{
+    NSMutableDictionary<NSString *, id> *convertedRule = [@{
         @"action": actionDictionary,
         @"trigger": triggerDictionary,
+    } mutableCopy];
+
 #if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
-        @"_identifier": @(_ruleID),
-        @"_rulesetIdentifier": _rulesetID,
+    if (includeIdentifier) {
+        convertedRule[@"_identifier"] = @(_ruleID);
+        convertedRule[@"_rulesetIdentifier"] = _rulesetID;
+    }
 #endif
-    };
 
     if ([chromeActionType isEqualToString:declarativeNetRequestRuleActionTypeAllowAllRequests]) {
         triggerDictionary[@"url-filter"] = @".*";

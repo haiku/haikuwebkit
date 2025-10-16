@@ -72,10 +72,10 @@ std::unique_ptr<MemoryMappedGPUBuffer> MemoryMappedGPUBuffer::create(const IntSi
         return nullptr;
     }
 
-    constexpr uint32_t preferredDMABufFormat = DRM_FORMAT_ABGR8888;
+    constexpr FourCC preferredDMABufFormat = DRM_FORMAT_ABGR8888;
 
-    auto negotiateBufferFormat = [&]() -> std::optional<GLDisplay::DMABufFormat> {
-        const auto& supportedFormats = PlatformDisplay::sharedDisplay().dmabufFormats();
+    auto negotiateBufferFormat = [&]() -> std::optional<GLDisplay::BufferFormat> {
+        const auto& supportedFormats = PlatformDisplay::sharedDisplay().bufferFormats();
         for (const auto& format : supportedFormats) {
             if (format.fourcc != preferredDMABufFormat)
                 continue;
@@ -120,16 +120,16 @@ std::unique_ptr<MemoryMappedGPUBuffer> MemoryMappedGPUBuffer::create(const IntSi
     return buffer;
 }
 
-bool MemoryMappedGPUBuffer::allocate(struct gbm_device* device, const GLDisplay::DMABufFormat& bufferFormat)
+bool MemoryMappedGPUBuffer::allocate(struct gbm_device* device, const GLDisplay::BufferFormat& bufferFormat)
 {
     m_modifier = DRM_FORMAT_MOD_INVALID;
     if (!bufferFormat.modifiers.isEmpty())
-        m_bo = gbm_bo_create_with_modifiers2(device, m_size.width(), m_size.height(), bufferFormat.fourcc, bufferFormat.modifiers.span().data(), bufferFormat.modifiers.size(), GBM_BO_USE_RENDERING);
+        m_bo = gbm_bo_create_with_modifiers2(device, m_size.width(), m_size.height(), bufferFormat.fourcc.value, bufferFormat.modifiers.span().data(), bufferFormat.modifiers.size(), GBM_BO_USE_RENDERING);
 
     if (m_bo)
         m_modifier = gbm_bo_get_modifier(m_bo);
     else {
-        m_bo = gbm_bo_create(device, m_size.width(), m_size.height(), bufferFormat.fourcc, GBM_BO_USE_LINEAR);
+        m_bo = gbm_bo_create(device, m_size.width(), m_size.height(), bufferFormat.fourcc.value, GBM_BO_USE_LINEAR);
         m_modifier = DRM_FORMAT_MOD_INVALID;
     }
 

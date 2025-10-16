@@ -364,14 +364,11 @@ void SourceBufferPrivateAVFObjC::didProvideContentKeyRequestInitializationDataFo
 
 bool SourceBufferPrivateAVFObjC::needsVideoLayer() const
 {
-    if (!m_protectedTrackID)
-        return false;
-
     // When video content is protected and keys are assigned through
     // the renderers, decoding content through decompression sessions
     // will fail. In this scenario, ask the player to create a layer
     // instead.
-    return !isEnabledVideoTrackID(*m_protectedTrackID);
+    return m_protectedTrackID && isEnabledVideoTrackID(*m_protectedTrackID);
 }
 
 Ref<MediaPromise> SourceBufferPrivateAVFObjC::appendInternal(Ref<SharedBuffer>&& data)
@@ -1049,7 +1046,6 @@ void SourceBufferPrivateAVFObjC::enqueueSample(Ref<MediaSampleAVFObjC>&& sample,
 void SourceBufferPrivateAVFObjC::enqueueSampleBuffer(MediaSampleAVFObjC& sample, const MediaTime& minimumUpcomingTime)
 {
     attachContentKeyToSampleIfNeeded(sample);
-    WebSampleBufferVideoRendering *renderer = nil;
     if (RefPtr videoRenderer = m_videoRenderer) {
         videoRenderer->enqueueSample(sample, minimumUpcomingTime);
 
@@ -1062,41 +1058,13 @@ void SourceBufferPrivateAVFObjC::enqueueSampleBuffer(MediaSampleAVFObjC& sample,
         if (videoRenderer->isUsingDecompressionSession())
             return;
 
-        renderer = videoRenderer->renderer();
-#if HAVE(AVSAMPLEBUFFERDISPLAYLAYER_READYFORDISPLAY)
         if (RetainPtr displayLayer = videoRenderer->as<AVSampleBufferDisplayLayer>()) {
             // FIXME (117934497): Remove staging code once -[AVSampleBufferDisplayLayer isReadyForDisplay] is available in SDKs used by WebKit builders
             if ([displayLayer.get() respondsToSelector:@selector(isReadyForDisplay)])
                 return;
         }
-#endif
     }
-    RefPtr player = this->player();
-    if (!player || player->hasAvailableVideoFrame() || sample.isNonDisplaying())
-        return;
 
-    DEBUG_LOG(LOGIDENTIFIER, "adding buffer attachment");
-
-    [renderer prerollDecodeWithCompletionHandler:[weakThis = ThreadSafeWeakPtr { *this }, logSiteIdentifier = LOGIDENTIFIER] (BOOL success) mutable {
-        callOnMainThread([weakThis = WTFMove(weakThis), logSiteIdentifier, success] () {
-            RefPtr protectedThis = weakThis.get();
-            if (!protectedThis)
-                return;
-
-            if (!success) {
-                ERROR_LOG_WITH_THIS(protectedThis, logSiteIdentifier, "prerollDecodeWithCompletionHandler failed");
-                return;
-            }
-
-            RefPtr videoRenderer = protectedThis->m_videoRenderer;
-            if (!videoRenderer) {
-                ERROR_LOG_WITH_THIS(protectedThis, logSiteIdentifier, "prerollDecodeWithCompletionHandler called after renderer destroyed");
-                return;
-            }
-
-            protectedThis->videoRendererReadyForDisplayChanged(videoRenderer->renderer(), true);
-        });
-    }];
 }
 
 void SourceBufferPrivateAVFObjC::attachContentKeyToSampleIfNeeded(const MediaSampleAVFObjC& sample)

@@ -1265,6 +1265,9 @@ $(PROJECT_DIR)/css/CSSFontFaceDescriptors.idl
 $(PROJECT_DIR)/css/CSSFontFaceRule.idl
 $(PROJECT_DIR)/css/CSSFontFeatureValuesRule.idl
 $(PROJECT_DIR)/css/CSSFontPaletteValuesRule.idl
+$(PROJECT_DIR)/css/CSSFunctionDeclarations.idl
+$(PROJECT_DIR)/css/CSSFunctionDescriptors.idl
+$(PROJECT_DIR)/css/CSSFunctionRule.idl
 $(PROJECT_DIR)/css/CSSGroupingRule.idl
 $(PROJECT_DIR)/css/CSSImportRule.idl
 $(PROJECT_DIR)/css/CSSKeyframeRule.idl
@@ -1679,7 +1682,7 @@ $(PROJECT_DIR)/html/ImageBitmap.idl
 $(PROJECT_DIR)/html/ImageBitmapOptions.idl
 $(PROJECT_DIR)/html/ImageData.idl
 $(PROJECT_DIR)/html/ImageDataSettings.idl
-$(PROJECT_DIR)/html/ImageDataStorageFormat.idl
+$(PROJECT_DIR)/html/ImageDataPixelFormat.idl
 $(PROJECT_DIR)/html/MediaController.idl
 $(PROJECT_DIR)/html/MediaEncryptedEvent.idl
 $(PROJECT_DIR)/html/MediaError.idl
@@ -1866,6 +1869,7 @@ $(PROJECT_DIR)/page/IntersectionObserver.idl
 $(PROJECT_DIR)/page/IntersectionObserverCallback.idl
 $(PROJECT_DIR)/page/IntersectionObserverEntry.idl
 $(PROJECT_DIR)/page/IsLoggedIn.idl
+$(PROJECT_DIR)/page/LargestContentfulPaint.idl
 $(PROJECT_DIR)/page/Location.idl
 $(PROJECT_DIR)/page/NavigateEvent.idl
 $(PROJECT_DIR)/page/Navigation.idl
@@ -1891,6 +1895,7 @@ $(PROJECT_DIR)/page/NavigatorStorageManager.idl
 $(PROJECT_DIR)/page/NavigatorUA.idl
 $(PROJECT_DIR)/page/NavigatorUABrandVersion.idl
 $(PROJECT_DIR)/page/NavigatorUAData.idl
+$(PROJECT_DIR)/page/PaintTimingMixin.idl
 $(PROJECT_DIR)/page/Performance+EventCounts.idl
 $(PROJECT_DIR)/page/Performance+NavigationTiming.idl
 $(PROJECT_DIR)/page/Performance+PerformanceTimeline.idl

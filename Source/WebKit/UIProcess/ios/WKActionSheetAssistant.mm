@@ -424,7 +424,7 @@ static bool isJavaScriptURL(NSURL *url)
     };
 
     if (_positionInformation->url.isEmpty() && _positionInformation->image && [delegate respondsToSelector:@selector(actionSheetAssistant:getAlternateURLForImage:completion:)]) {
-        RetainPtr<UIImage> uiImage = adoptNS([[UIImage alloc] initWithCGImage:_positionInformation->image->makeCGImageCopy().get()]);
+        RetainPtr<UIImage> uiImage = adoptNS([[UIImage alloc] initWithCGImage:_positionInformation->image->createPlatformImage().get()]);
 
         _hasPendingActionSheet = YES;
         RetainPtr<WKActionSheetAssistant> retainedSelf(self);

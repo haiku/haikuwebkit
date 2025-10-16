@@ -316,7 +316,7 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
 
     if (needsValidationLayerWorkaround) {
         pipeline = pipeline->recomputeLastStrideAsStride();
-        m_currentPipelineState = pipeline->renderPipelineState();
+        m_currentPipelineState = pipeline->icbRenderPipelineState();
     }
 
     if (!m_currentPipelineState)
@@ -1314,14 +1314,14 @@ void RenderBundleEncoder::setPipeline(const RenderPipeline& pipeline)
     }
 
     id<MTLRenderPipelineState> previousRenderPipelineState = m_currentPipelineState;
-    m_currentPipelineState = pipeline.renderPipelineState();
+    m_currentPipelineState = pipeline.icbRenderPipelineState();
 
     if (replayingCommands()) {
         auto currentPipeline = m_pipeline;
         if (m_pipeline && m_currentCommandIndex && icbNeedsToBeSplit(*currentPipeline, pipeline)) {
             m_currentPipelineState = previousRenderPipelineState;
             splitICB(false);
-            m_currentPipelineState = pipeline.renderPipelineState();
+            m_currentPipelineState = pipeline.icbRenderPipelineState();
         }
 
         id<MTLDepthStencilState> previousDepthStencilState = m_depthStencilState;
@@ -1369,7 +1369,7 @@ void RenderBundleEncoder::setPipeline(const RenderPipeline& pipeline)
             [commandEncoder setDepthBias:m_depthBias slopeScale:m_depthBiasSlopeScale clamp:m_depthBiasClamp];
         }
     } else {
-        if (!pipeline.renderPipelineState())
+        if (!pipeline.icbRenderPipelineState())
             return;
 
         if (!pipeline.validateRenderBundle(m_descriptor)) {

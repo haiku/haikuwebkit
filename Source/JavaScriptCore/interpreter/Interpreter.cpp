@@ -34,6 +34,7 @@
 #include "AbstractModuleRecord.h"
 #include "ArgList.h"
 #include "BatchedTransitionOptimizer.h"
+#include "BuiltinNames.h"
 #include "Bytecodes.h"
 #include "CallLinkInfo.h"
 #include "CatchScope.h"
@@ -57,6 +58,7 @@
 #include "JSModuleEnvironment.h"
 #include "JSModuleRecord.h"
 #include "JSObject.h"
+#include "JSPromise.h"
 #include "JSRemoteFunction.h"
 #include "JSString.h"
 #include "JSWebAssemblyException.h"
@@ -78,6 +80,7 @@
 #include "VMTrapsInlines.h"
 #include "VirtualRegister.h"
 #include "WasmThunks.h"
+#include "parser/ParserModes.h"
 #include <stdio.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/Scope.h>
@@ -448,6 +451,70 @@ bool Interpreter::isOpcode(Opcode opcode)
 }
 #endif // ASSERT_ENABLED
 
+
+void Interpreter::getAsyncStackTrace(JSCell* owner, Vector<StackFrame>& results, JSGenerator* generator, size_t maxStackSize)
+{
+    RELEASE_ASSERT(Options::useAsyncStackTrace());
+    ASSERT(generator);
+
+    AssertNoGC assertNoGC;
+
+    VM& vm = this->vm();
+
+    auto getParentGenerator = [&](JSGenerator* gen) -> JSGenerator* {
+        JSValue contextValue = gen->internalField(static_cast<unsigned>(JSGenerator::Field::Context)).get();
+        JSPromise* awaitedPromise = jsDynamicCast<JSPromise*>(contextValue);
+        if (awaitedPromise && awaitedPromise->status(vm) == JSPromise::Status::Pending) {
+            JSValue reactionsValue = awaitedPromise->internalField(JSPromise::Field::ReactionsOrResult).get();
+            if (JSObject* reactions = jsDynamicCast<JSObject*>(reactionsValue)) {
+                Structure* structure = reactions->structure();
+                unsigned attributes;
+                PropertyOffset offset = structure->getConcurrently(vm.propertyNames->builtinNames().contextPrivateName().impl(), attributes);
+                if (offset != invalidOffset && !(attributes & (PropertyAttribute::Accessor | PropertyAttribute::CustomAccessorOrValue))) {
+                    JSValue contextFieldValue = reactions->getDirect(offset);
+                    if (auto* resultGenerator = jsDynamicCast<JSGenerator*>(contextFieldValue))
+                        return resultGenerator;
+                }
+            }
+        }
+        return nullptr;
+    };
+
+    auto computeBytecodeIndex = [&](CodeBlock* codeBlock, JSGenerator* generator) -> BytecodeIndex {
+        BytecodeIndex bytecodeIndex(0);
+        JSValue stateValue = generator->internalField(static_cast<unsigned>(JSGenerator::Field::State)).get();
+        if (stateValue.isInt32()) {
+            int32_t state = stateValue.asInt32();
+            size_t numberOfJumpTables = codeBlock->numberOfUnlinkedSwitchJumpTables();
+            if (state > 0 && numberOfJumpTables > 0) {
+                size_t lastTableIndex = numberOfJumpTables - 1;
+                const UnlinkedSimpleJumpTable& jumpTable = codeBlock->unlinkedSwitchJumpTable(lastTableIndex);
+                int32_t offset = jumpTable.offsetForValue(state);
+                if (offset)
+                    bytecodeIndex = BytecodeIndex(offset);
+            }
+        }
+        return bytecodeIndex;
+    };
+
+    JSGenerator* currentGenerator = getParentGenerator(generator);
+    while (currentGenerator && results.size() < maxStackSize) {
+        JSValue nextValue = currentGenerator->internalField(static_cast<unsigned>(JSGenerator::Field::Next)).get();
+        JSFunction* asyncFunction = jsDynamicCast<JSFunction*>(nextValue);
+        if (asyncFunction && !asyncFunction->isHostOrBuiltinFunction()) {
+            if (FunctionExecutable* executable = asyncFunction->jsExecutable()) {
+                // If a CodeBlock doesn't already exist, the stack trace will only show the filename and won't show line column
+                if (CodeBlock* codeBlock = executable->codeBlockForCall()) {
+                    BytecodeIndex bytecodeIndex = computeBytecodeIndex(codeBlock, currentGenerator);
+                    results.append(StackFrame(vm, owner, asyncFunction, codeBlock, bytecodeIndex, /* isAsyncFrame */ true));
+                } else
+                    results.append(StackFrame(vm, owner, asyncFunction, /* isAsyncFrame */ true));
+            }
+        }
+        currentGenerator = getParentGenerator(currentGenerator);
+    }
+}
+
 void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size_t framesToSkip, size_t maxStackSize, JSCell* caller, JSCell* ownerOfCallLinkInfo, CallLinkInfo* callLinkInfo)
 {
     AssertNoGC assertNoGC;
@@ -497,6 +564,8 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
     }
 
     bool foundCaller = !caller;
+    JSGenerator* asyncStackTraceOriginGenerator = nullptr;
+    size_t asyncStackTraceInsertPos = 0;
     StackVisitor::visit(callFrame, vm, [&] (StackVisitor& visitor) ALWAYS_INLINE_LAMBDA {
         if (results.size() >= maxStackSize)
             return IterationStatus::Done;
@@ -511,6 +580,26 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
                 foundCaller = true;
             skippedFrames++;
             return IterationStatus::Continue;
+        }
+
+        if (Options::useAsyncStackTrace()) {
+            if (visitor->callee().isCell()) {
+                if (JSFunction* callee = jsDynamicCast<JSFunction*>(visitor->callee().asCell())) {
+                    JSGlobalObject* globalObject = callFrame->lexicalGlobalObject(vm);
+
+                    JSGenerator* generator = nullptr;
+                    if (callee == globalObject->promiseReactionJobFunction())
+                        generator = jsDynamicCast<JSGenerator*>(visitor->callFrame()->argument(3));
+                    else if (callee == globalObject->promiseReactionJobWithoutPromiseFunction())
+                        generator = jsDynamicCast<JSGenerator*>(visitor->callFrame()->argument(2));
+
+                    if (generator) {
+                        asyncStackTraceOriginGenerator = generator;
+                        asyncStackTraceInsertPos = results.size();
+                        return IterationStatus::Continue;
+                    }
+                }
+            }
         }
 
         if (visitor->isImplementationVisibilityPrivate())
@@ -533,6 +622,15 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
             results.append(StackFrame(vm, owner, visitor->callee().asCell()));
         return IterationStatus::Continue;
     });
+
+    if (Options::useAsyncStackTrace()) {
+        if (asyncStackTraceOriginGenerator) {
+            Vector<StackFrame> asyncFrames;
+            getAsyncStackTrace(owner, asyncFrames, asyncStackTraceOriginGenerator, maxStackSize);
+            if (!asyncFrames.isEmpty())
+                results.insertVector(asyncStackTraceInsertPos, asyncFrames);
+        }
+    }
 }
 
 String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace)
@@ -1240,7 +1338,7 @@ ALWAYS_INLINE JSValue Interpreter::executeCallImpl(VM& vm, JSObject* function, c
 
 #if ENABLE(WEBASSEMBLY)
     if (callData.native.isWasm)
-        return JSValue::decode(vmEntryToWasm(jsCast<WebAssemblyFunction*>(function)->jsEntrypoint(ArityCheckMode::MustCheckArity).taggedPtr(), &vm, &protoCallFrame));
+        return JSValue::decode(vmEntryToWasm(jsCast<WebAssemblyFunction*>(function)->jsToWasm(ArityCheckMode::MustCheckArity).taggedPtr(), &vm, &protoCallFrame));
 #endif
 
     return JSValue::decode(vmEntryToNative(nativeFunction.taggedPtr(), &vm, &protoCallFrame));

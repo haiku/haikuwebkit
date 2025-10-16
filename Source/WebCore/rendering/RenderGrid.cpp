@@ -525,15 +525,7 @@ void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
         updateDescendantTransformsAfterLayout();
     }
 
-    updateLayerTransform();
-
-    // Update our scroll information if we're overflow:auto/scroll/hidden now that we know if
-    // we overflow or not.
-    updateScrollInfoAfterLayout();
-
     repainter.repaintAfterLayout();
-
-    clearNeedsLayout();
 
     m_trackSizingAlgorithm.clearBaselineItemsCache();
     m_baselineItemsCached = false;
@@ -662,15 +654,7 @@ void RenderGrid::layoutMasonry(RelayoutChildren relayoutChildren)
         updateDescendantTransformsAfterLayout();
     }
 
-    updateLayerTransform();
-
-    // Update our scroll information if we're overflow:auto/scroll/hidden now that we know if
-    // we overflow or not.
-    updateScrollInfoAfterLayout();
-
     repainter.repaintAfterLayout();
-
-    clearNeedsLayout();
 
     m_trackSizingAlgorithm.clearBaselineItemsCache();
     m_baselineItemsCached = false;

@@ -42,7 +42,7 @@ SystemHeap* systemHeapCache { nullptr };
 
 DEFINE_STATIC_PER_PROCESS_STORAGE(SystemHeap);
 
-#if BOS(DARWIN)
+#if BENABLE(MALLOC_HEAP_BREAKDOWN) || BOS(DARWIN)
 
 static bool shouldUseDefaultMallocZone()
 {

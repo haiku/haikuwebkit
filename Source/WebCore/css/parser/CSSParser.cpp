@@ -435,6 +435,21 @@ RefPtr<StyleRuleBase> CSSParser::consumeAtRule(CSSParserTokenRange& range, Allow
     if (allowedRules == AllowedRules::NoRules)
         return nullptr;
 
+    if (allowedRules == AllowedRules::ConditionalGroupRules) {
+        switch (id) {
+        case CSSAtRuleMedia:
+        case CSSAtRuleSupports:
+        case CSSAtRuleContainer:
+            break;
+        case CSSAtRuleFunction:
+            if (!isFunctionNestedContext())
+                return nullptr;
+            break;
+        default:
+            return nullptr;
+        }
+    };
+
     switch (id) {
     case CSSAtRuleMedia:
         return consumeMediaRule(prelude, block);
@@ -704,6 +719,9 @@ Vector<Ref<StyleRuleBase>> CSSParser::consumeNestedGroupRules(CSSParserTokenRang
             }
             rules.appendVector(topContext().m_parsedRules);
         });
+    } else if (isFunctionNestedContext()) {
+        // Only allow <declaration-rule-list> in @function context.
+        rules.appendVector(consumeDeclarationRuleListInNewNestingContext(block, StyleRuleType::Function));
     } else {
         consumeRuleList(block, RuleList::Regular, [&rules](Ref<StyleRuleBase>&& rule) {
             rules.append(WTFMove(rule));
@@ -1175,10 +1193,11 @@ RefPtr<StyleRuleFunction> CSSParser::consumeFunctionRule(CSSParserTokenRange pre
     if (!prelude.atEnd())
         return nullptr;
 
-    // FIXME: Parse the descriptors.
-    block.consumeAll();
+    m_ancestorRuleTypeStack.append(CSSParserEnum::NestedContextType::Function);
+    auto functionBody = consumeDeclarationRuleListInNewNestingContext(block, StyleRuleType::Function);
+    m_ancestorRuleTypeStack.removeLast();
 
-    return StyleRuleFunction::create(name, WTFMove(parameters), WTFMove(returnType), { });
+    return StyleRuleFunction::create(name, WTFMove(parameters), WTFMove(returnType), WTFMove(functionBody));
 }
 
 RefPtr<StyleRuleScope> CSSParser::consumeScopeRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
@@ -1492,14 +1511,13 @@ RefPtr<StyleRuleBase> CSSParser::consumeStyleRule(CSSParserTokenRange prelude, C
 
 // https://drafts.csswg.org/css-syntax/#consume-block-contents
 // https://drafts.csswg.org/css-syntax/#block-contents
-void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType ruleType, OnlyDeclarations onlyDeclarations, ParsingStyleDeclarationsInRuleList isParsingStyleDeclarationsInRuleList)
+void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType ruleType, OptionSet<BlockAllowedRule> blockAllowedRules, ParsingStyleDeclarationsInRuleList isParsingStyleDeclarationsInRuleList)
 {
-    auto nestedRulesAllowed = [&] {
-        return isStyleNestedContext() && onlyDeclarations == OnlyDeclarations::No;
-    };
-
     ASSERT(topContext().m_parsedProperties.isEmpty());
     ASSERT(topContext().m_parsedRules.isEmpty());
+
+    // All the current callers support declarations so the no-declarations case is not implemented.
+    ASSERT(blockAllowedRules.contains(BlockAllowedRule::Declarations));
 
     RefPtr observerWrapper = m_observerWrapper.get();
 
@@ -1519,7 +1537,8 @@ void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType rul
     bool initialDeclarationBlockFinished = false;
     auto storeDeclarations = [&] {
         // We don't wrap the first declaration block, we store it until the end of the style rule.
-        if (!initialDeclarationBlockFinished) {
+        // For @function we always use the declaration block.
+        if (!initialDeclarationBlockFinished && ruleType != StyleRuleType::Function) {
             initialDeclarationBlockFinished = true;
             std::swap(initialDeclarationBlock, topContext().m_parsedProperties);
             return;
@@ -1532,6 +1551,12 @@ void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType rul
         ParsedPropertyVector properties;
         std::swap(properties, topContext().m_parsedProperties);
 
+        if (ruleType == StyleRuleType::Function) {
+            auto rule = StyleRuleFunctionDeclarations::create(createStyleProperties(properties, m_context.mode));
+            topContext().m_parsedRules.append(WTFMove(rule));
+            return;
+        }
+
         auto rule = StyleRuleNestedDeclarations::create(createStyleProperties(properties, m_context.mode));
         topContext().m_parsedRules.append(WTFMove(rule));
     };
@@ -1540,7 +1565,8 @@ void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType rul
         const auto initialRange = range;
 
         auto consumeNestedRuleOrInvalidSyntax = [&] {
-            if (nestedRulesAllowed()) {
+            if (blockAllowedRules.contains(BlockAllowedRule::QualifiedRules)) {
+                ASSERT(isStyleNestedContext());
                 // For block, we try to consume a qualified rule (~= a style rule).
                 // This consumes tokens and deals with error recovery
                 // in the case of invalid syntax.
@@ -1587,8 +1613,9 @@ void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType rul
             break;
         }
         case AtKeywordToken: {
-            if (nestedRulesAllowed()) {
-                RefPtr rule = consumeAtRule(range, AllowedRules::RegularRules);
+            if (blockAllowedRules.contains(BlockAllowedRule::AtRules)) {
+                auto allowedRules = ruleType == StyleRuleType::Function ? AllowedRules::ConditionalGroupRules : AllowedRules::RegularRules;
+                RefPtr rule = consumeAtRule(range, allowedRules);
                 if (!rule)
                     break;
                 auto lastAncestor = lastAncestorRuleType();
@@ -1635,14 +1662,33 @@ ParsedPropertyVector CSSParser::consumeDeclarationListInNewNestingContext(CSSPar
     return result;
 }
 
+Vector<Ref<StyleRuleBase>> CSSParser::consumeDeclarationRuleListInNewNestingContext(CSSParserTokenRange range, StyleRuleType ruleType)
+{
+    Vector<Ref<StyleRuleBase>> rules;
+    runInNewNestingContext([&] {
+        consumeDeclarationRuleList(range, ruleType);
+        rules.appendVector(topContext().m_parsedRules);
+    });
+    return rules;
+}
+
 void CSSParser::consumeDeclarationList(CSSParserTokenRange range, StyleRuleType ruleType)
 {
-    consumeBlockContent(range, ruleType, OnlyDeclarations::Yes);
+    // https://drafts.csswg.org/css-syntax-3/#block-contents
+    // <declaration-list>: only declarations are allowed; at-rules and qualified rules are automatically invalid.
+    consumeBlockContent(range, ruleType, BlockAllowedRule::Declarations);
+}
+
+void CSSParser::consumeDeclarationRuleList(CSSParserTokenRange range, StyleRuleType ruleType)
+{
+    // <declaration-rule-list>: declarations and at-rules are allowed; qualified rules are automatically invalid.
+    consumeBlockContent(range, ruleType, { BlockAllowedRule::Declarations, BlockAllowedRule::AtRules });
 }
 
 void CSSParser::consumeStyleBlock(CSSParserTokenRange range, StyleRuleType ruleType, ParsingStyleDeclarationsInRuleList isParsingStyleDeclarationsInRuleList)
 {
-    consumeBlockContent(range, ruleType, OnlyDeclarations::No, isParsingStyleDeclarationsInRuleList);
+    // <block-contents>
+    consumeBlockContent(range, ruleType, { BlockAllowedRule::Declarations, BlockAllowedRule::QualifiedRules, BlockAllowedRule::AtRules }, isParsingStyleDeclarationsInRuleList);
 }
 
 IsImportant CSSParser::consumeTrailingImportantAndWhitespace(CSSParserTokenRange& range)
@@ -1672,7 +1718,8 @@ static bool ruleDoesNotAllowImportant(StyleRuleType type)
         || type == StyleRuleType::FontPaletteValues
         || type == StyleRuleType::Keyframe
         || type == StyleRuleType::PositionTry
-        || type == StyleRuleType::ViewTransition;
+        || type == StyleRuleType::ViewTransition
+        || type == StyleRuleType::Function;
 }
 
 // https://drafts.csswg.org/css-syntax/#consume-declaration

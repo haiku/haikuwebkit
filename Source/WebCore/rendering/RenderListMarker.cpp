@@ -88,10 +88,10 @@ void RenderListMarker::styleDidChange(StyleDifference diff, const RenderStyle* o
         diff = adjustedStyleDifference(diff, *oldStyle, style());
     RenderBox::styleDidChange(diff, oldStyle);
 
-    if (m_image != style().listStyleImage()) {
+    if (RefPtr newImage = style().listStyleImage().tryStyleImage(); m_image != newImage) {
         if (m_image)
             m_image->removeClient(*this);
-        m_image = style().listStyleImage();
+        m_image = WTFMove(newImage);
         if (m_image)
             m_image->addClient(*this);
     }

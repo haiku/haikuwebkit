@@ -96,12 +96,13 @@ private:
     void collectMatchingRules(const MatchRequest&);
     void collectMatchingRulesForList(const RuleSet::RuleDataVector*, const MatchRequest&);
     bool isFirstMatchModeAndHasMatchedAnyRules() const;
-    bool ruleMatches(const RuleData&, unsigned& specificity, ScopeOrdinal, const ContainerNode* scopingRoot = nullptr);
-    bool containerQueriesMatch(const RuleData&, const MatchRequest&);
     struct ScopingRootWithDistance {
         RefPtr<const ContainerNode> scopingRoot;
         unsigned distance { std::numeric_limits<unsigned>::max() };
+        bool matchesVisited { false };
     };
+    bool ruleMatches(const RuleData&, unsigned& specificity, ScopeOrdinal, std::optional<ScopingRootWithDistance> scopingRoot = { });
+    bool containerQueriesMatch(const RuleData&, const MatchRequest&);
     std::pair<bool, std::optional<Vector<ScopingRootWithDistance>>> scopeRulesMatch(const RuleData&, const MatchRequest&);
 
     void sortMatchedRules();

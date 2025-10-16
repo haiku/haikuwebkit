@@ -32,6 +32,7 @@ namespace WebCore {
 namespace MQ {
 
 struct MediaQuery;
+using MediaQueryList = Vector<MediaQuery>;
 
 struct MediaQueryParser : public GenericMediaQueryParser<MediaQueryParser>  {
     static MediaQueryList parse(const String&, const CSSParserContext&);

@@ -234,6 +234,12 @@
     _showedInspector = YES;
 }
 
+- (void)_webView:(WKWebView *)webView didReceiveConsoleLogForTesting:(NSString *)log
+{
+    if (_didReceiveConsoleLogForTesting)
+        _didReceiveConsoleLogForTesting(log);
+}
+
 - (void)waitForInspectorToShow
 {
     while (!_showedInspector)

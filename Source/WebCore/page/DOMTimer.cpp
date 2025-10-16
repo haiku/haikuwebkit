@@ -27,6 +27,7 @@
 #include "config.h"
 #include "DOMTimer.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "HTMLPlugInElement.h"
 #include "InspectorInstrumentation.h"
 #include "Logging.h"

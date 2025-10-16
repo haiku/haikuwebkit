@@ -516,5 +516,12 @@
                 "expected": {"gtk": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/284812"}}
             }
         }
+    },
+    "TestWebKitImmersiveMode": {
+        "subtests": {
+            "/webkit/WebKitImmersiveMode/leave-immersive-mode": {
+                "expected": {"all" : {"status": ["SKIP"], "bug": "webkit.org/b/297261"}}
+            }
+        }
     }
 }

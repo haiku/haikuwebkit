@@ -34,7 +34,6 @@
 #include "Settings.h"
 #include "StyleCursor.h"
 #include "StyleImage.h"
-#include "StyleReflection.h"
 #include "TransformOperationsBuilder.h"
 
 namespace WebCore {
@@ -90,12 +89,12 @@ void loadPendingResources(RenderStyle& style, Document& document, const Element*
             loadPendingImage(document, cursorImage.image.ptr(), element);
     }
 
-    loadPendingImage(document, style.listStyleImage(), element);
+    loadPendingImage(document, style.listStyleImage().tryStyleImage().get(), element);
     loadPendingImage(document, style.borderImageSource().tryStyleImage().get(), element);
     loadPendingImage(document, style.maskBorderSource().tryStyleImage().get(), element);
 
-    if (auto* reflection = style.boxReflect())
-        loadPendingImage(document, reflection->mask().source().tryStyleImage().get(), element);
+    if (auto reflection = style.boxReflect().tryReflection())
+        loadPendingImage(document, reflection->mask.source().tryStyleImage().get(), element);
 
     // Masking operations may be sensitive to timing attacks that can be used to reveal the pixel data of
     // the image used as the mask. As a means to mitigate such attacks CSS mask images and shape-outside

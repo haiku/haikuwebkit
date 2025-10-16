@@ -29,6 +29,7 @@
 #if ENABLE(WEBGL)
 
 #include "CachedImage.h"
+#include "ContextDestructionObserverInlines.h"
 #include "EXTClipControl.h"
 #include "EXTColorBufferFloat.h"
 #include "EXTColorBufferHalfFloat.h"

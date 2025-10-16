@@ -489,7 +489,7 @@ static Vector<AtomString> classListForNamedViewTransitionPseudoElement(const Doc
     return capturedElement->classList;
 }
 
-inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned& specificity, ScopeOrdinal styleScopeOrdinal, const ContainerNode* scopingRoot)
+inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned& specificity, ScopeOrdinal styleScopeOrdinal, std::optional<ScopingRootWithDistance> scopingRoot)
 {
     // We know a sufficiently simple single part selector matches simply because we found it from the rule hash when filtering the RuleSet.
     // This is limited to HTML only so we don't need to check the namespace (because of tag name match).
@@ -549,7 +549,10 @@ inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned
     }
     context.styleScopeOrdinal = styleScopeOrdinal;
     context.selectorMatchingState = m_selectorMatchingState;
-    context.scope = scopingRoot;
+    if (scopingRoot) {
+        context.scope = scopingRoot->scopingRoot;
+        context.scopingRootMatchesVisited = scopingRoot->matchesVisited;
+    }
 
     bool selectorMatches;
 #if ENABLE(CSS_SELECTOR_JIT)
@@ -607,7 +610,7 @@ void ElementRuleCollector::collectMatchingRulesForList(const RuleSet::RuleDataVe
 
         auto addRuleIfMatches = [&] (const ScopingRootWithDistance& scopingRootWithDistance = { }) {
             unsigned specificity;
-            if (ruleMatches(ruleData, specificity, matchRequest.styleScopeOrdinal, scopingRootWithDistance.scopingRoot.get()))
+            if (ruleMatches(ruleData, specificity, matchRequest.styleScopeOrdinal, scopingRootWithDistance))
                 addMatchedRule(ruleData, specificity, scopingRootWithDistance.distance, matchRequest);
         };
 
@@ -678,17 +681,21 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
                     shadowHostCrossed = true;
                 }
                 for (const auto& selector : selectorList) {
-                    auto appendIfMatch = [&] (const ContainerNode* previousScopingRoot = nullptr) {
-                        subContext.scope = previousScopingRoot;
+                    auto appendIfMatch = [&] (std::optional<ScopingRootWithDistance> previousScopingRoot = { }) {
+                        if (previousScopingRoot)
+                            subContext.scope = previousScopingRoot->scopingRoot;
+                        // Reset visited flag for each scoping root evaluation
+                        subContext.scopingRootMatchesVisited = false;
+                        subContext.isEvaluatingScopingRoot = true;
                         auto match = checker.match(selector, *ancestor, subContext);
                         if (match)
-                            scopingRoots.append({ ancestor, distance });
+                            scopingRoots.append({ ancestor, distance, subContext.scopingRootMatchesVisited });
                     };
                     if (previousScopingRoots.isEmpty())
                         appendIfMatch();
                     else {
-                        for (const auto& [previousScopingRoot, _] : previousScopingRoots)
-                            appendIfMatch(previousScopingRoot.get());
+                        for (const auto& previousScopingRoot : previousScopingRoots)
+                            appendIfMatch(previousScopingRoot);
                     }
                 }
 

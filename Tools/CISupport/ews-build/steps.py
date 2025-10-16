@@ -1354,29 +1354,27 @@ class CheckChangeRelevance(AnalyzeChange):
                 return False
         return False
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         patch = self._get_patch()
         if not patch:
             # This build doesn't have a patch, it might be a force build.
-            self.finished(SUCCESS)
-            return None
+            defer.returnValue(SUCCESS)
 
         if self._patch_is_relevant(patch, self.getProperty('buildername', '')):
-            self._addToLog('stdio', 'This {} contains relevant changes.'.format(self.change_type.lower()))
-            self.finished(SUCCESS)
-            return None
+            self._addToLog('stdio', f'This {self.change_type.lower()} contains relevant changes.')
+            defer.returnValue(SUCCESS)
 
-        self._addToLog('stdio', 'This {} does not have relevant changes.'.format(self.change_type.lower()))
-        self.finished(FAILURE)
+        yield self._addToLog('stdio', f'This {self.change_type.lower()} does not have relevant changes.')
         self.build.results = SKIPPED
         self.build.buildFinished(['{} {} doesn\'t have relevant changes'.format(
             self.change_type,
             self.getProperty('patch_id', '') or self.getProperty('github.number', ''),
         )], SKIPPED)
-        return None
+        defer.returnValue(FAILURE)
 
 
-class GetTestExpectationsBaseline(shell.ShellCommand, ShellMixin):
+class GetTestExpectationsBaseline(shell.ShellCommandNewStyle, ShellMixin):
     name = 'get-test-expectations-baseline'
     description = 'get-test-expectations-baseline running'
     descriptionDone = 'Found baseline expectations for layout tests'
@@ -1388,17 +1386,17 @@ class GetTestExpectationsBaseline(shell.ShellCommand, ShellMixin):
         self.addLogObserver('stdio', self.log_observer)
 
         platform = self.getProperty('platform')
-        self.setCommand(self.command + customBuildFlag(platform, self.getProperty('fullPlatform')))
+        self.command += customBuildFlag(platform, self.getProperty('fullPlatform'))
 
         patch_author = self.getProperty('patch_author')
         if patch_author in ['webkit-wpt-import-bot@igalia.com']:
-            self.setCommand(self.command + ['imported/w3c/web-platform-tests'])
+            self.command += ['imported/w3c/web-platform-tests']
 
         additionalArguments = self.getProperty('additionalArguments', '')
         if additionalArguments:
-            self.setCommand(self.command + additionalArguments)
+            self.command += additionalArguments
 
-        self.setCommand(self.shell_command(' '.join(self.command) + ' > base-expectations.txt'))
+        self.command = self.shell_command(' '.join(self.command) + ' > base-expectations.txt')
         rc = yield super().run()
 
         log_text = log_text = self.log_observer.getStdout() + self.log_observer.getStderr()
@@ -3276,7 +3274,7 @@ class BuildLogLineObserver(ParseByLineLogObserver):
             self.error_context_buffer = []
 
 
-class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
+class CompileWebKit(shell.CompileNewStyle, AddToLogMixin, ShellMixin):
     name = 'compile-webkit'
     description = ['compiling']
     descriptionDone = ['Compiled WebKit']
@@ -3296,7 +3294,8 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
     def doStepIf(self, step):
         return not (self.getProperty('fast_commit_queue') and self.getProperty('buildername', '').lower() == 'commit-queue')
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         platform = self.getProperty('platform')
         buildOnly = self.getProperty('buildOnly')
         architecture = self.getProperty('architecture')
@@ -3335,16 +3334,17 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
 
         # filter-build-webkit is specifically designed for Xcode and doesn't work generally
         if platform in self.APPLE_PLATFORMS:
-            self.setCommand(self.shell_command(f"{' '.join(build_command)} 2>&1 | {' '.join(self.filter_command)}"))
+            self.command = self.shell_command(f"{' '.join(build_command)} 2>&1 | {' '.join(self.filter_command)}")
         else:
-            self.setCommand(build_command)
+            self.command = build_command
 
-        return shell.Compile.start(self)
+        rc = yield super().run()
+        defer.returnValue(rc)
 
     def errorReceived(self, error):
         # Temporary workaround for catching silent failures: https://bugs.webkit.org/show_bug.cgi?id=276081
         self.build_failed = True
-        self._addToLog('errors', error + '\n')
+        # FIXME: Re-enable error filtering from logs.
 
     def handleExcessiveLogging(self):
         build_url = f'{self.master.config.buildbotURL}#/builders/{self.build._builderid}/builds/{self.build.number}'
@@ -3419,7 +3419,7 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
             return {'step': 'Skipped compiling WebKit'}
         if self.results == CANCELLED and self.cancelled_due_to_huge_logs:
             return {'step': 'Cancelled step due to huge logs', 'build': 'Cancelled build due to huge logs'}
-        return shell.Compile.getResultSummary(self)
+        return super().getResultSummary()
 
 
 class CompileWebKitWithoutChange(CompileWebKit):
@@ -3431,7 +3431,7 @@ class CompileWebKitWithoutChange(CompileWebKit):
         super().__init__(**kwargs)
 
     def evaluateCommand(self, cmd):
-        rc = shell.Compile.evaluateCommand(self, cmd)
+        rc = shell.CompileNewStyle.evaluateCommand(self, cmd)
 
         self.build.addStepsAfterCurrentStep(self.follow_up_steps())
 
@@ -3658,14 +3658,16 @@ class CompileJSC(CompileWebKit):
     descriptionDone = ['Compiled JSC']
     build_command = ['perl', 'Tools/Scripts/build-jsc']
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         self.setProperty('group', 'jsc')
-        return CompileWebKit.start(self)
+        rc = yield super().run()
+        defer.returnValue(rc)
 
     def getResultSummary(self):
         if self.results == FAILURE:
             return {'step': 'Failed to compile JSC'}
-        return shell.Compile.getResultSummary(self)
+        return shell.CompileNewStyle.getResultSummary(self)
 
 
 class CompileJSC32(CompileWebKit):
@@ -3673,28 +3675,30 @@ class CompileJSC32(CompileWebKit):
     descriptionDone = ['Compiled JSC']
     build_command = ["linux32", "perl", "Tools/Scripts/build-jsc", "--32-bit", "--cmakeargs", "-DUSE_LIBBACKTRACE=OFF -DDEVELOPER_MODE=ON -DENABLE_OFFLINE_ASM_ALT_ENTRY=1 -DCMAKE_CXX_FLAGS='-fuse-ld=gold -Wl,--no-map-whole-files -Wl,--no-keep-memory -Wl,--no-keep-files-mapped -Wl,--no-mmap-output-file -fno-omit-frame-pointer' -DCMAKE_C_FLAGS='-fuse-ld=gold -Wl,--no-map-whole-files -Wl,--no-keep-memory -Wl,--no-keep-files-mapped -Wl,--no-mmap-output-file -fno-omit-frame-pointer' -DUSE_LD_LLD=OFF"]
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         self.setProperty('group', 'jsc')
-        return CompileWebKit.start(self)
+        rc = yield super().run()
+        defer.returnValue(rc)
 
     def getResultSummary(self):
         if self.results == FAILURE:
             return {'step': 'Failed to compile JSC'}
-        return shell.Compile.getResultSummary(self)
+        return shell.CompileNewStyle.getResultSummary(self)
 
 
 class CompileJSCWithoutChange(CompileJSC):
     name = 'compile-jsc-without-change'
 
     def evaluateCommand(self, cmd):
-        return shell.Compile.evaluateCommand(self, cmd)
+        return shell.CompileNewStyle.evaluateCommand(self, cmd)
 
 
 class CompileJSCWithoutChange32(CompileJSC32):
     name = 'compile-jsc-32bit-without-change'
 
     def evaluateCommand(self, cmd):
-        return shell.Compile.evaluateCommand(self, cmd)
+        return shell.CompileNewStyle.evaluateCommand(self, cmd)
 
 
 class RunJavaScriptCoreTests(shell.Test, AddToLogMixin, ShellMixin):
@@ -3740,7 +3744,7 @@ class RunJavaScriptCoreTests(shell.Test, AddToLogMixin, ShellMixin):
         if self.getProperty('architecture') in ["armv7"]:
             self.command = ["linux32"] + self.command
 
-        self.setCommand(self.command + customBuildFlag(self.getProperty('platform'), self.getProperty('fullPlatform')))
+        self.command += customBuildFlag(self.getProperty('platform'), self.getProperty('fullPlatform'))
         self.command.extend(self.command_extra)
         self.command = self.shell_command(' '.join(quote(str(c)) for c in self.command) + ' 2>&1 | Tools/Scripts/filter-test-logs jsc')
         return super().start()
@@ -4078,38 +4082,38 @@ class RunWebKitTests(shell.Test, AddToLogMixin, ShellMixin):
 
     def setLayoutTestCommand(self):
         platform = self.getProperty('platform')
-        self.setCommand(self.command + customBuildFlag(platform, self.getProperty('fullPlatform')))
+        self.command += customBuildFlag(platform, self.getProperty('fullPlatform'))
 
         if self.getProperty('use-dump-render-tree', False):
-            self.setCommand(self.command + ['--dump-render-tree'])
+            self.command += ['--dump-render-tree']
 
-        self.setCommand(self.command + ['--results-directory', self.resultDirectory])
-        self.setCommand(self.command + ['--debug-rwt-logging'])
+        self.command += ['--results-directory', self.resultDirectory]
+        self.command += ['--debug-rwt-logging']
 
         patch_author = self.getProperty('patch_author')
         self.maxTime = None
         if patch_author in ['webkit-wpt-import-bot@igalia.com']:
-            self.setCommand(self.command + ['imported/w3c/web-platform-tests'])
+            self.command += ['imported/w3c/web-platform-tests']
         elif GitHub.NO_FAILURE_LIMITS_LABEL in self.getProperty('github_labels', []):
-            self.setCommand(self.command + ['--no-retry'])
+            self.command += ['--no-retry']
             self.maxTime = 60 * 90
         else:
             if self.EXIT_AFTER_FAILURES is not None:
-                self.setCommand(self.command + ['--exit-after-n-failures', '{}'.format(self.EXIT_AFTER_FAILURES)])
+                self.command += ['--exit-after-n-failures', f'{self.EXIT_AFTER_FAILURES}']
             if not self.STRESS_MODE:
-                self.setCommand(self.command + ['--skip-failing-tests'])
+                self.command += ['--skip-failing-tests']
             else:
-                self.setCommand(self.command + ['--skipped', 'always'])
+                self.command += ['--skipped', 'always']
 
         if platform in ['gtk', 'wpe']:
-            self.setCommand(self.command + ['--enable-core-dumps-nolimit'])
+            self.command += ['--enable-core-dumps-nolimit']
 
         additionalArguments = self.getProperty('additionalArguments')
         if additionalArguments and self.ENABLE_ADDITIONAL_ARGUMENTS:
-            self.setCommand(self.command + additionalArguments)
+            self.command += additionalArguments
 
         if self.ENABLE_GUARD_MALLOC:
-            self.setCommand(self.command + ['--guard-malloc'])
+            self.command += ['--guard-malloc']
 
     def buildCommandKwargs(self, warnings):
         result = super().buildCommandKwargs(warnings)
@@ -4339,10 +4343,10 @@ class RunWebKitTestsInStressMode(RunWebKitTests):
             self.setProperty('use-dump-render-tree', True)
         RunWebKitTests.setLayoutTestCommand(self)
 
-        self.setCommand(self.command + ['--iterations', self.num_iterations])
+        self.command += ['--iterations', self.num_iterations]
         modified_tests = self.getProperty('modified_tests')
         if modified_tests:
-            self.setCommand(self.command + modified_tests)
+            self.command += modified_tests
 
     def evaluateCommand(self, cmd):
         rc = self.evaluateResult(cmd)
@@ -4557,15 +4561,13 @@ class RunWebKitTestsWithoutChange(RunWebKitTests):
     def setLayoutTestCommand(self):
         super().setLayoutTestCommand()
         if CURRENT_HOSTNAME in EWS_BUILD_HOSTNAMES and self.getProperty('github.base.ref', DEFAULT_BRANCH) == DEFAULT_BRANCH:
-            self.setCommand(
-                self.command + [
-                    '--builder-name', self.getProperty('buildername', ''),
-                    '--build-number', self.getProperty('buildnumber', ''),
-                    '--buildbot-worker', self.getProperty('workername', ''),
-                    '--buildbot-master', CURRENT_HOSTNAME,
-                    '--report', RESULTS_DB_URL,
-                ]
-            )
+            self.command += [
+                '--builder-name', self.getProperty('buildername', ''),
+                '--build-number', self.getProperty('buildnumber', ''),
+                '--buildbot-worker', self.getProperty('workername', ''),
+                '--buildbot-master', CURRENT_HOSTNAME,
+                '--report', RESULTS_DB_URL,
+            ]
 
         # In order to speed up testing, on the step that retries running the layout tests without change
         # only run the subset of tests that failed on the previous steps.
@@ -4582,7 +4584,7 @@ class RunWebKitTestsWithoutChange(RunWebKitTests):
             second_results_failing_tests = set(self.getProperty('second_run_failures', set()))
             list_failed_tests_with_change = sorted(first_results_failing_tests.union(second_results_failing_tests))
             if list_failed_tests_with_change:
-                self.setCommand(self.command + ['--skipped=always'] + list_failed_tests_with_change)
+                self.command += ['--skipped=always'] + list_failed_tests_with_change
 
 
 class AnalyzeLayoutTestsResults(buildstep.BuildStep, BugzillaMixin, GitHubMixin):
@@ -4941,9 +4943,9 @@ class RunWebKitTestsRepeatFailuresRedTree(RunWebKitTestsRedTree):
     def setLayoutTestCommand(self):
         super().setLayoutTestCommand()
         # On the repeat steps we don't enable coredump generation (makes the run much slower if there are crashes)
-        self.setCommand([arg for arg in self.command if arg != '--enable-core-dumps-nolimit'])
+        self.command = [arg for arg in self.command if arg != '--enable-core-dumps-nolimit']
         first_results_failing_tests = set(self.getProperty('first_run_failures', []))
-        self.setCommand(self.command + ['--fully-parallel', '--repeat-each=%s' % self.NUM_REPEATS_PER_TEST] + sorted(first_results_failing_tests))
+        self.command += ['--fully-parallel', '--repeat-each=%s' % self.NUM_REPEATS_PER_TEST] + sorted(first_results_failing_tests)
 
     def evaluateCommand(self, cmd):
         with_change_repeat_failures_results_nonflaky_failures = set(self.getProperty('with_change_repeat_failures_results_nonflaky_failures', []))
@@ -5021,7 +5023,7 @@ class RunWebKitTestsRepeatFailuresWithoutChangeRedTree(RunWebKitTestsRedTree):
     def setLayoutTestCommand(self):
         super().setLayoutTestCommand()
         # On the repeat steps we don't enable coredump generation (makes the run much slower if there are crashes)
-        self.setCommand([arg for arg in self.command if arg != '--enable-core-dumps-nolimit'])
+        self.command = [arg for arg in self.command if arg != '--enable-core-dumps-nolimit']
         with_change_nonflaky_failures = set(self.getProperty('with_change_repeat_failures_results_nonflaky_failures', []))
         first_run_failures = set(self.getProperty('first_run_failures', []))
         with_change_repeat_failures_timedout = self.getProperty('with_change_repeat_failures_timedout', False)
@@ -5030,7 +5032,7 @@ class RunWebKitTestsRepeatFailuresWithoutChangeRedTree(RunWebKitTestsRedTree):
         # is skipped anyways if is marked as such on the Expectation files or if is marked
         # as failure (since we are passing also '--skip-failing-tests'). That way we ensure
         # to report the case of a change removing an expectation that still fails with it.
-        self.setCommand(self.command + ['--fully-parallel', '--repeat-each=%s' % self.NUM_REPEATS_PER_TEST, '--skipped=always'] + sorted(failures_to_repeat))
+        self.command += ['--fully-parallel', '--repeat-each=%s' % self.NUM_REPEATS_PER_TEST, '--skipped=always'] + sorted(failures_to_repeat)
 
     def evaluateCommand(self, cmd):
         rc = self.evaluateResult(cmd)
@@ -6117,24 +6119,6 @@ class CleanGitRepo(steps.ShellSequence, ShellMixin):
         if self.results != SUCCESS:
             return {'step': 'Encountered some issues during cleanup'}
         return {'step': 'Cleaned up git repository'}
-
-
-class ApplyWatchList(shell.ShellCommandNewStyle):
-    name = 'apply-watch-list'
-    description = ['applying watchilist']
-    descriptionDone = ['Applied WatchList']
-    bug_id = WithProperties('%(bug_id)s')
-    command = ['python3', 'Tools/Scripts/webkit-patch', 'apply-watchlist-local', bug_id]
-    haltOnFailure = True
-    flunkOnFailure = True
-
-    def __init__(self, **kwargs):
-        super().__init__(timeout=2 * 60, logEnviron=False, **kwargs)
-
-    def getResultSummary(self):
-        if self.results != SUCCESS:
-            return {'step': 'Failed to apply watchlist'}
-        return super().getResultSummary()
 
 
 class PushCommitToWebKitRepo(shell.ShellCommandNewStyle):

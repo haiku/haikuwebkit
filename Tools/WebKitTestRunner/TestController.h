@@ -805,7 +805,7 @@ private:
 
     class Callbacks {
     public:
-        void append(WKTypeRef);
+        void append(WKJSHandleRef);
         void clear() { m_callbacks.clear(); }
         void notifyListeners(WKStringRef);
         void notifyListeners();

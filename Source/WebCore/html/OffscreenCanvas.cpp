@@ -471,6 +471,16 @@ std::unique_ptr<CSSParserContext> OffscreenCanvas::createCSSParserContext() cons
     return makeUnique<CSSParserContext>(HTMLStandardMode);
 }
 
+ScriptExecutionContext* OffscreenCanvas::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
+}
+
+ScriptExecutionContext* OffscreenCanvas::canvasBaseScriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
+}
+
 }
 
 #endif

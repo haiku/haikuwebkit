@@ -80,7 +80,7 @@ class Git(Scm):
             default_branch = self.repo.default_branch
             if branch == default_branch:
                 branch_point = None
-            elif self._ordered_commits[branch]:
+            elif self._ordered_commits[branch] and self._ordered_commits[branch][0] in self._hash_to_identifiers:
                 branch_point = int(self._hash_to_identifiers[self._ordered_commits[branch][0]].split('@')[0])
             else:
                 return

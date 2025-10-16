@@ -57,7 +57,7 @@ class AccessibilityObject;
 class Page;
 enum class AXStreamOptions : uint16_t;
 
-static constexpr uint16_t lastPropertyFlagIndex = 24;
+static constexpr uint16_t lastPropertyFlagIndex = 25;
 // The most common boolean properties are stored in a bitfield rather than in a HashMap.
 // If you edit these, make sure the corresponding AXProperty is ordered correctly in that
 // enum, and update lastPropertyFlagIndex above.
@@ -71,22 +71,23 @@ enum class AXPropertyFlag : uint32_t {
     HasPlainText                                  = 1 << 6,
     IsEnabled                                     = 1 << 7,
     IsExposedTableCell                            = 1 << 8,
-    IsGrabbed                                     = 1 << 9,
-    IsIgnored                                     = 1 << 10,
-    IsInlineText                                  = 1 << 11,
-    IsKeyboardFocusable                           = 1 << 12,
-    IsNonLayerSVGObject                           = 1 << 13,
-    IsTableRow                                    = 1 << 14,
+    IsExposedTableRow                             = 1 << 9,
+    IsGrabbed                                     = 1 << 10,
+    IsHiddenUntilFoundContainer                   = 1 << 11,
+    IsIgnored                                     = 1 << 12,
+    IsInlineText                                  = 1 << 13,
+    IsKeyboardFocusable                           = 1 << 14,
+    IsNonLayerSVGObject                           = 1 << 15,
     // These IsTextEmissionBehavior flags are the variants of enum TextEmissionBehavior.
-    IsTextEmissionBehaviorTab                     = 1 << 15,
-    IsTextEmissionBehaviorNewline                 = 1 << 16,
-    IsTextEmissionBehaviorDoubleNewline           = 1 << 17,
-    IsVisited                                     = 1 << 18,
-    SupportsCheckedState                          = 1 << 19,
-    SupportsDragging                              = 1 << 20,
-    SupportsExpanded                              = 1 << 21,
-    SupportsPath                                  = 1 << 22,
-    SupportsPosInSet                              = 1 << 23,
+    IsTextEmissionBehaviorTab                     = 1 << 16,
+    IsTextEmissionBehaviorNewline                 = 1 << 17,
+    IsTextEmissionBehaviorDoubleNewline           = 1 << 18,
+    IsVisited                                     = 1 << 19,
+    SupportsCheckedState                          = 1 << 20,
+    SupportsDragging                              = 1 << 21,
+    SupportsExpanded                              = 1 << 22,
+    SupportsPath                                  = 1 << 23,
+    SupportsPosInSet                              = 1 << 24,
     SupportsSetSize                               = 1 << lastPropertyFlagIndex
 };
 
@@ -100,21 +101,22 @@ enum class AXProperty : uint16_t {
     HasPlainText = 6,
     IsEnabled = 7,
     IsExposedTableCell = 8,
-    IsGrabbed = 9,
-    IsIgnored = 10,
-    IsInlineText = 11,
-    IsKeyboardFocusable = 12,
-    IsNonLayerSVGObject = 13,
-    IsTableRow = 14,
-    IsTextEmissionBehaviorTab = 15,
-    IsTextEmissionBehaviorNewline = 16,
-    IsTextEmissionBehaviorDoubleNewline = 17,
-    IsVisited = 18,
-    SupportsCheckedState = 19,
-    SupportsDragging = 20,
-    SupportsExpanded = 21,
-    SupportsPath = 22,
-    SupportsPosInSet = 23,
+    IsExposedTableRow = 9,
+    IsGrabbed = 10,
+    IsHiddenUntilFoundContainer = 11,
+    IsIgnored = 12,
+    IsInlineText = 13,
+    IsKeyboardFocusable = 14,
+    IsNonLayerSVGObject = 15,
+    IsTextEmissionBehaviorTab = 16,
+    IsTextEmissionBehaviorNewline = 17,
+    IsTextEmissionBehaviorDoubleNewline = 18,
+    IsVisited = 19,
+    SupportsCheckedState = 20,
+    SupportsDragging = 21,
+    SupportsExpanded = 22,
+    SupportsPath = 23,
+    SupportsPosInSet = 24,
     SupportsSetSize = lastPropertyFlagIndex,
     // End bool attributes that are matched in order by AXPropertyFlag.
 
@@ -261,13 +263,14 @@ enum class AXProperty : uint16_t {
 #endif
     PosInSet,
     PreventKeyboardDOMEventDispatch,
-    RadioButtonGroup,
+    RadioButtonGroupMembers,
     RelativeFrame,
     RemoteFrameOffset,
     RemoteFramePlatformElement,
 #if PLATFORM(COCOA)
     RemoteParent,
 #endif
+    RevealableText,
     RolePlatformString,
     Rows,
     RowHeaders,
@@ -491,7 +494,7 @@ public:
 
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
         objectChangedIgnoredState(object);
-        queueNodeUpdate(object.objectID(), { AXProperty::IsIgnored });
+        queueNodeUpdate(object.objectID(), { { AXProperty::IsIgnored, AXProperty::RevealableText } });
 #endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     }
     void objectBecameUnignored(const AccessibilityObject& object)

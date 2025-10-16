@@ -1132,6 +1132,13 @@ void InspectorInstrumentation::didEnableExtensionImpl(InstrumentingAgents& instr
         canvasAgent->didEnableExtension(contextWebGLBase, extension);
 }
 
+void InspectorInstrumentation::willDestroyWebGLProgram(WebGLProgram& program)
+{
+    FAST_RETURN_IF_NO_FRONTENDS(void());
+    if (RefPtr agents = instrumentingAgents(program.protectedScriptExecutionContext().get()))
+        willDestroyWebGLProgramImpl(*agents, program);
+}
+
 void InspectorInstrumentation::didCreateWebGLProgramImpl(InstrumentingAgents& instrumentingAgents, WebGLRenderingContextBase& contextWebGLBase, WebGLProgram& program)
 {
     if (auto* canvasAgent = instrumentingAgents.enabledCanvasAgent())

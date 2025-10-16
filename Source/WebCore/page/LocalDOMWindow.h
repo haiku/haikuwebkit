@@ -27,7 +27,7 @@
 #pragma once
 
 #include <JavaScriptCore/HandleForward.h>
-#include <WebCore/ContextDestructionObserverInlines.h>
+#include <WebCore/ContextDestructionObserver.h>
 #include <WebCore/DOMHighResTimeStamp.h>
 #include <WebCore/DOMWindow.h>
 #include <WebCore/EventTargetInterfaces.h>
@@ -40,6 +40,7 @@
 #include <wtf/HashSet.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/Platform.h>
+#include <wtf/WeakHashSet.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {
@@ -62,9 +63,11 @@ namespace WebCore {
 
 class CloseWatcherManager;
 class LocalFrame;
+class SecurityOriginData;
 struct ScrollToOptions;
 struct WindowPostMessageOptions;
 
+enum class PlatformEventModifier : uint8_t;
 using ReducedResolutionSeconds = Seconds;
 
 template<typename> class ExceptionOr;
@@ -152,6 +155,14 @@ public:
     WEBCORE_EXPORT bool consumeTransientActivation();
     WEBCORE_EXPORT bool hasHistoryActionActivation() const;
     WEBCORE_EXPORT bool consumeHistoryActionUserActivation();
+    WEBCORE_EXPORT static Seconds transientActivationDuration();
+
+    struct ClickEventData {
+        MonotonicTime time;
+        OptionSet<PlatformEventModifier> modifiers;
+    };
+    void updateLastUserClickEvent(OptionSet<PlatformEventModifier>);
+    WEBCORE_EXPORT std::optional<ClickEventData> consumeLastUserClickEvent();
 
     DOMSelection* getSelection();
 
@@ -381,7 +392,7 @@ public:
 private:
     explicit LocalDOMWindow(Document&);
 
-    ScriptExecutionContext* scriptExecutionContext() const final { return ContextDestructionObserver::scriptExecutionContext(); }
+    ScriptExecutionContext* scriptExecutionContext() const final;
 
     void closePage() final;
     void eventListenersDidChange() final;
@@ -487,6 +498,8 @@ private:
     // value is positive infinity.
     MonotonicTime m_lastActivationTimestamp { MonotonicTime::infinity() };
     MonotonicTime m_lastHistoryActionActivationTimestamp { MonotonicTime::infinity() };
+
+    std::optional<ClickEventData> m_lastUserClickEvent;
 
     bool m_wasWrappedWithoutInitializedSecurityOrigin { false };
     bool m_mayReuseForNavigation { true };

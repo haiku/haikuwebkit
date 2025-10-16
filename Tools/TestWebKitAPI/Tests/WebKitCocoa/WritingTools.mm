@@ -1707,7 +1707,9 @@ TEST(WritingTools, CompositionWithList)
         TestWebKitAPI::Util::runFor(0.1_s);
 
         [[webView writingToolsDelegate] compositionSession:session.get() didReceiveText:attributedText.get() replacementRange:NSMakeRange(0, 27) inContext:contexts.firstObject finished:YES];
-        [webView waitForNextPresentationUpdate];
+
+        // FIXME: Remove this, and all other delays, once there is testing infrastructure in place to be able to wait for animations to finish.
+        TestWebKitAPI::Util::runFor(2.0_s);
 
         EXPECT_EQ([webView stringByEvaluatingJavaScript:@"document.getElementsByTagName('li').length"].intValue, 3);
         EXPECT_EQ([webView stringByEvaluatingJavaScript:@"document.getElementsByTagName('ul').length"].intValue, 1);
@@ -1737,15 +1739,6 @@ TEST(WritingTools, CompositionWithTextAttachment)
     auto webView = adoptNS([[WritingToolsWKWebView alloc] initWithHTMLString:@"<body contenteditable><p>Sunset in Cupertino</p></body>"]);
     [webView focusDocumentBodyAndSelectAll];
 
-    auto waitForValue = [webView]() {
-        do {
-            if ([webView stringByEvaluatingJavaScript:@"document.querySelector('img').complete"].boolValue)
-                break;
-
-            TestWebKitAPI::Util::runFor(0.1_s);
-        } while (true);
-    };
-
     __block bool finished = false;
     [[webView writingToolsDelegate] willBeginWritingToolsSession:session.get() requestContexts:^(NSArray<WTContext *> *contexts) {
         [[webView writingToolsDelegate] writingToolsSession:session.get() didReceiveAction:WTActionCompositionRestart];
@@ -1756,10 +1749,11 @@ TEST(WritingTools, CompositionWithTextAttachment)
         RetainPtr attributedText = [NSAttributedString attributedStringWithAttachment:attachment.get()];
 
         [[webView writingToolsDelegate] compositionSession:session.get() didReceiveText:attributedText.get() replacementRange:NSMakeRange(0, 19) inContext:contexts.firstObject finished:NO];
+        TestWebKitAPI::Util::runFor(0.1_s);
 
         [[webView writingToolsDelegate] compositionSession:session.get() didReceiveText:attributedText.get() replacementRange:NSMakeRange(0, 19) inContext:contexts.firstObject finished:YES];
-        TestWebKitAPI::Util::runFor(0.1_s); // this is needed to let the information load at least a bit or we can fail on a javascript issue.
-        waitForValue();
+        // FIXME: Remove this, and all other delays, once there is testing infrastructure in place to be able to wait for animations to finish.
+        TestWebKitAPI::Util::runFor(2.0_s);
 
         EXPECT_TRUE([webView stringByEvaluatingJavaScript:@"document.querySelector('img').complete"].boolValue);
         EXPECT_WK_STREQ([webView stringByEvaluatingJavaScript:@"document.querySelector('img').width"], "200");

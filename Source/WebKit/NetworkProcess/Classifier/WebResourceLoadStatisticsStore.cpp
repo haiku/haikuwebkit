@@ -459,9 +459,17 @@ void WebResourceLoadStatisticsStore::requestStorageAccess(RegistrableDomain&& su
     });
 }
 
-void WebResourceLoadStatisticsStore::queryStorageAccessPermission(SubFrameDomain&& subFrameDomain, TopFrameDomain&& topFrameDomain, CompletionHandler<void(PermissionState)>&& completionHandler)
+void WebResourceLoadStatisticsStore::queryStorageAccessPermission(SubFrameDomain&& subFrameDomain, TopFrameDomain&& topFrameDomain, std::optional<WebPageProxyIdentifier> webPageProxyID, CompletionHandler<void(PermissionState)>&& completionHandler)
 {
     ASSERT(RunLoop::isMain());
+
+    if (isEphemeral()) {
+        if (webPageProxyID) {
+            if (auto it = m_domainsGrantedStorageAccessPermissionInPage.find(*webPageProxyID); it != m_domainsGrantedStorageAccessPermissionInPage.end())
+                return completionHandler(it->value.contains({ topFrameDomain, subFrameDomain }) ? PermissionState::Granted : PermissionState::Prompt);
+        }
+        return completionHandler(PermissionState::Prompt);
+    }
 
     postTask([subFrameDomain = WTFMove(subFrameDomain).isolatedCopy(), topFrameDomain = WTFMove(topFrameDomain).isolatedCopy(), completionHandler = WTFMove(completionHandler)](auto& store) mutable {
         RefPtr statisticsStore = store.m_statisticsStore;
@@ -1675,6 +1683,9 @@ void WebResourceLoadStatisticsStore::setStorageAccessPermissionForTesting(bool g
         wasGrantedStorageAccessPermissionInPage(webPageProxyID, topFrameDomain, subFrameDomain);
     else
         wasRevokedStorageAccessPermissionInPage(webPageProxyID);
+
+    if (isEphemeral())
+        return completionHandler();
 
     postTask([granted, subFrameDomain = WTFMove(subFrameDomain).isolatedCopy(), topFrameDomain = WTFMove(topFrameDomain).isolatedCopy(), completionHandler = WTFMove(completionHandler)](auto& store) mutable {
         RefPtr statisticsStore = store.m_statisticsStore;

@@ -464,5 +464,13 @@ String roleToString(AccessibilityRole role)
     return ""_s;
 }
 
-} // WebCore
+bool needsLayoutOrStyleRecalc(const Document& document)
+{
+    if (RefPtr frameView = document.view()) {
+        if (frameView->needsLayout() || frameView->checkedLayoutContext()->isLayoutPending())
+            return true;
+    }
+    return document.hasPendingStyleRecalc();
+}
 
+} // namespace WebCore

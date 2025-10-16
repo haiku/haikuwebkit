@@ -280,9 +280,7 @@ Vector<Ref<PerformanceEntry>> Performance::getEntriesByName(const String& name, 
 
 void Performance::appendBufferedEntriesByType(const String& entryType, Vector<Ref<PerformanceEntry>>& entries, PerformanceObserver& observer) const
 {
-    if (m_navigationTiming
-        && entryType == "navigation"_s
-        && !observer.hasNavigationTiming()) {
+    if (m_navigationTiming && entryType == "navigation"_s && !observer.hasNavigationTiming()) {
         entries.append(*m_navigationTiming);
         observer.addedNavigationTiming();
     }
@@ -365,12 +363,20 @@ void Performance::addNavigationTiming(DocumentLoader& documentLoader, Document& 
     m_navigationTiming = PerformanceNavigationTiming::create(m_timeOrigin, resource, timing, metrics, document.eventTiming(), document.securityOrigin(), documentLoader.triggeringAction().type());
 }
 
-void Performance::navigationFinished(const NetworkLoadMetrics& metrics)
+void Performance::documentLoadFinished(const NetworkLoadMetrics& metrics)
 {
     if (!m_navigationTiming)
         return;
-    m_navigationTiming->navigationFinished(metrics);
 
+    m_navigationTiming->documentLoadFinished(metrics);
+}
+
+void Performance::navigationFinished(MonotonicTime loadEventEnd)
+{
+    if (!m_navigationTiming)
+        return;
+
+    m_navigationTiming->documentLoadTiming().setLoadEventEnd(loadEventEnd);
     queueEntry(*m_navigationTiming);
 }
 
@@ -531,24 +537,11 @@ void Performance::removeAllObservers()
 void Performance::registerPerformanceObserver(PerformanceObserver& observer)
 {
     m_observers.add(&observer);
-
-    if (m_navigationTiming
-        && observer.typeFilter().contains(PerformanceEntry::Type::Navigation)
-        && !observer.hasNavigationTiming()) {
-        observer.queueEntry(*m_navigationTiming);
-        observer.addedNavigationTiming();
-    }
 }
 
 void Performance::unregisterPerformanceObserver(PerformanceObserver& observer)
 {
     m_observers.remove(&observer);
-}
-
-void Performance::scheduleNavigationObservationTaskIfNeeded()
-{
-    if (m_navigationTiming)
-        scheduleTaskIfNeeded();
 }
 
 void Performance::queueEntry(PerformanceEntry& entry)
@@ -557,6 +550,9 @@ void Performance::queueEntry(PerformanceEntry& entry)
     for (auto& observer : m_observers) {
         bool isObserverInterested = observer->typeFilter().contains(entry.performanceEntryType());
         if (entry.performanceEntryType() == PerformanceEntry::Type::Event && entry.duration() < observer->durationThreshold().milliseconds())
+            isObserverInterested = false;
+
+        if (entry.performanceEntryType() == PerformanceEntry::Type::Navigation && observer->hasNavigationTiming())
             isObserverInterested = false;
 
         if (isObserverInterested) {
@@ -574,20 +570,20 @@ void Performance::queueEntry(PerformanceEntry& entry)
 
 void Performance::scheduleTaskIfNeeded()
 {
-    if (m_hasScheduledTimingBufferDeliveryTask)
+    if (m_hasScheduledDeliveryTask)
         return;
 
     auto* context = scriptExecutionContext();
     if (!context)
         return;
 
-    m_hasScheduledTimingBufferDeliveryTask = true;
+    m_hasScheduledDeliveryTask = true;
     context->eventLoop().queueTask(TaskSource::PerformanceTimeline, [protectedThis = Ref { *this }, this] {
         auto* context = scriptExecutionContext();
         if (!context)
             return;
 
-        m_hasScheduledTimingBufferDeliveryTask = false;
+        m_hasScheduledDeliveryTask = false;
         for (auto& observer : copyToVector(m_observers))
             observer->deliver();
     });

@@ -61,10 +61,10 @@ ImageBufferCGBackend::ImageBufferCGBackend(const Parameters& parameters, std::un
 
 ImageBufferCGBackend::~ImageBufferCGBackend() = default;
 
-unsigned ImageBufferCGBackend::calculateBytesPerRow(const IntSize& backendSize, ImageBufferPixelFormat imageBufferPixelFormat)
+unsigned ImageBufferCGBackend::calculateBytesPerRow(const IntSize& backendSize, PixelFormat imageBufferPixelFormat)
 {
     ASSERT(!backendSize.isEmpty());
-    return CheckedUint32(backendSize.width()) * PixelBuffer::bytesPerPixel(convertToPixelFormat(imageBufferPixelFormat));
+    return CheckedUint32(backendSize.width()) * PixelBuffer::bytesPerPixel(imageBufferPixelFormat);
 }
 
 std::unique_ptr<ThreadSafeImageBufferFlusher> ImageBufferCGBackend::createFlusher()

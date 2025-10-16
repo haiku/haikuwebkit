@@ -69,7 +69,7 @@ void LazySlowPath::generate(CodeBlock* codeBlock)
     LinkBuffer linkBuffer(jit, codeBlock, LinkBuffer::Profile::FTLThunk, JITCompilationMustSucceed);
     m_stub = FINALIZE_CODE_FOR(codeBlock, linkBuffer, JITStubRoutinePtrTag, nullptr, "Lazy slow path call stub");
 
-    MacroAssembler::repatchJump<jitMemcpyRepatchFlush>(m_patchableJump, CodeLocationLabel<JITStubRoutinePtrTag>(m_stub.code()));
+    MacroAssembler::repatchJump(m_patchableJump, CodeLocationLabel<JITStubRoutinePtrTag>(m_stub.code()));
 }
 
 } } // namespace JSC::FTL

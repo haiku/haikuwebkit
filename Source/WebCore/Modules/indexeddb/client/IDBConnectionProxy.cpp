@@ -26,6 +26,7 @@
 #include "config.h"
 #include "IDBConnectionProxy.h"
 
+#include "IDBActiveDOMObjectInlines.h"
 #include "IDBCursorInfo.h"
 #include "IDBDatabase.h"
 #include "IDBDatabaseNameAndVersion.h"
@@ -39,6 +40,7 @@
 #include "IDBResultData.h"
 #include "ScriptExecutionContext.h"
 #include "SecurityOrigin.h"
+#include "TransactionOperation.h"
 #include <wtf/MainThread.h>
 #include <wtf/TZoneMallocInlines.h>
 

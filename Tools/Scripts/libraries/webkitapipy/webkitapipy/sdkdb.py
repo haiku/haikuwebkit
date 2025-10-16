@@ -120,7 +120,7 @@ class SDKDB:
         while user_version != VERSION:
             self.con = sqlite3.connect(db_file, isolation_level='IMMEDIATE',
                                        detect_types=sqlite3.PARSE_DECLTYPES)
-            self.con.execute('PRAGMA busy_timeout = 60000')
+            self.con.execute('PRAGMA busy_timeout = 300000')
             self.con.execute('PRAGMA foreign_keys = ON')
             user_version, = self.con.execute('PRAGMA user_version').fetchone()
             if user_version == 0:

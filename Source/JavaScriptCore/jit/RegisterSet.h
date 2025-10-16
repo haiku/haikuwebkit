@@ -209,6 +209,7 @@ public:
     JS_EXPORT_PRIVATE static RegisterSet argumentFPRs();
 #if ENABLE(WEBASSEMBLY)
     JS_EXPORT_PRIVATE static RegisterSet wasmPinnedRegisters();
+    JS_EXPORT_PRIVATE static RegisterSet ipintCalleeSaveRegisters(); // Registers saved and used by the IPInt.
 #endif
     JS_EXPORT_PRIVATE static RegisterSetBuilder registersToSaveForJSCall(RegisterSetBuilder live);
     JS_EXPORT_PRIVATE static RegisterSetBuilder registersToSaveForCCall(RegisterSetBuilder live);

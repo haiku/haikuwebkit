@@ -218,7 +218,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationCompileOSRExit, void, (CallFrame* cal
     }
 
     if (exit.codeLocationForRepatch())
-        MacroAssembler::repatchJump<jitMemcpyRepatchFlush>(exit.codeLocationForRepatch(), CodeLocationLabel<OSRExitPtrTag>(exitCode.code()));
+        MacroAssembler::repatchJump(exit.codeLocationForRepatch(), CodeLocationLabel<OSRExitPtrTag>(exitCode.code()));
 
     vm.osrExitJumpDestination = exitCode.code().taggedPtr();
 }

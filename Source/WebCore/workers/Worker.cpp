@@ -28,6 +28,7 @@
 #include "Worker.h"
 
 #include "ContentSecurityPolicy.h"
+#include "ContextDestructionObserver.h"
 #include "DedicatedWorkerGlobalScope.h"
 #include "ErrorEvent.h"
 #include "Event.h"
@@ -249,6 +250,11 @@ void Worker::notifyFinished(std::optional<ScriptExecutionContextIdentifier> main
             InspectorInstrumentation::scriptImported(mainContext, identifier, script.toString());
         });
     }
+}
+
+ScriptExecutionContext* Worker::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void Worker::dispatchEvent(Event& event)

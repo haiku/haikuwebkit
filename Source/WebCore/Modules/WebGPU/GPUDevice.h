@@ -49,6 +49,7 @@
 
 namespace WebCore {
 
+class GPUAdapterInfo;
 class GPUBindGroup;
 struct GPUBindGroupDescriptor;
 class GPUBindGroupLayout;
@@ -93,9 +94,9 @@ public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 
-    static Ref<GPUDevice> create(ScriptExecutionContext* scriptExecutionContext, Ref<WebGPU::Device>&& backing, String&& queueLabel)
+    static Ref<GPUDevice> create(ScriptExecutionContext* scriptExecutionContext, Ref<WebGPU::Device>&& backing, String&& queueLabel, GPUAdapterInfo& info)
     {
-        return adoptRef(*new GPUDevice(scriptExecutionContext, WTFMove(backing), WTFMove(queueLabel)));
+        return adoptRef(*new GPUDevice(scriptExecutionContext, WTFMove(backing), WTFMove(queueLabel), info));
     }
 
     virtual ~GPUDevice();
@@ -147,13 +148,14 @@ public:
     const WebGPU::Device& backing() const { return m_backing; }
     void removeBufferToUnmap(GPUBuffer&);
     void addBufferToUnmap(GPUBuffer&);
+    Ref<GPUAdapterInfo> adapterInfo() const;
 
 #if ENABLE(VIDEO)
     WeakPtr<GPUExternalTexture> takeExternalTextureForVideoElement(const HTMLVideoElement&);
 #endif
 
 private:
-    GPUDevice(ScriptExecutionContext*, Ref<WebGPU::Device>&&, String&& queueLabel);
+    GPUDevice(ScriptExecutionContext*, Ref<WebGPU::Device>&&, String&& queueLabel, GPUAdapterInfo&);
 
     // FIXME: We probably need to override more methods to make this work properly.
     RefPtr<GPUPipelineLayout> createAutoPipelineLayout();
@@ -177,6 +179,9 @@ private:
     std::pair<RefPtr<HTMLVideoElement>, RefPtr<GPUExternalTexture>> m_previouslyImportedExternalTexture;
     std::pair<Vector<GPUBindGroupEntry>, RefPtr<GPUBindGroup>> m_lastCreatedExternalTextureBindGroup;
 #endif
+    Ref<GPUSupportedFeatures> m_features;
+    Ref<GPUSupportedLimits> m_limits;
+    Ref<GPUAdapterInfo> m_adapterInfo;
 
     bool m_waitingForDeviceLostPromise { false };
 };

@@ -62,11 +62,8 @@ JSWebAssemblyArray* tryFillArray(JSWebAssemblyInstance* instance, WebAssemblyGCS
     return array;
 }
 
-inline JSValue arrayNew(JSWebAssemblyInstance* instance, uint32_t typeIndex, uint32_t size, EncodedJSValue encValue)
+inline JSValue arrayNew(JSWebAssemblyInstance* instance, WebAssemblyGCStructure* structure, uint32_t size, EncodedJSValue encValue)
 {
-    ASSERT(typeIndex < instance->module().moduleInformation().typeCount());
-
-    WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex);
     const Wasm::TypeDefinition& arraySignature = structure->typeDefinition();
     ASSERT(arraySignature.is<ArrayType>());
     Wasm::FieldType fieldType = arraySignature.as<ArrayType>()->elementType();
@@ -99,13 +96,10 @@ inline JSValue arrayNew(JSWebAssemblyInstance* instance, uint32_t typeIndex, uin
     return array;
 }
 
-inline JSValue arrayNew(JSWebAssemblyInstance* instance, uint32_t typeIndex, uint32_t size, v128_t value)
+inline JSValue arrayNew(JSWebAssemblyInstance* instance, WebAssemblyGCStructure* structure, uint32_t size, v128_t value)
 {
     VM& vm = instance->vm();
 
-    ASSERT(typeIndex < instance->module().moduleInformation().typeCount());
-
-    WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex);
     const Wasm::TypeDefinition& arraySignature = structure->typeDefinition();
     ASSERT(arraySignature.is<ArrayType>());
     Wasm::FieldType fieldType = arraySignature.as<ArrayType>()->elementType();
@@ -143,15 +137,13 @@ JSWebAssemblyArray* tryCopyElementsInReverse(JSWebAssemblyInstance* instance, We
 }
 
 // Expects arguments in reverse order
-inline JSValue arrayNewFixed(JSWebAssemblyInstance* instance, uint32_t typeIndex, uint32_t size, uint64_t* arguments)
+inline JSValue arrayNewFixed(JSWebAssemblyInstance* instance, WebAssemblyGCStructure* structure, uint32_t size, uint64_t* arguments)
 {
     // Get the array element type and determine the element size
-    WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex);
     const Wasm::TypeDefinition& arraySignature = structure->typeDefinition();
     ASSERT(arraySignature.is<ArrayType>());
     Wasm::FieldType fieldType = arraySignature.as<ArrayType>()->elementType();
     size_t elementSize = fieldType.type.elementSize();
-    Ref arrayRTT = instance->module().moduleInformation().rtts[typeIndex];
 
     // Copy the elements into the result array in reverse order
     JSWebAssemblyArray* array = nullptr;
@@ -456,12 +448,11 @@ inline bool arrayInitData(JSWebAssemblyInstance* instance, EncodedJSValue dst, u
 }
 
 // structNew() expects the `arguments` array (when used) to be in reverse order
-inline EncodedJSValue structNew(JSWebAssemblyInstance* instance, uint32_t typeIndex, bool useDefault, uint64_t* arguments)
+inline JSValue structNew(JSWebAssemblyInstance* instance, WebAssemblyGCStructure* structure, bool useDefault, uint64_t* arguments)
 {
     JSGlobalObject* globalObject = instance->globalObject();
     VM& vm = globalObject->vm();
 
-    WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex);
     ASSERT(structure->typeDefinition().is<StructType>());
     const StructType& structType = *structure->typeDefinition().as<StructType>();
     JSWebAssemblyStruct* structValue = JSWebAssemblyStruct::create(vm, structure);
@@ -485,7 +476,7 @@ inline EncodedJSValue structNew(JSWebAssemblyInstance* instance, uint32_t typeIn
             structValue->set(dstIndex, arguments[srcIndex]);
         }
     }
-    return JSValue::encode(structValue);
+    return structValue;
 }
 
 inline EncodedJSValue structGet(EncodedJSValue encodedStructReference, uint32_t fieldIndex)
@@ -509,9 +500,9 @@ inline void structSet(EncodedJSValue encodedStructReference, uint32_t fieldIndex
     return structPointer->set(fieldIndex, argument);
 }
 
-inline bool refCast(EncodedJSValue encodedReference, bool allowNull, TypeIndex typeIndex)
+inline bool refCast(EncodedJSValue encodedReference, bool allowNull, TypeIndex typeIndex, const RTT* rtt)
 {
-    return TypeInformation::castReference(JSValue::decode(encodedReference), allowNull, typeIndex);
+    return TypeInformation::isReferenceValueAssignable(JSValue::decode(encodedReference), allowNull, typeIndex, rtt);
 }
 
 inline EncodedJSValue externInternalize(EncodedJSValue reference)

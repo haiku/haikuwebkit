@@ -173,7 +173,7 @@ public:
     void removeScrollerFromAnchorScrollAdjusters(const RenderBox& scroller);
 
 private:
-    friend class LayoutScope;
+    friend class LayoutFrameScope;
     friend class LayoutStateMaintainer;
     friend class LayoutStateDisabler;
     friend class SubtreeLayoutStateMaintainer;

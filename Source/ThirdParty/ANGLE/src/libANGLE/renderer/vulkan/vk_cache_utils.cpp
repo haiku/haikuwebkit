@@ -8,6 +8,10 @@
 //    Also contains the structures for the packed descriptions for the RenderPass and Pipeline.
 //
 
+#ifdef UNSAFE_BUFFERS_BUILD
+#    pragma allow_unsafe_buffers
+#endif
+
 #include "libANGLE/renderer/vulkan/vk_cache_utils.h"
 
 #include "common/aligned_memory.h"
@@ -5802,7 +5806,7 @@ angle::Result SamplerDesc::init(ContextVk *contextVk, Sampler *sampler) const
         ASSERT((contextVk->getFeatures().supportsYUVSamplerConversion.enabled));
         samplerYcbcrConversionInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
         samplerYcbcrConversionInfo.pNext = nullptr;
-        ANGLE_TRY(contextVk->getRenderer()->getYuvConversionCache().getSamplerYcbcrConversion(
+        ANGLE_TRY(contextVk->getShareGroup()->getYuvConversionCache().getSamplerYcbcrConversion(
             contextVk, mYcbcrConversionDesc, &samplerYcbcrConversionInfo.conversion));
         AddToPNextChain(&createInfo, &samplerYcbcrConversionInfo);
 
@@ -6064,7 +6068,7 @@ void WriteDescriptorDescs::updateImages(const gl::ProgramExecutable &executable,
 void WriteDescriptorDescs::updateInputAttachments(
     const gl::ProgramExecutable &executable,
     const ShaderInterfaceVariableInfoMap &variableInfoMap,
-    FramebufferVk *framebufferVk)
+    const FramebufferVk *framebufferVk)
 {
     if (framebufferVk->getDepthStencilRenderTarget() != nullptr)
     {
@@ -6427,24 +6431,14 @@ void DescriptorSetDescBuilder::setEmptyBuffer(uint32_t infoDescIndex,
 void DescriptorSetDescBuilder::updateOneShaderBuffer(
     Context *context,
     CommandBufferHelperCommon *commandBufferHelper,
-    const size_t blockIndex,
+    const uint32_t infoDescIndex,
     const gl::InterfaceBlock &block,
     const gl::OffsetBindingPointer<gl::Buffer> &bufferBinding,
     VkDescriptorType descriptorType,
     VkDeviceSize maxBoundBufferRange,
-    const BufferHelper &emptyBuffer,
-    const WriteDescriptorDescs &writeDescriptorDescs,
-    const GLbitfield memoryBarrierBits)
+    const BufferHelper &emptyBuffer)
 {
-    uint32_t infoDescIndex =
-        writeDescriptorDescs.getDescriptorDescIndexForBufferBlockIndex(descriptorType, blockIndex);
     ASSERT(infoDescIndex != kInvalidDescriptorDescIndex && infoDescIndex < mDesc.size());
-
-    if (bufferBinding.get() == nullptr)
-    {
-        setEmptyBuffer(infoDescIndex, descriptorType, emptyBuffer);
-        return;
-    }
 
     // Limit bound buffer size to maximum resource binding size.
     GLsizeiptr boundBufferSize = gl::GetBoundBufferAvailableSize(bufferBinding);
@@ -6457,49 +6451,7 @@ void DescriptorSetDescBuilder::updateOneShaderBuffer(
 
     BufferVk *bufferVk         = vk::GetImpl(bufferBinding.get());
     BufferHelper &bufferHelper = bufferVk->getBuffer();
-
-    if (IsUniformBuffer(descriptorType))
-    {
-        commandBufferHelper->bufferRead(context, VK_ACCESS_UNIFORM_READ_BIT, block.activeShaders(),
-                                        &bufferHelper);
-    }
-    else
-    {
-        ASSERT(descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ||
-               descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC);
-        if (block.pod.isReadOnly)
-        {
-            // Avoid unnecessary barriers for readonly SSBOs by making sure the buffers are
-            // marked read-only.  This also helps BufferVk make better decisions during
-            // buffer data uploads and copies by knowing that the buffers are not actually
-            // being written to.
-            commandBufferHelper->bufferRead(context, VK_ACCESS_SHADER_READ_BIT,
-                                            block.activeShaders(), &bufferHelper);
-        }
-        else if (bufferHelper.isLastAccessShaderWriteOnly() &&
-                 (memoryBarrierBits & kBufferMemoryBarrierBits) == 0)
-        {
-            // Buffer is already in shader write access, and this is not from memoryBarrier call,
-            // then skip the WAW barrier since GL spec says driver is not required to insert barrier
-            // here. We still need to maintain object life time tracking here.
-            // Based on discussion here https://gitlab.khronos.org/opengl/API/-/issues/144, the
-            // above check of VK_ACCESS_SHADER_WRITE_BIT bit can be removed and instead rely on app
-            // issue glMemoryBarrier. But almost all usage I am seeing does not issue
-            // glMemoryBarrier before SSBO write. They only issue glMemoryBarrier after the SSBO
-            // write. This is to ensure we do not break the existing usage even if we think they are
-            // out of spec.
-            commandBufferHelper->retainResourceForWrite(&bufferHelper);
-        }
-        else
-        {
-            // We set the SHADER_READ_BIT to be conservative.
-            VkAccessFlags accessFlags = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-            commandBufferHelper->bufferWrite(context, accessFlags, block.activeShaders(),
-                                             &bufferHelper);
-        }
-    }
-
-    VkDeviceSize offset = bufferBinding.getOffset() + bufferHelper.getOffset();
+    VkDeviceSize offset        = bufferBinding.getOffset() + bufferHelper.getOffset();
 
     DescriptorInfoDesc &infoDesc   = mDesc.getInfoDesc(infoDescIndex);
     infoDesc.samplerOrBufferSerial = bufferHelper.getBlockSerial().getValue();
@@ -6518,33 +6470,139 @@ void DescriptorSetDescBuilder::updateOneShaderBuffer(
     mHandles[infoDescIndex].buffer = bufferHelper.getBuffer().getHandle();
 }
 
-void DescriptorSetDescBuilder::updateShaderBuffers(Context *context,
-                                                   CommandBufferHelperCommon *commandBufferHelper,
-                                                   const gl::ProgramExecutable &executable,
-                                                   const gl::BufferVector &buffers,
-                                                   const std::vector<gl::InterfaceBlock> &blocks,
-                                                   VkDescriptorType descriptorType,
-                                                   VkDeviceSize maxBoundBufferRange,
-                                                   const BufferHelper &emptyBuffer,
-                                                   const WriteDescriptorDescs &writeDescriptorDescs,
-                                                   const GLbitfield memoryBarrierBits)
+void DescriptorSetDescBuilder::updateOneUniformBuffer(
+    Context *context,
+    CommandBufferHelperCommon *commandBufferHelper,
+    const size_t blockIndex,
+    const gl::InterfaceBlock &block,
+    const gl::OffsetBindingPointer<gl::Buffer> &bufferBinding,
+    VkDescriptorType descriptorType,
+    VkDeviceSize maxBoundBufferRange,
+    const BufferHelper &emptyBuffer,
+    const WriteDescriptorDescs &writeDescriptorDescs)
 {
-    const bool isUniformBuffer = IsUniformBuffer(descriptorType);
+    ASSERT(IsUniformBuffer(descriptorType));
 
-    gl::ProgramBufferBlockMask dirtyBlocks = isUniformBuffer
-                                                 ? executable.getActiveUniformBufferBlocks()
-                                                 : executable.getActiveStorageBufferBlocks();
+    uint32_t infoDescIndex =
+        writeDescriptorDescs.getDescriptorDescIndexForUniformBufferBlockIndex(blockIndex);
 
-    // Now that we have the proper array elements counts, initialize the info structures.
-    for (size_t blockIndex : dirtyBlocks)
+    // Early return if empty buffer
+    if (bufferBinding.get() == nullptr)
     {
-        const GLuint binding = isUniformBuffer
-                                   ? executable.getUniformBlockBinding(blockIndex)
-                                   : executable.getShaderStorageBlockBinding(blockIndex);
+        setEmptyBuffer(infoDescIndex, descriptorType, emptyBuffer);
+        return;
+    }
 
-        updateOneShaderBuffer(context, commandBufferHelper, blockIndex, blocks[blockIndex],
-                              buffers[binding], descriptorType, maxBoundBufferRange, emptyBuffer,
-                              writeDescriptorDescs, memoryBarrierBits);
+    updateOneShaderBuffer(context, commandBufferHelper, infoDescIndex, block, bufferBinding,
+                          descriptorType, maxBoundBufferRange, emptyBuffer);
+
+    // Insert necessary barriers
+    commandBufferHelper->bufferRead(context, VK_ACCESS_UNIFORM_READ_BIT, block.activeShaders(),
+                                    &vk::GetImpl(bufferBinding.get())->getBuffer());
+}
+
+void DescriptorSetDescBuilder::updateOneUniformBufferOffset(
+    const size_t blockIndex,
+    const gl::OffsetBindingPointer<gl::Buffer> &bufferBinding,
+    const WriteDescriptorDescs &writeDescriptorDescs)
+{
+    uint32_t infoDescIndex =
+        writeDescriptorDescs.getDescriptorDescIndexForUniformBufferBlockIndex(blockIndex);
+    ASSERT(infoDescIndex != kInvalidDescriptorDescIndex && infoDescIndex < mDesc.size());
+    ASSERT(bufferBinding.get() != nullptr);
+
+    DescriptorInfoDesc &infoDesc = mDesc.getInfoDesc(infoDescIndex);
+    BufferHelper &bufferHelper   = vk::GetImpl(bufferBinding.get())->getBuffer();
+    ASSERT(infoDesc.samplerOrBufferSerial == bufferHelper.getBlockSerial().getValue());
+    // Reachable only by program executables with dynamic descriptor type
+    ASSERT(infoDesc.imageViewSerialOrOffset == 0);
+
+    VkDeviceSize newOffset = bufferBinding.getOffset() + bufferHelper.getOffset();
+    ASSERT(infoDescIndex < mDynamicOffsets.size());
+    SetBitField(mDynamicOffsets[infoDescIndex], newOffset);
+}
+
+void DescriptorSetDescBuilder::updateOneStorageBuffer(
+    Context *context,
+    CommandBufferHelperCommon *commandBufferHelper,
+    const size_t blockIndex,
+    const gl::InterfaceBlock &block,
+    const gl::OffsetBindingPointer<gl::Buffer> &bufferBinding,
+    VkDescriptorType descriptorType,
+    VkDeviceSize maxBoundBufferRange,
+    const BufferHelper &emptyBuffer,
+    const WriteDescriptorDescs &writeDescriptorDescs,
+    const GLbitfield memoryBarrierBits)
+{
+    ASSERT(IsStorageBuffer(descriptorType));
+
+    uint32_t infoDescIndex =
+        writeDescriptorDescs.getDescriptorDescIndexForStorageBufferBlockIndex(blockIndex);
+
+    // Early return if empty buffer
+    if (bufferBinding.get() == nullptr)
+    {
+        setEmptyBuffer(infoDescIndex, descriptorType, emptyBuffer);
+        return;
+    }
+
+    updateOneShaderBuffer(context, commandBufferHelper, infoDescIndex, block, bufferBinding,
+                          descriptorType, maxBoundBufferRange, emptyBuffer);
+
+    // Insert necessary barriers
+    BufferHelper &bufferHelper = vk::GetImpl(bufferBinding.get())->getBuffer();
+    if (block.pod.isReadOnly)
+    {
+        // Avoid unnecessary barriers for readonly SSBOs by making sure the buffers are
+        // marked read-only.  This also helps BufferVk make better decisions during
+        // buffer data uploads and copies by knowing that the buffers are not actually
+        // being written to.
+        commandBufferHelper->bufferRead(context, VK_ACCESS_SHADER_READ_BIT, block.activeShaders(),
+                                        &bufferHelper);
+    }
+    else if (bufferHelper.isLastAccessShaderWriteOnly() &&
+             (memoryBarrierBits & kBufferMemoryBarrierBits) == 0)
+    {
+        // Buffer is already in shader write access, and this is not from memoryBarrier call,
+        // then skip the WAW barrier since GL spec says driver is not required to insert barrier
+        // here. We still need to maintain object life time tracking here.
+        // Based on discussion here https://gitlab.khronos.org/opengl/API/-/issues/144, the
+        // above check of VK_ACCESS_SHADER_WRITE_BIT bit can be removed and instead rely on app
+        // issue glMemoryBarrier. But almost all usage I am seeing does not issue
+        // glMemoryBarrier before SSBO write. They only issue glMemoryBarrier after the SSBO
+        // write. This is to ensure we do not break the existing usage even if we think they are
+        // out of spec.
+        commandBufferHelper->retainResourceForWrite(&bufferHelper);
+    }
+    else
+    {
+        // We set the SHADER_READ_BIT to be conservative.
+        VkAccessFlags accessFlags = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+        commandBufferHelper->bufferWrite(context, accessFlags, block.activeShaders(),
+                                         &bufferHelper);
+    }
+}
+
+void DescriptorSetDescBuilder::updateStorageBuffers(
+    Context *context,
+    CommandBufferHelperCommon *commandBufferHelper,
+    const gl::ProgramExecutable &executable,
+    const gl::BufferVector &buffers,
+    const std::vector<gl::InterfaceBlock> &blocks,
+    VkDescriptorType descriptorType,
+    VkDeviceSize maxBoundBufferRange,
+    const BufferHelper &emptyBuffer,
+    const WriteDescriptorDescs &writeDescriptorDescs,
+    const GLbitfield memoryBarrierBits)
+{
+    // Now that we have the proper array elements counts, initialize the info structures.
+    for (size_t blockIndex : executable.getActiveStorageBufferBlocks())
+    {
+        const GLuint binding = executable.getShaderStorageBlockBinding(blockIndex);
+
+        updateOneStorageBuffer(context, commandBufferHelper, blockIndex, blocks[blockIndex],
+                               buffers[binding], descriptorType, maxBoundBufferRange, emptyBuffer,
+                               writeDescriptorDescs, memoryBarrierBits);
     }
 }
 
@@ -6620,37 +6678,15 @@ void DescriptorSetDescBuilder::updateAtomicCounters(
     }
 }
 
-void DescriptorSetDescBuilder::updateOneShaderBufferOffset(
-    const size_t blockIndex,
-    const gl::OffsetBindingPointer<gl::Buffer> &bufferBinding,
-    VkDescriptorType descriptorType,
-    const WriteDescriptorDescs &writeDescriptorDescs)
-{
-    uint32_t infoDescIndex =
-        writeDescriptorDescs.getDescriptorDescIndexForBufferBlockIndex(descriptorType, blockIndex);
-    ASSERT(infoDescIndex != kInvalidDescriptorDescIndex && infoDescIndex < mDesc.size());
-    ASSERT(bufferBinding.get() != nullptr);
-
-    DescriptorInfoDesc &infoDesc = mDesc.getInfoDesc(infoDescIndex);
-    BufferHelper &bufferHelper   = vk::GetImpl(bufferBinding.get())->getBuffer();
-    ASSERT(infoDesc.samplerOrBufferSerial == bufferHelper.getBlockSerial().getValue());
-    // Reachable only by program executables with dynamic descriptor type
-    ASSERT(infoDesc.imageViewSerialOrOffset == 0);
-
-    VkDeviceSize newOffset = bufferBinding.getOffset() + bufferHelper.getOffset();
-    ASSERT(infoDescIndex < mDynamicOffsets.size());
-    SetBitField(mDynamicOffsets[infoDescIndex], newOffset);
-}
-
 angle::Result DescriptorSetDescBuilder::updateImages(
-    Context *context,
+    ContextVk *contextVk,
     const gl::ProgramExecutable &executable,
     const ShaderInterfaceVariableInfoMap &variableInfoMap,
     const gl::ActiveTextureArray<TextureVk *> &activeImages,
     const std::vector<gl::ImageUnit> &imageUnits,
     const WriteDescriptorDescs &writeDescriptorDescs)
 {
-    Renderer *renderer                                 = context->getRenderer();
+    Renderer *renderer                                 = contextVk->getRenderer();
     const std::vector<gl::ImageBinding> &imageBindings = executable.getImageBindings();
     const std::vector<gl::LinkedUniform> &uniforms     = executable.getUniforms();
 
@@ -6696,7 +6732,7 @@ angle::Result DescriptorSetDescBuilder::updateImages(
                                      arrayElement + imageUniform.getOuterArrayOffset();
 
                 const vk::BufferView *view = nullptr;
-                ANGLE_TRY(textureVk->getBufferView(context, format, nullptr, true, &view));
+                ANGLE_TRY(textureVk->getBufferView(contextVk, format, nullptr, true, &view));
 
                 DescriptorInfoDesc &infoDesc = mDesc.getInfoDesc(infoIndex);
                 infoDesc.imageViewSerialOrOffset =
@@ -6722,7 +6758,7 @@ angle::Result DescriptorSetDescBuilder::updateImages(
                 vk::ImageOrBufferViewSubresourceSerial serial =
                     textureVk->getStorageImageViewSerial(binding);
 
-                ANGLE_TRY(textureVk->getStorageImageView(context, binding, &imageView));
+                ANGLE_TRY(textureVk->getStorageImageView(contextVk, binding, &imageView));
 
                 uint32_t infoIndex = writeDescriptorDescs[info.binding].descriptorInfoIndex +
                                      arrayElement + imageUniform.getOuterArrayOffset();
@@ -6744,10 +6780,10 @@ angle::Result DescriptorSetDescBuilder::updateImages(
 }
 
 angle::Result DescriptorSetDescBuilder::updateInputAttachments(
-    vk::Context *context,
+    ContextVk *contextVk,
     const gl::ProgramExecutable &executable,
     const ShaderInterfaceVariableInfoMap &variableInfoMap,
-    FramebufferVk *framebufferVk,
+    const FramebufferVk *framebufferVk,
     const WriteDescriptorDescs &writeDescriptorDescs)
 {
     // Note: Depth/stencil input attachments are only supported in ANGLE when using
@@ -6756,7 +6792,7 @@ angle::Result DescriptorSetDescBuilder::updateInputAttachments(
     if (executable.usesDepthFramebufferFetch() || executable.usesStencilFramebufferFetch())
     {
         RenderTargetVk *renderTargetVk = framebufferVk->getDepthStencilRenderTarget();
-        ASSERT(context->getFeatures().preferDynamicRendering.enabled);
+        ASSERT(contextVk->getFeatures().preferDynamicRendering.enabled);
 
         if (renderTargetVk != nullptr)
         {
@@ -6770,14 +6806,14 @@ angle::Result DescriptorSetDescBuilder::updateInputAttachments(
             {
                 const vk::ImageView *imageView = nullptr;
                 ANGLE_TRY(renderTargetVk->getDepthOrStencilImageView(
-                    context, VK_IMAGE_ASPECT_DEPTH_BIT, &imageView));
+                    contextVk, VK_IMAGE_ASPECT_DEPTH_BIT, &imageView));
 
                 const uint32_t depthBinding =
                     variableInfoMap
                         .getVariableById(gl::ShaderType::Fragment,
                                          sh::vk::spirv::kIdDepthInputAttachment)
                         .binding;
-                updateInputAttachment(context, depthBinding,
+                updateInputAttachment(contextVk, depthBinding,
                                       VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR, imageView, serial,
                                       writeDescriptorDescs);
             }
@@ -6787,14 +6823,14 @@ angle::Result DescriptorSetDescBuilder::updateInputAttachments(
             {
                 const vk::ImageView *imageView = nullptr;
                 ANGLE_TRY(renderTargetVk->getDepthOrStencilImageView(
-                    context, VK_IMAGE_ASPECT_STENCIL_BIT, &imageView));
+                    contextVk, VK_IMAGE_ASPECT_STENCIL_BIT, &imageView));
 
                 const uint32_t stencilBinding =
                     variableInfoMap
                         .getVariableById(gl::ShaderType::Fragment,
                                          sh::vk::spirv::kIdStencilInputAttachment)
                         .binding;
-                updateInputAttachment(context, stencilBinding,
+                updateInputAttachment(contextVk, stencilBinding,
                                       VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR, imageView, serial,
                                       writeDescriptorDescs);
             }
@@ -6820,14 +6856,14 @@ angle::Result DescriptorSetDescBuilder::updateInputAttachments(
         RenderTargetVk *renderTargetVk = framebufferVk->getColorDrawRenderTarget(colorIndex);
 
         const vk::ImageView *imageView = nullptr;
-        ANGLE_TRY(renderTargetVk->getImageView(context, &imageView));
+        ANGLE_TRY(renderTargetVk->getImageView(contextVk, &imageView));
         const ImageOrBufferViewSubresourceSerial serial =
             renderTargetVk->getDrawSubresourceSerial();
 
         // We just need any layout that represents GENERAL for render pass objects.  With dynamic
         // rendering, there's a specific layout.
-        updateInputAttachment(context, binding,
-                              context->getFeatures().preferDynamicRendering.enabled
+        updateInputAttachment(contextVk, binding,
+                              contextVk->getFeatures().preferDynamicRendering.enabled
                                   ? VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR
                                   : VK_IMAGE_LAYOUT_GENERAL,
                               imageView, serial, writeDescriptorDescs);
@@ -8476,27 +8512,44 @@ SamplerYcbcrConversionCache::~SamplerYcbcrConversionCache()
     ASSERT(mExternalFormatPayload.empty() && mVkFormatPayload.empty());
 }
 
-void SamplerYcbcrConversionCache::destroy(vk::Renderer *renderer)
+void SamplerYcbcrConversionCache::destroy(vk::Renderer *renderer, bool orphanConversionInfo)
 {
     renderer->accumulateCacheStats(VulkanCacheType::SamplerYcbcrConversion, mCacheStats);
 
-    VkDevice device = renderer->getDevice();
-
-    uint32_t count = static_cast<uint32_t>(mExternalFormatPayload.size());
-    for (auto &iter : mExternalFormatPayload)
+    // If the EGL_ANGLE_display_texture_share_group extension is causing some samplers to
+    // stay alive, there is no way to know which conversion info object needs to stay alive.
+    // stash them all in the renderer to be destroyed when possible.
+    if (orphanConversionInfo)
     {
-        vk::SamplerYcbcrConversion &samplerYcbcrConversion = iter.second;
-        samplerYcbcrConversion.destroy(device);
+        for (auto &iter : mExternalFormatPayload)
+        {
+            renderer->addSamplerYcbcrConversionToOrphanList(iter.second.release());
+        }
+        for (auto &iter : mVkFormatPayload)
+        {
+            renderer->addSamplerYcbcrConversionToOrphanList(iter.second.release());
+        }
     }
-    renderer->onDeallocateHandle(vk::HandleType::SamplerYcbcrConversion, count);
-
-    count = static_cast<uint32_t>(mExternalFormatPayload.size());
-    for (auto &iter : mVkFormatPayload)
+    else
     {
-        vk::SamplerYcbcrConversion &samplerYcbcrConversion = iter.second;
-        samplerYcbcrConversion.destroy(device);
+        VkDevice device = renderer->getDevice();
+
+        uint32_t count = static_cast<uint32_t>(mExternalFormatPayload.size());
+        for (auto &iter : mExternalFormatPayload)
+        {
+            vk::SamplerYcbcrConversion &samplerYcbcrConversion = iter.second;
+            samplerYcbcrConversion.destroy(device);
+        }
+        renderer->onDeallocateHandle(vk::HandleType::SamplerYcbcrConversion, count);
+
+        count = static_cast<uint32_t>(mExternalFormatPayload.size());
+        for (auto &iter : mVkFormatPayload)
+        {
+            vk::SamplerYcbcrConversion &samplerYcbcrConversion = iter.second;
+            samplerYcbcrConversion.destroy(device);
+        }
+        renderer->onDeallocateHandle(vk::HandleType::SamplerYcbcrConversion, count);
     }
-    renderer->onDeallocateHandle(vk::HandleType::SamplerYcbcrConversion, count);
 
     mExternalFormatPayload.clear();
     mVkFormatPayload.clear();
@@ -8545,14 +8598,34 @@ SamplerCache::~SamplerCache()
     ASSERT(mPayload.empty());
 }
 
-void SamplerCache::destroy(vk::Renderer *renderer)
+void SamplerCache::destroy(vk::Renderer *renderer, bool orphanReferencedSamplers)
 {
     renderer->accumulateCacheStats(VulkanCacheType::Sampler, mCacheStats);
 
     uint32_t count = static_cast<uint32_t>(mPayload.size());
-    ASSERT(AllCacheEntriesHaveUniqueReference(mPayload));
+
+    if (orphanReferencedSamplers)
+    {
+        for (auto &iter : mPayload)
+        {
+            // If the EGL_ANGLE_display_texture_share_group extension is causing some samplers to
+            // stay alive, stash them in the renderer to be destroyed when possible.
+            if (!iter.second.unique())
+            {
+                renderer->addSamplerToOrphanList(iter.second);
+            }
+            else
+            {
+                renderer->onDeallocateHandle(vk::HandleType::Sampler, 1);
+            }
+        }
+    }
+    else
+    {
+        ASSERT(AllCacheEntriesHaveUniqueReference(mPayload));
+        renderer->onDeallocateHandle(vk::HandleType::Sampler, count);
+    }
     mPayload.clear();
-    renderer->onDeallocateHandle(vk::HandleType::Sampler, count);
 }
 
 angle::Result SamplerCache::getSampler(ContextVk *contextVk,

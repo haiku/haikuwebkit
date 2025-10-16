@@ -1,4 +1,4 @@
-Blocked access to external URL https://www.localhost:9443/focus/support/activeelement-after-calling-window-focus-outer-same.sub.html
+CONSOLE MESSAGE: Blocked access to external URL https://www.localhost:9443/focus/support/activeelement-after-calling-window-focus-outer-same.sub.html
 
 Harness Error (TIMEOUT), message = null
 

@@ -531,23 +531,17 @@ void WebChromeClient::setResizable(bool resizable)
 
 void WebChromeClient::addMessageToConsole(MessageSource source, MessageLevel level, const String& message, unsigned lineNumber, unsigned columnNumber, const String& sourceID)
 {
-    // Notify the bundle client.
     RefPtr page = m_page.get();
     if (!page)
         return;
 
-    // FIXME: Remove this after rdar://143399667 is fixed.
+#if !PLATFORM(COCOA)
     page->injectedBundleUIClient().willAddMessageToConsole(page.get(), source, level, message, lineNumber, columnNumber, sourceID);
+#endif
 
     if (!page->shouldSendConsoleLogsToUIProcessForTesting())
         return;
     page->send(Messages::WebPageProxy::AddMessageToConsoleForTesting(message.length() > String::MaxLength / 2 ? "Out of memory"_s : message), IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
-}
-
-void WebChromeClient::addMessageWithArgumentsToConsole(MessageSource source, MessageLevel level, const String& message, std::span<const String> messageArguments, unsigned lineNumber, unsigned columnNumber, const String& sourceID)
-{
-    if (RefPtr page = m_page.get())
-        page->injectedBundleUIClient().willAddMessageWithArgumentsToConsole(page.get(), source, level, message, messageArguments, lineNumber, columnNumber, sourceID);
 }
 
 bool WebChromeClient::canRunBeforeUnloadConfirmPanel()
@@ -634,7 +628,6 @@ void WebChromeClient::runJavaScriptAlert(LocalFrame& frame, const String& alertT
     if (!page)
         return;
 
-    page->injectedBundleUIClient().willRunJavaScriptAlert(page.get(), alertText, webFrame.get());
     page->prepareToRunModalJavaScriptDialog();
 
     HangDetectionDisabler hangDetectionDisabler;
@@ -658,7 +651,6 @@ bool WebChromeClient::runJavaScriptConfirm(LocalFrame& frame, const String& mess
     if (!page)
         return false;
 
-    page->injectedBundleUIClient().willRunJavaScriptConfirm(page.get(), message, webFrame.get());
     page->prepareToRunModalJavaScriptDialog();
 
     HangDetectionDisabler hangDetectionDisabler;
@@ -684,7 +676,6 @@ bool WebChromeClient::runJavaScriptPrompt(LocalFrame& frame, const String& messa
     if (!page)
         return false;
 
-    page->injectedBundleUIClient().willRunJavaScriptPrompt(page.get(), message, defaultValue, webFrame.get());
     page->prepareToRunModalJavaScriptDialog();
 
     HangDetectionDisabler hangDetectionDisabler;
@@ -1134,7 +1125,7 @@ RefPtr<ImageBuffer> WebChromeClient::createImageBuffer(const FloatSize& size, Re
     }
 
     if (purpose == RenderingPurpose::ShareableSnapshot || purpose == RenderingPurpose::ShareableLocalSnapshot)
-        return ImageBuffer::create<ImageBufferShareableBitmapBackend>(size, resolutionScale, colorSpace, { ImageBufferPixelFormat::BGRA8 }, purpose, { });
+        return ImageBuffer::create<ImageBufferShareableBitmapBackend>(size, resolutionScale, colorSpace, { PixelFormat::BGRA8 }, purpose, { });
 
     return nullptr;
 }
@@ -1934,15 +1925,7 @@ void WebChromeClient::inputElementDidResignStrongPasswordAppearance(HTMLInputEle
     RefPtr page = m_page.get();
     if (!page)
         return;
-
-    RefPtr<API::Object> userData;
-
-    // Notify the bundle client.
-    auto nodeHandle = InjectedBundleNodeHandle::getOrCreate(inputElement);
-    page->injectedBundleUIClient().didResignInputElementStrongPasswordAppearance(*page, nodeHandle.get(), userData);
-
-    // Notify the UIProcess.
-    page->send(Messages::WebPageProxy::DidResignInputElementStrongPasswordAppearance { UserData { WebProcess::singleton().transformObjectsToHandles(userData.get()).get() } });
+    page->send(Messages::WebPageProxy::DidResignInputElementStrongPasswordAppearance { UserData { } });
 }
 
 void WebChromeClient::performSwitchHapticFeedback()

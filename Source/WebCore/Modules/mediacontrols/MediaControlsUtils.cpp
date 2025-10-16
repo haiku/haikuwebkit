@@ -29,6 +29,7 @@
 #if ENABLE(VIDEO)
 
 #include "Blob.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DOMURL.h"
 #include "HTMLImageElement.h"
 #include "MIMETypeRegistry.h"

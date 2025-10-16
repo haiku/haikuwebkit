@@ -122,8 +122,8 @@ class GtkPort(GLibPort):
     def _search_paths(self):
         search_paths = []
 
-        if self._is_gtk4_build():
-            search_paths.append(self.port_name + "4")
+        if self._is_gtk3_build():
+            search_paths.append(self.port_name + "3")
 
         if self._driver_class() in [WaylandDriver, WestonDriver]:
             search_paths.append(self.port_name + "-wayland")
@@ -197,16 +197,16 @@ class GtkPort(GLibPort):
         return self._executive.run_command(command + args, cwd=self.webkit_base(), stdout=None, return_stderr=False, decode_output=False, env=env, pass_fds=pass_fds)
 
     @memoized
-    def _is_gtk4_build(self):
+    def _is_gtk3_build(self):
         try:
             libdir = self._build_path('lib')
             candidates = self._filesystem.glob(os.path.join(libdir, 'libwebkit*gtk-*.so'))
             if not candidates:
                 return False
             if len(candidates) > 1:
-                _log.warning("Multiple WebKit2GTK libraries found. Skipping GTK4 detection.")
+                _log.warning("Multiple WebKit2GTK libraries found. Skipping GTK3 detection.")
                 return False
-            return os.path.basename(candidates[0]) == 'libwebkitgtk-6.0.so'
+            return os.path.basename(candidates[0]) == 'libwebkit2gtk-4.0.so'
 
         except (webkitpy.common.system.executive.ScriptError, IOError, OSError):
             return False

@@ -189,6 +189,11 @@ void TextureView::setCommandEncoder(CommandEncoder& commandEncoder) const
         commandEncoder.makeSubmitInvalid();
 }
 
+id<MTLRasterizationRateMap> TextureView::rasterizationMapForSlice(uint32_t slice)
+{
+    return apiParentTexture().rasterizationMapForSlice(slice);
+}
+
 } // namespace WebGPU
 
 #pragma mark WGPU Stubs

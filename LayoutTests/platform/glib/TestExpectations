@@ -870,6 +870,7 @@ accessibility/dynamically-changing-iframe-remains-accessible.html [ Skip ]
 accessibility/ignore-modals-without-any-content.html [ Skip ]
 accessibility/iframe-tree-update-with-dirty-layout.html [ Skip ]
 accessibility/iframe-with-role.html [ Skip ]
+accessibility/missing-content-inside-expanded-details.html [ Skip ]
 
 accessibility/editable-webpage-focused-ui-element.html [ Skip ]
 
@@ -955,6 +956,7 @@ webkit.org/b/228915 accessibility/selected-state-changed-notifications.html [ Ti
 # Not supported
 accessibility/embedded-image-description.html [ Skip ]
 accessibility/aria-keyshortcuts.html [ Skip ]
+accessibility/radio-button-group-dynamic-changes.html [ Skip ]
 
 # Not supported. Skipped also in mac-wk1 and win ports.
 accessibility/nested-textareas-value-changed-notifications.html [ Skip ]
@@ -1201,6 +1203,9 @@ imported/w3c/web-platform-tests/css/css-transforms/transform3d-translate3d-001.h
 
 imported/w3c/web-platform-tests/focus/activeelement-after-nested-loses-focus.html [ Skip ]
 
+# Assertion failure in Release build with ASSERT_ENABLED
+webkit.org/b/279421 imported/w3c/web-platform-tests/css/css-multicol/crashtests/inline-float-parallel-flow.html [ Skip ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of CSS-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
@@ -1255,7 +1260,8 @@ webkit.org/b/239345 editing/execCommand/insert-ordered-list-and-delete.html [ Fa
 
 webkit.org/b/179605 editing/execCommand/underline-selection-containing-image.html [ Failure ]
 
-webkit.org/b/286128 editing/inserting/insert-list-user-select-none-crash.html [ Crash ]
+# Assertion failure if ASSERT_ENABLED
+webkit.org/b/286128 [ Release ] editing/inserting/insert-list-user-select-none-crash.html [ Crash Pass ]
 
 webkit.org/b/179261 editing/selection/drag-to-contenteditable-iframe.html [ Timeout ]
 
@@ -1326,6 +1332,12 @@ webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrolle
 webkit.org/b/201556 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-for-user-scroll.html [ Skip ]
 
 webkit.org/b/219248 imported/w3c/web-platform-tests/uievents/mouse/mouseevent_move_button.html [ Failure ]
+
+# WTR::UIScriptController::sendEventStream isn't implemented
+# Crash mentioning WTR::UIScriptController::notImplemented() with the EventTimingEnabled feature flag
+webkit.org/b/296246 imported/w3c/web-platform-tests/event-timing/first-input-interactionid-key.html [ Skip ]
+webkit.org/b/296246 imported/w3c/web-platform-tests/event-timing/interaction-count-tap.html [ Skip ]
+webkit.org/b/296246 imported/w3c/web-platform-tests/event-timing/TapToStopFling.html [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Events-related bugs
@@ -1413,9 +1425,6 @@ webkit.org/b/152247 fast/forms/listbox-scrollbar-hit-test.html [ Skip ]
 
 webkit.org/b/209403 fast/forms/placeholder-content-center-line-height-greater-than-content-height.html [ ImageOnlyFailure ]
 
-# This test assumes that color on sliders is not reversed for RTL, so failing is good.
-fast/forms/range/input-appearance-range-rtl.html [ ImageOnlyFailure ]
-
 webkit.org/b/209727 fast/forms/single-text-line-content-clipping.html [ ImageOnlyFailure ]
 
 fast/forms/listbox-typeahead-cyrillic.html [ Failure ]
@@ -1434,7 +1443,9 @@ webkit.org/b/181662 fast/forms/auto-fill-button/input-strong-password-viewable-b
 
 webkit.org/b/182103 fast/forms/focus-selection-textarea.html [ Failure ]
 
-webkit.org/b/286129 fast/forms/textarea-node-removed-from-document-crash.html [ Crash ]
+# Assertion failure if ASSERT_ENABLED
+webkit.org/b/286129 [ Debug ] fast/forms/textarea-node-removed-from-document-crash.html [ Skip ]
+webkit.org/b/286129 [ Release ] fast/forms/textarea-node-removed-from-document-crash.html [ Crash Pass ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Forms-related bugs
@@ -1667,6 +1678,9 @@ media/modern-media-controls/media-documents/background-color-and-centering.html 
 http/tests/media/modern-media-controls/skip-back-support/skip-back-support-button-click.html [ Skip ] # Timeout
 
 media/modern-media-controls/scrubber-support/scrubber-support-drag.html [ Pass Timeout ]
+
+# Unimplemented WTR::UIScriptController::singleTapAtPoint
+webkit.org/b/286930 media/modern-media-controls/scrubber-support/scrubber-support-seek-back.html [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Media-controls-related bugs
@@ -1968,7 +1982,7 @@ webkit.org/b/273396 fast/clip/overflow-hidden-with-border-radius-overflow-clippi
 webkit.org/b/273396 fast/css/ignore-empty-focus-ring-rects.html [ ImageOnlyFailure ]
 webkit.org/b/273396 fast/css3-text/css3-text-decoration/text-decoration-skip/text-decoration-skip-ink-svg.html [ ImageOnlyFailure ]
 webkit.org/b/273396 fast/encoding/denormalised-voiced-japanese-chars.html [ ImageOnlyFailure ]
-webkit.org/b/273396 fast/images/animated-avif.html [ ImageOnlyFailure ]
+webkit.org/b/273396 fast/images/animated-avif.html [ ImageOnlyFailure Pass ]
 webkit.org/b/273396 fast/inline/hidpi-outline-inline-box-writing-modes.html [ ImageOnlyFailure ]
 webkit.org/b/273396 fast/masking/clip-path-inset-large-radii.html [ ImageOnlyFailure ]
 webkit.org/b/273396 fast/multicol/clipped-video-in-second-column.html [ ImageOnlyFailure ]
@@ -2313,10 +2327,7 @@ webkit.org/b/132995 transitions/cancel-transition.html [ Failure Pass ]
 # WebAnimations-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
 
-webkit.org/b/211948 webanimations/accelerated-animation-playback-rate.html [ ImageOnlyFailure ]
 webkit.org/b/212020 webanimations/accelerated-animation-single-keyframe.html [ Skip ]
-
-webkit.org/b/216539 webanimations/accelerated-animation-easing-and-direction-update.html [ ImageOnlyFailure ]
 
 webkit.org/b/221021 webanimations/accelerated-animation-immediate-prevetion-direction-reverse.html [ Skip ]
 webkit.org/b/221021 webanimations/combining-transform-animations-with-different-acceleration-capabilities-2.html [ Skip ]
@@ -2794,8 +2805,12 @@ webkit.org/b/215912 http/tests/websocket/tests/hybi/handshake-fail-by-no-cr.html
 #////////////////////////////////////////////////////////////////////////////////////////
 
 webkit.org/b/208988 http/tests/webxr/webxr-third-party-iframe-requestsession-denied-by-insufficient-feature-policy.html [ Timeout ]
-webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrViewport_valid.https.html [ Failure ]
-webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrWebGLLayer_viewports.https.html [ Failure ]
+
+# Assertion failure if ASSERT_ENABLED
+webkit.org/b/298434 [ Debug ] imported/w3c/web-platform-tests/webxr/xrViewport_valid.https.html [ Skip ]
+webkit.org/b/298434 [ Release ] imported/w3c/web-platform-tests/webxr/xrViewport_valid.https.html [ Crash Pass ]
+webkit.org/b/298434 [ Debug ] imported/w3c/web-platform-tests/webxr/xrWebGLLayer_viewports.https.html [ Skip ]
+webkit.org/b/298434 [ Release ] imported/w3c/web-platform-tests/webxr/xrWebGLLayer_viewports.https.html [ Crash Pass ]
 
 # WebXROpaqueFramebuffer is not able to properly setup gfx resources
 webkit.org/b/296681 imported/w3c/web-platform-tests/webxr [ Skip ]
@@ -2840,9 +2855,7 @@ imported/w3c/web-platform-tests/content-security-policy/frame-ancestors/frame-an
 imported/w3c/web-platform-tests/content-security-policy/frame-src/frame-src-blocked-path-matching.sub.html [ Failure ]
 imported/w3c/web-platform-tests/content-security-policy/generic/image-document-ignores-csp.html [ Failure ]
 imported/w3c/web-platform-tests/content-security-policy/generic/policy-inherited-correctly-by-plznavigate.html [ Failure ]
-imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.html [ Failure ]
 imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.sharedworker.html [ Failure ]
-imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.worker.html [ Failure ]
 imported/w3c/web-platform-tests/content-security-policy/generic/wildcard-host-part.sub.window.html [ Failure ]
 imported/w3c/web-platform-tests/content-security-policy/img-src/img-src-port-wildcard-allowed.sub.html [ Failure ]
 imported/w3c/web-platform-tests/content-security-policy/reporting/report-original-url-on-mixed-content-frame.https.sub.html [ Failure ]
@@ -3395,7 +3408,6 @@ http/tests/security/canvas-remote-read-remote-video-hls.html [ Skip ]
 http/tests/media/modern-media-controls/status-support/status-support-live-broadcast.html [ Skip ]
 http/tests/media/modern-media-controls/time-control/1-to-10-hours.html [ Skip ]
 http/tests/media/modern-media-controls/time-control/10-hours-or-more.html [ Skip ]
-http/tests/media/modern-media-controls/time-control/less-than-10-minutes.html [ Skip ]
 http/tests/media/modern-media-controls/time-control/10-minutes-to-1-hour.html [ Skip ]
 
 # DASH media playback support is disabled in the GStreamer ports.
@@ -3522,8 +3534,6 @@ imported/w3c/web-platform-tests/html/semantics/embedded-content/the-embed-elemen
 
 # Remove console message: 'Navigator.getGamepads() will be removed from insecure contexts in a future release'.
 imported/w3c/web-platform-tests/gamepad/gamepad-secure-context.html [ DumpJSConsoleLogInStdErr ]
-
-webkit.org/b/259104 gamepad/gamepad-visibility-1.html [ Failure ]
 
 # ENABLE(DRAGGABLE_REGION) is disabled
 Bug(GLIB) fast/css/draggable-region-parser.html [ Failure ]
@@ -3862,8 +3872,6 @@ webkit.org/b/131546 media/track/track-in-band.html [ Failure ]
 
 # See also webkit.org/b/163528 Threaded compositor failures caused by one of r203496, r203497, or r203498
 webkit.org/b/177536 media/video-object-fit.html [ ImageOnlyFailure Pass ]
-
-webkit.org/b/133865 media/W3C/video/networkState/networkState_during_progress.html [ Failure ]
 
 webkit.org/b/134576 media/track/video/video-track-mkv-theora-selected.html [ Failure ]
 webkit.org/b/143478 media/video-page-load-preload-none.html [ Failure ]
@@ -4205,8 +4213,6 @@ webkit.org/b/245032 imported/w3c/web-platform-tests/css/compositing/root-element
 imported/w3c/web-platform-tests/css/css-color/system-color-hightlights-vs-getSelection-001.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-color/system-color-hightlights-vs-getSelection-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-color/parsing/color-valid-relative-color.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-color/parsing/color-computed-rgb.html [ Failure ]
-imported/w3c/web-platform-tests/css/css-color/parsing/color-valid-rgb.html [ Failure ]
 imported/w3c/web-platform-tests/css/css-color/body-opacity-0-to-1-stacking-context.html [ Pass ImageOnlyFailure ]
 
 # Flakily crashing on GTK and WPE bots
@@ -4847,7 +4853,9 @@ imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/js
 
 imported/w3c/web-platform-tests/css/selectors/invalidation/media-pseudo-classes-in-has.html [ Failure ]
 
-imported/w3c/web-platform-tests/selection/caret/move-around-generated-content.html [ Crash ]
+# Assertion failure if ASSERT_ENABLED
+webkit.org/b/298433 [ Debug ] imported/w3c/web-platform-tests/selection/caret/move-around-generated-content.html [ Skip ]
+webkit.org/b/298433 [ Release ] imported/w3c/web-platform-tests/selection/caret/move-around-generated-content.html [ Crash Pass Failure ]
 
 # Needs rebaseline.
 fast/text/glyph-display-lists [ Skip ]

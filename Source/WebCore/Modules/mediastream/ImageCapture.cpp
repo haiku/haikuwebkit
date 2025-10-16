@@ -147,7 +147,7 @@ static void createImageBitmap(VideoFrame& videoFrame, CompletionHandler<void(Ref
     IntSize size { static_cast<int>(videoFrame.presentationSize().width()), static_cast<int>(videoFrame.presentationSize().height()) };
     if (videoFrame.has90DegreeRotation())
         size = { size.height(), size.width() };
-    auto imageBuffer = ImageBuffer::create(size, RenderingMode::Unaccelerated, RenderingPurpose::Unspecified, 1, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8);
+    auto imageBuffer = ImageBuffer::create(size, RenderingMode::Unaccelerated, RenderingPurpose::Unspecified, 1, DestinationColorSpace::SRGB(), PixelFormat::BGRA8);
     if (!imageBuffer) {
         completionHandler({ });
         return;

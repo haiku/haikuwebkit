@@ -1375,6 +1375,9 @@ void WebProcess::dispatchSimulatedNotificationsForPreferenceChange(const String&
         RetainPtr notificationCenter = [NSNotificationCenter defaultCenter];
         [notificationCenter postNotificationName:@"NSSystemColorsWillChangeNotification" object:nil];
         [notificationCenter postNotificationName:NSSystemColorsDidChangeNotification object:nil];
+    } else if (key == increaseContrastPreferenceKey()) {
+        RetainPtr notificationCenter = [[NSWorkspace sharedWorkspace] notificationCenter];
+        [notificationCenter postNotificationName:NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification object:nil];
     }
 #endif
     if (key == captionProfilePreferenceKey()) {

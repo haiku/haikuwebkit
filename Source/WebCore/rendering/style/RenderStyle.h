@@ -72,12 +72,10 @@ class RenderStyle;
 class SVGRenderStyle;
 class ScrollTimeline;
 class StyleContentAlignmentData;
-class StyleImage;
 class StyleInheritedData;
 class StyleNonInheritedData;
 class StylePathData;
 class StyleRareInheritedData;
-class StyleReflection;
 class StyleSelfAlignmentData;
 class TextAutospace;
 class TextSpacingTrim;
@@ -284,6 +282,7 @@ struct GridTrackSizes;
 struct HyphenateCharacter;
 struct HyphenateLimitEdge;
 struct HyphenateLimitLines;
+struct ImageOrNone;
 struct InsetEdge;
 struct LineWidth;
 struct ListStyleType;
@@ -349,6 +348,8 @@ struct ViewTimelineInsets;
 struct ViewTimelines;
 struct ViewTransitionClasses;
 struct ViewTransitionName;
+struct WebkitBoxReflect;
+struct WebkitInitialLetter;
 struct WebkitLineClamp;
 struct WebkitLineGrid;
 struct WebkitTextStrokeWidth;
@@ -390,6 +391,9 @@ using TransformOriginXY = Position;
 using TransformOriginY = PositionY;
 using TransformOriginZ = Length<>;
 using WebkitBorderSpacing = Length<CSS::Nonnegative>;
+using WebkitBoxFlex = Number<CSS::All, float>;
+using WebkitBoxFlexGroup = Integer<CSS::Nonnegative>;
+using WebkitBoxOrdinalGroup = Integer<CSS::Positive>;
 }
 
 constexpr auto PublicPseudoIDBits = 17;
@@ -786,7 +790,7 @@ public:
     CaptionSide captionSide() const { return static_cast<CaptionSide>(m_inheritedFlags.captionSide); }
 
     inline const Style::ListStyleType& listStyleType() const;
-    StyleImage* listStyleImage() const;
+    inline const Style::ImageOrNone& listStyleImage() const;
     ListStylePosition listStylePosition() const { return static_cast<ListStylePosition>(m_inheritedFlags.listStylePosition); }
     inline bool isFixedTableLayout() const;
 
@@ -886,10 +890,10 @@ public:
 
     inline BoxAlignment boxAlign() const;
     BoxDirection boxDirection() const { return static_cast<BoxDirection>(m_inheritedFlags.boxDirection); }
-    inline float boxFlex() const;
-    inline unsigned boxFlexGroup() const;
+    inline Style::WebkitBoxFlex boxFlex() const;
+    inline Style::WebkitBoxFlexGroup boxFlexGroup() const;
     inline BoxLines boxLines() const;
-    inline unsigned boxOrdinalGroup() const;
+    inline Style::WebkitBoxOrdinalGroup boxOrdinalGroup() const;
     inline BoxOrient boxOrient() const;
     inline BoxPack boxPack() const;
 
@@ -937,7 +941,9 @@ public:
 
     inline BoxDecorationBreak boxDecorationBreak() const;
 
-    inline StyleReflection* boxReflect() const;
+    inline const Style::WebkitBoxReflect& boxReflect() const;
+    inline bool hasBoxReflect() const;
+
     inline BoxSizing boxSizing() const;
     inline BoxSizing boxSizingForAspectRatio() const;
     inline const Length& marqueeIncrement() const;
@@ -1120,9 +1126,7 @@ public:
     inline const Style::BlockEllipsis& blockEllipsis() const;
     inline Style::MaximumLines maxLines() const;
     inline OverflowContinue overflowContinue() const;
-    inline const FloatSize& initialLetter() const;
-    inline float initialLetterDrop() const;
-    inline float initialLetterHeight() const;
+    inline const Style::WebkitInitialLetter& initialLetter() const;
 
     inline OptionSet<TouchAction> touchActions() const;
     // 'touch-action' behavior depends on values in ancestors. We use an additional inherited property to implement that.
@@ -1422,7 +1426,7 @@ public:
     inline void setUsedContentVisibility(ContentVisibility);
 
     inline void setListStyleType(Style::ListStyleType&&);
-    void setListStyleImage(RefPtr<StyleImage>&&);
+    void setListStyleImage(Style::ImageOrNone&&);
     void setListStylePosition(ListStylePosition v) { m_inheritedFlags.listStylePosition = static_cast<unsigned>(v); }
 
     inline void resetMargin();
@@ -1487,14 +1491,14 @@ public:
     inline void setUsedAppearance(StyleAppearance);
     inline void setBoxAlign(BoxAlignment);
     void setBoxDirection(BoxDirection d) { m_inheritedFlags.boxDirection = static_cast<unsigned>(d); }
-    inline void setBoxFlex(float);
-    inline void setBoxFlexGroup(unsigned);
+    inline void setBoxFlex(Style::WebkitBoxFlex);
+    inline void setBoxFlexGroup(Style::WebkitBoxFlexGroup);
     inline void setBoxLines(BoxLines);
-    inline void setBoxOrdinalGroup(unsigned);
+    inline void setBoxOrdinalGroup(Style::WebkitBoxOrdinalGroup);
     inline void setBoxOrient(BoxOrient);
     inline void setBoxPack(BoxPack);
     inline void setBoxShadow(Style::BoxShadows&&);
-    inline void setBoxReflect(RefPtr<StyleReflection>&&);
+    inline void setBoxReflect(Style::WebkitBoxReflect&&);
     inline void setBoxSizing(BoxSizing);
     inline void setFlexGrow(Style::FlexGrow);
     inline void setFlexShrink(Style::FlexShrink);
@@ -1639,8 +1643,8 @@ public:
     inline void setOverflowContinue(OverflowContinue);
     inline void setBlockEllipsis(Style::BlockEllipsis&&);
 
-    inline void setInitialLetter(const FloatSize&);
-    
+    inline void setInitialLetter(Style::WebkitInitialLetter&&);
+
     inline void setTouchActions(OptionSet<TouchAction>);
     inline void setUsedTouchActions(OptionSet<TouchAction>);
     inline void setEventListenerRegionTypes(OptionSet<EventListenerRegionType>);
@@ -1959,7 +1963,7 @@ public:
     static inline Color initialColor();
     static inline Style::Color initialTextStrokeColor();
     static inline Style::Color initialTextDecorationColor();
-    static StyleImage* initialListStyleImage() { return 0; }
+    static inline Style::ImageOrNone initialListStyleImage();
     static constexpr Style::LineWidth initialBorderWidth();
     static constexpr Style::LineWidth initialColumnRuleWidth();
     static constexpr Style::LineWidth initialOutlineWidth();
@@ -2006,12 +2010,12 @@ public:
     static constexpr BoxLines initialBoxLines();
     static constexpr BoxOrient initialBoxOrient();
     static constexpr BoxPack initialBoxPack();
-    static float initialBoxFlex() { return 0.0f; }
-    static unsigned initialBoxFlexGroup() { return 1; }
-    static unsigned initialBoxOrdinalGroup() { return 1; }
+    static constexpr Style::WebkitBoxFlex initialBoxFlex();
+    static constexpr Style::WebkitBoxFlexGroup initialBoxFlexGroup();
+    static constexpr Style::WebkitBoxOrdinalGroup initialBoxOrdinalGroup();
     static inline Style::BoxShadows initialBoxShadow();
     static constexpr BoxSizing initialBoxSizing();
-    static StyleReflection* initialBoxReflect() { return 0; }
+    static inline Style::WebkitBoxReflect initialBoxReflect();
     static constexpr Style::FlexGrow initialFlexGrow();
     static constexpr Style::FlexShrink initialFlexShrink();
     static inline Style::FlexBasis initialFlexBasis();
@@ -2168,7 +2172,7 @@ public:
     static constexpr LineSnap initialLineSnap();
     static constexpr LineAlign initialLineAlign();
 
-    static constexpr FloatSize initialInitialLetter();
+    static constexpr Style::WebkitInitialLetter initialInitialLetter();
     static constexpr Style::WebkitLineClamp initialLineClamp();
     static inline Style::BlockEllipsis initialBlockEllipsis();
     static OverflowContinue initialOverflowContinue();

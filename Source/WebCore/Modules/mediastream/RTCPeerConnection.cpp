@@ -36,6 +36,7 @@
 
 #if ENABLE(WEB_RTC)
 
+#include "ContextDestructionObserverInlines.h"
 #include "DNS.h"
 #include "DocumentInlines.h"
 #include "Event.h"
@@ -717,6 +718,11 @@ void RTCPeerConnection::close()
 
     ASSERT(isClosed());
     protectedBackend()->close();
+}
+
+ScriptExecutionContext* RTCPeerConnection::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void RTCPeerConnection::emulatePlatformEvent(const String& action)

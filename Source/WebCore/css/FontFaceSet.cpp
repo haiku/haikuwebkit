@@ -26,6 +26,7 @@
 #include "config.h"
 #include "FontFaceSet.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DOMPromiseProxy.h"
 #include "Document.h"
 #include "DocumentInlines.h"
@@ -281,5 +282,11 @@ FontFaceSet& FontFaceSet::readyPromiseResolve()
 {
     return *this;
 }
+
+ScriptExecutionContext* FontFaceSet::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 
 }

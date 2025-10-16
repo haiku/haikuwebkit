@@ -2006,6 +2006,14 @@ void UIDelegate::UIClient::didDisableInspectorBrowserDomain(WebPageProxy&)
     [delegate _webViewDidDisableInspectorBrowserDomain:uiDelegate->m_webView.get().get()];
 }
 
+void UIDelegate::UIClient::addMessageToConsoleForTesting(WebPageProxy& page, String&& log)
+{
+    RetainPtr delegate = uiDelegatePrivate();
+    if (!delegate || ![delegate respondsToSelector:@selector(_webView:didReceiveConsoleLogForTesting:)])
+        return;
+    [delegate _webView:page.cocoaView().get() didReceiveConsoleLogForTesting:log.createNSString().get()];
+}
+
 void UIDelegate::UIClient::updateAppBadge(WebPageProxy&, const WebCore::SecurityOriginData& origin, std::optional<uint64_t> badge)
 {
     RefPtr uiDelegate = m_uiDelegate.get();

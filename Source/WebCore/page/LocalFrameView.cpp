@@ -2153,7 +2153,7 @@ static bool isHiddenOrNearlyTransparent(const RenderBox& box)
     if (box.opacity() < PageColorSampler::nearlyTransparentAlphaThreshold)
         return true;
 
-    if (!box.hasBackground() && !box.firstChild() && !is<RenderReplaced>(box))
+    if (!box.hasBackground() && !box.hasBackdropFilter() && !box.firstChild() && !is<RenderReplaced>(box))
         return true;
 
     return false;
@@ -2192,6 +2192,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         Color backgroundColor;
     };
 
+    auto sizeForViewportUnits = LayoutSize { sizeForCSSDefaultViewportUnits() };
     auto unclampedFixedRect = rectForFixedPositionLayout();
     auto fixedRect = unclampedFixedRect;
     if (CheckedPtr view = renderView())
@@ -2214,14 +2215,14 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         return side;
     };
 
-    auto lengthOnSide = [](BoxSide side, const LayoutRect& rect) -> LayoutUnit {
+    auto lengthOnSide = [](BoxSide side, auto& rectOrSize) -> LayoutUnit {
         switch (side) {
         case BoxSide::Top:
         case BoxSide::Bottom:
-            return rect.width();
+            return rectOrSize.width();
         case BoxSide::Right:
         case BoxSide::Left:
-            return rect.height();
+            return rectOrSize.height();
         }
         return { };
     };
@@ -2238,7 +2239,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         static constexpr auto maximumRatio = 1.05;
         auto elementRect = enclosingLayoutRect(renderer.absoluteBoundingBoxRect());
         auto containerLength = lengthOnSide(side, elementRect);
-        auto viewportLength = lengthOnSide(side, fixedRect);
+        auto viewportLength = std::min(lengthOnSide(side, fixedRect), lengthOnSide(side, sizeForViewportUnits));
         if (containerLength < viewportLength * minimumRatio)
             return Smaller;
 

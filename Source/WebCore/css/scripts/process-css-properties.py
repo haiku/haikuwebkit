@@ -3010,11 +3010,22 @@ class GenerateCSSPropertyNames:
             """)
 
     def _generate_gperf_keywords(self, *, to):
-        # Concatenates a list of unique 'property-name, property-id' strings with a second list of all 'property-alias, property-id' strings.
-        all_property_names_and_aliases_with_ids = itertools.chain(
-              [f'{property.name}, {property.id}'                        for property in self.properties_and_descriptors.all_unique],
-            *[[f'{alias}, {property.id}' for alias in property.aliases] for property in self.properties_and_descriptors.all_properties_and_descriptors]
-        )
+        # Use a set to automatically deduplicate entries that would cause gperf
+        # hash collisions. This handles cases where the same alias (like
+        # "font-stretch") is defined multiple times.
+        all_entries_set = set()
+
+        # Add unique property names.
+        for property in self.properties_and_descriptors.all_unique:
+            all_entries_set.add(f'{property.name}, {property.id}')
+
+        # Add aliases.
+        for property in self.properties_and_descriptors.all_properties_and_descriptors:
+            for alias in property.aliases:
+                all_entries_set.add(f'{alias}, {property.id}')
+
+        # Sort for consistent output.
+        all_property_names_and_aliases_with_ids = sorted(all_entries_set)
 
         to.write("%%")
         to.write_lines(all_property_names_and_aliases_with_ids)

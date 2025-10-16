@@ -146,6 +146,11 @@ void MediaRecorder::stop()
     stopRecordingInternal();
 }
 
+ScriptExecutionContext* MediaRecorder::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
+}
+
 void MediaRecorder::suspend(ReasonForSuspension reason)
 {
     if (reason != ReasonForSuspension::BackForwardCache)

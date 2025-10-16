@@ -43,10 +43,6 @@ interface TestRunner {
 
     // Downloads.
     undefined waitUntilDownloadFinished();
-    undefined setShouldLogDownloadCallbacks(boolean value);
-    undefined setShouldLogDownloadSize(boolean value);
-    undefined setShouldLogDownloadExpectedSize(boolean value);
-    undefined setShouldDownloadContentDispositionAttachments(boolean value);
 
     const unsigned short RENDER_TREE_SHOW_ALL_LAYERS            = 1;
     const unsigned short RENDER_TREE_SHOW_LAYER_NESTING         = 2;
@@ -62,7 +58,6 @@ interface TestRunner {
     undefined dumpEditingCallbacks();
     undefined dumpSelectionRect();
     undefined dumpTitleChanges();
-    undefined dumpFullScreenCallbacks();
     undefined dumpFrameLoadCallbacks();
     undefined dumpProgressFinishedCallback();
     undefined dumpResourceLoadCallbacks();
@@ -100,22 +95,12 @@ interface TestRunner {
     undefined setCacheModel(long model);
     undefined setAsynchronousSpellCheckingEnabled(boolean value);
     undefined setPrinting();
-    undefined setShouldDecideNavigationPolicyAfterDelay(boolean value);
-    undefined setShouldDecideResponsePolicyAfterDelay(boolean value);
-    undefined setNavigationGesturesEnabled(boolean value);
-    undefined setIgnoresViewportScaleLimits(boolean value);
-    undefined setUseDarkAppearanceForTesting(boolean useDarkAppearance);
-    undefined setShouldDownloadUndisplayableMIMETypes(boolean value);
-    undefined stopLoading();
 
     // Special DOM functions.
     Promise<undefined> clearBackForwardList();
     undefined execCommand(DOMString name, DOMString showUI, DOMString value);
     boolean isCommandEnabled(DOMString name);
     unsigned long windowCount();
-
-    // Device Orientation Motion.
-    undefined setShouldAllowDeviceOrientationAndMotionAccess(boolean value);
 
     // Special DOM variables.
     attribute boolean globalFlag;
@@ -153,7 +138,6 @@ interface TestRunner {
 
     // Text search testing.
     undefined findStringMatchesInPage(DOMString target, object optionsArray);
-    undefined indicateFindMatch(unsigned long matchIndex);
     undefined replaceFindMatchesAtIndices(object matchIndicesArray, DOMString replacementText, boolean selectionOnly);
 
     // Evaluating script in a special context.
@@ -257,9 +241,6 @@ interface TestRunner {
     undefined queueNonLoadingScript(DOMString script);
 
     // Authentication
-    undefined setRejectsProtectionSpaceAndContinueForAuthenticationChallenges(boolean value);
-    undefined setHandlesAuthenticationChallenges(boolean value);
-    undefined setShouldLogCanAuthenticateAgainstProtectionSpace(boolean value);
     undefined setAuthenticationUsername(DOMString username);
     undefined setAuthenticationPassword(DOMString password);
 
@@ -272,7 +253,6 @@ interface TestRunner {
     readonly attribute boolean secureEventInputIsEnabled;
     
     // Override plugin load policy.
-    undefined setBlockAllPlugins(boolean shouldBlock);
     undefined setPluginSupportedMode(DOMString mode);
 
     // Hooks to the JSC compiler.
@@ -288,7 +268,7 @@ interface TestRunner {
     undefined setAllowedMenuActions(object actions);
 
     // Gamepad
-    undefined setMockGamepadDetails(unsigned long index, DOMString id, DOMString mapping, unsigned long axisCount, unsigned long buttonCount, boolean supportsDualRumble);
+    undefined setMockGamepadDetails(unsigned long index, DOMString id, DOMString mapping, unsigned long axisCount, unsigned long buttonCount, boolean supportsDualRumble, boolean wasConnected);
     undefined setMockGamepadAxisValue(unsigned long index, unsigned long axisIndex, double value);
     undefined setMockGamepadButtonValue(unsigned long index, unsigned long buttonIndex, double value);
     undefined connectMockGamepad(unsigned long index);

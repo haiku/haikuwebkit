@@ -43,7 +43,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -58,7 +57,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                       43,100,25,255
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                      2,0,8,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -75,7 +73,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -90,7 +87,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                       43,100,25,255
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                      2,0,8,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -107,7 +103,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -122,7 +117,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                       43,100,25,255
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                      2,0,8,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -139,7 +133,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -156,7 +149,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -173,7 +165,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpace
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -190,7 +181,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -205,7 +195,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                       0,0,245,102                      118,250,75,102                        235,50,35,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                               0,0,-148,153                    -73,-150,-42,153                     -142,-36,-28,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -222,7 +211,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -237,7 +225,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                       0,0,245,102                      118,250,75,102                        235,50,35,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                               0,0,-148,153                    -73,-150,-42,153                     -142,-36,-28,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -254,7 +241,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -269,7 +255,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                       0,0,245,102                      118,250,75,102                        235,50,35,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                               0,0,-148,153                    -73,-150,-42,153                     -142,-36,-28,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -286,7 +271,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -301,7 +285,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -318,7 +301,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -333,7 +315,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -350,7 +331,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -365,7 +345,6 @@ FAIL :onscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";col
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -393,7 +372,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="opaque";webgl
        actual == 0x: ff 0c 66 12 ff
        failed ->        xx    xx
      expected ==     ff 00 66 00 ff
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -403,7 +381,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="opaque";webgl
        actual == 0x: ff 0c 66 12 ff
        failed ->        xx    xx
      expected ==     ff 00 66 00 ff
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -413,7 +390,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="opaque";webgl
        actual == 0x: ff 0c 66 12 ff
        failed ->        xx    xx
      expected ==     ff 00 66 00 ff
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -423,7 +399,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="opaque";webgl
        actual == 0x: ff 0c 66 12 ff
        failed ->        xx    xx
      expected ==     ff 00 66 00 ff
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -433,7 +408,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="premultiplied
        actual == 0x: 00 66 ff 0c 66 12 ff 66 00 00 ff 66 66 00 ff
        failed ->        xx xx xx xx xx xx xx       xx xx xx    xx
      expected ==     00 ff 66 00 ff 00 66 ff 00 00 66 ff ff 00 66
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -443,7 +417,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="premultiplied
        actual == 0x: 00 66 ff 0c 66 12 ff 66 00 00 ff 66 66 00 ff
        failed ->        xx xx xx xx xx xx xx       xx xx xx    xx
      expected ==     00 ff 66 00 ff 00 66 ff 00 00 66 ff ff 00 66
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -453,7 +426,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="premultiplied
        actual == 0x: 00 66 ff 0c 66 12 ff 66 00 00 ff 66 66 00 ff
        failed ->        xx xx xx xx xx xx xx       xx xx xx    xx
      expected ==     00 ff 66 00 ff 00 66 ff 00 00 66 ff ff 00 66
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -463,7 +435,6 @@ FAIL :onscreenCanvas,uploadToWebGL:format="rgba16float";alphaMode="premultiplied
        actual == 0x: 00 66 ff 0c 66 12 ff 66 00 00 ff 66 66 00 ff
        failed ->        xx xx xx xx xx xx xx       xx xx xx    xx
      expected ==     00 ff 66 00 ff 00 66 ff 00 00 66 ff ff 00 66
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     failCheckElements@http://127.0.0.1:8000/webgpu/webgpu/util/check_contents.js:265:28
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:435:32
  Reached unreachable code
@@ -502,7 +473,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -517,7 +487,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                       43,100,25,255
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                      2,0,8,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -534,7 +503,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,102,255                      0,102,0,255                      102,0,0,255 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                0,0,-102,0                       0,-102,0,0                       -102,0,0,0 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -550,7 +518,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                       0,0,97,255                       43,100,25,255                          93,14,7,255 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                 0,0,-97,0                      -43,-100,-25,0                         -93,-14,-7,0 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -568,7 +535,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -583,7 +549,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                       43,100,25,255
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                      2,0,8,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -600,7 +565,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -617,7 +581,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,102,255                      0,102,0,255                      102,0,0,255 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                0,0,-102,0                       0,-102,0,0                       -102,0,0,0 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -633,7 +596,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,107,255                      0,104,0,255                      112,0,0,255 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                0,0,-107,0                       0,-104,0,0                       -112,0,0,0 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -651,7 +613,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="opaque";colorSpac
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -668,7 +629,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -683,7 +643,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                       0,0,245,102                      118,250,75,102                        235,50,35,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                               0,0,-148,153                    -73,-150,-42,153                     -142,-36,-28,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -700,7 +659,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                             0,0,-255,-102                    0,-255,0,-102                    -255,0,0,-102 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -716,7 +674,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                       0,0,245,102                      118,250,75,102                       235,50,35,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-245,-102                  -118,-250,-75,-102                   -235,-50,-35,-102 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -734,7 +691,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -749,7 +705,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                       0,0,245,102                      118,250,75,102                        235,50,35,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                               0,0,-148,153                    -73,-150,-42,153                     -142,-36,-28,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -766,7 +721,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -781,7 +735,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -798,7 +751,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                             0,0,-255,-102                    0,-255,0,-102                    -255,0,0,-102 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -814,7 +766,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                             0,0,-255,-102                    0,-255,0,-102                    -255,0,0,-102 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -832,7 +783,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithSameColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:167:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:203:43
@@ -847,7 +797,6 @@ FAIL :offscreenCanvas,snapshot:format="rgba16float";alphaMode="premultiplied";co
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 3 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     checkImageResultWithDifferentColorSpaceCanvas@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:187:35
     checkImageResult@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:207:48
@@ -896,7 +845,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="opaque";colorSpace="srgb";w
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -911,7 +859,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="opaque";colorSpace="srgb";w
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -926,7 +873,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="opaque";colorSpace="srgb";w
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -941,7 +887,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="opaque";colorSpace="srgb";w
             exp. normal-ULPs-from-zero == R,G,B,A:                          0,102,0,255
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                                     12,0,18,0
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -960,7 +905,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -975,7 +919,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -990,7 +933,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -1005,7 +947,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                          0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-153,153                       12,-153,18,153                     -153,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -1020,7 +961,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -1035,7 +975,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -1050,7 +989,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code
@@ -1065,7 +1003,6 @@ FAIL :drawTo2DCanvas:format="rgba16float";alphaMode="premultiplied";colorSpace="
             exp. normal-ULPs-from-zero == R,G,B,A:                      0,0,255,102                      0,255,0,102                      255,0,0,102 ...
              tolerance ± 0 normal-ULPs
        diff (act - exp) in normal-ULPs ==                              0,0,-148,153                     0,-151,0,153                     -143,0,0,153 ...
-    ErrorWithExtra@http://127.0.0.1:8000/webgpu/common/util/util.js:23:10
     readPixelsFrom2DCanvasAndCompare@http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:244:25
     @http://127.0.0.1:8000/webgpu/webgpu/web_platform/canvas/readbackFromWebGPUCanvas.spec.js:490:35
  Reached unreachable code

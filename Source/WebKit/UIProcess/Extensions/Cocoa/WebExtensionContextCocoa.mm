@@ -4671,6 +4671,12 @@ void WebExtensionContext::compileDeclarativeNetRequestRules(NSDictionary *rulesD
         NSArray<NSString *> *parsingErrorStrings;
         auto *allConvertedRules = [_WKWebExtensionDeclarativeNetRequestTranslator translateRules:allJSONObjects errorStrings:&parsingErrorStrings];
 
+#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
+        RefPtr extension = m_extension;
+        for (NSString *errorString in parsingErrorStrings)
+            recordError(extension->createError(WebExtension::Error::InvalidDeclarativeNetRequest, errorString));
+#endif
+
         auto *webKitRules = encodeJSONString(allConvertedRules, JSONOptions::FragmentsAllowed);
         if (!webKitRules) {
             dispatch_async(dispatch_get_main_queue(), makeBlockPtr([completionHandler = WTFMove(completionHandler)]() mutable {

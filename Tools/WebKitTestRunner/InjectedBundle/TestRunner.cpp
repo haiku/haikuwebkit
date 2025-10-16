@@ -345,11 +345,6 @@ void TestRunner::findStringMatchesInPage(JSContextRef context, JSStringRef targe
     }
 }
 
-void TestRunner::indicateFindMatch(JSContextRef context, uint32_t index)
-{
-    postPageMessage("IndicateFindMatch", index);
-}
-
 void TestRunner::replaceFindMatchesAtIndices(JSContextRef context, JSValueRef matchIndicesAsValue, JSStringRef replacementText, bool selectionOnly)
 {
     auto& bundle = InjectedBundle::singleton();
@@ -917,16 +912,6 @@ void TestRunner::queueLoadHTMLString(JSStringRef content, JSStringRef baseURL, J
     InjectedBundle::singleton().queueLoadHTMLString(toWK(content).get(), baseURLWK.get(), unreachableURLWK.get());
 }
 
-void TestRunner::stopLoading()
-{
-    postPageMessage("StopLoading");
-}
-
-void TestRunner::dumpFullScreenCallbacks()
-{
-    postPageMessage("DumpFullScreenCallbacks");
-}
-
 void TestRunner::queueReload()
 {
     InjectedBundle::singleton().queueReload();
@@ -942,41 +927,6 @@ void TestRunner::queueNonLoadingScript(JSStringRef script)
     InjectedBundle::singleton().queueNonLoadingScript(toWK(script).get());
 }
 
-void TestRunner::setRejectsProtectionSpaceAndContinueForAuthenticationChallenges(bool value)
-{
-    postPageMessage("SetRejectsProtectionSpaceAndContinueForAuthenticationChallenges", value);
-}
-    
-void TestRunner::setHandlesAuthenticationChallenges(bool handlesAuthenticationChallenges)
-{
-    postPageMessage("SetHandlesAuthenticationChallenges", handlesAuthenticationChallenges);
-}
-
-void TestRunner::setShouldLogCanAuthenticateAgainstProtectionSpace(bool value)
-{
-    postPageMessage("SetShouldLogCanAuthenticateAgainstProtectionSpace", value);
-}
-
-void TestRunner::setShouldLogDownloadCallbacks(bool value)
-{
-    postPageMessage("SetShouldLogDownloadCallbacks", value);
-}
-
-void TestRunner::setShouldDownloadContentDispositionAttachments(bool value)
-{
-    postPageMessage("SetShouldDownloadContentDispositionAttachments", value);
-}
-
-void TestRunner::setShouldLogDownloadSize(bool value)
-{
-    postPageMessage("SetShouldLogDownloadSize", value);
-}
-
-void TestRunner::setShouldLogDownloadExpectedSize(bool value)
-{
-    postPageMessage("SetShouldLogDownloadExpectedSize", value);
-}
-
 void TestRunner::setAuthenticationUsername(JSStringRef username)
 {
     postPageMessage("SetAuthenticationUsername", toWK(username));
@@ -990,11 +940,6 @@ void TestRunner::setAuthenticationPassword(JSStringRef password)
 bool TestRunner::secureEventInputIsEnabled() const
 {
     return postSynchronousPageMessageReturningBoolean("SecureEventInputIsEnabled");
-}
-
-void TestRunner::setBlockAllPlugins(bool shouldBlock)
-{
-    postPageMessage("SetBlockAllPlugins", shouldBlock);
 }
 
 void TestRunner::setPluginSupportedMode(JSStringRef mode)
@@ -1015,43 +960,6 @@ JSValueRef TestRunner::numberOfDFGCompiles(JSContextRef context, JSValueRef func
 JSValueRef TestRunner::neverInlineFunction(JSContextRef context, JSValueRef function)
 {
     return JSC::setNeverInline(context, function);
-}
-
-void TestRunner::setShouldDecideNavigationPolicyAfterDelay(bool value)
-{
-    m_shouldDecideNavigationPolicyAfterDelay = value;
-    postPageMessage("SetShouldDecideNavigationPolicyAfterDelay", value);
-}
-
-void TestRunner::setShouldDecideResponsePolicyAfterDelay(bool value)
-{
-    m_shouldDecideResponsePolicyAfterDelay = value;
-    postPageMessage("SetShouldDecideResponsePolicyAfterDelay", value);
-}
-
-void TestRunner::setNavigationGesturesEnabled(bool value)
-{
-    postPageMessage("SetNavigationGesturesEnabled", value);
-}
-
-void TestRunner::setIgnoresViewportScaleLimits(bool value)
-{
-    postPageMessage("SetIgnoresViewportScaleLimits", value);
-}
-
-void TestRunner::setUseDarkAppearanceForTesting(bool useDarkAppearance)
-{
-    postPageMessage("SetUseDarkAppearanceForTesting", useDarkAppearance);
-}
-
-void TestRunner::setShouldDownloadUndisplayableMIMETypes(bool value)
-{
-    postPageMessage("SetShouldDownloadUndisplayableMIMETypes", value);
-}
-
-void TestRunner::setShouldAllowDeviceOrientationAndMotionAccess(bool value)
-{
-    postPageMessage("SetShouldAllowDeviceOrientationAndMotionAccess", value);
 }
 
 void TestRunner::terminateGPUProcess()
@@ -1641,7 +1549,7 @@ void TestRunner::disconnectMockGamepad(unsigned index)
     postSynchronousMessage("DisconnectMockGamepad", index);
 }
 
-void TestRunner::setMockGamepadDetails(unsigned index, JSStringRef gamepadID, JSStringRef mapping, unsigned axisCount, unsigned buttonCount, bool supportsDualRumble)
+void TestRunner::setMockGamepadDetails(unsigned index, JSStringRef gamepadID, JSStringRef mapping, unsigned axisCount, unsigned buttonCount, bool supportsDualRumble, bool wasConnected)
 {
     postSynchronousMessage("SetMockGamepadDetails", createWKDictionary({
         { "GamepadID", toWK(gamepadID) },
@@ -1650,6 +1558,7 @@ void TestRunner::setMockGamepadDetails(unsigned index, JSStringRef gamepadID, JS
         { "AxisCount", adoptWK(WKUInt64Create(axisCount)) },
         { "ButtonCount", adoptWK(WKUInt64Create(buttonCount)) },
         { "SupportsDualRumble", adoptWK(WKBooleanCreate(supportsDualRumble)) },
+        { "WasConnected", adoptWK(WKBooleanCreate(wasConnected)) },
     }));
 }
 
@@ -1681,7 +1590,7 @@ void TestRunner::disconnectMockGamepad(unsigned)
 {
 }
 
-void TestRunner::setMockGamepadDetails(unsigned, JSStringRef, JSStringRef, unsigned, unsigned, bool)
+void TestRunner::setMockGamepadDetails(unsigned, JSStringRef, JSStringRef, unsigned, unsigned, bool, bool)
 {
 }
 

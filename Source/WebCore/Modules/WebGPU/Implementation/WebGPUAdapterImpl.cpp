@@ -178,6 +178,9 @@ void AdapterImpl::requestDevice(const DeviceDescriptor& descriptor, CompletionHa
     if (features.contains(WGPUFeatureName_TextureFormatsTier1) && !features.contains(WGPUFeatureName_RG11B10UfloatRenderable))
         features.append(WGPUFeatureName_RG11B10UfloatRenderable);
 
+    if (!features.contains(WGPUFeatureName_CoreFeaturesAndLimits))
+        features.append(WGPUFeatureName_CoreFeaturesAndLimits);
+
     auto limits = wgpuDefaultLimits();
 
     auto& supportedLimits = this->limits();

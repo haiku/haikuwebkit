@@ -28,6 +28,7 @@
 #include "AXLogger.h"
 #include "AXLoggerBase.h"
 #include "AXObjectCacheInlines.h"
+#include "AXUtilities.h"
 #include "AccessibilityObject.h"
 #include "Logging.h"
 #include "TextIterator.h"
@@ -277,6 +278,45 @@ static void appendChildrenToArray(Ref<AXCoreObject> object, bool isForward, RefP
     }
 }
 
+DidTimeout AXSearchManager::revealHiddenMatchWithTimeout(AXCoreObject& matchedObject, Seconds timeout)
+{
+    auto revealAndUpdateAccessibilityTrees = [axID = matchedObject.objectID(), treeID = matchedObject.treeID()] {
+        WeakPtr cache = AXTreeStore<AXObjectCache>::axObjectCacheForID(treeID);
+        RefPtr object = cache ? cache->objectForID(axID) : nullptr;
+        if (!object)
+            return;
+        object->revealAncestors();
+        for (RefPtr ancestor = object; ancestor; ancestor = ancestor->parentObject()) {
+            if (RefPtr document = ancestor->document(); document && needsLayoutOrStyleRecalc(*document)) {
+                document->updateLayoutIgnorePendingStylesheets();
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+                cache->scheduleObjectRegionsUpdate(/* scheduleImmediately */ true);
+#endif
+            }
+            ancestor->recomputeIsIgnored();
+        }
+
+        cache->performDeferredCacheUpdate(ForceLayout::Yes);
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+        if (RefPtr tree = AXTreeStore<AXIsolatedTree>::isolatedTreeForID(treeID))
+            tree->processQueuedNodeUpdates();
+#endif
+    };
+
+    if (lastRevealAttemptTimedOut()) {
+        // If the last reveal attempt timed out because the main-thread is busy, don't delay this search any further.
+        // We should still expand the collapsed content to increase the chance the user discovers it later when the
+        // main-thread has stopped being busy and can perform the expansion.
+        Accessibility::performFunctionOnMainThread(revealAndUpdateAccessibilityTrees);
+        return DidTimeout::Yes;
+    }
+
+    auto didTimeout = Accessibility::performFunctionOnMainThreadAndWaitWithTimeout(revealAndUpdateAccessibilityTrees, timeout);
+    if (didTimeout == DidTimeout::Yes)
+        setLastRevealAttemptTimedOut(true);
+    return didTimeout;
+}
+
 AXCoreObject::AccessibilityChildrenVector AXSearchManager::findMatchingObjectsInternal(const AccessibilitySearchCriteria& criteria)
 {
     AXTRACE("AXSearchManager::findMatchingObjectsInternal"_s);
@@ -313,6 +353,26 @@ AXCoreObject::AccessibilityChildrenVector AXSearchManager::findMatchingObjectsIn
 #endif // PLATFORM(MAC)
 
     AXCoreObject::AccessibilityChildrenVector results;
+    bool shouldCheckForRevealableText = !criteria.visibleOnly && !criteria.immediateDescendantsOnly && !criteria.searchText.isEmpty();
+    auto matchWithinRevealableContainer = [&] (AXCoreObject& object) -> bool {
+        if (!shouldCheckForRevealableText)
+            return false;
+
+        for (const auto& revealableContainer : object.revealableContainers()) {
+            RefPtr descendant = revealableContainer.get();
+            while ((descendant = descendant ? descendant->nextInPreOrder(/* updateChildren */ true, /* stayWithin */ revealableContainer.ptr()) : nullptr)) {
+                if (match(*descendant, criteria) && containsPlainText(descendant->revealableText(), criteria.searchText, FindOption::CaseInsensitive)) {
+
+                    if (revealHiddenMatchWithTimeout(*descendant, 100_ms) == DidTimeout::No) {
+                        results.append(*descendant);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
     // This search algorithm only searches the elements before/after the starting object.
     // It does this by stepping up the parent chain and at each level doing a DFS.
 
@@ -332,6 +392,9 @@ AXCoreObject::AccessibilityChildrenVector AXSearchManager::findMatchingObjectsIn
         startObject = startObject->parentObjectUnignored();
     }
 
+    if (startObject && matchWithinRevealableContainer(*startObject) && results.size() >= criteria.resultsLimit)
+        return results;
+
     // The outer loop steps up the parent chain each time (unignored is important here because otherwise elements would be searched twice)
     for (RefPtr stopSearchElement = criteria.anchorObject->parentObjectUnignored(); startObject && startObject != stopSearchElement; startObject = startObject->parentObjectUnignored()) {
         // Only append the children after/before the previous element, so that the search does not check elements that are
@@ -342,10 +405,11 @@ AXCoreObject::AccessibilityChildrenVector AXSearchManager::findMatchingObjectsIn
 
         // This now does a DFS at the current level of the parent.
         while (!searchStack.isEmpty()) {
-            auto searchObject = searchStack.last();
-            searchStack.removeLast();
-
+            Ref searchObject = searchStack.takeLast();
             if (matchWithResultsLimit(searchObject, criteria, results))
+                break;
+
+            if (matchWithinRevealableContainer(searchObject.get()) && results.size() >= criteria.resultsLimit)
                 break;
 
             if (!criteria.immediateDescendantsOnly)

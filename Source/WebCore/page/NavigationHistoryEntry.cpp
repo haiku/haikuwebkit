@@ -26,6 +26,7 @@
 #include "config.h"
 #include "NavigationHistoryEntry.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "DocumentInlines.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"

@@ -177,6 +177,8 @@ auto SVGRenderSupport::computeContainerBoundingBoxes(const RenderElement& contai
         auto repaintRect = current->repaintRectInLocalCoordinates(repaintRectCalculation);
         if (!transform.isIdentity())
             repaintRect = transform.mapRect(repaintRect);
+        if (repaintRect.isNaN())
+            continue;
 
         result.repaintBoundingBox.unite(repaintRect);
 
@@ -193,13 +195,15 @@ auto SVGRenderSupport::computeContainerBoundingBoxes(const RenderElement& contai
             result.objectBoundingBox->uniteEvenIfEmpty(objectBounds);
     }
 
+    ASSERT(!result.repaintBoundingBox.isNaN());
     return result;
 }
 
 FloatRect SVGRenderSupport::computeContainerStrokeBoundingBox(const RenderElement& container)
 {
     ASSERT(container.isLegacyRenderSVGRoot() || container.isLegacyRenderSVGContainer());
-    FloatRect strokeBoundingBox = FloatRect();
+    FloatRect strokeBoundingBox;
+
     for (CheckedRef current : childrenOfType<RenderObject>(container)) {
         if (current->isLegacyRenderSVGHiddenContainer())
             continue;
@@ -209,14 +213,19 @@ FloatRect SVGRenderSupport::computeContainerStrokeBoundingBox(const RenderElemen
             continue;
 
         FloatRect childStrokeBoundingBox = current->strokeBoundingBox();
+        ASSERT(!childStrokeBoundingBox.isNaN());
+
         if (auto* currentElement = dynamicDowncast<RenderElement>(current.get()))
             SVGRenderSupport::intersectRepaintRectWithResources(*currentElement, childStrokeBoundingBox, RepaintRectCalculation::Accurate);
         const AffineTransform& transform = current->localToParentTransform();
-        if (transform.isIdentity())
+        if (!transform.isIdentity())
+            childStrokeBoundingBox = transform.mapRect(childStrokeBoundingBox);
+
+        if (!childStrokeBoundingBox.isNaN())
             strokeBoundingBox.unite(childStrokeBoundingBox);
-        else
-            strokeBoundingBox.unite(transform.mapRect(childStrokeBoundingBox));
     }
+
+    ASSERT(!strokeBoundingBox.isNaN());
     return strokeBoundingBox;
 }
 

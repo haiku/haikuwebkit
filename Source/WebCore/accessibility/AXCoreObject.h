@@ -48,6 +48,7 @@
 #include <wtf/RefCounted.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/WallTime.h>
+#include <wtf/threads/BinarySemaphore.h>
 
 #if PLATFORM(WIN)
 #include "AccessibilityObjectWrapperWin.h"
@@ -247,6 +248,7 @@ enum class AccessibilityOrientation : uint8_t {
     Vertical
 };
 
+enum class DidTimeout : bool { No, Yes };
 enum class IncludeListMarkerText : bool { No, Yes };
 enum class TrimWhitespace : bool { No, Yes };
 
@@ -427,6 +429,7 @@ public:
     typedef Vector<Ref<AXCoreObject>> AccessibilityChildrenVector;
 
     virtual bool isAccessibilityObject() const = 0;
+    virtual bool isAccessibilityNodeObject() const = 0;
     virtual bool isAccessibilityRenderObject() const = 0;
     virtual bool isAXIsolatedObjectInstance() const = 0;
     virtual bool isAXRemoteFrame() const = 0;
@@ -475,6 +478,7 @@ public:
     unsigned tableLevel() const;
     bool hasGridRole() const;
     bool hasCellRole() const;
+    bool hasCellOrRowRole() const;
     bool supportsSelectedRows() const { return hasGridRole(); }
     virtual AccessibilityChildrenVector columns() = 0;
     virtual AccessibilityChildrenVector rows() = 0;
@@ -494,6 +498,7 @@ public:
 
     // Table cell support.
     virtual bool isTableCell() const = 0;
+    virtual AXCoreObject* parentTableIfTableCell() const = 0;
     virtual bool isExposedTableCell() const = 0;
     virtual bool isColumnHeader() const { return false; }
     virtual bool isRowHeader() const { return false; }
@@ -516,7 +521,10 @@ public:
     AXCoreObject* columnHeader();
 
     // Table row support.
+    virtual AXCoreObject* parentTable() const = 0;
     virtual bool isTableRow() const = 0;
+    virtual AXCoreObject* parentTableIfExposedTableRow() const = 0;
+    virtual bool isExposedTableRow() const = 0;
     virtual unsigned rowIndex() const = 0;
     AXCoreObject* rowHeader();
 
@@ -809,6 +817,13 @@ public:
     virtual String textUnderElement(TextUnderElementMode = { }) const = 0;
     virtual String text() const = 0;
     virtual unsigned textLength() const = 0;
+    AccessibilityChildrenVector revealableContainers();
+    // Text of objects within revealable containers (e.g. hidden="until-found" or collapsed details elements).
+    // Returns empty string for text that is already revealed / visible.
+    virtual String revealableText() const = 0;
+    // The word "container" is significant in this method name. This should only be true for elements / objects
+    // that actually have the hidden-until-found markup, not descendants of hidden-until-found elements / objects.
+    virtual bool isHiddenUntilFoundContainer() const = 0;
 #if PLATFORM(COCOA)
     enum class SpellCheck : bool { No, Yes };
     virtual RetainPtr<NSAttributedString> attributedStringForTextMarkerRange(AXTextMarkerRange&&, SpellCheck) const = 0;
@@ -894,6 +909,9 @@ public:
     virtual bool isWidget() const = 0;
     virtual Widget* widget() const = 0;
     virtual PlatformWidget platformWidget() const = 0;
+#if PLATFORM(COCOA)
+    virtual RetainPtr<PlatformWidget> protectedPlatformWidget() const;
+#endif
     virtual Widget* widgetForAttachmentView() const = 0;
     virtual bool isPlugin() const = 0;
 
@@ -1149,6 +1167,9 @@ public:
     virtual void mathPostscripts(AccessibilityMathMultiscriptPairs&) = 0;
 
     AccessibilityObjectWrapper* wrapper() const { return m_wrapper.get(); }
+#if PLATFORM(COCOA)
+    RetainPtr<AccessibilityObjectWrapper> protectedWrapper() const;
+#endif
     void setWrapper(AccessibilityObjectWrapper* wrapper) { m_wrapper = wrapper; }
     void detachWrapper(AccessibilityDetachmentType);
 
@@ -1183,6 +1204,7 @@ public:
     virtual AXCoreObject* editableAncestor() const = 0;
     virtual AXCoreObject* highestEditableAncestor() = 0;
     virtual AXCoreObject* exposedTableAncestor(bool includeSelf = false) const = 0;
+    AXCoreObject* detailsAncestor() const;
 
     virtual AccessibilityChildrenVector documentLinks() = 0;
 
@@ -1560,6 +1582,41 @@ template<typename U> inline void performFunctionOnMainThread(U&& lambda)
     ensureOnMainThread([lambda = std::forward<U>(lambda)] () mutable {
         lambda();
     });
+}
+
+template<typename U>
+inline DidTimeout performFunctionOnMainThreadAndWaitWithTimeout(U&& lambda, Seconds timeout)
+{
+    if (isMainThread()) {
+        std::forward<U>(lambda)();
+        return DidTimeout::No;
+    }
+
+    // Because this is ref-counted, we can give it to the lambda to keep alive
+    // even if this thread gave up due to a timeout and moved on (which would normally destroy
+    // the semaphore, causing a use-after-free).
+    struct TimeoutSafeSemaphore : RefCounted<TimeoutSafeSemaphore> {
+        BinarySemaphore semaphore;
+        std::atomic<bool> shouldSignal { true };
+
+        void signal() { semaphore.signal(); }
+        bool wait(Seconds timeout) { return semaphore.waitFor(timeout); }
+    };
+
+    Ref<TimeoutSafeSemaphore> semaphore = adoptRef(*new TimeoutSafeSemaphore);
+    ensureOnMainThread([semaphore, lambda = std::forward<U>(lambda)] () mutable {
+        lambda();
+        // Only signal if the calling thread didn't timeout waiting for the main-thread to complete the lambda.
+        if (semaphore->shouldSignal.exchange(false, std::memory_order_acq_rel))
+            semaphore->signal();
+    });
+
+    bool completedInTime = semaphore->wait(timeout);
+    if (!completedInTime) {
+        // If we timed out, prevent a later signal attempt from the lambda.
+        semaphore->shouldSignal.exchange(false, std::memory_order_acq_rel);
+    }
+    return completedInTime ? DidTimeout::No : DidTimeout::Yes;
 }
 
 template<typename T, typename U> inline T retrieveValueFromMainThread(U&& lambda)

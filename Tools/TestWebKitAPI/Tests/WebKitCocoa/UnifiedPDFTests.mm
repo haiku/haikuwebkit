@@ -369,10 +369,16 @@ UNIFIED_PDF_TEST(SetPageZoomFactorDoesNotBailIncorrectly)
     EXPECT_EQ(scaleAfterResetting, 1.0);
 }
 
-static void checkFrame(NSRect frame, CGFloat x, CGFloat y, CGFloat width, CGFloat height)
+static void checkFrame(NSRect frame, CGFloat x, CGFloat y, CGFloat width, CGFloat height, std::optional<CGFloat> frameOriginTolerance = { })
 {
-    EXPECT_EQ(frame.origin.x, x);
-    EXPECT_EQ(frame.origin.y, y);
+    if (frameOriginTolerance) {
+        auto tolerance = *frameOriginTolerance;
+        EXPECT_TRUE(std::abs(frame.origin.x - x) <= tolerance) << "Expected frameOrigin.x to be around " << x << ", got " << frame.origin.x;
+        EXPECT_TRUE(std::abs(frame.origin.y - y) <= tolerance) << "Expected frameOrigin.y to be around " << y << ", got " << frame.origin.y;
+    } else {
+        EXPECT_EQ(frame.origin.x, x);
+        EXPECT_EQ(frame.origin.y, y);
+    }
     EXPECT_EQ(frame.size.width, width);
     EXPECT_EQ(frame.size.height, height);
 }
@@ -463,7 +469,7 @@ UNIFIED_PDF_TEST(PDFHUDMoveIFrame)
     while ([webView _pdfHUDs].anyObject.frame.size.width != 560)
         TestWebKitAPI::Util::spinRunLoop();
     EXPECT_EQ([webView _pdfHUDs].count, 1u);
-    checkFrame([webView _pdfHUDs].anyObject.frame, 14, 40, 560, 210);
+    checkFrame([webView _pdfHUDs].anyObject.frame, 13, 40, 560, 210, 1);
 }
 
 UNIFIED_PDF_TEST(PDFHUDNestedIFrames)

@@ -47,6 +47,7 @@ public:
     static Ref<TestInvocation> create(WKURLRef, const TestOptions&);
     ~TestInvocation();
 
+    uint64_t identifier() const { return m_identifier; }
     WKURLRef url() const { return m_url.get(); }
     bool urlContains(StringView) const;
     
@@ -123,6 +124,7 @@ private:
 
     const TestOptions m_options;
     
+    uint64_t m_identifier;
     WKRetainPtr<WKURLRef> m_url;
     String m_urlString;
     RunLoop::Timer m_waitToDumpWatchdogTimer;

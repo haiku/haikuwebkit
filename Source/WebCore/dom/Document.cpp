@@ -74,6 +74,7 @@
 #include "DOMAudioSession.h"
 #include "DOMCSSPaintWorklet.h"
 #include "DOMImplementation.h"
+#include "DOMTimer.h"
 #include "DateComponents.h"
 #include "DebugPageOverlays.h"
 #include "DeprecatedGlobalSettings.h"
@@ -262,6 +263,7 @@
 #include "ScopedEventQueue.h"
 #include "ScriptController.h"
 #include "ScriptDisallowedScope.h"
+#include "ScriptExecutionContextInlines.h"
 #include "ScriptModuleLoader.h"
 #include "ScriptRunner.h"
 #include "ScriptSourceCode.h"
@@ -4346,6 +4348,11 @@ bool Document::supportsPaintTiming() const
     return protectedSecurityOrigin()->isSameOriginDomain(topOrigin());
 }
 
+bool Document::supportsLargestContentfulPaint() const
+{
+    return settings().largestContentfulPaintEnabled();
+}
+
 // https://w3c.github.io/paint-timing/#ref-for-mark-paint-timing
 void Document::enqueuePaintTimingEntryIfNeeded()
 {
@@ -8015,7 +8022,7 @@ void Document::setHasHDRContent()
 
 bool Document::drawsHDRContent() const
 {
-    if (!(settings().supportHDRDisplayEnabled() || settings().canvasPixelFormatEnabled()))
+    if (!(settings().supportHDRDisplayEnabled() || settings().canvasColorTypeEnabled()))
         return false;
 
     if (!hasHDRContent())
@@ -8561,12 +8568,8 @@ void Document::addConsoleMessage(MessageSource source, MessageLevel level, const
         postTask(AddConsoleMessageTask(source, level, message));
         return;
     }
-
     if (RefPtr page = this->page())
         page->console().addMessage(source, level, message, requestIdentifier, this);
-
-    if (RefPtr consoleMessageListener = m_consoleMessageListener)
-        consoleMessageListener->scheduleCallback(*this, message);
 }
 
 void Document::addMessage(MessageSource source, MessageLevel level, const String& message, const String& sourceURL, unsigned lineNumber, unsigned columnNumber, RefPtr<Inspector::ScriptCallStack>&& callStack, JSC::JSGlobalObject* state, unsigned long requestIdentifier)
@@ -10610,11 +10613,6 @@ void Document::downgradeReferrerToRegistrableDomain()
         m_referrerOverride = makeString(referrerURL.protocol(), "://"_s, domainString, ':', *port, '/');
     else
         m_referrerOverride = makeString(referrerURL.protocol(), "://"_s, domainString, '/');
-}
-
-void Document::setConsoleMessageListener(RefPtr<StringCallback>&& listener)
-{
-    m_consoleMessageListener = listener;
 }
 
 AnimationTimelinesController& Document::ensureTimelinesController()

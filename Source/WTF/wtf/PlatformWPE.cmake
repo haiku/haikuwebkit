@@ -10,6 +10,7 @@ list(APPEND WTF_SOURCES
     glib/ChassisType.cpp
     glib/FileSystemGlib.cpp
     glib/GRefPtr.cpp
+    glib/GResources.cpp
     glib/GSocketMonitor.cpp
     glib/GSpanExtras.cpp
     glib/RunLoopGLib.cpp
@@ -42,6 +43,7 @@ list(APPEND WTF_PUBLIC_HEADERS
     glib/ChassisType.h
     glib/GMutexLocker.h
     glib/GRefPtr.h
+    glib/GResources.h
     glib/GSocketMonitor.h
     glib/GSpanExtras.h
     glib/GThreadSafeWeakPtr.h
@@ -69,6 +71,10 @@ list(APPEND WTF_LIBRARIES
     ${GLIB_LIBRARIES}
     Threads::Threads
     ZLIB::ZLIB
+)
+
+list(APPEND WTF_PRIVATE_DEFINITIONS
+    PKGDATADIR="${CMAKE_INSTALL_FULL_DATADIR}/wpe-webkit-${WPE_API_VERSION}"
 )
 
 if (ENABLE_JOURNALD_LOG)

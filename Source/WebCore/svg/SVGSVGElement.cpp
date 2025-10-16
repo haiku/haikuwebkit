@@ -700,7 +700,11 @@ RefPtr<SVGViewElement> SVGSVGElement::findViewAnchor(StringView fragmentIdentifi
 
 SVGSVGElement* SVGSVGElement::findRootAnchor(const SVGViewElement* viewElement) const
 {
-    return dynamicDowncast<SVGSVGElement>(SVGLocatable::nearestViewportElement(viewElement));
+    if (!viewElement)
+        return nullptr;
+
+    auto& document = viewElement->document();
+    return dynamicDowncast<SVGSVGElement>(document.documentElement());
 }
 
 SVGSVGElement* SVGSVGElement::findRootAnchor(StringView fragmentIdentifier) const
@@ -743,9 +747,9 @@ bool SVGSVGElement::scrollToFragment(StringView fragmentIdentifier)
     }
 
     // Spec: If the SVG fragment identifier addresses a "view" element within an SVG document (e.g., MyDrawing.svg#MyView)
-    // then the closest ancestor "svg" element is displayed in the viewport.
+    // then the root 'svg' element is displayed in the SVG viewport.
     // Any view specification attributes included on the given "view" element override the corresponding view specification
-    // attributes on the closest ancestor "svg" element.
+    // attributes on the root 'svg' element.
     if (RefPtr viewElement = findViewAnchor(fragmentIdentifier)) {
         if (RefPtr rootElement = findRootAnchor(viewElement.get())) {
             if (rootElement->m_currentViewElement) {

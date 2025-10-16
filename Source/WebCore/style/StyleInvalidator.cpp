@@ -401,6 +401,21 @@ void Invalidator::invalidateStyleWithMatchElement(Element& element, MatchElement
         }
         break;
     }
+    case MatchElement::HasDescendantParent: {
+        // :has(.changed) > .subject
+        Vector<Element*, 16> ancestors;
+        for (auto* parent = element.parentElement(); parent; parent = parent->parentElement())
+            ancestors.append(parent);
+
+        SelectorMatchingState selectorMatchingState;
+        selectorMatchingState.selectorFilter.parentStackReserveInitialCapacity(ancestors.size());
+        for (auto* ancestor : makeReversedRange(ancestors)) {
+            selectorMatchingState.selectorFilter.pushParent(ancestor);
+            for (auto& ancestorChild : childrenOfType<Element>(*ancestor))
+                invalidateIfNeeded(ancestorChild, &selectorMatchingState);
+        }
+        break;
+    }
     case MatchElement::HasChildAncestor: {
         // :has(> .changed) .subject
         if (CheckedPtr parent = element.parentElement()) {

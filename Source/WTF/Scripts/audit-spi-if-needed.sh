@@ -10,6 +10,9 @@ depfile="${SCRIPT_OUTPUT_FILE_0/%.timestamp/.d}"
 
 eval allowlists=(${WK_AUDIT_SPI_ALLOWLISTS})
 
+# For compatibility with offline build environments.
+export DISABLE_WEBKITCOREPY_AUTOINSTALLER=1
+
 if [[ "${WK_AUDIT_SPI}" == YES && -f "${program}" ]]; then
     mkdir -p "${OBJROOT}/WebKitSDKDBs"
 
@@ -24,7 +27,6 @@ if [[ "${WK_AUDIT_SPI}" == YES && -f "${program}" ]]; then
     done
 
     for arch in ${ARCHS}; do
-         # FIXME: Remove --no-errors to enforce no new SPI in the build.
         (set -x && "${program}" \
          --sdkdb-dir "${versioned_sdkdb_dir}" \
          --sdkdb-cache "${OBJROOT}/WebKitSDKDBs/${SDK_NAME}.sqlite3" \
@@ -35,7 +37,6 @@ if [[ "${WK_AUDIT_SPI}" == YES && -f "${program}" ]]; then
          ${allowlists[@]/#/--allowlist } \
          ${WK_OTHER_AUDIT_SPI_FLAGS} \
          @"${BUILT_PRODUCTS_DIR}/DerivedSources/${PROJECT_NAME}/platform-enabled-swift-args.${arch}.resp" \
-         --no-errors \
          $@)
      done
 else

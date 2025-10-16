@@ -98,7 +98,6 @@
 #include "Settings.h"
 #include "StyleBoxShadow.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
-#include "StyleReflection.h"
 #include "StyleScrollSnapPoints.h"
 #include "TransformOperationData.h"
 #include "TransformState.h"
@@ -544,7 +543,7 @@ void RenderBox::updateFromStyle()
         }
     }
     setHasTransformRelatedProperty(computeHasTransformRelatedProperty(styleToUse));
-    setHasReflection(styleToUse.boxReflect());
+    setHasReflection(!styleToUse.boxReflect().isNone());
 }
 
 bool RenderBox::computeHasTransformRelatedProperty(const RenderStyle& styleToUse) const
@@ -943,21 +942,23 @@ void RenderBox::addFocusRingRects(Vector<LayoutRect>& rects, const LayoutPoint& 
 
 int RenderBox::reflectionOffset() const
 {
-    if (!style().boxReflect())
+    auto reflection = style().boxReflect().tryReflection();
+    if (!reflection)
         return 0;
-    if (style().boxReflect()->direction() == ReflectionDirection::Left || style().boxReflect()->direction() == ReflectionDirection::Right)
-        return valueForLength(style().boxReflect()->offset(), borderBoxRect().width());
-    return valueForLength(style().boxReflect()->offset(), borderBoxRect().height());
+    if (reflection->direction == ReflectionDirection::Left || reflection->direction == ReflectionDirection::Right)
+        return Style::evaluate(reflection->offset, borderBoxRect().width());
+    return Style::evaluate(reflection->offset, borderBoxRect().height());
 }
 
 LayoutRect RenderBox::reflectedRect(const LayoutRect& r) const
 {
-    if (!style().boxReflect())
+    auto reflection = style().boxReflect().tryReflection();
+    if (!reflection)
         return LayoutRect();
 
     LayoutRect box = borderBoxRect();
     LayoutRect result = r;
-    switch (style().boxReflect()->direction()) {
+    switch (reflection->direction) {
     case ReflectionDirection::Below:
         result.setY(box.maxY() + reflectionOffset() + (box.maxY() - r.maxY()));
         break;
@@ -5062,7 +5063,7 @@ bool RenderBox::isUnsplittableForPagination() const
         || (is<HTMLFormControlElement>(element()) && !is<HTMLFieldSetElement>(element()))
         || hasUnsplittableScrollingOverflow()
         || (parent() && isWritingModeRoot())
-        || (isFloating() && style().pseudoElementType() == PseudoId::FirstLetter && style().initialLetterDrop() > 0)
+        || (isFloating() && style().pseudoElementType() == PseudoId::FirstLetter && style().initialLetter().drop() > 0)
         || shouldApplySizeContainment();
 }
 

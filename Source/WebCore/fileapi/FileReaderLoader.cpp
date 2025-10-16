@@ -49,6 +49,7 @@
 #include "ThreadableBlobRegistry.h"
 #include "ThreadableLoader.h"
 #include <JavaScriptCore/ArrayBuffer.h>
+#include <wtf/NeverDestroyed.h>
 #include <wtf/RefPtr.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/Vector.h>
@@ -57,6 +58,8 @@
 #include <wtf/text/StringBuilder.h>
 
 namespace WebCore {
+
+DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(FileReaderLoader);
 
 const int defaultBufferLength = 32768;
 

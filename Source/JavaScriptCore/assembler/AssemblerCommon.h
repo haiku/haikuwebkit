@@ -34,19 +34,16 @@
 
 namespace JSC {
 
-// These are useful for determining how to patch code:
 enum class RepatchingFlag : uint8_t {
-    Atomic = 1 << 0, // Is it OK for the write to tear? If the code can be run, it must be patched without tearing.
-    Memcpy = 1 << 1, // Use JITMemcpy or regular memcpy.
-    // On platforms with jit write protection, you should use memcpy inside jit write scopes; otherwise, use jitMemcpy.
-    Flush = 1 << 2, // Do an icache flush before executing new code.
+    Atomic = 1 << 0,
+    Memcpy = 1 << 1, // or JITMemcpy
+    Flush = 1 << 2,
 };
 
 using RepatchingInfo = WTF::ConstexprOptionSet<RepatchingFlag>;
 constexpr RepatchingInfo jitMemcpyRepatch = RepatchingInfo { };
 constexpr RepatchingInfo jitMemcpyRepatchAtomic = RepatchingInfo { RepatchingFlag::Atomic };
 constexpr RepatchingInfo jitMemcpyRepatchFlush = RepatchingInfo { RepatchingFlag::Flush };
-constexpr RepatchingInfo jitMemcpyRepatchAtomicFlush = RepatchingInfo { RepatchingFlag::Atomic, RepatchingFlag::Flush };
 constexpr RepatchingInfo memcpyRepatchFlush = RepatchingInfo { RepatchingFlag::Memcpy, RepatchingFlag::Flush };
 constexpr RepatchingInfo memcpyRepatch = RepatchingInfo { RepatchingFlag::Memcpy };
 
@@ -417,17 +414,31 @@ ALWAYS_INLINE void* memcpyTearing(void* dst, const void* src, size_t n)
     }
     return memcpy(dst, src, n);
 }
+
+static ALWAYS_INLINE void* memcpyAtomicIfPossible(void* dst, const void* src, size_t n)
+{
+    if (isPowerOfTwo(n) && n <= sizeof(CPURegister))
+        return memcpyAtomic(dst, src, n);
+    return memcpyTearing(dst, src, n);
+}
+
 template<RepatchingInfo repatch>
 void* performJITMemcpy(void* dst, const void* src, size_t n);
 
 template<RepatchingInfo repatch>
 ALWAYS_INLINE void* machineCodeCopy(void* dst, const void* src, size_t n)
 {
-    static_assert(!repatch->contains(RepatchingFlag::Flush));
-    if constexpr (repatch->contains(RepatchingFlag::Memcpy) && repatch->contains(RepatchingFlag::Atomic))
-        return memcpyAtomic(dst, src, n);
-    else if constexpr (repatch->contains(RepatchingFlag::Memcpy) && !repatch->contains(RepatchingFlag::Atomic))
+    static_assert(!(*repatch).contains(RepatchingFlag::Flush));
+    if constexpr (is32Bit()) {
+        // Avoid unaligned accesses.
+        if (WTF::isAligned(dst, n))
+            return memcpyAtomicIfPossible(dst, src, n);
         return memcpyTearing(dst, src, n);
+    }
+    if constexpr ((*repatch).contains(RepatchingFlag::Memcpy) && (*repatch).contains(RepatchingFlag::Atomic))
+        return memcpyAtomic(dst, src, n);
+    else if constexpr ((*repatch).contains(RepatchingFlag::Memcpy))
+        return memcpyAtomicIfPossible(dst, src, n);
     else
         return performJITMemcpy<repatch>(dst, src, n);
 }

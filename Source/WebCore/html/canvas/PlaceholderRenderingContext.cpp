@@ -140,7 +140,7 @@ void PlaceholderRenderingContext::setPlaceholderBuffer(Ref<ImageBuffer>&& buffer
     canvasBase().setImageBufferAndMarkDirty(WTFMove(buffer));
 }
 
-ImageBufferPixelFormat PlaceholderRenderingContext::pixelFormat() const
+PixelFormat PlaceholderRenderingContext::pixelFormat() const
 {
     if (Ref canvas = this->canvas(); canvas->buffer())
         return Ref { *canvas->buffer() }->pixelFormat();

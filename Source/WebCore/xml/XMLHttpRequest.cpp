@@ -27,6 +27,7 @@
 #include "CachedResourceRequestInitiatorTypes.h"
 #include "CommonAtomStrings.h"
 #include "ContentSecurityPolicy.h"
+#include "ContextDestructionObserverInlines.h"
 #include "CrossOriginAccessControl.h"
 #include "DOMFormData.h"
 #include "Event.h"
@@ -135,6 +136,11 @@ XMLHttpRequest::~XMLHttpRequest()
 #ifndef NDEBUG
     xmlHttpRequestCounter.decrement();
 #endif
+}
+
+ScriptExecutionContext* XMLHttpRequest::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 Document* XMLHttpRequest::document() const

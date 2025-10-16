@@ -49,6 +49,7 @@
 #include "ChannelSplitterOptions.h"
 #include "ConstantSourceNode.h"
 #include "ConstantSourceOptions.h"
+#include "ContextDestructionObserverInlines.h"
 #include "ConvolverNode.h"
 #include "DelayNode.h"
 #include "DelayOptions.h"

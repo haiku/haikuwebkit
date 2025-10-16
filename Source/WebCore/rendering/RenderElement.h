@@ -40,6 +40,7 @@ class ReferencedSVGResources;
 class RenderBlock;
 class RenderStyle;
 class RenderTreeBuilder;
+class StyleImage;
 
 struct MarginRect {
     LayoutRect marginRect;

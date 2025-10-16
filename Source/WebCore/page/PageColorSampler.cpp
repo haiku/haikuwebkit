@@ -125,7 +125,7 @@ static std::optional<Lab<float>> sampleColor(Document& document, IntPoint&& loca
     auto colorSpace = DestinationColorSpace::SRGB();
 
     ASSERT(document.view());
-    auto snapshot = snapshotFrameRect(document.view()->protectedFrame(), IntRect(location, IntSize(1, 1)), { { SnapshotFlags::ExcludeSelectionHighlighting, SnapshotFlags::PaintEverythingExcludingSelection }, ImageBufferPixelFormat::BGRA8, colorSpace });
+    auto snapshot = snapshotFrameRect(document.view()->protectedFrame(), IntRect(location, IntSize(1, 1)), { { SnapshotFlags::ExcludeSelectionHighlighting, SnapshotFlags::PaintEverythingExcludingSelection }, PixelFormat::BGRA8, colorSpace });
     if (!snapshot)
         return std::nullopt;
 
@@ -313,7 +313,7 @@ Variant<PredominantColorType, Color> PageColorSampler::predominantColor(Page& pa
     };
 
     auto colorSpace = DestinationColorSpace::SRGB();
-    auto snapshot = snapshotFrameRect(*frame, snappedIntRect(absoluteRect), { snapshotFlags, ImageBufferPixelFormat::BGRA8, colorSpace });
+    auto snapshot = snapshotFrameRect(*frame, snappedIntRect(absoluteRect), { snapshotFlags, PixelFormat::BGRA8, colorSpace });
     if (!snapshot)
         return PredominantColorType::None;
 

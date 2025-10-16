@@ -37,6 +37,7 @@
 #include "CSSValuePool.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "ContextDestructionObserverInlines.h"
 #include "DOMPromiseProxy.h"
 #include "Document.h"
 #include "DocumentInlines.h"
@@ -121,6 +122,11 @@ WebAnimation::~WebAnimation()
 
     ASSERT(instances().contains(this));
     instances().remove(this);
+}
+
+ScriptExecutionContext* WebAnimation::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void WebAnimation::contextDestroyed()

@@ -57,3 +57,11 @@ symbols = [
     "_MACaptionAppearanceCopyActiveProfileID",
 ]
 requires = ["!HAVE_MEDIA_ACCESSIBILITY_PROFILES_API"]
+
+[[temporary-usage]]
+request = "rdar://159806937"
+cleanup = "rdar://159806845"
+symbols = [
+    "_CGDataProviderCreateWithCopyOfData",
+]
+

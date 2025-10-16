@@ -26,6 +26,7 @@
 #include "config.h"
 #include "ScreenOrientation.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "DocumentFullscreen.h"
 #include "DocumentInlines.h"
@@ -273,6 +274,11 @@ void ScreenOrientation::stop()
 bool ScreenOrientation::virtualHasPendingActivity() const
 {
     return m_hasChangeEventListener;
+}
+
+ScriptExecutionContext* ScreenOrientation::scriptExecutionContext() const
+{
+    return ActiveDOMObject::scriptExecutionContext();
 }
 
 void ScreenOrientation::eventListenersDidChange()

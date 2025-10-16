@@ -1354,7 +1354,7 @@ class RunWebDriverTests(shell.TestNewStyle, CustomFlagsMixin, ShellMixin):
     description = ["webdriver-tests running"]
     descriptionDone = ["webdriver-tests"]
     jsonFileName = "webdriver_tests.json"
-    command = ["python3", "Tools/Scripts/run-webdriver-tests", "--json-output={0}".format(jsonFileName), WithProperties("--%(configuration)s")]
+    command = ["python3", "Tools/Scripts/run-webdriver-tests", "--verbose", f"--json-output={jsonFileName}", WithProperties("--%(configuration)s")]
     logfiles = {"json": jsonFileName}
 
     def __init__(self, **kwargs):
@@ -1368,7 +1368,7 @@ class RunWebDriverTests(shell.TestNewStyle, CustomFlagsMixin, ShellMixin):
             self.command += additionalArguments
 
         self.appendCustomBuildFlags(self.getProperty('platform'), self.getProperty('fullPlatform'))
-        self.command = self.shell_command(' '.join(self.command) + ' > logs.txt 2>&1')
+        self.command = self.shell_command(' '.join(self.command) + ' 2>&1 | python3 Tools/Scripts/filter-test-logs webdriver')
 
         self.log_observer = logobserver.BufferLogObserver()
         self.addLogObserver('stdio', self.log_observer)

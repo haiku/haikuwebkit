@@ -40,6 +40,7 @@
 #include "ContentExtensionActions.h"
 #include "ContentExtensionRule.h"
 #include "ContentRuleListResults.h"
+#include "ContextDestructionObserverInlines.h"
 #include "CookieStore.h"
 #include "CrossOriginMode.h"
 #include "CrossOriginOpenerPolicy.h"
@@ -200,7 +201,7 @@ static std::optional<Seconds>& transientActivationDurationOverrideForTesting()
     return overrideForTesting;
 }
 
-static Seconds transientActivationDuration()
+Seconds LocalDOMWindow::transientActivationDuration()
 {
     if (auto override = transientActivationDurationOverrideForTesting())
         return *override;
@@ -434,6 +435,11 @@ LocalDOMWindow::LocalDOMWindow(Document& document)
 {
     ASSERT(frame());
     addLanguageChangeObserver(this, &languagesChangedCallback);
+}
+
+ScriptExecutionContext* LocalDOMWindow::scriptExecutionContext() const
+{
+    return ContextDestructionObserver::scriptExecutionContext();
 }
 
 void LocalDOMWindow::didSecureTransitionTo(Document& document)
@@ -1275,7 +1281,7 @@ bool LocalDOMWindow::find(const String& string, bool caseSensitive, bool backwar
         options.add(FindOption::CaseInsensitive);
     if (wrap)
         options.add(FindOption::WrapAround);
-    return localFrame()->editor().findString(string, options);
+    return localFrame()->editor().findString(string, options).has_value();
 }
 
 bool LocalDOMWindow::offscreenBuffering() const
@@ -1589,6 +1595,19 @@ bool LocalDOMWindow::consumeHistoryActionUserActivation()
     }
 
     return true;
+}
+
+void LocalDOMWindow::updateLastUserClickEvent(OptionSet<PlatformEventModifier> modifiers)
+{
+    m_lastUserClickEvent = ClickEventData {
+        MonotonicTime::now(),
+        modifiers
+    };
+}
+
+std::optional<LocalDOMWindow::ClickEventData> LocalDOMWindow::consumeLastUserClickEvent()
+{
+    return std::exchange(m_lastUserClickEvent, std::nullopt);
 }
 
 // https://html.spec.whatwg.org/multipage/interaction.html#activation-notification
@@ -2353,8 +2372,7 @@ void LocalDOMWindow::dispatchLoadEvent()
     if (shouldMarkLoadEventTimes) {
         auto now = MonotonicTime::now();
         protectedLoader->timing().setLoadEventEnd(now);
-        if (RefPtr navigationTiming = performance().navigationTiming())
-            navigationTiming->documentLoadTiming().setLoadEventEnd(now);
+        performance().navigationFinished(now);
         WTFEmitSignpost(document.get(), NavigationAndPaintTiming, "loadEventEnd");
         WTFEndSignpost(document.get(), NavigationAndPaintTiming);
     }

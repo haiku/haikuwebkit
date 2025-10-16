@@ -147,7 +147,7 @@ void BBQPlan::work()
                 entrypoint = calleeCallee->entrypoint().retagged<WasmEntryPtrTag>();
             }
 
-            MacroAssembler::repatchNearCall<jitMemcpyRepatchAtomic>(call.callLocation, CodeLocationLabel<WasmEntryPtrTag>(entrypoint));
+            MacroAssembler::repatchNearCall(call.callLocation, CodeLocationLabel<WasmEntryPtrTag>(entrypoint));
         }
 
         m_calleeGroup->updateCallsitesToCallUs(locker, CodeLocationLabel<WasmEntryPtrTag>(entrypoint), m_functionIndex);

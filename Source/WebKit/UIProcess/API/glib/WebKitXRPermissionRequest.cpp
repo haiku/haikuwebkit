@@ -33,6 +33,28 @@
 typedef WebKitPermissionRequestIface WebKitPermissionRequestInterface;
 #endif
 
+#if ENABLE(WEBXR)
+static PlatformXR::Device::FeatureList toFeatureList(WebKitXRSessionFeatures features)
+{
+    PlatformXR::Device::FeatureList result;
+    if (features & WEBKIT_XR_SESSION_FEATURES_VIEWER)
+        result.append(PlatformXR::SessionFeature::ReferenceSpaceTypeViewer);
+    if (features & WEBKIT_XR_SESSION_FEATURES_LOCAL)
+        result.append(PlatformXR::SessionFeature::ReferenceSpaceTypeLocal);
+    if (features & WEBKIT_XR_SESSION_FEATURES_LOCAL_FLOOR)
+        result.append(PlatformXR::SessionFeature::ReferenceSpaceTypeLocalFloor);
+    if (features & WEBKIT_XR_SESSION_FEATURES_BOUNDED_FLOOR)
+        result.append(PlatformXR::SessionFeature::ReferenceSpaceTypeBoundedFloor);
+    if (features & WEBKIT_XR_SESSION_FEATURES_UNBOUNDED)
+        result.append(PlatformXR::SessionFeature::ReferenceSpaceTypeUnbounded);
+#if ENABLE(WEBXR_HANDS)
+    if (features & WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING)
+        result.append(PlatformXR::SessionFeature::HandTracking);
+#endif
+    return result;
+}
+#endif // ENABLE(WEBXR)
+
 /**
  * WebKitXRPermissionRequest:
  * @See_also: #WebKitPermissionRequest, #WebKitWebView
@@ -57,7 +79,12 @@ struct _WebKitXRPermissionRequestPrivate {
 #if ENABLE(WEBXR)
     WebKitSecurityOrigin* securityOrigin;
     WebKitXRSessionMode mode;
-    PlatformXR::Device::FeatureList grantedFeatures;
+    WebKitXRSessionFeatures newlyGrantedFeatures;
+    WebKitXRSessionFeatures previouslyGrantedFeatures;
+    WebKitXRSessionFeatures consentRequiredFeatures;
+    WebKitXRSessionFeatures consentOptionalFeatures;
+    WebKitXRSessionFeatures requiredFeaturesRequested;
+    WebKitXRSessionFeatures optionalFeaturesRequested;
     CompletionHandler<void(std::optional<PlatformXR::Device::FeatureList>&&)> completionHandler;
 #endif
 };
@@ -74,7 +101,7 @@ static void webkitXRPermissionRequestAllow(WebKitPermissionRequest* request)
     WebKitXRPermissionRequestPrivate* priv = WEBKIT_XR_PERMISSION_REQUEST(request)->priv;
 
     if (priv->completionHandler)
-        priv->completionHandler(WTFMove(priv->grantedFeatures));
+        priv->completionHandler(toFeatureList(static_cast<WebKitXRSessionFeatures>(priv->newlyGrantedFeatures | priv->previouslyGrantedFeatures | priv->consentRequiredFeatures)));
 }
 
 static void webkitXRPermissionRequestDeny(WebKitPermissionRequest* request)
@@ -155,6 +182,128 @@ WebKitXRSessionMode webkit_xr_permission_request_get_session_mode(WebKitXRPermis
 #endif
 }
 
+/**
+ * webkit_xr_permission_request_get_granted_features
+ * @request: a #WebKitXRPermissionRequest
+ *
+ * Get the previously granted features for the XR device.
+ *
+ * Since: 2.52
+ */
+WebKitXRSessionFeatures webkit_xr_permission_request_get_granted_features(WebKitXRPermissionRequest* request)
+{
+#if ENABLE(WEBXR)
+    g_return_val_if_fail(WEBKIT_IS_XR_PERMISSION_REQUEST(request), static_cast<WebKitXRSessionFeatures>(0));
+    return request->priv->previouslyGrantedFeatures;
+#else
+    notImplemented();
+    return static_cast<WebKitXRSessionFeatures>(0);
+#endif
+}
+
+/**
+ * webkit_xr_permission_request_get_consent_required_features
+ * @request: a #WebKitXRPermissionRequest
+ *
+ * Get the consent required features of this request.
+ *
+ * Returns: The consent required features of @request
+ *
+ * Since: 2.52
+ */
+WebKitXRSessionFeatures webkit_xr_permission_request_get_consent_required_features(WebKitXRPermissionRequest* request)
+{
+#if ENABLE(WEBXR)
+    g_return_val_if_fail(WEBKIT_IS_XR_PERMISSION_REQUEST(request), static_cast<WebKitXRSessionFeatures>(0));
+    return request->priv->consentRequiredFeatures;
+#else
+    notImplemented();
+    return static_cast<WebKitXRSessionFeatures>(0);
+#endif
+}
+
+/**
+ * webkit_xr_permission_request_get_consent_optional_features
+ * @request: a #WebKitXRPermissionRequest
+ *
+ * Get the consent optional features of this request.
+ *
+ * Returns: The optional features of @request
+ *
+ * Since: 2.52
+ */
+WebKitXRSessionFeatures webkit_xr_permission_request_get_consent_optional_features(WebKitXRPermissionRequest* request)
+{
+#if ENABLE(WEBXR)
+    g_return_val_if_fail(WEBKIT_IS_XR_PERMISSION_REQUEST(request), static_cast<WebKitXRSessionFeatures>(0));
+    return request->priv->consentOptionalFeatures;
+#else
+    notImplemented();
+    return static_cast<WebKitXRSessionFeatures>(0);
+#endif
+}
+
+/**
+ * webkit_xr_permission_request_get_required_features_requested
+ * @request: a #WebKitXRPermissionRequest
+ *
+ * Get the requested required features of this request.
+ *
+ * Returns: The required features of @request
+ *
+ * Since: 2.52
+ */
+WebKitXRSessionFeatures webkit_xr_permission_request_get_required_features_requested(WebKitXRPermissionRequest* request)
+{
+#if ENABLE(WEBXR)
+    g_return_val_if_fail(WEBKIT_IS_XR_PERMISSION_REQUEST(request), static_cast<WebKitXRSessionFeatures>(0));
+    return request->priv->requiredFeaturesRequested;
+#else
+    notImplemented();
+    return static_cast<WebKitXRSessionFeatures>(0);
+#endif
+}
+
+/**
+ * webkit_xr_permission_request_get_optional_features_requested
+ * @request: a #WebKitXRPermissionRequest
+ *
+ * Get the requested optional features of this request.
+ *
+ * Returns: The optional features of @request
+ *
+ * Since: 2.52
+ */
+WebKitXRSessionFeatures webkit_xr_permission_request_get_optional_features_requested(WebKitXRPermissionRequest* request)
+{
+#if ENABLE(WEBXR)
+    g_return_val_if_fail(WEBKIT_IS_XR_PERMISSION_REQUEST(request), static_cast<WebKitXRSessionFeatures>(0));
+    return request->priv->optionalFeaturesRequested;
+#else
+    notImplemented();
+    return static_cast<WebKitXRSessionFeatures>(0);
+#endif
+}
+
+/**
+ * webkit_xr_permission_request_set_granted_features
+ * @request: a #WebKitXRPermissionRequest
+ * @granted: granted features
+ *
+ * Set the granted features for the XR device.
+ *
+ * Since: 2.52
+ */
+void webkit_xr_permission_request_set_granted_features(WebKitXRPermissionRequest* request, WebKitXRSessionFeatures granted)
+{
+#if ENABLE(WEBXR)
+    g_return_if_fail(WEBKIT_IS_XR_PERMISSION_REQUEST(request));
+    request->priv->newlyGrantedFeatures = granted;
+#else
+    notImplemented();
+#endif
+}
+
 #if ENABLE(WEBXR)
 static WebKitXRSessionMode toWebKitXRSessionMode(PlatformXR::SessionMode mode)
 {
@@ -170,13 +319,50 @@ static WebKitXRSessionMode toWebKitXRSessionMode(PlatformXR::SessionMode mode)
     return WEBKIT_XR_SESSION_MODE_INLINE;
 }
 
-WebKitXRPermissionRequest* webkitXRPermissionRequestCreate(const WebCore::SecurityOriginData& securityOriginData, PlatformXR::SessionMode mode, const PlatformXR::Device::FeatureList& granted, CompletionHandler<void(std::optional<PlatformXR::Device::FeatureList>&&)>&& completionHandler)
+static WebKitXRSessionFeatures toWebKitXRSessionFeatures(const PlatformXR::Device::FeatureList& features)
+{
+    unsigned result = 0;
+    for (auto& feature : features) {
+        switch (feature) {
+        case PlatformXR::SessionFeature::ReferenceSpaceTypeViewer:
+            result |= WEBKIT_XR_SESSION_FEATURES_VIEWER;
+            break;
+        case PlatformXR::SessionFeature::ReferenceSpaceTypeLocal:
+            result |= WEBKIT_XR_SESSION_FEATURES_LOCAL;
+            break;
+        case PlatformXR::SessionFeature::ReferenceSpaceTypeLocalFloor:
+            result |= WEBKIT_XR_SESSION_FEATURES_LOCAL_FLOOR;
+            break;
+        case PlatformXR::SessionFeature::ReferenceSpaceTypeBoundedFloor:
+            result |= WEBKIT_XR_SESSION_FEATURES_BOUNDED_FLOOR;
+            break;
+        case PlatformXR::SessionFeature::ReferenceSpaceTypeUnbounded:
+            result |= WEBKIT_XR_SESSION_FEATURES_UNBOUNDED;
+            break;
+#if ENABLE(WEBXR_HANDS)
+        case PlatformXR::SessionFeature::HandTracking:
+            result |= WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING;
+            break;
+#endif
+        default:
+            ASSERT_NOT_REACHED();
+            break;
+        }
+    }
+    return static_cast<WebKitXRSessionFeatures>(result);
+}
+
+WebKitXRPermissionRequest* webkitXRPermissionRequestCreate(const WebCore::SecurityOriginData& securityOriginData, PlatformXR::SessionMode mode, const PlatformXR::Device::FeatureList& granted, const PlatformXR::Device::FeatureList& consentRequired, const PlatformXR::Device::FeatureList& consentOptional, const PlatformXR::Device::FeatureList& requiredFeaturesRequested, const PlatformXR::Device::FeatureList& optionalFeaturesRequested, CompletionHandler<void(std::optional<PlatformXR::Device::FeatureList>&&)>&& completionHandler)
 {
     WebKitXRPermissionRequest* xrPermissionRequest = WEBKIT_XR_PERMISSION_REQUEST(g_object_new(WEBKIT_TYPE_XR_PERMISSION_REQUEST, nullptr));
     xrPermissionRequest->priv->securityOrigin = webkitSecurityOriginCreate(WebCore::SecurityOriginData { securityOriginData });
     xrPermissionRequest->priv->mode = toWebKitXRSessionMode(mode);
-    xrPermissionRequest->priv->grantedFeatures = granted;
     xrPermissionRequest->priv->completionHandler = WTFMove(completionHandler);
+    xrPermissionRequest->priv->previouslyGrantedFeatures = toWebKitXRSessionFeatures(granted);
+    xrPermissionRequest->priv->consentRequiredFeatures = toWebKitXRSessionFeatures(consentRequired);
+    xrPermissionRequest->priv->consentOptionalFeatures = toWebKitXRSessionFeatures(consentOptional);
+    xrPermissionRequest->priv->requiredFeaturesRequested = toWebKitXRSessionFeatures(requiredFeaturesRequested);
+    xrPermissionRequest->priv->optionalFeaturesRequested = toWebKitXRSessionFeatures(optionalFeaturesRequested);
     return xrPermissionRequest;
 }
 #endif

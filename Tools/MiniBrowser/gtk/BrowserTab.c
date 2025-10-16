@@ -341,6 +341,25 @@ static const gchar *webKitXRSessionModeToString(WebKitXRSessionMode mode)
     return "unknown";
 }
 
+static gchar *WebKitXRSessionFeaturesToString(WebKitXRSessionFeatures features)
+{
+    unsigned count = 0;
+    GString *str = g_string_new(NULL);
+#define APPEND_FEATURE(feature, name) \
+    if (features & feature) \
+        g_string_append(str, (" " name) + !(count++));
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_VIEWER, "viewer");
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_LOCAL, "local");
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_LOCAL_FLOOR, "local-floor");
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_BOUNDED_FLOOR, "bounded-floor");
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_UNBOUNDED, "unbounded");
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING, "hand_tracking");
+#undef APPEND_FEATURE
+    gchar *result = str->str;
+    g_string_free(str, FALSE);
+    return result;
+}
+
 static gboolean decidePermissionRequest(WebKitWebView *webView, WebKitPermissionRequest *request, BrowserTab *tab)
 {
     const gchar *title = NULL;
@@ -423,14 +442,21 @@ static gboolean decidePermissionRequest(WebKitWebView *webView, WebKitPermission
         WebKitXRPermissionRequest *xrRequest = WEBKIT_XR_PERMISSION_REQUEST(request);
         WebKitSecurityOrigin *origin = webkit_xr_permission_request_get_security_origin(xrRequest);
         WebKitXRSessionMode mode = webkit_xr_permission_request_get_session_mode(xrRequest);
-        gchar *originStr = webkit_security_origin_to_string(origin);
+        g_autofree gchar *originStr = webkit_security_origin_to_string(origin);
         if (g_hash_table_contains(xrPermissionGrantedOrigins, originStr)) {
             webkit_permission_request_allow(request);
-            g_free(originStr);
             return TRUE;
         }
-        text = g_strdup_printf("Allow XR device access?\norigin=%s mode=%s", originStr, webKitXRSessionModeToString(mode));
-        g_free(originStr);
+        g_autofree gchar *grantedFeatures = WebKitXRSessionFeaturesToString(webkit_xr_permission_request_get_granted_features(xrRequest));
+        g_autofree gchar *consentRequiredFeatures = WebKitXRSessionFeaturesToString(webkit_xr_permission_request_get_consent_required_features(xrRequest));
+        g_autofree gchar *consentOptionalFeatures = WebKitXRSessionFeaturesToString(webkit_xr_permission_request_get_consent_optional_features(xrRequest));
+        g_autofree gchar *requiredFeaturesRequested = WebKitXRSessionFeaturesToString(webkit_xr_permission_request_get_required_features_requested(xrRequest));
+        g_autofree gchar *optionalFeaturesRequested = WebKitXRSessionFeaturesToString(webkit_xr_permission_request_get_optional_features_requested(xrRequest));
+        text = g_strdup_printf("Allow XR device access?\n"
+            "origin=%s mode=%s granted=(%s) consentRequired=(%s) consentOptional=(%s) requiredFeaturesRequested=(%s) optionalFeaturesRequested=(%s)",
+            originStr, webKitXRSessionModeToString(mode), grantedFeatures, consentRequiredFeatures, consentOptionalFeatures, requiredFeaturesRequested, optionalFeaturesRequested);
+        /* Needs UI to select optional features to grant */
+        webkit_xr_permission_request_set_granted_features(xrRequest, webkit_xr_permission_request_get_consent_optional_features(xrRequest));
     } else {
         g_print("%s request not handled\n", G_OBJECT_TYPE_NAME(request));
         return FALSE;

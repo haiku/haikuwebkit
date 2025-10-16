@@ -43,6 +43,7 @@ class FetchRequest;
 class ScriptExecutionContext;
 class FragmentedSharedBuffer;
 
+DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(FetchLoader);
 class WEBCORE_EXPORT FetchLoader final : public RefCounted<FetchLoader>, public ThreadableLoaderClient {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FetchLoader, FetchLoader);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FetchLoader);

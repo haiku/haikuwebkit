@@ -47,6 +47,7 @@
 #include "ContentRuleListResults.h"
 #include "ContentSecurityPolicy.h"
 #include "ContentType.h"
+#include "ContextDestructionObserverInlines.h"
 #include "CookieJar.h"
 #include "DNS.h"
 #include "DeprecatedGlobalSettings.h"

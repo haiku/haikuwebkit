@@ -27,6 +27,7 @@
 #include "config.h"
 #include "NavigatorBase.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "GPU.h"
 #include "ScriptTrackingPrivacyCategory.h"
