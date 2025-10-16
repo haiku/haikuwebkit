@@ -461,7 +461,7 @@ inline static String pointerType(UITouchType type)
     [_mouseHoverGestureRecognizer setEnabled:NO];
     _pointerLockState.isActive = true;
 
-    LOG(PointerLock, "Pointer lock mouse tracking enabled with GCMouse: %{private}@", [_pointerLockState.currentMouse productCategory]);
+    RELEASE_LOG_DEBUG(PointerLock, "Pointer lock mouse tracking enabled with GCMouse: %" PRIVATE_LOG_STRING, [_pointerLockState.currentMouse productCategory].UTF8String);
 }
 
 - (void)endPointerLockMouseTracking

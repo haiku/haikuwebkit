@@ -28,6 +28,7 @@
 
 #include <JavaScriptCore/JSRemoteInspector.h>
 #include <JavaScriptCore/JSRetainPtr.h>
+#include <wtf/NeverDestroyed.h>
 #include <wtf/RunLoop.h>
 #include <wtf/RuntimeApplicationChecks.h>
 
@@ -39,9 +40,6 @@ class SharedJSContextWK {
 public:
     static SharedJSContextWK& singleton()
     {
-#if PLATFORM(COCOA)
-        ASSERT(isInWebProcess());
-#endif
         static MainRunLoopNeverDestroyed<SharedJSContextWK> sharedContext;
         return sharedContext.get();
     }

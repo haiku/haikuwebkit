@@ -41,9 +41,6 @@
     (literal "/private/var/db/MobileIdentityData/Version.plist"))
 
 (define-once (framebuffer-access)
-    (deny iokit-open-user-client (with telemetry-backtrace)
-        (iokit-user-client-class "IOMobileFramebufferUserClient"))
-
     ; IOMobileFramebuffer
     (with-filter (iokit-registry-entry-class "IOMobileFramebuffer")
         (allow iokit-get-properties (with telemetry)
@@ -135,21 +132,6 @@
 ;;; Declare that the application uses the OpenGL, Metal, and CoreML hardware & frameworks.
 ;;;
 (define-once (opengl)
-    ;; Items not seen in testing
-    (deny iokit-open-user-client (with telemetry)
-           (iokit-connection "IOGPU")
-           (iokit-user-client-class
-                "AGXCommandQueue"
-                "AGXDevice"
-                "AGXSharedUserClient"
-                "IOAccelContext"
-                "IOAccelDevice"
-                "IOAccelSharedUserClient"
-                "IOAccelSubmitter2"
-                "IOAccelContext2"
-                "IOAccelDevice2"
-                "IOAccelSharedUserClient2"))
-
 #if !ENABLE(WEBCONTENT_GPU_SANDBOX_EXTENSIONS_BLOCKING)
     (allow iokit-open*
         (require-all
@@ -199,9 +181,6 @@
 )
 
 (define-once (device-access)
-    (deny file-read* file-write*
-          (vnode-type BLOCK-DEVICE CHARACTER-DEVICE))
-
     (allow file-read*
            (literal "/dev/null")
            (literal "/dev/zero"))
@@ -223,10 +202,7 @@
     ;; <rdar://problem/14215718>
     (deny file-write-data NO_REPORT
           (literal "/dev/random")
-          (literal "/dev/urandom"))
-
-    (deny file-read* file-write-data
-           (literal "/dev/aes_0")))
+          (literal "/dev/urandom")))
 
 (define required-etc-files
   (literal "/private/etc/fstab"
@@ -263,18 +239,10 @@
         "com.apple.mt"
         "com.apple.preferences.sounds")
 
-    (deny mach-lookup
-        (global-name "com.apple.frontboard.systemappservices"))                 ; -[UIViewServiceInterface _createProcessAssertion] -> SBSProcessIDForDisplayIdentifier()
-
 #if !ENABLE(CARENDERSERVER_BLOCKING_IN_WEBCONTENT)
     (with-filter (require-not (state-flag "EnableExperimentalSandbox"))
         (allow mach-lookup (with report) (with telemetry-backtrace) (global-name "com.apple.CARenderServer")))
 #endif
-
-    ; UIKit-required IOKit nodes.
-    (deny iokit-open-user-client (with telemetry)
-        (iokit-user-client-class "IOSurfaceSendRight")
-    )
 
 #if !ENABLE(WEBCONTENT_GPU_SANDBOX_EXTENSIONS_BLOCKING)
     ; WebKit-required IOKit classes
@@ -338,12 +306,6 @@
         (require-all
             (extension-class "com.apple.mediaserverd.read")
             (subpath "/System/Library")))
-    (let ((hw-identifying-paths
-            (require-any
-                (literal "/System/Library/Caches/apticket.der")
-                (subpath "/System/Library/Caches/com.apple.kernelcaches")
-                (subpath "/System/Library/Caches/com.apple.factorydata"))))
-        (deny file-issue-extension file-read* hw-identifying-paths))
     
     (allow file-map-executable
            (subpath "/System/Library")
@@ -369,12 +331,6 @@
 
     (allow-read-and-issue-generic-extensions (executable-bundle))
     (allow file-map-executable (executable-bundle))
-
-    ;; <rdar://problem/13963294>
-    (deny file-read-data file-issue-extension file-map-executable
-        (require-all
-            (executable-bundle)
-            (regex #"/[^/]+/SC_Info/")))
 
     (unless (defined? 'restrictive-extension)
         (with-filter
@@ -445,11 +401,24 @@
 (allow mach-lookup (log-services))
 #endif
 
-(deny mach-lookup NO_REPORT
-    (global-name "com.apple.distributed_notifications@1v3"))
+(deny mach-lookup (xpc-service-name-prefix ""))
 
 (deny mach-lookup NO_REPORT
-    (global-name "com.apple.lsd.mapdb")) 
+    (global-name
+        "com.apple.SystemConfiguration.configd"
+        "com.apple.aggregated"
+        "com.apple.analyticsd"
+        "com.apple.audio.AudioComponentRegistrar"
+        "com.apple.containermanagerd"
+        "com.apple.containermanagerd.system"
+        "com.apple.diagnosticd"
+        "com.apple.distributed_notifications@1v3"
+        "com.apple.fontservicesd"
+        "com.apple.lsd.mapdb"
+        "com.apple.runningboard"))
+
+(deny mach-lookup NO_REPORT
+    (xpc-service-name "com.apple.audio.toolbox.reporting.service"))
 
 ;; <rdar://problem/12413942>
 (allow file-read*
@@ -457,9 +426,6 @@
 
 (allow iokit-get-properties
        (iokit-property "IORegistryEntryPropertyKeys"))
-
-(deny mach-lookup NO_REPORT
-    (global-name "com.apple.runningboard"))
 
 (allow system-sched
        (require-entitlement "com.apple.private.kernel.override-cpumon"))
@@ -517,7 +483,6 @@
 (allow process-info-dirtycontrol (target self))
 (allow process-info-rusage (target self))
 
-(deny mach-lookup (xpc-service-name-prefix ""))
 (deny iokit-get-properties)
 (deny lsopen)
 
@@ -567,9 +532,6 @@
 ;; <rdar://problem/7344719&26323449> LaunchServices app icons
 (allow file-read*
     (well-known-system-group-container-subpath "/systemgroup.com.apple.lsd.iconscache"))
-(deny mach-lookup (with telemetry)
-    (xpc-service-name "com.apple.iconservices")
-    (global-name "com.apple.iconservices"))
 
 (allow-preferences-common)
 
@@ -776,20 +738,6 @@
 
 (media-accessibility-support)
 
-(deny mach-lookup NO_REPORT
-    (global-name
-        "com.apple.SystemConfiguration.configd"
-        "com.apple.aggregated"
-        "com.apple.analyticsd"
-        "com.apple.diagnosticd"
-        "com.apple.fontservicesd"))
-
-(deny mach-lookup (with telemetry)
-    (global-name "com.apple.PowerManagement.control"))
-
-(deny file-write-create (vnode-type SYMLINK))
-(deny file-read-xattr file-write-xattr (xattr-prefix "com.apple.security.private."))
-
 ;; Allow loading injected bundles.
 (with-filter (require-not (webcontent-process-launched))
     (allow file-map-executable))
@@ -804,24 +752,6 @@
 ;; <rdar://problem/60983812>
 (deny file-write* NO_REPORT
     (home-subpath "/Library/Preferences/"))
-
-(deny mach-lookup NO_REPORT
-    (global-name
-        "com.apple.containermanagerd"
-        "com.apple.containermanagerd.system"))
-
-(deny mach-lookup
-    (global-name "com.apple.mobilegestalt.xpc"))
-
-(with-filter (require-not (sandbox-version-2))
-    (allow mach-lookup (with telemetry)
-        (require-all
-            (require-not (webcontent-process-launched))
-            (extension "com.apple.webkit.extension.mach")
-            (global-name "com.apple.mobilegestalt.xpc"))))
-
-(deny mach-lookup NO_REPORT
-    (xpc-service-name "com.apple.audio.toolbox.reporting.service"))
 
 #if !ENABLE(WEBCONTENT_GPU_SANDBOX_EXTENSIONS_BLOCKING)
 (allow iokit-open-user-client
@@ -874,27 +804,6 @@
         (require-all
             (extension "com.apple.webkit.extension.mach")
             (global-name "com.apple.mobileassetd.v2"))))
-
-(with-filter (require-not (sandbox-version-2))
-    (allow mach-lookup
-        (require-all
-            (extension "com.apple.webkit.extension.mach")
-            (system-attribute apple-internal)
-            (global-name "com.apple.webinspector"))))
-
-;; Silence warnings about these connections if we have decided not to extend access to them:
-(deny mach-lookup NO_REPORT
-    (require-all
-        (require-not (extension "com.apple.webkit.extension.mach"))
-        (global-name "com.apple.audio.AudioComponentRegistrar")))
-
-;; These services have been identified as unused during living-on.
-;; This list overrides some definitions above and in common.sb.
-;; FIXME: remove overridden rules once the final list has been
-;; established, see https://bugs.webkit.org/show_bug.cgi?id=193840
-(deny mach-lookup
-    (global-name "com.apple.webkit.camera")
-)
 
 (disable-syscall-inference)
 
@@ -1097,13 +1006,6 @@
         (syscall-unix-rarely-in-use-blocked-in-lockdown-mode)
         (syscall-quicklook)))
 
-(deny file-ioctl (with telemetry))
-
-(deny file-ioctl (with telemetry)
-    (literal "/dev/aes_0"))
-
-(deny socket-ioctl (with telemetry))
-
 (when (defined? 'system-fcntl)
     (deny system-fcntl (with telemetry))
     (allow system-fcntl
@@ -1148,16 +1050,6 @@
 
 (when (not (defined? 'process-codesigning*))
     (allow process-info-codesignature (target self))
-)
-
-(when (defined? 'socket-option-get)
-    ;; getsockopt
-    (deny socket-option-get (with telemetry))
-)
-
-(when (defined? 'socket-option-set)
-    ;; setsockopt
-    (deny socket-option-set)
 )
 
 (define-once (mach-bootstrap-message-numbers)
@@ -1227,9 +1119,6 @@
         MSC_pid_for_task
         MSC_thread_self_trap))
 
-(deny syscall-mach
-    (machtrap-number MSC_mach_wait_until))
-
 (deny syscall-mach (with telemetry))
 (allow syscall-mach
     (syscall-mach-blocked-in-lockdown-mode)
@@ -1266,7 +1155,6 @@
     (kernel-mig-routine
         host_get_special_port
         host_info
-        io_server_version
         (when (defined? 'mach_vm_range_create) mach_vm_range_create) ;; <rdar://105161083>
         task_restartable_ranges_register
         task_set_special_port))
@@ -1278,6 +1166,7 @@
         host_get_io_master
         io_registry_entry_from_path
         io_registry_entry_get_property_bin_buf
+        io_server_version
         mach_memory_entry_ownership
         mach_port_extract_right
         mach_port_get_context_from_user
@@ -1346,7 +1235,6 @@
 
 (allow syscall-mig
     (kernel-mig-routine-blocked-in-lockdown-mode)
-    (kernel-mig-routine-only-in-use-during-launch)
     (kernel-mig-routine-in-use))
 
 #if PLATFORM(WATCHOS)
@@ -1358,7 +1246,7 @@
     (allow syscall-mig
         (kernel-mig-routine-only-in-use-during-launch)))
 (with-filter (webcontent-process-launched)
-    (allow syscall-mig
+    (deny syscall-mig
         (with telemetry)
         (with message "kernel mig routine used after launch")
         (kernel-mig-routine-only-in-use-during-launch)))

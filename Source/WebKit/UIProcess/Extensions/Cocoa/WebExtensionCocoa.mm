@@ -192,7 +192,8 @@ bool WebExtension::validateResourceData(NSURL *resourceURL, NSData *resourceData
     if (!staticCode)
         return false;
 
-    NSURL *bundleSupportFilesURL = CFBridgingRelease(CFBundleCopySupportFilesDirectoryURL(m_bundle.get()._cfBundle));
+    RetainPtr<__CFBundle> bundle = m_bundle.get()._cfBundle;
+    NSURL *bundleSupportFilesURL = CFBridgingRelease(CFBundleCopySupportFilesDirectoryURL(bundle.get()));
     NSString *bundleSupportFilesURLString = bundleSupportFilesURL.absoluteString;
     NSString *resourceURLString = resourceURL.absoluteString;
     ASSERT([resourceURLString hasPrefix:bundleSupportFilesURLString]);

@@ -36,7 +36,8 @@
 #include "JSCJSValue.h"
 #include "LLIntPCRanges.h"
 #include "PureNaN.h"
-#include "VMInspector.h"
+#include "VM.h"
+#include "VMManager.h"
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -1633,7 +1634,7 @@ bool A64DOpcodeMoveWide::handlePotentialDataPointer(void* ptr)
     ASSERT(Integrity::isSanePointer(ptr));
 
     bool handled = false;
-    VMInspector::forEachVM([&] (VM& vm) {
+    VMManager::forEachVM([&] (VM& vm) {
         if (ptr == &vm) {
             bufferPrintf(" vm");
             handled = true;

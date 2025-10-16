@@ -1,4 +1,4 @@
 
 PASS Starts rendering with flip-block
-PASS No successful position (with intermediate successful), keep flip-block
+FAIL No successful position (with intermediate successful), keep flip-block assert_equals: expected 200 but got 0
 

@@ -29,6 +29,7 @@
 
 #import "HTTPServer.h"
 #import "TestUIDelegate.h"
+#import "TestWKWebView.h"
 #import "WebExtensionUtilities.h"
 
 namespace TestWebKitAPI {

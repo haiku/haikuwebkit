@@ -217,7 +217,7 @@ void IPIntPlan::didCompleteCompilation()
                 executableAddress = m_wasmToWasmExitStubs.at(call.functionIndexSpace).code();
             } else
                 executableAddress = m_callees[call.functionIndexSpace - m_moduleInformation->importFunctionCount()]->entrypoint();
-            MacroAssembler::repatchNearCall(call.callLocation, CodeLocationLabel<WasmEntryPtrTag>(executableAddress));
+            MacroAssembler::repatchNearCall<jitMemcpyRepatchAtomicFlush>(call.callLocation, CodeLocationLabel<WasmEntryPtrTag>(executableAddress));
         }
     }
 }

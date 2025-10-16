@@ -57,10 +57,6 @@
 #define NS_RETURNS_RETAINED
 #endif
 
-#ifndef __OBJC__
-typedef struct objc_object *id;
-#endif
-
 // Because ARC enablement is a compile-time choice, and we compile this header
 // both ways, we need a separate copy of our code when ARC is enabled.
 #if __has_feature(objc_arc)

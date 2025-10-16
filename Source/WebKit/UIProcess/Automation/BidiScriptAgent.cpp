@@ -69,17 +69,43 @@ void BidiScriptAgent::callFunction(const String& functionDeclaration, bool await
     Ref<JSON::Array> argumentsArray = arguments ? arguments.releaseNonNull() : JSON::Array::create();
 
     session->evaluateJavaScriptFunction(*browsingContext, emptyString(), functionDeclaration, WTFMove(argumentsArray), false, optionalUserActivation.value_or(false), std::nullopt, [callback = WTFMove(callback)](Inspector::CommandResult<String>&& stringResult) {
-        auto evaluateResultType = stringResult.has_value() ? Inspector::Protocol::BidiScript::EvaluateResultType::Success : Inspector::Protocol::BidiScript::EvaluateResultType::Exception;
+        // FIXME: Properly fill ExceptionDetails remaining fields once we have a way to get them instead of just the error message.
+        // https://bugs.webkit.org/show_bug.cgi?id=288058
+        if (!stringResult) {
+            if (stringResult.error().startsWith("JavaScriptError"_s)) {
+                auto exceptionValue = Inspector::Protocol::BidiScript::RemoteValue::create()
+                    .setType(Inspector::Protocol::BidiScript::RemoteValueType::Error)
+                    .release();
+                auto stackTrace = Inspector::Protocol::BidiScript::StackTrace::create()
+                    .setCallFrames(JSON::ArrayOf<Inspector::Protocol::BidiScript::StackFrame>::create())
+                    .release();
+                auto exceptionDetails = Inspector::Protocol::BidiScript::ExceptionDetails::create()
+                    .setText(stringResult.error().right("JavaScriptError;"_s.length()))
+                    .setLineNumber(0)
+                    .setColumnNumber(0)
+                    .setException(WTFMove(exceptionValue))
+                    .setStackTrace(WTFMove(stackTrace))
+                    .release();
+
+                callback({ { Inspector::Protocol::BidiScript::EvaluateResultType::Exception, "placeholder_realm"_s, nullptr, WTFMove(exceptionDetails) } });
+                return;
+            }
+
+            callback(makeUnexpected(stringResult.error()));
+            return;
+        }
+
+        auto resultValue = JSON::Value::parseJSON(stringResult.value());
+        ASYNC_FAIL_WITH_PREDEFINED_ERROR_AND_DETAILS_IF(!resultValue, InternalError, "Failed to parse callFunction result as JSON"_s);
+
         auto resultObject = Inspector::Protocol::BidiScript::RemoteValue::create()
             .setType(Inspector::Protocol::BidiScript::RemoteValueType::Object)
             .release();
 
-        auto resultValue = JSON::Value::parseJSON(stringResult.value());
-        ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!resultValue, InternalError);
         resultObject->setValue(resultValue.releaseNonNull());
 
         // FIXME: keep track of realm IDs that we hand out.
-        callback({ { evaluateResultType, "placeholder_realm"_s, WTFMove(resultObject), nullptr } });
+        callback({ { Inspector::Protocol::BidiScript::EvaluateResultType::Success, "placeholder_realm"_s, WTFMove(resultObject), nullptr } });
     });
 }
 

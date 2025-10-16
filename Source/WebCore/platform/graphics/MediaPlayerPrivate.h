@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
 #if ENABLE(VIDEO)
 
 #include <WebCore/HostingContext.h>
@@ -86,7 +87,7 @@ public:
     virtual RetainPtr<PlatformLayer> createVideoFullscreenLayer() { return nullptr; }
     virtual void setVideoFullscreenLayer(PlatformLayer*, Function<void()>&& completionHandler) { completionHandler(); }
     virtual void updateVideoFullscreenInlineImage() { }
-    virtual void setVideoFullscreenFrame(FloatRect) { }
+    virtual void setVideoFullscreenFrame(const FloatRect&) { }
     virtual void setVideoFullscreenGravity(MediaPlayer::VideoGravity) { }
     virtual void setVideoFullscreenMode(MediaPlayer::VideoFullscreenMode) { }
     virtual void videoFullscreenStandbyChanged() { }
@@ -380,6 +381,8 @@ public:
     virtual void soundStageSizeDidChange() { }
 
     virtual void setMessageClientForTesting(WeakPtr<MessageClientForTesting>) { }
+
+    virtual void elementIdChanged(const String&) const { }
 
 protected:
     mutable PlatformTimeRanges m_seekable;

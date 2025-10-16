@@ -27,6 +27,7 @@
 #include "WPEDisplayMock.h"
 
 #include "WPEScreenMock.h"
+#include "WPEToplevelMock.h"
 #include "WPEViewMock.h"
 #include <gio/gio.h>
 #include <gmodule.h>
@@ -85,7 +86,15 @@ static gboolean wpeDisplayMockConnect(WPEDisplay* display, GError** error)
 
 static WPEView* wpeDisplayMockCreateView(WPEDisplay* display)
 {
-    return WPE_VIEW(g_object_new(WPE_TYPE_VIEW_MOCK, "display", display, nullptr));
+    auto* view = WPE_VIEW(g_object_new(WPE_TYPE_VIEW_MOCK, "display", display, nullptr));
+
+    if (wpe_settings_get_boolean(wpe_display_get_settings(display), WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, nullptr)) {
+        WPEToplevel* toplevel = wpeToplevelMockNew(WPE_DISPLAY_MOCK(display), 1);
+        wpe_view_set_toplevel(view, toplevel);
+        g_object_unref(toplevel);
+    }
+
+    return view;
 }
 
 static WPEInputMethodContext* wpeDisplayMockCreateInputMethodContext(WPEDisplay* display, WPEView*)

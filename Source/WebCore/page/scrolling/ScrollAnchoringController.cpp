@@ -39,6 +39,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "TypedElementDescendantIteratorInlines.h"
+#include <wtf/SetForScope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>
 

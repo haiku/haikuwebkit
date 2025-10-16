@@ -191,6 +191,7 @@ monospace
 -webkit-body
 -webkit-pictograph
 system-ui
+math
 //
 //
 // CSS_PROP_*_COLOR
@@ -1634,6 +1635,7 @@ sRGB
 // color() function
 a98-rgb
 display-p3
+display-p3-linear
 prophoto-rgb
 // rec2020
 // sRGB
@@ -1715,6 +1717,7 @@ minimal-ui enable-if=ENABLE_APPLICATION_MANIFEST
 browser enable-if=ENABLE_APPLICATION_MANIFEST
 
 // text-decoration-line
+grammar-error
 spelling-error
 
 // text-decoration-thickness, text-underline-offset

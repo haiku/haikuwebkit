@@ -41,6 +41,7 @@
 #import "RemoteLayerTreeDrawingAreaProxyIOS.h"
 #import "SmartMagnificationController.h"
 #import "UIKitSPI.h"
+#import "UIKitUtilities.h"
 #import "VisibleContentRectUpdateInfo.h"
 #import "WKBrowsingContextGroupPrivate.h"
 #import "WKInspectorHighlightView.h"
@@ -662,11 +663,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [_textInteractionWrapper deactivateSelection];
 }
 
-static WebCore::FloatBoxExtent floatBoxExtent(UIEdgeInsets insets)
-{
-    return { WebCore::narrowPrecisionToFloatFromCGFloat(insets.top), WebCore::narrowPrecisionToFloatFromCGFloat(insets.right), WebCore::narrowPrecisionToFloatFromCGFloat(insets.bottom), WebCore::narrowPrecisionToFloatFromCGFloat(insets.left) };
-}
-
 - (CGRect)_computeUnobscuredContentRectRespectingInputViewBounds:(CGRect)unobscuredContentRect inputViewBounds:(CGRect)inputViewBounds
 {
     // The input view bounds are in window coordinates, but the unobscured rect is in content coordinates. Account for this by converting input view bounds to content coordinates.
@@ -708,12 +704,12 @@ static WebCore::FloatBoxExtent floatBoxExtent(UIEdgeInsets insets)
     WebKit::VisibleContentRectUpdateInfo visibleContentRectUpdateInfo(
         visibleContentRect,
         unobscuredContentRect,
-        floatBoxExtent(contentInsets),
+        WebKit::floatBoxExtent(contentInsets),
         unobscuredRectInScrollViewCoordinates,
         unobscuredContentRectRespectingInputViewBounds,
         fixedPositionRectForLayout,
-        floatBoxExtent(obscuredInsets),
-        floatBoxExtent(unobscuredSafeAreaInsets),
+        WebKit::floatBoxExtent(obscuredInsets),
+        WebKit::floatBoxExtent(unobscuredSafeAreaInsets),
         zoomScale,
         viewStability,
         !!_sizeChangedSinceLastVisibleContentRectUpdate,

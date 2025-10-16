@@ -31,6 +31,8 @@ class RenderReplaced : public RenderBox {
 public:
     virtual ~RenderReplaced();
 
+    virtual bool shouldRespectZeroIntrinsicWidth() const;
+
     LayoutUnit computeReplacedLogicalWidth(ShouldComputePreferred = ShouldComputePreferred::ComputeActual) const override;
     LayoutUnit computeReplacedLogicalHeight(std::optional<LayoutUnit> estimatedUsedWidth = std::nullopt) const override;
 

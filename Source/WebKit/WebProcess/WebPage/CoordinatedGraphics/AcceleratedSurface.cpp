@@ -179,7 +179,7 @@ void AcceleratedSurface::RenderTargetShareableBuffer::didRenderFrame(Vector<IntR
 void AcceleratedSurface::RenderTargetShareableBuffer::willRenderFrame()
 {
     if (m_releaseFenceFD) {
-        if (auto fence = GLFence::importFD(WTFMove(m_releaseFenceFD)))
+        if (auto fence = GLFence::importFD(PlatformDisplay::sharedDisplay().glDisplay(), WTFMove(m_releaseFenceFD)))
             fence->serverWait();
     }
 
@@ -190,11 +190,12 @@ void AcceleratedSurface::RenderTargetShareableBuffer::willRenderFrame()
 
 std::unique_ptr<GLFence> AcceleratedSurface::RenderTargetShareableBuffer::createRenderingFence(bool useExplicitSync) const
 {
+    auto& display = PlatformDisplay::sharedDisplay().glDisplay();
     if (useExplicitSync && supportsExplicitSync()) {
-        if (auto fence = GLFence::createExportable())
+        if (auto fence = GLFence::createExportable(display))
             return fence;
     }
-    return GLFence::create();
+    return GLFence::create(display);
 }
 
 void AcceleratedSurface::RenderTargetShareableBuffer::sync(bool useExplicitSync)

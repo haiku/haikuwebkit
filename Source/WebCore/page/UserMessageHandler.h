@@ -49,6 +49,7 @@ public:
     virtual ~UserMessageHandler();
 
     ExceptionOr<void> postMessage(JSC::JSGlobalObject&, JSC::JSValue, Ref<DeferredPromise>&&);
+    JSC::JSValue postLegacySynchronousMessage(JSC::JSGlobalObject&, JSC::JSValue);
 
     UserMessageHandlerDescriptor* descriptor() { return m_descriptor.get(); }
     void invalidateDescriptor() { m_descriptor = nullptr; }

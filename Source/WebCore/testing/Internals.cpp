@@ -27,8 +27,8 @@
 #include "config.h"
 #include "Internals.h"
 
-#include "AXObjectCache.h"
-#include "AddEventListenerOptions.h"
+#include "AXObjectCacheInlines.h"
+#include "AddEventListenerOptionsInlines.h"
 #include "AnimationTimeline.h"
 #include "AnimationTimelinesController.h"
 #include "ApplicationCacheStorage.h"
@@ -5816,11 +5816,6 @@ void Internals::systemBeep()
 
 #if ENABLE(VIDEO)
 
-String Internals::getCurrentMediaControlsStatusForElement(HTMLMediaElement& mediaElement)
-{
-    return mediaElement.getCurrentMediaControlsStatus();
-}
-
 void Internals::setMediaControlsMaximumRightContainerButtonCountOverride(HTMLMediaElement& mediaElement, size_t count)
 {
     mediaElement.setMediaControlsMaximumRightContainerButtonCountOverride(count);
@@ -7774,7 +7769,7 @@ AccessibilityObject* Internals::axObjectForElement(Element& element) const
 
     if (CheckedPtr cache = document->axObjectCache()) {
         cache->performDeferredCacheUpdate(ForceLayout::No);
-        return cache->getOrCreate(element);
+        return cache->exportedGetOrCreate(element);
     }
     return nullptr;
 }

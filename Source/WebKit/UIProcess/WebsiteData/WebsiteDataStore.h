@@ -518,6 +518,7 @@ public:
     void setCookies(Vector<WebCore::Cookie>&&, CompletionHandler<void()>&&);
 
     void setStorageAccessPermissionForTesting(bool, WebPageProxyIdentifier, const String& topFrameDomain, const String& subFrameDomain, CompletionHandler<void()>&&);
+    void clearStorageAccessForTesting(CompletionHandler<void()>&&);
 
 private:
     enum class ForceReinitialization : bool { No, Yes };

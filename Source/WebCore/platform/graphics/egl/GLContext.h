@@ -88,7 +88,7 @@ public:
     WEBCORE_EXPORT ~GLContext();
 
     RefPtr<GLDisplay> display() const;
-    unsigned version();
+    unsigned version() const;
     EGLConfig config() const { return m_config; }
 
     WEBCORE_EXPORT bool makeContextCurrent();
@@ -156,6 +156,7 @@ private:
     GLContextWrapper::Type type() const override { return GLContextWrapper::Type::Native; }
     bool makeCurrentImpl() override;
     bool unmakeCurrentImpl() override;
+    unsigned glVersion() const override;
 
 #if ENABLE(MEDIA_TELEMETRY)
     EGLDisplay eglDisplay() const final;
@@ -167,7 +168,7 @@ private:
 #endif
 
     ThreadSafeWeakPtr<GLDisplay> m_display;
-    unsigned m_version { 0 };
+    mutable unsigned m_version { 0 };
     EGLContext m_context { nullptr };
     EGLSurface m_surface { nullptr };
     EGLConfig m_config { nullptr };

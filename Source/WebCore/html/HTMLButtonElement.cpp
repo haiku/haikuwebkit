@@ -219,7 +219,6 @@ void HTMLButtonElement::handleCommand()
     CommandEvent::Init init;
     init.bubbles = false;
     init.cancelable = true;
-    init.composed = true;
     init.source = this;
     init.command = commandRaw.isNull() ? emptyAtom() : commandRaw;
 

@@ -28,6 +28,7 @@
 #include <WebCore/TrustedHTML.h>
 #include <WebCore/TrustedScript.h>
 #include <WebCore/TrustedScriptURL.h>
+#include <wtf/text/WTFString.h>
 
 namespace JSC {
 

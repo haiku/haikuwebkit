@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <wtf/StdLibExtras.h>
+
 // We do not delete "delete" operators to allow classes to have a virtual destructor. The following code raises a compile error like "error: attempt to use a deleted function".
 //
 //     class A {

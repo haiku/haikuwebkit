@@ -1060,10 +1060,11 @@ inline std::unique_ptr<GLFence> createAcceleratedRenderingFence(T object)
 
     grContext->flush(object);
 
-    if (GLFence::isSupported()) {
+    auto& glDisplay = PlatformDisplay::sharedDisplay().glDisplay();
+    if (GLFence::isSupported(glDisplay)) {
         grContext->submit(GrSyncCpu::kNo);
 
-        if (auto fence = GLFence::create())
+        if (auto fence = GLFence::create(glDisplay))
             return fence;
     }
 

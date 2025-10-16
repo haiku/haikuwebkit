@@ -25,9 +25,9 @@
 
 #pragma once
 
+#include "CachedScript.h"
 #include <WebCore/CachedResourceClient.h>
 #include <WebCore/CachedResourceHandle.h>
-#include "CachedScript.h"
 #include <WebCore/Document.h>
 #include <WebCore/LoadableScript.h>
 #include <WebCore/LoadableScriptError.h>

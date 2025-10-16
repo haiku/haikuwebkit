@@ -186,7 +186,7 @@ macro ipintEntry()
     move sp, argumINTEnd
     subq argumINTTmp, sp
     move sp, argumINTDsp
-    loadp Wasm::IPIntCallee::m_argumINTBytecodePointer[ws0], MC
+    loadp Wasm::IPIntCallee::m_argumINTBytecode + VectorBufferOffset[ws0], MC
 
     push argumINTTmp, argumINTDst, argumINTSrc, argumINTEnd
 
@@ -223,7 +223,7 @@ macro argumINTInitializeDefaultLocals()
     sxb2q argumINTTmp, argumINTTmp
     andq ValueNull, argumINTTmp
     storeq argumINTTmp, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
 end
 
 macro argumINTFinish()
@@ -378,7 +378,7 @@ ipintOp(_throw_ref, macro()
     jumpToException()
 
 .throw_null_ref:
-    throwException(NullExnReference)
+    throwException(NullExnrefReference)
 end)
 
 macro uintDispatch()
@@ -416,7 +416,7 @@ end)
 
 # This implementation is specially defined out of ipintOp scope to make end implementation tight.
 .ipint_end_ret:
-    loadp Wasm::IPIntCallee::m_uINTBytecodePointer[ws0], MC
+    loadp Wasm::IPIntCallee::m_uINTBytecode + VectorBufferOffset[ws0], MC
     ipintEpilogueOSR(10)
 if X86_64
     loadp UnboxedWasmCalleeStackSlot[cfr], ws0
@@ -529,16 +529,16 @@ ipintOp(_call, macro()
     loadb IPInt::CallMetadata::length[MC], t0
     advancePCByReg(t0)
 
-    # get function index
-    loadi IPInt::CallMetadata::functionIndex[MC], a1
+    move cfr, a1
+    move MC, a2
     advanceMC(IPInt::CallMetadata::signature)
 
     subq 16, sp
-    move sp, a2
+    move sp, a3
 
     # operation returns the entrypoint in r0 and the target instance in r1
     # operation stores the target callee to sp[0] and target function info to sp[1]
-    operationCall(macro() cCall3(_ipint_extern_prepare_call) end)
+    operationCall(macro() cCall4(_ipint_extern_prepare_call) end)
     loadq [sp], IPIntCallCallee
     loadq 8[sp], IPIntCallFunctionSlot
     addq 16, sp
@@ -578,15 +578,14 @@ ipintOp(_return_call, macro()
     loadb IPInt::TailCallMetadata::length[MC], t0
     advancePCByReg(t0)
 
-    # get function index
-    loadi IPInt::TailCallMetadata::functionIndex[MC], a1
-
+    move cfr, a1
+    move MC, a2
     subq 16, sp
-    move sp, a2
+    move sp, a3
 
     # operation returns the entrypoint in r0 and the target instance in r1
     # this operation stores the boxed Callee into *r2
-    operationCall(macro() cCall3(_ipint_extern_prepare_call) end)
+    operationCall(macro() cCall4(_ipint_extern_prepare_call) end)
 
     loadq [sp], IPIntCallCallee
     loadq 8[sp], IPIntCallFunctionSlot
@@ -626,7 +625,7 @@ ipintOp(_call_ref, macro()
     saveCallSiteIndex()
 
     move cfr, a1
-    loadi IPInt::CallRefMetadata::typeIndex[MC], a2
+    move MC, a2
     move sp, a3
 
     operationCallMayThrow(macro() cCall4(_ipint_extern_prepare_call_ref) end)
@@ -649,7 +648,7 @@ ipintOp(_return_call_ref, macro()
     advancePCByReg(t2)
 
     move cfr, a1
-    loadi IPInt::TailCallRefMetadata::typeIndex[MC], a2
+    move MC, a2
     move sp, a3
     operationCallMayThrow(macro() cCall4(_ipint_extern_prepare_call_ref) end)
     loadq [sp], IPIntCallCallee
@@ -6033,7 +6032,7 @@ end
 
     # set up the Callee slot
     storeq IPIntCallCallee, Callee - CallerFrameAndPCSize[sp]
-    storeq IPIntCallFunctionSlot, CodeBlock - CallerFrameAndPCSize[sp]
+    storep IPIntCallFunctionSlot, CodeBlock - CallerFrameAndPCSize[sp]
 
     push targetEntrypoint, targetInstance
     move t2, sc3
@@ -6172,12 +6171,20 @@ mintAlign(_a1)
     mintArgDispatch()
 
 mintAlign(_a2)
+if ARM64 or ARM64E or X86_64
     mintPop(a2)
     mintArgDispatch()
+else
+    break
+end
 
 mintAlign(_a3)
+if ARM64 or ARM64E or X86_64
     mintPop(a3)
     mintArgDispatch()
+else
+    break
+end
 
 mintAlign(_a4)
 if ARM64 or ARM64E or X86_64
@@ -6371,14 +6378,22 @@ mintAlign(_r1)
     mintRetDispatch()
 
 mintAlign(_r2)
+if ARM64 or ARM64E or X86_64
     subp StackValueSize, mintRetDst
     storeq wa2, [mintRetDst]
     mintRetDispatch()
+else
+    break
+end
 
 mintAlign(_r3)
+if ARM64 or ARM64E or X86_64
     subp StackValueSize, mintRetDst
     storeq wa3, [mintRetDst]
     mintRetDispatch()
+else
+    break
+end
 
 mintAlign(_r4)
 if ARM64 or ARM64E or X86_64
@@ -6498,7 +6513,9 @@ if X86_64
 end
 
     # Restore PC / MC
-    getIPIntCallee()
+    loadp Callee[cfr], ws0
+    unboxWasmCallee(ws0, ws1)
+    storep ws0, UnboxedWasmCalleeStackSlot[cfr]
 if X86_64
     move sc2, wasmInstance
     loadq 8[sc3], PL
@@ -6537,7 +6554,7 @@ end
 
     # load the size of stack values in, and subtract that from sc2
     loadi [MC], sc3
-    mulq -SlotSize, sc3
+    mulp -SlotSize, sc3
 
     # copy from sc2 downwards
     validateOpcodeConfig(sc0)
@@ -6553,8 +6570,8 @@ else
     storeq sc1, 8[sc2, sc3]
 end
 
-    addq 16, sc3
-    addq 16, sp
+    addp 16, sc3
+    addp 16, sp
     jmp .ipint_tail_call_copy_stackargs_loop
 
 .ipint_tail_call_copy_stackargs_loop_end:
@@ -6580,7 +6597,7 @@ end
 
     # save new Callee
     storeq sc0, Callee[sc2]
-    storeq sc3, CodeBlock[sc2]
+    storep sc3, CodeBlock[sc2]
 
     # take off the last two values we stored, and move SP down to make it look like a fresh frame
     pop targetInstance, ws0
@@ -6624,7 +6641,7 @@ end
     addp CallerFrameAndPCSize, sp
 
 if X86_64
-    subq 8, sp
+    subp 8, sp
 end
 
     # go!
@@ -6733,7 +6750,7 @@ uintAlign(_fr7)
 uintAlign(_stack)
     popInt64(sc1, sc2)
     storeq sc1, [sc0]
-    subq 8, sc0
+    subp 8, sc0
     uintDispatch()
 
 uintAlign(_ret)
@@ -6752,28 +6769,37 @@ uintAlign(_ret)
 argumINTAlign(_a0)
 _argumINT_begin:
     storeq wa0, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_a1)
     storeq wa1, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_a2)
+if ARM64 or ARM64E or X86_64
     storeq wa2, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
+else
+    break
+end
+
 
 argumINTAlign(_a3)
+if ARM64 or ARM64E or X86_64
     storeq wa3, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
+else
+    break
+end
 
 argumINTAlign(_a4)
 if ARM64 or ARM64E or X86_64
     storeq wa4, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 else
     break
@@ -6782,7 +6808,7 @@ end
 argumINTAlign(_a5)
 if ARM64 or ARM64E or X86_64
     storeq wa5, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 else
     break
@@ -6791,7 +6817,7 @@ end
 argumINTAlign(_a6)
 if ARM64 or ARM64E
     storeq wa6, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 else
     break
@@ -6800,7 +6826,7 @@ end
 argumINTAlign(_a7)
 if ARM64 or ARM64E
     storeq wa7, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 else
     break
@@ -6808,49 +6834,49 @@ end
 
 argumINTAlign(_fa0)
     stored wfa0, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_fa1)
     stored wfa1, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_fa2)
     stored wfa2, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_fa3)
     stored wfa3, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_fa4)
     stored wfa4, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_fa5)
     stored wfa5, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_fa6)
     stored wfa6, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_fa7)
     stored wfa7, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_stack)
     loadq [argumINTSrc], csr0
-    addq 8, argumINTSrc
+    addp 8, argumINTSrc
     storeq csr0, [argumINTDst]
-    addq LocalSize, argumINTDst
+    addp LocalSize, argumINTDst
     argumINTDispatch()
 
 argumINTAlign(_end)

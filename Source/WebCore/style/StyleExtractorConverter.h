@@ -170,7 +170,6 @@ public:
     static Ref<CSSValue> convertAppleColorFilterOperations(ExtractorState&, const FilterOperations&);
     static Ref<CSSValue> convertWebkitTextCombine(ExtractorState&, TextCombine);
     static Ref<CSSValue> convertImageOrientation(ExtractorState&, ImageOrientation);
-    static Ref<CSSValue> convertLineClamp(ExtractorState&, const LineClampValue&);
     static Ref<CSSValue> convertContain(ExtractorState&, OptionSet<Containment>);
     static Ref<CSSValue> convertInitialLetter(ExtractorState&, FloatSize);
     static Ref<CSSValue> convertTextSpacingTrim(ExtractorState&, TextSpacingTrim);
@@ -188,7 +187,6 @@ public:
     static Ref<CSSValue> convertPosition(ExtractorState&, const LengthPoint&);
     static Ref<CSSValue> convertTouchAction(ExtractorState&, OptionSet<TouchAction>);
     static Ref<CSSValue> convertTextTransform(ExtractorState&, OptionSet<TextTransform>);
-    static Ref<CSSValue> convertTextDecorationLine(ExtractorState&, OptionSet<TextDecorationLine>);
     static Ref<CSSValue> convertTextUnderlinePosition(ExtractorState&, OptionSet<TextUnderlinePosition>);
     static Ref<CSSValue> convertTextEmphasisPosition(ExtractorState&, OptionSet<TextEmphasisPosition>);
     static Ref<CSSValue> convertSpeakAs(ExtractorState&, OptionSet<SpeakAs>);
@@ -208,18 +206,10 @@ public:
 
     // MARK: FillLayer conversions
 
-    static Ref<CSSValue> convertFillLayerAttachment(ExtractorState&, FillAttachment);
-    static Ref<CSSValue> convertFillLayerBlendMode(ExtractorState&, BlendMode);
-    static Ref<CSSValue> convertFillLayerClip(ExtractorState&, FillBox);
-    static Ref<CSSValue> convertFillLayerOrigin(ExtractorState&, FillBox);
-    static Ref<CSSValue> convertFillLayerRepeat(ExtractorState&, FillRepeatXY);
-    static Ref<CSSValue> convertFillLayerBackgroundSize(ExtractorState&, FillSize);
-    static Ref<CSSValue> convertFillLayerMaskSize(ExtractorState&, FillSize);
     static Ref<CSSValue> convertFillLayerMaskComposite(ExtractorState&, CompositeOperator);
     static Ref<CSSValue> convertFillLayerWebkitMaskComposite(ExtractorState&, CompositeOperator);
     static Ref<CSSValue> convertFillLayerMaskMode(ExtractorState&, MaskMode);
     static Ref<CSSValue> convertFillLayerWebkitMaskSourceType(ExtractorState&, MaskMode);
-    static Ref<CSSValue> convertFillLayerImage(ExtractorState&, const StyleImage*);
 
     // MARK: Font conversions
 
@@ -613,15 +603,6 @@ inline Ref<CSSValue> ExtractorConverter::convertImageOrientation(ExtractorState&
     return CSSPrimitiveValue::create(CSSValueNone);
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertLineClamp(ExtractorState&, const LineClampValue& lineClamp)
-{
-    if (lineClamp.isNone())
-        return CSSPrimitiveValue::create(CSSValueNone);
-    if (lineClamp.isPercentage())
-        return CSSPrimitiveValue::create(lineClamp.value(), CSSUnitType::CSS_PERCENTAGE);
-    return CSSPrimitiveValue::createInteger(lineClamp.value());
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertContain(ExtractorState&, OptionSet<Containment> containment)
 {
     if (!containment)
@@ -909,27 +890,6 @@ inline Ref<CSSValue> ExtractorConverter::convertTextTransform(ExtractorState&, O
     if (textTransform.contains(TextTransform::FullSizeKana))
         list.append(CSSPrimitiveValue::create(CSSValueFullSizeKana));
 
-    if (list.isEmpty())
-        return CSSPrimitiveValue::create(CSSValueNone);
-    return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertTextDecorationLine(ExtractorState&, OptionSet<TextDecorationLine> textDecorationLine)
-{
-    if (textDecorationLine.isEmpty())
-        return CSSPrimitiveValue::create(CSSValueNone);
-    if (textDecorationLine & TextDecorationLine::SpellingError)
-        return CSSPrimitiveValue::create(CSSValueSpellingError);
-
-    CSSValueListBuilder list;
-    if (textDecorationLine & TextDecorationLine::Underline)
-        list.append(CSSPrimitiveValue::create(CSSValueUnderline));
-    if (textDecorationLine & TextDecorationLine::Overline)
-        list.append(CSSPrimitiveValue::create(CSSValueOverline));
-    if (textDecorationLine & TextDecorationLine::LineThrough)
-        list.append(CSSPrimitiveValue::create(CSSValueLineThrough));
-    if (textDecorationLine & TextDecorationLine::Blink)
-        list.append(CSSPrimitiveValue::create(CSSValueBlink));
     if (list.isEmpty())
         return CSSPrimitiveValue::create(CSSValueNone);
     return CSSValueList::createSpaceSeparated(WTFMove(list));
@@ -1317,77 +1277,6 @@ inline Ref<CSSValue> ExtractorConverter::convertPositionVisibility(ExtractorStat
 
 // MARK: - FillLayer conversions
 
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerAttachment(ExtractorState& state, FillAttachment attachment)
-{
-    return convert(state, attachment);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerBlendMode(ExtractorState& state, BlendMode blendMode)
-{
-    return convert(state, blendMode);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerClip(ExtractorState& state, FillBox clip)
-{
-    return convert(state, clip);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerOrigin(ExtractorState& state, FillBox origin)
-{
-    return convert(state, origin);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerRepeat(ExtractorState& state, FillRepeatXY repeat)
-{
-    if (repeat.x == repeat.y)
-        return convert(state, repeat.x);
-
-    if (repeat.x == FillRepeat::Repeat && repeat.y == FillRepeat::NoRepeat)
-        return CSSPrimitiveValue::create(CSSValueRepeatX);
-
-    if (repeat.x == FillRepeat::NoRepeat && repeat.y == FillRepeat::Repeat)
-        return CSSPrimitiveValue::create(CSSValueRepeatY);
-
-    return CSSValueList::createSpaceSeparated(
-        convert(state, repeat.x),
-        convert(state, repeat.y)
-    );
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerBackgroundSize(ExtractorState& state, FillSize size)
-{
-    if (size.type == FillSizeType::Contain)
-        return CSSPrimitiveValue::create(CSSValueContain);
-
-    if (size.type == FillSizeType::Cover)
-        return CSSPrimitiveValue::create(CSSValueCover);
-
-    if (size.size.height.isAuto() && size.size.width.isAuto())
-        return convertLength(state, size.size.width);
-
-    return CSSValueList::createSpaceSeparated(
-        convertLength(state, size.size.width),
-        convertLength(state, size.size.height)
-    );
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerMaskSize(ExtractorState& state, FillSize size)
-{
-    if (size.type == FillSizeType::Contain)
-        return CSSPrimitiveValue::create(CSSValueContain);
-
-    if (size.type == FillSizeType::Cover)
-        return CSSPrimitiveValue::create(CSSValueCover);
-
-    if (size.size.height.isAuto())
-        return convertLength(state, size.size.width);
-
-    return CSSValueList::createSpaceSeparated(
-        convertLength(state, size.size.width),
-        convertLength(state, size.size.height)
-    );
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertFillLayerMaskComposite(ExtractorState&, CompositeOperator composite)
 {
     return CSSPrimitiveValue::create(toCSSValueID(composite, CSSPropertyMaskComposite));
@@ -1427,11 +1316,6 @@ inline Ref<CSSValue> ExtractorConverter::convertFillLayerWebkitMaskSourceType(Ex
     return CSSPrimitiveValue::create(CSSValueAlpha);
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertFillLayerImage(ExtractorState& state, const StyleImage* image)
-{
-    return convertImageOrNone(state, image);
-}
-
 // MARK: - Font conversions
 
 inline Ref<CSSValue> ExtractorConverter::convertFontFamily(ExtractorState& state, const AtomString& family)
@@ -1443,6 +1327,8 @@ inline Ref<CSSValue> ExtractorConverter::convertFontFamily(ExtractorState& state
             return CSSValueFantasy;
         if (family == monospaceFamily)
             return CSSValueMonospace;
+        if (family == mathFamily)
+            return CSSValueMath;
         if (family == pictographFamily)
             return CSSValueWebkitPictograph;
         if (family == sansSerifFamily)

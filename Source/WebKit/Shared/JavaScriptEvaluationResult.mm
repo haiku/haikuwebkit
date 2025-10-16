@@ -31,7 +31,30 @@
 
 namespace WebKit {
 
-RetainPtr<id> JavaScriptEvaluationResult::toID(Value&& root)
+class JavaScriptEvaluationResult::ObjCExtractor {
+public:
+    Map takeMap() { return WTFMove(m_map); }
+    JSObjectID addObjectToMap(id);
+private:
+    Value toValue(id);
+
+    Map m_map;
+    HashMap<RetainPtr<id>, JSObjectID> m_objectsInMap;
+};
+
+class JavaScriptEvaluationResult::ObjCInserter {
+public:
+    using Dictionaries = Vector<std::pair<ObjectMap, RetainPtr<NSMutableDictionary>>>;
+    using Arrays = Vector<std::pair<Vector<JSObjectID>, RetainPtr<NSMutableArray>>>;
+    RetainPtr<id> toID(Value&&);
+    Dictionaries takeDictionaries() { return WTFMove(m_dictionaries); }
+    Arrays takeArrays() { return WTFMove(m_arrays); }
+private:
+    Dictionaries m_dictionaries;
+    Arrays m_arrays;
+};
+
+RetainPtr<id> JavaScriptEvaluationResult::ObjCInserter::toID(Value&& root)
 {
     return WTF::switchOn(WTFMove(root), [] (EmptyType type) -> RetainPtr<id> {
         switch (type) {
@@ -51,14 +74,14 @@ RetainPtr<id> JavaScriptEvaluationResult::toID(Value&& root)
         return [NSDate dateWithTimeIntervalSince1970:value.seconds()];
     }, [&] (Vector<JSObjectID>&& vector) -> RetainPtr<id> {
         RetainPtr array = adoptNS([[NSMutableArray alloc] initWithCapacity:vector.size()]);
-        m_nsArrays.append({ WTFMove(vector), array });
+        m_arrays.append({ WTFMove(vector), array });
         return array;
-    }, [&] (HashMap<JSObjectID, JSObjectID>&& map) -> RetainPtr<id> {
+    }, [&] (ObjectMap&& map) -> RetainPtr<id> {
         RetainPtr dictionary = adoptNS([[NSMutableDictionary alloc] initWithCapacity:map.size()]);
-        m_nsDictionaries.append({ WTFMove(map), dictionary });
+        m_dictionaries.append({ WTFMove(map), dictionary });
         return dictionary;
-    }, [] (JSHandleInfo&& info) -> RetainPtr<id> {
-        return wrapper(API::JSHandle::create(WTFMove(info)));
+    }, [] (UniqueRef<JSHandleInfo>&& info) -> RetainPtr<id> {
+        return wrapper(API::JSHandle::create(WTFMove(info.get())));
     }, [] (UniqueRef<WebCore::SerializedNode>&& serializedNode) -> RetainPtr<id> {
         return wrapper(API::SerializedNode::create(WTFMove(serializedNode.get())).get());
     });
@@ -66,34 +89,39 @@ RetainPtr<id> JavaScriptEvaluationResult::toID(Value&& root)
 
 RetainPtr<id> JavaScriptEvaluationResult::toID()
 {
+    HashMap<JSObjectID, RetainPtr<id>> instantiatedObjects;
+    ObjCInserter inserter;
+
     for (auto&& [identifier, value] : std::exchange(m_map, { }))
-        m_instantiatedNSObjects.add(identifier, toID(WTFMove(value)));
-    for (auto [vector, array] : std::exchange(m_nsArrays, { })) {
+        instantiatedObjects.add(identifier, inserter.toID(WTFMove(value)));
+
+    for (auto [vector, array] : inserter.takeArrays()) {
         for (auto identifier : vector) {
-            if (RetainPtr element = m_instantiatedNSObjects.get(identifier))
+            if (RetainPtr element = instantiatedObjects.get(identifier))
                 [array addObject:element.get()];
             else
                 [array addObject:NSNull.null];
         }
     }
-    for (auto [map, dictionary] : std::exchange(m_nsDictionaries, { })) {
+
+    for (auto [map, dictionary] : inserter.takeDictionaries()) {
         for (auto [keyIdentifier, valueIdentifier] : map) {
-            RetainPtr key = m_instantiatedNSObjects.get(keyIdentifier);
+            RetainPtr key = instantiatedObjects.get(keyIdentifier);
             if (!key)
                 continue;
-            RetainPtr value = m_instantiatedNSObjects.get(valueIdentifier);
+            RetainPtr value = instantiatedObjects.get(valueIdentifier);
             if (!value)
                 continue;
             [dictionary setObject:value.get() forKey:key.get()];
         }
     }
-    return std::exchange(m_instantiatedNSObjects, { }).take(m_root);
+
+    return std::exchange(instantiatedObjects, { }).take(m_root);
 }
 
-auto JavaScriptEvaluationResult::toValue(id object) -> Value
+auto JavaScriptEvaluationResult::ObjCExtractor::toValue(id object) -> Value
 {
-    if (!object)
-        return EmptyType::Undefined;
+    ASSERT(object);
 
     if ([object isKindOfClass:NSNull.class])
         return EmptyType::Null;
@@ -122,7 +150,7 @@ auto JavaScriptEvaluationResult::toValue(id object) -> Value
     }
 
     if ([object isKindOfClass:NSDictionary.class]) {
-        HashMap<JSObjectID, JSObjectID> map;
+        ObjectMap map;
         [(NSDictionary *)object enumerateKeysAndObjectsUsingBlock:[&](id key, id value, BOOL *) {
             map.add(addObjectToMap(key), addObjectToMap(value));
         }];
@@ -133,22 +161,16 @@ auto JavaScriptEvaluationResult::toValue(id object) -> Value
         return makeUniqueRef<WebCore::SerializedNode>(((_WKSerializedNode *)object)->_node->coreSerializedNode());
 
     if ([object isKindOfClass:_WKJSHandle.class])
-        return JSHandleInfo { ((_WKJSHandle *)object)->_ref->info() };
+        return makeUniqueRef<JSHandleInfo>(((_WKJSHandle *)object)->_ref->info());
 
     // This object has been null checked and went through isSerializable which only supports these types.
     ASSERT_NOT_REACHED();
     return EmptyType::Undefined;
 }
 
-JSObjectID JavaScriptEvaluationResult::addObjectToMap(id object)
+JSObjectID JavaScriptEvaluationResult::ObjCExtractor::addObjectToMap(id object)
 {
-    if (!object) {
-        if (!m_nullObjectID) {
-            m_nullObjectID = JSObjectID::generate();
-            m_map.add(*m_nullObjectID, EmptyType::Undefined);
-        }
-        return *m_nullObjectID;
-    }
+    ASSERT(object);
 
     auto it = m_objectsInMap.find(object);
     if (it != m_objectsInMap.end())
@@ -204,16 +226,15 @@ static bool isSerializable(id argument)
 
 std::optional<JavaScriptEvaluationResult> JavaScriptEvaluationResult::extract(id object)
 {
-    if (object && !isSerializable(object))
-        return std::nullopt;
-    return JavaScriptEvaluationResult { object };
-}
+    if (!object)
+        return jsUndefined();
 
-JavaScriptEvaluationResult::JavaScriptEvaluationResult(id object)
-    : m_root(addObjectToMap(object))
-{
-    m_objectsInMap.clear();
-    m_nullObjectID = std::nullopt;
+    if (!isSerializable(object))
+        return std::nullopt;
+
+    ObjCExtractor extractor;
+    auto root = extractor.addObjectToMap(object);
+    return JavaScriptEvaluationResult { root, extractor.takeMap() };
 }
 
 }

@@ -28,7 +28,7 @@
 #if ENABLE(GPU_PROCESS)
 
 #include "ImageBufferBackendHandle.h"
-#include "RemoteDisplayListRecorderProxy.h"
+#include "RemoteGraphicsContextProxy.h"
 #include "RemoteSerializedImageBufferIdentifier.h"
 #include "RenderingBackendIdentifier.h"
 #include <WebCore/ImageBuffer.h>
@@ -80,7 +80,7 @@ public:
     // Messages
     void didCreateBackend(std::optional<ImageBufferBackendHandle>);
 
-    RemoteDisplayListRecorderIdentifier contextIdentifier() const { return m_context.identifier(); }
+    RemoteGraphicsContextIdentifier contextIdentifier() const { return m_context.identifier(); }
 private:
     RemoteImageBufferProxy(Parameters, const WebCore::ImageBufferBackend::Info&, RemoteRenderingBackendProxy&);
 
@@ -111,7 +111,7 @@ private:
     RefPtr<IPC::StreamClientConnection> connection() const;
     void didBecomeUnresponsive() const;
 
-    mutable RemoteDisplayListRecorderProxy m_context;
+    mutable RemoteGraphicsContextProxy m_context;
     WeakPtr<RemoteRenderingBackendProxy> m_renderingBackend;
 };
 

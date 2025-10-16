@@ -217,7 +217,7 @@ public:
 private:
     RTCPeerConnection(Document&);
 
-    ExceptionOr<void> initializeConfiguration(RTCConfiguration&&);
+    ExceptionOr<void> initializeWithConfiguration(RTCConfiguration&&);
 
     ExceptionOr<Ref<RTCRtpTransceiver>> addReceiveOnlyTransceiver(String&&);
 

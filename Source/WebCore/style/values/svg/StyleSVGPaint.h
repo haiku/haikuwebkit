@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "StyleColor.h"
-#include "StyleURL.h"
+#include <WebCore/StyleColor.h>
+#include <WebCore/StyleURL.h>
 
 namespace WebCore {
 namespace Style {

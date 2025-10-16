@@ -140,7 +140,6 @@ public:
 
     using ExpressionType = ConstExprValue;
     using ResultList = Vector<ExpressionType, 8>;
-    using ArgumentList = Vector<ExpressionType, 8>;
 
     // Structured blocks should not appear in the constant expression except
     // for a dummy top-level block from parseBody() that cannot be jumped to.
@@ -172,6 +171,7 @@ public:
     using Stack = FunctionParser<ConstExprGenerator>::Stack;
     using TypedExpression = FunctionParser<ConstExprGenerator>::TypedExpression;
     using CatchHandler = FunctionParser<ConstExprGenerator>::CatchHandler;
+    using ArgumentList = FunctionParser<ConstExprGenerator>::ArgumentList;
 
     enum class Mode : uint8_t {
         Validate,
@@ -231,14 +231,14 @@ public:
         case TypeKind::Structref:
         case TypeKind::Arrayref:
         case TypeKind::Funcref:
-        case TypeKind::Exn:
+        case TypeKind::Exnref:
         case TypeKind::Externref:
         case TypeKind::Eqref:
         case TypeKind::Anyref:
-        case TypeKind::Nullexn:
-        case TypeKind::Nullref:
-        case TypeKind::Nullfuncref:
-        case TypeKind::Nullexternref:
+        case TypeKind::Noexnref:
+        case TypeKind::Noneref:
+        case TypeKind::Nofuncref:
+        case TypeKind::Noexternref:
             return ConstExprValue(JSValue::encode(jsNull()));
         default:
             RELEASE_ASSERT_NOT_REACHED_WITH_MESSAGE("Unimplemented constant type.\n");
@@ -355,13 +355,13 @@ public:
                 WASM_PARSER_FAIL_IF(result.isInvalid(), "Failed to allocate new array"_s);
                 JSWebAssemblyArray* arrayObject = jsCast<JSWebAssemblyArray*>(JSValue::decode(result.getValue()));
                 for (size_t i = 0; i < args.size(); i++)
-                    arrayObject->set(arrayObject->vm(), i, args[i].getVector());
+                    arrayObject->set(arrayObject->vm(), i, args[i].value().getVector());
             } else {
                 result = createNewArray(typeIndex, args.size(), { });
                 WASM_PARSER_FAIL_IF(result.isInvalid(), "Failed to allocate new array"_s);
                 JSWebAssemblyArray* arrayObject = jsCast<JSWebAssemblyArray*>(JSValue::decode(result.getValue()));
                 for (size_t i = 0; i < args.size(); i++)
-                    arrayObject->set(arrayObject->vm(), i, args[i].getValue());
+                    arrayObject->set(arrayObject->vm(), i, args[i].value().getValue());
             }
         }
 
@@ -405,10 +405,10 @@ public:
             WASM_PARSER_FAIL_IF(result.isInvalid(), "Failed to allocate new struct"_s);
             JSWebAssemblyStruct* structObject = jsCast<JSWebAssemblyStruct*>(JSValue::decode(result.getValue()));
             for (size_t i = 0; i < args.size(); i++) {
-                if (args[i].type() == ConstExprValue::Vector)
-                    structObject->set(i, args[i].getVector());
+                if (args[i].value().type() == ConstExprValue::Vector)
+                    structObject->set(i, args[i].value().getVector());
                 else
-                    structObject->set(i, args[i].getValue());
+                    structObject->set(i, args[i].value().getValue());
             }
         }
 
@@ -674,9 +674,9 @@ public:
         return { };
     }
 
-    PartialResult WARN_UNUSED_RETURN addCall(unsigned, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call) CONST_EXPR_STUB
-    PartialResult WARN_UNUSED_RETURN addCallIndirect(unsigned, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call) CONST_EXPR_STUB
-    PartialResult WARN_UNUSED_RETURN addCallRef(const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call) CONST_EXPR_STUB
+    PartialResult WARN_UNUSED_RETURN addCall(unsigned, FunctionSpaceIndex, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call) CONST_EXPR_STUB
+    PartialResult WARN_UNUSED_RETURN addCallIndirect(unsigned, unsigned, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call) CONST_EXPR_STUB
+    PartialResult WARN_UNUSED_RETURN addCallRef(unsigned, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call) CONST_EXPR_STUB
     PartialResult WARN_UNUSED_RETURN addUnreachable() CONST_EXPR_STUB
     PartialResult WARN_UNUSED_RETURN addCrash() CONST_EXPR_STUB
     bool usesSIMD() { return false; }

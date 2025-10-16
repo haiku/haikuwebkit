@@ -1800,12 +1800,12 @@ static void invalidateLineLayoutPathOnContentChangeIfNeeded(RenderText& renderer
     if (!inlineLayout)
         return;
 
-    if (LayoutIntegration::LineLayout::shouldInvalidateLineLayoutPathAfterContentChange(*container, renderer, *inlineLayout)) {
-        container->invalidateLineLayoutPath(RenderBlockFlow::InvalidationReason::ContentChange);
+    if (LayoutIntegration::LineLayout::shouldInvalidateLineLayoutAfterContentChange(*container, renderer, *inlineLayout)) {
+        container->invalidateLineLayout(RenderBlockFlow::InvalidationReason::ContentChange);
         return;
     }
     if (!inlineLayout->updateTextContent(renderer, offset, oldLength))
-        container->invalidateLineLayoutPath(RenderBlockFlow::InvalidationReason::ContentChange);
+        container->invalidateLineLayout(RenderBlockFlow::InvalidationReason::ContentChange);
 }
 
 void RenderText::setTextInternal(const String& text, bool force)

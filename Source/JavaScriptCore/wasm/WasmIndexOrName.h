@@ -107,7 +107,11 @@ public:
 
     const std::span<const char8_t> moduleName() const
     {
-        return nameSection()->moduleName.size() ? nameSection()->moduleName.span() : nameSection()->moduleHash.span();
+        if (nameSection()->moduleName.size())
+            return nameSection()->moduleName.span();
+        if (nameSection()->moduleHash.size())
+            return nameSection()->moduleHash.span();
+        return std::span<const char8_t>();
     }
 
     NameSection* nameSection() const { return m_nameSection.get(); }

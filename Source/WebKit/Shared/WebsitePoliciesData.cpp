@@ -180,6 +180,9 @@ void WebsitePoliciesData::applyToDocumentLoader(WebsitePoliciesData&& websitePol
         break;
     }
 
+    if (!websitePolicies.alternateRequest.isNull())
+        documentLoader.willContinueMainResourceLoadAfterRedirect(websitePolicies.alternateRequest);
+
     RefPtr frame = documentLoader.frame();
     if (!frame)
         return;

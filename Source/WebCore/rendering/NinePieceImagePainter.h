@@ -36,9 +36,10 @@ class RenderStyle;
 
 enum class CompositeOperator : uint8_t;
 
+struct ImagePaintingOptions;
+
 namespace Style {
 struct BorderImage;
-struct ImagePaintingOptions;
 struct MaskBorder;
 }
 

@@ -35,6 +35,7 @@
 #include <WebCore/IntRect.h>
 #include <WebCore/PolicyContainer.h>
 #include <memory>
+#include <wtf/Platform.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UUID.h>
@@ -47,7 +48,6 @@
 
 #if PLATFORM(COCOA)
 #import <wtf/RetainPtr.h>
-typedef struct objc_object* id;
 #endif
 
 namespace WebCore {

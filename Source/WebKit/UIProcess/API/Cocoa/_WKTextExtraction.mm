@@ -26,6 +26,9 @@
 #import "config.h"
 #import "_WKTextExtractionInternal.h"
 
+#import <WebKit/WKError.h>
+#import <wtf/RetainPtr.h>
+
 @implementation _WKTextExtractionConfiguration
 
 - (instancetype)init
@@ -84,6 +87,28 @@
 {
     _hasSetLocation = YES;
     _location = location;
+}
+
+@end
+
+@implementation _WKTextExtractionInteractionResult {
+    RetainPtr<NSError> _error;
+}
+
+- (instancetype)initWithErrorDescription:(NSString *)errorDescription
+{
+    if (!(self = [super init]))
+        return nil;
+
+    if (errorDescription)
+        _error = [NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:@{ NSDebugDescriptionErrorKey: errorDescription }];
+
+    return self;
+}
+
+- (NSError *)error
+{
+    return _error.get();
 }
 
 @end

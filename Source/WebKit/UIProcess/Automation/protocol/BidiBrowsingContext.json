@@ -35,7 +35,7 @@
             ]
         },
         {
-            "id": "Navigation",
+            "id": "NavigationID",
             "description": "Unique string identifying an ongoing navigation.",
             "spec": "https://w3c.github.io/webdriver-bidi/#type-browsingContext-Navigation",
             "type": "string"
@@ -47,7 +47,7 @@
             "type": "object",
             "properties": [
                 { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
-                { "name": "navigation", "$ref": "BidiBrowsingContext.Navigation", "nullable": true },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true },
                 { "name": "timestamp", "type": "number" },
                 { "name": "url", "type": "string" }
             ]
@@ -144,7 +144,7 @@
             ],
             "returns": [
                 { "name": "url", "type": "string", "description": "The URL the browsing context navigated to." },
-                { "name": "navigation", "$ref": "BidiBrowsingContext.Navigation", "optional": true, "description": "The navigation ID, or null if not applicable." }
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true, "description": "The navigation ID, or null if not applicable." }
             ]
         },
         {
@@ -160,7 +160,7 @@
             ],
             "returns": [
                 { "name": "url", "type": "string", "description": "The URL the browsing context navigated to." },
-                { "name": "navigation", "$ref": "BidiBrowsingContext.Navigation", "optional": true, "description": "The navigation ID, or null if not applicable." }
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true, "description": "The navigation ID, or null if not applicable." }
             ]
         }
     ],
@@ -169,11 +169,59 @@
             "name": "navigationStarted",
             "description": "Event fired when navigation starts in a navigable.",
             "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-navigationStarted",
+            "wpt": "https://github.com/web-platform-tests/wpt/tree/master/webdriver/tests/bidi/browsing_context/navigation_started",
             "parameters": [
                 { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
-                { "name": "navigation", "$ref": "BidiBrowsingContext.Navigation", "nullable": true },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true },
                 { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
-                { "name": "url", "type": "string" }
+                { "name": "url", "type": "string", "description": "The provisional URL being navigated to." }
+            ]
+        },
+        {
+            "name": "navigationCommitted",
+            "description": "Event fired when navigation commits in a navigable.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-navigationCommitted",
+            "wpt": "https://github.com/web-platform-tests/wpt/tree/master/webdriver/tests/bidi/browsing_context/navigation_committed",
+            "parameters": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": false },
+                { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
+                { "name": "url", "type": "string", "description": "The URL that navigation committed to." }
+            ]
+        },
+        {
+            "name": "navigationFailed",
+            "description": "Event fired when navigation fails in a navigable.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-navigationFailed",
+            "wpt": "https://github.com/web-platform-tests/wpt/tree/master/webdriver/tests/bidi/browsing_context/navigation_failed",
+            "parameters": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true, "description": "The navigation ID, or null when the navigation is canceled before making progress." },
+                { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
+                { "name": "url", "type": "string", "description": "The URL that failed to navigate to." }
+            ]
+        },
+        {
+            "name": "navigationAborted",
+            "description": "Event fired when navigation is aborted in a navigable.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-navigationAborted",
+            "parameters": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true, "description": "The navigation ID, or null when the navigation is canceled before making progress." },
+                { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
+                { "name": "url", "type": "string", "description": "The URL that was being navigated to when aborted." }
+            ]
+        },
+        {
+            "name": "fragmentNavigated",
+            "description": "Event fired when fragment navigation occurs in a navigable.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-browsingContext-fragmentNavigated",
+            "wpt": "https://github.com/web-platform-tests/wpt/tree/master/webdriver/tests/bidi/browsing_context/navigation_committed",
+            "parameters": [
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext" },
+                { "name": "navigation", "$ref": "BidiBrowsingContext.NavigationID", "nullable": true },
+                { "name": "timestamp", "type": "number", "description": "Time value in milliseconds representing the current date and time in UTC." },
+                { "name": "url", "type": "string", "description": "The URL with the fragment that was navigated to." }
             ]
         },
         {

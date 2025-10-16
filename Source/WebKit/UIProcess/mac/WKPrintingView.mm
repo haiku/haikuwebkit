@@ -277,7 +277,7 @@ static void pageDidDrawToImage(std::optional<WebCore::ShareableBitmap::Handle>&&
 
     ASSERT(firstPage > 0);
     ASSERT(firstPage <= lastPage);
-    LOG(Printing, "WKPrintingView requesting PDF data for pages %u...%u", firstPage, lastPage);
+    LOG(Printing, "WKPrintingView requesting PDF data for pages %zu...%zu", firstPage, lastPage);
 
     WebKit::PrintInfo printInfo([_printOperation.get() printInfo]);
     // Return to printing mode if we're already back to screen (e.g. due to window resizing).

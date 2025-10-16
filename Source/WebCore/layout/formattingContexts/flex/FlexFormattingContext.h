@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include "FlexFormattingUtils.h"
 #include <WebCore/FlexFormattingConstraints.h>
-#include <WebCore/FlexFormattingUtils.h>
 #include <WebCore/FlexLayout.h>
 #include <WebCore/FlexRect.h>
 #include <WebCore/LayoutIntegrationUtils.h>

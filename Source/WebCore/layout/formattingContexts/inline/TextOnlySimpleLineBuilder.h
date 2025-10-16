@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include "InlineContentCache.h"
 #include <WebCore/AbstractLineBuilder.h>
-#include <WebCore/InlineContentCache.h>
 
 namespace WebCore {
 namespace Layout {
@@ -39,7 +39,7 @@ class TextOnlySimpleLineBuilder final : public AbstractLineBuilder {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(TextOnlySimpleLineBuilder);
 public:
     TextOnlySimpleLineBuilder(InlineFormattingContext&, const ElementBox& rootBox, HorizontalConstraints rootHorizontalConstraints, const InlineItemList&);
-    LineLayoutResult layoutInlineContent(const LineInput&, const std::optional<PreviousLine>&) final;
+    LineLayoutResult layoutInlineContent(const LineInput&, const std::optional<PreviousLine>&, bool isFirstFormattedLine) final;
 
     static bool isEligibleForSimplifiedTextOnlyInlineLayoutByContent(const InlineContentCache::InlineItems&, const PlacedFloats&);
     static bool isEligibleForSimplifiedInlineLayoutByStyle(const RenderStyle&);
@@ -50,7 +50,7 @@ private:
     std::optional<LineLayoutResult> placeSingleCharacterContentIfApplicable(const LineInput&);
     TextOnlyLineBreakResult handleOverflowingTextContent(const RenderStyle&, const InlineContentBreaker::ContinuousContent&, const InlineItemRange&);
     TextOnlyLineBreakResult commitCandidateContent(const RenderStyle&, const CandidateTextContent&, const InlineItemRange&);
-    void initialize(const InlineItemRange&, const InlineRect& initialLogicalRect, const std::optional<PreviousLine>&);
+    void initialize(const InlineItemRange&, const InlineRect& initialLogicalRect, const std::optional<PreviousLine>&, bool isFirstFormattedLine);
     void handleLineEnding(const RenderStyle&, InlineItemPosition, size_t layoutRangeEndIndex);
     size_t revertToTrailingItem(const RenderStyle&, const InlineItemRange&, const InlineTextItem&);
     size_t revertToLastNonOverflowingItem(const RenderStyle&, const InlineItemRange&);

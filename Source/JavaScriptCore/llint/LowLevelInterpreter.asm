@@ -154,6 +154,8 @@ nop
 
 const PtrSize = constexpr (sizeof(void*))
 const MachineRegisterSize = constexpr (sizeof(CPURegister))
+const FPRRegisterSize = 8
+const VectorRegisterSize = 16
 const SlotSize = constexpr (sizeof(Register))
 const SeenMultipleCalleeObjects = 1
 
@@ -2876,7 +2878,6 @@ if WEBASSEMBLY
 macro wasmScope()
     # Wrap the script in a macro since it overwrites some of the LLInt macros,
     # but we don't want to interfere with the LLInt opcodes
-    include WebAssembly
     include InPlaceInterpreter
 end
 
@@ -2911,11 +2912,7 @@ op(ipint_entry, macro ()
     crash()
 end)
 
-op(ipint_function_prologue_simd_trampoline, macro ()
-    crash()
-end)
-
-op(ipint_function_prologue_simd, macro ()
+op(ipint_simd_entry, macro ()
     crash()
 end)
 

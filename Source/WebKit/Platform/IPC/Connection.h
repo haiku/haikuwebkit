@@ -67,6 +67,10 @@
 #include <wtf/WorkQueue.h>
 #include <wtf/text/CString.h>
 
+#if OS(ANDROID)
+#include <wtf/android/RefPtrAndroid.h>
+#endif
+
 #if OS(DARWIN)
 #include <mach/mach_port.h>
 #include <wtf/OSObjectPtr.h>
@@ -338,6 +342,11 @@ public:
     xpc_connection_t xpcConnection() const { return m_xpcConnection.get(); }
     std::optional<audit_token_t> getAuditToken();
     pid_t remoteProcessID() const;
+#endif
+
+#if USE(GLIB)
+    void sendCredentials() const;
+    static pid_t remoteProcessID(GSocket*);
 #endif
 
     static Ref<Connection> createServerConnection(Identifier&&, Thread::QOS = Thread::QOS::Default);
@@ -714,18 +723,32 @@ private:
 #if USE(UNIX_DOMAIN_SOCKETS)
     // Called on the connection queue.
     void readyReadHandler();
-    bool processMessage();
-    bool sendOutputMessage(UnixMessage&);
-    int socketDescriptor() const;
+    bool sendOutputMessage(UnixMessage&&);
 
     Vector<uint8_t> m_readBuffer;
-    Vector<int> m_fileDescriptors;
-    std::unique_ptr<UnixMessage> m_pendingOutputMessage;
+
 #if USE(GLIB)
+    std::unique_ptr<Decoder> createMessageDecoder();
+
     GRefPtr<GSocket> m_socket;
+    GRefPtr<GCancellable> m_cancellable;
     GSocketMonitor m_readSocketMonitor;
     GSocketMonitor m_writeSocketMonitor;
+    Vector<UnixFileDescriptor> m_fileDescriptors;
+    bool m_hasPendingOutputMessage { false };
+#if OS(ANDROID)
+    bool sendOutgoingHardwareBuffers();
+    bool receiveIncomingHardwareBuffers();
+
+    size_t m_pendingIncomingHardwareBufferCount { 0 };
+    Vector<RefPtr<AHardwareBuffer>, 2> m_incomingHardwareBuffers;
+    Vector<RefPtr<AHardwareBuffer>, 2> m_outgoingHardwareBuffers;
+#endif
 #else
+    bool processMessage();
+    int socketDescriptor() const;
+
+    Vector<int> m_fileDescriptors;
     UnixFileDescriptor m_socketDescriptor;
 #endif
 #if PLATFORM(PLAYSTATION)

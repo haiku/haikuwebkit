@@ -172,7 +172,7 @@ void SVGResourcesCache::clientStyleChanged(RenderElement& renderer, StyleDiffere
             return true;
 
         // RenderSVGResourceMarker only supports SVG <mask> references.
-        if (!arePointingToEqualData(oldStyle->maskImage(), newStyle.maskImage()))
+        if (oldStyle->maskLayers().first().image() != newStyle.maskLayers().first().image())
             return true;
 
         if (oldStyle->filter() != newStyle.filter())

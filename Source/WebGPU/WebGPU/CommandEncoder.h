@@ -102,7 +102,7 @@ public:
     void setLabel(String&&);
 
     Device& device() const { return m_device; }
-    Ref<Device> protectedDevice() const SWIFT_RETURNS_INDEPENDENT_VALUE { return m_device; }
+    Ref<Device> protectedDevice() const { return m_device; }
 
     bool isValid() const { return m_commandBuffer; }
     void lock(bool);

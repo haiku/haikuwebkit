@@ -19,7 +19,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -44,7 +44,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 188, 95, 85, 80
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -69,7 +69,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 106, 68, 25, 34
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -94,7 +94,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -119,15 +119,13 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 106, 68, 25, 34
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="m";modeV="c" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -144,15 +142,15 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 124, 154, 65, 51
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="m";modeV="r" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -169,15 +167,15 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="m";modeV="m" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -194,9 +192,11 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 124, 154, 65, 51
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -220,7 +220,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -245,7 +245,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -270,7 +270,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 87, 62, 2, 32
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -295,15 +295,13 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="r";modeV="m" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -320,15 +318,15 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="m";modeV="c" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -345,9 +343,11 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 31, 63, 18, 7
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -370,7 +370,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -395,7 +395,7 @@ FAIL :2d_coords:stage="c";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -418,7 +418,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
@@ -437,7 +437,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -462,11 +462,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -483,9 +481,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -506,7 +506,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -527,7 +527,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -550,7 +550,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -571,7 +571,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -594,11 +594,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -615,9 +613,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -638,11 +638,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -659,9 +657,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -682,11 +682,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -703,9 +701,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -726,7 +726,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -747,7 +747,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -770,7 +770,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -791,7 +791,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -814,9 +814,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -833,11 +835,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -858,7 +858,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -879,7 +879,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -902,7 +902,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -923,7 +923,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -946,9 +946,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -965,11 +967,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -990,7 +990,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1011,7 +1011,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1034,9 +1034,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1053,11 +1055,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1078,9 +1078,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1097,11 +1099,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1122,9 +1122,11 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1141,11 +1143,9 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1166,7 +1166,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
@@ -1185,7 +1185,7 @@ FAIL :2d_coords:stage="c";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1213,7 +1213,7 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1238,7 +1238,7 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 188, 95, 85, 80
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1263,7 +1263,7 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 106, 68, 25, 34
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1288,15 +1288,13 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="r";modeV="m" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1313,9 +1311,11 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 106, 68, 25, 34
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1338,15 +1338,13 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 124, 154, 65, 51
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="m";modeV="r" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1363,15 +1361,15 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="m";modeV="m" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1388,16 +1386,16 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 124, 154, 65, 51
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 PASS :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="c";modeV="c"
 FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="c";modeV="r" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1414,15 +1412,15 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="c";modeV="m" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1439,9 +1437,11 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1464,15 +1464,13 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 87, 62, 2, 32
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="r";modeV="r" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1489,9 +1487,11 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1514,7 +1514,7 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1539,7 +1539,7 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 31, 63, 18, 7
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1564,7 +1564,7 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1589,7 +1589,7 @@ FAIL :2d_coords:stage="f";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1612,9 +1612,11 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1631,11 +1633,9 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1656,7 +1656,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
@@ -1675,7 +1675,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1700,7 +1700,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1721,7 +1721,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1744,7 +1744,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1765,7 +1765,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1788,7 +1788,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1809,7 +1809,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1832,11 +1832,9 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1853,9 +1851,11 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1876,7 +1876,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1897,7 +1897,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -1920,9 +1920,11 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -1939,11 +1941,9 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -1964,7 +1964,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -1985,7 +1985,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2008,9 +2008,11 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2027,11 +2029,9 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2052,7 +2052,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2073,7 +2073,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2096,9 +2096,11 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2115,11 +2117,9 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2140,11 +2140,9 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2161,9 +2159,11 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2184,9 +2184,11 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2203,11 +2205,9 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2228,7 +2228,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2249,7 +2249,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2272,7 +2272,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2293,7 +2293,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2316,7 +2316,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2337,7 +2337,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2360,7 +2360,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2381,7 +2381,7 @@ FAIL :2d_coords:stage="f";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2407,7 +2407,7 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2432,7 +2432,7 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 188, 95, 85, 80
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2457,15 +2457,13 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 106, 68, 25, 34
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="r";modeV="r" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2482,9 +2480,11 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2507,7 +2507,7 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 106, 68, 25, 34
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2532,7 +2532,7 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 124, 154, 65, 51
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2557,15 +2557,13 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 72, 17, 12, 9
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU="m";modeV="m" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2582,9 +2580,11 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="nearest";modeU
      ulp diffs: 124, 154, 65, 51
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2608,15 +2608,13 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="c";modeV="m" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2633,9 +2631,11 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2658,7 +2658,7 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 87, 62, 2, 32
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2683,7 +2683,7 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2708,15 +2708,13 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="m";modeV="c" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2733,15 +2731,15 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 31, 63, 18, 7
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
 FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU="m";modeV="r" assert_unreached:
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -2758,9 +2756,11 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 47, 61, 10, 27
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -2783,7 +2783,7 @@ FAIL :2d_coords:stage="v";textureType="texture_2d%3Cf32%3E";filt="linear";modeU=
      ulp diffs: 19, 49, 4, 24
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2806,7 +2806,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
@@ -2825,7 +2825,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2850,7 +2850,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
@@ -2869,7 +2869,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2894,7 +2894,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2915,7 +2915,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="c
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2938,7 +2938,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -2959,7 +2959,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -2982,7 +2982,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3003,7 +3003,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3026,7 +3026,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3047,7 +3047,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="r
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3070,9 +3070,11 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -3089,11 +3091,9 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -3114,7 +3114,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3135,7 +3135,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3158,7 +3158,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3179,7 +3179,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="nearest";modeU="m
      ulp diffs: 74, 123, 123, 245
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3202,9 +3202,11 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -3221,11 +3223,9 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -3246,9 +3246,11 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -3265,11 +3267,9 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -3290,11 +3290,9 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
-  - INFO: subcase: samplePoints="texel-centre"
-    OK
   - EXPECTATION FAILED: subcase: samplePoints="spiral"
     result was not as expected:
           size: [8, 8, 1]
@@ -3311,9 +3309,11 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="c"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
+  - INFO: subcase: samplePoints="texel-centre"
+    OK
   - INFO: subcase: samplePoints="spiral"
     OK
  Reached unreachable code
@@ -3334,7 +3334,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3355,7 +3355,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3378,7 +3378,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3399,7 +3399,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3422,7 +3422,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3443,7 +3443,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="r"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3466,7 +3466,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3487,7 +3487,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3510,7 +3510,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3531,7 +3531,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"
@@ -3554,7 +3554,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 62, 70, 39, 226
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="texel-centre"
@@ -3575,7 +3575,7 @@ FAIL :2d_coords:stage="v";textureType="texture_external";filt="linear";modeU="m"
      ulp diffs: 91, 67, 122, 210
 
     ### turn on debugging to see sample points ###
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
+    checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2668:37
     checkCallResults@http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/texture_utils.js:2269:40
     @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/expression/call/builtin/textureSampleBaseClampToEdge.spec.js:121:39
   - INFO: subcase: samplePoints="spiral"

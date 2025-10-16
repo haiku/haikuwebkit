@@ -1259,8 +1259,7 @@ class RunBuiltinsTests(shell.TestNewStyle):
 
 
 class RunMVTTests(shell.TestNewStyle):
-    command = ["Tools/Scripts/run-mvt-tests", WithProperties("--%(configuration)s"),
-               WithProperties("--%(fullPlatform)s"), "--headless"]
+    command = ["Tools/Scripts/run-mvt-tests", WithProperties("--%(configuration)s"), WithProperties("--%(fullPlatform)s")]
     name = "MVT-tests"
     description = ["MVT tests running"]
     descriptionDone = ["MVT tests"]

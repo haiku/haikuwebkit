@@ -1103,13 +1103,13 @@ bool TypeInformation::castReference(JSValue refValue, bool allowNull, TypeIndex 
             return jsDynamicCast<WebAssemblyFunctionBase*>(refValue);
         case TypeKind::Eqref:
             return (refValue.isInt32() && refValue.asInt32() <= maxI31ref && refValue.asInt32() >= minI31ref) || jsDynamicCast<JSWebAssemblyArray*>(refValue) || jsDynamicCast<JSWebAssemblyStruct*>(refValue);
-        case TypeKind::Exn:
-            // Exn and Nullexn are in a different heap hierarchy
+        case TypeKind::Exnref:
+            // Exnref and Noexnref are in a different heap hierarchy
             return jsDynamicCast<JSWebAssemblyException*>(refValue);
-        case TypeKind::Nullexn:
-        case TypeKind::Nullref:
-        case TypeKind::Nullfuncref:
-        case TypeKind::Nullexternref:
+        case TypeKind::Noexnref:
+        case TypeKind::Noneref:
+        case TypeKind::Nofuncref:
+        case TypeKind::Noexternref:
             return false;
         case TypeKind::I31ref:
             return refValue.isInt32() && refValue.asInt32() <= maxI31ref && refValue.asInt32() >= minI31ref;
@@ -1174,6 +1174,48 @@ void TypeInformation::tryCleanup()
             return false;
         });
     } while (changed);
+}
+
+bool Type::definitelyIsCellOrNull() const
+{
+    if (!isRefType(*this))
+        return false;
+
+    if (typeIndexIsType(index)) {
+        switch (static_cast<TypeKind>(index)) {
+        case TypeKind::Funcref:
+        case TypeKind::Arrayref:
+        case TypeKind::Structref:
+        case TypeKind::Exnref:
+            return true;
+        default:
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Type::definitelyIsWasmGCObjectOrNull() const
+{
+    if (!isRefType(*this))
+        return false;
+
+    if (typeIndexIsType(index)) {
+        switch (static_cast<TypeKind>(index)) {
+        case TypeKind::Arrayref:
+        case TypeKind::Structref:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    const TypeDefinition& def = TypeInformation::get(index).expand();
+    if (def.is<Wasm::StructType>())
+        return true;
+    if (def.is<Wasm::ArrayType>())
+        return true;
+    return false;
 }
 
 } } // namespace JSC::Wasm

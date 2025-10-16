@@ -69,7 +69,7 @@ public:
         return true;
     }
 
-    FloatRect frameRect() const final;
+    FloatRect localRect() const final;
     bool isNonLayerSVGObject() const final;
 
     bool isAttachment() const final;

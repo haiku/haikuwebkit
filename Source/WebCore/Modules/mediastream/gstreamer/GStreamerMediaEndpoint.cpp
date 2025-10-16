@@ -259,6 +259,7 @@ bool GStreamerMediaEndpoint::initializePipeline()
         if (GST_PAD_DIRECTION(pad) != GST_PAD_SRC)
             return;
 
+        GST_DEBUG_OBJECT(endPoint->pipeline(), "Pad added: %" GST_PTR_FORMAT, pad);
         if (endPoint->isStopped())
             return;
 
@@ -1000,6 +1001,15 @@ void GStreamerMediaEndpoint::setDescription(const RTCSessionDescription* descrip
             failureCallback(&error);
             return;
         }
+        if (descriptionType == DescriptionType::Remote) {
+            GUniqueOutPtr<GstWebRTCSessionDescription> currentDescription;
+
+            g_object_get(m_webrtcBin.get(), "current-remote-description", &currentDescription.outPtr(), nullptr);
+            if (currentDescription && !validateRTPHeaderExtensions(currentDescription->sdp, message.get())) {
+                failureCallback(nullptr);
+                return;
+            }
+        }
     } else if (gst_sdp_message_new(&message.outPtr()) != GST_SDP_OK) {
         failureCallback(nullptr);
         return;
@@ -1526,6 +1536,7 @@ void GStreamerMediaEndpoint::connectPad(GstPad* pad)
     if (!caps)
         caps = adoptGRef(gst_pad_query_caps(pad, nullptr));
 
+    GST_DEBUG_OBJECT(m_pipeline.get(), "Connecting pad %" GST_PTR_FORMAT " with caps %" GST_PTR_FORMAT, pad, caps.get());
     auto structure = gst_caps_get_structure(caps.get(), 0);
     auto ssrc = gstStructureGet<unsigned>(structure, "ssrc"_s);
     if (!ssrc) {
@@ -1944,7 +1955,7 @@ std::unique_ptr<RTCDataChannelHandler> GStreamerMediaEndpoint::createDataChannel
         return nullptr;
 
     auto init = GStreamerDataChannelHandler::fromRTCDataChannelInit(options);
-    GST_DEBUG_OBJECT(m_pipeline.get(), "Creating data channel for init options %" GST_PTR_FORMAT, init.get());
+    GST_DEBUG_OBJECT(m_pipeline.get(), "Creating data channel for init options %" GST_PTR_FORMAT " and label %s", init.get(), label.utf8().data());
     GRefPtr<GstWebRTCDataChannel> channel;
     g_signal_emit_by_name(m_webrtcBin.get(), "create-data-channel", label.utf8().data(), init.get(), &channel.outPtr());
     if (!channel)

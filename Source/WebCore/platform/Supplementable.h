@@ -86,6 +86,8 @@ public:
     virtual bool isNavigatorGamepad() const { return false; }
     virtual bool isUserMediaController() const { return false; }
     virtual bool isWorkerGlobalScopeCaches() const { return false; }
+    virtual bool isLocalDOMWindowMediaControls() const { return false; }
+    virtual bool isDocumentMediaElement() const { return false; }
 };
 
 template<typename T>

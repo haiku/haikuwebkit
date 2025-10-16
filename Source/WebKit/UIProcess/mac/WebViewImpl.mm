@@ -227,20 +227,20 @@ WTF_DECLARE_CF_TYPE_TRAIT(CGImage);
 
 - (void)mouseMoved:(NSEvent *)event
 {
-    if (_impl)
-        _impl->mouseMoved(event);
+    if (CheckedPtr impl = _impl.get())
+        impl->mouseMoved(event);
 }
 
 - (void)mouseEntered:(NSEvent *)event
 {
-    if (_impl)
-        _impl->mouseEntered(event);
+    if (CheckedPtr impl = _impl.get())
+        impl->mouseEntered(event);
 }
 
 - (void)mouseExited:(NSEvent *)event
 {
-    if (_impl)
-        _impl->mouseExited(event);
+    if (CheckedPtr impl = _impl.get())
+        impl->mouseExited(event);
 }
 
 @end
@@ -637,7 +637,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
 @end
 
 @interface WKResponderChainSink : NSResponder {
-    NSResponder *_lastResponderInChain;
+    WeakObjCPtr<NSResponder> _lastResponderInChain;
     bool _didReceiveUnhandledCommand;
 }
 
@@ -666,7 +666,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     // -initWithResponderChain: was called, or was modified in such a way
     // that _lastResponderInChain is still in the chain, and self was not
     // moved earlier in the chain than _lastResponderInChain.
-    RetainPtr responderBeforeSelf = _lastResponderInChain;
+    RetainPtr responderBeforeSelf = _lastResponderInChain.get();
     RetainPtr next = [responderBeforeSelf nextResponder];
     for (; next && next != self; next = [next nextResponder])
         responderBeforeSelf = next;
@@ -839,7 +839,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)_selectList:(id)sender
 {
-    if (!_webViewImpl)
+    CheckedPtr webViewImpl = _webViewImpl.get();
+    if (!webViewImpl)
         return;
 
     RetainPtr insertListControl = dynamic_objc_cast<NSSegmentedControl>(self.view);
@@ -849,19 +850,19 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         // behave as toggles, so we can invoke the appropriate edit command depending on our _currentListType
         // to remove an existing list. We don't have to do anything if _currentListType is NoList.
         if (_currentListType == WebKit::ListType::OrderedList)
-            _webViewImpl->page().executeEditCommand(@"InsertOrderedList", @"");
+            webViewImpl->page().executeEditCommand(@"InsertOrderedList", @"");
         else if (_currentListType == WebKit::ListType::UnorderedList)
-            _webViewImpl->page().executeEditCommand(@"InsertUnorderedList", @"");
+            webViewImpl->page().executeEditCommand(@"InsertUnorderedList", @"");
         break;
     case unorderedListSegment:
-        _webViewImpl->page().executeEditCommand(@"InsertUnorderedList", @"");
+        webViewImpl->page().executeEditCommand(@"InsertUnorderedList", @"");
         break;
     case orderedListSegment:
-        _webViewImpl->page().executeEditCommand(@"InsertOrderedList", @"");
+        webViewImpl->page().executeEditCommand(@"InsertOrderedList", @"");
         break;
     }
 
-    _webViewImpl->dismissTextTouchBarPopoverItemWithIdentifier(NSTouchBarItemIdentifierTextList);
+    webViewImpl->dismissTextTouchBarPopoverItemWithIdentifier(NSTouchBarItemIdentifierTextList);
 }
 
 - (void)setCurrentListType:(WebKit::ListType)listType
@@ -970,6 +971,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (index == NSNotFound)
         return;
 
+    CheckedPtr webViewImpl = _webViewImpl.get();
     if (!_webViewImpl)
         return;
 
@@ -978,29 +980,31 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return;
 
     RetainPtr candidate = checked_objc_cast<NSTextCheckingResult>(candidates.get()[index]);
-    _webViewImpl->handleAcceptedCandidate(candidate.get());
+    webViewImpl->handleAcceptedCandidate(candidate.get());
 }
 
 - (void)candidateListTouchBarItem:(NSCandidateListTouchBarItem *)anItem changedCandidateListVisibility:(BOOL)isVisible
 {
-    if (!_webViewImpl)
+    CheckedPtr webViewImpl = _webViewImpl.get();
+    if (!webViewImpl)
         return;
 
     if (isVisible)
-        _webViewImpl->requestCandidatesForSelectionIfNeeded();
+        webViewImpl->requestCandidatesForSelectionIfNeeded();
 
-    _webViewImpl->updateTouchBar();
+    webViewImpl->updateTouchBar();
 }
 
 #pragma mark NSNotificationCenter observers
 
 - (void)touchBarDidExitCustomization:(NSNotification *)notification
 {
-    if (!_webViewImpl)
+    CheckedPtr webViewImpl = _webViewImpl.get();
+    if (!webViewImpl)
         return;
 
-    _webViewImpl->setIsCustomizingTouchBar(false);
-    _webViewImpl->updateTouchBar();
+    webViewImpl->setIsCustomizingTouchBar(false);
+    webViewImpl->updateTouchBar();
 }
 
 - (void)touchBarWillEnterCustomization:(NSNotification *)notification
@@ -1013,10 +1017,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)didChangeAutomaticTextCompletion:(NSNotification *)notification
 {
-    if (!_webViewImpl)
+    CheckedPtr webViewImpl = _webViewImpl.get();
+    if (!webViewImpl)
         return;
 
-    _webViewImpl->updateTouchBarAndRefreshTextBarIdentifiers();
+    webViewImpl->updateTouchBarAndRefreshTextBarIdentifiers();
 }
 
 
@@ -1077,32 +1082,33 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)_wkChangeTextAlignment:(id)sender
 {
-    if (!_webViewImpl)
+    CheckedPtr webViewImpl = _webViewImpl.get();
+    if (!webViewImpl)
         return;
 
     NSTextAlignment alignment = (NSTextAlignment)[self.textAlignments.cell tagForSegment:self.textAlignments.selectedSegment];
     switch (alignment) {
     case NSTextAlignmentLeft:
         _currentTextAlignment = NSTextAlignmentLeft;
-        _webViewImpl->page().executeEditCommand("AlignLeft"_s, emptyString());
+        webViewImpl->page().executeEditCommand("AlignLeft"_s, emptyString());
         break;
     case NSTextAlignmentRight:
         _currentTextAlignment = NSTextAlignmentRight;
-        _webViewImpl->page().executeEditCommand("AlignRight"_s, emptyString());
+        webViewImpl->page().executeEditCommand("AlignRight"_s, emptyString());
         break;
     case NSTextAlignmentCenter:
         _currentTextAlignment = NSTextAlignmentCenter;
-        _webViewImpl->page().executeEditCommand("AlignCenter"_s, emptyString());
+        webViewImpl->page().executeEditCommand("AlignCenter"_s, emptyString());
         break;
     case NSTextAlignmentJustified:
         _currentTextAlignment = NSTextAlignmentJustified;
-        _webViewImpl->page().executeEditCommand("AlignJustified"_s, emptyString());
+        webViewImpl->page().executeEditCommand("AlignJustified"_s, emptyString());
         break;
     default:
         break;
     }
 
-    _webViewImpl->dismissTextTouchBarPopoverItemWithIdentifier(NSTouchBarItemIdentifierTextAlignment);
+    webViewImpl->dismissTextTouchBarPopoverItemWithIdentifier(NSTouchBarItemIdentifierTextAlignment);
 }
 
 - (NSColor *)textColor
@@ -3718,6 +3724,19 @@ NSUInteger WebViewImpl::accessibilityUIProcessLocalTokenHash()
     return [m_remoteAccessibilityTokenGeneratedByUIProcess hash];
 }
 
+NSArray<NSNumber *> *WebViewImpl::registeredRemoteAccessibilityPids()
+{
+    NSMutableArray<NSNumber *> *result = [NSMutableArray new];
+    for (pid_t pid : m_registeredRemoteAccessibilityPids)
+        [result addObject:@(pid)];
+    return result;
+}
+
+bool WebViewImpl::hasRemoteAccessibilityChild()
+{
+    return !!remoteAccessibilityChildIfNotSuspended();
+}
+
 void WebViewImpl::updateRemoteAccessibilityRegistration(bool registerProcess)
 {
     // When the tree is connected/disconnected, the remote accessibility registration
@@ -3734,10 +3753,13 @@ void WebViewImpl::updateRemoteAccessibilityRegistration(bool registerProcess)
     if (!pid)
         return;
 
-    if (registerProcess)
+    if (registerProcess) {
         [NSAccessibilityRemoteUIElement registerRemoteUIProcessIdentifier:pid];
-    else
+        m_registeredRemoteAccessibilityPids.add(pid);
+    } else {
         [NSAccessibilityRemoteUIElement unregisterRemoteUIProcessIdentifier:pid];
+        m_registeredRemoteAccessibilityPids.remove(pid);
+    }
 }
 
 void WebViewImpl::accessibilityRegisterUIProcessTokens()
@@ -3993,10 +4015,8 @@ void WebViewImpl::setAcceleratedCompositingRootLayer(CALayer *rootLayer)
     m_rootLayer = rootLayer;
     rootLayer.hidden = NO;
 
-    if (m_thumbnailView) {
-        updateThumbnailViewLayer();
+    if (m_thumbnailView && updateThumbnailViewLayer())
         return;
-    }
 
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
@@ -4059,13 +4079,17 @@ void WebViewImpl::reparentLayerTreeInThumbnailView()
     [m_thumbnailView.get() _setThumbnailLayer: m_rootLayer.get()];
 }
 
-void WebViewImpl::updateThumbnailViewLayer()
+bool WebViewImpl::updateThumbnailViewLayer()
 {
     RetainPtr thumbnailView = m_thumbnailView.get();
     ASSERT(thumbnailView);
 
-    if ([thumbnailView _waitingForSnapshot] && [m_view window])
+    if ([thumbnailView _waitingForSnapshot] && [m_view window]) {
         reparentLayerTreeInThumbnailView();
+        return true;
+    }
+
+    return false;
 }
 
 void WebViewImpl::setInspectorAttachmentView(NSView *newView)
@@ -5251,7 +5275,7 @@ void WebViewImpl::insertText(id string, NSRange replacementRange)
     ASSERT(isAttributedString || [string isKindOfClass:[NSString class]]);
 
     if (replacementRange.location != NSNotFound)
-        LOG(TextInput, "insertText:\"%@\" replacementRange:(%u, %u)", isAttributedString ? [string string] : string, replacementRange.location, replacementRange.length);
+        LOG(TextInput, "insertText:\"%@\" replacementRange:(%zu, %zu)", isAttributedString ? [string string] : string, replacementRange.location, replacementRange.length);
     else
         LOG(TextInput, "insertText:\"%@\"", isAttributedString ? [string string] : string);
 
@@ -5318,9 +5342,9 @@ void WebViewImpl::selectedRangeWithCompletionHandler(void(^completionHandlerPtr)
 
         NSRange result = editingRangeResult;
         if (result.location == NSNotFound)
-            LOG(TextInput, "    -> selectedRange returned (NSNotFound, %llu)", result.length);
+            LOG(TextInput, "    -> selectedRange returned (NSNotFound, %zu)", result.length);
         else
-            LOG(TextInput, "    -> selectedRange returned (%llu, %llu)", result.location, result.length);
+            LOG(TextInput, "    -> selectedRange returned (%zu, %zu)", result.location, result.length);
         completionHandlerBlock(result);
     });
 }
@@ -5334,9 +5358,9 @@ void WebViewImpl::markedRangeWithCompletionHandler(void(^completionHandlerPtr)(N
         void (^completionHandlerBlock)(NSRange) = (void (^)(NSRange))completionHandler.get();
         NSRange result = editingRangeResult;
         if (result.location == NSNotFound)
-            LOG(TextInput, "    -> markedRange returned (NSNotFound, %llu)", result.length);
+            LOG(TextInput, "    -> markedRange returned (NSNotFound, %zu)", result.length);
         else
-            LOG(TextInput, "    -> markedRange returned (%llu, %llu)", result.location, result.length);
+            LOG(TextInput, "    -> markedRange returned (%zu, %zu)", result.location, result.length);
         completionHandlerBlock(result);
     });
 }
@@ -5352,7 +5376,7 @@ void WebViewImpl::hasMarkedTextWithCompletionHandler(void(^completionHandler)(BO
 
 void WebViewImpl::attributedSubstringForProposedRange(NSRange proposedRange, void(^completionHandler)(NSAttributedString *attrString, NSRange actualRange))
 {
-    LOG(TextInput, "attributedSubstringFromRange:(%u, %u)", proposedRange.location, proposedRange.length);
+    LOG(TextInput, "attributedSubstringFromRange:(%zu, %zu)", proposedRange.location, proposedRange.length);
     m_page->attributedSubstringForCharacterRangeAsync(proposedRange, [completionHandler = makeBlockPtr(completionHandler)](const WebCore::AttributedString& string, const EditingRange& actualRange) {
         auto attributedString = string.nsAttributedString();
         LOG(TextInput, "    -> attributedSubstringFromRange returned %@", attributedString.get());
@@ -5362,7 +5386,7 @@ void WebViewImpl::attributedSubstringForProposedRange(NSRange proposedRange, voi
 
 void WebViewImpl::firstRectForCharacterRange(NSRange range, void(^completionHandler)(NSRect firstRect, NSRange actualRange))
 {
-    LOG(TextInput, "firstRectForCharacterRange:(%u, %u)", range.location, range.length);
+    LOG(TextInput, "firstRectForCharacterRange:(%zu, %zu)", range.location, range.length);
 
     // Just to match NSTextView's behavior. Regression tests cannot detect this;
     // to reproduce, use a test application from http://bugs.webkit.org/show_bug.cgi?id=4682
@@ -5403,7 +5427,7 @@ void WebViewImpl::characterIndexForPoint(NSPoint point, void(^completionHandler)
     m_page->characterIndexForPointAsync(WebCore::IntPoint(point), [completionHandler = makeBlockPtr(completionHandler)](uint64_t result) {
         if (result == notFound)
             result = NSNotFound;
-        LOG(TextInput, "    -> characterIndexForPoint returned %lu", result);
+        LOG(TextInput, "    -> characterIndexForPoint returned %llu", result);
         completionHandler(result);
     });
 }
@@ -5561,7 +5585,7 @@ void WebViewImpl::setMarkedText(id string, NSRange selectedRange, NSRange replac
     BOOL isAttributedString = [string isKindOfClass:[NSAttributedString class]];
     ASSERT(isAttributedString || [string isKindOfClass:[NSString class]]);
 
-    LOG(TextInput, "setMarkedText:\"%@\" selectedRange:(%u, %u) replacementRange:(%u, %u)", string, selectedRange.location, selectedRange.length, replacementRange.location, replacementRange.length);
+    LOG(TextInput, "setMarkedText:\"%@\" selectedRange:(%zu, %zu) replacementRange:(%zu, %zu)", string, selectedRange.location, selectedRange.length, replacementRange.location, replacementRange.length);
 
 #if HAVE(INLINE_PREDICTIONS)
     if (RetainPtr attributedString = dynamic_objc_cast<NSAttributedString>(string)) {
@@ -7042,6 +7066,15 @@ void WebViewImpl::fulfillDeferredImageAnalysisOverlayViewHierarchyTask()
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
+void WebViewImpl::setCanInstallScrollPocket()
+{
+    if (m_canInstallScrollPocket)
+        return;
+
+    m_canInstallScrollPocket = true;
+    updateScrollPocket();
+}
+
 void WebViewImpl::updatePrefersSolidColorHardPocket()
 {
     static bool canSetPrefersSolidColorHardPocket = [NSScrollPocket instancesRespondToSelector:@selector(setPrefersSolidColorHardPocket:)];
@@ -7071,10 +7104,14 @@ void WebViewImpl::updateScrollPocket()
     if (m_windowIsEnteringOrExitingFullScreen)
         return;
 
+    Ref page = m_page.get();
+    if (!m_canInstallScrollPocket)
+        return;
+
     RetainPtr view = m_view.get();
     CGFloat topContentInset = obscuredContentInsets().top();
-    CGFloat additionalHeight = m_page->overflowHeightForTopScrollEdgeEffect();
-    bool needsTopView = m_page->preferences().contentInsetBackgroundFillEnabled()
+    CGFloat additionalHeight = page->overflowHeightForTopScrollEdgeEffect();
+    bool needsTopView = page->preferences().contentInsetBackgroundFillEnabled()
         && view
         && !view->_reasonsToHideTopScrollPocket
         && (topContentInset > 0 || additionalHeight > 0);

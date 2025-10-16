@@ -154,7 +154,7 @@ void ARKitInlinePreviewModelPlayerMac::createPreviewsForModelWithURL(const URL& 
 {
     // First, create the WebProcess preview.
     m_inlinePreview = adoptNS([allocASVInlinePreviewInstance() initWithFrame:CGRectMake(0, 0, m_size.width(), m_size.height())]);
-    LOG(ModelElement, "ARKitInlinePreviewModelPlayerMac::createPreviewsForModelWithURL() created preview with UUID %s and size %f x %f.", ((String)[m_inlinePreview uuid].UUIDString).utf8().data(), m_size.width(), m_size.height());
+    LOG(ModelElement, "ARKitInlinePreviewModelPlayerMac::createPreviewsForModelWithURL() created preview with UUID %s and size %f x %f.", ((String)[m_inlinePreview uuid].UUIDString).utf8().data(), m_size.width().toDouble(), m_size.height().toDouble());
 
     auto* client = this->client();
     if (!client)
@@ -227,7 +227,7 @@ void ARKitInlinePreviewModelPlayerMac::didCreateRemotePreviewForModelWithURL(con
             return;
         }
 
-        LOG(ModelElement, "ARKitInlinePreviewModelPlayer::didCreateRemotePreviewForModelWithURL() successfully completed load for UUID %s.", [strongSelf->m_inlinePreview uuid]);
+        LOG(ModelElement, "ARKitInlinePreviewModelPlayer::didCreateRemotePreviewForModelWithURL() successfully completed load for UUID %@.", [strongSelf->m_inlinePreview uuid]);
 
         client->didFinishLoading(*strongSelf);
     };

@@ -44,6 +44,54 @@ public:
         }
         builderState.style().setTestHighPriority(fromCSSValueDeducingType(builderState, value));
     }
+    static void applyInitialBackgroundFillLayerTestPrimary(BuilderState& builderState)
+    {
+        applyInitialPrimaryFillLayerProperty<&RenderStyle::setBackgroundLayers, &RenderStyle::initialBackgroundLayers>(builderState);
+    }
+    static void applyInheritBackgroundFillLayerTestPrimary(BuilderState& builderState)
+    {
+        applyInheritPrimaryFillLayerProperty<&RenderStyle::setBackgroundLayers, &RenderStyle::backgroundLayers, &BackgroundLayers::Layer::backgroundFillLayerTestPrimary, BackgroundLayers>(builderState);
+    }
+    static void applyValueBackgroundFillLayerTestPrimary(BuilderState& builderState, CSSValue& value)
+    {
+        applyValuePrimaryFillLayerProperty<&RenderStyle::setBackgroundLayers, &fromCSSValueDeducingType, BackgroundLayers>(builderState, value);
+    }
+    static void applyInitialTestMediumPriority(BuilderState& builderState)
+    {
+        builderState.style().setTestMediumPriority(RenderStyle::initialTestMediumPriority());
+    }
+    static void applyInheritTestMediumPriority(BuilderState& builderState)
+    {
+        builderState.style().setTestMediumPriority(forwardInheritedValue(builderState.parentStyle().testMediumPriority()));
+    }
+    static void applyValueTestMediumPriority(BuilderState& builderState, CSSValue& value)
+    {
+        builderState.style().setTestMediumPriority(fromCSSValueDeducingType(builderState, value));
+    }
+    static void applyInitialBackgroundFillLayerTestSecondary(BuilderState& builderState)
+    {
+        applyInitialSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondary, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondary>(builderState);
+    }
+    static void applyInheritBackgroundFillLayerTestSecondary(BuilderState& builderState)
+    {
+        applyInheritSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondary, &BackgroundLayers::Layer::backgroundFillLayerTestSecondary>(builderState);
+    }
+    static void applyValueBackgroundFillLayerTestSecondary(BuilderState& builderState, CSSValue& value)
+    {
+        applyValueSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondary, &BackgroundLayers::Layer::backgroundFillLayerTestSecondary, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondary, &fromCSSValueDeducingType>(builderState, value);
+    }
+    static void applyInitialBackgroundFillLayerTestSecondaryWithConverter(BuilderState& builderState)
+    {
+        applyInitialSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondaryWithConverter>(builderState);
+    }
+    static void applyInheritBackgroundFillLayerTestSecondaryWithConverter(BuilderState& builderState)
+    {
+        applyInheritSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::backgroundFillLayerTestSecondaryWithConverter>(builderState);
+    }
+    static void applyValueBackgroundFillLayerTestSecondaryWithConverter(BuilderState& builderState, CSSValue& value)
+    {
+        applyValueSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::backgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondaryWithConverter, &BuilderConverter::convertFillTestConverter>(builderState, value);
+    }
     static void applyInitialTestAnimationWrapper(BuilderState& builderState)
     {
         builderState.style().setTestAnimationWrapper(RenderStyle::initialTestAnimationWrapper());
@@ -1274,6 +1322,58 @@ void BuilderGenerated::applyProperty(CSSPropertyID id, BuilderState& builderStat
             break;
         case ApplyValueType::Value:
             BuilderFunctions::applyValueTestHighPriority(builderState, value);
+            break;
+        }
+        break;
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialBackgroundFillLayerTestPrimary(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritBackgroundFillLayerTestPrimary(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueBackgroundFillLayerTestPrimary(builderState, value);
+            break;
+        }
+        break;
+    case CSSPropertyID::CSSPropertyTestMediumPriority:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialTestMediumPriority(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritTestMediumPriority(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueTestMediumPriority(builderState, value);
+            break;
+        }
+        break;
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialBackgroundFillLayerTestSecondary(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritBackgroundFillLayerTestSecondary(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueBackgroundFillLayerTestSecondary(builderState, value);
+            break;
+        }
+        break;
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialBackgroundFillLayerTestSecondaryWithConverter(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritBackgroundFillLayerTestSecondaryWithConverter(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueBackgroundFillLayerTestSecondaryWithConverter(builderState, value);
             break;
         }
         break;

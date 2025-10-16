@@ -124,64 +124,7 @@ PASS :scalar_vector:lhs="abstract-int";rhs="f32";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-int";rhs="f16";compound_assignment=false
 PASS :scalar_vector:lhs="abstract-int";rhs="f16";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Cabstract-int%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="abstract-int";rhs="vec2%3Cabstract-int%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0;
-      v += vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0;
-      v -= vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0;
-      v *= vec2(0, 0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Cabstract-int%3E";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Cabstract-float%3E";compound_assignment=false
 PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Cabstract-float%3E";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Cf32%3E";compound_assignment=false
@@ -191,64 +134,7 @@ PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Cf16%3E";compound_assignment=t
 PASS :scalar_vector:lhs="abstract-int";rhs="i32";compound_assignment=false
 PASS :scalar_vector:lhs="abstract-int";rhs="i32";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Ci32%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="abstract-int";rhs="vec2%3Ci32%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0;
-      v += vec2(i32(0), i32(0));
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0;
-      v -= vec2(i32(0), i32(0));
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0;
-      v *= vec2(i32(0), i32(0));
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Ci32%3E";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-int";rhs="u32";compound_assignment=false
 PASS :scalar_vector:lhs="abstract-int";rhs="u32";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-int";rhs="vec2%3Cu32%3E";compound_assignment=false
@@ -266,182 +152,11 @@ PASS :scalar_vector:lhs="abstract-float";rhs="f32";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-float";rhs="f16";compound_assignment=false
 PASS :scalar_vector:lhs="abstract-float";rhs="f16";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cabstract-int%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="abstract-float";rhs="vec2%3Cabstract-int%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v += vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v -= vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v *= vec2(0, 0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cabstract-int%3E";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cabstract-float%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="abstract-float";rhs="vec2%3Cabstract-float%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v += vec2(0.0, 0.0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v -= vec2(0.0, 0.0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v *= vec2(0.0, 0.0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cabstract-float%3E";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cf32%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="abstract-float";rhs="vec2%3Cf32%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v += vec2(0.0f, 0.0f);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v -= vec2(0.0f, 0.0f);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0;
-      v *= vec2(0.0f, 0.0f);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cf32%3E";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cf16%3E";compound_assignment=false
 PASS :scalar_vector:lhs="abstract-float";rhs="vec2%3Cf16%3E";compound_assignment=true
 PASS :scalar_vector:lhs="abstract-float";rhs="i32";compound_assignment=false
@@ -465,182 +180,11 @@ PASS :scalar_vector:lhs="f32";rhs="f32";compound_assignment=true
 PASS :scalar_vector:lhs="f32";rhs="f16";compound_assignment=false
 PASS :scalar_vector:lhs="f32";rhs="f16";compound_assignment=true
 PASS :scalar_vector:lhs="f32";rhs="vec2%3Cabstract-int%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="f32";rhs="vec2%3Cabstract-int%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v += vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v -= vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v *= vec2(0, 0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="f32";rhs="vec2%3Cabstract-int%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f32";rhs="vec2%3Cabstract-float%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="f32";rhs="vec2%3Cabstract-float%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v += vec2(0.0, 0.0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v -= vec2(0.0, 0.0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v *= vec2(0.0, 0.0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="f32";rhs="vec2%3Cabstract-float%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f32";rhs="vec2%3Cf32%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="f32";rhs="vec2%3Cf32%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v += vec2(0.0f, 0.0f);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v -= vec2(0.0f, 0.0f);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0.0f;
-      v *= vec2(0.0f, 0.0f);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="f32";rhs="vec2%3Cf32%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f32";rhs="vec2%3Cf16%3E";compound_assignment=false
 PASS :scalar_vector:lhs="f32";rhs="vec2%3Cf16%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f32";rhs="i32";compound_assignment=false
@@ -664,184 +208,13 @@ PASS :scalar_vector:lhs="f16";rhs="f32";compound_assignment=true
 PASS :scalar_vector:lhs="f16";rhs="f16";compound_assignment=false
 PASS :scalar_vector:lhs="f16";rhs="f16";compound_assignment=true
 PASS :scalar_vector:lhs="f16";rhs="vec2%3Cabstract-int%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="f16";rhs="vec2%3Cabstract-int%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v += vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v -= vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v *= vec2(0, 0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="f16";rhs="vec2%3Cabstract-int%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f16";rhs="vec2%3Cabstract-float%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="f16";rhs="vec2%3Cabstract-float%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v += vec2(0.0, 0.0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v -= vec2(0.0, 0.0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v *= vec2(0.0, 0.0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="f16";rhs="vec2%3Cabstract-float%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f16";rhs="vec2%3Cf32%3E";compound_assignment=false
 PASS :scalar_vector:lhs="f16";rhs="vec2%3Cf32%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f16";rhs="vec2%3Cf16%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="f16";rhs="vec2%3Cf16%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v += vec2(0.0h, 0.0h);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v -= vec2(0.0h, 0.0h);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-    enable f16;
-    fn f() {
-      var v = 0.0h;
-      v *= vec2(0.0h, 0.0h);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="f16";rhs="vec2%3Cf16%3E";compound_assignment=true
 PASS :scalar_vector:lhs="f16";rhs="i32";compound_assignment=false
 PASS :scalar_vector:lhs="f16";rhs="i32";compound_assignment=true
 PASS :scalar_vector:lhs="f16";rhs="vec2%3Ci32%3E";compound_assignment=false
@@ -1199,64 +572,7 @@ PASS :scalar_vector:lhs="i32";rhs="f32";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="f16";compound_assignment=false
 PASS :scalar_vector:lhs="i32";rhs="f16";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="vec2%3Cabstract-int%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="i32";rhs="vec2%3Cabstract-int%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = i32(0);
-      v += vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = i32(0);
-      v -= vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = i32(0);
-      v *= vec2(0, 0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="i32";rhs="vec2%3Cabstract-int%3E";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="vec2%3Cabstract-float%3E";compound_assignment=false
 PASS :scalar_vector:lhs="i32";rhs="vec2%3Cabstract-float%3E";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="vec2%3Cf32%3E";compound_assignment=false
@@ -1266,64 +582,7 @@ PASS :scalar_vector:lhs="i32";rhs="vec2%3Cf16%3E";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="i32";compound_assignment=false
 PASS :scalar_vector:lhs="i32";rhs="i32";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="vec2%3Ci32%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="i32";rhs="vec2%3Ci32%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = i32(0);
-      v += vec2(i32(0), i32(0));
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = i32(0);
-      v -= vec2(i32(0), i32(0));
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = i32(0);
-      v *= vec2(i32(0), i32(0));
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="i32";rhs="vec2%3Ci32%3E";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="u32";compound_assignment=false
 PASS :scalar_vector:lhs="i32";rhs="u32";compound_assignment=true
 PASS :scalar_vector:lhs="i32";rhs="vec2%3Cu32%3E";compound_assignment=false
@@ -1425,64 +684,7 @@ PASS :scalar_vector:lhs="u32";rhs="f32";compound_assignment=true
 PASS :scalar_vector:lhs="u32";rhs="f16";compound_assignment=false
 PASS :scalar_vector:lhs="u32";rhs="f16";compound_assignment=true
 PASS :scalar_vector:lhs="u32";rhs="vec2%3Cabstract-int%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="u32";rhs="vec2%3Cabstract-int%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0u;
-      v += vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0u;
-      v -= vec2(0, 0);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0u;
-      v *= vec2(0, 0);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="u32";rhs="vec2%3Cabstract-int%3E";compound_assignment=true
 PASS :scalar_vector:lhs="u32";rhs="vec2%3Cabstract-float%3E";compound_assignment=false
 PASS :scalar_vector:lhs="u32";rhs="vec2%3Cabstract-float%3E";compound_assignment=true
 PASS :scalar_vector:lhs="u32";rhs="vec2%3Cf32%3E";compound_assignment=false
@@ -1496,64 +698,7 @@ PASS :scalar_vector:lhs="u32";rhs="vec2%3Ci32%3E";compound_assignment=true
 PASS :scalar_vector:lhs="u32";rhs="u32";compound_assignment=false
 PASS :scalar_vector:lhs="u32";rhs="u32";compound_assignment=true
 PASS :scalar_vector:lhs="u32";rhs="vec2%3Cu32%3E";compound_assignment=false
-FAIL :scalar_vector:lhs="u32";rhs="vec2%3Cu32%3E";compound_assignment=true assert_unreached:
-  - VALIDATION FAILED: subcase: op="add"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0u;
-      v += vec2(0u, 0u);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="sub"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0u;
-      v -= vec2(0u, 0u);
-    }
-
-    expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:93:24
-  - VALIDATION FAILED: subcase: op="mul"
-    Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-
-    fn f() {
-      var v = 0u;
-      v *= vec2(0u, 0u);
-    }
-
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: op="add"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="sub"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: op="mul"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: op="add"
-    OK
-  - INFO: subcase: op="sub"
-    OK
-  - INFO: subcase: op="mul"
-    OK
- Reached unreachable code
+PASS :scalar_vector:lhs="u32";rhs="vec2%3Cu32%3E";compound_assignment=true
 PASS :scalar_vector:lhs="vec2%3Cu32%3E";rhs="bool";compound_assignment=false
 PASS :scalar_vector:lhs="vec2%3Cu32%3E";rhs="bool";compound_assignment=true
 PASS :scalar_vector:lhs="vec2%3Cu32%3E";rhs="vec2%3Cbool%3E";compound_assignment=false
@@ -1709,6 +854,12 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -1716,13 +867,7 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="add";lhs="vec2%3Cf16%3E";rhs="f16" assert_unreached:
@@ -1848,6 +993,8 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf16%3E";rhs="vec3%3Cf16%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -1855,6 +1002,10 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf16%3E";rhs="vec3%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -1862,18 +1013,12 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf16%3E";rhs="vec3%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -1968,26 +1113,11 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -1997,7 +1127,22 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -2051,6 +1196,8 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf16%3E";rhs="vec4%3Cf16%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -2065,27 +1212,25 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf16%3E";rhs="vec4%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf16%3E";rhs="f16" assert_unreached:
@@ -2161,43 +1306,7 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
     OK
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
-    expectGPUError@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:1252:34
-    expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
-    validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
-    expectGPUError@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:1252:34
-    expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
-    validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax";stage="constant"
     OK
@@ -2221,6 +1330,40 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
+    expectGPUError@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:1252:34
+    expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
+    validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
+    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
+    expectGPUError@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:1252:34
+    expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
+    validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
+    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -2233,6 +1376,8 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
@@ -2307,6 +1452,12 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -2314,13 +1465,7 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="add";lhs="vec2%3Cf32%3E";rhs="f32" assert_unreached:
@@ -2389,22 +1534,22 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec2%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -2569,12 +1714,6 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
@@ -2582,10 +1721,6 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -2596,6 +1731,16 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -2666,16 +1811,11 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -2684,6 +1824,11 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="f32" assert_unreached:
@@ -2783,6 +1928,8 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -2797,6 +1944,14 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -2809,16 +1964,6 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
@@ -2827,16 +1972,6 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
-  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
@@ -2844,6 +1979,16 @@ FAIL :scalar_vector_out_of_range:op="add";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -2875,6 +2020,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="f16";rhs="f16" assert_unreached:
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -2883,8 +2030,6 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="f16";rhs="f16" assert_unreached:
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E" assert_unreached:
@@ -2912,6 +2057,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -2929,8 +2076,6 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -2984,6 +2129,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -3011,8 +2158,6 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf16%3E";rhs="f16" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -3065,6 +2210,12 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec3%3Cf16%3E";rhs="vec3%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -3072,20 +2223,14 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec3%3Cf16%3E";rhs="vec3%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="sub";lhs="vec3%3Cf16%3E";rhs="f16" assert_unreached:
@@ -3168,6 +2313,12 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -3175,6 +2326,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -3187,10 +2340,6 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
@@ -3198,10 +2347,6 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -3373,6 +2518,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -3387,27 +2534,25 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -3436,6 +2581,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -3445,8 +2592,6 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
@@ -3510,6 +2655,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -3527,8 +2674,6 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -3596,23 +2741,23 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec2%3Cf32%3E";rhs="f32" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -3859,6 +3004,8 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -3873,23 +3020,21 @@ FAIL :scalar_vector_out_of_range:op="sub";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -4077,6 +3222,8 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="f16";rhs="f16" assert_unreached:
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4084,6 +3231,10 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="f16";rhs="f16" assert_unreached:
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4091,20 +3242,14 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="f16";rhs="f16" assert_unreached:
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E" assert_unreached:
@@ -4130,6 +3275,14 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4142,10 +3295,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
@@ -4153,10 +3302,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="vec2%3Cf16%3E
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
     OK
@@ -4184,6 +3329,8 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4191,6 +3338,8 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="f16" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4198,18 +3347,38 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="f16" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4228,18 +3397,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
@@ -4251,18 +3408,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf16%3E";rhs="f16" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
     OK
@@ -4307,11 +3452,21 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="vec3%3Cf16%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
     OK
@@ -4319,47 +3474,37 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="vec3%3Cf16%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
     OK
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="f16" assert_unreached:
@@ -4410,6 +3555,28 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4419,6 +3586,18 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4437,62 +3616,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4505,6 +3628,18 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax";stage="override"
@@ -4512,6 +3647,16 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf16%3E";rhs="f16" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
@@ -4539,6 +3684,8 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="vec4%3Cf16%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4559,15 +3706,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="vec4%3Cf16%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
@@ -4575,14 +3713,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="vec4%3Cf16%3E
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -4592,44 +3722,59 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="vec4%3Cf16%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
     OK
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
     OK
  Reached unreachable code
 FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_unreached:
@@ -4665,6 +3810,8 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4679,9 +3826,19 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4703,12 +3860,15 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
@@ -4723,11 +3883,11 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
     OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
     OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
     OK
@@ -4743,15 +3903,14 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="constant"
     OK
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4776,21 +3935,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
@@ -4807,20 +3951,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     OK
-  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="constant"
@@ -4836,6 +3966,21 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf16%3E";rhs="f16" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -4886,6 +4031,8 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax";stage="constant"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4893,6 +4040,8 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -4912,8 +4061,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
@@ -4923,8 +4070,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="vec2%3Cf32%3E
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
@@ -4968,6 +4113,16 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="f32" assert_u
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -4992,16 +4147,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
@@ -5018,16 +4163,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="f32" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
     OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
@@ -5042,6 +4177,16 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec2%3Cf32%3E";rhs="f32" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
@@ -5053,8 +4198,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="vec3%3Cf32%3E
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax";stage="constant"
     OK
@@ -5091,6 +4234,12 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="vec3%3Cf32%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
@@ -5105,6 +4254,12 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="vec3%3Cf32%3E
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
     OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
@@ -5118,16 +4273,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="vec3%3Cf32%3E
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
     OK
@@ -5149,14 +4294,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
     OK
   - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax";stage="constant"
     OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax";stage="constant"
-    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -5180,9 +4317,41 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -5201,36 +4370,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
@@ -5242,30 +4381,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
     OK
@@ -5279,15 +4394,45 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec3%3Cf32%3E";rhs="f32" assert_u
     OK
   - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax";stage="constant"
     OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax";stage="override"
+    OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
     OK
@@ -5316,6 +4461,10 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBinaryOpEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:264:27
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/binary/add_sub_mul.spec.js:216:38
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -5329,15 +4478,41 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
+    OK
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -5353,20 +4528,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="override"
-    OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
@@ -5376,22 +4537,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="vec4%3Cf32%3E
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=1;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
     OK
@@ -5470,24 +4615,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
@@ -5505,18 +4632,6 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=false;nonZeroIndex=0;valueCase="halfmax";stage="constant"
     OK
@@ -5536,18 +4651,24 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
     OK
   - INFO: subcase: swap=false;nonZeroIndex=2;valueCase="sqrtmax+ulp";stage="constant"
     OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
-    OK
-  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
-    OK
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    Expected validation error
+      at (elided: only 2 shown)
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
     Expected validation error
       at (elided: only 2 shown)
@@ -5575,6 +4696,18 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
   - EXPECTATION FAILED: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
     Expected validation error
       at (elided: only 2 shown)
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="override"
+    OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax+ulp";stage="override"
@@ -5592,6 +4725,18 @@ FAIL :scalar_vector_out_of_range:op="mul";lhs="vec4%3Cf32%3E";rhs="f32" assert_u
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="halfmax+ulp";stage="override"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="override"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=false;nonZeroIndex=3;valueCase="sqrtmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="halfmax+ulp";stage="constant"
+    OK
+  - INFO: subcase: swap=true;nonZeroIndex=0;valueCase="sqrtmax+ulp";stage="constant"
     OK
   - INFO: subcase: swap=true;nonZeroIndex=1;valueCase="halfmax";stage="constant"
     OK

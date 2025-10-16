@@ -867,6 +867,7 @@ imported/w3c/web-platform-tests/webtransport/ [ Skip ]
 
 # Event timing: times out, missing automation
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/contextmenu.html [ Skip ]
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html [ Skip ]
 
 # WebKitLegacy doesn't support https-based WPT
 webkit.org/b/246719 imported/w3c/web-platform-tests/reporting/generateTestReport-honors-endpoint.https.sub.html [ Failure ]
@@ -1741,6 +1742,8 @@ fast/scrolling/sync-scroll-overscroll-behavior-unscrollable-iframe.html [ Skip ]
 # Fetch tests that only timeout in WK1.
 imported/w3c/web-platform-tests/fetch/metadata/unload.https.sub.html [ Skip ]
 
+css3/filters/drop-shadow-current-color.html [ ImageOnlyFailure ]
+
 ### END OF (2) Failures without bug reports
 ########################################
 
@@ -2507,6 +2510,9 @@ webanimations/frame-rate/document-timeline-maximum-frame-rate.html [ Skip ]
 webkit.org/b/231918 imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-dialog-element/dialog-autofocus-multiple-times.html [ Pass Failure ]
 imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-dialog-element/show-modal-focusing-steps.html [ Skip ]
 
+# Uses requestIdleCallback.
+imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-dialog-element/dialog-closedby-start-open.html [ Skip ]
+
 # webkit.org/b/234105 Skip 2 imported/w3c/web-platform-tests/speech-api/SpeechSynthesis in mac wk1.
 imported/w3c/web-platform-tests/speech-api/SpeechSynthesis-speak-events.html [ Skip ]
 imported/w3c/web-platform-tests/speech-api/SpeechSynthesis-pause-resume.tentative.html [ Skip ]
@@ -3214,5 +3220,8 @@ media/video-setSinkId-default.html [ Skip ]
 dom/xsl/lockdown-mode [ Skip ]
 http/tests/lockdown-mode [ Skip ]
 js/dom/lockdown-mode [ Skip ]
+
+# The decimal portion of the coordinates changes slightly between runs
+webkit.org/b/297993 imported/w3c/web-platform-tests/pointerevents/pointerlock/pointerevent_coordinates_when_locked.html [ Skip ]
 
 webkit.org/b/289382 fast/canvas/offscreen-no-script-context-crash.html [ Skip ]

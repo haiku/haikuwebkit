@@ -2456,7 +2456,7 @@ window.UIHelper = class UIHelper {
                 if (options.normalize) {
                     debugText = debugText
                         .replace(/uid=\d+/g, "uid=…")
-                        .replace(/rect=\[[^\]]+\]/g, "rect=[…]")
+                        .replace(/\[\d+,\d+;\d+x\d+\]/g, "[…]")
                         .replace(/\t/g, "    ");
                 }
                 resolve(debugText);
@@ -2483,12 +2483,10 @@ window.UIHelper = class UIHelper {
             return Promise.resolve(false);
 
         return new Promise(resolve => {
-            testRunner.runUIScript(`
-                uiController.performTextExtractionInteraction("${action}"
-                    , ${JSON.stringify(options)}
-                    , result => uiController.uiScriptComplete(result));`, (result) => {
-                        resolve(result === "true")
-                    });
+            const scriptToRun = `uiController.performTextExtractionInteraction("${action}", ${JSON.stringify(options)}, result => {
+                uiController.uiScriptComplete(result)
+            })`;
+            testRunner.runUIScript(scriptToRun, resolve);
         });
     }
 }

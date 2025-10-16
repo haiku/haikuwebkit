@@ -49,6 +49,7 @@
 #include <wtf/MathExtras.h>
 #include <wtf/Ref.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/text/CString.h>
 
 using SpanConstUInt8 = std::span<const uint8_t>;
 using SpanUInt8 = std::span<uint8_t>;
@@ -70,10 +71,10 @@ class Range;
 
 namespace WebGPU_Internal {
 
-inline void logString(const char * input)
+inline void logString(const String& input)
 {
-    if (input)
-        RELEASE_LOG(WebGPUSwift, "%s", input);
+    if (!input.isEmpty())
+        RELEASE_LOG(WebGPUSwift, "%s", input.utf8().data());
 }
 
 using RefComputePassEncoder = Ref<WebGPU::ComputePassEncoder>;

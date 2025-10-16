@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<html class="reftest-wait">
 <meta charset="UTF-8">
 <title>CSS Pseudo Test: Dynamic Custom Properties for Highlights</title>
 <link rel="help" href="https://drafts.csswg.org/css-pseudo/#highlight-styling">
@@ -19,9 +18,11 @@
 <div id="originating">Green background when selected</div>
 <script>
   window.getSelection().selectAllChildren(document.body);
-  document.addEventListener('TestRendered', function() {
-    originating.style.setProperty("--background-color", "green");
-    document.documentElement.classList.remove('reftest-wait');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      originating.style.setProperty("--background-color", "green");
+      requestAnimationFrame(() => takeScreenshot());
+    });
   });
 </script>
 </html>

@@ -50,7 +50,7 @@ using namespace WebCore;
 
 void WebEditorClient::handleKeyboardEvent(KeyboardEvent& event)
 {
-    if (m_page->handleEditingKeyboardEvent(event))
+    if (protectedPage()->handleEditingKeyboardEvent(event))
         event.setDefaultHandled();
 }
 
@@ -62,7 +62,7 @@ void WebEditorClient::handleInputMethodKeydown(KeyboardEvent& event)
 
 void WebEditorClient::didDispatchInputMethodKeydown(KeyboardEvent& event)
 {
-    m_page->handleEditingKeyboardEvent(event);
+    protectedPage()->handleEditingKeyboardEvent(event);
 }
 
 void WebEditorClient::setInsertionPasteboard(const String&)
@@ -71,37 +71,39 @@ void WebEditorClient::setInsertionPasteboard(const String&)
     notImplemented();
 }
 
-static void changeWordCase(WebPage* page, NSString *(*changeCase)(NSString *))
+static void changeWordCase(WebPage& page, NSString *(*changeCase)(NSString *))
 {
-    RefPtr frame = page->corePage()->focusController().focusedOrMainFrame();
+    RefPtr frame = page.corePage()->focusController().focusedOrMainFrame();
     if (!frame)
         return;
-    if (!frame->editor().canEdit())
+
+    Ref editor = frame->editor();
+    if (!editor->canEdit())
         return;
 
-    frame->editor().command("selectWord"_s).execute();
+    editor->command("selectWord"_s).execute();
 
-    RetainPtr selectedString = frame->displayStringModifiedByEncoding(frame->editor().selectedText()).createNSString();
-    page->replaceSelectionWithText(frame.get(), changeCase(selectedString.get()));
+    RetainPtr selectedString = frame->displayStringModifiedByEncoding(editor->selectedText()).createNSString();
+    page.replaceSelectionWithText(frame.get(), changeCase(selectedString.get()));
 }
 
 void WebEditorClient::uppercaseWord()
 {
-    changeWordCase(RefPtr { m_page.get() }.get(), [] (NSString *string) {
+    changeWordCase(protectedPage().get(), [] (NSString *string) {
         return [string uppercaseString];
     });
 }
 
 void WebEditorClient::lowercaseWord()
 {
-    changeWordCase(RefPtr { m_page.get() }.get(), [] (NSString *string) {
+    changeWordCase(protectedPage().get(), [] (NSString *string) {
         return [string lowercaseString];
     });
 }
 
 void WebEditorClient::capitalizeWord()
 {
-    changeWordCase(RefPtr { m_page.get() }.get(), [] (NSString *string) {
+    changeWordCase(protectedPage().get(), [] (NSString *string) {
         return [string capitalizedString];
     });
 }
@@ -115,19 +117,19 @@ void WebEditorClient::showSubstitutionsPanel(bool)
 
 bool WebEditorClient::substitutionsPanelIsShowing()
 {
-    auto sendResult = Ref { *m_page }->sendSync(Messages::WebPageProxy::SubstitutionsPanelIsShowing());
+    auto sendResult = protectedPage()->sendSync(Messages::WebPageProxy::SubstitutionsPanelIsShowing());
     auto [isShowing] = sendResult.takeReplyOr(false);
     return isShowing;
 }
 
 void WebEditorClient::toggleSmartInsertDelete()
 {
-    Ref { *m_page }->send(Messages::WebPageProxy::toggleSmartInsertDelete());
+    protectedPage()->send(Messages::WebPageProxy::toggleSmartInsertDelete());
 }
 
 bool WebEditorClient::isAutomaticQuoteSubstitutionEnabled()
 {
-    if (Ref { *m_page }->isControlledByAutomation())
+    if (protectedPage()->isControlledByAutomation())
         return false;
 
     return WebProcess::singleton().textCheckerState().contains(TextCheckerState::AutomaticQuoteSubstitutionEnabled);
@@ -135,7 +137,7 @@ bool WebEditorClient::isAutomaticQuoteSubstitutionEnabled()
 
 void WebEditorClient::toggleAutomaticQuoteSubstitution()
 {
-    Ref { *m_page }->send(Messages::WebPageProxy::toggleAutomaticQuoteSubstitution());
+    protectedPage()->send(Messages::WebPageProxy::toggleAutomaticQuoteSubstitution());
 }
 
 bool WebEditorClient::isAutomaticLinkDetectionEnabled()
@@ -145,12 +147,12 @@ bool WebEditorClient::isAutomaticLinkDetectionEnabled()
 
 void WebEditorClient::toggleAutomaticLinkDetection()
 {
-    Ref { *m_page }->send(Messages::WebPageProxy::toggleAutomaticLinkDetection());
+    protectedPage()->send(Messages::WebPageProxy::toggleAutomaticLinkDetection());
 }
 
 bool WebEditorClient::isAutomaticDashSubstitutionEnabled()
 {
-    if (m_page->isControlledByAutomation())
+    if (protectedPage()->isControlledByAutomation())
         return false;
 
     return WebProcess::singleton().textCheckerState().contains(TextCheckerState::AutomaticDashSubstitutionEnabled);
@@ -158,12 +160,12 @@ bool WebEditorClient::isAutomaticDashSubstitutionEnabled()
 
 void WebEditorClient::toggleAutomaticDashSubstitution()
 {
-    Ref { *m_page }->send(Messages::WebPageProxy::toggleAutomaticDashSubstitution());
+    protectedPage()->send(Messages::WebPageProxy::toggleAutomaticDashSubstitution());
 }
 
 bool WebEditorClient::isAutomaticTextReplacementEnabled()
 {
-    if (m_page->isControlledByAutomation())
+    if (protectedPage()->isControlledByAutomation())
         return false;
 
     return WebProcess::singleton().textCheckerState().contains(TextCheckerState::AutomaticTextReplacementEnabled);
@@ -171,12 +173,12 @@ bool WebEditorClient::isAutomaticTextReplacementEnabled()
 
 void WebEditorClient::toggleAutomaticTextReplacement()
 {
-    Ref { *m_page }->send(Messages::WebPageProxy::toggleAutomaticTextReplacement());
+    protectedPage()->send(Messages::WebPageProxy::toggleAutomaticTextReplacement());
 }
 
 bool WebEditorClient::isAutomaticSpellingCorrectionEnabled()
 {
-    if (m_page->isControlledByAutomation())
+    if (protectedPage()->isControlledByAutomation())
         return false;
 
     return WebProcess::singleton().textCheckerState().contains(TextCheckerState::AutomaticSpellingCorrectionEnabled);

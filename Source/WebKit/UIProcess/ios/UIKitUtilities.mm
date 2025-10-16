@@ -30,6 +30,7 @@
 
 #import "UIKitSPI.h"
 #import <WebCore/BoxSides.h>
+#import <WebCore/FloatConversion.h>
 #import <WebCore/FloatPoint.h>
 #import <WebCore/FloatQuad.h>
 #import <wtf/BlockPtr.h>
@@ -397,6 +398,16 @@ UIEdgeInsets maxEdgeInsets(const UIEdgeInsets& a, const UIEdgeInsets& b)
         std::max<CGFloat>(a.bottom, b.bottom),
         std::max<CGFloat>(a.right, b.right)
     );
+}
+
+WebCore::FloatBoxExtent floatBoxExtent(const UIEdgeInsets& insets)
+{
+    return {
+        WebCore::narrowPrecisionToFloatFromCGFloat(insets.top),
+        WebCore::narrowPrecisionToFloatFromCGFloat(insets.right),
+        WebCore::narrowPrecisionToFloatFromCGFloat(insets.bottom),
+        WebCore::narrowPrecisionToFloatFromCGFloat(insets.left)
+    };
 }
 
 } // namespace WebKit

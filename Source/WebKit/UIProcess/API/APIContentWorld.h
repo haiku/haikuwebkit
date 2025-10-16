@@ -62,8 +62,11 @@ public:
     bool disableLegacyBuiltinOverrides() const { return m_options.contains(WebKit::ContentWorldOption::DisableLegacyBuiltinOverrides); }
     void setDisableLegacyBuiltinOverrides(bool value) { m_options.add(WebKit::ContentWorldOption::DisableLegacyBuiltinOverrides); }
 
-    bool allowNodeInfo() const { return m_options.contains(WebKit::ContentWorldOption::AllowNodeInfo); }
-    void setNodeInfoEnabled() { m_options.add(WebKit::ContentWorldOption::AllowNodeInfo); }
+    bool allowJSHandleCreation() const { return m_options.contains(WebKit::ContentWorldOption::AllowJSHandleCreation); }
+    void setAllowJSHandleCreation() { m_options.add(WebKit::ContentWorldOption::AllowJSHandleCreation); }
+
+    bool allowNodeSerialization() const { return m_options.contains(WebKit::ContentWorldOption::AllowNodeSerialization); }
+    void setAllowNodeSerialization() { m_options.add(WebKit::ContentWorldOption::AllowNodeSerialization); }
 
     void addAssociatedUserContentControllerProxy(WebKit::WebUserContentControllerProxy&);
     void userContentControllerProxyDestroyed(WebKit::WebUserContentControllerProxy&);

@@ -1,5 +1,3 @@
-GPUProcess/mac/GPUProcessMac.mm
-GPUProcess/webrtc/RemoteSampleBufferDisplayLayer.mm
 GeneratedWebKitSecureCoding.mm
 NetworkProcess/Authentication/cocoa/AuthenticationManagerCocoa.mm
 NetworkProcess/Notifications/Cocoa/WebPushDaemonConnectionCocoa.mm
@@ -46,11 +44,9 @@ Shared/Cocoa/CoreIPCContacts.mm
 Shared/Cocoa/CoreIPCPKSecureElementPass.mm
 Shared/Cocoa/CoreIPCPassKit.mm
 Shared/Cocoa/CoreIPCPersonNameComponents.mm
-Shared/Cocoa/CoreIPCPresentationIntent.mm
 Shared/Cocoa/DefaultWebBrowserChecks.mm
 Shared/Cocoa/PDFKitSoftLink.h
 Shared/Cocoa/RevealItem.mm
-Shared/Cocoa/WKKeyedCoder.mm
 Shared/Cocoa/WKNSError.mm
 Shared/Cocoa/WKNSURLRequest.mm
 Shared/Cocoa/WebIconUtilities.mm
@@ -64,14 +60,11 @@ Shared/EntryPointUtilities/Cocoa/XPCService/XPCServiceEntryPoint.mm
 Shared/EntryPointUtilities/Cocoa/XPCService/XPCServiceMain.mm
 Shared/JavaScriptEvaluationResult.mm
 Shared/RemoteLayerTree/RemoteLayerTreePropertyApplier.mm
-Shared/cf/CoreIPCNumber.mm
 Shared/mac/AuxiliaryProcessMac.mm
 Shared/mac/ScrollingAccelerationCurveMac.mm
 UIProcess/API/C/mac/WKNotificationPrivateMac.mm
 UIProcess/API/C/mac/WKProtectionSpaceNS.mm
-UIProcess/API/Cocoa/APIAttachmentCocoa.mm
 UIProcess/API/Cocoa/NSAttributedString.mm
-UIProcess/API/Cocoa/WKContentRuleListStore.mm
 UIProcess/API/Cocoa/WKDownload.mm
 UIProcess/API/Cocoa/WKFrameInfo.mm
 UIProcess/API/Cocoa/WKNSURLAuthenticationChallenge.mm
@@ -148,7 +141,6 @@ UIProcess/Cocoa/WebPageProxyCocoa.mm
 UIProcess/Cocoa/WebProcessPoolCocoa.mm
 UIProcess/Cocoa/WebProcessProxyCocoa.mm
 UIProcess/Cocoa/_WKWarningView.mm
-UIProcess/Extensions/Cocoa/WebExtensionCocoa.mm
 UIProcess/Extensions/WebExtensionController.h
 UIProcess/Gamepad/mac/UIGamepadProviderMac.mm
 UIProcess/Inspector/Cocoa/InspectorExtensionDelegate.mm
@@ -194,8 +186,6 @@ UIProcess/mac/WKQuickLookPreviewController.mm
 UIProcess/mac/WKRevealItemPresenter.mm
 UIProcess/mac/WKSharingServicePickerDelegate.mm
 UIProcess/mac/WKTextAnimationManagerMac.mm
-UIProcess/mac/WKTextFinderClient.mm
-UIProcess/mac/WebColorPickerMac.mm
 UIProcess/mac/WebContextMenuProxyMac.mm
 UIProcess/mac/WebDataListSuggestionsDropdownMac.mm
 UIProcess/mac/WebDateTimePickerMac.mm

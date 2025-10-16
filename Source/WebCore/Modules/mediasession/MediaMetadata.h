@@ -27,9 +27,9 @@
 
 #if ENABLE(MEDIA_SESSION)
 
+#include "MediaMetadataInit.h"
 #include <WebCore/CachedImageClient.h>
 #include <WebCore/CachedResourceHandle.h>
-#include "MediaMetadataInit.h"
 #include <WebCore/MediaSession.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Function.h>

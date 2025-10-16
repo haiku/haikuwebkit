@@ -52,7 +52,7 @@ public:
     WEBCORE_EXPORT const DOMWrapperWorld& world() const;
 
     virtual void didPostMessage(UserMessageHandler&, JSC::JSGlobalObject&, JSC::JSValue, Function<void(JSC::JSValue, const String&)>&&) = 0;
-
+    virtual JSC::JSValue didPostLegacySynchronousMessage(UserMessageHandler&, JSC::JSGlobalObject&, JSC::JSValue) = 0;
 private:
     AtomString m_name;
     const Ref<DOMWrapperWorld> m_world;

@@ -22,7 +22,6 @@
 
 #include "AXIsolatedTree.h"
 #include "AXLogger.h"
-#include "AXObjectCache.h"
 #include "AXObjectCacheInlines.h"
 #include "ActivityStateChangeObserver.h"
 #include "AdvancedPrivacyProtections.h"
@@ -1733,7 +1732,7 @@ void Page::setDeviceScaleFactor(float scaleFactor)
     pageOverlayController().didChangeDeviceScaleFactor();
 }
 
-void Page::screenPropertiesDidChange()
+void Page::screenPropertiesDidChange(bool affectsStyle)
 {
 #if ENABLE(VIDEO)
     auto mode = preferredDynamicRangeMode(protectedMainFrame()->protectedVirtualView().get());
@@ -1747,7 +1746,8 @@ void Page::screenPropertiesDidChange()
 
     updateScreenSupportedContentsFormats();
 
-    setNeedsRecalcStyleInAllFrames();
+    if (affectsStyle)
+        setNeedsRecalcStyleInAllFrames();
 
     forEachRenderableDocument([this] (Document& document) {
         document.screenPropertiesDidChange(m_displayID);
@@ -5871,14 +5871,6 @@ const std::optional<audit_token_t>& Page::presentingApplicationAuditToken() cons
 void Page::setPresentingApplicationAuditToken(std::optional<audit_token_t> presentingApplicationAuditToken)
 {
     m_presentingApplicationAuditToken = WTFMove(presentingApplicationAuditToken);
-
-#if ENABLE(EXTENSION_CAPABILITIES)
-    if (settings().mediaCapabilityGrantsEnabled())
-        return;
-#endif
-
-    if (RefPtr mediaSessionManager = mediaSessionManagerIfExists())
-        mediaSessionManager->updatePresentingApplicationPIDIfNecessary(presentingApplicationPID());
 }
 #endif
 

@@ -58,11 +58,8 @@ bool AutosizeStatus::probablyContainsASmallFixedNumberOfLines(const RenderStyle&
         return false;
 
     float approximateNumberOfLines = heightOrMaxHeight / approximateLineHeight;
-    auto& lineClamp = style.lineClamp();
-    if (!lineClamp.isNone() && !lineClamp.isPercentage()) {
-        int lineClampValue = lineClamp.value();
-        return lineClampValue && std::floor(approximateNumberOfLines) == lineClampValue;
-    }
+    if (auto integerLineClamp = style.lineClamp().tryInteger())
+        return std::floor(approximateNumberOfLines) == integerLineClamp->value;
 
     const int maximumNumberOfLines = 5;
     const float thresholdForConsideringAnApproximateNumberOfLinesToBeCloseToAnInteger = 0.01;

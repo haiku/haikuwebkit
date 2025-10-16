@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: No valid data-* attributes found in selector list : [data-expected-width]:not([skip-second-pass])
 
 
 
@@ -32,4 +31,28 @@ FAIL [data-expected-width] 21 assert_equals:
 width expected 55 but got 45
 PASS [data-expected-width] 22
 PASS [data-expected-width] 23
+PASS [data-expected-width]:not([skip-second-pass]) 24
+PASS [data-expected-width]:not([skip-second-pass]) 25
+PASS [data-expected-width]:not([skip-second-pass]) 26
+PASS [data-expected-width]:not([skip-second-pass]) 27
+PASS [data-expected-width]:not([skip-second-pass]) 28
+PASS [data-expected-width]:not([skip-second-pass]) 29
+PASS [data-expected-width]:not([skip-second-pass]) 30
+PASS [data-expected-width]:not([skip-second-pass]) 31
+PASS [data-expected-width]:not([skip-second-pass]) 32
+PASS [data-expected-width]:not([skip-second-pass]) 33
+PASS [data-expected-width]:not([skip-second-pass]) 34
+PASS [data-expected-width]:not([skip-second-pass]) 35
+PASS [data-expected-width]:not([skip-second-pass]) 36
+PASS [data-expected-width]:not([skip-second-pass]) 37
+PASS [data-expected-width]:not([skip-second-pass]) 38
+PASS [data-expected-width]:not([skip-second-pass]) 39
+PASS [data-expected-width]:not([skip-second-pass]) 40
+PASS [data-expected-width]:not([skip-second-pass]) 41
+PASS [data-expected-width]:not([skip-second-pass]) 42
+PASS [data-expected-width]:not([skip-second-pass]) 43
+FAIL [data-expected-width]:not([skip-second-pass]) 44 assert_equals:
+<div class="test" data-expected-width="55" style="box-sizing: border-box;"></div>
+width expected 55 but got 45
+PASS [data-expected-width]:not([skip-second-pass]) 45
 

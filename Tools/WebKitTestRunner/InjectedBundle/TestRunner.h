@@ -385,21 +385,8 @@ public:
     bool didCancelClientRedirect() const { return m_didCancelClientRedirect; }
     void setDidCancelClientRedirect(bool value) { m_didCancelClientRedirect = value; }
 
-    void runUIScript(JSContextRef, JSStringRef script, JSValueRef callback);
-    void runUIScriptImmediately(JSContextRef, JSStringRef script, JSValueRef callback);
-    void runUIScriptCallback(unsigned callbackID, JSStringRef result);
-
     // Contextual menu actions
     void setAllowedMenuActions(JSContextRef, JSValueRef);
-
-    void installDidBeginSwipeCallback(JSContextRef, JSValueRef);
-    void installWillEndSwipeCallback(JSContextRef, JSValueRef);
-    void installDidEndSwipeCallback(JSContextRef, JSValueRef);
-    void installDidRemoveSwipeSnapshotCallback(JSContextRef, JSValueRef);
-    void callDidBeginSwipeCallback();
-    void callWillEndSwipeCallback();
-    void callDidEndSwipeCallback();
-    void callDidRemoveSwipeSnapshotCallback();
 
     void clearTestRunnerCallbacks();
 
@@ -482,6 +469,7 @@ public:
     void getAllStorageAccessEntries(JSContextRef, JSValueRef callback);
     void setRequestStorageAccessThrowsExceptionUntilReload(bool enabled);
     void setStorageAccessPermission(JSContextRef, bool, JSStringRef, JSValueRef callback);
+    void setStorageAccess(JSContextRef, bool, JSValueRef callback);
 
     // Open panel
     void setOpenPanelFiles(JSContextRef, JSValueRef);
@@ -497,8 +485,6 @@ public:
     void setUseSeparateServiceWorkerProcess(bool);
 
     void removeAllSessionCredentials(JSContextRef, JSValueRef);
-    
-    void getApplicationManifestThen(JSContextRef, JSValueRef);
 
     void installFakeHelvetica(JSStringRef configuration);
 
@@ -534,7 +520,6 @@ public:
     // FIXME(189876)
     void addTestKeyToKeychain(JSStringRef privateKeyBase64, JSStringRef attrLabel, JSStringRef applicationTagBase64);
     void cleanUpKeychain(JSStringRef attrLabel, JSStringRef applicationLabelBase64);
-    bool keyExistsInKeychain(JSStringRef attrLabel, JSStringRef applicationLabelBase64);
 
     unsigned long serverTrustEvaluationCallbackCallsCount();
 
@@ -563,10 +548,6 @@ public:
 
     void flushConsoleLogs(JSContextRef, JSValueRef callback);
     void updatePresentation(JSContextRef, JSValueRef callback);
-    void scrollDuringEnterFullscreen();
-    void waitBeforeFinishingFullscreenExit();
-    void finishFullscreenExit();
-    void requestExitFullscreenFromUIProcess();
 
     // Reporting API
     void generateTestReport(JSContextRef, JSStringRef message, JSStringRef group);

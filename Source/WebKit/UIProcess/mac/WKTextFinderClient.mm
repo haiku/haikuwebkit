@@ -299,7 +299,8 @@ private:
             rectsArray = createNSArray(rects);
         else
             rectsArray = @[];
-        return adoptNS([[WKTextFinderMatch alloc] initWithClient:self view:_view index:index++ rects:rectsArray.get()]);
+        RetainPtr strongView = _view;
+        return adoptNS([[WKTextFinderMatch alloc] initWithClient:self view:strongView.get() index:index++ rects:rectsArray.get()]);
     });
 
     _findReplyCallbacks.takeFirst()(matchObjects.get(), didWrapAround);

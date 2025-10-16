@@ -649,6 +649,11 @@ framework module WebKit_Private [system] {
     export *
   }
 
+  explicit module WKJSHandleRef {
+    header "WKJSHandleRef.h"
+    export *
+  }
+
   explicit module WKKeyValueStorageManager {
     header "WKKeyValueStorageManager.h"
     export *
@@ -1876,6 +1881,16 @@ framework module WebKit_Private [system] {
 
   explicit module _WKNSFileManagerExtras {
     header "_WKNSFileManagerExtras.h"
+    export *
+  }
+
+  explicit module _WKNSStringExtras {
+    header "_WKNSStringExtras.h"
+    export *
+  }
+
+  explicit module _WKNSURLExtras {
+    header "_WKNSURLExtras.h"
     export *
   }
 

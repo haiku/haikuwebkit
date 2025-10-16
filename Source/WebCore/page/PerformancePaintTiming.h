@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "DOMHighResTimeStamp.h"
 #include "PerformanceEntry.h"
 #include <wtf/text/WTFString.h>
 

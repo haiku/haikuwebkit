@@ -47,6 +47,7 @@
 #import <WebKit/WKUIDelegatePrivate.h>
 #import <WebKit/WKWebViewConfiguration.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
+#import <WebKit/WKWebViewPrivateForTestingMac.h>
 
 #if ENABLE(POINTER_LOCK)
 #import <GameController/GameController.h>
@@ -1361,6 +1362,8 @@ TEST(WebKit, TabDoesNotTakeFocusFromEditableWebView)
     ASSERT_FALSE(delegate->_done);
 }
 
+#if ENABLE(PDF_HUD)
+
 @interface SaveDataToFileDelegate : NSObject <WKUIDelegatePrivate, WKNavigationDelegate>
 @end
 
@@ -1378,17 +1381,20 @@ TEST(WebKit, TabDoesNotTakeFocusFromEditableWebView)
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
-    NSPoint location = NSMakePoint(490, 70); // Location of button to download the pdf.
-    [(TestWKWebView *)webView mouseDownAtPoint:location simulatePressure:NO];
-    [(TestWKWebView *)webView mouseUpAtPoint:location];
+    [[webView _pdfHUDs].anyObject performSelector:NSSelectorFromString(@"_performActionForControl:") withObject:@"arrow.down.circle"];
 }
 
 @end
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-TEST(WebKit, DISABLED_SaveDataToFile)
+TEST(WebKit, SaveDataToFile)
 {
-    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600)]);
+    RetainPtr configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"WebProcessPlugInWithInternals" configureJSCForTesting:YES];
+    for (_WKFeature *feature in [WKPreferences _features]) {
+        if ([feature.key isEqualToString:@"PDFPluginHUDEnabled"])
+            [[configuration preferences] _setEnabled:YES forFeature:feature];
+    }
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     RetainPtr delegate = adoptNS([[SaveDataToFileDelegate alloc] init]);
     [webView setUIDelegate:delegate.get()];
     [webView setNavigationDelegate:delegate.get()];
@@ -1396,6 +1402,8 @@ TEST(WebKit, DISABLED_SaveDataToFile)
     [webView loadRequest:[NSURLRequest requestWithURL:pdfURL]];
     TestWebKitAPI::Util::run(&done);
 }
+
+#endif // ENABLE(PDF_HUD)
 
 #define RELIABLE_DID_NOT_HANDLE_WHEEL_EVENT 0
 // FIXME: make wheel event handling more reliable.

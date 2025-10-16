@@ -2169,19 +2169,19 @@ void NetworkResourceLoader::dataReceivedThroughContentFilter(const SharedBuffer&
     sendDidReceiveDataMessage(buffer);
 }
 
-WebCore::ResourceError NetworkResourceLoader::contentFilterDidBlock(WebCore::ContentFilterUnblockHandler unblockHandler, String&& unblockRequestDeniedScript)
+WebCore::ResourceError NetworkResourceLoader::contentFilterDidBlock(WebCore::ContentFilterUnblockHandler&& unblockHandler, String&& unblockRequestDeniedScript)
 {
     auto error = WebKit::blockedByContentFilterError(m_parameters.request);
     CheckedPtr contentFilter = m_contentFilter.get();
 
-    m_unblockHandler = unblockHandler;
+    m_unblockHandler = WTFMove(unblockHandler);
     m_unblockRequestDeniedScript = unblockRequestDeniedScript;
     
-    if (unblockHandler.needsUIProcess()) {
+    if (m_unblockHandler.needsUIProcess()) {
         contentFilter->setBlockedError(error);
         contentFilter->handleProvisionalLoadFailure(error);
     } else {
-        unblockHandler.requestUnblockAsync([this, protectedThis = Ref { *this }, contentFilter](bool unblocked) mutable {
+        m_unblockHandler.requestUnblockAsync([this, protectedThis = Ref { *this }, contentFilter](bool unblocked) mutable {
             m_unblockHandler.setUnblockedAfterRequest(unblocked);
 
             ResourceRequest request;

@@ -731,21 +731,6 @@ static void wpe_view_wayland_class_init(WPEViewWaylandClass* viewWaylandClass)
 }
 
 /**
- * wpe_view_wayland_new:
- * @display: a #WPEDisplayWayland
- *
- * Create a new #WPEViewWayland
- *
- * Returns: (transfer full): a #WPEView
- */
-WPEView* wpe_view_wayland_new(WPEDisplayWayland* display)
-{
-    g_return_val_if_fail(WPE_IS_DISPLAY_WAYLAND(display), nullptr);
-
-    return WPE_VIEW(g_object_new(WPE_TYPE_VIEW_WAYLAND, "display", display, nullptr));
-}
-
-/**
  * wpe_view_wayland_get_wl_surface: (skip)
  * @view: a #WPEViewWayland
  *

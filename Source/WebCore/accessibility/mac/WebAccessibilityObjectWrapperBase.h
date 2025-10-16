@@ -26,11 +26,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "AXCoreObject.h"
-#import "CocoaAccessibilityConstants.h"
-#import "FontPlatformData.h"
 #import <CoreGraphics/CoreGraphics.h>
+#import <WebCore/AXCoreObject.h>
+#import <WebCore/CocoaAccessibilityConstants.h>
+#import <WebCore/FontPlatformData.h>
 #import <wtf/Markable.h>
+#import <wtf/Platform.h>
 #import <wtf/RefPtr.h>
 #import <wtf/WeakPtr.h>
 

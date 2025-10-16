@@ -28,6 +28,8 @@
 
 #include "SessionState.h"
 #include "WebBackForwardListItem.h"
+#include <wtf/HashMap.h>
+#include <wtf/NeverDestroyed.h>
 #include <wtf/text/StringBuilder.h>
 
 namespace WebKit {

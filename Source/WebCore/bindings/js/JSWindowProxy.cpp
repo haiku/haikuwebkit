@@ -33,7 +33,7 @@
 #include "Document.h"
 #include "Frame.h"
 #include "FrameLoaderTypes.h"
-#include "GCController.h"
+#include "GarbageCollectionController.h"
 #include "JSDOMWindow.h"
 #include "JSDOMWindowProperties.h"
 #include "JSEventTarget.h"
@@ -88,7 +88,7 @@ void JSWindowProxy::setWindow(VM& vm, JSDOMGlobalObject& window)
 {
     ASSERT(window.classInfo() == JSDOMWindow::info());
     setTarget(vm, &window);
-    GCController::singleton().garbageCollectSoon();
+    GarbageCollectionController::singleton().garbageCollectSoon();
 }
 
 void JSWindowProxy::setWindow(DOMWindow& domWindow)

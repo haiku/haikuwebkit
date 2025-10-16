@@ -223,7 +223,7 @@ void InjectedBundle::extendClassesForParameterCoder(API::Array& classes)
     for (size_t i = 0; i < size; ++i) {
         RefPtr classNameString = classes.at<API::String>(i);
         if (!classNameString) {
-            WTFLogAlways("InjectedBundle::extendClassesForParameterCoder - No class provided as argument %d.\n", i);
+            WTFLogAlways("InjectedBundle::extendClassesForParameterCoder - No class provided as argument %zu.\n", i);
             break;
         }
     

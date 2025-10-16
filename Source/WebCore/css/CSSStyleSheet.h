@@ -109,6 +109,7 @@ public:
 
     void removeAdoptingTreeScope(ContainerNode&);
     void addAdoptingTreeScope(ContainerNode&);
+    const WeakHashSet<ContainerNode, WeakPtrImplWithEventTargetData>& adoptingTreeScopes() const { return m_adoptingTreeScopes; }
 
     Document* ownerDocument() const;
     CSSStyleSheet& rootStyleSheet();

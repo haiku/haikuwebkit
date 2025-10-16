@@ -1,3 +1,4 @@
+//@ skip if $addressBits <= 32
 //@ runDefault("--jitPolicyScale=0.1", "--useJIT=0", "--watchdog-exception-ok", "--watchdog=500")
 function instantiate(moduleBase64, importObject) {
     let bytes = Uint8Array.fromBase64(moduleBase64);

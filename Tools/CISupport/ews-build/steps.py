@@ -69,10 +69,11 @@ Interpolate = properties.Interpolate
 GITHUB_URL = 'https://github.com/'
 # First project is treated as the default
 GITHUB_PROJECTS = ['WebKit/WebKit', 'WebKit/WebKit-security']
+CANONICAL_GITHUB_PROJECT = 'WebKit/WebKit'
 HASH_LENGTH_TO_DISPLAY = 8
 DEFAULT_BRANCH = 'main'
 DEFAULT_REMOTE = 'origin'
-LAYOUT_TESTS_URL = '{}{}/blob/{}/LayoutTests/'.format(GITHUB_URL, GITHUB_PROJECTS[0], DEFAULT_BRANCH)
+LAYOUT_TESTS_URL = '{}{}/blob/{}/LayoutTests/'.format(GITHUB_URL, CANONICAL_GITHUB_PROJECT, DEFAULT_BRANCH)
 MAX_COMMITS_IN_PR_SERIES = 50
 QUEUES_WITH_PUSH_ACCESS = ('commit-queue', 'merge-queue', 'unsafe-merge-queue')
 THRESHOLD_FOR_EXCESSIVE_LOGS_DEFAULT = 1000000
@@ -145,7 +146,7 @@ class GitHub(object):
     @classmethod
     def pr_url(cls, pr_number, repository_url=None):
         if not repository_url:
-            repository_url = '{}{}'.format(GITHUB_URL, GITHUB_PROJECTS[0])
+            repository_url = '{}{}'.format(GITHUB_URL, CANONICAL_GITHUB_PROJECT)
 
         if repository_url not in GitHub.repository_urls():
             return ''
@@ -156,7 +157,7 @@ class GitHub(object):
     @classmethod
     def commit_url(cls, sha, repository_url=None):
         if not repository_url:
-            repository_url = '{}{}'.format(GITHUB_URL, GITHUB_PROJECTS[0])
+            repository_url = '{}{}'.format(GITHUB_URL, CANONICAL_GITHUB_PROJECT)
         if repository_url not in GitHub.repository_urls():
             return ''
         if not sha:
@@ -166,7 +167,7 @@ class GitHub(object):
     @classmethod
     def api_url(cls, repository_url=None):
         if not repository_url:
-            repository_url = '{}{}'.format(GITHUB_URL, GITHUB_PROJECTS[0])
+            repository_url = '{}{}'.format(GITHUB_URL, CANONICAL_GITHUB_PROJECT)
 
         if repository_url not in GitHub.repository_urls():
             return ''
@@ -258,7 +259,7 @@ class GitHubMixin(object):
 
     @defer.inlineCallbacks
     def get_number_of_prs_with_label(self, label, retry=0):
-        project = self.getProperty('project') or GITHUB_PROJECTS[0]
+        project = self.getProperty('project') or CANONICAL_GITHUB_PROJECT
         owner, name = project.split('/', 1)
         query_body = '{repository(owner:"%s", name:"%s") { pullRequests(labels: "%s") { totalCount } } }' % (owner, name, label)
         query = {'query': query_body}
@@ -563,7 +564,7 @@ class AddToLogMixin(object):
 
 
 class Contributors(object):
-    url = 'https://raw.githubusercontent.com/WebKit/WebKit/main/metadata/contributors.json'
+    url = f'https://raw.githubusercontent.com/{CANONICAL_GITHUB_PROJECT}/main/metadata/contributors.json'
     contributors = {}
     last_update = 0
     REFRESH = 4 * 60 * 60
@@ -718,7 +719,7 @@ class ConfigureBuild(buildstep.BuildStep, AddToLogMixin):
         revision = self.getProperty('github.head.sha')
 
         project = self.getProperty('project')
-        if project == GITHUB_PROJECTS[0]:
+        if project == CANONICAL_GITHUB_PROJECT:
             self.setProperty('remote', DEFAULT_REMOTE)
             self.setProperty('sensitive', False)
         elif project in GITHUB_PROJECTS:
@@ -749,7 +750,7 @@ class CheckOutSource(git.Git):
     CHECKOUT_DELAY_AND_MAX_RETRIES_PAIR = (0, 2)
     haltOnFailure = False
 
-    def __init__(self, repourl=f'{GITHUB_URL}{GITHUB_PROJECTS[0]}.git', **kwargs):
+    def __init__(self, repourl=f'{GITHUB_URL}{CANONICAL_GITHUB_PROJECT}.git', **kwargs):
         self.default_repourl = repourl
         super().__init__(
             repourl=repourl,
@@ -784,7 +785,7 @@ class CheckOutSource(git.Git):
 
     @defer.inlineCallbacks
     def _fetch(self, _):
-        project = self.getProperty('project', '') or GITHUB_PROJECTS[0]
+        project = self.getProperty('project', '') or CANONICAL_GITHUB_PROJECT
         self.repourl = f'{GITHUB_URL}{project}.git'
 
         try:
@@ -809,7 +810,7 @@ class CheckOutSource(git.Git):
         defer.returnValue(rc)
 
 
-class CleanUpGitIndexLock(shell.ShellCommand, ShellMixin):
+class CleanUpGitIndexLock(shell.ShellCommandNewStyle, ShellMixin):
     name = 'clean-git-index-lock'
     command = ['rm', '-f', '.git/index.lock']
     descriptionDone = ['Deleted .git/index.lock']
@@ -817,16 +818,16 @@ class CleanUpGitIndexLock(shell.ShellCommand, ShellMixin):
     def __init__(self, **kwargs):
         super().__init__(timeout=2 * 60, logEnviron=False, **kwargs)
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         if self.has_windows_shell():
             self.command = ['del', r'.git\index.lock']
 
         self.send_email_for_git_issue()
-        return shell.ShellCommand.start(self)
+        rc = yield super().run()
 
-    def evaluateCommand(self, cmd):
         self.build.buildFinished(['Git issue, retrying build'], RETRY)
-        return super().evaluateCommand(cmd)
+        defer.returnValue(rc)
 
     def send_email_for_git_issue(self):
         try:
@@ -906,7 +907,7 @@ class FetchBranches(steps.ShellSequence, ShellMixin):
             util.ShellArg(command=['git', 'fetch', DEFAULT_REMOTE, '--prune'], logname='stdio'),
         ]
 
-        project = self.getProperty('project', GITHUB_PROJECTS[0])
+        project = self.getProperty('project', CANONICAL_GITHUB_PROJECT)
         remote = self.getProperty('remote', DEFAULT_REMOTE)
         if remote != DEFAULT_REMOTE:
             for command in [
@@ -928,16 +929,17 @@ class FetchBranches(steps.ShellSequence, ShellMixin):
         return results == SUCCESS
 
 
-class ShowIdentifier(shell.ShellCommand):
+class ShowIdentifier(shell.ShellCommandNewStyle):
     name = 'show-identifier'
-    identifier_re = '^Identifier: (.*)$'
+    identifier_re = r'^Identifier: (.*)$'
     flunkOnFailure = False
     haltOnFailure = False
 
     def __init__(self, **kwargs):
         super().__init__(timeout=5 * 60, logEnviron=False, **kwargs)
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         self.log_observer = logobserver.BufferLogObserver()
         self.addLogObserver('stdio', self.log_observer)
 
@@ -949,13 +951,11 @@ class ShowIdentifier(shell.ShellCommand):
                 revision = candidate
                 break
 
-        self.setCommand(['python3', 'Tools/Scripts/git-webkit', 'find', revision])
-        return super().start()
+        self.command = ['python3', 'Tools/Scripts/git-webkit', 'find', revision]
+        rc = yield super().run()
 
-    def evaluateCommand(self, cmd):
-        rc = super().evaluateCommand(cmd)
         if rc != SUCCESS:
-            return rc
+            return defer.returnValue(rc)
 
         log_text = self.log_observer.getStdout()
         match = re.search(self.identifier_re, log_text, re.MULTILINE)
@@ -974,7 +974,8 @@ class ShowIdentifier(shell.ShellCommand):
             self.descriptionDone = 'Identifier: {}'.format(identifier)
         else:
             self.descriptionDone = 'Failed to find identifier'
-        return rc
+
+        defer.returnValue(rc)
 
     def getLastBuildStepByName(self, name):
         for step in reversed(self.build.executedSteps):
@@ -1057,6 +1058,7 @@ class CleanDerivedSources(shell.ShellCommandNewStyle):
 
     def run(self):
         return super().run()
+
 
 class UpdateWorkingDirectory(steps.ShellSequence, ShellMixin):
     name = 'update-working-directory'
@@ -2282,7 +2284,7 @@ class DetermineLabelOwner(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
             yield self._addToLog('stdio', 'Unable to fetch PR number.\n')
             return defer.returnValue(FAILURE)
 
-        project = self.getProperty('project') or GITHUB_PROJECTS[0]
+        project = self.getProperty('project') or CANONICAL_GITHUB_PROJECT
         owner, name = project.split('/', 1)
         query_body = '{repository(owner:"%s", name:"%s") { pullRequest(number: %s) {timelineItems(itemTypes: LABELED_EVENT, last: 5) {nodes {... on LabeledEvent {actor { login } label { name } createdAt } } } } } }' % (owner, name, pr_number)
         query = {'query': query_body}
@@ -2536,7 +2538,7 @@ class RemoveAndAddLabels(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
 class RetrievePRDataFromLabel(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
     name = 'retrieve-pr-data-from-label'
 
-    def __init__(self, project="WebKit/WebKit", label='', **kwargs):
+    def __init__(self, project=CANONICAL_GITHUB_PROJECT, label='', **kwargs):
         self.project = project
         owner, name = project.lower().split('/', 1)
         self.name = f'{self.name}-{owner}-{name}'
@@ -2577,7 +2579,7 @@ class RetrievePRDataFromLabel(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
 
     @defer.inlineCallbacks
     def getAllPRData(self, limit, label, retry=0):
-        project = self.getProperty('project') or GITHUB_PROJECTS[0]
+        project = self.getProperty('project') or CANONICAL_GITHUB_PROJECT
         owner, name = project.split('/', 1)
         query_body = '{repository(owner:"%s", name:"%s") { pullRequests(labels: "%s", last: %s) { edges { node { title number commits(last: 3) { nodes { commit { commitUrl status { state contexts { context state } } } } } } } } } }' % (owner, name, label, limit)
         query = {'query': query_body}
@@ -2667,7 +2669,7 @@ class CheckStatusOfPR(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
     @defer.inlineCallbacks
     def checkPRStatus(self, pr_number):
         yield self._addToLog('stdio', f'Checking the status of PR {pr_number}...\n')
-        project = self.getProperty('project') or GITHUB_PROJECTS[0]
+        project = self.getProperty('project') or CANONICAL_GITHUB_PROJECT
         owner, name = project.split('/', 1)
         query_body = '{repository(owner: "%s", name: "%s") {pullRequest(number: %s) {commits (last:1) {edges {node {commit {oid } } } } } } }' % (owner, name, pr_number)
         query = {'query': query_body}
@@ -2710,7 +2712,7 @@ class CheckStatusOfPR(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
 
         # FIXME: safe-merge-queue should obtain skipped status from EWS instead of hardcoding
         queues_for_safe_merge = self.EMBEDDED_CHECKS + self.MACOS_CHECKS
-        if self.getProperty('project') == GITHUB_PROJECTS[0]:
+        if self.getProperty('project') == CANONICAL_GITHUB_PROJECT:
             queues_for_safe_merge += self.LINUX_CHECKS
             queues_for_safe_merge += self.WINDOWS_CHECKS
 
@@ -2993,7 +2995,7 @@ class CheckStyle(TestWithFailureCount):
         return int(match.group('errors'))
 
 
-class RunBindingsTests(shell.ShellCommand, AddToLogMixin):
+class RunBindingsTests(shell.ShellCommandNewStyle, AddToLogMixin):
     name = 'bindings-tests'
     description = ['bindings-tests running']
     descriptionDone = ['bindings-tests']
@@ -3005,10 +3007,10 @@ class RunBindingsTests(shell.ShellCommand, AddToLogMixin):
     def __init__(self, **kwargs):
         super().__init__(timeout=5 * 60, logEnviron=False, **kwargs)
 
-    def start(self):
+    def run(self):
         self.log_observer = logobserver.BufferLogObserver()
         self.addLogObserver('json', self.log_observer)
-        return shell.ShellCommand.start(self)
+        return super().run()
 
     def getResultSummary(self):
         if self.results == SUCCESS:
@@ -3053,7 +3055,7 @@ class RunWebKitPerlTests(shell.ShellCommandNewStyle):
         return {'step': 'Failed webkitperl tests'}
 
     def evaluateCommand(self, cmd):
-        rc = shell.ShellCommandNewStyle.evaluateCommand(self, cmd)
+        rc = super().evaluateCommand(self, cmd)
         if rc == FAILURE:
             self.build.addStepsAfterCurrentStep([KillOldProcesses(), ReRunWebKitPerlTests()])
         return rc
@@ -3278,7 +3280,6 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
     name = 'compile-webkit'
     description = ['compiling']
     descriptionDone = ['Compiled WebKit']
-    env = {'MFLAGS': ''}
     warningPattern = '.*arning: .*'
     haltOnFailure = False
     build_command = ['perl', 'Tools/Scripts/build-webkit']
@@ -3990,7 +3991,7 @@ class CleanBuild(shell.Compile):
     command = ['python3', 'Tools/CISupport/clean-build', WithProperties('--platform=%(fullPlatform)s'), WithProperties('--%(configuration)s')]
 
 
-class KillOldProcesses(shell.Compile):
+class KillOldProcesses(shell.CompileNewStyle):
     name = 'kill-old-processes'
     description = ['killing old processes']
     descriptionDone = ['Killed old processes']
@@ -4000,7 +4001,7 @@ class KillOldProcesses(shell.Compile):
         super().__init__(timeout=2 * 60, logEnviron=False, **kwargs)
 
     def evaluateCommand(self, cmd):
-        rc = shell.Compile.evaluateCommand(self, cmd)
+        rc = super().evaluateCommand(cmd)
         if rc in [FAILURE, EXCEPTION]:
             self.build.buildFinished(['Failed to kill old processes, retrying build'], RETRY)
         return rc
@@ -4008,10 +4009,10 @@ class KillOldProcesses(shell.Compile):
     def getResultSummary(self):
         if self.results in [FAILURE, EXCEPTION]:
             return {'step': 'Failed to kill old processes'}
-        return shell.Compile.getResultSummary(self)
+        return super().getResultSummary()
 
 
-class TriggerCrashLogSubmission(shell.Compile):
+class TriggerCrashLogSubmission(shell.CompileNewStyle):
     name = 'trigger-crash-log-submission'
     description = ['triggering crash log submission']
     descriptionDone = ['Triggered crash log submission']
@@ -4025,10 +4026,10 @@ class TriggerCrashLogSubmission(shell.Compile):
     def getResultSummary(self):
         if self.results in [FAILURE, EXCEPTION]:
             return {'step': 'Failed to trigger crash log submission'}
-        return shell.Compile.getResultSummary(self)
+        return super().getResultSummary()
 
 
-class WaitForCrashCollection(shell.Compile):
+class WaitForCrashCollection(shell.CompileNewStyle):
     name = 'wait-for-crash-collection'
     description = ['waiting-for-crash-collection-to-quiesce']
     descriptionDone = ['Crash collection has quiesced']
@@ -4042,7 +4043,7 @@ class WaitForCrashCollection(shell.Compile):
     def getResultSummary(self):
         if self.results in [FAILURE, EXCEPTION]:
             return {'step': 'Crash log collection process still running'}
-        return shell.Compile.getResultSummary(self)
+        return super().getResultSummary()
 
 
 class RunWebKitTests(shell.Test, AddToLogMixin, ShellMixin):
@@ -5453,7 +5454,7 @@ class TransferToS3(master.MasterShellCommandNewStyle):
         return super().getResultSummary()
 
 
-class DownloadBuiltProduct(shell.ShellCommand):
+class DownloadBuiltProduct(shell.ShellCommandNewStyle):
     command = [
         'python3', 'Tools/CISupport/download-built-product',
         WithProperties('--%(configuration)s'),
@@ -5473,19 +5474,17 @@ class DownloadBuiltProduct(shell.ShellCommand):
     def __init__(self, **kwargs):
         super().__init__(logEnviron=False, **kwargs)
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         # Only try to download from S3 on the official deployments <https://webkit.org/b/230006>
-        if CURRENT_HOSTNAME in EWS_BUILD_HOSTNAMES + TESTING_ENVIRONMENT_HOSTNAMES:
-            return shell.ShellCommand.start(self)
-        self.build.addStepsAfterCurrentStep([DownloadBuiltProductFromMaster()])
-        self.finished(SKIPPED)
-        return defer.succeed(None)
+        if CURRENT_HOSTNAME not in (EWS_BUILD_HOSTNAMES + TESTING_ENVIRONMENT_HOSTNAMES):
+            self.build.addStepsAfterCurrentStep([DownloadBuiltProductFromMaster()])
+            return defer.returnValue(SKIPPED)
 
-    def evaluateCommand(self, cmd):
-        rc = shell.ShellCommand.evaluateCommand(self, cmd)
+        rc = yield super().run()
         if rc == FAILURE:
             self.build.addStepsAfterCurrentStep([DownloadBuiltProductFromMaster()])
-        return rc
+        defer.returnValue(rc)
 
 
 class DownloadBuiltProductFromMaster(transfer.FileDownload):
@@ -6138,7 +6137,7 @@ class ApplyWatchList(shell.ShellCommandNewStyle):
         return super().getResultSummary()
 
 
-class PushCommitToWebKitRepo(shell.ShellCommand):
+class PushCommitToWebKitRepo(shell.ShellCommandNewStyle):
     name = 'push-commit-to-webkit-repo'
     descriptionDone = ['Pushed commit to WebKit repository']
     haltOnFailure = False
@@ -6148,21 +6147,21 @@ class PushCommitToWebKitRepo(shell.ShellCommand):
     def __init__(self, **kwargs):
         super().__init__(logEnviron=False, timeout=300, **kwargs)
 
-    def start(self, BufferLogObserverClass=logobserver.BufferLogObserver):
+    @defer.inlineCallbacks
+    def run(self, BufferLogObserverClass=logobserver.BufferLogObserver):
         head_ref = self.getProperty('github.base.ref', 'main')
         remote = self.getProperty('remote', '?')
         self.command = ['git', 'push', remote, f'HEAD:{head_ref}']
 
         username, access_token = GitHub.credentials(user=GitHub.user_for_queue(self.getProperty('buildername', '')))
-        self.workerEnvironment['GIT_USER'] = username
-        self.workerEnvironment['GIT_PASSWORD'] = access_token
+        self.env['GIT_USER'] = username
+        self.env['GIT_PASSWORD'] = access_token
 
         self.log_observer = logobserver.BufferLogObserver(wantStderr=True)
         self.addLogObserver('stdio', self.log_observer)
-        return super().start()
 
-    def evaluateCommand(self, cmd):
-        rc = shell.ShellCommand.evaluateCommand(self, cmd)
+        rc = yield super().run()
+
         if rc == SUCCESS:
             log_text = self.log_observer.getStdout() + self.log_observer.getStderr()
             landed_hash = self.hash_from_commit_text(log_text)
@@ -6209,7 +6208,7 @@ class PushCommitToWebKitRepo(shell.ShellCommand):
                         ValidateChange(addURLs=False, verifycqplus=True),
                         PushCommitToWebKitRepo(),
                     ])
-                return rc
+                return defer.returnValue(rc)
 
             if self.getProperty('github.number', ''):
                 self.setProperty('comment_text', 'merge-queue failed to commit PR to repository. To retry, remove any blocking labels and re-apply merge-queue label')
@@ -6219,12 +6218,13 @@ class PushCommitToWebKitRepo(shell.ShellCommand):
 
             self.setProperty('build_finish_summary', 'Failed to commit to WebKit repository')
             self.build.addStepsAfterCurrentStep([LeaveComment(), SetCommitQueueMinusFlagOnPatch(), BlockPullRequest()])
-        return rc
+
+        defer.returnValue(rc)
 
     def getResultSummary(self):
         if self.results != SUCCESS:
             return {'step': 'Failed to push commit to Webkit repository'}
-        return shell.ShellCommand.getResultSummary(self)
+        return super().getResultSummary()
 
     def doStepIf(self, step):
         return CURRENT_HOSTNAME in EWS_BUILD_HOSTNAMES
@@ -6332,7 +6332,7 @@ class CheckStatusOnEWSQueues(buildstep.BuildStep, BugzillaMixin):
 
     @defer.inlineCallbacks
     def get_change_status(self, change_id, queue):
-        url = '{}status/{}/'.format(EWS_URL, change_id)
+        url = f'{EWS_URL}status/{change_id}/'
         try:
             response = yield TwistedAdditions.request(url, logger=lambda content: self._addToLog('stdio', content))
             if response.status_code != 200:
@@ -6354,10 +6354,22 @@ class CheckStatusOnEWSQueues(buildstep.BuildStep, BugzillaMixin):
         change_status_on_mac_wk2 = yield self.get_change_status(change_id, 'mac-wk2')
         if change_status_on_mac_wk2 == SUCCESS:
             self.setProperty('passed_mac_wk2', True)
+        elif change_status_on_mac_wk2 == FAILURE:
+            self.setProperty('passed_mac_wk2', False)
+        else:
+            self.setProperty('passed_mac_wk2', None)
         defer.returnValue(SUCCESS)
 
+    def getResultSummary(self):
+        passed_mac_wk2 = self.getProperty('passed_mac_wk2')
+        if passed_mac_wk2 is True:
+            return {'step': 'mac-wk2 tests already passed'}
+        if passed_mac_wk2 is False:
+            return {'step': 'mac-wk2 tests failed'}
+        return {'step': "mac-wk2 tests haven't completed"}
 
-class ValidateRemote(shell.ShellCommand):
+
+class ValidateRemote(shell.ShellCommandNewStyle):
     name = 'validate-remote'
     haltOnFailure = False
     flunkOnFailure = True
@@ -6366,7 +6378,8 @@ class ValidateRemote(shell.ShellCommand):
         self.summary = ''
         super().__init__(logEnviron=False, **kwargs)
 
-    def start(self, BufferLogObserverClass=logobserver.BufferLogObserver):
+    @defer.inlineCallbacks
+    def run(self, BufferLogObserverClass=logobserver.BufferLogObserver):
         base_ref = self.getProperty('github.base.ref', f'{DEFAULT_REMOTE}/{DEFAULT_BRANCH}')
         remote = self.getProperty('remote', DEFAULT_REMOTE)
 
@@ -6376,33 +6389,29 @@ class ValidateRemote(shell.ShellCommand):
             f'remotes/{DEFAULT_REMOTE}/{base_ref}',
         ]
 
-        return super().start()
+        rc = yield super().run()
+
+        if rc == SUCCESS:
+            self.summary = f"Cannot land on '{base_ref}', it is owned by '{CANONICAL_GITHUB_PROJECT}'"
+            self.setProperty(
+                'comment_text',
+                f"{self.summary}, blocking PR #{self.getProperty('github.number')}.\n"
+                f"Make a pull request against '{CANONICAL_GITHUB_PROJECT}' to land this change."
+            )
+            self.setProperty('build_finish_summary', self.summary)
+            self.build.addStepsAfterCurrentStep([LeaveComment(), BlockPullRequest()])
+            return defer.returnValue(FAILURE)
+
+        if rc == FAILURE:
+            self.summary = f"Verified '{CANONICAL_GITHUB_PROJECT}' does not own '{base_ref}'"
+            return defer.returnValue(SUCCESS)
+
+        defer.returnValue(rc)
 
     def getResultSummary(self):
         if self.results in (FAILURE, SUCCESS):
             return {'step': self.summary}
         return super().getResultSummary()
-
-    def evaluateCommand(self, cmd):
-        base_ref = self.getProperty('github.base.ref', f'{DEFAULT_REMOTE}/{DEFAULT_BRANCH}')
-        rc = super().evaluateCommand(cmd)
-
-        if rc == SUCCESS:
-            self.summary = f"Cannot land on '{base_ref}', it is owned by '{GITHUB_PROJECTS[0]}'"
-            self.setProperty(
-                'comment_text',
-                f"{self.summary}, blocking PR #{self.getProperty('github.number')}.\n"
-                f"Make a pull request against '{GITHUB_PROJECTS[0]}' to land this change."
-            )
-            self.setProperty('build_finish_summary', self.summary)
-            self.build.addStepsAfterCurrentStep([LeaveComment(), BlockPullRequest()])
-            return FAILURE
-
-        if rc == FAILURE:
-            self.summary = f"Verified '{GITHUB_PROJECTS[0]}' does not own '{base_ref}'"
-            return SUCCESS
-
-        return rc
 
     def doStepIf(self, step):
         if not self.getProperty('github.number'):
@@ -6419,7 +6428,7 @@ class ValidateRemote(shell.ShellCommand):
 # There are cases where we have a branch alias tracking a more traditional static branch.
 # We want contributors to be able to land changes on the branch alias instead of the possibly
 # changing branch.
-class MapBranchAlias(shell.ShellCommand):
+class MapBranchAlias(shell.ShellCommandNewStyle):
     name = 'map-branch-alias'
     haltOnFailure = False
     flunkOnFailure = True
@@ -6430,32 +6439,23 @@ class MapBranchAlias(shell.ShellCommand):
         self.summary = ''
         super().__init__(logEnviron=False, timeout=60, **kwargs)
 
-    def start(self, BufferLogObserverClass=logobserver.BufferLogObserver):
-        base_ref = self.getProperty('github.base.ref', DEFAULT_BRANCH)
+    @defer.inlineCallbacks
+    def run(self, BufferLogObserverClass=logobserver.BufferLogObserver):
+        branch = self.getProperty('github.base.ref', DEFAULT_BRANCH)
         remote = self.getProperty('remote', DEFAULT_REMOTE)
 
-        self.command = ['git', 'branch', '-a', '--contains', f'remotes/{remote}/{base_ref}']
+        self.command = ['git', 'branch', '-a', '--contains', f'remotes/{remote}/{branch}']
 
         self.log_observer = BufferLogObserverClass(wantStderr=True)
         self.addLogObserver('stdio', self.log_observer)
 
-        return super().start()
-
-    def getResultSummary(self):
-        if self.results in (FAILURE, SUCCESS):
-            return {'step': self.summary}
-        return super().getResultSummary()
-
-    def evaluateCommand(self, cmd):
-        remote = self.getProperty('remote', DEFAULT_REMOTE)
-        branch = self.getProperty('github.base.ref', DEFAULT_BRANCH)
-        rc = super().evaluateCommand(cmd)
+        rc = yield super().run()
 
         if rc == FAILURE:
             self.summary = f"Failed to query checkout for aliases of '{branch}'"
-            return FAILURE
+            return defer.returnValue(FAILURE)
         elif rc != SUCCESS:
-            return rc
+            return defer.returnValue(rc)
 
         aliases = set()
         log_text = self.log_observer.getStdout()
@@ -6480,7 +6480,12 @@ class MapBranchAlias(shell.ShellCommand):
 
         self.summary = f"'{branch}' is the prevailing alias"
         self.setProperty('github.base.ref', branch)
-        return rc
+        defer.returnValue(rc)
+
+    def getResultSummary(self):
+        if self.results in (FAILURE, SUCCESS):
+            return {'step': self.summary}
+        return super().getResultSummary()
 
     def doStepIf(self, step):
         if not self.getProperty('github.number'):
@@ -6604,7 +6609,7 @@ class AddReviewerMixin(object):
         return 'NOBODY (OOPS!)'
 
 
-class AddReviewerToCommitMessage(shell.ShellCommand, AddReviewerMixin):
+class AddReviewerToCommitMessage(shell.ShellCommandNewStyle, AddReviewerMixin):
     name = 'add-reviewer-to-commit-message'
     haltOnFailure = True
 
@@ -6638,7 +6643,7 @@ class AddReviewerToCommitMessage(shell.ShellCommand, AddReviewerMixin):
 
         commit_environment = yield self.gitCommitEnvironment()
         for key, value in commit_environment.items():
-            self.workerEnvironment[key] = value
+            self.env[key] = value
 
         rc = yield super().run()
         defer.returnValue(rc)
@@ -7720,7 +7725,7 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
             issue_comment = f" with {num_issues} issue{'s' if num_issues > 1 else ''}" if num_issues else ''
             pluralSuffix = 's' if num_failures > 1 else ''
             comment += f":x: Found [{num_failures} failing file{pluralSuffix}{issue_comment}]({results_link}). "
-            comment += 'Please address these issues before landing. See [WebKit Guidelines for Safer C++ Programming](https://github.com/WebKit/WebKit/wiki/Safer-CPP-Guidelines).\n(cc @rniwa)\n'
+            comment += f'Please address these issues before landing. See [WebKit Guidelines for Safer C++ Programming](https://github.com/{CANONICAL_GITHUB_PROJECT}/wiki/Safer-CPP-Guidelines).\n(cc @rniwa)\n'
         if num_passes:
             pluralSuffix = 's' if num_passes > 1 else ''
             pluralCommand = 's' if len(commands_for_comment) > 1 else ''

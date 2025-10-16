@@ -59,7 +59,7 @@ class RubyFormattingContext;
 class LineBox {
     WTF_MAKE_TZONE_ALLOCATED(LineBox);
 public:
-    LineBox(const Box& rootLayoutBox, InlineLayoutUnit contentLogicalLeft, InlineLayoutUnit contentLogicalWidth, size_t lineIndex, size_t nonSpanningInlineLevelBoxCount);
+    LineBox(const Box& rootLayoutBox, InlineLayoutUnit contentLogicalLeft, InlineLayoutUnit contentLogicalWidth, size_t lineIndex, bool isFirstFormattedLine, size_t nonSpanningInlineLevelBoxCount);
 
     // Note that the line can have many inline boxes and be "empty" the same time e.g. <div><span></span><span></span></div>
     bool hasContent() const { return m_hasContent; }
@@ -85,6 +85,8 @@ public:
     const InlineRect& logicalRect() const { return m_logicalRect; }
 
     size_t lineIndex() const { return m_lineIndex; }
+
+    bool isFirstFormattedLine() const { return m_isFirstFormattedLine; }
 
 private:
     friend class LineBoxBuilder;
@@ -116,6 +118,7 @@ private:
 private:
     size_t m_lineIndex { 0 };
     bool m_hasContent { false };
+    bool m_isFirstFormattedLine { true };
     InlineRect m_logicalRect;
     OptionSet<InlineLevelBox::Type> m_boxTypes;
 

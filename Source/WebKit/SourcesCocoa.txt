@@ -290,6 +290,8 @@ UIProcess/API/Cocoa/_WKJSHandle.mm
 UIProcess/API/Cocoa/_WKLinkIconParameters.mm
 UIProcess/API/Cocoa/_WKModalContainerInfo.mm
 UIProcess/API/Cocoa/_WKNotificationData.mm
+UIProcess/API/Cocoa/_WKNSStringExtras.mm
+UIProcess/API/Cocoa/_WKNSURLExtras.mm
 UIProcess/API/Cocoa/_WKPageLoadTiming.mm
 UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm

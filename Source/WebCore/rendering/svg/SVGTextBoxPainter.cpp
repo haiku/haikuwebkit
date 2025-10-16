@@ -220,10 +220,10 @@ void SVGTextBoxPainter<TextBoxPath>::paint()
 
         // Spec: All text decorations except line-through should be drawn before the text is filled and stroked; thus, the text is rendered on top of these decorations.
         auto decorations = style.textDecorationLineInEffect();
-        if (decorations & TextDecorationLine::Underline)
-            paintDecoration(TextDecorationLine::Underline, fragment);
-        if (decorations & TextDecorationLine::Overline)
-            paintDecoration(TextDecorationLine::Overline, fragment);
+        if (decorations.hasUnderline())
+            paintDecoration(Style::TextDecorationLine::Flag::Underline, fragment);
+        if (decorations.hasOverline())
+            paintDecoration(Style::TextDecorationLine::Flag::Overline, fragment);
 
         for (auto type : RenderStyle::paintTypesForPaintOrder(style.paintOrder())) {
             switch (type) {
@@ -247,8 +247,8 @@ void SVGTextBoxPainter<TextBoxPath>::paint()
         }
 
         // Spec: Line-through should be drawn after the text is filled and stroked; thus, the line-through is rendered on top of the text.
-        if (decorations & TextDecorationLine::LineThrough)
-            paintDecoration(TextDecorationLine::LineThrough, fragment);
+        if (decorations.hasLineThrough())
+            paintDecoration(Style::TextDecorationLine::Flag::LineThrough, fragment);
 
         m_paintingResourceMode = { };
     }
@@ -396,23 +396,23 @@ bool mapStartEndPositionsIntoFragmentCoordinates(unsigned textBoxStart, const SV
     return true;
 }
 
-static inline float positionOffsetForDecoration(OptionSet<TextDecorationLine> decoration, const FontMetrics& fontMetrics, float thickness)
+static inline float positionOffsetForDecoration(Style::TextDecorationLine decoration, const FontMetrics& fontMetrics, float thickness)
 {
     // FIXME: For SVG Fonts we need to use the attributes defined in the <font-face> if specified.
     // Compatible with Batik/Opera.
     const float ascent = fontMetrics.ascent();
-    if (decoration == TextDecorationLine::Underline)
+    if (decoration == Style::TextDecorationLine::Flag::Underline)
         return ascent + thickness * 1.5f;
-    if (decoration == TextDecorationLine::Overline)
+    if (decoration == Style::TextDecorationLine::Flag::Overline)
         return thickness;
-    if (decoration == TextDecorationLine::LineThrough)
+    if (decoration == Style::TextDecorationLine::Flag::LineThrough)
         return ascent * 5 / 8.0f;
 
     ASSERT_NOT_REACHED();
     return 0.0f;
 }
 
-static inline float thicknessForDecoration(OptionSet<TextDecorationLine>, const FontCascade& font)
+static inline float thicknessForDecoration(Style::TextDecorationLine, const FontCascade& font)
 {
     // FIXME: For SVG Fonts we need to use the attributes defined in the <font-face> if specified.
     // Compatible with Batik/Opera
@@ -420,9 +420,9 @@ static inline float thicknessForDecoration(OptionSet<TextDecorationLine>, const 
 }
 
 template<typename TextBoxPath>
-void SVGTextBoxPainter<TextBoxPath>::paintDecoration(OptionSet<TextDecorationLine> decoration, const SVGTextFragment& fragment)
+void SVGTextBoxPainter<TextBoxPath>::paintDecoration(Style::TextDecorationLine decoration, const SVGTextFragment& fragment)
 {
-    if (renderer().style().textDecorationLineInEffect().isEmpty())
+    if (renderer().style().textDecorationLineInEffect().isNone())
         return;
 
     // Find out which render style defined the text-decoration, as its fill/stroke properties have to be used for drawing instead of ours.
@@ -435,7 +435,7 @@ void SVGTextBoxPainter<TextBoxPath>::paintDecoration(OptionSet<TextDecorationLin
         while (parentBox) {
             renderer = &parentBox->renderer();
 
-            if (!renderer->style().textDecorationLine().isEmpty())
+            if (!renderer->style().textDecorationLine().isNone())
                 break;
 
             parentBox = parentBox->parentInlineBox();
@@ -476,7 +476,7 @@ void SVGTextBoxPainter<TextBoxPath>::paintDecoration(OptionSet<TextDecorationLin
 }
 
 template<typename TextBoxPath>
-void SVGTextBoxPainter<TextBoxPath>::paintDecorationWithStyle(OptionSet<TextDecorationLine> decoration, const SVGTextFragment& fragment, const RenderBoxModelObject& decorationRenderer)
+void SVGTextBoxPainter<TextBoxPath>::paintDecorationWithStyle(Style::TextDecorationLine decoration, const SVGTextFragment& fragment, const RenderBoxModelObject& decorationRenderer)
 {
     ASSERT(!m_legacyPaintingResource);
     ASSERT(!paintingResourceMode().isEmpty());

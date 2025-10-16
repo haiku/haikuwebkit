@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include <WebCore/BlockFormattingContext.h>
-#include <WebCore/BlockFormattingQuirks.h>
-#include <WebCore/TableWrapperBlockFormattingQuirks.h>
+#include "BlockFormattingContext.h"
+#include "BlockFormattingQuirks.h"
+#include "TableWrapperBlockFormattingQuirks.h"
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

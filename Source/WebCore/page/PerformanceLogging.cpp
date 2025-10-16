@@ -35,6 +35,7 @@
 #include "LocalFrameLoaderClient.h"
 #include "Logging.h"
 #include "Page.h"
+#include <JavaScriptCore/VM.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

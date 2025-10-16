@@ -111,7 +111,7 @@ public:
 
 IGNORE_GCC_WARNINGS_BEGIN("mismatched-new-delete")
     // https://webkit.org/b/241516
-    virtual ~CSSStyleValue() = default;
+    virtual ~CSSStyleValue();
 IGNORE_GCC_WARNINGS_END
 
     virtual CSSStyleValueType getType() const { return CSSStyleValueType::CSSStyleValue; }

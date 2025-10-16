@@ -314,8 +314,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="texture_3d";usa
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -335,6 +333,8 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="texture_3d";usa
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -361,19 +361,19 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="texture_3d";usa
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -438,12 +438,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="texture_3d";usa
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -465,10 +459,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="texture_3d";usa
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -499,15 +489,25 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="texture_3d";usa
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -532,10 +532,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -556,6 +552,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -567,10 +567,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -591,6 +587,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -617,21 +617,21 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -660,8 +660,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -684,6 +682,8 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -693,12 +693,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -721,10 +715,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -752,18 +742,28 @@ FAIL :single_entry_point:stage="vertex";a_kind="storage";b_kind="uniform";usage=
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -788,6 +788,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -808,15 +812,21 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -837,6 +847,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -868,20 +882,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -916,8 +916,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -940,22 +938,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -977,9 +959,25 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -1005,19 +1003,21 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="texture_3d";
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -1046,8 +1046,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1068,6 +1066,8 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -1103,10 +1103,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1129,21 +1125,25 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -1170,10 +1170,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1196,6 +1192,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -1233,10 +1233,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1264,6 +1260,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -1271,11 +1271,11 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_2d";b_kind="uniform";usa
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -1387,9 +1387,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="textur
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -1400,6 +1397,9 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="textur
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -1428,8 +1428,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="textur
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1452,21 +1450,11 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="textur
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -1489,7 +1477,21 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="textur
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -1515,21 +1517,19 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="textur
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -1556,10 +1556,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1580,6 +1576,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -1617,8 +1617,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
       at (elided: only 2 shown)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1650,6 +1648,8 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -1682,10 +1682,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1708,6 +1704,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -1747,8 +1747,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
       at (elided: only 2 shown)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1773,19 +1771,21 @@ FAIL :single_entry_point:stage="vertex";a_kind="texture_external";b_kind="unifor
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -1848,6 +1848,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="texture_3d";usa
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -1867,6 +1871,10 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="texture_3d";usa
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1898,14 +1906,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="texture_3d";usa
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -1940,8 +1940,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="texture_3d";usa
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -1964,6 +1962,8 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="texture_3d";usa
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -2001,10 +2001,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="texture_3d";usa
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2032,18 +2028,22 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="texture_3d";usa
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -2070,8 +2070,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2092,6 +2090,8 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -2129,8 +2129,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
       at (elided: only 2 shown)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2156,18 +2154,20 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -2194,10 +2194,6 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2220,21 +2216,15 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -2257,6 +2247,16 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -2290,16 +2290,16 @@ FAIL :single_entry_point:stage="vertex";a_kind="uniform";b_kind="uniform";usage=
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -2358,10 +2358,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_3d";u
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -2380,6 +2376,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_3d";u
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -2406,18 +2406,18 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_3d";u
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -2480,6 +2480,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_3d";u
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -2500,16 +2502,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_3d";u
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2536,18 +2528,26 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_3d";u
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -2571,6 +2571,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2590,10 +2594,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -2628,10 +2628,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2653,6 +2649,12 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
@@ -2662,8 +2664,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
@@ -2693,10 +2693,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2718,6 +2714,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -2731,8 +2731,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -2777,23 +2775,25 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="texture_stora
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -2821,8 +2821,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2842,6 +2840,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -2878,8 +2878,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
       at (elided: only 2 shown)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2901,21 +2899,23 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -2941,10 +2941,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -2966,6 +2962,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -2977,10 +2977,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -3002,8 +2998,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3024,6 +3018,14 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
@@ -3036,8 +3038,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="storage";b_kind="uniform";usag
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -3067,10 +3067,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3090,6 +3086,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -3099,10 +3099,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -3122,6 +3118,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
@@ -3152,16 +3152,16 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -3189,10 +3189,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3214,6 +3210,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -3250,10 +3250,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3277,21 +3273,25 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_3d
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -3317,8 +3317,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3338,6 +3336,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -3347,12 +3347,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -3372,6 +3366,12 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -3397,19 +3397,19 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -3437,10 +3437,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3462,6 +3458,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -3475,8 +3475,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -3498,10 +3496,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3534,6 +3528,12 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="texture_st
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -3563,10 +3563,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3586,6 +3582,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -3597,10 +3597,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -3620,6 +3616,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -3648,16 +3648,16 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -3687,8 +3687,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3710,22 +3708,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -3746,10 +3728,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3773,19 +3751,41 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_2d";b_kind="uniform";u
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -3813,8 +3813,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -3834,6 +3832,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -3841,14 +3841,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -3868,6 +3860,14 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -3896,16 +3896,16 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -4017,23 +4017,23 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -4059,10 +4059,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4082,6 +4078,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -4093,6 +4093,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -4139,10 +4143,9 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -4153,9 +4156,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -4181,10 +4181,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4206,21 +4202,15 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -4262,6 +4252,16 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -4269,21 +4269,21 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="text
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -4307,6 +4307,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4326,8 +4328,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
@@ -4364,10 +4364,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4392,18 +4388,22 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -4431,8 +4431,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4454,6 +4452,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -4490,6 +4490,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4510,26 +4514,22 @@ FAIL :single_entry_point:stage="fragment";a_kind="texture_external";b_kind="unif
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -4555,6 +4555,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_3d";u
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4574,10 +4578,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_3d";u
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -4591,6 +4591,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_3d";u
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -4610,8 +4612,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_3d";u
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -4640,16 +4640,16 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_3d";u
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -4738,6 +4738,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_3d";u
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -4761,25 +4763,23 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_3d";u
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -4840,8 +4840,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_stora
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -4860,6 +4858,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_stora
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -4885,21 +4885,21 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_stora
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -4958,14 +4958,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_stora
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -5012,12 +5004,14 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_stora
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -5026,6 +5020,12 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="texture_stora
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -5053,8 +5053,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -5074,6 +5072,8 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -5083,8 +5083,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -5104,11 +5102,15 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -5131,23 +5133,21 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -5173,10 +5173,6 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -5198,19 +5194,13 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -5232,11 +5222,17 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -5261,6 +5257,10 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -5269,13 +5269,13 @@ FAIL :single_entry_point:stage="fragment";a_kind="uniform";b_kind="uniform";usag
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -5332,12 +5332,6 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_3d";us
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -5356,9 +5350,13 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_3d";us
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -5384,13 +5382,15 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_3d";us
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -5458,10 +5458,6 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_3d";us
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -5482,6 +5478,10 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_3d";us
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -5549,8 +5549,6 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_storag
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -5570,6 +5568,8 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_storag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -5635,15 +5635,15 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_storag
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -5730,6 +5730,10 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_storag
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -5762,10 +5766,6 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="texture_storag
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -5826,6 +5826,12 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="uniform";usage
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
     OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -5844,17 +5850,9 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="uniform";usage
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -5877,21 +5875,23 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="uniform";usage
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -6006,20 +6006,20 @@ FAIL :single_entry_point:stage="compute";a_kind="storage";b_kind="uniform";usage
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -6045,8 +6045,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_3d"
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -6066,7 +6064,21 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_3d"
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -6086,18 +6098,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_3d"
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
@@ -6120,26 +6120,26 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_3d"
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -6200,8 +6200,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_3d"
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -6222,13 +6220,13 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_3d"
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -6256,16 +6254,18 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_3d"
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -6320,6 +6320,12 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_sto
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
     OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -6338,17 +6344,13 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_sto
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -6377,17 +6379,15 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_sto
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -6413,10 +6413,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_sto
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -6438,6 +6434,10 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="texture_sto
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -6596,10 +6596,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="uniform";us
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -6630,6 +6626,10 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="uniform";us
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
@@ -6698,6 +6698,10 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="uniform";us
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -6718,14 +6722,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="uniform";us
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -6752,18 +6748,22 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_2d";b_kind="uniform";us
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -6824,8 +6824,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -6844,6 +6842,8 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -6909,10 +6909,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -6934,6 +6930,10 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -6943,12 +6943,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
   - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -6970,10 +6964,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -6994,24 +6984,34 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -7035,10 +7035,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7058,6 +7054,10 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -7071,6 +7071,8 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -7090,8 +7092,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -7196,6 +7196,8 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -7216,8 +7218,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="textu
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -7316,12 +7316,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
 
@@ -7340,6 +7334,12 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
@@ -7365,6 +7365,8 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
@@ -7374,8 +7376,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
@@ -7407,8 +7407,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7430,6 +7428,8 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -7468,8 +7468,6 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
       at (elided: only 2 shown)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7496,16 +7494,18 @@ FAIL :single_entry_point:stage="compute";a_kind="texture_external";b_kind="unifo
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
+    OK
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
-    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
@@ -7533,8 +7533,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7554,6 +7552,8 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -7619,15 +7619,15 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -7653,6 +7653,10 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7674,10 +7678,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -7691,8 +7691,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -7714,9 +7712,9 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -7747,15 +7745,17 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_3d";us
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -7779,10 +7779,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7802,6 +7798,10 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -7813,10 +7813,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -7836,9 +7832,11 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
     }
 
       at (elided: only 2 shown)
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
@@ -7858,24 +7856,26 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -7901,10 +7901,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7926,6 +7922,10 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
@@ -7964,8 +7964,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
       at (elided: only 2 shown)
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -7992,18 +7990,20 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="texture_storag
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
-    OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    Expected validation error
+      at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
+    OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -8027,10 +8027,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -8050,19 +8046,13 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:123:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
     OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -8082,6 +8072,22 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
+    OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -8103,27 +8109,21 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code
@@ -8151,8 +8151,6 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
   - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=3
     OK
-  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
-    OK
   - VALIDATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Missing expected compilationInfo 'error' message.
 
@@ -8174,19 +8172,9 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
 
     expectCompileResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:73:28
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_io/group_and_binding.spec.js:131:26
+  - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
-    OK
-  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
-    OK
-  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
     OK
   - VALIDATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Missing expected compilationInfo 'error' message.
@@ -8208,6 +8196,18 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
     }
 
       at (elided: only 2 shown)
+  - INFO: subcase: a_group=0;b_group=3;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=0
+    OK
+  - INFO: subcase: a_group=0;b_group=3;a_binding=3;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=0
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=0;b_binding=3
+    OK
+  - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=0
+    OK
   - INFO: subcase: a_group=3;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=3
@@ -8237,21 +8237,21 @@ FAIL :single_entry_point:stage="compute";a_kind="uniform";b_kind="uniform";usage
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
+    OK
   - EXPECTATION FAILED: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: a_group=0;b_group=0;a_binding=0;b_binding=0
-    OK
+  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a_group=0;b_group=0;a_binding=3;b_binding=3
     OK
   - INFO: subcase: a_group=3;b_group=3;a_binding=0;b_binding=0
     OK
-  - EXPECTATION FAILED: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a_group=3;b_group=3;a_binding=3;b_binding=3
     OK
  Reached unreachable code

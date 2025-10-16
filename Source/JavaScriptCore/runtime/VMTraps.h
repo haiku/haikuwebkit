@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "StackManager.h"
+#include <JavaScriptCore/StackManager.h>
 #include <wtf/AutomaticThread.h>
 #include <wtf/Box.h>
 #include <wtf/Expected.h>
@@ -320,7 +320,7 @@ private:
     bool m_threadStopRequested { false };
     bool m_trapsDeferred { false };
 
-    Box<Lock> m_lock;
+    Box<Lock> m_trapSignalingLock;
     Box<Condition> m_condition;
 
 #if ENABLE(SIGNAL_BASED_VM_TRAPS)

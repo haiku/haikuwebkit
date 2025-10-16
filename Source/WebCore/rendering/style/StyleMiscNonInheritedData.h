@@ -32,6 +32,7 @@
 #include <WebCore/StyleBoxShadow.h>
 #include <WebCore/StyleContent.h>
 #include <WebCore/StyleContentAlignmentData.h>
+#include <WebCore/StyleMaskLayer.h>
 #include <WebCore/StyleObjectPosition.h>
 #include <WebCore/StyleOpacity.h>
 #include <WebCore/StyleOrder.h>
@@ -50,7 +51,6 @@ class TextStream;
 namespace WebCore {
 
 class AnimationList;
-class FillLayer;
 class StyleDeprecatedFlexibleBoxData;
 class StyleFilterData;
 class StyleFlexibleBoxData;
@@ -82,9 +82,9 @@ public:
     DataRef<StyleMultiColData> multiCol; //  CSS3 multicol properties
     DataRef<StyleFilterData> filter; // Filter operations (url, sepia, blur, etc.)
     DataRef<StyleTransformData> transform; // Transform properties (rotate, scale, skew, etc.)
-    DataRef<FillLayer> mask;
     DataRef<StyleVisitedLinkColorData> visitedLinkColor;
 
+    Style::MaskLayers mask;
     RefPtr<AnimationList> animations;
     RefPtr<AnimationList> transitions;
     Style::Content content;

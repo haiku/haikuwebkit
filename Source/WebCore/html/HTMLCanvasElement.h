@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <JavaScriptCore/JSCJSValue.h>
 #include <WebCore/ActiveDOMObject.h>
 #include <WebCore/CanvasBase.h>
 #include <WebCore/Document.h>

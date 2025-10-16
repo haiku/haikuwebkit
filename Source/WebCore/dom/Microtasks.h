@@ -67,6 +67,7 @@ public:
 
     bool isEmpty() const { return m_microtaskQueue.isEmpty(); }
     bool hasMicrotasksForFullyActiveDocument() const;
+    bool isPerformingCheckpoint() const { return m_performingMicrotaskCheckpoint; }
 
     static void runJSMicrotask(JSC::JSGlobalObject*, JSC::VM&, JSC::QueuedTask&);
 

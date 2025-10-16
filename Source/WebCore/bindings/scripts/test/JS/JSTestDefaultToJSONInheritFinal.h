@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "JSDOMWrapper.h"
 #include "JSTestDefaultToJSONInherit.h"
 #include "TestDefaultToJSONInheritFinal.h"
+#include <WebCore/JSDOMWrapper.h>
 
 namespace WebCore {
 

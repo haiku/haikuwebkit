@@ -142,8 +142,6 @@ typedef NS_OPTIONS(NSUInteger, AVOutputDeviceFeatures) {
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSString *deviceName;
 @property (nonatomic, readonly) AVOutputDeviceFeatures deviceFeatures;
-@property (nonatomic, readonly) BOOL supportsHeadTrackedSpatialAudio;
-- (BOOL)allowsHeadTrackedSpatialAudio;
 @end
 
 #if !PLATFORM(IOS_FAMILY)
@@ -269,14 +267,6 @@ typedef NS_ENUM(NSInteger, AVExternalContentProtectionStatus) {
 - (AVExternalContentProtectionStatus)externalContentProtectionStatus;
 @end
 #endif // HAVE(AVCONTENTKEYREQUEST_PENDING_PROTECTION_STATUS)
-
-#if HAVE(AVCONTENTKEYREQUEST_COMPATABILITIY_MODE)
-NS_ASSUME_NONNULL_BEGIN
-@interface AVContentKeyRequest (AVContentKeyRequest_WebKitCompatibilityMode)
-+ (instancetype)contentKeySessionWithLegacyWebKitCompatibilityModeAndKeySystem:(AVContentKeySystem)keySystem storageDirectoryAtURL:(NSURL *)storageURL;
-@end
-NS_ASSUME_NONNULL_END
-#endif
 
 #endif // HAVE(AVCONTENTKEYSESSION)
 

@@ -30,6 +30,7 @@
 
 #import "APIFrameHandle.h"
 #import "APINavigationAction.h"
+#import "APIPageConfiguration.h"
 #import "PopUpSOAuthorizationSession.h"
 #import "RedirectSOAuthorizationSession.h"
 #import "SubFrameSOAuthorizationSession.h"
@@ -39,9 +40,11 @@
 #import <WebCore/ResourceRequest.h>
 #import <pal/spi/cf/CFNetworkSPI.h>
 #import <pal/spi/cocoa/AuthKitSPI.h>
+#import <wtf/BlockPtr.h>
 #import <wtf/Function.h>
 #import <wtf/ThreadAssertions.h>
 #import <wtf/TZoneMallocInlines.h>
+
 #import <pal/cocoa/AppSSOSoftLink.h>
 
 #define AUTHORIZATIONCOORDINATOR_RELEASE_LOG(fmt, ...) RELEASE_LOG(AppSSO, "%p - SOAuthorizationCoordinator::" fmt, this, ##__VA_ARGS__)

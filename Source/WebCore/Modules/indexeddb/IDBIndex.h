@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <WebCore/IDBCursor.h>
+#include "IDBCursor.h"
 #include <WebCore/IDBIndexInfo.h>
 #include <WebCore/IDBRequest.h>
 #include <wtf/TZoneMalloc.h>

@@ -25,7 +25,7 @@
 #ifndef AuthenticationMac_h
 #define AuthenticationMac_h
 
-#import "PlatformExportMacros.h"
+#import <WebCore/PlatformExportMacros.h>
 
 @class NSURLAuthenticationChallenge;
 

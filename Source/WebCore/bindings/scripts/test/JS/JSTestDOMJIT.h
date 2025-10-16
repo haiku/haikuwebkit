@@ -20,10 +20,10 @@
 
 #pragma once
 
-#include "JSDOMWrapper.h"
 #include "JSNode.h"
 #include "TestDOMJIT.h"
 #include <JavaScriptCore/DOMJITGetterSetter.h>
+#include <WebCore/JSDOMWrapper.h>
 
 namespace WebCore {
 

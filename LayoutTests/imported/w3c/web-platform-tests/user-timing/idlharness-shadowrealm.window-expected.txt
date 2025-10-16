@@ -1,4 +1,5 @@
+CONSOLE MESSAGE: ReferenceError: Can't find variable: idl_test_shadowrealm
 
-Harness Error (FAIL), message = ReferenceError: Can't find variable: ShadowRealm
+Harness Error (FAIL), message = ReferenceError: Can't find variable: idl_test_shadowrealm
 
 

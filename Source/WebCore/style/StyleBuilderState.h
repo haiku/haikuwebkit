@@ -25,19 +25,19 @@
 
 #pragma once
 
-#include "CSSToLengthConversionData.h"
 #include "CSSToStyleMap.h"
 #include "CascadeLevel.h"
-#include "Document.h"
-#include "FontTaggedSettings.h"
-#include "PositionArea.h"
-#include "PositionTryFallback.h"
 #include "PropertyCascade.h"
 #include "RuleSet.h"
 #include "SelectorChecker.h"
-#include "StyleForVisitedLink.h"
 #include "TreeResolutionState.h"
-#include "platform/text/TextFlags.h"
+#include <WebCore/CSSToLengthConversionData.h>
+#include <WebCore/Document.h>
+#include <WebCore/FontTaggedSettings.h>
+#include <WebCore/PositionArea.h>
+#include <WebCore/PositionTryFallback.h>
+#include <WebCore/StyleForVisitedLink.h>
+#include <WebCore/TextFlags.h>
 #include <wtf/BitSet.h>
 #include <wtf/RefCountedFixedVector.h>
 

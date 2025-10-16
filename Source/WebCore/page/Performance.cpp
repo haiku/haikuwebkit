@@ -42,6 +42,7 @@
 #include "EventNames.h"
 #include "ExceptionOr.h"
 #include "LocalFrame.h"
+#include "Logging.h"
 #include "PerformanceEntry.h"
 #include "PerformanceEventTiming.h"
 #include "PerformanceMarkOptions.h"
@@ -56,6 +57,7 @@
 #include "ResourceResponse.h"
 #include "ScriptExecutionContext.h"
 #include "dom/DOMHighResTimeStamp.h"
+#include <JavaScriptCore/ProfilerSupport.h>
 #include <ranges>
 #include <wtf/SystemTracing.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -163,6 +165,13 @@ EventCounts* Performance::eventCounts()
     return m_eventCounts.get();
 }
 
+uint64_t Performance::interactionCount()
+{
+    ASSERT(is<Document>(scriptExecutionContext()));
+    ASSERT(isMainThread());
+    return downcast<Document>(*scriptExecutionContext()).window()->interactionCount();
+}
+
 PerformanceNavigation* Performance::navigation()
 {
     if (!is<Document>(scriptExecutionContext()))
@@ -202,6 +211,9 @@ Vector<Ref<PerformanceEntry>> Performance::getEntries() const
     if (m_firstContentfulPaint)
         entries.append(*m_firstContentfulPaint);
 
+    if (m_firstInput)
+        entries.append(*m_firstInput);
+
     std::ranges::sort(entries, PerformanceEntry::startTimeCompareLessThan);
     return entries;
 }
@@ -225,6 +237,9 @@ Vector<Ref<PerformanceEntry>> Performance::getEntriesByType(const String& entryT
         else if (entryType == "measure"_s)
             entries.appendVector(m_userTiming->getMeasures());
     }
+
+    if (entryType == "first-input"_s && m_firstInput)
+        entries.append(*m_firstInput);
 
     std::ranges::sort(entries, PerformanceEntry::startTimeCompareLessThan);
     return entries;
@@ -252,6 +267,11 @@ Vector<Ref<PerformanceEntry>> Performance::getEntriesByName(const String& name, 
             entries.appendVector(m_userTiming->getMarks(name));
         if (entryType.isNull() || entryType == "measure"_s)
             entries.appendVector(m_userTiming->getMeasures(name));
+    }
+
+    if (entryType.isNull() || entryType == "first-input"_s) {
+        if (m_firstInput && name == m_firstInput->name())
+            entries.append(*m_firstInput);
     }
 
     std::ranges::sort(entries, PerformanceEntry::startTimeCompareLessThan);
@@ -293,25 +313,29 @@ void Performance::countEvent(EventType type)
     eventCounts()->add(type);
 }
 
-void Performance::processEventEntry(PerformanceEventTiming::Candidate& candidate, Seconds duration)
+void Performance::processEventEntry(const PerformanceEventTimingCandidate& candidate)
 {
-    // FIXME: handle firstInput based on InteractionId
-    if (!m_firstInput) {
-        m_firstInput = PerformanceEventTiming::create(candidate, duration, true);
+    // Constants to avoid the need to round to the appropriate resolution
+    // (PerformanceEventTiming::durationResolution) when filtering candidates:
+    static constexpr Seconds minDurationCutoffBeforeRounding = PerformanceEventTiming::minimumDurationThreshold - (PerformanceEventTiming::durationResolution / 2);
+    static constexpr Seconds defaultDurationCutoffBeforeRounding = PerformanceEventTiming::defaultDurationThreshold - (PerformanceEventTiming::durationResolution / 2);
+
+    if (!m_firstInput && candidate.interactionID.value) {
+        m_firstInput = PerformanceEventTiming::create(candidate, true);
         queueEntry(*m_firstInput);
     }
 
-    if (duration < minDurationCutoffBeforeRounding)
+    if (candidate.duration < minDurationCutoffBeforeRounding)
         return;
 
     // FIXME: early return more often by keeping track of m_observers; we
     // should keep track of the minimum defaultThreshold and whether any
     // observers are interested in 'event' entries:
-    if (duration <= defaultDurationCutoffBeforeRounding && !m_observers.size())
+    if (candidate.duration <= defaultDurationCutoffBeforeRounding && !m_observers.size())
         return;
 
-    auto entry = PerformanceEventTiming::create(candidate, duration);
-    if (m_eventTimingBuffer.size() < m_eventTimingBufferSize && duration > defaultDurationCutoffBeforeRounding)
+    auto entry = PerformanceEventTiming::create(candidate);
+    if (m_eventTimingBuffer.size() < m_eventTimingBufferSize && candidate.duration > defaultDurationCutoffBeforeRounding)
         m_eventTimingBuffer.append(entry);
 
     queueEntry(entry);
@@ -460,22 +484,30 @@ ExceptionOr<Ref<PerformanceMeasure>> Performance::measure(JSC::JSGlobalObject& g
         return measure.releaseException();
 
     if (isSignpostEnabled()) {
-#if OS(DARWIN)
         Ref entry { measure.returnValue() };
-        auto startTime = m_continuousTimeOrigin + Seconds::fromMilliseconds(entry->startTime());
-        auto endTime = m_continuousTimeOrigin + Seconds::fromMilliseconds(entry->startTime() + entry->duration());
-        uint64_t platformStartTime = startTime.toMachContinuousTime();
-        uint64_t platformEndTime = endTime.toMachContinuousTime();
-        uint64_t correctedStartTime = std::min(platformStartTime, platformEndTime);
-        uint64_t correctedEndTime = std::max(platformStartTime, platformEndTime);
-        // Because signpost intervals are closed invervals [start, end], we decrease the endTime by 1 if startTime and endTime is not the same.
-        if (correctedStartTime != correctedEndTime)
-            correctedEndTime -= 1;
         auto message = measureName.utf8();
+#if OS(DARWIN)
+        {
+            auto startTime = m_continuousTimeOrigin + Seconds::fromMilliseconds(entry->startTime());
+            auto endTime = m_continuousTimeOrigin + Seconds::fromMilliseconds(entry->startTime() + entry->duration());
+            uint64_t platformStartTime = startTime.toMachContinuousTime();
+            uint64_t platformEndTime = endTime.toMachContinuousTime();
+            uint64_t correctedStartTime = std::min(platformStartTime, platformEndTime);
+            uint64_t correctedEndTime = std::max(platformStartTime, platformEndTime);
+            // Because signpost intervals are closed invervals [start, end], we decrease the endTime by 1 if startTime and endTime is not the same.
+            if (correctedStartTime != correctedEndTime)
+                correctedEndTime -= 1;
 
-        WTFBeginSignpostAlwaysWithSpecificTime(entry.ptr(), WebKitPerformance, correctedStartTime, "%" PUBLIC_LOG_STRING, message.data());
-        WTFEndSignpostAlwaysWithSpecificTime(entry.ptr(), WebKitPerformance, correctedEndTime, "%" PUBLIC_LOG_STRING, message.data());
+            WTFBeginSignpostAlwaysWithSpecificTime(entry.ptr(), WebKitPerformance, correctedStartTime, "%" PUBLIC_LOG_STRING, message.data());
+            WTFEndSignpostAlwaysWithSpecificTime(entry.ptr(), WebKitPerformance, correctedEndTime, "%" PUBLIC_LOG_STRING, message.data());
+        }
 #endif
+        {
+            auto timeOrigin = m_continuousTimeOrigin.approximateMonotonicTime();
+            auto startTime = timeOrigin + Seconds::fromMilliseconds(entry->startTime());
+            auto endTime = timeOrigin + Seconds::fromMilliseconds(entry->startTime() + entry->duration());
+            JSC::ProfilerSupport::markInterval(entry.ptr(), JSC::ProfilerSupport::Category::WebKitPerformanceSignpost, startTime, endTime, WTFMove(message));
+        }
     }
 
     queueEntry(measure.returnValue().get());
@@ -536,6 +568,7 @@ void Performance::queueEntry(PerformanceEntry& entry)
     if (!shouldScheduleTask)
         return;
 
+    LOG_WITH_STREAM(PerformanceTimeline, stream << "PerformanceEntry of type " << entry.name() << " dispatched to interested observer at t=" << now());
     scheduleTaskIfNeeded();
 }
 

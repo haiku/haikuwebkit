@@ -196,6 +196,7 @@ namespace JSC {
     macro(FunctionToStringIntrinsic) \
     macro(FunctionBindIntrinsic) \
     macro(IteratorHelperCreateIntrinsic) \
+    macro(WrapForValidIteratorCreateIntrinsic) \
     \
     /* Getter intrinsics. */ \
     macro(TypedArrayLengthIntrinsic) \

@@ -20,10 +20,10 @@
 
 #pragma once
 
+#include "StyleExtractor.h"
 #include <WebCore/CSSStyleProperties.h>
 #include <WebCore/PseudoElementIdentifier.h>
 #include <WebCore/RenderStyleConstants.h>
-#include "StyleExtractor.h"
 #include <wtf/FixedVector.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>

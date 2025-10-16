@@ -28,7 +28,8 @@
 #include "config.h"
 #include "AccessibilitySVGObject.h"
 
-#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
+#include "AXUtilities.h"
 #include "ElementChildIteratorInlines.h"
 #include "ElementInlines.h"
 #include "EventTargetInlines.h"
@@ -84,7 +85,7 @@ AccessibilityObject* AccessibilitySVGObject::targetForUseElement() const
     if (href.isEmpty())
         href = getAttribute(HTMLNames::hrefAttr);
 
-    auto target = SVGURIReference::targetElementFromIRIString(href, use->treeScopeForSVGReferences());
+    auto target = SVGURIReference::targetElementFromIRIString(href, Ref { use->treeScopeForSVGReferences() });
     CheckedPtr cache = axObjectCache();
     return cache ? cache->getOrCreate(target.element.get()) : nullptr;
 }
@@ -251,8 +252,8 @@ bool AccessibilitySVGObject::computeIsIgnored() const
 
     // The SVG AAM states text elements should also be included, if they have content.
     if (m_renderer->isRenderSVGText() || m_renderer->isRenderSVGTextPath()) {
-        for (auto& child : childrenOfType<RenderText>(downcast<RenderElement>(*m_renderer))) {
-            if (!child.containsOnlyCollapsibleWhitespace())
+        for (CheckedRef child : childrenOfType<RenderText>(downcast<RenderElement>(*m_renderer))) {
+            if (!child->containsOnlyCollapsibleWhitespace())
                 return false;
         }
     }
@@ -303,7 +304,7 @@ AccessibilityRole AccessibilitySVGObject::determineAriaRoleAttribute() const
 
 AccessibilityRole AccessibilitySVGObject::determineAccessibilityRole()
 {
-    if ((m_ariaRole = determineAriaRoleAttribute()) != AccessibilityRole::Unknown)
+    if (m_ariaRole != AccessibilityRole::Unknown)
         return m_ariaRole;
 
     if (!m_renderer)

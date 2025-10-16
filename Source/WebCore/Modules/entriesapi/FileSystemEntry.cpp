@@ -34,6 +34,7 @@
 #include "FileSystemDirectoryEntry.h"
 #include "FileSystemEntryCallback.h"
 #include "ScriptExecutionContext.h"
+#include "ScriptWrappableInlines.h"
 #include "WindowEventLoop.h"
 #include <wtf/FileSystem.h>
 #include <wtf/TZoneMallocInlines.h>

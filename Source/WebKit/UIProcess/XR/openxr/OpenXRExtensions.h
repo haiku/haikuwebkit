@@ -46,14 +46,19 @@ public:
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
     PFN_xrGetOpenGLESGraphicsRequirementsKHR xrGetOpenGLESGraphicsRequirementsKHR { nullptr };
 #endif
+#if defined(XR_EXT_hand_tracking)
+    PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT { nullptr };
+    PFN_xrDestroyHandTrackerEXT xrDestroyHandTrackerEXT { nullptr };
+    PFN_xrLocateHandJointsEXT xrLocateHandJointsEXT { nullptr };
+#endif
 };
 
 class OpenXRExtensions final {
     WTF_MAKE_TZONE_ALLOCATED(OpenXRExtensions);
     WTF_MAKE_NONCOPYABLE(OpenXRExtensions);
 public:
-    static std::unique_ptr<OpenXRExtensions> create();
-    OpenXRExtensions(Vector<XrExtensionProperties>&&);
+    static OpenXRExtensions& singleton();
+
     ~OpenXRExtensions();
 
     bool loadMethods(XrInstance);
@@ -61,6 +66,8 @@ public:
     const OpenXRExtensionMethods& methods() const { return *m_methods; }
 
 private:
+    friend class NeverDestroyed<OpenXRExtensions>;
+    OpenXRExtensions();
     Vector<XrExtensionProperties> m_extensions;
     std::unique_ptr<OpenXRExtensionMethods> m_methods;
 };

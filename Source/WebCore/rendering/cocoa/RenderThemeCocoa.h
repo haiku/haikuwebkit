@@ -28,6 +28,7 @@
 
 #include <WebCore/Icon.h>
 #include <WebCore/RenderTheme.h>
+#include <wtf/Platform.h>
 #include <wtf/RetainPtr.h>
 
 OBJC_CLASS NSDateComponentsFormatter;
@@ -292,6 +293,7 @@ private:
 #if ENABLE(VIDEO)
     Vector<String, 2> mediaControlsStyleSheets(const HTMLMediaElement&) override;
     Vector<String, 2> mediaControlsScripts() override;
+    RefPtr<FragmentedSharedBuffer> mediaControlsImageDataForIconNameAndType(const String&, const String&) override;
     String mediaControlsBase64StringForIconNameAndType(const String&, const String&) override;
     String mediaControlsFormattedStringForDuration(double) override;
 

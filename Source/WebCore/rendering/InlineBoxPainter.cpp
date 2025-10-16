@@ -166,7 +166,7 @@ void InlineBoxPainter::paintMask()
     bool flattenCompositingLayers = renderer().view().frameView().paintBehavior().contains(PaintBehavior::FlattenCompositingLayers);
     CompositeOperator compositeOp = CompositeOperator::SourceOver;
     if (!compositedMask || flattenCompositingLayers) {
-        if ((maskBorderSource && renderer().style().maskLayers().hasImage()) || renderer().style().maskLayers().next())
+        if ((maskBorderSource && renderer().style().maskLayers().hasImage()) || renderer().style().maskLayers().size() > 1)
             pushTransparencyLayer = true;
 
         compositeOp = CompositeOperator::DestinationIn;
@@ -292,25 +292,21 @@ void InlineBoxPainter::paintDecorations()
     borderPainter.paintBorder(LayoutRect(stripX, stripY, stripWidth, stripHeight), style);
 }
 
-void InlineBoxPainter::paintFillLayers(const Color& color, const FillLayer& fillLayer, const LayoutRect& rect, CompositeOperator op)
+template<typename Layers> void InlineBoxPainter::paintFillLayers(const Color& color, const Layers& fillLayers, const LayoutRect& rect, CompositeOperator op)
 {
-    Vector<const FillLayer*, 8> layers;
-    for (auto* layer = &fillLayer; layer; layer = layer->next())
-        layers.append(layer);
-
-    for (auto* layer : makeReversedRange(layers))
-        paintFillLayer(color, *layer, rect, op);
+    for (auto& layer : makeReversedRange(fillLayers))
+        paintFillLayer(color, FillLayerToPaint<typename Layers::Layer> { .layer = layer, .isLast = &layer == &fillLayers.last() }, rect, op);
 }
 
-void InlineBoxPainter::paintFillLayer(const Color& color, const FillLayer& fillLayer, const LayoutRect& rect, CompositeOperator op)
+template<typename Layer> void InlineBoxPainter::paintFillLayer(const Color& color, const FillLayerToPaint<Layer>& fillLayer, const LayoutRect& rect, CompositeOperator op)
 {
-    auto* image = fillLayer.image();
+    RefPtr image = fillLayer.layer.image().tryStyleImage();
     bool hasFillImage = image && image->canRender(&renderer(), renderer().style().usedZoom());
-    bool hasFillImageOrBorderRadious = hasFillImage || renderer().style().hasBorderRadius();
+    bool hasFillImageOrBorderRadius = hasFillImage || renderer().style().hasBorderRadius();
 
     BackgroundPainter backgroundPainter { renderer(), m_paintInfo };
 
-    if (!hasFillImageOrBorderRadious || !m_inlineBox.isSplit() || m_isRootInlineBox) {
+    if (!hasFillImageOrBorderRadius || !m_inlineBox.isSplit() || m_isRootInlineBox) {
         backgroundPainter.paintFillLayer(color, fillLayer, rect, BleedAvoidance::None, m_inlineBox, { }, op);
         return;
     }

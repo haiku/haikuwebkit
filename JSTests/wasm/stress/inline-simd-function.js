@@ -1,5 +1,5 @@
 //@ slow!
-//@ skip if !$isWasmPlatform or $buildType == "debug"
+//@ skip if $buildType == "debug"
 
 function instantiate(moduleBase64, importObject) {
     let bytes = Uint8Array.fromBase64(moduleBase64);

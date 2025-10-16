@@ -30,7 +30,7 @@
 #include "IPCEvent.h"
 #include "ImageBufferSet.h"
 #include "PrepareBackingStoreBuffersData.h"
-#include "RemoteDisplayListRecorderIdentifier.h"
+#include "RemoteGraphicsContextIdentifier.h"
 #include "RemoteImageBufferSetConfiguration.h"
 #include "RemoteImageBufferSetIdentifier.h"
 #include "RenderingUpdateID.h"
@@ -45,12 +45,12 @@
 
 namespace WebKit {
 
-class RemoteDisplayListRecorder;
+class RemoteGraphicsContext;
 class RemoteRenderingBackend;
 
 class RemoteImageBufferSet : public IPC::StreamMessageReceiver, public ImageBufferSet {
 public:
-    static Ref<RemoteImageBufferSet> create(RemoteImageBufferSetIdentifier, RemoteDisplayListRecorderIdentifier, RemoteRenderingBackend&);
+    static Ref<RemoteImageBufferSet> create(RemoteImageBufferSetIdentifier, RemoteGraphicsContextIdentifier, RemoteRenderingBackend&);
     ~RemoteImageBufferSet();
     void stopListeningForIPC();
 
@@ -66,7 +66,7 @@ public:
     bool makeBuffersVolatile(OptionSet<BufferInSetType> requestedBuffers, OptionSet<BufferInSetType>& volatileBuffers, bool forcePurge);
 
 private:
-    RemoteImageBufferSet(RemoteImageBufferSetIdentifier, RemoteDisplayListRecorderIdentifier, RemoteRenderingBackend&);
+    RemoteImageBufferSet(RemoteImageBufferSetIdentifier, RemoteGraphicsContextIdentifier, RemoteRenderingBackend&);
     void startListeningForIPC();
     IPC::StreamConnectionWorkQueue& workQueue() const;
 
@@ -93,10 +93,10 @@ private:
     }
 
     const RemoteImageBufferSetIdentifier m_identifier;
-    const RemoteDisplayListRecorderIdentifier m_contextIdentifier;
+    const RemoteGraphicsContextIdentifier m_contextIdentifier;
     const Ref<RemoteRenderingBackend> m_renderingBackend;
     RemoteImageBufferSetConfiguration m_configuration;
-    IPC::ScopedActiveMessageReceiveQueue<RemoteDisplayListRecorder> m_context;
+    IPC::ScopedActiveMessageReceiveQueue<RemoteGraphicsContext> m_context;
     std::optional<WebCore::IntRect> m_previouslyPaintedRect;
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
     WebCore::DynamicContentScalingResourceCache m_dynamicContentScalingResourceCache;

@@ -107,7 +107,7 @@
 #endif
 
 #if HAVE(SUPPORT_HDR_DISPLAY_APIS)
-#import <UIKit/_UITraitHDRHeadroomUsage.h>
+#import <UIKit/UITraitCollection.h>
 #endif
 
 #import <pal/ios/ManagedConfigurationSoftLink.h>
@@ -291,8 +291,8 @@ static WebCore::IntDegrees deviceOrientationForUIInterfaceOrientation(UIInterfac
 #endif
 
 #if HAVE(SUPPORT_HDR_DISPLAY_APIS)
-    [self registerForTraitChanges:@[[_UITraitHDRHeadroomUsage class]] withAction:@selector(_UITraitHDRHeadroomUsageDidChange)];
-    [self _UITraitHDRHeadroomUsageDidChange];
+    [self registerForTraitChanges:@[[UITraitHDRHeadroomUsageLimit class]] withAction:@selector(_hdrHeadroomUsageLimitDidChange)];
+    [self _hdrHeadroomUsageLimitDidChange];
 #endif // HAVE(SUPPORT_HDR_DISPLAY_APIS)
 }
 
@@ -3919,10 +3919,10 @@ static WebCore::UserInterfaceLayoutDirection toUserInterfaceLayoutDirection(UISe
 #endif // HAVE(UIKIT_RESIZABLE_WINDOWS)
 
 #if HAVE(SUPPORT_HDR_DISPLAY_APIS)
-- (void)_UITraitHDRHeadroomUsageDidChange
+- (void)_hdrHeadroomUsageLimitDidChange
 {
-    const _UIHDRHeadroomUsage _headroomUsage = [[self traitCollection] _headroomUsage];
-    _page->setShouldSuppressHDR(_headroomUsage != _UIHDRHeadroomUsageEnabled);
+    const UIHDRHeadroomUsageLimit hdrHeadroomUsageLimit = [[self traitCollection] hdrHeadroomUsageLimit];
+    _page->setShouldSuppressHDR(hdrHeadroomUsageLimit == UIHDRHeadroomUsageLimitActive);
 }
 #endif // HAVE(SUPPORT_HDR_DISPLAY_APIS)
 

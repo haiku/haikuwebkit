@@ -58,6 +58,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@interface _WKTextExtractionInteractionResult ()
+
+- (instancetype)initWithErrorDescription:(NSString *)errorDescription;
+
+@end
+
 typedef NS_ENUM(NSInteger, WKTextExtractionContainer) {
     WKTextExtractionContainerRoot,
     WKTextExtractionContainerViewportConstrained,

@@ -86,7 +86,7 @@ private:
     WebPasteboardProxy();
 
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
-    bool didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&) override;
+    void didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&) override;
 
     RefPtr<WebProcessProxy> webProcessProxyForConnection(IPC::Connection&) const;
 

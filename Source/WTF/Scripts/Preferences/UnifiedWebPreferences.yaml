@@ -1174,6 +1174,20 @@ CSSFontVariantEmojiEnabled:
     WebCore:
       default: false
 
+CSSFunctionAtRuleEnabled:
+  type: bool
+  status: testable
+  category: css
+  humanReadableName: "CSS @function"
+  humanReadableDescription: "Enable CSS @function rule"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 CSSInputSecurityEnabled:
   type: bool
   status: testable
@@ -1352,6 +1366,21 @@ CSSScrollbarWidthEnabled:
   defaultValue:
     WebKitLegacy:
       default: false
+    WebKit:
+      default: true
+    WebCore:
+      default: true
+
+CSSSelectorJITCompilerEnabled:
+  type: bool
+  status: internal
+  category: css
+  humanReadableName: "CSS Selector JIT Compiler"
+  humanReadableDescription: "Enable the JIT compiler for CSS selectors"
+  condition: ENABLE(CSS_SELECTOR_JIT)
+  defaultValue:
+    WebKitLegacy:
+      default: true
     WebKit:
       default: true
     WebCore:
@@ -1812,17 +1841,17 @@ ColorFilterEnabled:
 
 CommandAttributesEnabled:
   type: bool
-  status: preview
+  status: stable
   category: html
   humanReadableName: "HTML command & commandfor attributes"
   humanReadableDescription: "Enable HTML command & commandfor attribute support"
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 # FIXME: WebKit has an alternate name for this called 'ShowDebugBorders'. We should standardize on one name.
 CompositingBordersVisible:
@@ -2626,6 +2655,20 @@ EnterKeyHintEnabled:
       default: false
     WebKit:
       "PLATFORM(COCOA)": true
+      default: false
+    WebCore:
+      default: false
+
+EnumeratedARIAAttributeReflectionEnabled:
+  type: bool
+  status: developer
+  category: javascript
+  humanReadableName: "Enumerated ARIA Attribute Reflection"
+  humanReadableDescription: "Enable enumerated ARIA attributes"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
       default: false
     WebCore:
       default: false
@@ -4443,6 +4486,7 @@ LocalFileContentSniffingEnabled:
 LocalNetworkAccessEnabled:
   type: bool
   status: unstable
+  category: networking
   humanReadableName: "Local Network Access"
   humanReadableDescription: "Enable Local Network Access"
   webKitLegacyPreferenceKey: WebKitLocalNetworkAccessEnabledPreferenceKey
@@ -4629,6 +4673,19 @@ ManagedMediaSourceNeedsAirPlay:
     WebCore:
       default: false
 
+MathFontFamily:
+  type: String
+  status: embedder
+  webKitLegacyPreferenceKey: WebKitMathFont
+  webcoreImplementation: custom
+  defaultValue:
+    WebKitLegacy:
+      default: '""_str'
+    WebKit:
+      default: '""_str'
+    WebCore:
+      default: '""_str'
+
 MathMLEnabled:
   type: bool
   status: embedder
@@ -4775,6 +4832,20 @@ MediaControlsContextMenusEnabled:
       default: false
   sharedPreferenceForWebProcess: true
   mediaPlaybackRelated: true
+
+MediaControlsMacInlineSizeSpecsEnabled:
+  type: bool
+  status: testable
+  category: media
+  humanReadableName: "Media Controls Rounded Corners"
+  humanReadableDescription: "Adopt new size specs for media controls"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 MediaControlsScaleWithPageZoom:
   type: bool
@@ -5290,7 +5361,7 @@ MuteCameraOnMicrophoneInterruptionEnabled:
 
 NavigationAPIEnabled:
   type: bool
-  status: stable
+  status: preview
   category: dom
   humanReadableName: "Navigation API"
   humanReadableDescription: "Enable Navigation API"
@@ -5298,17 +5369,16 @@ NavigationAPIEnabled:
     WebKitLegacy:
       default: false
     WebKit:
-      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)": true
       default: false
     WebCore:
-      "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)": true
       default: false
 
 NavigatorUserAgentDataJavaScriptAPIEnabled:
   type: bool
-  status: unstable
+  status: internal
   category: dom
-  humanReadableName: "Enable the navigator.userAgentData JavaScript API"
+  humanReadableName: "Navigator userAgentData JavaScript API"
+  humanReadableDescription: "Enable the navigator.userAgentData JavaScript API"
   defaultValue:
     WebKitLegacy:
       default: false
@@ -7089,22 +7159,6 @@ ShouldTakeNearSuspendedAssertions:
     WebCore:
       default: true
 
-ShouldUseModernAVContentKeySession:
-  type: bool
-  status: internal
-  category: media
-  humanReadableName: "Modern AVContentKeySession"
-  humanReadableDescription: "Use modern AVContentKeySession"
-  webcoreOnChange: shouldUseModernAVContentKeySessionChanged
-  condition: USE(MODERN_AVCONTENTKEYSESSION)
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 # FIXME: This is not relevent for WebKitLegacy, so should be excluded from WebKitLegacy entirely (though we should still set the default value to false when initializing settings).
 # FIXME: This is not used in WebCore, so should not have a binding to WebCore::Settings.
 ShouldUseServiceWorkerShortTimeout:
@@ -8302,7 +8356,7 @@ VerticalFormControlsEnabled:
 
 VideoFullsceenPrefersMostVisibleHeuristic:
   type: bool
-  status: testable
+  status: stable
   category: media
   humanReadableName: "Prefers most visible video in element fullscreen."
   humanReadableDescription: "Prefers most visible video in element fullscreen."
@@ -8311,9 +8365,9 @@ VideoFullsceenPrefersMostVisibleHeuristic:
     WebKitLegacy:
       default: false
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 VideoFullscreenRequiresElementFullscreen:
   type: bool
@@ -8397,8 +8451,10 @@ VideoRendererUseDecompressionSessionForProtected:
     WebKitLegacy:
       default: false
     WebKit:
+      "PLATFORM(VISION)" : true
       default: false
     WebCore:
+      "PLATFORM(VISION)" : true
       default: false
   sharedPreferenceForWebProcess: true
 

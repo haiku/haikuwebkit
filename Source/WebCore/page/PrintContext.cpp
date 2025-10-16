@@ -22,7 +22,6 @@
 #include "PrintContext.h"
 
 #include "AXIsolatedTree.h"
-#include "AXObjectCache.h"
 #include "AXObjectCacheInlines.h"
 #include "CommonAtomStrings.h"
 #include "ContainerNodeInlines.h"

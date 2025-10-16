@@ -57,6 +57,59 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		2938424F2E258DF1006DF6A9 /* aesni-gcm-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841D82E258DF1006DF6A9 /* aesni-gcm-x86_64-apple.S */; };
+		293842512E258DF1006DF6A9 /* ghash-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842002E258DF1006DF6A9 /* ghash-x86_64-apple.S */; };
+		293842582E258DF1006DF6A9 /* aes-gcm-avx2-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841D22E258DF1006DF6A9 /* aes-gcm-avx2-x86_64-apple.S */; };
+		2938425B2E258DF1006DF6A9 /* aesni-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841DB2E258DF1006DF6A9 /* aesni-x86_64-apple.S */; };
+		2938425F2E258DF1006DF6A9 /* p256_beeu-armv8-asm-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 2938420A2E258DF1006DF6A9 /* p256_beeu-armv8-asm-apple.S */; };
+		293842672E258DF1006DF6A9 /* sha256-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 2938422D2E258DF1006DF6A9 /* sha256-x86_64-apple.S */; };
+		293842712E258DF1006DF6A9 /* p256_beeu-x86_64-asm-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 2938420D2E258DF1006DF6A9 /* p256_beeu-x86_64-asm-apple.S */; };
+		293842772E258DF1006DF6A9 /* ghash-neon-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841F72E258DF1006DF6A9 /* ghash-neon-armv8-apple.S */; };
+		2938427A2E258DF1006DF6A9 /* sha512-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842372E258DF1006DF6A9 /* sha512-x86_64-apple.S */; };
+		2938427C2E258DF1006DF6A9 /* p256-armv8-asm-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842102E258DF1006DF6A9 /* p256-armv8-asm-apple.S */; };
+		2938427E2E258DF1006DF6A9 /* aesv8-gcm-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841E52E258DF1006DF6A9 /* aesv8-gcm-armv8-apple.S */; };
+		293842872E258DF1006DF6A9 /* armv8-mont-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841E92E258DF1006DF6A9 /* armv8-mont-apple.S */; };
+		293842912E258DF1006DF6A9 /* ghashv8-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842072E258DF1006DF6A9 /* ghashv8-armv8-apple.S */; };
+		293842922E258DF1006DF6A9 /* sha1-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842202E258DF1006DF6A9 /* sha1-armv8-apple.S */; };
+		293842932E258DF1006DF6A9 /* sha256-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 2938422A2E258DF1006DF6A9 /* sha256-armv8-apple.S */; };
+		293842942E258DF1006DF6A9 /* rsaz-avx2-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842192E258DF1006DF6A9 /* rsaz-avx2-apple.S */; };
+		2938429A2E258DF1006DF6A9 /* sha512-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842342E258DF1006DF6A9 /* sha512-armv8-apple.S */; };
+		293842A12E258DF1006DF6A9 /* ghash-ssse3-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841FA2E258DF1006DF6A9 /* ghash-ssse3-x86_64-apple.S */; };
+		293842AB2E258DF1006DF6A9 /* bn-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841EF2E258DF1006DF6A9 /* bn-armv8-apple.S */; };
+		293842AE2E258DF1006DF6A9 /* aesv8-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841E22E258DF1006DF6A9 /* aesv8-armv8-apple.S */; };
+		293842B12E258DF1006DF6A9 /* p256-x86_64-asm-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842132E258DF1006DF6A9 /* p256-x86_64-asm-apple.S */; };
+		293842B32E258DF1006DF6A9 /* vpaes-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 2938423B2E258DF1006DF6A9 /* vpaes-armv8-apple.S */; };
+		293842B72E258DF1006DF6A9 /* aes-gcm-avx512-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293841D52E258DF1006DF6A9 /* aes-gcm-avx512-x86_64-apple.S */; };
+		293842BC2E258DF1006DF6A9 /* vpaes-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 2938423E2E258DF1006DF6A9 /* vpaes-x86_64-apple.S */; };
+		293842C02E258DF1006DF6A9 /* sha1-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842232E258DF1006DF6A9 /* sha1-x86_64-apple.S */; };
+		293842C12E258DF1006DF6A9 /* x86_64-mont5-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842472E258DF1006DF6A9 /* x86_64-mont5-apple.S */; };
+		293842C52E258DF1006DF6A9 /* rdrand-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842162E258DF1006DF6A9 /* rdrand-x86_64-apple.S */; };
+		293842C82E258DF1006DF6A9 /* x86_64-mont-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842442E258DF1006DF6A9 /* x86_64-mont-apple.S */; };
+		293842E42E258DFC006DF6A9 /* chacha-armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842CD2E258DFC006DF6A9 /* chacha-armv8-apple.S */; };
+		293842EC2E258DFC006DF6A9 /* aes128gcmsiv-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842C92E258DFC006DF6A9 /* aes128gcmsiv-x86_64-apple.S */; };
+		293842EE2E258DFC006DF6A9 /* chacha-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842D02E258DFC006DF6A9 /* chacha-x86_64-apple.S */; };
+		293842F12E258DFC006DF6A9 /* md5-x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842E02E258DFC006DF6A9 /* md5-x86_64-apple.S */; };
+		293842F32E258DFC006DF6A9 /* chacha20_poly1305_armv8-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842D62E258DFC006DF6A9 /* chacha20_poly1305_armv8-apple.S */; };
+		293842F62E258DFC006DF6A9 /* chacha20_poly1305_x86_64-apple.S in Sources */ = {isa = PBXBuildFile; fileRef = 293842D92E258DFC006DF6A9 /* chacha20_poly1305_x86_64-apple.S */; };
+		293843002E259009006DF6A9 /* cpu_intel.cc in Sources */ = {isa = PBXBuildFile; fileRef = 293842FF2E259009006DF6A9 /* cpu_intel.cc */; };
+		293843012E259009006DF6A9 /* cpu_aarch64_apple.cc in Sources */ = {isa = PBXBuildFile; fileRef = 293842FE2E259009006DF6A9 /* cpu_aarch64_apple.cc */; };
+		29A573662E25BEAD0073CB92 /* fiat_p256_adx_sqr.S in Sources */ = {isa = PBXBuildFile; fileRef = 29A573642E25BEAD0073CB92 /* fiat_p256_adx_sqr.S */; };
+		29A573672E25BEAD0073CB92 /* fiat_curve25519_adx_mul.S in Sources */ = {isa = PBXBuildFile; fileRef = 29A573612E25BEAD0073CB92 /* fiat_curve25519_adx_mul.S */; };
+		29A573682E25BEAD0073CB92 /* fiat_curve25519_adx_square.S in Sources */ = {isa = PBXBuildFile; fileRef = 29A573622E25BEAD0073CB92 /* fiat_curve25519_adx_square.S */; };
+		29A573692E25BEAD0073CB92 /* fiat_p256_adx_mul.S in Sources */ = {isa = PBXBuildFile; fileRef = 29A573632E25BEAD0073CB92 /* fiat_p256_adx_mul.S */; };
+		295762D42E1DBF01006C2416 /* pitch_neon_intr.c in Sources */ = {isa = PBXBuildFile; fileRef = 295762D12E1DBF01006C2416 /* pitch_neon_intr.c */; };
+		295762D92E1DBF01006C2416 /* celt_neon_intr.c in Sources */ = {isa = PBXBuildFile; fileRef = 295762C72E1DBF01006C2416 /* celt_neon_intr.c */; };
+		295762E02E1DBF01006C2416 /* pitch_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 295762D02E1DBF01006C2416 /* pitch_arm.h */; };
+		29FAED1B2E1EE70C00F5645C /* fixed_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = 29FAED1A2E1EE70C00F5645C /* fixed_arm64.h */; };
+		29FAED2F2E1EE83200F5645C /* macros_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = 29FAED212E1EE83200F5645C /* macros_arm64.h */; };
+		29FAED3A2E1EE8BC00F5645C /* LPC_inv_pred_gain_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 29FAED392E1EE8BC00F5645C /* LPC_inv_pred_gain_arm.h */; };
+		29FAED3C2E1EE8C900F5645C /* LPC_inv_pred_gain_neon_intr.c in Sources */ = {isa = PBXBuildFile; fileRef = 29FAED3B2E1EE8C900F5645C /* LPC_inv_pred_gain_neon_intr.c */; };
+		29FAED3E2E1EE8DD00F5645C /* NSQ_del_dec_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 29FAED3D2E1EE8DD00F5645C /* NSQ_del_dec_arm.h */; };
+		29FAED402E1EE8ED00F5645C /* NSQ_del_dec_neon_intr.c in Sources */ = {isa = PBXBuildFile; fileRef = 29FAED3F2E1EE8ED00F5645C /* NSQ_del_dec_neon_intr.c */; };
+		29FAED432E1EE8F800F5645C /* NSQ_neon.h in Headers */ = {isa = PBXBuildFile; fileRef = 29FAED412E1EE8F800F5645C /* NSQ_neon.h */; };
+		29FAED442E1EE8F800F5645C /* NSQ_neon.c in Sources */ = {isa = PBXBuildFile; fileRef = 29FAED422E1EE8F800F5645C /* NSQ_neon.c */; };
+		29FAED472E1EE91C00F5645C /* biquad_alt_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 29FAED452E1EE91C00F5645C /* biquad_alt_arm.h */; };
+		29FAED482E1EE91C00F5645C /* biquad_alt_neon_intr.c in Sources */ = {isa = PBXBuildFile; fileRef = 29FAED462E1EE91C00F5645C /* biquad_alt_neon_intr.c */; };
 		2D6BFF60280A93DF00A1A74F /* video_coding.h in Headers */ = {isa = PBXBuildFile; fileRef = 4131C45B234C81710028A615 /* video_coding.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2D6BFF61280A93EC00A1A74F /* video_codec_initializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4131C45E234C81720028A615 /* video_codec_initializer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2D6BFF62280A93F400A1A74F /* video_codec_interface.h in Headers */ = {isa = PBXBuildFile; fileRef = 4131C45F234C81720028A615 /* video_codec_interface.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -5771,6 +5824,59 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		293841D22E258DF1006DF6A9 /* aes-gcm-avx2-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "aes-gcm-avx2-x86_64-apple.S"; sourceTree = "<group>"; };
+		293841D52E258DF1006DF6A9 /* aes-gcm-avx512-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "aes-gcm-avx512-x86_64-apple.S"; sourceTree = "<group>"; };
+		293841D82E258DF1006DF6A9 /* aesni-gcm-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "aesni-gcm-x86_64-apple.S"; sourceTree = "<group>"; };
+		293841DB2E258DF1006DF6A9 /* aesni-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "aesni-x86_64-apple.S"; sourceTree = "<group>"; };
+		293841E22E258DF1006DF6A9 /* aesv8-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "aesv8-armv8-apple.S"; sourceTree = "<group>"; };
+		293841E52E258DF1006DF6A9 /* aesv8-gcm-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "aesv8-gcm-armv8-apple.S"; sourceTree = "<group>"; };
+		293841E92E258DF1006DF6A9 /* armv8-mont-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "armv8-mont-apple.S"; sourceTree = "<group>"; };
+		293841EF2E258DF1006DF6A9 /* bn-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "bn-armv8-apple.S"; sourceTree = "<group>"; };
+		293841F72E258DF1006DF6A9 /* ghash-neon-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "ghash-neon-armv8-apple.S"; sourceTree = "<group>"; };
+		293841FA2E258DF1006DF6A9 /* ghash-ssse3-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "ghash-ssse3-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842002E258DF1006DF6A9 /* ghash-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "ghash-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842072E258DF1006DF6A9 /* ghashv8-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "ghashv8-armv8-apple.S"; sourceTree = "<group>"; };
+		2938420A2E258DF1006DF6A9 /* p256_beeu-armv8-asm-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "p256_beeu-armv8-asm-apple.S"; sourceTree = "<group>"; };
+		2938420D2E258DF1006DF6A9 /* p256_beeu-x86_64-asm-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "p256_beeu-x86_64-asm-apple.S"; sourceTree = "<group>"; };
+		293842102E258DF1006DF6A9 /* p256-armv8-asm-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "p256-armv8-asm-apple.S"; sourceTree = "<group>"; };
+		293842132E258DF1006DF6A9 /* p256-x86_64-asm-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "p256-x86_64-asm-apple.S"; sourceTree = "<group>"; };
+		293842162E258DF1006DF6A9 /* rdrand-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "rdrand-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842192E258DF1006DF6A9 /* rsaz-avx2-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "rsaz-avx2-apple.S"; sourceTree = "<group>"; };
+		293842202E258DF1006DF6A9 /* sha1-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "sha1-armv8-apple.S"; sourceTree = "<group>"; };
+		293842232E258DF1006DF6A9 /* sha1-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "sha1-x86_64-apple.S"; sourceTree = "<group>"; };
+		2938422A2E258DF1006DF6A9 /* sha256-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "sha256-armv8-apple.S"; sourceTree = "<group>"; };
+		2938422D2E258DF1006DF6A9 /* sha256-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "sha256-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842342E258DF1006DF6A9 /* sha512-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "sha512-armv8-apple.S"; sourceTree = "<group>"; };
+		293842372E258DF1006DF6A9 /* sha512-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "sha512-x86_64-apple.S"; sourceTree = "<group>"; };
+		2938423B2E258DF1006DF6A9 /* vpaes-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "vpaes-armv8-apple.S"; sourceTree = "<group>"; };
+		2938423E2E258DF1006DF6A9 /* vpaes-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "vpaes-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842442E258DF1006DF6A9 /* x86_64-mont-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "x86_64-mont-apple.S"; sourceTree = "<group>"; };
+		293842472E258DF1006DF6A9 /* x86_64-mont5-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "x86_64-mont5-apple.S"; sourceTree = "<group>"; };
+		293842C92E258DFC006DF6A9 /* aes128gcmsiv-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "aes128gcmsiv-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842CD2E258DFC006DF6A9 /* chacha-armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "chacha-armv8-apple.S"; sourceTree = "<group>"; };
+		293842D02E258DFC006DF6A9 /* chacha-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "chacha-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842D62E258DFC006DF6A9 /* chacha20_poly1305_armv8-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "chacha20_poly1305_armv8-apple.S"; sourceTree = "<group>"; };
+		293842D92E258DFC006DF6A9 /* chacha20_poly1305_x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "chacha20_poly1305_x86_64-apple.S"; sourceTree = "<group>"; };
+		293842E02E258DFC006DF6A9 /* md5-x86_64-apple.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = "md5-x86_64-apple.S"; sourceTree = "<group>"; };
+		293842FE2E259009006DF6A9 /* cpu_aarch64_apple.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cpu_aarch64_apple.cc; sourceTree = "<group>"; };
+		293842FF2E259009006DF6A9 /* cpu_intel.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cpu_intel.cc; sourceTree = "<group>"; };
+		29A573612E25BEAD0073CB92 /* fiat_curve25519_adx_mul.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = fiat_curve25519_adx_mul.S; sourceTree = "<group>"; };
+		29A573622E25BEAD0073CB92 /* fiat_curve25519_adx_square.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = fiat_curve25519_adx_square.S; sourceTree = "<group>"; };
+		29A573632E25BEAD0073CB92 /* fiat_p256_adx_mul.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = fiat_p256_adx_mul.S; sourceTree = "<group>"; };
+		29A573642E25BEAD0073CB92 /* fiat_p256_adx_sqr.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = fiat_p256_adx_sqr.S; sourceTree = "<group>"; };
+		295762C72E1DBF01006C2416 /* celt_neon_intr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = celt_neon_intr.c; sourceTree = "<group>"; };
+		295762D02E1DBF01006C2416 /* pitch_arm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pitch_arm.h; sourceTree = "<group>"; };
+		295762D12E1DBF01006C2416 /* pitch_neon_intr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = pitch_neon_intr.c; sourceTree = "<group>"; };
+		29FAED1A2E1EE70C00F5645C /* fixed_arm64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fixed_arm64.h; sourceTree = "<group>"; };
+		29FAED212E1EE83200F5645C /* macros_arm64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = macros_arm64.h; sourceTree = "<group>"; };
+		29FAED392E1EE8BC00F5645C /* LPC_inv_pred_gain_arm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LPC_inv_pred_gain_arm.h; sourceTree = "<group>"; };
+		29FAED3B2E1EE8C900F5645C /* LPC_inv_pred_gain_neon_intr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LPC_inv_pred_gain_neon_intr.c; sourceTree = "<group>"; };
+		29FAED3D2E1EE8DD00F5645C /* NSQ_del_dec_arm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSQ_del_dec_arm.h; sourceTree = "<group>"; };
+		29FAED3F2E1EE8ED00F5645C /* NSQ_del_dec_neon_intr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = NSQ_del_dec_neon_intr.c; sourceTree = "<group>"; };
+		29FAED412E1EE8F800F5645C /* NSQ_neon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSQ_neon.h; sourceTree = "<group>"; };
+		29FAED422E1EE8F800F5645C /* NSQ_neon.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = NSQ_neon.c; sourceTree = "<group>"; };
+		29FAED452E1EE91C00F5645C /* biquad_alt_arm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = biquad_alt_arm.h; sourceTree = "<group>"; };
+		29FAED462E1EE91C00F5645C /* biquad_alt_neon_intr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = biquad_alt_neon_intr.c; sourceTree = "<group>"; };
 		3178AB2C2D80C9A8002F8CF9 /* libgmock.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libgmock.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		3178AB2E2D810582002F8CF9 /* libgtest.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libgtest.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		410091CD242CFD5E00C5EDA2 /* aes_nohw.cc.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; path = aes_nohw.cc.inc; sourceTree = "<group>"; };
@@ -11629,6 +11735,79 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2938424D2E258DF1006DF6A9 /* bcm */ = {
+			isa = PBXGroup;
+			children = (
+				293841D22E258DF1006DF6A9 /* aes-gcm-avx2-x86_64-apple.S */,
+				293841D52E258DF1006DF6A9 /* aes-gcm-avx512-x86_64-apple.S */,
+				293841D82E258DF1006DF6A9 /* aesni-gcm-x86_64-apple.S */,
+				293841DB2E258DF1006DF6A9 /* aesni-x86_64-apple.S */,
+				293841E22E258DF1006DF6A9 /* aesv8-armv8-apple.S */,
+				293841E52E258DF1006DF6A9 /* aesv8-gcm-armv8-apple.S */,
+				293841E92E258DF1006DF6A9 /* armv8-mont-apple.S */,
+				293841EF2E258DF1006DF6A9 /* bn-armv8-apple.S */,
+				293841F72E258DF1006DF6A9 /* ghash-neon-armv8-apple.S */,
+				293841FA2E258DF1006DF6A9 /* ghash-ssse3-x86_64-apple.S */,
+				293842002E258DF1006DF6A9 /* ghash-x86_64-apple.S */,
+				293842072E258DF1006DF6A9 /* ghashv8-armv8-apple.S */,
+				293842102E258DF1006DF6A9 /* p256-armv8-asm-apple.S */,
+				293842132E258DF1006DF6A9 /* p256-x86_64-asm-apple.S */,
+				2938420A2E258DF1006DF6A9 /* p256_beeu-armv8-asm-apple.S */,
+				2938420D2E258DF1006DF6A9 /* p256_beeu-x86_64-asm-apple.S */,
+				293842162E258DF1006DF6A9 /* rdrand-x86_64-apple.S */,
+				293842192E258DF1006DF6A9 /* rsaz-avx2-apple.S */,
+				293842202E258DF1006DF6A9 /* sha1-armv8-apple.S */,
+				293842232E258DF1006DF6A9 /* sha1-x86_64-apple.S */,
+				2938422A2E258DF1006DF6A9 /* sha256-armv8-apple.S */,
+				2938422D2E258DF1006DF6A9 /* sha256-x86_64-apple.S */,
+				293842342E258DF1006DF6A9 /* sha512-armv8-apple.S */,
+				293842372E258DF1006DF6A9 /* sha512-x86_64-apple.S */,
+				2938423B2E258DF1006DF6A9 /* vpaes-armv8-apple.S */,
+				2938423E2E258DF1006DF6A9 /* vpaes-x86_64-apple.S */,
+				293842442E258DF1006DF6A9 /* x86_64-mont-apple.S */,
+				293842472E258DF1006DF6A9 /* x86_64-mont5-apple.S */,
+			);
+			path = bcm;
+			sourceTree = "<group>";
+		};
+		29A573652E25BEAD0073CB92 /* asm */ = {
+			isa = PBXGroup;
+			children = (
+				29A573612E25BEAD0073CB92 /* fiat_curve25519_adx_mul.S */,
+				29A573622E25BEAD0073CB92 /* fiat_curve25519_adx_square.S */,
+				29A573632E25BEAD0073CB92 /* fiat_p256_adx_mul.S */,
+				29A573642E25BEAD0073CB92 /* fiat_p256_adx_sqr.S */,
+			);
+			path = asm;
+			sourceTree = "<group>";
+		};
+		295762D22E1DBF01006C2416 /* arm */ = {
+			isa = PBXGroup;
+			children = (
+				295762C72E1DBF01006C2416 /* celt_neon_intr.c */,
+				29FAED1A2E1EE70C00F5645C /* fixed_arm64.h */,
+				295762D02E1DBF01006C2416 /* pitch_arm.h */,
+				295762D12E1DBF01006C2416 /* pitch_neon_intr.c */,
+			);
+			path = arm;
+			sourceTree = "<group>";
+		};
+		29FAED2A2E1EE83200F5645C /* arm */ = {
+			isa = PBXGroup;
+			children = (
+				29FAED452E1EE91C00F5645C /* biquad_alt_arm.h */,
+				29FAED462E1EE91C00F5645C /* biquad_alt_neon_intr.c */,
+				29FAED392E1EE8BC00F5645C /* LPC_inv_pred_gain_arm.h */,
+				29FAED3B2E1EE8C900F5645C /* LPC_inv_pred_gain_neon_intr.c */,
+				29FAED212E1EE83200F5645C /* macros_arm64.h */,
+				29FAED3D2E1EE8DD00F5645C /* NSQ_del_dec_arm.h */,
+				29FAED3F2E1EE8ED00F5645C /* NSQ_del_dec_neon_intr.c */,
+				29FAED422E1EE8F800F5645C /* NSQ_neon.c */,
+				29FAED412E1EE8F800F5645C /* NSQ_neon.h */,
+			);
+			path = arm;
+			sourceTree = "<group>";
+		};
 		410091EF242E360800C5EDA2 /* h265 */ = {
 			isa = PBXGroup;
 			children = (
@@ -15022,6 +15201,7 @@
 		419C847B1FE256A80040C30F /* fiat */ = {
 			isa = PBXGroup;
 			children = (
+				29A573652E25BEAD0073CB92 /* asm */,
 				41ABB1292BFE00810035D075 /* p256_64.h */,
 			);
 			path = fiat;
@@ -15932,6 +16112,7 @@
 		41BDE3872E0043AE00142A13 /* gen */ = {
 			isa = PBXGroup;
 			children = (
+				2938424D2E258DF1006DF6A9 /* bcm */,
 				41BDE3882E0043D600142A13 /* crypto */,
 			);
 			path = gen;
@@ -15940,7 +16121,13 @@
 		41BDE3882E0043D600142A13 /* crypto */ = {
 			isa = PBXGroup;
 			children = (
+				293842C92E258DFC006DF6A9 /* aes128gcmsiv-x86_64-apple.S */,
+				293842CD2E258DFC006DF6A9 /* chacha-armv8-apple.S */,
+				293842D02E258DFC006DF6A9 /* chacha-x86_64-apple.S */,
+				293842D62E258DFC006DF6A9 /* chacha20_poly1305_armv8-apple.S */,
+				293842D92E258DFC006DF6A9 /* chacha20_poly1305_x86_64-apple.S */,
 				41BDE3892E0043EC00142A13 /* err_data.cc */,
+				293842E02E258DFC006DF6A9 /* md5-x86_64-apple.S */,
 			);
 			path = crypto;
 			sourceTree = "<group>";
@@ -18512,6 +18699,8 @@
 				41BDE3822E00434200142A13 /* spake2plus */,
 				5C4B44611E42A690002651C8 /* stack */,
 				5C4B44621E42A698002651C8 /* x509 */,
+				293842FE2E259009006DF6A9 /* cpu_aarch64_apple.cc */,
+				293842FF2E259009006DF6A9 /* cpu_intel.cc */,
 				5C4B451E1E42A71B002651C8 /* crypto.cc */,
 				5C4B451F1E42A71B002651C8 /* ex_data.cc */,
 				5C4B45201E42A71B002651C8 /* internal.h */,
@@ -19918,6 +20107,7 @@
 		5CDD8CAC1E43C72300621E92 /* celt */ = {
 			isa = PBXGroup;
 			children = (
+				295762D22E1DBF01006C2416 /* arm */,
 				5CDD8D131E43C75500621E92 /* x86 */,
 				5CDD8CAD1E43C75200621E92 /* _kiss_fft_guts.h */,
 				5CDD8CAE1E43C75200621E92 /* arch.h */,
@@ -19990,6 +20180,7 @@
 		5CDD8D5D1E43C7C700621E92 /* silk */ = {
 			isa = PBXGroup;
 			children = (
+				29FAED2A2E1EE83200F5645C /* arm */,
 				5CDD8F021E43CA1300621E92 /* fixed */,
 				5CDD8E9B1E43C9A400621E92 /* float */,
 				5CDD8E241E43C7DC00621E92 /* x86 */,
@@ -21244,6 +21435,7 @@
 				5CDD8E3C1E43C80C00621E92 /* API.h in Headers */,
 				5CDD8D301E43C79C00621E92 /* arch.h in Headers */,
 				5CDD8D321E43C79C00621E92 /* bands.h in Headers */,
+				29FAED472E1EE91C00F5645C /* biquad_alt_arm.h in Headers */,
 				5CDD8D381E43C79C00621E92 /* celt.h in Headers */,
 				5CDD8D361E43C79C00621E92 /* celt_lpc.h in Headers */,
 				5CDD8E461E43C80C00621E92 /* control.h in Headers */,
@@ -21256,15 +21448,18 @@
 				5CDD8D401E43C79C00621E92 /* entdec.h in Headers */,
 				5CDD8D421E43C79C00621E92 /* entenc.h in Headers */,
 				5CDD8E551E43C80C00621E92 /* errors.h in Headers */,
+				29FAED1B2E1EE70C00F5645C /* fixed_arm64.h in Headers */,
 				5CDD8D431E43C79C00621E92 /* fixed_debug.h in Headers */,
 				5CDD8D441E43C79C00621E92 /* fixed_generic.h in Headers */,
 				5CDD8D451E43C79C00621E92 /* float_cast.h in Headers */,
 				5CDD8E5A1E43C80C00621E92 /* Inlines.h in Headers */,
 				5CDD8D471E43C79C00621E92 /* kiss_fft.h in Headers */,
 				5CDD8D491E43C79C00621E92 /* laplace.h in Headers */,
+				29FAED3A2E1EE8BC00F5645C /* LPC_inv_pred_gain_arm.h in Headers */,
 				5CDD8E621E43C80C00621E92 /* MacroCount.h in Headers */,
 				5CDD8E631E43C80C00621E92 /* MacroDebug.h in Headers */,
 				5CDD8E641E43C80C00621E92 /* macros.h in Headers */,
+				29FAED2F2E1EE83200F5645C /* macros_arm64.h in Headers */,
 				5CDD8E651E43C80C00621E92 /* main.h in Headers */,
 				5CDD8F471E43CB1E00621E92 /* main_FIX.h in Headers */,
 				5CDD8EF21E43C9F600621E92 /* main_FLP.h in Headers */,
@@ -21275,11 +21470,14 @@
 				5C4B4AB91E42C574002651C8 /* mlp.h in Headers */,
 				5CDD8D501E43C79C00621E92 /* modes.h in Headers */,
 				5CDD8E701E43C80C00621E92 /* NSQ.h in Headers */,
+				29FAED3E2E1EE8DD00F5645C /* NSQ_del_dec_arm.h in Headers */,
+				29FAED432E1EE8F800F5645C /* NSQ_neon.h in Headers */,
 				CDC1F47625CF69EA0084CA16 /* opus_defines.h in Headers */,
 				5C4B4AC11E42C574002651C8 /* opus_private.h in Headers */,
 				CDC1F47725CF6A640084CA16 /* opus_types.h in Headers */,
 				5CDD8D511E43C79C00621E92 /* os_support.h in Headers */,
 				5CDD8D531E43C79C00621E92 /* pitch.h in Headers */,
+				295762E02E1DBF01006C2416 /* pitch_arm.h in Headers */,
 				5CDD8E711E43C80C00621E92 /* pitch_est_defines.h in Headers */,
 				5CDD8E741E43C80C00621E92 /* PLC.h in Headers */,
 				5CDD8D551E43C79C00621E92 /* quant_bands.h in Headers */,
@@ -25094,6 +25292,7 @@
 				5CDD8EE11E43C9F600621E92 /* autocorrelation_FLP.c in Sources */,
 				5CDD8D311E43C79C00621E92 /* bands.c in Sources */,
 				5CDD8E3D1E43C80C00621E92 /* biquad_alt.c in Sources */,
+				29FAED482E1EE91C00F5645C /* biquad_alt_neon_intr.c in Sources */,
 				5CDD8F3C1E43CB1E00621E92 /* burg_modified_FIX.c in Sources */,
 				5CDD8EE21E43C9F600621E92 /* burg_modified_FLP.c in Sources */,
 				5CDD8E3F1E43C80C00621E92 /* bwexpander.c in Sources */,
@@ -25103,6 +25302,7 @@
 				5CDD8D331E43C79C00621E92 /* celt_decoder.c in Sources */,
 				5CDD8D341E43C79C00621E92 /* celt_encoder.c in Sources */,
 				5CDD8D351E43C79C00621E92 /* celt_lpc.c in Sources */,
+				295762D92E1DBF01006C2416 /* celt_neon_intr.c in Sources */,
 				5CDD8E401E43C80C00621E92 /* check_control_input.c in Sources */,
 				5CDD8E411E43C80C00621E92 /* CNG.c in Sources */,
 				5CDD8E421E43C80C00621E92 /* code_signs.c in Sources */,
@@ -25158,6 +25358,7 @@
 				4153CD2721CC661000C3E188 /* LPC_fit.c in Sources */,
 				5CDD8E611E43C80C00621E92 /* LPC_inv_pred_gain.c in Sources */,
 				5CDD8EEF1E43C9F600621E92 /* LPC_inv_pred_gain_FLP.c in Sources */,
+				29FAED3C2E1EE8C900F5645C /* LPC_inv_pred_gain_neon_intr.c in Sources */,
 				5CDD8F451E43CB1E00621E92 /* LTP_analysis_filter_FIX.c in Sources */,
 				5CDD8EF01E43C9F600621E92 /* LTP_analysis_filter_FLP.c in Sources */,
 				5CDD8F461E43CB1E00621E92 /* LTP_scale_ctrl_FIX.c in Sources */,
@@ -25179,7 +25380,9 @@
 				5CDD8EF31E43C9F600621E92 /* noise_shape_analysis_FLP.c in Sources */,
 				5CDD8E6F1E43C80C00621E92 /* NSQ.c in Sources */,
 				5CDD8E6E1E43C80C00621E92 /* NSQ_del_dec.c in Sources */,
+				29FAED402E1EE8ED00F5645C /* NSQ_del_dec_neon_intr.c in Sources */,
 				418938C2242A3D46007FDC41 /* NSQ_del_dec_sse4_1.c in Sources */,
+				29FAED442E1EE8F800F5645C /* NSQ_neon.c in Sources */,
 				418938C3242A3D46007FDC41 /* NSQ_sse4_1.c in Sources */,
 				5C4B4AC21E42C574002651C8 /* opus.c in Sources */,
 				5C4B4ABB1E42C574002651C8 /* opus_decoder.c in Sources */,
@@ -25191,6 +25394,7 @@
 				5CDD8F491E43CB1E00621E92 /* pitch_analysis_core_FIX.c in Sources */,
 				5CDD8EF41E43C9F600621E92 /* pitch_analysis_core_FLP.c in Sources */,
 				5CDD8E721E43C80C00621E92 /* pitch_est_tables.c in Sources */,
+				295762D42E1DBF01006C2416 /* pitch_neon_intr.c in Sources */,
 				5CDD8E731E43C80C00621E92 /* PLC.c in Sources */,
 				5CDD8F4B1E43CB1E00621E92 /* process_gains_FIX.c in Sources */,
 				5CDD8EF61E43C9F600621E92 /* process_gains_FLP.c in Sources */,
@@ -25274,8 +25478,16 @@
 				5C4B47551E42AAF5002651C8 /* a_type.cc in Sources */,
 				5C4B47561E42AAF5002651C8 /* a_utctm.cc in Sources */,
 				5C4B46701E42AA3C002651C8 /* a_verify.cc in Sources */,
+				293842582E258DF1006DF6A9 /* aes-gcm-avx2-x86_64-apple.S in Sources */,
+				293842B72E258DF1006DF6A9 /* aes-gcm-avx512-x86_64-apple.S in Sources */,
 				41BDE37B2E0042E100142A13 /* aes.cc in Sources */,
+				293842EC2E258DFC006DF6A9 /* aes128gcmsiv-x86_64-apple.S in Sources */,
+				2938424F2E258DF1006DF6A9 /* aesni-gcm-x86_64-apple.S in Sources */,
+				2938425B2E258DF1006DF6A9 /* aesni-x86_64-apple.S in Sources */,
+				293842AE2E258DF1006DF6A9 /* aesv8-armv8-apple.S in Sources */,
+				2938427E2E258DF1006DF6A9 /* aesv8-gcm-armv8-apple.S in Sources */,
 				5C4B46711E42AA3C002651C8 /* algorithm.cc in Sources */,
+				293842872E258DF1006DF6A9 /* armv8-mont-apple.S in Sources */,
 				5C4B471E1E42AAD6002651C8 /* asn1_compat.cc in Sources */,
 				5C4B46721E42AA3C002651C8 /* asn1_gen.cc in Sources */,
 				5C4B47591E42AAF5002651C8 /* asn1_lib.cc in Sources */,
@@ -25288,16 +25500,23 @@
 				5C4B473A1E42AAEA002651C8 /* bio_mem.cc in Sources */,
 				5CFACF35226E96ED0056C7D0 /* bio_ssl.cc in Sources */,
 				41D728F72665069C00651A0B /* blake2.cc in Sources */,
+				293842AB2E258DF1006DF6A9 /* bn-armv8-apple.S in Sources */,
 				41A391BB1EFC45CD00C4516A /* bn_asn1.cc in Sources */,
 				5C4B47231E42AADA002651C8 /* buf.cc in Sources */,
 				5C4B46731E42AA3C002651C8 /* by_dir.cc in Sources */,
 				5C4B46741E42AA3C002651C8 /* by_file.cc in Sources */,
 				5C4B47201E42AAD6002651C8 /* cbb.cc in Sources */,
 				5C4B47211E42AAD6002651C8 /* cbs.cc in Sources */,
+				293842E42E258DFC006DF6A9 /* chacha-armv8-apple.S in Sources */,
+				293842EE2E258DFC006DF6A9 /* chacha-x86_64-apple.S in Sources */,
 				5C4B471D1E42AAD0002651C8 /* chacha.cc in Sources */,
+				293842F32E258DFC006DF6A9 /* chacha20_poly1305_armv8-apple.S in Sources */,
+				293842F62E258DFC006DF6A9 /* chacha20_poly1305_x86_64-apple.S in Sources */,
 				5C4B47DB1E42C021002651C8 /* conf.cc in Sources */,
 				5C4B473D1E42AAEA002651C8 /* connect.cc in Sources */,
 				41A391BC1EFC45CD00C4516A /* convert.cc in Sources */,
+				293843012E259009006DF6A9 /* cpu_aarch64_apple.cc in Sources */,
+				293843002E259009006DF6A9 /* cpu_intel.cc in Sources */,
 				5C4B463C1E42AA2C002651C8 /* crypto.cc in Sources */,
 				412FF945254B10A5001DF036 /* curve25519.cc in Sources */,
 				5CFACF36226E96F20056C7D0 /* d1_both.cc in Sources */,
@@ -25339,11 +25558,19 @@
 				5C4B475E1E42AAF5002651C8 /* f_int.cc in Sources */,
 				5C4B475F1E42AAF5002651C8 /* f_string.cc in Sources */,
 				5C4B473E1E42AAEA002651C8 /* fd.cc in Sources */,
+				29A573672E25BEAD0073CB92 /* fiat_curve25519_adx_mul.S in Sources */,
+				29A573682E25BEAD0073CB92 /* fiat_curve25519_adx_square.S in Sources */,
+				29A573692E25BEAD0073CB92 /* fiat_p256_adx_mul.S in Sources */,
+				29A573662E25BEAD0073CB92 /* fiat_p256_adx_sqr.S in Sources */,
 				5C4B473F1E42AAEA002651C8 /* file.cc in Sources */,
 				41402E802CFF3DAA00F7A84A /* fips_shared_support.cc in Sources */,
 				41402E962CFF3EA100F7A84A /* fork_detect.cc in Sources */,
 				41A392151EFC4B3A00C4516A /* forkunsafe.cc in Sources */,
 				41ABB15D2BFE01AD0035D075 /* getentropy.cc in Sources */,
+				293842772E258DF1006DF6A9 /* ghash-neon-armv8-apple.S in Sources */,
+				293842A12E258DF1006DF6A9 /* ghash-ssse3-x86_64-apple.S in Sources */,
+				293842512E258DF1006DF6A9 /* ghash-x86_64-apple.S in Sources */,
+				293842912E258DF1006DF6A9 /* ghashv8-armv8-apple.S in Sources */,
 				41D729032665079700651A0B /* handoff.cc in Sources */,
 				5CFACF3C226E970C0056C7D0 /* handshake.cc in Sources */,
 				5CFACF3D226E970F0056C7D0 /* handshake_client.cc in Sources */,
@@ -25356,12 +25583,17 @@
 				411927682A375B8B007C09F6 /* kyber.cc in Sources */,
 				5C4B46DF1E42AA89002651C8 /* lhash.cc in Sources */,
 				41402E882CFF3E2700F7A84A /* md4.cc in Sources */,
+				293842F12E258DFC006DF6A9 /* md5-x86_64-apple.S in Sources */,
 				41402E862CFF3E1F00F7A84A /* md5.cc in Sources */,
 				5C4B463F1E42AA2C002651C8 /* mem.cc in Sources */,
 				41402E922CFF3E7B00F7A84A /* mlkem.cc in Sources */,
 				4119277D2A375E8B007C09F6 /* name_print.cc in Sources */,
 				5C4B46CD1E42AA70002651C8 /* obj.cc in Sources */,
 				5C4B46CB1E42AA70002651C8 /* obj_xref.cc in Sources */,
+				2938427C2E258DF1006DF6A9 /* p256-armv8-asm-apple.S in Sources */,
+				293842B12E258DF1006DF6A9 /* p256-x86_64-asm-apple.S in Sources */,
+				2938425F2E258DF1006DF6A9 /* p256_beeu-armv8-asm-apple.S in Sources */,
+				293842712E258DF1006DF6A9 /* p256_beeu-x86_64-asm-apple.S in Sources */,
 				5C4B46BC1E42AA66002651C8 /* p5_pbev2.cc in Sources */,
 				41ABB1C02BFE40190035D075 /* p_dh.cc in Sources */,
 				41ABB1BF2BFE40190035D075 /* p_dh_asn1.cc in Sources */,
@@ -25400,16 +25632,24 @@
 				5C4B47431E42AAEA002651C8 /* printf.cc in Sources */,
 				413111BB2552A0B2001B9D95 /* rand.cc in Sources */,
 				5C4B46B01E42AA51002651C8 /* rc4.cc in Sources */,
+				293842C52E258DF1006DF6A9 /* rdrand-x86_64-apple.S in Sources */,
 				41ABB15A2BFE015A0035D075 /* refcount.cc in Sources */,
 				41A391D31EFC484D00C4516A /* rsa_asn1.cc in Sources */,
 				4119276B2A375BB0007C09F6 /* rsa_crypt.cc in Sources */,
 				5C4B467A1E42AA3C002651C8 /* rsa_pss.cc in Sources */,
+				293842942E258DF1006DF6A9 /* rsaz-avx2-apple.S in Sources */,
 				5CFACF3F226E97180056C7D0 /* s3_both.cc in Sources */,
 				5CFACF40226E971C0056C7D0 /* s3_lib.cc in Sources */,
 				5CFACF41226E971F0056C7D0 /* s3_pkt.cc in Sources */,
 				41ABB1BE2BFE40190035D075 /* scrypt.cc in Sources */,
+				293842922E258DF1006DF6A9 /* sha1-armv8-apple.S in Sources */,
+				293842C02E258DF1006DF6A9 /* sha1-x86_64-apple.S in Sources */,
 				41402E8D2CFF3E4C00F7A84A /* sha1.cc in Sources */,
+				293842932E258DF1006DF6A9 /* sha256-armv8-apple.S in Sources */,
+				293842672E258DF1006DF6A9 /* sha256-x86_64-apple.S in Sources */,
 				41402E8E2CFF3E4C00F7A84A /* sha256.cc in Sources */,
+				2938429A2E258DF1006DF6A9 /* sha512-armv8-apple.S in Sources */,
+				2938427A2E258DF1006DF6A9 /* sha512-x86_64-apple.S in Sources */,
 				41402E8F2CFF3E4C00F7A84A /* sha512.cc in Sources */,
 				5C4B46F01E42AA97002651C8 /* sign.cc in Sources */,
 				4119277B2A375E3F007C09F6 /* siphash.cc in Sources */,
@@ -25482,6 +25722,8 @@
 				41ABB1452BFE00C30035D075 /* v3_purp.cc in Sources */,
 				41ABB14C2BFE00C30035D075 /* v3_skey.cc in Sources */,
 				41ABB1472BFE00C30035D075 /* v3_utl.cc in Sources */,
+				293842B32E258DF1006DF6A9 /* vpaes-armv8-apple.S in Sources */,
+				293842BC2E258DF1006DF6A9 /* vpaes-x86_64-apple.S in Sources */,
 				41A3921A1EFC5AB800C4516A /* x25519-asm-arm.S in Sources */,
 				5C4B469F1E42AA3C002651C8 /* x509.cc in Sources */,
 				5C4B468F1E42AA3C002651C8 /* x509_att.cc in Sources */,
@@ -25502,6 +25744,8 @@
 				5C4B46A11E42AA3C002651C8 /* x509name.cc in Sources */,
 				5C4B46A21E42AA3C002651C8 /* x509rset.cc in Sources */,
 				5C4B46A31E42AA3C002651C8 /* x509spki.cc in Sources */,
+				293842C82E258DF1006DF6A9 /* x86_64-mont-apple.S in Sources */,
+				293842C12E258DF1006DF6A9 /* x86_64-mont5-apple.S in Sources */,
 				5C4B46801E42AA3C002651C8 /* x_algor.cc in Sources */,
 				41A391CC1EFC46DE00C4516A /* x_all.cc in Sources */,
 				5C4B46821E42AA3C002651C8 /* x_attrib.cc in Sources */,

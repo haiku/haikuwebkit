@@ -249,12 +249,7 @@ PASS :format:method="render-pass-resolve";format="r16uint";sampleCount=1;viewUsa
 PASS :format:method="render-pass-resolve";format="r16uint";sampleCount=1;viewUsageMethod="minimal"
 PASS :format:method="render-pass-resolve";format="r16sint";sampleCount=1;viewUsageMethod="inherit"
 PASS :format:method="render-pass-resolve";format="r16sint";sampleCount=1;viewUsageMethod="minimal"
-FAIL :format:method="render-pass-resolve";format="r16float";sampleCount=1;viewUsageMethod="inherit" assert_unreached:
-  - EXCEPTION: OperationError: map async was not successful
-  - EXCEPTION: Error: Device was unexpectedly lost. Reason: unknown, Message:
-    assert@http://127.0.0.1:8000/webgpu/common/util/util.js:37:20
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:106:13
- Reached unreachable code
+PASS :format:method="render-pass-resolve";format="r16float";sampleCount=1;viewUsageMethod="inherit"
 PASS :format:method="render-pass-resolve";format="r16float";sampleCount=1;viewUsageMethod="minimal"
 PASS :format:method="render-pass-resolve";format="rg16uint";sampleCount=1;viewUsageMethod="inherit"
 PASS :format:method="render-pass-resolve";format="rg16uint";sampleCount=1;viewUsageMethod="minimal"

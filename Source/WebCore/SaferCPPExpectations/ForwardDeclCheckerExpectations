@@ -31,7 +31,7 @@ Modules/webdatabase/DatabaseManager.h
 Modules/webdatabase/DatabaseThread.h
 accessibility/AXTextMarker.cpp
 accessibility/AccessibilityObject.cpp
-bindings/js/GCController.cpp
+bindings/js/GarbageCollectionController.cpp
 bindings/js/JSDOMAsyncIterator.h
 bindings/js/JSDOMConvertBase.h
 bindings/js/JSLocationCustom.cpp

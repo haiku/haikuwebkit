@@ -23,7 +23,6 @@
 
 #include "OpenXRExtensions.h"
 #include "PlatformXRCoordinator.h"
-
 #include <WebCore/PageIdentifier.h>
 #include <openxr/openxr.h>
 #include <wtf/Box.h>
@@ -31,12 +30,14 @@
 #include <wtf/Threading.h>
 
 namespace WebCore {
+class GBMDevice;
 class GLContext;
-class PlatformDisplay;
+class GLDisplay;
 }
 
 namespace WebKit {
 
+class OpenXRInput;
 class OpenXRLayer;
 class OpenXRSwapchain;
 
@@ -60,15 +61,11 @@ public:
 
 private:
     void createInstance();
-    void createSessionIfNeeded();
-    std::unique_ptr<OpenXRSwapchain> createSwapchain(uint32_t width, uint32_t height, bool alpha);
-    void cleanupSessionAndAssociatedResources();
+    RefPtr<WebCore::GLDisplay> createGLDisplay() const;
     void initializeDevice();
     void initializeSystem();
     void initializeBlendModes();
-    void tryInitializeGraphicsBinding();
     void collectViewConfigurations();
-    bool collectSwapchainFormatsIfNeeded();
 
     struct Idle {
     };
@@ -76,44 +73,49 @@ private:
         WeakPtr<PlatformXRCoordinatorSessionEventClient> sessionEventClient;
         WebCore::PageIdentifier pageIdentifier;
         Box<RenderState> renderState;
-        RefPtr<Thread> renderThread;
+        RefPtr<WorkQueue> renderQueue;
     };
     using State = Variant<Idle, Active>;
 
-    void handleSessionStateChange(Box<RenderState>);
-    void endSessionIfExists(std::optional<WebCore::PageIdentifier>);
+    void createSessionIfNeeded();
+    void handleSessionStateChange();
+    void tryInitializeGraphicsBinding();
+    void cleanupSessionAndAssociatedResources();
+    bool collectSwapchainFormatsIfNeeded();
     enum class PollResult : bool;
-    PollResult pollEvents(Box<RenderState>);
-    PlatformXR::FrameData populateFrameData(Box<RenderState>);
+    PollResult pollEvents();
+    std::unique_ptr<OpenXRSwapchain> createSwapchain(uint32_t width, uint32_t height, bool alpha) const;
     void createReferenceSpacesIfNeeded(Box<RenderState>);
+    PlatformXR::FrameData populateFrameData(Box<RenderState>);
+    void beginFrame(Box<RenderState>);
+    void endFrame(Box<RenderState>, Vector<XRDeviceLayer>&&);
     void renderLoop(Box<RenderState>);
-    void submitFrameInternal(Box<RenderState>, Vector<XRDeviceLayer>&&);
 
     XRDeviceIdentifier m_deviceIdentifier { XRDeviceIdentifier::generate() };
     XrInstance m_instance { XR_NULL_HANDLE };
     XrSystemId m_systemId { XR_NULL_SYSTEM_ID };
-    XrSession m_session { XR_NULL_HANDLE };
+    State m_state;
     Vector<XrViewConfigurationView> m_viewConfigurationViews;
     XrViewConfigurationType m_currentViewConfiguration;
-    Vector<XrView> m_views;
-    XrSessionState m_sessionState { XR_SESSION_STATE_UNKNOWN };
     XrEnvironmentBlendMode m_vrBlendMode;
     XrEnvironmentBlendMode m_arBlendMode;
-    XrSpace m_localSpace { XR_NULL_HANDLE };
-    XrSpace m_floorSpace { XR_NULL_HANDLE };
+    PlatformXR::SessionMode m_sessionMode;
+    RefPtr<WebCore::GLDisplay> m_glDisplay;
+#if USE(GBM)
+    mutable RefPtr<WebCore::GBMDevice> m_gbmDevice;
+#endif
+    std::unique_ptr<OpenXRInput> m_input;
 
-    std::unique_ptr<OpenXRExtensions>
-        m_extensions;
+    XrSession m_session { XR_NULL_HANDLE };
+    XrSessionState m_sessionState { XR_SESSION_STATE_UNKNOWN };
     bool m_isSessionRunning { false };
+    Vector<XrView> m_views;
     HashMap<PlatformXR::LayerHandle, std::unique_ptr<OpenXRLayer>> m_layers;
     Vector<int64_t> m_supportedSwapchainFormats;
-
-    std::unique_ptr<WebCore::PlatformDisplay> m_platformDisplay;
-    std::unique_ptr<WebCore::GLContext> m_glContext;
     XrGraphicsBindingEGLMNDX m_graphicsBinding;
-
-    State m_state;
-    PlatformXR::SessionMode m_sessionMode;
+    std::unique_ptr<WebCore::GLContext> m_glContext;
+    XrSpace m_localSpace { XR_NULL_HANDLE };
+    XrSpace m_floorSpace { XR_NULL_HANDLE };
 };
 
 } // namespace WebKit

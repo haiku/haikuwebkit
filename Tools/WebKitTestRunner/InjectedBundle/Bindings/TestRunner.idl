@@ -280,17 +280,7 @@ interface TestRunner {
     object numberOfDFGCompiles(object function);
     object neverInlineFunction(object function);
 
-    // Swipe gestures
-    undefined installDidBeginSwipeCallback(object callback);
-    undefined installWillEndSwipeCallback(object callback);
-    undefined installDidEndSwipeCallback(object callback);
-    undefined installDidRemoveSwipeSnapshotCallback(object callback);
-
     unsigned long imageCountInGeneralPasteboard();
-
-    // UI Process Testing
-    undefined runUIScript(DOMString script, object callback);
-    undefined runUIScriptImmediately(DOMString script, object callback);
 
     undefined accummulateLogsForChannel(DOMString channel);
 
@@ -371,6 +361,7 @@ interface TestRunner {
     undefined getAllStorageAccessEntries(object callback);
     undefined setRequestStorageAccessThrowsExceptionUntilReload(boolean enabled);
     Promise<undefined> setStorageAccessPermission(boolean value, DOMString subFrameURL);
+    Promise<undefined> setStorageAccess(boolean value);
 
     // Open panel
     undefined setOpenPanelFiles(object filesArray);
@@ -392,8 +383,6 @@ interface TestRunner {
     readonly attribute boolean didCancelClientRedirect;
 
     undefined removeAllSessionCredentials(object callback);
-
-    undefined getApplicationManifestThen(object callback);
 
     undefined installFakeHelvetica(DOMString configuration);
 
@@ -427,7 +416,6 @@ interface TestRunner {
     // WebAuthn
     undefined addTestKeyToKeychain(DOMString privateKeyBase64, DOMString attrLabel, DOMString applicationTagBase64);
     undefined cleanUpKeychain(DOMString attrLabel, optional DOMString applicationLabelBase64);
-    boolean keyExistsInKeychain(DOMString attrLabel, DOMString applicationLabelBase64);
 
     undefined clearMemoryCache();
 
@@ -459,11 +447,6 @@ interface TestRunner {
     undefined getAndClearReportedWindowProxyAccessDomains(object callback);
     Promise<undefined> flushConsoleLogs();
     Promise<undefined> updatePresentation();
-
-    undefined scrollDuringEnterFullscreen();
-    undefined waitBeforeFinishingFullscreenExit();
-    undefined finishFullscreenExit();
-    undefined requestExitFullscreenFromUIProcess();
 
     Promise<undefined> setObscuredContentInsets(double top, double right, double bottom, double left);
     Promise<undefined> setPageScaleFactor(unrestricted double scaleFactor, long x, long y);

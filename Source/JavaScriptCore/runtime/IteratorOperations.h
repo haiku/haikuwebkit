@@ -30,6 +30,9 @@
 #include <JavaScriptCore/JSArrayIterator.h>
 #include <JavaScriptCore/JSCJSValue.h>
 #include <JavaScriptCore/JSObjectInlines.h>
+#include <JavaScriptCore/JSSetInlines.h>
+#include <JavaScriptCore/JSSetIterator.h>
+#include <JavaScriptCore/SetIteratorPrototypeInlines.h>
 #include <JavaScriptCore/ThrowScope.h>
 
 namespace JSC {
@@ -58,6 +61,29 @@ JS_EXPORT_PRIVATE bool hasIteratorMethod(JSGlobalObject*, JSValue);
 
 JS_EXPORT_PRIVATE IterationMode getIterationMode(VM&, JSGlobalObject*, JSValue iterable);
 JS_EXPORT_PRIVATE IterationMode getIterationMode(VM&, JSGlobalObject*, JSValue iterable, JSValue symbolIterator);
+
+
+template<typename CallBackType>
+static ALWAYS_INLINE void forEachInSetStorage(VM& vm, JSGlobalObject* globalObject, JSCell* storageCell, JSSet::Helper::Entry startEntry, NOESCAPE const CallBackType& callback)
+{
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    auto* storage = jsCast<JSSet::Storage*>(storageCell);
+    JSSet::Helper::Entry entry = startEntry;
+
+    while (true) {
+        storageCell = JSSet::Helper::nextAndUpdateIterationEntry(vm, *storage, entry);
+        if (storageCell == vm.orderedHashTableSentinel())
+            break;
+
+        storage = jsCast<JSSet::Storage*>(storageCell);
+        entry = JSSet::Helper::iterationEntry(*storage) + 1;
+        JSValue entryKey = JSSet::Helper::getIterationEntryKey(*storage);
+
+        callback(vm, globalObject, entryKey);
+        RETURN_IF_EXCEPTION(scope, void());
+    }
+}
 
 template<typename CallBackType>
 static ALWAYS_INLINE void forEachInFastArray(JSGlobalObject* globalObject, JSValue iterable, JSArray* array, NOESCAPE const CallBackType& callback)
@@ -121,6 +147,17 @@ void forEachInIterable(JSGlobalObject* globalObject, JSValue iterable, NOESCAPE 
         return;
     }
 
+    if (auto* jsSet = jsDynamicCast<JSSet*>(iterable)) {
+        if (jsSet->isIteratorProtocolFastAndNonObservable()) {
+            JSCell* storageCell = jsSet->storageOrSentinel(vm);
+            if (storageCell != vm.orderedHashTableSentinel()) {
+                forEachInSetStorage(vm, globalObject, storageCell, 0, callback);
+                RETURN_IF_EXCEPTION(scope, void());
+            }
+            return;
+        }
+    }
+
     IterationRecord iterationRecord = iteratorForIterable(globalObject, iterable);
     RETURN_IF_EXCEPTION(scope, void());
     scope.release();
@@ -176,6 +213,22 @@ void forEachInIteratorProtocol(JSGlobalObject* globalObject, JSValue iterable, N
 {
     auto& vm = getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
+
+    if (auto* setIterator = jsDynamicCast<JSSetIterator*>(iterable)) {
+        if (setIteratorProtocolIsFastAndNonObservable(vm, setIterator)) {
+            if (JSSet* iteratedSet = jsCast<JSSet*>(setIterator->iteratedObject())) {
+                if (iteratedSet->isIteratorProtocolFastAndNonObservable()) {
+                    JSCell* storageCell = iteratedSet->storageOrSentinel(vm);
+                    if (storageCell != vm.orderedHashTableSentinel()) {
+                        JSSet::Helper::Entry startEntry = setIterator->entry();
+                        forEachInSetStorage(vm, globalObject, storageCell, startEntry, callback);
+                        RETURN_IF_EXCEPTION(scope, void());
+                    }
+                    return;
+                }
+            }
+        }
+    }
 
     IterationRecord iterationRecord = iteratorDirect(globalObject, iterable);
     RETURN_IF_EXCEPTION(scope, void());

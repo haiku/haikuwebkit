@@ -84,7 +84,7 @@ static gboolean wpeDisplayHeadlessConnect(WPEDisplay*, GError**)
 
 static WPEView* wpeDisplayHeadlessCreateView(WPEDisplay* display)
 {
-    auto* view = wpe_view_headless_new(WPE_DISPLAY_HEADLESS(display));
+    auto* view = WPE_VIEW(g_object_new(WPE_TYPE_VIEW_HEADLESS, "display", display, nullptr));
     if (wpe_settings_get_boolean(wpe_display_get_settings(display), WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, nullptr)) {
         GRefPtr<WPEToplevel> toplevel = adoptGRef(wpe_toplevel_headless_new(WPE_DISPLAY_HEADLESS(display)));
         wpe_view_set_toplevel(view, toplevel.get());

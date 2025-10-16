@@ -160,6 +160,10 @@
         "in CSS cascading order. High priority properties must not accept <length>",
         "values. All font-properties must be high-priority.",
         "",
+        "* medium-priority:",
+        "Whether the property needs to be applied before non-medium-priority properties",
+        "in CSS cascading order.",
+        "",
         "* sink-priority:",
         "Whether the property needs to be applied at the end of its priority bucket",
         "in CSS cascading order.",
@@ -568,16 +572,13 @@
                 "cursive",
                 "fantasy",
                 "monospace",
+                "math",
                 {
                     "value": "system-ui",
                     "status": "unimplemented"
                 },
                 {
                     "value": "emoji",
-                    "status": "unimplemented"
-                },
-                {
-                    "value": "math",
                     "status": "unimplemented"
                 },
                 {
@@ -2024,6 +2025,7 @@
                 "local"
             ],
             "codegen-properties": {
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Attachment",
                 "fill-layer-property": true,
                 "disables-native-appearance": true,
@@ -2065,6 +2067,7 @@
                 }
             ],
             "codegen-properties": {
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "BlendMode",
                 "fill-layer-property": true,
                 "separator": ",",
@@ -2103,6 +2106,7 @@
                 }
             ],
             "codegen-properties": {
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Clip",
                 "fill-layer-property": true,
                 "separator": " ",
@@ -2137,10 +2141,13 @@
                 "none"
             ],
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "FillLayerStyleTypeWrapper",
                 "fill-layer-name-for-methods": "Image",
                 "fill-layer-property": true,
+                "fill-layer-primary": true,
+                "style-converter": "StyleType<ImageOrNone>",
                 "disables-native-appearance": true,
+                "medium-priority": true,
                 "separator": " ",
                 "parser-grammar": "<single-background-image>#"
             },
@@ -2159,6 +2166,7 @@
                 "content-box"
             ],
             "codegen-properties": {
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Origin",
                 "fill-layer-property": true,
                 "disables-native-appearance": true,
@@ -2192,10 +2200,10 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "FillLayerStyleTypeWrapper",
                 "fill-layer-name-for-methods": "XPosition",
                 "fill-layer-property": true,
-                "style-extractor-converter": "StyleType<FillPositionX>",
+                "style-converter": "StyleType<PositionX>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<single-background-position-x>#"
             },
@@ -2208,10 +2216,10 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "FillLayerStyleTypeWrapper",
                 "fill-layer-name-for-methods": "YPosition",
                 "fill-layer-property": true,
-                "style-extractor-converter": "StyleType<FillPositionY>",
+                "style-converter": "StyleType<PositionY>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<single-background-position-y>#"
             },
@@ -2232,8 +2240,10 @@
                 "no-repeat"
             ],
             "codegen-properties": {
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Repeat",
                 "fill-layer-property": true,
+                "style-converter": "StyleType<RepeatStyle>",
                 "parser-grammar": "<single-background-repeat>#"
             },
             "specification": {
@@ -2250,10 +2260,10 @@
                 "contain"
             ],
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "FillLayerStyleTypeWrapper",
                 "fill-layer-name-for-methods": "Size",
                 "fill-layer-property": true,
-                "style-extractor-converter": "FillLayerBackgroundSize",
+                "style-converter": "StyleType<BackgroundSize>",
                 "disables-native-appearance": true,
                 "separator": " ",
                 "parser-grammar": "<single-background-size>#"
@@ -5664,7 +5674,7 @@
                 "no-clip"
             ],
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Clip",
                 "fill-layer-property": true,
                 "parser-grammar": "<single-mask-clip>#"
@@ -5684,7 +5694,7 @@
                 "exclude"
             ],
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Composite",
                 "fill-layer-property": true,
                 "style-extractor-converter": "FillLayerMaskComposite",
@@ -5705,9 +5715,12 @@
                 "aliases": [
                     "-webkit-mask-image"
                 ],
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Image",
                 "fill-layer-property": true,
+                "fill-layer-primary": true,
+                "style-converter": "StyleType<ImageOrNone>",
+                "medium-priority": true,
                 "parser-grammar": "<single-mask-image>#"
             },
             "specification": {
@@ -5724,9 +5737,10 @@
                 "match-source"
             ],
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "MaskMode",
                 "fill-layer-property": true,
+                "style-converter": "FillLayerMaskMode",
                 "parser-grammar": "<single-mask-mode>#"
             },
             "specification": {
@@ -5774,7 +5788,7 @@
                 "aliases": [
                     "-webkit-mask-origin"
                 ],
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Origin",
                 "fill-layer-property": true,
                 "parser-grammar": "<single-mask-origin>#"
@@ -5819,10 +5833,10 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "FillLayerStyleTypeWrapper",
                 "fill-layer-name-for-methods": "XPosition",
                 "fill-layer-property": true,
-                "style-extractor-converter": "StyleType<FillPositionX>",
+                "style-converter": "StyleType<PositionX>",
                 "parser-grammar": "<single-webkit-mask-position-x>#"
             },
             "status": {
@@ -5838,10 +5852,10 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "FillLayerStyleTypeWrapper",
                 "fill-layer-name-for-methods": "YPosition",
                 "fill-layer-property": true,
-                "style-extractor-converter": "StyleType<FillPositionY>",
+                "style-converter": "StyleType<PositionY>",
                 "parser-grammar": "<single-webkit-mask-position-y>#"
             },
             "status": {
@@ -5868,8 +5882,10 @@
                 "aliases":[
                     "-webkit-mask-repeat"
                 ],
+                "animation-wrapper": "DiscreteFillLayerWrapper",
                 "fill-layer-name-for-methods": "Repeat",
                 "fill-layer-property": true,
+                "style-converter": "StyleType<RepeatStyle>",
                 "parser-grammar": "<single-mask-repeat>#"
             },
             "specification": {
@@ -5889,10 +5905,10 @@
                 "aliases":[
                     "-webkit-mask-size"
                 ],
-                "animation-wrapper": "FillLayersWrapper",
+                "animation-wrapper": "FillLayerStyleTypeWrapper",
                 "fill-layer-name-for-methods": "Size",
                 "fill-layer-property": true,
-                "style-extractor-converter": "FillLayerMaskSize",
+                "style-converter": "StyleType<BackgroundSize>",
                 "parser-grammar": "<single-mask-size>#"
             },
             "specification": {
@@ -10312,7 +10328,7 @@
                 "none"
             ],
             "codegen-properties": {
-                "style-converter": "LineClamp",
+                "style-converter": "StyleType<WebkitLineClamp>",
                 "parser-grammar": "none | <percentage [0,inf]> | <integer [1,inf]>"
             },
             "status": "non-standard"
@@ -10508,7 +10524,7 @@
                 "skip-style-builder": true,
                 "fill-layer-name-for-methods": "MaskMode",
                 "fill-layer-property": true,
-                "style-extractor-converter": "FillLayerWebkitMaskSourceType",
+                "style-converter": "FillLayerWebkitMaskSourceType",
                 "parser-grammar": "<single-webkit-mask-source-type>#"
             },
             "status": {
@@ -10784,7 +10800,7 @@
                 }
             ],
             "codegen-properties": {
-                "style-converter": "TextDecorationLine",
+                "style-converter": "StyleType<TextDecorationLine>",
                 "aliases": [
                     "-webkit-text-decoration-line"
                 ],
@@ -10929,7 +10945,7 @@
             "inherited": true,
             "codegen-properties": {
                 "skip-style-builder": true,
-                "style-extractor-converter": "TextDecorationLine",
+                "style-extractor-converter": "StyleType<TextDecorationLine>",
                 "render-style-name-for-methods": "TextDecorationLineInEffect",
                 "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt) | spelling-error@(settings-flag=cssTextDecorationLineErrorValues)",
                 "comment": "FIXME: Should this be an alias of text-decoration-line?"
@@ -12801,6 +12817,18 @@
                 }
             }
         },
+        "@function": {
+            "result": {
+                "codegen-properties": {
+                    "settings-flag": "cssFunctionAtRuleEnabled",
+                    "parser-grammar": "<declaration-value>?"
+                },
+                "specification": {
+                    "category": "css-mixins",
+                    "url": "https://www.w3.org/TR/css-mixins-1/#descdef-function-result"
+                }
+            }
+        },
         "@view-transition": {
             "navigation": {
                 "values": [
@@ -12979,6 +13007,11 @@
             "shortname": "CSS Masking",
             "longname": "CSS Masking Module",
             "url": "https://drafts.fxtf.org/css-masking-1/"
+        },
+        "css-mixins": {
+            "shortname": "CSS Functions and Mixins",
+            "longname": "CSS Functions and Mixins Module",
+            "url": "https://www.w3.org/TR/css-mixins-1"
         },
         "css-motion-path": {
             "shortname": "CSS Motion Path",

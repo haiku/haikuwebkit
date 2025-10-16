@@ -42,7 +42,7 @@ struct LineInput {
 
 class AbstractLineBuilder {
 public:
-    virtual LineLayoutResult layoutInlineContent(const LineInput&, const std::optional<PreviousLine>&) = 0;
+    virtual LineLayoutResult layoutInlineContent(const LineInput&, const std::optional<PreviousLine>&, bool isFirstFormattedLineCandidate) = 0;
     virtual ~AbstractLineBuilder() { };
 
     void setIntrinsicWidthMode(IntrinsicWidthMode);
@@ -57,7 +57,7 @@ protected:
     std::optional<IntrinsicWidthMode> intrinsicWidthMode() const { return m_intrinsicWidthMode; }
     bool isInIntrinsicWidthMode() const { return !!intrinsicWidthMode(); }
 
-    bool isFirstFormattedLine() const { return !m_previousLine.has_value(); }
+    bool isFirstFormattedLineCandidate() const { return m_isFirstFormattedLineCandidate; }
 
     InlineContentBreaker& inlineContentBreaker() { return m_inlineContentBreaker; }
 
@@ -77,6 +77,7 @@ protected:
     Vector<const InlineItem*, 32> m_wrapOpportunityList;
     std::optional<InlineTextItem> m_partialLeadingTextItem;
     std::optional<PreviousLine> m_previousLine { };
+    bool m_isFirstFormattedLineCandidate { false };
 
 private:
     InlineFormattingContext& m_inlineFormattingContext;

@@ -48,7 +48,9 @@ public:
 
     virtual void goToItem(HistoryItem&) = 0;
 
+    virtual Vector<Ref<HistoryItem>> allItems(FrameIdentifier) = 0;
     virtual RefPtr<HistoryItem> itemAtIndex(int, FrameIdentifier) = 0;
+
     virtual unsigned backListCount() const = 0;
     virtual unsigned forwardListCount() const = 0;
     virtual bool containsItem(const HistoryItem&) const = 0;

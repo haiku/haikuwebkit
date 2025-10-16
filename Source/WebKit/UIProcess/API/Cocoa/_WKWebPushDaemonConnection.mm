@@ -170,7 +170,7 @@ static _WKWebPushPermissionState toWKPermissionsState(WebCore::PushPermissionSta
 }
 
 
-- (void)showNotification:(_WKNotificationData *)notificationData completionHandler:(void (^)())completionHandler
+- (void)showNotification:(_WKNotificationData *)notificationData completionHandler:(void (^)(void))completionHandler
 {
     self._protectedConnection->showNotification([notificationData _getCoreData], [completionHandlerCopy = makeBlockPtr(completionHandler)] () {
         completionHandlerCopy();

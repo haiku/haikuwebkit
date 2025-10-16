@@ -36,6 +36,7 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/RunLoop.h>
 #import <wtf/Vector.h>
+#import <wtf/cocoa/SpanCocoa.h>
 
 #import "NearFieldSoftLink.h"
 

@@ -308,6 +308,7 @@
         "kern.tcsm_available" ;; Needed for IndexedDB support.
         "kern.tcsm_enable"
         "kern.willshutdown"
+        "machdep.ptrauth_enabled"
         "vm.malloc_ranges") ;; <rdar://problem/105161083>
     (sysctl-name-prefix "kern.proc.pid.")
     (sysctl-name-prefix "net.routetable"))

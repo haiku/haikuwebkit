@@ -121,9 +121,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paint-order-003-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paint-order-003-ref.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paint-order-003.svg
-/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paintorder-text-decorations-expected.svg
-/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paintorder-text-decorations-ref.svg
-/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paintorder-text-decorations.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paint-order-text-decorations-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paint-order-text-decorations-ref.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/paint-order-text-decorations.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/pattern-external-reference-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/pattern-external-reference.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/percentage-attribute-expected.svg

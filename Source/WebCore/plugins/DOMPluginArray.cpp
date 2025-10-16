@@ -24,6 +24,7 @@
 #include "FrameInlines.h"
 #include "LocalFrameInlines.h"
 #include "Page.h"
+#include "ScriptWrappableInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/AtomString.h>
 

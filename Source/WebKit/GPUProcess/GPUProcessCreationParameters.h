@@ -51,9 +51,6 @@ struct GPUProcessCreationParameters {
     SandboxExtension::Handle launchServicesExtensionHandle;
 #endif
 #endif
-#if USE(MODERN_AVCONTENTKEYSESSION)
-    bool shouldUseModernAVContentKeySession { false };
-#endif
 
 #if USE(SANDBOX_EXTENSIONS_FOR_CACHE_AND_TEMP_DIRECTORY_ACCESS)
     SandboxExtension::Handle containerCachesDirectoryExtensionHandle;

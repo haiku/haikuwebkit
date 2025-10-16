@@ -40,7 +40,7 @@
 #include "DocumentInlines.h"
 #include "FontCustomPlatformData.h"
 #include "FontFaceSet.h"
-#include "GCController.h"
+#include "GarbageCollectionController.h"
 #include "IDBConnectionProxy.h"
 #include "ImageBitmapOptions.h"
 #include "InspectorInstrumentation.h"
@@ -686,7 +686,7 @@ void WorkerGlobalScope::dumpGCHeapForWorkers()
     Locker locker { allWorkerGlobalScopeIdentifiersLock };
     for (auto& globalScopeIdentifier : allWorkerGlobalScopeIdentifiers()) {
         postTaskTo(globalScopeIdentifier, [](auto& context) {
-            GCController::dumpHeapForVM(downcast<WorkerGlobalScope>(context).vm());
+            GarbageCollectionController::dumpHeapForVM(downcast<WorkerGlobalScope>(context).vm());
         });
     }
 }

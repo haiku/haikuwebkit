@@ -65,9 +65,11 @@
 #include "RenderView.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImage.h"
+#include "SVGSVGElement.h"
 #include "Settings.h"
 #include "TextPainter.h"
 #include <wtf/StackStats.h>
+#include <wtf/TypeCasts.h>
 #include <wtf/TZoneMallocInlines.h>
 
 #if PLATFORM(IOS_FAMILY)
@@ -452,6 +454,20 @@ bool RenderImage::shouldDisplayBrokenImageIcon() const
     return imageResource().errorOccurred();
 }
 
+// Per CSSWG resolution, we should respect 0px inline sizes.
+// See: https://github.com/w3c/csswg-drafts/issues/11236#issuecomment-2718502765
+bool RenderImage::shouldRespectZeroIntrinsicWidth() const
+{
+    auto* cachedImage = this->cachedImage();
+    if (!cachedImage)
+        return false;
+    if (auto* svgImage = dynamicDowncast<SVGImage>(cachedImage->image())) {
+        if (auto rootElement = svgImage->rootElement())
+            return rootElement->hasIntrinsicWidth();
+    }
+    return false;
+}
+
 #if ENABLE(MULTI_REPRESENTATION_HEIC)
 bool RenderImage::isMultiRepresentationHEIC() const
 {
@@ -651,7 +667,7 @@ void RenderImage::paintReplaced(PaintInfo& paintInfo, const LayoutPoint& paintOf
 void RenderImage::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
 {
     RenderReplaced::paint(paintInfo, paintOffset);
-    
+
     if (paintInfo.phase == PaintPhase::Outline)
         paintAreaElementFocusRing(paintInfo, paintOffset);
 }
@@ -768,7 +784,7 @@ bool RenderImage::foregroundIsKnownToBeOpaqueInRect(const LayoutRect& localRect,
         return false;
     if (!contentBoxRect().contains(localRect))
         return false;
-    auto backgroundClip = style().backgroundClip();
+    auto backgroundClip = style().backgroundLayers().first().clip();
     // Background paints under borders.
     if (backgroundClip == FillBox::BorderBox && style().hasBorder() && !borderObscuresBackground())
         return false;

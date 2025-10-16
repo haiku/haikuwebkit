@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "ExceptionOr.h"
 #include "PerformanceEntry.h"
 #include <wtf/text/WTFString.h>
 
@@ -37,6 +38,7 @@ namespace WebCore {
 
 class SerializedScriptValue;
 class ScriptExecutionContext;
+template<typename> class ExceptionOr;
 
 class PerformanceMeasure final : public PerformanceEntry {
 public:

@@ -30,6 +30,7 @@
 #include "APIFrameInfo.h"
 #include "APISecurityOrigin.h"
 #include "WKAPICast.h"
+#include "WebPageProxy.h"
 
 WKTypeID WKFrameInfoGetTypeID()
 {

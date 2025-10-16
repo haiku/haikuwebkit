@@ -1,28 +1,40 @@
 # Longstanding SPI used by WebKit before we started auditing SPI use.
 # NEVER add to this list, only remove!
 
-[graphics.legacy]
+[[legacy]]
 classes = [
     "CAFilter",
 ]
 
-[writing-tools.legacy]
+[[legacy]]
 classes = [
     "WTTextSuggestion",
 ]
 symbols = [
     "_$s5UIKit16UITextEffectViewC09PonderingC0C2idAC0C2IDVvgTj",
     "_$s5UIKit16UITextEffectViewC0C2IDVSHAAMc",
-    "_$s5UIKit16UITextEffectViewC0C2IDVSQAAMc",
     "_$s5UIKit16UITextEffectViewC16removeAllEffectsyyFTj",
 ]
 
-[ios26.legacy]
+[[legacy]]
+selectors = [
+    { name = "_isAnimatingScroll", class = "UIScrollView" },
+    { name = "_isAnimatingZoom", class = "UIScrollView" },
+    { name = "_stopScrollingAndZoomingAnimations", class = "UIScrollView" },
+]
+requires = [ "!HAVE_UI_SCROLL_VIEW_APIS_ADDED_IN_RADAR_112474145" ]
+
+[[legacy]]
+selectors = [
+    { name = "isInteractivelyResizing", class = "UIWindowSceneGeometry" }, # Staging_143004359
+]
+requires = ["!HAVE_UI_WINDOW_SCENE_LIVE_RESIZE_API_143004359"]
+
+[[legacy]]
 selectors = [
     { name = "_countOfBytesReceivedEncoded", class = "?" },
     { name = "_deviceLanguage", class = "?" },
     { name = "_establishmentReport", class = "?" },
-    { name = "_setPrivacyProxyFailClosed:", class = "?" },
     { name = "_transitionCoordinator", class = "?" },
     { name = "accessibilityElementsWithPlugin:", class = "?" },
     { name = "accessibilityHitTest:withPlugin:", class = "?" },
@@ -63,7 +75,7 @@ symbols = [
     "_kCGDataProviderIndeterminateSize",
 ]
 
-[pre-ios26.legacy]
+[[legacy]]
 classes = [
     "AKAuthorizationController",
     "AMSEngagementRequest",
@@ -219,7 +231,6 @@ selectors = [
     { name = "_legacy_sizeWithFont:minFontSize:actualFontSize:forWidth:lineBreakMode:", class = "?" },
     { name = "_lp_simplifiedDisplayString", class = "?" },
     { name = "_modifiedInput", class = "?" },
-    { name = "_needsNetworkTrackingPrevention", class = "?" },
     { name = "_networkContext", class = "?" },
     { name = "_nsTextAlternative", class = "?" },
     { name = "_pageContentRect:", class = "?" },
@@ -230,7 +241,6 @@ selectors = [
     { name = "_resolvedCNAMEChain", class = "?" },
     { name = "_sceneIdentifier", class = "?" },
     { name = "_sendCloseCode:reason:", class = "?" },
-    { name = "_setAllowPrivateAccessTokensForThirdParty:", class = "?" },
     { name = "_setAllowableSeparation:", class = "?" },
     { name = "_setAllowsDownscaling:", class = "?" },
     { name = "_setAllowsMultipleSelection:", class = "?" },
@@ -240,7 +250,6 @@ selectors = [
     { name = "_setAnimator:", class = "?" },
     { name = "_setAttributedTitle:", class = "?" },
     { name = "_setAvoidsJumpOnInterruptedBounce:", class = "?" },
-    { name = "_setBlockTrackers:", class = "?" },
     { name = "_setColorsToMatchTintColor:", class = "?" },
     { name = "_setCompletionHandler:", class = "?" },
     { name = "_setContainerView:", class = "?" },
@@ -258,12 +267,9 @@ selectors = [
     { name = "_setIsContentManaged:", class = "?" },
     { name = "_setLiftDelay:", class = "?" },
     { name = "_setMagnifierEnabled:", class = "?" },
-    { name = "_setNeedsNetworkTrackingPrevention:", class = "?" },
     { name = "_setNonWakingTopics:", class = "?" },
     { name = "_setOpportunisticTopics:", class = "?" },
-    { name = "_setPrivacyProxyFailClosedForUnreachableHosts:", class = "?" },
     { name = "_setPrivateLocalContext:", class = "?" },
-    { name = "_setProhibitPrivacyProxy:", class = "?" },
     { name = "_setRequiresPickingConfirmation:", class = "?" },
     { name = "_setRequiresQuietImpulse:", class = "?" },
     { name = "_setSectionContentInsetFollowsLayoutMargins:", class = "?" },
@@ -274,7 +280,6 @@ selectors = [
     { name = "_setToViewController:", class = "?" },
     { name = "_setTransitionIsInFlight:", class = "?" },
     { name = "_setUsesCheckedSelection:", class = "?" },
-    { name = "_setWebSearchContent:", class = "?" },
     { name = "_signatureForBlockAtArgumentIndex:", class = "?" },
     { name = "_sourceApplicationAuditTokenData", class = "?" },
     { name = "_sourceApplicationSecondaryIdentifier", class = "?" },
@@ -405,6 +410,7 @@ selectors = [
     { name = "initWithPolicyChangeHandler:", class = "?" },
     { name = "initWithPreviewItemProvider:contentType:previewTitle:fileSize:previewItem:", class = "?" },
     { name = "initWithPrimaryString:alternativeStrings:isLowConfidence:", class = "?" },
+    { name = "initWithProvider:", class = "PDFDocument" },
     { name = "initWithQueue:", class = "CoreTelephonyClient" },
     { name = "initWithRequest:bag:presentingViewController:", class = "?" },
     { name = "initWithRequestContext:appIdentifier:", class = "?" },
@@ -419,7 +425,6 @@ selectors = [
     { name = "interactionDidStartForURL:", class = "?" },
     { name = "invalidateURLTokenForInfo:completion:", class = "?" },
     { name = "isAutofilleSIMIdAllowedForDomain:error:", class = "?" },
-    { name = "isChecked", class = "?" },
     { name = "isErrorStatusCode:", class = "?" },
     { name = "isInHardwareKeyboardMode", class = "?" },
     { name = "isLiveCameraOnlyAction", class = "?" },
@@ -710,9 +715,7 @@ selectors = [
     { name = "_saveCookies:", class = "?" },
     { name = "_schemeWasUpgradedDueToDynamicHSTS", class = "?" },
     { name = "_setCookies:forURL:mainDocumentURL:policyProperties:", class = "?" },
-    { name = "_setPrivacyProxyFailClosedForUnreachableNonMainHosts:", class = "?" },
     { name = "_setProperty:forKey:", class = "?" },
-    { name = "_setUseEnhancedPrivacyMode:", class = "?" },
     { name = "_strictlyUnarchivedObjectOfClasses:fromData:error:", class = "?" },
     { name = "_web_removeFileOnlyAtPath:", class = "?" },
     { name = "addCommitHandler:forPhase:", class = "?" },
@@ -731,7 +734,6 @@ selectors = [
     ]
 symbols = [
     "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C2idAC0C2IDVvgTj",
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C5chunk4view8delegate9fromColorAeA0bcF5ChunkC_AcE8Delegate_pSo7UIColorCtcfc",
     "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateMp",
     "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP011replacementC11DidCompleteyyAEFTq",
     "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP07performE18AndGeneratePreview3for6effect9animationSo010UITargetedK0CSgAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq",
@@ -739,37 +741,22 @@ symbols = [
     "_$s5UIKit16UITextEffectViewC015ReplacementTextC0CMa",
     "_$s5UIKit16UITextEffectViewC03addC0yAC0C2IDVAC04TextC0_pFTj",
     "_$s5UIKit16UITextEffectViewC06removeC0yyAC0C2IDVFTj",
-    "_$s5UIKit16UITextEffectViewC09PonderingC0C5chunk4view18lightConfigurationAeA0bC9TextChunkC_AcA018UIDirectionalLightcD0C0I0Vtcfc",
     "_$s5UIKit16UITextEffectViewC09PonderingC0CAC04TextC0AAWP",
     "_$s5UIKit16UITextEffectViewC09PonderingC0CMa",
     "_$s5UIKit16UITextEffectViewC0C2IDV2eeoiySbAE_AEtFZ",
     "_$s5UIKit16UITextEffectViewC0C2IDVMa",
     "_$s5UIKit16UITextEffectViewC0C2IDVMn",
-    "_$s5UIKit16UITextEffectViewC6sourceAcA0bcD6Source_p_tcfc",
     "_$s5UIKit16UITextEffectViewCMa",
     "_$s5UIKit16UITextEffectViewCMn",
     "_$s5UIKit21UITextEffectTextChunkCMn",
     "_$s5UIKit28UIDirectionalLightEffectViewC13ConfigurationV9fillColorSo7UIColorCvg",
     "_$s5UIKit28UIDirectionalLightEffectViewC13ConfigurationV9ponderingAEvgZ",
     "_$s5UIKit28UIDirectionalLightEffectViewC13ConfigurationVMa",
-
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C5chunk4view8delegate9fromColorAeA0bcF5ChunkC_AcE8Delegate_pSo7UIColorCtcfC",
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq",
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq",
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaF",
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTu",
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaF",
-    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTu",
-    "_$s5UIKit16UITextEffectViewC09PonderingC0C5chunk4view18lightConfigurationAeA0bC9TextChunkC_AcA018UIDirectionalLightcD0C0I0VtcfC",
-    "_$s5UIKit16UITextEffectViewC6sourceAcA0bcD6Source_p_tcfC",
-
     "_APSEnvironmentProduction",
     "_ASCAuthorizationErrorDomain",
     "_BKSDisplayBrightnessGetCurrent",
     "_BKSHIDEventSetDigitizerInfo",
     "_CABackingStoreCollectBlocking",
-    "_CARenderServerRenderDisplayLayerWithTransformAndTimeOffset",
-    "_CARenderServerRenderLayerWithTransform",
     "_CFHTTPCookieStorageCreateFromFile",
     "_CFHTTPCookieStorageCreateFromIdentifyingData",
     "_CFHTTPCookieStorageCreateIdentifyingData",
@@ -953,7 +940,36 @@ symbols = [
     "_kGSEventHardwareKeyboardAvailabilityChangedNotification",
 ]
 
-[pre-ios26-internal-only.legacy]
+# Some of the TextEffectView SPI symbols WebKit uses change between Debug and Release builds. This appears to be an
+# implementation detail of Swift's ABI in different optimization modes. Perhaps
+# audit-spi should have a higher level way to declare usage of Swift types that
+# allows use of both kinds of symbols. (rdar://158963645)
+[[legacy]]
+symbols = [
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq",
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq",
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaF",
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTu",
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaF",
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTu",
+]
+[[legacy]]
+symbols = [
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C5chunk4view8delegate9fromColorAeA0bcF5ChunkC_AcE8Delegate_pSo7UIColorCtcfC",
+    "_$s5UIKit16UITextEffectViewC09PonderingC0C5chunk4view18lightConfigurationAeA0bC9TextChunkC_AcA018UIDirectionalLightcD0C0I0VtcfC",
+    "_$s5UIKit16UITextEffectViewC6sourceAcA0bcD6Source_p_tcfC",
+]
+requires = ["!NDEBUG"]
+[[legacy]]
+symbols = [
+    "_$s5UIKit16UITextEffectViewC015ReplacementTextC0C5chunk4view8delegate9fromColorAeA0bcF5ChunkC_AcE8Delegate_pSo7UIColorCtcfc",
+    "_$s5UIKit16UITextEffectViewC09PonderingC0C5chunk4view18lightConfigurationAeA0bC9TextChunkC_AcA018UIDirectionalLightcD0C0I0Vtcfc",
+    "_$s5UIKit16UITextEffectViewC0C2IDVSQAAMc",
+    "_$s5UIKit16UITextEffectViewC6sourceAcA0bcD6Source_p_tcfc",
+]
+requires = ["NDEBUG"]
+
+[[legacy]]
 selectors = [
     { name = "openApplicationWithBundleID:", class = "?" },
     { name = "set_attributedBundleIdentifier:", class = "?" },
@@ -962,15 +978,15 @@ requires = ["USE_APPLE_INTERNAL_SDK"]
 
 # FIXME: Public SDK builds bind to the former class instead of the
 # latter. Needs to be cleaned up in rdar://102246762.
-[photos-public-sdk.legacy]
+[[legacy]]
 classes = ["PUActivityProgressController"]
 requires = ["!USE_APPLE_INTERNAL_SDK"]
 
-[photos-internal-sdk.legacy]
+[[legacy]]
 classes = ["PXActivityProgressController"]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 
-[app-privacy-report.legacy]
+[[legacy]]
 classes = [
     "AnalyticsWorkspace",
     "UsageFeed",
@@ -979,7 +995,7 @@ selectors = [
     { name = "initWithWorkspace:", class = "?" },
     { name = "initWorkspaceWithService:", class = "?" },
     { name = "performNetworkDomainsActionWithOptions:reply:", class = "?" },
-]    
+]
 symbols = [
     "_kSymptomAnalyticsServiceDomainTrackingClearHistoryBundleIDs",
     "_kSymptomAnalyticsServiceDomainTrackingClearHistoryStartDate",
@@ -989,7 +1005,7 @@ symbols = [
 ]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 
-[network-activity-tracker.legacy]
+[[legacy]]
 symbols = [
     "_nw_activity_activate",
     "_nw_activity_complete_with_reason",
@@ -1005,7 +1021,7 @@ requires = [
     "USE_APPLE_INTERNAL_SDK"
 ]
 
-[network-resolution-failure-report.legacy]
+[[legacy]]
 symbols = [
     "_nw_resolution_report_get_dns_failure_reason",
     "_nw_resolution_report_get_extended_dns_error_extra_text",
@@ -1017,7 +1033,7 @@ requires = [
     "USE_APPLE_INTERNAL_SDK"
 ]
 
-[network-unified-http.legacy]
+[[legacy]]
 symbols = [
     "_nw_settings_get_unified_http_enabled",
 ]
@@ -1029,20 +1045,20 @@ requires = [
 
 # The public iOS build uses CGGeometry methods instead of internal only
 # NSGeometry methods. Clean up in rdar://6669434.
-[NSGeometry.legacy]
+[[legacy]]
 symbols = [
     "_NSIntersectionRect",
     "_NSIsEmptyRect",
 ]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 
-[LocalAuthentication.legacy]
+[[legacy]]
 selectors = [
     { name = "evaluatePolicy:options:reply:", class = "?" },
 ]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 
-[DataDetectors.legacy]
+[[legacy]]
 selectors = [
     { name = "interactionURL", class = "?" },
     { name = "interactionViewControllerProvider", class = "?" },
@@ -1054,7 +1070,7 @@ requires = [
     "USE_APPLE_INTERNAL_SDK"
 ]
 
-[script-tracking-privacy-protections.legacy]
+[[legacy]]
 selectors = [
     { name = "isFirstParty", class = "?" },
     { name = "isTopDomain", class = "?" },
@@ -1065,9 +1081,15 @@ requires = [
     "ENABLE_SCRIPT_TRACKING_PRIVACY_PROTECTIONS",
 ]
 
-[accessibility-non-blinking-cursor.legacy]
+[[legacy]]
 symbols = [
-    "__AXSPrefersNonBlinkingCursorIndicator", 
+    "__AXSPrefersNonBlinkingCursorIndicator",
     "_kAXSPrefersNonBlinkingCursorIndicatorDidChangeNotification",
 ]
 requires = [ "ENABLE_ACCESSIBILITY_NON_BLINKING_CURSOR" ]
+
+[[legacy]]
+selectors = [
+    { name = "getClientCapabilitiesForRelyingParty:withCompletionHandler:", class = "ASCWebKitSPISupport" },
+]
+requires = ["!SDKDB_HAS_148943382"]

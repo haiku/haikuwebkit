@@ -1,4 +1,3 @@
-//@ skip unless $isWasmPlatform
 //@ runDefaultWasm("-m", "--wasmFunctionIndexRangeToCompile=0:5", "--useOMGJIT=0")
 
 import { instantiate } from "../wabt-wrapper.js"

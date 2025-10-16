@@ -4898,8 +4898,8 @@ void RenderLayerCompositor::rootOrBodyStyleChanged(RenderElement& renderer, cons
     if (oldBackgroundColor != renderer.style().visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor))
         rootBackgroundColorOrTransparencyChanged();
 
-    bool hadFixedBackground = oldStyle && oldStyle->hasEntirelyFixedBackground();
-    if (hadFixedBackground != renderer.style().hasEntirelyFixedBackground())
+    bool hadFixedBackground = oldStyle && oldStyle->backgroundLayers().hasEntirelyFixedBackground();
+    if (hadFixedBackground != renderer.style().backgroundLayers().hasEntirelyFixedBackground())
         rootLayerConfigurationChanged();
     
     if (oldStyle && (oldStyle->overscrollBehaviorX() != renderer.style().overscrollBehaviorX() || oldStyle->overscrollBehaviorY() != renderer.style().overscrollBehaviorY())) {

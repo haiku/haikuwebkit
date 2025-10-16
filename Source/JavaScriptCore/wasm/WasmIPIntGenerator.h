@@ -195,6 +195,7 @@ enum class CallArgumentBytecode : uint8_t { // (mINT)
 
 struct CallMetadata {
     uint8_t length; // 1B for instruction length
+    uint32_t callSlotIndex; // 4B for call slot index
     Wasm::FunctionSpaceIndex functionIndex; // 4B for decoded index
     CallSignatureMetadata signature;
     CallArgumentBytecode argumentBytecode[0];
@@ -202,6 +203,7 @@ struct CallMetadata {
 
 struct TailCallMetadata {
     uint8_t length; // 1B for instruction length
+    uint32_t callSlotIndex; // 4B for call slot index
     Wasm::FunctionSpaceIndex functionIndex; // 4B for decoded index
     int32_t callerStackArgSize; // 4B for caller stack size
     CallArgumentBytecode argumentBytecode[0];
@@ -209,6 +211,7 @@ struct TailCallMetadata {
 
 struct CallIndirectMetadata {
     uint8_t length; // 1B for length
+    uint32_t callSlotIndex; // 4B for call slot index
     uint32_t tableIndex; // 4B for table index
     uint32_t typeIndex; // 4B for type index
     CallSignatureMetadata signature;
@@ -217,6 +220,7 @@ struct CallIndirectMetadata {
 
 struct TailCallIndirectMetadata {
     uint8_t length; // 1B for instruction length
+    uint32_t callSlotIndex; // 4B for call slot index
     uint32_t tableIndex; // 4B for table index
     uint32_t typeIndex; // 4B for type index
     int32_t callerStackArgSize; // 4B for caller stack size
@@ -225,6 +229,7 @@ struct TailCallIndirectMetadata {
 
 struct CallRefMetadata {
     uint8_t length; // 1B for length
+    uint32_t callSlotIndex; // 4B for call slot index
     uint32_t typeIndex; // 4B for type index
     CallSignatureMetadata signature;
     CallArgumentBytecode argumentBytecode[0];
@@ -232,6 +237,7 @@ struct CallRefMetadata {
 
 struct TailCallRefMetadata {
     uint8_t length; // 1B for length
+    uint32_t callSlotIndex; // 4B for call slot index
     uint32_t typeIndex; // 4B for type index
     int32_t callerStackArgSize; // 4B for caller stack size
     CallArgumentBytecode argumentBytecode[0];

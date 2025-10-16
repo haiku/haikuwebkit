@@ -792,4 +792,14 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
     _websitePolicies->setPushAndNotificationsEnabledPolicy(enabled ? WebKit::WebsitePushAndNotificationsEnabledPolicy::Yes : WebKit::WebsitePushAndNotificationsEnabledPolicy::No);
 }
 
+- (void)_setAlternateRequest:(NSURLRequest *)request
+{
+    _websitePolicies->setAlternateRequest(request);
+}
+
+- (NSURLRequest *)_alternateRequest
+{
+    return _websitePolicies->alternateRequest().nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody);
+}
+
 @end

@@ -26,6 +26,7 @@
 
 namespace WebCore {
 
+class CSSToLengthConversionData;
 class SVGElement;
 class WeakPtrImplWithEventTargetData;
 
@@ -72,6 +73,9 @@ public:
     ExceptionOr<float> convertValueToUserUnits(float, SVGLengthType, SVGLengthMode) const;
     ExceptionOr<float> convertValueFromUserUnits(float, SVGLengthType, SVGLengthMode) const;
 
+    ExceptionOr<float> resolveValueToUserUnits(float, const CSS::LengthPercentageUnit&, SVGLengthMode) const;
+    ExceptionOr<CSS::LengthPercentage<>> resolveValueFromUserUnits(float, const CSS::LengthPercentageUnit&, SVGLengthMode) const;
+
     std::optional<FloatSize> viewportSize() const;
 
 private:
@@ -92,7 +96,9 @@ private:
     ExceptionOr<float> convertValueFromChToUserUnits(float) const;
 
     std::optional<FloatSize> computeViewportSize() const;
+    float computeNonCalcLength(float, CSS::LengthUnit) const;
 
+    std::optional<CSSToLengthConversionData> cssConversionData() const;
     RefPtr<const SVGElement> protectedContext() const;
 
     template<typename SizeType> float valueForSizeType(const SizeType&, SVGLengthMode = SVGLengthMode::Other);

@@ -259,38 +259,56 @@ static MTLCompareFunction convertToMTLCompare(WGPUCompareFunction comparison)
 static MTLVertexFormat vertexFormat(WGPUVertexFormat vertexFormat)
 {
     switch (vertexFormat) {
+    case WGPUVertexFormat_Uint8:
+        return MTLVertexFormatUChar;
     case WGPUVertexFormat_Uint8x2:
         return MTLVertexFormatUChar2;
     case WGPUVertexFormat_Uint8x4:
         return MTLVertexFormatUChar4;
+    case WGPUVertexFormat_Sint8:
+        return MTLVertexFormatChar;
     case WGPUVertexFormat_Sint8x2:
         return MTLVertexFormatChar2;
     case WGPUVertexFormat_Sint8x4:
         return MTLVertexFormatChar4;
+    case WGPUVertexFormat_Unorm8:
+        return MTLVertexFormatUCharNormalized;
     case WGPUVertexFormat_Unorm8x2:
         return MTLVertexFormatUChar2Normalized;
     case WGPUVertexFormat_Unorm8x4:
         return MTLVertexFormatUChar4Normalized;
+    case WGPUVertexFormat_Snorm8:
+        return MTLVertexFormatCharNormalized;
     case WGPUVertexFormat_Snorm8x2:
         return MTLVertexFormatChar2Normalized;
     case WGPUVertexFormat_Snorm8x4:
         return MTLVertexFormatChar4Normalized;
+    case WGPUVertexFormat_Uint16:
+        return MTLVertexFormatUShort;
     case WGPUVertexFormat_Uint16x2:
         return MTLVertexFormatUShort2;
     case WGPUVertexFormat_Uint16x4:
         return MTLVertexFormatUShort4;
+    case WGPUVertexFormat_Sint16:
+        return MTLVertexFormatShort;
     case WGPUVertexFormat_Sint16x2:
         return MTLVertexFormatShort2;
     case WGPUVertexFormat_Sint16x4:
         return MTLVertexFormatShort4;
+    case WGPUVertexFormat_Unorm16:
+        return MTLVertexFormatUShortNormalized;
     case WGPUVertexFormat_Unorm16x2:
         return MTLVertexFormatUShort2Normalized;
     case WGPUVertexFormat_Unorm16x4:
         return MTLVertexFormatUShort4Normalized;
+    case WGPUVertexFormat_Snorm16:
+        return MTLVertexFormatShortNormalized;
     case WGPUVertexFormat_Snorm16x2:
         return MTLVertexFormatShort2Normalized;
     case WGPUVertexFormat_Snorm16x4:
         return MTLVertexFormatShort4Normalized;
+    case WGPUVertexFormat_Float16:
+        return MTLVertexFormatHalf;
     case WGPUVertexFormat_Float16x2:
         return MTLVertexFormatHalf2;
     case WGPUVertexFormat_Float16x4:
@@ -319,8 +337,10 @@ static MTLVertexFormat vertexFormat(WGPUVertexFormat vertexFormat)
         return MTLVertexFormatInt3;
     case WGPUVertexFormat_Sint32x4:
         return MTLVertexFormatInt4;
-    case WGPUVertexFormat_Unorm10_10_10_2:
+    case WGPUVertexFormat_Unorm1010102:
         return MTLVertexFormatUInt1010102Normalized;
+    case WGPUVertexFormat_Unorm8x4Bgra:
+        return MTLVertexFormatUChar4Normalized_BGRA;
     case WGPUVertexFormat_Force32:
     case WGPUVertexFormat_Undefined:
         ASSERT_NOT_REACHED();
@@ -331,38 +351,56 @@ static MTLVertexFormat vertexFormat(WGPUVertexFormat vertexFormat)
 static size_t vertexFormatSize(WGPUVertexFormat vertexFormat)
 {
     switch (vertexFormat) {
+    case WGPUVertexFormat_Uint8:
+        return 1;
     case WGPUVertexFormat_Uint8x2:
         return 2;
     case WGPUVertexFormat_Uint8x4:
         return 4;
+    case WGPUVertexFormat_Sint8:
+        return 1;
     case WGPUVertexFormat_Sint8x2:
         return 2;
     case WGPUVertexFormat_Sint8x4:
         return 4;
+    case WGPUVertexFormat_Unorm8:
+        return 1;
     case WGPUVertexFormat_Unorm8x2:
         return 2;
     case WGPUVertexFormat_Unorm8x4:
         return 4;
+    case WGPUVertexFormat_Snorm8:
+        return 1;
     case WGPUVertexFormat_Snorm8x2:
         return 2;
     case WGPUVertexFormat_Snorm8x4:
         return 4;
+    case WGPUVertexFormat_Uint16:
+        return 2;
     case WGPUVertexFormat_Uint16x2:
         return 4;
     case WGPUVertexFormat_Uint16x4:
         return 8;
+    case WGPUVertexFormat_Sint16:
+        return 2;
     case WGPUVertexFormat_Sint16x2:
         return 4;
     case WGPUVertexFormat_Sint16x4:
         return 8;
+    case WGPUVertexFormat_Unorm16:
+        return 2;
     case WGPUVertexFormat_Unorm16x2:
         return 4;
     case WGPUVertexFormat_Unorm16x4:
         return 8;
+    case WGPUVertexFormat_Snorm16:
+        return 2;
     case WGPUVertexFormat_Snorm16x2:
         return 4;
     case WGPUVertexFormat_Snorm16x4:
         return 8;
+    case WGPUVertexFormat_Float16:
+        return 2;
     case WGPUVertexFormat_Float16x2:
         return 4;
     case WGPUVertexFormat_Float16x4:
@@ -391,7 +429,9 @@ static size_t vertexFormatSize(WGPUVertexFormat vertexFormat)
         return 12;
     case WGPUVertexFormat_Sint32x4:
         return 16;
-    case WGPUVertexFormat_Unorm10_10_10_2:
+    case WGPUVertexFormat_Unorm1010102:
+        return 4;
+    case WGPUVertexFormat_Unorm8x4Bgra:
         return 4;
     case WGPUVertexFormat_Force32:
     case WGPUVertexFormat_Undefined:
@@ -421,38 +461,56 @@ static MTLVertexStepFunction stepFunction(WGPUVertexStepMode stepMode, auto arra
 static ASCIILiteral name(WGPUVertexFormat format)
 {
     switch (format) {
+    case WGPUVertexFormat_Uint8:
+        return "UChar"_s;
     case WGPUVertexFormat_Uint8x2:
         return "UChar2"_s;
     case WGPUVertexFormat_Uint8x4:
         return "UChar4"_s;
+    case WGPUVertexFormat_Sint8:
+        return "Char"_s;
     case WGPUVertexFormat_Sint8x2:
         return "Char2"_s;
     case WGPUVertexFormat_Sint8x4:
         return "Char4"_s;
+    case WGPUVertexFormat_Unorm8:
+        return "UCharNormalized"_s;
     case WGPUVertexFormat_Unorm8x2:
         return "UChar2Normalized"_s;
     case WGPUVertexFormat_Unorm8x4:
         return "UChar4Normalized"_s;
+    case WGPUVertexFormat_Snorm8:
+        return "CharNormalized"_s;
     case WGPUVertexFormat_Snorm8x2:
         return "Char2Normalized"_s;
     case WGPUVertexFormat_Snorm8x4:
         return "Char4Normalized"_s;
+    case WGPUVertexFormat_Uint16:
+        return "UShort"_s;
     case WGPUVertexFormat_Uint16x2:
         return "UShort2"_s;
     case WGPUVertexFormat_Uint16x4:
         return "UShort4"_s;
+    case WGPUVertexFormat_Sint16:
+        return "Short"_s;
     case WGPUVertexFormat_Sint16x2:
         return "Short2"_s;
     case WGPUVertexFormat_Sint16x4:
         return "Short4"_s;
+    case WGPUVertexFormat_Unorm16:
+        return "UShortNormalized"_s;
     case WGPUVertexFormat_Unorm16x2:
         return "UShort2Normalized"_s;
     case WGPUVertexFormat_Unorm16x4:
         return "UShort4Normalized"_s;
+    case WGPUVertexFormat_Snorm16:
+        return "ShortNormalized"_s;
     case WGPUVertexFormat_Snorm16x2:
         return "Short2Normalized"_s;
     case WGPUVertexFormat_Snorm16x4:
         return "Short4Normalized"_s;
+    case WGPUVertexFormat_Float16:
+        return "Half"_s;
     case WGPUVertexFormat_Float16x2:
         return "Half2"_s;
     case WGPUVertexFormat_Float16x4:
@@ -481,8 +539,10 @@ static ASCIILiteral name(WGPUVertexFormat format)
         return "Int3"_s;
     case WGPUVertexFormat_Sint32x4:
         return "Int4"_s;
-    case WGPUVertexFormat_Unorm10_10_10_2:
+    case WGPUVertexFormat_Unorm1010102:
         return "UInt1010102Normalized"_s;
+    case WGPUVertexFormat_Unorm8x4Bgra:
+        return "Unorm8x4Bgra"_s;
     case WGPUVertexFormat_Force32:
     case WGPUVertexFormat_Undefined:
         ASSERT_NOT_REACHED();
@@ -500,8 +560,10 @@ enum class WGPUVertexFormatType {
 static constexpr WGPUVertexFormatType formatType(WGPUVertexFormat format)
 {
     switch (format) {
+    case WGPUVertexFormat_Uint8:
     case WGPUVertexFormat_Uint8x2:
     case WGPUVertexFormat_Uint8x4:
+    case WGPUVertexFormat_Uint16:
     case WGPUVertexFormat_Uint16x2:
     case WGPUVertexFormat_Uint16x4:
     case WGPUVertexFormat_Uint32:
@@ -510,8 +572,10 @@ static constexpr WGPUVertexFormatType formatType(WGPUVertexFormat format)
     case WGPUVertexFormat_Uint32x4:
         return WGPUVertexFormatType::UnsignedInt;
 
+    case WGPUVertexFormat_Sint8:
     case WGPUVertexFormat_Sint8x2:
     case WGPUVertexFormat_Sint8x4:
+    case WGPUVertexFormat_Sint16:
     case WGPUVertexFormat_Sint16x2:
     case WGPUVertexFormat_Sint16x4:
     case WGPUVertexFormat_Sint32:
@@ -520,21 +584,27 @@ static constexpr WGPUVertexFormatType formatType(WGPUVertexFormat format)
     case WGPUVertexFormat_Sint32x4:
         return WGPUVertexFormatType::SignedInt;
 
+    case WGPUVertexFormat_Unorm8:
     case WGPUVertexFormat_Unorm8x2:
     case WGPUVertexFormat_Unorm8x4:
+    case WGPUVertexFormat_Snorm8:
     case WGPUVertexFormat_Snorm8x2:
     case WGPUVertexFormat_Snorm8x4:
+    case WGPUVertexFormat_Unorm16:
     case WGPUVertexFormat_Unorm16x2:
     case WGPUVertexFormat_Unorm16x4:
+    case WGPUVertexFormat_Snorm16:
     case WGPUVertexFormat_Snorm16x2:
     case WGPUVertexFormat_Snorm16x4:
+    case WGPUVertexFormat_Float16:
     case WGPUVertexFormat_Float16x2:
     case WGPUVertexFormat_Float16x4:
     case WGPUVertexFormat_Float32:
     case WGPUVertexFormat_Float32x2:
     case WGPUVertexFormat_Float32x3:
     case WGPUVertexFormat_Float32x4:
-    case WGPUVertexFormat_Unorm10_10_10_2:
+    case WGPUVertexFormat_Unorm1010102:
+    case WGPUVertexFormat_Unorm8x4Bgra:
         return WGPUVertexFormatType::Float;
 
     case WGPUVertexFormat_Force32:
@@ -553,7 +623,7 @@ static bool matchesFormat(const ShaderModule::VertexStageIn& stageIn, uint32_t s
     return formatType(it->value) == formatType(format);
 }
 
-static MTLVertexDescriptor *createVertexDescriptor(WGPUVertexState vertexState, const WGPULimits& limits, const ShaderModule::VertexStageIn& stageIn, RenderPipeline::RequiredBufferIndicesContainer& requiredBufferIndices, NSString** error)
+static MTLVertexDescriptor *createVertexDescriptor(WGPUVertexState vertexState, const WGPULimits& limits, const ShaderModule::VertexStageIn& stageIn, RenderPipeline::RequiredBufferIndicesContainer& requiredBufferIndices, NSString** error, ShaderModule::VertexStageIn& outShaderLocations)
 {
     MTLVertexDescriptor *vertexDescriptor = [MTLVertexDescriptor new];
     Checked<uint32_t> totalAttributeCount = 0;
@@ -606,12 +676,12 @@ static MTLVertexDescriptor *createVertexDescriptor(WGPUVertexState vertexState, 
                     return nil;
                 }
             } else if (offsetPlusFormatSize.value() > buffer.arrayStride) {
-                *error = @"attribute.offset + formatSize > buffer.arrayStride";
+                *error = [NSString stringWithFormat:@"attribute.offset(%llu) + formatSize(%zu) > buffer.arrayStride(%llu)", attribute.offset, formatSize, buffer.arrayStride];
                 return nil;
             }
 
             if (attribute.offset % std::min<size_t>(4, formatSize)) {
-                *error = @"attribute.offset + formatSize > buffer.arrayStride";
+                *error = [NSString stringWithFormat:@"attribute.offset(%llu) mod std::min<size_t>(4, formatSize)(%lu) is not zero", attribute.offset, std::min<size_t>(4, formatSize)];
                 return nil;
             }
 
@@ -652,6 +722,11 @@ static MTLVertexDescriptor *createVertexDescriptor(WGPUVertexState vertexState, 
         *error = @"totalAttributeCount > limits.maxVertexAttributes";
         return nil;
     }
+#if !defined(NDEBUG) || (defined(ENABLE_LIBFUZZER) && ENABLE_LIBFUZZER && defined(ASAN_ENABLED) && ASAN_ENABLED)
+    outShaderLocations = shaderLocations;
+#else
+    UNUSED_PARAM(outShaderLocations);
+#endif
 
     return vertexDescriptor;
 }
@@ -786,6 +861,52 @@ static WGPUTextureFormat convertFormat(WGSL::TexelFormat format)
         return WGPUTextureFormat_RGBA8Uint;
     case WGSL::TexelFormat::RGBA8unorm:
         return WGPUTextureFormat_RGBA8Unorm;
+    case WGSL::TexelFormat::RG16unorm:
+        return WGPUTextureFormat_RG16Unorm;
+    case WGSL::TexelFormat::RG16snorm:
+        return WGPUTextureFormat_RG16Snorm;
+    case WGSL::TexelFormat::RGBA16unorm:
+        return WGPUTextureFormat_RGBA16Unorm;
+    case WGSL::TexelFormat::RGBA16snorm:
+        return WGPUTextureFormat_RGBA16Snorm;
+    case WGSL::TexelFormat::R16unorm:
+        return WGPUTextureFormat_R16Unorm;
+    case WGSL::TexelFormat::R16snorm:
+        return WGPUTextureFormat_R16Snorm;
+    case WGSL::TexelFormat::R16float:
+        return WGPUTextureFormat_R16Float;
+    case WGSL::TexelFormat::RG16float:
+        return WGPUTextureFormat_RG16Float;
+    case WGSL::TexelFormat::RGB10A2uint:
+        return WGPUTextureFormat_RGB10A2Uint;
+    case WGSL::TexelFormat::RGB10A2unorm:
+        return WGPUTextureFormat_RGB10A2Unorm;
+    case WGSL::TexelFormat::R16uint:
+        return WGPUTextureFormat_R16Uint;
+    case WGSL::TexelFormat::R16sint:
+        return WGPUTextureFormat_R16Sint;
+    case WGSL::TexelFormat::R8sint:
+        return WGPUTextureFormat_R8Sint;
+    case WGSL::TexelFormat::R8snorm:
+        return WGPUTextureFormat_R8Snorm;
+    case WGSL::TexelFormat::R8uint:
+        return WGPUTextureFormat_R8Uint;
+    case WGSL::TexelFormat::R8unorm:
+        return WGPUTextureFormat_R8Unorm;
+    case WGSL::TexelFormat::RG8sint:
+        return WGPUTextureFormat_RG8Sint;
+    case WGSL::TexelFormat::RG8snorm:
+        return WGPUTextureFormat_RG8Snorm;
+    case WGSL::TexelFormat::RG8uint:
+        return WGPUTextureFormat_RG8Uint;
+    case WGSL::TexelFormat::RG8unorm:
+        return WGPUTextureFormat_RG8Unorm;
+    case WGSL::TexelFormat::RG16uint:
+        return WGPUTextureFormat_RG16Uint;
+    case WGSL::TexelFormat::RG16sint:
+        return WGPUTextureFormat_RG16Sint;
+    case WGSL::TexelFormat::RG11B10ufloat:
+        return WGPUTextureFormat_RG11B10Ufloat;
     }
 }
 
@@ -1030,6 +1151,10 @@ static bool hasAlphaChannel(WGPUTextureFormat format)
     case WGPUTextureFormat_R8Sint:
     case WGPUTextureFormat_R16Uint:
     case WGPUTextureFormat_R16Sint:
+    case WGPUTextureFormat_R16Unorm:
+    case WGPUTextureFormat_R16Snorm:
+    case WGPUTextureFormat_RG16Unorm:
+    case WGPUTextureFormat_RG16Snorm:
     case WGPUTextureFormat_R16Float:
     case WGPUTextureFormat_RG8Unorm:
     case WGPUTextureFormat_RG8Snorm:
@@ -1051,6 +1176,8 @@ static bool hasAlphaChannel(WGPUTextureFormat format)
     case WGPUTextureFormat_BGRA8UnormSrgb:
     case WGPUTextureFormat_RGB10A2Uint:
     case WGPUTextureFormat_RGB10A2Unorm:
+    case WGPUTextureFormat_RGBA16Unorm:
+    case WGPUTextureFormat_RGBA16Snorm:
         return true;
     case WGPUTextureFormat_RG11B10Ufloat:
     case WGPUTextureFormat_RGB9E5Ufloat:
@@ -1144,21 +1271,30 @@ static bool textureFormatAllowedForRetunType(WGPUTextureFormat format, MTLDataTy
         return false;
 
     switch (format) {
+    case WGPUTextureFormat_R8Snorm:
     case WGPUTextureFormat_R8Unorm:
+    case WGPUTextureFormat_R16Snorm:
+    case WGPUTextureFormat_R16Unorm:
     case WGPUTextureFormat_R16Float:
     case WGPUTextureFormat_R32Float:
         return dataType == MTLDataTypeFloat || dataType == MTLDataTypeFloat2 || dataType == MTLDataTypeFloat3 || dataType == MTLDataTypeFloat4;
 
+    case WGPUTextureFormat_RG8Snorm:
     case WGPUTextureFormat_RG8Unorm:
+    case WGPUTextureFormat_RG16Snorm:
+    case WGPUTextureFormat_RG16Unorm:
     case WGPUTextureFormat_RG16Float:
     case WGPUTextureFormat_RG32Float:
         return dataType == MTLDataTypeFloat2 || dataType == MTLDataTypeFloat3 || dataType == MTLDataTypeFloat4;
 
+    case WGPUTextureFormat_RGBA8Snorm:
     case WGPUTextureFormat_RGBA8Unorm:
     case WGPUTextureFormat_RGBA8UnormSrgb:
     case WGPUTextureFormat_BGRA8Unorm:
     case WGPUTextureFormat_BGRA8UnormSrgb:
     case WGPUTextureFormat_RGB10A2Unorm:
+    case WGPUTextureFormat_RGBA16Snorm:
+    case WGPUTextureFormat_RGBA16Unorm:
     case WGPUTextureFormat_RGBA16Float:
     case WGPUTextureFormat_RGBA32Float:
         return dataType == MTLDataTypeFloat4;
@@ -1358,6 +1494,8 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
     const ShaderModule::VertexOutputs* vertexOutputs = nullptr;
     BufferBindingSizesForPipeline minimumBufferSizes;
     uint32_t vertexShaderBindingCount = 0;
+    String vertexShaderSource, fragmentShaderSource;
+    ShaderModule::VertexStageIn shaderLocations;
     {
         if (descriptor.vertex.nextInChain)
             return returnInvalidRenderPipeline(*this, isAsync, "Vertex module has an invalid chain"_s);
@@ -1373,7 +1511,7 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
         if (NSString* error = errorValidatingVertexStageIn(vertexStageIn, *this))
             return returnInvalidRenderPipeline(*this, isAsync, error);
         NSError *error = nil;
-        auto libraryCreationResult = createLibrary(m_device, vertexModule, pipelineLayout.get(), vertexEntryPoint, label.get(), descriptor.vertex.constantsSpan(), minimumBufferSizes, &error);
+        auto libraryCreationResult = createLibrary(m_device, vertexModule, pipelineLayout.get(), vertexEntryPoint, label.get(), descriptor.vertex.constantsSpan(), minimumBufferSizes, &error, vertexShaderSource);
         if (!libraryCreationResult)
             return returnInvalidRenderPipeline(*this, isAsync, error.localizedDescription ?: @"Vertex library failed creation");
 
@@ -1416,7 +1554,7 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
         usesFragDepth = fragmentModule->usesFragDepth(fragmentEntryPoint);
         usesSampleMask = fragmentModule->usesSampleMaskInOutput(fragmentEntryPoint);
         NSError *error = nil;
-        auto libraryCreationResult = createLibrary(m_device, *fragmentModule, pipelineLayout.get(), fragmentEntryPoint, label.get(), fragmentDescriptor.constantsSpan(), minimumBufferSizes, &error);
+        auto libraryCreationResult = createLibrary(m_device, *fragmentModule, pipelineLayout.get(), fragmentEntryPoint, label.get(), fragmentDescriptor.constantsSpan(), minimumBufferSizes, &error, fragmentShaderSource);
         if (!libraryCreationResult)
             return returnInvalidRenderPipeline(*this, isAsync, error.localizedDescription ?: @"Fragment library could not be created");
 
@@ -1489,7 +1627,7 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
         }
 
         if (bytesPerSample > deviceLimits.maxColorAttachmentBytesPerSample)
-            return returnInvalidRenderPipeline(*this, isAsync, "Bytes per sample exceeded maximum allowed limit"_s);
+            return returnInvalidRenderPipeline(*this, isAsync, [NSString stringWithFormat:@"Bytes per sample(%u) exceeded maximum allowed limit(%u)", bytesPerSample, deviceLimits.maxColorAttachmentBytesPerSample]);
     }
 
     MTLDepthStencilDescriptor *depthStencilDescriptor = nil;
@@ -1549,7 +1687,7 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
         if (!vertexStageIn)
             return returnInvalidRenderPipeline(*this, isAsync, [NSString stringWithFormat:@"Vertex shader has no stageIn parameters but buffer count was %zu and attribute count was %zu", descriptor.vertex.bufferCount, descriptor.vertex.buffers[0].attributeCount]);
         NSString *error = nil;
-        MTLVertexDescriptor *vertexDecriptor = createVertexDescriptor(descriptor.vertex, deviceLimits, *vertexStageIn, requiredBufferIndices, &error);
+        MTLVertexDescriptor *vertexDecriptor = createVertexDescriptor(descriptor.vertex, deviceLimits, *vertexStageIn, requiredBufferIndices, &error, shaderLocations);
         if (error)
             return returnInvalidRenderPipeline(*this, isAsync, [NSString stringWithFormat:@"vertex descriptor creation failed %@", error]);
 
@@ -1588,7 +1726,13 @@ std::pair<Ref<RenderPipeline>, NSString*> Device::createRenderPipeline(const WGP
     auto mtlCullMode = cullMode(descriptor.primitive.cullMode);
 
     NSError *error = nil;
+#if !defined(NDEBUG) || (defined(ENABLE_LIBFUZZER) && ENABLE_LIBFUZZER && defined(ASAN_ENABLED) && ASAN_ENABLED)
+    dumpMetalReproCaseRenderPSO(WTFMove(vertexShaderSource), mtlRenderPipelineDescriptor.vertexFunction.name, WTFMove(fragmentShaderSource), mtlRenderPipelineDescriptor.fragmentFunction.name, mtlRenderPipelineDescriptor, shaderLocations, *this);
+#endif
     id<MTLRenderPipelineState> renderPipelineState = [m_device newRenderPipelineStateWithDescriptor:mtlRenderPipelineDescriptor error:&error];
+#if !defined(NDEBUG) || (defined(ENABLE_LIBFUZZER) && ENABLE_LIBFUZZER && defined(ASAN_ENABLED) && ASAN_ENABLED)
+    clearMetalPSORepro();
+#endif
     if (error || !renderPipelineState)
         return returnInvalidRenderPipeline(*this, isAsync, error.localizedDescription);
 

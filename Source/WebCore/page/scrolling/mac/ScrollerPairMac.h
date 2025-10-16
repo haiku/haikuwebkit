@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
 #if PLATFORM(MAC)
 
 #include <WebCore/FloatRect.h>
@@ -125,6 +126,7 @@ public:
 
     void setScrollbarWidth(ScrollbarWidth);
 
+    void updateScrollbarPainters();
 private:
     ScrollerPairMac(ScrollingTreeScrollingNode&);
 

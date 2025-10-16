@@ -258,11 +258,11 @@ WebAnimationTime::operator CSSNumberish() const
 void WebAnimationTime::dump(TextStream& ts) const
 {
     if (m_type == Type::Time) {
-        ts << m_value * 1000;
+        ts << Seconds { m_value } * 1000;
         return;
     }
     ASSERT(m_type == Type::Percentage);
-    ts << m_value << '%';
+    ts << LayoutUnit(m_value) << '%';
     return;
 }
 

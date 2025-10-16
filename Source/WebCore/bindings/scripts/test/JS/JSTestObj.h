@@ -22,8 +22,8 @@
 
 #include "JSDOMConvertDictionary.h"
 #include "JSDOMConvertEnumeration.h"
-#include "JSDOMWrapper.h"
 #include "TestObj.h"
+#include <WebCore/JSDOMWrapper.h>
 #include <wtf/NeverDestroyed.h>
 
 namespace WebCore {

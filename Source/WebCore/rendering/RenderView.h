@@ -222,6 +222,9 @@ public:
     void removeViewTransitionGroup(const AtomString&);
     RenderBox* viewTransitionGroupForName(const AtomString&);
 
+protected:
+    void willBeDestroyed() override;
+
 private:
     void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
 

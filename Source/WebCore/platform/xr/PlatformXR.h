@@ -27,6 +27,7 @@
 #include <memory>
 #include <wtf/CompletionHandler.h>
 #include <wtf/HashMap.h>
+#include <wtf/Platform.h>
 #include <wtf/Ref.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/ThreadSafeWeakPtr.h>
@@ -425,6 +426,9 @@ public:
         LayerHandle handle { 0 };
         bool visible { true };
         Vector<LayerView> views;
+#if USE(OPENXR)
+        WTF::UnixFileDescriptor fenceFD;
+#endif
     };
 
     struct ViewData {

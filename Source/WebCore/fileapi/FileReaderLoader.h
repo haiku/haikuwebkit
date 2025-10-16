@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include <JavaScriptCore/ArrayBuffer.h>
 #include <WebCore/BlobResourceHandle.h>
 #include <WebCore/ExceptionCode.h>
 #include <WebCore/ThreadableLoaderClient.h>

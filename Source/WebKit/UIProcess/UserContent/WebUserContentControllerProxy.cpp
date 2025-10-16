@@ -28,7 +28,6 @@
 
 #include "APIArray.h"
 #include "APIContentWorld.h"
-#include "APISerializedScriptValue.h"
 #include "APIUserScript.h"
 #include "APIUserStyleSheet.h"
 #include "InjectUserScriptImmediately.h"
@@ -396,6 +395,11 @@ void WebUserContentControllerProxy::didPostMessage(WebPageProxyIdentifier pagePr
         return reply(makeUnexpected(String()));
 
     handler->client().didPostMessage(*page, WTFMove(frameInfoData), handler->world(), WTFMove(message), WTFMove(reply));
+}
+
+void WebUserContentControllerProxy::didPostLegacySynchronousMessage(WebPageProxyIdentifier webPageProxyID, FrameInfoData&& frameInfoData, ScriptMessageHandlerIdentifier messageHandlerID, JavaScriptEvaluationResult&& message, CompletionHandler<void(Expected<JavaScriptEvaluationResult, String>&&)>&& reply)
+{
+    didPostMessage(webPageProxyID, WTFMove(frameInfoData), messageHandlerID, WTFMove(message), WTFMove(reply));
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)

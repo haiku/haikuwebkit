@@ -82,16 +82,16 @@ FAIL :values:stage="constant";type="abstract-int" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=-10;value2=-10
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: value1=-1000;value2=-1000
-    OK
-  - INFO: subcase: value1=-10;value2=-10
-    OK
   - EXPECTATION FAILED: subcase: value1=10;value2=10
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: value1=1000;value2=1000
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: value1=-1000;value2=-1000
+    OK
+  - INFO: subcase: value1=-10;value2=-10
+    OK
   - INFO: subcase: value1=0;value2=0
     OK
   - INFO: subcase: value1=10;value2=10
@@ -182,16 +182,16 @@ FAIL :values:stage="constant";type="abstract-float" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=-10;value2=-10
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: value1=-1000;value2=-1000
+    OK
+  - INFO: subcase: value1=-10;value2=-10
+    OK
   - EXPECTATION FAILED: subcase: value1=10;value2=10
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: value1=1000;value2=1000
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: value1=-1000;value2=-1000
-    OK
-  - INFO: subcase: value1=-10;value2=-10
-    OK
   - INFO: subcase: value1=0;value2=0
     OK
   - INFO: subcase: value1=10;value2=10
@@ -479,6 +479,8 @@ FAIL :values:stage="constant";type="vec2%3Cabstract-int%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=-1000;value2=-1000
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: value1=-1000;value2=-1000
+    OK
   - EXPECTATION FAILED: subcase: value1=-10;value2=-10
     Expected validation error
       at (elided: below max severity)
@@ -488,8 +490,6 @@ FAIL :values:stage="constant";type="vec2%3Cabstract-int%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=1000;value2=1000
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: value1=-1000;value2=-1000
-    OK
   - INFO: subcase: value1=-10;value2=-10
     OK
   - INFO: subcase: value1=0;value2=0
@@ -782,16 +782,16 @@ FAIL :values:stage="constant";type="vec2%3Cabstract-float%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=-10;value2=-10
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: value1=-1000;value2=-1000
+    OK
+  - INFO: subcase: value1=-10;value2=-10
+    OK
   - EXPECTATION FAILED: subcase: value1=10;value2=10
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: value1=1000;value2=1000
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: value1=-1000;value2=-1000
-    OK
-  - INFO: subcase: value1=-10;value2=-10
-    OK
   - INFO: subcase: value1=0;value2=0
     OK
   - INFO: subcase: value1=10;value2=10
@@ -1085,6 +1085,9 @@ FAIL :values:stage="constant";type="vec3%3Cabstract-float%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=10;value2=10
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: value1=1000;value2=1000
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: value1=-1000;value2=-1000
     OK
   - INFO: subcase: value1=-10;value2=-10
@@ -1093,9 +1096,6 @@ FAIL :values:stage="constant";type="vec3%3Cabstract-float%3E" assert_unreached:
     OK
   - INFO: subcase: value1=10;value2=10
     OK
-  - EXPECTATION FAILED: subcase: value1=1000;value2=1000
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: value1=1000;value2=1000
     OK
  Reached unreachable code
@@ -1482,16 +1482,16 @@ FAIL :values:stage="constant";type="vec4%3Cf32%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=-10;value2=-10
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: value1=-1000;value2=-1000
-    OK
-  - INFO: subcase: value1=-10;value2=-10
-    OK
   - EXPECTATION FAILED: subcase: value1=10;value2=10
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: value1=1000;value2=1000
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: value1=-1000;value2=-1000
+    OK
+  - INFO: subcase: value1=-10;value2=-10
+    OK
   - INFO: subcase: value1=0;value2=0
     OK
   - INFO: subcase: value1=10;value2=10
@@ -1579,6 +1579,8 @@ FAIL :values:stage="constant";type="vec4%3Cf16%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=-1000;value2=-1000
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: value1=-1000;value2=-1000
+    OK
   - EXPECTATION FAILED: subcase: value1=-10;value2=-10
     Expected validation error
       at (elided: below max severity)
@@ -1588,8 +1590,6 @@ FAIL :values:stage="constant";type="vec4%3Cf16%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value1=1000;value2=1000
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: value1=-1000;value2=-1000
-    OK
   - INFO: subcase: value1=-10;value2=-10
     OK
   - INFO: subcase: value1=0;value2=0
@@ -2277,8 +2277,6 @@ FAIL :partial_eval_errors:lowStage="constant";highStage="constant";type="f32" as
   - EXPECTATION FAILED: subcase: low=0;high=0;in_shader=false
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: low=0;high=0;in_shader=false
-    OK
   - EXPECTATION FAILED: subcase: low=0;high=0;in_shader=true
     Expected validation error
       at (elided: below max severity)
@@ -2288,6 +2286,8 @@ FAIL :partial_eval_errors:lowStage="constant";highStage="constant";type="f32" as
   - EXPECTATION FAILED: subcase: low=10;high=10;in_shader=true
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: low=0;high=0;in_shader=false
+    OK
   - INFO: subcase: low=0;high=0;in_shader=true
     OK
   - INFO: subcase: low=10;high=10;in_shader=false
@@ -2475,15 +2475,15 @@ FAIL :partial_eval_errors:lowStage="constant";highStage="constant";type="vec2%3C
   - EXPECTATION FAILED: subcase: low=10;high=10;in_shader=false
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: low=10;high=10;in_shader=true
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: low=0;high=0;in_shader=false
     OK
   - INFO: subcase: low=0;high=0;in_shader=true
     OK
   - INFO: subcase: low=10;high=10;in_shader=false
     OK
+  - EXPECTATION FAILED: subcase: low=10;high=10;in_shader=true
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: low=10;high=10;in_shader=true
     OK
  Reached unreachable code
@@ -2757,6 +2757,8 @@ FAIL :partial_eval_errors:lowStage="constant";highStage="constant";type="vec3%3C
   - EXPECTATION FAILED: subcase: low=0;high=0;in_shader=false
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: low=0;high=0;in_shader=false
+    OK
   - EXPECTATION FAILED: subcase: low=0;high=0;in_shader=true
     Expected validation error
       at (elided: below max severity)
@@ -2766,8 +2768,6 @@ FAIL :partial_eval_errors:lowStage="constant";highStage="constant";type="vec3%3C
   - EXPECTATION FAILED: subcase: low=10;high=10;in_shader=true
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: low=0;high=0;in_shader=false
-    OK
   - INFO: subcase: low=0;high=0;in_shader=true
     OK
   - INFO: subcase: low=10;high=10;in_shader=false
@@ -2856,16 +2856,16 @@ FAIL :partial_eval_errors:lowStage="constant";highStage="constant";type="vec4%3C
   - EXPECTATION FAILED: subcase: low=0;high=0;in_shader=true
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: low=0;high=0;in_shader=false
-    OK
-  - INFO: subcase: low=0;high=0;in_shader=true
-    OK
   - EXPECTATION FAILED: subcase: low=10;high=10;in_shader=false
     Expected validation error
       at (elided: below max severity)
   - EXPECTATION FAILED: subcase: low=10;high=10;in_shader=true
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: low=0;high=0;in_shader=false
+    OK
+  - INFO: subcase: low=0;high=0;in_shader=true
+    OK
   - INFO: subcase: low=10;high=10;in_shader=false
     OK
   - INFO: subcase: low=10;high=10;in_shader=true

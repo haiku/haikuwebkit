@@ -434,7 +434,7 @@ FAIL :write_layout:case="vec2u_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 14789820 00000000
+       actual == 0x: 00000000 ff342721 00000000
        failed ->                    xx
      expected ==     00000000 00000000 00000000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -463,7 +463,7 @@ FAIL :write_layout:case="vec2h_align4";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 0 through 0.
      Starting at index 0:
-       actual == 0x: 46db0000 00005140
+       actual == 0x: ffff0000 00005140
        failed ->           xx
      expected ==     00000000 00005140
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -484,7 +484,7 @@ FAIL :write_layout:case="vec4h_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 0 through 1.
      Starting at index 0:
-       actual == 0x: 46db0000 10689820 00000000
+       actual == 0x: 3c000000 3c003c00 00000000
        failed ->           xx       xx
      expected ==     00000000 00000000 00000000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -501,7 +501,7 @@ FAIL :write_layout:case="vec2f_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 7948b820 00000000
+       actual == 0x: 00000000 30c03004 00000000
        failed ->                    xx
      expected ==     00000000 00000000 00000000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -546,7 +546,7 @@ FAIL :write_layout:case="mat2x2f_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 3ce89860 42280000
+       actual == 0x: 00000000 ffffffff 42280000
        failed ->                    xx
      expected ==     00000000 00000000 42280000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -563,7 +563,7 @@ FAIL :write_layout:case="mat3x2f_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 3c68f820 42280000
+       actual == 0x: 00000000 3a623a4a 42280000
        failed ->                    xx
      expected ==     00000000 00000000 42280000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -580,7 +580,7 @@ FAIL :write_layout:case="mat4x2f_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 62016890 42280000
+       actual == 0x: 00000000 148077ee 42280000
        failed ->                    xx
      expected ==     00000000 00000000 42280000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -593,37 +593,11 @@ FAIL :write_layout:case="mat4x2f_align8";aspace="workgroup" assert_unreached:
 PASS :write_layout:case="mat4x2f_align8";aspace="function"
 PASS :write_layout:case="mat4x2f_align8";aspace="private"
 PASS :write_layout:case="mat2x3f_align16";aspace="storage"
-FAIL :write_layout:case="mat2x3f_align16";aspace="workgroup" assert_unreached:
-  - EXPECTATION FAILED: subcase:
-    Array had unexpected contents at indices 1 through 3.
-     Starting at index 0:
-       actual == 0x: 00000000 98118999 054461ac 04ceb674 42280000
-       failed ->                    xx       xx       xx
-     expected ==     00000000 00000000 00000000 00000000 42280000
-    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
-    expectGPUBufferValuesPassCheck@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:804:34
-    expectGPUBufferValuesEqual@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:820:40
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/memory_layout.spec.js:1187:31
-  - INFO: subcase:
-    OK
- Reached unreachable code
+PASS :write_layout:case="mat2x3f_align16";aspace="workgroup"
 PASS :write_layout:case="mat2x3f_align16";aspace="function"
 PASS :write_layout:case="mat2x3f_align16";aspace="private"
 PASS :write_layout:case="mat3x3f_align16";aspace="storage"
-FAIL :write_layout:case="mat3x3f_align16";aspace="workgroup" assert_unreached:
-  - EXPECTATION FAILED: subcase:
-    Array had unexpected contents at indices 1 through 3.
-     Starting at index 0:
-       actual == 0x: 00000000 38e89860 c0524723 33321ce9 42280000
-       failed ->                    xx       xx       xx
-     expected ==     00000000 00000000 00000000 00000000 42280000
-    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
-    expectGPUBufferValuesPassCheck@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:804:34
-    expectGPUBufferValuesEqual@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:820:40
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/memory_layout.spec.js:1187:31
-  - INFO: subcase:
-    OK
- Reached unreachable code
+PASS :write_layout:case="mat3x3f_align16";aspace="workgroup"
 PASS :write_layout:case="mat3x3f_align16";aspace="function"
 PASS :write_layout:case="mat3x3f_align16";aspace="private"
 PASS :write_layout:case="mat4x3f_align16";aspace="storage"
@@ -631,7 +605,7 @@ FAIL :write_layout:case="mat4x3f_align16";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 3.
      Starting at index 0:
-       actual == 0x: 00000000 10e81820 c6524627 b1321cab 42280000
+       actual == 0x: 00000000 b87a1e99 deb87a1e 0301faf2 42280000
        failed ->                    xx       xx       xx
      expected ==     00000000 00000000 00000000 00000000 42280000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -648,7 +622,7 @@ FAIL :write_layout:case="mat2x4f_align16";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 3.
      Starting at index 0:
-       actual == 0x: 00000000 1ce99820 c0540707 b3321ceb 42280000
+       actual == 0x: 00000000 3aab3aa7 3ab73aaf 3aa73aa3 42280000
        failed ->                    xx       xx       xx
      expected ==     00000000 00000000 00000000 00000000 42280000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -665,7 +639,7 @@ FAIL :write_layout:case="mat3x4f_align16";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 3.
      Starting at index 0:
-       actual == 0x: 00000000 14e89820 c2125527 b3330ceb 42280000
+       actual == 0x: 00000000 ffffffff ffffffff ffffffff 42280000
        failed ->                    xx       xx       xx
      expected ==     00000000 00000000 00000000 00000000 42280000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -682,7 +656,7 @@ FAIL :write_layout:case="mat4x4f_align16";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 3.
      Starting at index 0:
-       actual == 0x: 00000000 34e8f860 c2500623 b1321ceb 42280000
+       actual == 0x: 00000000 ffffffff ffffffff ffffffff 42280000
        failed ->                    xx       xx       xx
      expected ==     00000000 00000000 00000000 00000000 42280000
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -711,7 +685,7 @@ FAIL :write_layout:case="mat2x3h_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 3cf89820 00005140
+       actual == 0x: 00000000 ffffffff 00005140
        failed ->                    xx
      expected ==     00000000 00000000 00005140
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -728,7 +702,7 @@ FAIL :write_layout:case="mat3x3h_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 38f8d820 00005140
+       actual == 0x: 00000000 ffffffff 00005140
        failed ->                    xx
      expected ==     00000000 00000000 00005140
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -745,7 +719,7 @@ FAIL :write_layout:case="mat4x3h_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 74e8f820 00005140
+       actual == 0x: 00000000 39fe39ea 00005140
        failed ->                    xx
      expected ==     00000000 00000000 00005140
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -762,7 +736,7 @@ FAIL :write_layout:case="mat2x4h_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 75e9f820 00005140
+       actual == 0x: 00000000 ffffffff 00005140
        failed ->                    xx
      expected ==     00000000 00000000 00005140
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -775,20 +749,7 @@ FAIL :write_layout:case="mat2x4h_align8";aspace="workgroup" assert_unreached:
 PASS :write_layout:case="mat2x4h_align8";aspace="function"
 PASS :write_layout:case="mat2x4h_align8";aspace="private"
 PASS :write_layout:case="mat3x4h_align8";aspace="storage"
-FAIL :write_layout:case="mat3x4h_align8";aspace="workgroup" assert_unreached:
-  - EXPECTATION FAILED: subcase:
-    Array had unexpected contents at indices 1 through 1.
-     Starting at index 0:
-       actual == 0x: 00000000 34e89820 00005140
-       failed ->                    xx
-     expected ==     00000000 00000000 00005140
-    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
-    expectGPUBufferValuesPassCheck@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:804:34
-    expectGPUBufferValuesEqual@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:820:40
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/memory_layout.spec.js:1187:31
-  - INFO: subcase:
-    OK
- Reached unreachable code
+PASS :write_layout:case="mat3x4h_align8";aspace="workgroup"
 PASS :write_layout:case="mat3x4h_align8";aspace="function"
 PASS :write_layout:case="mat3x4h_align8";aspace="private"
 PASS :write_layout:case="mat4x4h_align8";aspace="storage"
@@ -796,7 +757,7 @@ FAIL :write_layout:case="mat4x4h_align8";aspace="workgroup" assert_unreached:
   - EXPECTATION FAILED: subcase:
     Array had unexpected contents at indices 1 through 1.
      Starting at index 0:
-       actual == 0x: 00000000 3cc89860 00005140
+       actual == 0x: 00000000 ffffffff 00005140
        failed ->                    xx
      expected ==     00000000 00000000 00005140
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -893,20 +854,7 @@ PASS :write_layout:case="struct_align_vec4i";aspace="workgroup"
 PASS :write_layout:case="struct_align_vec4i";aspace="function"
 PASS :write_layout:case="struct_align_vec4i";aspace="private"
 PASS :write_layout:case="struct_align_vec2h";aspace="storage"
-FAIL :write_layout:case="struct_align_vec2h";aspace="workgroup" assert_unreached:
-  - EXPECTATION FAILED: subcase:
-    Array had unexpected contents at indices 0 through 1.
-     Starting at index 0:
-       actual == 0x: 46db0000 30f85140 00000000
-       failed ->           xx       xx
-     expected ==     00000000 00005140 00000000
-    eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
-    expectGPUBufferValuesPassCheck@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:804:34
-    expectGPUBufferValuesEqual@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:820:40
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/execution/memory_layout.spec.js:1187:31
-  - INFO: subcase:
-    OK
- Reached unreachable code
+PASS :write_layout:case="struct_align_vec2h";aspace="workgroup"
 PASS :write_layout:case="struct_align_vec2h";aspace="function"
 PASS :write_layout:case="struct_align_vec2h";aspace="private"
 PASS :write_layout:case="struct_align_vec3h";aspace="storage"

@@ -27,15 +27,19 @@
 
 #include <WebCore/AXTextMarker.h>
 #include <WebCore/AXTreeStore.h>
+#include <WebCore/Document.h>
+#include <WebCore/RenderView.h>
 #include <WebCore/SimpleRange.h>
 #include <WebCore/StyleChange.h>
 #include <WebCore/Timer.h>
 #include <WebCore/VisibleUnits.h>
 #include <limits.h>
+#include <wtf/CheckedPtr.h>
 #include <wtf/Deque.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/ListHashSet.h>
+#include <wtf/Platform.h>
 #include <wtf/WeakHashMap.h>
 #include <wtf/WeakHashSet.h>
 
@@ -54,7 +58,6 @@ class AXRemoteFrame;
 class AccessibilityNodeObject;
 class AccessibilityObject;
 class AccessibilityRenderObject;
-class AccessibilityTable;
 class AccessibilityTableCell;
 class Document;
 class HTMLAreaElement;
@@ -75,10 +78,12 @@ class VisiblePosition;
 class Widget;
 
 struct AXTextStateChangeIntent;
+struct TextMarkerData;
 
 enum class AXNotification : uint8_t;
 enum class AXStreamOptions : uint16_t;
 enum class AXProperty : uint16_t;
+enum class TextMarkerOrigin : uint16_t;
 
 struct CharacterOffset {
     RefPtr<Node> node;
@@ -197,7 +202,12 @@ public:
     {
         return node ? getOrCreate(*node, isPartOfRelation) : nullptr;
     }
-    WEBCORE_EXPORT AccessibilityObject* getOrCreate(Node&, IsPartOfRelation = IsPartOfRelation::No);
+    AccessibilityObject* getOrCreate(Node&, IsPartOfRelation = IsPartOfRelation::No);
+    AccessibilityObject* getOrCreate(Element&, IsPartOfRelation = IsPartOfRelation::No);
+    // Out-of-line implementations (necessary for use outside of WebCore). Our inlined
+    // implementations (important for performance inside WebCore) cannot be exported.
+    WEBCORE_EXPORT AccessibilityObject* exportedGetOrCreate(Node&);
+    WEBCORE_EXPORT AccessibilityObject* exportedGetOrCreate(Node*);
 
     // used for objects without backing elements
     AccessibilityObject* create(AccessibilityRole);
@@ -219,7 +229,7 @@ public:
     }
     inline AccessibilityObject* get(Widget& widget) const
     {
-        auto axID = m_widgetObjectMapping.getOptional(widget);
+        auto axID = m_widgetIdMapping.getOptional(widget);
         return axID ? m_objects.get(*axID) : nullptr;
     }
 
@@ -231,20 +241,28 @@ public:
     {
         if (CheckedPtr document = dynamicDowncast<Document>(node)) [[unlikely]]
             return get(document->renderView());
-        auto nodeID = m_nodeObjectMapping.get(node);
-        return nodeID ? m_objects.get(*nodeID) : nullptr;
+        return m_nodeObjectMapping.get(node);
+    }
+    inline AccessibilityObject* get(Element& element) const
+    {
+        return m_nodeObjectMapping.get(element);
     }
     inline std::optional<AXID> getAXID(RenderObject& renderer) const
     {
         if (RefPtr node = renderer.node())
-            return m_nodeObjectMapping.getOptional(*node);
-        return m_renderObjectMapping.getOptional(const_cast<RenderObject&>(renderer));
+            return m_nodeIdMapping.getOptional(*node);
+        return m_renderObjectIdMapping.getOptional(const_cast<RenderObject&>(renderer));
     }
 
     void remove(RenderObject&);
     void remove(Node&);
     void remove(Widget&);
-    void remove(std::optional<AXID>);
+    void remove(std::optional<AXID> axID)
+    {
+        if (axID)
+            remove(*axID);
+    }
+    void remove(AXID);
 
 #if !PLATFORM(COCOA) && !USE(ATSPI)
     void detachWrapper(AXCoreObject*, AccessibilityDetachmentType);
@@ -253,6 +271,8 @@ private:
     using DOMObjectVariant = Variant<std::nullptr_t, RenderObject*, Node*, Widget*>;
     void cacheAndInitializeWrapper(AccessibilityObject&, DOMObjectVariant = nullptr);
     void attachWrapper(AccessibilityObject&);
+
+    AccessibilityObject* getOrCreateSlow(Node&, IsPartOfRelation);
 
 public:
     void onPageActivityStateChange(OptionSet<ActivityState>);
@@ -347,7 +367,7 @@ public:
         , WeakHashSet<Element, WeakPtrImplWithEventTargetData>
         , WeakHashSet<HTMLTableElement, WeakPtrImplWithEventTargetData>
         , WeakHashSet<AccessibilityObject>
-        , WeakHashSet<AccessibilityTable>
+        , WeakHashSet<AccessibilityNodeObject>
         , WeakHashSet<AccessibilityTableCell>
         , WeakListHashSet<Node, WeakPtrImplWithEventTargetData>
         , WeakListHashSet<Element, WeakPtrImplWithEventTargetData>
@@ -421,8 +441,8 @@ public:
 #endif
 
     // Text marker utilities.
-    std::optional<TextMarkerData> textMarkerDataForVisiblePosition(const VisiblePosition&, TextMarkerOrigin = TextMarkerOrigin::Unknown);
-    TextMarkerData textMarkerDataForCharacterOffset(const CharacterOffset&, TextMarkerOrigin = TextMarkerOrigin::Unknown);
+    std::optional<TextMarkerData> textMarkerDataForVisiblePosition(const VisiblePosition&, TextMarkerOrigin = static_cast<TextMarkerOrigin>(0));
+    TextMarkerData textMarkerDataForCharacterOffset(const CharacterOffset&, TextMarkerOrigin = static_cast<TextMarkerOrigin>(0));
     TextMarkerData textMarkerDataForNextCharacterOffset(const CharacterOffset&);
     AXTextMarker nextTextMarker(const AXTextMarker&);
     TextMarkerData textMarkerDataForPreviousCharacterOffset(const CharacterOffset&);
@@ -517,7 +537,7 @@ public:
     void deferRecomputeIsIgnoredIfNeeded(Element*);
     void deferRecomputeIsIgnored(Element*);
     void deferRecomputeTableIsExposed(Element*);
-    void deferRecomputeTableCellSlots(AccessibilityTable&);
+    void deferRecomputeTableCellSlots(AccessibilityNodeObject&);
     void deferTextChangedIfNeeded(Node*);
     void deferSelectedChildrenChangedIfNeeded(Element&);
     WEBCORE_EXPORT void performDeferredCacheUpdate(ForceLayout);
@@ -557,6 +577,8 @@ public:
     WEBCORE_EXPORT static void initializeAXThreadIfNeeded();
     WEBCORE_EXPORT static bool isAXThreadInitialized();
     WEBCORE_EXPORT RefPtr<AXIsolatedTree> getOrCreateIsolatedTree();
+
+    static bool isAccessibilityList(Element&);
 private:
     static bool clientSupportsIsolatedTree();
     // Propagates the root of the isolated tree back into the Core and WebKit.
@@ -683,7 +705,7 @@ private:
     void handleFocusedUIElementChanged(Element* oldFocus, Element* newFocus, UpdateModal = UpdateModal::Yes);
     void handleMenuListValueChanged(Element&);
     void handleTextChanged(AccessibilityObject*);
-    void handleRecomputeCellSlots(AccessibilityTable&);
+    void handleRecomputeCellSlots(AccessibilityNodeObject&);
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void handleRowspanChanged(AccessibilityTableCell&);
 #endif
@@ -732,9 +754,9 @@ private:
     HashMap<AXID, Ref<AccessibilityObject>> m_objects;
 
     // Should be used only for renderer-only (i.e. no DOM node) accessibility objects.
-    WeakHashMap<RenderObject, AXID, SingleThreadWeakPtrImpl> m_renderObjectMapping;
-    WeakHashMap<Widget, AXID, SingleThreadWeakPtrImpl> m_widgetObjectMapping;
-    // FIXME: The type for m_nodeObjectMapping really should be:
+    WeakHashMap<RenderObject, AXID, SingleThreadWeakPtrImpl> m_renderObjectIdMapping;
+    WeakHashMap<Widget, AXID, SingleThreadWeakPtrImpl> m_widgetIdMapping;
+    // FIXME: The type for m_nodeIdMapping really should be:
     // HashMap<WeakRef<Node, WeakPtrImplWithEventTargetData>, AXID>
     // As this guarantees that we've called AXObjectCache::remove(Node&) for every node we store.
     // However, in rare circumstances, we can add a node to this map, then later the document associated
@@ -742,7 +764,11 @@ private:
     // clean it up from this map, since existingAXObjectCache fails due to the nullptr m_frame.
     // This scenario seems extremely rare, and may only happen when the webpage is about to be destroyed anyways,
     // so, go with WeakHashMap now until we find a completely safe solution based on document / frame lifecycles.
-    WeakHashMap<Node, AXID, WeakPtrImplWithEventTargetData> m_nodeObjectMapping;
+    WeakHashMap<Node, AXID, WeakPtrImplWithEventTargetData> m_nodeIdMapping;
+    // This map exists as an optimization, reducing the number of HashMap lookups that AXObjectCache::get
+    // has to do to 1 (vs. a m_nodeIdMapping lookup, plus a m_objects lookup). Since this is one of
+    // our hottest functions, the extra memory cost is worth it.
+    WeakHashMap<Node, Ref<AccessibilityObject>, WeakPtrImplWithEventTargetData> m_nodeObjectMapping;
 
     WeakHashMap<RenderText, LineRange, SingleThreadWeakPtrImpl> m_mostRecentlyPaintedText;
 
@@ -799,7 +825,7 @@ private:
     WeakHashSet<AccessibilityObject> m_deferredRecomputeActiveSummaryList;
     WeakHashSet<Element, WeakPtrImplWithEventTargetData> m_deferredRecomputeIsIgnoredList;
     WeakHashSet<HTMLTableElement, WeakPtrImplWithEventTargetData> m_deferredRecomputeTableIsExposedList;
-    WeakHashSet<AccessibilityTable> m_deferredRecomputeTableCellSlotsList;
+    WeakHashSet<AccessibilityNodeObject> m_deferredRecomputeTableCellSlotsList;
     WeakHashSet<AccessibilityTableCell> m_deferredRowspanChanges;
     WeakListHashSet<Node, WeakPtrImplWithEventTargetData> m_deferredTextChangedList;
     WeakHashSet<Element, WeakPtrImplWithEventTargetData> m_deferredSelectedChildredChangedList;

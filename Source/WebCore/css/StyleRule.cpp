@@ -49,6 +49,7 @@
 #include "MutableStyleProperties.h"
 #include "StyleProperties.h"
 #include "StylePropertiesInlines.h"
+#include "StyleRuleFunction.h"
 #include "StyleRuleImport.h"
 #include "StyleSheetContents.h"
 
@@ -135,6 +136,10 @@ template<typename Visitor> constexpr decltype(auto) StyleRuleBase::visitDerived(
         return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<StyleRuleViewTransition>(*this));
     case StyleRuleType::PositionTry:
         return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<StyleRulePositionTry>(*this));
+    case StyleRuleType::Function:
+        return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<StyleRuleFunction>(*this));
+    case StyleRuleType::FunctionDeclarations:
+        return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<StyleRuleFunctionDeclarations>(*this));
     case StyleRuleType::Margin:
         break;
     }
@@ -235,6 +240,12 @@ Ref<CSSRule> StyleRuleBase::createCSSOMWrapper(CSSStyleSheet* parentSheet, CSSRu
         [&](StyleRulePositionTry& rule) -> Ref<CSSRule> {
             return CSSPositionTryRule::create(rule, parentSheet);
         },
+        [&](StyleRuleFunction&) -> Ref<CSSRule> {
+            RELEASE_ASSERT_NOT_REACHED();
+        },
+        [&](StyleRuleFunctionDeclarations&) -> Ref<CSSRule> {
+            RELEASE_ASSERT_NOT_REACHED();
+        },
         [](StyleRuleCharset&) -> Ref<CSSRule> {
             RELEASE_ASSERT_NOT_REACHED();
         },
@@ -300,6 +311,17 @@ MutableStyleProperties& StyleRule::mutableProperties()
     return mutablePropertiesRef;
 }
 
+void StyleRule::wrapperAdoptSelectorList(CSSSelectorList&& selectors)
+{
+    adoptSelectorList(WTFMove(selectors));
+}
+
+void StyleRuleWithNesting::wrapperAdoptOriginalSelectorList(CSSSelectorList&& selectors)
+{
+    m_originalSelectorList = WTFMove(selectors);
+    invalidateResolvedSelectorListRecursively();
+}
+
 Ref<StyleRule> StyleRule::createForSplitting(const Vector<const CSSSelector*>& selectors, Ref<StyleProperties>&& properties, bool hasDocumentSecurityOrigin)
 {
     ASSERT_WITH_SECURITY_IMPLICATION(!selectors.isEmpty());
@@ -321,7 +343,7 @@ Vector<Ref<StyleRule>> StyleRule::splitIntoMultipleRulesWithMaximumSelectorCompo
 
     for (auto& selector : selectorList()) {
         Vector<const CSSSelector*, 8> componentsInThisSelector;
-        for (const CSSSelector* component = &selector; component; component = component->tagHistory())
+        for (const CSSSelector* component = &selector; component; component = component->precedingInComplexSelector())
             componentsInThisSelector.append(component);
 
         if (componentsInThisSelector.size() + componentsSinceLastSplit.size() > maxCount && !componentsSinceLastSplit.isEmpty()) {
@@ -343,7 +365,7 @@ Vector<Ref<StyleRule>> StyleRule::splitIntoMultipleRulesWithMaximumSelectorCompo
 
 String StyleRule::debugDescription() const
 {
-    return makeString("StyleRule ["_s, m_properties->asText(CSS::defaultSerializationContext()), ']');
+    return makeString(" StyleRule ["_s, " selector: "_s, selectorList().selectorsText(), " properties: "_s, m_properties->asText(CSS::defaultSerializationContext()), ']');
 }
 
 StyleRuleWithNesting::~StyleRuleWithNesting() = default;
@@ -356,7 +378,7 @@ Ref<StyleRuleWithNesting> StyleRuleWithNesting::copy() const
 String StyleRuleWithNesting::debugDescription() const
 {
     StringBuilder builder;
-    builder.append("StyleRuleWithNesting ["_s, properties().asText(CSS::defaultSerializationContext()), " "_s);
+    builder.append(" StyleRuleWithNesting ["_s, "originalSelector: "_s, originalSelectorList().selectorsText(), StyleRule::debugDescription());
     for (const auto& rule : m_nestedRules)
         builder.append(rule->debugDescription());
     builder.append(']');
@@ -389,10 +411,12 @@ Ref<StyleRuleWithNesting> StyleRuleWithNesting::create(StyleRule&& styleRule)
 }
 
 StyleRuleWithNesting::StyleRuleWithNesting(Ref<StyleProperties>&& properties, bool hasDocumentSecurityOrigin, CSSSelectorList&& selectors, Vector<Ref<StyleRuleBase>>&& nestedRules)
-    : StyleRule(WTFMove(properties), hasDocumentSecurityOrigin, WTFMove(selectors))
+    // Actual selectors will be resolved later, at RuleSetBuilder time.
+    : StyleRule(WTFMove(properties), hasDocumentSecurityOrigin, { })
     , m_nestedRules(WTFMove(nestedRules))
-    , m_originalSelectorList(selectorList())
+    , m_originalSelectorList(WTFMove(selectors))
 {
+
     setType(StyleRuleType::StyleWithNesting);
 }
 
@@ -672,6 +696,33 @@ StyleRuleNamespace::StyleRuleNamespace(const AtomString& prefix, const AtomStrin
 Ref<StyleRuleNamespace> StyleRuleNamespace::create(const AtomString& prefix, const AtomString& uri)
 {
     return adoptRef(*new StyleRuleNamespace(prefix, uri));
+}
+
+void StyleRuleBase::invalidateResolvedSelectorListRecursively()
+{
+    visitDerived(WTF::makeVisitor(
+        [](StyleRuleWithNesting& rule) {
+            rule.adoptSelectorList({ });
+            for (auto& child : rule.nestedRules())
+                child->invalidateResolvedSelectorListRecursively();
+        },
+        [&](StyleRuleNestedDeclarations& rule) {
+            rule.adoptSelectorList({ });
+        },
+        [&](StyleRuleScope& rule) {
+            rule.setScopeStart({ });
+            rule.setScopeEnd({ });
+            for (auto& child : rule.childRules())
+                child->invalidateResolvedSelectorListRecursively();
+        },
+        [&](const auto& rule) {
+            using ItemType = std::decay_t<decltype(rule)>;
+            if constexpr (std::is_base_of_v<StyleRuleGroup, ItemType>) {
+                for (auto& child : rule.childRules())
+                    child->invalidateResolvedSelectorListRecursively();
+            }
+        }
+        ));
 }
 
 String StyleRuleBase::debugDescription() const

@@ -30,7 +30,7 @@
 #include "AccessibilityTableHeaderContainer.h"
 
 #include "AXObjectCache.h"
-#include "AccessibilityTable.h"
+#include "AccessibilityNodeObject.h"
 
 namespace WebCore {
 
@@ -65,8 +65,8 @@ void AccessibilityTableHeaderContainer::addChildren()
     ASSERT(!m_childrenInitialized);
 
     m_childrenInitialized = true;
-    RefPtr parentTable = dynamicDowncast<AccessibilityTable>(m_parent.get());
-    if (!parentTable || !parentTable->isExposable())
+    RefPtr parentTable = dynamicDowncast<AccessibilityNodeObject>(m_parent.get());
+    if (!parentTable || !parentTable->isExposableTable())
         return;
 
     for (auto& columnHeader : parentTable->columnHeaders())

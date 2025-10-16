@@ -31,7 +31,7 @@
 #include <WebCore/IntRect.h>
 #include <WebCore/IntRectHash.h>
 #include <WebCore/InteractionRegion.h>
-#include <WebCore/Node.h>
+#include <WebCore/NodeIdentifier.h>
 #include <WebCore/Region.h>
 #include <WebCore/RegionContext.h>
 #include <WebCore/RenderStyleConstants.h>

@@ -29,8 +29,10 @@
 #include "GeometryUtilities.h"
 #include "Path.h"
 #include "StyleGradient.h"
+#include "StyleLengthWrapper+Blending.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
+#include <WebCore/StylePosition.h>
 #include <wtf/TinyLRUCache.h>
 
 namespace WebCore {

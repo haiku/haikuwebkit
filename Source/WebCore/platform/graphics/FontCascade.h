@@ -33,6 +33,7 @@
 #include <optional>
 #include <wtf/CheckedRef.h>
 #include <wtf/HashSet.h>
+#include <wtf/Platform.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/CharacterProperties.h>
@@ -232,6 +233,19 @@ public:
     // Keep this in sync with RenderText's m_fontCodePath
     enum class CodePath : uint8_t { Auto, Simple, Complex, SimpleWithGlyphOverflow };
     WEBCORE_EXPORT CodePath codePath(const TextRun&, std::optional<unsigned> from = std::nullopt, std::optional<unsigned> to = std::nullopt) const;
+
+    CodePath codePathForShaping(const TextRun& run, std::optional<unsigned> from = std::nullopt, std::optional<unsigned> to = std::nullopt) const
+    {
+#if ENABLE(COMPLEX_TEXT_CONTROLLER_FOR_SIMPLE_CODE_PATH)
+        UNUSED_PARAM(run);
+        UNUSED_PARAM(from);
+        UNUSED_PARAM(to);
+        return CodePath::Complex;
+#else
+        return codePath(run, from, to);
+#endif
+    }
+
     static CodePath characterRangeCodePath(std::span<const LChar>) { return CodePath::Simple; }
     WEBCORE_EXPORT static CodePath characterRangeCodePath(std::span<const char16_t>);
 
@@ -457,7 +471,15 @@ inline float FontCascade::widthForTextUsingSimplifiedMeasuring(StringView text, 
     if (cacheEntry && !std::isnan(*cacheEntry))
         return *cacheEntry;
 
+#if !ENABLE(COMPLEX_TEXT_CONTROLLER_FOR_SIMPLE_CODE_PATH)
     return widthForSimpleTextSlow(text, textDirection, cacheEntry);
+#else
+    TextRun run { text, 0, 0, ExpansionBehavior::defaultBehavior(), textDirection, false, false };
+    float width = widthForComplexText(run, nullptr, nullptr);
+    if (cacheEntry)
+        *cacheEntry = width;
+    return width;
+#endif // !ENABLE(COMPLEX_TEXT_CONTROLLER_FOR_SIMPLE_CODE_PATH)
 }
 
 bool shouldSynthesizeSmallCaps(bool, const Font*, char32_t, std::optional<char32_t>, FontVariantCaps, bool);

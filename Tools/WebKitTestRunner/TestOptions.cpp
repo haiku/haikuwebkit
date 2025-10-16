@@ -98,6 +98,7 @@ const TestFeatures& TestOptions::defaults()
             { "DeveloperExtrasEnabled", true },
             { "DirectoryUploadEnabled", true },
             { "EncryptedMediaAPIEnabled", true },
+            { "EnumeratedARIAAttributeReflectionEnabled", false },
             { "EventHandlerDrivenSmoothKeyboardScrollingEnabled", eventHandlerDrivenSmoothKeyboardScrollingEnabledValue },
             { "ExposeSpeakersEnabled", true },
             { "FullScreenEnabled", true },
@@ -105,7 +106,7 @@ const TestFeatures& TestOptions::defaults()
             { "HiddenPageCSSAnimationSuspensionEnabled", false },
             { "HiddenPageDOMTimerThrottlingEnabled", false },
 #if ENABLE(CONTENT_EXTENSIONS)
-            { "IFrameResourceMonitoringEnabled", true },
+            { "IFrameResourceMonitoringEnabled", false },
 #endif
             { "InlineMediaPlaybackRequiresPlaysInlineAttribute", false },
             { "InputTypeDateEnabled", true },

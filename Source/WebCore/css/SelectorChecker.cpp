@@ -362,7 +362,7 @@ SelectorChecker::MatchResult SelectorChecker::matchRecursively(CheckingContext& 
     auto relation = context.selector->relation();
 
     // Prepare next selector
-    const CSSSelector* leftSelector = context.selector->tagHistory();
+    const CSSSelector* leftSelector = context.selector->precedingInComplexSelector();
     if (!leftSelector) {
         if (context.mustMatchHostPseudoClass && !context.matchedHostPseudoClass)
             return MatchResult::fails(Match::SelectorFailsCompletely);
@@ -668,7 +668,7 @@ static bool canMatchHoverOrActiveInQuirksMode(const SelectorChecker::LocalContex
     if (context.inFunctionalPseudoClass)
         return true;
 
-    for (const CSSSelector* selector = context.firstSelectorOfTheFragment; selector; selector = selector->tagHistory()) {
+    for (const CSSSelector* selector = context.firstSelectorOfTheFragment; selector; selector = selector->precedingInComplexSelector()) {
         switch (selector->match()) {
         case CSSSelector::Match::Tag:
             if (selector->tagQName() != anyQName())
@@ -1638,7 +1638,7 @@ unsigned SelectorChecker::determineLinkMatchType(const CSSSelector* selector)
 
     // Statically determine if this selector will match a link in visited, unvisited or any state, or never.
     // :visited never matches other elements than the innermost link element.
-    for (; selector; selector = selector->tagHistory()) {
+    for (; selector; selector = selector->precedingInComplexSelector()) {
         if (selector->match() == CSSSelector::Match::PseudoClass) {
             switch (selector->pseudoClass()) {
             case CSSSelector::PseudoClass::Link:

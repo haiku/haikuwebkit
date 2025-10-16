@@ -133,6 +133,14 @@ static void testWebKitSettings(Test*, gconstpointer)
     webkit_settings_set_pictograph_font_family(settings, "sans-serif");
     g_assert_cmpstr(webkit_settings_get_pictograph_font_family(settings), ==, "sans-serif");
 
+    // Default math font family is nullptr.
+    g_assert_null(webkit_settings_get_math_font_family(settings));
+    webkit_settings_set_math_font_family(settings, "sans-serif");
+    g_assert_cmpstr(webkit_settings_get_math_font_family(settings), ==, "sans-serif");
+    // Can be reset to default by passing nullptr again.
+    webkit_settings_set_math_font_family(settings, nullptr);
+    g_assert_null(webkit_settings_get_math_font_family(settings));
+
     // Default font size is 16.
     g_assert_cmpuint(webkit_settings_get_default_font_size(settings), ==, 16);
     webkit_settings_set_default_font_size(settings, 14);

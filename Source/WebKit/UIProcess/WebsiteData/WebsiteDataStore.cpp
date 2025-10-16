@@ -2916,4 +2916,9 @@ void WebsiteDataStore::setStorageAccessPermissionForTesting(bool granted, WebPag
     protectedNetworkProcess()->sendWithAsyncReply(Messages::NetworkProcess::SetStorageAccessPermissionForTesting(m_sessionID, granted, webPageProxyID, WebCore::RegistrableDomain(URL(topFrame)), WebCore::RegistrableDomain(URL(subFrame))), WTFMove(completionHandler));
 }
 
+void WebsiteDataStore::clearStorageAccessForTesting(CompletionHandler<void()>&& completionHandler)
+{
+    protectedNetworkProcess()->sendWithAsyncReply(Messages::NetworkProcess::ClearStorageAccessForTesting(m_sessionID), WTFMove(completionHandler));
+}
+
 } // namespace WebKit

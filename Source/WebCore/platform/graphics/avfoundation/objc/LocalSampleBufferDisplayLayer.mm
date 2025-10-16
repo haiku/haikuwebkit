@@ -263,6 +263,12 @@ PlatformLayer* LocalSampleBufferDisplayLayer::rootLayer()
     return m_rootLayer.get();
 }
 
+
+RetainPtr<PlatformLayer> LocalSampleBufferDisplayLayer::protectedRootLayer()
+{
+    return rootLayer();
+}
+
 bool LocalSampleBufferDisplayLayer::didFail() const
 {
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN

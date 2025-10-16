@@ -69,7 +69,7 @@ def main():
 
 #pragma once
 
-#include "ThreadGlobalData.h"
+#include <WebCore/ThreadGlobalData.h>
 #include <array>
 #include <functional>
 #include <wtf/HashSet.h>

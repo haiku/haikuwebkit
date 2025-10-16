@@ -40,6 +40,7 @@ enum class Action : uint8_t {
     SelectText,
     SelectMenuItem,
     TextInput,
+    KeyPress,
 };
 
 struct Interaction {

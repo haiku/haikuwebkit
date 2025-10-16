@@ -128,7 +128,7 @@ void BroadcastChannel::MainThreadBridge::ensureOnMainThread(Function<void(Page*)
 
 void BroadcastChannel::MainThreadBridge::registerChannel()
 {
-    ensureOnMainThread([this, contextIdentifier = m_broadcastChannel->scriptExecutionContext()->identifier()](auto* page) mutable {
+    ensureOnMainThread([this, protectedThis = Ref { *this }, contextIdentifier = m_broadcastChannel->scriptExecutionContext()->identifier()](auto* page) mutable {
         if (page)
             page->protectedBroadcastChannelRegistry()->registerChannel(m_origin, m_name, identifier());
         channelToContextIdentifier().add(identifier(), contextIdentifier);
@@ -137,7 +137,7 @@ void BroadcastChannel::MainThreadBridge::registerChannel()
 
 void BroadcastChannel::MainThreadBridge::unregisterChannel()
 {
-    ensureOnMainThread([this](auto* page) {
+    ensureOnMainThread([this, protectedThis = Ref { *this }](auto* page) {
         if (page)
             page->protectedBroadcastChannelRegistry()->unregisterChannel(m_origin, m_name, identifier());
         channelToContextIdentifier().remove(identifier());
@@ -146,7 +146,7 @@ void BroadcastChannel::MainThreadBridge::unregisterChannel()
 
 void BroadcastChannel::MainThreadBridge::postMessage(Ref<SerializedScriptValue>&& message)
 {
-    ensureOnMainThread([this, message = WTFMove(message)](auto* page) mutable {
+    ensureOnMainThread([this, protectedThis = Ref { *this }, message = WTFMove(message)](auto* page) mutable {
         if (!page)
             return;
 

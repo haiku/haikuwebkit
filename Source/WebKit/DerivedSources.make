@@ -279,11 +279,11 @@ MESSAGE_RECEIVERS = \
 	GPUProcess/ShapeDetection/RemoteBarcodeDetector \
 	GPUProcess/ShapeDetection/RemoteFaceDetector \
 	GPUProcess/ShapeDetection/RemoteTextDetector \
-	GPUProcess/graphics/RemoteDisplayListRecorder \
+	GPUProcess/graphics/RemoteGraphicsContext \
+	GPUProcess/graphics/RemoteGraphicsContextGL \
 	GPUProcess/graphics/RemoteImageBuffer \
 	GPUProcess/graphics/RemoteImageBufferSet \
 	GPUProcess/graphics/RemoteRenderingBackend \
-	GPUProcess/graphics/RemoteGraphicsContextGL \
 	GPUProcess/graphics/WebGPU/RemoteAdapter \
 	GPUProcess/graphics/WebGPU/RemoteBindGroup \
 	GPUProcess/graphics/WebGPU/RemoteBindGroupLayout \
@@ -452,20 +452,26 @@ WEBPUSHD_SANDBOX_PROFILE = \
 	com.apple.WebKit.webpushd.mac.sb
 endif
 
-SANDBOX_PROFILES_IOS = \
+SANDBOX_PROFILES_EMBEDDED = \
 	com.apple.WebKit.adattributiond.sb \
 	com.apple.WebKit.webpushd.sb \
 	com.apple.WebKit.GPU.sb \
-	com.apple.WebKit.GPU.Development.sb \
-	com.apple.WebKit.Model.sb \
 	com.apple.WebKit.Networking.sb \
+	com.apple.WebKit.WebContent.sb
+
+ifneq ($(filter xr%,$(WK_PLATFORM_NAME)),)
+SANDBOX_PROFILES_EMBEDDED += com.apple.WebKit.Model.sb
+endif
+
+ifeq ($(WK_PLATFORM_NAME), iphoneos)
+SANDBOX_PROFILES_EMBEDDED += com.apple.WebKit.GPU.Development.sb \
 	com.apple.WebKit.Networking.Development.sb \
-	com.apple.WebKit.WebContent.sb \
 	com.apple.WebKit.WebContent.Development.sb
+endif
 
-sandbox-profiles-ios : $(SANDBOX_PROFILES_IOS)
+sandbox-profiles-embedded : $(SANDBOX_PROFILES_EMBEDDED)
 
-all : $(SANDBOX_PROFILES_WITHOUT_WEBPUSHD) $(WEBPUSHD_SANDBOX_PROFILE) $(SANDBOX_PROFILES_IOS)
+all : $(SANDBOX_PROFILES_WITHOUT_WEBPUSHD) $(WEBPUSHD_SANDBOX_PROFILE) $(SANDBOX_PROFILES_EMBEDDED)
 
 NOTIFICATION_ALLOW_LISTS = \
 	Resources/cocoa/NotificationAllowList/EmbeddedForwardedNotifications.def \

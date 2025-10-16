@@ -98,6 +98,9 @@ public:
         , m_params(WTFMove(params))
     { }
 
+    size_t numParams() const { return m_params.size(); }
+    size_t numResults() const { return m_results.size(); }
+
     bool check(const Wasm::FunctionSignature&) const;
 
 private:
@@ -113,17 +116,21 @@ class WebAssemblyBuiltinSet;
  */
 class WebAssemblyBuiltin {
 public:
-    using ImplementationPtr = EncodedJSValue (*)();
+    using WasmTrampolinePtr = EncodedJSValue (*)();
     friend class WebAssemblyBuiltinSet;
 
-    WebAssemblyBuiltin(uint32_t id, ASCIILiteral name, WebAssemblyBuiltinSignature&& sig, ImplementationPtr implementation, NativeFunction implementationForReexports)
+    template <typename WasmEntryPoint>
+    WebAssemblyBuiltin(uint32_t id, ASCIILiteral name, WebAssemblyBuiltinSignature&& sig, WasmEntryPoint wasmEntryPoint, WasmTrampolinePtr wasmTrampoline, NativeFunction jsEntryPoint)
         : m_id(id)
         , m_name(name)
         , m_signature(WTFMove(sig))
-        , m_implementation(implementation)
-        , m_reexportImplementation(implementationForReexports)
+        , m_jsEntryPoint(jsEntryPoint)
     {
+        ASSERT(sig.numParams() <= 4); // see generateWasmBuiltinTrampoline() for why this is the limit
+        m_wasmEntryPoint = CodePtr<CFunctionPtrTag>::fromTaggedPtr(std::bit_cast<void*>(wasmEntryPoint));
+        m_wasmTrampoline = CodePtr<CFunctionPtrTag>::fromTaggedPtr(std::bit_cast<void*>(wasmTrampoline)).template retagged<WasmEntryPtrTag>();
     }
+
     WebAssemblyBuiltin(WebAssemblyBuiltin&&) = default;
 
     // An index used to get the builtin callee from the callee table in a Wasm instance.
@@ -135,10 +142,9 @@ public:
     // The signature that a valid import of this builtin must match.
     const WebAssemblyBuiltinSignature& signature() const { return m_signature; }
 
-    // The entry point of this builtin implementation when called from Wasm code.
-    ImplementationPtr implementation() const { return m_implementation; }
-
-    // A JS function used in place of the builtin if it's re-exported by the module.
+    CodePtr<CFunctionPtrTag> wasmEntryPoint() const { return m_wasmEntryPoint; }
+    CodePtr<WasmEntryPtrTag> wasmTrampoline() const { return m_wasmTrampoline; }
+    // Return a JSFunction wrapping m_jsEntryPoint.
     JSObject* jsWrapper(JSGlobalObject*) const;
 
     Wasm::WasmBuiltinCallee* callee() const { return m_callee.get(); }
@@ -149,8 +155,9 @@ private:
     uint32_t m_id;
     ASCIILiteral m_name;
     WebAssemblyBuiltinSignature m_signature;
-    ImplementationPtr m_implementation;
-    NativeFunction m_reexportImplementation;
+    CodePtr<CFunctionPtrTag> m_wasmEntryPoint;
+    CodePtr<WasmEntryPtrTag> m_wasmTrampoline;
+    NativeFunction m_jsEntryPoint;
     // The following are set by WasmBuiltinSet::finalizeCreation()
     const Wasm::Name* m_wasmName;
     RefPtr<Wasm::NameSection> m_nameSection;
@@ -219,7 +226,14 @@ private:
     Vector<WebAssemblyBuiltinSet> m_builtinSets;
 };
 
+#define PASTE(x, y) x##y
+#define CONCAT(x, y) PASTE(x, y)
+
+// The naming scheme. Changes should be matched in InPlaceInterpreter.asm
+// macros wasmBuiltinCallTrampoline and defineWasmBuiltinCallTrampoline.
+
 #define BUILTIN_FULL_NAME(setName, builtinName) setName ## __ ## builtinName
+#define BUILTIN_WASM_ENTRY_NAME(setName, builtinName) CONCAT(wasm_builtin__, BUILTIN_FULL_NAME(setName, builtinName))
 
 #define EXPECTATIONS(...) Vector<std::unique_ptr<WebAssemblyBuiltinTypeExpectation>>::from(__VA_ARGS__)
 
@@ -285,10 +299,13 @@ private:
     m(jsstring, equals, BUILTIN_SIG_I_RR) \
     m(jsstring, compare, BUILTIN_SIG_I_RR)
 
+#define FOR_EACH_WASM_BUILTIN(m) \
+    FOR_EACH_WASM_JS_STRING_BUILTIN(m)
+    // additional builtin sets go here
+
 enum class WasmBuiltinID {
 #define BUILTIN_ENTRY(setName, builtinName, type) BUILTIN_FULL_NAME(setName, builtinName),
-    FOR_EACH_WASM_JS_STRING_BUILTIN(BUILTIN_ENTRY)
-    // additional builtin set enumerations go here
+    FOR_EACH_WASM_BUILTIN(BUILTIN_ENTRY)
 #undef BUILTIN_ENTRY
     _last
 };
@@ -301,8 +318,7 @@ constexpr std::size_t WASM_BUILTIN_COUNT = static_cast<std::size_t>(WasmBuiltinI
 */
 struct WasmBuiltinCalleeOffsets {
 #define CALLEE_ENTRY(setName, builtinName, type) void* BUILTIN_FULL_NAME(setName, builtinName);
-    FOR_EACH_WASM_JS_STRING_BUILTIN(CALLEE_ENTRY)
-    // additional builtin set enumerations go here
+    FOR_EACH_WASM_BUILTIN(CALLEE_ENTRY)
 #undef CALLEE_ENTRY
 };
 

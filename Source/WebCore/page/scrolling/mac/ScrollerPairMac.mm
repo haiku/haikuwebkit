@@ -31,6 +31,7 @@
 #import "Logging.h"
 #import "ScrollTypesMac.h"
 #import "ScrollingTreeFrameScrollingNode.h"
+#import <QuartzCore/QuartzCore.h>
 #import <WebCore/FloatPoint.h>
 #import <WebCore/IntRect.h>
 #import <WebCore/NSScrollerImpDetails.h>
@@ -317,7 +318,7 @@ ScrollerPairMac::Values ScrollerPairMac::valuesForOrientation(ScrollbarOrientati
 
 bool ScrollerPairMac::hasScrollerImp()
 {
-    return verticalScroller().hasScrollerImp() || horizontalScroller().hasScrollerImp();
+    return checkedVerticalScroller()->hasScrollerImp() || checkedHorizontalScroller()->hasScrollerImp();
 }
 
 void ScrollerPairMac::releaseReferencesToScrollerImpsOnTheMainThread()
@@ -448,6 +449,24 @@ void ScrollerPairMac::scrollbarColorChanged(const std::optional<ScrollbarColor>&
 {
     checkedHorizontalScroller()->scrollbarColorChanged(scrollbarColor);
     checkedVerticalScroller()->scrollbarColorChanged(scrollbarColor);
+}
+
+void ScrollerPairMac::updateScrollbarPainters()
+{
+    Locker lockerHorizontal { horizontalScroller().scrollerImpLock() };
+    Locker lockerVertical { verticalScroller().scrollerImpLock() };
+
+    BEGIN_BLOCK_OBJC_EXCEPTIONS
+    [CATransaction lock];
+
+    auto horizontalValues = valuesForOrientation(ScrollbarOrientation::Horizontal);
+    setHorizontalScrollbarPresentationValue(horizontalValues.value);
+
+    auto verticalValues = valuesForOrientation(ScrollbarOrientation::Vertical);
+    setVerticalScrollbarPresentationValue(verticalValues.value);
+
+    [CATransaction unlock];
+    END_BLOCK_OBJC_EXCEPTIONS
 }
 
 } // namespace WebCore

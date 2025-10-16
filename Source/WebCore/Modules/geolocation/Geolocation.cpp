@@ -44,6 +44,7 @@
 #include "Page.h"
 #include "PermissionsPolicy.h"
 #include "ScriptExecutionContextInlines.h"
+#include "ScriptWrappableInlines.h"
 #include "SecurityOrigin.h"
 #include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/Ref.h>

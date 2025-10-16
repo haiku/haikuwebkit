@@ -110,8 +110,6 @@ static_assert(sizeof(RenderStyle) == sizeof(SameSizeAsRenderStyle), "RenderStyle
 
 static_assert(PublicPseudoIDBits == enumToUnderlyingType(PseudoId::FirstInternalPseudoId) - enumToUnderlyingType(PseudoId::FirstPublicPseudoId));
 
-static_assert(!(static_cast<unsigned>(maxTextDecorationLineValue) >> TextDecorationLineBits));
-
 static_assert(!(static_cast<unsigned>(maxTextTransformValue) >> TextTransformBits));
 
 static_assert(!((enumToUnderlyingType(PseudoId::AfterLastInternalPseudoId) - 1) >> PseudoElementTypeBits));
@@ -558,7 +556,7 @@ unsigned RenderStyle::hashForTextAutosizing() const
 {
     // FIXME: Not a very smart hash. Could be improved upon. See <https://bugs.webkit.org/show_bug.cgi?id=121131>.
     unsigned hash = m_nonInheritedData->miscData->usedAppearance;
-    hash ^= m_nonInheritedData->rareData->lineClamp.value();
+    hash ^= m_nonInheritedData->rareData->lineClamp.valueForTextAutosizingHash();
     hash ^= m_rareInheritedData->overflowWrap;
     hash ^= m_rareInheritedData->nbspMode;
     hash ^= m_rareInheritedData->lineBreak;
@@ -661,7 +659,7 @@ bool RenderStyle::isIdempotentTextAutosizingCandidate(AutosizeStatus status) con
         return false;
     }
 
-    if (hasBackgroundImage() && backgroundRepeat() == FillRepeatXY { FillRepeat::NoRepeat, FillRepeat::NoRepeat })
+    if (hasBackgroundImage() && backgroundLayers().first().repeat() == FillRepeat::NoRepeat)
         return false;
 
     return true;
@@ -948,6 +946,7 @@ static bool rareInheritedDataChangeRequiresLayout(const StyleRareInheritedData& 
         || first.hyphenateCharacter != second.hyphenateCharacter
         || first.rubyPosition != second.rubyPosition
         || first.rubyAlign != second.rubyAlign
+        || first.rubyOverhang != second.rubyOverhang
         || first.textCombine != second.textCombine
         || first.textEmphasisStyle != second.textEmphasisStyle
         || first.textEmphasisPosition != second.textEmphasisPosition
@@ -2407,24 +2406,6 @@ void RenderStyle::setVisitedLinkColor(Color&& v)
     SET_VAR(m_inheritedData, visitedLinkColor, WTFMove(v));
 }
 
-bool RenderStyle::hasEntirelyFixedBackground() const
-{
-    for (auto* layer = &backgroundLayers(); layer; layer = layer->next()) {
-        if (!(layer->image() && layer->attachment() == FillAttachment::FixedBackground))
-            return false;
-    }
-    return true;
-}
-
-bool RenderStyle::hasAnyBackgroundClipText() const
-{
-    for (auto* layer = &backgroundLayers(); layer; layer = layer->next()) {
-        if (layer->clip() == FillBox::Text)
-            return true;
-    }
-    return false;
-}
-
 const CounterDirectiveMap& RenderStyle::counterDirectives() const
 {
     return m_nonInheritedData->rareData->counterDirectives;
@@ -3722,7 +3703,7 @@ std::optional<size_t> RenderStyle::lastSuccessfulPositionTryFallbackIndex() cons
     return m_nonInheritedData->rareData->lastSuccessfulPositionTryFallbackIndex;
 }
 
-void RenderStyle::setLastSuccessfulPositionTryFallbackIndex(std::optional<size_t>&& index)
+void RenderStyle::setLastSuccessfulPositionTryFallbackIndex(std::optional<size_t> index)
 {
     SET_NESTED_VAR(m_nonInheritedData, rareData, lastSuccessfulPositionTryFallbackIndex, WTFMove(index));
 }
@@ -3787,7 +3768,7 @@ void RenderStyle::NonInheritedFlags::dumpDifferences(TextStream& ts, const NonIn
     LOG_IF_DIFFERENT(usesContainerUnits);
     LOG_IF_DIFFERENT(useTreeCountingFunctions);
 
-    LOG_IF_DIFFERENT_WITH_CAST(TextDecorationLine, textDecorationLine);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::TextDecorationLine, textDecorationLine);
 
     LOG_IF_DIFFERENT(hasExplicitlyInheritedProperties);
     LOG_IF_DIFFERENT(disallowsFastPathInheritance);
@@ -3814,7 +3795,7 @@ void RenderStyle::InheritedFlags::dumpDifferences(TextStream& ts, const Inherite
     LOG_IF_DIFFERENT_WITH_CAST(TextWrapStyle, textWrapStyle);
 
     LOG_RAW_OPTIONSET_IF_DIFFERENT(TextTransform, textTransform);
-    LOG_RAW_OPTIONSET_IF_DIFFERENT(TextDecorationLine, textDecorationLineInEffect);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::TextDecorationLine, textDecorationLineInEffect);
 
     LOG_IF_DIFFERENT_WITH_CAST(PointerEvents, pointerEvents);
     LOG_IF_DIFFERENT_WITH_CAST(Visibility, visibility);

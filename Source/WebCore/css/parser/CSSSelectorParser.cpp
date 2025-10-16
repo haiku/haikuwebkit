@@ -60,7 +60,7 @@ static void appendImplicitSelectorPseudoClassScopeIfNeeded(MutableCSSSelector& s
         scopeSelector->setMatch(CSSSelector::Match::PseudoClass);
         scopeSelector->setPseudoClass(CSSSelector::PseudoClass::Scope);
         scopeSelector->setImplicit();
-        selector.appendTagHistoryAsRelative(WTFMove(scopeSelector));
+        selector.prependInComplexSelectorAsRelative(WTFMove(scopeSelector));
     }
 }
 
@@ -71,7 +71,7 @@ static void appendImplicitSelectorNestingParentIfNeeded(MutableCSSSelector& sele
         nestingParentSelector->setMatch(CSSSelector::Match::NestingParent);
         // https://drafts.csswg.org/css-nesting/#nesting
         // Spec: nested rules with relative selectors include the specificity of their implied nesting selector.
-        selector.appendTagHistoryAsRelative(WTFMove(nestingParentSelector));
+        selector.prependInComplexSelectorAsRelative(WTFMove(nestingParentSelector));
     }
 }
 
@@ -386,7 +386,7 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumeComplexSelector(CS
 
     OptionSet<CompoundSelectorFlag> previousCompoundFlags;
 
-    for (auto* simple = selector.get(); simple && !previousCompoundFlags; simple = simple->tagHistory())
+    for (auto* simple = selector.get(); simple && !previousCompoundFlags; simple = simple->precedingInComplexSelector())
         previousCompoundFlags = extractCompoundFlags(*simple, m_context.mode);
 
     while (true) {
@@ -401,13 +401,13 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumeComplexSelector(CS
             return nullptr;
         auto* end = nextSelector.get();
         auto compoundFlags = extractCompoundFlags(*end, m_context.mode);
-        while (end->tagHistory()) {
-            end = end->tagHistory();
+        while (end->precedingInComplexSelector()) {
+            end = end->precedingInComplexSelector();
             compoundFlags.add(extractCompoundFlags(*end, m_context.mode));
         }
         end->setRelation(combinator);
         previousCompoundFlags = compoundFlags;
-        end->setTagHistory(WTFMove(selector));
+        end->setPrecedingInComplexSelector(WTFMove(selector));
 
         selector = WTFMove(nextSelector);
     }
@@ -427,14 +427,14 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumeRelativeScopeSelec
         return nullptr;
 
     auto* end = selector.get();
-    while (end->tagHistory())
-        end = end->tagHistory();
+    while (end->precedingInComplexSelector())
+        end = end->precedingInComplexSelector();
 
     auto scopeSelector = makeUnique<MutableCSSSelector>();
     scopeSelector->setMatch(CSSSelector::Match::HasScope);
 
     end->setRelation(scopeCombinator);
-    end->setTagHistory(WTFMove(scopeSelector));
+    end->setPrecedingInComplexSelector(WTFMove(scopeSelector));
 
     return selector;
 }
@@ -591,7 +591,7 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumeCompoundSelector(C
             m_precedingPseudoElement = simpleSelector->pseudoElement();
 
         if (compoundSelector)
-            compoundSelector->appendTagHistory(CSSSelector::Relation::Subselector, WTFMove(simpleSelector));
+            compoundSelector->prependInComplexSelector(CSSSelector::Relation::Subselector, WTFMove(simpleSelector));
         else
             compoundSelector = WTFMove(simpleSelector);
     }
@@ -1243,16 +1243,16 @@ void CSSSelectorParser::prependTypeSelectorIfNeeded(const AtomString& namespaceP
     if (isHostPseudo && elementName.isNull() && namespacePrefix.isNull())
         return;
     if (tag != anyQName() || isHostPseudo || isShadowDOM)
-        compoundSelector.prependTagSelector(tag, determinedPrefix == nullAtom() && determinedElementName == starAtom() && !isHostPseudo);
+        compoundSelector.appendTagInComplexSelector(tag, determinedPrefix == nullAtom() && determinedElementName == starAtom() && !isHostPseudo);
 }
 
 std::unique_ptr<MutableCSSSelector> CSSSelectorParser::splitCompoundAtImplicitShadowCrossingCombinator(std::unique_ptr<MutableCSSSelector> compoundSelector, const CSSSelectorParserContext& context)
 {
-    // The tagHistory is a linked list that stores combinator separated compound selectors
+    // Complex selectors are represented as a linked list that stores combinator separated compound selectors
     // from right-to-left. Yet, within a single compound selector, stores the simple selectors
     // from left-to-right.
     //
-    // ".a.b > div#id" is stored in a tagHistory as [div, #id, .a, .b], each element in the
+    // ".a.b > div#id" is stored in a complex selector as [div, #id, .a, .b], each element in the
     // list stored with an associated relation (combinator or Subselector).
     //
     // ::cue, ::shadow, and custom pseudo elements have an implicit ShadowPseudo combinator
@@ -1262,26 +1262,26 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::splitCompoundAtImplicitSh
     // Example: input#x::-webkit-inner-spin-button -> [ ::-webkit-inner-spin-button, input, #x ]
     //
     auto* splitAfter = compoundSelector.get();
-    while (splitAfter->tagHistory() && !splitAfter->tagHistory()->needsImplicitShadowCombinatorForMatching())
-        splitAfter = splitAfter->tagHistory();
+    while (splitAfter->precedingInComplexSelector() && !splitAfter->precedingInComplexSelector()->needsImplicitShadowCombinatorForMatching())
+        splitAfter = splitAfter->precedingInComplexSelector();
 
-    if (!splitAfter || !splitAfter->tagHistory())
+    if (!splitAfter || !splitAfter->precedingInComplexSelector())
         return compoundSelector;
 
     // ::part() combines with other pseudo elements.
-    bool isPart = splitAfter->tagHistory()->match() == CSSSelector::Match::PseudoElement && splitAfter->tagHistory()->pseudoElement() == CSSSelector::PseudoElement::Part;
+    bool isPart = splitAfter->precedingInComplexSelector()->match() == CSSSelector::Match::PseudoElement && splitAfter->precedingInComplexSelector()->pseudoElement() == CSSSelector::PseudoElement::Part;
 
     // ::slotted() combines with other pseudo elements.
-    bool isSlotted = splitAfter->tagHistory()->match() == CSSSelector::Match::PseudoElement && splitAfter->tagHistory()->pseudoElement() == CSSSelector::PseudoElement::Slotted;
+    bool isSlotted = splitAfter->precedingInComplexSelector()->match() == CSSSelector::Match::PseudoElement && splitAfter->precedingInComplexSelector()->pseudoElement() == CSSSelector::PseudoElement::Slotted;
 
     std::unique_ptr<MutableCSSSelector> secondCompound;
     if (isUASheetBehavior(context.mode) || isPart) {
         // FIXME: https://bugs.webkit.org/show_bug.cgi?id=161747
         // We have to recur, since we have rules in media controls like video::a::b. This should not be allowed, and
         // we should remove this recursion once those rules are gone.
-        secondCompound = splitCompoundAtImplicitShadowCrossingCombinator(splitAfter->releaseTagHistory(), context);
+        secondCompound = splitCompoundAtImplicitShadowCrossingCombinator(splitAfter->releaseFromComplexSelector(), context);
     } else
-        secondCompound = splitAfter->releaseTagHistory();
+        secondCompound = splitAfter->releaseFromComplexSelector();
 
     auto relation = [&] {
         if (isSlotted)
@@ -1290,13 +1290,13 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::splitCompoundAtImplicitSh
             return CSSSelector::Relation::ShadowPartDescendant;
         return CSSSelector::Relation::ShadowDescendant;
     }();
-    secondCompound->appendTagHistory(relation, WTFMove(compoundSelector));
+    secondCompound->prependInComplexSelector(relation, WTFMove(compoundSelector));
     return secondCompound;
 }
 
 bool CSSSelectorParser::containsUnknownWebKitPseudoElements(const CSSSelector& complexSelector)
 {
-    for (auto current = &complexSelector; current; current = current->tagHistory()) {
+    for (auto current = &complexSelector; current; current = current->precedingInComplexSelector()) {
         if (current->match() == CSSSelector::Match::PseudoElement && current->pseudoElement() == CSSSelector::PseudoElement::WebKitUnknown)
             return true;
     }

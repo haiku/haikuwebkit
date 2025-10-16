@@ -28,7 +28,7 @@
 
 #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
 
-#import "AddEventListenerOptions.h"
+#import "AddEventListenerOptionsInlines.h"
 #import "AudioTrackList.h"
 #import "DocumentInlines.h"
 #import "Event.h"

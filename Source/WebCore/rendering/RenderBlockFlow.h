@@ -282,7 +282,6 @@ public:
     bool subtreeContainsFloats() const;
     bool subtreeContainsFloat(const RenderBox&) const;
 
-    void deleteLines() override;
     void computeOverflow(LayoutUnit oldClientAfterEdge, bool recomputeFloats = false) override;
     Position positionForPoint(const LayoutPoint&, HitTestSource) override;
     PositionWithAffinity positionForPoint(const LayoutPoint&, HitTestSource, const RenderFragmentContainer*) override;
@@ -349,11 +348,11 @@ public:
     bool hasLines() const;
 
     enum InvalidationReason : uint8_t {
-        StyleChange,
-        InsertionOrRemoval, // renderer gets constructed/goes away
+        InternalMove,       // (anon) block is moved or collapsed
+        InsertionOrRemoval, // child renderer gets constructed/goes away
         ContentChange       // existing renderer gets changed (text content only atm)
     };
-    void invalidateLineLayoutPath(InvalidationReason);
+    void invalidateLineLayout(InvalidationReason);
     void computeAndSetLineLayoutPath();
 
     enum LineLayoutPath { UndeterminedPath = 0, InlinePath, SvgTextPath };

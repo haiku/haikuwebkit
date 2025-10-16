@@ -222,6 +222,30 @@ public:
     enum class TopLayerElementType : bool { Other, Popover };
     HTMLElement* topmostPopoverAncestor(TopLayerElementType topLayerType);
 
+    // https://github.com/w3c/aria/pull/2484
+    // These ARIA attributes will become enumerated. Currently, they use [ReflectSetter] with custom getters
+    // rather than [Reflect, Enumerated] to facilitate testing behind the EnumeratedARIAAttributeReflectionEnabled flag.
+    const AtomString& ariaAtomic() const;
+    const AtomString& ariaAutoComplete() const;
+    const AtomString& ariaBusy() const;
+    const AtomString& ariaChecked() const;
+    const AtomString& ariaCurrent() const;
+    const AtomString& ariaDisabled() const;
+    const AtomString& ariaExpanded() const;
+    const AtomString& ariaHasPopup() const;
+    const AtomString& ariaHidden() const;
+    const AtomString& ariaInvalid() const;
+    const AtomString& ariaLive() const;
+    const AtomString& ariaModal() const;
+    const AtomString& ariaMultiLine() const;
+    const AtomString& ariaMultiSelectable() const;
+    const AtomString& ariaOrientation() const;
+    const AtomString& ariaPressed() const;
+    const AtomString& ariaReadOnly() const;
+    const AtomString& ariaRequired() const;
+    const AtomString& ariaSelected() const;
+    const AtomString& ariaSort() const;
+
 #if DUMP_NODE_STATISTICS
     bool hasNamedNodeMap() const;
 #endif

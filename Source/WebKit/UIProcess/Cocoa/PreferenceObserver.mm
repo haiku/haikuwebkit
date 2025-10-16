@@ -49,7 +49,8 @@
 
 - (void)findPreferenceChangesAndNotifyForKeys:(NSDictionary<NSString *, id> *)oldValues toValuesForKeys:(NSDictionary<NSString *, id> *)newValues
 {
-    if (!m_observer)
+    RetainPtr strongObserver = m_observer.get();
+    if (!strongObserver)
         return;
 
     for (NSString *key in oldValues) {
@@ -80,10 +81,10 @@
         };
 
         if (preferenceValuesAreEqual((__bridge id)systemValue.get(), newValue.get()) || preferenceValuesAreEqual((__bridge id)globalValue.get(), newValue.get()))
-            [m_observer preferenceDidChange:nil key:key encodedValue:encodedString.get()];
+            [strongObserver.get() preferenceDidChange:nil key:key encodedValue:encodedString.get()];
 
         if (preferenceValuesAreEqual((__bridge id)domainValue.get(), newValue.get()))
-            [m_observer preferenceDidChange:m_suiteName.get() key:key encodedValue:encodedString.get()];
+            [strongObserver.get() preferenceDidChange:m_suiteName.get() key:key encodedValue:encodedString.get()];
     }
 }
 

@@ -30,6 +30,7 @@
 #include <WebCore/ColorModels.h>
 #include <WebCore/ColorTransferFunctions.h>
 #include <optional>
+#include <type_traits>
 
 namespace WebCore {
 

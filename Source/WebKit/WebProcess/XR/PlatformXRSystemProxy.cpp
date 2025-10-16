@@ -130,7 +130,8 @@ void PlatformXRSystemProxy::submitFrame(Vector<PlatformXR::Device::Layer>&& laye
         deviceLayers.append(WebKit::XRDeviceLayer {
             .handle = layer.handle,
             .visible = layer.visible,
-            .views = layer.views
+            .views = layer.views,
+            .fenceFD = WTFMove(layer.fenceFD)
         });
     }
     protectedPage()->send(Messages::PlatformXRSystem::SubmitFrame(WTFMove(deviceLayers)));

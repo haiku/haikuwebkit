@@ -28,7 +28,6 @@
 #include <WebCore/CSSPropertyNames.h>
 #include <WebCore/CounterDirectives.h>
 #include <WebCore/LengthPoint.h>
-#include <WebCore/LineClampValue.h>
 #include <WebCore/NameScope.h>
 #include <WebCore/PositionArea.h>
 #include <WebCore/PositionTryFallback.h>
@@ -74,6 +73,7 @@
 #include <WebCore/StyleViewTimelines.h>
 #include <WebCore/StyleViewTransitionClass.h>
 #include <WebCore/StyleViewTransitionName.h>
+#include <WebCore/StyleWebKitLineClamp.h>
 #include <WebCore/TouchAction.h>
 #include <memory>
 #include <wtf/DataRef.h>
@@ -145,7 +145,7 @@ public:
     Style::ContainIntrinsicSize containIntrinsicWidth;
     Style::ContainIntrinsicSize containIntrinsicHeight;
 
-    LineClampValue lineClamp; // An Apple extension.
+    Style::WebkitLineClamp lineClamp;
 
     float zoom;
 
@@ -190,8 +190,6 @@ public:
 
     Style::ClipPath clipPath;
 
-    Style::Color textDecorationColor;
-
     DataRef<Style::CustomPropertyData> customProperties;
     HashSet<AtomString> customPaintWatchedProperties;
 
@@ -213,6 +211,7 @@ public:
     Style::OffsetAnchor offsetAnchor;
     Style::OffsetRotate offsetRotate;
 
+    Style::Color textDecorationColor;
     Style::TextDecorationThickness textDecorationThickness;
 
     Style::ScrollTimelines scrollTimelines;

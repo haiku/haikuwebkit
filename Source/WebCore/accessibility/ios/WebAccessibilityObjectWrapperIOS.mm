@@ -31,13 +31,11 @@
 #import "AXAttributeCacheScope.h"
 #import "AXLogger.h"
 #import "AXNotifications.h"
-#import "AXObjectCache.h"
 #import "AXObjectCacheInlines.h"
 #import "AXSearchManager.h"
 #import "AXUtilities.h"
 #import "AccessibilityRenderObject.h"
 #import "AccessibilityScrollView.h"
-#import "AccessibilityTable.h"
 #import "AccessibilityTableCell.h"
 #import "Chrome.h"
 #import "ChromeClient.h"
@@ -65,6 +63,7 @@
 #import "WAKWindow.h"
 #import "WebCoreThread.h"
 #import <CoreText/CoreText.h>
+#import <wtf/HashFunctions.h>
 #import <wtf/RuntimeApplicationChecks.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
@@ -500,7 +499,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     if (![self _prepareAccessibilityCall])
         return nil;
 
-    return accessibilityRoleToString(self.axBackingObject->role()).createNSString().autorelease();
+    return roleToString(self.axBackingObject->role()).createNSString().autorelease();
 }
 
 - (BOOL)accessibilityHasPopup
@@ -579,6 +578,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     return roleValue == AccessibilityRole::ApplicationDialog || roleValue == AccessibilityRole::ApplicationAlertDialog;
 }
 
+using AccessibilityRoleSet = HashSet<AccessibilityRole, IntHash<AccessibilityRole>, WTF::StrongEnumHashTraits<AccessibilityRole>>;
 static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descendant, const AccessibilityRoleSet& roles)
 {
     auto* ancestor = Accessibility::findAncestor(descendant, false, [&roles] (const auto& object) {
@@ -1244,12 +1244,10 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     return nil;
 }
 
-- (AccessibilityTable*)tableParent
+- (AccessibilityObject*)tableParent
 {
     // Find the parent table for the table cell.
-    if (auto* ancestor = self.axBackingObject->exposedTableAncestor(true))
-        return dynamicDowncast<AccessibilityTable>(ancestor);
-    return nil;
+    return self.axBackingObject->exposedTableAncestor(/* includeSelf */ true);
 }
 
 - (id)accessibilityTitleElement
@@ -1274,7 +1272,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     if (!tableCell)
         return nil;
 
-    AccessibilityTable* table = [self tableParent];
+    RefPtr table = [self tableParent];
     if (!table)
         return nil;
 
@@ -1316,7 +1314,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     if (![self _prepareAccessibilityCall])
         return nil;
 
-    AccessibilityTable* table = [self tableParent];
+    RefPtr table = [self tableParent];
     if (!table)
         return nil;
 
@@ -1328,33 +1326,27 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
 {
     if (![self _prepareAccessibilityCall])
         return 0;
-    AccessibilityTable *table = [self tableParent];
-    if (!table)
-        return 0;
 
-    return table->rowCount();
+    RefPtr table = [self tableParent];
+    return table ? table->rowCount() : 0;
 }
 
 - (NSUInteger)accessibilityColumnCount
 {
     if (![self _prepareAccessibilityCall])
         return 0;
-    AccessibilityTable *table = [self tableParent];
-    if (!table)
-        return 0;
 
-    return table->columnCount();
+    RefPtr table = [self tableParent];
+    return table ? table->columnCount() : 0;
 }
 
 - (NSUInteger)accessibilityARIARowCount
 {
     if (![self _prepareAccessibilityCall])
         return 0;
-    AccessibilityTable *table = [self tableParent];
-    if (!table)
-        return 0;
 
-    NSInteger rowCount = table->axRowCount();
+    RefPtr table = [self tableParent];
+    NSInteger rowCount = table ? table->axRowCount() : 0;
     return rowCount > 0 ? rowCount : 0;
 }
 
@@ -1362,11 +1354,9 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
 {
     if (![self _prepareAccessibilityCall])
         return 0;
-    AccessibilityTable *table = [self tableParent];
-    if (!table)
-        return 0;
 
-    NSInteger colCount = table->axColumnCount();
+    RefPtr table = [self tableParent];
+    NSInteger colCount = table ? table->axColumnCount() : 0;
     return colCount > 0 ? colCount : 0;
 }
 
@@ -1904,7 +1894,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     // The parentView should have an accessibilityContainer, if the UIKit accessibility bundle was loaded.
     // The exception is DRT, which tests accessibility without the entire system turning accessibility on. Hence,
     // this check should be valid for everything except DRT.
-    ASSERT([parentView accessibilityContainer] || WTF::IOSApplication::isDumpRenderTree());
+    ASSERT([parentView accessibilityContainer] || WTF::CocoaApplication::isDumpRenderTree());
 
     return [parentView accessibilityContainer];
 }

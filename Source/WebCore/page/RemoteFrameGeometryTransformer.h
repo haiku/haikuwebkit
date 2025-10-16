@@ -29,6 +29,7 @@
 
 namespace WebCore {
 
+class DoublePoint;
 class IntPoint;
 class FloatPoint;
 class LocalFrameView;

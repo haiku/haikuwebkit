@@ -717,9 +717,5 @@ window.test_driver_internal.set_storage_access = async function (origin, embeddi
         throw new Error("Unsupported value for origin or embedding_origin");
 
     context = context ?? window;
-    return new Promise((resolve) => {
-        context.testRunner.setStatisticsShouldBlockThirdPartyCookies(blocked, () => {
-            blocked ? context.testRunner.statisticsClearInMemoryAndPersistentStore(resolve) : resolve();
-        });
-    });
+    await context.testRunner.setStorageAccess(blocked);
 }

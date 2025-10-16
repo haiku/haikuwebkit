@@ -2514,6 +2514,24 @@ static String mouseButtonForAutomation(MouseButton button)
     RELEASE_ASSERT_NOT_REACHED();
 }
 
+static String mouseInteractionForAutomation(MouseInteraction interaction)
+{
+    switch (interaction) {
+    case MouseInteraction::Move:
+        return "Move"_s;
+    case MouseInteraction::Down:
+        return "Down"_s;
+    case MouseInteraction::Up:
+        return "Up"_s;
+    case MouseInteraction::SingleClick:
+        return "SingleClick"_s;
+    case MouseInteraction::DoubleClick:
+        return "DoubleClick"_s;
+    }
+
+    RELEASE_ASSERT_NOT_REACHED();
+}
+
 void Session::performMouseInteraction(int x, int y, MouseButton button, MouseInteraction interaction, Function<void(CommandResult&&)>&& completionHandler)
 {
     auto parameters = JSON::Object::create();
@@ -2896,9 +2914,11 @@ void Session::performActions(Vector<Vector<Action>>&& actionsByTick, Function<vo
                     switch (action.subtype) {
                     case Action::Subtype::PointerUp:
                         currentState.pressedButton = std::nullopt;
+                        currentState.mouseInteraction = MouseInteraction::Up;
                         break;
                     case Action::Subtype::PointerDown:
                         currentState.pressedButton = action.button.value();
+                        currentState.mouseInteraction = MouseInteraction::Down;
                         break;
                     case Action::Subtype::PointerMove: {
                         if (!action.x || !action.y)
@@ -2910,6 +2930,7 @@ void Session::performActions(Vector<Vector<Action>>&& actionsByTick, Function<vo
                         state->setObject("location"_s, WTFMove(location));
                         if (action.origin->type == PointerOrigin::Type::Element)
                             state->setString("nodeHandle"_s, action.origin->elementID.value());
+                        currentState.mouseInteraction = MouseInteraction::Move;
                         [[fallthrough]];
                     }
                     case Action::Subtype::Pause:
@@ -2926,6 +2947,8 @@ void Session::performActions(Vector<Vector<Action>>&& actionsByTick, Function<vo
                     }
                     if (currentState.pressedButton)
                         state->setString("pressedButton"_s, mouseButtonForAutomation(currentState.pressedButton.value()));
+                    if (currentState.mouseInteraction)
+                        state->setString("mouseInteraction"_s, mouseInteractionForAutomation(currentState.mouseInteraction.value()));
                     break;
                 }
                 case Action::Type::Key:

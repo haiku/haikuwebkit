@@ -33,6 +33,62 @@ public:
     {
         ExtractorSerializer::serialize(extractorState, builder, context, extractorState.style.testHighPriority());
     }
+    static RefPtr<CSSValue> extractBackgroundFillLayerTestPrimary(ExtractorState& extractorState)
+    {
+        auto mapper = [](auto& extractorState, auto& layer) -> Ref<CSSValue> {
+            return ExtractorConverter::convert(extractorState, layer.backgroundFillLayerTestPrimary());
+        };
+        return extractFillLayerValue(extractorState, extractorState.style.backgroundLayers(), mapper);
+    }
+    static void extractBackgroundFillLayerTestPrimarySerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+    {
+        auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, auto& layer) {
+            if (includeComma)
+                builder.append(", "_s);
+            ExtractorSerializer::serialize(extractorState, builder, context, layer.backgroundFillLayerTestPrimary());
+        };
+        extractFillLayerValueSerialization(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
+    }
+    static RefPtr<CSSValue> extractTestMediumPriority(ExtractorState& extractorState)
+    {
+        return ExtractorConverter::convert(extractorState, extractorState.style.testMediumPriority());
+    }
+    static void extractTestMediumPrioritySerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+    {
+        ExtractorSerializer::serialize(extractorState, builder, context, extractorState.style.testMediumPriority());
+    }
+    static RefPtr<CSSValue> extractBackgroundFillLayerTestSecondary(ExtractorState& extractorState)
+    {
+        auto mapper = [](auto& extractorState, auto& layer) -> Ref<CSSValue> {
+            return ExtractorConverter::convert(extractorState, layer.backgroundFillLayerTestSecondary());
+        };
+        return extractFillLayerValue(extractorState, extractorState.style.backgroundLayers(), mapper);
+    }
+    static void extractBackgroundFillLayerTestSecondarySerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+    {
+        auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, auto& layer) {
+            if (includeComma)
+                builder.append(", "_s);
+            ExtractorSerializer::serialize(extractorState, builder, context, layer.backgroundFillLayerTestSecondary());
+        };
+        extractFillLayerValueSerialization(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
+    }
+    static RefPtr<CSSValue> extractBackgroundFillLayerTestSecondaryWithConverter(ExtractorState& extractorState)
+    {
+        auto mapper = [](auto& extractorState, auto& layer) -> Ref<CSSValue> {
+            return ExtractorConverter::convertFillTestConverter(extractorState, layer.backgroundFillLayerTestSecondaryWithConverter());
+        };
+        return extractFillLayerValue(extractorState, extractorState.style.backgroundLayers(), mapper);
+    }
+    static void extractBackgroundFillLayerTestSecondaryWithConverterSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+    {
+        auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, auto& layer) {
+            if (includeComma)
+                builder.append(", "_s);
+            ExtractorSerializer::serializeFillTestConverter(extractorState, builder, context, layer.backgroundFillLayerTestSecondaryWithConverter());
+        };
+        extractFillLayerValueSerialization(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
+    }
     static RefPtr<CSSValue> extractTestAnimationWrapper(ExtractorState& extractorState)
     {
         return ExtractorConverter::convert(extractorState, extractorState.style.testAnimationWrapper());
@@ -844,6 +900,14 @@ RefPtr<CSSValue> ExtractorGenerated::extractValue(ExtractorState& extractorState
         return ExtractorFunctions::extractTestTopPriority(extractorState);
     case CSSPropertyID::CSSPropertyTestHighPriority:
         return ExtractorFunctions::extractTestHighPriority(extractorState);
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
+        return ExtractorFunctions::extractBackgroundFillLayerTestPrimary(extractorState);
+    case CSSPropertyID::CSSPropertyTestMediumPriority:
+        return ExtractorFunctions::extractTestMediumPriority(extractorState);
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
+        return ExtractorFunctions::extractBackgroundFillLayerTestSecondary(extractorState);
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
+        return ExtractorFunctions::extractBackgroundFillLayerTestSecondaryWithConverter(extractorState);
     case CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor:
         // Skipped - Descriptor-only property
         return nullptr;
@@ -1083,6 +1147,18 @@ void ExtractorGenerated::extractValueSerialization(ExtractorState& extractorStat
         return;
     case CSSPropertyID::CSSPropertyTestHighPriority:
         ExtractorFunctions::extractTestHighPrioritySerialization(extractorState, builder, context);
+        return;
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
+        ExtractorFunctions::extractBackgroundFillLayerTestPrimarySerialization(extractorState, builder, context);
+        return;
+    case CSSPropertyID::CSSPropertyTestMediumPriority:
+        ExtractorFunctions::extractTestMediumPrioritySerialization(extractorState, builder, context);
+        return;
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
+        ExtractorFunctions::extractBackgroundFillLayerTestSecondarySerialization(extractorState, builder, context);
+        return;
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
+        ExtractorFunctions::extractBackgroundFillLayerTestSecondaryWithConverterSerialization(extractorState, builder, context);
         return;
     case CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor:
         // Skipped - Descriptor-only property

@@ -47,7 +47,7 @@ class WebEditorClient final : public WebCore::EditorClient, public WebCore::Text
     WTF_MAKE_TZONE_ALLOCATED(WebEditorClient);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebEditorClient);
 public:
-    WebEditorClient(WebPage* page)
+    WebEditorClient(WebPage& page)
         : m_page(page)
     {
     }
@@ -208,7 +208,9 @@ private:
     bool shouldDrawVisuallyContiguousBidiSelection() const final;
 #endif
 
-    WeakPtr<WebPage> m_page;
+    Ref<WebPage> protectedPage() const;
+
+    const WeakRef<WebPage> m_page;
 };
 
 } // namespace WebKit

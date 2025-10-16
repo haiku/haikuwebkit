@@ -184,6 +184,7 @@ public:
     SVGConditionalProcessingAttributes* conditionalProcessingAttributesIfExists() const;
 
     bool hasAssociatedSVGLayoutBox() const;
+    void invalidateInstances();
 
 protected:
     SVGElement(const QualifiedName&, Document&, UniqueRef<SVGPropertyRegistry>&&, OptionSet<TypeFlag> = { });
@@ -221,8 +222,6 @@ private:
 #ifndef NDEBUG
     virtual bool filterOutAnimatableAttribute(const QualifiedName&) const;
 #endif
-
-    void invalidateInstances();
 
     std::unique_ptr<SVGElementRareData> m_svgRareData;
 

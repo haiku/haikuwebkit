@@ -391,7 +391,7 @@ void WebResourceLoader::didReceiveResource(ShareableResource::Handle&& handle)
 #endif
 
 #if ENABLE(CONTENT_FILTERING)
-void WebResourceLoader::contentFilterDidBlockLoad(const WebCore::ContentFilterUnblockHandler& unblockHandler, String&& unblockRequestDeniedScript, const ResourceError& error, const URL& blockedPageURL,  WebCore::SubstituteData&& substituteData)
+void WebResourceLoader::contentFilterDidBlockLoad(WebCore::ContentFilterUnblockHandler&& unblockHandler, String&& unblockRequestDeniedScript, const ResourceError& error, const URL& blockedPageURL,  WebCore::SubstituteData&& substituteData)
 {
     RefPtr coreLoader = m_coreLoader;
     if (!m_coreLoader || !coreLoader->documentLoader())
@@ -399,7 +399,7 @@ void WebResourceLoader::contentFilterDidBlockLoad(const WebCore::ContentFilterUn
     RefPtr documentLoader = coreLoader->documentLoader();
     documentLoader->setBlockedPageURL(blockedPageURL);
     documentLoader->setSubstituteDataFromContentFilter(WTFMove(substituteData));
-    documentLoader->handleContentFilterDidBlock(unblockHandler, WTFMove(unblockRequestDeniedScript));
+    documentLoader->handleContentFilterDidBlock(WTFMove(unblockHandler), WTFMove(unblockRequestDeniedScript));
     documentLoader->cancelMainResourceLoad(error);
 }
 #endif // ENABLE(CONTENT_FILTERING)

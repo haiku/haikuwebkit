@@ -27,6 +27,7 @@
 
 #include "APIObject.h"
 #include "WebsitePoliciesData.h"
+#include <WebCore/ResourceRequest.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebKit {
@@ -153,6 +154,9 @@ public:
 
     bool allowSharedProcess() const { return m_data.allowSharedProcess; }
     void setAllowSharedProcess(bool allowSharedProcess) { m_data.allowSharedProcess = allowSharedProcess; }
+
+    const WebCore::ResourceRequest& alternateRequest() const;
+    void setAlternateRequest(WebCore::ResourceRequest&&);
 
 private:
     WebKit::WebsitePoliciesData m_data;

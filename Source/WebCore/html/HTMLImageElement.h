@@ -30,6 +30,7 @@
 #include <WebCore/GraphicsTypes.h>
 #include <WebCore/HTMLElement.h>
 #include <WebCore/MediaQuery.h>
+#include <wtf/Platform.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {
@@ -148,6 +149,8 @@ public:
 
     bool isDroppedImagePlaceholder() const { return m_isDroppedImagePlaceholder; }
     void setIsDroppedImagePlaceholder() { m_isDroppedImagePlaceholder = true; }
+
+    void setIsUserAgentShadowRootResource();
 
     void evaluateDynamicMediaQueryDependencies();
 

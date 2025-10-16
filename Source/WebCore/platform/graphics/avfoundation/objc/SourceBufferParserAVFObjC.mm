@@ -59,11 +59,9 @@
 #pragma mark -
 #pragma mark WebAVStreamDataParserListener
 
-#if USE(MODERN_AVCONTENTKEYSESSION)
 @interface AVContentKeySpecifier (WebCorePrivate)
 @property (readonly) NSData *initializationData;
 @end
-#endif
 
 @interface WebAVStreamDataParserListener : NSObject<AVStreamDataParserOutputHandling> {
     ThreadSafeWeakPtr<WebCore::SourceBufferParserAVFObjC> _parent;
@@ -144,7 +142,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 @end
 
-#if USE(MODERN_AVCONTENTKEYSESSION)
 @interface WebAVStreamDataParserWithKeySpecifierListener : WebAVStreamDataParserListener
 @end
 
@@ -156,7 +153,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         _parent.get()->didProvideContentKeyRequestSpecifierForTrackID(keySpecifier.initializationData, trackID);
 }
 @end
-#endif
 
 namespace WebCore {
 
@@ -222,12 +218,8 @@ SourceBufferParserAVFObjC::SourceBufferParserAVFObjC(const MediaSourceConfigurat
     : m_parser(adoptNS([PAL::allocAVStreamDataParserInstance() init]))
     , m_configuration(configuration)
 {
-#if USE(MODERN_AVCONTENTKEYSESSION)
-    if (MediaSessionManagerCocoa::shouldUseModernAVContentKeySession())
-        m_delegate = adoptNS([[WebAVStreamDataParserWithKeySpecifierListener alloc] initWithParser:m_parser.get() parent:this]);
-    else
-#endif
-        m_delegate = adoptNS([[WebAVStreamDataParserListener alloc] initWithParser:m_parser.get() parent:this]);
+    m_delegate = adoptNS([[WebAVStreamDataParserWithKeySpecifierListener alloc] initWithParser:m_parser.get() parent:this]);
+
 #if USE(MEDIAPARSERD)
     if ([m_parser.get() respondsToSelector:@selector(setPreferSandboxedParsing:)])
         [m_parser.get() setPreferSandboxedParsing:YES];

@@ -156,7 +156,7 @@ String keyIdentifierForKeyEvent(WebEvent *event)
     }
     NSString *characters = event.charactersIgnoringModifiers;
     if ([characters length] != 1) {
-        LOG(Events, "received an unexpected number of characters in key event: %u", [characters length]);
+        LOG(Events, "received an unexpected number of characters in key event: %zu", [characters length]);
         return "Unidentified"_s;
     }
     return keyIdentifierForCharCode([characters characterAtIndex:0]);

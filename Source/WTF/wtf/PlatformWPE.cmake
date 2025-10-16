@@ -1,5 +1,6 @@
 list(APPEND WTF_SOURCES
     android/LoggingAndroid.cpp
+    android/RefPtrAndroid.cpp
 
     generic/MainThreadGeneric.cpp
     generic/MemoryFootprintGeneric.cpp
@@ -35,6 +36,8 @@ list(APPEND WTF_SOURCES
 )
 
 list(APPEND WTF_PUBLIC_HEADERS
+    android/RefPtrAndroid.h
+
     glib/Application.h
     glib/ChassisType.h
     glib/GMutexLocker.h
@@ -73,7 +76,7 @@ if (ENABLE_JOURNALD_LOG)
 endif ()
 
 if (ANDROID)
-    list(APPEND WTF_LIBRARIES Android::Log)
+    list(APPEND WTF_LIBRARIES Android::Android Android::Log)
 endif ()
 
 list(APPEND WTF_SYSTEM_INCLUDE_DIRECTORIES

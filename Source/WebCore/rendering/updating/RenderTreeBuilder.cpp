@@ -101,15 +101,15 @@ static void invalidateLineLayout(RenderObject& renderer, IsRemoval isRemoval)
         return;
     }
 
-    auto shouldInvalidateLineLayoutPath = [&](auto& inlineLayout) {
-        if (LayoutIntegration::LineLayout::shouldInvalidateLineLayoutPathAfterTreeMutation(*container, renderer, inlineLayout, isRemoval == IsRemoval::Yes))
+    auto shouldInvalidateLineLayout = [&](auto& inlineLayout) {
+        if (LayoutIntegration::LineLayout::shouldInvalidateLineLayoutAfterTreeMutation(*container, renderer, inlineLayout, isRemoval == IsRemoval::Yes))
             return true;
         if (isRemoval == IsRemoval::Yes)
             return !inlineLayout.removedFromTree(*renderer.parent(), renderer);
         return !inlineLayout.insertedIntoTree(*renderer.parent(), renderer);
     };
-    if (auto* inlineLayout = container->inlineLayout(); inlineLayout && shouldInvalidateLineLayoutPath(*inlineLayout))
-        container->invalidateLineLayoutPath(RenderBlockFlow::InvalidationReason::InsertionOrRemoval);
+    if (auto* inlineLayout = container->inlineLayout(); inlineLayout && shouldInvalidateLineLayout(*inlineLayout))
+        container->invalidateLineLayout(RenderBlockFlow::InvalidationReason::InsertionOrRemoval);
 }
 
 static void getInlineRun(RenderObject* start, RenderObject* boundary, RenderObject*& inlineRunStart, RenderObject*& inlineRunEnd)
@@ -563,7 +563,7 @@ void RenderTreeBuilder::move(RenderBoxModelObject& from, RenderBoxModelObject& t
         for (CheckedPtr containingBlock = &from; containingBlock; containingBlock = containingBlock->containingBlock()) {
             containingBlock->setNeedsLayout();
             if (auto* blockFlow = dynamicDowncast<RenderBlockFlow>(*containingBlock)) {
-                blockFlow->deleteLines();
+                blockFlow->invalidateLineLayout(RenderBlockFlow::InvalidationReason::InternalMove);
                 break;
             }
         }
@@ -758,7 +758,8 @@ void RenderTreeBuilder::createAnonymousWrappersForInlineContent(RenderBlock& par
     if (!child)
         return;
 
-    parent.deleteLines();
+    if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(parent))
+        blockFlow->invalidateLineLayout(RenderBlockFlow::InvalidationReason::InternalMove);
 
     while (child) {
         RenderObject* inlineRunStart = nullptr;

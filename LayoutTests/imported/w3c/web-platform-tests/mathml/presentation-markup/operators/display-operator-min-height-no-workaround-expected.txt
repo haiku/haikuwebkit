@@ -1,0 +1,4 @@
+
+FAIL DisplayOperatorMinHeight is not modified assert_approx_equals: Using the small variant expected 40 +/- 3.2 but got 0
+⫿
+⫿

@@ -72,7 +72,7 @@ private:
     void logJSONPayload(const JSON::Object&);
     void logString(std::span<const String> path, const String&);
     void logObject(std::span<const String> path, Ref<JSON::Object>&&);
-    void logError(const char*, ...);
+    void logError(const char*, ...) WTF_ATTRIBUTE_PRINTF(2, 3);
 
     void logExecutablePath(void);
     void logDYLDSharedCacheInfo(void);

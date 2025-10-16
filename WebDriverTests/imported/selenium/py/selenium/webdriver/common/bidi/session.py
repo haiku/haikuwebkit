@@ -15,32 +15,42 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from selenium.webdriver.common.bidi.common import command_builder
 
-def session_subscribe(*events, browsing_contexts=None):
-    cmd_dict = {
-        "method": "session.subscribe",
-        "params": {
+
+class Session:
+    def __init__(self, conn):
+        self.conn = conn
+
+    def subscribe(self, *events, browsing_contexts=None):
+        params = {
             "events": events,
-        },
-    }
-    if browsing_contexts is None:
-        browsing_contexts = []
-    if browsing_contexts:
-        cmd_dict["params"]["browsingContexts"] = browsing_contexts
-    _ = yield cmd_dict
-    return None
+        }
+        if browsing_contexts is None:
+            browsing_contexts = []
+        if browsing_contexts:
+            params["browsingContexts"] = browsing_contexts
+        return command_builder("session.subscribe", params)
 
-
-def session_unsubscribe(*events, browsing_contexts=None):
-    cmd_dict = {
-        "method": "session.unsubscribe",
-        "params": {
+    def unsubscribe(self, *events, browsing_contexts=None):
+        params = {
             "events": events,
-        },
-    }
-    if browsing_contexts is None:
-        browsing_contexts = []
-    if browsing_contexts:
-        cmd_dict["params"]["browsingContexts"] = browsing_contexts
-    _ = yield cmd_dict
-    return None
+        }
+        if browsing_contexts is None:
+            browsing_contexts = []
+        if browsing_contexts:
+            params["browsingContexts"] = browsing_contexts
+        return command_builder("session.unsubscribe", params)
+
+    def status(self):
+        """
+        The session.status command returns information about the remote end's readiness
+        to create new sessions and may include implementation-specific metadata.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the ready state (bool), message (str) and metadata
+        """
+        cmd = command_builder("session.status", {})
+        return self.conn.execute(cmd)

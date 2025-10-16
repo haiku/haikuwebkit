@@ -123,7 +123,7 @@ RefPtr<RenderPassEncoder> CommandEncoderImpl::beginRenderPass(const RenderPassDe
 
 RefPtr<ComputePassEncoder> CommandEncoderImpl::beginComputePass(const std::optional<ComputePassDescriptor>& descriptor)
 {
-    CString label = descriptor ? descriptor->label.utf8() : CString(""_s);
+    String label = descriptor ? descriptor->label : emptyString();
 
     WGPUComputePassTimestampWrites timestampWrites {
         .querySet = (descriptor && descriptor->timestampWrites && descriptor->timestampWrites->querySet) ? m_convertToBackingContext->convertToBacking(*descriptor->timestampWrites->protectedQuerySet().get()) : nullptr,
@@ -133,7 +133,7 @@ RefPtr<ComputePassEncoder> CommandEncoderImpl::beginComputePass(const std::optio
 
     WGPUComputePassDescriptor backingDescriptor {
         .nextInChain = nullptr,
-        .label = label.data(),
+        .label = label,
         .timestampWrites = timestampWrites.querySet ? &timestampWrites : nullptr
     };
 
@@ -280,11 +280,9 @@ void CommandEncoderImpl::resolveQuerySet(
 
 RefPtr<CommandBuffer> CommandEncoderImpl::finish(const CommandBufferDescriptor& descriptor)
 {
-    auto label = descriptor.label.utf8();
-
     WGPUCommandBufferDescriptor backingDescriptor {
         nullptr,
-        label.data(),
+        descriptor.label,
     };
 
     return CommandBufferImpl::create(adoptWebGPU(wgpuCommandEncoderFinish(m_backing.get(), &backingDescriptor)), m_convertToBackingContext);

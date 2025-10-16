@@ -128,7 +128,6 @@ css/CSSStyleProperties.cpp
 css/CSSStyleRule.cpp
 css/CSSStyleSheet.cpp
 css/CSSStyleSheetObservableArray.cpp
-css/CSSToStyleMap.cpp
 css/CSSValue.cpp
 css/CSSValueList.cpp
 css/CSSValueList.h
@@ -203,7 +202,6 @@ dom/UIEventWithKeyState.cpp
 editing/ApplyStyleCommand.cpp
 editing/ChangeListTypeCommand.cpp
 editing/Editing.cpp
-editing/EditingStyle.cpp
 editing/Editor.cpp
 editing/EditorCommand.cpp
 editing/FormatBlockCommand.cpp
@@ -366,7 +364,6 @@ platform/ScrollableArea.cpp
 platform/ScrollbarsController.cpp
 platform/ThreadGlobalData.cpp
 platform/ThreadGlobalData.h
-platform/audio/PlatformMediaSessionManager.cpp
 platform/cocoa/PlaybackSessionModelMediaElement.mm
 platform/graphics/ComplexTextController.cpp
 platform/graphics/DisplayRefreshMonitorManager.cpp
@@ -374,7 +371,6 @@ platform/graphics/FontCache.cpp
 platform/graphics/FontRanges.cpp
 platform/graphics/GraphicsLayer.cpp
 platform/graphics/Image.cpp
-platform/graphics/SourceBrush.cpp
 platform/graphics/avfoundation/AudioSourceProviderAVFObjC.mm
 platform/graphics/avfoundation/objc/CDMInstanceFairPlayStreamingAVFObjC.mm
 platform/graphics/avfoundation/objc/MediaSourcePrivateAVFObjC.mm
@@ -415,11 +411,9 @@ platform/text/BidiContext.cpp
 platform/text/BidiResolver.h
 plugins/PluginData.cpp
 plugins/PluginInfoProvider.cpp
-rendering/BackgroundPainter.cpp
 rendering/GlyphDisplayListCache.cpp
 rendering/HitTestResult.cpp
 rendering/ImageQualityController.cpp
-rendering/InlineBoxPainter.cpp
 rendering/MarkedText.cpp
 rendering/ReferencedSVGResources.cpp
 rendering/RenderAttachment.cpp
@@ -453,7 +447,6 @@ rendering/RenderWidget.cpp
 rendering/TextBoxPainter.cpp
 rendering/mac/RenderThemeMac.mm
 rendering/mathml/MathMLStyle.cpp
-rendering/style/FillLayer.cpp
 rendering/style/RenderStyle.cpp
 rendering/style/RenderStyleSetters.h
 rendering/style/StyleCachedImage.cpp

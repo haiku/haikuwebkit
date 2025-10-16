@@ -1,9 +1,8 @@
-# SPI used by JavaScriptCore, either for temporary use (denoted by a bug URL)
-# or permanent use.
-#
+# SPI used by JavaScriptCore on iOS.
 # More info: https://github.com/WebKit/WebKit/wiki/Using-SPI-on-Apple-platforms
 
-[runtime.not-web-essential]
+[[not-web-essential]]
+request = "rdar://157890653"
 symbols = ["_dyld_program_sdk_at_least"]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 

@@ -3812,7 +3812,7 @@ id UnifiedPDFPlugin::accessibilityHitTestInPageForIOS(WebCore::FloatPoint point)
 WebCore::AXCoreObject* UnifiedPDFPlugin::accessibilityCoreObject()
 {
     if (CheckedPtr cache = axObjectCache())
-        return cache->getOrCreate(m_element.get());
+        return cache->exportedGetOrCreate(m_element.get());
     return nullptr;
 }
 #endif // PLATFORM(IOS_FAMILY)

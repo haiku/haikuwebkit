@@ -7,20 +7,6 @@ HTML IDL tests
 
 PASS idl_test setup
 PASS idl_test validation
-PASS Partial interface Document: original interface defined
-PASS Partial interface Document: member names are unique
-PASS Partial interface mixin DocumentOrShadowRoot: original interface mixin defined
-PASS Partial interface mixin DocumentOrShadowRoot: member names are unique
-PASS Partial interface Navigator: original interface defined
-PASS Partial interface Navigator: member names are unique
-PASS Partial interface Element: original interface defined
-PASS Partial interface Element: member names are unique
-PASS Partial interface ShadowRoot: original interface defined
-PASS Partial interface ShadowRoot: member names are unique
-PASS Partial interface Range: original interface defined
-PASS Partial interface Range: member names are unique
-PASS Partial interface mixin NavigatorID: original interface mixin defined
-PASS Partial interface mixin NavigatorID: member names are unique
 PASS Partial interface HTMLAnchorElement: original interface defined
 PASS Partial interface HTMLAnchorElement: member names are unique
 PASS Partial interface HTMLAreaElement: original interface defined
@@ -83,17 +69,6 @@ PASS Partial interface HTMLTableRowElement: original interface defined
 PASS Partial interface HTMLTableRowElement: member names are unique
 PASS Partial interface HTMLUListElement: original interface defined
 PASS Partial interface HTMLUListElement: member names are unique
-PASS Partial interface Document[2]: original interface defined
-PASS Partial interface Document[2]: member names are unique
-PASS Partial interface Window: original interface defined
-PASS Partial interface Window: member names are unique
-PASS Partial interface Document[3]: member names are unique
-PASS Partial interface mixin DocumentOrShadowRoot[2]: member names are unique
-PASS Partial interface UIEvent: member names are unique
-PASS Partial interface MouseEvent: member names are unique
-PASS Partial interface UIEvent[2]: member names are unique
-PASS Partial dictionary UIEventInit: member names are unique
-PASS Document includes GlobalEventHandlers: member names are unique
 PASS HTMLElement includes GlobalEventHandlers: member names are unique
 PASS HTMLElement includes ElementContentEditable: member names are unique
 PASS HTMLElement includes HTMLOrSVGElement: member names are unique
@@ -104,88 +79,8 @@ PASS HTMLAnchorElement includes HTMLHyperlinkElementUtils: member names are uniq
 PASS HTMLAreaElement includes HTMLHyperlinkElementUtils: member names are unique
 PASS HTMLInputElement includes PopoverInvokerElement: member names are unique
 PASS HTMLButtonElement includes PopoverInvokerElement: member names are unique
-PASS CanvasRenderingContext2D includes CanvasSettings: member names are unique
-PASS CanvasRenderingContext2D includes CanvasState: member names are unique
-PASS CanvasRenderingContext2D includes CanvasTransform: member names are unique
-PASS CanvasRenderingContext2D includes CanvasCompositing: member names are unique
-PASS CanvasRenderingContext2D includes CanvasImageSmoothing: member names are unique
-PASS CanvasRenderingContext2D includes CanvasFillStrokeStyles: member names are unique
-PASS CanvasRenderingContext2D includes CanvasShadowStyles: member names are unique
-PASS CanvasRenderingContext2D includes CanvasFilters: member names are unique
-PASS CanvasRenderingContext2D includes CanvasRect: member names are unique
-PASS CanvasRenderingContext2D includes CanvasDrawPath: member names are unique
-PASS CanvasRenderingContext2D includes CanvasUserInterface: member names are unique
-PASS CanvasRenderingContext2D includes CanvasText: member names are unique
-PASS CanvasRenderingContext2D includes CanvasDrawImage: member names are unique
-PASS CanvasRenderingContext2D includes CanvasImageData: member names are unique
-PASS CanvasRenderingContext2D includes CanvasPathDrawingStyles: member names are unique
-PASS CanvasRenderingContext2D includes CanvasTextDrawingStyles: member names are unique
-PASS CanvasRenderingContext2D includes CanvasPath: member names are unique
-PASS Path2D includes CanvasPath: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasSettings: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasState: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasTransform: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasCompositing: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasImageSmoothing: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasFillStrokeStyles: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasShadowStyles: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasFilters: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasRect: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasDrawPath: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasText: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasDrawImage: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasImageData: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasPathDrawingStyles: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasTextDrawingStyles: member names are unique
-PASS OffscreenCanvasRenderingContext2D includes CanvasPath: member names are unique
-PASS ElementInternals includes ARIAMixin: member names are unique
-PASS Window includes GlobalEventHandlers: member names are unique
-PASS Window includes WindowEventHandlers: member names are unique
-PASS Window includes WindowOrWorkerGlobalScope: member names are unique
-PASS WorkerGlobalScope includes WindowOrWorkerGlobalScope: member names are unique
-PASS Navigator includes NavigatorID: member names are unique
-PASS Navigator includes NavigatorLanguage: member names are unique
-PASS Navigator includes NavigatorOnLine: member names are unique
-PASS Navigator includes NavigatorContentUtils: member names are unique
-PASS Navigator includes NavigatorCookies: member names are unique
-PASS Navigator includes NavigatorPlugins: member names are unique
-PASS Navigator includes NavigatorConcurrentHardware: member names are unique
-PASS Window includes AnimationFrameProvider: member names are unique
-PASS DedicatedWorkerGlobalScope includes AnimationFrameProvider: member names are unique
-PASS MessagePort includes MessageEventTarget: member names are unique
-PASS DedicatedWorkerGlobalScope includes MessageEventTarget: member names are unique
-PASS Worker includes AbstractWorker: member names are unique
-PASS Worker includes MessageEventTarget: member names are unique
-PASS SharedWorker includes AbstractWorker: member names are unique
-PASS WorkerNavigator includes NavigatorID: member names are unique
-PASS WorkerNavigator includes NavigatorLanguage: member names are unique
-PASS WorkerNavigator includes NavigatorOnLine: member names are unique
-PASS WorkerNavigator includes NavigatorConcurrentHardware: member names are unique
-PASS Window includes WindowSessionStorage: member names are unique
-PASS Window includes WindowLocalStorage: member names are unique
 PASS HTMLFrameSetElement includes WindowEventHandlers: member names are unique
-PASS Element includes ARIAMixin: member names are unique
-PASS SVGElement includes GlobalEventHandlers: member names are unique
-PASS SVGElement includes SVGElementInstance: member names are unique
-PASS SVGElement includes HTMLOrSVGElement: member names are unique
-PASS SVGGraphicsElement includes SVGTests: member names are unique
-PASS SVGSVGElement includes SVGFitToViewBox: member names are unique
-PASS SVGSVGElement includes WindowEventHandlers: member names are unique
-PASS SVGImageElement includes SVGURIReference: member names are unique
-PASS SVGScriptElement includes SVGURIReference: member names are unique
 PASS HTMLElement includes ElementCSSInlineStyle: member names are unique
-PASS SVGElement includes ElementCSSInlineStyle: member names are unique
-PASS Document includes NonElementParentNode: member names are unique
-PASS DocumentFragment includes NonElementParentNode: member names are unique
-PASS Document includes DocumentOrShadowRoot: member names are unique
-PASS ShadowRoot includes DocumentOrShadowRoot: member names are unique
-PASS Document includes ParentNode: member names are unique
-PASS DocumentFragment includes ParentNode: member names are unique
-PASS Element includes ParentNode: member names are unique
-PASS Element includes NonDocumentTypeChildNode: member names are unique
-PASS Element includes ChildNode: member names are unique
-PASS Element includes Slottable: member names are unique
-PASS Document includes XPathEvaluatorBase: member names are unique
 PASS HTMLAllCollection interface: existence and properties of interface object
 PASS HTMLAllCollection interface object length
 PASS HTMLAllCollection interface object name

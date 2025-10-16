@@ -3115,15 +3115,15 @@ class CppStyleTest(CppStyleTestBase):
                       % (code, result, expected_message))
 
     def test_build_storage_class(self):
-        qualifiers = [None, 'const', 'volatile']
+        qualifiers = [None, 'const', 'constexpr', 'volatile']
         signs = [None, 'signed', 'unsigned']
-        types = ['void', 'char', 'int', 'float', 'double',
+        types = ['void', 'char', 'float', 'double',
                  'schar', 'int8', 'uint8', 'int16', 'uint16',
                  'int32', 'uint32', 'int64', 'uint64']
-        storage_classes = ['auto', 'extern', 'register', 'static', 'typedef']
+        storage_classes = ['static', 'extern', 'typedef', 'register']
 
         build_storage_class_error_message = (
-            'Storage class (static, extern, typedef, etc) should be first.'
+            'Storage class (static, extern, typedef, register) should be first.'
             '  [build/storage_class] [5]')
 
         # Some explicit cases. Legal in C++, deprecated in C99.

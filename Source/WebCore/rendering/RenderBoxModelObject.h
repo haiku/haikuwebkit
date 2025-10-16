@@ -44,7 +44,7 @@ enum class ContentChangeType : uint8_t {
     Image,
     HDRImage,
     MaskImage,
-    BackgroundIImage,
+    BackgroundImage,
     Canvas,
     CanvasPixels,
     Video,

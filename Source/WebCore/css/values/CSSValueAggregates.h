@@ -887,10 +887,51 @@ template<size_t I, typename T> decltype(auto) get(const SpaceSeparatedSize<T>& s
 template<typename T> inline constexpr auto TreatAsTupleLike<SpaceSeparatedSize<T>> = true;
 template<typename T> inline constexpr auto SerializationSeparator<SpaceSeparatedSize<T>> = SerializationSeparatorType::Space;
 
+// Wraps a pair of elements of a single type representing a point, semantically marking them as serializing as "space separated" and "minimally serializing".
+template<typename T> struct MinimallySerializingSpaceSeparatedPoint {
+    using Array = SpaceSeparatedPair<T>;
+    using value_type = T;
+
+    constexpr MinimallySerializingSpaceSeparatedPoint(T p1)
+        : value { p1, p1 }
+    {
+    }
+
+    constexpr MinimallySerializingSpaceSeparatedPoint(T p1, T p2)
+        : value { WTFMove(p1), WTFMove(p2) }
+    {
+    }
+
+    constexpr MinimallySerializingSpaceSeparatedPoint(SpaceSeparatedPair<T>&& array)
+        : value { WTFMove(array) }
+    {
+    }
+
+    constexpr bool operator==(const MinimallySerializingSpaceSeparatedPoint<T>&) const = default;
+
+    const T& x() const { return get<0>(value); }
+    const T& y() const { return get<1>(value); }
+
+    SpaceSeparatedPair<T> value;
+};
+
+template<size_t I, typename T> decltype(auto) get(const MinimallySerializingSpaceSeparatedPoint<T>& point)
+{
+    return get<I>(point.value);
+}
+
+template<typename T> inline constexpr auto TreatAsTupleLike<MinimallySerializingSpaceSeparatedPoint<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<MinimallySerializingSpaceSeparatedPoint<T>> = SerializationSeparatorType::Space;
+
 // Wraps a pair of elements of a single type representing a size, semantically marking them as serializing as "space separated" and "minimally serializing".
 template<typename T> struct MinimallySerializingSpaceSeparatedSize {
     using Array = SpaceSeparatedPair<T>;
     using value_type = T;
+
+    constexpr MinimallySerializingSpaceSeparatedSize(T p1)
+        : value { p1, p1 }
+    {
+    }
 
     constexpr MinimallySerializingSpaceSeparatedSize(T p1, T p2)
         : value { WTFMove(p1), WTFMove(p2) }
@@ -1189,6 +1230,13 @@ template<typename T> WTF::TextStream& operator<<(WTF::TextStream& ts, const Spac
     return ts;
 }
 
+
+template<typename T> TextStream& operator<<(TextStream& ts, const MinimallySerializingSpaceSeparatedPoint<T>& value)
+{
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<MinimallySerializingSpaceSeparatedPoint<T>>);
+    return ts;
+}
+
 template<typename T> TextStream& operator<<(TextStream& ts, const MinimallySerializingSpaceSeparatedSize<T>& value)
 {
     logForCSSOnTupleLike(ts, value, SerializationSeparatorString<MinimallySerializingSpaceSeparatedSize<T>>);
@@ -1253,6 +1301,12 @@ public:
     using type = T;
 };
 
+template<typename T> class tuple_size<WebCore::MinimallySerializingSpaceSeparatedPoint<T>> : public std::integral_constant<size_t, 2> { };
+template<size_t I, typename T> class tuple_element<I, WebCore::MinimallySerializingSpaceSeparatedPoint<T>> {
+public:
+    using type = T;
+};
+
 template<typename T> class tuple_size<WebCore::MinimallySerializingSpaceSeparatedSize<T>> : public std::integral_constant<size_t, 2> { };
 template<size_t I, typename T> class tuple_element<I, WebCore::MinimallySerializingSpaceSeparatedSize<T>> {
 public:
@@ -1310,6 +1364,9 @@ struct supports_text_stream_insertion<WebCore::SpaceSeparatedPoint<T>> : support
 
 template<typename T>
 struct supports_text_stream_insertion<WebCore::SpaceSeparatedSize<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparatedPoint<T>> : supports_text_stream_insertion<T> { };
 
 template<typename T>
 struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparatedSize<T>> : supports_text_stream_insertion<T> { };

@@ -72,7 +72,7 @@ public:
     template<typename T>
     void set(void* logicalAddress, T value)
     {
-        if (sizeof(T) <= s_chunkSize)
+        if constexpr (sizeof(T) <= s_chunkSize)
             m_dirtyBits |= dirtyBitFor(logicalAddress);
         else {
             size_t numberOfChunks = roundUpToMultipleOf<sizeof(T)>(s_chunkSize) / s_chunkSize;

@@ -91,7 +91,7 @@ AsyncRevalidation::AsyncRevalidation(Cache& cache, const GlobalFrameID& frameID,
         if (m_completionHandler)
             m_completionHandler(revalidatedEntry ? Result::Success : Result::Failure);
     };
-    lazyInitialize(m_load, makeUnique<SpeculativeLoad>(cache, frameID, WTFMove(revalidationRequest), WTFMove(entry), isNavigatingToAppBoundDomain, allowPrivacyProxy, advancedPrivacyProtections, WTFMove(loadRevalidationCompletionHandler)));
+    lazyInitialize(m_load, SpeculativeLoad::create(cache, frameID, WTFMove(revalidationRequest), WTFMove(entry), isNavigatingToAppBoundDomain, allowPrivacyProxy, advancedPrivacyProtections, WTFMove(loadRevalidationCompletionHandler)));
 }
 
 } // namespace NetworkCache

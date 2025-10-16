@@ -29,7 +29,7 @@
 
 #include "MediaControlsHost.h"
 
-#include "AddEventListenerOptions.h"
+#include "AddEventListenerOptionsInlines.h"
 #include "AudioTrackList.h"
 #include "CaptionUserPreferences.h"
 #include "Chrome.h"
@@ -99,14 +99,19 @@ static const AtomString& manualKeyword()
     return alwaysOn;
 }
 
-Ref<MediaControlsHost> MediaControlsHost::create(HTMLMediaElement& mediaElement)
-{
-    return adoptRef(*new MediaControlsHost(mediaElement));
-}
-
 MediaControlsHost::MediaControlsHost(HTMLMediaElement& mediaElement)
     : m_mediaElement(mediaElement)
 {
+}
+
+void MediaControlsHost::ref() const
+{
+    m_mediaElement->ref();
+}
+
+void MediaControlsHost::deref() const
+{
+    m_mediaElement->deref();
 }
 
 MediaControlsHost::~MediaControlsHost()
@@ -424,11 +429,6 @@ Vector<String, 2> MediaControlsHost::shadowRootStyleSheets() const
 String MediaControlsHost::base64StringForIconNameAndType(const String& iconName, const String& iconType)
 {
     return RenderTheme::singleton().mediaControlsBase64StringForIconNameAndType(iconName, iconType);
-}
-
-String MediaControlsHost::formattedStringForDuration(double durationInSeconds)
-{
-    return RenderTheme::singleton().mediaControlsFormattedStringForDuration(durationInSeconds);
 }
 
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)

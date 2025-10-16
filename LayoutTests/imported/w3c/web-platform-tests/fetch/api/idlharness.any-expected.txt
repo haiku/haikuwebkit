@@ -105,7 +105,7 @@ PASS Response interface: existence and properties of interface prototype object'
 PASS Response interface: existence and properties of interface prototype object's @@unscopables property
 PASS Response interface: operation error()
 PASS Response interface: operation redirect(USVString, optional unsigned short)
-FAIL Response interface: operation json(any, optional ResponseInit) assert_equals: property has wrong .length expected 0 but got 1
+PASS Response interface: operation json(any, optional ResponseInit)
 PASS Response interface: attribute type
 PASS Response interface: attribute url
 PASS Response interface: attribute redirected

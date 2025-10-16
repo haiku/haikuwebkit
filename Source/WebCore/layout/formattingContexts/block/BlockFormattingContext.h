@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include <WebCore/BlockFormattingGeometry.h>
-#include <WebCore/BlockFormattingQuirks.h>
-#include <WebCore/BlockFormattingState.h>
-#include <WebCore/FormattingContext.h>
+#include "BlockFormattingGeometry.h"
+#include "BlockFormattingQuirks.h"
+#include "BlockFormattingState.h"
+#include "FormattingContext.h"
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>
 

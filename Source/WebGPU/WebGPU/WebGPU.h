@@ -36,6 +36,9 @@
 #include <swift/bridging>
 #endif
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnullability-completeness"
+
 #ifdef __cplusplus
 
 #include <array>
@@ -387,6 +390,7 @@ typedef enum WGPUFeatureName {
     WGPUFeatureName_Float16Renderable = 0x00000011,
     WGPUFeatureName_Float32Renderable = 0x00000012,
     WGPUFeatureName_CoreFeaturesAndLimits = 0x00000013,
+    WGPUFeatureName_TextureFormatsTier1 = 0x00000014,
     WGPUFeatureName_Force32 = 0x7FFFFFFF
 } WGPUFeatureName WGPU_ENUM_ATTRIBUTE;
 
@@ -637,6 +641,12 @@ typedef enum WGPUTextureFormat {
     WGPUTextureFormat_ASTC12x10UnormSrgb = 0x0000005D,
     WGPUTextureFormat_ASTC12x12Unorm = 0x0000005E,
     WGPUTextureFormat_ASTC12x12UnormSrgb = 0x0000005F,
+    WGPUTextureFormat_R16Unorm = 0x00000060,
+    WGPUTextureFormat_R16Snorm = 0x00000061,
+    WGPUTextureFormat_RG16Unorm = 0x00000062,
+    WGPUTextureFormat_RG16Snorm = 0x00000063,
+    WGPUTextureFormat_RGBA16Unorm = 0x00000064,
+    WGPUTextureFormat_RGBA16Snorm = 0x00000065,
     WGPUTextureFormat_Force32 = 0x7FFFFFFF
 } WGPUTextureFormat WGPU_ENUM_ATTRIBUTE;
 
@@ -663,37 +673,47 @@ typedef enum WGPUTextureViewDimension {
 
 typedef enum WGPUVertexFormat {
     WGPUVertexFormat_Undefined = 0x00000000,
-    WGPUVertexFormat_Uint8x2 = 0x00000001,
-    WGPUVertexFormat_Uint8x4 = 0x00000002,
-    WGPUVertexFormat_Sint8x2 = 0x00000003,
-    WGPUVertexFormat_Sint8x4 = 0x00000004,
-    WGPUVertexFormat_Unorm8x2 = 0x00000005,
-    WGPUVertexFormat_Unorm8x4 = 0x00000006,
-    WGPUVertexFormat_Snorm8x2 = 0x00000007,
-    WGPUVertexFormat_Snorm8x4 = 0x00000008,
-    WGPUVertexFormat_Uint16x2 = 0x00000009,
-    WGPUVertexFormat_Uint16x4 = 0x0000000A,
-    WGPUVertexFormat_Sint16x2 = 0x0000000B,
-    WGPUVertexFormat_Sint16x4 = 0x0000000C,
-    WGPUVertexFormat_Unorm16x2 = 0x0000000D,
-    WGPUVertexFormat_Unorm16x4 = 0x0000000E,
-    WGPUVertexFormat_Snorm16x2 = 0x0000000F,
-    WGPUVertexFormat_Snorm16x4 = 0x00000010,
-    WGPUVertexFormat_Float16x2 = 0x00000011,
-    WGPUVertexFormat_Float16x4 = 0x00000012,
-    WGPUVertexFormat_Float32 = 0x00000013,
-    WGPUVertexFormat_Float32x2 = 0x00000014,
-    WGPUVertexFormat_Float32x3 = 0x00000015,
-    WGPUVertexFormat_Float32x4 = 0x00000016,
-    WGPUVertexFormat_Uint32 = 0x00000017,
-    WGPUVertexFormat_Uint32x2 = 0x00000018,
-    WGPUVertexFormat_Uint32x3 = 0x00000019,
-    WGPUVertexFormat_Uint32x4 = 0x0000001A,
-    WGPUVertexFormat_Sint32 = 0x0000001B,
-    WGPUVertexFormat_Sint32x2 = 0x0000001C,
-    WGPUVertexFormat_Sint32x3 = 0x0000001D,
-    WGPUVertexFormat_Sint32x4 = 0x0000001E,
-    WGPUVertexFormat_Unorm10_10_10_2 = 0x0000001F,
+    WGPUVertexFormat_Uint8,
+    WGPUVertexFormat_Uint8x2,
+    WGPUVertexFormat_Uint8x4,
+    WGPUVertexFormat_Sint8,
+    WGPUVertexFormat_Sint8x2,
+    WGPUVertexFormat_Sint8x4,
+    WGPUVertexFormat_Unorm8,
+    WGPUVertexFormat_Unorm8x2,
+    WGPUVertexFormat_Unorm8x4,
+    WGPUVertexFormat_Snorm8,
+    WGPUVertexFormat_Snorm8x2,
+    WGPUVertexFormat_Snorm8x4,
+    WGPUVertexFormat_Uint16,
+    WGPUVertexFormat_Uint16x2,
+    WGPUVertexFormat_Uint16x4,
+    WGPUVertexFormat_Sint16,
+    WGPUVertexFormat_Sint16x2,
+    WGPUVertexFormat_Sint16x4,
+    WGPUVertexFormat_Unorm16,
+    WGPUVertexFormat_Unorm16x2,
+    WGPUVertexFormat_Unorm16x4,
+    WGPUVertexFormat_Snorm16,
+    WGPUVertexFormat_Snorm16x2,
+    WGPUVertexFormat_Snorm16x4,
+    WGPUVertexFormat_Float16,
+    WGPUVertexFormat_Float16x2,
+    WGPUVertexFormat_Float16x4,
+    WGPUVertexFormat_Float32,
+    WGPUVertexFormat_Float32x2,
+    WGPUVertexFormat_Float32x3,
+    WGPUVertexFormat_Float32x4,
+    WGPUVertexFormat_Uint32,
+    WGPUVertexFormat_Uint32x2,
+    WGPUVertexFormat_Uint32x3,
+    WGPUVertexFormat_Uint32x4,
+    WGPUVertexFormat_Sint32,
+    WGPUVertexFormat_Sint32x2,
+    WGPUVertexFormat_Sint32x3,
+    WGPUVertexFormat_Sint32x4,
+    WGPUVertexFormat_Unorm1010102,
+    WGPUVertexFormat_Unorm8x4Bgra,
     WGPUVertexFormat_Force32 = 0x7FFFFFFF
 } WGPUVertexFormat WGPU_ENUM_ATTRIBUTE;
 
@@ -773,12 +793,12 @@ typedef void (*WGPURequestDeviceCallback)(WGPURequestDeviceStatus status, WGPUDe
 typedef struct WGPUChainedStruct {
     struct WGPUChainedStruct const * next;
     WGPUSType sType;
-} WGPUChainedStruct WGPU_STRUCTURE_ATTRIBUTE;
+} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPUChainedStruct WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUChainedStructOut {
     struct WGPUChainedStructOut * next;
     WGPUSType sType;
-} WGPUChainedStructOut WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPUChainedStructOut WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUAdapterProperties {
     WGPUChainedStructOut * nextInChain;
@@ -799,6 +819,7 @@ typedef struct WGPUBindGroupEntry {
     uint64_t offset;
     uint64_t size;
     WGPU_NULLABLE WGPUSampler sampler;
+    WGPU_NULLABLE WGPUTexture texture;
     WGPU_NULLABLE WGPUTextureView textureView;
 } WGPUBindGroupEntry WGPU_STRUCTURE_ATTRIBUTE;
 
@@ -833,8 +854,12 @@ typedef struct WGPUColor {
 
 typedef struct WGPUCommandBufferDescriptor {
     WGPUChainedStruct const * nextInChain;
-    WGPU_NULLABLE char const * label;
-} WGPUCommandBufferDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+    WGPU_NULLABLE WTF::String label;
+} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPUCommandBufferDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+
+static inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetCommandBufferDescriptorNextChainedStruct(const WGPUCommandBufferDescriptor * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
+    return descriptor->nextInChain;
+}
 
 typedef struct WGPUCommandEncoderDescriptor {
     WGPUChainedStruct const * nextInChain;
@@ -858,7 +883,7 @@ typedef struct WGPUComputePassTimestampWrites {
     WGPUQuerySet querySet;
     uint32_t beginningOfPassWriteIndex;
     uint32_t endOfPassWriteIndex;
-} WGPUComputePassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPUComputePassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUConstantEntry {
     WGPUChainedStruct const * nextInChain;
@@ -997,13 +1022,13 @@ typedef struct WGPURenderPassDepthStencilAttachment {
 typedef struct WGPURenderPassDescriptorMaxDrawCount {
     WGPUChainedStruct chain;
     uint64_t maxDrawCount;
-} WGPURenderPassDescriptorMaxDrawCount WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPURenderPassDescriptorMaxDrawCount WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderPassTimestampWrites {
     WGPUQuerySet querySet;
     uint32_t beginningOfPassWriteIndex;
     uint32_t endOfPassWriteIndex;
-} WGPURenderPassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPURenderPassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURequestAdapterOptions {
     WGPUChainedStruct const * nextInChain;
@@ -1147,6 +1172,10 @@ typedef struct WGPUTextureDataLayout {
     uint32_t rowsPerImage;
 } SWIFT_ESCAPABLE WGPUTextureDataLayout WGPU_STRUCTURE_ATTRIBUTE;
 
+inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetTextureDataLayoutNextInChain(const WGPUTextureDataLayout * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
+    return descriptor->nextInChain;
+}
+
 typedef struct WGPUTextureViewDescriptor {
     WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;
@@ -1157,6 +1186,7 @@ typedef struct WGPUTextureViewDescriptor {
     uint32_t baseArrayLayer;
     uint32_t arrayLayerCount;
     WGPUTextureAspect aspect;
+    WGPUTextureUsageFlags usage;
 } WGPUTextureViewDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUVertexAttribute {
@@ -1204,9 +1234,17 @@ inline std::span<const WGPUCompilationMessage> messagesSpan(const WGPUCompilatio
 
 typedef struct WGPUComputePassDescriptor {
     WGPUChainedStruct const * nextInChain;
-    WGPU_NULLABLE char const * label;
+    WGPU_NULLABLE WTF::String label;
     WGPU_NULLABLE WGPUComputePassTimestampWrites const * timestampWrites;
-} SWIFT_ESCAPABLE WGPUComputePassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPUComputePassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+
+static inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetComputePassDescriptorNextChainedStruct(const WGPUComputePassDescriptor * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
+    return descriptor->nextInChain;
+}
+
+static inline WGPU_NULLABLE WGPUComputePassTimestampWrites const * _Nullable __counted_by(1) wgpuGetComputePassDescriptorTimestampWrites(const WGPUComputePassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor) {
+    return descriptor->timestampWrites;
+}
 
 typedef struct WGPUDepthStencilState {
     WGPUChainedStruct const * nextInChain;
@@ -1228,6 +1266,10 @@ typedef struct WGPUImageCopyBuffer {
     WGPUBuffer buffer;
 } SWIFT_ESCAPABLE WGPUImageCopyBuffer WGPU_STRUCTURE_ATTRIBUTE;
 
+inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetImageCopyBufferNextInChain(const WGPUImageCopyBuffer * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
+    return descriptor->nextInChain;
+}
+
 typedef struct WGPUImageCopyTexture {
     WGPUChainedStruct const * nextInChain;
     WGPUTexture texture;
@@ -1235,6 +1277,10 @@ typedef struct WGPUImageCopyTexture {
     WGPUOrigin3D origin;
     WGPUTextureAspect aspect;
 } SWIFT_ESCAPABLE WGPUImageCopyTexture WGPU_STRUCTURE_ATTRIBUTE;
+
+inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetImageCopyTextureNextInChain(const WGPUImageCopyTexture * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
+    return descriptor->nextInChain;
+}
 
 typedef struct WGPUProgrammableStageDescriptor {
     WGPUChainedStruct const * nextInChain;
@@ -1345,7 +1391,24 @@ typedef struct WGPURenderPassDescriptor {
     WGPU_NULLABLE WGPURenderPassTimestampWrites const * timestampWrites;
 
     auto colorAttachmentsSpan() const { return unsafeMakeSpan(colorAttachments, colorAttachmentCount); }
-} SWIFT_ESCAPABLE WGPURenderPassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+} __attribute__((swift_attr("@safe"))) SWIFT_ESCAPABLE WGPURenderPassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+
+inline struct WGPUChainedStruct const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorNextChainedStruct(const WGPURenderPassDescriptor * __counted_by(1) __attribute__((lifetimebound)) __attribute__((noescape)) descriptor) {
+    return descriptor->nextInChain;
+}
+
+inline WGPURenderPassTimestampWrites const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorTimestampWrites(const WGPURenderPassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor) {
+    return descriptor->timestampWrites;
+}
+
+inline WGPURenderPassColorAttachment const * __counted_by(count) wgpuGetRenderPassDescriptorColorAttachments(const WGPURenderPassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor, size_t count) {
+    ((void)count);
+    return descriptor->colorAttachments;
+}
+
+inline WGPURenderPassDepthStencilAttachment const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorDepthSencilAttachment(const WGPURenderPassDescriptor * __attribute__((lifetimebound)) __counted_by(1) __attribute__((noescape)) descriptor) {
+    return descriptor->depthStencilAttachment;
+}
 
 typedef struct WGPUVertexState {
     WGPUChainedStruct const * nextInChain;
@@ -1896,5 +1959,7 @@ WGPU_EXPORT std::span<uint8_t> wgpuBufferGetBufferContents(WGPUBuffer buffer) WG
 WGPU_EXPORT std::span<uint8_t> wgpuBufferGetMappedRange(WGPUBuffer buffer, size_t offset, size_t size) WGPU_FUNCTION_ATTRIBUTE;
 
 #endif
+
+#pragma clang diagnostic pop
 
 #endif // WEBGPU_H_

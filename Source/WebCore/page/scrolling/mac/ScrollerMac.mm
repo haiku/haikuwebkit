@@ -101,7 +101,7 @@ enum class FeatureToAnimate {
     else
         currentValue = progress;
 
-    _scroller->updateProgress(_featureToAnimate, currentValue);
+    CheckedPtr { _scroller }->updateProgress(_featureToAnimate, currentValue);
 }
 
 - (void)invalidate
@@ -206,9 +206,10 @@ enum class FeatureToAnimate {
         scrollbarPartAnimation = nil;
     }
 
-    CGFloat currentAlpha = featureToAnimate == FeatureToAnimate::KnobAlpha ? _scroller->knobAlpha() : _scroller->trackAlpha();
+    CheckedPtr scroller = _scroller;
+    CGFloat currentAlpha = featureToAnimate == FeatureToAnimate::KnobAlpha ? scroller->knobAlpha() : scroller->trackAlpha();
 
-    scrollbarPartAnimation = adoptNS([[WebScrollbarPartAnimationMac alloc] initWithScroller:_scroller.get()
+    scrollbarPartAnimation = adoptNS([[WebScrollbarPartAnimationMac alloc] initWithScroller:scroller.get()
         featureToAnimate:featureToAnimate
         animateFrom:currentAlpha
         animateTo:newAlpha
@@ -389,7 +390,6 @@ void ScrollerMac::updateScrollbarStyle()
     Locker locker { m_scrollerImpLock };
 
     RefPtr pair = m_pair.get();
-
     setScrollerImp([NSScrollerImp scrollerImpWithStyle:nsScrollerStyle(pair->scrollbarStyle()) controlSize:nsControlSizeFromScrollbarWidth(pair->scrollbarWidthStyle()) horizontal:m_orientation == ScrollbarOrientation::Horizontal replacingScrollerImp:nil]);
     [m_scrollerImp setDelegate:m_scrollerImpDelegate.get()];
 
@@ -491,6 +491,7 @@ void ScrollerMac::setScrollbarLayoutDirection(UserInterfaceLayoutDirection scrol
 
     if (m_scrollbarLayoutDirection == scrollbarLayoutDirection)
         return;
+
     m_scrollbarLayoutDirection = scrollbarLayoutDirection;
     updateScrollbarStyle();
     [m_scrollerImp setUserInterfaceLayoutDirection: scrollbarLayoutDirection == UserInterfaceLayoutDirection::RTL ? NSUserInterfaceLayoutDirectionRightToLeft : NSUserInterfaceLayoutDirectionLeftToRight];

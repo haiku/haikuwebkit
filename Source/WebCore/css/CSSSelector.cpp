@@ -146,7 +146,7 @@ static SelectorSpecificity simpleSelectorSpecificity(const CSSSelector&, IgnoreP
 static SelectorSpecificity selectorSpecificity(const CSSSelector& firstSimpleSelector, IgnorePseudoElement ignorePseudoElement = IgnorePseudoElement::No)
 {
     SelectorSpecificity total;
-    for (const auto* selector = &firstSimpleSelector; selector; selector = selector->tagHistory())
+    for (const auto* selector = &firstSimpleSelector; selector; selector = selector->precedingInComplexSelector())
         total += simpleSelectorSpecificity(*selector, ignorePseudoElement);
     return total;
 }
@@ -251,7 +251,7 @@ unsigned CSSSelector::specificityForPage() const
     // See http://dev.w3.org/csswg/css3-page/#cascading-and-page-context
     unsigned s = 0;
 
-    for (const CSSSelector* component = this; component; component = component->tagHistory()) {
+    for (const CSSSelector* component = this; component; component = component->precedingInComplexSelector()) {
         switch (component->match()) {
         case Match::Tag:
             s += tagQName().localName() == starAtom() ? 0 : 4;
@@ -359,14 +359,14 @@ std::optional<CSSSelector::PseudoElement> CSSSelector::parsePseudoElementName(St
 }
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-const CSSSelector* CSSSelector::firstInCompound() const
+const CSSSelector* CSSSelector::lastInCompound() const
 {
     auto* selector = this;
-    while (!selector->isFirstInTagHistory()) {
-        auto* previousSelector = selector - 1;
-        if (previousSelector->relation() != Relation::Subselector)
+    while (!selector->isLastInComplexSelector()) {
+        auto* next = selector - 1;
+        if (next->relation() != Relation::Subselector)
             break;
-        selector = previousSelector;
+        selector = next;
     }
     return selector;
 }
@@ -645,9 +645,9 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
             }
         }
 
-        if (selector->relation() != Relation::Subselector || !selector->tagHistory())
+        if (selector->relation() != Relation::Subselector || !selector->precedingInComplexSelector())
             break;
-        selector = selector->tagHistory();
+        selector = selector->precedingInComplexSelector();
     }
 
     builder.append(separator, rightSide);
@@ -665,7 +665,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
         }
     };
 
-    if (auto* previousSelector = selector->tagHistory()) {
+    if (auto* previousSelector = selector->precedingInComplexSelector()) {
         ASCIILiteral separator = ""_s;
         switch (selector->relation()) {
         case Relation::DescendantSpace:
@@ -690,7 +690,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
         }
         return previousSelector->selectorText(separator, builder);
     } else if (auto separatorText = separatorTextForNestingRelative(); !separatorText.isNull()) {
-        // We have a separator but no tag history which can happen with implicit relative nesting selector
+        // We have a separator but no preceding selector which can happen with implicit relative nesting selector
         return makeString(separatorText, builder.toString());
     }
 
@@ -800,8 +800,8 @@ CSSSelector::CSSSelector(const CSSSelector& other)
     , m_match(other.m_match)
     , m_pseudoType(other.m_pseudoType)
     , m_isLastInSelectorList(other.m_isLastInSelectorList)
-    , m_isFirstInTagHistory(other.m_isFirstInTagHistory)
-    , m_isLastInTagHistory(other.m_isLastInTagHistory)
+    , m_isFirstInComplexSelector(other.m_isFirstInComplexSelector)
+    , m_isLastInComplexSelector(other.m_isLastInComplexSelector)
     , m_hasRareData(other.m_hasRareData)
     , m_isForPage(other.m_isForPage)
     , m_tagIsForNamespaceRule(other.m_tagIsForNamespaceRule)
@@ -841,7 +841,7 @@ bool CSSSelector::visitSimpleSelectors(VisitFunctor&& functor, VisitFunctionalPs
         }
 
         // Visit the next simple selector
-        if (auto next = current->tagHistory()) {
+        if (auto next = current->precedingInComplexSelector()) {
             // We stop visiting at the end of the compound selector (= when relation is anything else than subselector) if we are in subject only mode.
             if (current->relation() != Relation::Subselector || visitOnlySubject != VisitOnlySubject::Yes)
                 worklist.push(next);

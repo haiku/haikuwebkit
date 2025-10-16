@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: No valid data-* attributes found in selector list : [data-expected-width]
 
 
 
@@ -32,4 +31,29 @@ FAIL [data-expected-width] 21 assert_equals:
 width expected 55 but got 45
 PASS [data-expected-width] 22
 PASS [data-expected-width] 23
+PASS [data-expected-width] 24
+PASS [data-expected-width] 25
+PASS [data-expected-width] 26
+PASS [data-expected-width] 27
+PASS [data-expected-width] 28
+PASS [data-expected-width] 29
+PASS [data-expected-width] 30
+PASS [data-expected-width] 31
+PASS [data-expected-width] 32
+PASS [data-expected-width] 33
+PASS [data-expected-width] 34
+PASS [data-expected-width] 35
+PASS [data-expected-width] 36
+PASS [data-expected-width] 37
+PASS [data-expected-width] 38
+PASS [data-expected-width] 39
+PASS [data-expected-width] 40
+PASS [data-expected-width] 41
+PASS [data-expected-width] 42
+PASS [data-expected-width] 43
+FAIL [data-expected-width] 44 assert_equals:
+<div class="test" data-expected-width="55" style="box-sizing: border-box;"></div>
+width expected 55 but got 45
+PASS [data-expected-width] 45
+PASS [data-expected-width] 46
 

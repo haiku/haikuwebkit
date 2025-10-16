@@ -30,7 +30,7 @@
 #if ENABLE(MATHML)
 #include "AccessibilityMathMLElement.h"
 
-#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
 #include "AXUtilities.h"
 #include "MathMLNames.h"
 #include "NodeInlines.h"
@@ -56,7 +56,7 @@ AccessibilityRole AccessibilityMathMLElement::determineAccessibilityRole()
     if (!m_renderer)
         return AccessibilityRole::Unknown;
 
-    if ((m_ariaRole = determineAriaRoleAttribute()) != AccessibilityRole::Unknown)
+    if (m_ariaRole != AccessibilityRole::Unknown)
         return m_ariaRole;
 
     if (WebCore::elementName(m_renderer->protectedNode().get()) == ElementName::MathML_math)

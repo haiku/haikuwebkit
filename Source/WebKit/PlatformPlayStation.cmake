@@ -43,6 +43,7 @@ list(APPEND WebKit_SOURCES
     Platform/IPC/unix/ArgumentCodersUnix.cpp
     Platform/IPC/unix/ConnectionUnix.cpp
     Platform/IPC/unix/IPCSemaphoreUnix.cpp
+    Platform/IPC/unix/IPCUtilitiesUnix.cpp
 
     Platform/classifier/ResourceLoadStatisticsClassifier.cpp
 

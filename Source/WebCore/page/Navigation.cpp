@@ -169,20 +169,24 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
     }
 
     // https://html.spec.whatwg.org/multipage/browsing-the-web.html#getting-session-history-entries-for-the-navigation-api
-    Vector<Ref<HistoryItem>> items;
     auto rawEntries = page->backForward().itemsForFrame(frame()->frameID());
     auto startingIndex = rawEntries.find(*currentItem);
-    if (startingIndex != notFound) {
+
+    Vector<Ref<HistoryItem>> items;
+
+    if (startingIndex == notFound)
+        items.append(*currentItem);
+    else {
         Ref startingOrigin = SecurityOrigin::create(Ref { rawEntries[startingIndex] }->url());
 
-        for (size_t i = 0; i < startingIndex; i++) {
+        for (int i = (int)startingIndex - 1; i >= 0; i--) {
             Ref item = rawEntries[i];
-
             if (!SecurityOrigin::create(item->url())->isSameOriginAs(startingOrigin))
                 break;
             items.append(WTFMove(item));
         }
 
+        items.reverse();
         items.append(*currentItem);
 
         for (size_t i = startingIndex + 1; i < rawEntries.size(); i++) {
@@ -191,8 +195,7 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
                 break;
             items.append(WTFMove(item));
         }
-    } else
-        items.append(*currentItem);
+    }
 
     size_t start = m_entries.size();
 
@@ -427,8 +430,9 @@ Navigation::Result Navigation::navigate(const String& url, NavigateOptions&& opt
     if (!newURL.isValid())
         return createErrorResult(WTFMove(committed), WTFMove(finished), ExceptionCode::SyntaxError, "Invalid URL"_s);
 
-    if (options.history == HistoryBehavior::Push && newURL.protocolIsJavaScript())
-        return createErrorResult(WTFMove(committed), WTFMove(finished), ExceptionCode::NotSupportedError, "A \"push\" navigation was explicitly requested, but only a \"replace\" navigation is possible when navigating to a javascript: URL."_s);
+    // Reject all JavaScript URLs in Navigation API.
+    if (newURL.protocolIsJavaScript())
+        return createErrorResult(WTFMove(committed), WTFMove(finished), ExceptionCode::NotSupportedError, "Navigation API does not support javascript: URLs."_s);
 
     if (options.history == HistoryBehavior::Push && currentURL.isAboutBlank())
         return createErrorResult(WTFMove(committed), WTFMove(finished), ExceptionCode::NotSupportedError, "A \"push\" navigation was explicitly requested, but only a \"replace\" navigation is possible while on an about:blank document."_s);
@@ -766,8 +770,12 @@ static bool documentCanHaveURLRewritten(const Document& document, const URL& tar
     const URL& documentURL = document.url();
     Ref documentOrigin = document.securityOrigin();
     auto targetOrigin = SecurityOrigin::create(targetURL);
+    bool isSameSite = documentOrigin->isSameSiteAs(targetOrigin);
+    bool isSameOrigin = documentOrigin->isSameOriginAs(targetOrigin);
 
-    if (!documentOrigin->isSameSiteAs(targetOrigin))
+    // For cross-window navigation with document.domain, we need to check same-origin rather than same-site
+    // to account for document.domain modifications that make cross-origin windows same-origin-domain
+    if (!isSameSite && !isSameOrigin)
         return false;
 
     if (targetURL.protocolIsInHTTPFamily())

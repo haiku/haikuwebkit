@@ -116,12 +116,37 @@ static void testDisplayWaylandAvailableInputDevices(WPEWaylandPlatformTest* test
     g_assert_false(devices & WPE_AVAILABLE_INPUT_DEVICE_TOUCHSCREEN);
 }
 
+static void testDisplayWaylandCreateView(WPEWaylandPlatformTest* test, gconstpointer)
+{
+    connectOrSkipIfNotUnderWayland();
+
+    GRefPtr<WPEView> view1 = adoptGRef(wpe_view_new(test->display()));
+    g_assert_true(WPE_IS_VIEW_WAYLAND(view1.get()));
+    test->assertObjectIsDeletedWhenTestFinishes(view1.get());
+    g_assert_true(wpe_view_get_display(view1.get()) == test->display());
+    auto* toplevel = wpe_view_get_toplevel(view1.get());
+    g_assert_true(WPE_IS_TOPLEVEL_WAYLAND(toplevel));
+    test->assertObjectIsDeletedWhenTestFinishes(toplevel);
+    g_assert_cmpuint(wpe_toplevel_get_max_views(toplevel), ==, 1);
+
+    auto* settings = wpe_display_get_settings(test->display());
+    GUniqueOutPtr<GError> error;
+    wpe_settings_set_boolean(settings, WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, FALSE, WPE_SETTINGS_SOURCE_APPLICATION, &error.outPtr());
+    g_assert_no_error(error.get());
+    GRefPtr<WPEView> view2 = adoptGRef(wpe_view_new(test->display()));
+    g_assert_true(WPE_IS_VIEW_WAYLAND(view2.get()));
+    test->assertObjectIsDeletedWhenTestFinishes(view2.get());
+    g_assert_true(wpe_view_get_display(view2.get()) == test->display());
+    g_assert_null(wpe_view_get_toplevel(view2.get()));
+}
+
 void beforeAll()
 {
     WPEWaylandPlatformTest::add("DisplayWayland", "connect", testDisplayWaylandConnect);
     WPEWaylandPlatformTest::add("DisplayWayland", "keymap", testDisplayWaylandKeymap);
     WPEWaylandPlatformTest::add("DisplayWayland", "screens", testDisplayWaylandScreens);
     WPEWaylandPlatformTest::add("DisplayWayland", "available-input-devices", testDisplayWaylandAvailableInputDevices);
+    WPEWaylandPlatformTest::add("DisplayWayland", "create-view", testDisplayWaylandCreateView);
 }
 
 void afterAll()

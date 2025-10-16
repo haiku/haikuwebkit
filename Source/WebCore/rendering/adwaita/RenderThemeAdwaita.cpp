@@ -216,6 +216,25 @@ Vector<String, 2> RenderThemeAdwaita::mediaControlsStyleSheets(const HTMLMediaEl
     return { m_mediaControlsStyleSheet };
 }
 
+RefPtr<FragmentedSharedBuffer> RenderThemeAdwaita::mediaControlsImageDataForIconNameAndType(const String& iconName, const String& iconType)
+{
+#if USE(GLIB)
+    auto path = makeString("/org/webkit/media-controls/"_s, iconName, '.', iconType);
+    auto data = adoptGRef(g_resources_lookup_data(path.latin1().data(), G_RESOURCE_LOOKUP_FLAGS_NONE, nullptr));
+    if (!data)
+        return nullptr;
+    return SharedBuffer::create(span(data));
+#elif PLATFORM(WIN)
+    auto path = webKitBundlePath(iconName, iconType, "media-controls"_s);
+    auto data = FileSystem::readEntireFile(path);
+    if (!data)
+        return nullptr;
+    return SharedBuffer::create(WTFMove(*data));
+#else
+    return nullptr;
+#endif
+}
+
 String RenderThemeAdwaita::mediaControlsBase64StringForIconNameAndType(const String& iconName, const String& iconType)
 {
 #if USE(GLIB)

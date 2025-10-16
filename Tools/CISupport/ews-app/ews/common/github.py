@@ -197,7 +197,7 @@ class GitHub(object):
 
 
 class GitHubEWS(GitHub):
-    APPLE_INTERNAL_QUEUES = ['ios-apple', 'mac-apple']
+    APPLE_INTERNAL_QUEUES = ['ios-apple', 'mac-apple', 'vision-apple']
     APPLE_INTERNAL_BUILDS_TITLE = 'Apple Internal'
     ICON_BUILD_PASS = u'\U00002705'
     ICON_BUILD_FAIL = u'\U0000274C'

@@ -32,12 +32,19 @@
 
 #pragma once
 
+#include <WebCore/PlatformExportMacros.h>
 #include <WebCore/RegisteredEventListener.h>
 #include <atomic>
 #include <memory>
+#include <wtf/Assertions.h>
+#include <wtf/CheckedArithmetic.h>
+#include <wtf/Compiler.h>
 #include <wtf/Forward.h>
 #include <wtf/Lock.h>
+#include <wtf/Locker.h>
+#include <wtf/Platform.h>
 #include <wtf/Threading.h>
+#include <wtf/Vector.h>
 #include <wtf/text/AtomString.h>
 
 #if PLATFORM(IOS_FAMILY)

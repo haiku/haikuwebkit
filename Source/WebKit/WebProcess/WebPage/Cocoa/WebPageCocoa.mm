@@ -1463,6 +1463,29 @@ void WebPage::processSystemDidWake() const
         manager->processSystemDidWake();
 }
 
+NSObject *WebPage::accessibilityObjectForMainFramePlugin()
+{
+#if ENABLE(PDF_PLUGIN)
+    if (!m_page)
+        return nil;
+
+    if (RefPtr pluginView = mainFramePlugIn())
+        return pluginView->accessibilityObject();
+#endif
+
+    return nil;
+}
+
+bool WebPage::shouldFallbackToWebContentAXObjectForMainFramePlugin() const
+{
+#if ENABLE(PDF_PLUGIN)
+    RefPtr pluginView = mainFramePlugIn();
+    return pluginView && pluginView->isPresentingLockedContent();
+#else
+    return false;
+#endif
+}
+
 } // namespace WebKit
 
 #endif // PLATFORM(COCOA)

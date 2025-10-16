@@ -30,8 +30,10 @@
 #include "BarProp.h"
 
 #include "Chrome.h"
+#include "FrameInlines.h"
 #include "LocalFrame.h"
 #include "Page.h"
+#include "ScriptWrappableInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -69,5 +71,7 @@ bool BarProp::visible() const
     ASSERT_NOT_REACHED();
     return false;
 }
+
+BarProp::~BarProp() = default;
 
 } // namespace WebCore

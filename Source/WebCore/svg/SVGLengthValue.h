@@ -69,7 +69,6 @@ public:
 
     static std::optional<SVGLengthValue> construct(SVGLengthMode, StringView);
     static SVGLengthValue construct(SVGLengthMode, StringView, SVGParsingError&, SVGLengthNegativeValuesMode = SVGLengthNegativeValuesMode::Allow);
-    static SVGLengthValue blend(const SVGLengthValue& from, const SVGLengthValue& to, float progress);
 
     SVGLengthType lengthType() const;
     SVGLengthMode lengthMode() const { return m_lengthMode; }

@@ -55,7 +55,6 @@
 #include "FontSelectionValueInlines.h"
 #include "FontSizeAdjust.h"
 #include "FrameDestructionObserverInlines.h"
-#include "LineClampValue.h"
 #include "LocalFrame.h"
 #include "Quirks.h"
 #include "RenderStyleInlines.h"
@@ -133,7 +132,6 @@ public:
     static TabSize convertTabSize(BuilderState&, const CSSValue&);
     template<typename T> static T convertComputedLength(BuilderState&, const CSSValue&);
     template<typename T> static T convertLineWidth(BuilderState&, const CSSValue&);
-    static OptionSet<TextDecorationLine> convertTextDecorationLine(BuilderState&, const CSSValue&);
     static OptionSet<TextTransform> convertTextTransform(BuilderState&, const CSSValue&);
     template<typename T> static T convertNumber(BuilderState&, const CSSValue&);
     static RefPtr<StyleImage> convertImageOrNone(BuilderState&, CSSValue&);
@@ -209,8 +207,6 @@ public:
     static std::optional<PositionArea> convertPositionArea(BuilderState&, const CSSValue&);
     static OptionSet<PositionVisibility> convertPositionVisibility(BuilderState&, const CSSValue&);
 
-    static LineClampValue convertLineClamp(BuilderState&, const CSSValue&);
-
     static RefPtr<TimingFunction> convertTimingFunction(BuilderState&, const CSSValue&);
 
     static NameScope convertNameScope(BuilderState&, const CSSValue&);
@@ -219,6 +215,8 @@ public:
     static SingleTimelineRange convertAnimationRangeEnd(BuilderState&, const CSSValue&);
 
     static FixedVector<PositionTryFallback> convertPositionTryFallbacks(BuilderState&, const CSSValue&);
+
+    static MaskMode convertFillLayerMaskMode(BuilderState&, const CSSValue&);
 
 private:
     friend class BuilderCustom;
@@ -333,22 +331,6 @@ inline T BuilderConverter::convertLineWidth(BuilderState& builderState, const CS
     }
 }
 
-inline OptionSet<TextDecorationLine> BuilderConverter::convertTextDecorationLine(BuilderState&, const CSSValue& value)
-{
-    // none or spelling-error
-    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        if (primitiveValue->valueID() == CSSValueNone)
-            return { };
-        if (primitiveValue->valueID() == CSSValueSpellingError)
-            return TextDecorationLine::SpellingError;
-    }
-    auto result = RenderStyle::initialTextDecorationLine();
-    if (auto* list = dynamicDowncast<CSSValueList>(value)) {
-        for (auto& currentValue : *list)
-            result.add(fromCSSValue<TextDecorationLine>(currentValue));
-    }
-    return result;
-}
 
 inline OptionSet<TextTransform> BuilderConverter::convertTextTransform(BuilderState&, const CSSValue& value)
 {
@@ -1736,22 +1718,6 @@ inline OptionSet<PositionVisibility> BuilderConverter::convertPositionVisibility
     return result;
 }
 
-inline LineClampValue BuilderConverter::convertLineClamp(BuilderState& builderState, const CSSValue& value)
-{
-    auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return { };
-
-    if (primitiveValue->primitiveType() == CSSUnitType::CSS_INTEGER)
-        return LineClampValue(std::max(primitiveValue->resolveAsInteger<int>(builderState.cssToLengthConversionData()), 1), LineClamp::LineCount);
-
-    if (primitiveValue->primitiveType() == CSSUnitType::CSS_PERCENTAGE)
-        return LineClampValue(std::max(primitiveValue->resolveAsPercentage<int>(builderState.cssToLengthConversionData()), 0), LineClamp::Percentage);
-
-    ASSERT(primitiveValue->valueID() == CSSValueNone);
-    return LineClampValue();
-}
-
 inline RefPtr<TimingFunction> BuilderConverter::convertTimingFunction(BuilderState& builderState, const CSSValue& value)
 {
     return createTimingFunction(value, builderState.cssToLengthConversionData());
@@ -1789,7 +1755,7 @@ inline FixedVector<PositionTryFallback> BuilderConverter::convertPositionTryFall
             // Turn the inlined position-area fallback into properties object that can be applied similarly to @position-try declarations.
             auto property = CSSProperty { CSSPropertyPositionArea, Ref { const_cast<CSSValue&>(fallbackValue) } };
             return PositionTryFallback {
-                .positionAreaProperties = ImmutableStyleProperties::create(std::span { &property, 1 }, HTMLStandardMode)
+                .positionAreaProperties = ImmutableStyleProperties::createDeduplicating(std::span { &property, 1 }, HTMLStandardMode)
             };
         }
 
@@ -1828,6 +1794,23 @@ inline FixedVector<PositionTryFallback> BuilderConverter::convertPositionTryFall
         auto fallback = convertFallback(item);
         return fallback ? *fallback : PositionTryFallback { };
     });
+}
+
+inline MaskMode BuilderConverter::convertFillLayerMaskMode(BuilderState& builderState, const CSSValue& value)
+{
+    switch (value.valueID()) {
+    case CSSValueAlpha:
+        return MaskMode::Alpha;
+    case CSSValueLuminance:
+        return MaskMode::Luminance;
+    case CSSValueMatchSource:
+        return MaskMode::MatchSource;
+    case CSSValueAuto: // -webkit-mask-source-type
+        return MaskMode::MatchSource;
+    default:
+        builderState.setCurrentPropertyInvalidAtComputedValueTime();
+        return MaskMode::MatchSource;
+    }
 }
 
 } // namespace Style

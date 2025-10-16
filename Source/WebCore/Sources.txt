@@ -136,6 +136,7 @@ Modules/fetch/FetchLoader.cpp
 Modules/fetch/FetchRequest.cpp
 Modules/fetch/FetchResponse.cpp
 Modules/fetch/FormDataConsumer.cpp
+Modules/fetch/IPAddressSpace.cpp
 Modules/fetch/WindowOrWorkerGlobalScopeFetch.cpp
 Modules/filesystem/FileSystemDirectoryHandle.cpp
 Modules/filesystem/FileSystemFileHandle.cpp
@@ -218,7 +219,9 @@ Modules/indexeddb/shared/IndexKey.cpp
 Modules/mediacapabilities/MediaCapabilities.cpp
 Modules/mediacapabilities/NavigatorMediaCapabilities.cpp
 Modules/mediacapabilities/WorkerNavigatorMediaCapabilities.cpp
+Modules/mediacontrols/LocalDOMWindowMediaControls.cpp
 Modules/mediacontrols/MediaControlsHost.cpp
+Modules/mediacontrols/MediaControlsUtils.cpp
 Modules/mediarecorder/BlobEvent.cpp
 Modules/mediarecorder/MediaRecorder.cpp
 Modules/mediarecorder/MediaRecorderErrorEvent.cpp
@@ -281,6 +284,7 @@ Modules/mediastream/RTCRtpSFrameTransformer.cpp
 Modules/mediastream/RTCRtpScriptTransform.cpp
 Modules/mediastream/RTCRtpScriptTransformer.cpp
 Modules/mediastream/RTCRtpSender.cpp
+Modules/mediastream/RTCEncodedStreamProducer.cpp
 Modules/mediastream/RTCRtpTransceiver.cpp
 Modules/mediastream/RTCRtpTransform.cpp
 Modules/mediastream/RTCSctpTransport.cpp
@@ -559,17 +563,17 @@ accessibility/AXGeometryManager.cpp
 accessibility/AXLogger.cpp
 accessibility/AXLoggerBase.cpp
 accessibility/AXObjectCache.cpp
+accessibility/AXObjectRareData.cpp
 accessibility/AXRemoteFrame.cpp
 accessibility/AXSearchManager.cpp
+accessibility/AXTableHelpers.cpp
 accessibility/AXTextMarker.cpp
 accessibility/AXTextRun.cpp
 accessibility/AXTreeStore.cpp
 accessibility/AXUtilities.cpp
 accessibility/AXAttachmentHelpers.cpp
+accessibility/AXListHelpers.cpp
 accessibility/AccessibilityImageMapLink.cpp
-accessibility/AccessibilityLabel.cpp
-accessibility/AccessibilityList.cpp
-accessibility/AccessibilityListBox.cpp
 accessibility/AccessibilityListBoxOption.cpp
 accessibility/AccessibilityMathMLElement.cpp
 accessibility/AccessibilityMenuList.cpp
@@ -586,7 +590,6 @@ accessibility/AccessibilityScrollbar.cpp
 accessibility/AccessibilitySlider.cpp
 accessibility/AccessibilitySpinButton.cpp
 accessibility/AccessibilitySpinButtonPart.cpp
-accessibility/AccessibilityTable.cpp
 accessibility/AccessibilityTableCell.cpp
 accessibility/AccessibilityTableColumn.cpp
 accessibility/AccessibilityTableHeaderContainer.cpp
@@ -635,7 +638,7 @@ bindings/js/CachedScriptFetcher.cpp
 bindings/js/CommonVM.cpp
 bindings/js/DOMGCOutputConstraint.cpp
 bindings/js/DOMWrapperWorld.cpp
-bindings/js/GCController.cpp
+bindings/js/GarbageCollectionController.cpp
 bindings/js/IDBBindingUtilities.cpp
 bindings/js/InternalReadableStream.cpp
 bindings/js/InternalWritableStream.cpp
@@ -719,6 +722,7 @@ bindings/js/JSIntersectionObserverEntryCustom.cpp
 bindings/js/JSKeyframeEffectCustom.cpp
 bindings/js/JSLazyEventListener.cpp
 bindings/js/JSLocationCustom.cpp
+bindings/js/JSMediaControlsHostCustom.cpp
 bindings/js/JSMediaSessionCustom.cpp
 bindings/js/JSMediaSourceCustom.cpp
 bindings/js/JSMediaStreamTrackCustom.cpp
@@ -1005,6 +1009,7 @@ css/StyleMedia.cpp
 css/StyleProperties.cpp
 css/StylePropertyShorthand.cpp
 css/StyleRule.cpp
+css/StyleRuleFunction.cpp
 css/StyleRuleImport.cpp
 css/StyleSheet.cpp
 css/StyleSheetContents.cpp
@@ -1238,6 +1243,7 @@ dom/DocumentFontLoader.cpp
 dom/DocumentFragment.cpp
 dom/DocumentFullscreen.cpp
 dom/DocumentMarkerController.cpp
+dom/DocumentMediaElement.cpp
 dom/DocumentOrShadowRootFullscreen.cpp
 dom/DocumentParser.cpp
 dom/DocumentSharedObjectPool.cpp
@@ -2403,6 +2409,7 @@ platform/audio/HRTFElevation.cpp
 platform/audio/HRTFKernel.cpp
 platform/audio/HRTFPanner.cpp
 platform/audio/IIRFilter.cpp
+platform/audio/MediaSessionManagerInterface.cpp
 platform/audio/MultiChannelResampler.cpp
 platform/audio/Panner.cpp
 platform/audio/PlatformMediaSession.cpp
@@ -2949,7 +2956,6 @@ rendering/style/AutosizeStatus.cpp
 rendering/style/BorderData.cpp
 rendering/style/BorderValue.cpp
 rendering/style/DropShadowFilterOperationWithStyleColor.cpp
-rendering/style/FillLayer.cpp
 rendering/style/GridSpan.cpp
 rendering/style/OutlineValue.cpp
 rendering/style/PositionArea.cpp
@@ -3142,6 +3148,8 @@ style/StyleUpdate.cpp
 style/Styleable.cpp
 style/TransformOperationsBuilder.cpp
 style/UserAgentStyle.cpp
+style/values/backgrounds/StyleBackgroundLayer.cpp
+style/values/backgrounds/StyleBackgroundSize.cpp
 style/values/backgrounds/StyleBorderImageOutset.cpp
 style/values/backgrounds/StyleBorderImageRepeat.cpp
 style/values/backgrounds/StyleBorderImageSlice.cpp
@@ -3149,6 +3157,7 @@ style/values/backgrounds/StyleBorderImageSource.cpp
 style/values/backgrounds/StyleBorderImageWidth.cpp
 style/values/backgrounds/StyleBorderImage.cpp
 style/values/backgrounds/StyleLineWidth.cpp
+style/values/backgrounds/StyleRepeatStyle.cpp
 style/values/borders/StyleBorderRadius.cpp
 style/values/borders/StyleBoxShadow.cpp
 style/values/borders/StyleCornerShapeValue.cpp
@@ -3202,6 +3211,7 @@ style/values/grid/StyleGridTrackBreadth.cpp
 style/values/grid/StyleGridTrackSize.cpp
 style/values/grid/StyleGridTrackSizes.cpp
 style/values/images/StyleGradient.cpp
+style/values/images/StyleImageOrNone.cpp
 style/values/images/StyleImageWrapper.cpp
 style/values/inline/StyleVerticalAlign.cpp
 style/values/lists/StyleListStyleType.cpp
@@ -3213,6 +3223,7 @@ style/values/masking/StyleMaskBorderSlice.cpp
 style/values/masking/StyleMaskBorderSource.cpp
 style/values/masking/StyleMaskBorderWidth.cpp
 style/values/masking/StyleMaskBorder.cpp
+style/values/masking/StyleMaskLayer.cpp
 style/values/motion/StyleOffsetAnchor.cpp
 style/values/motion/StyleOffsetPath.cpp
 style/values/motion/StyleOffsetPosition.cpp
@@ -3220,6 +3231,7 @@ style/values/motion/StyleOffsetRotate.cpp
 style/values/motion/StyleRayFunction.cpp
 style/values/multicol/StyleColumnCount.cpp
 style/values/multicol/StyleColumnWidth.cpp
+style/values/non-standard/StyleWebKitLineClamp.cpp
 style/values/non-standard/StyleWebKitOverflowScrolling.cpp
 style/values/non-standard/StyleWebKitTextStrokeWidth.cpp
 style/values/non-standard/StyleWebKitTouchCallout.cpp
@@ -3258,6 +3270,7 @@ style/values/svg/StyleSVGBaselineShift.cpp
 style/values/svg/StyleSVGPaint.cpp
 style/values/svg/StyleSVGStrokeDasharray.cpp
 style/values/svg/StyleSVGStrokeDashoffset.cpp
+style/values/text-decoration/StyleTextDecorationLine.cpp
 style/values/text-decoration/StyleTextDecorationThickness.cpp
 style/values/text-decoration/StyleTextEmphasisStyle.cpp
 style/values/text-decoration/StyleTextShadow.cpp
@@ -4298,6 +4311,7 @@ JSMediaCapabilitiesEncodingInfo.cpp
 JSMediaCapabilitiesInfo.cpp
 JSMediaController.cpp
 JSMediaControlsHost.cpp
+JSMediaControlsUtils.cpp
 JSMediaDecodingConfiguration.cpp
 JSMediaDecodingType.cpp
 JSMediaDeviceInfo.cpp
@@ -4550,6 +4564,7 @@ JSRTCIceServerTransportProtocol.cpp
 JSRTCIceTcpCandidateType.cpp
 JSRTCIceTransport.cpp
 JSRTCIceTransportState.cpp
+JSRTCEncodedStreams.cpp
 JSRTCLocalSessionDescriptionInit.cpp
 JSRTCLogsCallback.cpp
 JSRTCOfferAnswerOptions.cpp

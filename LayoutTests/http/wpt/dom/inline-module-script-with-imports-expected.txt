@@ -1,0 +1,11 @@
+CONSOLE MESSAGE: in classic script => document.readyState = loading
+CONSOLE MESSAGE: delayed-module.js loading...
+CONSOLE MESSAGE: delayed-module.js loaded with value: delayed-value
+CONSOLE MESSAGE: [module script with import] in module script => document.readyState = interactive
+CONSOLE MESSAGE: [module script with import] imported value = delayed-value
+CONSOLE MESSAGE: [module script with import] in promise_test => document.readyState = interactive
+CONSOLE MESSAGE: [module script with import] in window.onload => document.readyState = complete
+This timing test verifies that inline module scripts with imports block readyState completion
+
+PASS Inline module script with imports blocks readyState completion until imports are loaded
+

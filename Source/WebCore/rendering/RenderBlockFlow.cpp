@@ -25,6 +25,7 @@
 #include "config.h"
 #include "RenderBlockFlow.h"
 
+#include "AXObjectCache.h"
 #include "BlockStepSizing.h"
 #include "Editor.h"
 #include "ElementInlines.h"
@@ -741,25 +742,24 @@ LayoutUnit RenderBlockFlow::shiftForAlignContent(LayoutUnit intrinsicLogicalHeig
     if (alignment.isCentered())
         space = space / 2;
 
-    // Alright, now shift all our content.
-    if (!childrenInline()) {
-        for (CheckedPtr<RenderBox> child = firstChildBox(); child; child = child->nextSiblingBox()) {
+    // Now shift all our content.
+    if (CheckedPtr inlineLayout = this->inlineLayout())
+        inlineLayout->shiftLinesBy(space);
+    else if (auto* svgTextLayout = this->svgTextLayout()) {
+        if (isHorizontalWritingMode())
+            svgTextLayout->shiftLineBy(0, space);
+        else
+            svgTextLayout->shiftLineBy(-space, 0);
+    } else {
+        for (CheckedPtr child = firstChildBox(); child; child = child->nextSiblingBox()) {
             setLogicalTopForChild(*child, logicalTopForChild(*child) + space);
-            if (child->isOutOfFlowPositioned()) {
-                if (child->style().hasStaticBlockPosition(isHorizontalWritingMode())) {
-                    ASSERT(child->layer());
-                    child->layer()->setStaticBlockPosition(child->layer()->staticBlockPosition() + space);
-                    child->setChildNeedsLayout(MarkOnlyThis);
-                }
+            if (child->isOutOfFlowPositioned() && child->style().hasStaticBlockPosition(isHorizontalWritingMode())) {
+                ASSERT(child->layer());
+                child->layer()->setStaticBlockPosition(child->layer()->staticBlockPosition() + space);
+                child->setChildNeedsLayout(MarkOnlyThis);
             }
         }
-    } else if (svgTextLayout()) {
-        if (isHorizontalWritingMode())
-            svgTextLayout()->shiftLineBy(0, space);
-        else
-            svgTextLayout()->shiftLineBy(-space, 0);
-    } else if (inlineLayout())
-        inlineLayout()->shiftLinesBy(space);
+    }
     if (m_floatingObjects)
         m_floatingObjects->shiftFloatsBy(space);
 
@@ -2446,13 +2446,6 @@ void RenderBlockFlow::styleWillChange(StyleDifference diff, const RenderStyle& n
     RenderBlock::styleWillChange(diff, newStyle);
 }
 
-void RenderBlockFlow::deleteLines()
-{
-    m_lineLayout = std::monostate();
-
-    RenderBlock::deleteLines();
-}
-
 void RenderBlockFlow::addFloatsToNewParent(RenderBlockFlow& toBlockFlow) const
 {
     // When a portion of the render tree is being detached, anonymous blocks
@@ -3805,46 +3798,48 @@ bool RenderBlockFlow::hasLines() const
     return childrenInline() ? lineCount() : false;
 }
 
-void RenderBlockFlow::invalidateLineLayoutPath(InvalidationReason invalidationReason)
+void RenderBlockFlow::invalidateLineLayout(InvalidationReason invalidationReason)
 {
-    switch (lineLayoutPath()) {
-    case UndeterminedPath:
-        return;
-    case SvgTextPath:
-        setLineLayoutPath(UndeterminedPath);
-        return;
-    case InlinePath: {
-        // FIXME: Implement partial invalidation.
-        if (inlineLayout()) {
-            ASSERT(!m_previousInlineLayoutContentTopAndBottomIncludingInkOverflow);
-            m_previousInlineLayoutContentTopAndBottomIncludingInkOverflow = inlineContentTopAndBottomIncludingInkOverflow();
-            if (invalidationReason != InvalidationReason::InsertionOrRemoval) {
-                auto repaintAndSetNeedsLayoutIncludingOutOfFlowBoxes = [&] {
-                    // Since we eagerly remove the display content here, repaints issued between this invalidation (triggered by style change/content mutation) and the subsequent layout would produce empty rects.
-                    repaint();
-                    for (auto walker = InlineWalker(*this); !walker.atEnd(); walker.advance()) {
-                        auto& renderer = *walker.current();
-                        if (!renderer.everHadLayout())
-                            continue;
-                        if (!renderer.isInFlow() && inlineLayout()->contains(downcast<RenderElement>(renderer)))
-                            renderer.repaint();
-                        renderer.setNeedsPreferredWidthsUpdate();
-                    }
-                };
-                repaintAndSetNeedsLayoutIncludingOutOfFlowBoxes();
-            }
-        }
-        m_lineLayout = std::monostate();
-        if (invalidationReason == InvalidationReason::InsertionOrRemoval)
-            setLineLayoutPath(UndeterminedPath);
+    auto issueNeedsLayoutIfApplicable = [&] {
         if (selfNeedsLayout() || normalChildNeedsLayout())
             return;
         // FIXME: We should just kick off a subtree layout here (if needed at all) see webkit.org/b/172947.
         setNeedsLayout();
-        return;
+    };
+
+    if (inlineLayout()) {
+        ASSERT(!m_previousInlineLayoutContentTopAndBottomIncludingInkOverflow);
+        m_previousInlineLayoutContentTopAndBottomIncludingInkOverflow = inlineContentTopAndBottomIncludingInkOverflow();
     }
+
+    switch (invalidationReason) {
+    case InvalidationReason::InternalMove:
+        if (AXObjectCache* cache = protectedDocument()->existingAXObjectCache())
+            cache->deferRecomputeIsIgnored(protectedElement().get());
+        break;
+    case InvalidationReason::ContentChange: {
+        // Since we eagerly remove the display content here, repaints issued between this invalidation (triggered by style change/content mutation) and the subsequent layout would produce empty rects.
+        repaint();
+        for (auto walker = InlineWalker(*this); !walker.atEnd(); walker.advance()) {
+            auto& renderer = *walker.current();
+            if (!renderer.everHadLayout())
+                continue;
+            if (!renderer.isInFlow() && inlineLayout()->contains(downcast<RenderElement>(renderer)))
+                renderer.repaint();
+            renderer.setNeedsPreferredWidthsUpdate();
+        }
+        issueNeedsLayoutIfApplicable();
+        break;
     }
-    ASSERT_NOT_REACHED();
+    case InvalidationReason::InsertionOrRemoval:
+        setLineLayoutPath(UndeterminedPath);
+        issueNeedsLayoutIfApplicable();
+        break;
+    default:
+        break;
+    }
+
+    m_lineLayout = std::monostate();
 }
 
 static bool hasSimpleStaticPositionForInlineLevelOutOfFlowChildrenByStyle(const RenderStyle& rootStyle)
@@ -3881,6 +3876,9 @@ std::pair<float, float> RenderBlockFlow::inlineContentTopAndBottomIncludingInkOv
 {
     if (m_previousInlineLayoutContentTopAndBottomIncludingInkOverflow)
         return *m_previousInlineLayoutContentTopAndBottomIncludingInkOverflow;
+
+    if (!inlineLayout())
+        return { };
 
     auto firstLineBox = InlineIterator::firstLineBoxFor(*this);
     auto lastLineBox = InlineIterator::lastLineBoxFor(*this);

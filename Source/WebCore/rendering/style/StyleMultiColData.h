@@ -29,6 +29,7 @@
 #include <WebCore/RenderStyleConstants.h>
 #include <WebCore/StyleColumnCount.h>
 #include <WebCore/StyleColumnWidth.h>
+#include <WebCore/StyleLineWidth.h>
 #include <wtf/RefCounted.h>
 
 namespace WTF {
@@ -52,12 +53,7 @@ public:
     void dumpDifferences(TextStream&, const StyleMultiColData&) const;
 #endif
 
-    Style::LineWidth ruleWidth() const
-    {
-        if (rule.style() == BorderStyle::None || rule.style() == BorderStyle::Hidden)
-            return 0_css_px;
-        return rule.width();
-    }
+    Style::LineWidth ruleWidth() const;
 
     Style::ColumnWidth width { CSS::Keyword::Auto { } };
     Style::ColumnCount count { CSS::Keyword::Auto { } };

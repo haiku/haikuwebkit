@@ -26,6 +26,7 @@
 #include "NinePieceImagePainter.h"
 
 #include "GraphicsContext.h"
+#include "ImagePaintingOptions.h"
 #include "ImageQualityController.h"
 #include "LayoutRect.h"
 #include "LengthBox.h"

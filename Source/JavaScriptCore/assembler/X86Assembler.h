@@ -6215,16 +6215,19 @@ public:
         setPointer(static_cast<char*>(code) + where.offset(), value);
     }
 
+    template<RepatchingInfo repatch = memcpyRepatch>
     static void relinkJump(void* from, void* to)
     {
         setRel32(from, to);
     }
     
+    template <RepatchingInfo repatch = memcpyRepatch>
     static void relinkCall(void* from, void* to)
     {
         setRel32(from, to);
     }
 
+    template <RepatchingInfo repatch = memcpyRepatch>
     static void relinkTailCall(void* from, void* to)
     {
         relinkJump(from, to);
@@ -6244,7 +6247,7 @@ public:
     {
 #if ENABLE(MPROTECT_RX_TO_RWX)
         uint8_t op = OP_HLT;
-        performJITMemcpy(instructionStart, &op, 1);
+        performJITMemcpy<jitMemcpyRepatch>(instructionStart, &op, 1);
 #else
         WTF::unalignedStore<uint8_t>(instructionStart, static_cast<uint8_t>(OP_HLT));
 #endif
@@ -6259,7 +6262,7 @@ public:
         uint8_t buffer[5];
         buffer[0] = static_cast<uint8_t>(OP_JMP_rel32);
         WTF::unalignedStore<int32_t>(buffer + 1, static_cast<int32_t>(distance));
-        performJITMemcpy(ptr, buffer, 5);
+        performJITMemcpy<jitMemcpyRepatch>(ptr, buffer, 5);
 #else
         WTF::unalignedStore<uint8_t>(ptr, static_cast<uint8_t>(OP_JMP_rel32));
         WTF::unalignedStore<int32_t>(ptr + 1, static_cast<int32_t>(distance));
@@ -6268,11 +6271,7 @@ public:
 
     static void replaceWithNops(void* instructionStart, size_t memoryToFillWithNopsInBytes)
     {
-#if ENABLE(MPROTECT_RX_TO_RWX)
-        fillNops<MachineCodeCopyMode::JITMemcpy>(instructionStart, memoryToFillWithNopsInBytes);
-#else
-        fillNops<MachineCodeCopyMode::Memcpy>(instructionStart, memoryToFillWithNopsInBytes);
-#endif
+        fillNops(instructionStart, memoryToFillWithNopsInBytes);
     }
 
     static constexpr ptrdiff_t maxJumpReplacementSize()
@@ -6302,7 +6301,7 @@ public:
         buffer[0] = PRE_REX | (1 << 3) | (dst >> 3);
         buffer[1] = OP_MOV_EAXIv | (dst & 7);
         memcpy(buffer + rexBytes + opcodeBytes, u.asBytes, instructionSize - rexBytes - opcodeBytes);
-        performJITMemcpy(ptr, buffer, instructionSize);
+        performJITMemcpy<jitMemcpyRepatch>(ptr, buffer, instructionSize);
 #else
         ptr[0] = PRE_REX | (1 << 3) | (dst >> 3);
         ptr[1] = OP_MOV_EAXIv | (dst & 7);
@@ -6332,7 +6331,7 @@ public:
         buffer[0] = PRE_REX | (1 << 3) | (dst >> 3);
         buffer[1] = OP_MOV_EAXIv | (dst & 7);
         memcpy(buffer + rexBytes + opcodeBytes, u.asBytes, instructionSize - rexBytes - opcodeBytes);
-        performJITMemcpy(ptr, buffer, instructionSize);
+        performJITMemcpy<jitMemcpyRepatch>(ptr, buffer, instructionSize);
 #else
         ptr[0] = PRE_REX | (dst >> 3);
         ptr[1] = OP_MOV_EAXIv | (dst & 7);
@@ -6357,7 +6356,7 @@ public:
         buffer[0] = OP_GROUP1_EvIz;
         buffer[1] = (X86InstructionFormatter::ModRmRegister << 6) | (GROUP1_OP_CMP << 3) | dst;
         memcpy(buffer + 2, u.asBytes, maxJumpReplacementSize() - opcodeBytes - modRMBytes);
-        performJITMemcpy(ptr, buffer, maxJumpReplacementSize());
+        performJITMemcpy<jitMemcpyRepatch>(ptr, buffer, maxJumpReplacementSize());
 #else
         ptr[0] = OP_GROUP1_EvIz;
         ptr[1] = (X86InstructionFormatter::ModRmRegister << 6) | (GROUP1_OP_CMP << 3) | dst;
@@ -6383,7 +6382,7 @@ public:
         buffer[0] = OP_GROUP1_EvIz;
         buffer[1] = (X86InstructionFormatter::ModRmMemoryNoDisp << 6) | (GROUP1_OP_CMP << 3) | dst;
         memcpy(buffer + 2, u.asBytes, maxJumpReplacementSize() - opcodeBytes - modRMBytes);
-        performJITMemcpy(ptr, buffer, maxJumpReplacementSize());
+        performJITMemcpy<jitMemcpyRepatch>(ptr, buffer, maxJumpReplacementSize());
 #else
         ptr[0] = OP_GROUP1_EvIz;
         ptr[1] = (X86InstructionFormatter::ModRmMemoryNoDisp << 6) | (GROUP1_OP_CMP << 3) | dst;
@@ -6416,10 +6415,8 @@ public:
         m_formatter.oneByteOp(OP_NOP);
     }
 
-    template<MachineCodeCopyMode copy>
     static void fillNops(void* base, size_t size)
     {
-        UNUSED_PARAM(copy);
         static const uint8_t nops[10][10] = {
             // nop
             {0x90},
@@ -6457,10 +6454,11 @@ public:
                 *bufferWriter++ = nops[nopRest-1][i];
 
             ASSERT(nopSize == bufferWriter - buffer);
-            if constexpr (copy == MachineCodeCopyMode::JITMemcpy)
-                performJITMemcpy(where, buffer, nopSize);
-            else
-                memcpy(where, buffer, nopSize);
+#if ENABLE(MPROTECT_RX_TO_RWX)
+            machineCodeCopy<jitMemcpyRepatch>(where, buffer, nopSize);
+#else
+            machineCodeCopy<memcpyRepatch>(where, buffer, nopSize);
+#endif
             where += nopSize;
             size -= nopSize;
         }
@@ -6474,7 +6472,7 @@ private:
     static void setPointer(void* where, void* value)
     {
 #if ENABLE(MPROTECT_RX_TO_RWX)
-        performJITMemcpy(std::bit_cast<void**>(where) - 1, &value, sizeof(void*));
+        performJITMemcpy<jitMemcpyRepatch>(std::bit_cast<void**>(where) - 1, &value, sizeof(void*));
 #else
         WTF::unalignedStore<void*>(std::bit_cast<void**>(where) - 1, value);
 #endif
@@ -6483,7 +6481,7 @@ private:
     static void setInt32(void* where, int32_t value)
     {
 #if ENABLE(MPROTECT_RX_TO_RWX)
-        performJITMemcpy(std::bit_cast<int32_t*>(where) - 1, &value, sizeof(int32_t));
+        performJITMemcpy<jitMemcpyRepatch>(std::bit_cast<int32_t*>(where) - 1, &value, sizeof(int32_t));
 #else
         WTF::unalignedStore<int32_t>(std::bit_cast<int32_t*>(where) - 1, value);
 #endif
@@ -6492,7 +6490,7 @@ private:
     static void setInt8(void* where, int8_t value)
     {
 #if ENABLE(MPROTECT_RX_TO_RWX)
-        performJITMemcpy(std::bit_cast<int8_t*>(where) - 1, &value, sizeof(int8_t));
+        performJITMemcpy<jitMemcpyRepatch>(std::bit_cast<int8_t*>(where) - 1, &value, sizeof(int8_t));
 #else
         WTF::unalignedStore<int8_t>(std::bit_cast<int8_t*>(where) - 1, value);
 #endif

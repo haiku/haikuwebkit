@@ -35,8 +35,8 @@
 #include "AXLogger.h"
 #include "AXLoggerBase.h"
 #include "AXNotifications.h"
-#include "AXObjectCache.h"
 #include "AXObjectCacheInlines.h"
+#include "AXObjectRareData.h"
 #include "AXRemoteFrame.h"
 #include "AXSearchManager.h"
 #include "AXTextMarker.h"
@@ -44,7 +44,6 @@
 #include "AccessibilityMockObject.h"
 #include "AccessibilityRenderObject.h"
 #include "AccessibilityScrollView.h"
-#include "AccessibilityTable.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "ContainerNodeInlines.h"
@@ -101,7 +100,6 @@
 #include "RenderText.h"
 #include "RenderTextControl.h"
 #include "RenderTheme.h"
-#include "RenderTreeBuilder.h"
 #include "RenderView.h"
 #include "RenderWidget.h"
 #include "RenderedPosition.h"
@@ -139,6 +137,14 @@ AccessibilityObject::~AccessibilityObject()
 void AccessibilityObject::init()
 {
     m_role = determineAccessibilityRole();
+
+    if (needsRareData())
+        ensureRareData();
+}
+
+AXObjectCache* AccessibilityObject::axObjectCache() const
+{
+    return m_axObjectCache.get();
 }
 
 std::optional<AXID> AccessibilityObject::treeID() const
@@ -151,7 +157,7 @@ String AccessibilityObject::debugDescriptionInternal(bool verbose, std::optional
 {
     StringBuilder result;
     result.append("{"_s);
-    result.append("role: "_s, accessibilityRoleToString(role()));
+    result.append("role: "_s, roleToString(role()));
     result.append(", ID "_s, objectID().loggingString());
 
     if (debugOptions) {
@@ -626,7 +632,7 @@ AccessibilityObject* firstAccessibleObjectFromNode(const Node* node, NOESCAPE co
     if (!cache)
         return nullptr;
 
-    RefPtr accessibleObject = cache->getOrCreate(axNode->renderer());
+    RefPtr accessibleObject = cache->getOrCreate(const_cast<Node&>(*axNode));
     while (accessibleObject && !isAccessible(*accessibleObject)) {
         axNode = NodeTraversal::next(*axNode);
 
@@ -636,7 +642,7 @@ AccessibilityObject* firstAccessibleObjectFromNode(const Node* node, NOESCAPE co
         if (!axNode)
             return nullptr;
 
-        accessibleObject = cache->getOrCreate(axNode->renderer());
+        accessibleObject = cache->getOrCreate(const_cast<Node&>(*axNode));
     }
 
     return accessibleObject.get();
@@ -706,7 +712,7 @@ void AccessibilityObject::insertChild(AccessibilityObject& child, unsigned index
         // AccessibilityTable::addChildren never actually calls `insertChild` for table section elements
         // (e.g. tbody, thead), so don't block this `insertChild` for display:contents section elements,
         // or else the child elements of the section element will never be inserted into the tree.
-        allowInsert = allowInsert || (isAccessibilityTableInstance() && is<HTMLTableSectionElement>(displayContentsParent->element()));
+        allowInsert = allowInsert || (isTable() && is<HTMLTableSectionElement>(displayContentsParent->element()));
         if (!allowInsert)
             return;
     }
@@ -2314,9 +2320,9 @@ AccessibilityObject* AccessibilityObject::anchorElementForNode(Node& node)
         return nullptr;
 
     WeakPtr cache = renderer->document().axObjectCache();
-    RefPtr axObject = cache ? cache->getOrCreate(renderer.get()) : nullptr;
+    RefPtr axObject = cache ? cache->getOrCreate(node) : nullptr;
     RefPtr anchor = axObject ? axObject->anchorElement() : nullptr;
-    return anchor ? cache->getOrCreate(anchor->renderer()) : nullptr;
+    return anchor ? cache->getOrCreate(*anchor) : nullptr;
 }
 
 AccessibilityObject* AccessibilityObject::headingElementForNode(Node* node)
@@ -2328,7 +2334,7 @@ AccessibilityObject* AccessibilityObject::headingElementForNode(Node* node)
     if (!renderObject)
         return nullptr;
 
-    RefPtr axObject = renderObject->document().axObjectCache()->getOrCreate(*renderObject);
+    RefPtr axObject = renderObject->document().axObjectCache()->getOrCreate(*node);
 
     return Accessibility::findAncestor<AccessibilityObject>(*axObject, true, [] (const AccessibilityObject& object) {
         return object.role() == AccessibilityRole::Heading;
@@ -2931,6 +2937,7 @@ String AccessibilityObject::computedRoleString() const
 void AccessibilityObject::updateRole()
 {
     auto previousRole = m_role;
+    recomputeAriaRole();
     m_role = determineAccessibilityRole();
     if (previousRole != m_role) {
         if (auto* cache = axObjectCache())
@@ -3014,11 +3021,7 @@ const RenderStyle* AccessibilityObject::style() const
     }
 
     RefPtr element = this->element();
-    if (!element)
-        return nullptr;
-    // We cannot resolve style (as computedStyle() does) if we are downstream of an existing render tree
-    // update. Otherwise, a RELEASE_ASSERT preventing re-entrancy will be hit inside RenderTreeBuilder.
-    return RenderTreeBuilder::current() ? element->existingComputedStyle() : element->computedStyle();
+    return element ? safeStyleFrom(*element) : nullptr;
 }
 
 bool AccessibilityObject::isValueAutofillAvailable() const
@@ -3082,7 +3085,7 @@ bool AccessibilityObject::isTabItemSelected() const
 
     auto elements = elementsFromAttribute(aria_controlsAttr);
     for (auto& element : elements) {
-        RefPtr tabPanel = cache->getOrCreate(element.ptr());
+        RefPtr tabPanel = cache->getOrCreate(element.get());
 
         // A tab item should only control tab panels.
         if (!tabPanel || tabPanel->role() != AccessibilityRole::TabPanel)
@@ -4340,6 +4343,13 @@ AccessibilityObject* AccessibilityObject::containingWebArea() const
     CheckedPtr cache = axObjectCache();
     RefPtr root = cache ? dynamicDowncast<AccessibilityScrollView>(cache->getOrCreate(frameView.get())) : nullptr;
     return root ? root->webAreaObject() : nullptr;
+}
+
+AXObjectRareData& AccessibilityObject::ensureRareData()
+{
+    if (!hasRareData())
+        m_rareDataWithBitfields.setPointer(makeUnique<AXObjectRareData>());
+    return *rareData();
 }
 
 } // namespace WebCore

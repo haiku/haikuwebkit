@@ -148,10 +148,10 @@ void VMTraps::tryInstallTrapBreakpoints(VMTraps::SignalContext& context, StackBo
     }
 
     if (foundCodeBlock->canInstallVMTrapBreakpoints()) {
-        if (!m_lock->tryLock())
+        if (!m_trapSignalingLock->tryLock())
             return; // Let the SignalSender try again later.
 
-        Locker locker { AdoptLock, *m_lock };
+        Locker locker { AdoptLock, *m_trapSignalingLock };
         if (!needHandling(VMTraps::AsyncEvents)) {
             // Too late. Someone else already handled the trap.
             return;
@@ -199,7 +199,7 @@ class VMTraps::SignalSender final : public ThreadSafeRefCounted<VMTraps::SignalS
 public:
     SignalSender(const AbstractLocker&, VM& vm)
         : m_vm(vm)
-        , m_lock(vm.traps().m_lock)
+        , m_lock(vm.traps().m_trapSignalingLock)
         , m_condition(vm.traps().m_condition)
     {
         activateSignalHandlersFor(Signal::AccessFault);
@@ -368,9 +368,9 @@ void VMTraps::willDestroyVM()
 #if ENABLE(SIGNAL_BASED_VM_TRAPS)
     if (m_signalSender) {
         {
-            Locker locker { *m_lock };
+            Locker locker { *m_trapSignalingLock };
             while (!m_signalSender->isStopped(locker))
-                m_condition->wait(*m_lock);
+                m_condition->wait(*m_trapSignalingLock);
         }
         m_signalSender = nullptr;
     }
@@ -379,7 +379,7 @@ void VMTraps::willDestroyVM()
 
 void VMTraps::cancelThreadStopIfNeeded()
 {
-    Locker locker { *m_lock };
+    Locker locker { *m_trapSignalingLock };
 
     // We need to confirm that there are no pending async events before cancelling the
     // thread stop request. This is because:
@@ -400,7 +400,7 @@ void VMTraps::cancelThreadStopIfNeeded()
 
 void VMTraps::requestThreadStopIfNeeded(VMTraps::Event event)
 {
-    Locker locker { *m_lock };
+    Locker locker { *m_trapSignalingLock };
     ASSERT(!m_isShuttingDown);
 
     // We got here because an AsyncEvent was set. Because this is an asynchronous event,
@@ -459,7 +459,7 @@ bool VMTraps::handleTraps(VMTraps::BitField mask)
     }
 
     auto takeTopPriorityTrap = [&] (VMTraps::BitField mask) -> Event {
-        Locker locker { *m_lock };
+        Locker locker { *m_trapSignalingLock };
 
         // Note: the EventBitShift is already sorted in highest to lowest priority
         // i.e. a bit shift of 0 is highest priority, etc.
@@ -552,7 +552,7 @@ void VMTraps::undoDeferTerminationSlow(DeferAction deferAction)
 }
 
 VMTraps::VMTraps()
-    : m_lock(Box<Lock>::create())
+    : m_trapSignalingLock(Box<Lock>::create())
     , m_condition(Box<Condition>::create())
 {
     if (Options::forceTrapAwareStackChecks()) [[unlikely]]

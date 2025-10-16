@@ -27,6 +27,7 @@
 #include "DatasetDOMStringMap.h"
 
 #include "ElementInlines.h"
+#include "ScriptWrappableInlines.h"
 #include <wtf/ASCIICType.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/AtomString.h>
@@ -210,5 +211,7 @@ Ref<Element> DatasetDOMStringMap::protectedElement() const
 {
     return m_element.get();
 }
+
+DatasetDOMStringMap::~DatasetDOMStringMap() = default;
 
 } // namespace WebCore

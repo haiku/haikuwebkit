@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 #include "JSCJSValueInlines.h"
 #include "MarkedBlockInlines.h"
 #include "SweepingScope.h"
-#include "VMInspector.h"
+#include "VMManager.h"
 #include <wtf/CommaPrinter.h>
 
 #if PLATFORM(COCOA)
@@ -605,12 +605,8 @@ NO_RETURN_DUE_TO_CRASH NEVER_INLINE void MarkedBlock::dumpInfoAndCrashForInvalid
     }
     updateCrashLogMsg(__LINE__);
 
-    VMInspector::forEachVM([&](VM& vm) {
-        if (blockVM == &vm) {
-            isBlockVMValid = true;
-            return IterationStatus::Done;
-        }
-        return IterationStatus::Continue;
+    isBlockVMValid = VMManager::findMatchingVM([&] (VM& vm) {
+        return blockVM == &vm;
     });
     updateCrashLogMsg(__LINE__);
 
@@ -625,7 +621,7 @@ NO_RETURN_DUE_TO_CRASH NEVER_INLINE void MarkedBlock::dumpInfoAndCrashForInvalid
 
     if (!foundInBlockVM) {
         // Search all VMs to see if this block belongs to any VM.
-        VMInspector::forEachVM([&](VM& vm) {
+        VMManager::forEachVM([&](VM& vm) {
             MarkedSpace& objectSpace = vm.heap.objectSpace();
             isBlockInSet = objectSpace.blocks().set().contains(this);
             handle = objectSpace.findMarkedBlockHandleDebug(this);

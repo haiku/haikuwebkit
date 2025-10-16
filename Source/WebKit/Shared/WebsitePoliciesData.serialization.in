@@ -91,4 +91,5 @@ struct WebKit::WebsitePoliciesData {
     bool allowSharedProcess;
     WebKit::WebsitePushAndNotificationsEnabledPolicy pushAndNotificationsEnabledPolicy;
     WebKit::WebsiteInlineMediaPlaybackPolicy inlineMediaPlaybackPolicy;
+    WebCore::ResourceRequest alternateRequest;
 };

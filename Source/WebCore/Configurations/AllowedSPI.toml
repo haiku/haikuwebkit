@@ -1,16 +1,17 @@
-# SPI used by WebCore, either for temporary use (denoted by a bug URL) or
-# permanent use.
-#
+# SPI used by WebCore on iOS.
 # More info: https://github.com/WebKit/WebKit/wiki/Using-SPI-on-Apple-platforms
 
-[accessibility."rdar://141698311"]
+[[temporary-usage]]
+request = "rdar://141698311"
+cleanup = "rdar://157890302"
 classes = ["AXRemoteElement"]
 selectors = [
     { name = "setOnClientSide:", class = "?" },
     { name = "initWithUUID:andRemotePid:andContextId:", class = "?" },
 ]
 
-[materials.not-web-essential]
+[[not-web-essential]]
+request = "rdar://157890384"
 classes = ["MTMaterialLayer"]
 symbols = [
     "_MTCoreMaterialRecipeNone",
@@ -35,8 +36,24 @@ symbols = [
     "_MTVisualStylingCreateDictionaryRepresentation",
 ]
 
-[network.not-web-essential]
+[[not-web-essential]]
+request = "rdar://157890562"
 symbols = [
     # Only used for benchmarking, see 293525@main.
     "_nw_parameters_set_source_application_by_bundle_id",
 ]
+
+[[temporary-usage]]
+request = "rdar://157890014"
+cleanup = "rdar://157890142"
+symbols = [
+    "_nw_path_create_evaluator_for_endpoint",
+    "_nw_path_evaluator_copy_path",
+    "_nw_resolver_create_with_path",
+]
+
+[[staging]]
+symbols = [
+    "_MACaptionAppearanceCopyActiveProfileID",
+]
+requires = ["!HAVE_MEDIA_ACCESSIBILITY_PROFILES_API"]

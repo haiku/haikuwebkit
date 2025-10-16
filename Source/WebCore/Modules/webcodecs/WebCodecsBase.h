@@ -27,9 +27,9 @@
 
 #if ENABLE(WEB_CODECS)
 
+#include "WebCodecsCodecState.h"
 #include <WebCore/ActiveDOMObject.h>
 #include <WebCore/EventTarget.h>
-#include "WebCodecsCodecState.h"
 #include <wtf/Deque.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeWeakPtr.h>

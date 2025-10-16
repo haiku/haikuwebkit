@@ -1,12 +1,12 @@
-PASS clickSucceeded is true
+PASS clickError is ""
 PASS clickCount.textContent is "1"
-PASS textInputSucceeded is true
+PASS textInputError is ""
 PASS textField.value is "bar"
-PASS selectMenuItemSucceeded is true
+PASS selectMenuItemError is ""
 PASS select.value is "Three"
-PASS selectTextSucceeded is true
+PASS selectTextError is ""
 PASS getSelection().toString() is "Subject"
-PASS invalidActionSucceeded is false
+PASS invalidActionError is "Failed to resolve nodeIdentifier 4294967293"
 PASS successfullyParsed is true
 
 TEST COMPLETE

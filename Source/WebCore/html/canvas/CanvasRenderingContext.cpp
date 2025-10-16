@@ -39,6 +39,7 @@
 #include "OriginAccessPatterns.h"
 #include "PixelFormat.h"
 #include "SVGImageElement.h"
+#include "ScriptWrappableInlines.h"
 #include "SecurityOrigin.h"
 #include <wtf/HashSet.h>
 #include <wtf/Lock.h>

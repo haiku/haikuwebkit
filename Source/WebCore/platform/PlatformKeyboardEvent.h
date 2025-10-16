@@ -29,6 +29,7 @@
 #include <WebCore/CompositionUnderline.h>
 #include <WebCore/KeypressCommand.h>
 #include <WebCore/PlatformEvent.h>
+#include <wtf/Platform.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WindowsExtras.h>
 #include <wtf/text/WTFString.h>
@@ -55,6 +56,8 @@ namespace WebCore {
             : PlatformEvent(PlatformEvent::Type::KeyDown)
         {
         }
+
+        static std::optional<PlatformKeyboardEvent> syntheticEventFromText(Type, const String&);
 
         PlatformKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code,
         const String& keyIdentifier, int windowsVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)

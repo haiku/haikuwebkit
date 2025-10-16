@@ -38,6 +38,7 @@
 #include <WebCore/NodeInlines.h>
 #include <WebCore/ParserContentPolicy.h>
 #include <WebCore/ProcessWarming.h>
+#include <WebCore/ScriptWrappableInlines.h>
 #include <WebCore/Settings.h>
 #include <WebCore/Text.h>
 #include <wtf/text/WTFString.h>

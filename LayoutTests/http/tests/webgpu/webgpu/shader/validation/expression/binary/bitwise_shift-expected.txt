@@ -1174,6 +1174,10 @@ FAIL :partial_eval_errors:op="%3E%3E";type="i32" assert_unreached:
   - EXPECTATION FAILED: subcase: stage="shader";value=33
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: stage="shader";value=32
+    OK
+  - INFO: subcase: stage="shader";value=33
+    OK
   - EXPECTATION FAILED: subcase: stage="shader";value=64
     Expected validation error
       at (elided: below max severity)
@@ -1183,20 +1187,16 @@ FAIL :partial_eval_errors:op="%3E%3E";type="i32" assert_unreached:
   - EXPECTATION FAILED: subcase: stage="pipeline";value=33
     Expected validation error
       at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: stage="pipeline";value=64
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: stage="pipeline";value=32
     OK
   - INFO: subcase: stage="pipeline";value=33
     OK
-  - INFO: subcase: stage="shader";value=32
-    OK
-  - INFO: subcase: stage="shader";value=33
+  - INFO: subcase: stage="pipeline";value=64
     OK
   - INFO: subcase: stage="shader";value=64
-    OK
-  - EXPECTATION FAILED: subcase: stage="pipeline";value=64
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: stage="pipeline";value=64
     OK
  Reached unreachable code
 FAIL :partial_eval_errors:op="%3E%3E";type="u32" assert_unreached:

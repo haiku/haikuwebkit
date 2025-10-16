@@ -110,7 +110,7 @@ void Navigation::resetRequestStart()
     m_requestStart = MonotonicTime::now();
 }
 
-void Navigation::setCurrentRequest(ResourceRequest&& request, ProcessIdentifier processIdentifier)
+void Navigation::setCurrentRequest(ResourceRequest&& request, std::optional<ProcessIdentifier> processIdentifier)
 {
     m_currentRequest = WTFMove(request);
     m_currentRequestProcessIdentifier = processIdentifier;

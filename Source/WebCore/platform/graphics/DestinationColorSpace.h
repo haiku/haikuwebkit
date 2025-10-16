@@ -26,8 +26,12 @@
 #pragma once
 
 #include <WebCore/PlatformColorSpace.h>
+#include <WebCore/PlatformExportMacros.h>
 #include <optional>
+#include <wtf/Assertions.h>
 #include <wtf/Forward.h>
+#include <wtf/Platform.h>
+#include <wtf/StdLibExtras.h>
 
 namespace WebCore {
 

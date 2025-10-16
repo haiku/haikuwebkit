@@ -25,8 +25,10 @@
 #pragma once
 
 #include <WebCore/CSSPrimitiveKeywordList.h>
+#include <WebCore/CalculationValue.h>
 #include <WebCore/StyleLengthWrapperData.h>
 #include <WebCore/StylePrimitiveNumericTypes.h>
+#include <wtf/StdLibExtras.h>
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {

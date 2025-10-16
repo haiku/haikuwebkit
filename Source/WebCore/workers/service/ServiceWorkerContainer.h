@@ -26,7 +26,6 @@
 #pragma once
 
 #include "ActiveDOMObject.h"
-#include "AddEventListenerOptions.h"
 #include "EventTarget.h"
 #include "EventTargetInterfaces.h"
 #include "IDLTypes.h"

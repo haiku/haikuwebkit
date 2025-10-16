@@ -51,6 +51,7 @@
 #import <WebKit/WKWebsiteDataStorePrivate.h>
 #import <WebKit/_WKFeature.h>
 #import <WebKit/_WKFrameTreeNode.h>
+#import <WebKit/_WKJSHandle.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
 #import <WebKit/_WKTextManipulationConfiguration.h>
 #import <WebKit/_WKTextManipulationDelegate.h>
@@ -1812,8 +1813,9 @@ TEST(SiteIsolation, DragEvents)
     "<script>"
     "    draggable.addEventListener('dragstart', (event) => { window.parent.postMessage('dragstart', '*') });"
     "    draggable.addEventListener('dragend', (event) => { window.parent.postMessage('dragend', '*') });"
-    "    draggable.addEventListener('dragenter', (event) => { window.parent.postMessage('dragenter', '*') });"
+    "    draggable.addEventListener('dragenter', (event) => { window.parent.postMessage('dragenter:' + event.clientX + ',' + event.clientY, '*') });"
     "    draggable.addEventListener('dragleave', (event) => { window.parent.postMessage('dragleave', '*') });"
+    "    addEventListener('dragover', (event) => { window.parent.postMessage('dragover:' + event.clientX + ',' + event.clientY, '*') });"
     "</script>"
     "</body>"_s;
 
@@ -1836,11 +1838,46 @@ TEST(SiteIsolation, DragEvents)
     [simulator runFrom:CGPointMake(50, 50) to:CGPointMake(150, 150)];
 
     NSArray<NSString *> *events = [webView objectByEvaluatingJavaScript:@"window.events"];
-    EXPECT_EQ(4U, events.count);
+    EXPECT_GT(events.count, 4U);
+
+    bool foundDragLeave = false;
+    for (NSString *event in events) {
+        if ([event hasPrefix:@"dragleave"]) {
+            foundDragLeave = true;
+            break;
+        }
+    }
     EXPECT_WK_STREQ("dragstart", events[0]);
-    EXPECT_WK_STREQ("dragenter", events[1]);
-    EXPECT_WK_STREQ("dragleave", events[2]);
-    EXPECT_WK_STREQ("dragend", events[3]);
+    EXPECT_TRUE(foundDragLeave);
+    EXPECT_WK_STREQ("dragend", events[events.count - 1]);
+
+    NSString *dragenterEvent = events[1];
+    EXPECT_TRUE([dragenterEvent hasPrefix:@"dragenter:"]);
+    NSString *dragenterCoords = [dragenterEvent substringFromIndex:[@"dragenter:" length]];
+    NSArray *dragenterComponents = [dragenterCoords componentsSeparatedByString:@","];
+    if (dragenterComponents.count == 2) {
+        int x = [dragenterComponents[0] intValue];
+        int y = [dragenterComponents[1] intValue];
+        EXPECT_TRUE(x >= 65 && x <= 75) << "Expected dragenter x coordinate around 71, got " << x;
+        EXPECT_TRUE(y >= 65 && y <= 75) << "Expected dragenter y coordinate around 71, got " << y;
+    }
+
+    NSString *lastDragOverEvent = nil;
+    for (NSString *event in events) {
+        if ([event hasPrefix:@"dragover:"])
+            lastDragOverEvent = event;
+    }
+    EXPECT_NOT_NULL(lastDragOverEvent);
+    if (lastDragOverEvent) {
+        NSString *dragoverCoords = [lastDragOverEvent substringFromIndex:[@"dragover:" length]];
+        NSArray *dragoverComponents = [dragoverCoords componentsSeparatedByString:@","];
+        if (dragoverComponents.count == 2) {
+            int x = [dragoverComponents[0] intValue];
+            int y = [dragoverComponents[1] intValue];
+            EXPECT_TRUE(x >= 135 && x <= 145) << "Expected final dragover x coordinate around 140, got " << x;
+            EXPECT_TRUE(y >= 135 && y <= 145) << "Expected final dragover y coordinate around 140, got " << y;
+        }
+    }
 }
 
 TEST(SiteIsolation, FrameMetrics)
@@ -5350,25 +5387,23 @@ TEST(SiteIsolation, HitTesting)
         { "/exampleframe"_s, { makeString("<div id=exampleiframediv>"_s, text, text, "</div>"_s) } },
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto hitTestResult = [] (RetainPtr<WKWebView> webView, CGPoint point, WKFrameInfo *coordinateFrame = nil) -> std::optional<std::pair<RetainPtr<_WKJSHandle>, RetainPtr<WKFrameInfo>>> {
+    auto hitTestResult = [] (RetainPtr<WKWebView> webView, CGPoint point, WKFrameInfo *coordinateFrame = nil) -> RetainPtr<_WKJSHandle> {
         __block bool done { false };
-        __block std::optional<std::pair<RetainPtr<_WKJSHandle>, RetainPtr<WKFrameInfo>>> result;
-        [webView _hitTestAtPoint:point inFrameCoordinateSpace:coordinateFrame completionHandler:^(_WKJSHandle *node, WKFrameInfo *frame, NSError *error) {
+        __block RetainPtr<_WKJSHandle> result;
+        [webView _hitTestAtPoint:point inFrameCoordinateSpace:coordinateFrame completionHandler:^(_WKJSHandle *node, NSError *error) {
             done = true;
-            if (error)
-                return;
-            result = { { { node }, { frame } } };
+            EXPECT_NE(!node, !error);
+            result = node;
         }];
         Util::run(&done);
         return result;
     };
 
     auto hitNodePrototypeAndParentElement = [&] (RetainPtr<TestWKWebView> webView, CGPoint point, WKFrameInfo *coordinateFrame = nil) -> NSString * {
-        auto result = hitTestResult(webView, point, coordinateFrame);
-        if (!result)
+        auto node = hitTestResult(webView, point, coordinateFrame);
+        if (!node)
             return @"(error)";
-        auto [node, frame] = *result;
-        return [webView objectByCallingAsyncFunction:@"return Object.getPrototypeOf(n).toString() + ' ' + n.id + ', child of ' + n.parentElement?.id" withArguments:@{ @"n" : node.get() } inFrame:frame.get() inContentWorld:WKContentWorld.pageWorld];
+        return [webView objectByCallingAsyncFunction:@"return Object.getPrototypeOf(n).toString() + ' ' + n.id + ', child of ' + n.parentElement?.id" withArguments:@{ @"n" : node.get() } inFrame:node.get().frame inContentWorld:WKContentWorld.pageWorld];
     };
 
     auto runTest = [&] (bool withSiteIsolation) {
@@ -5438,6 +5473,108 @@ TEST(SiteIsolation, WKFrameInfo_isSameFrame)
     EXPECT_TRUE([mainFrameInfo _isSameFrame:[frames info]]);
     EXPECT_FALSE([mainFrameInfo _isSameFrame:[[[frames childFrames]objectAtIndex:0] info]]);
     EXPECT_FALSE([mainFrameInfo _isSameFrame:[[[frames childFrames]objectAtIndex:1] info]]);
+}
+
+#if ENABLE(DRAG_SUPPORT) && PLATFORM(MAC)
+TEST(SiteIsolation, DragSourceEndedAtCoordinateTransformation)
+{
+    static constexpr ASCIILiteral mainframeHTML = "<script>"
+    "    window.events = [];"
+    "    addEventListener('message', function(event) {"
+    "        window.events.push(event.data);"
+    "    });"
+    "</script>"
+    "<iframe width='300' height='300' style='position: absolute; top: 200px; left: 200px; border: 2px solid red;' src='https://domain2.com/subframe'></iframe>"_s;
+
+    static constexpr ASCIILiteral subframeHTML = "<body style='margin: 0; padding: 0; width: 100%; height: 100vh; background-color: lightblue;'>"
+    "<div id='draggable' draggable='true' style='width: 100px; height: 100px; background-color: blue; position: absolute; top: 50px; left: 50px;'>Drag me</div>"
+    "<script>"
+    "    const draggable = document.getElementById('draggable');"
+    "    draggable.addEventListener('dragstart', (event) => {"
+    "        parent.postMessage('dragstart:' + event.clientX + ',' + event.clientY, '*');"
+    "    });"
+    "    draggable.addEventListener('dragend', (event) => {"
+    "        parent.postMessage('dragend:' + event.clientX + ',' + event.clientY, '*');"
+    "    });"
+    "</script>"
+    "</body>"_s;
+
+    HTTPServer server({
+        { "/mainframe"_s, { mainframeHTML } },
+        { "/subframe"_s, { subframeHTML } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    auto configuration = server.httpsProxyConfiguration();
+    enableSiteIsolation(configuration);
+    RetainPtr simulator = adoptNS([[DragAndDropSimulator alloc] initWithWebViewFrame:NSMakeRect(0, 0, 600, 600) configuration:configuration]);
+    RetainPtr webView = [simulator webView];
+    webView.get().navigationDelegate = navigationDelegate.get();
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://domain1.com/mainframe"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    [webView waitForNextPresentationUpdate];
+    [simulator runFrom:CGPointMake(300, 300) to:CGPointMake(350, 350)];
+
+    NSArray<NSString *> *events = [webView objectByEvaluatingJavaScript:@"window.events"];
+    EXPECT_GT(events.count, 0U);
+
+    bool foundDragStart = false;
+    bool foundDragEnd = false;
+    NSString *dragEndEvent = nil;
+
+    for (NSString *event in events) {
+        if ([event hasPrefix:@"dragstart:"]) {
+            foundDragStart = true;
+        } else if ([event hasPrefix:@"dragend:"]) {
+            foundDragEnd = true;
+            dragEndEvent = event;
+        }
+    }
+
+    EXPECT_TRUE(foundDragStart) << "Should have received dragstart event in remote frame";
+    EXPECT_TRUE(foundDragEnd) << "Should have received dragend event in remote frame";
+
+    if (dragEndEvent) {
+        NSString *coords = [dragEndEvent substringFromIndex:[@"dragend:" length]];
+        NSArray *components = [coords componentsSeparatedByString:@","];
+        if (components.count == 2) {
+            int x = [components[0] intValue];
+            int y = [components[1] intValue];
+            EXPECT_TRUE(x >= 190 && x <= 200) << "Expected dragend x coordinate around 196, got " << x;
+            EXPECT_TRUE(y >= 95 && y <= 105) << "Expected dragend y coordinate around 100, got " << y;
+        }
+    }
+}
+#endif // ENABLE(DRAG_SUPPORT) && PLATFORM(MAC)
+
+TEST(SiteIsolation, AlternateRequest)
+{
+    auto alertLocation = "<script>alert(window.location)</script>"_s;
+    HTTPServer server({
+        { "/example1"_s, { "<script>window.location = 'https://example.com/example2'</script>"_s } },
+        { "/example2"_s, { alertLocation } },
+        { "/example3"_s, { alertLocation } },
+        { "/webkit1"_s, { "<script>window.location = 'https://example.com/example4'</script>"_s } },
+        { "/webkit2"_s, { alertLocation } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    navigationDelegate.get().decidePolicyForNavigationActionWithPreferences = ^(WKNavigationAction *action, WKWebpagePreferences *preferences, void (^completionHandler)(WKNavigationActionPolicy, WKWebpagePreferences *)) {
+        NSString *url = action.request.URL.absoluteString;
+        if ([url isEqualToString:@"https://example.com/example2"])
+            preferences._alternateRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example3"]];
+        if ([url isEqualToString:@"https://example.com/example3"])
+            EXPECT_FALSE(true);
+        if ([url isEqualToString:@"https://example.com/example4"])
+            preferences._alternateRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://webkit.org/webkit2"]];
+        completionHandler(WKNavigationActionPolicyAllow, preferences);
+    };
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example1"]]];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "https://example.com/example3");
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://webkit.org/webkit1"]]];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "https://webkit.org/webkit2");
 }
 
 }

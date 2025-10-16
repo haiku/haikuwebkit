@@ -55,7 +55,9 @@ enum class MatchElement : uint8_t {
     HasSibling,
     HasSiblingDescendant,
     HasAnySibling,
-    HasNonSubject, // FIXME: This is a catch-all for cases where :has() is in a non-subject position.
+    HasChildParent,
+    HasChildAncestor,
+    HasNonSubject, // FIXME: This is a catch-all for the rest of cases where :has() is in a non-subject position.
     HasScopeBreaking, // FIXME: This is a catch-all for cases where :has() contains a scope breaking sub-selector like, like :has(:is(.x .y)).
     Host,
     HostChild
@@ -147,8 +149,10 @@ private:
 bool isHasPseudoClassMatchElement(MatchElement);
 MatchElement computeHasPseudoClassMatchElement(const CSSSelector&);
 
-enum class InvalidationKeyType : uint8_t { Universal = 1, Class, Id, Tag };
+enum class InvalidationKeyType : uint8_t { Universal = 1, Class, Id, Attribute, Tag };
 PseudoClassInvalidationKey makePseudoClassInvalidationKey(CSSSelector::PseudoClass, InvalidationKeyType, const AtomString& = starAtom());
+
+bool unlikelyToHaveSelectorForAttribute(const AtomString&);
 
 inline bool isUniversalInvalidation(const PseudoClassInvalidationKey& key)
 {

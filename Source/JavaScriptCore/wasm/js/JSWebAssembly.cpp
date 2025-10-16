@@ -374,8 +374,7 @@ JSC_DEFINE_HOST_FUNCTION(webAssemblyInstantiateFunc, (JSGlobalObject* globalObje
         RETURN_IF_EXCEPTION(scope, { });
         compileAndInstantiate(vm, globalObject, promise, JSWebAssemblyInstance::createPrivateModuleKey(), firstArgument, importObject, WTFMove(provider), WTFMove(compileOptions), Resolve::WithModuleAndInstance, Wasm::CreationMode::FromJS);
     }
-
-    return JSValue::encode(promise);
+    RELEASE_AND_RETURN(scope, JSValue::encode(promise));
 }
 
 /**

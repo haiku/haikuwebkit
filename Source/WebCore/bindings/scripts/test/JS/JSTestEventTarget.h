@@ -21,9 +21,9 @@
 #pragma once
 
 #include "EventTargetInlines.h"
-#include "JSDOMWrapper.h"
 #include "JSEventTarget.h"
 #include "TestEventTarget.h"
+#include <WebCore/JSDOMWrapper.h>
 
 namespace WebCore {
 

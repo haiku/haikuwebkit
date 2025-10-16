@@ -41,6 +41,7 @@
 #include "Page.h"
 #include "Quirks.h"
 #include "ScriptController.h"
+#include "ScriptWrappableInlines.h"
 #include "SecurityOrigin.h"
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/MainThread.h>
@@ -311,5 +312,7 @@ ExceptionOr<void> History::stateObjectAdded(RefPtr<SerializedScriptValue>&& data
     frame->loader().updateURLAndHistory(fullURL, WTFMove(data), historyBehavior);
     return { };
 }
+
+History::~History() = default;
 
 } // namespace WebCore

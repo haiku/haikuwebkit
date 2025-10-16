@@ -1977,6 +1977,14 @@ imported/w3c/web-platform-tests/event-timing/interaction-count-tap.html [ Crash 
 imported/w3c/web-platform-tests/event-timing/interaction-count-click.html [ Skip ]
 imported/w3c/web-platform-tests/event-timing/interaction-count-press-key.html [ Skip ]
 
+# Timeout:
+imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html [ Skip ]
+
+# Fail with AccessDeniedAccess
+imported/w3c/web-platform-tests/event-timing/contextmenu.html [ Skip ]
+imported/w3c/web-platform-tests/event-timing/interactionid-auxclick.html [ Skip ]
+imported/w3c/web-platform-tests/event-timing/first-input-interactionid-key.html [ Skip ]
+
 compositing/video [ Skip ]
 editing/pasteboard [ Skip ]
 fast/attachment [ Skip ]
@@ -2425,8 +2433,6 @@ fast/text/emoji-variation-selector.html [ ImageOnlyFailure ]
 fast/text/emoji-with-joiner.html [ Failure ]
 fast/text/emphasis-overlap.html [ Failure ]
 fast/text/fallback-language-han-2.html [ ImageOnlyFailure ]
-fast/text/font-collection-2.html [ ImageOnlyFailure ]
-fast/text/font-collection.html [ ImageOnlyFailure ]
 fast/text/font-variations-feature-detection.html [ ImageOnlyFailure ]
 fast/text/hyphenate-avoid-orphaned-word.html [ Failure ]
 fast/text/image-alt-text-bidi-2.html [ ImageOnlyFailure ]
@@ -4537,3 +4543,7 @@ imported/w3c/web-platform-tests/focus/hasfocus-same-site.html [ Failure ]
 imported/w3c/web-platform-tests/focus/iframe-contentwindow-focus-with-different-site-intermediate-frame.html [ Failure ]
 imported/w3c/web-platform-tests/focus/iframe-contentwindow-focus-with-same-as-top-intermediate-frame.html [ Failure ]
 imported/w3c/web-platform-tests/focus/iframe-focus-with-different-site-intermediate-frame.html [ Failure ]
+
+# Now that partial fonts are working, two characters previously rendered as a square are now showing correctly, which makes the test fail. 
+# Probably the test should be updated.
+fast/text/text-combine-placement.html [ Failure ]

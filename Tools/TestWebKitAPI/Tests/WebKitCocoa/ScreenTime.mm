@@ -551,6 +551,7 @@ TEST(ScreenTime, URLIsPictureInPicture)
     RetainPtr contentHTML = [NSString stringWithContentsOfFile:[NSBundle.test_resourcesBundle pathForResource:@"PictureInPictureDelegate" ofType:@"html"] encoding:NSUTF8StringEncoding error:NULL];
     TestWebKitAPI::HTTPServer server({
         { "/"_s, { contentHTML.get() } },
+        { "/favicon.ico"_s, { "Actual response is immaterial."_s } },
         { "/test.mp4"_s, [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"mp4"]] },
     }, TestWebKitAPI::HTTPServer::Protocol::Http);
 

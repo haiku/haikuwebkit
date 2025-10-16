@@ -27,13 +27,6 @@ namespace WebCore {
 
 class Animation;
 class CSSValue;
-class FillLayer;
-class RenderStyle;
-class StyleImage;
-
-enum CSSPropertyID : uint16_t;
-
-struct Length;
 
 namespace Style {
 class BuilderState;
@@ -42,18 +35,6 @@ class BuilderState;
 class CSSToStyleMap {
 public:
     explicit CSSToStyleMap(Style::BuilderState&);
-
-    static void mapFillAttachment(CSSPropertyID, FillLayer&, const CSSValue&);
-    static void mapFillClip(CSSPropertyID, FillLayer&, const CSSValue&);
-    static void mapFillComposite(CSSPropertyID, FillLayer&, const CSSValue&);
-    static void mapFillBlendMode(CSSPropertyID, FillLayer&, const CSSValue&);
-    static void mapFillOrigin(CSSPropertyID, FillLayer&, const CSSValue&);
-    void mapFillImage(CSSPropertyID, FillLayer&, const CSSValue&);
-    static void mapFillRepeat(CSSPropertyID, FillLayer&, const CSSValue&);
-    void mapFillSize(CSSPropertyID, FillLayer&, const CSSValue&);
-    void mapFillXPosition(CSSPropertyID, FillLayer&, const CSSValue&);
-    void mapFillYPosition(CSSPropertyID, FillLayer&, const CSSValue&);
-    static void mapFillMaskMode(CSSPropertyID, FillLayer&, const CSSValue&);
 
     void mapAnimationDelay(Animation&, const CSSValue&);
     static void mapAnimationDirection(Animation&, const CSSValue&);
@@ -71,8 +52,6 @@ public:
     void mapAnimationRangeEnd(Animation&, const CSSValue&);
 
 private:
-    RefPtr<StyleImage> styleImage(const CSSValue&);
-
     Style::BuilderState& m_builderState;
 };
 

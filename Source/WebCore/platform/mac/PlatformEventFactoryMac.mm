@@ -519,7 +519,7 @@ String keyIdentifierForKeyEvent(NSEvent* event)
     
     NSString *s = [event charactersIgnoringModifiers];
     if ([s length] != 1) {
-        LOG(Events, "received an unexpected number of characters in key event: %u", [s length]);
+        LOG(Events, "received an unexpected number of characters in key event: %zu", [s length]);
         return "Unidentified"_s;
     }
     return keyIdentifierForCharCode([s characterAtIndex:0]);

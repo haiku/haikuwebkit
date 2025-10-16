@@ -30,6 +30,7 @@
 #include "config.h"
 #include "MixedContentChecker.h"
 
+#include "DocumentInlines.h"
 #include "Document.h"
 #include "LegacySchemeRegistry.h"
 #include "LocalFrame.h"

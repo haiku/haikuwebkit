@@ -3608,7 +3608,12 @@ void miniaturizeWebView(TestWKWebView* webView)
 }
 #endif // PLATFORM(MAC)
 
+// FIXME when rdar://158787776 is resolved
+#if PLATFORM(MAC)
+TEST(ServiceWorker, DISABLED_ServiceWorkerWindowClientFocus)
+#else
 TEST(ServiceWorker, ServiceWorkerWindowClientFocus)
+#endif
 {
     [WKWebsiteDataStore _allowWebsiteDataRecordsForAllOrigins];
 

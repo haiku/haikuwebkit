@@ -263,16 +263,6 @@ AVContentKeySession* CDMInstanceFairPlayStreamingAVFObjC::contentKeySession()
         return nullptr;
 
     auto storageURL = this->storageURL();
-#if HAVE(AVCONTENTKEYREQUEST_COMPATABILITIY_MODE)
-    if (!MediaSessionManagerCocoa::shouldUseModernAVContentKeySession()) {
-        if (!persistentStateAllowed() || !storageURL) {
-            IGNORE_NULL_CHECK_WARNINGS_BEGIN
-            m_session = [PAL::getAVContentKeySessionClass() contentKeySessionWithLegacyWebKitCompatibilityModeAndKeySystem:AVContentKeySystemFairPlayStreaming storageDirectoryAtURL:nil];
-            IGNORE_NULL_CHECK_WARNINGS_END
-        } else
-            m_session = [PAL::getAVContentKeySessionClass() contentKeySessionWithLegacyWebKitCompatibilityModeAndKeySystem:AVContentKeySystemFairPlayStreaming storageDirectoryAtURL:storageURL];
-    } else
-#endif
     if (!persistentStateAllowed() || !storageURL)
         m_session = [PAL::getAVContentKeySessionClass() contentKeySessionWithKeySystem:AVContentKeySystemFairPlayStreaming];
     else
@@ -1690,7 +1680,7 @@ std::optional<CDMKeyStatus> CDMInstanceSessionFairPlayStreamingAVFObjC::protecti
         return std::nullopt;
 
     // FIXME (118150407): Remove staging code once -[AVContentKey externalContentProtectionStatus] is available in SDKs used by WebKit builders
-    if (MediaSessionManagerCocoa::shouldUseModernAVContentKeySession() && [contentKey respondsToSelector:@selector(externalContentProtectionStatus)])
+    if ([contentKey respondsToSelector:@selector(externalContentProtectionStatus)])
         return keyStatusForContentProtectionStatus([contentKey externalContentProtectionStatus]);
 #endif
 
@@ -1753,16 +1743,6 @@ bool CDMInstanceSessionFairPlayStreamingAVFObjC::ensureSessionOrGroup(KeyGroupin
     }
 
     auto storageURL = m_instance->storageURL();
-#if HAVE(AVCONTENTKEYREQUEST_COMPATABILITIY_MODE)
-    if (!MediaSessionManagerCocoa::shouldUseModernAVContentKeySession()) {
-        if (!m_instance->persistentStateAllowed() || !storageURL) {
-            IGNORE_NULL_CHECK_WARNINGS_BEGIN
-            m_session = [PAL::getAVContentKeySessionClass() contentKeySessionWithLegacyWebKitCompatibilityModeAndKeySystem:AVContentKeySystemFairPlayStreaming storageDirectoryAtURL:nil];
-            IGNORE_NULL_CHECK_WARNINGS_END
-        } else
-            m_session = [PAL::getAVContentKeySessionClass() contentKeySessionWithLegacyWebKitCompatibilityModeAndKeySystem:AVContentKeySystemFairPlayStreaming storageDirectoryAtURL:storageURL];
-    } else
-#endif
     if (!m_instance->persistentStateAllowed() || !storageURL)
         m_session = [PAL::getAVContentKeySessionClass() contentKeySessionWithKeySystem:AVContentKeySystemFairPlayStreaming];
     else

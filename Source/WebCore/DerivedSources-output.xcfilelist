@@ -824,6 +824,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+DeviceMotion.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+DeviceMotion.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+DeviceOrientation.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+DeviceOrientation.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+MediaControls.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+MediaControls.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+RequestIdleCallback.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+RequestIdleCallback.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDOMWindow+Selection.cpp
@@ -1840,6 +1842,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaController.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaController.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaControlsHost.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaControlsHost.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaControlsUtils.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaControlsUtils.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaDecodingConfiguration.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaDecodingConfiguration.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMediaDecodingType.cpp
@@ -2410,6 +2414,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCDtlsTransportState.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCDtlsTransportState.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCEncodedAudioFrame.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCEncodedAudioFrame.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCEncodedStreams.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCEncodedStreams.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCEncodedVideoFrame.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCEncodedVideoFrame.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSRTCError.cpp

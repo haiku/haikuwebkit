@@ -292,7 +292,7 @@ RenderObject* RenderTreeBuilder::MultiColumn::adjustBeforeChildForMultiColumnSpa
 void RenderTreeBuilder::MultiColumn::createFragmentedFlow(RenderBlockFlow& flow)
 {
     flow.setChildrenInline(false); // Do this to avoid wrapping inline children that are just going to move into the flow thread.
-    flow.deleteLines();
+    flow.invalidateLineLayout(RenderBlockFlow::InvalidationReason::InternalMove);
     // If this soon-to-be multicolumn flow is already part of a multicolumn context, we need to move back the descendant spanners
     // to their original position before moving subtrees around.
     if (auto* enclosingflow = dynamicDowncast<RenderMultiColumnFlow>(flow.enclosingFragmentedFlow()))
@@ -319,7 +319,7 @@ void RenderTreeBuilder::MultiColumn::createFragmentedFlow(RenderBlockFlow& flow)
 void RenderTreeBuilder::MultiColumn::destroyFragmentedFlow(RenderBlockFlow& flow)
 {
     auto& multiColumnFlow = *flow.multiColumnFlow();
-    multiColumnFlow.deleteLines();
+    multiColumnFlow.invalidateLineLayout(RenderBlockFlow::InvalidationReason::InternalMove);
 
     // Move spanners back to their original DOM position in the tree, and destroy the placeholders.
     auto& spanners = multiColumnFlow.spannerMap();

@@ -287,6 +287,15 @@ public:
         return true;
     }
 
+    template<typename... Arguments>
+    inline void toObservers(WTFLogChannel& channel, WTFLogLevel level, const Arguments&... arguments) const
+    {
+        if (!willLog(channel, level, arguments...))
+            return;
+
+        sendMessageToObservers(channel, level, arguments...);
+    }
+
     bool enabled() const { return m_enabled; }
     void setEnabled(const void* owner, bool enabled)
     {
@@ -346,7 +355,7 @@ private:
     friend class AggregateLogger;
     friend class NativePromiseBase;
 
-    Logger(const void* owner)
+    explicit Logger(const void* owner)
         : m_owner { owner }
     {
     }
@@ -368,6 +377,12 @@ private:
         fprintf(stderr, "[" LOG_CHANNEL_WEBKIT_SUBSYSTEM ":%s:-] %s\n", channel.name, logMessage.utf8().data());
 #endif
 
+        sendMessageToObservers(channel, level, arguments...);
+    }
+
+    template<typename... Argument>
+    static inline void sendMessageToObservers(WTFLogChannel& channel, WTFLogLevel level, const Argument&... arguments)
+    {
         if (channel.state == WTFLogChannelState::Off || level > channel.level)
             return;
 
@@ -401,15 +416,7 @@ private:
         fprintf(stderr, "[" LOG_CHANNEL_WEBKIT_SUBSYSTEM ":%s:-] %s FILE=%s:%d %s\n", channel.name, logMessage.utf8().data(), file, line, function);
 #endif
 
-        if (channel.state == WTFLogChannelState::Off || level > channel.level)
-            return;
-
-        if (!observerLock().tryLock())
-            return;
-
-        Locker locker { AdoptLock, observerLock() };
-        for (Observer& observer : observers())
-            observer.didLogMessage(channel, level, { ConsoleLogValue<Argument>::toValue(arguments)... });
+        sendMessageToObservers(channel, level, arguments...);
     }
 
     WTF_EXPORT_PRIVATE static Vector<std::reference_wrapper<Observer>>& observers() WTF_REQUIRES_LOCK(observerLock());

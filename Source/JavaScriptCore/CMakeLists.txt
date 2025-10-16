@@ -214,7 +214,6 @@ set(LLINT_ASM
     llint/LowLevelInterpreter.asm
     llint/LowLevelInterpreter32_64.asm
     llint/LowLevelInterpreter64.asm
-    llint/WebAssembly.asm
 )
 
 set(OFFLINE_ASM
@@ -1148,6 +1147,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/JSCalleeInlines.h
     runtime/JSCast.h
     runtime/JSCell.h
+    runtime/JSCellButterfly.h
     runtime/JSCellInlines.h
     runtime/JSCInlines.h
     runtime/JSCJSValue.h
@@ -1179,7 +1179,6 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/JSGlobalObjectInlines.h
     runtime/JSGlobalProxy.h
     runtime/JSGlobalProxyInlines.h
-    runtime/JSImmutableButterfly.h
     runtime/JSInt16Array.h
     runtime/JSInt32Array.h
     runtime/JSInt8Array.h
@@ -1215,6 +1214,8 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/JSSetInlines.h
     runtime/JSSetIterator.h
     runtime/JSSetIteratorInlines.h
+    runtime/SetIteratorPrototype.h
+    runtime/SetIteratorPrototypeInlines.h
     runtime/JSSourceCode.h
     runtime/JSSourceCodeInlines.h
     runtime/JSString.h
@@ -1275,6 +1276,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/ParseInt.h
     runtime/PrivateFieldPutKind.h
     runtime/PrivateName.h
+    runtime/ProfilerSupport.h
     runtime/ProgramExecutable.h
     runtime/PropertyDescriptor.h
     runtime/PropertyName.h
@@ -1375,6 +1377,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/VMEntryScope.h
     runtime/VMEntryScopeInlines.h
     runtime/VMInlines.h
+    runtime/VMManager.h
     runtime/VMTraps.h
     runtime/VMTrapsInlines.h
     runtime/WaiterListManager.h
@@ -1394,6 +1397,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     tools/SourceProfiler.h
 
     wasm/WasmBranchHints.h
+    wasm/WasmCallSlot.h
     wasm/WasmCallee.h
     wasm/WasmCalleeGroup.h
     wasm/WasmCallingConvention.h

@@ -64,10 +64,21 @@ static uint64_t generateAddRequestIdentifier()
 }
 
 WebProcessCache::WebProcessCache(WebProcessPool& processPool)
-    : m_evictionTimer(RunLoop::mainSingleton(), "WebProcessCache::EvictionTimer"_s, this, &WebProcessCache::clear)
+    : m_processPool(processPool)
+    , m_evictionTimer(RunLoop::mainSingleton(), "WebProcessCache::EvictionTimer"_s, this, &WebProcessCache::clear)
 {
     updateCapacity(processPool);
     platformInitialize();
+}
+
+void WebProcessCache::ref() const
+{
+    m_processPool->ref();
+}
+
+void WebProcessCache::deref() const
+{
+    m_processPool->deref();
 }
 
 bool WebProcessCache::canCacheProcess(WebProcessProxy& process) const
@@ -114,12 +125,11 @@ bool WebProcessCache::addProcessIfPossible(Ref<WebProcessProxy>&& process)
         return false;
 
     // CachedProcess can destroy the process pool (which owns the WebProcessCache), by making its reference weak in WebProcessProxy::setIsInProcessCache.
-    Ref protectedProcessPool = process->processPool();
     uint64_t requestIdentifier = generateAddRequestIdentifier();
     m_pendingAddRequests.add(requestIdentifier, CachedProcess::create(process.copyRef()));
 
     WEBPROCESSCACHE_RELEASE_LOG("addProcessIfPossible: Checking if process is responsive before caching it", process->processID());
-    process->isResponsive([this, checkedThis = CheckedPtr { this }, processPool = WTFMove(protectedProcessPool), process, requestIdentifier](bool isResponsive) {
+    process->isResponsive([this, protectedThis = Ref { *this }, process, requestIdentifier](bool isResponsive) {
         auto cachedProcess = m_pendingAddRequests.take(requestIdentifier);
         if (!cachedProcess)
             return;
@@ -128,7 +138,7 @@ bool WebProcessCache::addProcessIfPossible(Ref<WebProcessProxy>&& process)
             WEBPROCESSCACHE_RELEASE_LOG_ERROR("addProcessIfPossible(): Not caching process because it is not responsive", cachedProcess->process().processID());
             return;
         }
-        processPool->webProcessCache().addProcess(cachedProcess.releaseNonNull());
+        addProcess(cachedProcess.releaseNonNull());
     });
     return true;
 }

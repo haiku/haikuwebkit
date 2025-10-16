@@ -119,16 +119,6 @@ inline WeakImpl* WeakImpl::asWeakImpl(JSValue* slot)
     return reinterpret_cast_ptr<WeakImpl*>(reinterpret_cast_ptr<char*>(slot) + OBJECT_OFFSETOF(WeakImpl, m_jsValue));
 }
 
-template<typename T>
-inline void Weak<T>::clear()
-{
-    auto* pointer = impl();
-    if (!pointer)
-        return;
-    pointer->clear();
-    m_impl = nullptr;
-}
-
 } // namespace JSC
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

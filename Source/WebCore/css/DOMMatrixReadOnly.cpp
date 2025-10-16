@@ -34,6 +34,7 @@
 #include "DOMPoint.h"
 #include "MutableStyleProperties.h"
 #include "ScriptExecutionContext.h"
+#include "ScriptWrappableInlines.h"
 #include "StyleProperties.h"
 #include "TransformOperations.h"
 #include "TransformOperationsBuilder.h"
@@ -413,5 +414,7 @@ ExceptionOr<String> DOMMatrixReadOnly::toString() const
 
     return makeString("matrix3d("_s, m_matrix.m11(), ", "_s, m_matrix.m12(), ", "_s, m_matrix.m13(), ", "_s, m_matrix.m14(), ", "_s, m_matrix.m21(), ", "_s, m_matrix.m22(), ", "_s, m_matrix.m23(), ", "_s, m_matrix.m24(), ", "_s, m_matrix.m31(), ", "_s, m_matrix.m32(), ", "_s, m_matrix.m33(), ", "_s, m_matrix.m34(), ", "_s, m_matrix.m41(), ", "_s, m_matrix.m42(), ", "_s, m_matrix.m43(), ", "_s, m_matrix.m44(), ')');
 }
+
+DOMMatrixReadOnly::~DOMMatrixReadOnly() = default;
 
 } // namespace WebCore

@@ -24,7 +24,7 @@
 #include "CommonVM.h"
 #include "DOMWrapperWorld.h"
 #include "FrameInlines.h"
-#include "GCController.h"
+#include "GarbageCollectionController.h"
 #include "JSDOMWindowBase.h"
 #include "JSWindowProxy.h"
 #include "LocalFrame.h"
@@ -51,9 +51,9 @@ static void collectGarbageAfterWindowProxyDestruction()
     if (MemoryPressureHandler::singleton().isUnderMemoryPressure()) {
         // NOTE: We do the collection on next runloop to ensure that there's no pointer
         //       to the window object on the stack.
-        GCController::singleton().garbageCollectOnNextRunLoop();
+        GarbageCollectionController::singleton().garbageCollectOnNextRunLoop();
     } else
-        GCController::singleton().garbageCollectSoon();
+        GarbageCollectionController::singleton().garbageCollectSoon();
 }
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(WindowProxy);

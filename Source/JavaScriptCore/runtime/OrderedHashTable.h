@@ -36,7 +36,7 @@ class OrderedHashTable : public JSNonFinalObject {
 public:
     using HashTable = OrderedHashTable<Traits>;
     using Helper = OrderedHashTableHelper<Traits>;
-    using Storage = JSImmutableButterfly;
+    using Storage = JSCellButterfly;
     using TableIndex = typename Helper::TableIndex;
 
     DECLARE_VISIT_CHILDREN;
@@ -137,10 +137,9 @@ public:
         m_storage.set(vm, this, storage);
     }
 
-    ALWAYS_INLINE JSCell* storage(JSGlobalObject* globalObject)
+    ALWAYS_INLINE JSCell* tryGetStorage(JSGlobalObject* globalObject)
     {
         materializeIfNeeded(globalObject);
-        ASSERT(m_storage);
         return m_storage.get();
     }
 

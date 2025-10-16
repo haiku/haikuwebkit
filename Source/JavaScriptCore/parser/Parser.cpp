@@ -2745,7 +2745,7 @@ template <class TreeBuilder> bool Parser<LexerType>::parseFunctionInfo(TreeBuild
         // But (1) is not possible because we do not recognize the string literal in ArrowFunctionBodyExpression as directive and this is correct in terms of the spec (`value => "use strict"`).
         // So we only check TreeBuilder's type here.
         ASSERT_UNUSED(functionScopeWasStrictMode, functionScopeWasStrictMode == currentScope()->strictMode());
-        if (!std::is_same<TreeBuilder, SyntaxChecker>::value)
+        if constexpr (!std::is_same_v<TreeBuilder, SyntaxChecker>)
             lexCurrentTokenAgainUnderCurrentContext(context);
     }
 

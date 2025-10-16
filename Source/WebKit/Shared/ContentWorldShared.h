@@ -44,7 +44,8 @@ enum class ContentWorldOption : uint8_t {
     AllowAutofill = 1 << 1,
     AllowElementUserInfo = 1 << 2,
     DisableLegacyBuiltinOverrides = 1 << 3,
-    AllowNodeInfo = 1 << 4,
+    AllowJSHandleCreation = 1 << 4,
+    AllowNodeSerialization = 1 << 5,
 };
 
 } // namespace WebKit

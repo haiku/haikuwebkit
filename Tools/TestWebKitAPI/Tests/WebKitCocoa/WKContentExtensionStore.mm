@@ -1262,6 +1262,42 @@ TEST_F(WKContentRuleListStoreTest, MainResourceCrossOriginRedirect)
     EXPECT_WK_STREQ([webView _test_waitForAlert], "loaded replacement successfully: key=value");
 }
 
+TEST_F(WKContentRuleListStoreTest, MainResourceSameOriginRedirect)
+{
+    using namespace TestWebKitAPI;
+
+    HTTPServer server({
+        { "/redirect?"_s, { "<script>addEventListener('pageshow', () => { alert('redirected successfully') });</script>"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto list = compileContentRuleList(R"JSON(
+        [ {
+            "action": { "type": "redirect", "redirect": { "transform": { "query-transform": { "remove-parameters": [ "ved" ] } } } },
+            "trigger": { "url-filter": "redirect" }
+        } ]
+    )JSON");
+
+    auto configuration = server.httpsProxyConfiguration();
+    [configuration.userContentController addContentRuleList:list.get()];
+    auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSZeroRect configuration:configuration]);
+
+    auto delegate = adoptNS([TestNavigationDelegate new]);
+    delegate.get().decidePolicyForNavigationActionWithPreferences = ^(WKNavigationAction *, WKWebpagePreferences *preferences, void (^decisionHandler)(WKNavigationActionPolicy, WKWebpagePreferences *)) {
+        preferences._activeContentRuleListActionPatterns = @{
+            @"testidentifier": [NSSet setWithObject:@"https://example.com/*"]
+        };
+        decisionHandler(WKNavigationActionPolicyAllow, preferences);
+    };
+    [delegate allowAnyTLSCertificate];
+    webView.get().navigationDelegate = delegate.get();
+
+    auto originalURL = [NSURL URLWithString:@"https://example.com/redirect?ved=123"];
+    [webView loadRequest:[NSURLRequest requestWithURL:originalURL]];
+
+    // Verify that the parameters were removed from the URL and the page loads.
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "redirected successfully");
+}
+
 TEST_F(WKContentRuleListStoreTest, MainResourceCrossOriginRedirectFromLoadedPageWithoutActivePatterns)
 {
     using namespace TestWebKitAPI;

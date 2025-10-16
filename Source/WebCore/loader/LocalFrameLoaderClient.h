@@ -38,6 +38,7 @@
 #include <WebCore/ResourceLoaderIdentifier.h>
 #include <wtf/Expected.h>
 #include <wtf/Forward.h>
+#include <wtf/Platform.h>
 #include <wtf/WallTime.h>
 #include <wtf/WeakRef.h>
 #include <wtf/text/WTFString.h>
@@ -327,7 +328,7 @@ public:
 #endif
 
 #if ENABLE(CONTENT_FILTERING)
-    virtual void contentFilterDidBlockLoad(ContentFilterUnblockHandler) { }
+    virtual void contentFilterDidBlockLoad(ContentFilterUnblockHandler&&) { }
 #endif
 
     virtual void prefetchDNS(const String&) = 0;

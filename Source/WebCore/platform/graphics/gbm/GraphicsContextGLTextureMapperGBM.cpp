@@ -234,7 +234,7 @@ void GraphicsContextGLTextureMapperGBM::prepareForDisplay()
         fenceFD = createExportedFence();
         if (!fenceFD) {
             GL_Flush();
-            fence = GLFence::create();
+            fence = GLFence::create(PlatformDisplay::sharedDisplay().glDisplay());
         }
     });
 

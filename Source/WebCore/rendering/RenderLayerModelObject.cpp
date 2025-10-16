@@ -503,7 +503,7 @@ RenderSVGResourceMasker* RenderLayerModelObject::svgMaskerResourceFromStyle() co
     if (!document().settings().layerBasedSVGEngineEnabled())
         return nullptr;
 
-    RefPtr maskImage = style().maskImage();
+    RefPtr maskImage = style().maskLayers().first().image().tryStyleImage();
     auto maskImageURL = maskImage ? maskImage->url() : Style::URL::none();
     if (maskImageURL.isNone())
         return nullptr;

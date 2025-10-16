@@ -69,6 +69,7 @@
 #include "Settings.h"
 #include "ShadowRoot.h"
 #include "StyleSelfAlignmentData.h"
+#include "StyleTextDecorationLine.h"
 #include "StyleUpdate.h"
 #include "Styleable.h"
 #include "Text.h"
@@ -465,11 +466,7 @@ void Adjuster::adjustFromBuilder(RenderStyle& style)
     } else if (style.position() != PositionType::Static)
         style.setUsedZIndex(style.specifiedZIndex());
 
-    // Cull out any useless layers and also repeat patterns into additional layers.
-    style.adjustBackgroundLayers();
-    style.adjustMaskLayers();
-
-    // Do the same for animations and transitions.
+    // Cull out any useless animations and transitions.
     style.adjustAnimations();
     style.adjustTransitions();
 
@@ -659,7 +656,7 @@ void Adjuster::adjust(RenderStyle& style) const
     if (shouldInheritTextDecorationsInEffect(style, m_element.get()))
         style.addToTextDecorationLineInEffect(style.textDecorationLine());
     else
-        style.setTextDecorationLineInEffect(style.textDecorationLine());
+        style.setTextDecorationLineInEffect(Style::TextDecorationLine { style.textDecorationLine() });
 
     bool overflowIsClipOrVisible = isOverflowClipOrVisible(style.overflowY()) && isOverflowClipOrVisible(style.overflowX());
 
@@ -987,19 +984,6 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         static MainThreadNeverDestroyed<const AtomString> roleValue("navigation"_s);
         if (style.overflowY() == Overflow::Hidden && m_element->attributeWithoutSynchronization(roleAttr) == roleValue)
             style.setOverflowY(Overflow::Auto);
-    }
-    if (m_document->quirks().needsIPadSkypeOverflowScrollQuirk()) {
-        // This makes the layout scrollable and makes visible the buttons hidden outside of the viewport.
-        // static MainThreadNeverDestroyed<const AtomString> selectorValue(".app-container .noFocusOutline > div"_s);
-        if (is<HTMLDivElement>(*m_element)) {
-            auto matchesNoFocus = m_element->matches(".app-container .noFocusOutline > div"_s);
-            if (matchesNoFocus.hasException())
-                return;
-            if (matchesNoFocus.returnValue()) {
-                if (style.overflowY() == Overflow::Hidden)
-                    style.setOverflowY(Overflow::Scroll);
-            }
-        }
     }
     if (m_document->quirks().needsYouTubeOverflowScrollQuirk()) {
         // This turns sidebar scrollable without hover.

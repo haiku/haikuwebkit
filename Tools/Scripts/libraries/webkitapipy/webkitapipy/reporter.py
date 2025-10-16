@@ -75,11 +75,13 @@ class BuildToolReporter(Reporter):
         missing_names = [d for d in self.issues if isinstance(d, MissingName)]
         clss = '\n    '.join(f'"{d.name}",'
                              for d in missing_names if d.kind == OBJC_CLS)
-        sels = '\n    '.join(f'"{d.name}",'
+        sels = '\n    '.join(f'{{ name = "{d.name}", class = "?" }},'
                              for d in missing_names if d.kind == OBJC_SEL)
         syms = '\n    '.join(f'"{d.name}",'
                              for d in missing_names if d.kind == SYMBOL)
-        entry = f'[<category>."{self.bug_placeholder}"]'
+        entry = ('[[temporary-usage]]\n'
+                 f'request = "{self.bug_placeholder}"\n'
+                 f'cleanup = "{self.bug_placeholder}"')
         if clss:
             entry += f'\nclasses = [\n    {clss}\n]'
         if sels:
@@ -91,7 +93,7 @@ class BuildToolReporter(Reporter):
     def finished(self):
         if any(d for d in self.issues if isinstance(d, MissingName)):
             if self.suggested_allowlists:
-                allowlists = '│ \n    '.join(map(str, self.suggested_allowlists))
+                allowlists = '\n│     '.join(map(str, self.suggested_allowlists))
                 allowlist_entry = self.allowlist_entry().replace('\n', '\n│     ')
                 print(f'''\
 │ If new SPI usage is intentional, please update one of this configuration's
@@ -102,9 +104,7 @@ class BuildToolReporter(Reporter):
 │ with the following entry:
 │
 │     {allowlist_entry}
-│
-│ Pick a <category> name based on how the SPI is being used, and file a bug
-│ to track this SPI's removal.''')
+│''')
 
 
 def configure_reporter(args: program.Options, db: SDKDB) -> Reporter:

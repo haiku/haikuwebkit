@@ -42,6 +42,7 @@
 #include "Quirks.h"
 #include "ResourceLoadObserver.h"
 #include "ScreenOrientation.h"
+#include "ScriptWrappableInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

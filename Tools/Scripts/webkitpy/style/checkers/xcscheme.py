@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from collections import namedtuple
 from webkitpy.port.config import apple_additions
 from xml.dom import minidom

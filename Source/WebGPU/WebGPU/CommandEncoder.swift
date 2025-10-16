@@ -76,7 +76,7 @@ public func CommandEncoder_beginComputePass_thunk(commandEncoder: WebGPU.Command
 public func CommandEncoder_runClearEncoder_thunk(commandEncoder: WebGPU.CommandEncoder, attachmentsToClear: NSMutableDictionary, depthStencilAttachmentToClear: inout MTLTexture?, depthAttachmentToClear: Bool, stencilAttachmentToClear: Bool, depthClearValue: Double, stencilClearValue: UInt32, existingEncoder: MTLRenderCommandEncoder?) {
     let dInput = attachmentsToClear as? [NSNumber: TextureAndClearColor]
     if dInput == nil {
-        unsafe WebGPU_Internal.logString("Dictionary not convertible")
+        WebGPU_Internal.logString(WTF.String("Dictionary not convertible"))
         precondition(false, "Dictionary not convertible")
     } else {
         return commandEncoder.runClearEncoder(attachmentsToClear: dInput!, depthStencilAttachmentToClear: &depthStencilAttachmentToClear, depthAttachmentToClear: depthAttachmentToClear, stencilAttachmentToClear: stencilAttachmentToClear, depthClearValue: depthClearValue, stencilClearValue: stencilClearValue, existingEncoder: existingEncoder)
@@ -90,7 +90,7 @@ public func CommandEncoder_clearTextureIfNeeded_thunk(commandEncoder: WebGPU.Com
 
 @_expose(Cxx)
 public func CommandEncoder_finish_thunk(commandEncoder: WebGPU.CommandEncoder, descriptor: WGPUCommandBufferDescriptor) -> WebGPU_Internal.RefCommandBuffer {
-    return unsafe commandEncoder.finish(descriptor: descriptor)
+    commandEncoder.finish(descriptor: descriptor)
 }
 
 extension WebGPU.CommandEncoder {
@@ -112,15 +112,15 @@ extension WebGPU.CommandEncoder {
         return nil
     }
     public func finish(descriptor: WGPUCommandBufferDescriptor) -> WebGPU_Internal.RefCommandBuffer {
-        if unsafe descriptor.nextInChain != nil ||  !isValid() || (m_existingCommandEncoder != nil && m_existingCommandEncoder !== m_blitCommandEncoder) {
+        let collection = CollectionOfOne(descriptor)
+        if wgpuGetCommandBufferDescriptorNextChainedStruct(collection.span) != nil ||  !isValid() || (m_existingCommandEncoder != nil && m_existingCommandEncoder !== m_blitCommandEncoder) {
             setEncoderState(WebGPU.CommandsMixin.EncoderState.Ended)
             discardCommandBuffer();
-            unsafe protectedDevice().ptr().generateAValidationError(m_lastErrorString != nil ? m_lastErrorString! as String : String("Invalid CommandEncoder"))
+            protectedDevice().ptr().generateAValidationError(m_lastErrorString != nil ? m_lastErrorString! as String : String("Invalid CommandEncoder"))
             return WebGPU.CommandBuffer.createInvalid(m_device.ptr())
         }
 
         // https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-finish
-
         let validationFailedError = validateFinishError()
 
         // FIXME: equivalent of ? UNUSED_PARAM(priorState);
@@ -129,7 +129,7 @@ extension WebGPU.CommandEncoder {
         setEncoderState(WebGPU.CommandsMixin.EncoderState.Ended)
         if validationFailedError != nil {
             discardCommandBuffer()
-            unsafe protectedDevice().ptr().generateAValidationError(m_lastErrorString != nil ? m_lastErrorString! as String : validationFailedError);
+            protectedDevice().ptr().generateAValidationError(m_lastErrorString != nil ? m_lastErrorString! as String : validationFailedError)
             return WebGPU.CommandBuffer.createInvalid(m_device.ptr())
         }
 
@@ -139,7 +139,7 @@ extension WebGPU.CommandEncoder {
         m_commandBuffer = nil
         m_existingCommandEncoder = nil
 
-        commandBuffer?.label = unsafe WebGPU_Internal.convertWTFStringToNSString(WebGPU.fromAPI(descriptor.label))
+        commandBuffer?.label = WebGPU_Internal.convertWTFStringToNSString(descriptor.label)
 
         #if arch(x86_64) && (os(macOS) || targetEnvironment(macCatalyst))
         if m_managedBuffers.count != 0 || m_managedTextures.count != 0 {
@@ -169,7 +169,7 @@ extension WebGPU.CommandEncoder {
     }
     private func clearTextureIfNeeded(destination: WGPUImageCopyTexture , slice: UInt, device: WebGPU.Device , blitCommandEncoder: MTLBlitCommandEncoder?)
     {
-        let texture = unsafe WebGPU.fromAPI(destination.texture)
+        let texture = WebGPU.fromAPI(destination.texture)
         let mipLevel: UInt = UInt(destination.mipLevel)
         clearTextureIfNeeded(texture, mipLevel, slice, device, blitCommandEncoder)
     }
@@ -481,12 +481,12 @@ extension WebGPU.CommandEncoder {
         func errorString(_ error: String) -> String {
              "GPUCommandEncoder.copyTextureToTexture: \(error)"
         }
-        let sourceTexture = unsafe WebGPU.fromAPI(source.texture)
+        let sourceTexture = WebGPU.fromAPI(source.texture)
         if !WebGPU_Internal.isValidToUseWithTextureCommandEncoder(sourceTexture, self) {
             return errorString("source texture is not valid to use with this GPUCommandEncoder")
         }
 
-        let destinationTexture = unsafe WebGPU.fromAPI(destination.texture)
+        let destinationTexture = WebGPU.fromAPI(destination.texture)
         if !WebGPU_Internal.isValidToUseWithTextureCommandEncoder(destinationTexture, self) {
             return errorString("desintation texture is not valid to use with this GPUCommandEncoder")
         }
@@ -518,7 +518,7 @@ extension WebGPU.CommandEncoder {
         let srcIsDepthOrStencil = WebGPU.Texture.isDepthOrStencilFormat(sourceTexture.format())
         let dstIsDepthOrStencil = WebGPU.Texture.isDepthOrStencilFormat(destinationTexture.format())
 
-        if (srcIsDepthOrStencil) {
+        if srcIsDepthOrStencil {
             if !refersToAllAspects(format: sourceTexture.format(), aspect: source.aspect) || !refersToAllAspects(format: destinationTexture.format(), aspect: destination.aspect) {
                 return errorString("source or destination do not refer to a single copy aspect")
             }
@@ -542,10 +542,11 @@ extension WebGPU.CommandEncoder {
         }
 
         // https://gpuweb.github.io/gpuweb/#abstract-opdef-set-of-subresources-for-texture-copy
-        if unsafe source.texture == destination.texture {
+        // FIXME(rdar://130765784): we should be able use === here once the radar lands
+        if unsafe unsafeBitCast(source.texture, to: UnsafeRawPointer.self) == unsafeBitCast(destination.texture, to: UnsafeRawPointer.self) {
             // Mip levels are never ranges.
             if source.mipLevel == destination.mipLevel {
-                switch (unsafe WebGPU.fromAPI(source.texture).dimension()) {
+                switch WebGPU.fromAPI(source.texture).dimension() {
                 case WGPUTextureDimension_1D:
                     return errorString("can't copy 1D texture to itself")
                 case WGPUTextureDimension_2D:
@@ -572,7 +573,7 @@ extension WebGPU.CommandEncoder {
         func errorString(_ error: String) -> String {
             return "GPUCommandEncoder.copyTextureToBuffer: \(error)"
         }
-        let sourceTexture = unsafe WebGPU.fromAPI(source.texture)
+        let sourceTexture = WebGPU.fromAPI(source.texture)
 
         if !WebGPU_Internal.isValidToUseWithTextureCommandEncoder(sourceTexture, self) {
             return errorString("source texture is not valid to use with this GPUCommandEncoder")
@@ -608,7 +609,7 @@ extension WebGPU.CommandEncoder {
             return errorString(error)
         }
 
-        if unsafe WebGPU.fromAPI(destination.buffer).usage() & WGPUBufferUsage_CopyDst.rawValue == 0 {
+        if WebGPU.fromAPI(destination.buffer).usage() & WGPUBufferUsage_CopyDst.rawValue == 0 {
             return errorString("destination buffer usage does not contain CopyDst")
         }
 
@@ -629,14 +630,14 @@ extension WebGPU.CommandEncoder {
             }
         }
 
-        if let error = WebGPU.Texture.errorValidatingLinearTextureData(destination.layout, unsafe WebGPU.fromAPI(destination.buffer).initialSize(), aspectSpecificFormat, copySize) {
+        if let error = WebGPU.Texture.errorValidatingLinearTextureData(destination.layout, WebGPU.fromAPI(destination.buffer).initialSize(), aspectSpecificFormat, copySize) {
             return errorString(error)
         }
         return nil
     }
     private func errorValidatingImageCopyBuffer(imageCopyBuffer: WGPUImageCopyBuffer) -> String? {
         // https://gpuweb.github.io/gpuweb/#abstract-opdef-validating-gpuimagecopybuffer
-        let buffer = unsafe WebGPU.fromAPI(imageCopyBuffer.buffer)
+        let buffer = WebGPU.fromAPI(imageCopyBuffer.buffer)
         if !WebGPU_Internal.isValidToUseWithBufferCommandEncoder(buffer, self) {
             return "buffer is not valid";
         }
@@ -652,8 +653,8 @@ extension WebGPU.CommandEncoder {
         func errorString(_ error: String) -> String {
             return "GPUCommandEncoder.copyBufferToTexture: \(error)"
         }
-        let destinationTexture = unsafe WebGPU.fromAPI(destination.texture)
-        let sourceBuffer = unsafe WebGPU.fromAPI(source.buffer)
+        let destinationTexture = WebGPU.fromAPI(destination.texture)
+        let sourceBuffer = WebGPU.fromAPI(source.buffer)
 
         if let error = errorValidatingImageCopyBuffer(imageCopyBuffer: source) {
             return errorString(error)
@@ -705,12 +706,12 @@ extension WebGPU.CommandEncoder {
         }
 
         if WebGPU.Texture.isDepthOrStencilFormat(destinationTexture.format()) {
-            if (source.layout.offset % 4 != 0) {
+            if source.layout.offset % 4 != 0 {
                 return errorString("source.layout.offset is not a multiple of four for depth stencil format")
             }
         }
 
-        if let error = WebGPU.Texture.errorValidatingLinearTextureData(source.layout, unsafe WebGPU.fromAPI(source.buffer).initialSize(), aspectSpecificFormat, copySize) {
+        if let error = WebGPU.Texture.errorValidatingLinearTextureData(source.layout, WebGPU.fromAPI(source.buffer).initialSize(), aspectSpecificFormat, copySize) {
             return errorString(error)
         }
         return nil
@@ -718,52 +719,55 @@ extension WebGPU.CommandEncoder {
 
 
     private func errorValidatingRenderPassDescriptor(descriptor: WGPURenderPassDescriptor) -> String? {
-        if let wgpuOcclusionQuery = unsafe descriptor.occlusionQuerySet {
-            let occlusionQuery = unsafe WebGPU.fromAPI(wgpuOcclusionQuery)
+        if let wgpuOcclusionQuery = descriptor.occlusionQuerySet {
+            let occlusionQuery = WebGPU.fromAPI(wgpuOcclusionQuery)
             if !WebGPU_Internal.isValidToUseWithQuerySetCommandEncoder(occlusionQuery, self) {
                 return "occlusion query does not match the device"
             }
-            if (occlusionQuery.type() != WGPUQueryType_Occlusion) {
+            if occlusionQuery.type() != WGPUQueryType_Occlusion {
                 return "occlusion query type is not occlusion"
             }
         }
-        if unsafe descriptor.timestampWrites != nil {
-            return unsafe errorValidatingTimestampWrites(timestampWrites: WGPUComputePassTimestampWrites ( querySet: descriptor.timestampWrites.pointee.querySet, beginningOfPassWriteIndex: descriptor.timestampWrites.pointee.beginningOfPassWriteIndex, endOfPassWriteIndex: descriptor.timestampWrites.pointee.endOfPassWriteIndex))
+        let collection = CollectionOfOne(descriptor)
+        let descriptorSpan = collection.span
+        if let timestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)?[0] {
+            return errorValidatingTimestampWrites(timestampWrites: WGPUComputePassTimestampWrites ( querySet: timestampWrites.querySet, beginningOfPassWriteIndex: timestampWrites.beginningOfPassWriteIndex, endOfPassWriteIndex: timestampWrites.endOfPassWriteIndex))
         }
         return nil
     }
 
     private func errorValidatingTimestampWrites(timestampWrites: WGPUComputePassTimestampWrites) -> String? {
+        if !protectedDevice().ptr().hasFeature(WGPUFeatureName_TimestampQuery) {
+            return "device does not have timestamp query feature"
+        }
 
-            if (unsafe !self.protectedDevice().ptr().hasFeature(WGPUFeatureName_TimestampQuery)) {
-                return "device does not have timestamp query feature"
-            }
+        let querySet = WebGPU.fromAPI(timestampWrites.querySet)
+        if querySet.type() != WGPUQueryType_Timestamp {
+            return "query type is not timestamp but \(querySet.type())"
+        }
 
-            let querySet = unsafe WebGPU.fromAPI(timestampWrites.querySet)
-            if (querySet.type() != WGPUQueryType_Timestamp) {
-                return "query type is not timestamp but \(querySet.type())"
-            }
+        if !WebGPU_Internal.isValidToUseWithQuerySetCommandEncoder(querySet, self) {
+            return "device mismatch"
+        }
 
-            if (!WebGPU_Internal.isValidToUseWithQuerySetCommandEncoder(querySet, self)) {
-                return "device mismatch"
-            }
+        let querySetCount = querySet.count()
+        let beginningOfPassWriteIndex = timestampWriteIndex(writeIndex: timestampWrites.beginningOfPassWriteIndex)
+        let endOfPassWriteIndex = timestampWriteIndex(writeIndex: timestampWrites.endOfPassWriteIndex)
+        if beginningOfPassWriteIndex >= querySetCount || endOfPassWriteIndex >= querySetCount || timestampWrites.beginningOfPassWriteIndex == timestampWrites.endOfPassWriteIndex {
+            return "writeIndices mismatch: beginningOfPassWriteIndex(\(beginningOfPassWriteIndex) >= querySetCount(\(querySetCount) || endOfPassWriteIndex(\(endOfPassWriteIndex)) >= querySetCount(\(querySetCount)) || timestampWrite.beginningOfPassWriteIndex(\(timestampWrites.beginningOfPassWriteIndex) == timestampWrite.endOfPassWriteIndex(\(timestampWrites.endOfPassWriteIndex))"
+        }
 
-            let querySetCount = querySet.count()
-            let beginningOfPassWriteIndex = unsafe timestampWriteIndex(writeIndex: timestampWrites.beginningOfPassWriteIndex)
-            let endOfPassWriteIndex = unsafe timestampWriteIndex(writeIndex: timestampWrites.endOfPassWriteIndex)
-            if (unsafe beginningOfPassWriteIndex >= querySetCount || endOfPassWriteIndex >= querySetCount || timestampWrites.beginningOfPassWriteIndex == timestampWrites.endOfPassWriteIndex) {
-                return unsafe "writeIndices mismatch: beginningOfPassWriteIndex(\(beginningOfPassWriteIndex) >= querySetCount(\(querySetCount) || endOfPassWriteIndex(\(endOfPassWriteIndex)) >= querySetCount(\(querySetCount)) || timestampWrite.beginningOfPassWriteIndex(\(timestampWrites.beginningOfPassWriteIndex) == timestampWrite.endOfPassWriteIndex(\(timestampWrites.endOfPassWriteIndex))"
-            }
-
-            return nil
+        return nil
     }
 
     private func errorValidatingComputePassDescriptor(descriptor: WGPUComputePassDescriptor) -> String? {
-        if unsafe descriptor.timestampWrites != nil {
-            return unsafe errorValidatingTimestampWrites(timestampWrites: descriptor.timestampWrites.pointee)
+        let collection = CollectionOfOne(descriptor)
+        if let timestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0] {
+            return errorValidatingTimestampWrites(timestampWrites: timestampWrites)
         }
         return nil
     }
+
     private func isRenderableTextureView(texture: WebGPU.TextureView) -> Bool {
         let textureDimension = texture.dimension()
 
@@ -810,13 +814,14 @@ extension WebGPU.CommandEncoder {
 
     public func beginRenderPass(descriptor: WGPURenderPassDescriptor) -> WebGPU_Internal.RefRenderPassEncoder {
         var maxDrawCount = UInt64.max
-        if unsafe descriptor.nextInChain != nil {
-            if unsafe descriptor.nextInChain.pointee.sType != WGPUSType_RenderPassDescriptorMaxDrawCount {
+        let collection = CollectionOfOne(descriptor)
+        let descriptorSpan = collection.span
+        if let nextInChain = wgpuGetRenderPassDescriptorNextChainedStruct(descriptorSpan)?[0] {
+            if nextInChain.sType != WGPUSType_RenderPassDescriptorMaxDrawCount {
                 return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "descriptor is corrupted")
             }
-            unsafe descriptor.nextInChain.withMemoryRebound(to: WGPURenderPassDescriptorMaxDrawCount.self, capacity: 1) {
-                maxDrawCount = unsafe $0.pointee.maxDrawCount
-            }
+            let renderPassDescriptorMaxDrawCount = unsafe unsafeBitCast(nextInChain, to: WGPURenderPassDescriptorMaxDrawCount.self)
+            maxDrawCount = renderPassDescriptorMaxDrawCount.maxDrawCount
         }
 
         guard prepareTheEncoderState() else {
@@ -834,19 +839,20 @@ extension WebGPU.CommandEncoder {
 
         let mtlDescriptor = MTLRenderPassDescriptor()
         var counterSampleBuffer: MTLCounterSampleBuffer? = nil
-        if let wgpuTimestampWrites = unsafe descriptor.timestampWrites {
-            let wgpuQuerySet = unsafe wgpuTimestampWrites.pointee.querySet
-            let querySet = unsafe WebGPU.fromAPI(wgpuQuerySet)
-            counterSampleBuffer = unsafe querySet.counterSampleBufferWithOffset().pointee.first
+        if let wgpuTimestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)?[0] {
+            let wgpuQuerySet = wgpuTimestampWrites.querySet
+            let querySet = WebGPU.fromAPI(wgpuQuerySet)
+            counterSampleBuffer = querySet.counterSampleBufferWithOffset().first
         }
 
-        if (m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil) {
-            if (counterSampleBuffer != nil) {
+        if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
+            if counterSampleBuffer != nil {
+                let timestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)![0]
                 mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer;
-                mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = unsafe Int(descriptor.timestampWrites.pointee.beginningOfPassWriteIndex)
-                mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = unsafe Int(descriptor.timestampWrites.pointee.endOfPassWriteIndex)
-                mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = unsafe Int(descriptor.timestampWrites.pointee.endOfPassWriteIndex)
-                mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = unsafe Int(descriptor.timestampWrites.pointee.endOfPassWriteIndex)
+                mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = Int(timestampWrites.beginningOfPassWriteIndex)
+                mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = Int(timestampWrites.endOfPassWriteIndex)
+                mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = Int(timestampWrites.endOfPassWriteIndex)
+                mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = Int(timestampWrites.endOfPassWriteIndex)
                 m_device.ptr().trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
             } else {
                 mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer != nil ? counterSampleBuffer : m_device.ptr().timestampsBuffer(m_commandBuffer, 4)
@@ -869,11 +875,13 @@ extension WebGPU.CommandEncoder {
         let maxColorAttachmentBytesPerSample = m_device.ptr().limitsCopy().maxColorAttachmentBytesPerSample
         var textureWidth: UInt32 = 0, textureHeight: UInt32  = 0, sampleCount: UInt32 = 0
 
-        var depthSlices: [UnsafeRawPointer: Set<UInt64>] = unsafe [:]
-        for i in unsafe 0..<descriptor.colorAttachmentsSpan().count {
-            let attachment = descriptor.colorAttachmentsSpan()[i]
+        var depthSlices: [UInt64: Set<UInt64>] = [:]
+        // FIXME: it shouldn't be necessary to pass colorAttachmentCount here
+        let attachments = wgpuGetRenderPassDescriptorColorAttachments(descriptorSpan, descriptor.colorAttachmentCount)
+        for i in 0..<attachments.count {
+            let attachment = attachments[i]
 
-            if (unsafe attachment.view == nil) {
+            if attachment.view == nil {
                 continue
             }
 
@@ -885,11 +893,11 @@ extension WebGPU.CommandEncoder {
                 attachment.clearValue.b,
                 attachment.clearValue.a)
 
-            let texture = unsafe WebGPU.fromAPI(attachment.view)
-            if (!WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(texture, self)) {
+            let texture = WebGPU.fromAPI(attachment.view)
+            if !WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(texture, self) {
                 return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "device mismatch")
             }
-            if (textureWidth != 0 && (texture.width() != textureWidth || texture.height() != textureHeight || sampleCount != texture.sampleCount())) {
+            if textureWidth != 0 && (texture.width() != textureWidth || texture.height() != textureHeight || sampleCount != texture.sampleCount()) {
                 return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "texture size does not match")
             }
 
@@ -899,17 +907,17 @@ extension WebGPU.CommandEncoder {
             let textureFormat = texture.format()
             bytesPerSample = WebGPU_Internal.roundUpToMultipleOfNonPowerOfTwoUInt32UInt32(WebGPU.Texture.renderTargetPixelByteAlignment(textureFormat), bytesPerSample)
             bytesPerSample += WebGPU.Texture.renderTargetPixelByteCost(textureFormat)
-            if (bytesPerSample > maxColorAttachmentBytesPerSample) {
+            if bytesPerSample > maxColorAttachmentBytesPerSample {
                 return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "total bytes per sample exceeds limit")
             }
 
             let textureIsDestroyed = texture.isDestroyed()
-            if (!textureIsDestroyed) {
-                if ((texture.usage() & WGPUTextureUsage_RenderAttachment.rawValue) == 0 || !WebGPU.Texture.isColorRenderableFormat(textureFormat, m_device.ptr())) {
+            if !textureIsDestroyed {
+                if (texture.usage() & WGPUTextureUsage_RenderAttachment.rawValue) == 0 || !WebGPU.Texture.isColorRenderableFormat(textureFormat, m_device.ptr()) {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "color attachment is not renderable")
                 }
 
-                if (!isRenderableTextureView(texture: texture)) {
+                if !isRenderableTextureView(texture: texture) {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "texture view is not renderable")
                 }
             }
@@ -917,8 +925,8 @@ extension WebGPU.CommandEncoder {
 
             let mtlTexture = texture.texture()
             mtlAttachment.texture = mtlTexture
-            if (mtlAttachment.texture == nil) {
-                if (!textureIsDestroyed) {
+            if mtlAttachment.texture == nil {
+                if !textureIsDestroyed {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "color attachment's texture is nil")
                 }
                 continue
@@ -941,28 +949,22 @@ extension WebGPU.CommandEncoder {
                 }
                 depthSliceOrArrayLayer = UInt64(textureIsDestroyed ? 0 : texture.baseArrayLayer())
             }
-            var bridgedTexture: UnsafeRawPointer? = nil
-            unsafe withUnsafePointer(to: texture.parentTexture()) {
-                unsafe bridgedTexture = unsafe UnsafeRawPointer($0)
-            }
-            guard unsafe bridgedTexture != nil else {
-                return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "parent texture is nil")
-            }
+            let bridgedTexture = texture.parentTexture().gpuResourceID._impl
             let baseMipLevel = textureIsDestroyed ? 0 : texture.baseMipLevel()
             let depthAndMipLevel: UInt64 = depthSliceOrArrayLayer | (UInt64(baseMipLevel) << 32)
-            if unsafe depthSlices[bridgedTexture!] != nil {
-                if unsafe depthSlices[bridgedTexture!]!.contains(depthAndMipLevel) {
+            if depthSlices[bridgedTexture] != nil {
+                if depthSlices[bridgedTexture]!.contains(depthAndMipLevel) {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "attempting to render to overlapping color attachment")
                 }
-                unsafe depthSlices[bridgedTexture!]!.insert(depthAndMipLevel)
+                depthSlices[bridgedTexture]!.insert(depthAndMipLevel)
             } else {
-                unsafe depthSlices[bridgedTexture!] = [ depthAndMipLevel ]
+                depthSlices[bridgedTexture] = [ depthAndMipLevel ]
             }
 
             mtlAttachment.depthPlane = Int(textureDimension == WGPUTextureViewDimension_3D ? depthSliceOrArrayLayer : 0)
             mtlAttachment.slice = 0
             mtlAttachment.loadAction = loadAction(loadOp: attachment.loadOp)
-            mtlAttachment.storeAction = unsafe storeAction(storeOp: attachment.storeOp, hasResolveTarget: attachment.resolveTarget != nil)
+            mtlAttachment.storeAction = storeAction(storeOp: attachment.storeOp, hasResolveTarget: attachment.resolveTarget != nil)
 
             zeroColorTargets = false
             var textureToClear: MTLTexture? = nil
@@ -970,14 +972,14 @@ extension WebGPU.CommandEncoder {
                 textureToClear = mtlAttachment.texture
             }
 
-            if unsafe attachment.resolveTarget != nil {
-                let resolveTarget = unsafe WebGPU.fromAPI(attachment.resolveTarget)
+            if attachment.resolveTarget != nil {
+                let resolveTarget = WebGPU.fromAPI(attachment.resolveTarget)
                 if !WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(resolveTarget, self) {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target created from different device")
                 }
                 resolveTarget.setCommandEncoder(self)
                 let resolveTexture = resolveTarget.texture()
-                if (resolveTexture == nil || mtlTexture == nil) {
+                if resolveTexture == nil || mtlTexture == nil {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolveTexture/mtlTexture is nil")
                 }
                 if mtlTexture!.sampleCount == 1 || resolveTexture!.sampleCount != 1 || isMultisampleTexture(texture: resolveTexture!) || !isMultisampleTexture(texture: mtlTexture!) || !isRenderableTextureView(texture: resolveTarget) || mtlTexture!.pixelFormat != resolveTexture!.pixelFormat || !WebGPU.Texture.supportsResolve(resolveTarget.format(), m_device.ptr()) {
@@ -992,16 +994,16 @@ extension WebGPU.CommandEncoder {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "resolve target dimensions are invalid")
                 }
             }
-            if (textureToClear != nil) {
+            if textureToClear != nil {
                 let textureWithResolve = TextureAndClearColor(texture: textureToClear!)
                 attachmentsToClear[i as NSNumber] = textureWithResolve
-                if (textureToClear != nil) {
+                if textureToClear != nil {
                     // FIXME: rdar://138042799 remove default argument.
                     texture.setPreviouslyCleared(0, 0)
                 }
-                if (unsafe attachment.resolveTarget != nil) {
+                if attachment.resolveTarget != nil {
                     // FIXME: rdar://138042799 remove default argument.
-                    unsafe WebGPU.fromAPI(attachment.resolveTarget).setPreviouslyCleared(0, 0)
+                    WebGPU.fromAPI(attachment.resolveTarget).setPreviouslyCleared(0, 0)
                 }
             }
 
@@ -1010,9 +1012,9 @@ extension WebGPU.CommandEncoder {
         var hasStencilComponent = false
         var depthStencilAttachmentToClear: MTLTexture? = nil
         var depthAttachmentToClear = false
-        if let attachment = unsafe descriptor.depthStencilAttachment {
-            let textureView = unsafe WebGPU.fromAPI(attachment.pointee.view)
-            if (!WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(textureView, self)) {
+        if let attachment = wgpuGetRenderPassDescriptorDepthSencilAttachment(descriptorSpan)?[0] {
+            let textureView = WebGPU.fromAPI(attachment.view)
+            if !WebGPU_Internal.isValidToUseWithTextureViewCommandEncoder(textureView, self) {
                 return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depth stencil texture device mismatch")
             }
             let metalDepthStencilTexture = textureView.texture()
@@ -1033,15 +1035,15 @@ extension WebGPU.CommandEncoder {
                 }
             }
 
-            depthReadOnly = unsafe attachment.pointee.depthReadOnly != 0
+            depthReadOnly = attachment.depthReadOnly != 0
             if hasDepthComponent {
                 let mtlAttachment = mtlDescriptor.depthAttachment
-                let clearDepth: Double = unsafe WebGPU_Internal.clampDouble(WebGPU.RenderPassEncoder.quantizedDepthValue(Double(attachment.pointee.depthClearValue), textureView.format()), 0.0, 1.0)
-                mtlAttachment!.clearDepth = unsafe attachment.pointee.depthLoadOp == WGPULoadOp_Clear ? clearDepth : 1.0
+                let clearDepth: Double = WebGPU_Internal.clampDouble(WebGPU.RenderPassEncoder.quantizedDepthValue(Double(attachment.depthClearValue), textureView.format()), 0.0, 1.0)
+                mtlAttachment!.clearDepth = attachment.depthLoadOp == WGPULoadOp_Clear ? clearDepth : 1.0
                 mtlAttachment!.texture = metalDepthStencilTexture
                 mtlAttachment!.level = 0
-                mtlAttachment!.loadAction = unsafe loadAction(loadOp: attachment.pointee.depthLoadOp)
-                mtlAttachment!.storeAction = unsafe storeAction(storeOp: attachment.pointee.depthStoreOp)
+                mtlAttachment!.loadAction = loadAction(loadOp: attachment.depthLoadOp)
+                mtlAttachment!.storeAction = storeAction(storeOp: attachment.depthStoreOp)
 
                 if mtlAttachment!.loadAction == MTLLoadAction.load && mtlAttachment!.storeAction == MTLStoreAction.dontCare && !textureView.previouslyCleared() {
                     depthStencilAttachmentToClear = mtlAttachment!.texture
@@ -1051,15 +1053,15 @@ extension WebGPU.CommandEncoder {
 
             if !isDestroyed {
                 if hasDepthComponent && !depthReadOnly {
-                    if unsafe attachment.pointee.depthLoadOp == WGPULoadOp_Undefined || attachment.pointee.depthStoreOp == WGPUStoreOp_Undefined {
+                    if attachment.depthLoadOp == WGPULoadOp_Undefined || attachment.depthStoreOp == WGPUStoreOp_Undefined {
                         return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depth load and store op were not specified")
                     }
-                } else if unsafe attachment.pointee.depthLoadOp != WGPULoadOp_Undefined || attachment.pointee.depthStoreOp != WGPUStoreOp_Undefined {
+                } else if attachment.depthLoadOp != WGPULoadOp_Undefined || attachment.depthStoreOp != WGPUStoreOp_Undefined {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depth load and store op were specified")
                 }
             }
 
-            if unsafe attachment.pointee.depthLoadOp == WGPULoadOp_Clear && (attachment.pointee.depthClearValue < 0 || attachment.pointee.depthClearValue > 1) {
+            if attachment.depthLoadOp == WGPULoadOp_Clear && (attachment.depthClearValue < 0 || attachment.depthClearValue > 1) {
                 return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "depth clear value is invalid")
             }
 
@@ -1074,23 +1076,23 @@ extension WebGPU.CommandEncoder {
         }
 
         var stencilAttachmentToClear = false
-        if let attachment = unsafe descriptor.depthStencilAttachment {
+        if let attachment = wgpuGetRenderPassDescriptorDepthSencilAttachment(descriptorSpan)?[0] {
             let mtlAttachment = mtlDescriptor.stencilAttachment
-            stencilReadOnly = unsafe attachment.pointee.stencilReadOnly != 0
-            let textureView = unsafe WebGPU.fromAPI(attachment.pointee.view)
+            stencilReadOnly = attachment.stencilReadOnly != 0
+            let textureView = WebGPU.fromAPI(attachment.view)
             if hasStencilComponent {
                 mtlAttachment!.texture = textureView.texture()
             }
-            mtlAttachment!.clearStencil = unsafe attachment.pointee.stencilClearValue
-            mtlAttachment!.loadAction = unsafe loadAction(loadOp: attachment.pointee.stencilLoadOp)
-            mtlAttachment!.storeAction = unsafe storeAction(storeOp: attachment.pointee.stencilStoreOp)
+            mtlAttachment!.clearStencil = attachment.stencilClearValue
+            mtlAttachment!.loadAction = loadAction(loadOp: attachment.stencilLoadOp)
+            mtlAttachment!.storeAction = storeAction(storeOp: attachment.stencilStoreOp)
             let isDestroyed = textureView.isDestroyed()
             if !isDestroyed {
                 if hasStencilComponent && !stencilReadOnly {
-                    if unsafe attachment.pointee.stencilLoadOp == WGPULoadOp_Undefined || attachment.pointee.stencilStoreOp == WGPUStoreOp_Undefined {
+                    if attachment.stencilLoadOp == WGPULoadOp_Undefined || attachment.stencilStoreOp == WGPUStoreOp_Undefined {
                         return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "stencil load and store op were not specified")
                     }
-                } else if unsafe attachment.pointee.stencilLoadOp != WGPULoadOp_Undefined || attachment.pointee.stencilStoreOp != WGPUStoreOp_Undefined {
+                } else if attachment.stencilLoadOp != WGPULoadOp_Undefined || attachment.stencilStoreOp != WGPUStoreOp_Undefined {
                     return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "stencil load and store op were specified")
                 }
             }
@@ -1109,8 +1111,8 @@ extension WebGPU.CommandEncoder {
 
         var visibilityResultBufferSize: UInt = 0
         var visibilityResultBuffer: MTLBuffer? = nil
-        if let wgpuOcclusionQuery = unsafe descriptor.occlusionQuerySet {
-            let occlusionQuery = unsafe WebGPU.fromAPI(wgpuOcclusionQuery)
+        if let wgpuOcclusionQuery = descriptor.occlusionQuerySet {
+            let occlusionQuery = WebGPU.fromAPI(wgpuOcclusionQuery)
             occlusionQuery.setCommandEncoder(self)
             if occlusionQuery.type() != WGPUQueryType_Occlusion {
                 return WebGPU.RenderPassEncoder.createInvalid(self, m_device.ptr(), "querySet for occlusion query was not of type occlusion")
@@ -1120,11 +1122,11 @@ extension WebGPU.CommandEncoder {
             visibilityResultBufferSize = occlusionQuery.isDestroyed() ? UInt.max : UInt(occlusionQuery.visibilityBuffer().length)
         }
 
-        if (attachmentsToClear.count != 0 || depthStencilAttachmentToClear != nil) {
-            let attachment = unsafe descriptor.depthStencilAttachment
-            if unsafe attachment != nil && depthStencilAttachmentToClear != nil {
+        if attachmentsToClear.count != 0 || depthStencilAttachmentToClear != nil {
+            let attachment = wgpuGetRenderPassDescriptorDepthSencilAttachment(descriptorSpan)?[0]
+            if attachment != nil && depthStencilAttachmentToClear != nil {
                 // FIXME: rdar://138042799 remove default argument.
-                unsafe WebGPU.fromAPI(attachment.pointee.view).setPreviouslyCleared(0, 0)
+                WebGPU.fromAPI(attachment!.view).setPreviouslyCleared(0, 0)
             }
             // FIXME: rdar://138042799 remove default argument.
             runClearEncoder(attachmentsToClear: attachmentsToClear, depthStencilAttachmentToClear: &depthStencilAttachmentToClear, depthAttachmentToClear: depthAttachmentToClear, stencilAttachmentToClear: stencilAttachmentToClear, depthClearValue: 0 ,stencilClearValue: 0 ,existingEncoder: nil)
@@ -1135,7 +1137,7 @@ extension WebGPU.CommandEncoder {
         }
 
         let mtlRenderCommandEncoder = m_commandBuffer.makeRenderCommandEncoder(descriptor: mtlDescriptor)
-        if (m_existingCommandEncoder != nil)  {
+        if m_existingCommandEncoder != nil {
             assertionFailure("!m_existingCommandEncoder")
         }
         setExistingEncoder(mtlRenderCommandEncoder)
@@ -1182,7 +1184,14 @@ extension WebGPU.CommandEncoder {
     }
 
     public func copyTextureToBuffer(source: WGPUImageCopyTexture, destination: WGPUImageCopyBuffer, copySize: WGPUExtent3D) {
-        guard unsafe source.nextInChain == nil && destination.nextInChain == nil && destination.layout.nextInChain == nil else {
+        let sourceCollection = CollectionOfOne(source)
+        let destinationCollection = CollectionOfOne(destination)
+        let sourceSpan = sourceCollection.span
+        let destinationSpan = destinationCollection.span
+        let sourceNextInChain = wgpuGetImageCopyTextureNextInChain(sourceSpan)?[0]
+        let destinationNextInChain = wgpuGetImageCopyBufferNextInChain(destinationSpan)?[0]
+        let destinationLayoutNextInChain = wgpuGetTextureDataLayoutNextInChain(CollectionOfOne(destination.layout).span)?[0]
+        guard sourceNextInChain == nil && destinationNextInChain == nil && destinationLayoutNextInChain == nil else {
             return
         }
 
@@ -1193,13 +1202,13 @@ extension WebGPU.CommandEncoder {
             return
         }
 
-        let sourceTexture = unsafe WebGPU.fromAPI(source.texture);
+        let sourceTexture = WebGPU.fromAPI(source.texture)
         if let error = self.errorValidatingCopyTextureToBuffer(source: source, destination: destination, copySize: copySize) {
             self.makeInvalid(error)
             return
         }
 
-        let apiDestinationBuffer = unsafe WebGPU.fromAPI(destination.buffer)
+        let apiDestinationBuffer = WebGPU.fromAPI(destination.buffer)
         sourceTexture.setCommandEncoder(self)
         apiDestinationBuffer.setCommandEncoder(self, false)
         apiDestinationBuffer.indirectBufferInvalidated(self)
@@ -1230,7 +1239,7 @@ extension WebGPU.CommandEncoder {
             return
         }
         var destinationBytesPerRow = UInt(destination.layout.bytesPerRow)
-        if (destinationBytesPerRow == WGPU_COPY_STRIDE_UNDEFINED) {
+        if destinationBytesPerRow == WGPU_COPY_STRIDE_UNDEFINED {
             destinationBytesPerRow = UInt(destinationBuffer.length)
         }
 
@@ -1307,7 +1316,7 @@ extension WebGPU.CommandEncoder {
                     guard !didOverflow else {
                         return
                     }
-                    let newSource = unsafe WGPUImageCopyTexture(
+                    let newSource = WGPUImageCopyTexture(
                         nextInChain: nil,
                         texture: source.texture,
                         mipLevel: source.mipLevel,
@@ -1323,7 +1332,7 @@ extension WebGPU.CommandEncoder {
                     guard !didOverflow else {
                         return
                     }
-                    let newDestination = unsafe WGPUImageCopyBuffer(
+                    let newDestination = WGPUImageCopyBuffer(
                         nextInChain: nil,
                         layout: WGPUTextureDataLayout(
                             nextInChain: nil,
@@ -1466,20 +1475,27 @@ extension WebGPU.CommandEncoder {
     }
 
     public func copyBufferToTexture(source: WGPUImageCopyBuffer, destination: WGPUImageCopyTexture, copySize: WGPUExtent3D) {
-        guard unsafe source.nextInChain == nil && source.layout.nextInChain == nil && destination.nextInChain == nil else {
+        let sourceCollection = CollectionOfOne(source)
+        let destinationCollection = CollectionOfOne(destination)
+        let sourceSpan = sourceCollection.span
+        let destinationSpan = destinationCollection.span
+        let sourceNextInChain = wgpuGetImageCopyBufferNextInChain(sourceSpan)?[0]
+        let sourceLayoutNextInChain = wgpuGetTextureDataLayoutNextInChain(CollectionOfOne(source.layout).span)?[0]
+        let destinationNextInChain = wgpuGetImageCopyTextureNextInChain(destinationSpan)?[0]
+        guard sourceNextInChain == nil && sourceLayoutNextInChain == nil && destinationNextInChain == nil else {
             return
         }
         guard self.prepareTheEncoderState() else {
             self.generateInvalidEncoderStateError()
             return
         }
-        let destinationTexture = unsafe WebGPU.fromAPI(destination.texture)
+        let destinationTexture = WebGPU.fromAPI(destination.texture)
 
         if let error = self.errorValidatingCopyBufferToTexture(source: source, destination: destination, copySize: copySize) {
             self.makeInvalid(error)
             return
         }
-        let apiBuffer = unsafe WebGPU.fromAPI(source.buffer)
+        let apiBuffer = WebGPU.fromAPI(source.buffer)
         apiBuffer.setCommandEncoder(self, false) 
         destinationTexture.setCommandEncoder(self)
         guard copySize.width != 0 || copySize.height != 0 || copySize.depthOrArrayLayers != 0, !apiBuffer.isDestroyed(), !destinationTexture.isDestroyed() else {
@@ -1538,7 +1554,7 @@ extension WebGPU.CommandEncoder {
             default:
                 return
         }
-        let logicalSize = unsafe WebGPU.fromAPI(destination.texture).logicalMiplevelSpecificTextureExtent(destination.mipLevel)
+        let logicalSize = WebGPU.fromAPI(destination.texture).logicalMiplevelSpecificTextureExtent(destination.mipLevel)
         let widthForMetal = logicalSize.width < destination.origin.x ? 0 : min(copySize.width, logicalSize.width - destination.origin.x)
         let heightForMetal = logicalSize.height < destination.origin.y ? 0 : min(copySize.height, logicalSize.height - destination.origin.y)
         let depthForMetal = logicalSize.depthOrArrayLayers < destination.origin.z ? 0 : min(copySize.depthOrArrayLayers, logicalSize.depthOrArrayLayers - destination.origin.z)
@@ -1606,7 +1622,7 @@ extension WebGPU.CommandEncoder {
                     guard !didOverflow else {
                         return
                     }
-                    let newSource = unsafe WGPUImageCopyBuffer(
+                    let newSource = WGPUImageCopyBuffer(
                         nextInChain: nil,
                         layout: WGPUTextureDataLayout(
                             nextInChain: nil,
@@ -1620,7 +1636,7 @@ extension WebGPU.CommandEncoder {
                     guard !didOverflow else {
                         return
                     }
-                    let newDestination = unsafe WGPUImageCopyTexture(
+                    let newDestination = WGPUImageCopyTexture(
                         nextInChain: nil,
                         texture: destination.texture,
                         mipLevel: destination.mipLevel,
@@ -1858,7 +1874,13 @@ extension WebGPU.CommandEncoder {
     }
 
     public func copyTextureToTexture(source: WGPUImageCopyTexture, destination: WGPUImageCopyTexture, copySize: WGPUExtent3D) {
-        guard unsafe source.nextInChain == nil, unsafe destination.nextInChain == nil else {
+        let sourceCollection = CollectionOfOne(source)
+        let destinationCollection = CollectionOfOne(destination)
+        let sourceSpan = sourceCollection.span
+        let destinationSpan = destinationCollection.span
+        let sourceNextInChain = wgpuGetImageCopyTextureNextInChain(sourceSpan)?[0]
+        let destinationNextInChain = wgpuGetImageCopyTextureNextInChain(destinationSpan)?[0]
+        guard sourceNextInChain == nil, destinationNextInChain == nil else {
             return
         }
 
@@ -1873,8 +1895,8 @@ extension WebGPU.CommandEncoder {
             return
         }
 
-        let sourceTexture = unsafe WebGPU.fromAPI(source.texture)
-        let destinationTexture = unsafe WebGPU.fromAPI(destination.texture)
+        let sourceTexture = WebGPU.fromAPI(source.texture)
+        let destinationTexture = WebGPU.fromAPI(destination.texture)
         sourceTexture.setCommandEncoder(self)
         destinationTexture.setCommandEncoder(self)
 
@@ -1915,7 +1937,7 @@ extension WebGPU.CommandEncoder {
                 self.clearTextureIfNeeded(destination: destination, slice: destinationSlice)
             }
         }
-        guard let mtlDestinationTexture = destinationTexture.texture(), let mtlSourceTexture = unsafe WebGPU.fromAPI(source.texture).texture() else {
+        guard let mtlDestinationTexture = destinationTexture.texture(), let mtlSourceTexture = WebGPU.fromAPI(source.texture).texture() else {
             return
         }
 
@@ -2040,7 +2062,8 @@ extension WebGPU.CommandEncoder {
     }
 
     public func beginComputePass(descriptor: WGPUComputePassDescriptor) -> WebGPU_Internal.RefComputePassEncoder {
-        guard unsafe descriptor.nextInChain == nil else {
+        let collection = CollectionOfOne(descriptor)
+        guard wgpuGetComputePassDescriptorNextChainedStruct(collection.span) == nil else {
             return WebGPU.ComputePassEncoder.createInvalid(self, m_device.ptr(), "descriptor is corrupted")
         }
 
@@ -2066,15 +2089,15 @@ extension WebGPU.CommandEncoder {
         let computePassDescriptor = MTLComputePassDescriptor()
         computePassDescriptor.dispatchType = MTLDispatchType.serial
         var counterSampleBuffer: MTLCounterSampleBuffer? = nil
-        if let wgpuTimestampWrites = unsafe descriptor.timestampWrites {
-            counterSampleBuffer = unsafe WebGPU.fromAPI(wgpuTimestampWrites.pointee.querySet).counterSampleBufferWithOffset().pointee.first
+        if let wgpuTimestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0] {
+            counterSampleBuffer = WebGPU.fromAPI(wgpuTimestampWrites.querySet).counterSampleBufferWithOffset().first
         }
 
         if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
-            let timestampWrites = unsafe descriptor.timestampWrites
+            let timestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0]
             computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer != nil ? computePassDescriptor.sampleBufferAttachments[0].sampleBuffer : m_device.ptr().timestampsBuffer(m_commandBuffer, 2)
-            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = unsafe timestampWrites != nil ? Int(timestampWrites.pointee.beginningOfPassWriteIndex) : 0
-            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = unsafe timestampWrites != nil ? Int(timestampWrites.pointee.endOfPassWriteIndex) : 1
+            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWrites != nil ? Int(timestampWrites!.beginningOfPassWriteIndex) : 0
+            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWrites != nil ? Int(timestampWrites!.endOfPassWriteIndex) : 1
             if counterSampleBuffer != nil {
                 m_device.ptr().trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
             }
@@ -2086,7 +2109,7 @@ extension WebGPU.CommandEncoder {
         self.setExistingEncoder(computeCommandEncoder)
         // FIXME: Figure out a way so that WTFString does not override String in the global
         //        namespace. At the moment it is and that's why we need this.
-        computeCommandEncoder.label = unsafe String(cString: descriptor.label)
+        computeCommandEncoder.label = WebGPU_Internal.convertWTFStringToNSString(descriptor.label)
 
         return WebGPU.ComputePassEncoder.create(computeCommandEncoder, descriptor, self, m_device.ptr())
 

@@ -981,6 +981,8 @@ ExceptionOr<void> ViewTransition::updatePseudoElementStylesRead()
     if (!document)
         return { };
 
+    document->updateStyleIfNeededIgnoringPendingStylesheets();
+
     for (auto& [name, capturedElement] : m_namedElements.map()) {
         if (auto newStyleable = capturedElement->newElement.styleable()) {
             CheckedPtr renderer = dynamicDowncast<RenderBoxModelObject>(newStyleable->renderer());

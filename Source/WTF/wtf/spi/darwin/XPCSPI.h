@@ -77,7 +77,7 @@ extern "C" const char * const XPC_ACTIVITY_PRIORITY_MAINTENANCE;
 extern "C" const char * const XPC_ACTIVITY_ALLOW_BATTERY;
 extern "C" const char * const XPC_ACTIVITY_REPEATING;
 
-#if PLATFORM(IOS_FAMILY) && __has_attribute(noescape)
+#if PLATFORM(IOS_FAMILY) && COMPILER_HAS_ATTRIBUTE(noescape)
 #define XPC_NOESCAPE __attribute__((__noescape__))
 #endif
 

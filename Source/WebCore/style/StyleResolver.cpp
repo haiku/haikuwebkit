@@ -826,7 +826,7 @@ static CSSSelectorList viewTransitionSelector(CSSSelector::PseudoElement element
     groupSelector->setValue(selectorName);
     groupSelector->setArgumentList({ { name } });
 
-    selectorList.first()->appendTagHistory(CSSSelector::Relation::Subselector, WTFMove(groupSelector));
+    selectorList.first()->prependInComplexSelector(CSSSelector::Relation::Subselector, WTFMove(groupSelector));
 
     return CSSSelectorList(WTFMove(selectorList));
 }

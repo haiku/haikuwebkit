@@ -36,6 +36,7 @@
 #include "Event.h"
 #include "EventLoop.h"
 #include "EventNames.h"
+#include "AddEventListenerOptionsInlines.h"
 #include "Exception.h"
 #include "FrameLoader.h"
 #include "IDLTypes.h"

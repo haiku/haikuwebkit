@@ -20,7 +20,7 @@
 #include "config.h"
 #include "MediaQueryList.h"
 
-#include "AddEventListenerOptions.h"
+#include "AddEventListenerOptionsInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "EventNames.h"

@@ -116,6 +116,24 @@ class TestImporterTest(unittest.TestCase):
         self.assertTrue(host.filesystem.exists("/mock-checkout/LayoutTests/w3c/web-platform-tests/test2/__init__.py"))
         self.assertTrue(host.filesystem.getsize("/mock-checkout/LayoutTests/w3c/web-platform-tests/test1/__init__.py") > 0)
 
+    def test_import_dir_not_web_platform_tests(self):
+        # This is a horrible hack so we don't actually need to support symlinks in the MockFileSystem.
+        MockFileSystem.symlink = lambda self, src, dst: self.copytree(src, dst)
+        self.addCleanup(lambda: delattr(MockFileSystem, "symlink"))
+
+        FAKE_FILES = {}
+        FAKE_FILES.update(FAKE_RESOURCES)
+        FAKE_FILES.update({
+            '/t/wpt/test1/test.html': MINIMAL_TESTHARNESS,
+            '/t/wpt/wpt': '',
+            '/t/wpt/resources/testharness.js': '',
+        })
+
+        fs = self.import_downloaded_tests(['--no-fetch', '-s', '/t/wpt', '-d', 'w3c'], FAKE_FILES)
+        print(fs.files_under("/mock-checkout/LayoutTests/w3c/web-platform-tests"))
+
+        self.assertTrue(fs.exists('/mock-checkout/LayoutTests/w3c/web-platform-tests/test1/test.html'))
+
     def import_directory(self, args, files, test_paths):
         return self.import_downloaded_tests(args + test_paths, files)
 

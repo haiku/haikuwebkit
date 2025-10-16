@@ -27,6 +27,7 @@
 
 #include <JavaScriptCore/DestructionMode.h>
 #include <JavaScriptCore/HeapCell.h>
+#include <JavaScriptCore/JSExportMacros.h>
 #include <wtf/PrintStream.h>
 
 namespace JSC {

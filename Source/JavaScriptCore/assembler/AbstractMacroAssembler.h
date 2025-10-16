@@ -1014,21 +1014,21 @@ public:
         return AssemblerType::getCallReturnOffset(call.m_label);
     }
 
-    template<PtrTag jumpTag, PtrTag destTag>
+    template<RepatchingInfo repatch, PtrTag jumpTag, PtrTag destTag>
     static void repatchJump(CodeLocationJump<jumpTag> jump, CodeLocationLabel<destTag> destination)
     {
-        AssemblerType::relinkJump(jump.dataLocation(), destination.dataLocation());
+        AssemblerType::template relinkJump<repatch>(jump.dataLocation(), destination.dataLocation());
     }
     
-    template<PtrTag callTag, PtrTag destTag>
+    template<RepatchingInfo repatch, PtrTag callTag, PtrTag destTag>
     static void repatchNearCall(CodeLocationNearCall<callTag> nearCall, CodeLocationLabel<destTag> destination)
     {
         switch (nearCall.callMode()) {
         case NearCallMode::Tail:
-            AssemblerType::relinkTailCall(nearCall.dataLocation(), destination.dataLocation());
+            AssemblerType::template relinkTailCall<repatch>(nearCall.dataLocation(), destination.dataLocation());
             return;
         case NearCallMode::Regular:
-            AssemblerType::relinkCall(nearCall.dataLocation(), destination.untaggedPtr());
+            AssemblerType::template relinkCall<repatch>(nearCall.dataLocation(), destination.untaggedPtr());
             return;
         }
         RELEASE_ASSERT_NOT_REACHED();
@@ -1085,16 +1085,17 @@ public:
 
     void emitNops(size_t memoryToFillWithNopsInBytes)
     {
-#if CPU(ARM64)
-        RELEASE_ASSERT(memoryToFillWithNopsInBytes % 4 == 0);
-        for (unsigned i = 0; i < memoryToFillWithNopsInBytes / 4; ++i)
+#if CPU(ARM64) || CPU(ARM)
+        size_t nopSize = is32Bit() ? 2 : 4;
+        RELEASE_ASSERT(memoryToFillWithNopsInBytes % nopSize == 0);
+        for (unsigned i = 0; i < memoryToFillWithNopsInBytes / nopSize; ++i)
             m_assembler.nop();
 #else
         AssemblerBuffer& buffer = m_assembler.buffer();
         size_t startCodeSize = buffer.codeSize();
         size_t targetCodeSize = startCodeSize + memoryToFillWithNopsInBytes;
         buffer.ensureSpace(memoryToFillWithNopsInBytes);
-        AssemblerType::template fillNops<MachineCodeCopyMode::Memcpy>(static_cast<char*>(buffer.data()) + startCodeSize, memoryToFillWithNopsInBytes);
+        AssemblerType::fillNops(static_cast<char*>(buffer.data()) + startCodeSize, memoryToFillWithNopsInBytes);
         buffer.setCodeSize(targetCodeSize);
 #endif
     }
@@ -1250,4 +1251,3 @@ void printInternal(PrintStream& out, JSC::AbstractMacroAssemblerBase::StatusCond
 } // namespace WTF
 
 #endif // ENABLE(ASSEMBLER)
-

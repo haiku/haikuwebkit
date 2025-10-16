@@ -86,6 +86,7 @@ static GPUFeatureName convertFeatureNameToEnum(const String& stringValue)
         { "texture-compression-bc"_s, GPUFeatureName::TextureCompressionBc },
         { "texture-compression-bc-sliced-3d"_s, GPUFeatureName::TextureCompressionBcSliced3d },
         { "texture-compression-etc2"_s, GPUFeatureName::TextureCompressionEtc2 },
+        { "texture-formats-tier1"_s, GPUFeatureName::TextureFormatsTier1 },
         { "timestamp-query"_s, GPUFeatureName::TimestampQuery },
     };
     static constexpr SortedArrayMap enumerationMapping { mappings };

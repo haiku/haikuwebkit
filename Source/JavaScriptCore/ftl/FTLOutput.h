@@ -123,17 +123,19 @@ public:
     template<typename T>
     LValue constIntPtr(T* value)
     {
-        static_assert(!std::is_base_of<HeapCell, T>::value, "To use a GC pointer, the graph must be aware of it. Use gcPointer instead and make sure the graph is aware of this reference.");
-        if (sizeof(void*) == 8)
+        static_assert(!std::derived_from<T, HeapCell>, "To use a GC pointer, the graph must be aware of it. Use gcPointer instead and make sure the graph is aware of this reference.");
+        if constexpr (sizeof(void*) == 8)
             return constInt64(std::bit_cast<intptr_t>(value));
-        return constInt32(std::bit_cast<intptr_t>(value));
+        else
+            return constInt32(std::bit_cast<intptr_t>(value));
     }
     template<typename T>
     LValue constIntPtr(T value)
     {
-        if (sizeof(void*) == 8)
+        if constexpr (sizeof(void*) == 8)
             return constInt64(static_cast<intptr_t>(value));
-        return constInt32(static_cast<intptr_t>(value));
+        else
+            return constInt32(static_cast<intptr_t>(value));
     }
     LValue constInt64(int64_t value);
     LValue constDouble(double value);

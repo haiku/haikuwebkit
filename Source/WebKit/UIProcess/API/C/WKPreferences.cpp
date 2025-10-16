@@ -254,6 +254,16 @@ WKStringRef WKPreferencesCopyPictographFontFamily(WKPreferencesRef preferencesRe
     return toCopiedAPI(toProtectedImpl(preferencesRef)->pictographFontFamily());
 }
 
+void WKPreferencesSetMathFontFamily(WKPreferencesRef preferencesRef, WKStringRef family)
+{
+    toProtectedImpl(preferencesRef)->setMathFontFamily(toWTFString(family));
+}
+
+WKStringRef WKPreferencesCopyMathFontFamily(WKPreferencesRef preferencesRef)
+{
+    return toCopiedAPI(toProtectedImpl(preferencesRef)->mathFontFamily());
+}
+
 void WKPreferencesSetDefaultFontSize(WKPreferencesRef preferencesRef, uint32_t size)
 {
     toProtectedImpl(preferencesRef)->setDefaultFontSize(size);

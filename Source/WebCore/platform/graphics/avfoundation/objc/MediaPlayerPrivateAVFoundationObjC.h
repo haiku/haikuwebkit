@@ -180,7 +180,7 @@ private:
     RetainPtr<PlatformLayer> createVideoFullscreenLayer() final;
     void setVideoFullscreenLayer(PlatformLayer*, Function<void()>&& completionHandler) final;
     void updateVideoFullscreenInlineImage() final;
-    void setVideoFullscreenFrame(FloatRect) final;
+    void setVideoFullscreenFrame(const FloatRect&) final;
     void setVideoFullscreenGravity(MediaPlayer::VideoGravity) final;
     void setVideoFullscreenMode(MediaPlayer::VideoFullscreenMode) final;
     void videoFullscreenStandbyChanged() final;

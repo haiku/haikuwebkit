@@ -809,13 +809,11 @@ String MediaKeySession::mediaKeysStorageDirectory() const
 
 CDMKeyGroupingStrategy MediaKeySession::keyGroupingStrategy() const
 {
-#if USE(MODERN_AVCONTENTKEYSESSION)
-    RefPtr document = downcast<Document>(scriptExecutionContext());
-    if (document && document->settings().shouldUseModernAVContentKeySession())
-        return CDMKeyGroupingStrategy::BuiltIn;
-#endif
-
+#if USE(AVFOUNDATION)
+    return CDMKeyGroupingStrategy::BuiltIn;
+#else
     return CDMKeyGroupingStrategy::Platform;
+#endif
 }
 
 bool MediaKeySession::virtualHasPendingActivity() const

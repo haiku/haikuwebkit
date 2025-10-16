@@ -26,11 +26,17 @@
 
 #include <WebCore/EventTarget.h>
 #include <WebCore/NodeIdentifier.h>
+#include <WebCore/PlatformExportMacros.h>
 #include <WebCore/RenderStyleConstants.h>
 #include <WebCore/StyleValidity.h>
+#include <bit>
 #include <compare>
+#include <new>
+#include <wtf/CheckedPtr.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/CompactPointerTuple.h>
 #include <wtf/CompactUniquePtrTuple.h>
+#include <wtf/FastMalloc.h>
 #include <wtf/FixedVector.h>
 #include <wtf/Forward.h>
 #include <wtf/ListHashSet.h>
@@ -38,9 +44,12 @@
 #include <wtf/OptionSet.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RobinHoodHashSet.h>
+#include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMalloc.h>
+#include <wtf/TypeCasts.h>
 #include <wtf/URLHash.h>
 #include <wtf/WeakPtr.h>
+#include <wtf/text/ASCIILiteral.h>
 
 namespace WTF {
 class TextStream;

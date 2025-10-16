@@ -223,6 +223,7 @@ set(WPE_API_HEADER_TEMPLATES
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebsiteDataManager.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWindowProperties.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebsitePolicies.h.in
+    ${WEBKIT_DIR}/UIProcess/API/glib/WebKitXRPermissionRequest.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/webkit.h.in
 )
 
@@ -386,6 +387,7 @@ list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
     "${FORWARDING_HEADERS_WPE_EXTENSION_DIR}"
     "${WEBKIT_DIR}/NetworkProcess/glib"
     "${WEBKIT_DIR}/NetworkProcess/soup"
+    "${WEBKIT_DIR}/Platform/IPC/android"
     "${WEBKIT_DIR}/Platform/IPC/glib"
     "${WEBKIT_DIR}/Platform/IPC/unix"
     "${WEBKIT_DIR}/Platform/classifier"
@@ -503,8 +505,26 @@ if (ENABLE_WPE_PLATFORM)
     )
 
     list(APPEND WebKit_PRIVATE_LIBRARIES
-        WPEPlatform-${WPE_API_VERSION}
+        WPEPlatform
     )
+
+    if (ENABLE_WPE_PLATFORM_DRM)
+        list(APPEND WebKit_PRIVATE_LIBRARIES
+            WPEPlatformDRM
+        )
+    endif ()
+
+    if (ENABLE_WPE_PLATFORM_HEADLESS)
+        list(APPEND WebKit_PRIVATE_LIBRARIES
+            WPEPlatformHeadless
+        )
+    endif ()
+
+    if (ENABLE_WPE_PLATFORM_WAYLAND)
+        list(APPEND WebKit_PRIVATE_LIBRARIES
+            WPEPlatformWayland
+        )
+    endif ()
 
     list(APPEND WebKit_MESSAGES_IN_FILES
         UIProcess/glib/AcceleratedBackingStore
@@ -589,7 +609,6 @@ if (ENABLE_WPE_QT_API)
                 WebKit
                 ${GLIB_GOBJECT_LIBRARIES}
                 ${GLIB_LIBRARIES}
-                WPEPlatform-${WPE_API_VERSION}
         )
         target_include_directories(qtwpe PRIVATE
             $<TARGET_PROPERTY:WebKit,INCLUDE_DIRECTORIES>

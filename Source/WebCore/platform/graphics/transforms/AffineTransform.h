@@ -34,6 +34,7 @@
 #include <array>
 #include <optional>
 #include <span>
+#include <wtf/Compiler.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
 

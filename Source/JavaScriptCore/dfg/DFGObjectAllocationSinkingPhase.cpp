@@ -45,6 +45,7 @@
 #include "JSIteratorHelper.h"
 #include "JSMapIterator.h"
 #include "JSSetIterator.h"
+#include "JSWrapForValidIterator.h"
 #include "StructureInlines.h"
 #include <wtf/StdList.h>
 
@@ -1136,6 +1137,9 @@ private:
                 break;
             case JSIteratorHelperType:
                 target = handleInternalFieldClass<JSIteratorHelper>(node, writes);
+                break;
+            case JSWrapForValidIteratorType:
+                target = handleInternalFieldClass<JSWrapForValidIterator>(node, writes);
                 break;
             case JSPromiseType:
                 if (node->structure()->classInfoForCells() == JSInternalPromise::info())

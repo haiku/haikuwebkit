@@ -776,11 +776,11 @@ FAIL :offset_argument:textureType="texture_3d%3Cf32%3E";offsetType="vec3%3Cabstr
   - EXPECTATION FAILED: subcase: value=-9
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: value=-9
+    OK
   - EXPECTATION FAILED: subcase: value=8
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: value=-9
-    OK
   - INFO: subcase: value=8
     OK
  Reached unreachable code

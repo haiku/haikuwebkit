@@ -1247,7 +1247,7 @@ bool EventHandler::handleMouseReleaseEvent(const MouseEventWithHitTestResults& e
     // editing, place the caret.
     if (m_mouseDownWasSingleClickInSelection && m_selectionInitiationState != ExtendedSelection
 #if ENABLE(DRAG_SUPPORT)
-            && m_dragStartPosition == event.event().position()
+            && m_dragStartPosition == flooredIntPoint(event.event().position())
 #endif
             && frame->selection().isRange()
             && event.event().button() != MouseButton::Right) {
@@ -4397,8 +4397,8 @@ std::optional<RemoteUserInputEventData> EventHandler::dragSourceEndedAt(const Pl
     // Send a hit test request so that RenderLayer gets a chance to update the :hover and :active pseudoclasses.
     auto mouseEvent = prepareMouseEvent(OptionSet<HitTestRequest::Type> { HitTestRequest::Type::Release, HitTestRequest::Type::DisallowUserAgentShadowContent }, event);
     if (RefPtr remoteSubframe = dynamicDowncast<RemoteFrame>(subframeForHitTestResult(mouseEvent))) {
-        // FIXME(264611): These mouse coordinates need to be correctly transformed.
-        return RemoteUserInputEventData { remoteSubframe->frameID(),  mouseEvent.hitTestResult().roundedPointInInnerNodeFrame() };
+        auto pointInFrame = mouseEvent.hitTestResult().roundedPointInInnerNodeFrame();
+        return userInputEventDataForRemoteFrame(remoteSubframe.get(), pointInFrame);
     }
 
     if (shouldDispatchEventsToDragSourceElement()) {

@@ -185,29 +185,29 @@ void SourceBufferPrivateGStreamer::enqueueSample(Ref<MediaSample>&& sample, Trac
     GRefPtr<GstSample> gstSample = sample->platformSample().sample.gstSample;
     ASSERT(gstSample);
 
-    GRefPtr<GstBuffer> gstBuffer = gst_sample_get_buffer(gstSample.get());
-    ASSERT(gstBuffer);
-
+#ifndef GST_DISABLE_GST_DEBUG
     RefPtr player = this->player();
-
     if (player) {
+        const auto& size = sample->presentationSize();
         GST_TRACE_OBJECT(player->pipeline(), "enqueing sample trackId=%" PRIu64 " presentationSize=%.0fx%.0f at PTS %" GST_TIME_FORMAT " duration: %" GST_TIME_FORMAT,
-            trackId, sample->presentationSize().width(), sample->presentationSize().height(),
-            GST_TIME_ARGS(WebCore::toGstClockTime(sample->presentationTime())),
-            GST_TIME_ARGS(WebCore::toGstClockTime(sample->duration())));
+            trackId, size.width(), size.height(),
+            GST_TIME_ARGS(toGstClockTime(sample->presentationTime())),
+            GST_TIME_ARGS(toGstClockTime(sample->duration())));
     }
+#endif
     ASSERT(m_tracks.contains(trackId));
     auto track = m_tracks[trackId];
 
+#ifndef GST_DISABLE_GST_DEBUG
     if (player && track->type() == TrackPrivateBaseGStreamer::Text) {
-        GstMappedBuffer mappedBuffer(gstBuffer, GST_MAP_READ);
+        GstMappedBuffer mappedBuffer(gst_sample_get_buffer(gstSample.get()), GST_MAP_READ);
 
-        if (mappedBuffer) {
-            GST_TRACE_OBJECT(player->pipeline(), "text sample (trackId=%" PRIu64 ") contents:\n%.*s",
-                trackId, static_cast<int>(mappedBuffer.size()), reinterpret_cast<char*>(mappedBuffer.data()));
+        if (mappedBuffer) [[likely]] {
+            auto message = makeString("Text sample (trackId="_s, trackId, ')');
+            GST_MEMDUMP_OBJECT(player->pipeline(), message.utf8().data(), mappedBuffer.data(), mappedBuffer.size());
         }
     }
-
+#endif
     track->enqueueObject(adoptGRef(GST_MINI_OBJECT(gstSample.leakRef())));
 }
 

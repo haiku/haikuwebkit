@@ -36,6 +36,7 @@
 #include "LocalFrame.h"
 #include "NavigationScheduler.h"
 #include "Quirks.h"
+#include "ScriptWrappableInlines.h"
 #include "SecurityOrigin.h"
 #include "ServiceWorkerContainer.h"
 #include <wtf/TZoneMallocInlines.h>
@@ -335,5 +336,7 @@ RefPtr<DOMWindow> Location::protectedWindow()
 {
     return m_window.get();
 }
+
+Location::~Location() = default;
 
 } // namespace WebCore

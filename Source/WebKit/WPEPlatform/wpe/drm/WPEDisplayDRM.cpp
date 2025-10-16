@@ -390,6 +390,8 @@ static gboolean wpeDisplayDRMSetup(WPEDisplayDRM* displayDRM, const char* device
         height = mode->vdisplay;
     }
 
+    wpeScreenDRMCreateDumbBufferIfNeeded(WPE_SCREEN_DRM(displayDRM->priv->screen.get()), displayDRM->priv->fd.value(), displayDRM->priv->connector->id());
+
     double scale = scaleFromEnvironment.value_or(wpeScreenDRMGuessScale(WPE_SCREEN_DRM(displayDRM->priv->screen.get())));
     RELEASE_ASSERT(wpe_settings_set_double(wpe_display_get_settings(WPE_DISPLAY(displayDRM)), WPE_SETTING_DRM_SCALE, scale, WPE_SETTINGS_SOURCE_PLATFORM, nullptr));
 
@@ -429,7 +431,7 @@ static gboolean wpeDisplayDRMConnect(WPEDisplay* display, GError** error)
 static WPEView* wpeDisplayDRMCreateView(WPEDisplay* display)
 {
     auto* displayDRM = WPE_DISPLAY_DRM(display);
-    auto* view = wpe_view_drm_new(displayDRM);
+    auto* view = WPE_VIEW(g_object_new(WPE_TYPE_VIEW_DRM, "display", display, nullptr));
 
     if (wpe_settings_get_boolean(wpe_display_get_settings(display), WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, nullptr)) {
         GRefPtr<WPEToplevel> toplevel = adoptGRef(wpe_toplevel_drm_new(displayDRM));

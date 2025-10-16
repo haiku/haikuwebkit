@@ -24,8 +24,13 @@
 
 #pragma once
 
+#include <WebCore/AXCoreObject.h>
 #include <WebCore/AccessibilityObject.h>
+#include <WebCore/Position.h>
+#include <WebCore/VisiblePosition.h>
+#include <wtf/Platform.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/text/WTFString.h>
 
 #define TEXT_MARKER_ASSERT(assertion) do { \
     std::string debugString = "Text marker origin: " + originToString(origin()).utf8().toStdString(); \
@@ -89,6 +94,8 @@ enum class TextMarkerOrigin : uint16_t {
     StartTextMarkerForBounds,
     EndTextMarkerForBounds
 };
+
+static_assert(TextMarkerOrigin::Unknown == static_cast<TextMarkerOrigin>(0)); // Needed for AXObjectCache.h default parameters
 
 inline String originToString(TextMarkerOrigin origin)
 {

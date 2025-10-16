@@ -75,6 +75,7 @@
 #include "NestingLevelIncrementer.h"
 #include "StylePropertiesInlines.h"
 #include "StyleRule.h"
+#include "StyleRuleFunction.h"
 #include "StyleRuleImport.h"
 #include "StyleSheetContents.h"
 #include <bitset>
@@ -287,7 +288,7 @@ CSSSelectorList CSSParser::parsePageSelector(CSSParserTokenRange range, StyleShe
                 return { };
         }
         if (!typeSelector.isNull())
-            selector->prependTagSelector(QualifiedName(nullAtom(), typeSelector, styleSheet->defaultNamespace()));
+            selector->appendTagInComplexSelector(QualifiedName(nullAtom(), typeSelector, styleSheet->defaultNamespace()));
     }
 
     selector->setForPage();
@@ -473,6 +474,8 @@ RefPtr<StyleRuleBase> CSSParser::consumeAtRule(CSSParserTokenRange& range, Allow
         return consumeViewTransitionRule(prelude, block);
     case CSSAtRulePositionTry:
         return consumePositionTryRule(prelude, block);
+    case CSSAtRuleFunction:
+        return consumeFunctionRule(prelude, block);
     default:
         return nullptr; // Parse error, unrecognised at-rule with block
     }
@@ -1077,6 +1080,105 @@ RefPtr<StyleRulePositionTry> CSSParser::consumePositionTryRule(CSSParserTokenRan
 
     auto declarations = consumeDeclarationListInNewNestingContext(block, StyleRuleType::PositionTry);
     return StyleRulePositionTry::create(WTFMove(ruleName), createStyleProperties(declarations, m_context.mode));
+}
+
+RefPtr<StyleRuleFunction> CSSParser::consumeFunctionRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
+{
+    if (!m_context.propertySettings.cssFunctionAtRuleEnabled)
+        return nullptr;
+
+    // https://drafts.csswg.org/css-mixins/#function-rule
+    // <@function> = @function <function-token> <function-parameter>#? ) [ returns <css-type> ]?
+
+    if (prelude.peek().type() != FunctionToken)
+        return nullptr;
+
+    auto name = prelude.peek().value().toAtomString();
+    auto parametersRange = CSSPropertyParserHelpers::consumeFunction(prelude);
+
+    // <function-parameter>#?
+    Vector<StyleRuleFunction::Parameter> parameters;
+    while (!parametersRange.atEnd()) {
+        auto consumeParameter = [&]() -> std::optional<StyleRuleFunction::Parameter> {
+            // <function-parameter> = <custom-property-name> <css-type>? [ : <default-value> ]?
+
+            auto nameToken = parametersRange.consumeIncludingWhitespace();
+            if (nameToken.type() != IdentToken)
+                return { };
+
+            auto parameter = StyleRuleFunction::Parameter { };
+
+            // <custom-property-name>
+            parameter.name = nameToken.value().toAtomString();
+            if (!isCustomPropertyName(parameter.name))
+                return { };
+
+            if (parametersRange.atEnd() || parametersRange.peek().type() == CommaToken)
+                return parameter;
+
+            // <css-type>?
+            if (parametersRange.peek().type() != ColonToken) {
+                auto type = CSSCustomPropertySyntax::consumeType(parametersRange);
+                if (!type)
+                    return { };
+                parameter.type = *type;
+            }
+
+            // [ : <default-value> ]?
+            if (parametersRange.peek().type() == ColonToken) {
+                parametersRange.consumeIncludingWhitespace();
+                // <default-value> = <declaration-value>
+                auto defaultRangeStart = parametersRange;
+                while (!parametersRange.atEnd() && parametersRange.peek().type() != CommaToken) {
+                    if (parametersRange.peek().type() == DelimiterToken && parametersRange.peek().delimiter() == '!')
+                        return { };
+                    parametersRange.consumeIncludingWhitespace();
+                }
+
+                auto defaultRange = defaultRangeStart.rangeUntil(parametersRange);
+
+                // "If a default value and a parameter type are both provided, then the default value must parse
+                // successfully according to that parameter type’s syntax. Otherwise, the @function rule is invalid."
+                if (!CSSPropertyParser::isValidCustomPropertyValueForSyntax(parameter.type, defaultRange, m_context))
+                    return { };
+
+                parameter.defaultValue = CSSVariableData::create(defaultRange);
+            }
+
+            if (parametersRange.atEnd() || parametersRange.peek().type() == CommaToken)
+                return parameter;
+
+            return { };
+        };
+
+        auto parameter = consumeParameter();
+        if (!parameter)
+            return nullptr;
+        parameters.append(*parameter);
+
+        if (parametersRange.peek().type() == CommaToken)
+            parametersRange.consumeIncludingWhitespace();
+    }
+
+    auto returnType = CSSCustomPropertySyntax::universal();
+
+    // [ returns <css-type> ]?
+    if (prelude.peek().type() == IdentToken && equalLettersIgnoringASCIICase(prelude.peek().value(), "returns"_s)) {
+        prelude.consumeIncludingWhitespace();
+
+        auto specifiedReturnType = CSSCustomPropertySyntax::consumeType(prelude);
+        if (!specifiedReturnType)
+            return nullptr;
+        returnType = *specifiedReturnType;
+    }
+
+    if (!prelude.atEnd())
+        return nullptr;
+
+    // FIXME: Parse the descriptors.
+    block.consumeAll();
+
+    return StyleRuleFunction::create(name, WTFMove(parameters), WTFMove(returnType), { });
 }
 
 RefPtr<StyleRuleScope> CSSParser::consumeScopeRule(CSSParserTokenRange prelude, CSSParserTokenRange block)

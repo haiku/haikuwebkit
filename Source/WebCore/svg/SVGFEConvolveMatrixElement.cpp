@@ -277,7 +277,7 @@ RefPtr<FilterEffect> SVGFEConvolveMatrixElement::createFilterEffect(const Filter
     auto& kernelMatrix = this->kernelMatrix();
 
     // The spec says this is a requirement, and should bail out if fails
-    if (order.area() != kernelMatrix.length())
+    if (order.unclampedArea() != kernelMatrix.length())
         return nullptr;
 
     // Spec says the specified divisor cannot be 0.

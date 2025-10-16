@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,9 +29,17 @@
 #pragma once
 
 #include <JavaScriptCore/JSExportMacros.h>
+#include <wtf/ScopedLambda.h>
+#include <wtf/StdLibExtras.h>
 
 namespace JSC {
 
 JS_EXPORT_PRIVATE void initialize();
+JS_EXPORT_PRIVATE void initializeWithOptionsCustomization(const ScopedLambda<void()>& optionsCustomizationCallback);
+
+ALWAYS_INLINE void initialize(const Invocable<void()> auto& optionsCustomizationCallback)
+{
+    SUPPRESS_FORWARD_DECL_ARG initializeWithOptionsCustomization(scopedLambda<void()>(optionsCustomizationCallback));
+}
 
 } // namespace JSC

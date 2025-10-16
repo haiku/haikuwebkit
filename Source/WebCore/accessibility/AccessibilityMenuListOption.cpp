@@ -26,7 +26,7 @@
 #include "config.h"
 #include "AccessibilityMenuListOption.h"
 
-#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
 #include "AccessibilityMenuListPopup.h"
 #include "Document.h"
 #include "HTMLNames.h"

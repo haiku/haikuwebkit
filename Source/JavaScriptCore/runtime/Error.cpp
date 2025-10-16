@@ -163,7 +163,7 @@ private:
     mutable BytecodeIndex m_bytecodeIndex { 0 };
 };
 
-std::unique_ptr<Vector<StackFrame>> getStackTrace(VM& vm, JSObject* obj, bool useCurrentFrame, JSCell* ownerOfCallLinkInfo, CallLinkInfo* callLinkInfo)
+std::unique_ptr<Vector<StackFrame>> getStackTrace(VM& vm, JSObject* obj, bool useCurrentFrame, JSCell* ownerOfCallLinkInfo, CallLinkInfo* callLinkInfo, JSCell* subclassCaller)
 {
     JSGlobalObject* globalObject = obj->globalObject();
     if (!globalObject->stackTraceLimit())
@@ -171,7 +171,7 @@ std::unique_ptr<Vector<StackFrame>> getStackTrace(VM& vm, JSObject* obj, bool us
 
     size_t framesToSkip = useCurrentFrame ? 0 : 1;
     std::unique_ptr<Vector<StackFrame>> stackTrace = makeUnique<Vector<StackFrame>>();
-    vm.interpreter.getStackTrace(obj, *stackTrace, framesToSkip, globalObject->stackTraceLimit().value_or(0), nullptr, ownerOfCallLinkInfo, callLinkInfo);
+    vm.interpreter.getStackTrace(obj, *stackTrace, framesToSkip, globalObject->stackTraceLimit().value_or(0), subclassCaller, ownerOfCallLinkInfo, callLinkInfo);
     return stackTrace;
 }
 

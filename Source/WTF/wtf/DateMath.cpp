@@ -655,6 +655,9 @@ double parseES5Date(std::span<const LChar> dateString, bool& isLocalTime)
     if (!dateString.empty())
         return std::numeric_limits<double>::quiet_NaN();
 
+    if (isSingleDigit)
+        isLocalTime = true;
+
     // A few of these checks could be done inline above, but since many of them are interrelated
     // we would be sacrificing readability to "optimize" the (presumably less common) failure path.
     if (month < 1 || month > 12)

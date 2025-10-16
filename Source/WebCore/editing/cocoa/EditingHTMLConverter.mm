@@ -343,12 +343,12 @@ static void updateAttributes(const Node* node, const RenderStyle& style, OptionS
     UNUSED_PARAM(elementQualifiesForWritingToolsPreservationCache);
 #endif
 
-    if (style.textDecorationLineInEffect() & TextDecorationLine::Underline)
+    if (style.textDecorationLineInEffect().hasUnderline())
         [attributes setObject:[NSNumber numberWithInteger:NSUnderlineStyleSingle] forKey:NSUnderlineStyleAttributeName];
     else
         [attributes removeObjectForKey:NSUnderlineStyleAttributeName];
 
-    if (style.textDecorationLineInEffect() & TextDecorationLine::LineThrough)
+    if (style.textDecorationLineInEffect().hasLineThrough())
         [attributes setObject:[NSNumber numberWithInteger:NSUnderlineStyleSingle] forKey:NSStrikethroughStyleAttributeName];
     else
         [attributes removeObjectForKey:NSStrikethroughStyleAttributeName];

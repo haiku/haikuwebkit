@@ -6364,7 +6364,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     
     DOMRange *range = [frame _convertNSRangeToDOMRange:theRange];
     if (!range) {
-        LOG(TextInput, "firstRectForCharacterRange:(%u, %u) -> (0, 0, 0, 0)", theRange.location, theRange.length);
+        LOG(TextInput, "firstRectForCharacterRange:(%zu, %zu) -> (0, 0, 0, 0)", theRange.location, theRange.length);
         return NSZeroRect;
     }
     
@@ -6378,7 +6378,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     if (window)
         resultRect.origin = [window convertRectToScreen:resultRect].origin;
     
-    LOG(TextInput, "firstRectForCharacterRange:(%u, %u) -> (%f, %f, %f, %f)", theRange.location, theRange.length, resultRect.origin.x, resultRect.origin.y, resultRect.size.width, resultRect.size.height);
+    LOG(TextInput, "firstRectForCharacterRange:(%zu, %zu) -> (%f, %f, %f, %f)", theRange.location, theRange.length, resultRect.origin.x, resultRect.origin.y, resultRect.size.width, resultRect.size.height);
     return resultRect;
 }
 
@@ -6394,7 +6394,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     }
     NSRange result = [[self _frame] _selectedNSRange];
 
-    LOG(TextInput, "selectedRange -> (%u, %u)", result.location, result.length);
+    LOG(TextInput, "selectedRange -> (%zu, %zu)", result.location, result.length);
     return result;
 }
 
@@ -6414,7 +6414,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         return NSMakeRange(NSNotFound, 0);
 
     NSRange result = [webFrame _convertToNSRange:*range];
-    LOG(TextInput, "markedRange -> (%u, %u)", result.location, result.length);
+    LOG(TextInput, "markedRange -> (%zu, %zu)", result.location, result.length);
     return result;
 }
 
@@ -6429,12 +6429,12 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     WebFrame *frame = [self _frame];
     auto* coreFrame = core(frame);
     if (!isTextInput(coreFrame) || isInPasswordField(coreFrame)) {
-        LOG(TextInput, "attributedSubstringFromRange:(%u, %u) -> nil", nsRange.location, nsRange.length);
+        LOG(TextInput, "attributedSubstringFromRange:(%zu, %zu) -> nil", nsRange.location, nsRange.length);
         return nil;
     }
     auto range = [frame _convertToDOMRange:nsRange];
     if (!range) {
-        LOG(TextInput, "attributedSubstringFromRange:(%u, %u) -> nil", nsRange.location, nsRange.length);
+        LOG(TextInput, "attributedSubstringFromRange:(%zu, %zu) -> nil", nsRange.location, nsRange.length);
         return nil;
     }
 
@@ -6448,7 +6448,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         ASSERT([[result string] characterAtIndex:nsRange.length] == '\n' || [[result string] characterAtIndex:nsRange.length] == ' ');
         result = [result attributedSubstringFromRange:NSMakeRange(0, nsRange.length)];
     }
-    LOG(TextInput, "attributedSubstringFromRange:(%u, %u) -> \"%@\"", nsRange.location, nsRange.length, [result string]);
+    LOG(TextInput, "attributedSubstringFromRange:(%zu, %zu) -> \"%@\"", nsRange.location, nsRange.length, [result string]);
     return result.autorelease();
 }
 
@@ -6533,7 +6533,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     BOOL isAttributedString = [string isKindOfClass:[NSAttributedString class]];
     ASSERT(isAttributedString || [string isKindOfClass:[NSString class]]);
 
-    LOG(TextInput, "setMarkedText:\"%@\" selectedRange:(%u, %u)", isAttributedString ? [string string] : string, newSelRange.location, newSelRange.length);
+    LOG(TextInput, "setMarkedText:\"%@\" selectedRange:(%zu, %zu)", isAttributedString ? [string string] : string, newSelRange.location, newSelRange.length);
 #endif
 
     // Use pointer to get parameters passed to us by the caller of interpretKeyEvents.

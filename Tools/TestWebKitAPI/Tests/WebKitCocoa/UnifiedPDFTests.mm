@@ -341,10 +341,14 @@ UNIFIED_PDF_TEST(PrintSize)
     TestWebKitAPI::Util::run(&receivedSize);
 }
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-UNIFIED_PDF_TEST(DISABLED_SetPageZoomFactorDoesNotBailIncorrectly)
+#endif // PLATFORM(MAC)
+
+#if ENABLE(PDF_HUD)
+
+UNIFIED_PDF_TEST(SetPageZoomFactorDoesNotBailIncorrectly)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF(true).get()]);
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/testPath"]];
     [webView _test_waitForDidFinishNavigation];
 
@@ -373,10 +377,10 @@ static void checkFrame(NSRect frame, CGFloat x, CGFloat y, CGFloat width, CGFloa
     EXPECT_EQ(frame.size.height, height);
 }
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-UNIFIED_PDF_TEST(DISABLED_PDFHUDMainResourcePDF)
+UNIFIED_PDF_TEST(PDFHUDMainResourcePDF)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF(true).get()]);
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/testPath"]];
     EXPECT_EQ([webView _pdfHUDs].count, 0u);
     [webView _test_waitForDidFinishNavigation];
@@ -402,8 +406,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDMainResourcePDF)
         TestWebKitAPI::Util::spinRunLoop();
 }
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-UNIFIED_PDF_TEST(DISABLED_PDFHUDMoveIFrame)
+UNIFIED_PDF_TEST(PDFHUDMoveIFrame)
 {
     RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
     [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
@@ -426,6 +429,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDMoveIFrame)
     RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
     EXPECT_EQ([webView _pdfHUDs].count, 0u);
     [webView _test_waitForDidFinishNavigation];
@@ -462,8 +466,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDMoveIFrame)
     checkFrame([webView _pdfHUDs].anyObject.frame, 14, 40, 560, 210);
 }
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-UNIFIED_PDF_TEST(DISABLED_PDFHUDNestedIFrames)
+UNIFIED_PDF_TEST(PDFHUDNestedIFrames)
 {
     RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
     [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
@@ -491,6 +494,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDNestedIFrames)
     RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
     EXPECT_EQ([webView _pdfHUDs].count, 0u);
     [webView _test_waitForDidFinishNavigation];
@@ -502,8 +506,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDNestedIFrames)
         TestWebKitAPI::Util::spinRunLoop();
 }
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-UNIFIED_PDF_TEST(DISABLED_PDFHUDIFrame3DTransform)
+UNIFIED_PDF_TEST(PDFHUDIFrame3DTransform)
 {
     RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
     [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
@@ -526,6 +529,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDIFrame3DTransform)
     RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
     EXPECT_EQ([webView _pdfHUDs].count, 0u);
     [webView _test_waitForDidFinishNavigation];
@@ -533,8 +537,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDIFrame3DTransform)
     checkFrame([webView _pdfHUDs].anyObject.frame, 403, 10, 500, 500);
 }
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-UNIFIED_PDF_TEST(DISABLED_PDFHUDMultipleIFrames)
+UNIFIED_PDF_TEST(PDFHUDMultipleIFrames)
 {
     RetainPtr handler = adoptNS([TestURLSchemeHandler new]);
     [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
@@ -558,6 +561,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDMultipleIFrames)
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"test"];
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"test:///main.html"]]];
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     EXPECT_EQ([webView _pdfHUDs].count, 0u);
     [webView _test_waitForDidFinishNavigation];
     EXPECT_EQ([webView _pdfHUDs].count, 2u);
@@ -576,12 +580,12 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDMultipleIFrames)
     EXPECT_TRUE(hadRightFrame);
 }
 
-// FIXME: <webkit.org/b/296970> [macOS] Several API tests interacting with the PDF HUD are failing
-UNIFIED_PDF_TEST(DISABLED_PDFHUDLoadPDFTypeWithPluginsBlocked)
+UNIFIED_PDF_TEST(PDFHUDLoadPDFTypeWithPluginsBlocked)
 {
     RetainPtr configuration = configurationForWebViewTestingUnifiedPDF(true);
     [configuration _setOverrideContentSecurityPolicy:@"object-src 'none'"];
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView _setWindowOcclusionDetectionEnabled:NO];
     [webView loadData:testPDFData().get() MIMEType:@"application/pdf" characterEncodingName:@"" baseURL:[NSURL URLWithString:@"https://www.apple.com/testPath"]];
     EXPECT_EQ([webView _pdfHUDs].count, 0u);
     [webView _test_waitForDidFinishNavigation];
@@ -589,7 +593,7 @@ UNIFIED_PDF_TEST(DISABLED_PDFHUDLoadPDFTypeWithPluginsBlocked)
     checkFrame([webView _pdfHUDs].anyObject.frame, 0, 0, 800, 600);
 }
 
-#endif // PLATFORM(MAC)
+#endif // ENABLE(PDF_HUD)
 
 UNIFIED_PDF_TEST(SnapshotsPaintPageContent)
 {

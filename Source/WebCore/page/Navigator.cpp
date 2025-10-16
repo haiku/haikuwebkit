@@ -48,6 +48,7 @@
 #include "Quirks.h"
 #include "ResourceLoadObserver.h"
 #include "ScriptController.h"
+#include "ScriptWrappableInlines.h"
 #include "SecurityOrigin.h"
 #include "Settings.h"
 #include "ShareData.h"
@@ -457,7 +458,7 @@ NavigatorUAData& Navigator::userAgentData() const
     RefPtr frame = this->frame();
     if (frame && frame->page()) {
         RefPtr client = frame->loader().client();
-        if (client->hasCustomUserAgent()) {
+        if (client->hasCustomUserAgent() || (frame->document() && frame->document()->quirks().needsCustomUserAgentData())) {
             auto userAgentString = frame->loader().userAgent({ });
             Ref parser = UserAgentStringParser::create(userAgentString);
             std::optional userAgentStringData = parser->parse();

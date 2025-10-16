@@ -76,11 +76,18 @@ enum class JSCProfileTag { };
 
 void initialize()
 {
+    initialize([] {
+        // No extra options customization needed by default.
+    });
+}
+
+void initializeWithOptionsCustomization(const ScopedLambda<void()>& optionsCustomizationCallback)
+{
     static std::once_flag onceFlag;
 
-    std::call_once(onceFlag, [] {
+    std::call_once(onceFlag, [&] {
         WTF::initialize();
-        Options::initialize();
+        Options::initialize(optionsCustomizationCallback);
 
         initializePtrTagLookup();
 

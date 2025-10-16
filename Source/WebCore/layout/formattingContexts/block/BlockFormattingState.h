@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <WebCore/FormattingState.h>
+#include "FormattingState.h"
 #include <WebCore/PlacedFloats.h>
 #include <wtf/HashSet.h>
 #include <wtf/TZoneMalloc.h>

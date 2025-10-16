@@ -388,6 +388,8 @@ void UIScriptControllerCocoa::performTextExtractionInteraction(JSStringRef jsAct
         action = _WKTextExtractionActionSelectMenuItem;
     if (equalLettersIgnoringASCIICase(actionName, "textinput"))
         action = _WKTextExtractionActionTextInput;
+    if (equalLettersIgnoringASCIICase(actionName, "keypress"))
+        action = _WKTextExtractionActionKeyPress;
 
     if (!action) {
         ASSERT_NOT_REACHED();
@@ -409,11 +411,13 @@ void UIScriptControllerCocoa::performTextExtractionInteraction(JSStringRef jsAct
         [interaction setLocation:CGPointMake(x, y)];
     }
 
-    [webView() _performInteraction:interaction.get() completionHandler:^(BOOL success) {
+    [webView() _performInteraction:interaction.get() completionHandler:^(_WKTextExtractionInteractionResult *result) {
         if (!m_context)
             return;
 
-        m_context->asyncTaskComplete(callbackID, { JSValueMakeBoolean(m_context->jsContext(), success) });
+        RetainPtr description = [result.error.userInfo objectForKey:NSDebugDescriptionErrorKey] ?: @"";
+        JSRetainPtr jsDescription = adopt(JSStringCreateWithCFString((__bridge CFStringRef)description.get()));
+        m_context->asyncTaskComplete(callbackID, { JSValueMakeString(m_context->jsContext(), jsDescription.get()) });
     }];
 }
 

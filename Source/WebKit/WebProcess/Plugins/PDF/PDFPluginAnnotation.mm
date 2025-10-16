@@ -34,7 +34,7 @@
 #import "PDFPluginTextAnnotation.h"
 #import <CoreGraphics/CoreGraphics.h>
 #import <PDFKit/PDFKit.h>
-#import <WebCore/AddEventListenerOptions.h>
+#import <WebCore/AddEventListenerOptionsInlines.h>
 #import <WebCore/CSSPrimitiveValue.h>
 #import <WebCore/CSSPropertyNames.h>
 #import <WebCore/Event.h>

@@ -1232,23 +1232,33 @@ void Queue::scheduleWork(Instance::WorkItem&& workItem)
 
 void Queue::clearTextureViewIfNeeded(TextureView& textureView)
 {
+    Ref parentTexture = textureView.apiParentTexture();
+    return clearTextureIfNeeded(parentTexture.get(), textureView.mipLevelCount(), textureView.arrayLayerCount(), textureView.baseMipLevel(), textureView.baseArrayLayer());
+}
+
+void Queue::clearTextureViewIfNeeded(Texture& texture)
+{
+    return clearTextureIfNeeded(texture, texture.mipLevelCount(), texture.arrayLayerCount(), 0, 0);
+}
+
+void Queue::clearTextureIfNeeded(Texture& parentTexture, uint32_t mipLevelCount, uint32_t arrayLayerCount, uint32_t baseMipLevel, uint32_t baseArrayLayer)
+{
     auto devicePtr = m_device.get();
     if (!devicePtr)
         return;
 
-    Ref parentTexture = textureView.apiParentTexture();
-    for (uint32_t slice = 0; slice < textureView.arrayLayerCount(); ++slice) {
-        for (uint32_t mipLevel = 0; mipLevel < textureView.mipLevelCount(); ++mipLevel) {
-            auto checkedParentMipLevel = checkedSum<uint32_t>(textureView.baseMipLevel(), mipLevel);
-            auto checkedParentSlice = checkedSum<uint32_t>(textureView.baseArrayLayer(), slice);
+    for (uint32_t slice = 0; slice < arrayLayerCount; ++slice) {
+        for (uint32_t mipLevel = 0; mipLevel < mipLevelCount; ++mipLevel) {
+            auto checkedParentMipLevel = checkedSum<uint32_t>(baseMipLevel, mipLevel);
+            auto checkedParentSlice = checkedSum<uint32_t>(baseArrayLayer, slice);
             if (checkedParentMipLevel.hasOverflowed() || checkedParentSlice.hasOverflowed())
                 return;
             auto parentMipLevel = checkedParentMipLevel.value();
             auto parentSlice = checkedParentSlice.value();
-            if (parentTexture->previouslyCleared(parentMipLevel, parentSlice))
+            if (parentTexture.previouslyCleared(parentMipLevel, parentSlice))
                 continue;
 
-            CommandEncoder::clearTextureIfNeeded(parentTexture.get(), parentMipLevel, parentSlice, *devicePtr, ensureBlitCommandEncoder());
+            CommandEncoder::clearTextureIfNeeded(parentTexture, parentMipLevel, parentSlice, *devicePtr, ensureBlitCommandEncoder());
         }
     }
     finalizeBlitCommandEncoder();

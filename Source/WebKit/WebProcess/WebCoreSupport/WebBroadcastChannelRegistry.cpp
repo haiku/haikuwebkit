@@ -30,6 +30,7 @@
 #include "NetworkProcessConnection.h"
 #include "WebProcess.h"
 #include <WebCore/BroadcastChannel.h>
+#include <WebCore/ContextDestructionObserverInlines.h>
 #include <WebCore/MessageWithMessagePorts.h>
 #include <wtf/CallbackAggregator.h>
 

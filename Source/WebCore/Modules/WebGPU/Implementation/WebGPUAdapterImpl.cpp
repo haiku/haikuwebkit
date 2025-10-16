@@ -175,6 +175,9 @@ void AdapterImpl::requestDevice(const DeviceDescriptor& descriptor, CompletionHa
         return convertToBackingContext.convertToBacking(featureName);
     });
 
+    if (features.contains(WGPUFeatureName_TextureFormatsTier1) && !features.contains(WGPUFeatureName_RG11B10UfloatRenderable))
+        features.append(WGPUFeatureName_RG11B10UfloatRenderable);
+
     auto limits = wgpuDefaultLimits();
 
     auto& supportedLimits = this->limits();

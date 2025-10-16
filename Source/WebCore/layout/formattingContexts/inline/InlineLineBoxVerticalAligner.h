@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <WebCore/InlineFormattingContext.h>
-#include <WebCore/InlineFormattingUtils.h>
+#include "InlineFormattingContext.h"
+#include "InlineFormattingUtils.h"
 
 namespace WebCore {
 namespace Layout {

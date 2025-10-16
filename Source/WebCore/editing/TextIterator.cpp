@@ -369,10 +369,7 @@ TextIterator::TextIterator(const SimpleRange& range, TextIteratorBehaviors behav
 {
     ASSERT(!m_behaviors.contains(TextIteratorBehavior::EmitsObjectReplacementCharacters) || !m_behaviors.contains(TextIteratorBehavior::EmitsObjectReplacementCharactersForImages));
 
-    OptionSet<LayoutOptions> findInPageLayoutOptions;
-    if (m_behaviors.contains(TextIteratorBehavior::EntersSkippedContentRelevantToUser))
-        findInPageLayoutOptions.add({ LayoutOptions::TreatContentVisibilityAutoAsVisible, LayoutOptions::TreatRevealedWhenFoundAsVisible });
-    range.start.protectedDocument()->updateLayoutIgnorePendingStylesheets(findInPageLayoutOptions);
+    range.start.protectedDocument()->updateLayoutIgnorePendingStylesheets();
 
     m_startContainer = range.start.container.ptr();
     m_startOffset = range.start.offset;

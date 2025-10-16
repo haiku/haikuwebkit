@@ -374,12 +374,6 @@ FAIL :depth_bias:isAsync=false;topology="point-list" assert_unreached:
   - VALIDATION FAILED: subcase: depthBiasSlopeScale=1
     Validation succeeded unexpectedly.
       at (elided: only 2 shown)
-  - VALIDATION FAILED: subcase: depthBiasClamp=-1
-    Validation succeeded unexpectedly.
-      at (elided: only 2 shown)
-  - VALIDATION FAILED: subcase: depthBiasClamp=1
-    Validation succeeded unexpectedly.
-      at (elided: only 2 shown)
   - INFO: subcase: depthBias=-1
     OK
   - INFO: subcase: depthBias=1
@@ -388,6 +382,12 @@ FAIL :depth_bias:isAsync=false;topology="point-list" assert_unreached:
     OK
   - INFO: subcase: depthBiasSlopeScale=1
     OK
+  - VALIDATION FAILED: subcase: depthBiasClamp=-1
+    Validation succeeded unexpectedly.
+      at (elided: only 2 shown)
+  - VALIDATION FAILED: subcase: depthBiasClamp=1
+    Validation succeeded unexpectedly.
+      at (elided: only 2 shown)
   - INFO: subcase: depthBiasClamp=-1
     OK
   - INFO: subcase: depthBiasClamp=1
@@ -423,9 +423,6 @@ FAIL :depth_bias:isAsync=false;topology="line-list" assert_unreached:
   - VALIDATION FAILED: subcase: depthBiasClamp=-1
     Validation succeeded unexpectedly.
       at (elided: only 2 shown)
-  - VALIDATION FAILED: subcase: depthBiasClamp=1
-    Validation succeeded unexpectedly.
-      at (elided: only 2 shown)
   - INFO: subcase: depthBias=-1
     OK
   - INFO: subcase: depthBias=1
@@ -436,6 +433,9 @@ FAIL :depth_bias:isAsync=false;topology="line-list" assert_unreached:
     OK
   - INFO: subcase: depthBiasClamp=-1
     OK
+  - VALIDATION FAILED: subcase: depthBiasClamp=1
+    Validation succeeded unexpectedly.
+      at (elided: only 2 shown)
   - INFO: subcase: depthBiasClamp=1
     OK
  Reached unreachable code
@@ -454,6 +454,8 @@ FAIL :depth_bias:isAsync=false;topology="line-strip" assert_unreached:
     expectValidationError@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:1310:36
     doCreateRenderPipelineTest@http://127.0.0.1:8000/webgpu/webgpu/api/validation/validation_test.js:401:35
     @http://127.0.0.1:8000/webgpu/webgpu/api/validation/render_pipeline/depth_stencil_state.spec.js:254:31
+  - INFO: subcase: depthBias=-1
+    OK
   - VALIDATION FAILED: subcase: depthBias=1
     Validation succeeded unexpectedly.
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -469,8 +471,9 @@ FAIL :depth_bias:isAsync=false;topology="line-strip" assert_unreached:
   - VALIDATION FAILED: subcase: depthBiasClamp=-1
     Validation succeeded unexpectedly.
       at (elided: only 2 shown)
-  - INFO: subcase: depthBias=-1
-    OK
+  - VALIDATION FAILED: subcase: depthBiasClamp=1
+    Validation succeeded unexpectedly.
+      at (elided: only 2 shown)
   - INFO: subcase: depthBias=1
     OK
   - INFO: subcase: depthBiasSlopeScale=-1
@@ -479,9 +482,6 @@ FAIL :depth_bias:isAsync=false;topology="line-strip" assert_unreached:
     OK
   - INFO: subcase: depthBiasClamp=-1
     OK
-  - VALIDATION FAILED: subcase: depthBiasClamp=1
-    Validation succeeded unexpectedly.
-      at (elided: only 2 shown)
   - INFO: subcase: depthBiasClamp=1
     OK
  Reached unreachable code
@@ -506,12 +506,6 @@ FAIL :depth_bias:isAsync=true;topology="point-list" assert_unreached:
   - EXPECTATION FAILED: subcase: depthBiasSlopeScale=1
     DID NOT REJECT
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: depthBiasClamp=-1
-    DID NOT REJECT
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: depthBiasClamp=1
-    DID NOT REJECT
-      at (elided: only 2 shown)
   - INFO: subcase:
     OK
   - INFO: subcase: depthBias=-1
@@ -526,6 +520,12 @@ FAIL :depth_bias:isAsync=true;topology="point-list" assert_unreached:
     OK
   - INFO: subcase: depthBiasSlopeScale=1
     OK
+  - EXPECTATION FAILED: subcase: depthBiasClamp=-1
+    DID NOT REJECT
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: depthBiasClamp=1
+    DID NOT REJECT
+      at (elided: only 2 shown)
   - INFO: subcase: depthBiasClamp=-1
     OK
   - INFO: subcase: depthBiasClamp=0
@@ -534,8 +534,6 @@ FAIL :depth_bias:isAsync=true;topology="point-list" assert_unreached:
     OK
  Reached unreachable code
 FAIL :depth_bias:isAsync=true;topology="line-list" assert_unreached:
-  - INFO: subcase:
-    OK
   - EXPECTATION FAILED: subcase: depthBias=-1
     DID NOT REJECT
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -560,6 +558,8 @@ FAIL :depth_bias:isAsync=true;topology="line-list" assert_unreached:
   - EXPECTATION FAILED: subcase: depthBiasClamp=1
     DID NOT REJECT
       at (elided: only 2 shown)
+  - INFO: subcase:
+    OK
   - INFO: subcase: depthBias=-1
     OK
   - INFO: subcase: depthBias=0
@@ -586,6 +586,12 @@ FAIL :depth_bias:isAsync=true;topology="line-strip" assert_unreached:
     shouldReject@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:297:34
     doCreateRenderPipelineTest@http://127.0.0.1:8000/webgpu/webgpu/api/validation/validation_test.js:397:26
     @http://127.0.0.1:8000/webgpu/webgpu/api/validation/render_pipeline/depth_stencil_state.spec.js:254:31
+  - INFO: subcase:
+    OK
+  - INFO: subcase: depthBias=-1
+    OK
+  - INFO: subcase: depthBias=0
+    OK
   - EXPECTATION FAILED: subcase: depthBias=1
     DID NOT REJECT
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -595,18 +601,6 @@ FAIL :depth_bias:isAsync=true;topology="line-strip" assert_unreached:
   - EXPECTATION FAILED: subcase: depthBiasSlopeScale=-1
     DID NOT REJECT
       at (elided: only 2 shown)
-  - INFO: subcase:
-    OK
-  - INFO: subcase: depthBias=-1
-    OK
-  - INFO: subcase: depthBias=0
-    OK
-  - INFO: subcase: depthBias=1
-    OK
-  - INFO: subcase: depthBiasSlopeScale=-1
-    OK
-  - INFO: subcase: depthBiasSlopeScale=0
-    OK
   - EXPECTATION FAILED: subcase: depthBiasSlopeScale=1
     DID NOT REJECT
       at (elided: only 2 shown)
@@ -616,6 +610,12 @@ FAIL :depth_bias:isAsync=true;topology="line-strip" assert_unreached:
   - EXPECTATION FAILED: subcase: depthBiasClamp=1
     DID NOT REJECT
       at (elided: only 2 shown)
+  - INFO: subcase: depthBias=1
+    OK
+  - INFO: subcase: depthBiasSlopeScale=-1
+    OK
+  - INFO: subcase: depthBiasSlopeScale=0
+    OK
   - INFO: subcase: depthBiasSlopeScale=1
     OK
   - INFO: subcase: depthBiasClamp=-1

@@ -28,6 +28,7 @@
 #include <initializer_list>
 #include <limits>
 #include <optional>
+#include <type_traits>
 #include <wtf/EnumTraits.h>
 
 namespace WTF {
@@ -348,6 +349,17 @@ enum class FillBox : uint8_t {
     NoClip
 };
 
+constexpr inline FillBox clipMax(FillBox clipA, FillBox clipB)
+{
+    if (clipA == FillBox::BorderBox || clipB == FillBox::BorderBox)
+        return FillBox::BorderBox;
+    if (clipA == FillBox::PaddingBox || clipB == FillBox::PaddingBox)
+        return FillBox::PaddingBox;
+    if (clipA == FillBox::ContentBox || clipB == FillBox::ContentBox)
+        return FillBox::ContentBox;
+    return FillBox::NoClip;
+}
+
 enum class FillRepeat : uint8_t {
     Repeat,
     NoRepeat,
@@ -655,15 +667,6 @@ enum class TextTransform : uint8_t {
 };
 constexpr auto maxTextTransformValue = TextTransform::FullWidth;
 
-enum class TextDecorationLine : uint8_t {
-    Underline     = 1 << 0,
-    Overline      = 1 << 1,
-    LineThrough   = 1 << 2,
-    Blink         = 1 << 3,
-    SpellingError = 1 << 4
-};
-constexpr auto maxTextDecorationLineValue = TextDecorationLine::SpellingError;
-
 enum class TextDecorationStyle : uint8_t {
     Solid,
     Double,
@@ -905,11 +908,6 @@ enum class TransformBox : uint8_t {
     BorderBox,
     FillBox,
     ViewBox
-};
-
-enum class LineClamp : bool {
-    LineCount,
-    Percentage
 };
 
 enum class OverflowContinue : bool {
@@ -1341,7 +1339,6 @@ WTF::TextStream& operator<<(WTF::TextStream&, TableLayoutType);
 WTF::TextStream& operator<<(WTF::TextStream&, TextAlignMode);
 WTF::TextStream& operator<<(WTF::TextStream&, TextAlignLast);
 WTF::TextStream& operator<<(WTF::TextStream&, TextCombine);
-WTF::TextStream& operator<<(WTF::TextStream&, TextDecorationLine);
 WTF::TextStream& operator<<(WTF::TextStream&, TextDecorationSkipInk);
 WTF::TextStream& operator<<(WTF::TextStream&, TextDecorationStyle);
 WTF::TextStream& operator<<(WTF::TextStream&, TextEmphasisFill);

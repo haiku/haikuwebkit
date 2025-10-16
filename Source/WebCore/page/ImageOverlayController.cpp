@@ -38,6 +38,7 @@
 #include "ImageOverlay.h"
 #include "IntRect.h"
 #include "LayoutRect.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrame.h"
 #include "Page.h"
 #include "PageOverlayController.h"

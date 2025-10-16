@@ -42,8 +42,12 @@
 #include <wtf/Unexpected.h>
 #include <wtf/WallTime.h>
 
+#if OS(ANDROID)
+#include "ArgumentCodersAndroid.h"
+#endif
 #if USE(GLIB)
 #include "ArgumentCodersGlib.h"
+#include "RendererBufferFormat.h"
 #endif
 #if USE(UNIX_DOMAIN_SOCKETS)
 #include "ArgumentCodersUnix.h"

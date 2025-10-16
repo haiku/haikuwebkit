@@ -26,6 +26,7 @@
 #pragma once
 
 #include <JavaScriptCore/DataView.h>
+#include <WebCore/PlatformExportMacros.h>
 #include <WebCore/SharedBuffer.h>
 #include <wtf/EnumTraits.h>
 #include <wtf/text/StringView.h>

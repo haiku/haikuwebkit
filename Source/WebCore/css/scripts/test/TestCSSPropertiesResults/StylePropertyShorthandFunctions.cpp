@@ -12,6 +12,10 @@ StylePropertyShorthand allShorthand()
     static const CSSPropertyID allProperties[] = {
         CSSPropertyID::CSSPropertyTestTopPriority,
         CSSPropertyID::CSSPropertyTestHighPriority,
+        CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary,
+        CSSPropertyID::CSSPropertyTestMediumPriority,
+        CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary,
+        CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter,
         CSSPropertyID::CSSPropertyTestAnimationWrapper,
         CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways,
         CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly,
@@ -171,6 +175,9 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalBlock:
     case CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalInline:
         return StylePropertyShorthandVector{allShorthand(), testShorthandTwoShorthand()};
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
     case CSSPropertyID::CSSPropertyTestAnimationWrapper:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:
@@ -249,6 +256,7 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestMatchOneWithMultipleKeywords:
     case CSSPropertyID::CSSPropertyTestMatchOneWithReferenceWithSettingsFlag:
     case CSSPropertyID::CSSPropertyTestMatchOneWithSettingsFlag:
+    case CSSPropertyID::CSSPropertyTestMediumPriority:
     case CSSPropertyID::CSSPropertyTestNumericValueRange:
     case CSSPropertyID::CSSPropertyTestProperty:
     case CSSPropertyID::CSSPropertyTestSettingsOne:

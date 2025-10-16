@@ -22,6 +22,7 @@
 
 #if ENABLE(WEB_RTC) && USE(GSTREAMER_WEBRTC)
 
+#include "ContextDestructionObserverInlines.h"
 #include "GStreamerDTMFSenderBackend.h"
 #include "GStreamerDtlsTransportBackend.h"
 #include "GStreamerPeerConnectionBackend.h"

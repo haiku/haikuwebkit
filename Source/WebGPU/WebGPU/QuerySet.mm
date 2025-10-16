@@ -149,7 +149,7 @@ void QuerySet::setCommandEncoder(CommandEncoder& commandEncoder) const
         commandEncoder.makeSubmitInvalid();
 }
 
-const QuerySet::CounterSampleBuffer& QuerySet::counterSampleBufferWithOffset() const
+QuerySet::CounterSampleBuffer QuerySet::counterSampleBufferWithOffset() const
 {
     return m_timestampBufferWithOffset;
 }

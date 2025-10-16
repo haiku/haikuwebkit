@@ -37,6 +37,10 @@
 #define SWIFT_ESCAPABLE
 #endif
 
+#ifndef SWIFT_RETURNS_UNRETAINED
+#define SWIFT_RETURNS_UNRETAINED
+#endif
+
 #ifndef SWIFT_ESCAPABLE_IF
 #define SWIFT_ESCAPABLE_IF(...)
 #endif

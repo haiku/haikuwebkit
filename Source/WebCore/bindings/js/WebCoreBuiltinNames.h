@@ -751,6 +751,7 @@ namespace WebCore {
     macro(underlyingByteSource) \
     macro(underlyingSink) \
     macro(underlyingSource) \
+    macro(utils) \
     macro(view) \
     macro(visualViewport) \
     macro(webkit) \

@@ -108,6 +108,15 @@ template<typename T> inline bool Weak<T>::was(T* other) const
     return static_cast<T*>(m_impl->jsValue().asCell()) == other;
 }
 
+template<typename T> inline void Weak<T>::clear()
+{
+    auto* pointer = impl();
+    if (!pointer)
+        return;
+    pointer->clear();
+    m_impl = nullptr;
+}
+
 template<typename T> inline bool Weak<T>::operator!() const
 {
     auto* pointer = impl();

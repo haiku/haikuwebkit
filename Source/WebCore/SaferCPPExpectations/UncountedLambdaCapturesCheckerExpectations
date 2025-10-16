@@ -24,7 +24,6 @@ Modules/webcodecs/WebCodecsVideoEncoder.cpp
 Modules/webdatabase/DatabaseThread.cpp
 Modules/webdatabase/SQLCallbackWrapper.h
 accessibility/AccessibilityScrollView.cpp
-accessibility/AccessibilityTable.cpp
 accessibility/isolatedtree/AXIsolatedObject.cpp
 accessibility/isolatedtree/AXIsolatedObject.h
 accessibility/isolatedtree/AXIsolatedTree.cpp
@@ -38,12 +37,9 @@ css/CSSPendingSubstitutionValue.cpp
 css/CSSValue.cpp
 css/CSSVariableReferenceValue.cpp
 css/StyleRule.cpp
-dom/BroadcastChannel.cpp
 dom/ContentVisibilityDocumentState.cpp
 dom/CustomElementDefaultARIA.cpp
-dom/Document.cpp
 dom/RejectedPromiseTracker.cpp
-dom/Subscriber.cpp
 editing/Editor.cpp
 html/FormAssociatedCustomElement.cpp
 html/track/TrackBase.cpp
@@ -100,6 +96,7 @@ rendering/updating/RenderTreeUpdater.cpp
 style/StyleCustomProperty.cpp
 style/Styleable.cpp
 style/values/StyleValueTypes.h
+style/values/backgrounds/StyleFillLayers.h
 style/values/images/StyleGradient.cpp
 testing/MockMediaSessionCoordinator.cpp
 workers/Worker.cpp

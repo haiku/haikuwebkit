@@ -482,7 +482,9 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/mediacapabilities/VideoConfiguration.idl
     Modules/mediacapabilities/WorkerNavigator+MediaCapabilities.idl
 
+    Modules/mediacontrols/DOMWindow+MediaControls.idl
     Modules/mediacontrols/MediaControlsHost.idl
+    Modules/mediacontrols/MediaControlsUtils.idl
 
     Modules/mediarecorder/BlobEvent.idl
     Modules/mediarecorder/MediaRecorder.idl
@@ -552,6 +554,7 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/mediastream/RTCDtlsTransport.idl
     Modules/mediastream/RTCDtlsTransportState.idl
     Modules/mediastream/RTCEncodedAudioFrame.idl
+    Modules/mediastream/RTCEncodedStreams.idl
     Modules/mediastream/RTCEncodedVideoFrame.idl
     Modules/mediastream/RTCError.idl
     Modules/mediastream/RTCErrorDetailType.idl

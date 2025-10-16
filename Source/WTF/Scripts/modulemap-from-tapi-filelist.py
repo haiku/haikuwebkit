@@ -83,7 +83,7 @@ for module_name, paths in itertools.groupby(
         sys.stdout.write(indent)
         if path in config['textual-headers']:
             sys.stdout.write('textual ')
-        sys.stdout.write(f'header "{path}"\n')
+        sys.stdout.write(f'header "{path}"\nexport *\n')
     if in_submodule:
         sys.stdout.write('    }\n')
 

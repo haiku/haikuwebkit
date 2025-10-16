@@ -62,7 +62,7 @@ static_assert(sizeof(RuleData) == sizeof(SameSizeAsRuleData), "RuleData should s
 
 static inline MatchBasedOnRuleHash computeMatchBasedOnRuleHash(const CSSSelector& selector)
 {
-    if (selector.tagHistory())
+    if (selector.precedingInComplexSelector())
         return MatchBasedOnRuleHash::None;
 
     if (selector.match() == CSSSelector::Match::Tag) {
@@ -100,14 +100,14 @@ static bool selectorCanMatchPseudoElement(const CSSSelector& rootSelector)
             }
         }
 
-        selector = selector->tagHistory();
+        selector = selector->precedingInComplexSelector();
     } while (selector);
     return false;
 }
 
 static inline PropertyAllowlist determinePropertyAllowlist(const CSSSelector* selector)
 {
-    for (const CSSSelector* component = selector; component; component = component->tagHistory()) {
+    for (const CSSSelector* component = selector; component; component = component->precedingInComplexSelector()) {
 #if ENABLE(VIDEO)
         // Property allow-list for `::cue`:
         if (component->match() == CSSSelector::Match::PseudoElement && component->pseudoElement() == CSSSelector::PseudoElement::UserAgentPart && component->value() == UserAgentParts::cue())

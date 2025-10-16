@@ -515,7 +515,7 @@ std::optional<InteractionRegion> interactionRegionForRenderedRegion(RenderObject
             }();
         } else if (regionRenderer.style().hasBackgroundImage()) {
             isPhoto = [&]() -> bool {
-                auto* backgroundImage = regionRenderer.style().backgroundLayers().image();
+                RefPtr backgroundImage = regionRenderer.style().backgroundLayers().first().image().tryStyleImage();
                 if (!backgroundImage || !backgroundImage->cachedImage())
                     return false;
 

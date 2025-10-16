@@ -245,9 +245,7 @@ def test_touch_pointer_properties(driver, pages):
         width=23, height=31, pressure=0.78, tilt_x=21, tilt_y=-8, twist=355
     ).move_to(
         pointerArea, x=10, y=10, width=39, height=35, pressure=0.91, tilt_x=-19, tilt_y=62, twist=345
-    ).pointer_up().move_to(
-        pointerArea, x=15, y=15
-    )
+    ).pointer_up().move_to(pointerArea, x=15, y=15)
     touch_chain.perform()
     events = _get_events(driver)
     assert len(events) == 7

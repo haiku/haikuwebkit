@@ -755,7 +755,7 @@ public:
     void setActiveOpenPanelResultListener(Ref<WebOpenPanelResultListener>&&);
 
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
-    bool didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&) override;
+    void didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&) override;
 
     // -- InjectedBundle methods
 #if ENABLE(CONTEXT_MENUS)
@@ -841,7 +841,7 @@ public:
 #endif
 #endif // PLATFORM(MAC)
 
-    void screenPropertiesDidChange();
+    void screenPropertiesDidChange(bool affectsStyle = true);
 
     // FIXME(site-isolation): Calls to these should be removed in favour of setting via WebPageProxy.
     void scalePage(double scale, const WebCore::IntPoint& origin);
@@ -1245,6 +1245,7 @@ public:
     void setIsolatedTree(Ref<WebCore::AXIsolatedTree>&&);
 #endif
     NSObject *accessibilityObjectForMainFramePlugin();
+    bool shouldFallbackToWebContentAXObjectForMainFramePlugin() const;
     const WebCore::FloatPoint& accessibilityPosition() const { return m_accessibilityPosition; }
 
     void setTextAsync(const String&);
@@ -2019,6 +2020,8 @@ public:
 
     WebHistoryItemClient& historyItemClient() const { return m_historyItemClient.get(); }
 
+    const String& overrideReferrerForAllRequests() const { return m_overrideReferrerForAllRequests; }
+
     bool isAlwaysOnLoggingAllowed() const;
 
     void callAfterPendingSyntheticClick(CompletionHandler<void(WebCore::SyntheticClickResult)>&&);
@@ -2585,7 +2588,7 @@ private:
     void requestAllTargetableElements(float, CompletionHandler<void(Vector<Vector<WebCore::TargetedElementInfo>>&&)>&&);
 
     void requestTextExtraction(WebCore::TextExtraction::Request&&, CompletionHandler<void(WebCore::TextExtraction::Item&&)>&&);
-    void handleTextExtractionInteraction(WebCore::TextExtraction::Interaction&&, CompletionHandler<void(bool)>&&);
+    void handleTextExtractionInteraction(WebCore::TextExtraction::Interaction&&, CompletionHandler<void(bool, String&&)>&&);
 
 #if HAVE(SANDBOX_STATE_FLAGS)
     static void setHasLaunchedWebContentProcess();
@@ -3102,6 +3105,7 @@ private:
     bool m_textManipulationIncludesSubframes { false };
 
     Vector<String> m_corsDisablingPatterns;
+    const String m_overrideReferrerForAllRequests;
 
     std::unique_ptr<WebCore::CachedPage> m_cachedPage;
 

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "ScriptExecutionContextIdentifier.h"
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <span>
 #include <wtf/Function.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
@@ -71,7 +71,7 @@ private:
 
     size_t m_currentElementIndex { 0 };
     const Ref<WorkQueue> m_fileQueue;
-    std::unique_ptr<BlobLoader> m_blobLoader;
+    RefPtr<BlobLoader> m_blobLoader;
     bool m_isReadingFile { false };
 };
 

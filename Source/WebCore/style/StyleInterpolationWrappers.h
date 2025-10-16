@@ -1349,6 +1349,7 @@ public:
 // MARK: - FillLayer Wrappers
 
 // Wrapper base class for an animatable property in a FillLayer
+template<typename FillLayerType>
 class FillLayerWrapperBase {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerWrapperBase, Animation);
 public:
@@ -1360,296 +1361,156 @@ public:
 
     CSSPropertyID property() const { return m_property; }
 
-    virtual bool equals(const FillLayer*, const FillLayer*) const = 0;
-    virtual void interpolate(FillLayer*, const FillLayer*, const FillLayer*, const Context&) const = 0;
-    virtual bool canInterpolate(const FillLayer*, const FillLayer*) const { return true; }
+    virtual bool equals(const FillLayerType&, const FillLayerType&) const = 0;
+    virtual void interpolate(FillLayerType&, const FillLayerType&, const FillLayerType&, const Context&) const = 0;
+    virtual bool canInterpolate(const FillLayerType&, const FillLayerType&) const { return true; }
 #if !LOG_DISABLED
-    virtual void log(const FillLayer* destination, const FillLayer*, const FillLayer*, double) const = 0;
+    virtual void log(const FillLayerType& destination, const FillLayerType&, const FillLayerType&, double) const = 0;
 #endif
 
 private:
     CSSPropertyID m_property;
 };
 
-template<typename T>
-class FillLayerWrapperWithGetter : public FillLayerWrapperBase {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerWrapperWithGetter, Animation);
-    WTF_MAKE_NONCOPYABLE(FillLayerWrapperWithGetter);
-public:
-    FillLayerWrapperWithGetter(CSSPropertyID property, T (FillLayer::*getter)() const)
-        : FillLayerWrapperBase(property)
-        , m_getter(getter)
-    {
-    }
-
-protected:
-    bool equals(const FillLayer* a, const FillLayer* b) const override
-    {
-        if (a == b)
-            return true;
-        if (!a || !b)
-            return false;
-        return value(a) == value(b);
-    }
-
-    T value(const FillLayer* layer) const
-    {
-        return (layer->*m_getter)();
-    }
-
-#if !LOG_DISABLED
-    void log(const FillLayer* destination, const FillLayer* from, const FillLayer* to, double progress) const override
-    {
-        LOG_WITH_STREAM(Animations, stream << "  blending " << property() << " from " << value(from) << " to " << value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << value(destination));
-    }
-#endif
-
-private:
-    T (FillLayer::*m_getter)() const;
-};
-
-template<typename T>
-class FillLayerWrapper final : public FillLayerWrapperWithGetter<const T&> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerWrapper, Animation);
-public:
-    FillLayerWrapper(CSSPropertyID property, const T& (FillLayer::*getter)() const, void (FillLayer::*setter)(T))
-        : FillLayerWrapperWithGetter<const T&>(property, getter)
-        , m_setter(setter)
-    {
-    }
-
-private:
-    void interpolate(FillLayer* destination, const FillLayer* from, const FillLayer* to, const Context& context) const final
-    {
-        (destination->*this->m_setter)(blendFunc(this->value(from), this->value(to), context));
-    }
-
-    bool canInterpolate(const FillLayer* from, const FillLayer* to) const final
-    {
-        return canInterpolateLengthVariants(this->value(from), this->value(to));
-    }
-
-#if !LOG_DISABLED
-    void log(const FillLayer* destination, const FillLayer* from, const FillLayer* to, double progress) const final
-    {
-        LOG_WITH_STREAM(Animations, stream << "  blending " << FillLayerWrapperWithGetter<const T&>::property()
-            << " from " << FillLayerWrapperWithGetter<const T&>::value(from)
-            << " to " << FillLayerWrapperWithGetter<const T&>::value(to)
-            << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << FillLayerWrapperWithGetter<const T&>::value(destination));
-    }
-#endif
-
-    void (FillLayer::*m_setter)(T);
-};
-
-template<typename StyleType>
-class FillLayerStyleTypeWrapper final : public FillLayerWrapperBase {
+template<typename StyleType, typename FillLayerType>
+class FillLayerStyleTypeWrapper final : public FillLayerWrapperBase<FillLayerType> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerStyleTypeWrapper, Animation);
 public:
-    FillLayerStyleTypeWrapper(CSSPropertyID property, const StyleType& (FillLayer::*getter)() const, void (FillLayer::*setter)(StyleType&&))
-        : FillLayerWrapperBase(property)
+    FillLayerStyleTypeWrapper(CSSPropertyID property, const StyleType& (FillLayerType::*getter)() const, void (FillLayerType::*setter)(StyleType&&))
+        : FillLayerWrapperBase<FillLayerType>(property)
         , m_getter(getter)
         , m_setter(setter)
     {
     }
 
-    bool equals(const FillLayer* from, const FillLayer* to) const override
+    bool equals(const FillLayerType& from, const FillLayerType& to) const override
     {
-        if (from == to)
+        if (&from == &to)
             return true;
-        if (!from || !to)
-            return false;
         return Style::equalsForBlending(value(from), value(to));
     }
 
-    bool canInterpolate(const FillLayer* from, const FillLayer* to) const override final
+    bool canInterpolate(const FillLayerType& from, const FillLayerType& to) const override final
     {
         return Style::canBlend(value(from), value(to));
     }
 
-    void interpolate(FillLayer* destination, const FillLayer* from, const FillLayer* to, const Context& context) const override final
+    void interpolate(FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, const Context& context) const override final
     {
-        (destination->*m_setter)(Style::blend(value(from), value(to), context));
+        (destination.*m_setter)(Style::blend(value(from), value(to), context));
     }
 
 #if !LOG_DISABLED
-    void log(const FillLayer* destination, const FillLayer* from, const FillLayer* to, double progress) const override final
+    void log(const FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, double progress) const override final
     {
-        LOG_WITH_STREAM(Animations, stream << "  blending " << property() << " from " << value(from) << " to " << value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << value(destination));
+        LOG_WITH_STREAM(Animations, stream << "  blending " << this->property() << " from " << value(from) << " to " << value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << value(destination));
     }
 #endif
 
 private:
-    const StyleType& value(const FillLayer* layer) const
+    const StyleType& value(const FillLayerType& layer) const
     {
-        return (layer->*m_getter)();
+        return (layer.*m_getter)();
     }
 
-    const StyleType& (FillLayer::*m_getter)() const;
-    void (FillLayer::*m_setter)(StyleType&&);
+    const StyleType& (FillLayerType::*m_getter)() const;
+    void (FillLayerType::*m_setter)(StyleType&&);
 };
 
-template<typename T>
-class FillLayerRefCountedWrapper : public FillLayerWrapperWithGetter<T*> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerRefCountedWrapper, Animation);
-public:
-    FillLayerRefCountedWrapper(CSSPropertyID property, T* (FillLayer::*getter)() const, void (FillLayer::*setter)(RefPtr<T>&&))
-        : FillLayerWrapperWithGetter<T*>(property, getter)
-        , m_setter(setter)
-    {
-    }
-
-private:
-    void interpolate(FillLayer* destination, const FillLayer* from, const FillLayer* to, const Context& context) const final
-    {
-        (destination->*this->m_setter)(blendFunc(this->value(from), this->value(to), context));
-    }
-
-#if !LOG_DISABLED
-    void log(const FillLayer* destination, const FillLayer* from, const FillLayer* to, double progress) const override
-    {
-        LOG_WITH_STREAM(Animations, stream << "  blending " << FillLayerWrapperWithGetter<T*>::property()
-            << " from " << FillLayerWrapperWithGetter<T*>::value(from)
-            << " to " << FillLayerWrapperWithGetter<T*>::value(to)
-            << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << FillLayerWrapperWithGetter<T*>::value(destination));
-    }
-#endif
-
-    void (FillLayer::*m_setter)(RefPtr<T>&&);
-};
-
-class FillLayerStyleImageWrapper final : public FillLayerRefCountedWrapper<StyleImage> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerStyleImageWrapper, Animation);
-public:
-    FillLayerStyleImageWrapper(CSSPropertyID property, StyleImage* (FillLayer::*getter)() const, void (FillLayer::*setter)(RefPtr<StyleImage>&&))
-        : FillLayerRefCountedWrapper(property, getter, setter)
-    {
-    }
-
-private:
-    bool equals(const FillLayer* a, const FillLayer* b) const final
-    {
-        if (a == b)
-            return true;
-        if (!a || !b)
-            return false;
-        return arePointingToEqualData(value(a), value(b));
-    }
-
-    bool canInterpolate(const FillLayer* from, const FillLayer* to) const final
-    {
-        if (property() == CSSPropertyMaskImage)
-            return false;
-        return value(from) && value(to);
-    }
-
-#if !LOG_DISABLED
-    void log(const FillLayer* destination, const FillLayer* from, const FillLayer* to, double progress) const final
-    {
-        LOG_WITH_STREAM(Animations, stream << "  blending " << property() << " from " << this->value(from) << " to " << this->value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << value(destination));
-    }
-#endif
-};
-
-template<typename T>
-class DiscreteFillLayerWrapper final : public FillLayerWrapperBase {
+template<typename T, typename FillLayerType, typename GetterType = T, typename SetterType = T>
+class DiscreteFillLayerWrapper final : public FillLayerWrapperBase<FillLayerType> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(DiscreteFillLayerWrapper, Animation);
 public:
-    DiscreteFillLayerWrapper(CSSPropertyID property, T (FillLayer::*getter)() const, void (FillLayer::*setter)(T))
-        : FillLayerWrapperBase(property)
+    DiscreteFillLayerWrapper(CSSPropertyID property, GetterType (FillLayerType::*getter)() const, void (FillLayerType::*setter)(SetterType))
+        : FillLayerWrapperBase<FillLayerType>(property)
         , m_getter(getter)
         , m_setter(setter)
     {
     }
 
-private:
-    bool equals(const FillLayer* a, const FillLayer* b) const final
+    bool equals(const FillLayerType& a, const FillLayerType& b) const final
     {
-        return (a->*m_getter)() == (b->*m_getter)();
+        return value(a) == value(b);
     }
 
-    bool canInterpolate(const FillLayer*, const FillLayer*) const final
+    bool canInterpolate(const FillLayerType&, const FillLayerType&) const final
     {
         return false;
     }
 
-    void interpolate(FillLayer* destination, const FillLayer* from, const FillLayer* to, const Context& context) const final
+    void interpolate(FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, const Context& context) const final
     {
         ASSERT(!context.progress || context.progress == 1.0);
-        (destination->*m_setter)(((context.progress ? to : from)->*m_getter)());
+        (destination.*m_setter)(T { context.progress ? value(to) : value(from) });
     }
 
 #if !LOG_DISABLED
-    void log(const FillLayer* destination, const FillLayer* from, const FillLayer* to, double progress) const final
+    void log(const FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, double progress) const final
     {
-        LOG_WITH_STREAM(Animations, stream << "  blending " << property() << " from " << (from->*m_getter)() << " to " << (to->*m_getter)() << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << (destination->*m_getter)());
+        LOG_WITH_STREAM(Animations, stream << "  blending " << this->property() << " from " << value(from) << " to " << value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << value(destination));
     }
 #endif
 
-    T (FillLayer::*m_getter)() const;
-    void (FillLayer::*m_setter)(T);
+private:
+    GetterType value(const FillLayerType& fillLayer) const
+    {
+        return (fillLayer.*m_getter)();
+    }
+
+    GetterType (FillLayerType::*m_getter)() const;
+    void (FillLayerType::*m_setter)(SetterType);
 };
 
+// Deduction guide for getter/setters that return and take values.
+template<typename T, typename FillLayerType>
+DiscreteFillLayerWrapper(CSSPropertyID, T (FillLayerType::*getter)() const, void (FillLayerType::*setter)(T)) -> DiscreteFillLayerWrapper<T, FillLayerType, T, T>;
+
+// Deduction guide for getter/setters that return const references and take r-value references.
+template<typename T, typename FillLayerType>
+DiscreteFillLayerWrapper(CSSPropertyID, const T& (FillLayerType::*getter)() const, void (FillLayerType::*setter)(T&&)) -> DiscreteFillLayerWrapper<T, FillLayerType, const T&, T&&>;
+
+// Deduction guide for getter/setters that return values and take r-value references.
+template<typename T, typename FillLayerType>
+DiscreteFillLayerWrapper(CSSPropertyID, T (FillLayerType::*getter)() const, void (FillLayerType::*setter)(T&&)) -> DiscreteFillLayerWrapper<T, FillLayerType, T, T&&>;
+
+template<typename T, typename RepeatedValueWrapper>
 class FillLayersWrapper final : public WrapperBase {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayersWrapper, Animation);
 public:
-    typedef const FillLayer& (RenderStyle::*LayersGetter)() const;
-    typedef FillLayer& (RenderStyle::*LayersAccessor)();
+    using Layers = T;
+    using Layer = typename Layers::Layer;
 
-    FillLayersWrapper(CSSPropertyID property, LayersGetter getter, LayersAccessor accessor)
+    using LayersGetter = const Layers& (RenderStyle::*)() const;
+    using LayersAccessor = Layers& (RenderStyle::*)();
+    using LayersSetter = void (RenderStyle::*)(Layers&&);
+
+    FillLayersWrapper(CSSPropertyID property, LayersGetter getter, LayersAccessor accessor, LayersSetter setter, RepeatedValueWrapper repeatedValueWrapper)
         : WrapperBase(property)
         , m_layersGetter(getter)
         , m_layersAccessor(accessor)
+        , m_layersSetter(setter)
+        , m_repeatedValueWrapper(repeatedValueWrapper)
     {
-        switch (property) {
-        case CSSPropertyBackgroundPositionX:
-        case CSSPropertyWebkitMaskPositionX:
-            m_fillLayerWrapper = makeUnique<FillLayerStyleTypeWrapper<FillPositionX>>(property, &FillLayer::xPosition, &FillLayer::setXPosition);
-            break;
-        case CSSPropertyBackgroundPositionY:
-        case CSSPropertyWebkitMaskPositionY:
-            m_fillLayerWrapper = makeUnique<FillLayerStyleTypeWrapper<FillPositionY>>(property, &FillLayer::yPosition, &FillLayer::setYPosition);
-            break;
-        case CSSPropertyBackgroundSize:
-        case CSSPropertyWebkitBackgroundSize:
-        case CSSPropertyMaskSize:
-            m_fillLayerWrapper = makeUnique<FillLayerWrapper<LengthSize>>(property, &FillLayer::sizeLength, &FillLayer::setSizeLength);
-            break;
-        case CSSPropertyBackgroundImage:
-        case CSSPropertyMaskImage:
-            m_fillLayerWrapper = makeUnique<FillLayerStyleImageWrapper>(property, &FillLayer::image, &FillLayer::setImage);
-            break;
-        case CSSPropertyMaskClip:
-            m_fillLayerWrapper = makeUnique<DiscreteFillLayerWrapper<FillBox>>(property, &FillLayer::clip, &FillLayer::setClip);
-            break;
-        case CSSPropertyMaskOrigin:
-            m_fillLayerWrapper = makeUnique<DiscreteFillLayerWrapper<FillBox>>(property, &FillLayer::origin, &FillLayer::setOrigin);
-            break;
-        case CSSPropertyMaskComposite:
-            m_fillLayerWrapper = makeUnique<DiscreteFillLayerWrapper<CompositeOperator>>(property, &FillLayer::composite, &FillLayer::setComposite);
-            break;
-        case CSSPropertyMaskMode:
-            m_fillLayerWrapper = makeUnique<DiscreteFillLayerWrapper<MaskMode>>(property, &FillLayer::maskMode, &FillLayer::setMaskMode);
-            break;
-        default:
-            break;
-        }
     }
 
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
+    bool equals(const RenderStyle& from, const RenderStyle& to) const final
     {
-        if (&a == &b)
+        if (&from == &to)
             return true;
 
-        auto* fromLayer = &(a.*m_layersGetter)();
-        auto* toLayer = &(b.*m_layersGetter)();
+        auto& fromLayers = (from.*m_layersGetter)();
+        auto& toLayers = (to.*m_layersGetter)();
 
-        while (fromLayer && toLayer) {
-            if (!m_fillLayerWrapper->equals(fromLayer, toLayer))
+        auto numberOfFromLayers = fromLayers.size();
+        auto numberOfToLayers = toLayers.size();
+        auto numberOfLayers = std::min(numberOfFromLayers, numberOfToLayers);
+
+        for (size_t i = 0; i < numberOfLayers; ++i) {
+            auto& fromLayer = fromLayers[i];
+            auto& toLayer = toLayers[i];
+
+            if (!m_repeatedValueWrapper.equals(fromLayer, toLayer))
                 return false;
-
-            fromLayer = fromLayer->next();
-            toLayer = toLayer->next();
         }
 
         return true;
@@ -1657,18 +1518,22 @@ public:
 
     bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
     {
-        auto* fromLayer = &(from.*m_layersGetter)();
-        auto* toLayer = &(to.*m_layersGetter)();
+        auto& fromLayers = (from.*m_layersGetter)();
+        auto& toLayers = (to.*m_layersGetter)();
 
-        while (fromLayer && toLayer) {
-            if (fromLayer->sizeType() != toLayer->sizeType())
+        auto numberOfFromLayers = fromLayers.size();
+        auto numberOfToLayers = toLayers.size();
+        auto numberOfLayers = std::min(numberOfFromLayers, numberOfToLayers);
+
+        for (size_t i = 0; i < numberOfLayers; ++i) {
+            auto& fromLayer = fromLayers[i];
+            auto& toLayer = toLayers[i];
+
+            if (!fromLayer.size().hasSameType(toLayer.size()))
                 return false;
 
-            if (!m_fillLayerWrapper->canInterpolate(fromLayer, toLayer))
+            if (!m_repeatedValueWrapper.canInterpolate(fromLayer, toLayer))
                 return false;
-
-            fromLayer = fromLayer->next();
-            toLayer = toLayer->next();
         }
 
         return true;
@@ -1676,61 +1541,60 @@ public:
 
     void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
     {
-        auto* fromLayer = &(from.*m_layersGetter)();
-        auto* toLayer = &(to.*m_layersGetter)();
-        auto* dstLayer = &(destination.*m_layersAccessor)();
+        auto* fromLayers = &(from.*m_layersGetter)();
+        auto* toLayers = &(to.*m_layersGetter)();
+        auto& destinationLayers = (destination.*m_layersAccessor)();
 
         if (context.isDiscrete) {
             ASSERT(!context.progress || context.progress == 1.0);
-            auto* layer = context.progress ? toLayer : fromLayer;
-            fromLayer = layer;
-            toLayer = layer;
+            auto* layers = context.progress ? toLayers : fromLayers;
+            fromLayers = layers;
+            toLayers = layers;
         }
 
-        size_t layerCount = 0;
-        Vector<FillLayer*> previousDstLayers;
-        FillLayer* previousDstLayer = nullptr;
-        while (fromLayer && toLayer) {
-            if (dstLayer)
-                previousDstLayers.append(dstLayer);
-            else {
-                ASSERT(!previousDstLayers.isEmpty());
-                auto* layerToCopy = previousDstLayers[layerCount % previousDstLayers.size()];
-                previousDstLayer->setNext(layerToCopy->copy());
-                dstLayer = previousDstLayer->next();
-            }
+        auto numberOfFromLayers = fromLayers->size();
+        auto numberOfToLayers = toLayers->size();
+        auto numberOfDestinationLayers = destinationLayers.size();
+        auto numberOfLayers = std::min(numberOfFromLayers, numberOfToLayers);
 
-            dstLayer->setSizeType((context.progress ? toLayer : fromLayer)->sizeType());
-            m_fillLayerWrapper->interpolate(dstLayer, fromLayer, toLayer, context);
-            fromLayer = fromLayer->next();
-            toLayer = toLayer->next();
-
-            previousDstLayer = dstLayer;
-            dstLayer = dstLayer->next();
-            layerCount++;
+        if (numberOfLayers > numberOfDestinationLayers) {
+            (destination.*m_layersSetter)(
+                Layers {
+                    Layers::Container::createWithSizeFromGenerator(numberOfLayers, [&](const auto& i) {
+                        auto destinationLayer = destinationLayers[i % numberOfDestinationLayers];
+                        m_repeatedValueWrapper.interpolate(destinationLayer, (*fromLayers)[i], (*toLayers)[i], context);
+                        return destinationLayer;
+                    })
+                }
+            );
+        } else {
+            for (size_t i = 0; i < numberOfLayers; ++i)
+                m_repeatedValueWrapper.interpolate(destinationLayers[i], (*fromLayers)[i], (*toLayers)[i], context);
         }
     }
 
 #if !LOG_DISABLED
     void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const final
     {
-        auto* fromLayer = &(from.*m_layersGetter)();
-        auto* toLayer = &(to.*m_layersGetter)();
-        auto* dstLayer = &(destination.*m_layersGetter)();
+        auto& fromLayers = (from.*m_layersGetter)();
+        auto& toLayers = (to.*m_layersGetter)();
+        auto& destinationLayers = (destination.*m_layersGetter)();
 
-        while (fromLayer && toLayer && dstLayer) {
-            m_fillLayerWrapper->log(dstLayer, fromLayer, toLayer, progress);
-            fromLayer = fromLayer->next();
-            toLayer = toLayer->next();
-            dstLayer = dstLayer->next();
-        }
+        auto numberOfFromLayers = fromLayers.size();
+        auto numberOfToLayers = toLayers.size();
+        auto numberOfDestinationLayers = destinationLayers.size();
+        auto numberOfLayers = std::min({numberOfFromLayers, numberOfToLayers, numberOfDestinationLayers});
+
+        for (size_t i = 0; i < numberOfLayers; ++i)
+            m_repeatedValueWrapper.log(destinationLayers[i], fromLayers[i], toLayers[i], progress);
     }
 #endif
 
 private:
-    std::unique_ptr<FillLayerWrapperBase> m_fillLayerWrapper;
     LayersGetter m_layersGetter;
     LayersAccessor m_layersAccessor;
+    LayersSetter m_layersSetter;
+    RepeatedValueWrapper m_repeatedValueWrapper;
 };
 
 // MARK: - Shorthand Wrapper

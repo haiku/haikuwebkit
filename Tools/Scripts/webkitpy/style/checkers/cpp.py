@@ -1526,13 +1526,14 @@ def check_for_non_standard_constructs(clean_lines, line_number,
     # For the rest, work with both comments and strings removed.
     line = clean_lines.elided[line_number]
 
-    if search(r'\b(const|volatile|void|char|short|int|long'
+    if search(r'\b(const|constexpr|constinit|consteval|volatile|'
+              r'void|char|short|int|long'
               r'|float|double|signed|unsigned'
               r'|schar|u?int8|u?int16|u?int32|u?int64)'
-              r'\s+(auto|register|static|extern|typedef)\b',
+              r'\s+(static|extern|typedef|register)\b',
               line):
         error(line_number, 'build/storage_class', 5,
-              'Storage class (static, extern, typedef, etc) should be first.')
+              'Storage class (static, extern, typedef, register) should be first.')
 
     if match(r'\s*#\s*endif\s*[^/\s]+', line):
         error(line_number, 'build/endif_comment', 5,

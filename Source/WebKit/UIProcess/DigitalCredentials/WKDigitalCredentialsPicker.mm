@@ -401,7 +401,7 @@ static RetainPtr<NSArray<NSArray<WKIdentityDocumentPresentmentRequestAuthenticat
         exceptionData = { ExceptionCode::AbortError, "Request was cancelled."_s };
         break;
     default:
-        LOG(DigitalCredentials, "The error code was not in the case statement? %d.", error.code);
+        LOG(DigitalCredentials, "The error code was not in the case statement? %zd.", error.code);
         exceptionData = { ExceptionCode::UnknownError, "Some other error."_s };
         RetainPtr debugDescription = error.userInfo[NSDebugDescriptionErrorKey] ?: error.userInfo[NSLocalizedDescriptionKey];
         LOG(DigitalCredentials, "Internal error: %@", debugDescription ? debugDescription.get() : @"Unknown error with no description.");

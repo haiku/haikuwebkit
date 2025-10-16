@@ -317,6 +317,21 @@ TEST(ObscuredContentInsets, TopScrollPocketKVO)
     EXPECT_EQ([observer changeCount], 2u);
 }
 
+TEST(ObscuredContentInsets, NonObscuredTopContentInset)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 600, 400)]);
+    EXPECT_NULL([webView _topScrollPocket]);
+
+    [webView _setTopContentInset:50];
+    [webView waitForNextPresentationUpdate];
+    [webView synchronouslyLoadTestPageNamed:@"top-fixed-element"];
+    EXPECT_NULL([webView _topScrollPocket]);
+
+    [webView _setOverrideTopScrollEdgeEffectColor:NSColor.redColor];
+    [webView waitForNextPresentationUpdate];
+    EXPECT_NOT_NULL([webView _topScrollPocket]);
+}
+
 TEST(ObscuredContentInsets, AdjustedColorForTopContentInsetColor)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 600, 400)]);

@@ -133,12 +133,12 @@ public:
     static const ASCIILiteral nameForUserAgentPartLegacyAlias(StringView);
 
     // Selectors are kept in an array by CSSSelectorList.
-    // The next component of the selector is the next item in the array.
+    // The left component of the selector is the next item in the array.
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    const CSSSelector* tagHistory() const { return m_isLastInTagHistory ? nullptr : this + 1; }
+    const CSSSelector* precedingInComplexSelector() const { return m_isFirstInComplexSelector ? nullptr : this + 1; }
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-    const CSSSelector* firstInCompound() const;
+    const CSSSelector* lastInCompound() const;
 
     const QualifiedName& tagQName() const;
     const AtomString& tagLowercaseLocalName() const;
@@ -174,8 +174,8 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     Match match() const { return static_cast<Match>(m_match); }
 
     bool isLastInSelectorList() const { return m_isLastInSelectorList; }
-    bool isFirstInTagHistory() const { return m_isFirstInTagHistory; }
-    bool isLastInTagHistory() const { return m_isLastInTagHistory; }
+    bool isFirstInComplexSelector() const { return m_isFirstInComplexSelector; }
+    bool isLastInComplexSelector() const { return m_isLastInComplexSelector; }
 
     // FIXME: This should ideally be private, but StyleRule uses it.
     void setLastInSelectorList() { m_isLastInSelectorList = true; }
@@ -217,8 +217,11 @@ private:
     mutable unsigned m_pseudoType : 8 { 0 }; // PseudoType.
     // 17 bits
     unsigned m_isLastInSelectorList : 1 { false };
-    unsigned m_isFirstInTagHistory : 1 { true };
-    unsigned m_isLastInTagHistory : 1 { true };
+
+    // These are in logical order, which is reversed from the memory order.
+    unsigned m_isFirstInComplexSelector : 1 { true };
+    unsigned m_isLastInComplexSelector : 1 { true };
+
     unsigned m_hasRareData : 1 { false };
     unsigned m_isForPage : 1 { false };
     unsigned m_tagIsForNamespaceRule : 1 { false };

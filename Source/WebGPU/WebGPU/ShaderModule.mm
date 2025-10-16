@@ -1118,6 +1118,8 @@ String wgpuAdapterFeatureName(WGPUFeatureName feature)
         return "float32-renderable"_s;
     case WGPUFeatureName_CoreFeaturesAndLimits:
         return "core-features-and-limits"_s;
+    case WGPUFeatureName_TextureFormatsTier1:
+        return "texture-formats-tier1"_s;
     case WGPUFeatureName_Force32:
         return emptyString();
     }

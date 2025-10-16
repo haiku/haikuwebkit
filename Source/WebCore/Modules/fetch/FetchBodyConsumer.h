@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <WebCore/FetchBodySource.h>
+#include "FetchBodySource.h"
 #include "FormDataConsumer.h"
 #include <WebCore/JSDOMPromiseDeferredForward.h>
 #include <WebCore/ReadableStreamSink.h>
@@ -45,7 +45,7 @@ class FetchBodySource;
 class FormData;
 class ReadableStream;
 
-class FetchBodyConsumer final : public CanMakeCheckedPtr<FetchBodyConsumer> {
+class FetchBodyConsumer final : public CanMakeWeakPtr<FetchBodyConsumer>, public CanMakeCheckedPtr<FetchBodyConsumer> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(FetchBodyConsumer);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FetchBodyConsumer);
 public:

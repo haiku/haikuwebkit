@@ -81,8 +81,10 @@ void GPUQueue::submit(Vector<Ref<GPUCommandBuffer>>&& commandBuffers)
     m_backing->submit(WTFMove(result));
 
     if (RefPtr device = m_device.get()) {
-        for (Ref commandBuffer : commandBuffers)
+        for (Ref commandBuffer : commandBuffers) {
+            commandBuffer->setOverrideLabel(commandBuffer->label());
             commandBuffer->setBacking(device->invalidCommandEncoder(), device->invalidCommandBuffer());
+        }
     }
 }
 
@@ -255,6 +257,8 @@ static PixelFormat toPixelFormat(GPUTextureFormat textureFormat)
     case GPUTextureFormat::R8snorm:
     case GPUTextureFormat::R8uint:
     case GPUTextureFormat::R8sint:
+    case GPUTextureFormat::R16unorm:
+    case GPUTextureFormat::R16snorm:
     case GPUTextureFormat::R16uint:
     case GPUTextureFormat::R16sint:
     case GPUTextureFormat::R16float:
@@ -265,6 +269,8 @@ static PixelFormat toPixelFormat(GPUTextureFormat textureFormat)
     case GPUTextureFormat::R32uint:
     case GPUTextureFormat::R32sint:
     case GPUTextureFormat::R32float:
+    case GPUTextureFormat::Rg16unorm:
+    case GPUTextureFormat::Rg16snorm:
     case GPUTextureFormat::Rg16uint:
     case GPUTextureFormat::Rg16sint:
     case GPUTextureFormat::Rg16float:
@@ -286,6 +292,8 @@ static PixelFormat toPixelFormat(GPUTextureFormat textureFormat)
     case GPUTextureFormat::Rg32uint:
     case GPUTextureFormat::Rg32sint:
     case GPUTextureFormat::Rg32float:
+    case GPUTextureFormat::Rgba16unorm:
+    case GPUTextureFormat::Rgba16snorm:
     case GPUTextureFormat::Rgba16uint:
     case GPUTextureFormat::Rgba16sint:
     case GPUTextureFormat::Rgba16float:
@@ -411,6 +419,25 @@ static void getImageBytesFromVideoFrame(WebGPU::Queue& backing, const RefPtr<Vid
 }
 #endif
 
+#if PLATFORM(COCOA) && ENABLE(VIDEO) && ENABLE(WEB_CODECS)
+static void clipTo8bitsPerChannel(std::span<const uint8_t> data, size_t bitsPerComponent, Vector<uint8_t>& byteSpanBacking)
+{
+    RELEASE_ASSERT(bitsPerComponent != 8);
+
+    if (bitsPerComponent == 16) {
+        byteSpanBacking.resize(data.size() / 2);
+        auto uint16Span = unsafeMakeSpan(static_cast<const uint16_t*>(static_cast<const void*>(data.data())), byteSpanBacking.size());
+        for (size_t i = 0; i < uint16Span.size(); ++i)
+            byteSpanBacking[i] = std::min<uint8_t>(255, uint16Span[i]);
+    } else if (bitsPerComponent == 32) {
+        byteSpanBacking.resize(data.size() / 4);
+        auto uint32Span = unsafeMakeSpan(static_cast<const uint32_t*>(static_cast<const void*>(data.data())), byteSpanBacking.size());
+        for (size_t i = 0; i < uint32Span.size(); ++i)
+            byteSpanBacking[i] = std::min<uint8_t>(255, uint32Span[i]);
+    }
+}
+#endif
+
 static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExternalImage& sourceDescriptor, const GPUImageCopyTextureTagged& destination, bool& needsYFlip, bool& needsPremultipliedAlpha, NOESCAPE const ImageDataCallback& callback)
 {
     UNUSED_PARAM(needsYFlip);
@@ -462,11 +489,20 @@ static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExtern
             return callback({ }, 0, 0);
 
         auto sizeInBytes = height * CGImageGetBytesPerRow(platformImage.get());
+        auto bitsPerComponent = CGImageGetBitsPerComponent(platformImage.get());
         auto byteSpan = span(pixelDataCfData.get());
+        Vector<uint8_t> byteSpanBacking;
+        if (bitsPerComponent != 8) {
+            clipTo8bitsPerChannel(byteSpan, bitsPerComponent, byteSpanBacking);
+            byteSpan = byteSpanBacking.span();
+            sizeInBytes = byteSpan.size();
+        }
+
         auto requiredSize = width * height * 4;
         auto alphaInfo = CGImageGetAlphaInfo(platformImage.get());
         bool channelLayoutIsRGB = false;
         bool isBGRA = toPixelFormat(destination.texture->format()) == PixelFormat::BGRA8;
+        bool hasAlpha = false;
         static constexpr std::array channelsSVG1 { 0, 1, 2, 3 };
         static constexpr std::array channelsSVG2 { 2, 1, 0, 3 };
         static constexpr std::array channelsRGBX { 0, 1, 2, 3 };
@@ -478,17 +514,21 @@ static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExtern
                 return isBGRA ? channelsSVG1 : channelsSVG2;
 
             switch (alphaInfo) {
-            case kCGImageAlphaNone:               /* For example, RGB. */
             case kCGImageAlphaPremultipliedLast:  /* For example, premultiplied RGBA */
             case kCGImageAlphaLast:               /* For example, non-premultiplied RGBA */
+                hasAlpha = true;
+                [[fallthrough]];
+            case kCGImageAlphaNone:               /* For example, RGB. */
             case kCGImageAlphaNoneSkipLast: {     /* For example, RGBX. */
                 channelLayoutIsRGB = true;
                 return isBGRA ? channelsBGRX : channelsRGBX;
             }
             case kCGImageAlphaPremultipliedFirst: /* For example, premultiplied ARGB */
             case kCGImageAlphaFirst:              /* For example, non-premultiplied ARGB */
-            case kCGImageAlphaNoneSkipFirst:      /* For example, XRGB. */
-            case kCGImageAlphaOnly: {             /* No color data, alpha data only */
+            case kCGImageAlphaOnly:               /* No color data, alpha data only */
+                hasAlpha = true;
+                [[fallthrough]];
+            case kCGImageAlphaNoneSkipFirst: {      /* For example, XRGB. */
                 return isBGRA ? channelsXBGR : channelsXRGB;
             }
             }
@@ -497,19 +537,26 @@ static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExtern
         if (sizeInBytes == requiredSize && channelLayoutIsRGB)
             return callback(byteSpan.first(sizeInBytes), width, height);
 
-        auto bytesPerRow = CGImageGetBytesPerRow(platformImage.get());
+        auto bytesPerRow = CGImageGetBytesPerRow(platformImage.get()) / (bitsPerComponent / 8);
         Vector<uint8_t> tempBuffer(requiredSize, 255);
         auto bytesPerPixel = sizeInBytes / (width * height);
-        auto bytesToCopy = std::min<size_t>(4, bytesPerPixel);
         bool flipY = sourceDescriptor.flipY;
         needsYFlip = false;
         int direction = flipY ? -1 : 1;
+        auto maxChannelIndex = bytesPerPixel - 1;
+        auto alphaIndex = 0;
+        if (hasAlpha && maxChannelIndex > 0) {
+            --maxChannelIndex;
+            alphaIndex = 1;
+        }
+
         for (size_t y = 0, y0 = flipY ? (height - 1) : 0; y < height; ++y, y0 += direction) {
             for (size_t x = 0; x < width; ++x) {
-                // FIXME: These pixel values are probably incorrect after only copying 4 if bytesPerPixel is not 4.
-                for (size_t c = 0; c < bytesToCopy; ++c) {
-                    // FIXME: These pixel values are probably incorrect after only copying 4 if bytesPerPixel is not 4.
-                    tempBuffer[y * (width * 4) + x * 4 + channels[c]] = byteSpan[y * bytesPerRow + x * bytesPerPixel + c];
+                for (size_t c = 0; c < 4; ++c) {
+                    if (channels[c] == 3 && bytesPerPixel < 4)
+                        tempBuffer[y0 * (width * 4) + x * 4 + channels[c]] = hasAlpha ? byteSpan[y * bytesPerRow + x * bytesPerPixel + alphaIndex] : 255;
+                    else
+                        tempBuffer[y0 * (width * 4) + x * 4 + channels[c]] = byteSpan[y * bytesPerRow + x * bytesPerPixel + std::min<size_t>(maxChannelIndex, c)];
                 }
             }
         }
@@ -915,6 +962,8 @@ static MallocSpan<uint8_t> copyToDestinationFormat(std::span<const uint8_t> rgba
     case GPUTextureFormat::R8snorm:
     case GPUTextureFormat::R8uint:
     case GPUTextureFormat::R8sint:
+    case GPUTextureFormat::R16unorm:
+    case GPUTextureFormat::R16snorm:
     case GPUTextureFormat::R16uint:
     case GPUTextureFormat::R16sint:
     case GPUTextureFormat::Rg8snorm:
@@ -922,6 +971,8 @@ static MallocSpan<uint8_t> copyToDestinationFormat(std::span<const uint8_t> rgba
     case GPUTextureFormat::Rg8sint:
     case GPUTextureFormat::R32uint:
     case GPUTextureFormat::R32sint:
+    case GPUTextureFormat::Rg16unorm:
+    case GPUTextureFormat::Rg16snorm:
     case GPUTextureFormat::Rg16uint:
     case GPUTextureFormat::Rg16sint:
     case GPUTextureFormat::Rgba32uint:
@@ -934,6 +985,8 @@ static MallocSpan<uint8_t> copyToDestinationFormat(std::span<const uint8_t> rgba
     case GPUTextureFormat::Rg11b10ufloat:
     case GPUTextureFormat::Rg32uint:
     case GPUTextureFormat::Rg32sint:
+    case GPUTextureFormat::Rgba16unorm:
+    case GPUTextureFormat::Rgba16snorm:
     case GPUTextureFormat::Rgba16uint:
     case GPUTextureFormat::Rgba16sint:
     case GPUTextureFormat::Stencil8:

@@ -50,11 +50,13 @@ R_MissingSymbol = MissingName(name='_WKDoesntExistLibraryVersion',
 R_MissingClass = MissingName(name='WKDoesntExist', file=F_Client, arch='arm64e', kind=OBJC_CLS)
 R_MissingSelector = MissingName(name='initWithData:', file=F_Client, arch='arm64e', kind=OBJC_SEL)
 
-A = AllowList.from_dict({'sdkdb-unittest':
-                         {'rdar://12345':
-                          {'classes': ['WKDoesntExist'],
-                           'selectors': [{'name': 'initWithData:', 'class': '?'}],
-                           'symbols': ['_WKDoesntExistLibraryVersion']}}})
+A = AllowList.from_dict({'temporary-usage': [
+    {'request': 'rdar://12345',
+     'cleanup': 'rdar://12346',
+     'classes': ['WKDoesntExist'],
+     'selectors': [{'name': 'initWithData:', 'class': '?'}],
+     'symbols': ['_WKDoesntExistLibraryVersion']}
+]})
 A_File = Path('/allowed.toml')
 A_Hash = 23456
 A_UnusedAllow = UnusedAllowedName(name='WKDoesntExist', file=A_File,
@@ -68,40 +70,40 @@ R_Uses_Own_Selector = APIReport(
     selrefs={'someInternalMethodWithObject:'}
 )
 
-A_Conditional = AllowList.from_dict(
-    {'sdkdb-unittest': {'rdar://12345': {
-        'classes': ['WKDoesntExist'],
-        'selectors': [{'name': 'initWithData:', 'class': '?'}],
-        'symbols': ['_WKDoesntExistLibraryVersion'],
-        'requires': ['ENABLE_FEATURE']}
-    }}
-)
+A_Conditional = AllowList.from_dict({'temporary-usage': [
+    {'request': 'rdar://12345',
+     'cleanup': 'rdar://12346',
+     'classes': ['WKDoesntExist'],
+     'selectors': [{'name': 'initWithData:', 'class': '?'}],
+     'symbols': ['_WKDoesntExistLibraryVersion'],
+     'requires': ['ENABLE_FEATURE']}
+]})
 
-A_NegatedConditional = AllowList.from_dict(
-    {'sdkdb-unittest': {'rdar://12345': {
-        'classes': ['WKDoesntExist'],
-        'selectors': [{'name': 'initWithData:', 'class': '?'}],
-        'symbols': ['_WKDoesntExistLibraryVersion'],
-        'requires': ['!ENABLE_FEATURE']}
-    }}
-)
+A_NegatedConditional = AllowList.from_dict({'temporary-usage': [
+    {'request': 'rdar://12345',
+     'cleanup': 'rdar://12346',
+     'classes': ['WKDoesntExist'],
+     'selectors': [{'name': 'initWithData:', 'class': '?'}],
+     'symbols': ['_WKDoesntExistLibraryVersion'],
+     'requires': ['!ENABLE_FEATURE']}
+]})
 
-A_MultipleConditions = AllowList.from_dict(
-    {'sdkdb-unittest': {'rdar://12345': {
-        'classes': ['WKDoesntExist'],
-        'selectors': [{'name': 'initWithData:', 'class': '?'}],
-        'symbols': ['_WKDoesntExistLibraryVersion'],
-        'requires': ['ENABLE_A', 'ENABLE_B', '!ENABLE_C']}
-    }}
-)
+A_MultipleConditions = AllowList.from_dict({'temporary-usage': [
+    {'request': 'rdar://12345',
+     'cleanup': 'rdar://12346',
+     'classes': ['WKDoesntExist'],
+     'selectors': [{'name': 'initWithData:', 'class': '?'}],
+     'symbols': ['_WKDoesntExistLibraryVersion'],
+     'requires': ['ENABLE_A', 'ENABLE_B', '!ENABLE_C']}
+]})
 
-A_QualifiedSelector = AllowList.from_dict(
-    {'sdkdb-unittest': {'rdar://12345': {
-        'classes': ['WKDoesntExist'],
-        'selectors': [{'name': 'initWithData:', 'class': 'WKDoesntExist'}],
-        'symbols': ['_WKDoesntExistLibraryVersion']}
-    }}
-)
+A_QualifiedSelector = AllowList.from_dict({'temporary-usage': [
+    {'request': 'rdar://12345',
+     'cleanup': 'rdar://12346',
+     'classes': ['WKDoesntExist'],
+     'selectors': [{'name': 'initWithData:', 'class': 'WKDoesntExist'}],
+     'symbols': ['_WKDoesntExistLibraryVersion']}
+]})
 
 S = {
     'PublicSDKContentRoot': [{
@@ -294,8 +296,8 @@ class TestSDKDB(TestCase):
         self.reconnect()
 
         other_allowlist = AllowList.from_dict(
-            {'test': {'legacy': {'selectors': [{'name': 'initWithData:',
-                                                'class': '?'}]}}})
+            {'legacy': [{'selectors': [{'name': 'initWithData:',
+                                        'class': '?'}]}]})
         other_file = Path('/allowed2.toml')
         with self.sdkdb:
             self.sdkdb._cache_hit_preparing_to_insert(other_file, 34567890)
@@ -309,8 +311,8 @@ class TestSDKDB(TestCase):
         self.add_library()
 
         other_allowlist = AllowList.from_dict(
-            {'test': {'legacy': {'selectors': [{'name': 'initWithData:',
-                                                'class': '?'}]}}})
+            {'legacy': [{'selectors': [{'name': 'initWithData:',
+                                                'class': '?'}]}]})
         other_file = Path('/allowed2.toml')
         with self.sdkdb:
             self.sdkdb._cache_hit_preparing_to_insert(other_file, 34567890)
@@ -329,8 +331,8 @@ class TestSDKDB(TestCase):
         self.add_library()
 
         other_allowlist = AllowList.from_dict(
-            {'test': {'legacy': {'selectors': [{'name': 'initWithData:',
-                                                'class': '?'}]}}})
+            {'legacy': [{'selectors': [{'name': 'initWithData:',
+                                                'class': '?'}]}]})
         other_file = Path('/allowed2.toml')
         with self.sdkdb:
             self.sdkdb._cache_hit_preparing_to_insert(other_file, 34567890)

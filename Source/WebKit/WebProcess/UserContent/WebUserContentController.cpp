@@ -134,8 +134,10 @@ InjectedBundleScriptWorld* WebUserContentController::addContentWorld(const Conte
             scriptWorld->setAllowElementUserInfo();
         if (world.options.contains(ContentWorldOption::DisableLegacyBuiltinOverrides))
             scriptWorld->disableOverrideBuiltinsBehavior();
-        if (world.options.contains(ContentWorldOption::AllowNodeInfo))
-            scriptWorld->setNodeInfoEnabled();
+        if (world.options.contains(ContentWorldOption::AllowJSHandleCreation))
+            scriptWorld->setAllowJSHandleCreation();
+        if (world.options.contains(ContentWorldOption::AllowNodeSerialization))
+            scriptWorld->setAllowNodeSerialization();
         return scriptWorld.ptr();
     }
     return nullptr;
@@ -297,7 +299,7 @@ private:
         RefPtr frame = handler.frame();
         if (!frame)
             return;
-    
+
         auto webFrame = WebFrame::fromCoreFrame(*frame);
         if (!webFrame)
             return;
@@ -316,6 +318,32 @@ private:
                 return completionHandler(JSC::jsUndefined(), result.error());
             completionHandler(toJS(toJS(context.get()), result->toJS(context.get()).get()), { });
         }, m_controller->identifier());
+    }
+
+    JSC::JSValue didPostLegacySynchronousMessage(WebCore::UserMessageHandler& handler, JSC::JSGlobalObject& globalObject, JSC::JSValue jsMessage) override
+    {
+        RefPtr frame = handler.frame();
+        if (!frame)
+            return JSC::jsUndefined();
+
+        auto webFrame = WebFrame::fromCoreFrame(*frame);
+        if (!webFrame)
+            return JSC::jsUndefined();
+
+        RefPtr webPage = webFrame->page();
+        if (!webPage)
+            return JSC::jsUndefined();
+
+        JSRetainPtr context { JSContextGetGlobalContext(toRef(&globalObject)) };
+        auto message = JavaScriptEvaluationResult::extract(context.get(), toRef(&globalObject, jsMessage));
+        if (!message)
+            return JSC::jsUndefined();
+
+        auto sendResult = WebProcess::singleton().protectedParentProcessConnection()->sendSync(Messages::WebUserContentControllerProxy::DidPostLegacySynchronousMessage(webPage->webPageProxyIdentifier(), webFrame->info(), m_identifier, *message), m_controller->identifier());
+        auto [result] = sendResult.takeReplyOr(makeUnexpected(String()));
+        if (!result)
+            return JSC::jsUndefined();
+        return toJS(toJS(context.get()), result->toJS(context.get()).get());
     }
 
     RefPtr<WebUserContentController> m_controller;

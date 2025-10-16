@@ -32,6 +32,7 @@
 #include <WPEToolingBackends/HeadlessViewBackend.h>
 #include <WebCore/NotImplemented.h>
 #include <wpe/wpe.h>
+#include <wtf/MonotonicTime.h>
 #include <wtf/UniqueArray.h>
 
 namespace WTR {
@@ -291,6 +292,42 @@ void EventSenderProxyClientLibWPE::keyDown(WKStringRef keyRef, double time, WKEv
 #endif
     wpe_view_backend_dispatch_keyboard_event(viewBackend(m_testController), &event);
     event.pressed = false;
+    wpe_view_backend_dispatch_keyboard_event(viewBackend(m_testController), &event);
+#if defined(WPE_ENABLE_XKB) && WPE_ENABLE_XKB
+    free(entries);
+#endif
+}
+
+void EventSenderProxyClientLibWPE::rawKeyDown(WKStringRef key, WKEventModifiers wkModifiers, unsigned keyLocation)
+{
+    uint32_t modifiers = wkEventModifiersToWPE(wkModifiers);
+    uint32_t keySym = wpeKeySymForKeyRef(key, keyLocation, &modifiers);
+#if defined(WPE_ENABLE_XKB) && WPE_ENABLE_XKB
+    struct wpe_input_xkb_keymap_entry* entries;
+    uint32_t entriesCount;
+    wpe_input_xkb_context_get_entries_for_key_code(wpe_input_xkb_context_get_default(), keySym, &entries, &entriesCount);
+    struct wpe_input_keyboard_event event { secToMsTimestamp(MonotonicTime::now().secondsSinceEpoch().value()), keySym, entriesCount ? entries[0].hardware_key_code : 0, true, modifiers };
+#else
+    struct wpe_input_keyboard_event event { secToMsTimestamp(MonotonicTime::now().secondsSinceEpoch().value()), keySym, 0, true, modifiers };
+#endif
+    wpe_view_backend_dispatch_keyboard_event(viewBackend(m_testController), &event);
+#if defined(WPE_ENABLE_XKB) && WPE_ENABLE_XKB
+    free(entries);
+#endif
+}
+
+void EventSenderProxyClientLibWPE::rawKeyUp(WKStringRef key, WKEventModifiers wkModifiers, unsigned keyLocation)
+{
+    uint32_t modifiers = wkEventModifiersToWPE(wkModifiers);
+    uint32_t keySym = wpeKeySymForKeyRef(key, keyLocation, &modifiers);
+#if defined(WPE_ENABLE_XKB) && WPE_ENABLE_XKB
+    struct wpe_input_xkb_keymap_entry* entries;
+    uint32_t entriesCount;
+    wpe_input_xkb_context_get_entries_for_key_code(wpe_input_xkb_context_get_default(), keySym, &entries, &entriesCount);
+    struct wpe_input_keyboard_event event { secToMsTimestamp(MonotonicTime::now().secondsSinceEpoch().value()), keySym, entriesCount ? entries[0].hardware_key_code : 0, false, modifiers };
+#else
+    struct wpe_input_keyboard_event event { secToMsTimestamp(MonotonicTime::now().secondsSinceEpoch().value()), keySym, 0, false, modifiers };
+#endif
     wpe_view_backend_dispatch_keyboard_event(viewBackend(m_testController), &event);
 #if defined(WPE_ENABLE_XKB) && WPE_ENABLE_XKB
     free(entries);

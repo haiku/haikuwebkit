@@ -393,12 +393,6 @@ void RenderBlock::styleDidChange(StyleDifference diff, const RenderStyle* oldSty
     setShouldForceRelayoutChildren(shouldForceRelayoutChildren);
 }
 
-void RenderBlock::deleteLines()
-{
-    if (AXObjectCache* cache = protectedDocument()->existingAXObjectCache())
-        cache->deferRecomputeIsIgnored(protectedElement().get());
-}
-
 bool RenderBlock::childrenPreventSelfCollapsing() const
 {
     // Whether or not we collapse is dependent on whether all our normal flow children

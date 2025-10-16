@@ -60,6 +60,8 @@ public:
     JS_EXPORT_PRIVATE void adopt(Ref<Wasm::Memory>&&);
     Wasm::Memory& memory() { return m_memory.get(); }
     JSArrayBuffer* buffer(JSGlobalObject*);
+    JSArrayBuffer* toFixedLengthBuffer(JSGlobalObject*);
+    JSArrayBuffer* toResizableBuffer(JSGlobalObject*);
     PageCount grow(VM&, JSGlobalObject*, uint32_t delta);
     JS_EXPORT_PRIVATE void growSuccessCallback(VM&, PageCount oldPageCount, PageCount newPageCount);
 
@@ -75,6 +77,9 @@ public:
 private:
     JSWebAssemblyMemory(VM&, Structure*);
     void finishCreation(VM&);
+
+    void associateArrayBuffer(JSGlobalObject*, bool shouldBeFixedLength);
+    void disassociateArrayBuffer(VM&);
 
     Ref<Wasm::Memory> m_memory;
     WriteBarrier<JSArrayBuffer> m_bufferWrapper;

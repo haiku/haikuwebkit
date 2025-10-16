@@ -42,12 +42,6 @@ struct TextSpacingContext {
     TrimmableTextSpacings trimmableTextSpacings;
 };
 
-enum class PreviousLineState {
-    NoPreviousLine,
-    EndsWithLineBreak,
-    DoesNotEndWithLineBreak,
-};
-
 enum class LineEndingTruncationPolicy : uint8_t {
     NoTruncation,
     WhenContentOverflowsInInlineDirection,

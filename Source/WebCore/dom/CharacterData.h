@@ -23,6 +23,10 @@
 #pragma once
 
 #include <WebCore/ContainerNode.h>
+#include <WebCore/ExceptionOr.h>
+#include <WebCore/PlatformExportMacros.h>
+#include <span>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 

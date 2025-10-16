@@ -32,7 +32,7 @@
 #include "config.h"
 #include "InspectorIndexedDBAgent.h"
 
-#include "AddEventListenerOptions.h"
+#include "AddEventListenerOptionsInlines.h"
 #include "DOMStringList.h"
 #include "Document.h"
 #include "Event.h"

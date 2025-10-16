@@ -317,6 +317,11 @@ ImageCandidate HTMLImageElement::bestFitSourceFromPictureElement()
     return candidate;
 }
 
+void HTMLImageElement::setIsUserAgentShadowRootResource()
+{
+    m_imageLoader->setElementIsUserAgentShadowRootResource(true);
+}
+
 void HTMLImageElement::evaluateDynamicMediaQueryDependencies()
 {
     RefPtr documentElement = document().documentElement();

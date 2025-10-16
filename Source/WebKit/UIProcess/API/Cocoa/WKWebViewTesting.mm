@@ -651,6 +651,13 @@ static void dumpCALayer(TextStream& ts, CALayer *layer, bool traverse)
 #endif
 }
 
+- (void)_getRenderTreeAsStringWithCompletionHandler:(void(^)(NSString *, NSError *))callback
+{
+    _page->getRenderTreeExternalRepresentation([callback = makeBlockPtr(callback)] (const String& result) {
+        callback(result.createNSString().get(), nil);
+    });
+}
+
 - (void)_lastNavigationWasAppInitiated:(void(^)(BOOL))completionHandler
 {
     _page->lastNavigationWasAppInitiated([completionHandler = makeBlockPtr(completionHandler)] (bool isAppInitiated) {

@@ -1,4 +1,4 @@
 
-FAIL rlh unit in SVGLength The operation is not supported.
-FAIL Convert back to rlh from new user unit value The operation is not supported.
+PASS rlh unit in SVGLength
+PASS Convert back to rlh from new user unit value
 

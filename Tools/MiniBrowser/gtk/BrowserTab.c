@@ -62,6 +62,7 @@ struct _BrowserTab {
 static GHashTable *userMediaPermissionGrantedOrigins;
 static GHashTable *mediaKeySystemPermissionGrantedOrigins;
 static GHashTable *clipboardPermissionGrantedOrigins;
+static GHashTable *xrPermissionGrantedOrigins;
 struct _BrowserTabClass {
     GtkBoxClass parent;
 };
@@ -298,6 +299,8 @@ static void permissionRequestDialogResponse(GtkWidget *dialog, gint response, Pe
             g_hash_table_add(mediaKeySystemPermissionGrantedOrigins, g_strdup(requestData->origin));
         if (WEBKIT_IS_CLIPBOARD_PERMISSION_REQUEST(requestData->request))
             g_hash_table_add(clipboardPermissionGrantedOrigins, g_strdup(requestData->origin));
+        if (WEBKIT_IS_XR_PERMISSION_REQUEST(requestData->request))
+            g_hash_table_add(xrPermissionGrantedOrigins, g_strdup(requestData->origin));
 
         webkit_permission_request_allow(requestData->request);
         break;
@@ -308,6 +311,8 @@ static void permissionRequestDialogResponse(GtkWidget *dialog, gint response, Pe
             g_hash_table_remove(mediaKeySystemPermissionGrantedOrigins, requestData->origin);
         if (WEBKIT_IS_CLIPBOARD_PERMISSION_REQUEST(requestData->request))
             g_hash_table_remove(clipboardPermissionGrantedOrigins, requestData->origin);
+        if (WEBKIT_IS_XR_PERMISSION_REQUEST(requestData->request))
+            g_hash_table_remove(xrPermissionGrantedOrigins, requestData->origin);
 
         webkit_permission_request_deny(requestData->request);
         break;
@@ -319,6 +324,21 @@ static void permissionRequestDialogResponse(GtkWidget *dialog, gint response, Pe
     gtk_widget_destroy(dialog);
 #endif
     g_clear_pointer(&requestData, permissionRequestDataFree);
+}
+
+static const gchar *webKitXRSessionModeToString(WebKitXRSessionMode mode)
+{
+    switch (mode) {
+    case WEBKIT_XR_SESSION_MODE_INLINE:
+        return "inline";
+    case WEBKIT_XR_SESSION_MODE_IMMERSIVE_VR:
+        return "immersive-vr";
+    case WEBKIT_XR_SESSION_MODE_IMMERSIVE_AR:
+        return "immersive-ar";
+    default:
+        break;
+    }
+    return "unknown";
 }
 
 static gboolean decidePermissionRequest(WebKitWebView *webView, WebKitPermissionRequest *request, BrowserTab *tab)
@@ -398,6 +418,19 @@ static gboolean decidePermissionRequest(WebKitWebView *webView, WebKitPermission
         title = "Clipboard access request";
         text = g_strdup_printf("Do you want to allow \"%s\" to read the contents of the clipboard?", origin);
         g_free(origin);
+    } else if (WEBKIT_IS_XR_PERMISSION_REQUEST(request)) {
+        title = "XR session request";
+        WebKitXRPermissionRequest *xrRequest = WEBKIT_XR_PERMISSION_REQUEST(request);
+        WebKitSecurityOrigin *origin = webkit_xr_permission_request_get_security_origin(xrRequest);
+        WebKitXRSessionMode mode = webkit_xr_permission_request_get_session_mode(xrRequest);
+        gchar *originStr = webkit_security_origin_to_string(origin);
+        if (g_hash_table_contains(xrPermissionGrantedOrigins, originStr)) {
+            webkit_permission_request_allow(request);
+            g_free(originStr);
+            return TRUE;
+        }
+        text = g_strdup_printf("Allow XR device access?\norigin=%s mode=%s", originStr, webKitXRSessionModeToString(mode));
+        g_free(originStr);
     } else {
         g_print("%s request not handled\n", G_OBJECT_TYPE_NAME(request));
         return FALSE;
@@ -778,6 +811,9 @@ static void browser_tab_class_init(BrowserTabClass *klass)
 
     if (!clipboardPermissionGrantedOrigins)
         clipboardPermissionGrantedOrigins = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    if (!xrPermissionGrantedOrigins)
+        xrPermissionGrantedOrigins = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     g_object_class_install_property(
         gobjectClass,

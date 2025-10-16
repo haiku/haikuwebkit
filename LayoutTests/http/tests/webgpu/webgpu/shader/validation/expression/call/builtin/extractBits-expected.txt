@@ -240,6 +240,10 @@ FAIL :count_offset:offsetStage="constant";countStage="constant" assert_unreached
   - EXPECTATION FAILED: subcase: offset=2;count=31;in_shader=true
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: offset=2;count=31;in_shader=false
+    OK
+  - INFO: subcase: offset=2;count=31;in_shader=true
+    OK
   - EXPECTATION FAILED: subcase: offset=31;count=2;in_shader=false
     Expected validation error
       at (elided: below max severity)
@@ -270,10 +274,6 @@ FAIL :count_offset:offsetStage="constant";countStage="constant" assert_unreached
   - EXPECTATION FAILED: subcase: offset=1;count=33;in_shader=true
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: offset=2;count=31;in_shader=false
-    OK
-  - INFO: subcase: offset=2;count=31;in_shader=true
-    OK
   - INFO: subcase: offset=31;count=2;in_shader=false
     OK
   - INFO: subcase: offset=31;count=2;in_shader=true

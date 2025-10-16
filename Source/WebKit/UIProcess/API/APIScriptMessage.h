@@ -26,7 +26,6 @@
 #pragma once
 
 #include "APIObject.h"
-#include "WKRetainPtr.h"
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 
@@ -53,20 +52,20 @@ public:
 #if PLATFORM(COCOA)
     const RetainPtr<id>& body() const { return m_body; }
 #endif
-    WKTypeRef wkBody() const { return m_wkBody.get(); }
+    API::Object* apiBody() const { return m_apiBody.get(); }
     WebKit::WebPageProxy* page() const;
     API::FrameInfo& frame() const { return m_frame.get(); }
     const WTF::String& name() const { return m_name; }
     API::ContentWorld& world() const { return m_world.get(); }
 
 private:
-    ScriptMessage(WKRetainPtr<WKTypeRef>&&, WebKit::WebPageProxy&, Ref<API::FrameInfo>&&, const WTF::String&, Ref<API::ContentWorld>&&);
+    ScriptMessage(RefPtr<API::Object>&&, WebKit::WebPageProxy&, Ref<API::FrameInfo>&&, const WTF::String&, Ref<API::ContentWorld>&&);
 #if PLATFORM(COCOA)
     ScriptMessage(RetainPtr<id>&&, WebKit::WebPageProxy&, Ref<API::FrameInfo>&&, const WTF::String&, Ref<API::ContentWorld>&&);
 
     const RetainPtr<id> m_body;
 #endif
-    const WKRetainPtr<WKTypeRef> m_wkBody;
+    const RefPtr<API::Object> m_apiBody;
     const WeakPtr<WebKit::WebPageProxy> m_page;
     const Ref<API::FrameInfo> m_frame;
     const WTF::String m_name;

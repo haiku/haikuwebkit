@@ -404,16 +404,16 @@ FAIL :subresources,depth_stencil_attachment_and_bind_group:dsLevel=0;dsLayer=1;b
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
     expectValidationError@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:1310:36
     @http://127.0.0.1:8000/webgpu/webgpu/api/validation/resource_usages/texture/in_render_common.spec.js:417:26
+  - INFO: subcase: depthReadOnly=true;stencilReadOnly=false;bgAspect="stencil-only";inSamePass=true
+    OK
+  - INFO: subcase: depthReadOnly=false;stencilReadOnly=true;bgAspect="depth-only";inSamePass=true
+    OK
   - VALIDATION FAILED: subcase: depthReadOnly=false;stencilReadOnly=false;bgAspect="depth-only";inSamePass=true
     Validation succeeded unexpectedly.
       at (elided: only 2 shown)
   - VALIDATION FAILED: subcase: depthReadOnly=false;stencilReadOnly=false;bgAspect="stencil-only";inSamePass=true
     Validation succeeded unexpectedly.
       at (elided: only 2 shown)
-  - INFO: subcase: depthReadOnly=true;stencilReadOnly=false;bgAspect="stencil-only";inSamePass=true
-    OK
-  - INFO: subcase: depthReadOnly=false;stencilReadOnly=true;bgAspect="depth-only";inSamePass=true
-    OK
   - INFO: subcase: depthReadOnly=false;stencilReadOnly=false;bgAspect="depth-only";inSamePass=true
     OK
   - INFO: subcase: depthReadOnly=false;stencilReadOnly=false;bgAspect="stencil-only";inSamePass=true
@@ -476,8 +476,6 @@ FAIL :subresources,depth_stencil_attachment_and_bind_group:dsLevel=1;dsLayer=1;b
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
     expectValidationError@http://127.0.0.1:8000/webgpu/webgpu/gpu_test.js:1310:36
     @http://127.0.0.1:8000/webgpu/webgpu/api/validation/resource_usages/texture/in_render_common.spec.js:417:26
-  - INFO: subcase: depthReadOnly=true;stencilReadOnly=false;bgAspect="stencil-only";inSamePass=true
-    OK
   - VALIDATION FAILED: subcase: depthReadOnly=false;stencilReadOnly=true;bgAspect="depth-only";inSamePass=true
     Validation succeeded unexpectedly.
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -489,6 +487,8 @@ FAIL :subresources,depth_stencil_attachment_and_bind_group:dsLevel=1;dsLayer=1;b
   - VALIDATION FAILED: subcase: depthReadOnly=false;stencilReadOnly=false;bgAspect="stencil-only";inSamePass=true
     Validation succeeded unexpectedly.
       at (elided: only 2 shown)
+  - INFO: subcase: depthReadOnly=true;stencilReadOnly=false;bgAspect="stencil-only";inSamePass=true
+    OK
   - INFO: subcase: depthReadOnly=false;stencilReadOnly=true;bgAspect="depth-only";inSamePass=true
     OK
   - INFO: subcase: depthReadOnly=false;stencilReadOnly=false;bgAspect="depth-only";inSamePass=true

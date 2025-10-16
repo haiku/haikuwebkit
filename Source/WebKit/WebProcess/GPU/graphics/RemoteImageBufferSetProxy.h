@@ -28,7 +28,7 @@
 #include "BufferIdentifierSet.h"
 #include "MarkSurfacesAsVolatileRequestIdentifier.h"
 #include "PrepareBackingStoreBuffersData.h"
-#include "RemoteDisplayListRecorderProxy.h"
+#include "RemoteGraphicsContextProxy.h"
 #include "RemoteImageBufferSetConfiguration.h"
 #include "RemoteImageBufferSetIdentifier.h"
 #include "RenderingUpdateID.h"
@@ -83,7 +83,7 @@ public:
 };
 
 // A RemoteImageBufferSet is an ImageBufferSet, where the actual ImageBuffers are owned by the GPU process.
-// To draw a frame, the consumer allocates a new RemoteDisplayListRecorderProxy and
+// To draw a frame, the consumer allocates a new RemoteGraphicsContextProxy and
 // asks the RemoteImageBufferSet set to map it to an appropriate new front
 // buffer (either by picking one of the back buffers, or by allocating a new
 // one). It then copies across the pixels from the previous front buffer,
@@ -114,7 +114,7 @@ public:
     WebCore::GraphicsContext& context();
     bool hasContext() const { return !!m_context; }
 
-    RemoteDisplayListRecorderIdentifier contextIdentifier() const { return m_contextIdentifier; }
+    RemoteGraphicsContextIdentifier contextIdentifier() const { return m_contextIdentifier; }
 
     std::unique_ptr<ThreadSafeImageBufferSetFlusher> flushFrontBufferAsync(ThreadSafeImageBufferSetFlusher::FlushType);
 
@@ -139,9 +139,9 @@ private:
     RefPtr<IPC::StreamClientConnection> connection() const;
     void didBecomeUnresponsive() const;
 
-    const RemoteDisplayListRecorderIdentifier m_contextIdentifier { RemoteDisplayListRecorderIdentifier::generate() };
+    const RemoteGraphicsContextIdentifier m_contextIdentifier { RemoteGraphicsContextIdentifier::generate() };
     WeakPtr<RemoteRenderingBackendProxy> m_remoteRenderingBackendProxy;
-    std::optional<RemoteDisplayListRecorderProxy> m_context;
+    std::optional<RemoteGraphicsContextProxy> m_context;
 
     CheckedPtr<ImageBufferSetClient> m_client;
 

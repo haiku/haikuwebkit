@@ -1329,6 +1329,19 @@ void MediaPlayerPrivateGStreamer::videoSinkCapsChanged(GstPad* videoSinkPad)
     });
 }
 
+void MediaPlayerPrivateGStreamer::elementIdChanged(const String& elementId) const
+{
+    if (!m_pipeline) [[unlikely]]
+        return;
+
+    GUniquePtr<char> objectName(gst_object_get_name(GST_OBJECT_CAST(m_pipeline.get())));
+    auto currentName = String::fromUTF8(objectName.get());
+    auto tokens = currentName.split('-');
+    auto newName = makeString(tokens[0], '-', elementId, '-', tokens.last());
+    GST_DEBUG_OBJECT(m_pipeline.get(), "Renaming to %s", newName.utf8().data());
+    gst_object_set_name(GST_OBJECT_CAST(m_pipeline.get()), newName.utf8().data());
+}
+
 void MediaPlayerPrivateGStreamer::handleTextSample(GRefPtr<GstSample>&& sample, TrackID streamId)
 {
     for (auto& track : m_textTracks.values()) {
@@ -3341,13 +3354,13 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url)
     if (elementId.isEmpty())
         elementId = "media-player"_s;
 
-    auto type = isMediaSource() ? "MSE-"_s : isMediaStream ? "mediastream-"_s : isBlob ? "blob-" : ""_s;
+    ASCIILiteral type = isMediaSource() ? "mse"_s : isMediaStream ? "mediastream"_s : isBlob ? "blob"_s : "regular"_s;
 
     m_isLegacyPlaybin = playbinName == "playbin"_s;
 
     static Atomic<uint32_t> pipelineId;
 
-    m_pipeline = makeGStreamerElement(playbinName, makeString(type, elementId, '-', pipelineId.exchangeAdd(1)));
+    m_pipeline = makeGStreamerElement(playbinName, makeString(type, '-', elementId, '-', pipelineId.exchangeAdd(1)));
     if (!m_pipeline) {
         GST_WARNING("%s not found, make sure to install gst-plugins-base", playbinName.characters());
         loadingFailed(MediaPlayer::NetworkState::FormatError, MediaPlayer::ReadyState::HaveNothing, true);
@@ -4622,9 +4635,18 @@ void MediaPlayerPrivateGStreamer::audioOutputDeviceChanged()
         return;
     }
 
-    bool changed = false;
     auto deviceId = player->audioOutputDeviceId();
+    if (deviceId == "default"_s) {
+        const auto& devices = GStreamerAudioCaptureDeviceManager::singleton().speakerDevices();
+        if (!devices.isEmpty()) [[likely]] {
+            const auto defaultDeviceIndex = devices.findIf([](const CaptureDevice& device) {
+                return device.isDefault();
+            });
+            deviceId = (defaultDeviceIndex == notFound) ? devices.first().persistentId() : devices[defaultDeviceIndex].persistentId();
+        }
+    }
 
+    bool changed = false;
     if (auto captureDevice = GStreamerAudioCaptureDeviceManager::singleton().gstreamerDeviceWithUID(deviceId)) {
         auto* device = captureDevice->device();
         GUniquePtr<char> deviceName(gst_device_get_display_name(device));

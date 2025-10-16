@@ -28,7 +28,7 @@
 #include <WebCore/FetchRequestDestination.h>
 #include <WebCore/FetchRequestMode.h>
 #include <WebCore/RunningStatus.h>
-#include "URLPattern.h"
+#include <WebCore/URLPattern.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/Vector.h>
 

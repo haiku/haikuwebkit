@@ -385,6 +385,11 @@ bool GLContext::unmakeCurrentImpl()
     return display ? eglMakeCurrent(display->eglDisplay(), EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) : false;
 }
 
+unsigned GLContext::glVersion() const
+{
+    return version();
+}
+
 bool GLContext::makeContextCurrent()
 {
     if (isCurrent())
@@ -486,7 +491,7 @@ unsigned GLContext::versionFromString(const char* versionStringAsChar)
     return parseIntegerAllowingTrailingJunk<unsigned>(versionDigits[0]).value_or(0) * 100 + parseIntegerAllowingTrailingJunk<unsigned>(versionDigits[1]).value_or(0) * 10;
 }
 
-unsigned GLContext::version()
+unsigned GLContext::version() const
 {
     if (!m_version) {
         auto* versionString = reinterpret_cast<const char*>(::glGetString(GL_VERSION));

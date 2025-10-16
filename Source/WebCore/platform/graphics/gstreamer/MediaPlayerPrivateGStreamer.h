@@ -260,6 +260,8 @@ public:
     bool requiresVideoSinkCapsNotifications() const;
     void videoSinkCapsChanged(GstPad*);
 
+    void elementIdChanged(const String&) const final;
+
 protected:
     enum MainThreadNotification {
         VideoChanged = 1 << 0,

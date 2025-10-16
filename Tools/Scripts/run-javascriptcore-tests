@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Copyright (C) 2005-2024 Apple Inc.  All rights reserved.
+# Copyright (C) 2005-2025 Apple Inc.  All rights reserved.
 # Copyright (C) 2007 Eric Seidel <eric@webkit.org>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -105,6 +105,7 @@ my $runMozillaTests = RUN_IF_NO_TESTS_SPECIFIED;
 # on the JSC stress test or mozilla tests.
 my $runJITStressTests = 1;
 my $runJITlessWasm = 1;
+my $runWasm = 1;
 
 my $runCLoopMode = 0;
 my $runQuickMode = 0;
@@ -804,6 +805,14 @@ sub runJSCStressTests
 
     my $hasTestsToRun = 0;
     my @testList;
+
+    # Override options before tests are added.
+    if ($runCLoopMode) {
+        $runJITStressTests = 0;
+        $runWasm = 0;
+        $runJITlessWasm = 0;
+    }
+
     if ($runJSCStress) {
         @testList = (
             "PerformanceTests/SunSpider/tests/sunspider-1.0",
@@ -826,8 +835,11 @@ sub runJSCStressTests
             "JSTests/es6.yaml",
             "JSTests/modules.yaml",
             "JSTests/complex.yaml",
-            "JSTests/ChakraCore.yaml",
-            "JSTests/wasm.yaml");
+            "JSTests/ChakraCore.yaml");
+
+        if ($runWasm) {
+            push(@testList, "JSTests/wasm.yaml");
+        }
 
         my $internalTestsDir = File::Spec->catdir(dirname(sourceDir()), "Internal", "Tests", "InternalJSTests");
         if (-e $internalTestsDir and -d $internalTestsDir) {

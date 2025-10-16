@@ -36,6 +36,7 @@
 #include "CSSStyleValueFactory.h"
 #include "CSSUnitValue.h"
 #include "ExceptionOr.h"
+#include "ScriptWrappableInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringView.h>
@@ -94,5 +95,7 @@ void CSSStyleValue::serialize(StringBuilder& builder, OptionSet<SerializationArg
     if (m_propertyValue)
         builder.append(m_propertyValue->cssText(CSS::defaultSerializationContext()));
 }
+
+CSSStyleValue::~CSSStyleValue() = default;
 
 } // namespace WebCore

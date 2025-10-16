@@ -224,7 +224,12 @@ function flatMap(mapper)
     var iteratedWrapper = {
         @@iterator: function() { return this; },
         next: function() { return iteratedNextMethod.@call(iterated); },
-        return: function() { return iterated.return(@undefined); },
+        return: function() {
+            var iteratedReturnMethod = iterated.return;
+            if (iteratedReturnMethod !== @undefined)
+                return iteratedReturnMethod.@call(iterated, @undefined);
+            return { done: true };
+        },
     };
 
     var generator = (function*() {

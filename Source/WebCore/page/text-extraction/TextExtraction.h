@@ -41,7 +41,7 @@ namespace TextExtraction {
 WEBCORE_EXPORT Item extractItem(Request&&, Page&);
 WEBCORE_EXPORT Vector<std::pair<String, FloatRect>> extractAllTextAndRects(Page&);
 
-WEBCORE_EXPORT void handleInteraction(Interaction&&, Page&, CompletionHandler<void(bool)>&&);
+WEBCORE_EXPORT void handleInteraction(Interaction&&, Page&, CompletionHandler<void(bool, String&&)>&&);
 
 struct RenderedText {
     String textWithReplacedContent;

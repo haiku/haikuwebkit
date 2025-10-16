@@ -222,7 +222,7 @@ void EventSendingController::mouseUp(JSContextRef context, int button, JSValueRe
     postSynchronousPageMessage("EventSender", createMouseMessageBody(MouseUp, button, parseModifierArray(context, modifierArray), pointerType));
 }
 
-void EventSendingController::mouseMoveTo(int x, int y, JSStringRef pointerType)
+void EventSendingController::mouseMoveTo(double x, double y, JSStringRef pointerType)
 {
     auto body = adoptWK(WKMutableDictionaryCreate());
     setValue(body, "SubMessage", "MouseMoveTo");
@@ -249,7 +249,7 @@ void EventSendingController::asyncMouseUp(JSContextRef context, int button, JSVa
     postMessageWithAsyncReply(context, "EventSender", createMouseMessageBody(MouseUp, button, parseModifierArray(context, modifierArray), pointerType), completionHandler);
 }
 
-void EventSendingController::asyncMouseMoveTo(JSContextRef context, int x, int y, JSStringRef pointerType, JSValueRef completionHandler)
+void EventSendingController::asyncMouseMoveTo(JSContextRef context, double x, double y, JSStringRef pointerType, JSValueRef completionHandler)
 {
     auto body = adoptWK(WKMutableDictionaryCreate());
     setValue(body, "SubMessage", "MouseMoveTo");

@@ -31,6 +31,7 @@
 #include "ModelPlayerAnimationState.h"
 #include "ModelPlayerTransformState.h"
 #include "TransformationMatrix.h"
+#include <wtf/CompletionHandler.h>
 #include <wtf/TZoneMallocInlines.h>
 
 #if ENABLE(MODEL_PROCESS)

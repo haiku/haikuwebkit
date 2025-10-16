@@ -30,7 +30,7 @@
 
 namespace WebKit {
 
-class RemoteDisplayListRecorderProxy;
+class RemoteGraphicsContextProxy;
 class RemoteImageBufferSetProxy;
 
 class RemoteLayerWithRemoteRenderingBackingStore final : public RemoteLayerBackingStore, public ImageBufferSetClient {

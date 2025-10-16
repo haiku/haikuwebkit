@@ -38,14 +38,14 @@ FAIL :vertex_state_only:isAsync=false assert_unreached:
     OK
  Reached unreachable code
 FAIL :vertex_state_only:isAsync=true assert_unreached:
-  - INFO: subcase: depthStencilFormat="depth24plus";hasColor=false
-    OK
   - EXPECTATION FAILED: subcase: depthStencilFormat="";hasColor=true
     DID NOT REJECT
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
     shouldReject@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:297:34
     doCreateRenderPipelineTest@http://127.0.0.1:8000/webgpu/webgpu/api/validation/validation_test.js:397:26
     @http://127.0.0.1:8000/webgpu/webgpu/api/validation/render_pipeline/misc.spec.js:79:31
+  - INFO: subcase: depthStencilFormat="depth24plus";hasColor=false
+    OK
   - INFO: subcase: depthStencilFormat="depth24plus";hasColor=true
     OK
   - INFO: subcase: depthStencilFormat="depth24plus-stencil8";hasColor=false

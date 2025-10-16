@@ -54,15 +54,19 @@ NetworkProcess/webrtc/LibWebRTCSocketClient.cpp
 NetworkProcess/webrtc/NetworkRTCMonitor.cpp
 NetworkProcess/webrtc/NetworkRTCProvider.cpp
 
+Platform/IPC/glib/ConnectionGLib.cpp
+
 Platform/IPC/unix/ArgumentCodersUnix.cpp
-Platform/IPC/unix/ConnectionUnix.cpp
 Platform/IPC/unix/IPCSemaphoreUnix.cpp
+Platform/IPC/unix/IPCUtilitiesUnix.cpp
 
 Platform/classifier/ResourceLoadStatisticsClassifier.cpp
 
 Platform/glib/ModuleGlib.cpp
 
 Platform/unix/LoggingUnix.cpp
+
+Shared/API/APISerializedScriptValue.cpp
 
 Shared/API/c/cairo/WKImageCairo.cpp
 
@@ -187,6 +191,7 @@ UIProcess/API/glib/WebKitWebsiteDataAccessPermissionRequest.cpp @no-unify
 UIProcess/API/glib/WebKitWebsiteDataManager.cpp @no-unify
 UIProcess/API/glib/WebKitWindowProperties.cpp @no-unify
 UIProcess/API/glib/WebKitWebsitePolicies.cpp @no-unify
+UIProcess/API/glib/WebKitXRPermissionRequest.cpp @no-unify
 
 UIProcess/API/gtk/DragSourceGtk3.cpp @no-unify
 UIProcess/API/gtk/DragSourceGtk4.cpp @no-unify
@@ -294,6 +299,8 @@ UIProcess/gtk/WebTextCheckerClient.cpp
 UIProcess/soup/WebProcessPoolSoup.cpp
 
 UIProcess/XR/openxr/OpenXRExtensions.cpp
+UIProcess/XR/openxr/OpenXRInput.cpp
+UIProcess/XR/openxr/OpenXRInputSource.cpp
 UIProcess/XR/openxr/OpenXRLayer.cpp
 UIProcess/XR/openxr/OpenXRSwapchain.cpp
 UIProcess/XR/openxr/PlatformXROpenXR.cpp

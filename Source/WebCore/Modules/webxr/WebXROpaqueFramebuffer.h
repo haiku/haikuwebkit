@@ -107,12 +107,16 @@ public:
 
     void releaseAllDisplayAttachments();
 
+#if USE(OPENXR)
+    WTF::UnixFileDescriptor takeFenceFD();
+#endif
+
 private:
     WebXROpaqueFramebuffer(PlatformXR::LayerHandle, Ref<WebGLFramebuffer>&&, WebGLRenderingContextBase&, Attributes&&, IntSize);
 
     bool setupFramebuffer(GraphicsContextGL&, const PlatformXR::FrameData::LayerSetupData&);
     const std::array<WebXRExternalAttachments, 2>* reusableDisplayAttachments(const PlatformXR::FrameData::ExternalTextureData&) const;
-    void bindCompositorTexturesForDisplay(GraphicsContextGL&, const PlatformXR::FrameData::LayerData&);
+    void bindCompositorTexturesForDisplay(GraphicsContextGL&, PlatformXR::FrameData::LayerData&);
     const std::array<WebXRExternalAttachments, 2>* reusableDisplayAttachmentsAtIndex(size_t);
     void releaseDisplayAttachmentsAtIndex(size_t);
     void allocateRenderbufferStorage(GraphicsContextGL&, GCGLOwnedRenderbuffer&, GCGLsizei, GCGLenum, IntSize);
@@ -142,6 +146,9 @@ private:
     size_t m_currentDisplayAttachmentIndex { 0 };
 #if PLATFORM(COCOA)
     MachSendRight m_completionSyncEvent;
+#endif
+#if USE(OPENXR)
+    WTF::UnixFileDescriptor m_fenceFD;
 #endif
     uint64_t m_renderingFrameIndex { ~0u };
     bool m_usingFoveation { false };

@@ -44,8 +44,8 @@ else:
 
 @dataclass
 class AllowedSPI:
-    key: str
-    bug: str | PermanentlyAllowedReason
+    reason: AllowedReason
+    bugs: Bugs
 
     symbols: list[str]
     selectors: list[Selector]
@@ -56,9 +56,20 @@ class AllowedSPI:
         name: str
         class_: Optional[str]
 
+    class Bugs(NamedTuple):
+        request: Optional[str]
+        cleanup: Optional[str]
 
-class PermanentlyAllowedReason(StrEnum):
+
+class AllowedReason(StrEnum):
     LEGACY = 'legacy'
+
+    # For SPI that we intend to replace with API before the next release.
+    TEMPORARY_USAGE = 'temporary-usage'
+
+    # For pre-adopting new API before it is available in the SDK. There should
+    # be no active `staging` entries when WebKit ships.
+    STAGING = 'staging'
 
     # For SPI implementing non-essential web engine features that a browser
     # vendor would either not use or provide their own implementation.
@@ -78,15 +89,8 @@ class AllowList:
         seen_syms: dict[Union[str, AllowedSPI.Selector], AllowedSPI] = {}
         seen_sels: dict[Union[str, AllowedSPI.Selector], AllowedSPI] = {}
         seen_clss: dict[Union[str, AllowedSPI.Selector], AllowedSPI] = {}
-        for key in doc:
-            for bug, entry in doc[key].items():
-                if bug.startswith('rdar://') or \
-                        bug.startswith('https://bugs.webkit.org') or \
-                        bug.startswith('https://webkit.org/b/'):
-                    pass
-                else:
-                    bug = PermanentlyAllowedReason(bug)
-
+        for reason in AllowedReason:
+            for entry in doc.pop(reason.value, []):
                 syms = entry.pop('symbols', [])
                 clss = entry.pop('classes', [])
                 reqs = entry.pop('requires', [])
@@ -95,11 +99,31 @@ class AllowList:
                     receiver = sel.get('class')
                     sels.append(AllowedSPI.Selector(sel['name'],
                                                     None if receiver == '?' else receiver))
-                if entry:
-                    raise ValueError(f'Unrecognized items in "{key}"."{bug}": '
-                                     f'{entry}')
-                allow = AllowedSPI(key=key, bug=bug, symbols=syms,
+
+                bugs = AllowedSPI.Bugs(entry.pop('request', None),
+                                       entry.pop('cleanup', None))
+                allow = AllowedSPI(reason=reason, bugs=bugs, symbols=syms,
                                    selectors=sels, classes=clss, requires=reqs)
+
+                if reason == AllowedReason.TEMPORARY_USAGE:
+                    if not bugs.cleanup:
+                        # Typically a temporary-use entry should have *both* a
+                        # request and cleanup bug, but in some cases the
+                        # temporary usage does not require new API to resolve.
+                        # For example, using SPI to work around a bug in an
+                        # underlying framework.
+                        raise ValueError('Allowlist entries marked '
+                                         'temporary-usage must have a '
+                                         f'"cleanup" bug: {allow}')
+                elif reason not in (AllowedReason.LEGACY,
+                                    AllowedReason.STAGING):
+                    if not bugs.request:
+                        raise ValueError('Allowlist entries must have a '
+                                         f'"request" bug: {allow}')
+
+                if entry:
+                    raise ValueError('Unrecognized items in allowlist entry: '
+                                     f'{entry}')
 
                 # Validate that each section is a list (not a string, to avoid
                 # treating each character as a separate declaration), and that
@@ -117,11 +141,13 @@ class AllowList:
                                          'string, expected a list')
                     for item in items:
                         if (prev := prevs.get(item)) and prev.requires == reqs:
-                            raise ValueError(f'"{item}" already mentioned in '
-                                             f'allowlist at "{prev.key}".'
-                                             f'"{prev.bug}"')
+                            raise ValueError(f'"{item}" in "{bugs.request}" '
+                                             'already mentioned in allowlist '
+                                             f'at "{prev.bugs.request}".')
                         prevs[item] = allow
                 entries.append(allow)
+        if doc:
+            raise ValueError(f'Unrecognized items in allowlist: {doc.keys()}')
         return cls(entries)
 
     @classmethod

@@ -26,6 +26,12 @@
 #pragma once
 
 #include <WebCore/BoundaryPoint.h>
+#include <WebCore/EventTarget.h>
+#include <WebCore/PlatformExportMacros.h>
+#include <wtf/Ref.h>
+#include <wtf/ThreadSafeRefCounted.h>
+#include <wtf/WeakPtrImpl.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 

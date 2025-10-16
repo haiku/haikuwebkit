@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <WebCore/InlineContentCache.h>
+#include "InlineContentCache.h"
 #include <WebCore/LineLayoutResult.h>
 
 namespace WebCore {

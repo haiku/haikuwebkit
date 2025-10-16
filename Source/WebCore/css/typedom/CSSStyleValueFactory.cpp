@@ -57,6 +57,7 @@
 #include "CSSVariableReferenceValue.h"
 #include "ExceptionOr.h"
 #include "RenderStyle.h"
+#include "ScriptWrappableInlines.h"
 #include "StylePropertiesInlines.h"
 #include "StylePropertyShorthand.h"
 #include "StyleURL.h"
@@ -393,5 +394,7 @@ ExceptionOr<Vector<Ref<CSSStyleValue>>> CSSStyleValueFactory::vectorFromStyleVal
     }
     return { WTFMove(styleValues) };
 }
+
+CSSStyleValueFactory::~CSSStyleValueFactory() = default;
 
 } // namespace WebCore

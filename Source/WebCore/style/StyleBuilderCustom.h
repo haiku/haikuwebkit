@@ -73,8 +73,10 @@ template<typename T> inline T forwardInheritedValue(T&& value) { return std::for
 template<auto R, typename V> inline Length<R, V> forwardInheritedValue(const Length<R, V>& value) { auto copy = value; return copy; }
 inline AnchorNames forwardInheritedValue(const AnchorNames& value) { auto copy = value; return copy; }
 inline AspectRatio forwardInheritedValue(const AspectRatio& value) { auto copy = value; return copy; }
+inline BackgroundSize forwardInheritedValue(const BackgroundSize& value) { auto copy = value; return copy; }
 inline BlockEllipsis forwardInheritedValue(const BlockEllipsis& value) { auto copy = value; return copy; }
 inline BlockStepSize forwardInheritedValue(const BlockStepSize& value) { auto copy = value; return copy; }
+inline BorderImageSource forwardInheritedValue(const BorderImageSource& value) { auto copy = value; return copy; }
 inline BorderRadiusValue forwardInheritedValue(const BorderRadiusValue& value) { auto copy = value; return copy; }
 inline BoxShadows forwardInheritedValue(const BoxShadows& value) { auto copy = value; return copy; }
 inline ContainIntrinsicSize forwardInheritedValue(const ContainIntrinsicSize& value) { auto copy = value; return copy; }
@@ -90,8 +92,10 @@ inline FilterOperations forwardInheritedValue(const FilterOperations& value) { a
 inline TransformOperations forwardInheritedValue(const TransformOperations& value) { auto copy = value; return copy; }
 inline ScrollMarginEdge forwardInheritedValue(const ScrollMarginEdge& value) { auto copy = value; return copy; }
 inline ScrollPaddingEdge forwardInheritedValue(const ScrollPaddingEdge& value) { auto copy = value; return copy; }
+inline MaskBorderSource forwardInheritedValue(const MaskBorderSource& value) { auto copy = value; return copy; }
 inline MarginEdge forwardInheritedValue(const MarginEdge& value) { auto copy = value; return copy; }
 inline PaddingEdge forwardInheritedValue(const PaddingEdge& value) { auto copy = value; return copy; }
+inline ImageOrNone forwardInheritedValue(const ImageOrNone& value) { auto copy = value; return copy; }
 inline InsetEdge forwardInheritedValue(const InsetEdge& value) { auto copy = value; return copy; }
 inline Perspective forwardInheritedValue(const Perspective& value) { auto copy = value; return copy; }
 inline Quotes forwardInheritedValue(const Quotes& value) { auto copy = value; return copy; }
@@ -133,6 +137,7 @@ inline ScrollbarGutter forwardInheritedValue(const ScrollbarGutter& value) { aut
 inline ShapeMargin forwardInheritedValue(const ShapeMargin& value) { auto copy = value; return copy; }
 inline ShapeOutside forwardInheritedValue(const ShapeOutside& value) { auto copy = value; return copy; }
 inline StrokeWidth forwardInheritedValue(const StrokeWidth& value) { auto copy = value; return copy; }
+inline TextDecorationLine forwardInheritedValue(const TextDecorationLine& value) { auto copy = value; return copy; }
 inline TextDecorationThickness forwardInheritedValue(const TextDecorationThickness& value) { auto copy = value; return copy; }
 inline TextEmphasisStyle forwardInheritedValue(const TextEmphasisStyle& value) { auto copy = value; return copy; }
 inline TextIndent forwardInheritedValue(const TextIndent& value) { auto copy = value; return copy; }
@@ -150,10 +155,8 @@ inline ViewTimelines forwardInheritedValue(const ViewTimelines& value) { auto co
 inline ViewTransitionClasses forwardInheritedValue(const ViewTransitionClasses& value) { auto copy = value; return copy; }
 inline ViewTransitionName forwardInheritedValue(const ViewTransitionName& value) { auto copy = value; return copy; }
 inline Vector<GridTrackSize> forwardInheritedValue(const Vector<GridTrackSize>& value) { auto copy = value; return copy; }
+inline WebkitLineClamp forwardInheritedValue(const WebkitLineClamp& value) { auto copy = value; return copy; }
 inline WebkitLineGrid forwardInheritedValue(const WebkitLineGrid& value) { auto copy = value; return copy; }
-
-inline BorderImageSource forwardInheritedValue(const BorderImageSource& value) { auto copy = value; return copy; }
-inline MaskBorderSource forwardInheritedValue(const MaskBorderSource& value) { auto copy = value; return copy; }
 
 // Note that we assume the CSS parser only allows valid CSSValue types.
 class BuilderCustom {
@@ -168,7 +171,6 @@ public:
     DECLARE_PROPERTY_CUSTOM_HANDLERS(BorderImageRepeat);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(BorderImageSlice);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(BorderImageWidth);
-    DECLARE_PROPERTY_CUSTOM_HANDLERS(BoxShadow);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(CaretColor);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(Color);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(CounterIncrement);
@@ -194,7 +196,6 @@ public:
     DECLARE_PROPERTY_CUSTOM_HANDLERS(PaddingLeft);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(PaddingRight);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(PaddingTop);
-    DECLARE_PROPERTY_CUSTOM_HANDLERS(OutlineStyle);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(Stroke);
     DECLARE_PROPERTY_CUSTOM_HANDLERS(Zoom);
 
@@ -223,15 +224,137 @@ private:
     static void resetUsedZoom(BuilderState&);
 
     enum CounterBehavior { Increment, Reset, Set };
-    template <CounterBehavior counterBehavior>
+    template<CounterBehavior>
     static void applyInheritCounter(BuilderState&);
-    template <CounterBehavior counterBehavior>
+    template<CounterBehavior>
     static void applyValueCounter(BuilderState&, CSSValue&);
 
     static float largerFontSize(float size);
     static float smallerFontSize(float size);
     static float determineRubyTextSizeMultiplier(BuilderState&);
 };
+
+// MARK: - Utilities
+
+template<auto layersSetter, auto layersInitial>
+void applyInitialPrimaryFillLayerProperty(BuilderState& builderState)
+{
+    (builderState.style().*layersSetter)(layersInitial());
+}
+
+template<auto layersSetter, auto layersGetter, auto getter, typename Layers>
+void applyInheritPrimaryFillLayerProperty(BuilderState& builderState)
+{
+    // Check for no-op before copying anything.
+    auto& layers = (builderState.style().*layersGetter)();
+    auto& parentLayers = (builderState.parentStyle().*layersGetter)();
+
+    if (layers == parentLayers)
+        return;
+
+    (builderState.style().*layersSetter)(
+        Layers {
+            Layers::Container::map(parentLayers.size(), parentLayers, [&](const typename Layers::Layer& parentLayer) {
+                return typename Layers::Layer { forwardInheritedValue((parentLayer.*getter)()) };
+            })
+        }
+    );
+}
+
+template<auto layersSetter, auto converter, typename Layers>
+void applyValuePrimaryFillLayerProperty(BuilderState& builderState, CSSValue& value)
+{
+    if (RefPtr valueList = dynamicDowncast<CSSValueList>(value)) {
+        (builderState.style().*layersSetter)(
+            Layers {
+                Layers::Container::map(valueList->size(), *valueList, [&](const CSSValue& item) {
+                    return typename Layers::Layer { converter(builderState, item) };
+                })
+            }
+        );
+    } else {
+        (builderState.style().*layersSetter)(
+            Layers {
+                Layers::Container::create({ typename Layers::Layer { converter(builderState, value) } })
+            }
+        );
+    }
+}
+
+template<auto layersMutableGetter, auto setter, auto initial>
+void applyInitialSecondaryFillLayerProperty(BuilderState& builderState)
+{
+    auto& layers = (builderState.style().*layersMutableGetter)();
+
+    for (auto& layer : layers)
+        (layer.*setter)(initial());
+}
+
+template<auto setter, auto getter>
+void fillRemainingViaRepetition(auto& layers, size_t indexToStartAt)
+{
+    for (size_t i = indexToStartAt, patternIndex = 0; i < layers.size(); ++i, ++patternIndex)
+        (layers[i].*setter)(forwardInheritedValue((layers[patternIndex % indexToStartAt].*getter)()));
+}
+
+template<auto layersMutableGetter, auto layersGetter, auto setter, auto getter>
+void applyInheritSecondaryFillLayerProperty(BuilderState& builderState)
+{
+    // Check for no-op before copying anything.
+    auto& layers = (builderState.style().*layersMutableGetter)();
+    auto& parentLayers = (builderState.parentStyle().*layersGetter)();
+
+    if (layers == parentLayers)
+        return;
+
+    auto numberOfLayers = layers.size();
+    auto numberOfParentLayers = parentLayers.size();
+
+    if (numberOfLayers > numberOfParentLayers) {
+        // Pattern repetition is needed.
+        for (size_t i = 0; i < numberOfParentLayers; ++i)
+            (layers[i].*setter)(forwardInheritedValue((parentLayers[i].*getter)()));
+
+        fillRemainingViaRepetition<setter, getter>(layers, numberOfParentLayers);
+    } else {
+        // Otherwise, no pattern repetition is needed.
+        for (size_t i = 0; i < numberOfLayers; ++i)
+            (layers[i].*setter)(forwardInheritedValue((parentLayers[i].*getter)()));
+    }
+}
+
+template<auto layersMutableGetter, auto setter, auto getter, auto initial, auto converter>
+void applyValueSecondaryFillLayerProperty(BuilderState& builderState, CSSValue& value)
+{
+    auto& layers = (builderState.style().*layersMutableGetter)();
+
+    auto set = [&](auto index, auto& item) {
+        // When the `background` or `mask` shorthands are used, implicit `initial` values may be inserted
+        // by the parser and must be handled explicitly here.
+        if (item.valueID() == CSSValueInitial)
+            (layers[index].*setter)(initial());
+        else
+            (layers[index].*setter)(converter(builderState, item));
+    };
+
+    size_t maxIndexSet = 0;
+    if (RefPtr valueList = dynamicDowncast<CSSValueList>(value)) {
+        for (auto [index, item] : indexedRange(*valueList)) {
+            if (index >= layers.size())
+                break;
+
+            set(index, item);
+            maxIndexSet = index;
+        }
+    } else {
+        set(0, value);
+    }
+
+    // We need to fill in any remaining values with the pattern specified.
+    fillRemainingViaRepetition<setter, getter>(layers, maxIndexSet + 1);
+}
+
+// MARK: - Custom conversions
 
 inline void BuilderCustom::applyValueDirection(BuilderState& builderState, CSSValue& value)
 {

@@ -4,3 +4,7 @@ Harness Error (FAIL), message = TypeError: undefined is not an object (evaluatin
 
 NOTRUN USB Report Format
 
+Harness Error (FAIL), message = TypeError: undefined is not an object (evaluating 'navigator.usb.getDevices')
+
+NOTRUN USB Report Format
+

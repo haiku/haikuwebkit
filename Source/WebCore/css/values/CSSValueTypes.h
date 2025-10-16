@@ -194,6 +194,20 @@ template<CSSValueID Name, typename CSSType> struct Serialize<FunctionNotation<Na
     }
 };
 
+// Specialization for `MinimallySerializingSpaceSeparatedPoint`.
+template<typename CSSType> struct Serialize<MinimallySerializingSpaceSeparatedPoint<CSSType>> {
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const MinimallySerializingSpaceSeparatedPoint<CSSType>& value, Rest&&... rest)
+    {
+        constexpr auto separator = SerializationSeparatorString<MinimallySerializingSpaceSeparatedPoint<CSSType>>;
+
+        if (get<0>(value) != get<1>(value)) {
+            serializationForCSSOnTupleLike(builder, context, std::tuple { get<0>(value), get<1>(value) }, separator, std::forward<Rest>(rest)...);
+            return;
+        }
+        serializationForCSS(builder, context, get<0>(value), std::forward<Rest>(rest)...);
+    }
+};
+
 // Specialization for `MinimallySerializingSpaceSeparatedSize`.
 template<typename CSSType> struct Serialize<MinimallySerializingSpaceSeparatedSize<CSSType>> {
     template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const MinimallySerializingSpaceSeparatedSize<CSSType>& value, Rest&&... rest)
@@ -604,6 +618,14 @@ template<CSSValueID Name, typename CSSType> struct CSSValueCreation<FunctionNota
     template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const FunctionNotation<Name, CSSType>& value, Rest&&... rest)
     {
         return makeFunctionCSSValue(value.name, createCSSValue(pool, value.parameters, std::forward<Rest>(rest)...));
+    }
+};
+
+// Specialization for `MinimallySerializingSpaceSeparatedPoint`.
+template<typename CSSType> struct CSSValueCreation<MinimallySerializingSpaceSeparatedPoint<CSSType>> {
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const MinimallySerializingSpaceSeparatedPoint<CSSType>& value, Rest&&... rest)
+    {
+        return makeSpaceSeparatedCoalescingPairCSSValue(createCSSValue(pool, get<0>(value), rest...), createCSSValue(pool, get<1>(value), rest...));
     }
 };
 

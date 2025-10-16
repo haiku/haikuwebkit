@@ -45,6 +45,7 @@ std::optional<WebAssemblyCompileOptions> WebAssemblyCompileOptions::tryCreate(JS
 
     // Check for the 'importedStringConstants' entry
     JSValue importedStringConstantsValue = optionsObject->get(globalObject, PropertyName(Identifier::fromString(vm, "importedStringConstants"_s)));
+    RETURN_IF_EXCEPTION(scope, std::nullopt);
     if (importedStringConstantsValue.isString()) {
         auto importedStringConstants = asString(importedStringConstantsValue)->value(globalObject);
         options.m_importedStringConstants = makeString(StringView(importedStringConstants));
@@ -56,6 +57,7 @@ std::optional<WebAssemblyCompileOptions> WebAssemblyCompileOptions::tryCreate(JS
 
     // Check for the 'builtins' entry, qualifying builtin set names in the process.
     JSValue builtinsValue = optionsObject->get(globalObject, PropertyName(Identifier::fromString(vm, "builtins"_s)));
+    RETURN_IF_EXCEPTION(scope, std::nullopt);
     if (builtinsValue.isObject()) {
         bool sawBadEntries = false;
         forEachInIterable(globalObject, builtinsValue, [&] (VM&, JSGlobalObject* globalObject, JSValue nextValue) {
@@ -66,6 +68,7 @@ std::optional<WebAssemblyCompileOptions> WebAssemblyCompileOptions::tryCreate(JS
             } else
                 sawBadEntries = true;
         });
+        RETURN_IF_EXCEPTION(scope, std::nullopt);
         if (sawBadEntries) {
             auto error = createTypeError(globalObject, "builtins list option values must be strings"_s);
             throwException(globalObject, scope, error);
@@ -127,6 +130,12 @@ bool WebAssemblyCompileOptions::validateImportForBuiltinSetNames(const Wasm::Imp
         return true;
     auto& builtinSig = builtin->signature();
 
+    // The spec does not explicitly check if the import is a function because an import type is fully self-contained in `import[2]`.
+    // A non-function import would have a non-function type as its `import[2]`, failing the `match_externtype` check in Step 7.
+    // In our implementation import type is held externally, so we must check that the import kind is a function before fetching the function type
+    // at `kindIndex`. The wrong import kind is equivalent in spec terms to `match_externtype` returning false in Step 7.
+    if (import.kind != Wasm::ExternalKind::Function)
+        return false;
     Wasm::TypeIndex typeIndex = moduleInfo.importFunctionTypeIndices[import.kindIndex];
     Ref<const Wasm::TypeDefinition> type = Wasm::TypeInformation::get(typeIndex);
     if (!type->is<Wasm::FunctionSignature>())

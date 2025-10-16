@@ -205,7 +205,7 @@ float FontCascade::wordSpacing() const
 FloatSize FontCascade::drawText(GraphicsContext& context, const TextRun& run, const FloatPoint& point, unsigned from, std::optional<unsigned> to, CustomFontNotReadyAction customFontNotReadyAction) const
 {
     unsigned destination = to.value_or(run.length());
-    auto glyphBuffer = layoutText(codePath(run, from, to), run, from, destination);
+    auto glyphBuffer = layoutText(codePathForShaping(run, from, to), run, from, destination);
     glyphBuffer.flatten();
 
     if (glyphBuffer.isEmpty())
@@ -223,7 +223,7 @@ void FontCascade::drawEmphasisMarks(GraphicsContext& context, const TextRun& run
 
     unsigned destination = to.value_or(run.length());
 
-    auto glyphBuffer = layoutText(codePath(run, from, to), run, from, destination, ForTextEmphasisOrNot::ForTextEmphasis);
+    auto glyphBuffer = layoutText(codePathForShaping(run, from, to), run, from, destination, ForTextEmphasisOrNot::ForTextEmphasis);
     glyphBuffer.flatten();
 
     if (glyphBuffer.isEmpty())
@@ -239,7 +239,7 @@ RefPtr<const DisplayList::DisplayList> FontCascade::displayListForTextRun(Graphi
     unsigned destination = to.value_or(run.length());
 
     // FIXME: Use the fast code path once it handles partial runs with kerning and ligatures. See http://webkit.org/b/100050
-    CodePath codePathToUse = codePath(run);
+    CodePath codePathToUse = codePathForShaping(run);
     if (codePathToUse != CodePath::Complex && (enableKerning() || requiresShaping()) && (from || destination != run.length()))
         codePathToUse = CodePath::Complex;
 
@@ -271,7 +271,7 @@ float FontCascade::widthOfTextRange(const TextRun& run, unsigned from, unsigned 
     float offsetAfterRange = 0;
     float totalWidth = 0;
 
-    auto codePathToUse = codePath(run);
+    auto codePathToUse = codePathForShaping(run);
     if (codePathToUse == CodePath::Complex) {
         ComplexTextController complexIterator(*this, run, false, fallbackFonts);
         complexIterator.advance(from, nullptr, GlyphIterationStyle::IncludePartialGlyphs, fallbackFonts);
@@ -314,7 +314,7 @@ float FontCascade::width(const TextRun& run, SingleThreadWeakHashSet<const Font>
     if (!run.length())
         return 0;
 
-    CodePath codePathToUse = codePath(run);
+    CodePath codePathToUse = codePathForShaping(run);
     if (codePathToUse != CodePath::Complex) {
         // The complex path is more restrictive about returning fallback fonts than the simple path, so we need an explicit test to make their behaviors match.
         if constexpr (!canReturnFallbackFontsForComplexText())
@@ -567,7 +567,7 @@ void FontCascade::adjustSelectionRectForText(bool canUseSimplifiedTextMeasuring,
     unsigned destination = to.value_or(run.length());
 
     // FIXME: Use the fast code path once it handles partial runs with kerning and ligatures. See http://webkit.org/b/100050
-    CodePath codePathToUse = codePath(run);
+    CodePath codePathToUse = codePathForShaping(run);
     if (codePathToUse != CodePath::Complex) {
         if (canUseSimplifiedTextMeasuring && canTakeFixedPitchFastContentMeasuring())
             return adjustSelectionRectForSimpleTextWithFixedPitch(run, selectionRect, from, destination);
@@ -583,7 +583,7 @@ void FontCascade::adjustSelectionRectForText(bool canUseSimplifiedTextMeasuring,
 
 int FontCascade::offsetForPosition(const TextRun& run, float x, bool includePartialGlyphs) const
 {
-    if (codePath(run, x) != CodePath::Complex)
+    if (codePathForShaping(run, x) != CodePath::Complex)
         return offsetForPositionForSimpleText(run, x, includePartialGlyphs);
 
     return offsetForPositionForComplexText(run, x, includePartialGlyphs);
@@ -646,7 +646,7 @@ FontCascade::CodePath FontCascade::codePath(const TextRun& run, std::optional<un
     if (s_codePath != CodePath::Auto)
         return s_codePath;
 
-#if !USE(FREETYPE)
+#if !USE(FREETYPE) && !ENABLE(COMPLEX_TEXT_CONTROLLER_FOR_SIMPLE_CODE_PATH)
     // FIXME: Use the fast code path once it handles partial runs with kerning and ligatures. See http://webkit.org/b/100050
     if ((enableKerning() || requiresShaping()) && (from.value_or(0) || to.value_or(run.length()) != run.length()))
         return CodePath::Complex;
@@ -657,7 +657,7 @@ FontCascade::CodePath FontCascade::codePath(const TextRun& run, std::optional<un
 
     // FIXME: https://bugs.webkit.org/show_bug.cgi?id=150791: @font-face features should also cause this to be complex.
 
-#if !USE(FONT_VARIANT_VIA_FEATURES) && !USE(FREETYPE)
+#if !USE(FONT_VARIANT_VIA_FEATURES) && !USE(FREETYPE) && !ENABLE(COMPLEX_TEXT_CONTROLLER_FOR_SIMPLE_CODE_PATH)
     if (run.length() > 1 && (enableKerning() || requiresShaping()))
         return CodePath::Complex;
 #endif
@@ -1637,7 +1637,7 @@ float FontCascade::widthForComplexText(const TextRun& run, SingleThreadWeakHashS
 float FontCascade::widthForCharacterInRun(const TextRun& run, unsigned characterPosition) const
 {
     auto shortenedRun = run.subRun(characterPosition, 1);
-    auto codePathToUse = codePath(run);
+    auto codePathToUse = codePathForShaping(run);
     if (codePathToUse == CodePath::Complex)
         return widthForComplexText(shortenedRun);
 
@@ -1886,7 +1886,7 @@ Vector<FloatSegment> FontCascade::lineSegmentsForIntersectionsWithRect(const Tex
     if (isLoadingCustomFonts())
         return result;
 
-    auto glyphBuffer = layoutText(codePath(run), run, 0, run.length());
+    auto glyphBuffer = layoutText(codePathForShaping(run), run, 0, run.length());
     if (!glyphBuffer.size())
         return result;
 

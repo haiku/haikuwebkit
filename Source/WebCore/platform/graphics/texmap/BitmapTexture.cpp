@@ -261,7 +261,8 @@ void BitmapTexture::updateContents(const void* srcData, const IntRect& targetRec
             return;
         }
 
-        LOG_ERROR("BitmapTexture::updateContents(), failed to obtain MemoryMappedGPUBuffer write scope, fallback to OpenGL.");
+        WTFLogAlways("ERROR: Update Bitmap Texture Contents failed to obtain MemoryMappedGPUBuffer write scope. Aborting fallback to OpenGL..."); // NOLINT
+        CRASH();
     }
 #endif
 

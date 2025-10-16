@@ -85,6 +85,25 @@ void WebBackForwardListProxy::goToItem(HistoryItem& item)
     m_cachedBackForwardListCounts = backForwardListCounts;
 }
 
+Vector<Ref<HistoryItem>> WebBackForwardListProxy::allItems(FrameIdentifier frameID)
+{
+    RefPtr page = m_page.get();
+    if (!page)
+        return { };
+
+    auto sendResult = m_page->sendSync(Messages::WebPageProxy::BackForwardAllItems(frameID));
+    auto [allFrameStates] = sendResult.takeReplyOr(Vector<Ref<FrameState>> { });
+
+    Ref historyItemClient = page->historyItemClient();
+    auto ignoreHistoryItemChangesForScope = historyItemClient->ignoreChangesForScope();
+
+    Vector<Ref<HistoryItem>> allItems;
+    for (Ref frameState : allFrameStates)
+        allItems.append(toHistoryItem(historyItemClient, WTFMove(frameState)));
+
+    return allItems;
+}
+
 RefPtr<HistoryItem> WebBackForwardListProxy::itemAtIndex(int itemIndex, FrameIdentifier frameID)
 {
     RefPtr page = m_page.get();

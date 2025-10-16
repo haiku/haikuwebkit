@@ -290,17 +290,21 @@ class TestExporterTest(testing.PathTestCase):
         host.filesystem.maybe_make_directory(self.path)
         host._mockSCM.mock_format_patch_result = b"""
 Subversion Revision: 231920
+diff --git a/LayoutTests/imported/w3c/web-platform-tests/css/css-counter-styles/counter-style-at-rule/empty-string-symbol-expected.xht b/LayoutTests/imported/w3c/web-platform-tests/css/css-counter-styles/counter-style-at-rule/empty-string-symbol-expected.xht
+
++change to expected
+
 diff --git a/LayoutTests/imported/w3c/web-platform-tests/fetch/api/headers/header-values-expected.txt b/LayoutTests/imported/w3c/web-platform-tests/fetch/api/headers/header-values-expected.txt
 
 +change to expected
 
 diff --git a/LayoutTests/imported/w3c/web-platform-tests/fetch/api/headers/header-values.any.serviceworker.html b/LayoutTests/imported/w3c/web-platform-tests/fetch/api/headers/header-values.any.serviceworker.html
 
-+change to expected
++change to any.serviceworker
 
 diff --git a/LayoutTests/imported/w3c/web-platform-tests/fetch/api/headers/header-values.any.sharedworker.html b/LayoutTests/imported/w3c/web-platform-tests/fetch/api/headers/header-values.any.sharedworker.html
 
-+change to expected
++change to any.sharedworker
 """
         options = parse_args(['test_exporter.py', '-g', 'HEAD', '-b', '1', '-c', '-n', 'USER', '-t', 'TOKEN', '-d', self.path])
         with mocks.local.Git(self.path) as repo:

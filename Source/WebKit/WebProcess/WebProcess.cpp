@@ -111,7 +111,7 @@
 #include <WebCore/FontCache.h>
 #include <WebCore/FontCascade.h>
 #include <WebCore/FrameLoader.h>
-#include <WebCore/GCController.h>
+#include <WebCore/GarbageCollectionController.h>
 #include <WebCore/GlyphPage.h>
 #include <WebCore/HTMLMediaElement.h>
 #include <WebCore/LegacySchemeRegistry.h>
@@ -470,7 +470,7 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
                 critical = Critical::Yes;
 
             if (Options::dumpHeapOnLowMemory()) [[unlikely]]
-                GCController::singleton().dumpHeap();
+                GarbageCollectionController::singleton().dumpHeap();
 
 #if PLATFORM(COCOA)
             // If this is a process we keep around for performance, kill it on memory pressure instead of trying to free up its memory.
@@ -1035,7 +1035,7 @@ void WebProcess::terminate()
 {
 #ifndef NDEBUG
     // These are done in an attempt to reduce LEAK output.
-    GCController::singleton().garbageCollectNow();
+    GarbageCollectionController::singleton().garbageCollectNow();
     FontCache::invalidateAllFontCaches();
     MemoryCache::singleton().setDisabled(true);
 #endif
@@ -1166,7 +1166,7 @@ void WebProcess::isJITEnabled(CompletionHandler<void(bool)>&& completionHandler)
 
 void WebProcess::garbageCollectJavaScriptObjects()
 {
-    GCController::singleton().garbageCollectNow();
+    GarbageCollectionController::singleton().garbageCollectNow();
 }
 
 void WebProcess::backgroundResponsivenessPing()
@@ -1228,7 +1228,7 @@ void WebProcess::gamepadDisconnected(unsigned index)
 
 void WebProcess::setJavaScriptGarbageCollectorTimerEnabled(bool flag)
 {
-    GCController::singleton().setJavaScriptGarbageCollectorTimerEnabled(flag);
+    GarbageCollectionController::singleton().setJavaScriptGarbageCollectorTimerEnabled(flag);
 }
 
 void WebProcess::handleInjectedBundleMessage(const String& messageName, const UserData& messageBody)

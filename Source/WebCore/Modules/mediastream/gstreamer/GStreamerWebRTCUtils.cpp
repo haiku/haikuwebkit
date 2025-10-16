@@ -33,6 +33,7 @@
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
 #include <wtf/CryptographicallyRandomNumber.h>
+#include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/WallTime.h>
 #include <wtf/WeakRandomNumber.h>
@@ -1125,6 +1126,54 @@ GRefPtr<GstCaps> extractMidAndRidFromRTPBuffer(const GstMappedRtpBuffer& buffer,
         }
     }
     return nullptr;
+}
+
+static HashMap<String, unsigned> getRTPHeaderExtensionMappingFromSDPMedia(const GstSDPMedia* media)
+{
+    HashMap<String, unsigned> result;
+    for (unsigned i = 0; i < gst_sdp_media_attributes_len(media); i++) {
+        const auto attribute = gst_sdp_media_get_attribute(media, i);
+        auto key = StringView::fromLatin1(attribute->key);
+        if (key != "extmap"_s)
+            continue;
+
+        auto value = String::fromUTF8(attribute->value);
+        auto tokens = value.split(' ');
+        if (tokens.size() < 2) [[unlikely]]
+            continue;
+
+        auto id = parseInteger<unsigned>(tokens[0]);
+        if (!id) [[unlikely]]
+            continue;
+
+        result.add(tokens[1], *id);
+    }
+    return result;
+}
+
+bool validateRTPHeaderExtensions(const GstSDPMessage* previousSDP, const GstSDPMessage* newSDP)
+{
+    ensureDebugCategoryInitialized();
+    unsigned totalMedias = gst_sdp_message_medias_len(previousSDP);
+    for (unsigned i = 0; i < totalMedias; i++) {
+        const auto previousMedia = gst_sdp_message_get_media(previousSDP, i);
+        const auto newMedia = gst_sdp_message_get_media(newSDP, i);
+        if (!newMedia)
+            break;
+
+        auto previousMapping = getRTPHeaderExtensionMappingFromSDPMedia(previousMedia);
+        auto newMapping = getRTPHeaderExtensionMappingFromSDPMedia(newMedia);
+        for (const auto& [uri, id] : newMapping) {
+            const auto& previousId = previousMapping.getOptional(uri);
+            if (!previousId)
+                continue;
+            if (*previousId != id) {
+                GST_WARNING("RTP header extension id changed from %u to %u for %s", *previousId, id, uri.utf8().data());
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 #undef GST_CAT_DEFAULT

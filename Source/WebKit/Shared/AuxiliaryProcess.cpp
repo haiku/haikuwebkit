@@ -44,6 +44,9 @@
 
 #if OS(LINUX)
 #include <wtf/MemoryPressureHandler.h>
+#if USE(GLIB)
+#include <wtf/glib/Sandbox.h>
+#endif
 #endif
 
 #if PLATFORM(COCOA)
@@ -132,8 +135,15 @@ void AuxiliaryProcess::initializeProcessName(const AuxiliaryProcessInitializatio
 {
 }
 
-void AuxiliaryProcess::initializeConnection(IPC::Connection*)
+void AuxiliaryProcess::initializeConnection(IPC::Connection* connection)
 {
+#if OS(LINUX) && USE(GLIB)
+    // When bubblewrap sandbox is used isInsideFlatpak() also returns true in the web process.
+    if (isInsideFlatpak())
+        connection->sendCredentials();
+#else
+    UNUSED_PARAM(connection);
+#endif
 }
 
 bool AuxiliaryProcess::dispatchMessage(IPC::Connection& connection, IPC::Decoder& decoder)

@@ -46,12 +46,12 @@ struct PatchpointExceptionHandleBase {
 #if ENABLE(WEBASSEMBLY_OMGJIT)
 
 struct PatchpointExceptionHandle : public PatchpointExceptionHandleBase {
-    PatchpointExceptionHandle(std::optional<bool> hasExceptionHandlers, unsigned callSiteIndex)
+    PatchpointExceptionHandle(bool hasExceptionHandlers, unsigned callSiteIndex)
         : m_hasExceptionHandlers(hasExceptionHandlers)
         , m_callSiteIndex(callSiteIndex)
     { }
 
-    PatchpointExceptionHandle(std::optional<bool> hasExceptionHandlers, unsigned callSiteIndex, unsigned numLiveValues, unsigned firstStackmapParamOffset, unsigned firstStackmapChildOffset)
+    PatchpointExceptionHandle(bool hasExceptionHandlers, unsigned callSiteIndex, unsigned numLiveValues, unsigned firstStackmapParamOffset, unsigned firstStackmapChildOffset)
         : m_hasExceptionHandlers(hasExceptionHandlers)
         , m_callSiteIndex(callSiteIndex)
         , m_numLiveValues(numLiveValues)
@@ -65,7 +65,7 @@ struct PatchpointExceptionHandle : public PatchpointExceptionHandleBase {
         JIT_COMMENT(jit, "Store call site index ", m_callSiteIndex, " at throw or call site.");
         jit.store32(CCallHelpers::TrustedImm32(m_callSiteIndex), CCallHelpers::tagFor(CallFrameSlot::argumentCountIncludingThis));
 
-        if (m_hasExceptionHandlers && !*m_hasExceptionHandlers)
+        if (!m_hasExceptionHandlers)
             return;
         if (!m_numLiveValues)
             return;
@@ -77,7 +77,7 @@ struct PatchpointExceptionHandle : public PatchpointExceptionHandleBase {
         generator->addStackMap(m_callSiteIndex, WTFMove(values));
     }
 
-    std::optional<bool> m_hasExceptionHandlers;
+    bool m_hasExceptionHandlers;
     unsigned m_callSiteIndex { s_invalidCallSiteIndex };
     std::optional<unsigned> m_numLiveValues { };
     unsigned m_firstStackmapParamOffset { };

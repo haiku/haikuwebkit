@@ -239,7 +239,7 @@ String AXTextMarker::debugDescription() const
 
     return makeString("{"_s
         , id
-        , object ? makeString(separator, "role "_s, accessibilityRoleToString(object->role())) : ""_s
+        , object ? makeString(separator, "role "_s, roleToString(object->role())) : ""_s
         , isIgnored() ? makeString(separator, "ignored"_s) : ""_s
         // Anchor type and other fields below are not used for text markers processed off the main-thread.
         , isMainThread() ? makeString(separator, "anchor "_s, m_data.anchorType) : ""_s

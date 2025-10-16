@@ -31,8 +31,8 @@
     Exposed=Window
 ] interface WebKitNamespace {
     readonly attribute UserMessageHandlersNamespace messageHandlers;
-    [EnabledForWorld=nodeInfoEnabled, CallWith=CurrentDocument] WebKitJSHandle createJSHandle(object object);
-    [EnabledForWorld=nodeInfoEnabled] WebKitSerializedNode serializeNode(Node node, optional WebKitSerializedNodeInit init);
+    [EnabledForWorld=allowJSHandleCreation, CallWith=CurrentDocument] WebKitJSHandle createJSHandle(object object);
+    [EnabledForWorld=allowNodeSerialization] WebKitSerializedNode serializeNode(Node node, optional WebKitSerializedNodeInit init);
 };
 
 dictionary WebKitSerializedNodeInit {

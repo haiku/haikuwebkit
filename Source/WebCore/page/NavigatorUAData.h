@@ -25,9 +25,9 @@
 
 #pragma once
 
+#include "NavigatorUABrandVersion.h"
 #include <WebCore/IDLTypes.h>
 #include <WebCore/JSDOMPromiseDeferred.h>
-#include "NavigatorUABrandVersion.h"
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 

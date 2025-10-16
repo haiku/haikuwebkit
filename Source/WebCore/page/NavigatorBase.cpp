@@ -31,6 +31,7 @@
 #include "GPU.h"
 #include "ScriptTrackingPrivacyCategory.h"
 #include "ServiceWorkerContainer.h"
+#include "Settings.h"
 #include "StorageManager.h"
 #include "WebCoreOpaqueRoot.h"
 #include "WebLockManager.h"

@@ -13,7 +13,7 @@ PASS child of munderover (non-accent overscript)
 PASS accent child of mover (accent overscript)
 PASS accent child of munderover (accent overscript)
 PASS mmultiscripts
-PASS element with specified CSS math-style
+PASS element with specified CSS math-shift
 
 
 

@@ -41,6 +41,9 @@ class CheckedObject : public CanMakeCheckedPtr<CheckedObject> {
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(CheckedObject);
 public:
     int someFunction() const { return -7; }
+    int member() const { return m_member; }
+private:
+    int m_member { 333 };
 };
 
 class DerivedCheckedObject : public CheckedObject {
@@ -343,6 +346,16 @@ TEST(WTF_CheckedPtr, ReferenceCountLimit)
     Vector<CheckedPtr<CheckedObject>> ptrs;
     ptrs.fill(object.get(), count);
     EXPECT_EQ(object->checkedPtrCount(), count);
+}
+
+TEST(WTF_CheckedPtr, ObjectIsNulledOut)
+{
+    static NeverDestroyed<CheckedPtr<CheckedObject>> leakedCheckedPtr;
+    auto object = makeUnique<CheckedObject>();
+    leakedCheckedPtr.get() = object.get();
+    object = nullptr;
+    std::array<uint8_t, sizeof(CheckedObject)> allZeros { };
+    EXPECT_TRUE(equalSpans(asByteSpan(*leakedCheckedPtr.get()), std::span { allZeros }));
 }
 
 class ThreadSafeCheckedPtrObject final : public CanMakeThreadSafeCheckedPtr<ThreadSafeCheckedPtrObject> {

@@ -197,43 +197,36 @@ void setJSCOptions(xpc_object_t initializerMessage, EnableLockdownMode enableLoc
 {
     RELEASE_ASSERT(!g_jscConfig.initializeHasBeenCalled);
 
-    bool optionsChanged = false;
     if (xpc_dictionary_get_bool(initializerMessage, "configure-jsc-for-testing"))
         JSC::Config::configureForTesting();
     if (enableLockdownMode == EnableLockdownMode::Yes) {
         JSC::Options::machExceptionHandlerSandboxPolicy = JSC::Options::SandboxPolicy::Block;
-        JSC::Options::initialize();
-        JSC::Options::AllowUnfinalizedAccessScope scope;
-        JSC::ExecutableAllocator::disableJIT();
-        JSC::Options::useGenerationalGC() = false;
-        JSC::Options::useConcurrentGC() = false;
-        JSC::Options::useLLIntICs() = false;
-        JSC::Options::useWasm() = false;
-        JSC::Options::useZombieMode() = true;
-        JSC::Options::allowDoubleShape() = false;
-        JSC::Options::alwaysHaveABadTime() = true;
-        optionsChanged = true;
+        JSC::Options::initialize([] {
+            JSC::ExecutableAllocator::disableJIT();
+            JSC::Options::useGenerationalGC() = false;
+            JSC::Options::useConcurrentGC() = false;
+            JSC::Options::useLLIntICs() = false;
+            JSC::Options::useWasm() = false;
+            JSC::Options::useZombieMode() = true;
+            JSC::Options::allowDoubleShape() = false;
+            JSC::Options::alwaysHaveABadTime() = true;
+        });
     } else if (xpc_dictionary_get_bool(initializerMessage, "disable-jit")) {
-        JSC::Options::initialize();
-        JSC::Options::AllowUnfinalizedAccessScope scope;
-        JSC::ExecutableAllocator::disableJIT();
-        optionsChanged = true;
+        JSC::Options::initialize([] {
+            JSC::ExecutableAllocator::disableJIT();
+        });
     }
     if (xpc_dictionary_get_bool(initializerMessage, "enable-shared-array-buffer")) {
-        JSC::Options::initialize();
-        JSC::Options::AllowUnfinalizedAccessScope scope;
-        JSC::Options::useSharedArrayBuffer() = true;
-        optionsChanged = true;
+        JSC::Options::initialize([] {
+            JSC::Options::useSharedArrayBuffer() = true;
+        });
     }
     // FIXME (276012): Remove this XPC bootstrap message when it's no longer necessary. See rdar://130669638 for more context.
     if (xpc_dictionary_get_bool(initializerMessage, "disable-jit-cage")) {
-        JSC::Options::initialize();
-        JSC::Options::AllowUnfinalizedAccessScope scope;
-        JSC::Options::useJITCage() = false;
-        optionsChanged = true;
+        JSC::Options::initialize([] {
+            JSC::Options::useJITCage() = false;
+        });
     }
-    if (optionsChanged)
-        JSC::Options::notifyOptionsChanged();
 }
 
 void disableJSC(NOESCAPE WTF::CompletionHandler<void(void)>&& beforeFinalizeHandler)
@@ -244,11 +237,10 @@ void disableJSC(NOESCAPE WTF::CompletionHandler<void(void)>&& beforeFinalizeHand
 
     WTF::initializeMainThread();
     {
-        JSC::Options::initialize();
-        JSC::Options::AllowUnfinalizedAccessScope scope;
-        JSC::ExecutableAllocator::disableJIT();
-        JSC::Options::useWasm() = false;
-        JSC::Options::notifyOptionsChanged();
+        JSC::Options::initialize([] {
+            JSC::ExecutableAllocator::disableJIT();
+            JSC::Options::useWasm() = false;
+        });
     }
     WTF::compilerFence();
 

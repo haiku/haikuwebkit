@@ -51,10 +51,11 @@ static constexpr auto multipleOf4(auto input)
 }
 static uint64_t maxBufferSize(id<MTLDevice> device)
 {
+    constexpr auto maxBuffersToAllow = 3;
 #if PLATFORM(MAC) || PLATFORM(MACCATALYST)
-    auto result = std::max<uint64_t>(std::min<uint64_t>(device.maxBufferLength, GB), std::min<uint64_t>(INT_MAX, device.maxBufferLength / 10));
+    auto result = std::max<uint64_t>(std::min<uint64_t>(device.maxBufferLength, GB), std::min<uint64_t>(INT_MAX, device.maxBufferLength / maxBuffersToAllow));
 #else
-    auto result = std::max<uint64_t>(defaultMaxBufferSize, std::min<uint64_t>(INT_MAX, device.maxBufferLength / 10));
+    auto result = std::max<uint64_t>(defaultMaxBufferSize, std::min<uint64_t>(GB, device.maxBufferLength / maxBuffersToAllow));
 #endif
     return multipleOf4(result);
 }
@@ -138,6 +139,7 @@ static Vector<WGPUFeatureName> baseFeatures(id<MTLDevice> device, const Hardware
     features.append(WGPUFeatureName_RG11B10UfloatRenderable);
     features.append(WGPUFeatureName_ShaderF16);
     features.append(WGPUFeatureName_BGRA8UnormStorage);
+    features.append(WGPUFeatureName_TextureFormatsTier1);
 
 #if !PLATFORM(WATCHOS)
     if (device.supports32BitFloatFiltering)
@@ -259,10 +261,10 @@ static HardwareCapabilities apple6(id<MTLDevice> device)
             .maxComputeWorkgroupSizeY =    1024,
             .maxComputeWorkgroupSizeZ =    1024,
             .maxComputeWorkgroupsPerDimension =    largeReasonableLimit(),
-            .maxStorageBuffersInFragmentStage = UINT32_MAX,
-            .maxStorageTexturesInFragmentStage = UINT32_MAX,
-            .maxStorageBuffersInVertexStage = UINT32_MAX,
-            .maxStorageTexturesInVertexStage = UINT32_MAX,
+            .maxStorageBuffersInFragmentStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageTexturesInFragmentStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageBuffersInVertexStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageTexturesInVertexStage = maxBindGroups * tier2LimitForBuffersAndTextures,
         },
         WTFMove(features),
         baseCapabilities,
@@ -319,10 +321,10 @@ static HardwareCapabilities apple7(id<MTLDevice> device)
             .maxComputeWorkgroupSizeY =    1024,
             .maxComputeWorkgroupSizeZ =    1024,
             .maxComputeWorkgroupsPerDimension =    largeReasonableLimit(),
-            .maxStorageBuffersInFragmentStage = UINT32_MAX,
-            .maxStorageTexturesInFragmentStage = UINT32_MAX,
-            .maxStorageBuffersInVertexStage = UINT32_MAX,
-            .maxStorageTexturesInVertexStage = UINT32_MAX,
+            .maxStorageBuffersInFragmentStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageTexturesInFragmentStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageBuffersInVertexStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageTexturesInVertexStage = maxBindGroups * tier2LimitForBuffersAndTextures,
         },
         WTFMove(features),
         baseCapabilities,
@@ -379,10 +381,10 @@ static HardwareCapabilities mac2(id<MTLDevice> device)
             .maxComputeWorkgroupSizeY =    1024,
             .maxComputeWorkgroupSizeZ =    1024,
             .maxComputeWorkgroupsPerDimension =    largeReasonableLimit(),
-            .maxStorageBuffersInFragmentStage = UINT32_MAX,
-            .maxStorageTexturesInFragmentStage = UINT32_MAX,
-            .maxStorageBuffersInVertexStage = UINT32_MAX,
-            .maxStorageTexturesInVertexStage = UINT32_MAX,
+            .maxStorageBuffersInFragmentStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageTexturesInFragmentStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageBuffersInVertexStage = maxBindGroups * tier2LimitForBuffersAndTextures,
+            .maxStorageTexturesInVertexStage = maxBindGroups * tier2LimitForBuffersAndTextures,
         },
         WTFMove(features),
         baseCapabilities,

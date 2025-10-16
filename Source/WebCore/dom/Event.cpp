@@ -33,6 +33,7 @@
 #include "JSDOMGlobalObject.h"
 #include "LocalDOMWindow.h"
 #include "Performance.h"
+#include "ScriptWrappableInlines.h"
 #include "UserGestureIndicator.h"
 #include "WorkerGlobalScope.h"
 #include <wtf/HexNumber.h>
@@ -168,7 +169,7 @@ Vector<Ref<EventTarget>> Event::composedPath(JSC::JSGlobalObject& lexicalGlobalO
 {
     if (!m_eventPath)
         return Vector<Ref<EventTarget>>();
-    if (JSC::jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)->world().canAccessAnyShadowRoot())
+    if (JSC::jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)->world().shadowRootIsAlwaysOpen())
         return m_eventPath->computePathTreatingAllShadowRootsAsOpen();
     return m_eventPath->computePathUnclosedToTarget(*protectedCurrentTarget());
 }

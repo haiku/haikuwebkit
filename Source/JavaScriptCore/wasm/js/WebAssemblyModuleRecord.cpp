@@ -135,11 +135,12 @@ static void defineImportedStringConstant(VM& vm, WriteBarrier<JSWebAssemblyInsta
 
 static void initializeBuiltinImport(VM& vm, WriteBarrier<JSWebAssemblyInstance>& instance, const Wasm::Import& import, const WebAssemblyBuiltin* builtin)
 {
+    RELEASE_ASSERT(import.kind == Wasm::ExternalKind::Function); // should be guaranteed by builtin import validation (see WebAssemblyCompileOptions::validateImportForBuiltinSetNames)
     auto* info = instance->importFunctionInfo(import.kindIndex);
     info->boxedCallee = builtin->callee(); // boxed by operator=
     instance->setBuiltinCalleeBits(builtin->id(), info->boxedCallee);
     info->boxedWasmCalleeLoadLocation = &info->boxedCallee;
-    info->importFunctionStub = CodePtr<CFunctionPtrTag>::fromTaggedPtr((void*) builtin->implementation()).retagged<WasmEntryPtrTag>();
+    info->importFunctionStub = builtin->callee()->entrypointImpl();
     info->entrypointLoadLocation = &info->importFunctionStub;
     info->targetInstance.set(vm, instance.get(), instance.get());
     info->typeIndex = instance->moduleInformation().importFunctionTypeIndices[import.kindIndex];
@@ -858,7 +859,7 @@ JSValue WebAssemblyModuleRecord::evaluate(JSGlobalObject* globalObject)
 
     Wasm::Module& module = m_instance->module(); const Wasm::ModuleInformation& moduleInformation = module.moduleInformation();
 
-    const Vector<Wasm::Segment::Ptr>& data = moduleInformation.data;
+    const Vector<std::unique_ptr<Wasm::Segment>>& data = moduleInformation.data;
     
     std::optional<JSValue> exception;
 
@@ -902,17 +903,17 @@ JSValue WebAssemblyModuleRecord::evaluate(JSGlobalObject* globalObject)
         uint8_t* memory = static_cast<uint8_t*>(wasmMemory.basePointer());
         uint64_t sizeInBytes = wasmMemory.size();
 
-        for (const Wasm::Segment::Ptr& segment : data) {
+        for (const auto& segment : data) {
             if (!segment->isActive())
                 continue;
             uint32_t offset = 0;
-            if (segment->offsetIfActive->isGlobalImport())
-                offset = static_cast<uint32_t>(m_instance->loadI32Global(segment->offsetIfActive->globalImportIndex()));
-            else if (segment->offsetIfActive->isConst())
-                offset = segment->offsetIfActive->constValue();
+            if (segment->offsetIfActive()->isGlobalImport())
+                offset = static_cast<uint32_t>(m_instance->loadI32Global(segment->offsetIfActive()->globalImportIndex()));
+            else if (segment->offsetIfActive()->isConst())
+                offset = segment->offsetIfActive()->constValue();
             else {
                 uint64_t result;
-                evaluateConstantExpression(globalObject, moduleInformation.constantExpressions[segment->offsetIfActive->constantExpressionIndex()], moduleInformation, Wasm::Types::I32, result);
+                evaluateConstantExpression(globalObject, moduleInformation.constantExpressions[segment->offsetIfActive()->constantExpressionIndex()], moduleInformation, Wasm::Types::I32, result);
                 RETURN_IF_EXCEPTION(scope, void());
                 offset = static_cast<uint32_t>(result);
             }
@@ -941,20 +942,20 @@ JSValue WebAssemblyModuleRecord::evaluate(JSGlobalObject* globalObject)
         return exception.value();
 
     // Validation of all segment ranges comes before all Table and Memory initialization.
-    forEachActiveDataSegment([&](uint8_t* memory, uint64_t sizeInBytes, const Wasm::Segment::Ptr& segment, uint32_t offset) {
-        if (sizeInBytes < segment->sizeInBytes) [[unlikely]] {
-            exception = dataSegmentFail(globalObject, vm, scope, sizeInBytes, segment->sizeInBytes, offset, ", segment is too big"_s);
+    forEachActiveDataSegment([&](uint8_t* memory, uint64_t sizeInBytes, const std::unique_ptr<Wasm::Segment>& segment, uint32_t offset) {
+        if (sizeInBytes < segment->sizeInBytes()) [[unlikely]] {
+            exception = dataSegmentFail(globalObject, vm, scope, sizeInBytes, segment->sizeInBytes(), offset, ", segment is too big"_s);
             return IterationStatus::Done;
         }
-        if (offset > sizeInBytes - segment->sizeInBytes) [[unlikely]] {
-            exception = dataSegmentFail(globalObject, vm, scope, sizeInBytes, segment->sizeInBytes, offset, ", segment writes outside of memory"_s);
+        if (offset > sizeInBytes - segment->sizeInBytes()) [[unlikely]] {
+            exception = dataSegmentFail(globalObject, vm, scope, sizeInBytes, segment->sizeInBytes(), offset, ", segment writes outside of memory"_s);
             return IterationStatus::Done;
         }
 
         // Empty segments are valid, but only if memory isn't present, which would be undefined behavior in memcpy.
-        if (segment->sizeInBytes) {
+        if (segment->sizeInBytes()) {
             RELEASE_ASSERT(memory);
-            memcpy(memory + offset, &segment->byte(0), segment->sizeInBytes);
+            memcpy(memory + offset, segment->span().data(), segment->sizeInBytes());
         }
         return IterationStatus::Continue;
     });

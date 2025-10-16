@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 1999-2000 Harri Porten (porten@kde.org)
- *  Copyright (C) 2004-2024 Apple Inc. All rights reserved.
+ *  Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  *  Copyright (C) 2006 Bjoern Graf (bjoern.graf@gmail.com)
  *
  *  This library is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@
 #include "TestRunnerUtils.h"
 #include "TypedArrayInlines.h"
 #include "VMInlines.h"
-#include "VMInspector.h"
+#include "VMManager.h"
 #include "VMTrapsInlines.h"
 #include "WasmCapabilities.h"
 #include "WasmFaultSignalHandler.h"
@@ -3507,12 +3507,11 @@ static void startTimeoutTimer(Seconds duration)
 {
     Thread::create("jsc Timeout Thread"_s, [=] () {
         sleep(duration);
-        VMInspector::forEachVM([&] (VM& vm) -> IterationStatus {
-            if (&vm != s_vm)
-                return IterationStatus::Continue;
-            vm.notifyNeedShellTimeoutCheck();
-            return IterationStatus::Done;
+        VM* foundVM = VMManager::findMatchingVM([&] (VM& vm) {
+            return &vm != s_vm;
         });
+        if (foundVM)
+            foundVM->notifyNeedShellTimeoutCheck();
 
         if (const char* timeoutString = getenv("JSCTEST_hardTimeout")) {
             double hardTimeoutInDouble = 0;
@@ -4072,12 +4071,12 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 void CommandLine::parseArguments(int argc, char** argv)
 {
     Options::AllowUnfinalizedAccessScope scope;
-    Options::initialize();
-    Options::useSharedArrayBuffer() = true;
-
+    Options::initialize([] {
+        Options::useSharedArrayBuffer() = true;
 #if PLATFORM(IOS_FAMILY) && !PLATFORM(APPLETV) && !PLATFORM(WATCHOS)
-    Options::crashIfCantAllocateJITMemory() = true;
+        Options::crashIfCantAllocateJITMemory() = true;
 #endif
+    });
 
     if (Options::dumpOptions()) {
         printf("Command line:");

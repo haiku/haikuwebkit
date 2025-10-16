@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "AXIsolatedTree.h"
+#include <WebCore/AXIsolatedTree.h>
 
 namespace WebCore {
 

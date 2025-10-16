@@ -106,12 +106,17 @@ extension WKTextExtractionItem {
     fileprivate func textRepresentationRecursive(depth: Int) -> String {
         let indent = String(repeating: "\t", count: depth)
 
-        var result = "\(indent)\(textRepresentationParts.joined(separator: ","))\n"
+        var result = "\(indent)\(textRepresentationParts.joined(separator: ","))"
 
-        if !children.isEmpty {
+        if let text = children.first as? WKTextExtractionTextItem, children.count == 1 {
+            result += ",\(text.textRepresentationParts.joined(separator: ","))\n"
+        } else if !children.isEmpty {
+            result += "\n"
             for child in children {
                 result += child.textRepresentationRecursive(depth: depth + 1)
             }
+        } else {
+            result += "\n"
         }
 
         return result
@@ -127,7 +132,10 @@ extension WKTextExtractionItem {
 
         let origin = rectInWebView.origin
         let size = rectInWebView.size
-        parts.append("rect=[\(Int(origin.x)),\(Int(origin.y));\(Int(size.width))x\(Int(size.height))]")
+
+        if children.isEmpty {
+            parts.append("[\(Int(origin.x)),\(Int(origin.y));\(Int(size.width))x\(Int(size.height))]")
+        }
 
         if !accessibilityRole.isEmpty {
             parts.append("role='\(accessibilityRole.escaped)'")
@@ -135,7 +143,7 @@ extension WKTextExtractionItem {
 
         let listeners = eventListenerTypesAsArray(eventListeners: eventListeners)
         if !listeners.isEmpty {
-            parts.append("eventListeners=[\(listeners.joined(separator: ","))]")
+            parts.append("events=[\(listeners.joined(separator: ","))]")
         }
 
         for (key, value) in ariaAttributes.sorted(by: { $0.key < $1.key }) {
@@ -207,7 +215,7 @@ extension WKTextExtractionContainerItem {
         }
 
         if let containerString {
-            parts.insert("container=\(containerString)", at: 0)
+            parts.insert(containerString, at: 0)
         }
 
         return parts
@@ -258,14 +266,14 @@ extension WKTextExtractionContentEditableItem {
     override fileprivate var textRepresentationParts: [String] {
         var parts = super.textRepresentationParts
 
-        parts.insert("type=contentEditable", at: 0)
+        parts.insert("contentEditable", at: 0)
 
         if isFocused {
             parts.append("focused")
         }
 
         if contentEditableType == .plainTextOnly {
-            parts.append("plainTextOnly")
+            parts.append("plaintext")
         }
 
         return parts
@@ -363,18 +371,18 @@ extension WKTextExtractionTextFormControlItem {
     override fileprivate var textRepresentationParts: [String] {
         var parts = super.textRepresentationParts
 
-        parts.insert("type=textFormControl", at: 0)
+        parts.insert("textFormControl", at: 0)
 
         if !controlType.isEmpty {
-            parts.insert("controlType='\(controlType)'", at: 1)
+            parts.insert("'\(controlType)'", at: 1)
         }
 
         if !autocomplete.isEmpty {
-            parts.append("autoComplete='\(autocomplete)'")
+            parts.append("autocomplete='\(autocomplete)'")
         }
 
         if isReadonly {
-            parts.append("readOnly")
+            parts.append("readonly")
         }
 
         if isDisabled {
@@ -481,7 +489,7 @@ extension WKTextExtractionLinkItem {
     override fileprivate var textRepresentationParts: [String] {
         var parts = super.textRepresentationParts
 
-        parts.insert("type=link", at: 0)
+        parts.insert("link", at: 0)
         parts.append("url='\(url.absoluteString.escaped)'")
 
         if !target.isEmpty {
@@ -559,10 +567,38 @@ extension WKTextExtractionTextItem {
         var parts = super.textRepresentationParts
 
         if !content.isEmpty {
-            parts.insert("text='\(content.escaped)'", at: 0)
-        }
+            let trimmedContent = content.trimmingCharacters(in: .newlines)
+            parts.insert("'\(trimmedContent.escaped)'", at: 0)
 
-        if selectedRange.length > 0 {
+            guard let originalRange = Range(selectedRange, in: content) else {
+                return parts
+            }
+
+            let leadingNewlineCount = content.prefix(while: \.isNewline).count
+            if selectedRange.length > 0 && !trimmedContent.isEmpty {
+                let newLocation = max(0, selectedRange.location - leadingNewlineCount)
+                let maxLength = trimmedContent.count - newLocation
+                let newLength = min(selectedRange.length, max(0, maxLength))
+                if newLocation < trimmedContent.count && newLength > 0 {
+                    let adjustedNSRange = NSRange(location: newLocation, length: newLength)
+                    if let adjustedRange = Range(adjustedNSRange, in: trimmedContent) {
+                        let startOffset = trimmedContent.distance(from: trimmedContent.startIndex, to: adjustedRange.lowerBound)
+                        let endOffset = trimmedContent.distance(from: trimmedContent.startIndex, to: adjustedRange.upperBound)
+                        parts.append("selected=[\(startOffset),\(endOffset)]")
+                    }
+                } else {
+                    parts.append("selected=[0,0]")
+                }
+            } else if trimmedContent.isEmpty {
+                parts.append("selected=[0,0]")
+            } else {
+                let startOffset = content.distance(from: content.startIndex, to: originalRange.lowerBound)
+                let endOffset = content.distance(from: content.startIndex, to: originalRange.upperBound)
+                if startOffset >= 0 && endOffset >= startOffset {
+                    parts.append("selected=[\(startOffset),\(endOffset)]")
+                }
+            }
+        } else if selectedRange.length > 0 {
             parts.append("selected=[\(selectedRange.location),\(selectedRange.location + selectedRange.length)]")
         }
 
@@ -604,7 +640,7 @@ extension WKTextExtractionScrollableItem {
     override fileprivate var textRepresentationParts: [String] {
         var parts = super.textRepresentationParts
 
-        parts.insert("type=scrollable", at: 0)
+        parts.insert("scrollable", at: 0)
         parts.append("contentSize=[\(contentSize.width)x\(contentSize.height)]")
 
         return parts
@@ -648,7 +684,7 @@ extension WKTextExtractionSelectItem {
     override fileprivate var textRepresentationParts: [String] {
         var parts = super.textRepresentationParts
 
-        parts.insert("type=select", at: 0)
+        parts.insert("select", at: 0)
 
         if !selectedValues.isEmpty {
             let escapedValues = selectedValues.map { "'\($0.escaped)'" }
@@ -700,7 +736,7 @@ extension WKTextExtractionImageItem {
     override fileprivate var textRepresentationParts: [String] {
         var parts = super.textRepresentationParts
 
-        parts.insert("type=image", at: 0)
+        parts.insert("image", at: 0)
 
         if !name.isEmpty {
             parts.append("name='\(name.escaped)'")
@@ -729,7 +765,7 @@ extension WKTextExtractionPopupMenu {
 
     fileprivate var textRepresentation: String {
         let escapedTitles = itemTitles.map { "'\($0.escaped)'" }
-        return "type=nativePopupMenu,items=[\(escapedTitles.joined(separator: ","))]\n"
+        return "nativePopupMenu,items=[\(escapedTitles.joined(separator: ","))]\n"
     }
 
     #if compiler(<6.0)

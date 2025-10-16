@@ -36,6 +36,9 @@
 #import "SharedBufferReference.h"
 #import "WKAPICast.h"
 #import "WKBrowsingContextHandleInternal.h"
+#import "WKMouseDeviceObserver.h"
+#import "WKStylusDeviceObserver.h"
+#import "WebPageProxy.h"
 #import "WebProcessMessages.h"
 #import "WebProcessPool.h"
 #import <WebCore/ActivityState.h>
@@ -268,13 +271,13 @@ bool WebProcessProxy::shouldDisableJITCage() const
 void WebProcessProxy::createLogStream(IPC::StreamServerConnectionHandle&& serverConnection, LogStreamIdentifier identifier, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&& completionHandler)
 {
     MESSAGE_CHECK(!m_logStream.get());
-    m_logStream = LogStream::create(WTFMove(serverConnection), processID(), identifier, WTFMove(completionHandler));
+    m_logStream = LogStream::create(*this, WTFMove(serverConnection), identifier, WTFMove(completionHandler));
 }
 #else
 void WebProcessProxy::createLogStream(LogStreamIdentifier identifier, CompletionHandler<void()>&& completionHandler)
 {
     MESSAGE_CHECK(!m_logStream.get());
-    Ref logStream = LogStream::create(protectedConnection(), processID(), identifier);
+    Ref logStream = LogStream::create(*this, protectedConnection(), identifier);
     addMessageReceiver(Messages::LogStream::messageReceiverName(), logStream->identifier(), logStream);
     m_logStream = WTFMove(logStream);
     completionHandler();

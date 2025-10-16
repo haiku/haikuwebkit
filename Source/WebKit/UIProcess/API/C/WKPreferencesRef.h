@@ -112,6 +112,9 @@ WK_EXPORT WKStringRef WKPreferencesCopyFantasyFontFamily(WKPreferencesRef prefer
 WK_EXPORT void WKPreferencesSetPictographFontFamily(WKPreferencesRef preferencesRef, WKStringRef family);
 WK_EXPORT WKStringRef WKPreferencesCopyPictographFontFamily(WKPreferencesRef preferencesRef);
 
+WK_EXPORT void WKPreferencesSetMathFontFamily(WKPreferencesRef preferencesRef, WKStringRef family);
+WK_EXPORT WKStringRef WKPreferencesCopyMathFontFamily(WKPreferencesRef preferencesRef);
+
 // Defaults to 16.
 WK_EXPORT void WKPreferencesSetDefaultFontSize(WKPreferencesRef preferencesRef, uint32_t);
 WK_EXPORT uint32_t WKPreferencesGetDefaultFontSize(WKPreferencesRef preferencesRef);

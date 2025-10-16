@@ -53,6 +53,7 @@
 #import "XRSubImage.h"
 #import "XRView.h"
 #import <wtf/BlockPtr.h>
+#import <wtf/SwiftBridging.h>
 #import <wtf/text/WTFString.h>
 
 namespace WebGPU {
@@ -169,7 +170,7 @@ inline PresentationContext& fromAPI(WGPUSwapChain swapChain)
     return static_cast<PresentationContext&>(*swapChain);
 }
 
-inline Texture& fromAPI(WGPUTexture texture)
+inline Texture& fromAPI(WGPUTexture texture) SWIFT_RETURNS_UNRETAINED
 {
     return static_cast<Texture&>(*texture);
 }

@@ -90,7 +90,6 @@ private:
         GRefPtr<GstElement> encoder;
         GRefPtr<GstElement> appsink;
         GRefPtr<GstPad> entryPad; // Sink pad of the parser/GstIdentity.
-        GRefPtr<GstPad> encoderPad; // Sink pad of the encoder/GstIdentity.
         GRefPtr<GstPad> appsinkPad;
 
         RefPtr<WebCore::TrackPrivateBase> webKitTrack;

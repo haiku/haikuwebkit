@@ -38,6 +38,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from urllib3.exceptions import HTTPError, ReadTimeoutError
+from webkitpy.common.host import Host
 
 top_level_directory = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
@@ -89,7 +90,11 @@ def parse_args(argument_list):
     parser.add_argument("--retry-webdriver-timeouts", type=restricted_int_range(0,2000), help="Number of times to retry when the connection with WebDriver times out. Pass 0 to disable.", default=3)
     parser.add_argument("--timeout-to-load", type=restricted_int_range(30,2000), help="Number of seconds to wait for load/ready requests.",  default=60)
     parser.add_argument("--timeout-to-run", type=restricted_int_range(120,2000), help="Number of seconds to wait for any MVT test to finish.", default=600)
-    parser.add_argument("--headless", action='store_true', help="Enable headless mode if available")
+    parser.add_argument("--headless", action='store_true', help=argparse.SUPPRESS) # FIXME: this doesn't have any effect, delete it once the build master restarts.
+    parser.add_argument("--display-server", choices=['xvfb', 'xorg', 'weston', 'wayland', 'headless'], default=argparse.SUPPRESS,
+                        help='"xvfb": Use a virtualized X11 server. "xorg": Use the current X11 session. '
+                             '"weston": Use a virtualized Weston server. "wayland": Use the current wayland session. '
+                             '"headless": Headless mode in current session. (default: xvfb for gtk and headless for wpe)')
     parser.add_argument("--browser-name", choices=['MiniBrowser', 'cog'], default='MiniBrowser', help="Select the browser to use via 'run-minibrowser'.")
     parser.add_argument('--log-level', dest='log_level', choices=['minimal', 'info', 'debug'], default='info')
     parser.add_argument('--', dest='extra_browser_args', help='Pass extra arguments to the browser (run-minibrowser) after two dashes (--)')
@@ -103,13 +108,14 @@ def parse_args(argument_list):
         argument_list = argument_list[:dashes_ind]
     args = parser.parse_args(argument_list)
     args.extra_browser_args = extra_browser_args
-
+    if not hasattr(args, 'display_server'):
+        args.display_server = 'xvfb' if args.platform == 'gtk' else 'headless'
     return args
 
 
 class MVTWebDriverRunner():
 
-    def __init__(self, platform, configuration, extra_browser_args, mvt_instance_address, browser_name, max_retries_if_timeout, timeout_to_load, timeout_to_run):
+    def __init__(self, port, platform, configuration, extra_browser_args, mvt_instance_address, browser_name, max_retries_if_timeout, timeout_to_load, timeout_to_run):
         self.mvt_instance_address = mvt_instance_address
         if platform == "gtk":
             from selenium.webdriver import WebKitGTKOptions as WebKitOptions
@@ -121,6 +127,7 @@ class MVTWebDriverRunner():
             from selenium.webdriver import WPEWebKit as WebKitDriver
         else:
             raise NotImplementedError(f"Unknown platform {platform}")
+        self.environ_for_test = self.start_display_server(port)
         self._max_retries_if_timeout = max_retries_if_timeout
         self.timeout_to_load = timeout_to_load
         self.timeout_to_run = timeout_to_run
@@ -143,11 +150,23 @@ class MVTWebDriverRunner():
         self.driver = None
         _log.info(f'Starting WebDriver MVT runner for platform {self.platform.upper()}')
 
+    def start_display_server(self, port):
+        self._display_driver = port._driver_class()(port, worker_number=0, pixel_tests=False, no_timeout=True)
+        if not self._display_driver.check_driver(port):
+            raise RuntimeError("Failed to check driver %s" % self._display_driver.__class__.__name__)
+        _log.info(f'Using display server: {self._display_driver.__class__.__name__}')
+        return self._display_driver._setup_environ_for_test()
+
+    def stop_display_server(self):
+        if self._display_driver:
+            self._display_driver.stop()
+        self._display_driver = None
+
     def start_driver(self, retry_if_failure_to_start=True):
         if retry_if_failure_to_start:
             return self._retry_if_timeout(self.start_driver, None, False)
         # Start the service (WebDriver) in its own process group to ensure cleaning everything at stop_driver()
-        self.driver_service = self.driver_service_class(executable_path=self._run_webdriver_script_path,
+        self.driver_service = self.driver_service_class(executable_path=self._run_webdriver_script_path, env=self.environ_for_test,
                           service_args=[f"--{self.configuration}", f"--{self.platform}"], popen_kw={"process_group": 0})
         self.driver = self.driver_class(options=self.driver_options, service=self.driver_service)
         self.driver.maximize_window()
@@ -530,23 +549,22 @@ def main(argument_list):
     else:
         raise NotImplementedError(f'Unknown platform {args.platform}')
 
-    # Enable headless mode if requested
-    if args.headless:
-        if args.platform == 'gtk':
-            _log.warning('Headless mode not available for WebKitGTK. Try to run this script with "xvfb-run"')
-        elif args.platform == 'wpe':
-            if args.browser_name == 'MiniBrowser':
-                args.extra_browser_args.append("--headless")
-            elif args.browser_name == 'cog':
-                os.environ['COG_PLATFORM_NAME'] = 'headless'
-            else:
-                raise NotImplementedError(f'Unknown wpe browser: {browser_name}')
+    # Enable WPE headless mode
+    if args.platform == 'wpe' and args.display_server == 'headless':
+        if args.browser_name == 'MiniBrowser':
+            args.extra_browser_args.append("--headless")
+        elif args.browser_name == 'cog':
+            os.environ['COG_PLATFORM_NAME'] = 'headless'
+        else:
+            raise NotImplementedError(f'Unknown wpe browser: {browser_name}')
 
     # Set a default timeout for all the urllib3 requests (avoid hangs)
     set_urllib3_request_default_timeout(args.timeout_to_load)
     exit_code = -1
+    mvtwebdriver_runner = None
     try:
-        mvtwebdriver_runner = MVTWebDriverRunner(args.platform, args.configuration.lower(), args.extra_browser_args, args.mvt_instance_address, args.browser_name, args.retry_webdriver_timeouts, args.timeout_to_load, args.timeout_to_run)
+        port = Host().port_factory.get(args.platform, args)
+        mvtwebdriver_runner = MVTWebDriverRunner(port, args.platform, args.configuration.lower(), args.extra_browser_args, args.mvt_instance_address, args.browser_name, args.retry_webdriver_timeouts, args.timeout_to_load, args.timeout_to_run)
         mvtwebdriver_runner.start_driver()
         mvtresultsexpectations_parser = MVTResultsExpectationsParser(args.platform, args.configuration, args.update_expectations, args.reset_expectations)
         suites = TEST_SUITES if args.suite is None else [args.suite]
@@ -562,7 +580,9 @@ def main(argument_list):
     except:
         traceback.print_exc()
     finally:
-        mvtwebdriver_runner.stop_driver()
+        if mvtwebdriver_runner:
+            mvtwebdriver_runner.stop_driver()
+            mvtwebdriver_runner.stop_display_server()
         return exit_code
 
 

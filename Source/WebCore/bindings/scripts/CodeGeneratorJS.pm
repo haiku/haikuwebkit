@@ -2121,6 +2121,66 @@ sub IsAlwaysExposedOnInterface
     return 1;
 }
 
+sub IsPrivateHeader
+{
+    my $headerFileName = shift;
+
+    # The set of DerivedSources headers that have private visibility.
+    # All private headers can only include other private headers or public headers.
+    # All private and public headers must be referenced using angle bracket includes.
+    # Always prefer using project visibility (instead of private) whenever possible.
+    my %privateHeaders = (
+    'JSAbstractRange.h' => 1,
+    'JSBlob.h' => 1,
+    'JSCompositeOperation.h' => 1,
+    'JSCompositeOperationOrAuto.h' => 1,
+    'JSComputedEffectTiming.h' => 1,
+    'JSCSSRule.h' => 1,
+    'JSCSSRuleList.h' => 1,
+    'JSCSSStyleDeclaration.h' => 1,
+    'JSDeprecatedCSSOMCounter.h' => 1,
+    'JSDeprecatedCSSOMRect.h' => 1,
+    'JSDeprecatedCSSOMRGBColor.h' => 1,
+    'JSDeprecatedCSSOMValue.h' => 1,
+    'JSDeprecatedCSSOMValueList.h' => 1,
+    'JSDocument.h' => 1,
+    'JSDOMImplementation.h' => 1,
+    'JSDOMWindow.h' => 1,
+    'JSEffectTiming.h' => 1,
+    'JSElement.h' => 1,
+    'JSEvent.h' => 1,
+    'JSEventTarget.h' => 1,
+    'JSFile.h' => 1,
+    'JSHTMLCollection.h' => 1,
+    'JSHTMLElement.h' => 1,
+    'JSHTMLOptionsCollection.h' => 1,
+    'JSIterationCompositeOperation.h' => 1,
+    'JSKeyframeEffectOptions.h' => 1,
+    'JSMediaList.h' => 1,
+    'JSNamedNodeMap.h' => 1,
+    'JSNode.h' => 1,
+    'JSNodeIterator.h' => 1,
+    'JSNodeList.h' => 1,
+    'JSNotification.h' => 1,
+    'JSOptionalEffectTiming.h' => 1,
+    'JSRange.h' => 1,
+    'JSStyleSheet.h' => 1,
+    'JSStyleSheetList.h' => 1,
+    'JSTreeWalker.h' => 1,
+    'JSWebKitJSHandle.h' => 1,
+    'JSWebKitSerializedNode.h' => 1,
+    'JSXPathExpression.h' => 1,
+    'JSXPathResult.h' => 1,
+    );
+
+    # Remove quotes and angle brackets if needed.
+    my $sanitizedHeader = $headerFileName;
+    $sanitizedHeader =~ s/^["<]//;
+    $sanitizedHeader =~ s/[">]$//;
+
+    return exists $privateHeaders{$sanitizedHeader};
+}
+
 sub NeedsRuntimeCheck
 {
     my ($interface, $context) = @_;
@@ -3051,7 +3111,7 @@ sub GenerateHeader
     if ($hasParent) {
         $headerIncludes{"$parentClassName.h"} = 1;
     } else {
-        $headerIncludes{"JSDOMWrapper.h"} = 1;
+        $headerIncludes{"<WebCore/JSDOMWrapper.h>"} = 1;
         if ($interface->extendedAttributes->{Exception}) {
             $headerIncludes{"<JavaScriptCore/ErrorPrototype.h>"} = 1;
         }
@@ -3545,7 +3605,7 @@ sub GenerateHeader
     }
 
     if (NeedsImplementationClass($interface)) {
-        $headerIncludes{"JSDOMWrapper.h"} = 1;
+        $headerIncludes{"<WebCore/JSDOMWrapper.h>"} = 1;
 
         push(@headerContent, "template<> struct JSDOMWrapperConverterTraits<${implType}> {\n");
         push(@headerContent, "    using WrapperClass = ${className};\n");
@@ -8070,6 +8130,11 @@ sub WriteData
             push @{$implIncludeConditions{$codeGenerator->GenerateConditionalStringFromAttributeValue($condition)}}, $include;
         }
     }
+
+    if ($name eq "AddEventListenerOptions" or $name eq "EventTarget") {
+        push @includes, "\"AddEventListenerOptionsInlines.h\"";
+    }
+
     foreach my $include (sort @includes) {
         $contents .= "#include $include\n";
     }
@@ -8093,7 +8158,12 @@ sub WriteData
 
     @includes = ();
     foreach my $include (keys %headerIncludes) {
-        $include = "\"$include\"" unless $include =~ /^["<]/; # "
+        if (IsPrivateHeader("JS$name.h")) {
+           $include = "<WebCore/$include>" unless $include =~ /^["<]/; # "
+        } else {
+           $include = "\"$include\"" unless $include =~ /^["<]/; # "
+        }
+
         $include = SubstituteHeader($include);
         push @includes, $include;
     }
@@ -8107,7 +8177,12 @@ sub WriteData
 
     @includes = ();
     foreach my $include (keys %headerTrailingIncludes) {
-        $include = "\"$include\"" unless $include =~ /^["<]/; # "
+        if (IsPrivateHeader("JS$name.h")) {
+           $include = "<WebCore/$include>" unless $include =~ /^["<]/; # "
+        } else {
+           $include = "\"$include\"" unless $include =~ /^["<]/; # "
+        }
+
         push @includes, $include;
     }
     foreach my $include (sort @includes) {

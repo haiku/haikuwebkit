@@ -4,6 +4,7 @@
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
  * Copyright (C) 2003-2017 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -24,8 +25,8 @@
 
 #pragma once
 
-#include <WebCore/FillLayer.h>
 #include <WebCore/OutlineValue.h>
+#include <WebCore/StyleBackgroundLayer.h>
 #include <WebCore/StyleColor.h>
 #include <wtf/DataRef.h>
 #include <wtf/RefCounted.h>
@@ -52,7 +53,7 @@ public:
 
     bool isEquivalentForPainting(const StyleBackgroundData&, bool currentColorDiffers) const;
 
-    DataRef<FillLayer> background;
+    Style::BackgroundLayers background;
     Style::Color color;
     OutlineValue outline;
 

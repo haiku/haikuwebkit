@@ -198,7 +198,7 @@ struct ModuleInformation final : public ThreadSafeRefCounted<ModuleInformation> 
 
     Vector<Export> exports;
     std::optional<uint32_t> startFunctionIndexSpace;
-    Vector<Segment::Ptr> data;
+    Vector<std::unique_ptr<Segment>> data;
     Vector<Element> elements;
     Vector<TableInformation> tables;
     Vector<GlobalInformation> globals;

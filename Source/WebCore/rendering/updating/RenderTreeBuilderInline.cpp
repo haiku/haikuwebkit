@@ -223,7 +223,8 @@ void RenderTreeBuilder::Inline::splitFlow(RenderInline& parent, RenderObject* be
     RenderBlock* block = parent.containingBlock();
 
     // Delete our line boxes before we do the inline split into continuations.
-    block->deleteLines();
+    if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(block))
+        blockFlow->invalidateLineLayout(RenderBlockFlow::InvalidationReason::InternalMove);
 
     RenderPtr<RenderBlock> createdPre;
     bool madeNewBeforeBlock = false;

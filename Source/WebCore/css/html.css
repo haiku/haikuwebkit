@@ -846,7 +846,6 @@ button[type="submit"], button[type="submit"]:active,
 button[type="menu"], button[type="menu"]:active {
     background-color: -apple-system-blue;
     color: white;
-    font-weight: bold;
 }
 
 #endif

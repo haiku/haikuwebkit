@@ -38,7 +38,7 @@
 #include <wtf/MachSendRight.h>
 #include <wtf/TZoneMalloc.h>
 
-#define MESSAGE_CHECK(assertion) MESSAGE_CHECK_OPTIONAL_CONNECTION_BASE(assertion, connection())
+#define MESSAGE_CHECK(assertion) MESSAGE_CHECK_OPTIONAL_CONNECTION_BASE(assertion, m_streamConnection)
 
 namespace WebKit {
 
@@ -69,14 +69,6 @@ Ref<IPC::StreamServerConnection> RemoteXRProjectionLayer::protectedStreamConnect
 Ref<RemoteGPU> RemoteXRProjectionLayer::protectedGPU() const
 {
     return m_gpu.get();
-}
-
-RefPtr<IPC::Connection> RemoteXRProjectionLayer::connection() const
-{
-    RefPtr connection = protectedGPU()->gpuConnectionToWebProcess();
-    if (!connection)
-        return nullptr;
-    return &connection->connection();
 }
 
 void RemoteXRProjectionLayer::destruct()

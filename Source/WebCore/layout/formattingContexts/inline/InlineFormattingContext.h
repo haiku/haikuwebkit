@@ -25,12 +25,12 @@
 
 #pragma once
 
+#include "InlineFormattingConstraints.h"
+#include "InlineFormattingUtils.h"
+#include "IntrinsicWidthHandler.h"
 #include <WebCore/InlineDisplayContent.h>
-#include <WebCore/InlineFormattingConstraints.h>
-#include <WebCore/InlineFormattingUtils.h>
 #include <WebCore/InlineLayoutState.h>
 #include <WebCore/InlineQuirks.h>
-#include <WebCore/IntrinsicWidthHandler.h>
 #include <WebCore/LayoutIntegrationUtils.h>
 #include <wtf/TZoneMalloc.h>
 

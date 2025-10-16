@@ -177,13 +177,7 @@ RefPtr<HistoryItem> BackForwardController::itemAtIndex(int i, std::optional<Fram
 
 Vector<Ref<HistoryItem>> BackForwardController::allItems()
 {
-    Vector<Ref<HistoryItem>> historyItems;
-    for (int index = -1 * static_cast<int>(backCount()); index <= static_cast<int>(forwardCount()); index++) {
-        if (RefPtr item = itemAtIndex(index))
-            historyItems.append(item.releaseNonNull());
-    }
-
-    return historyItems;
+    return m_client->allItems(m_page->mainFrame().frameID());
 }
 
 Vector<Ref<HistoryItem>> BackForwardController::itemsForFrame(FrameIdentifier frameID)

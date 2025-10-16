@@ -25,7 +25,8 @@
 
 #pragma once
 
-#include "pal/HysteresisActivity.h"
+#include <pal/HysteresisActivity.h>
+#include <wtf/Platform.h>
 #if ENABLE(ASYNC_SCROLLING)
 
 #include <WebCore/ScrollingCoordinator.h>

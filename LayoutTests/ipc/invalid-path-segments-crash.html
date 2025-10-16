@@ -51,7 +51,7 @@ window.setTimeout(async () => {
   const didCreateBackend = connection.connection.waitForMessage(imageBufferIdentifier, IPC.messages.RemoteImageBufferProxy_DidCreateBackend.name, 1);
 
   const imageBuffer = connection.newInterface("RemoteImageBuffer", imageBufferIdentifier);
-  const displayListRecorder = connection.newInterface("RemoteDisplayListRecorder", contextIdentifier);
+  const displayListRecorder = connection.newInterface("RemoteGraphicsContext", contextIdentifier);
   const pageID = IPC.pageID;
 
   displayListRecorder.BeginPage({

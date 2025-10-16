@@ -70,7 +70,7 @@ double pas_scavenger_period_in_milliseconds = 125.;
 #else
 double pas_scavenger_period_in_milliseconds = 100.;
 #endif
-uint64_t pas_scavenger_max_epoch_delta = 300ll * 1000ll * 1000ll;
+uint64_t pas_scavenger_max_epoch_delta = 600ll * 1000ll * 1000ll;
 #endif
 
 static uint32_t pas_scavenger_tick_count = 0;

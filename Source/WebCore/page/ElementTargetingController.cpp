@@ -664,7 +664,7 @@ static URL urlForElement(const Element& element)
 
     if (CheckedPtr renderer = element.renderer()) {
         if (auto& style = renderer->style(); style.hasBackgroundImage()) {
-            if (RefPtr image = style.backgroundLayers().image())
+            if (RefPtr image = style.backgroundLayers().first().image().tryStyleImage())
                 return image->url().resolved;
         }
     }

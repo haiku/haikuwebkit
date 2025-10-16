@@ -65,6 +65,13 @@ ExceptionOr<void> UserMessageHandler::postMessage(JSC::JSGlobalObject& globalObj
     return { };
 }
 
+JSC::JSValue UserMessageHandler::postLegacySynchronousMessage(JSC::JSGlobalObject& globalObject, JSC::JSValue value)
+{
+    if (!m_descriptor)
+        return JSC::jsUndefined();
+    return m_descriptor->didPostLegacySynchronousMessage(*this, globalObject, value);
+}
+
 } // namespace WebCore
 
 #endif // ENABLE(USER_MESSAGE_HANDLERS)

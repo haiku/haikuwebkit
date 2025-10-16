@@ -38,6 +38,7 @@ struct WebKit::XRDeviceLayer {
     PlatformXR::LayerHandle handle;
     bool visible;
     Vector<PlatformXR::Device::LayerView> views;
+    WTF::UnixFileDescriptor fenceFD;
 };
 
 #endif

@@ -261,7 +261,7 @@ public:
     }
 
     TextDirection direction() const { return bidiLevel() % 2 ? TextDirection::RTL : TextDirection::LTR; }
-    bool isFirstLine() const { return !box().lineIndex(); }
+    bool isFirstFormattedLine() const { return box().isFirstFormattedLine(); }
 
     const Vector<SVGTextFragment>& svgTextFragments() const
     {

@@ -421,6 +421,21 @@ static void decommit_impl(void* ptr, size_t size,
             totalSeen += memInfo.RegionSize;
         }
     }
+
+    // We need to decommit the region as well, otherwise commit space will never shrink
+    // However we can't decommit if do_mprotect is false - decommitting is an implicit mprotect
+    if (do_mprotect) {
+        size_t totalSeen = 0;
+        void* currentPtr = ptr;
+        while (totalSeen < size) {
+            MEMORY_BASIC_INFORMATION memInfo;
+            VirtualQuery(currentPtr, &memInfo, sizeof(memInfo));
+            PAS_ASSERT(VirtualFree(currentPtr, PAS_MIN(memInfo.RegionSize, size - totalSeen), MEM_DECOMMIT));
+            PAS_ASSERT(memInfo.RegionSize > 0);
+            currentPtr = (void*)((uintptr_t)currentPtr + memInfo.RegionSize);
+            totalSeen += memInfo.RegionSize;
+        }
+    }
 #else
     PAS_SYSCALL(madvise(ptr, size, MADV_DONTNEED));
 #endif

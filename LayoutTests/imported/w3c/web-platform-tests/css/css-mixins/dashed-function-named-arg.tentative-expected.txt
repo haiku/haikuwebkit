@@ -1,0 +1,17 @@
+
+FAIL e.style['top'] = "--func(myident)" should set the property value assert_not_equals: property should be set got disallowed value ""
+FAIL e.style['top'] = "--func(--myident)" should set the property value assert_not_equals: property should be set got disallowed value ""
+FAIL e.style['top'] = "--func(--)" should set the property value assert_not_equals: property should be set got disallowed value ""
+FAIL e.style['top'] = "--func(50px --myident:)" should set the property value assert_not_equals: property should be set got disallowed value ""
+PASS e.style['top'] = "--func(--myident:)" should not set the property value
+PASS e.style['top'] = "--func( --myident:)" should not set the property value
+PASS e.style['top'] = "--func(--myident :)" should not set the property value
+PASS e.style['top'] = "--func(--myident: )" should not set the property value
+PASS e.style['top'] = "--func( --myident : )" should not set the property value
+PASS e.style['top'] = "--func(10px, --myident : )" should not set the property value
+FAIL e.style['top'] = "--func({--myident:})" should set the property value assert_not_equals: property should be set got disallowed value ""
+FAIL e.style['top'] = "--func({ --myident:})" should set the property value assert_not_equals: property should be set got disallowed value ""
+FAIL e.style['top'] = "--func({--myident :})" should set the property value assert_not_equals: property should be set got disallowed value ""
+FAIL e.style['top'] = "--func({--myident: })" should set the property value assert_not_equals: property should be set got disallowed value ""
+FAIL e.style['top'] = "--func(10px, { --myident : })" should set the property value assert_not_equals: property should be set got disallowed value ""
+

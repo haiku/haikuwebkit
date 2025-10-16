@@ -22,8 +22,8 @@
 
 #include "EventTargetInlines.h"
 #include "ExposedStar.h"
-#include "JSDOMWrapper.h"
 #include "JSEventTarget.h"
+#include <WebCore/JSDOMWrapper.h>
 
 namespace WebCore {
 

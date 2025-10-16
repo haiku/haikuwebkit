@@ -26,6 +26,7 @@
 #pragma once
 
 #include <wtf/CompactPointerTuple.h>
+#include <wtf/FastMalloc.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RefPtr.h>
 

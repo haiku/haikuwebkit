@@ -31,6 +31,7 @@
 
 #pragma once
 
+#include <JavaScriptCore/WeakInlines.h>
 #include <WebCore/JSDOMWrapper.h>
 #include <WebCore/ScriptWrappable.h>
 
@@ -51,5 +52,7 @@ inline void ScriptWrappable::clearWrapper(JSDOMObject* wrapper)
 {
     weakClear(m_wrapper, wrapper);
 }
+
+inline ScriptWrappable::~ScriptWrappable() = default;
 
 } // namespace WebCore

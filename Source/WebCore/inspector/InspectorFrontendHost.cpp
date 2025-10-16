@@ -35,6 +35,7 @@
 #include "ColorConversion.h"
 #include "ColorSerialization.h"
 #include "ColorSpace.h"
+#include "ContextDestructionObserverInlines.h"
 #include "ContextMenu.h"
 #include "ContextMenuController.h"
 #include "ContextMenuItem.h"

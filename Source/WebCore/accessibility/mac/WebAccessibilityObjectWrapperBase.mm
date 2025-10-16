@@ -35,12 +35,9 @@
 #import "AXObjectCache.h"
 #import "AXRemoteFrame.h"
 #import "AXSearchManager.h"
-#import "AccessibilityList.h"
-#import "AccessibilityListBox.h"
 #import "AccessibilityRenderObject.h"
 #import "AccessibilityScrollView.h"
 #import "AccessibilitySpinButton.h"
-#import "AccessibilityTable.h"
 #import "AccessibilityTableCell.h"
 #import "AccessibilityTableColumn.h"
 #import "AccessibilityTableRow.h"
@@ -66,6 +63,7 @@
 #import <wtf/cocoa/VectorCocoa.h>
 
 #if PLATFORM(MAC)
+#import <AppKit/NSAccessibilityConstants.h>
 #import "WebAccessibilityObjectWrapperMac.h"
 #else
 #import "WebAccessibilityObjectWrapperIOS.h"

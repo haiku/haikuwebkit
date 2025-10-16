@@ -28,6 +28,7 @@
 #if ENABLE(WEBXR) && USE(OPENXR)
 
 #include <WebCore/PlatformXR.h>
+#include <wtf/unix/UnixFileDescriptor.h>
 
 namespace WebKit {
 
@@ -35,6 +36,7 @@ struct XRDeviceLayer {
     PlatformXR::LayerHandle handle;
     bool visible;
     Vector<PlatformXR::Device::LayerView> views;
+    WTF::UnixFileDescriptor fenceFD;
 };
 
 } // namespace WebKit

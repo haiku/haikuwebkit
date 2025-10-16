@@ -152,11 +152,10 @@ void RemotePageProxy::didReceiveMessage(IPC::Connection& connection, IPC::Decode
         page->didReceiveMessage(connection, decoder);
 }
 
-bool RemotePageProxy::didReceiveSyncMessage(IPC::Connection& connection, IPC::Decoder& decoder, UniqueRef<IPC::Encoder>& encoder)
+void RemotePageProxy::didReceiveSyncMessage(IPC::Connection& connection, IPC::Decoder& decoder, UniqueRef<IPC::Encoder>& encoder)
 {
     if (RefPtr page = m_page.get())
-        return page->didReceiveSyncMessage(connection, decoder, encoder);
-    return false;
+        page->didReceiveSyncMessage(connection, decoder, encoder);
 }
 
 RefPtr<WebPageProxy> RemotePageProxy::protectedPage() const

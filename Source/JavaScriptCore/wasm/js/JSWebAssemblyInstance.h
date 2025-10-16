@@ -43,6 +43,7 @@
 #include "WasmTable.h"
 #include "WebAssemblyBuiltin.h"
 #include "WebAssemblyFunction.h"
+#include "WebAssemblyGCStructure.h"
 #include "WriteBarrier.h"
 #include <wtf/BitVector.h>
 #include <wtf/FixedVector.h>
@@ -57,7 +58,6 @@ namespace JSC {
 class JSModuleNamespaceObject;
 class JSWebAssemblyArray;
 class JSWebAssemblyModule;
-class WebAssemblyGCStructure;
 class WebAssemblyModuleRecord;
 
 // The layout of a JSWebAssemblyInstance is
@@ -260,6 +260,7 @@ public:
     static constexpr ptrdiff_t offsetOfCachedMemory() { return OBJECT_OFFSETOF(JSWebAssemblyInstance, m_cachedMemory); }
     static constexpr ptrdiff_t offsetOfCachedBoundsCheckingSize() { return OBJECT_OFFSETOF(JSWebAssemblyInstance, m_cachedBoundsCheckingSize); }
     static constexpr ptrdiff_t offsetOfTemporaryCallFrame() { return OBJECT_OFFSETOF(JSWebAssemblyInstance, m_temporaryCallFrame); }
+    static constexpr ptrdiff_t offsetOfBuiltinCalleeBits() { return OBJECT_OFFSETOF(JSWebAssemblyInstance, m_builtinCalleeBits); }
 
     // Tail accessors.
     static constexpr size_t offsetOfTail() { return WTF::roundUpToMultipleOf<sizeof(uint64_t)>(sizeof(JSWebAssemblyInstance)); }
@@ -280,12 +281,14 @@ public:
 
     static_assert(sizeof(WasmOrJSImportableFunctionCallLinkInfo) == WTF::roundUpToMultipleOf<sizeof(uint64_t)>(sizeof(WasmOrJSImportableFunctionCallLinkInfo)), "We rely on this for the alignment to be correct");
     static constexpr size_t offsetOfTablePtr(unsigned numImportFunctions, unsigned i) { return offsetOfTail() + sizeof(WasmOrJSImportableFunctionCallLinkInfo) * numImportFunctions + sizeof(Wasm::Table*) * i; }
-    static constexpr size_t offsetOfGlobalPtr(unsigned numImportFunctions, unsigned numTables, unsigned i) { return roundUpToMultipleOf<sizeof(Wasm::Global::Value)>(offsetOfTablePtr(numImportFunctions, numTables)) + sizeof(Wasm::Global::Value) * i; }
-    static constexpr size_t offsetOfGCObjectStructure(unsigned numImportFunctions, unsigned numTables, unsigned numGlobals, unsigned i) { return offsetOfGlobalPtr(numImportFunctions, numTables, numGlobals) + sizeof(WriteBarrier<WebAssemblyGCStructure>) * i; }
-    WriteBarrier<WebAssemblyGCStructure>& gcObjectStructure(unsigned numImportFunctions, unsigned numTables, unsigned numGlobals, unsigned i) { return *std::bit_cast<WriteBarrier<WebAssemblyGCStructure>*>(reinterpret_cast<char*>(this) + offsetOfGCObjectStructure(numImportFunctions, numTables, numGlobals, i)); }
-    WriteBarrier<WebAssemblyGCStructure>& gcObjectStructure(unsigned typeIndex) { return gcObjectStructure(numImportFunctions(), moduleInformation().tableCount(), moduleInformation().globalCount(), typeIndex); }
+    static constexpr size_t offsetOfGlobalPtr(unsigned numImportFunctions, unsigned numTables, unsigned i) { return roundUpToMultipleOf<alignof(Wasm::Global::Value)>(offsetOfTablePtr(numImportFunctions, numTables)) + sizeof(Wasm::Global::Value) * i; }
+    static constexpr size_t offsetOfGCObjectStructureID(unsigned numImportFunctions, unsigned numTables, unsigned numGlobals, unsigned i) { return WTF::roundUpToMultipleOf<alignof(WriteBarrierStructureID)>(offsetOfGlobalPtr(numImportFunctions, numTables, numGlobals)) + sizeof(WriteBarrierStructureID) * i; }
+    WriteBarrierStructureID& gcObjectStructureID(unsigned numImportFunctions, unsigned numTables, unsigned numGlobals, unsigned i) { return *std::bit_cast<WriteBarrierStructureID*>(reinterpret_cast<char*>(this) + offsetOfGCObjectStructureID(numImportFunctions, numTables, numGlobals, i)); }
+    WriteBarrierStructureID& gcObjectStructureID(unsigned typeIndex) { return gcObjectStructureID(numImportFunctions(), moduleInformation().tableCount(), moduleInformation().globalCount(), typeIndex); }
 
-    static constexpr size_t offsetOfAllocatorForGCObject(unsigned numImportFunctions, unsigned numTables, unsigned numGlobals, unsigned numTypes, unsigned i) { return offsetOfGCObjectStructure(numImportFunctions, numTables, numGlobals, numTypes) + sizeof(Allocator) * i; }
+    WebAssemblyGCStructure* gcObjectStructure(unsigned typeIndex) { return jsCast<WebAssemblyGCStructure*>(gcObjectStructureID(numImportFunctions(), moduleInformation().tableCount(), moduleInformation().globalCount(), typeIndex).get()); }
+
+    static constexpr size_t offsetOfAllocatorForGCObject(unsigned numImportFunctions, unsigned numTables, unsigned numGlobals, unsigned numTypes, unsigned i) { return WTF::roundUpToMultipleOf<alignof(Allocator)>(offsetOfGCObjectStructureID(numImportFunctions, numTables, numGlobals, numTypes)) + sizeof(Allocator) * i; }
     Allocator& allocatorForGCObject(unsigned numImportFunctions, unsigned numTables, unsigned numGlobals, unsigned numTypes, unsigned i) { ASSERT(moduleInformation().hasGCObjectTypes()); return *std::bit_cast<Allocator*>(reinterpret_cast<char*>(this) + offsetOfAllocatorForGCObject(numImportFunctions, numTables, numGlobals, numTypes, i)); }
     Allocator& allocatorForGCObject(unsigned sizeClassIndex) { return allocatorForGCObject(numImportFunctions(), moduleInformation().tableCount(), moduleInformation().globalCount(), moduleInformation().typeCount(), sizeClassIndex); }
 

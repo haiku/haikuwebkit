@@ -32,11 +32,11 @@
 #include "AXIsolatedTree.h"
 #include "AXLogger.h"
 #include "AXLoggerBase.h"
-#include "AXObjectCache.h"
 #include "AXObjectCacheInlines.h"
 #include "AXSearchManager.h"
 #include "AXTextMarker.h"
 #include "AXTextRun.h"
+#include "AXUtilities.h"
 #include "AccessibilityNodeObject.h"
 #include "DateComponents.h"
 #include "HTMLNames.h"
@@ -81,7 +81,7 @@ String AXIsolatedObject::debugDescriptionInternal(bool verbose, std::optional<Op
 {
     StringBuilder result;
     result.append("{"_s);
-    result.append("role: "_s, accessibilityRoleToString(role()));
+    result.append("role: "_s, roleToString(role()));
     result.append(", ID "_s, objectID().loggingString());
 
     if (debugOptions) {
@@ -1095,10 +1095,10 @@ FloatRect AXIsolatedObject::relativeFrame() const
         if (rectFromLabels && !rectFromLabels->isEmpty())
             relativeFrame = *rectFromLabels;
         else {
-            // InitialFrameRect stores the correct size, but not position, of the element before it is painted.
+            // InitialLocalRect stores the correct size, but not position, of the element before it is painted.
             // We find the position of the nearest painted ancestor to use as the position until the object's frame
             // is cached during painting.
-            relativeFrame = rectAttributeValue<FloatRect>(AXProperty::InitialFrameRect);
+            relativeFrame = rectAttributeValue<FloatRect>(AXProperty::InitialLocalRect);
 
             std::optional<IntRect> ancestorRelativeFrame;
             Accessibility::findAncestor<AXIsolatedObject>(*this, false, [&] (const auto& object) {
@@ -1193,12 +1193,6 @@ void AXIsolatedObject::decrement()
 }
 
 bool AXIsolatedObject::isAccessibilityRenderObject() const
-{
-    ASSERT_NOT_REACHED();
-    return false;
-}
-
-bool AXIsolatedObject::isAccessibilityTableInstance() const
 {
     ASSERT_NOT_REACHED();
     return false;
@@ -1813,7 +1807,7 @@ AXCoreObject::AccessibilityChildrenVector AXIsolatedObject::rowHeaders()
     return headers;
 }
 
-AXIsolatedObject* AXIsolatedObject::headerContainer()
+AXIsolatedObject* AXIsolatedObject::tableHeaderContainer()
 {
     for (const auto& child : unignoredChildren()) {
         if (child->role() == AccessibilityRole::TableHeaderContainer)

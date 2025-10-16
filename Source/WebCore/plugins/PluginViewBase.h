@@ -27,10 +27,7 @@
 #include <WebCore/PlatformLayer.h>
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/Widget.h>
-
-#if PLATFORM(COCOA)
-typedef struct objc_object* id;
-#endif
+#include <wtf/Platform.h>
 
 namespace WebCore {
 

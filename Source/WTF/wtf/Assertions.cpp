@@ -71,16 +71,18 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace WTF {
 
-WTF_ATTRIBUTE_PRINTF(1, 0)
+WTF_ATTRIBUTE_NSSTRING(1, 0)
 static String createWithFormatAndArguments(const char* format, va_list args)
 {
     va_list argsCopy;
     va_copy(argsCopy, args);
 
+    auto formatSpan = unsafeSpan(format);
+
 ALLOW_NONLITERAL_FORMAT_BEGIN
 
 #if USE(CF)
-    if (contains(unsafeSpan(format), "%@"_span)) {
+    if (contains(formatSpan, "%@"_span)) {
         auto cfFormat = adoptCF(CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, format, kCFStringEncodingUTF8, kCFAllocatorNull));
         auto result = adoptCF(CFStringCreateWithFormatAndArguments(kCFAllocatorDefault, nullptr, cfFormat.get(), args));
         va_end(argsCopy);
@@ -90,10 +92,10 @@ ALLOW_NONLITERAL_FORMAT_BEGIN
 
     // Do the format once to get the length.
 #if OS(WINDOWS)
-    int result = _vscprintf(format, args);
+    int result = _vscprintf(formatSpan.data(), args);
 #else
     char ch;
-    int result = vsnprintf(&ch, 1, format, args);
+    int result = vsnprintf(&ch, 1, formatSpan.data(), args);
 #endif
 
     if (!result) {
@@ -109,7 +111,7 @@ ALLOW_NONLITERAL_FORMAT_BEGIN
     buffer.grow(result + 1);
 
     // Now do the formatting again, guaranteed to fit.
-    vsnprintf(buffer.mutableSpan().data(), buffer.size(), format, argsCopy);
+    vsnprintf(buffer.mutableSpan().data(), buffer.size(), formatSpan.data(), argsCopy);
     va_end(argsCopy);
 
 ALLOW_NONLITERAL_FORMAT_END
@@ -150,16 +152,18 @@ static void logToStderr([[maybe_unused]] WTFLogChannel* channel, const char* buf
     fputs(buffer, stderr);
 }
 
-WTF_ATTRIBUTE_PRINTF(2, 0)
+WTF_ATTRIBUTE_NSSTRING(2, 0)
 static void vprintf_stderr_common([[maybe_unused]] WTFLogChannel* channel, const char* format, va_list args)
 {
-#if USE(CF)
-    if (contains(unsafeSpan(format), "%@"_span)) {
-        auto cfFormat = adoptCF(CFStringCreateWithCStringNoCopy(nullptr, format, kCFStringEncodingUTF8, kCFAllocatorNull));
+    auto formatSpan = unsafeSpan(format);
 
 ALLOW_NONLITERAL_FORMAT_BEGIN
+
+#if USE(CF)
+    if (contains(formatSpan, "%@"_span)) {
+        auto cfFormat = adoptCF(CFStringCreateWithCStringNoCopy(nullptr, format, kCFStringEncodingUTF8, kCFAllocatorNull));
+
         auto str = adoptCF(CFStringCreateWithFormatAndArguments(nullptr, nullptr, cfFormat.get(), args));
-ALLOW_NONLITERAL_FORMAT_END
         CFIndex length = CFStringGetMaximumSizeForEncoding(CFStringGetLength(str.get()), kCFStringEncodingUTF8);
         constexpr unsigned InitialBufferSize { 256 };
         Vector<char, InitialBufferSize> buffer(length + 1);
@@ -175,7 +179,7 @@ ALLOW_NONLITERAL_FORMAT_END
         os_log_t osLogChannel = channel ? channel->osLogChannel : webkitSubsystemForGenericOSLog();
         va_list copyOfArgs;
         va_copy(copyOfArgs, args);
-        os_log_with_args(osLogChannel, OS_LOG_TYPE_DEFAULT, format, copyOfArgs, __builtin_return_address(0));
+        os_log_with_args(osLogChannel, OS_LOG_TYPE_DEFAULT, formatSpan.data(), copyOfArgs, __builtin_return_address(0));
         va_end(copyOfArgs);
     }
 #endif
@@ -184,7 +188,7 @@ ALLOW_NONLITERAL_FORMAT_END
     if (!g_wtfConfig.disableForwardingVPrintfStdErrToOSLog) {
         va_list copyOfArgs;
         va_copy(copyOfArgs, args);
-        __android_log_vprint(ANDROID_LOG_ERROR, LOG_CHANNEL_WEBKIT_SUBSYSTEM, format, copyOfArgs);
+        __android_log_vprint(ANDROID_LOG_ERROR, LOG_CHANNEL_WEBKIT_SUBSYSTEM, formatSpan.data(), copyOfArgs);
         va_end(copyOfArgs);
     }
 #endif
@@ -197,7 +201,7 @@ ALLOW_NONLITERAL_FORMAT_END
         Vector<char> buffer(size);
         do {
             buffer.grow(size);
-            if (vsnprintf(buffer.mutableSpan().data(), size, format, args) != -1) {
+            if (vsnprintf(buffer.mutableSpan().data(), size, formatSpan.data(), args) != -1) {
                 OutputDebugStringA(buffer.span().data());
                 break;
             }
@@ -205,10 +209,11 @@ ALLOW_NONLITERAL_FORMAT_END
         } while (size > 1024);
     }
 #endif
-    vfprintf(stderr, format, args);
+    vfprintf(stderr, formatSpan.data(), args);
+ALLOW_NONLITERAL_FORMAT_END
 }
 
-WTF_ATTRIBUTE_PRINTF(2, 0)
+WTF_ATTRIBUTE_NSSTRING(2, 0)
 static void vprintf_stderr_with_prefix(const char* rawPrefix, const char* rawFormat, va_list args)
 {
     auto prefix = unsafeSpan(rawPrefix);
@@ -223,7 +228,7 @@ ALLOW_NONLITERAL_FORMAT_BEGIN
 ALLOW_NONLITERAL_FORMAT_END
 }
 
-WTF_ATTRIBUTE_PRINTF(2, 0)
+WTF_ATTRIBUTE_NSSTRING(2, 0)
 static void vprintf_stderr_with_trailing_newline(WTFLogChannel* channel, const char* rawFormat, va_list args)
 {
     auto format = unsafeSpan(rawFormat);
@@ -242,7 +247,7 @@ ALLOW_NONLITERAL_FORMAT_BEGIN
 ALLOW_NONLITERAL_FORMAT_END
 }
 
-WTF_ATTRIBUTE_PRINTF(1, 2)
+WTF_ATTRIBUTE_NSSTRING(1, 2)
 static void printf_stderr_common(const char* format, ...)
 {
     va_list args;
@@ -296,7 +301,7 @@ void WTFReportArgumentAssertionFailure(const char* file, int line, const char* f
 
 class CrashLogPrintStream final : public PrintStream {
 public:
-    WTF_ATTRIBUTE_PRINTF(2, 0)
+    WTF_ATTRIBUTE_NSSTRING(2, 0)
     void vprintf(const char* format, va_list argList) final
     {
         vprintf_stderr_common(nullptr, format, argList);
@@ -511,7 +516,7 @@ ALLOW_NONLITERAL_FORMAT_END
     va_end(args);
 }
 
-WTF_ATTRIBUTE_PRINTF(2, 0)
+WTF_ATTRIBUTE_NSSTRING(2, 0)
 static void WTFLogVaList(WTFLogChannel* channel, const char* format, va_list args)
 {
     if (channel->state == WTFLogChannelState::Off)

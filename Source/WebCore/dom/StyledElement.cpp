@@ -45,6 +45,7 @@
 #include "InlineStylePropertyMap.h"
 #include "InspectorInstrumentation.h"
 #include "MutableStyleProperties.h"
+#include "SVGElement.h"
 #include "ScriptableDocumentParser.h"
 #include "StylePropertyMap.h"
 #include "StylePropertyShorthand.h"
@@ -191,6 +192,11 @@ void StyledElement::invalidateStyleAttribute()
     auto validity = selectorsForStyleAttribute == Style::SelectorsForStyleAttribute::None ? Style::Validity::InlineStyleInvalid : Style::Validity::ElementInvalid;
 
     Node::invalidateStyle(validity);
+
+    if (isSVGElement()) {
+        if (auto* svgElement = dynamicDowncast<SVGElement>(this))
+            svgElement->invalidateInstances();
+    }
 
     // In the rare case of selectors like "[style] ~ div" we need to synchronize immediately to invalidate.
     if (selectorsForStyleAttribute == Style::SelectorsForStyleAttribute::NonSubjectPosition) {

@@ -167,6 +167,8 @@ enum class WebCore::IDBTransactionMode : uint8_t {
     Versionchange
 };
 
+enum class WebCore::IPAddressSpace : bool;
+
 #if ENABLE(MEDIA_SESSION)
 header: <WebCore/MediaSessionAction.h>
 enum class WebCore::MediaSessionAction : uint8_t {
@@ -2114,6 +2116,7 @@ header: <WebCore/ResourceRequest.h>
     [BitField] bool m_didFilterLinkDecoration;
     [BitField] bool m_isPrivateTokenUsageByThirdPartyAllowed;
     [BitField] bool m_wasSchemeOptimisticallyUpgraded;
+    WebCore::IPAddressSpace m_targetAddressSpace;
 };
 
 #if USE(SOUP)
@@ -2328,6 +2331,7 @@ class WebCore::BlobPart {
     DisplayP3,
     ExtendedA98RGB,
     ExtendedDisplayP3,
+    ExtendedLinearDisplayP3,
     ExtendedLinearSRGB,
     ExtendedProPhotoRGB,
     ExtendedRec2020,
@@ -2336,6 +2340,7 @@ class WebCore::BlobPart {
     HWB,
     LCH,
     Lab,
+    LinearDisplayP3,
     LinearSRGB,
     OKLCH,
     OKLab,
@@ -3718,6 +3723,7 @@ enum class WebCore::WasPrivateRelayed : bool;
     String proxyName;
     bool isRangeRequested;
     std::optional<WebCore::CertificateInfo> certificateInfo;
+    WebCore::IPAddressSpace ipAddressSpace;
 };
 
 #if PLATFORM(COCOA)
@@ -5083,6 +5089,7 @@ enum class WebCore::PreserveResolution : bool;
     SRGB,
     SRGBLinear,
     DisplayP3,
+    DisplayP3Linear,
     A98RGB,
     ProPhotoRGB,
     Rec2020,
@@ -5119,6 +5126,8 @@ enum class WebCore::PreserveResolution : bool;
 };
 [Nested, AdditionalEncoder=StreamConnectionEncoder] struct WebCore::ColorInterpolationMethod::DisplayP3 {
 };
+[Nested, AdditionalEncoder=StreamConnectionEncoder] struct WebCore::ColorInterpolationMethod::DisplayP3Linear {
+};
 [Nested, AdditionalEncoder=StreamConnectionEncoder] struct WebCore::ColorInterpolationMethod::A98RGB {
 };
 [Nested, AdditionalEncoder=StreamConnectionEncoder] struct WebCore::ColorInterpolationMethod::ProPhotoRGB {
@@ -5131,7 +5140,7 @@ enum class WebCore::PreserveResolution : bool;
 };
 
 [AdditionalEncoder=StreamConnectionEncoder] struct WebCore::ColorInterpolationMethod {
-    Variant<WebCore::ColorInterpolationMethod::HSL, WebCore::ColorInterpolationMethod::HWB, WebCore::ColorInterpolationMethod::LCH, WebCore::ColorInterpolationMethod::Lab, WebCore::ColorInterpolationMethod::OKLCH, WebCore::ColorInterpolationMethod::OKLab, WebCore::ColorInterpolationMethod::SRGB, WebCore::ColorInterpolationMethod::SRGBLinear, WebCore::ColorInterpolationMethod::DisplayP3, WebCore::ColorInterpolationMethod::A98RGB, WebCore::ColorInterpolationMethod::ProPhotoRGB, WebCore::ColorInterpolationMethod::Rec2020, WebCore::ColorInterpolationMethod::XYZD50, WebCore::ColorInterpolationMethod::XYZD65> colorSpace;
+    Variant<WebCore::ColorInterpolationMethod::HSL, WebCore::ColorInterpolationMethod::HWB, WebCore::ColorInterpolationMethod::LCH, WebCore::ColorInterpolationMethod::Lab, WebCore::ColorInterpolationMethod::OKLCH, WebCore::ColorInterpolationMethod::OKLab, WebCore::ColorInterpolationMethod::SRGB, WebCore::ColorInterpolationMethod::SRGBLinear, WebCore::ColorInterpolationMethod::DisplayP3, WebCore::ColorInterpolationMethod::DisplayP3Linear, WebCore::ColorInterpolationMethod::A98RGB, WebCore::ColorInterpolationMethod::ProPhotoRGB, WebCore::ColorInterpolationMethod::Rec2020, WebCore::ColorInterpolationMethod::XYZD50, WebCore::ColorInterpolationMethod::XYZD65> colorSpace;
     WebCore::AlphaPremultiplication alphaPremultiplication;
 };
 
@@ -6143,33 +6152,30 @@ struct WebCore::ContentRuleListResults {
     Vector<std::pair<String, WebCore::ContentRuleListResults::Result>> results;
 };
 
-#endif
-
-#if ENABLE(DNR_ON_RULE_MATCHED_DEBUG)
-
 struct WebCore::ContentRuleListMatchedRule {
-    WebCore::ContentRuleListMatchedRule::Request request;
     WebCore::ContentRuleListMatchedRule::MatchedRule rule;
+    WebCore::ContentRuleListMatchedRule::Request request;
 };
 
 [Nested] struct WebCore::ContentRuleListMatchedRule::Request {
+    double frameId;
+    double parentFrameId;
+    String method;
+    String requestId;
+    double tabId;
+    String type;
+    String url;
+    std::optional<String> initiator;
     std::optional<String> documentId;
     std::optional<String> documentLifecycle;
-    std::optional<double> frameId;
     std::optional<String> frameType;
-    std::optional<String> initiator;
-    std::optional<String> method;
     std::optional<String> parentDocumentId;
-    std::optional<double> parentFrameId;
-    std::optional<String> requestId;
-    std::optional<String> type;
-    std::optional<String> url;
 };
 
 [Nested] struct WebCore::ContentRuleListMatchedRule::MatchedRule {
+    double ruleId;
+    String rulesetId;
     std::optional<String> extensionId;
-    std::optional<double> ruleId;
-    std::optional<String> rulesetId;
 };
 
 #endif
@@ -7053,7 +7059,8 @@ header: <WebCore/TextExtractionTypes.h>
     Click,
     SelectText,
     SelectMenuItem,
-    TextInput
+    TextInput,
+    KeyPress
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -7235,6 +7242,8 @@ enum class WebCore::WebGPU::TextureFormat : uint8_t {
     R8snorm,
     R8uint,
     R8sint,
+    R16unorm,
+    R16snorm,
     R16uint,
     R16sint,
     R16float,
@@ -7245,6 +7254,8 @@ enum class WebCore::WebGPU::TextureFormat : uint8_t {
     R32uint,
     R32sint,
     R32float,
+    Rg16unorm,
+    Rg16snorm,
     Rg16uint,
     Rg16sint,
     Rg16float,
@@ -7262,6 +7273,8 @@ enum class WebCore::WebGPU::TextureFormat : uint8_t {
     Rg32uint,
     Rg32sint,
     Rg32float,
+    Rgba16unorm,
+    Rgba16snorm,
     Rgba16uint,
     Rgba16sint,
     Rgba16float,

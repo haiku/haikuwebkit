@@ -178,6 +178,7 @@ struct WebPageCreationParameters {
     bool hasResourceLoadClient { false };
 
     Vector<String> mimeTypesWithCustomContentProviders { };
+    String overrideReferrerForAllRequests;
 
     bool controlledByAutomation { false };
     bool isProcessSwap { false };
@@ -185,6 +186,7 @@ struct WebPageCreationParameters {
     bool useDarkAppearance { false };
     bool useElevatedUserInterfaceLevel { false };
     bool allowJSHandleInPageContentWorld { false };
+    bool allowPostingLegacySynchronousMessages { false };
 
 #if PLATFORM(MAC)
     std::optional<WebCore::DestinationColorSpace> colorSpace { };

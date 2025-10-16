@@ -32,6 +32,7 @@
 #import "Test.h"
 #import "TestNavigationDelegate.h"
 #import "TestScriptMessageHandler.h"
+#import "TestUIDelegate.h"
 #import "TestURLSchemeHandler.h"
 #import "TestWKWebView.h"
 #import "WKWebViewConfigurationExtras.h"
@@ -1127,4 +1128,27 @@ TEST(EvaluateJavaScript, ReturnTypes)
     }];
 
     TestWebKitAPI::Util::run(&didEvaluateJavaScript);
+}
+
+@interface TestScriptMessageHandlerWithReply : NSObject <WKScriptMessageHandlerWithReply>
+@end
+
+@implementation TestScriptMessageHandlerWithReply
+
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message replyHandler:(void(^)(id, NSString *))replyHandler
+{
+    replyHandler([NSString stringWithFormat:@"UI process received: %@", message.body], nil);
+}
+
+@end
+
+TEST(WKWebView, LegacySynchronousMessages)
+{
+    RetainPtr configuration = adoptNS([WKWebViewConfiguration new]);
+    [configuration _setAllowPostingLegacySynchronousMessages:YES];
+    RetainPtr handler = adoptNS([TestScriptMessageHandlerWithReply new]);
+    [[configuration userContentController] addScriptMessageHandlerWithReply:handler.get() contentWorld:WKContentWorld.pageWorld name:@"testHandler"];
+    RetainPtr webView = adoptNS([[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration.get()]);
+    [webView loadHTMLString:@"<script>alert(window.webkit.messageHandlers.testHandler.postLegacySynchronousMessage('hello!'))</script>" baseURL:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "UI process received: hello!");
 }

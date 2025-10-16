@@ -38,7 +38,9 @@
 #include "EventTargetInlines.h"
 #include "ExceptionCode.h"
 #include "ExceptionOr.h"
+#include "FocusController.h"
 #include "FrameSelection.h"
+#include "GeometryUtilities.h"
 #include "HTMLAnchorElement.h"
 #include "HTMLBodyElement.h"
 #include "HTMLButtonElement.h"
@@ -54,6 +56,7 @@
 #include "ImageOverlay.h"
 #include "LocalFrame.h"
 #include "Page.h"
+#include "PlatformKeyboardEvent.h"
 #include "PlatformMouseEvent.h"
 #include "PositionInlines.h"
 #include "RenderBox.h"
@@ -592,7 +595,7 @@ static inline void extractRecursive(Node& node, Item& parentItem, TraversalConte
     }
 
     if (RefPtr container = dynamicDowncast<ContainerNode>(node)) {
-        for (auto& child : composedTreeChildren(*container))
+        for (auto& child : composedTreeChildren<0>(*container))
             extractRecursive(child, item ? *item : parentItem, context);
     }
 
@@ -613,18 +616,20 @@ static inline void extractRecursive(Node& node, Item& parentItem, TraversalConte
     if (!item)
         return;
 
-    if (context.mergeParagraphs) {
-        if (parentItem.children.isEmpty()) {
-            if (canMerge(parentItem, *item))
-                return merge(parentItem, WTFMove(*item));
-        } else if (auto& lastChild = parentItem.children.last(); canMerge(lastChild, *item))
+    if (context.mergeParagraphs && parentItem.children.isEmpty()) {
+        if (canMerge(parentItem, *item))
+            return merge(parentItem, WTFMove(*item));
+    }
+
+    if (!parentItem.children.isEmpty()) {
+        if (auto& lastChild = parentItem.children.last(); canMerge(lastChild, *item))
             return merge(lastChild, WTFMove(*item));
     }
 
     parentItem.children.append(WTFMove(*item));
 }
 
-static void pruneRedundantItemsRecursive(Item& item)
+static void pruneWhitespaceRecursive(Item& item)
 {
     item.children.removeAllMatching([](auto& child) {
         if (!child.children.isEmpty() || !std::holds_alternative<TextItemData>(child.data))
@@ -635,7 +640,33 @@ static void pruneRedundantItemsRecursive(Item& item)
     });
 
     for (auto& child : item.children)
-        pruneRedundantItemsRecursive(child);
+        pruneWhitespaceRecursive(child);
+}
+
+static void pruneEmptyContainersRecursive(Item& item)
+{
+    for (auto& child : item.children)
+        pruneEmptyContainersRecursive(child);
+
+    item.children.removeAllMatching([](auto& child) {
+        if (!child.children.isEmpty())
+            return false;
+
+        if (!child.eventListeners.isEmpty())
+            return false;
+
+        if (!child.ariaAttributes.isEmpty())
+            return false;
+
+        if (!child.accessibilityRole.isEmpty())
+            return false;
+
+        if (!std::holds_alternative<ContainerType>(child.data))
+            return false;
+
+        auto containerType = std::get<ContainerType>(child.data);
+        return containerType != ContainerType::Button;
+    });
 }
 
 Item extractItem(Request&& request, Page& page)
@@ -670,7 +701,8 @@ Item extractItem(Request&& request, Page& page)
         extractRecursive(*bodyElement, root, context);
     }
 
-    pruneRedundantItemsRecursive(root);
+    pruneWhitespaceRecursive(root);
+    pruneEmptyContainersRecursive(root);
 
     return root;
 }
@@ -867,17 +899,14 @@ static Vector<std::pair<String, FloatRect>> extractAllTextAndRectsRecursive(Docu
         if (!renderer)
             continue;
 
-        IntRect absoluteBounds;
+        FloatRect absoluteBounds;
         auto textRange = iterator.range();
         if (!textRange.collapsed()) {
-            auto textRects = RenderObject::absoluteTextRects(textRange, {
+            absoluteBounds = enclosingIntRect(unionRectIgnoringZeroRects(RenderObject::absoluteBorderAndTextRects(textRange, {
                 RenderObject::BoundingRectBehavior::IgnoreTinyRects,
                 RenderObject::BoundingRectBehavior::IgnoreEmptyTextSelections,
                 RenderObject::BoundingRectBehavior::UseSelectionHeight,
-            });
-
-            for (auto textRect : textRects)
-                absoluteBounds.unite(textRect);
+            })));
         }
 
         if (absoluteBounds.isEmpty())
@@ -924,11 +953,24 @@ static std::optional<SimpleRange> searchForText(Node& node, const String& search
     return { WTFMove(foundRange) };
 }
 
-static void dispatchSimulatedClick(Page& page, IntPoint location, CompletionHandler<void(bool)>&& completion)
+static String invalidNodeIdentifierDescription(NodeIdentifier identifier)
+{
+    return makeString("Failed to resolve nodeIdentifier "_s, identifier.loggingString());
+}
+
+static String searchTextNotFoundDescription(const String& searchText)
+{
+    return makeString('\'', searchText, "' not found inside the target node"_s);
+}
+
+static constexpr auto nullFrameDescription = "Browsing context has been detached"_s;
+static constexpr auto interactedWithSelectElementDescription = "Successfully updated option in select element"_s;
+
+static void dispatchSimulatedClick(Page& page, IntPoint location, CompletionHandler<void(bool, String&&)>&& completion)
 {
     RefPtr frame = page.localMainFrame();
     if (!frame)
-        return completion(false);
+        return completion(false, nullFrameDescription);
 
     frame->eventHandler().handleMouseMoveEvent({
         location, location, MouseButton::Left, PlatformEvent::Type::MouseMoved, 0, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap
@@ -942,35 +984,35 @@ static void dispatchSimulatedClick(Page& page, IntPoint location, CompletionHand
         location, location, MouseButton::Left, PlatformEvent::Type::MouseReleased, 1, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap
     });
 
-    completion(true);
+    completion(true, { });
 }
 
-static void dispatchSimulatedClick(Node& targetNode, const String& searchText, CompletionHandler<void(bool)>&& completion)
+static void dispatchSimulatedClick(Node& targetNode, const String& searchText, CompletionHandler<void(bool, String&&)>&& completion)
 {
     RefPtr element = dynamicDowncast<Element>(targetNode);
     if (!element)
-        return completion(false);
+        element = targetNode.parentElementInComposedTree();
 
-    if (!element->isConnected())
-        return completion(false);
+    if (!element || !element->isConnected())
+        return completion(false, "Target has been disconnected from the DOM"_s);
 
     {
         CheckedPtr renderer = element->renderer();
         if (!renderer)
-            return completion(false);
+            return completion(false, "Target is not rendered (possibly display: none)"_s);
 
         if (renderer->style().usedVisibility() != Visibility::Visible)
-            return completion(false);
+            return completion(false, "Target is hidden via CSS visibility"_s);
     }
 
     Ref document = element->document();
     RefPtr view = document->view();
     if (!view)
-        return completion(false);
+        return completion(false, "Document is not visible to the user"_s);
 
     RefPtr page = document->page();
     if (!page)
-        return completion(false);
+        return completion(false, "Document has been detached from the page"_s);
 
     static constexpr OptionSet defaultHitTestOptions {
         HitTestRequest::Type::ReadOnly,
@@ -982,7 +1024,7 @@ static void dispatchSimulatedClick(Node& targetNode, const String& searchText, C
         auto foundRange = searchForText(*element, searchText);
         if (!foundRange) {
             // Err on the side of failing, if the text has changed since the interaction was triggered.
-            return completion(false);
+            return completion(false, searchTextNotFoundDescription(searchText));
         }
 
         if (auto absoluteQuads = RenderObject::absoluteTextQuads(*foundRange); !absoluteQuads.isEmpty()) {
@@ -1008,14 +1050,17 @@ static void dispatchSimulatedClick(Node& targetNode, const String& searchText, C
     UserGestureIndicator indicator { IsProcessingUserGesture::Yes, element->protectedDocument().ptr() };
 
     // Fall back to dispatching a programmatic click.
-    completion(element->dispatchSimulatedClick(nullptr, SendMouseUpDownEvents));
+    if (element->dispatchSimulatedClick(nullptr, SendMouseUpDownEvents))
+        completion(false, "Failed to click (tried falling back to dispatching programmatic click since target could not be hit-tested)"_s);
+    else
+        completion(true, { });
 }
 
-static void dispatchSimulatedClick(NodeIdentifier identifier, const String& searchText, CompletionHandler<void(bool)>&& completion)
+static void dispatchSimulatedClick(NodeIdentifier identifier, const String& searchText, CompletionHandler<void(bool, String&&)>&& completion)
 {
     RefPtr foundNode = Node::fromIdentifier(identifier);
     if (!foundNode)
-        return completion(false);
+        return completion(false, invalidNodeIdentifierDescription(identifier));
 
     dispatchSimulatedClick(*foundNode, searchText, WTFMove(completion));
 }
@@ -1037,16 +1082,16 @@ static bool selectOptionByValue(NodeIdentifier identifier, const String& optionT
     return false;
 }
 
-static void selectText(NodeIdentifier identifier, const String& searchText, CompletionHandler<void(bool)>&& completion)
+static void selectText(NodeIdentifier identifier, const String& searchText, CompletionHandler<void(bool, String&&)>&& completion)
 {
     RefPtr foundNode = Node::fromIdentifier(identifier);
     if (!foundNode)
-        return completion(false);
+        return completion(false, invalidNodeIdentifierDescription(identifier));
 
     if (RefPtr control = dynamicDowncast<HTMLTextFormControlElement>(*foundNode)) {
         // FIXME: This should probably honor `searchText`.
         control->select();
-        return completion(true);
+        return completion(true, { });
     }
 
     std::optional<SimpleRange> targetRange;
@@ -1056,16 +1101,74 @@ static void selectText(NodeIdentifier identifier, const String& searchText, Comp
         targetRange = searchForText(*foundNode, searchText);
 
     if (!targetRange)
-        return completion(false);
+        return completion(false, searchTextNotFoundDescription(searchText));
 
-    completion(foundNode->protectedDocument()->selection().setSelectedRange(*targetRange, Affinity::Downstream, FrameSelection::ShouldCloseTyping::Yes, UserTriggered::Yes));
+    if (!foundNode->protectedDocument()->selection().setSelectedRange(*targetRange, Affinity::Downstream, FrameSelection::ShouldCloseTyping::Yes, UserTriggered::Yes))
+        return completion(false, "Failed to set selected range"_s);
+
+    return completion(true, { });
 }
 
-static void focusAndInsertText(NodeIdentifier identifier, String&& text, bool replaceAll, CompletionHandler<void(bool)>&& completion)
+static bool simulateKeyPress(LocalFrame& frame, const String& key)
+{
+    auto keyDown = PlatformKeyboardEvent::syntheticEventFromText(PlatformEvent::Type::KeyDown, key);
+    if (!keyDown)
+        return false;
+
+    auto keyUp = PlatformKeyboardEvent::syntheticEventFromText(PlatformEvent::Type::KeyUp, key);
+    if (!keyUp)
+        return false;
+
+    frame.eventHandler().keyEvent(*keyDown);
+    frame.eventHandler().keyEvent(*keyUp);
+    return true;
+}
+
+static void simulateKeyPress(Page& page, std::optional<NodeIdentifier>&& identifier, const String& text, CompletionHandler<void(bool, String&&)>&& completion)
+{
+    if (identifier) {
+        RefPtr focusTarget = dynamicDowncast<Element>(Node::fromIdentifier(*identifier));
+        if (!focusTarget)
+            return completion(false, makeString(identifier->loggingString()));
+
+        if (focusTarget != focusTarget->protectedDocument()->activeElement())
+            focusTarget->focus();
+    }
+
+    RefPtr targetFrame = page.focusController().focusedOrMainFrame();
+    if (!targetFrame)
+        return completion(false, nullFrameDescription);
+
+    String canonicalKey = text;
+    if (text == "\n"_s || text == "Return"_s)
+        canonicalKey = "Enter"_s;
+    else if (text == "Left"_s || text == "Right"_s || text == "Up"_s || text == "Down"_s)
+        canonicalKey = makeString("Arrow"_s, text);
+
+    if (simulateKeyPress(*targetFrame, canonicalKey))
+        return completion(true, { });
+
+    if (!text.is8Bit()) {
+        // FIXME: Consider falling back to simulating text insertion.
+        return completion(false, "Only 8-bit strings are supported"_s);
+    }
+
+    bool succeeded = true;
+    for (auto character : text.span8()) {
+        if (!simulateKeyPress(*targetFrame, { std::span { &character, 1 } }))
+            succeeded = false;
+    }
+
+    completion(succeeded, succeeded
+        ? makeString('\'', text, "' is not a valid key, but we successfully fell back to typing each character in the string separately"_s)
+        : makeString("One or more key events failed (tried to input '"_s, text, "' character by character"_s));
+}
+
+static void focusAndInsertText(NodeIdentifier identifier, String&& text, bool replaceAll, CompletionHandler<void(bool, String&&)>&& completion)
 {
     RefPtr foundNode = Node::fromIdentifier(identifier);
     if (!foundNode)
-        return completion(false);
+        return completion(false, invalidNodeIdentifierDescription(identifier));
 
     RefPtr<Element> elementToFocus;
     if (RefPtr element = dynamicDowncast<Element>(*foundNode); element && element->isTextField())
@@ -1079,15 +1182,15 @@ static void focusAndInsertText(NodeIdentifier identifier, String&& text, bool re
         elementToFocus = foundNode->isRootEditableElement() ? dynamicDowncast<Element>(*foundNode) : foundNode->rootEditableElement();
 
     if (!elementToFocus)
-        return completion(false);
+        return completion(false, makeString(identifier.loggingString(), " cannot be edited (requires text field or contentEditable)"_s));
 
     Ref document = elementToFocus->document();
     RefPtr frame = document->frame();
     if (!frame)
-        return completion(false);
+        return completion(false, nullFrameDescription);
 
     // First, attempt to dispatch a click over the editable area (and fall back to programmatically setting focus).
-    dispatchSimulatedClick(*elementToFocus, { }, [document = document.copyRef(), elementToFocus, frame, replaceAll, text = WTFMove(text), completion = WTFMove(completion)](bool clicked) mutable {
+    dispatchSimulatedClick(*elementToFocus, { }, [document = document.copyRef(), elementToFocus, frame, replaceAll, text = WTFMove(text), completion = WTFMove(completion)](bool clicked, String&&) mutable {
         if (!clicked || elementToFocus != document->activeElement())
             elementToFocus->focus();
 
@@ -1101,11 +1204,11 @@ static void focusAndInsertText(NodeIdentifier identifier, String&& text, bool re
         UserTypingGestureIndicator indicator { *frame };
 
         document->protectedEditor()->pasteAsPlainText(text, false);
-        completion(true);
+        completion(true, "Inserted text by simulating paste with plain text"_s);
     });
 }
 
-void handleInteraction(Interaction&& interaction, Page& page, CompletionHandler<void(bool)>&& completion)
+void handleInteraction(Interaction&& interaction, Page& page, CompletionHandler<void(bool, String&&)>&& completion)
 {
     switch (interaction.action) {
     case Action::Click: {
@@ -1115,39 +1218,41 @@ void handleInteraction(Interaction&& interaction, Page& page, CompletionHandler<
         if (auto identifier = interaction.nodeIdentifier)
             return dispatchSimulatedClick(*identifier, WTFMove(interaction.text), WTFMove(completion));
 
-        return completion(false);
+        return completion(false, "Missing location and nodeIdentifier"_s);
     }
     case Action::SelectMenuItem: {
         if (auto identifier = interaction.nodeIdentifier) {
             if (selectOptionByValue(*identifier, interaction.text))
-                return completion(true);
+                return completion(true, interactedWithSelectElementDescription);
 
             return dispatchSimulatedClick(*identifier, interaction.text, WTFMove(completion));
         }
 
-        return completion(false);
+        return completion(false, "Missing nodeIdentifier"_s);
     }
     case Action::SelectText: {
         if (auto identifier = interaction.nodeIdentifier) {
             if (selectOptionByValue(*identifier, interaction.text))
-                return completion(true);
+                return completion(true, interactedWithSelectElementDescription);
 
             return selectText(*identifier, WTFMove(interaction.text), WTFMove(completion));
         }
 
-        return completion(false);
+        return completion(false, "Missing nodeIdentifier"_s);
     }
     case Action::TextInput: {
         if (auto identifier = interaction.nodeIdentifier)
             return focusAndInsertText(*identifier, WTFMove(interaction.text), interaction.replaceAll, WTFMove(completion));
 
-        return completion(false);
+        return completion(false, "Missing nodeIdentifier"_s);
     }
+    case Action::KeyPress:
+        return simulateKeyPress(page, WTFMove(interaction.nodeIdentifier), interaction.text, WTFMove(completion));
     default:
         ASSERT_NOT_REACHED();
         break;
     }
-    completion(false);
+    completion(false, "Invalid action"_s);
 }
 
 } // namespace TextExtraction

@@ -27,12 +27,12 @@
 
 #pragma once
 
-#include "CSSSelector.h"
-#include "Element.h"
 #include "SelectorMatchingState.h"
 #include "StyleRelations.h"
-#include "StyleScopeOrdinal.h"
 #include "StyleScrollbarState.h"
+#include <WebCore/CSSSelector.h>
+#include <WebCore/Element.h>
+#include <WebCore/StyleScopeOrdinal.h>
 
 namespace WebCore {
 

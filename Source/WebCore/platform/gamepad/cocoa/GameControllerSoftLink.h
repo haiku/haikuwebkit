@@ -25,9 +25,10 @@
 
 #pragma once
 
+#import <wtf/Platform.h>
 #if ENABLE(GAMEPAD) && PLATFORM(COCOA)
 
-#import "GameControllerSPI.h"
+#import <WebCore/GameControllerSPI.h>
 #import <wtf/SoftLinking.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 

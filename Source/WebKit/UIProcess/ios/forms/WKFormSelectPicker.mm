@@ -36,6 +36,7 @@
 #import "WKFormSelectControl.h"
 #import "WKWebViewPrivateForTesting.h"
 #import "WebPageProxy.h"
+#import "WebPreferencesDefaultValues.h"
 #import <UIKit/UIKit.h>
 #import <WebCore/LocalizedStrings.h>
 #import <numbers>

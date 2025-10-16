@@ -26,7 +26,7 @@
 #pragma once
 
 #include <WebCore/LayoutBox.h>
-#include "LayoutBoxGeometry.h"
+#include <WebCore/LayoutBoxGeometry.h>
 #include <WebCore/LayoutPoint.h>
 #include <WebCore/LayoutUnits.h>
 #include <wtf/TZoneMalloc.h>

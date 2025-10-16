@@ -13,8 +13,6 @@ HTML IDL tests
 
 PASS idl_test setup
 PASS idl_test validation
-PASS Partial interface Document: original interface defined
-PASS Partial interface Document: member names are unique
 PASS Partial interface mixin DocumentOrShadowRoot: original interface mixin defined
 PASS Partial interface mixin DocumentOrShadowRoot: member names are unique
 PASS Partial interface Navigator: original interface defined
@@ -27,72 +25,8 @@ PASS Partial interface Range: original interface defined
 PASS Partial interface Range: member names are unique
 PASS Partial interface mixin NavigatorID: original interface mixin defined
 PASS Partial interface mixin NavigatorID: member names are unique
-PASS Partial interface HTMLAnchorElement: original interface defined
-PASS Partial interface HTMLAnchorElement: member names are unique
-PASS Partial interface HTMLAreaElement: original interface defined
-PASS Partial interface HTMLAreaElement: member names are unique
-PASS Partial interface HTMLBodyElement: original interface defined
-PASS Partial interface HTMLBodyElement: member names are unique
-PASS Partial interface HTMLBRElement: original interface defined
-PASS Partial interface HTMLBRElement: member names are unique
-PASS Partial interface HTMLTableCaptionElement: original interface defined
-PASS Partial interface HTMLTableCaptionElement: member names are unique
-PASS Partial interface HTMLTableColElement: original interface defined
-PASS Partial interface HTMLTableColElement: member names are unique
-PASS Partial interface HTMLDivElement: original interface defined
-PASS Partial interface HTMLDivElement: member names are unique
-PASS Partial interface HTMLDListElement: original interface defined
-PASS Partial interface HTMLDListElement: member names are unique
-PASS Partial interface HTMLEmbedElement: original interface defined
-PASS Partial interface HTMLEmbedElement: member names are unique
-PASS Partial interface HTMLHeadingElement: original interface defined
-PASS Partial interface HTMLHeadingElement: member names are unique
-PASS Partial interface HTMLHRElement: original interface defined
-PASS Partial interface HTMLHRElement: member names are unique
-PASS Partial interface HTMLHtmlElement: original interface defined
-PASS Partial interface HTMLHtmlElement: member names are unique
-PASS Partial interface HTMLIFrameElement: original interface defined
-PASS Partial interface HTMLIFrameElement: member names are unique
-PASS Partial interface HTMLImageElement: original interface defined
-PASS Partial interface HTMLImageElement: member names are unique
-PASS Partial interface HTMLInputElement: original interface defined
-PASS Partial interface HTMLInputElement: member names are unique
-PASS Partial interface HTMLLegendElement: original interface defined
-PASS Partial interface HTMLLegendElement: member names are unique
-PASS Partial interface HTMLLIElement: original interface defined
-PASS Partial interface HTMLLIElement: member names are unique
-PASS Partial interface HTMLLinkElement: original interface defined
-PASS Partial interface HTMLLinkElement: member names are unique
-PASS Partial interface HTMLMenuElement: original interface defined
-PASS Partial interface HTMLMenuElement: member names are unique
-PASS Partial interface HTMLMetaElement: original interface defined
-PASS Partial interface HTMLMetaElement: member names are unique
-PASS Partial interface HTMLObjectElement: original interface defined
-PASS Partial interface HTMLObjectElement: member names are unique
-PASS Partial interface HTMLOListElement: original interface defined
-PASS Partial interface HTMLOListElement: member names are unique
-PASS Partial interface HTMLParagraphElement: original interface defined
-PASS Partial interface HTMLParagraphElement: member names are unique
-PASS Partial interface HTMLPreElement: original interface defined
-PASS Partial interface HTMLPreElement: member names are unique
-PASS Partial interface HTMLStyleElement: original interface defined
-PASS Partial interface HTMLStyleElement: member names are unique
-PASS Partial interface HTMLScriptElement: original interface defined
-PASS Partial interface HTMLScriptElement: member names are unique
-PASS Partial interface HTMLTableElement: original interface defined
-PASS Partial interface HTMLTableElement: member names are unique
-PASS Partial interface HTMLTableSectionElement: original interface defined
-PASS Partial interface HTMLTableSectionElement: member names are unique
-PASS Partial interface HTMLTableCellElement: original interface defined
-PASS Partial interface HTMLTableCellElement: member names are unique
-PASS Partial interface HTMLTableRowElement: original interface defined
-PASS Partial interface HTMLTableRowElement: member names are unique
-PASS Partial interface HTMLUListElement: original interface defined
-PASS Partial interface HTMLUListElement: member names are unique
 PASS Partial interface Document[2]: original interface defined
 PASS Partial interface Document[2]: member names are unique
-PASS Partial interface Window: original interface defined
-PASS Partial interface Window: member names are unique
 PASS Partial interface Document[3]: member names are unique
 PASS Partial interface mixin DocumentOrShadowRoot[2]: member names are unique
 PASS Partial interface UIEvent: member names are unique
@@ -100,16 +34,6 @@ PASS Partial interface MouseEvent: member names are unique
 PASS Partial interface UIEvent[2]: member names are unique
 PASS Partial dictionary UIEventInit: member names are unique
 PASS Document includes GlobalEventHandlers: member names are unique
-PASS HTMLElement includes GlobalEventHandlers: member names are unique
-PASS HTMLElement includes ElementContentEditable: member names are unique
-PASS HTMLElement includes HTMLOrSVGElement: member names are unique
-PASS HTMLLinkElement includes LinkStyle: member names are unique
-PASS HTMLStyleElement includes LinkStyle: member names are unique
-PASS HTMLBodyElement includes WindowEventHandlers: member names are unique
-PASS HTMLAnchorElement includes HTMLHyperlinkElementUtils: member names are unique
-PASS HTMLAreaElement includes HTMLHyperlinkElementUtils: member names are unique
-PASS HTMLInputElement includes PopoverInvokerElement: member names are unique
-PASS HTMLButtonElement includes PopoverInvokerElement: member names are unique
 PASS CanvasRenderingContext2D includes CanvasSettings: member names are unique
 PASS CanvasRenderingContext2D includes CanvasState: member names are unique
 PASS CanvasRenderingContext2D includes CanvasTransform: member names are unique
@@ -169,7 +93,6 @@ PASS WorkerNavigator includes NavigatorOnLine: member names are unique
 PASS WorkerNavigator includes NavigatorConcurrentHardware: member names are unique
 PASS Window includes WindowSessionStorage: member names are unique
 PASS Window includes WindowLocalStorage: member names are unique
-PASS HTMLFrameSetElement includes WindowEventHandlers: member names are unique
 PASS Element includes ARIAMixin: member names are unique
 PASS SVGElement includes GlobalEventHandlers: member names are unique
 PASS SVGElement includes SVGElementInstance: member names are unique
@@ -179,7 +102,6 @@ PASS SVGSVGElement includes SVGFitToViewBox: member names are unique
 PASS SVGSVGElement includes WindowEventHandlers: member names are unique
 PASS SVGImageElement includes SVGURIReference: member names are unique
 PASS SVGScriptElement includes SVGURIReference: member names are unique
-PASS HTMLElement includes ElementCSSInlineStyle: member names are unique
 PASS SVGElement includes ElementCSSInlineStyle: member names are unique
 PASS Document includes NonElementParentNode: member names are unique
 PASS DocumentFragment includes NonElementParentNode: member names are unique

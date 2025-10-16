@@ -29,6 +29,7 @@
 #include "Document.h"
 #include "InternalObserver.h"
 #include "JSDOMExceptionHandling.h"
+#include "ScriptWrappableInlines.h"
 #include "SubscriberCallback.h"
 #include "SubscriptionObserverCallback.h"
 #include <wtf/TZoneMallocInlines.h>
@@ -46,6 +47,7 @@ Subscriber::Subscriber(ScriptExecutionContext& context, Ref<InternalObserver>&& 
     , m_observer(observer)
     , m_options(options)
 {
+    relaxAdoptionRequirement();
     followSignal(m_signal);
     if (RefPtr signal = options.signal)
         followSignal(*signal);
@@ -102,8 +104,9 @@ void Subscriber::followSignal(AbortSignal& signal)
     if (signal.aborted())
         close(signal.reason().getValue());
     else {
-        signal.addAlgorithm([this](JSC::JSValue reason) {
-            close(reason);
+        signal.addAlgorithm([weakThis = WeakPtr { *this }](JSC::JSValue reason) {
+            if (RefPtr subscriber = weakThis.get())
+                subscriber->close(reason);
         });
     }
 }
@@ -171,6 +174,8 @@ void Subscriber::visitAdditionalChildren(JSC::AbstractSlotVisitor& visitor)
 
     observerConcurrently()->visitAdditionalChildren(visitor);
 }
+
+Subscriber::~Subscriber() = default;
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(Subscriber);
 

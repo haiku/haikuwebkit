@@ -188,16 +188,6 @@ static GRefPtr<GSource> wpeDisplayWaylandCreateEventSource(WPEDisplayWayland* di
     return source;
 }
 
-static void wpeDisplayWaylandConstructed(GObject* object)
-{
-    G_OBJECT_CLASS(wpe_display_wayland_parent_class)->constructed(object);
-#if USE(SYSPROF_CAPTURE)
-    // libWPEPlatform brings its own SysprofAnnotator copy, due to linking against static libWTF.
-    // Therefore we need to initialize it here, otherwise no marks will be received by sysprof.
-    SysprofAnnotator::createIfNeeded("WPE/Wayland Platform"_s);
-#endif
-}
-
 static void wpeDisplayWaylandDispose(GObject* object)
 {
     auto* priv = WPE_DISPLAY_WAYLAND(object)->priv;
@@ -490,11 +480,10 @@ static gboolean wpeDisplayWaylandConnect(WPEDisplay* display, GError** error)
 
 static WPEView* wpeDisplayWaylandCreateView(WPEDisplay* display)
 {
-    auto* displayWayland = WPE_DISPLAY_WAYLAND(display);
-    auto* view = wpe_view_wayland_new(displayWayland);
+    auto* view = WPE_VIEW(g_object_new(WPE_TYPE_VIEW_WAYLAND, "display", display, nullptr));
 
     if (wpe_settings_get_boolean(wpe_display_get_settings(display), WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, nullptr)) {
-        GRefPtr<WPEToplevel> toplevel = adoptGRef(wpe_toplevel_wayland_new(displayWayland, 1));
+        GRefPtr<WPEToplevel> toplevel = adoptGRef(wpe_toplevel_wayland_new(WPE_DISPLAY_WAYLAND(display), 1));
         wpe_view_set_toplevel(view, toplevel.get());
     }
 
@@ -657,7 +646,6 @@ struct zwp_linux_explicit_synchronization_v1* wpeDisplayWaylandGetLinuxExplicitS
 static void wpe_display_wayland_class_init(WPEDisplayWaylandClass* displayWaylandClass)
 {
     GObjectClass* objectClass = G_OBJECT_CLASS(displayWaylandClass);
-    objectClass->constructed = wpeDisplayWaylandConstructed;
     objectClass->dispose = wpeDisplayWaylandDispose;
 
     WPEDisplayClass* displayClass = WPE_DISPLAY_CLASS(displayWaylandClass);

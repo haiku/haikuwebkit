@@ -1,7 +1,7 @@
 # Longstanding SPI used by WebCore before we started auditing SPI use.
 # NEVER add to this list, only remove!
 
-[adaptive-image-glyph.legacy]
+[[legacy]]
 classes = [
     "CTEmojiImageAsset",
     "CTEmojiImageStrike",
@@ -17,13 +17,13 @@ selectors = [
 requires = ["ENABLE_MULTI_REPRESENTATION_HEIC"]
 
 # This is SPI, but it's marked as public on 26.x releases due to rdar://148943382.
-[AXSpeechManager.legacy]
+[[legacy]]
 selectors = [
     { name = "isSystemVoice", class = "?" },
 ]
 requires = ["!SDKDB_HAS_148943382"]
 
-[content-filtering.legacy]
+[[legacy]]
 classes = [
     "WCRBrowserEngineClient",
 ]
@@ -34,33 +34,33 @@ selectors = [
 ]
 requires = ["HAVE_WEBCONTENTRESTRICTIONS"]
 
-[cookie-partitioning.legacy]
+[[legacy]]
 selectors = [
     { name = "_getCookiesForPartition:completionHandler:", class = "?" },
 ]
 requires = ["HAVE_ALLOW_ONLY_PARTITIONED_COOKIES"]
 
-[hdr-display.legacy]
+[[legacy]]
 symbols = [
     "_CGImageGetContentAverageLightLevelNits",
     "_kCGConstrainedDynamicRange",
     "_kCGContentEDRStrength",
 ]
 requires = ["HAVE_SUPPORT_HDR_DISPLAY_APIS"]
-[lockdown-mode.legacy]
+[[legacy]]
 classes = [
     "LockdownModeManager",
 ]
 requires = ["HAVE_LOCKDOWN_MODE_FRAMEWORK"]
 
-[AVContentKitRequest.legacy]
+[[legacy]]
 symbols = [
     "_AVContentKeyRequestRandomDeviceIdentifierSeedKey",
     "_AVContentKeyRequestShouldRandomizeDeviceIdentifierKey",
 ]
 requires = ["!HAVE_AVCONTENTKEYREQUEST_RANDOMIZATION_API"]
 
-[CoreMedia-spatial-video.legacy]
+[[legacy]]
 symbols = [
     "_kCMFormatDescriptionProjectionKind_AppleImmersiveVideo",
     "_kCMFormatDescriptionProjectionKind_ParametricImmersive",
@@ -71,20 +71,20 @@ requires = ["!HAVE_SPATIAL_FORMAT_DESCRIPTION_API"]
 
 # The public iOS build uses CGGeometry methods instead of internal only
 # NSGeometry methods. Clean up in rdar://6669434.
-[NSGeometry.legacy]
+[[legacy]]
 symbols = [
     "_NSEqualRects",
 ]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 
-[NSURLUtilities.legacy]
+[[legacy]]
 selectors = [
     { name = "_setTitle:", class = "?" },
     { name = "_title", class = "?" },
 ]
 requires = ["!HAVE_LINK_PRESENTATION_CHANGE_FOR_RADAR_115801517"]
 
-[web-transport.legacy]
+[[legacy]]
 symbols = [
     "_nw_webtransport_options_add_connect_request_header",
     "_nw_webtransport_metadata_get_session_error_code",
@@ -99,19 +99,13 @@ requires = ["HAVE_WEB_TRANSPORT"]
 # releases.
 # ------------------------------------------------------------------------
 
-[ios26.legacy]
-classes = [
-    "NSTextBlock",
-]
+[[legacy]]
 selectors = [
-    { name = "allowsHeadTrackedSpatialAudio", class = "?" },
     { name = "borderColorForEdge:", class = "?" },
     { name = "collapsesBorders", class = "?" },
     { name = "hidesEmptyCells", class = "?" },
     { name = "layoutAlgorithm", class = "?" },
-    { name = "newSharedEventWithMachPort:", class = "?" },
     { name = "setBrowserAuditToken:", class = "?" },
-    { name = "supportsHeadTrackedSpatialAudio", class = "?" },
     { name = "transferVideoViewTo:", class = "?" },
     { name = "valueForDimension:", class = "?" },
     { name = "verticalAlignment", class = "?" },
@@ -119,28 +113,35 @@ selectors = [
 ]
 symbols = [
     "_CAIOSurfaceReloadColorAttributes",
-    "_CGIOSurfaceContextGetSurface",
     "_CGIOSurfaceContextInvalidateSurface",
     "_CGPathAddContinuousRoundedRect",
-    "_DDResultGetRange",
-    "_PFMetadataImageSourceIsSpatialMedia",
-    "_VTGetHEVCCapabilitesForFormatDescription",
-    "__UIKitGetTextEffectsCatalog",
     "_kCAFilterColorBlendMode",
     "_kCAFilterHueBlendMode",
     "_kCAFilterLuminosityBlendMode",
     "_kCAFilterSaturationBlendMode",
     "_kCVPixelBufferPreferRealTimeCacheModeIfEveryoneDoesKey",
-    "_kMRMediaRemoteCommandInfoPreferredIntervalsKey",
 ]
 
-[pre-ios26-internal-only.legacy]
+[[legacy]]
+selectors = [
+    # In cross-platform cocoa code, but dead-stripped unless ENABLE_WEBXR is active.
+    { name = "newSharedEventWithMachPort:", class = "?" },
+]
+requires = ["!NDEBUG"]
+
+[[legacy]]
+symbols = [
+    "_CGIOSurfaceContextGetSurface",
+]
+requires = ["ASSERT_ENABLED"]
+
+[[legacy]]
 selectors = [
     { name = "initWithWebsiteIdentifier:", class = "?" },
 ]
 requires = ["USE_APPLE_INTERNAL_SDK"]
 
-[pre-ios26.legacy]
+[[legacy]]
 classes = [
     "AVAssetCollection",
     "AVContentKeyReportGroup",
@@ -297,7 +298,6 @@ selectors = [
     { name = "columnSpan", class = "?" },
     { name = "containsAttachments", class = "?" },
     { name = "contentDispositionEncodingFallbackArray", class = "?" },
-    { name = "contentKeySessionWithLegacyWebKitCompatibilityModeAndKeySystem:storageDirectoryAtURL:", class = "?" },
     { name = "coreResult", class = "?" },
     { name = "createFencePort", class = "?" },
     { name = "createPluginBindingsInstance:", class = "?" },

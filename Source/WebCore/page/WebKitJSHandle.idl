@@ -24,7 +24,7 @@
  */
 
 [
-    EnabledForWorld=nodeInfoEnabled,
+    EnabledForWorld=allowJSHandleCreation,
     Exposed=Window,
     ExportMacro=WEBCORE_EXPORT
 ] interface WebKitJSHandle {

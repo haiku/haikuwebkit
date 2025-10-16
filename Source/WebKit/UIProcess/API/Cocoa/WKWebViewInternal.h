@@ -27,6 +27,7 @@
 #import <WebKit/_WKTextExtraction.h>
 
 #ifdef __cplusplus
+#if !__has_feature(modules)
 
 #import "PDFPluginIdentifier.h"
 #import <WebCore/CocoaView.h>
@@ -148,6 +149,7 @@ enum class HideScrollPocketReason : uint8_t {
 };
 }
 
+@class NSScrollPocket;
 @class WKColorExtensionView;
 @class WKContentView;
 @class WKPasswordView;
@@ -559,6 +561,7 @@ struct PerWebProcessState {
 
 #if PLATFORM(MAC) && ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 - (NSColor *)_adjustedColorForTopContentInsetColorFromUIDelegate:(NSColor *)proposedColor;
+@property (nonatomic, readonly) RetainPtr<NSScrollPocket> _copyTopScrollPocket;
 @property (nonatomic, setter=_setAlwaysPrefersSolidColorHardPocket:) BOOL _alwaysPrefersSolidColorHardPocket;
 #endif
 
@@ -624,6 +627,7 @@ RetainPtr<NSError> nsErrorFromExceptionDetails(const std::optional<WebCore::Exce
 
 WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::FixedContainerEdges&, WebCore::BoxSide);
 
+#endif // !__has_feature(modules)
 #endif // __cplusplus
 
 @interface WKWebView (NonCpp)

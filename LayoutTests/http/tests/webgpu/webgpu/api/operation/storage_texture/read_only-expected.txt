@@ -36,12 +36,7 @@ PASS :basic:format="rgba8uint";shaderStage="compute";dimension="3d";depthOrArray
 PASS :basic:format="rgba8uint";shaderStage="compute";dimension="3d";depthOrArrayLayers=2
 PASS :basic:format="rgba8uint";shaderStage="vertex";dimension="1d";depthOrArrayLayers=1
 PASS :basic:format="rgba8uint";shaderStage="vertex";dimension="2d";depthOrArrayLayers=1
-FAIL :basic:format="rgba8uint";shaderStage="vertex";dimension="2d";depthOrArrayLayers=2 assert_unreached:
-  - EXCEPTION: OperationError: map async was not successful
-  - EXCEPTION: Error: Device was unexpectedly lost. Reason: unknown, Message:
-    assert@http://127.0.0.1:8000/webgpu/common/util/util.js:37:20
-    @http://127.0.0.1:8000/webgpu/webgpu/util/device_pool.js:106:13
- Reached unreachable code
+PASS :basic:format="rgba8uint";shaderStage="vertex";dimension="2d";depthOrArrayLayers=2
 PASS :basic:format="rgba8uint";shaderStage="vertex";dimension="3d";depthOrArrayLayers=1
 PASS :basic:format="rgba8uint";shaderStage="vertex";dimension="3d";depthOrArrayLayers=2
 PASS :basic:format="rgba8uint";shaderStage="fragment";dimension="1d";depthOrArrayLayers=1

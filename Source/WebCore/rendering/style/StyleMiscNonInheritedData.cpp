@@ -27,7 +27,6 @@
 #include "StyleMiscNonInheritedData.h"
 
 #include "AnimationList.h"
-#include "FillLayer.h"
 #include "RenderStyleDifference.h"
 #include "RenderStyleInlines.h"
 #include "StyleDeprecatedFlexibleBoxData.h"
@@ -50,8 +49,8 @@ StyleMiscNonInheritedData::StyleMiscNonInheritedData()
     , multiCol(StyleMultiColData::create())
     , filter(StyleFilterData::create())
     , transform(StyleTransformData::create())
-    , mask(FillLayer::create(FillLayerType::Mask))
     , visitedLinkColor(StyleVisitedLinkColorData::create())
+    , mask(RenderStyle::initialMaskLayers())
     , content(RenderStyle::initialContent())
     , boxShadow(RenderStyle::initialBoxShadow())
     , aspectRatio(RenderStyle::initialAspectRatio())
@@ -81,8 +80,8 @@ StyleMiscNonInheritedData::StyleMiscNonInheritedData(const StyleMiscNonInherited
     , multiCol(o.multiCol)
     , filter(o.filter)
     , transform(o.transform)
-    , mask(o.mask)
     , visitedLinkColor(o.visitedLinkColor)
+    , mask(o.mask)
     , animations(o.animations ? o.animations->copy() : o.animations)
     , transitions(o.transitions ? o.transitions->copy() : o.transitions)
     , content(o.content)
@@ -128,8 +127,8 @@ bool StyleMiscNonInheritedData::operator==(const StyleMiscNonInheritedData& o) c
         && multiCol == o.multiCol
         && filter == o.filter
         && transform == o.transform
-        && mask == o.mask
         && visitedLinkColor == o.visitedLinkColor
+        && mask == o.mask
         && arePointingToEqualData(animations, o.animations)
         && arePointingToEqualData(transitions, o.transitions)
         && content == o.content
@@ -176,9 +175,9 @@ void StyleMiscNonInheritedData::dumpDifferences(TextStream& ts, const StyleMiscN
     filter->dumpDifferences(ts, other.filter);
     transform->dumpDifferences(ts, other.transform);
 
-    LOG_IF_DIFFERENT(mask);
-
     visitedLinkColor->dumpDifferences(ts, other.visitedLinkColor);
+
+    LOG_IF_DIFFERENT(mask);
 
     LOG_IF_DIFFERENT(animations);
     LOG_IF_DIFFERENT(transitions);

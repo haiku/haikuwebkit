@@ -141,7 +141,7 @@ ReferencedSVGResources::SVGElementIdentifierAndTagPairs ReferencedSVGResources::
 
     if (style.hasPositionedMask()) {
         // FIXME: We should support all the values in the CSS mask property, but for now just use the first mask-image if it's a reference.
-        RefPtr maskImage = style.maskImage();
+        RefPtr maskImage = style.maskLayers().first().image().tryStyleImage();
         auto maskImageURL = maskImage ? maskImage->url() : Style::URL::none();
 
         if (!maskImageURL.isNone()) {

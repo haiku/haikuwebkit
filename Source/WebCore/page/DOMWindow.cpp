@@ -29,6 +29,7 @@
 #include "BackForwardController.h"
 #include "CSSRuleList.h"
 #include "CSSStyleProperties.h"
+#include "DocumentInlines.h"
 #include "Document.h"
 #include "ExceptionOr.h"
 #include "Frame.h"

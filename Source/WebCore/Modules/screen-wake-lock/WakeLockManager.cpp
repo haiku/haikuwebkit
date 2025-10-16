@@ -26,6 +26,7 @@
 #include "config.h"
 #include "WakeLockManager.h"
 
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
 #include "SleepDisabler.h"
 #include "VisibilityState.h"

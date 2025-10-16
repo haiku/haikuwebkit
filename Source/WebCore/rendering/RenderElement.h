@@ -416,7 +416,7 @@ private:
 
     bool shouldRepaintForStyleDifference(StyleDifference) const;
 
-    void updateFillImages(const FillLayer*, const FillLayer*);
+    template<typename FillLayerType> void updateFillImages(const FillLayerType*, const FillLayerType*);
     void updateImage(StyleImage*, StyleImage*);
     void updateShapeImage(const Style::ShapeOutside*, const Style::ShapeOutside*);
 

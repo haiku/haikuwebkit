@@ -50,6 +50,9 @@ DisplayList::~DisplayList() = default;
 String DisplayList::asText(OptionSet<AsTextFlag> flags) const
 {
     TextStream stream(TextStream::LineMode::MultipleLine, TextStream::Formatting::SVGStyleRect);
+    if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
+        stream.dumpProperty("display-list-identifier"_s, this);
+
     for (const auto& item : m_items) {
         if (!shouldDumpItem(item, flags))
             continue;

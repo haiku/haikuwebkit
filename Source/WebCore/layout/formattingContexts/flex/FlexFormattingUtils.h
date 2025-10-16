@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <WebCore/FormattingGeometry.h>
+#include "FormattingGeometry.h"
 
 namespace WebCore {
 namespace Layout {

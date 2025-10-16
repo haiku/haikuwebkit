@@ -36,6 +36,7 @@
 #include "PerformanceLogging.h"
 #include "RegistrableDomain.h"
 #include "Settings.h"
+#include <wtf/MemoryPressureHandler.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

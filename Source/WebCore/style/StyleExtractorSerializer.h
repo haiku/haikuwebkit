@@ -91,7 +91,6 @@ public:
     static void serializeAppleColorFilterOperations(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FilterOperations&);
     static void serializeWebkitTextCombine(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, TextCombine);
     static void serializeImageOrientation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, ImageOrientation);
-    static void serializeLineClamp(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const LineClampValue&);
     static void serializeContain(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<Containment>);
     static void serializeSmoothScrolling(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, bool);
     static void serializeInitialLetter(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FloatSize);
@@ -110,7 +109,6 @@ public:
     static void serializePosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const LengthPoint&);
     static void serializeTouchAction(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TouchAction>);
     static void serializeTextTransform(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextTransform>);
-    static void serializeTextDecorationLine(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextDecorationLine>);
     static void serializeTextUnderlinePosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextUnderlinePosition>);
     static void serializeTextEmphasisPosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextEmphasisPosition>);
     static void serializeSpeakAs(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<SpeakAs>);
@@ -129,18 +127,10 @@ public:
 
     // MARK: FillLayer serializations
 
-    static void serializeFillLayerAttachment(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FillAttachment);
-    static void serializeFillLayerBlendMode(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, BlendMode);
-    static void serializeFillLayerClip(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FillBox);
-    static void serializeFillLayerOrigin(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FillBox);
-    static void serializeFillLayerRepeat(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FillRepeatXY);
-    static void serializeFillLayerBackgroundSize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FillSize);
-    static void serializeFillLayerMaskSize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FillSize);
     static void serializeFillLayerMaskComposite(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, CompositeOperator);
     static void serializeFillLayerWebkitMaskComposite(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, CompositeOperator);
     static void serializeFillLayerMaskMode(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, MaskMode);
     static void serializeFillLayerWebkitMaskSourceType(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, MaskMode);
-    static void serializeFillLayerImage(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleImage*);
 
     // MARK: Font serializations
 
@@ -701,19 +691,6 @@ inline void ExtractorSerializer::serializeImageOrientation(ExtractorState&, Stri
     builder.append(nameLiteralForSerialization(imageOrientation == ImageOrientation::Orientation::FromImage ? CSSValueFromImage : CSSValueNone));
 }
 
-inline void ExtractorSerializer::serializeLineClamp(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const LineClampValue& lineClamp)
-{
-    if (lineClamp.isNone()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
-        return;
-    }
-    if (lineClamp.isPercentage()) {
-        CSS::serializationForCSS(builder, context, CSS::PercentageRaw<> { lineClamp.value() });
-        return;
-    }
-    serialize(state, builder, context, lineClamp.value());
-}
-
 inline void ExtractorSerializer::serializeContain(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<Containment> containment)
 {
     if (!containment) {
@@ -1101,34 +1078,6 @@ inline void ExtractorSerializer::serializeTextTransform(ExtractorState& state, S
         serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
 }
 
-inline void ExtractorSerializer::serializeTextDecorationLine(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<TextDecorationLine> textDecorationLine)
-{
-    if (textDecorationLine.isEmpty()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
-        return;
-    }
-    if (textDecorationLine & TextDecorationLine::SpellingError) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::SpellingError { });
-        return;
-    }
-    bool listEmpty = true;
-    auto appendOption = [&](TextDecorationLine test, CSSValueID value) {
-        if (textDecorationLine & test) {
-            if (!listEmpty)
-                builder.append(' ');
-            builder.append(nameLiteralForSerialization(value));
-            listEmpty = false;
-        }
-    };
-    appendOption(TextDecorationLine::Underline, CSSValueUnderline);
-    appendOption(TextDecorationLine::Overline, CSSValueOverline);
-    appendOption(TextDecorationLine::LineThrough, CSSValueLineThrough);
-    // Blink value is ignored for rendering but not for the computed value.
-    appendOption(TextDecorationLine::Blink, CSSValueBlink);
-
-    if (listEmpty)
-        serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
-}
 
 inline void ExtractorSerializer::serializeTextUnderlinePosition(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<TextUnderlinePosition> textUnderlinePosition)
 {
@@ -1424,92 +1373,6 @@ inline void ExtractorSerializer::serializePositionVisibility(ExtractorState& sta
 
 // MARK: - FillLayer serializations
 
-inline void ExtractorSerializer::serializeFillLayerAttachment(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, FillAttachment attachment)
-{
-    serialize(state, builder, context, attachment);
-}
-
-inline void ExtractorSerializer::serializeFillLayerBlendMode(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, BlendMode blendMode)
-{
-    serialize(state, builder, context, blendMode);
-}
-
-inline void ExtractorSerializer::serializeFillLayerClip(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, FillBox clip)
-{
-    serialize(state, builder, context, clip);
-}
-
-inline void ExtractorSerializer::serializeFillLayerOrigin(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, FillBox origin)
-{
-    serialize(state, builder, context, origin);
-}
-
-inline void ExtractorSerializer::serializeFillLayerRepeat(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, FillRepeatXY repeat)
-{
-    if (repeat.x == repeat.y) {
-        serialize(state, builder, context, repeat.x);
-        return;
-    }
-
-    if (repeat.x == FillRepeat::Repeat && repeat.y == FillRepeat::NoRepeat) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::RepeatX { });
-        return;
-    }
-
-    if (repeat.x == FillRepeat::NoRepeat && repeat.y == FillRepeat::Repeat) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::RepeatY { });
-        return;
-    }
-
-    serialize(state, builder, context, repeat.x);
-    builder.append(' ');
-    serialize(state, builder, context, repeat.y);
-}
-
-inline void ExtractorSerializer::serializeFillLayerBackgroundSize(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, FillSize size)
-{
-    if (size.type == FillSizeType::Contain) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Contain { });
-        return;
-    }
-
-    if (size.type == FillSizeType::Cover) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Cover { });
-        return;
-    }
-
-    if (size.size.height.isAuto() && size.size.width.isAuto()) {
-        serializeLength(state, builder, context, size.size.width);
-        return;
-    }
-
-    serializeLength(state, builder, context, size.size.width);
-    builder.append(' ');
-    serializeLength(state, builder, context, size.size.height);
-}
-
-inline void ExtractorSerializer::serializeFillLayerMaskSize(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, FillSize size)
-{
-    if (size.type == FillSizeType::Contain) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Contain { });
-        return;
-    }
-
-    if (size.type == FillSizeType::Cover) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Cover { });
-        return;
-    }
-
-    if (size.size.height.isAuto()) {
-        serializeLength(state, builder, context, size.size.width);
-        return;
-    }
-
-    serializeLength(state, builder, context, size.size.width);
-    builder.append(' ');
-    serializeLength(state, builder, context, size.size.height);
-}
-
 inline void ExtractorSerializer::serializeFillLayerMaskComposite(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, CompositeOperator composite)
 {
     builder.append(nameLiteralForSerialization(toCSSValueID(composite, CSSPropertyMaskComposite)));
@@ -1553,11 +1416,6 @@ inline void ExtractorSerializer::serializeFillLayerWebkitMaskSourceType(Extracto
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-inline void ExtractorSerializer::serializeFillLayerImage(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const StyleImage* image)
-{
-    serializeImageOrNone(state, builder, context, image);
-}
-
 // MARK: - Font serializations
 
 inline void ExtractorSerializer::serializeFontFamily(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, const AtomString& family)
@@ -1569,6 +1427,8 @@ inline void ExtractorSerializer::serializeFontFamily(ExtractorState&, StringBuil
             return CSSValueFantasy;
         if (family == monospaceFamily)
             return CSSValueMonospace;
+        if (family == mathFamily)
+            return CSSValueMath;
         if (family == pictographFamily)
             return CSSValueWebkitPictograph;
         if (family == sansSerifFamily)

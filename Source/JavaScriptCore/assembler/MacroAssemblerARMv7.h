@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <JavaScriptCore/AssemblerCommon.h>
 #include <wtf/Platform.h>
 
 #if ENABLE(ASSEMBLER) && CPU(ARM_THUMB2)
@@ -118,8 +119,8 @@ public:
     static JumpLinkType computeJumpType(LinkRecord& record, const uint8_t* from, const uint8_t* to) { return ARMv7Assembler::computeJumpType(record, from, to); }
     static int jumpSizeDelta(JumpType jumpType, JumpLinkType jumpLinkType) { return ARMv7Assembler::jumpSizeDelta(jumpType, jumpLinkType); }
 
-    template<MachineCodeCopyMode copy>
-    ALWAYS_INLINE static void link(LinkRecord& record, uint8_t* from, const uint8_t* fromInstruction, uint8_t* to) { return ARMv7Assembler::link<copy>(record, from, fromInstruction, to); }
+    template<RepatchingInfo repatch>
+    ALWAYS_INLINE static void link(LinkRecord& record, uint8_t* from, const uint8_t* fromInstruction, uint8_t* to) { return ARMv7Assembler::link<repatch>(record, from, fromInstruction, to); }
 
     struct ArmAddress {
         enum AddressType {
@@ -2424,10 +2425,10 @@ public:
         ARMv7Assembler::replaceWithJump(instructionStart.dataLocation(), destination.dataLocation());
     }
 
-    template<PtrTag startTag>
+    template<RepatchingInfo repatch, PtrTag startTag>
     static void replaceWithNops(CodeLocationLabel<startTag> instructionStart, size_t memoryToFillWithNopsInBytes)
     {
-        ARMv7Assembler::replaceWithNops(instructionStart.dataLocation(), memoryToFillWithNopsInBytes);
+        ARMv7Assembler::replaceWithNops<repatch>(instructionStart.dataLocation(), memoryToFillWithNopsInBytes);
     }
     
     static ptrdiff_t maxJumpReplacementSize()
@@ -3444,13 +3445,13 @@ public:
     template<PtrTag callTag, PtrTag destTag>
     static void repatchCall(CodeLocationCall<callTag> call, CodeLocationLabel<destTag> destination)
     {
-        ARMv7Assembler::relinkCall(call.dataLocation(), destination.taggedPtr());
+        ARMv7Assembler::relinkCall<jitMemcpyRepatchAtomicFlush>(call.dataLocation(), destination.taggedPtr());
     }
 
     template<PtrTag callTag, PtrTag destTag>
     static void repatchCall(CodeLocationCall<callTag> call, CodePtr<destTag> destination)
     {
-        ARMv7Assembler::relinkCall(call.dataLocation(), destination.taggedPtr());
+        ARMv7Assembler::relinkCall<jitMemcpyRepatchFlush>(call.dataLocation(), destination.taggedPtr());
     }
 
     void convertDoubleToFloat16(FPRegisterID src, FPRegisterID dest)

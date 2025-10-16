@@ -584,7 +584,7 @@ void writeResources(TextStream& ts, const RenderObject& renderer, OptionSet<Rend
     // FIXME: We want to use SVGResourcesCache to determine which resources are present, instead of quering the resource <-> id cache.
     // For now leave the DRT output as is, but later on we should change this so cycles are properly ignored in the DRT output.
     if (style.hasPositionedMask()) {
-        RefPtr maskImage = style.maskImage();
+        RefPtr maskImage = style.maskLayers().first().image().tryStyleImage();
         auto maskImageURL = maskImage ? maskImage->url() : Style::URL::none();
 
         if (!maskImageURL.isNone()) {

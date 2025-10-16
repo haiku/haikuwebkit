@@ -225,7 +225,13 @@ void TestRunner::waitUntilDownloadFinished()
 
 void TestRunner::waitUntilDone()
 {
-    RELEASE_ASSERT(InjectedBundle::singleton().isTestRunning());
+    if (!InjectedBundle::singleton().isTestRunning()) {
+        [[maybe_unused]] WTF::String testURL = "(unknown test)"_s;
+        if (WKURLRef url = m_testURL.get())
+            testURL = toWTFString(adoptWK(WKURLCopyString(url)));
+        LOG_ERROR("(%s) testRunner.waitUntilDone() called after test has terminated. Possibly an async handler was not awaited.", testURL.utf8().data());
+        return;
+    }
 
     setWaitUntilDone(true);
 }
@@ -590,14 +596,9 @@ static CallbackMap& callbackMap()
 }
 
 enum {
-    DidBeginSwipeCallbackID = 1,
-    WillEndSwipeCallbackID,
-    DidEndSwipeCallbackID,
-    DidRemoveSwipeSnapshotCallbackID,
-    TextDidChangeInTextFieldCallbackID,
+    TextDidChangeInTextFieldCallbackID = 1,
     TextFieldDidBeginEditingCallbackID,
     TextFieldDidEndEditingCallbackID,
-    FirstUIScriptCallbackID = 100
 };
 
 static void cacheTestRunnerCallback(JSContextRef context, unsigned index, JSValueRef callback)
@@ -1073,37 +1074,6 @@ void TestRunner::setUseSeparateServiceWorkerProcess(bool value)
     postSynchronousPageMessage("SetUseSeparateServiceWorkerProcess", value);
 }
 
-static unsigned nextUIScriptCallbackID()
-{
-    static unsigned callbackID = FirstUIScriptCallbackID;
-    return callbackID++;
-}
-
-void TestRunner::runUIScript(JSContextRef context, JSStringRef script, JSValueRef callback)
-{
-    unsigned callbackID = nextUIScriptCallbackID();
-    cacheTestRunnerCallback(context, callbackID, callback);
-    postPageMessage("RunUIProcessScript", createWKDictionary({
-        { "Script", toWK(script) },
-        { "CallbackID", adoptWK(WKUInt64Create(callbackID)).get() },
-    }));
-}
-
-void TestRunner::runUIScriptImmediately(JSContextRef context, JSStringRef script, JSValueRef callback)
-{
-    unsigned callbackID = nextUIScriptCallbackID();
-    cacheTestRunnerCallback(context, callbackID, callback);
-    postPageMessage("RunUIProcessScriptImmediately", createWKDictionary({
-        { "Script", toWK(script) },
-        { "CallbackID", adoptWK(WKUInt64Create(callbackID)).get() },
-    }));
-}
-
-void TestRunner::runUIScriptCallback(unsigned callbackID, JSStringRef result)
-{
-    callTestRunnerCallback(callbackID, result);
-}
-
 void TestRunner::setAllowedMenuActions(JSContextRef context, JSValueRef actions)
 {
     auto messageBody = adoptWK(WKMutableArrayCreate());
@@ -1114,46 +1084,6 @@ void TestRunner::setAllowedMenuActions(JSContextRef context, JSValueRef actions)
         WKArrayAppendItem(messageBody.get(), toWKString(context, value).get());
     }
     postPageMessage("SetAllowedMenuActions", messageBody);
-}
-
-void TestRunner::installDidBeginSwipeCallback(JSContextRef context, JSValueRef callback)
-{
-    cacheTestRunnerCallback(context, DidBeginSwipeCallbackID, callback);
-}
-
-void TestRunner::installWillEndSwipeCallback(JSContextRef context, JSValueRef callback)
-{
-    cacheTestRunnerCallback(context, WillEndSwipeCallbackID, callback);
-}
-
-void TestRunner::installDidEndSwipeCallback(JSContextRef context, JSValueRef callback)
-{
-    cacheTestRunnerCallback(context, DidEndSwipeCallbackID, callback);
-}
-
-void TestRunner::installDidRemoveSwipeSnapshotCallback(JSContextRef context, JSValueRef callback)
-{
-    cacheTestRunnerCallback(context, DidRemoveSwipeSnapshotCallbackID, callback);
-}
-
-void TestRunner::callDidBeginSwipeCallback()
-{
-    callTestRunnerCallback(DidBeginSwipeCallbackID);
-}
-
-void TestRunner::callWillEndSwipeCallback()
-{
-    callTestRunnerCallback(WillEndSwipeCallbackID);
-}
-
-void TestRunner::callDidEndSwipeCallback()
-{
-    callTestRunnerCallback(DidEndSwipeCallbackID);
-}
-
-void TestRunner::callDidRemoveSwipeSnapshotCallback()
-{
-    callTestRunnerCallback(DidRemoveSwipeSnapshotCallbackID);
 }
 
 void TestRunner::clearStatisticsDataForDomain(JSStringRef domain)
@@ -1566,6 +1496,11 @@ void TestRunner::setStorageAccessPermission(JSContextRef context, bool granted, 
     }), callback);
 }
 
+void TestRunner::setStorageAccess(JSContextRef context, bool blocked, JSValueRef callback)
+{
+    postMessageWithAsyncReply(context, "SetStorageAccess", adoptWK(WKBooleanCreate(blocked)), callback);
+}
+
 void TestRunner::loadedSubresourceDomains(JSContextRef context, JSValueRef callback)
 {
     postMessageWithAsyncReply(context, "LoadedSubresourceDomains", callback);
@@ -1860,11 +1795,6 @@ void TestRunner::setOriginQuotaRatioEnabled(bool enabled)
     postSynchronousPageMessage("SetOriginQuotaRatioEnabled", enabled);
 }
 
-void TestRunner::getApplicationManifestThen(JSContextRef context, JSValueRef callback)
-{
-    postMessageWithAsyncReply(context, "GetApplicationManifest", callback);
-}
-
 void TestRunner::installFakeHelvetica(JSStringRef configuration)
 {
     WTR::installFakeHelvetica(toWK(configuration).get());
@@ -1904,14 +1834,6 @@ void TestRunner::cleanUpKeychain(JSStringRef attrLabel, JSStringRef applicationL
         return;
     }
     postSynchronousMessage("CleanUpKeychain", createWKDictionary({
-        { "AttrLabel", toWK(attrLabel) },
-        { "ApplicationLabel", toWK(applicationLabelBase64) },
-    }));
-}
-
-bool TestRunner::keyExistsInKeychain(JSStringRef attrLabel, JSStringRef applicationLabelBase64)
-{
-    return postSynchronousMessageReturningBoolean("KeyExistsInKeychain", createWKDictionary({
         { "AttrLabel", toWK(attrLabel) },
         { "ApplicationLabel", toWK(applicationLabelBase64) },
     }));
@@ -2104,26 +2026,6 @@ void TestRunner::flushConsoleLogs(JSContextRef context, JSValueRef callback)
 void TestRunner::updatePresentation(JSContextRef context, JSValueRef callback)
 {
     postMessageWithAsyncReply(context, "UpdatePresentation", callback);
-}
-
-void TestRunner::waitBeforeFinishingFullscreenExit()
-{
-    postPageMessage("WaitBeforeFinishingFullscreenExit");
-}
-
-void TestRunner::scrollDuringEnterFullscreen()
-{
-    postPageMessage("ScrollDuringEnterFullscreen");
-}
-
-void TestRunner::finishFullscreenExit()
-{
-    postPageMessage("FinishFullscreenExit");
-}
-
-void TestRunner::requestExitFullscreenFromUIProcess()
-{
-    postPageMessage("RequestExitFullscreenFromUIProcess");
 }
 
 void TestRunner::setPageScaleFactor(JSContextRef context, double scaleFactor, long x, long y, JSValueRef callback)

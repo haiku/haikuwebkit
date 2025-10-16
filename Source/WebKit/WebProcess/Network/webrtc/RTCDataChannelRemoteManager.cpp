@@ -36,6 +36,8 @@
 #include <WebCore/RTCDataChannel.h>
 #include <WebCore/RTCError.h>
 #include <WebCore/ScriptExecutionContext.h>
+#include <wtf/NeverDestroyed.h>
+#include <wtf/Ref.h>
 
 namespace WebKit {
 

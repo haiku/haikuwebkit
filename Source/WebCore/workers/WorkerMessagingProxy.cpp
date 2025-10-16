@@ -34,7 +34,7 @@
 #include "ContentSecurityPolicy.h"
 #include "DedicatedWorkerGlobalScope.h"
 #include "DedicatedWorkerThread.h"
-#include "Document.h"
+#include "DocumentInlines.h"
 #include "ErrorEvent.h"
 #include "EventNames.h"
 #include "FetchRequestCredentials.h"

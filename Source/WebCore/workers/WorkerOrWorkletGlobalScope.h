@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/EventTarget.h>
+#include <WebCore/EventTargetInlines.h>
 #include <WebCore/FetchOptions.h>
 #include <WebCore/ScriptExecutionContext.h>
 #include <WebCore/WorkerThreadType.h>

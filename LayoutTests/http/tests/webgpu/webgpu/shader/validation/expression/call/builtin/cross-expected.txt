@@ -376,15 +376,15 @@ FAIL :values:stage="constant";type="vec3%3Cf16%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: a=-65504;b=63.96875
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a=-65504;b=65504
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a=-65504;b=-65504
     OK
   - INFO: subcase: a=-65504;b=-63.96875
     OK
   - INFO: subcase: a=-65504;b=63.96875
     OK
+  - EXPECTATION FAILED: subcase: a=-65504;b=65504
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a=-65504;b=65504
     OK
   - EXPECTATION FAILED: subcase: a=-63.96875;b=-65504
@@ -405,12 +405,6 @@ FAIL :values:stage="constant";type="vec3%3Cf16%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: a=65504;b=-63.96875
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a=65504;b=63.96875
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: a=65504;b=65504
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: a=-63.96875;b=-65504
     OK
   - INFO: subcase: a=-63.96875;b=65504
@@ -423,6 +417,12 @@ FAIL :values:stage="constant";type="vec3%3Cf16%3E" assert_unreached:
     OK
   - INFO: subcase: a=65504;b=-63.96875
     OK
+  - EXPECTATION FAILED: subcase: a=65504;b=63.96875
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: a=65504;b=65504
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: a=65504;b=63.96875
     OK
   - INFO: subcase: a=65504;b=65504

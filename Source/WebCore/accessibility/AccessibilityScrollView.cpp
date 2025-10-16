@@ -26,7 +26,7 @@
 #include "config.h"
 #include "AccessibilityScrollView.h"
 
-#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
 #include "AXRemoteFrame.h"
 #include "AccessibilityScrollbar.h"
 #include "ContainerNodeInlines.h"

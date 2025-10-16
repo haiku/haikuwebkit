@@ -234,6 +234,9 @@ WK_EXPORT void WKWebsiteDataStoreResetResourceMonitorThrottler(WKWebsiteDataStor
 typedef void (*WKWebsiteDataStoreSetStorageAccessPermissionForTestingFunction)(void* functionContext);
 WK_EXPORT void WKWebsiteDataStoreSetStorageAccessPermissionForTesting(WKWebsiteDataStoreRef dataStoreRef, WKPageRef pageRef, bool granted, WKStringRef topFrame, WKStringRef subFrame, void* context, WKWebsiteDataStoreSetStorageAccessPermissionForTestingFunction completionHandler);
 
+typedef void (*WKWebsiteDataStoreSetStorageAccessForTestingFunction)(void* functionContext);
+WK_EXPORT void WKWebsiteDataStoreSetStorageAccessForTesting(WKWebsiteDataStoreRef dataStoreRef, bool blocked, void* context, WKWebsiteDataStoreSetStorageAccessForTestingFunction completionHandler);
+
 #ifdef __cplusplus
 }
 #endif

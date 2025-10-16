@@ -317,7 +317,7 @@ Device::Device(id<MTLDevice> device, id<MTLCommandQueue> defaultQueue, HardwareC
         ALLOW_DEPRECATED_DECLARATIONS_END
         id<MTLLibrary> library = [device newLibraryWithSource:@"[[vertex]] float4 vsNop() { return (float4)0; }" options:options error:&error];
         if (error)
-            WTFLogAlways("%@", error); // NOLINT
+            WTFLogAlways("newLibraryWithSource failed: %@", error.localizedDescription); // NOLINT
         m_nopVertexFunction = [library newFunctionWithName:@"vsNop"];
     });
     RELEASE_ASSERT(m_nopVertexFunction);

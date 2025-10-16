@@ -38,7 +38,7 @@
 #include <WebCore/StyleSVGBaselineShift.h>
 #include <WebCore/StyleSVGCenterCoordinateComponent.h>
 #include <WebCore/StyleSVGCoordinateComponent.h>
-#include "StyleSVGPaint.h"
+#include <WebCore/StyleSVGPaint.h>
 #include <WebCore/StyleSVGRadius.h>
 #include <WebCore/StyleSVGRadiusComponent.h>
 #include <WebCore/StyleSVGStrokeDasharray.h>

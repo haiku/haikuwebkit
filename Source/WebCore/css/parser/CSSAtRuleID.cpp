@@ -46,6 +46,7 @@ CSSAtRuleID cssAtRuleID(StringView name)
         { "font-face"_s,             CSSAtRuleFontFace },
         { "font-feature-values"_s,   CSSAtRuleFontFeatureValues },
         { "font-palette-values"_s,   CSSAtRuleFontPaletteValues },
+        { "function"_s,              CSSAtRuleFunction },
         { "import"_s,                CSSAtRuleImport },
         { "keyframes"_s,             CSSAtRuleKeyframes },
         { "layer"_s,                 CSSAtRuleLayer },

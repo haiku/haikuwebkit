@@ -1,56 +1,128 @@
 M harness/temporalHelpers.js
-M harness/wellKnownIntrinsicObjects.js
-R100 test/built-ins/NativeErrors/AggregateError/cause-property.js test/built-ins/AggregateError/cause-property.js
-R100 test/built-ins/NativeErrors/AggregateError/errors-iterabletolist-failures.js test/built-ins/AggregateError/errors-iterabletolist-failures.js
-R100 test/built-ins/NativeErrors/AggregateError/errors-iterabletolist.js test/built-ins/AggregateError/errors-iterabletolist.js
-R100 test/built-ins/NativeErrors/AggregateError/is-a-constructor.js test/built-ins/AggregateError/is-a-constructor.js
-R100 test/built-ins/NativeErrors/AggregateError/length.js test/built-ins/AggregateError/length.js
-R100 test/built-ins/NativeErrors/AggregateError/message-method-prop-cast.js test/built-ins/AggregateError/message-method-prop-cast.js
-R100 test/built-ins/NativeErrors/AggregateError/message-method-prop.js test/built-ins/AggregateError/message-method-prop.js
-R100 test/built-ins/NativeErrors/AggregateError/message-tostring-abrupt-symbol.js test/built-ins/AggregateError/message-tostring-abrupt-symbol.js
-R100 test/built-ins/NativeErrors/AggregateError/message-tostring-abrupt.js test/built-ins/AggregateError/message-tostring-abrupt.js
-R100 test/built-ins/NativeErrors/AggregateError/message-undefined-no-prop.js test/built-ins/AggregateError/message-undefined-no-prop.js
-R100 test/built-ins/NativeErrors/AggregateError/name.js test/built-ins/AggregateError/name.js
-R100 test/built-ins/NativeErrors/AggregateError/newtarget-is-undefined.js test/built-ins/AggregateError/newtarget-is-undefined.js
-R100 test/built-ins/NativeErrors/AggregateError/newtarget-proto-custom.js test/built-ins/AggregateError/newtarget-proto-custom.js
-R100 test/built-ins/NativeErrors/AggregateError/newtarget-proto-fallback.js test/built-ins/AggregateError/newtarget-proto-fallback.js
-R100 test/built-ins/NativeErrors/AggregateError/newtarget-proto.js test/built-ins/AggregateError/newtarget-proto.js
-R100 test/built-ins/NativeErrors/AggregateError/order-of-args-evaluation.js test/built-ins/AggregateError/order-of-args-evaluation.js
-R100 test/built-ins/NativeErrors/AggregateError/prop-desc.js test/built-ins/AggregateError/prop-desc.js
-R100 test/built-ins/NativeErrors/AggregateError/proto-from-ctor-realm.js test/built-ins/AggregateError/proto-from-ctor-realm.js
-R100 test/built-ins/NativeErrors/AggregateError/proto.js test/built-ins/AggregateError/proto.js
-R100 test/built-ins/NativeErrors/AggregateError/prototype/constructor.js test/built-ins/AggregateError/prototype/constructor.js
-R100 test/built-ins/NativeErrors/AggregateError/prototype/errors-absent-on-prototype.js test/built-ins/AggregateError/prototype/errors-absent-on-prototype.js
-R100 test/built-ins/NativeErrors/AggregateError/prototype/message.js test/built-ins/AggregateError/prototype/message.js
-R100 test/built-ins/NativeErrors/AggregateError/prototype/name.js test/built-ins/AggregateError/prototype/name.js
-R100 test/built-ins/NativeErrors/AggregateError/prototype/prop-desc.js test/built-ins/AggregateError/prototype/prop-desc.js
-R100 test/built-ins/NativeErrors/AggregateError/prototype/proto.js test/built-ins/AggregateError/prototype/proto.js
-A test/built-ins/Map/prototype/getOrInsertComputed/canonical-key-passed-to-callback.js
-R100 test/built-ins/NativeErrors/SuppressedError/is-a-constructor.js test/built-ins/SuppressedError/is-a-constructor.js
-R100 test/built-ins/NativeErrors/SuppressedError/length.js test/built-ins/SuppressedError/length.js
-R100 test/built-ins/NativeErrors/SuppressedError/message-method-prop-cast.js test/built-ins/SuppressedError/message-method-prop-cast.js
-R100 test/built-ins/NativeErrors/SuppressedError/message-method-prop.js test/built-ins/SuppressedError/message-method-prop.js
-R100 test/built-ins/NativeErrors/SuppressedError/message-tostring-abrupt-symbol.js test/built-ins/SuppressedError/message-tostring-abrupt-symbol.js
-R100 test/built-ins/NativeErrors/SuppressedError/message-tostring-abrupt.js test/built-ins/SuppressedError/message-tostring-abrupt.js
-R100 test/built-ins/NativeErrors/SuppressedError/message-undefined-no-prop.js test/built-ins/SuppressedError/message-undefined-no-prop.js
-R100 test/built-ins/NativeErrors/SuppressedError/name.js test/built-ins/SuppressedError/name.js
-R100 test/built-ins/NativeErrors/SuppressedError/newtarget-is-undefined.js test/built-ins/SuppressedError/newtarget-is-undefined.js
-R100 test/built-ins/NativeErrors/SuppressedError/newtarget-proto-custom.js test/built-ins/SuppressedError/newtarget-proto-custom.js
-R100 test/built-ins/NativeErrors/SuppressedError/newtarget-proto-fallback.js test/built-ins/SuppressedError/newtarget-proto-fallback.js
-R100 test/built-ins/NativeErrors/SuppressedError/newtarget-proto.js test/built-ins/SuppressedError/newtarget-proto.js
-R100 test/built-ins/NativeErrors/SuppressedError/order-of-args-evaluation.js test/built-ins/SuppressedError/order-of-args-evaluation.js
-R100 test/built-ins/NativeErrors/SuppressedError/prop-desc.js test/built-ins/SuppressedError/prop-desc.js
-R100 test/built-ins/NativeErrors/SuppressedError/proto-from-ctor-realm.js test/built-ins/SuppressedError/proto-from-ctor-realm.js
-R100 test/built-ins/NativeErrors/SuppressedError/proto.js test/built-ins/SuppressedError/proto.js
-R100 test/built-ins/NativeErrors/SuppressedError/prototype/constructor.js test/built-ins/SuppressedError/prototype/constructor.js
-R100 test/built-ins/NativeErrors/SuppressedError/prototype/errors-absent-on-prototype.js test/built-ins/SuppressedError/prototype/errors-absent-on-prototype.js
-R100 test/built-ins/NativeErrors/SuppressedError/prototype/message.js test/built-ins/SuppressedError/prototype/message.js
-R100 test/built-ins/NativeErrors/SuppressedError/prototype/name.js test/built-ins/SuppressedError/prototype/name.js
-R100 test/built-ins/NativeErrors/SuppressedError/prototype/prop-desc.js test/built-ins/SuppressedError/prototype/prop-desc.js
-R100 test/built-ins/NativeErrors/SuppressedError/prototype/proto.js test/built-ins/SuppressedError/prototype/proto.js
-M test/built-ins/Temporal/Duration/prototype/with/argument-invalid-property.js
-M test/built-ins/Temporal/Duration/prototype/with/argument-not-object.js
-M test/built-ins/Temporal/ZonedDateTime/from/argument-zoneddatetime.js
-A test/built-ins/Uint8Array/fromBase64/last-chunk-invalid.js
-R100 test/intl402/Intl/DateTimeFormat/prototype/formatRange/fails-on-distinct-temporal-types.js test/intl402/DateTimeFormat/prototype/formatRange/fails-on-distinct-temporal-types.js
-R100 test/intl402/Intl/DateTimeFormat/prototype/formatRangeToParts/fails-on-distinct-temporal-types.js test/intl402/DateTimeFormat/prototype/formatRangeToParts/fails-on-distinct-temporal-types.js
+A test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
+A test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
+A test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
+A test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
+A test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
+A test/annexB/language/expressions/assignmenttargettype/callexpression.js
+A test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
+M test/built-ins/Iterator/concat/fresh-iterator-result.js
+A test/built-ins/Iterator/concat/get-value-after-done.js
+A test/built-ins/Temporal/Duration/compare/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/Duration/prototype/round/bubble-time-unit.js
+A test/built-ins/Temporal/Duration/prototype/round/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/Duration/prototype/toString/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/Duration/prototype/total/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/Instant/prototype/round/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/Instant/prototype/since/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/Instant/prototype/toString/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/Instant/prototype/until/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDate/from/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDate/prototype/add/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDate/prototype/since/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDate/prototype/subtract/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDate/prototype/until/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDate/prototype/with/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/from/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/add/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/round/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/since/bubble-time-unit.js
+A test/built-ins/Temporal/PlainDateTime/prototype/since/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/subtract/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/toString/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/toZonedDateTime/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/until/bubble-time-unit.js
+A test/built-ins/Temporal/PlainDateTime/prototype/until/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainDateTime/prototype/with/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainMonthDay/from/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainMonthDay/prototype/with/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainTime/from/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainTime/prototype/round/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainTime/prototype/since/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainTime/prototype/toString/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainTime/prototype/until/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainTime/prototype/with/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainYearMonth/from/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainYearMonth/prototype/add/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainYearMonth/prototype/since/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainYearMonth/prototype/subtract/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainYearMonth/prototype/until/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/PlainYearMonth/prototype/with/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/from/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/prototype/add/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/prototype/round/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/prototype/since/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/prototype/subtract/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/prototype/toString/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/prototype/until/options-read-before-algorithmic-validation.js
+A test/built-ins/Temporal/ZonedDateTime/prototype/with/options-read-before-algorithmic-validation.js
+M test/built-ins/TypedArray/prototype/copyWithin/coerced-target-start-end-shrink.js
+R094 test/staging/upsert/WeakMap/getOrInsertComputed/adds-object-element.js test/built-ins/WeakMap/prototype/getOrInsertComputed/adds-object-element.js
+R095 test/staging/upsert/WeakMap/getOrInsertComputed/adds-symbol-element.js test/built-ins/WeakMap/prototype/getOrInsertComputed/adds-symbol-element.js
+R092 test/staging/upsert/WeakMap/getOrInsertComputed/adds-value-different-callbackfn.js test/built-ins/WeakMap/prototype/getOrInsertComputed/adds-value-different-callbackfn.js
+R088 test/staging/upsert/WeakMap/getOrInsertComputed/callbackfn-throws.js test/built-ins/WeakMap/prototype/getOrInsertComputed/callbackfn-throws.js
+A test/built-ins/WeakMap/prototype/getOrInsertComputed/check-callback-fn-args.js
+A test/built-ins/WeakMap/prototype/getOrInsertComputed/check-state-after-callback-fn-throws.js
+R052 test/staging/upsert/WeakMap/getOrInsertComputed/does-not-evaluate-callbackfn-if-key-present.js test/built-ins/WeakMap/prototype/getOrInsertComputed/does-not-evaluate-callbackfn-if-key-present.js
+R086 test/staging/upsert/WeakMap/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-array.js test/built-ins/WeakMap/prototype/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-array.js
+R086 test/staging/upsert/WeakMap/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-map.js test/built-ins/WeakMap/prototype/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-map.js
+R086 test/staging/upsert/WeakMap/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-object.js test/built-ins/WeakMap/prototype/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-object.js
+R085 test/staging/upsert/WeakMap/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-set.js test/built-ins/WeakMap/prototype/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-set.js
+R086 test/staging/upsert/WeakMap/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-weakmap-prototype.js test/built-ins/WeakMap/prototype/getOrInsertComputed/does-not-have-weakmapdata-internal-slot-weakmap-prototype.js
+R066 test/staging/upsert/WeakMap/getOrInsertComputed/getOrInsertComputed.js test/built-ins/WeakMap/prototype/getOrInsertComputed/getOrInsertComputed.js
+R089 test/staging/upsert/WeakMap/getOrInsertComputed/not-a-constructor.js test/built-ins/WeakMap/prototype/getOrInsertComputed/not-a-constructor.js
+R058 test/staging/upsert/WeakMap/getOrInsertComputed/not-a-function-callbackfn-throws.js test/built-ins/WeakMap/prototype/getOrInsertComputed/not-a-function-callbackfn-throws.js
+R093 test/staging/upsert/WeakMap/getOrInsertComputed/overwrites-mutation-from-callbackfn.js test/built-ins/WeakMap/prototype/getOrInsertComputed/overwrites-mutation-from-callbackfn.js
+R093 test/staging/upsert/WeakMap/getOrInsertComputed/returns-value-if-key-is-not-present-object-key.js test/built-ins/WeakMap/prototype/getOrInsertComputed/returns-value-if-key-is-not-present-object-key.js
+R095 test/staging/upsert/WeakMap/getOrInsertComputed/returns-value-if-key-is-not-present-symbol-key.js test/built-ins/WeakMap/prototype/getOrInsertComputed/returns-value-if-key-is-not-present-symbol-key.js
+R094 test/staging/upsert/WeakMap/getOrInsertComputed/returns-value-if-key-is-present-object-key.js test/built-ins/WeakMap/prototype/getOrInsertComputed/returns-value-if-key-is-present-object-key.js
+R096 test/staging/upsert/WeakMap/getOrInsertComputed/returns-value-if-key-is-present-symbol-key.js test/built-ins/WeakMap/prototype/getOrInsertComputed/returns-value-if-key-is-present-symbol-key.js
+R093 test/staging/upsert/WeakMap/getOrInsertComputed/this-not-object-throw.js test/built-ins/WeakMap/prototype/getOrInsertComputed/this-not-object-throw.js
+R095 test/staging/upsert/WeakMap/getOrInsertComputed/throw-if-key-cannot-be-held-weakly.js test/built-ins/WeakMap/prototype/getOrInsertComputed/throw-if-key-cannot-be-held-weakly.js
+M test/intl402/Temporal/PlainDate/from/calendar-not-supporting-eras.js
+M test/intl402/Temporal/PlainDate/from/canonicalize-era-codes.js
+M test/intl402/Temporal/PlainDateTime/from/calendar-not-supporting-eras.js
+M test/intl402/Temporal/PlainDateTime/from/canonicalize-era-codes.js
+M test/intl402/Temporal/PlainMonthDay/from/calendar-not-supporting-eras.js
+M test/intl402/Temporal/PlainYearMonth/from/calendar-not-supporting-eras.js
+M test/intl402/Temporal/PlainYearMonth/from/canonicalize-era-codes.js
+M test/intl402/Temporal/PlainYearMonth/from/reference-day-hebrew.js
+M test/intl402/Temporal/PlainYearMonth/prototype/with/minimum-valid-year-month.js
+M test/intl402/Temporal/ZonedDateTime/from/calendar-not-supporting-eras.js
+M test/intl402/Temporal/ZonedDateTime/from/canonicalize-era-codes.js
+D test/language/expressions/assignmenttargettype/direct-callexpression-arguments.js
+A test/language/expressions/assignmenttargettype/direct-callexpression-as-for-in-lhs.js
+A test/language/expressions/assignmenttargettype/direct-callexpression-as-for-of-lhs.js
+A test/language/expressions/assignmenttargettype/direct-callexpression-in-compound-assignment.js
+A test/language/expressions/assignmenttargettype/direct-callexpression-in-logical-assignment.js
+A test/language/expressions/assignmenttargettype/direct-callexpression-in-postfix-update.js
+A test/language/expressions/assignmenttargettype/direct-callexpression-in-prefix-update.js
+A test/language/expressions/assignmenttargettype/direct-callexpression.js
+D test/language/expressions/assignmenttargettype/parenthesized-callexpression-arguments.js
+A test/language/expressions/assignmenttargettype/parenthesized-callexpression-in-compound-assignment.js
+A test/language/expressions/assignmenttargettype/parenthesized-callexpression-in-logical-assignment.js
+A test/language/expressions/assignmenttargettype/parenthesized-callexpression.js
+M test/staging/Intl402/Temporal/old/islamic-calendars-islamic-rgsa.js
+M test/staging/Intl402/Temporal/old/islamic-calendars-islamic.js
+M test/staging/Intl402/Temporal/old/japanese-before-era.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-buddhist.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-coptic.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-ethioaa.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-ethiopic.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-gregory.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-hebrew.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-indian.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-islamic-civil.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-islamic-rgsa.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-islamic-tbla.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-islamic-umalqura.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-islamic.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-islamicc.js
+M test/staging/Intl402/Temporal/old/non-iso-calendars-persian.js
+M test/staging/sm/Temporal/PlainDate/non-positive-era-year.js
+A test/staging/top-level-await/grandparent-tla_FIXTURE.js
+A test/staging/top-level-await/parent-tla_FIXTURE.js
+A test/staging/top-level-await/tla-hang-entry.js
+A test/staging/top-level-await/tla_FIXTURE.js
+D test/staging/upsert/WeakMap/getOrInsertComputed/length.js
+D test/staging/upsert/WeakMap/getOrInsertComputed/name.js

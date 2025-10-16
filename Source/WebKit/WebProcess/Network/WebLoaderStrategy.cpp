@@ -280,6 +280,13 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
     if (tryLoadingUsingURLSchemeHandler(resourceLoader, trackingParameters))
         return;
 
+#if ENABLE(SWIFT_DEMO_URI_SCHEME)
+    if (resourceLoader.request().url().protocolIs("x-swift-demo"_s)) {
+        // We don't load this at all - higher layers of webkit code will call loadData later.
+        return;
+    }
+#endif
+
     if (!trackingParameters) {
         ASSERT_NOT_REACHED();
         return;
@@ -393,12 +400,14 @@ static void addParametersShared(const LocalFrame* frame, NetworkResourceLoadPara
         parameters.pageHasResourceLoadClient = page->hasResourceLoadClient();
         page->logMediaDiagnosticMessage(parameters.request.httpBody());
 
-#if ENABLE(WK_WEB_EXTENSIONS) && PLATFORM(COCOA)
         if (RefPtr webPage = WebPage::fromCorePage(*page)) {
+            if (!webPage->overrideReferrerForAllRequests().isNull())
+                parameters.request.setHTTPHeaderField(HTTPHeaderName::Referer, webPage->overrideReferrerForAllRequests());
+#if ENABLE(WK_WEB_EXTENSIONS) && PLATFORM(COCOA)
             if (RefPtr extensionControllerProxy = webPage->webExtensionControllerProxy())
                 parameters.pageHasLoadedWebExtensions = extensionControllerProxy->hasLoadedContexts();
-        }
 #endif
+        }
     }
 
     if (RefPtr ownerElement = frame->ownerElement()) {

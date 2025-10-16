@@ -59,12 +59,12 @@ layer at (0,0) size 800x600
         RenderBR {BR} at (87,152) size 1x20
         RenderText {#text} at (0,173) size 48x20
           text run at (0,173) width 48: "submit "
-        RenderButton {INPUT} at (47,174) size 65x21 [color=#FFFFFF] [bgcolor=#007AFF] [border: (1px solid #FFFFFF)]
-          RenderBlock (anonymous) at (12,3) size 40x14
-            RenderText at (0,0) size 40x14
-              text run at (0,0) width 40: "Submit"
+        RenderButton {INPUT} at (47,174) size 62x21 [color=#FFFFFF] [bgcolor=#007AFF] [border: (1px solid #FFFFFF)]
+          RenderBlock (anonymous) at (12,3) size 37x14
+            RenderText at (0,0) size 37x14
+              text run at (0,0) width 37: "Submit"
         RenderText {#text} at (0,0) size 0x0
-        RenderBR {BR} at (111,173) size 1x20
+        RenderBR {BR} at (108,173) size 1x20
         RenderText {#text} at (0,194) size 51x20
           text run at (0,194) width 51: "isindex "
         RenderTextControl {INPUT} at (50,195) size 156x23 [bgcolor=#FFFFFF] [border: (1px solid #3C3C4399)]

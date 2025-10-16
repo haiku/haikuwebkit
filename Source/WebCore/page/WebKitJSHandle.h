@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "FrameIdentifier.h"
-#include "ProcessQualified.h"
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/ProcessQualified.h>
 #include <wtf/Markable.h>
 #include <wtf/ObjectIdentifier.h>
 

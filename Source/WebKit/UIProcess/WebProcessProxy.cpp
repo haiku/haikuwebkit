@@ -942,6 +942,7 @@ void WebProcessProxy::assumeReadAccessToBaseURL(WebPageProxy& page, const String
     // There's a chance that urlString does not point to a directory.
     // Get url's base URL to add to m_localPathsWithAssumedReadAccess.
     auto path = url.truncatedForUseAsBase().fileSystemPath();
+    WEBPROCESSPROXY_RELEASE_LOG_ERROR(Sandbox, "assumeReadAccessToBaseURL: path = %{private}s", path.utf8().data());
     if (path.isNull())
         return completionHandler();
 
@@ -1008,8 +1009,10 @@ void WebProcessProxy::assumeReadAccessToBaseURLs(WebPageProxy& page, const Vecto
 
 bool WebProcessProxy::hasAssumedReadAccessToURL(const URL& url) const
 {
-    if (!url.protocolIsFile())
+    if (!url.protocolIsFile()) {
+        WEBPROCESSPROXY_RELEASE_LOG_ERROR(Sandbox, "hasAssumedReadAccessToURL: URL is not a local file");
         return false;
+    }
 
     String path = url.fileSystemPath();
     auto startsWithURLPath = [&path](const String& assumedAccessPath) {
@@ -1018,12 +1021,17 @@ bool WebProcessProxy::hasAssumedReadAccessToURL(const URL& url) const
     };
 
     auto& platformPaths = platformPathsWithAssumedReadAccess();
-    if (std::ranges::find_if(platformPaths, startsWithURLPath) != platformPaths.end())
+    if (std::ranges::find_if(platformPaths, startsWithURLPath) != platformPaths.end()) {
+        WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "hasAssumedReadAccessToURL: has assumed access to platform path");
         return true;
+    }
 
-    if (std::ranges::find_if(m_localPathsWithAssumedReadAccess, startsWithURLPath) != m_localPathsWithAssumedReadAccess.end())
+    if (std::ranges::find_if(m_localPathsWithAssumedReadAccess, startsWithURLPath) != m_localPathsWithAssumedReadAccess.end()) {
+        WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "hasAssumedReadAccessToURL: has assumed access to local path");
         return true;
+    }
 
+    WEBPROCESSPROXY_RELEASE_LOG_ERROR(Sandbox, "hasAssumedReadAccessToURL: no access");
     return false;
 }
 
@@ -1332,11 +1340,6 @@ void WebProcessProxy::didReceiveInvalidMessage(IPC::Connection& connection, IPC:
     logInvalidMessage(connection, messageName);
 
     WebProcessPool::didReceiveInvalidMessage(messageName);
-
-#if ENABLE(IPC_TESTING_API)
-    if (connection.ignoreInvalidMessageForTesting())
-        return;
-#endif
 
     // Terminate the WebContent process.
     terminate();
@@ -3106,6 +3109,24 @@ void WebProcessProxy::setResourceMonitorRuleLists(RefPtr<WebCompiledContentRuleL
     sendWithAsyncReply(Messages::WebProcess::SetResourceMonitorContentRuleListAsync(ruleList->data()), WTFMove(completionHandler));
 }
 #endif
+
+std::optional<SandboxExtension::Handle> WebProcessProxy::sandboxExtensionForFile(const String& fileName) const
+{
+    auto handle = m_fileSandboxExtensions.getOptional(fileName);
+    WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "sandboxExtensionForFile: %{private}s, has cached extension: %d", fileName.utf8().data(), handle ? true : false);
+    return handle;
+}
+
+void WebProcessProxy::addSandboxExtensionForFile(const String& fileName, SandboxExtension::Handle handle)
+{
+    WEBPROCESSPROXY_RELEASE_LOG(Sandbox, "addSandboxExtensionForFile: %{private}s", fileName.utf8().data());
+    m_fileSandboxExtensions.add(fileName, handle);
+}
+
+void WebProcessProxy::clearSandboxExtensions()
+{
+    m_fileSandboxExtensions.clear();
+}
 
 } // namespace WebKit
 

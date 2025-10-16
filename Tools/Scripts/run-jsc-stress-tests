@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (C) 2013-2024 Apple Inc. All rights reserved.
+# Copyright (C) 2013-2025 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -286,7 +286,6 @@ GetoptLong.new(['--help', '-h', GetoptLong::NO_ARGUMENT],
         $outputDir = Pathname.new(arg)
     when '--cloop'
         $cloop = true
-        $jitTests = false
     when '--platform'
         $platform = arg
     when '--memory-limited'
@@ -618,6 +617,12 @@ def determineOS
     end
 end
 
+if $cloop
+    $jitTests = false
+    $runJITlessWasm = false
+    # $isWasmPlatform will already be disabled below because it is dependend on "not $cloop".
+end
+
 $hostOS = determineOS unless $hostOS
 $architecture = determineArchitecture unless $architecture
 $isFTLPlatform = !($architecture == "x86" || $architecture == "arm" || $architecture == "mips" || $architecture == "riscv64" || $hostOS == "playstation")
@@ -640,6 +645,7 @@ end
 
 if $architecture == "arm"
     $runJITlessWasm = false # TODO: re-enable this when these tests pass <rdar://146100752>.
+    $skipLockdown = true
 end
 
 # This is meant for skipping execution of tests than require a lot of address
@@ -2482,6 +2488,15 @@ end
 
 $collectionNames = {}
 
+def isWasmTest(path)
+    pathStr = path.to_s;
+    wasmIndex = pathStr.index("wasm");
+    if not wasmIndex
+        return false
+    end
+    pathStr[wasmIndex-1,1] == "\-" or pathStr[wasmIndex+4,1] == "\-"
+end
+
 def handleCollectionFile(collection)
     collectionName = simplifyCollectionName(collection)
    
@@ -2537,7 +2552,8 @@ def handleCollectionFile(collection)
                 | pathToSearch |
                 allJSFiles(pathToSearch).each {
                     | path |
-                    
+
+                    next if not $isWasmPlatform and isWasmTest(path)
                     $benchmark = path.basename
                     $benchmarkDirectory = path.dirname
                     $skipModes = Set.new
@@ -2566,7 +2582,8 @@ def handleCollectionDirectory(collection)
         $benchmarkDirectory = $collection
         allJSFiles($collection).each {
             | path |
-            
+
+            next if not $isWasmPlatform and isWasmTest(path)
             $benchmark = path.basename
             $skipModes = Set.new
             $runCommandOptions = {}

@@ -95,6 +95,7 @@ if sys.platform == 'linux':
     # Keep websocket toplevel for WebDriverTests' imported selenium
     AutoInstall.register(Package('websocket', Version(1, 8, 0), pypi_name='websocket-client'))
     AutoInstall.register(Package('selenium', Version(4, 24, 0), wheel=True, implicit_deps=['websocket']))
+    AutoInstall.register(Package('filetype', Version(1, 2, 0), wheel=True))
 else:
     AutoInstall.register(Package('selenium', Version(4, 12, 0), wheel=True))
 

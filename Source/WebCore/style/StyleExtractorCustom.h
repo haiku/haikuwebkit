@@ -283,27 +283,27 @@ template<CSSPropertyID propertyID> void extractSerialization(ExtractorState& sta
 
 // MARK: - Utilities
 
-template<typename MappingFunctor> Ref<CSSValue> extractFillLayerValue(ExtractorState& state, const FillLayer& layers, MappingFunctor&& mapper)
+template<typename Layers, typename MappingFunctor> Ref<CSSValue> extractFillLayerValue(ExtractorState& state, const Layers& layers, MappingFunctor&& mapper)
 {
-    if (!layers.next())
-        return mapper(state, layers);
+    if (layers.size() == 1)
+        return mapper(state, layers.first());
     CSSValueListBuilder list;
-    for (auto* layer = &layers; layer; layer = layer->next())
-        list.append(mapper(state, *layer));
+    for (auto& layer : layers)
+        list.append(mapper(state, layer));
     return CSSValueList::createCommaSeparated(WTFMove(list));
 }
 
-template<typename MappingFunctor> void extractFillLayerValueSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const FillLayer& layers, MappingFunctor&& mapper)
+template<typename Layers, typename MappingFunctor> void extractFillLayerValueSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const Layers& layers, MappingFunctor&& mapper)
 {
     bool includeComma = false;
 
-    if (!layers.next()) {
-        mapper(state, builder, context, includeComma, layers);
+    if (layers.size() == 1) {
+        mapper(state, builder, context, includeComma, layers.first());
         return;
     }
 
-    for (auto* layer = &layers; layer; layer = layer->next()) {
-        mapper(state, builder, context, includeComma, *layer);
+    for (auto& layer : layers) {
+        mapper(state, builder, context, includeComma, layer);
         includeComma = true;
     }
 }
@@ -1113,9 +1113,9 @@ inline void extractBorderRadiusShorthandSerialization(ExtractorState& state, Str
     builder.append(extractBorderRadiusShorthand(state, propertyID)->cssText(context));
 }
 
-inline Ref<CSSValue> extractFillLayerPropertyShorthand(ExtractorState& state, CSSPropertyID property, const StylePropertyShorthand& propertiesBeforeSlashSeparator, const StylePropertyShorthand& propertiesAfterSlashSeparator, CSSPropertyID lastLayerProperty)
+template<CSSPropertyID property> inline Ref<CSSValue> extractFillLayerPropertyShorthand(ExtractorState& state, const StylePropertyShorthand& propertiesBeforeSlashSeparator, const StylePropertyShorthand& propertiesAfterSlashSeparator, CSSPropertyID lastLayerProperty)
 {
-    ASSERT(property == CSSPropertyBackground || property == CSSPropertyMask);
+    static_assert(property == CSSPropertyBackground || property == CSSPropertyMask);
 
     auto computeRenderStyle = [&](std::unique_ptr<RenderStyle>& ownedStyle) -> const RenderStyle* {
         if (auto renderer = state.element->renderer(); renderer && renderer->isComposited() && Style::Interpolation::isAccelerated(property, state.element->document().settings())) {
@@ -1138,14 +1138,16 @@ inline Ref<CSSValue> extractFillLayerPropertyShorthand(ExtractorState& state, CS
         if (!style)
             return 0;
 
-        auto& layers = property == CSSPropertyMask ? style->maskLayers() : style->backgroundLayers();
+        const auto& layers = [&] {
+            if constexpr (property == CSSPropertyMask)
+                return style->maskLayers();
+            else
+                return style->backgroundLayers();
+        }();
 
-        size_t layerCount = 0;
-        for (auto* layer = &layers; layer; layer = layer->next())
-            layerCount++;
-        if (layerCount == 1 && property == CSSPropertyMask && !layers.image())
+        if (layers.size() == 1 && property == CSSPropertyMask && !layers.first().hasImage())
             return 0;
-        return layerCount;
+        return layers.size();
     }();
     if (!layerCount) {
         ASSERT(property == CSSPropertyMask);
@@ -1181,10 +1183,10 @@ inline Ref<CSSValue> extractFillLayerPropertyShorthand(ExtractorState& state, CS
     return CSSValueList::createCommaSeparated(WTFMove(layers));
 }
 
-inline void extractFillLayerPropertyShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, CSSPropertyID property, const StylePropertyShorthand& propertiesBeforeSlashSeparator, const StylePropertyShorthand& propertiesAfterSlashSeparator, CSSPropertyID lastLayerProperty)
+template<CSSPropertyID property> inline void extractFillLayerPropertyShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const StylePropertyShorthand& propertiesBeforeSlashSeparator, const StylePropertyShorthand& propertiesAfterSlashSeparator, CSSPropertyID lastLayerProperty)
 {
     // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-    builder.append(extractFillLayerPropertyShorthand(state, property, propertiesBeforeSlashSeparator, propertiesAfterSlashSeparator, lastLayerProperty)->cssText(context));
+    builder.append(extractFillLayerPropertyShorthand<property>(state, propertiesBeforeSlashSeparator, propertiesAfterSlashSeparator, lastLayerProperty)->cssText(context));
 }
 
 // MARK: - Custom Extractors
@@ -2091,9 +2093,8 @@ inline RefPtr<CSSValue> ExtractorCustom::extractBackgroundShorthand(ExtractorSta
     static constexpr std::array propertiesBeforeSlashSeparator { CSSPropertyBackgroundImage, CSSPropertyBackgroundRepeat, CSSPropertyBackgroundAttachment, CSSPropertyBackgroundPosition };
     static constexpr std::array propertiesAfterSlashSeparator { CSSPropertyBackgroundSize, CSSPropertyBackgroundOrigin, CSSPropertyBackgroundClip };
 
-    return extractFillLayerPropertyShorthand(
+    return extractFillLayerPropertyShorthand<CSSPropertyBackground>(
         state,
-        CSSPropertyBackground,
         StylePropertyShorthand(CSSPropertyBackground, std::span { propertiesBeforeSlashSeparator }),
         StylePropertyShorthand(CSSPropertyBackground, std::span { propertiesAfterSlashSeparator }),
         CSSPropertyBackgroundColor
@@ -2105,11 +2106,10 @@ inline void ExtractorCustom::extractBackgroundShorthandSerialization(ExtractorSt
     static constexpr std::array propertiesBeforeSlashSeparator { CSSPropertyBackgroundImage, CSSPropertyBackgroundRepeat, CSSPropertyBackgroundAttachment, CSSPropertyBackgroundPosition };
     static constexpr std::array propertiesAfterSlashSeparator { CSSPropertyBackgroundSize, CSSPropertyBackgroundOrigin, CSSPropertyBackgroundClip };
 
-    extractFillLayerPropertyShorthandSerialization(
+    extractFillLayerPropertyShorthandSerialization<CSSPropertyBackground>(
         state,
         builder,
         context,
-        CSSPropertyBackground,
         StylePropertyShorthand(CSSPropertyBackground, std::span { propertiesBeforeSlashSeparator }),
         StylePropertyShorthand(CSSPropertyBackground, std::span { propertiesAfterSlashSeparator }),
         CSSPropertyBackgroundColor
@@ -2480,9 +2480,8 @@ inline RefPtr<CSSValue> ExtractorCustom::extractMaskShorthand(ExtractorState& st
     static constexpr std::array propertiesBeforeSlashSeparator { CSSPropertyMaskImage, CSSPropertyMaskPosition };
     static constexpr std::array propertiesAfterSlashSeparator { CSSPropertyMaskSize, CSSPropertyMaskRepeat, CSSPropertyMaskOrigin, CSSPropertyMaskClip, CSSPropertyMaskComposite, CSSPropertyMaskMode };
 
-    return extractFillLayerPropertyShorthand(
+    return extractFillLayerPropertyShorthand<CSSPropertyMask>(
         state,
-        CSSPropertyMask,
         StylePropertyShorthand(CSSPropertyMask, std::span { propertiesBeforeSlashSeparator }),
         StylePropertyShorthand(CSSPropertyMask, std::span { propertiesAfterSlashSeparator }),
         CSSPropertyInvalid
@@ -2494,11 +2493,10 @@ inline void ExtractorCustom::extractMaskShorthandSerialization(ExtractorState& s
     static constexpr std::array propertiesBeforeSlashSeparator { CSSPropertyMaskImage, CSSPropertyMaskPosition };
     static constexpr std::array propertiesAfterSlashSeparator { CSSPropertyMaskSize, CSSPropertyMaskRepeat, CSSPropertyMaskOrigin, CSSPropertyMaskClip, CSSPropertyMaskComposite, CSSPropertyMaskMode };
 
-    extractFillLayerPropertyShorthandSerialization(
+    extractFillLayerPropertyShorthandSerialization<CSSPropertyMask>(
         state,
         builder,
         context,
-        CSSPropertyMask,
         StylePropertyShorthand(CSSPropertyMask, std::span { propertiesBeforeSlashSeparator }),
         StylePropertyShorthand(CSSPropertyMask, std::span { propertiesAfterSlashSeparator }),
         CSSPropertyInvalid
@@ -2754,7 +2752,7 @@ inline void ExtractorCustom::extractTextBoxShorthandSerialization(ExtractorState
 
 inline RefPtr<CSSValue> ExtractorCustom::extractTextDecorationShorthand(ExtractorState& state)
 {
-    bool hasDefaultTextDecorationLine = state.style.textDecorationLine().isEmpty();
+    bool hasDefaultTextDecorationLine = state.style.textDecorationLine().isNone();
     bool hasDefaultTextDecorationThickness = state.style.textDecorationThickness() == RenderStyle::initialTextDecorationThickness();
     bool hasDefaultTextDecorationStyle = state.style.textDecorationStyle() == RenderStyle::initialTextDecorationStyle();
     bool hasDefaultTextDecorationColor = state.style.textDecorationColor().isCurrentColor();
@@ -2764,7 +2762,7 @@ inline RefPtr<CSSValue> ExtractorCustom::extractTextDecorationShorthand(Extracto
 
     CSSValueListBuilder list;
     if (!hasDefaultTextDecorationLine)
-        list.append(ExtractorConverter::convertTextDecorationLine(state, state.style.textDecorationLine()));
+        list.append(ExtractorConverter::convertStyleType<TextDecorationLine>(state, state.style.textDecorationLine()));
     if (!hasDefaultTextDecorationThickness)
         list.append(ExtractorConverter::convertStyleType<TextDecorationThickness>(state, state.style.textDecorationThickness()));
     if (!hasDefaultTextDecorationStyle)
@@ -2777,7 +2775,7 @@ inline RefPtr<CSSValue> ExtractorCustom::extractTextDecorationShorthand(Extracto
 
 inline void ExtractorCustom::extractTextDecorationShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
-    bool hasDefaultTextDecorationLine = state.style.textDecorationLine().isEmpty();
+    bool hasDefaultTextDecorationLine = state.style.textDecorationLine().isNone();
     bool hasDefaultTextDecorationThickness = state.style.textDecorationThickness() == RenderStyle::initialTextDecorationThickness();
     bool hasDefaultTextDecorationStyle = state.style.textDecorationStyle() == RenderStyle::initialTextDecorationStyle();
     bool hasDefaultTextDecorationColor = state.style.textDecorationColor().isCurrentColor();
@@ -2788,7 +2786,7 @@ inline void ExtractorCustom::extractTextDecorationShorthandSerialization(Extract
     }
 
     if (!hasDefaultTextDecorationLine)
-        ExtractorSerializer::serializeTextDecorationLine(state, builder, context, state.style.textDecorationLine());
+        ExtractorSerializer::serialize(state, builder, context, state.style.textDecorationLine());
     if (!hasDefaultTextDecorationThickness) {
         if (!builder.isEmpty())
             builder.append(' ');

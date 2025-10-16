@@ -24,7 +24,10 @@ namespace WebCore {
 
 static_assert(cssPropertyIDEnumValueCount <= (std::numeric_limits<uint16_t>::max() + 1), "CSSPropertyID should fit into uint16_t.");
 
-const std::array<CSSPropertyID, 102> computedPropertyIDs {
+const std::array<CSSPropertyID, 106> computedPropertyIDs {
+    CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary,
+    CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary,
+    CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter,
     CSSPropertyID::CSSPropertyTestAnimationWrapper,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly,
@@ -108,6 +111,7 @@ const std::array<CSSPropertyID, 102> computedPropertyIDs {
     CSSPropertyID::CSSPropertyTestMatchOneWithMultipleKeywords,
     CSSPropertyID::CSSPropertyTestMatchOneWithReferenceWithSettingsFlag,
     CSSPropertyID::CSSPropertyTestMatchOneWithSettingsFlag,
+    CSSPropertyID::CSSPropertyTestMediumPriority,
     CSSPropertyID::CSSPropertyTestNumericValueRange,
     CSSPropertyID::CSSPropertyTestProperty,
     CSSPropertyID::CSSPropertyTestSettingsOne,
@@ -132,6 +136,10 @@ const std::array<CSSPropertyID, 102> computedPropertyIDs {
 constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-top-priority"_s,
     "test-high-priority"_s,
+    "background-fill-layer-test-primary"_s,
+    "test-medium-priority"_s,
+    "background-fill-layer-test-secondary"_s,
+    "background-fill-layer-test-secondary-with-converter"_s,
     "first-test-descriptor-for-first-descriptor"_s,
     "first-test-descriptor-for-second-descriptor"_s,
     "test-animation-wrapper"_s,
@@ -257,6 +265,10 @@ struct CSSPropertyHashTableEntry {
 %%
 test-top-priority, CSSPropertyID::CSSPropertyTestTopPriority
 test-high-priority, CSSPropertyID::CSSPropertyTestHighPriority
+background-fill-layer-test-primary, CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary
+test-medium-priority, CSSPropertyID::CSSPropertyTestMediumPriority
+background-fill-layer-test-secondary, CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary
+background-fill-layer-test-secondary-with-converter, CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter
 first-test-descriptor-for-first-descriptor, CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor
 first-test-descriptor-for-second-descriptor, CSSPropertyID::CSSPropertyFirstTestDescriptorForSecondDescriptor
 test-animation-wrapper, CSSPropertyID::CSSPropertyTestAnimationWrapper
@@ -492,6 +504,10 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     true , // CSSPropertyID::CSSPropertyCustom
     false, // CSSPropertyID::CSSPropertyTestTopPriority
     false, // CSSPropertyID::CSSPropertyTestHighPriority
+    false, // CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary
+    false, // CSSPropertyID::CSSPropertyTestMediumPriority
+    false, // CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary
+    false, // CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter
     false, // CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor
     false, // CSSPropertyID::CSSPropertyFirstTestDescriptorForSecondDescriptor
     false, // CSSPropertyID::CSSPropertyTestAnimationWrapper
@@ -653,6 +669,10 @@ bool CSSProperty::allowsNumberOrIntegerInput(CSSPropertyID id)
     switch (id) {
     case CSSPropertyID::CSSPropertyTestTopPriority:
     case CSSPropertyID::CSSPropertyTestHighPriority:
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
+    case CSSPropertyID::CSSPropertyTestMediumPriority:
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
+    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
     case CSSPropertyID::CSSPropertyTestAnimationWrapper:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:

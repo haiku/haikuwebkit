@@ -362,6 +362,13 @@ static std::optional<LayoutUnit> lastInflowBoxBaseline(const RenderBlock& blockC
 
 static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
 {
+    auto writingMode = renderBox.containingBlock()->writingMode();
+    if (renderBox.shouldApplyLayoutContainment())
+        return { };
+
+    if (writingMode.computedWritingMode() != renderBox.writingMode().computedWritingMode())
+        return { };
+
     if (is<RenderIFrame>(renderBox)
         || is<RenderEmbeddedObject>(renderBox)
         || is<LegacyRenderSVGRoot>(renderBox)
@@ -374,9 +381,6 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
         || is<RenderSVGRoot>(renderBox))
         return { };
 
-    auto writingMode = renderBox.containingBlock()->writingMode();
-
-    auto contentBoxBottom = writingMode.isHorizontal() ? renderBox.borderTop() + renderBox.paddingTop() + renderBox.contentBoxHeight() : renderBox.borderRight() + renderBox.paddingRight() + renderBox.contentBoxWidth();
     auto borderBoxBottom = renderBox.height();
     auto marginBoxBottom = renderBox.marginBoxLogicalHeight(writingMode) - (writingMode.isHorizontal() ? renderBox.marginTop() : renderBox.marginRight());
 
@@ -407,7 +411,7 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
     if (is<RenderButton>(renderBox)) {
         // We cannot rely on RenderFlexibleBox::baselinePosition() because of flexboxes have some special behavior
         // regarding baselines that shouldn't apply to buttons.
-        return renderBox.lastLineBaseline().value_or(contentBoxBottom);
+        return renderBox.lastLineBaseline();
     }
 
     if (is<RenderListBox>(renderBox)) {
@@ -581,15 +585,27 @@ static inline void setIntegrationBaseline(const RenderBox& renderBox)
     if (hasNonSyntheticBaseline()) {
         auto baselinePosition = [&]() -> LayoutUnit {
             auto rootWritingMode = renderBox.containingBlock()->writingMode();
-            auto marginBoxLogicalHeight = renderBox.marginBoxLogicalHeight(rootWritingMode);
-            auto shouldIgnoreBaseline = renderBox.shouldApplyLayoutContainment() || renderBox.isWritingModeRoot();
-            if (shouldIgnoreBaseline)
-                return renderBox.isFieldset() ? marginBoxLogicalHeight : LayoutUnit(roundToInt(marginBoxLogicalHeight));
+            auto marginBefore = renderBox.writingMode().isHorizontal() ? renderBox.marginTop() : renderBox.marginRight();
+
             if (auto baseline = baselineForBox(renderBox)) {
-                auto marginBefore = renderBox.writingMode().isHorizontal() ? renderBox.marginTop() : renderBox.marginRight();
                 *baseline = rootWritingMode.isLineInverted() ? renderBox.logicalHeight() - *baseline : *baseline;
                 return marginBefore + *baseline;
             }
+
+            auto marginBoxLogicalHeight = renderBox.marginBoxLogicalHeight(rootWritingMode);
+            auto isWritingModeRoot = rootWritingMode.computedWritingMode() != renderBox.writingMode().computedWritingMode();
+
+            if (renderBox.isFieldset()) {
+                if (isWritingModeRoot || renderBox.shouldApplyLayoutContainment())
+                    return marginBoxLogicalHeight;
+                return roundToInt(marginBoxLogicalHeight);
+            }
+
+            if (is<RenderButton>(renderBox)) {
+                auto contentBoxBottom = rootWritingMode.isHorizontal() ? renderBox.borderTop() + renderBox.paddingTop() + renderBox.contentBoxHeight() : renderBox.borderRight() + renderBox.paddingRight() + renderBox.contentBoxWidth();
+                return marginBefore + roundToInt(contentBoxBottom);
+            }
+
             return roundToInt(marginBoxLogicalHeight);
         };
         const_cast<Layout::ElementBox&>(*renderBox.layoutBox()).setBaselineForIntegration(baselinePosition());
@@ -624,10 +640,10 @@ void BoxGeometryUpdater::updateLayoutBoxDimensions(const RenderBox& renderBox, s
     }
 
     boxGeometry.setSpaceForScrollbar(scrollbarSize);
-
-    boxGeometry.setContentBoxWidth(contentLogicalWidthForRenderer(renderBox));
-    boxGeometry.setContentBoxHeight(contentLogicalHeightForRenderer(renderBox));
-
+    if (!renderBox.isOutOfFlowPositioned()) {
+        boxGeometry.setContentBoxWidth(contentLogicalWidthForRenderer(renderBox));
+        boxGeometry.setContentBoxHeight(contentLogicalHeightForRenderer(renderBox));
+    }
     boxGeometry.setVerticalMargin(verticalLogicalMargin(renderBox, availableWidth, writingMode));
     boxGeometry.setHorizontalMargin(inlineMargin);
     boxGeometry.setBorder(border);

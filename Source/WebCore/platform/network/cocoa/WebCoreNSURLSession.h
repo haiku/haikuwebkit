@@ -23,9 +23,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#import "RangeResponseGenerator.h"
-#import "SecurityOrigin.h"
 #import <Foundation/NSURLSession.h>
+#import <WebCore/RangeResponseGenerator.h>
+#import <WebCore/SecurityOrigin.h>
 #import <wtf/CompletionHandler.h>
 #import <wtf/HashSet.h>
 #import <wtf/Lock.h>

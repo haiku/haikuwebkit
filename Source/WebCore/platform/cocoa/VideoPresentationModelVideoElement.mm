@@ -28,7 +28,7 @@
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
 
-#import "AddEventListenerOptions.h"
+#import "AddEventListenerOptionsInlines.h"
 #import "DocumentFullscreen.h"
 #import "DocumentInlines.h"
 #import "Event.h"

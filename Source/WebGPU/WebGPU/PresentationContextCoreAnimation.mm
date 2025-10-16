@@ -111,15 +111,16 @@ auto PresentationContextCoreAnimation::Configuration::generateCurrentFrameState(
     auto texture = Texture::create(backingTexture, textureDescriptor, { format }, device);
 
     WGPUTextureViewDescriptor textureViewDescriptor {
-        nullptr,
-        label.data(),
-        format,
-        WGPUTextureViewDimension_2D,
-        0,
-        1,
-        0,
-        1,
-        WGPUTextureAspect_All,
+        .nextInChain = nullptr,
+        .label = label.data(),
+        .format = format,
+        .dimension = WGPUTextureViewDimension_2D,
+        .baseMipLevel = 0,
+        .mipLevelCount = 1,
+        .baseArrayLayer = 0,
+        .arrayLayerCount = 1,
+        .aspect = WGPUTextureAspect_All,
+        .usage = 0
     };
 
     auto textureView = TextureView::create(backingTexture, textureViewDescriptor, { { width, height, 1 } }, texture, device);

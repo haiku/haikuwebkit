@@ -27,6 +27,7 @@
 #include "TrustedTypePolicy.h"
 
 #include "ExceptionOr.h"
+#include "ScriptWrappableInlines.h"
 #include "TrustedHTML.h"
 #include "TrustedScript.h"
 #include "TrustedScriptURL.h"
@@ -133,5 +134,7 @@ WebCoreOpaqueRoot root(TrustedTypePolicy* policy)
 {
     return WebCoreOpaqueRoot { policy };
 }
+
+TrustedTypePolicy::~TrustedTypePolicy() = default;
 
 } // namespace WebCore

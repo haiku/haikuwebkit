@@ -562,11 +562,12 @@ UGPRPair SYSV_ABI llint_check_stack_and_vm_traps(CallFrame* callFrame, const JSI
 
     if (vm.traps().handleTrapsIfNeeded()) {
         if (vm.hasPendingTerminationException()) {
+            throwScope.release();
             pc = returnToThrow(vm);
             LLINT_RETURN_TWO(pc, callFrame);
         }
-        ASSERT(!vm.exceptionForInspection());
     }
+    throwScope.assertNoException();
 
     // Redo stack check because we may really have gotten here due to an imminent StackOverflow.
     bool imminentOverflowDetected = false;
@@ -574,10 +575,10 @@ UGPRPair SYSV_ABI llint_check_stack_and_vm_traps(CallFrame* callFrame, const JSI
 #if ENABLE(C_LOOP)
     Register* newTopOfStackRegister = reinterpret_cast<Register*>(newTopOfStack);
     if (newTopOfStackRegister < reinterpret_cast<Register*>(callFrame)) {
-        ASSERT(!vm.cloopStack().containsAddress(newTopOfStackRegister));
         if (!vm.ensureJSStackCapacityFor(newTopOfStackRegister))
             imminentOverflowDetected = true;
-    }
+    } else
+        imminentOverflowDetected = true; // Stack underflow == overflow.
 #else // not C_LOOP case
 
     void* softStackLimit = vm.softStackLimit();

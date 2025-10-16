@@ -33,10 +33,11 @@
 #import "WebFrameInternal.h"
 #import <JavaScriptCore/JSLock.h>
 #import <JavaScriptCore/MemoryStatistics.h>
+#import <JavaScriptCore/VM.h>
 #import <WebCore/BackForwardCache.h>
 #import <WebCore/CommonVM.h>
 #import <WebCore/FontCache.h>
-#import <WebCore/GCController.h>
+#import <WebCore/GarbageCollectionController.h>
 #import <WebCore/GlyphPage.h>
 #import <WebCore/GraphicsContextCG.h>
 #import <WebCore/LocalFrame.h>
@@ -104,17 +105,17 @@ static RetainPtr<NSCountedSet> createNSCountedSet(const HashCountedSet<ASCIILite
 
 + (void)garbageCollectJavaScriptObjects
 {
-    GCController::singleton().garbageCollectNow();
+    GarbageCollectionController::singleton().garbageCollectNow();
 }
 
 + (void)garbageCollectJavaScriptObjectsOnAlternateThreadForDebugging:(BOOL)waitUntilDone
 {
-    GCController::singleton().garbageCollectOnAlternateThreadForDebugging(waitUntilDone);
+    GarbageCollectionController::singleton().garbageCollectOnAlternateThreadForDebugging(waitUntilDone);
 }
 
 + (void)setJavaScriptGarbageCollectorTimerEnabled:(BOOL)enable
 {
-    GCController::singleton().setJavaScriptGarbageCollectorTimerEnabled(enable);
+    GarbageCollectionController::singleton().setJavaScriptGarbageCollectorTimerEnabled(enable);
 }
 
 + (size_t)iconPageURLMappingCount

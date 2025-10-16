@@ -28,6 +28,9 @@
 
 #pragma once
 
+#include "AXObjectRareData.h"
+#include "AXTableHelpers.h"
+#include "AXUtilities.h"
 #include "AccessibilityObject.h"
 #include "LayoutRect.h"
 #include <wtf/Forward.h>
@@ -44,12 +47,17 @@ public:
     virtual ~AccessibilityNodeObject();
 
     void init() override;
+    void recomputeAriaRole() final { m_ariaRole = determineAriaRoleAttribute(); }
 
     bool hasElementDescendant() const final;
 
     bool isBusy() const final;
     bool isDetached() const override { return !m_node; }
     bool isFieldset() const final;
+    bool isAccessibilityList() const final;
+    bool isUnorderedList() const final;
+    bool isOrderedList() const final;
+    bool isDescriptionList() const final;
     bool isMultiSelectable() const override;
     bool isNativeImage() const;
     bool isNativeTextControl() const final;
@@ -71,8 +79,39 @@ public:
     bool canSetSelectedAttribute() const override;
 
     Node* node() const final { return m_node.get(); }
+    CheckedPtr<Node> checkedNode() const { return node(); }
     Document* document() const override;
     LocalFrameView* documentFrameView() const override;
+
+    // Start table-related methods.
+    bool isTable() const final;
+    bool isAriaTable() const final { return AXTableHelpers::isTableRole(ariaRoleAttribute()); }
+    // isTable() check is last because it's the most expensive.
+    bool isExposableTable() const final { return hasRareData() && rareData()->isExposableTable() && isTable(); }
+
+    void recomputeIsExposableIfNecessary() final;
+
+    AccessibilityChildrenVector columns() final;
+    AccessibilityChildrenVector rows() final;
+
+    unsigned columnCount() final;
+    unsigned rowCount() final;
+
+    AccessibilityChildrenVector cells() final;
+    AccessibilityObject* cellForColumnAndRow(unsigned column, unsigned row) final;
+
+    AccessibilityChildrenVector rowHeaders() override;
+    AccessibilityChildrenVector visibleRows() final;
+
+    // Returns an object that contains, as children, all the objects that act as headers.
+    AccessibilityObject* tableHeaderContainer() final;
+
+    int axColumnCount() const final;
+    int axRowCount() const final;
+
+    Vector<Vector<Markable<AXID>>> cellSlots() final;
+    void setCellSlotsDirty();
+    // End table-related methods.
 
     void setFocused(bool) override;
     bool isFocused() const final;
@@ -136,6 +175,9 @@ public:
 
     LayoutRect elementRect() const override;
 
+    bool isLabelContainingOnlyStaticText() const;
+    bool isNativeLabel() const override;
+
 #if ENABLE(AX_THREAD_TEXT_APIS)
     TextEmissionBehavior textEmissionBehavior() const final;
 #endif
@@ -151,11 +193,17 @@ protected:
     bool m_isARIAGridCell { false };
     // Only used by AccessibilitySVGObject, but placed here to use space that would otherwise be taken by padding.
     bool m_isSVGRoot { false };
+
+    // Only used by isNativeLabel() objects. Placed here to use space that would otherwise be taken by padding.
+    mutable bool m_containsOnlyStaticTextDirty { false };
+    mutable bool m_containsOnlyStaticText { false };
+
 #ifndef NDEBUG
     bool m_initialized { false };
 #endif
 
     AccessibilityRole determineAccessibilityRole() override;
+    AccessibilityRole determineListRoleWithCleanChildren();
     enum class TreatStyleFormatGroupAsInline : bool { No, Yes };
     AccessibilityRole determineAccessibilityRoleFromNode(TreatStyleFormatGroupAsInline = TreatStyleFormatGroupAsInline::No) const;
     AccessibilityRole roleFromInputElement(const HTMLInputElement&) const;
@@ -168,6 +216,7 @@ protected:
     void clearChildren() override;
     void updateChildrenIfNecessary() override;
     bool canHaveChildren() const override;
+    void setSelectedChildren(const AccessibilityChildrenVector&) final;
     AccessibilityChildrenVector visibleChildren() override;
     bool isDescendantOfBarrenParent() const final;
     void updateOwnedChildren();
@@ -212,6 +261,7 @@ protected:
     HTMLMediaElement* mediaElement() const;
     HTMLVideoElement* videoElement() const;
 #endif
+    void addTableChildrenAndCellSlots();
 private:
     bool isAccessibilityNodeObject() const final { return true; }
     void accessibilityText(Vector<AccessibilityText>&) const override;
@@ -231,6 +281,17 @@ private:
     void setNeedsToUpdateSubtree() final { m_subtreeDirty = true; }
 
     bool isDescendantOfElementType(const HashSet<QualifiedName>&) const;
+
+    AXObjectRareData* rareDataWithCleanTableChildren();
+    // Returns the number of columns the table should have.
+    unsigned computeCellSlots();
+    // isDataTable / computeIsTableExposableThroughAccessibility perform heuristics to determine
+    // if a table should be exposed as a "semantic" data table in the accessibility API, or if
+    // this table is just used for layout and thus is not a "real" table.
+    bool computeIsTableExposableThroughAccessibility() const { return isAriaTable() || isDataTable(); }
+    bool isDataTable() const;
+    void updateRowDescendantRoles();
+
 protected:
     WeakPtr<Node, WeakPtrImplWithEventTargetData> m_node;
 };
@@ -239,10 +300,6 @@ namespace Accessibility {
 
 RefPtr<HTMLElement> controlForLabelElement(const HTMLLabelElement&);
 Vector<Ref<HTMLElement>> labelsForElement(Element*);
-
-// This value is what will be used if AccessibilityTableCell determines the cell
-// should not be treated as a cell (e.g. because it is in a layout table).
-static constexpr AccessibilityRole layoutTableCellRole = AccessibilityRole::TextGroup;
 
 } // namespace Accessibility
 

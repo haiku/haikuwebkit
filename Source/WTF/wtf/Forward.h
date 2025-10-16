@@ -31,6 +31,12 @@
 #endif
 #endif
 
+#ifndef __OBJC__
+WTF_EXTERN_C_BEGIN
+typedef struct objc_object* id;
+WTF_EXTERN_C_END
+#endif
+
 namespace WTF {
 
 class ASCIILiteral;

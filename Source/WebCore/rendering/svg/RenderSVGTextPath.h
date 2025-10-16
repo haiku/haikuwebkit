@@ -26,6 +26,7 @@
 namespace WebCore {
 
 class SVGGeometryElement;
+class SVGLengthValue;
 class SVGTextPathElement;
 
 class RenderSVGTextPath final : public RenderSVGInline {

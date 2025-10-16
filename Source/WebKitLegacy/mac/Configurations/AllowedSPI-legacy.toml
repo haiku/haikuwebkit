@@ -1,7 +1,7 @@
 # Longstanding SPI used by WebKitLegacy before we started auditing SPI use.
 # NEVER add to this list, only remove!
 
-[legacy.legacy]
+[[legacy]]
 classes = [
     "LSAppLink",
     "NSCalendarDate",
@@ -116,7 +116,7 @@ symbols = [
 
 # The public iOS build uses CGGeometry methods instead of internal only NSGeometry methods.
 # Clean up in rdar://6669434.
-[NSGeometry.legacy]
+[[legacy]]
 symbols = [
     "_NSEqualPoints",
     "_NSEqualSizes",

@@ -123,8 +123,6 @@ FAIL :values:stage="override";type="f32" assert_unreached:
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBuiltinEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:194:31
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/degrees.spec.js:49:37
-  - INFO: subcase: value=-3.4028234663852886e+38
-    OK
   - EXPECTATION FAILED: subcase: value=3.4028234663852886e+38
     Expected validation error
     eventualAsyncExpectation@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:254:33
@@ -132,6 +130,8 @@ FAIL :values:stage="override";type="f32" assert_unreached:
     expectPipelineResult@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:205:24
     validateConstOrOverrideBuiltinEval@http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/const_override_validation.js:194:31
     @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/expression/call/builtin/degrees.spec.js:49:37
+  - INFO: subcase: value=-3.4028234663852886e+38
+    OK
   - INFO: subcase: value=3.4028234663852886e+38
     OK
  Reached unreachable code
@@ -247,6 +247,15 @@ FAIL :values:stage="override";type="f16" assert_unreached:
   - EXPECTATION FAILED: subcase: value=2584
     Expected validation error
       at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: value=7540
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: value=23264
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: value=65504
+    Expected validation error
+      at (elided: only 2 shown)
   - INFO: subcase: value=-65504
     OK
   - INFO: subcase: value=-23264
@@ -257,17 +266,8 @@ FAIL :values:stage="override";type="f16" assert_unreached:
     OK
   - INFO: subcase: value=2584
     OK
-  - EXPECTATION FAILED: subcase: value=7540
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: value=7540
     OK
-  - EXPECTATION FAILED: subcase: value=23264
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: value=65504
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: value=23264
     OK
   - INFO: subcase: value=65504
@@ -1021,15 +1021,6 @@ FAIL :values:stage="override";type="vec4%3Cf16%3E" assert_unreached:
   - EXPECTATION FAILED: subcase: value=2584
     Expected validation error
       at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: value=7540
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: value=23264
-    Expected validation error
-      at (elided: only 2 shown)
-  - EXPECTATION FAILED: subcase: value=65504
-    Expected validation error
-      at (elided: only 2 shown)
   - INFO: subcase: value=-65504
     OK
   - INFO: subcase: value=-23264
@@ -1040,6 +1031,15 @@ FAIL :values:stage="override";type="vec4%3Cf16%3E" assert_unreached:
     OK
   - INFO: subcase: value=2584
     OK
+  - EXPECTATION FAILED: subcase: value=7540
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: value=23264
+    Expected validation error
+      at (elided: only 2 shown)
+  - EXPECTATION FAILED: subcase: value=65504
+    Expected validation error
+      at (elided: only 2 shown)
   - INFO: subcase: value=7540
     OK
   - INFO: subcase: value=23264

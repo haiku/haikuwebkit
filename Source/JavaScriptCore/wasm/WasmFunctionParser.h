@@ -125,7 +125,7 @@ struct FunctionParserTypes {
 
     using ResultList = Vector<ExpressionType, 8>;
 
-    using ArgumentList = Vector<ExpressionType, 8>;
+    using ArgumentList = Vector<TypedExpression, 8>;
 
     struct CatchHandler {
         CatchKind type;
@@ -194,6 +194,8 @@ public:
             result += entry.enclosedExpressionStack.size();
         return result;
     }
+
+    uint32_t numCallSlots() const { return m_callSlotIndex; }
 
 private:
     static constexpr bool verbose = false;
@@ -386,6 +388,7 @@ private:
 
     unsigned m_unreachableBlocks { 0 };
     unsigned m_loopIndex { 0 };
+    unsigned m_callSlotIndex { 0 };
 };
 
 WTF_MAKE_TZONE_ALLOCATED_TEMPLATE_IMPL(template<typename Context>, FunctionParser<Context>);
@@ -2713,20 +2716,20 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             if (typeIndexIsType(resultTypeIndex)) {
                 switch (static_cast<TypeKind>(heapType)) {
                 case TypeKind::Funcref:
-                case TypeKind::Nullfuncref:
+                case TypeKind::Nofuncref:
                     WASM_VALIDATOR_FAIL_IF(!isSubtype(ref.type(), funcrefType()), opName, " to type "_s, ref.type(), " expected a funcref"_s);
                     break;
                 case TypeKind::Externref:
-                case TypeKind::Nullexternref:
+                case TypeKind::Noexternref:
                     WASM_VALIDATOR_FAIL_IF(!isSubtype(ref.type(), externrefType()), opName, " to type "_s, ref.type(), " expected an externref"_s);
                     break;
-                case TypeKind::Exn:
-                case TypeKind::Nullexn:
-                    WASM_VALIDATOR_FAIL_IF(!isSubtype(ref.type(), exnrefType()), opName, " to type "_s, ref.type(), " expected an exn"_s);
+                case TypeKind::Exnref:
+                case TypeKind::Noexnref:
+                    WASM_VALIDATOR_FAIL_IF(!isSubtype(ref.type(), exnrefType()), opName, " to type "_s, ref.type(), " expected an exnref"_s);
                     break;
                 case TypeKind::Eqref:
                 case TypeKind::Anyref:
-                case TypeKind::Nullref:
+                case TypeKind::Noneref:
                 case TypeKind::I31ref:
                 case TypeKind::Arrayref:
                 case TypeKind::Structref:
@@ -3116,14 +3119,14 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             for (unsigned i = 0; i < calleeSignature.returnCount(); ++i)
                 WASM_VALIDATOR_FAIL_IF(!isSubtype(calleeSignature.returnType(i), callerSignature.returnType(i)), "tail call function index "_s, functionIndex, " return type mismatch: "_s , "expected "_s, callerSignature.returnType(i), ", got "_s, calleeSignature.returnType(i));
 
-            WASM_TRY_ADD_TO_CONTEXT(addCall(functionIndex, typeDefinition, args, results, CallType::TailCall));
+            WASM_TRY_ADD_TO_CONTEXT(addCall(m_callSlotIndex++, functionIndex, typeDefinition, args, results, CallType::TailCall));
 
             m_unreachableBlocks = 1;
 
             return { };
         }
 
-        WASM_TRY_ADD_TO_CONTEXT(addCall(functionIndex, typeDefinition, args, results));
+        WASM_TRY_ADD_TO_CONTEXT(addCall(m_callSlotIndex++, functionIndex, typeDefinition, args, results));
         RELEASE_ASSERT(calleeSignature.returnCount() == results.size());
 
         for (unsigned i = 0; i < calleeSignature.returnCount(); ++i) {
@@ -3186,14 +3189,14 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             for (unsigned i = 0; i < calleeSignature.returnCount(); ++i)
                 WASM_VALIDATOR_FAIL_IF(!isSubtype(calleeSignature.returnType(i), callerSignature.returnType(i)), "tail call indirect return type mismatch: "_s , "expected "_s, callerSignature.returnType(i), ", got "_s, calleeSignature.returnType(i));
 
-            WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(tableIndex, typeDefinition, args, results, CallType::TailCall));
+            WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(m_callSlotIndex++, tableIndex, typeDefinition, args, results, CallType::TailCall));
 
             m_unreachableBlocks = 1;
 
             return { };
         }
 
-        WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(tableIndex, typeDefinition, args, results));
+        WASM_TRY_ADD_TO_CONTEXT(addCallIndirect(m_callSlotIndex++, tableIndex, typeDefinition, args, results));
 
         for (unsigned i = 0; i < calleeSignature.returnCount(); ++i) {
             Type returnType = calleeSignature.returnType(i);
@@ -3253,14 +3256,14 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             for (unsigned i = 0; i < calleeSignature.returnCount(); ++i)
                 WASM_VALIDATOR_FAIL_IF(!isSubtype(calleeSignature.returnType(i), callerSignature.returnType(i)), "tail call ref return type mismatch: "_s , "expected "_s, callerSignature.returnType(i), ", got "_s, calleeSignature.returnType(i));
 
-            WASM_TRY_ADD_TO_CONTEXT(addCallRef(typeDefinition, args, results, CallType::TailCall));
+            WASM_TRY_ADD_TO_CONTEXT(addCallRef(m_callSlotIndex++, typeDefinition, args, results, CallType::TailCall));
 
             m_unreachableBlocks = 1;
 
             return { };
         }
 
-        WASM_TRY_ADD_TO_CONTEXT(addCallRef(typeDefinition, args, results));
+        WASM_TRY_ADD_TO_CONTEXT(addCallRef(m_callSlotIndex++, typeDefinition, args, results));
 
         for (unsigned i = 0; i < calleeSignature.returnCount(); ++i) {
             Type returnType = calleeSignature.returnType(i);
@@ -3509,7 +3512,7 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
             }
             if (catchTarget.type == CatchKind::CatchRef || catchTarget.type == CatchKind::CatchAllRef) {
                 ExpressionType exp;
-                results.constructAndAppend(Type { TypeKind::Ref, static_cast<TypeIndex>(TypeKind::Exn) }, exp);
+                results.constructAndAppend(Type { TypeKind::Ref, static_cast<TypeIndex>(TypeKind::Exnref) }, exp);
             }
 
             WASM_VALIDATOR_FAIL_IF(results.size() != target.branchTargetArity());
@@ -3574,11 +3577,11 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
     }
 
     case ThrowRef: {
-        TypedExpression exn;
-        WASM_TRY_POP_EXPRESSION_STACK_INTO(exn, "exception reference"_s);
-        WASM_VALIDATOR_FAIL_IF(!isSubtype(exn.type(), exnrefType()), "throw_ref expected an exception reference"_s);
+        TypedExpression exnref;
+        WASM_TRY_POP_EXPRESSION_STACK_INTO(exnref, "exception reference"_s);
+        WASM_VALIDATOR_FAIL_IF(!isSubtype(exnref.type(), exnrefType()), "throw_ref expected an exception reference"_s);
 
-        WASM_TRY_ADD_TO_CONTEXT(addThrowRef(exn, m_expressionStack));
+        WASM_TRY_ADD_TO_CONTEXT(addThrowRef(exnref, m_expressionStack));
         m_unreachableBlocks = 1;
         return { };
     }

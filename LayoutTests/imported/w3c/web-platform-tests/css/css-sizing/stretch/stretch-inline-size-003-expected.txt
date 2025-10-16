@@ -1,4 +1,3 @@
-CONSOLE MESSAGE: No valid data-* attributes found in selector list : .test
 
 
 
@@ -71,5 +70,59 @@ FAIL .test 17 assert_equals:
 height expected 55 but got 10
 FAIL .test 18 assert_equals:
 <div class="test vrl" data-expected-height="55"></div>
+height expected 55 but got 10
+FAIL .test 19 assert_equals:
+<div class="test htb" data-expected-width="55" style="box-sizing: border-box;"></div>
+width expected 55 but got 10
+FAIL .test 20 assert_equals:
+<div class="test vlr" data-expected-height="41" style="box-sizing: border-box;"></div>
+height expected 41 but got 10
+FAIL .test 21 assert_equals:
+<div class="test vrl" data-expected-height="41" style="box-sizing: border-box;"></div>
+height expected 41 but got 10
+FAIL .test 22 assert_equals:
+<div class="test htb" data-expected-width="55" style="box-sizing: border-box;"></div>
+width expected 55 but got 10
+FAIL .test 23 assert_equals:
+<div class="test vlr" data-expected-height="41" style="box-sizing: border-box;"></div>
+height expected 41 but got 10
+FAIL .test 24 assert_equals:
+<div class="test vrl" data-expected-height="41" style="box-sizing: border-box;"></div>
+height expected 41 but got 10
+FAIL .test 25 assert_equals:
+<div class="test htb" data-expected-width="41" style="box-sizing: border-box;"></div>
+width expected 41 but got 10
+FAIL .test 26 assert_equals:
+<div class="test vlr" data-expected-height="55" style="box-sizing: border-box;"></div>
+height expected 55 but got 10
+FAIL .test 27 assert_equals:
+<div class="test vrl" data-expected-height="55" style="box-sizing: border-box;"></div>
+height expected 55 but got 10
+FAIL .test 28 assert_equals:
+<div class="test htb" data-expected-width="41" style="box-sizing: border-box;"></div>
+width expected 41 but got 10
+FAIL .test 29 assert_equals:
+<div class="test vlr" data-expected-height="55" style="box-sizing: border-box;"></div>
+height expected 55 but got 10
+FAIL .test 30 assert_equals:
+<div class="test vrl" data-expected-height="55" style="box-sizing: border-box;"></div>
+height expected 55 but got 10
+FAIL .test 31 assert_equals:
+<div class="test htb" data-expected-width="41" style="box-sizing: border-box;"></div>
+width expected 41 but got 10
+FAIL .test 32 assert_equals:
+<div class="test vlr" data-expected-height="55" style="box-sizing: border-box;"></div>
+height expected 55 but got 10
+FAIL .test 33 assert_equals:
+<div class="test vrl" data-expected-height="55" style="box-sizing: border-box;"></div>
+height expected 55 but got 10
+FAIL .test 34 assert_equals:
+<div class="test htb" data-expected-width="41" style="box-sizing: border-box;"></div>
+width expected 41 but got 10
+FAIL .test 35 assert_equals:
+<div class="test vlr" data-expected-height="55" style="box-sizing: border-box;"></div>
+height expected 55 but got 10
+FAIL .test 36 assert_equals:
+<div class="test vrl" data-expected-height="55" style="box-sizing: border-box;"></div>
 height expected 55 but got 10
 

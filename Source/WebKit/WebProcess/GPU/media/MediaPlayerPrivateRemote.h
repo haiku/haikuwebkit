@@ -295,7 +295,7 @@ private:
     PlatformLayerContainer createVideoFullscreenLayer() final;
     void setVideoFullscreenLayer(PlatformLayer*, WTF::Function<void()>&& completionHandler) final;
     void updateVideoFullscreenInlineImage() final;
-    void setVideoFullscreenFrame(WebCore::FloatRect) final;
+    void setVideoFullscreenFrame(const WebCore::FloatRect&) final;
     void setVideoFullscreenGravity(WebCore::MediaPlayer::VideoGravity) final;
     void setVideoFullscreenMode(WebCore::MediaPlayer::VideoFullscreenMode) final;
     void videoFullscreenStandbyChanged() final;

@@ -37,7 +37,7 @@ WKTypeID WKScriptMessageGetTypeID()
 
 WKTypeRef WKScriptMessageGetBody(WKScriptMessageRef message)
 {
-    return WebKit::toImpl(message)->wkBody();
+    return WebKit::toAPI(WebKit::toImpl(message)->apiBody());
 }
 
 WKFrameInfoRef WKScriptMessageGetFrameInfo(WKScriptMessageRef message)

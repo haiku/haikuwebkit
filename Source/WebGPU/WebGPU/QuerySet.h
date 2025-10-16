@@ -39,7 +39,9 @@
 #import <wtf/WeakHashSet.h>
 #import <wtf/WeakPtr.h>
 
-struct WGPUQuerySetImpl {
+// FIXME(rdar://155970441): this annotation should be in WebGPU.h, move it once we support
+// annotating incomplete types
+struct __attribute__((swift_attr("@safe"))) SWIFT_SHARED_REFERENCE(wgpuQuerySetReference, wgpuQuerySetRelease) WGPUQuerySetImpl {
 };
 
 namespace WebGPU {
@@ -80,7 +82,7 @@ public:
     uint32_t count() const { return m_count; }
     WGPUQueryType type() const { return m_type; }
     id<MTLBuffer> visibilityBuffer() const { return m_visibilityBuffer; }
-    const CounterSampleBuffer& counterSampleBufferWithOffset() const SWIFT_RETURNS_INDEPENDENT_VALUE;
+    CounterSampleBuffer counterSampleBufferWithOffset() const;
     [[noreturn]] id<MTLCounterSampleBuffer> counterSampleBuffer() const { RELEASE_ASSERT_NOT_REACHED(); }
 
     void setCommandEncoder(CommandEncoder&) const;

@@ -34,6 +34,7 @@
 #include "ExceptionOr.h"
 #include "FileList.h"
 #include "Pasteboard.h"
+#include "ScriptWrappableInlines.h"
 #include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 

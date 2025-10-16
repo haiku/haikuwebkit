@@ -33,6 +33,7 @@
 #include "RTCDTMFToneChangeEvent.h"
 #include "RTCRtpSender.h"
 #include "ScriptExecutionContext.h"
+#include "ScriptWrappableInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

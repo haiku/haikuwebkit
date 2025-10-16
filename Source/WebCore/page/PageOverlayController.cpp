@@ -30,6 +30,7 @@
 #include "ChromeClient.h"
 #include "GraphicsContext.h"
 #include "GraphicsLayer.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
 #include "Page.h"

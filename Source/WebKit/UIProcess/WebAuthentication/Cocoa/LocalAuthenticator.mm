@@ -179,7 +179,7 @@ void LocalAuthenticator::clearAllCredentials()
 
     OSStatus status = SecItemDelete((__bridge CFDictionaryRef)query.get());
     if (status && status != errSecItemNotFound)
-        LOG_ERROR(makeString("Couldn't clear all credential: "_s, status).utf8().data());
+        LOG_ERROR("Couldn't clear all credential: %d", status);
 }
 
 LocalAuthenticator::LocalAuthenticator(Ref<LocalConnection>&& connection)
@@ -764,7 +764,7 @@ void LocalAuthenticator::continueGetAssertionAfterUserVerification(Ref<WebCore::
 
 void LocalAuthenticator::receiveException(ExceptionData&& exception, WebAuthenticationStatus status) const
 {
-    LOG_ERROR(exception.message.utf8().data());
+    LOG_ERROR("%s", exception.message.utf8().data());
 
     // Roll back the just created credential.
     if (m_provisionalCredentialId) {

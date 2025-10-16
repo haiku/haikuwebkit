@@ -33,6 +33,10 @@ WrapperMap::WrapperMap()
         nullptr, // CSSPropertyID::CSSPropertyCustom
         new DiscreteWrapper(CSSPropertyID::CSSPropertyTestTopPriority, &RenderStyle::testTopPriority, &RenderStyle::setTestTopPriority), // CSSPropertyID::CSSPropertyTestTopPriority
         new DiscreteWrapper(CSSPropertyID::CSSPropertyTestHighPriority, &RenderStyle::testHighPriority, &RenderStyle::setTestHighPriority), // CSSPropertyID::CSSPropertyTestHighPriority
+        new FillLayersWrapper(CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary, &RenderStyle::backgroundLayers, &RenderStyle::ensureBackgroundLayers, &RenderStyle::setBackgroundLayers, DiscreteFillLayerWrapper(CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary, &BackgroundLayers::Layer::backgroundFillLayerTestPrimary, &BackgroundLayers::Layer::setBackgroundFillLayerTestPrimary)), // CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary
+        new DiscreteWrapper(CSSPropertyID::CSSPropertyTestMediumPriority, &RenderStyle::testMediumPriority, &RenderStyle::setTestMediumPriority), // CSSPropertyID::CSSPropertyTestMediumPriority
+        new DiscreteWrapper(CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary, &RenderStyle::backgroundFillLayerTestSecondary, &RenderStyle::setBackgroundFillLayerTestSecondary), // CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary
+        new DiscreteWrapper(CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter, &RenderStyle::backgroundFillLayerTestSecondaryWithConverter, &RenderStyle::setBackgroundFillLayerTestSecondaryWithConverter), // CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter
         nullptr, // CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor - not animatable (descriptor only)
         nullptr, // CSSPropertyID::CSSPropertyFirstTestDescriptorForSecondDescriptor - not animatable (descriptor only)
         new Wrapper<float>(CSSPropertyID::CSSPropertyTestAnimationWrapper, &RenderStyle::testAnimationWrapper, &RenderStyle::setTestAnimationWrapper), // CSSPropertyID::CSSPropertyTestAnimationWrapper

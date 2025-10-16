@@ -63,7 +63,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteSerializedImageBufferProxy);
 
 RemoteImageBufferProxy::RemoteImageBufferProxy(Parameters parameters, const ImageBufferBackend::Info& info, RemoteRenderingBackendProxy& renderingBackend)
     : ImageBuffer(parameters, info, { }, nullptr)
-    , m_context(RemoteDisplayListRecorderProxy { ImageBuffer::colorSpace(), ImageBuffer::renderingMode() , { { }, ImageBuffer::logicalSize() }, ImageBuffer::baseTransform(), renderingBackend })
+    , m_context(RemoteGraphicsContextProxy { ImageBuffer::colorSpace(), ImageBuffer::renderingMode() , { { }, ImageBuffer::logicalSize() }, ImageBuffer::baseTransform(), renderingBackend })
     , m_renderingBackend(renderingBackend)
 {
     m_context.setClient(*this);
@@ -107,7 +107,7 @@ ALWAYS_INLINE auto RemoteImageBufferProxy::sendSync(T&& message)
 
     auto result = connection->sendSync(std::forward<T>(message), renderingResourceIdentifier());
     if (!result.succeeded()) [[unlikely]] {
-        RELEASE_LOG(RemoteLayerBuffers, "RemoteDisplayListRecorderProxy::sendSync - failed, name:%" PUBLIC_LOG_STRING ", error:%" PUBLIC_LOG_STRING, IPC::description(T::name()).characters(), IPC::errorAsString(result.error()).characters());
+        RELEASE_LOG(RemoteLayerBuffers, "RemoteGraphicsContextProxy::sendSync - failed, name:%" PUBLIC_LOG_STRING ", error:%" PUBLIC_LOG_STRING, IPC::description(T::name()).characters(), IPC::errorAsString(result.error()).characters());
         didBecomeUnresponsive();
     }
     return result;

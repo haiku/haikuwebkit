@@ -311,7 +311,14 @@ PlatformXR::Device::Layer WebXRWebGLLayer::endFrame()
         { PlatformXR::Eye::Right, m_rightViewportData.viewport->rect() }
     };
 
-    return PlatformXR::Device::Layer { .handle = m_framebuffer->handle(), .visible = true, .views = WTFMove(views) };
+    return PlatformXR::Device::Layer {
+        .handle = m_framebuffer->handle(),
+        .visible = true,
+        .views = WTFMove(views),
+#if USE(OPENXR)
+        .fenceFD = m_framebuffer->takeFenceFD()
+#endif
+    };
 }
 
 void WebXRWebGLLayer::canvasResized(CanvasBase&)

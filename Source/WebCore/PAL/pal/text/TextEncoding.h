@@ -26,9 +26,10 @@
 #pragma once
 
 #include "UnencodableHandling.h"
+#include <pal/ExportMacros.h>
 #include <wtf/URL.h>
 #include <wtf/text/StringView.h>
-#include "pal/ExportMacros.h"
+#include <wtf/text/WTFString.h>
 
 namespace PAL {
 

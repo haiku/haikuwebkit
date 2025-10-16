@@ -27,6 +27,7 @@
 #include "NetworkBroadcastChannelRegistry.h"
 
 #include "Logging.h"
+#include "NetworkConnectionToWebProcess.h"
 #include "NetworkProcess.h"
 #include "NetworkProcessProxyMessages.h"
 #include "WebBroadcastChannelRegistryMessages.h"

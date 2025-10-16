@@ -1,4 +1,4 @@
-# Copyright (C) 2024-2025 Apple Inc. All rights reserved.
+# Copyright (C) 2023-2025 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,6 +33,9 @@ const IPIntCalleeSaveSpaceMCPC = -8
 const IPIntCalleeSaveSpaceWI = -12
 
 macro saveIPIntRegisters()
+    # NOTE: We intentionally don't restore memoryBase and boundsCheckingSize here. These are saved
+    # and restored when entering Wasm by the JSToWasm wrapper and changes to them are meant
+    # to be observable within the same Wasm module.
     subp IPIntCalleeSaveSpaceStackAligned, sp
     store2ia MC, PC, IPIntCalleeSaveSpaceMCPC[cfr]
     storep wasmInstance, IPIntCalleeSaveSpaceWI[cfr]
@@ -214,31 +217,27 @@ end
 # Entering IPInt
 
 # MC = location in argumINT bytecode
-# csr1 = tmp
-# t4 = dst
-# t5 = src
-# csr0 = end
-# t7 = for dispatch
 
-const argumINTTmp = csr1
-const argumINTDst = t4
-const argumINTSrc = t5
-const argumINTEnd = csr0 # clobbers wasmInstance/WI
-const argumINTDsp = t7
+const argumINTTmp = t4
+const argumINTDst = csr0
+const argumINTSrc = csr1
+const argumINTEnd = t7
+const argumINTDsp = ws0 # t5
 
 macro ipintEntry()
     checkStackOverflow(ws0, argumINTTmp)
+    move ws0, lr
 
     # Allocate space for locals and rethrow values
-    loadi Wasm::IPIntCallee::m_localSizeToAlloc[ws0], argumINTTmp
-    loadi Wasm::IPIntCallee::m_numRethrowSlotsToAlloc[ws0], argumINTEnd
+    loadi Wasm::IPIntCallee::m_localSizeToAlloc[lr], argumINTTmp
+    loadi Wasm::IPIntCallee::m_numRethrowSlotsToAlloc[lr], argumINTEnd
     mulp LocalSize, argumINTEnd
     mulp LocalSize, argumINTTmp
     subp argumINTEnd, sp
     move sp, argumINTEnd
     subp argumINTTmp, sp
     move sp, argumINTDsp
-    loadp Wasm::IPIntCallee::m_argumINTBytecodePointer[ws0], MC
+    loadp Wasm::IPIntCallee::m_argumINTBytecode + VectorBufferOffset[lr], MC
 
     push argumINTTmp, argumINTDst, argumINTSrc, argumINTEnd
 
@@ -255,7 +254,7 @@ macro argumINTDispatch()
     lshiftp 6, argumINTTmp
     leap (_argumINT_begin + 1), argumINTDsp
     addp argumINTTmp, argumINTDsp
-    emit "bx r9" # argumINTDsp = t7 = r9
+    jmp argumINTDsp
 .err:
     break
 end
@@ -297,8 +296,12 @@ end)
 
 ipintOp(_block, macro()
     # block
+if ARM64 or ARM64E
+    loadpairi IPInt::BlockMetadata::deltaPC[MC], t0, t1
+else
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
+end
     advancePCByReg(t0)
     advanceMCByReg(t1)
     nextIPIntInstruction()
@@ -376,7 +379,7 @@ ipintOp(_throw_ref, macro()
     jumpToException()
 
 .throw_null_ref:
-    throwException(NullExnReference)
+    throwException(NullExnrefReference)
 end)
 
 # MC = location in uINT bytecode
@@ -410,7 +413,7 @@ end)
 
 # This implementation is specially defined out of ipintOp scope to make end implementation tight.
 .ipint_end_ret:
-    loadp Wasm::IPIntCallee::m_uINTBytecodePointer[ws0], MC
+    loadp Wasm::IPIntCallee::m_uINTBytecode + VectorBufferOffset[ws0], MC
     ipintEpilogueOSR(10)
     loadp Wasm::IPIntCallee::m_highestReturnStackOffset[ws0], sc0
     addp cfr, sc0
@@ -484,7 +487,7 @@ end)
 ipintOp(_return, macro()
     # ret
     loadi Wasm::IPIntCallee::m_bytecodeEnd[ws0], PC
-    loadp Wasm::IPIntCallee::m_uINTBytecode[ws0], MC
+    loadp Wasm::IPIntCallee::m_uINTBytecode + VectorBufferOffset[ws0], MC
     # This is guaranteed going to an end instruction, so skip
     # dispatch and end of program check for speed
     jmp .ipint_end_ret
@@ -502,16 +505,16 @@ ipintOp(_call, macro()
     loadb IPInt::CallMetadata::length[MC], t0
     advancePCByReg(t0)
 
-    # get function index
-    loadb IPInt::CallMetadata::functionIndex[MC], a1
+    move cfr, a1
+    move MC, a2
     advanceMC(IPInt::CallMetadata::signature)
 
     subp 16, sp
-    move sp, a2
+    move sp, a3
 
     # operation returns the entrypoint in r0 and the target instance in r1
     # operation stores the target callee to sp[0] and target function info to sp[1]
-    operationCall(macro() cCall3(_ipint_extern_prepare_call) end)
+    operationCall(macro() cCall4(_ipint_extern_prepare_call) end)
     loadp [sp], IPIntCallCallee
     loadp 8[sp], IPIntCallFunctionSlot
     addp 16, sp
@@ -552,15 +555,14 @@ ipintOp(_return_call, macro()
     loadb IPInt::TailCallMetadata::length[MC], t0
     advancePCByReg(t0)
 
-    # get function index
-    loadi IPInt::TailCallMetadata::functionIndex[MC], a1
-
+    move cfr, a1
+    move MC, a2
     subp 16, sp
-    move sp, a2
+    move sp, a3
 
     # operation returns the entrypoint in r0 and the target instance in r1
     # this operation stores the boxed Callee into *r2
-    operationCall(macro() cCall3(_ipint_extern_prepare_call) end)
+    operationCall(macro() cCall4(_ipint_extern_prepare_call) end)
 
     loadp [sp], IPIntCallCallee
     loadp 8[sp], IPIntCallFunctionSlot
@@ -598,7 +600,7 @@ ipintOp(_call_ref, macro()
     saveCallSiteIndex()
 
     move cfr, a1
-    loadi IPInt::CallRefMetadata::typeIndex[MC], a2
+    move MC, a2
     move sp, a3
 
     operationCallMayThrow(macro() cCall4(_ipint_extern_prepare_call_ref) end)
@@ -620,7 +622,7 @@ ipintOp(_return_call_ref, macro()
     advancePCByReg(t2)
 
     move cfr, a1
-    loadi IPInt::TailCallRefMetadata::typeIndex[MC], a2
+    move MC, a2
     move sp, a3
     operationCallMayThrow(macro() cCall4(_ipint_extern_prepare_call_ref) end)
     loadp [sp], IPIntCallCallee
@@ -4052,6 +4054,20 @@ unimplementedInstruction(_i64_atomic_rmw32_cmpxchg_u)
 ## ULEB128 decoding logic for locals ##
 #######################################
 
+macro decodeULEB128(result)
+    # result should already be the first byte.
+    andq 0x7f, result
+    move 7, t2 # t1 holds the shift.
+.loop:
+    loadb [PC], t3
+    andq t3, 0x7f, t1
+    lshiftq t2, t1
+    orq t1, result
+    addq 7, t2
+    advancePC(1)
+    bbaeq t3, 128, .loop
+end
+
 slowPathLabel(_local_get)
     break
 
@@ -4143,6 +4159,7 @@ end
     # arg             <- initial SP
 
     # store sp as our shadow stack for arguments later
+    move sp, t4
     # make extra space if necessary
     move sp, shadowSP
     loadh IPInt::CallSignatureMetadata::numExtraResults[MC], t2
@@ -4195,7 +4212,8 @@ end
 
     move t4, mintSS
 
-    mintArgDispatch()
+    # need a common entrypoint because of x86 PC base
+    jmp .ipint_mint_arg_dispatch
 
 .ipint_tail_call_common:
     # Free up r0 to be used as argument register
@@ -4215,6 +4233,9 @@ end
     #  ...
     #  argument n-1
     #  argument n      <- sp
+
+    # sc1 = target callee => wasmInstance to free up sc1
+    const savedCallee = wasmInstance
 
     # store entrypoint and target instance on the stack for now
     push r0, r1
@@ -4296,7 +4317,14 @@ end
     #  saved MC/PC
     #  return address, saved CFR   <- sp
 
+.ipint_mint_arg_dispatch:
+    # on x86, we'll use PC for our PC base
+    initPCRelative(mint_arg, PC)
+
     mintArgDispatch()
+
+    # tail calls reuse most of mINT's argument logic, but exit into a different tail call stub.
+    # we use sc2 to keep the new stack frame
 
 mintAlign(_a0)
 _mint_begin:
@@ -4304,26 +4332,56 @@ _mint_begin:
     mintArgDispatch()
 
 mintAlign(_a1)
-    break
-
-mintAlign(_a2)
     mintPop(a3, a2)
     mintArgDispatch()
 
-mintAlign(_a3)
+mintAlign(_a2)
+if ARM64 or ARM64E or X86_64
+    mintPop(a2)
+    mintArgDispatch()
+else
     break
+end
+
+mintAlign(_a3)
+if ARM64 or ARM64E or X86_64
+    mintPop(a3)
+    mintArgDispatch()
+else
+    break
+end
 
 mintAlign(_a4)
+if ARM64 or ARM64E or X86_64
+    mintPop(a4)
+    mintArgDispatch()
+else
     break
+end
 
 mintAlign(_a5)
+if ARM64 or ARM64E or X86_64
+    mintPop(a5)
+    mintArgDispatch()
+else
     break
+end
 
 mintAlign(_a6)
+if ARM64 or ARM64E
+    mintPop(a6)
+    mintArgDispatch()
+else
     break
+end
 
 mintAlign(_a7)
+if ARM64 or ARM64E
+    mintPop(a7)
+    mintArgDispatch()
+else
     break
+end
 
 mintAlign(_fa0)
     mintPopF(wfa0)
@@ -4357,16 +4415,24 @@ mintAlign(_fa7)
     mintPopF(wfa7)
     mintArgDispatch()
 
+# Note that the regular call and tail call opcodes will be implemented slightly differently.
+# Regular calls have to save space for return values, while tail calls are reusing the stack frame
+# and thus do not have to care.
+
 mintAlign(_stackzero)
-    mintPop(t1, t0)
-    store2ia t0, t1, [mintDst]
+    mintPop(argumINTTmp, lr)
+    store2ia argumINTTmp, lr, [sc3]
     mintArgDispatch()
 
 mintAlign(_stackeight)
-    mintPop(t1, t0)
-    subp 16, mintDst
-    store2ia t0, t1, 8[mintDst]
+    mintPop(argumINTTmp, lr)
+    subp 16, sc3
+    store2ia argumINTTmp, lr, 8[sc3]
     mintArgDispatch()
+
+# Since we're writing into the same frame, we're going to first push stack arguments onto the stack.
+# Once we're done, we'll copy them back down into the new frame, to avoid having to deal with writing over
+# arguments lower down on the stack.
 
 mintAlign(_tail_stackzero)
     break
@@ -4375,8 +4441,7 @@ mintAlign(_tail_stackeight)
     break
 
 mintAlign(_gap)
-    subp 16, mintDst
-    mintArgDispatch()
+    break
 
 mintAlign(_tail_gap)
     break
@@ -4385,28 +4450,50 @@ mintAlign(_tail_call)
     jmp .ipint_perform_tail_call
 
 mintAlign(_call)
-    pop wasmInstance, sc3 # sc3 = targetEntrypoint
+    pop wasmInstance, ws0
+    # pop targetInstance, targetEntrypoint
 
     # Save stack pointer, if we tail call someone who changes the frame above's stack argument size
     move sp, sc1
     storep sc1, ThisArgumentOffset[cfr]
 
-    # Make the call
-    call sc3, WasmEntryPtrTag
+    # Swap instances
+    # move targetInstance, wasmInstance
 
+    # Set up memory
+    push t2, t3
+    ipintReloadMemory()
+    pop t3, t2
+
+    # move targetEntrypoint, ws0
+
+    # Make the call
+if ARM64E
+    leap _g_config, ws1
+    jmp JSCConfigGateMapOffset + (constexpr Gate::wasm_ipint_call) * PtrSize[ws1], NativeToJITGatePtrTag # WasmEntryPtrTag
+end
+
+_wasm_trampoline_wasm_ipint_call:
+_wasm_trampoline_wasm_ipint_call_wide16:
+_wasm_trampoline_wasm_ipint_call_wide32:
+    call ws0, WasmEntryPtrTag
+
+_wasm_ipint_call_return_location:
+_wasm_ipint_call_return_location_wide16:
+_wasm_ipint_call_return_location_wide32:
     # Restore the stack pointer
     loadp ThisArgumentOffset[cfr], sc0
     move sc0, sp
 
-    # <first non-arg>   <- argSP
+    # <first non-arg>   <- t3
     # arg
     # ...
     # arg
     # arg
     # reserved
     # reserved
-    # argSP, PC
-    # PL, wasmInstance  <- sc2
+    # t3, PC
+    # PL, wasmInstance  <- sc3
     # call frame return
     # call frame return
     # call frame
@@ -4414,17 +4501,24 @@ mintAlign(_call)
     # call frame
     # call frame        <- sp
 
-    loadi IPInt::CallReturnMetadata::stackFrameSize[MC], sc2
-    leap [sp, sc2], sc2
+    loadi IPInt::CallReturnMetadata::stackFrameSize[MC], sc3
+    leap [sp, sc3], sc3
 
-    const mintRetSrc = csr1
-    const mintRetDst = sc1
+    const mintRetSrc = sc1
+    const mintRetDst = sc2
 
-    loadi IPInt::CallReturnMetadata::firstStackArgumentSPOffset[MC], csr1
+    loadi IPInt::CallReturnMetadata::firstStackArgumentSPOffset[MC], mintRetSrc
     advanceMC(IPInt::CallReturnMetadata::resultBytecode)
-    leap [sp, csr1], mintRetSrc
+    leap [sp, mintRetSrc], mintRetSrc
 
-    loadp 3*MachineRegisterSize[sc2], mintRetDst # load argSP
+if ARM64 or ARM64E
+    loadp 2*SlotSize[sc3], mintRetDst
+elsif X86_64
+    loadp 3*SlotSize[sc3], mintRetDst
+end
+
+    # on x86, we'll use PC again for our PC base
+    initPCRelative(mint_ret, PC)
 
     mintRetDispatch()
 
@@ -4435,27 +4529,63 @@ _mint_begin_return:
     mintRetDispatch()
 
 mintAlign(_r1)
-    break
-
-mintAlign(_r2)
     subp StackValueSize, mintRetDst
     store2ia a2, a3, [mintRetDst]
     mintRetDispatch()
 
-mintAlign(_r3)
+mintAlign(_r2)
+if ARM64 or ARM64E or X86_64
+    subp StackValueSize, mintRetDst
+    storeq wa2, [mintRetDst]
+    mintRetDispatch()
+else
     break
+end
+
+mintAlign(_r3)
+if ARM64 or ARM64E or X86_64
+    subp StackValueSize, mintRetDst
+    storeq wa3, [mintRetDst]
+    mintRetDispatch()
+else
+    break
+end
 
 mintAlign(_r4)
+if ARM64 or ARM64E or X86_64
+    subp StackValueSize, mintRetDst
+    storeq wa4, [mintRetDst]
+    mintRetDispatch()
+else
     break
+end
 
 mintAlign(_r5)
+if ARM64 or ARM64E or X86_64
+    subp StackValueSize, mintRetDst
+    storeq wa5, [mintRetDst]
+    mintRetDispatch()
+else
     break
+end
 
 mintAlign(_r6)
+if ARM64 or ARM64E
+    subp StackValueSize, mintRetDst
+    storeq wa6, [mintRetDst]
+    mintRetDispatch()
+else
     break
+end
 
 mintAlign(_r7)
+if ARM64 or ARM64E
+    subp StackValueSize, mintRetDst
+    storeq wa7, [mintRetDst]
+    mintRetDispatch()
+else
     break
+end
 
 mintAlign(_fr0)
     subp StackValueSize, mintRetDst
@@ -4498,14 +4628,15 @@ mintAlign(_fr7)
     mintRetDispatch()
 
 mintAlign(_stack)
-    load2ia [mintRetSrc], t0, t1
+    load2ia [mintRetSrc], sc0, sc1
     addp SlotSize, mintRetSrc
     subp StackValueSize, mintRetDst
-    store2ia t0, t1, [mintRetDst]
+    store2ia sc0, sc1, [mintRetDst]
     mintRetDispatch()
 
 mintAlign(_stack_gap)
-    break
+    addp SlotSize, mintRetSrc
+    mintRetDispatch()
 
 mintAlign(_end)
 
@@ -4532,9 +4663,13 @@ mintAlign(_end)
     move mintRetDst, sp
 
     push MC
-    getIPIntCallee()
+    loadp Callee[cfr], ws0
+    unboxWasmCallee(ws0, ws1)
+    storep ws0, UnboxedWasmCalleeStackSlot[cfr]
     pop MC
 
+    # Restore memory
+    ipintReloadMemory()
     nextIPIntInstruction()
 
 .ipint_perform_tail_call:
@@ -4588,7 +4723,12 @@ mintAlign(_end)
 
     # re-setup the call frame, and load our return address in
     subp FirstArgumentOffset, sc2
+if X86_64
+    pop sc1, sc0
+    storep sc0, ReturnPC[sc2]
+elsif ARM64 or ARM64E or ARMv7 or RISCV64
     pop sc1, lr
+end
 
     pop PC, MC
 
@@ -4624,7 +4764,9 @@ mintAlign(_end)
     # on ARM: lr = return address
 
     move sc2, sp
-
+if ARM64E
+    addp CallerFrameAndPCSize, cfr, ws2
+end
     # saved cfr
     move sc1, cfr
 
@@ -4633,6 +4775,19 @@ mintAlign(_end)
 
     addp CallerFrameAndPCSize, sp
 
+if X86_64
+    subp 8, sp
+end
+
+    # go!
+if ARM64E
+    leap _g_config, ws1
+    jmp JSCConfigGateMapOffset + (constexpr Gate::wasmIPIntTailCallWasmEntryPtrTag) * PtrSize[ws1], NativeToJITGatePtrTag # WasmEntryPtrTag
+end
+
+_wasm_trampoline_wasm_ipint_tail_call:
+_wasm_trampoline_wasm_ipint_tail_call_wide16:
+_wasm_trampoline_wasm_ipint_tail_call_wide32:
     jmp sc3, WasmEntryPtrTag
 
 ###########################################
@@ -4661,10 +4816,20 @@ uintAlign(_r5)
     break
 
 uintAlign(_r6)
+if ARM64 or ARM64E
+    popQuad(wa6)
+    uintDispatch()
+else
     break
+end
 
 uintAlign(_r7)
+if ARM64 or ARM64E
+    popQuad(wa7)
+    uintDispatch()
+else
     break
+end
 
 uintAlign(_fr0)
     popFloat(fr)
@@ -4701,8 +4866,8 @@ uintAlign(_fr7)
 # destination on stack is sc0
 
 uintAlign(_stack)
-    popInt64(csr1, csr0)
-    store2ia csr0, csr1, [sc0]
+    popInt64(argumINTTmp, lr)
+    store2ia argumINTTmp, lr, [sc0]
     subp 8, sc0
     uintDispatch()
 
@@ -4723,28 +4888,65 @@ _argumINT_begin:
     argumINTDispatch()
 
 argumINTAlign(_a1)
-    break
-
-argumINTAlign(_a2)
     storei a2, [argumINTDst]
     storei a3, 4[argumINTDst]
     addp LocalSize, argumINTDst
     argumINTDispatch()
 
-argumINTAlign(_a3)
+argumINTAlign(_a2)
+if ARM64 or ARM64E or X86_64
+    storeq wa2, [argumINTDst]
+    addp LocalSize, argumINTDst
+    argumINTDispatch()
+else
     break
+end
+
+
+argumINTAlign(_a3)
+if ARM64 or ARM64E or X86_64
+    storeq wa3, [argumINTDst]
+    addp LocalSize, argumINTDst
+    argumINTDispatch()
+else
+    break
+end
 
 argumINTAlign(_a4)
+if ARM64 or ARM64E or X86_64
+    storeq wa4, [argumINTDst]
+    addp LocalSize, argumINTDst
+    argumINTDispatch()
+else
     break
+end
 
 argumINTAlign(_a5)
+if ARM64 or ARM64E or X86_64
+    storeq wa5, [argumINTDst]
+    addp LocalSize, argumINTDst
+    argumINTDispatch()
+else
     break
+end
 
 argumINTAlign(_a6)
+if ARM64 or ARM64E
+    storeq wa6, [argumINTDst]
+    addp LocalSize, argumINTDst
+    argumINTDispatch()
+else
     break
+end
 
 argumINTAlign(_a7)
+if ARM64 or ARM64E
+    storeq wa7, [argumINTDst]
+    addp LocalSize, argumINTDst
+    argumINTDispatch()
+else
     break
+end
 
 argumINTAlign(_fa0)
     stored fa0, [argumINTDst]
@@ -4787,9 +4989,9 @@ argumINTAlign(_fa7)
     argumINTDispatch()
 
 argumINTAlign(_stack)
-    load2ia [argumINTSrc], t0, t1
+    load2ia [argumINTSrc], argumINTTmp, lr
     addp 8, argumINTSrc
-    store2ia t0, t1, [argumINTDst]
+    store2ia argumINTTmp, lr, [argumINTDst]
     addp LocalSize, argumINTDst
     argumINTDispatch()
 
@@ -4797,17 +4999,3 @@ argumINTAlign(_end)
     jmp .ipint_entry_end_local
 
 
-_wasm_trampoline_wasm_ipint_call:
-_wasm_trampoline_wasm_ipint_call_wide16:
-_wasm_trampoline_wasm_ipint_call_wide32:
-    break
-
-_wasm_ipint_call_return_location:
-_wasm_ipint_call_return_location_wide16:
-_wasm_ipint_call_return_location_wide32:
-    break
-
-_wasm_trampoline_wasm_ipint_tail_call:
-_wasm_trampoline_wasm_ipint_tail_call_wide16:
-_wasm_trampoline_wasm_ipint_tail_call_wide32:
-    break

@@ -276,6 +276,10 @@ struct Type {
         return kind == TypeKind::RefNull || kind == TypeKind::Externref || kind == TypeKind::Funcref;
     }
 
+    // Saying conservatively.
+    bool definitelyIsCellOrNull() const;
+    bool definitelyIsWasmGCObjectOrNull() const;
+
     void dump(PrintStream& out) const;
     Width width() const;
 
@@ -290,7 +294,7 @@ struct Type {
         switch(kind) {
         case TypeKind::I64:
         case TypeKind::Funcref:
-        case TypeKind::Exn:
+        case TypeKind::Exnref:
         case TypeKind::Externref:
         case TypeKind::RefNull:
         case TypeKind::Ref:

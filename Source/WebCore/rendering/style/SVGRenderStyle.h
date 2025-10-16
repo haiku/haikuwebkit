@@ -23,11 +23,11 @@
 
 #pragma once
 
+#include "StyleSVGPaint.h"
 #include <WebCore/RenderStyle.h>
 #include <WebCore/RenderStyleConstants.h>
 #include <WebCore/SVGRenderStyleDefs.h>
 #include <WebCore/StyleRareInheritedData.h>
-#include "StyleSVGPaint.h"
 #include <WebCore/StyleURL.h>
 #include <WebCore/WindRule.h>
 

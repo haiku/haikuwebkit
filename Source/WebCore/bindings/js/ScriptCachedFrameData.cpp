@@ -35,7 +35,7 @@
 #include "CommonVM.h"
 #include "Document.h"
 #include "FrameInlines.h"
-#include "GCController.h"
+#include "GarbageCollectionController.h"
 #include "JSDOMWindow.h"
 #include "LocalFrame.h"
 #include "LocalFrameInlines.h"
@@ -108,7 +108,7 @@ void ScriptCachedFrameData::clear()
 
     JSLockHolder lock(commonVM());
     m_windows.clear();
-    GCController::singleton().garbageCollectSoon();
+    GarbageCollectionController::singleton().garbageCollectSoon();
 }
 
 } // namespace WebCore

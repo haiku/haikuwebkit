@@ -28,11 +28,13 @@
 #include <WebCore/MouseEventTypes.h>
 #include <WebCore/PointerID.h>
 #include <wtf/HashMap.h>
+#include <wtf/Platform.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
 
 class Document;
+class DoublePoint;
 class Element;
 class EventTarget;
 class IntPoint;

@@ -369,6 +369,41 @@ bool CocoaApplication::isAppleApplication()
     return isAppleApplication;
 }
 
+bool CocoaApplication::isDumpRenderTree()
+{
+#if PLATFORM(MAC)
+    static bool isDumpRenderTree = applicationBundleIsEqualTo("com.apple.WebKit.DumpRenderTree"_s);
+    return isDumpRenderTree;
+#else
+    static bool isDumpRenderTree = applicationBundleIsEqualTo("org.webkit.DumpRenderTree"_s);
+    return isDumpRenderTree;
+#endif
+}
+
+bool CocoaApplication::shouldOSFaultLogForAppleApplicationUsingWebKit1()
+{
+    static bool bundleIdentifierShouldLog;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        bundleIdentifierShouldLog = []() -> bool {
+            if (!isAppleApplication())
+                return false;
+
+            String bundleIdentifier = applicationBundleIdentifier();
+            if (bundleIdentifier.startsWith("com.apple.InstallerRemotePluginService."_s))
+                return false;
+            if (applicationBundleIsEqualTo("TestWebKitAPI"_s))
+                return false;
+            if (CocoaApplication::isDumpRenderTree())
+                return false;
+
+            return true;
+        }();
+    });
+
+    return bundleIdentifierShouldLog && !((rand() * 1000) % 1000);
+}
+
 #if PLATFORM(MAC)
 
 bool MacApplication::isSafari()
@@ -471,14 +506,6 @@ bool IOSApplication::isWebBookmarksD()
 {
     static bool isWebBookmarksD = applicationBundleIsEqualTo("com.apple.webbookmarksd"_s);
     return isWebBookmarksD;
-}
-
-bool IOSApplication::isDumpRenderTree()
-{
-    // We use a prefix match instead of strict equality since multiple instances of DumpRenderTree
-    // may be launched, where the bundle identifier of each instance has a unique suffix.
-    static bool isDumpRenderTree = applicationBundleIsEqualTo("org.webkit.DumpRenderTree"_s); // e.g. org.webkit.DumpRenderTree0
-    return isDumpRenderTree;
 }
 
 bool IOSApplication::isMobileStore()

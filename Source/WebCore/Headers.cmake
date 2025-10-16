@@ -721,6 +721,10 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     Modules/system-preview/ARKitBadgeSystemImage.h
 
+    Modules/url-pattern/URLPattern.h
+    Modules/url-pattern/URLPatternComponent.h
+    Modules/url-pattern/URLPatternInit.h
+
     Modules/web-locks/WebLock.h
     Modules/web-locks/WebLockIdentifier.h
     Modules/web-locks/WebLockManagerSnapshot.h
@@ -834,6 +838,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     accessibility/AXComputedObjectAttributeCache.h
     accessibility/AXCoreObject.h
     accessibility/AXGeometryManager.h
+    accessibility/AXListHelpers.h
     accessibility/AXLogger.h
     accessibility/AXLoggerBase.h
     accessibility/AXNotifications.h
@@ -846,12 +851,12 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     accessibility/AXTreeStore.h
     accessibility/AXTreeStoreInlines.h
     accessibility/AXUtilities.h
-    accessibility/AccessibilityListBox.h
     accessibility/AccessibilityMenuListPopup.h
     accessibility/AccessibilityMockObject.h
     accessibility/AccessibilityNodeObject.h
     accessibility/AccessibilityObject.h
     accessibility/AccessibilityRenderObject.h
+    accessibility/AccessibilityRole.h
     accessibility/AccessibilityScrollView.h
     accessibility/ForcedAccessibilityValue.h
     accessibility/isolatedtree/AXIsolatedObject.h
@@ -913,7 +918,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     bindings/js/DOMPromiseProxy.h
     bindings/js/DOMWrapperWorld.h
     bindings/js/ExceptionDetails.h
-    bindings/js/GCController.h
+    bindings/js/GarbageCollectionController.h
     bindings/js/IDBBindingUtilities.h
     bindings/js/JSCSSRuleCustom.h
     bindings/js/JSCSSStyleDeclarationCustom.h
@@ -1262,6 +1267,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/ActiveDOMCallback.h
     dom/ActiveDOMObject.h
     dom/AddEventListenerOptions.h
+    dom/AddEventListenerOptionsInlines.h
     dom/AsyncNodeDeletionQueue.h
     dom/AsyncNodeDeletionQueueInlines.h
     dom/Attr.h
@@ -1695,6 +1701,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     html/canvas/PredefinedColorSpace.h
     html/canvas/WebGLAny.h
     html/canvas/WebGLContextAttributes.h
+    html/canvas/WebGLExtension.h
     html/canvas/WebGLExtensionAny.h
 
     html/closewatcher/CloseWatcher.h
@@ -1836,6 +1843,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     layout/integration/inline/LineSelection.h
 
     layout/layouttree/LayoutBox.h
+    layout/layouttree/LayoutBoxGeometry.h
     layout/layouttree/LayoutChildIterator.h
     layout/layouttree/LayoutContainingBlockChainIterator.h
     layout/layouttree/LayoutDescendantIterator.h
@@ -2008,6 +2016,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/ElementTargetingTypes.h
     page/EmptyAttachmentElementClient.h
     page/EventHandler.h
+    page/EventTimingInteractionID.h
     page/FocusController.h
     page/FocusDirection.h
     page/FocusEventData.h
@@ -2060,8 +2069,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/PageOverlayController.h
     page/PagePasteboardContext.h
     page/PartitionedSecurityOrigin.h
-    page/PerformanceEntry.h
-    page/PerformanceEventTiming.h
+    page/PerformanceEventTimingCandidate.h
     page/PerformanceLogging.h
     page/PerformanceLoggingClient.h
     page/PointerCaptureController.h
@@ -2193,6 +2201,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/writing-tools/WritingToolsTypes.h
 
     platform/AbortableTaskQueue.h
+    platform/AudioEncoderActiveConfiguration.h
     platform/AudioSampleFormat.h
     platform/BoxExtents.h
     platform/BoxSides.h
@@ -2447,6 +2456,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/AnimationFrameRate.h
     platform/graphics/AudioTrackPrivate.h
     platform/graphics/AudioTrackPrivateClient.h
+    platform/graphics/AudioVideoRenderer.h
     platform/graphics/BifurcatedGraphicsContext.h
     platform/graphics/BitmapImage.h
     platform/graphics/ByteArrayPixelBuffer.h
@@ -3093,10 +3103,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/BorderValue.h
     rendering/style/CollapsedBorderValue.h
     rendering/style/CounterDirectives.h
-    rendering/style/FillLayer.h
     rendering/style/GridArea.h
     rendering/style/GridSpan.h
-    rendering/style/LineClampValue.h
     rendering/style/NameScope.h
     rendering/style/OutlineValue.h
     rendering/style/PositionArea.h
@@ -3179,13 +3187,17 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/anchor-position/StyleAnchorName.h
 
+    style/values/backgrounds/StyleBackgroundLayer.h
+    style/values/backgrounds/StyleBackgroundSize.h
     style/values/backgrounds/StyleBorderImage.h
     style/values/backgrounds/StyleBorderImageOutset.h
     style/values/backgrounds/StyleBorderImageRepeat.h
     style/values/backgrounds/StyleBorderImageSlice.h
     style/values/backgrounds/StyleBorderImageSource.h
     style/values/backgrounds/StyleBorderImageWidth.h
+    style/values/backgrounds/StyleFillLayers.h
     style/values/backgrounds/StyleLineWidth.h
+    style/values/backgrounds/StyleRepeatStyle.h
 
     style/values/borders/StyleBorderRadius.h
     style/values/borders/StyleBoxShadow.h
@@ -3240,6 +3252,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/grid/StyleGridTrackSizingDirection.h
 
     style/values/images/StyleGradient.h
+    style/values/images/StyleImageOrNone.h
     style/values/images/StyleImageWrapper.h
     style/values/images/StyleObjectPosition.h
 
@@ -3258,6 +3271,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/masking/StyleMaskBorderSlice.h
     style/values/masking/StyleMaskBorderSource.h
     style/values/masking/StyleMaskBorderWidth.h
+    style/values/masking/StyleMaskLayer.h
 
     style/values/motion/StyleOffsetAnchor.h
     style/values/motion/StyleOffsetDistance.h
@@ -3270,6 +3284,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/multicol/StyleColumnWidth.h
 
     style/values/non-standard/StyleWebKitBorderSpacing.h
+    style/values/non-standard/StyleWebKitLineClamp.h
     style/values/non-standard/StyleWebKitOverflowScrolling.h
     style/values/non-standard/StyleWebKitTextStrokeWidth.h
     style/values/non-standard/StyleWebKitTouchCallout.h
@@ -3352,6 +3367,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/text/StyleHyphenateLimitLines.h
     style/values/text/StyleTextIndent.h
 
+    style/values/text-decoration/StyleTextDecorationLine.h
     style/values/text-decoration/StyleTextDecorationThickness.h
     style/values/text-decoration/StyleTextEmphasisStyle.h
     style/values/text-decoration/StyleTextShadow.h
@@ -3569,12 +3585,14 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     ${WebCore_DERIVED_SOURCES_DIR}/JSWebKitSerializedNode.h
     ${WebCore_DERIVED_SOURCES_DIR}/JSXPathExpression.h
     ${WebCore_DERIVED_SOURCES_DIR}/JSXPathResult.h
+    ${WebCore_DERIVED_SOURCES_DIR}/MathMLNames.h
     ${WebCore_DERIVED_SOURCES_DIR}/Namespace.h
     ${WebCore_DERIVED_SOURCES_DIR}/NodeName.h
     ${WebCore_DERIVED_SOURCES_DIR}/ProcessSyncClient.h
     ${WebCore_DERIVED_SOURCES_DIR}/ProcessSyncData.h
     ${WebCore_DERIVED_SOURCES_DIR}/ReadableByteStreamInternalsBuiltins.h
     ${WebCore_DERIVED_SOURCES_DIR}/ReadableStreamInternalsBuiltins.h
+    ${WebCore_DERIVED_SOURCES_DIR}/SVGNames.h
     ${WebCore_DERIVED_SOURCES_DIR}/Settings.h
     ${WebCore_DERIVED_SOURCES_DIR}/StreamInternalsBuiltins.h
     ${WebCore_DERIVED_SOURCES_DIR}/TagName.h

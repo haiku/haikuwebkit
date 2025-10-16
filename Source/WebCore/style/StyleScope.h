@@ -28,6 +28,7 @@
 #pragma once
 
 #include <WebCore/AnchorPositionEvaluator.h>
+#include <WebCore/Document.h>
 #include <WebCore/LayoutRect.h>
 #include <WebCore/LayoutSize.h>
 #include <WebCore/StyleScopeIdentifier.h>
@@ -53,7 +54,6 @@ namespace WebCore {
 
 class CSSCounterStyleRegistry;
 class CSSStyleSheet;
-class Document;
 class Element;
 class HTMLSlotElement;
 class Node;

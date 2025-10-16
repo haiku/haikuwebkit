@@ -49,7 +49,7 @@ class CSSStyleDeclaration : public ScriptWrappable, public AbstractRefCountedAnd
     WTF_MAKE_NONCOPYABLE(CSSStyleDeclaration);
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(CSSStyleDeclaration);
 public:
-    virtual ~CSSStyleDeclaration() = default;
+    virtual ~CSSStyleDeclaration();
 
     virtual StyleDeclarationType styleDeclarationType() const = 0;
 

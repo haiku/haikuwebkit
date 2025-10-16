@@ -25,19 +25,19 @@
 
 #pragma once
 
-#include <WebCore/FloatRect.h>
-#include <WebCore/InlineDamage.h>
-#include <WebCore/InlineFormattingConstraints.h>
-#include <WebCore/InlineFormattingContext.h>
+#include "InlineDamage.h"
+#include "InlineFormattingConstraints.h"
+#include "InlineFormattingContext.h"
 #include "InlineIteratorInlineBox.h"
+#include "LayoutIntegrationBoxGeometryUpdater.h"
+#include "LayoutIntegrationBoxTreeUpdater.h"
+#include "SVGTextChunk.h"
+#include <WebCore/FloatRect.h>
 #include <WebCore/InlineIteratorLineBox.h>
 #include <WebCore/InlineIteratorTextBox.h>
-#include <WebCore/LayoutIntegrationBoxGeometryUpdater.h>
-#include <WebCore/LayoutIntegrationBoxTreeUpdater.h>
 #include <WebCore/LayoutPoint.h>
 #include <WebCore/LayoutState.h>
 #include <WebCore/RenderObjectEnums.h>
-#include "SVGTextChunk.h"
 #include <wtf/CheckedPtr.h>
 
 namespace WebCore {
@@ -75,8 +75,8 @@ public:
 
     static bool canUseFor(const RenderBlockFlow&);
     static bool canUseForPreferredWidthComputation(const RenderBlockFlow&);
-    static bool shouldInvalidateLineLayoutPathAfterContentChange(const RenderBlockFlow& parent, const RenderObject& rendererWithNewContent, const LineLayout&);
-    static bool shouldInvalidateLineLayoutPathAfterTreeMutation(const RenderBlockFlow& parent, const RenderObject& renderer, const LineLayout&, bool isRemoval);
+    static bool shouldInvalidateLineLayoutAfterContentChange(const RenderBlockFlow& parent, const RenderObject& rendererWithNewContent, const LineLayout&);
+    static bool shouldInvalidateLineLayoutAfterTreeMutation(const RenderBlockFlow& parent, const RenderObject& renderer, const LineLayout&, bool isRemoval);
 
     void updateFormattingContexGeometries(LayoutUnit availableLogicalWidth);
     void updateOverflow();

@@ -70,7 +70,7 @@ public:
         RELEASE_ASSERT_UNDER_CONSTEXPR_CONTEXT(m_charactersWithNullTerminator[length - 1] == '\0');
     }
 
-    unsigned hash() const;
+    constexpr unsigned hash() const;
     constexpr bool isNull() const { return m_charactersWithNullTerminator.empty(); }
 
     constexpr const char* characters() const { return m_charactersWithNullTerminator.data(); }
@@ -118,7 +118,7 @@ inline auto operator<=>(ASCIILiteral a, ASCIILiteral b)
     return compareSpans(a.spanIncludingNullTerminator(), b.spanIncludingNullTerminator());
 }
 
-inline unsigned ASCIILiteral::hash() const
+inline constexpr unsigned ASCIILiteral::hash() const
 {
     if (isNull())
         return 0;

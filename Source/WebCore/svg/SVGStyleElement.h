@@ -38,12 +38,6 @@ public:
 
     bool disabled() const;
     void setDisabled(bool);
-                          
-    const AtomString& type() const;
-    void setType(const AtomString&);
-
-    const AtomString& media() const;
-    void setMedia(const AtomString&);
 
 private:
     SVGStyleElement(const QualifiedName&, Document&, bool createdByParser);

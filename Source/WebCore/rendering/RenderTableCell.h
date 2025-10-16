@@ -59,6 +59,7 @@ public:
     RenderTableRow* row() const { return downcast<RenderTableRow>(parent()); }
     RenderTableSection* section() const;
     RenderTable* table() const;
+    CheckedPtr<RenderTable> checkedTable() const;
     unsigned rowIndex() const;
     inline Style::PreferredSize styleOrColLogicalWidth() const;
     LayoutUnit logicalHeightForRowSizing() const;
@@ -270,6 +271,11 @@ inline RenderTable* RenderTableCell::table() const
     if (!section)
         return nullptr;
     return downcast<RenderTable>(section->parent());
+}
+
+inline CheckedPtr<RenderTable> RenderTableCell::checkedTable() const
+{
+    return table();
 }
 
 inline unsigned RenderTableCell::rowIndex() const

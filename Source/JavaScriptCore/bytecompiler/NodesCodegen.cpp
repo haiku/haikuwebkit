@@ -36,10 +36,10 @@
 #include "JSAsyncDisposableStack.h"
 #include "JSAsyncFromSyncIterator.h"
 #include "JSAsyncGenerator.h"
+#include "JSCellButterfly.h"
 #include "JSCInlines.h"
 #include "JSDisposableStack.h"
 #include "JSGenerator.h"
-#include "JSImmutableButterfly.h"
 #include "JSIteratorHelper.h"
 #include "JSMapIterator.h"
 #include "JSPromise.h"
@@ -457,8 +457,8 @@ RegisterID* ArrayNode::emitBytecode(BytecodeGenerator& generator, RegisterID* ds
             recommendedIndexingType |= CopyOnWrite;
             ASSERT(vm.heap.isDeferred()); // We run bytecode generator under a DeferGC. If we stopped doing that, we'd need to put a DeferGC here as we filled in these slots.
 
-            Structure* immutableButterflyStructure = allDenseStrings ? vm.immutableButterflyOnlyAtomStringsStructure.get() : vm.immutableButterflyStructure(recommendedIndexingType);
-            auto* array = JSImmutableButterfly::tryCreate(generator.vm(), immutableButterflyStructure, length);
+            Structure* cellButterflyStructure = allDenseStrings ? vm.cellButterflyOnlyAtomStringsStructure.get() : vm.cellButterflyStructure(recommendedIndexingType);
+            auto* array = JSCellButterfly::tryCreate(generator.vm(), cellButterflyStructure, length);
             RELEASE_ASSERT(array);
 
             unsigned index = 0;
@@ -6020,7 +6020,13 @@ void ObjectPatternNode::toString(StringBuilder& builder) const
     
 void ObjectPatternNode::bindValue(BytecodeGenerator& generator, RegisterID* rhs) const
 {
-    generator.emitRequireObjectCoercible(rhs, "Right side of assignment cannot be destructured"_s);
+    const Identifier* firstPropertyName = nullptr;
+    if (!m_targetPatterns.isEmpty()) {
+        const auto& firstTarget = m_targetPatterns[0];
+        if (!firstTarget.propertyExpression && !firstTarget.propertyName.isNull() && !firstTarget.propertyName.isPrivateName())
+            firstPropertyName = &firstTarget.propertyName;
+    }
+    generator.emitRequireObjectCoercibleForDestructuring(rhs, firstPropertyName);
 
     BytecodeGenerator::PreservedTDZStack preservedTDZStack;
     generator.preserveTDZStack(preservedTDZStack);

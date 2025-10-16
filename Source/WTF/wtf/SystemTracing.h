@@ -261,6 +261,7 @@ WTF_EXPORT_PRIVATE uint64_t WTFCurrentContinuousTime(Seconds deltaFromNow);
 WTF_EXTERN_C_END
 
 #define FOR_EACH_WTF_SIGNPOST_NAME(M) \
+    M(InitialAccessibilityIsolatedTreeBuild) \
     M(DataTask) \
     M(NavigationAndPaintTiming) \
     M(ExecuteScriptElement) \
@@ -274,6 +275,7 @@ WTF_EXTERN_C_END
     M(StreamClientConnection) \
     M(ScrollingPerformanceTestFingerDownInterval) \
     M(ScrollingPerformanceTestMomentumInterval) \
+    M(UpdateAccessibilityIsolatedTree) \
     M(WebKitPerformance) \
 
 #define DECLARE_WTF_SIGNPOST_NAME_ENUM(name) WTFOSSignpostName ## name,

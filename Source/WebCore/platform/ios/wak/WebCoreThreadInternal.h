@@ -43,7 +43,10 @@ void WebRunLoopDisableNested();
 void WebThreadInitRunQueue();
 
 WEBCORE_EXPORT CFRunLoopRef WebThreadRunLoop(void);
+
+#if TARGET_OS_IPHONE
 WebThreadContext *WebThreadCurrentContext(void);
+#endif
 
 #if defined(__cplusplus)
 } // extern "C"

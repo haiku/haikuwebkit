@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
 #if ENABLE(MEDIA_STREAM) && USE(AVFOUNDATION)
 
 #include <WebCore/MediaPlayerPrivate.h>
@@ -233,7 +234,7 @@ private:
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     RetainPtr<PlatformLayer> createVideoFullscreenLayer() override;
     void setVideoFullscreenLayer(PlatformLayer*, Function<void()>&& completionHandler) override;
-    void setVideoFullscreenFrame(FloatRect) override;
+    void setVideoFullscreenFrame(const FloatRect&) override;
 #endif
 
     AudioSourceProvider* audioSourceProvider() final;

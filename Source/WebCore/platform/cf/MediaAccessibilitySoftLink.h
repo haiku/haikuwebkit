@@ -78,6 +78,8 @@ SOFT_LINK_FUNCTION_FOR_HEADER(WebCore, MediaAccessibility, MAAudibleMediaPrefCop
 #define MAAudibleMediaPrefCopyPreferDescriptiveVideo softLink_MediaAccessibility_MAAudibleMediaPrefCopyPreferDescriptiveVideo
 SOFT_LINK_FUNCTION_MAY_FAIL_FOR_HEADER(WebCore, MediaAccessibility, MACaptionAppearanceIsCustomized, bool, (MACaptionAppearanceDomain domain), (domain))
 #define MACaptionAppearanceIsCustomized softLink_MediaAccessibility_MACaptionAppearanceIsCustomized
+SOFT_LINK_FUNCTION_MAY_FAIL_FOR_HEADER(WebCore, MediaAccessibility, MACaptionAppearanceCopyActiveProfileID, CFStringRef, (), ())
+#define MACaptionAppearanceCopyActiveProfileID softLink_MediaAccessibility_MACaptionAppearanceCopyActiveProfileID
 
 #endif // HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
 

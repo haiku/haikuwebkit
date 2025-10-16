@@ -81,4 +81,14 @@ bool WebsitePolicies::lockdownModeEnabled() const
     return m_lockdownModeEnabled ? *m_lockdownModeEnabled : WebKit::lockdownModeEnabledBySystem();
 }
 
+const WebCore::ResourceRequest& WebsitePolicies::alternateRequest() const
+{
+    return m_data.alternateRequest;
+}
+
+void WebsitePolicies::setAlternateRequest(WebCore::ResourceRequest&& request)
+{
+    m_data.alternateRequest = WTFMove(request);
+}
+
 }

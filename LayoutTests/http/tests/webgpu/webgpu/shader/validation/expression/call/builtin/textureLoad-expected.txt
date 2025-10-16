@@ -1225,18 +1225,6 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="abstra
   - EXPECTATION FAILED: subcase: format="rgba8uint";value=0
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: format="rgba8uint";value=1
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: format="rgba8sint";value=-1
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: format="rgba8sint";value=0
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: format="rgba8sint";value=1
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: format="rgba8unorm";value=-1
     OK
   - INFO: subcase: format="rgba8unorm";value=0
@@ -1253,14 +1241,18 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="abstra
     OK
   - INFO: subcase: format="rgba8uint";value=0
     OK
-  - INFO: subcase: format="rgba8uint";value=1
-    OK
-  - INFO: subcase: format="rgba8sint";value=-1
-    OK
-  - INFO: subcase: format="rgba8sint";value=0
-    OK
-  - INFO: subcase: format="rgba8sint";value=1
-    OK
+  - EXPECTATION FAILED: subcase: format="rgba8uint";value=1
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: format="rgba8sint";value=-1
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: format="rgba8sint";value=0
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: format="rgba8sint";value=1
+    Expected validation error
+      at (elided: below max severity)
   - EXPECTATION FAILED: subcase: format="rgba16uint";value=-1
     Expected validation error
       at (elided: below max severity)
@@ -1375,9 +1367,14 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="abstra
   - EXPECTATION FAILED: subcase: format="bgra8unorm";value=0
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: format="bgra8unorm";value=1
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: format="rgba8uint";value=1
+    OK
+  - INFO: subcase: format="rgba8sint";value=-1
+    OK
+  - INFO: subcase: format="rgba8sint";value=0
+    OK
+  - INFO: subcase: format="rgba8sint";value=1
+    OK
   - INFO: subcase: format="rgba16uint";value=-1
     OK
   - INFO: subcase: format="rgba16uint";value=0
@@ -1454,6 +1451,9 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="abstra
     OK
   - INFO: subcase: format="bgra8unorm";value=0
     OK
+  - EXPECTATION FAILED: subcase: format="bgra8unorm";value=1
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: format="bgra8unorm";value=1
     OK
  Reached unreachable code
@@ -2141,6 +2141,8 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="i32" a
   - EXPECTATION FAILED: subcase: format="rgba8unorm";value=-1
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: format="rgba8unorm";value=-1
+    OK
   - EXPECTATION FAILED: subcase: format="rgba8unorm";value=0
     Expected validation error
       at (elided: below max severity)
@@ -2183,8 +2185,9 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="i32" a
   - EXPECTATION FAILED: subcase: format="rgba16uint";value=1
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: format="rgba8unorm";value=-1
-    OK
+  - EXPECTATION FAILED: subcase: format="rgba16sint";value=-1
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: format="rgba8unorm";value=0
     OK
   - INFO: subcase: format="rgba8unorm";value=1
@@ -2213,9 +2216,8 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="i32" a
     OK
   - INFO: subcase: format="rgba16uint";value=1
     OK
-  - EXPECTATION FAILED: subcase: format="rgba16sint";value=-1
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: format="rgba16sint";value=-1
+    OK
   - EXPECTATION FAILED: subcase: format="rgba16sint";value=0
     Expected validation error
       at (elided: below max severity)
@@ -2318,11 +2320,6 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="i32" a
   - EXPECTATION FAILED: subcase: format="bgra8unorm";value=0
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: format="bgra8unorm";value=1
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: format="rgba16sint";value=-1
-    OK
   - INFO: subcase: format="rgba16sint";value=0
     OK
   - INFO: subcase: format="rgba16sint";value=1
@@ -2391,6 +2388,9 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="i32" a
     OK
   - INFO: subcase: format="bgra8unorm";value=0
     OK
+  - EXPECTATION FAILED: subcase: format="bgra8unorm";value=1
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: format="bgra8unorm";value=1
     OK
  Reached unreachable code
@@ -2848,10 +2848,6 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="u32" a
   - EXPECTATION FAILED: subcase: format="rgba8unorm";value=1
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: format="rgba8unorm";value=0
-    OK
-  - INFO: subcase: format="rgba8unorm";value=1
-    OK
   - EXPECTATION FAILED: subcase: format="rgba8snorm";value=0
     Expected validation error
       at (elided: below max severity)
@@ -2888,6 +2884,34 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="u32" a
   - EXPECTATION FAILED: subcase: format="rgba16float";value=1
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: format="rgba8unorm";value=0
+    OK
+  - INFO: subcase: format="rgba8unorm";value=1
+    OK
+  - INFO: subcase: format="rgba8snorm";value=0
+    OK
+  - INFO: subcase: format="rgba8snorm";value=1
+    OK
+  - INFO: subcase: format="rgba8uint";value=0
+    OK
+  - INFO: subcase: format="rgba8uint";value=1
+    OK
+  - INFO: subcase: format="rgba8sint";value=0
+    OK
+  - INFO: subcase: format="rgba8sint";value=1
+    OK
+  - INFO: subcase: format="rgba16uint";value=0
+    OK
+  - INFO: subcase: format="rgba16uint";value=1
+    OK
+  - INFO: subcase: format="rgba16sint";value=0
+    OK
+  - INFO: subcase: format="rgba16sint";value=1
+    OK
+  - INFO: subcase: format="rgba16float";value=0
+    OK
+  - INFO: subcase: format="rgba16float";value=1
+    OK
   - EXPECTATION FAILED: subcase: format="r32uint";value=0
     Expected validation error
       at (elided: below max severity)
@@ -2948,30 +2972,6 @@ FAIL :coords_argument,storage:textureType="texture_storage_2d";coordType="u32" a
   - EXPECTATION FAILED: subcase: format="bgra8unorm";value=1
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: format="rgba8snorm";value=0
-    OK
-  - INFO: subcase: format="rgba8snorm";value=1
-    OK
-  - INFO: subcase: format="rgba8uint";value=0
-    OK
-  - INFO: subcase: format="rgba8uint";value=1
-    OK
-  - INFO: subcase: format="rgba8sint";value=0
-    OK
-  - INFO: subcase: format="rgba8sint";value=1
-    OK
-  - INFO: subcase: format="rgba16uint";value=0
-    OK
-  - INFO: subcase: format="rgba16uint";value=1
-    OK
-  - INFO: subcase: format="rgba16sint";value=0
-    OK
-  - INFO: subcase: format="rgba16sint";value=1
-    OK
-  - INFO: subcase: format="rgba16float";value=0
-    OK
-  - INFO: subcase: format="rgba16float";value=1
-    OK
   - INFO: subcase: format="r32uint";value=0
     OK
   - INFO: subcase: format="r32uint";value=1
@@ -3808,42 +3808,6 @@ FAIL :coords_argument,storage:textureType="texture_storage_3d";coordType="abstra
   - EXPECTATION FAILED: subcase: format="r32sint";value=0
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: format="rgba8uint";value=1
-    OK
-  - INFO: subcase: format="rgba8sint";value=-1
-    OK
-  - INFO: subcase: format="rgba8sint";value=0
-    OK
-  - INFO: subcase: format="rgba8sint";value=1
-    OK
-  - INFO: subcase: format="rgba16uint";value=-1
-    OK
-  - INFO: subcase: format="rgba16uint";value=0
-    OK
-  - INFO: subcase: format="rgba16uint";value=1
-    OK
-  - INFO: subcase: format="rgba16sint";value=-1
-    OK
-  - INFO: subcase: format="rgba16sint";value=0
-    OK
-  - INFO: subcase: format="rgba16sint";value=1
-    OK
-  - INFO: subcase: format="rgba16float";value=-1
-    OK
-  - INFO: subcase: format="rgba16float";value=0
-    OK
-  - INFO: subcase: format="rgba16float";value=1
-    OK
-  - INFO: subcase: format="r32uint";value=-1
-    OK
-  - INFO: subcase: format="r32uint";value=0
-    OK
-  - INFO: subcase: format="r32uint";value=1
-    OK
-  - INFO: subcase: format="r32sint";value=-1
-    OK
-  - INFO: subcase: format="r32sint";value=0
-    OK
   - EXPECTATION FAILED: subcase: format="r32sint";value=1
     Expected validation error
       at (elided: below max severity)
@@ -3883,6 +3847,68 @@ FAIL :coords_argument,storage:textureType="texture_storage_3d";coordType="abstra
   - EXPECTATION FAILED: subcase: format="rg32float";value=1
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: format="rgba8uint";value=1
+    OK
+  - INFO: subcase: format="rgba8sint";value=-1
+    OK
+  - INFO: subcase: format="rgba8sint";value=0
+    OK
+  - INFO: subcase: format="rgba8sint";value=1
+    OK
+  - INFO: subcase: format="rgba16uint";value=-1
+    OK
+  - INFO: subcase: format="rgba16uint";value=0
+    OK
+  - INFO: subcase: format="rgba16uint";value=1
+    OK
+  - INFO: subcase: format="rgba16sint";value=-1
+    OK
+  - INFO: subcase: format="rgba16sint";value=0
+    OK
+  - INFO: subcase: format="rgba16sint";value=1
+    OK
+  - INFO: subcase: format="rgba16float";value=-1
+    OK
+  - INFO: subcase: format="rgba16float";value=0
+    OK
+  - INFO: subcase: format="rgba16float";value=1
+    OK
+  - INFO: subcase: format="r32uint";value=-1
+    OK
+  - INFO: subcase: format="r32uint";value=0
+    OK
+  - INFO: subcase: format="r32uint";value=1
+    OK
+  - INFO: subcase: format="r32sint";value=-1
+    OK
+  - INFO: subcase: format="r32sint";value=0
+    OK
+  - INFO: subcase: format="r32sint";value=1
+    OK
+  - INFO: subcase: format="r32float";value=-1
+    OK
+  - INFO: subcase: format="r32float";value=0
+    OK
+  - INFO: subcase: format="r32float";value=1
+    OK
+  - INFO: subcase: format="rg32uint";value=-1
+    OK
+  - INFO: subcase: format="rg32uint";value=0
+    OK
+  - INFO: subcase: format="rg32uint";value=1
+    OK
+  - INFO: subcase: format="rg32sint";value=-1
+    OK
+  - INFO: subcase: format="rg32sint";value=0
+    OK
+  - INFO: subcase: format="rg32sint";value=1
+    OK
+  - INFO: subcase: format="rg32float";value=-1
+    OK
+  - INFO: subcase: format="rg32float";value=0
+    OK
+  - INFO: subcase: format="rg32float";value=1
+    OK
   - EXPECTATION FAILED: subcase: format="rgba32uint";value=-1
     Expected validation error
       at (elided: below max severity)
@@ -3919,32 +3945,6 @@ FAIL :coords_argument,storage:textureType="texture_storage_3d";coordType="abstra
   - EXPECTATION FAILED: subcase: format="bgra8unorm";value=1
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: format="r32sint";value=1
-    OK
-  - INFO: subcase: format="r32float";value=-1
-    OK
-  - INFO: subcase: format="r32float";value=0
-    OK
-  - INFO: subcase: format="r32float";value=1
-    OK
-  - INFO: subcase: format="rg32uint";value=-1
-    OK
-  - INFO: subcase: format="rg32uint";value=0
-    OK
-  - INFO: subcase: format="rg32uint";value=1
-    OK
-  - INFO: subcase: format="rg32sint";value=-1
-    OK
-  - INFO: subcase: format="rg32sint";value=0
-    OK
-  - INFO: subcase: format="rg32sint";value=1
-    OK
-  - INFO: subcase: format="rg32float";value=-1
-    OK
-  - INFO: subcase: format="rg32float";value=0
-    OK
-  - INFO: subcase: format="rg32float";value=1
-    OK
   - INFO: subcase: format="rgba32uint";value=-1
     OK
   - INFO: subcase: format="rgba32uint";value=0
@@ -5361,6 +5361,10 @@ FAIL :coords_argument,storage:textureType="texture_storage_3d";coordType="u32" a
   - EXPECTATION FAILED: subcase: format="rgba8unorm";value=1
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: format="rgba8unorm";value=0
+    OK
+  - INFO: subcase: format="rgba8unorm";value=1
+    OK
   - EXPECTATION FAILED: subcase: format="rgba8snorm";value=0
     Expected validation error
       at (elided: below max severity)
@@ -5391,30 +5395,6 @@ FAIL :coords_argument,storage:textureType="texture_storage_3d";coordType="u32" a
   - EXPECTATION FAILED: subcase: format="rgba16sint";value=1
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: format="rgba8unorm";value=0
-    OK
-  - INFO: subcase: format="rgba8unorm";value=1
-    OK
-  - INFO: subcase: format="rgba8snorm";value=0
-    OK
-  - INFO: subcase: format="rgba8snorm";value=1
-    OK
-  - INFO: subcase: format="rgba8uint";value=0
-    OK
-  - INFO: subcase: format="rgba8uint";value=1
-    OK
-  - INFO: subcase: format="rgba8sint";value=0
-    OK
-  - INFO: subcase: format="rgba8sint";value=1
-    OK
-  - INFO: subcase: format="rgba16uint";value=0
-    OK
-  - INFO: subcase: format="rgba16uint";value=1
-    OK
-  - INFO: subcase: format="rgba16sint";value=0
-    OK
-  - INFO: subcase: format="rgba16sint";value=1
-    OK
   - EXPECTATION FAILED: subcase: format="rgba16float";value=0
     Expected validation error
       at (elided: below max severity)
@@ -5481,6 +5461,26 @@ FAIL :coords_argument,storage:textureType="texture_storage_3d";coordType="u32" a
   - EXPECTATION FAILED: subcase: format="bgra8unorm";value=1
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: format="rgba8snorm";value=0
+    OK
+  - INFO: subcase: format="rgba8snorm";value=1
+    OK
+  - INFO: subcase: format="rgba8uint";value=0
+    OK
+  - INFO: subcase: format="rgba8uint";value=1
+    OK
+  - INFO: subcase: format="rgba8sint";value=0
+    OK
+  - INFO: subcase: format="rgba8sint";value=1
+    OK
+  - INFO: subcase: format="rgba16uint";value=0
+    OK
+  - INFO: subcase: format="rgba16uint";value=1
+    OK
+  - INFO: subcase: format="rgba16sint";value=0
+    OK
+  - INFO: subcase: format="rgba16sint";value=1
+    OK
   - INFO: subcase: format="rgba16float";value=0
     OK
   - INFO: subcase: format="rgba16float";value=1
@@ -7195,15 +7195,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Crgba8unorm,%20r
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rg8snorm"
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rg8uint"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rg8sint"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm"
-    Expected validation error
-      at (elided: below max severity)
   - INFO: subcase: textureType="texture_storage_2d";format="rg32sint"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
@@ -7218,12 +7209,15 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Crgba8unorm,%20r
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
     OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
-    OK
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rg8uint"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rg8sint"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm"
+    Expected validation error
+      at (elided: below max severity)
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
     Expected validation error
       at (elided: below max severity)
@@ -7329,6 +7323,82 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Crgba8unorm,%20r
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="bc1-rgba-unorm"
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgb10a2uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgb10a2unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg11b10ufloat"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgb9e5ufloat"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="stencil8"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="depth16unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="depth32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="depth24plus"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="depth24plus-stencil8"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="depth32float-stencil8"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="bc1-rgba-unorm"
+    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="bc1-rgba-unorm-srgb"
     Expected validation error
       at (elided: below max severity)
@@ -7479,75 +7549,14 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Crgba8unorm,%20r
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_2d";format="rg32float"
     OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
+  - INFO: subcase: textureType="texture_storage_2d";format="rgba32uint"
     OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm-srgb"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgb10a2uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgb10a2unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg11b10ufloat"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgb9e5ufloat"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="stencil8"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="depth16unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="depth32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="depth24plus"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="depth24plus-stencil8"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="depth32float-stencil8"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="bc1-rgba-unorm"
+  - INFO: subcase: textureType="texture_storage_2d";format="rgba32sint"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="bc1-rgba-unorm-srgb"
     OK
@@ -7648,15 +7657,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Crgba8unorm,%20r
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
-    OK
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_2d";format="rg32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d";format="rgba32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d";format="rgba32sint"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
     OK
@@ -9461,8 +9461,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Cr32uint,%20read
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="rg32uint"
     OK
-  - INFO: subcase: textureType="texture_storage_2d";format="rg32sint"
-    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8unorm"
     Expected validation error
       at (elided: below max severity)
@@ -9493,26 +9491,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Cr32uint,%20read
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
-    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8snorm"
     Expected validation error
       at (elided: below max severity)
@@ -9534,6 +9512,42 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Cr32uint,%20read
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r16sint"
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_2d";format="rg32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16sint"
+    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r16float"
     Expected validation error
       at (elided: below max severity)
@@ -9756,19 +9770,19 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Cr32uint,%20read
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm-srgb"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16sint"
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_2d";format="rg32float"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="r16float"
     OK
@@ -9918,24 +9932,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Cr32uint,%20read
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
     OK
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_2d";format="rg32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d";format="rgba32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d";format="rgba32sint"
-    OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
@@ -9943,6 +9939,10 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d%3Cr32uint,%20read
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d";format="rgba32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d";format="rgba32sint"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="rgba32float"
     OK
@@ -11695,10 +11695,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Crgba8unor
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8snorm"
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
-    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8uint"
     Expected validation error
       at (elided: below max severity)
@@ -11891,93 +11887,10 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Crgba8unor
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="eac-rg11unorm"
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="eac-rg11snorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
+    OK
   - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
@@ -12106,6 +12019,93 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Crgba8unor
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="eac-rg11unorm"
     OK
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="eac-rg11snorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: textureType="texture_storage_1d";format="eac-rg11snorm"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm"
@@ -12206,6 +12206,50 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Crgba8unor
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="r16uint"
     OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg11b10ufloat"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb9e5ufloat"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="stencil8"
+    OK
   - INFO: subcase: textureType="texture_storage_2d";format="rg8snorm"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="rg8uint"
@@ -12233,6 +12277,10 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Crgba8unor
   - INFO: subcase: textureType="texture_storage_2d";format="r16float"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="rg16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="depth16unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="depth32float"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="rg16sint"
     OK
@@ -12385,54 +12433,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Crgba8unor
   - INFO: subcase: textureType="texture_storage_2d";format="astc-12x12-unorm"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="astc-12x12-unorm-srgb"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg11b10ufloat"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb9e5ufloat"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="stencil8"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="depth16unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="depth32float"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="depth24plus"
     OK
@@ -13985,6 +13985,14 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Cr32uint,%
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8sint"
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
+    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rg8unorm"
     Expected validation error
       at (elided: below max severity)
@@ -14000,24 +14008,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Cr32uint,%
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm"
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
-    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
     Expected validation error
       at (elided: below max severity)
@@ -14276,6 +14266,16 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Cr32uint,%
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
+    OK
   - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
@@ -14552,6 +14552,12 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Cr32uint,%
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="bgra8unorm"
     OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="depth16unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="depth32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="depth24plus"
+    OK
   - INFO: subcase: textureType="texture_storage_2d";format="bgra8unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="r16uint"
@@ -14561,12 +14567,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_2d_array%3Cr32uint,%
   - INFO: subcase: textureType="texture_storage_2d";format="r16float"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="rg16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="depth16unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="depth32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="depth24plus"
     OK
   - INFO: subcase: textureType="texture_storage_2d";format="rg16sint"
     OK
@@ -16263,6 +16263,10 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8snorm"
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
+    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8uint"
     Expected validation error
       at (elided: below max severity)
@@ -16311,42 +16315,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r16float"
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm-srgb"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r16float"
-    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rg16uint"
     Expected validation error
       at (elided: below max severity)
@@ -16491,93 +16459,38 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="eac-rg11unorm"
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="eac-rg11snorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="bgra8unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r16float"
+    OK
   - INFO: subcase: textureType="texture_storage_1d";format="rg16uint"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="rg16sint"
@@ -16674,6 +16587,93 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="eac-rg11unorm"
     OK
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="eac-rg11snorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x4-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-5x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-6x6-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x6-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-8x8-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x5-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x6-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x8-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: textureType="texture_storage_1d";format="eac-rg11snorm"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-4x4-unorm"
@@ -16942,6 +16942,12 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="rgba8unorm-srgb"
     OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba8sint"
+    OK
   - INFO: subcase: textureType="texture_storage_3d";format="r8unorm"
     OK
   - INFO: subcase: textureType="texture_storage_3d";format="r8snorm"
@@ -17036,11 +17042,15 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
     OK
   - INFO: subcase: textureType="texture_storage_3d";format="bc2-rgba-unorm-srgb"
     OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba8snorm"
+  - INFO: subcase: textureType="texture_storage_3d";format="bc3-rgba-unorm"
     OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba8uint"
+  - INFO: subcase: textureType="texture_storage_3d";format="bc3-rgba-unorm-srgb"
     OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba8sint"
+  - INFO: subcase: textureType="texture_storage_3d";format="bc4-r-unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="bc4-r-snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="bc5-rg-unorm"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="bgra8unorm"
     OK
@@ -17059,8 +17069,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
   - INFO: subcase: textureType="texture_storage_2d_array";format="rg16float"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc3-rgba-unorm"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16sint"
     OK
@@ -17194,6 +17202,16 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="astc-10x8-unorm"
     OK
+  - INFO: subcase: textureType="texture_storage_3d";format="bc5-rg-snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="bc6h-rgb-ufloat"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="bc6h-rgb-float"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="bc7-rgba-unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="bc7-rgba-unorm-srgb"
+    OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="astc-10x8-unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="astc-10x10-unorm"
@@ -17207,24 +17225,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Crgba8unorm,%20r
   - INFO: subcase: textureType="texture_storage_2d_array";format="astc-12x12-unorm"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="astc-12x12-unorm-srgb"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc3-rgba-unorm-srgb"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc4-r-unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc4-r-snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc5-rg-unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc5-rg-snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc6h-rgb-ufloat"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc6h-rgb-float"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc7-rgba-unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_3d";format="bc7-rgba-unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgb8unorm"
     OK
@@ -18550,6 +18550,12 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8uint"
     Expected validation error
       at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
+    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="r8sint"
     Expected validation error
       at (elided: below max severity)
@@ -18568,24 +18574,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm"
     Expected validation error
       at (elided: below max severity)
-  - INFO: subcase: textureType="texture_storage_1d";format="r8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
-    OK
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
     Expected validation error
       at (elided: below max severity)
@@ -18829,21 +18817,18 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
   - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm"
     Expected validation error
       at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
-    Expected validation error
-      at (elided: below max severity)
-  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
-    Expected validation error
-      at (elided: below max severity)
+  - INFO: subcase: textureType="texture_storage_1d";format="r8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8snorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rg8sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm"
+    OK
   - INFO: subcase: textureType="texture_storage_1d";format="rgba8unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="rgba8snorm"
@@ -19006,6 +18991,21 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm"
     OK
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm"
+    Expected validation error
+      at (elided: below max severity)
+  - EXPECTATION FAILED: subcase: textureType="texture_storage_1d";format="astc-12x12-unorm-srgb"
+    Expected validation error
+      at (elided: below max severity)
   - INFO: subcase: textureType="texture_storage_1d";format="astc-10x10-unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_1d";format="astc-12x10-unorm"
@@ -19240,46 +19240,6 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="r16sint"
     OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="r32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32sint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32float"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2uint"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2unorm"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rg11b10ufloat"
-    OK
-  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb9e5ufloat"
-    OK
   - INFO: subcase: textureType="texture_storage_3d";format="r8unorm"
     OK
   - INFO: subcase: textureType="texture_storage_3d";format="r8snorm"
@@ -19400,11 +19360,45 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
     OK
   - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgb8a1unorm"
     OK
-  - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgb8a1unorm-srgb"
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r16float"
     OK
-  - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgba8unorm"
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16uint"
     OK
-  - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgba8unorm-srgb"
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba16float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="r32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32sint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgba32float"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2uint"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb10a2unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rg11b10ufloat"
+    OK
+  - INFO: subcase: textureType="texture_storage_2d_array";format="rgb9e5ufloat"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="stencil8"
     OK
@@ -19440,7 +19434,7 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="bc6h-rgb-ufloat"
     OK
-  - INFO: subcase: textureType="texture_storage_3d";format="eac-r11unorm"
+  - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgb8a1unorm-srgb"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="bc6h-rgb-float"
     OK
@@ -19523,6 +19517,12 @@ FAIL :texture_type,storage:testTextureType="texture_storage_3d%3Cr32uint,%20read
   - INFO: subcase: textureType="texture_storage_2d_array";format="astc-12x12-unorm"
     OK
   - INFO: subcase: textureType="texture_storage_2d_array";format="astc-12x12-unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgba8unorm"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="etc2-rgba8unorm-srgb"
+    OK
+  - INFO: subcase: textureType="texture_storage_3d";format="eac-r11unorm"
     OK
   - INFO: subcase: textureType="texture_storage_3d";format="eac-r11snorm"
     OK

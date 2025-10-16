@@ -377,6 +377,16 @@ bool PageConfiguration::allowJSHandleInPageContentWorld() const
     return m_data.allowJSHandleInPageContentWorld;
 }
 
+void PageConfiguration::setAllowPostingLegacySynchronousMessages(bool allow)
+{
+    m_data.allowPostingLegacySynchronousMessages = allow;
+}
+
+bool PageConfiguration::allowPostingLegacySynchronousMessages() const
+{
+    return m_data.allowPostingLegacySynchronousMessages;
+}
+
 void PageConfiguration::setDelaysWebProcessLaunchUntilFirstLoad(bool delaysWebProcessLaunchUntilFirstLoad)
 {
     RELEASE_LOG(Process, "%p - PageConfiguration::setDelaysWebProcessLaunchUntilFirstLoad(%d)", this, delaysWebProcessLaunchUntilFirstLoad);

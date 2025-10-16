@@ -7,6 +7,6 @@ PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.ta
 PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.targetX (invalid value)
 PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.targetY (remove)
 PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.targetY (invalid value)
-FAIL SVGAnimatedInteger, initial values, SVGFETurbulenceElement.prototype.numOctaves (remove) assert_equals: initial after expected 1 but got 0
-FAIL SVGAnimatedInteger, initial values, SVGFETurbulenceElement.prototype.numOctaves (invalid value) assert_equals: initial after expected 1 but got 0
+PASS SVGAnimatedInteger, initial values, SVGFETurbulenceElement.prototype.numOctaves (remove)
+PASS SVGAnimatedInteger, initial values, SVGFETurbulenceElement.prototype.numOctaves (invalid value)
 

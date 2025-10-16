@@ -32,6 +32,7 @@
 #include "PlatformWebViewClientWPE.h"
 #include "TestController.h"
 #include <wpe/wpe-platform.h>
+#include <wtf/MonotonicTime.h>
 #include <wtf/UniqueArray.h>
 #include <wtf/glib/GUniquePtr.h>
 
@@ -298,6 +299,63 @@ void EventSenderProxyClientWPE::keyDown(WKStringRef keyRef, double time, WKEvent
     wpe_view_event(view, event);
     wpe_event_unref(event);
     event = wpe_event_keyboard_new(WPE_EVENT_KEYBOARD_KEY_UP, view, WPE_INPUT_SOURCE_KEYBOARD, secToMsTimestamp(time), static_cast<WPEModifiers>(modifiers), keycode, keyval);
+    wpe_view_event(view, event);
+    wpe_event_unref(event);
+}
+
+void EventSenderProxyClientWPE::rawKeyDown(WKStringRef keyRef, WKEventModifiers wkModifiers, unsigned location)
+{
+    unsigned modifiers = wkEventModifiersToWPE(wkModifiers);
+    auto keyval = wpeKeyvalForKeyRef(keyRef, location, modifiers);
+    switch (keyval) {
+    case WPE_KEY_Control_L:
+    case WPE_KEY_Control_R:
+        modifiers |= WPE_MODIFIER_KEYBOARD_CONTROL;
+        break;
+    case WPE_KEY_Shift_L:
+    case WPE_KEY_Shift_R:
+        modifiers |= WPE_MODIFIER_KEYBOARD_SHIFT;
+        break;
+    case WPE_KEY_Alt_L:
+    case WPE_KEY_Alt_R:
+        modifiers |= WPE_MODIFIER_KEYBOARD_ALT;
+        break;
+    case WPE_KEY_Meta_L:
+    case WPE_KEY_Meta_R:
+        modifiers |= WPE_MODIFIER_KEYBOARD_META;
+        break;
+    case WPE_KEY_Caps_Lock:
+        modifiers |= WPE_MODIFIER_KEYBOARD_CAPS_LOCK;
+        break;
+    }
+
+    auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
+    unsigned keycode = 0;
+    auto* keymap = wpe_display_get_keymap(wpe_view_get_display(view));
+    GUniqueOutPtr<WPEKeymapEntry> entries;
+    guint entriesCount;
+    if (wpe_keymap_get_entries_for_keyval(keymap, keyval, &entries.outPtr(), &entriesCount))
+        keycode = entries.get()[0].keycode;
+
+    auto* event = wpe_event_keyboard_new(WPE_EVENT_KEYBOARD_KEY_DOWN, view, WPE_INPUT_SOURCE_KEYBOARD, secToMsTimestamp(MonotonicTime::now().secondsSinceEpoch().value()), static_cast<WPEModifiers>(modifiers), keycode, keyval);
+    wpe_view_event(view, event);
+    wpe_event_unref(event);
+}
+
+void EventSenderProxyClientWPE::rawKeyUp(WKStringRef keyRef, WKEventModifiers wkModifiers, unsigned location)
+{
+    unsigned modifiers = wkEventModifiersToWPE(wkModifiers);
+    auto keyval = wpeKeyvalForKeyRef(keyRef, location, modifiers);
+
+    auto* view = WKViewGetView(m_testController.mainWebView()->platformView());
+    unsigned keycode = 0;
+    auto* keymap = wpe_display_get_keymap(wpe_view_get_display(view));
+    GUniqueOutPtr<WPEKeymapEntry> entries;
+    guint entriesCount;
+    if (wpe_keymap_get_entries_for_keyval(keymap, keyval, &entries.outPtr(), &entriesCount))
+        keycode = entries.get()[0].keycode;
+
+    auto* event = wpe_event_keyboard_new(WPE_EVENT_KEYBOARD_KEY_UP, view, WPE_INPUT_SOURCE_KEYBOARD, secToMsTimestamp(MonotonicTime::now().secondsSinceEpoch().value()), static_cast<WPEModifiers>(modifiers), keycode, keyval);
     wpe_view_event(view, event);
     wpe_event_unref(event);
 }

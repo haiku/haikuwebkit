@@ -29,6 +29,7 @@
 #include <WebCore/BoxExtents.h>
 #include <WebCore/PseudoElementIdentifier.h>
 #include <WebCore/StylePrimitiveNumeric+Forward.h>
+#include <WebCore/StyleTextDecorationLine.h>
 #include <WebCore/WritingMode.h>
 #include <unicode/utypes.h>
 #include <wtf/CheckedRef.h>
@@ -47,11 +48,8 @@ class AnimationList;
 class AutosizeStatus;
 class BorderData;
 class BorderValue;
-struct CSSPropertiesBitSet;
 class Color;
-class CursorList;
 class Element;
-class FillLayer;
 class FilterOperations;
 class FloatPoint;
 class FloatSize;
@@ -62,27 +60,17 @@ class FontCascadeDescription;
 class FontMetrics;
 class FontSelectionValue;
 class HitTestRequest;
-class IntPoint;
 class IntSize;
 class LayoutRect;
-class LayoutRoundedRect;
 class LayoutSize;
 class LayoutUnit;
-class LengthBox;
-class LineClampValue;
-class NinePieceImage;
 class OutlineValue;
-class PathOperation;
 class PositionArea;
 class PseudoIdSet;
 class RenderElement;
 class RenderStyle;
-class RotateTransformOperation;
-class SVGLengthValue;
 class SVGRenderStyle;
-class ScaleTransformOperation;
 class ScrollTimeline;
-class ShapeValue;
 class StyleContentAlignmentData;
 class StyleImage;
 class StyleInheritedData;
@@ -90,18 +78,16 @@ class StyleNonInheritedData;
 class StylePathData;
 class StyleRareInheritedData;
 class StyleReflection;
-class StyleScrollSnapArea;
 class StyleSelfAlignmentData;
+class TextAutospace;
+class TextSpacingTrim;
 class TransformOperations;
 class TransformationMatrix;
-class TranslateTransformOperation;
 class ViewTimeline;
 class WillChangeData;
 
 enum CSSPropertyID : uint16_t;
 enum GridAutoFlow : uint8_t;
-enum class PageSizeType : uint8_t;
-enum class PaginationMode : uint8_t;
 
 enum class ApplePayButtonStyle : uint8_t;
 enum class ApplePayButtonType : uint8_t;
@@ -180,6 +166,8 @@ enum class OverflowAnchor : bool;
 enum class OverflowContinue : bool;
 enum class OverflowWrap : uint8_t;
 enum class OverscrollBehavior : uint8_t;
+enum class PageSizeType : uint8_t;
+enum class PaginationMode : uint8_t;
 enum class PaintBehavior : uint32_t;
 enum class PaintOrder : uint8_t;
 enum class PaintType : uint8_t;
@@ -205,7 +193,6 @@ enum class TextAlignLast : uint8_t;
 enum class TextAlignMode : uint8_t;
 enum class TextBoxTrim : uint8_t;
 enum class TextCombine : bool;
-enum class TextDecorationLine : uint8_t;
 enum class TextDecorationSkipInk : uint8_t;
 enum class TextDecorationStyle : uint8_t;
 enum class TextEmphasisPosition : uint8_t;
@@ -232,25 +219,20 @@ enum class WhiteSpace : uint8_t;
 enum class WhiteSpaceCollapse : uint8_t;
 enum class WordBreak : uint8_t;
 
+struct CSSPropertiesBitSet;
 struct CounterDirectiveMap;
-struct FillRepeatXY;
 struct FontPalette;
 struct FontSizeAdjust;
 struct GridTrackList;
 struct ImageOrientation;
 struct Length;
-struct LengthPoint;
 struct LengthSize;
-struct SingleTimelineRange;
-
+struct NameScope;
 struct ScrollSnapAlign;
 struct ScrollSnapType;
-struct NameScope;
-
+struct SingleTimelineRange;
 struct TabSize;
-class TextAutospace;
 struct TextEdge;
-class TextSpacingTrim;
 struct TransformOperationData;
 
 template<typename> class FontTaggedSettings;
@@ -266,8 +248,11 @@ namespace Style {
 class CustomProperty;
 class CustomPropertyData;
 class CustomPropertyRegistry;
+
 struct AnchorNames;
 struct AspectRatio;
+struct BackgroundLayer;
+struct BackgroundSize;
 struct BlockEllipsis;
 struct BlockStepSize;
 struct BorderImage;
@@ -309,6 +294,7 @@ struct MaskBorderRepeat;
 struct MaskBorderSlice;
 struct MaskBorderSource;
 struct MaskBorderWidth;
+struct MaskLayer;
 struct MaximumLines;
 struct MaximumSize;
 struct MinimumSize;
@@ -329,6 +315,7 @@ struct PreferredSize;
 struct ProgressTimelineAxes;
 struct ProgressTimelineNames;
 struct Quotes;
+struct RepeatStyle;
 struct Rotate;
 struct SVGBaselineShift;
 struct SVGCenterCoordinateComponent;
@@ -362,6 +349,7 @@ struct ViewTimelineInsets;
 struct ViewTimelines;
 struct ViewTransitionClasses;
 struct ViewTransitionName;
+struct WebkitLineClamp;
 struct WebkitLineGrid;
 struct WebkitTextStrokeWidth;
 struct Widows;
@@ -375,8 +363,10 @@ enum class ScrollBehavior : bool;
 enum class WebkitOverflowScrolling : bool;
 enum class WebkitTouchCallout : bool;
 
+template<typename> struct FillLayers;
 template<typename> struct Shadows;
 
+using BackgroundLayers = FillLayers<BackgroundLayer>;
 using BorderRadiusValue = MinimallySerializingSpaceSeparatedSize<LengthPercentage<CSS::Nonnegative>>;
 using BoxShadows = Shadows<BoxShadow>;
 using FlexGrow = Number<CSS::Nonnegative, float>;
@@ -384,6 +374,7 @@ using FlexShrink = Number<CSS::Nonnegative, float>;
 using InsetBox = MinimallySerializingSpaceSeparatedRectEdges<InsetEdge>;
 using LineWidthBox = MinimallySerializingSpaceSeparatedRectEdges<LineWidth>;
 using MarginBox = MinimallySerializingSpaceSeparatedRectEdges<MarginEdge>;
+using MaskLayers = FillLayers<MaskLayer>;
 using ObjectPosition = Position;
 using Order = Integer<>;
 using PaddingBox = MinimallySerializingSpaceSeparatedRectEdges<PaddingEdge>;
@@ -520,11 +511,6 @@ public:
     inline bool hasInset() const;
 
     inline bool hasBackgroundImage() const;
-    inline bool hasAnyFixedBackground() const;
-    bool hasAnyBackgroundClipText() const;
-
-    bool hasEntirelyFixedBackground() const;
-    inline bool hasAnyLocalBackground() const;
 
     inline bool hasAppearance() const;
     inline bool hasUsedAppearance() const;
@@ -729,8 +715,8 @@ public:
     inline TextAlignLast textAlignLast() const;
     inline TextGroupAlign textGroupAlign() const;
     inline OptionSet<TextTransform> textTransform() const;
-    inline OptionSet<TextDecorationLine> textDecorationLineInEffect() const;
-    inline OptionSet<TextDecorationLine> textDecorationLine() const;
+    inline Style::TextDecorationLine textDecorationLineInEffect() const;
+    inline Style::TextDecorationLine textDecorationLine() const;
     inline TextDecorationStyle textDecorationStyle() const;
     inline TextDecorationSkipInk textDecorationSkipInk() const;
     inline OptionSet<TextUnderlinePosition> textUnderlinePosition() const;
@@ -775,27 +761,13 @@ public:
     TextWrapMode textWrapMode() const { return static_cast<TextWrapMode>(m_inheritedFlags.textWrapMode); }
     TextWrapStyle textWrapStyle() const { return static_cast<TextWrapStyle>(m_inheritedFlags.textWrapStyle); }
 
-    inline FillRepeatXY backgroundRepeat() const;
-    inline FillAttachment backgroundAttachment() const;
-    inline FillBox backgroundClip() const;
-    inline FillBox backgroundOrigin() const;
-    inline FillSizeType backgroundSizeType() const;
-    inline const LengthSize& backgroundSizeLength() const;
-    inline FillLayer& ensureBackgroundLayers();
-    inline const FillLayer& backgroundLayers() const; // Defined in RenderStyleInlines.h.
-    inline Ref<const FillLayer> protectedBackgroundLayers() const; // Defined in RenderStyleInlines.h.
-    inline BlendMode backgroundBlendMode() const;
+    inline Style::BackgroundLayers& ensureBackgroundLayers();
+    inline const Style::BackgroundLayers& backgroundLayers() const;
+    static inline Style::BackgroundLayers initialBackgroundLayers();
 
-    inline StyleImage* maskImage() const;
-    inline FillRepeatXY maskRepeat() const;
-    inline CompositeOperator maskComposite() const;
-    inline FillBox maskClip() const;
-    inline FillBox maskOrigin() const;
-    inline FillSizeType maskSizeType() const;
-    inline const LengthSize& maskSizeLength() const;
-    inline FillLayer& ensureMaskLayers();
-    inline const FillLayer& maskLayers() const; // Defined in RenderStyleInlines.h.
-    inline Ref<const FillLayer> protectedMaskLayers() const; // Defined in RenderStyleInlines.h.
+    inline Style::MaskLayers& ensureMaskLayers();
+    inline const Style::MaskLayers& maskLayers() const;
+    static inline Style::MaskLayers initialMaskLayers();
 
     inline const Style::MaskBorder& maskBorder() const;
     inline const Style::MaskBorderSource& maskBorderSource() const;
@@ -1144,7 +1116,7 @@ public:
     inline PageSizeType pageSizeType() const;
 
     inline OptionSet<Style::LineBoxContain> lineBoxContain() const;
-    inline const LineClampValue& lineClamp() const;
+    inline const Style::WebkitLineClamp& lineClamp() const;
     inline const Style::BlockEllipsis& blockEllipsis() const;
     inline Style::MaximumLines maxLines() const;
     inline OverflowContinue overflowContinue() const;
@@ -1226,7 +1198,7 @@ public:
     inline void setBlendMode(BlendMode);
     inline bool isInSubtreeWithBlendMode() const;
 
-    inline void setIsForceHidden(bool = true);
+    inline void setIsForceHidden();
     inline bool isForceHidden() const;
 
     inline void setIsolation(Isolation);
@@ -1309,11 +1281,7 @@ public:
     inline void resetBorderBottomRightRadius();
 
     inline void setBackgroundColor(Style::Color&&);
-    inline void setBackgroundAttachment(FillAttachment);
-    inline void setBackgroundClip(FillBox);
-    inline void setBackgroundOrigin(FillBox);
-    inline void setBackgroundRepeat(FillRepeatXY);
-    inline void setBackgroundBlendMode(BlendMode);
+    inline void setBackgroundLayers(Style::BackgroundLayers&&);
 
     inline void setBorderImage(Style::BorderImage&&);
     void setBorderImageSource(Style::BorderImageSource&&);
@@ -1384,9 +1352,9 @@ public:
     void setTextAlign(TextAlignMode v) { m_inheritedFlags.textAlign = static_cast<unsigned>(v); }
     inline void setTextAlignLast(TextAlignLast);
     inline void setTextGroupAlign(TextGroupAlign);
-    inline void addToTextDecorationLineInEffect(OptionSet<TextDecorationLine>);
-    inline void setTextDecorationLineInEffect(OptionSet<TextDecorationLine>);
-    inline void setTextDecorationLine(OptionSet<TextDecorationLine>);
+    inline void addToTextDecorationLineInEffect(const Style::TextDecorationLine&);
+    inline void setTextDecorationLineInEffect(Style::TextDecorationLine&&);
+    inline void setTextDecorationLine(Style::TextDecorationLine&&);
     inline void setTextDecorationStyle(TextDecorationStyle);
     inline void setTextDecorationSkipInk(TextDecorationSkipInk);
     inline void setTextDecorationThickness(Style::TextDecorationThickness&&);
@@ -1423,17 +1391,7 @@ public:
     void setLetterSpacing(Length&&);
     void setWordSpacing(Length&&);
 
-    inline void clearBackgroundLayers();
-    inline void inheritBackgroundLayers(const FillLayer& parent);
-
-    void adjustBackgroundLayers();
-
-    inline void clearMaskLayers();
-    inline void inheritMaskLayers(const FillLayer& parent);
-
-    inline void adjustMaskLayers();
-
-    inline void setMaskImage(RefPtr<StyleImage>&&);
+    inline void setMaskLayers(Style::MaskLayers&&);
 
     inline void setMaskBorder(Style::MaskBorder&&);
     void setMaskBorderSource(Style::MaskBorderSource&&);
@@ -1441,8 +1399,6 @@ public:
     void setMaskBorderWidth(Style::MaskBorderWidth&&);
     void setMaskBorderOutset(Style::MaskBorderOutset&&);
     void setMaskBorderRepeat(Style::MaskBorderRepeat&&);
-
-    inline void setMaskRepeat(FillRepeatXY);
 
     void setBorderCollapse(BorderCollapse collapse) { m_inheritedFlags.borderCollapse = static_cast<unsigned>(collapse); }
     inline void setBorderHorizontalSpacing(Style::WebkitBorderSpacing);
@@ -1677,8 +1633,8 @@ public:
     inline void resetPageSizeType();
 
     inline void setLineBoxContain(OptionSet<Style::LineBoxContain>);
-    inline void setLineClamp(LineClampValue);
-    
+    inline void setLineClamp(Style::WebkitLineClamp&&);
+
     inline void setMaxLines(Style::MaximumLines);
     inline void setOverflowContinue(OverflowContinue);
     inline void setBlockEllipsis(Style::BlockEllipsis&&);
@@ -2031,7 +1987,8 @@ public:
     static constexpr TextAlignMode initialTextAlign();
     static constexpr TextAlignLast initialTextAlignLast();
     static constexpr TextGroupAlign initialTextGroupAlign();
-    static constexpr OptionSet<TextDecorationLine> initialTextDecorationLine();
+    static inline Style::TextDecorationLine initialTextDecorationLine();
+    static inline Style::TextDecorationLine initialTextDecorationLineInEffect();
     static constexpr TextDecorationStyle initialTextDecorationStyle();
     static constexpr TextDecorationSkipInk initialTextDecorationSkipInk();
     static constexpr OptionSet<TextUnderlinePosition> initialTextUnderlinePosition();
@@ -2212,7 +2169,7 @@ public:
     static constexpr LineAlign initialLineAlign();
 
     static constexpr FloatSize initialInitialLetter();
-    static constexpr LineClampValue initialLineClamp();
+    static constexpr Style::WebkitLineClamp initialLineClamp();
     static inline Style::BlockEllipsis initialBlockEllipsis();
     static OverflowContinue initialOverflowContinue();
     static constexpr Style::MaximumLines initialMaxLines();
@@ -2370,7 +2327,7 @@ public:
     void setPositionTryFallbacks(FixedVector<Style::PositionTryFallback>&&);
 
     std::optional<size_t> lastSuccessfulPositionTryFallbackIndex() const;
-    void setLastSuccessfulPositionTryFallbackIndex(std::optional<size_t>&&);
+    void setLastSuccessfulPositionTryFallbackIndex(std::optional<size_t>);
 
     static constexpr OptionSet<PositionVisibility> initialPositionVisibility();
     inline OptionSet<PositionVisibility> positionVisibility() const;
@@ -2418,7 +2375,7 @@ private:
         PREFERRED_TYPE(bool) unsigned isLink : 1;
         PREFERRED_TYPE(PseudoId) unsigned pseudoElementType : PseudoElementTypeBits;
         unsigned pseudoBits : PublicPseudoIDBits;
-        PREFERRED_TYPE(OptionSet<TextDecorationLine>) unsigned textDecorationLine : TextDecorationLineBits; // Text decorations defined *only* by this element.
+        PREFERRED_TYPE(Style::TextDecorationLine) unsigned textDecorationLine : TextDecorationLineBits; // Text decorations defined *only* by this element.
 
         // If you add more style bits here, you will also need to update RenderStyle::NonInheritedFlags::copyNonInheritedFrom().
     };
@@ -2440,7 +2397,7 @@ private:
         PREFERRED_TYPE(TextWrapStyle) unsigned char textWrapStyle : 2;
         PREFERRED_TYPE(OptionSet<TextTransform>) unsigned char textTransform : TextTransformBits;
         unsigned char : 1; // byte alignment
-        PREFERRED_TYPE(OptionSet<TextDecorationLine>) unsigned char textDecorationLineInEffect : TextDecorationLineBits;
+        PREFERRED_TYPE(Style::TextDecorationLine) unsigned char textDecorationLineInEffect : TextDecorationLineBits;
 
         // Cursors and Visibility = 13 bits aligned onto 4 bits + 1 byte + 1 bit
         PREFERRED_TYPE(PointerEvents) unsigned char pointerEvents : 4;

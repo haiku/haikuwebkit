@@ -36,39 +36,39 @@
 
         const debugText = await UIHelper.requestDebugText();
 
-        clickSucceeded = await UIHelper.performTextExtractionInteraction("click", {
+        clickError = await UIHelper.performTextExtractionInteraction("click", {
             nodeIdentifier: UIHelper.nodeIdentifierFromDebugText(debugText, "Click Me")
         });
 
-        textInputSucceeded = await UIHelper.performTextExtractionInteraction("textinput", {
+        textInputError = await UIHelper.performTextExtractionInteraction("textinput", {
             nodeIdentifier: UIHelper.nodeIdentifierFromDebugText(debugText, "Enter some text"),
             replaceAll: true,
             text: "bar"
         });
 
-        selectMenuItemSucceeded = await UIHelper.performTextExtractionInteraction("selectmenuitem", {
+        selectMenuItemError = await UIHelper.performTextExtractionInteraction("selectmenuitem", {
             nodeIdentifier: UIHelper.nodeIdentifierFromDebugText(debugText, "menu"),
             text: "Three"
         });
 
-        selectTextSucceeded = await UIHelper.performTextExtractionInteraction("selecttext", {
+        selectTextError = await UIHelper.performTextExtractionInteraction("selecttext", {
             nodeIdentifier: UIHelper.nodeIdentifierFromDebugText(debugText, "contentEditable"),
             text: "Subject"
         });
 
-        invalidActionSucceeded = await UIHelper.performTextExtractionInteraction("click", {
-            nodeIdentifier: "invalid_id"
+        invalidActionError = await UIHelper.performTextExtractionInteraction("click", {
+            nodeIdentifier: "4294967293",
         });
 
-        shouldBeTrue("clickSucceeded");
+        shouldBeEqualToString("clickError", "");
         shouldBeEqualToString("clickCount.textContent", "1");
-        shouldBeTrue("textInputSucceeded");
+        shouldBeEqualToString("textInputError", "");
         shouldBeEqualToString("textField.value", "bar");
-        shouldBeTrue("selectMenuItemSucceeded");
+        shouldBeEqualToString("selectMenuItemError", "");
         shouldBeEqualToString("select.value", "Three");
-        shouldBeTrue("selectTextSucceeded");
+        shouldBeEqualToString("selectTextError", "");
         shouldBeEqualToString("getSelection().toString()", "Subject");
-        shouldBeFalse("invalidActionSucceeded");
+        shouldBeEqualToString("invalidActionError", "Failed to resolve nodeIdentifier 4294967293");
 
         finishJSTest();
     });

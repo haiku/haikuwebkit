@@ -1,3 +1,4 @@
-FAIL: Timed out waiting for notifyDone to be called
 
+
+PASS A traversal that redirects from same-origin to cross-origin fires the navigate event
 

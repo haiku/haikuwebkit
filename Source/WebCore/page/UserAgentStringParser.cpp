@@ -219,12 +219,12 @@ inline String UserAgentStringParser::getSubstring()
 }
 
 struct BrowsersSeen {
-    bool brave : 1;
-    bool firefox : 1;
-    bool chrome : 1;
-    bool safari : 1;
-    bool opera : 1;
-    bool edge : 1;
+    bool brave : 1 { false };
+    bool firefox : 1 { false };
+    bool chrome : 1 { false };
+    bool safari : 1 { false };
+    bool opera : 1 { false };
+    bool edge : 1 { false };
     String braveVersion;
     String firefoxVersion;
     String chromeVersion;
@@ -326,7 +326,7 @@ void UserAgentStringParser::populateUserAgentData()
     // chrome based browsers typically list chrome
     if (browsersSeen.chrome) {
         if (browsersSeen.edge) {
-            data->browserName = "Edge"_s;
+            data->browserName = "Microsoft Edge"_s;
             data->browserVersion = browsersSeen.edgeVersion;
         } else if (browsersSeen.brave) {
             data->browserName = "Brave"_s;
@@ -335,7 +335,7 @@ void UserAgentStringParser::populateUserAgentData()
             data->browserName = "Opera"_s;
             data->browserVersion = browsersSeen.operaVersion;
         } else {
-            data->browserName = "Chrome"_s;
+            data->browserName = "Google Chrome"_s;
             data->browserVersion = browsersSeen.chromeVersion;
         }
     }

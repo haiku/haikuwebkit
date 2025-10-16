@@ -61,12 +61,7 @@ static void validateChallenge(NSURLAuthenticationChallenge *challenge, uint16_t 
     verifyCertificateAndPublicKey(challenge.protectionSpace.serverTrust);
 }
 
-// FIXME: Re-enable these tests once rdar://148050136 is fixed.
-#if PLATFORM(MAC)
 TEST(WebTransport, ClientBidirectional)
-#else
-TEST(WebTransport, DISABLED_ClientBidirectional)
-#endif
 {
     WebTransportServer echoServer([](ConnectionGroup group) -> ConnectionTask {
         auto connection = co_await group.receiveIncomingConnection();
@@ -110,12 +105,7 @@ TEST(WebTransport, DISABLED_ClientBidirectional)
     EXPECT_TRUE(challenged);
 }
 
-// FIXME: Re-enable these tests once rdar://148050136 is fixed.
-#if PLATFORM(MAC)
 TEST(WebTransport, Datagram)
-#else
-TEST(WebTransport, DISABLED_Datagram)
-#endif
 {
     WebTransportServer echoServer([](ConnectionGroup group) -> ConnectionTask {
         auto datagramConnection = group.createWebTransportConnection(ConnectionGroup::ConnectionType::Datagram);
@@ -165,12 +155,7 @@ TEST(WebTransport, DISABLED_Datagram)
     EXPECT_TRUE(challenged);
 }
 
-// FIXME: Re-enable these tests once rdar://148050136 is fixed.
-#if PLATFORM(MAC)
 TEST(WebTransport, Unidirectional)
-#else
-TEST(WebTransport, DISABLED_Unidirectional)
-#endif
 {
     WebTransportServer echoServer([](ConnectionGroup group) -> ConnectionTask {
         auto connection = co_await group.receiveIncomingConnection();
@@ -217,8 +202,7 @@ TEST(WebTransport, DISABLED_Unidirectional)
     EXPECT_TRUE(challenged);
 }
 
-// FIXME: Fix and enable this test.
-TEST(WebTransport, DISABLED_ServerBidirectional)
+TEST(WebTransport, ServerBidirectional)
 {
     WebTransportServer echoServer([](ConnectionGroup group) -> ConnectionTask {
         auto connection = co_await group.receiveIncomingConnection();
@@ -267,12 +251,7 @@ TEST(WebTransport, DISABLED_ServerBidirectional)
     EXPECT_TRUE(challenged);
 }
 
-// FIXME: Re-enable these tests once rdar://148050136 is fixed.
-#if PLATFORM(MAC)
 TEST(WebTransport, NetworkProcessCrash)
-#else
-TEST(WebTransport, DISABLED_NetworkProcessCrash)
-#endif
 {
     WebTransportServer echoServer([](ConnectionGroup group) -> ConnectionTask {
         auto datagramConnection = group.createWebTransportConnection(ConnectionGroup::ConnectionType::Datagram);
@@ -444,12 +423,7 @@ TEST(WebTransport, DISABLED_NetworkProcessCrash)
     EXPECT_EQ(obj, nil);
 }
 
-// FIXME: Re-enable these tests once rdar://148050136 is fixed.
-#if PLATFORM(MAC)
 TEST(WebTransport, Worker)
-#else
-TEST(WebTransport, DISABLED_Worker)
-#endif
 {
     WebTransportServer transportServer([](ConnectionGroup group) -> ConnectionTask {
         auto connection = co_await group.receiveIncomingConnection();

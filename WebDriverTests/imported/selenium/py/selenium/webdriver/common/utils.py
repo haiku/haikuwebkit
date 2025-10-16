@@ -17,10 +17,8 @@
 """The Utils methods."""
 
 import socket
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Union
+from collections.abc import Iterable
+from typing import Optional, Union
 
 from selenium.types import AnyKey
 from selenium.webdriver.common.keys import Keys
@@ -66,12 +64,12 @@ def find_connectable_ip(host: Union[str, bytes, bytearray, None], port: Optional
     for family, _, _, _, sockaddr in addrinfos:
         connectable = True
         if port:
-            connectable = is_connectable(port, sockaddr[0])
+            connectable = is_connectable(port, str(sockaddr[0]))
 
         if connectable and family == socket.AF_INET:
-            return sockaddr[0]
+            return str(sockaddr[0])
         if connectable and not ip and family == socket.AF_INET6:
-            ip = sockaddr[0]
+            ip = str(sockaddr[0])
     return ip
 
 
@@ -128,13 +126,13 @@ def is_url_connectable(port: Union[int, str]) -> bool:
         return False
 
 
-def keys_to_typing(value: Iterable[AnyKey]) -> List[str]:
+def keys_to_typing(value: Iterable[AnyKey]) -> list[str]:
     """Processes the values that will be typed in the element."""
-    characters: List[str] = []
+    characters: list[str] = []
     for val in value:
         if isinstance(val, Keys):
             # Todo: Does this even work?
-            characters.append(val)
+            characters.append(str(val))
         elif isinstance(val, (int, float)):
             characters.extend(str(val))
         else:

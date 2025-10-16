@@ -43,6 +43,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeRefCounted.h>
+#include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 
 namespace JSC {
@@ -51,6 +52,10 @@ class VM;
 class ArrayBuffer;
 class ArrayBufferView;
 class JSArrayBuffer;
+
+namespace Wasm {
+class Memory;
+}
 
 using ArrayBufferDestructorFunction = RefPtr<SharedTask<void(void*)>>;
 
@@ -84,8 +89,8 @@ public:
 
     Mode mode() const { return m_mode; }
 
-    Expected<int64_t, GrowFailReason> grow(VM&, size_t newByteLength);
-    Expected<int64_t, GrowFailReason> grow(const AbstractLocker&, VM&, size_t newByteLength);
+    Expected<int64_t, GrowFailReason> grow(VM&, size_t newByteLength, bool requirePageMultiple);
+    Expected<int64_t, GrowFailReason> grow(const AbstractLocker&, VM&, size_t newByteLength, bool requirePageMultiple);
 
     void updateSize(size_t sizeInBytes, std::memory_order order = std::memory_order_seq_cst)
     {
@@ -141,13 +146,14 @@ public:
     {
     }
 
-    ArrayBufferContents(Ref<SharedArrayBufferContents>&& shared)
+    ArrayBufferContents(Ref<SharedArrayBufferContents>&& shared, bool forceFixedLengthIfWasm = true)
         : m_shared(WTFMove(shared))
         , m_memoryHandle(m_shared->memoryHandle())
         , m_sizeInBytes(m_shared->sizeInBytes(std::memory_order_seq_cst))
     {
         RELEASE_ASSERT(m_sizeInBytes <= MAX_ARRAY_BUFFER_SIZE);
-        if (m_shared->mode() == SharedArrayBufferContents::Mode::WebAssembly) {
+        bool adjustedForceFixedLengthIfWasm = forceFixedLengthIfWasm || !Options::useWasmMemoryToBufferAPIs();
+        if (m_shared->mode() == SharedArrayBufferContents::Mode::WebAssembly && adjustedForceFixedLengthIfWasm) {
             m_hasMaxByteLength = false;
             m_maxByteLength = m_sizeInBytes;
         } else {
@@ -216,6 +222,8 @@ public:
     bool isGrowableShared() const { return isResizableOrGrowableShared() && isShared(); }
     bool isResizableNonShared() const { return isResizableOrGrowableShared() && !isShared(); }
     
+    void refreshAfterWasmMemoryGrow(Wasm::Memory*);
+
     void swap(ArrayBufferContents& other)
     {
         using std::swap;
@@ -279,7 +287,7 @@ public:
     JS_EXPORT_PRIVATE static Ref<ArrayBuffer> create(ArrayBufferContents&&);
     JS_EXPORT_PRIVATE static Ref<ArrayBuffer> createAdopted(std::span<const uint8_t>);
     JS_EXPORT_PRIVATE static Ref<ArrayBuffer> createFromBytes(std::span<const uint8_t> data, ArrayBufferDestructorFunction&&);
-    JS_EXPORT_PRIVATE static Ref<ArrayBuffer> createShared(Ref<SharedArrayBufferContents>&&);
+    JS_EXPORT_PRIVATE static Ref<ArrayBuffer> createShared(Ref<SharedArrayBufferContents>&&, bool forceFixedLengthIfWasm = true);
     JS_EXPORT_PRIVATE static RefPtr<ArrayBuffer> tryCreate(size_t numElements, unsigned elementByteSize, std::optional<size_t> maxByteLength = std::nullopt);
     JS_EXPORT_PRIVATE static RefPtr<ArrayBuffer> tryCreate(ArrayBuffer&);
     JS_EXPORT_PRIVATE static RefPtr<ArrayBuffer> tryCreate(std::span<const uint8_t> = { });
@@ -302,6 +310,7 @@ public:
     inline bool isShared() const;
     inline ArrayBufferSharingMode sharingMode() const { return isShared() ? ArrayBufferSharingMode::Shared : ArrayBufferSharingMode::Default; }
     inline bool isResizableOrGrowableShared() const { return m_contents.isResizableOrGrowableShared(); }
+    inline bool isFixedLength() const { return !isResizableOrGrowableShared(); }
     inline bool isGrowableShared() const { return m_contents.isGrowableShared(); }
     inline bool isResizableNonShared() const { return m_contents.isResizableNonShared(); }
 
@@ -319,6 +328,9 @@ public:
 
     void makeWasmMemory();
     inline bool isWasmMemory();
+    void setAssociatedWasmMemory(Wasm::Memory*);
+    // When a resizable buffer is associated with a non-shared Wasm memory, this function is called by the memory's growthSuccessCallback.
+    void refreshAfterWasmMemoryGrow(Wasm::Memory*);
 
     JS_EXPORT_PRIVATE bool transferTo(VM&, ArrayBufferContents&);
     JS_EXPORT_PRIVATE bool shareWith(ArrayBufferContents&);
@@ -331,7 +343,7 @@ public:
     static constexpr ptrdiff_t offsetOfData() { return OBJECT_OFFSETOF(ArrayBuffer, m_contents) + OBJECT_OFFSETOF(ArrayBufferContents, m_data); }
     static constexpr ptrdiff_t offsetOfShared() { return OBJECT_OFFSETOF(ArrayBuffer, m_contents) + OBJECT_OFFSETOF(ArrayBufferContents, m_shared); }
 
-    ~ArrayBuffer() { }
+    JS_EXPORT_PRIVATE ~ArrayBuffer();
 
     JS_EXPORT_PRIVATE static Ref<SharedTask<void(void*)>> primitiveGigacageDestructor();
 
@@ -359,6 +371,7 @@ public:
 private:
     Checked<unsigned> m_pinCount { 0 };
     bool m_isWasmMemory { false };
+    WeakPtr<Wasm::Memory> m_associatedWasmMemory;
     // m_locked == true means that some API user fetched m_contents directly from a TypedArray object,
     // the buffer is backed by a WebAssembly.Memory, or is a SharedArrayBuffer.
     bool m_locked { false };

@@ -37,8 +37,10 @@
 #include <WebCore/Path.h>
 #include <WebCore/TextIterator.h>
 #include <iterator>
+#include <wtf/CompactUniquePtrTuple.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
+#include <wtf/Platform.h>
 #include <wtf/RefPtr.h>
 #include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/Vector.h>
@@ -53,6 +55,12 @@ OBJC_CLASS NSString;
 OBJC_CLASS NSValue;
 OBJC_CLASS NSView;
 #endif
+
+namespace WebCore {
+class AXObjectRareData;
+}
+
+WTF_ALLOW_COMPACT_POINTERS_TO_INCOMPLETE_TYPE(WebCore::AXObjectRareData);
 
 namespace WebCore {
 
@@ -90,6 +98,11 @@ public:
     bool hasAncestorMatchingFlag(AXAncestorFlag) const;
     bool matchesAncestorFlag(AXAncestorFlag) const;
 
+    bool hasRareData() const { return !!m_rareDataWithBitfields.pointer(); }
+    AXObjectRareData* rareData() const { return m_rareDataWithBitfields.pointer(); }
+    AXObjectRareData& ensureRareData();
+    bool needsRareData() const { return isTable(); }
+
     bool hasDirtySubtree() const { return m_subtreeDirty; }
 
     bool isInDescriptionListDetail() const;
@@ -106,9 +119,7 @@ public:
     virtual bool isAccessibilityScrollViewInstance() const { return false; }
     virtual bool isAccessibilitySVGRoot() const { return false; }
     virtual bool isAccessibilitySVGObjectInstance() const { return false; }
-    bool isAccessibilityTableInstance() const override { return false; }
     virtual bool isAccessibilityTableColumnInstance() const { return false; }
-    virtual bool isAccessibilityLabelInstance() const { return false; }
     virtual bool isAccessibilityListBoxInstance() const { return false; }
     virtual bool isAccessibilityListBoxOptionInstance() const { return false; }
     bool isAXIsolatedObjectInstance() const final { return false; }
@@ -123,20 +134,24 @@ public:
 #endif
     bool isMediaTimeline() const { return false; }
     virtual bool isSliderThumb() const { return false; }
-    bool isLabel() const { return isAccessibilityLabelInstance() || labelForObjects().size(); }
+    virtual bool isNativeLabel() const { return false; }
+    bool isLabelByRelation() const { return labelForObjects().size(); }
+    bool isLabel() const { return isNativeLabel() || isLabelByRelation(); }
     // FIXME: Re-evaluate what this means when site isolation is enabled (is this method name accurate?)
     virtual bool isRoot() const { return false; }
 
     std::optional<InputType::Type> inputType() const final;
 
-    virtual bool isListInstance() const { return false; }
+    virtual bool isAccessibilityList() const { return false; }
     virtual bool isUnorderedList() const { return false; }
     virtual bool isOrderedList() const { return false; }
     bool isDescriptionList() const override { return false; }
 
     // Table support.
     bool isTable() const override { return false; }
-    bool isExposable() const override { return true; }
+    virtual bool isAriaTable() const { return false; }
+    bool isExposableTable() const override { return false; }
+    virtual void recomputeIsExposableIfNecessary() { };
     AccessibilityChildrenVector columns() override { return AccessibilityChildrenVector(); }
     AccessibilityChildrenVector rows() override { return AccessibilityChildrenVector(); }
     unsigned columnCount() override { return 0; }
@@ -146,10 +161,12 @@ public:
     AccessibilityChildrenVector rowHeaders() override { return AccessibilityChildrenVector(); }
     AccessibilityChildrenVector visibleRows() override { return AccessibilityChildrenVector(); }
     String cellScope() const final { return getAttribute(HTMLNames::scopeAttr); }
-    AccessibilityObject* headerContainer() override { return nullptr; }
+    AccessibilityObject* tableHeaderContainer() override { return nullptr; }
     int axColumnCount() const override { return 0; }
     int axRowCount() const override { return 0; }
     virtual Vector<Vector<Markable<AXID>>> cellSlots() { return { }; }
+    // Cell indexes are assigned during child creation, so make sure children are up-to-date.
+    void ensureCellIndexesUpToDate() { updateChildrenIfNecessary(); }
 
     // Table cell support.
     bool isTableCell() const override { return false; }
@@ -162,7 +179,6 @@ public:
     std::optional<unsigned> axRowIndex() const override { return std::nullopt; }
     String axColumnIndexText() const override { return { }; }
     String axRowIndexText() const override { return { }; }
-
 
     // Table column support.
     unsigned columnIndex() const override { return 0; }
@@ -349,6 +365,7 @@ public:
     AccessibilityObject* internalLinkElement() const override { return nullptr; }
     AccessibilityChildrenVector radioButtonGroup() const override { return { }; }
 
+    virtual void recomputeAriaRole() { }
     virtual AccessibilityRole ariaRoleAttribute() const { return AccessibilityRole::Unknown; }
     bool hasExplicitGenericRole() const { return ariaRoleAttribute() == AccessibilityRole::Generic; }
     bool hasImplicitGenericRole() const { return role() == AccessibilityRole::Generic && !hasExplicitGenericRole(); }
@@ -800,7 +817,7 @@ public:
     void setLastPresentedTextPrediction(Node&, CompositionState, const String&, size_t, bool);
 #endif // PLATFORM(IOS_FAMILY)
 
-    virtual FloatRect frameRect() const { return { }; }
+    virtual FloatRect localRect() const { return { }; }
     virtual bool isNonLayerSVGObject() const { return false; }
 
     // When using the previousSibling and nextSibling methods, we can alternate between walking the DOM and the
@@ -944,16 +961,12 @@ protected: // FIXME: Make the data members private.
     AccessibilityChildrenVector m_children;
 private:
     const WeakPtr<AXObjectCache> m_axObjectCache;
+    CompactUniquePtrTuple<AXObjectRareData, uint16_t> m_rareDataWithBitfields;
 #if PLATFORM(IOS_FAMILY)
     InlineTextPrediction m_lastPresentedTextPrediction;
     InlineTextPrediction m_lastPresentedTextPredictionComplete;
 #endif
 };
-
-inline AXObjectCache* AccessibilityObject::axObjectCache() const
-{
-    return m_axObjectCache.get();
-}
 
 inline bool AccessibilityObject::hasDisplayContents() const
 {

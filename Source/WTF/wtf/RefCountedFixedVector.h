@@ -43,6 +43,11 @@ public:
         return adoptRef(*new (NotNull, fastMalloc(Base::allocationSize(size))) RefCountedFixedVectorBase(size));
     }
 
+    static Ref<RefCountedFixedVectorBase> create(std::initializer_list<T> initializerList)
+    {
+        return adoptRef(*new (NotNull, fastMalloc(Base::allocationSize(initializerList.size()))) RefCountedFixedVectorBase(initializerList));
+    }
+
     template<typename InputIterator>
     static Ref<RefCountedFixedVectorBase> create(InputIterator first, InputIterator last)
     {
@@ -94,6 +99,11 @@ public:
 private:
     explicit RefCountedFixedVectorBase(unsigned size)
         : Base(size)
+    {
+    }
+
+    explicit RefCountedFixedVectorBase(std::initializer_list<T> initializerList)
+        : Base(initializerList)
     {
     }
 

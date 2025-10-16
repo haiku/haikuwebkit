@@ -84,6 +84,14 @@ template<> struct CGColorSpaceMapping<ColorSpace::ExtendedRec2020> {
     }
 };
 
+WEBCORE_EXPORT CGColorSpaceRef extendedLinearDisplayP3ColorSpaceSingleton();
+template<> struct CGColorSpaceMapping<ColorSpace::ExtendedLinearDisplayP3> {
+    static CGColorSpaceRef colorSpace()
+    {
+        return extendedLinearDisplayP3ColorSpaceSingleton();
+    }
+};
+
 WEBCORE_EXPORT CGColorSpaceRef extendedLinearSRGBColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ExtendedLinearSRGB> {
     static CGColorSpaceRef colorSpace()
@@ -113,6 +121,14 @@ template<> struct CGColorSpaceMapping<ColorSpace::Rec2020> {
     static CGColorSpaceRef colorSpace()
     {
         return ITUR_2020ColorSpaceSingleton();
+    }
+};
+
+WEBCORE_EXPORT CGColorSpaceRef linearDisplayP3ColorSpaceSingleton();
+template<> struct CGColorSpaceMapping<ColorSpace::LinearDisplayP3> {
+    static CGColorSpaceRef colorSpace()
+    {
+        return linearDisplayP3ColorSpaceSingleton();
     }
 };
 
@@ -181,6 +197,8 @@ inline CGColorSpaceRef cachedNullableCGColorSpace(ColorSpace colorSpace)
         return cachedNullableCGColorSpace<ColorSpace::ExtendedA98RGB>();
     case ColorSpace::ExtendedDisplayP3:
         return cachedNullableCGColorSpace<ColorSpace::ExtendedDisplayP3>();
+    case ColorSpace::ExtendedLinearDisplayP3:
+        return cachedNullableCGColorSpace<ColorSpace::ExtendedLinearDisplayP3>();
     case ColorSpace::ExtendedLinearSRGB:
         return cachedNullableCGColorSpace<ColorSpace::ExtendedLinearSRGB>();
     case ColorSpace::ExtendedProPhotoRGB:
@@ -197,6 +215,8 @@ inline CGColorSpaceRef cachedNullableCGColorSpace(ColorSpace colorSpace)
         return cachedNullableCGColorSpace<ColorSpace::LCH>();
     case ColorSpace::Lab:
         return cachedNullableCGColorSpace<ColorSpace::Lab>();
+    case ColorSpace::LinearDisplayP3:
+        return cachedNullableCGColorSpace<ColorSpace::LinearDisplayP3>();
     case ColorSpace::LinearSRGB:
         return cachedNullableCGColorSpace<ColorSpace::LinearSRGB>();
     case ColorSpace::OKLCH:

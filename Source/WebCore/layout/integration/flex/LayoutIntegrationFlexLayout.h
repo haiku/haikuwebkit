@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <WebCore/LayoutIntegrationBoxTreeUpdater.h>
+#include "LayoutIntegrationBoxTreeUpdater.h"
 #include <WebCore/LayoutState.h>
 #include <WebCore/RenderObjectEnums.h>
 #include <wtf/CheckedPtr.h>

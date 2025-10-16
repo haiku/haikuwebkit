@@ -1171,7 +1171,7 @@ IGNORE_WARNINGS_END
                 [itemCopy setTarget:PDFSubviewProxy];
             }
         } else
-            LOG_ERROR("PDF context menu item %@ came with tag %d, so no WebKit tag was applied. This could mean that the item doesn't appear in clients such as Safari.", [itemCopy title], [itemCopy tag]);
+            LOG_ERROR("PDF context menu item %@ came with tag %zd, so no WebKit tag was applied. This could mean that the item doesn't appear in clients such as Safari.", [itemCopy title], [itemCopy tag]);
     }
     
     // Since we might have removed elements supplied by PDFKit, and we want to minimize our hardwired

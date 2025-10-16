@@ -42,6 +42,8 @@ public:
     static Ref<CSSTransformComponent> create(Ref<DOMMatrixReadOnly>&&, CSSMatrixComponentOptions&& = { });
     static ExceptionOr<Ref<CSSTransformComponent>> create(Ref<const CSSFunctionValue>, Document&);
 
+    ~CSSMatrixComponent();
+
     DOMMatrix& matrix();
     void setMatrix(Ref<DOMMatrix>&&);
 

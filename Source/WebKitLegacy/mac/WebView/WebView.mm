@@ -171,8 +171,8 @@
 #import <WebCore/FrameLoader.h>
 #import <WebCore/FrameSelection.h>
 #import <WebCore/FrameTree.h>
-#import <WebCore/GCController.h>
 #import <WebCore/GameControllerGamepadProvider.h>
+#import <WebCore/GarbageCollectionController.h>
 #import <WebCore/GeolocationController.h>
 #import <WebCore/GeolocationError.h>
 #import <WebCore/HTMLNames.h>
@@ -2513,7 +2513,7 @@ static bool fastDocumentTeardownEnabled()
 #ifndef NDEBUG
     // Need this to make leak messages accurate.
     if (applicationIsTerminating) {
-        WebCore::GCController::singleton().garbageCollectNow();
+        WebCore::GarbageCollectionController::singleton().garbageCollectNow();
         [WebCache setDisabled:YES];
     }
 #endif
@@ -5018,7 +5018,7 @@ IGNORE_WARNINGS_END
         return;
     initialized = YES;
 
-    if (WTF::CocoaApplication::isAppleApplication() && !((rand() * 100) % 100))
+    if (WTF::CocoaApplication::shouldOSFaultLogForAppleApplicationUsingWebKit1())
         os_fault_with_payload(OS_REASON_WEBKIT, 0, nullptr, 0, "WebView initialized", 0);
 
 #if !PLATFORM(IOS_FAMILY)
@@ -7820,13 +7820,13 @@ static NSAppleEventDescriptor* aeDescFromJSValue(JSC::JSGlobalObject* lexicalGlo
 
 - (void)addObserver:(NSObject *)anObserver forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(void *)context
 {
-    LOG (Bindings, "addObserver:%p forKeyPath:%@ options:%x context:%p", anObserver, keyPath, options, context);
+    LOG(Bindings, "addObserver:%p forKeyPath:%@ options:%zx context:%p", anObserver, keyPath, options, context);
     [super addObserver:anObserver forKeyPath:keyPath options:options context:context];
 }
 
 - (void)removeObserver:(NSObject *)anObserver forKeyPath:(NSString *)keyPath
 {
-    LOG (Bindings, "removeObserver:%p forKeyPath:%@", anObserver, keyPath);
+    LOG(Bindings, "removeObserver:%p forKeyPath:%@", anObserver, keyPath);
     [super removeObserver:anObserver forKeyPath:keyPath];
 }
 
@@ -9444,7 +9444,7 @@ static NSTextAlignment nsTextAlignmentFromRenderStyle(const WebCore::RenderStyle
                     String value = typingStyle->style()->getPropertyValue(CSSPropertyWebkitTextDecorationsInEffect);
                     [_private->_textTouchBarItemController setTextIsUnderlined:value.contains("underline"_s)];
                 } else
-                    [_private->_textTouchBarItemController setTextIsUnderlined:style->textDecorationLineInEffect().contains(TextDecorationLine::Underline)];
+                    [_private->_textTouchBarItemController setTextIsUnderlined:style->textDecorationLineInEffect().hasUnderline()];
 
                 Color textColor = style->visitedDependentColor(CSSPropertyColor);
                 if (textColor.isValid())

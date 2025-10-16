@@ -86,4 +86,11 @@ void StyleMultiColData::dumpDifferences(TextStream& ts, const StyleMultiColData&
 }
 #endif // !LOG_DISABLED
 
+Style::LineWidth StyleMultiColData::ruleWidth() const
+{
+    if (rule.style() == BorderStyle::None || rule.style() == BorderStyle::Hidden)
+        return Style::LineWidth { 0_css_px };
+    return rule.width();
+}
+
 } // namespace WebCore

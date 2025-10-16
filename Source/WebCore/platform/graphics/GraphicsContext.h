@@ -198,10 +198,6 @@ public:
     virtual RenderingMode renderingMode() const { return RenderingMode::Unaccelerated; }
     WEBCORE_EXPORT RenderingMode renderingModeForCompatibleBuffer() const;
 
-    // Pixel Snapping
-
-    WEBCORE_EXPORT static void adjustLineToPixelBoundaries(FloatPoint& p1, FloatPoint& p2, float strokeWidth, StrokeStyle);
-
     // Shapes
 
     // These draw methods will do both stroking and filling.

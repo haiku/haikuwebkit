@@ -21,10 +21,13 @@
 
 #pragma once
 
+#import <wtf/Platform.h>
+
 #if PLATFORM(MAC)
 
-#import "RenderThemeCocoa.h"
+#import <WebCore/RenderThemeCocoa.h>
 
+OBJC_CLASS NSPopUpButtonCell;
 OBJC_CLASS WebCoreRenderThemeNotificationObserver;
 
 namespace WebCore {
@@ -133,7 +136,7 @@ private:
     bool hasSwitchHapticFeedback(SwitchTrigger trigger) const final { return trigger == SwitchTrigger::PointerTracking; }
 
     void adjustListButtonStyle(RenderStyle&, const Element*) const final;
-    
+
 #if ENABLE(SERVICE_CONTROLS)
     void adjustImageControlsButtonStyle(RenderStyle&, const Element*) const final;
 #endif

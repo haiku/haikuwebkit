@@ -27,7 +27,7 @@
 
 #include <WebCore/ActiveDOMObject.h>
 #include <WebCore/AnimationFrameRate.h>
-#include "AnimationFrameRatePreset.h"
+#include <WebCore/AnimationFrameRatePreset.h>
 #include <WebCore/CSSKeywordValue.h>
 #include <WebCore/CSSNumericValue.h>
 #include <WebCore/ContextDestructionObserverInlines.h>
@@ -155,7 +155,7 @@ public:
     bool needsTick() const;
     virtual void tick();
     WEBCORE_EXPORT Seconds timeToNextTick() const;
-    virtual OptionSet<AnimationImpact> resolve(RenderStyle& targetStyle, const Style::ResolutionContext&);
+    virtual OptionSet<AnimationImpact> resolve(RenderStyle& targetStyle, const Style::ResolutionContext&, EndpointInclusiveActiveInterval = EndpointInclusiveActiveInterval::No);
     void effectTargetDidChange(const std::optional<const Styleable>& previousTarget, const std::optional<const Styleable>& newTarget);
     void acceleratedStateDidChange();
     void willChangeRenderer();

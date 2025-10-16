@@ -29,7 +29,7 @@
 #include "config.h"
 #include "AccessibilityImageMapLink.h"
 
-#include "AXObjectCache.h"
+#include "AXObjectCacheInlines.h"
 #include "ContainerNodeInlines.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "HTMLImageElement.h"
@@ -63,7 +63,7 @@ AccessibilityObject* AccessibilityImageMapLink::parentObject() const
 
 AccessibilityRole AccessibilityImageMapLink::determineAccessibilityRole()
 {
-    if ((m_ariaRole = determineAriaRoleAttribute()) != AccessibilityRole::Unknown)
+    if (m_ariaRole != AccessibilityRole::Unknown)
         return m_ariaRole;
 
     return !url().isEmpty() ? AccessibilityRole::Link : AccessibilityRole::Generic;

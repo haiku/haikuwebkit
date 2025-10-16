@@ -121,9 +121,19 @@ void InjectedBundleScriptWorld::setAllowAutofill()
     m_world->setAllowAutofill();
 }
 
-void InjectedBundleScriptWorld::setNodeInfoEnabled()
+void InjectedBundleScriptWorld::setAllowJSHandleCreation()
 {
-    m_world->setNodeInfoEnabled();
+    m_world->setAllowJSHandleCreation();
+}
+
+void InjectedBundleScriptWorld::setAllowNodeSerialization()
+{
+    m_world->setAllowNodeSerialization();
+}
+
+void InjectedBundleScriptWorld::setAllowPostingLegacySynchronousMessages()
+{
+    m_world->setAllowPostLegacySynchronousMessage();
 }
 
 void InjectedBundleScriptWorld::setAllowElementUserInfo()

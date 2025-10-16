@@ -25,9 +25,12 @@
 
 #import "config.h"
 
+#import "PlatformUtilities.h"
 #import "Test.h"
 #import "WTFTestUtilities.h"
 #import <WebKit/WKWebViewPrivate.h>
+#import <WebKit/_WKNSStringExtras.h>
+#import <WebKit/_WKNSURLExtras.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/URL.h>
 #import <wtf/Vector.h>
@@ -63,7 +66,7 @@ static const char* originalDataAsString(NSURL *URL)
 
 static const char* userVisibleString(NSURL *URL)
 {
-    return [WKWebView _userVisibleStringForURL:URL].UTF8String;
+    return [URL _wk_userVisibleString].UTF8String;
 }
 
 static NSURL *literalURL(const char* literal)
@@ -79,16 +82,16 @@ TEST(URLExtras, URLExtras)
     EXPECT_STREQ("http://site.com", userVisibleString(literalURL("http://site.com")));
     EXPECT_STREQ("http://%77ebsite.com", userVisibleString(literalURL("http://%77ebsite.com")));
 
-    EXPECT_STREQ("-.example.com", [WTF::decodeHostName(@"-.example.com") UTF8String]);
-    EXPECT_STREQ("-a.example.com", [WTF::decodeHostName(@"-a.example.com") UTF8String]);
-    EXPECT_STREQ("a-.example.com", [WTF::decodeHostName(@"a-.example.com") UTF8String]);
-    EXPECT_STREQ("ab--cd.example.com", [WTF::decodeHostName(@"ab--cd.example.com") UTF8String]);
+    EXPECT_WK_STREQ("-.example.com", [@"-.example.com" _wk_decodeHostName]);
+    EXPECT_WK_STREQ("-a.example.com", [@"-a.example.com" _wk_decodeHostName]);
+    EXPECT_WK_STREQ("a-.example.com", [@"a-.example.com" _wk_decodeHostName]);
+    EXPECT_WK_STREQ("ab--cd.example.com", [@"ab--cd.example.com" _wk_decodeHostName]);
 #if HAVE(NSURL_EMPTY_PUNYCODE_CHECK)
-    EXPECT_NULL([WTF::decodeHostName(@"xn--.example.com") UTF8String]);
+    EXPECT_NULL([@"xn--.example.com" _wk_decodeHostName]);
 #else
-    EXPECT_STREQ(".example.com", [WTF::decodeHostName(@"xn--.example.com") UTF8String]);
+    EXPECT_WK_STREQ(".example.com", [@"xn--.example.com" _wk_decodeHostName]);
 #endif
-    EXPECT_STREQ("a..example.com", [WTF::decodeHostName(@"a..example.com") UTF8String]);
+    EXPECT_WK_STREQ("a..example.com", [@"a..example.com" _wk_decodeHostName]);
 }
     
 TEST(URLExtras, URLExtras_Spoof)
@@ -245,7 +248,7 @@ TEST(URLExtras, URLExtras_DivisionSign)
 
     // Separate functions that deal with just a host name on its own.
     EXPECT_STREQ("site.xn--comothersite-kjb.org", [WTF::encodeHostName(@"site.com\xC3\xB7othersite.org") UTF8String]);
-    EXPECT_STREQ("site.com\xC3\xB7othersite.org", [WTF::decodeHostName(@"site.com\xC3\xB7othersite.org") UTF8String]);
+    EXPECT_WK_STREQ("site.com\xC3\xB7othersite.org", [@"site.com\xC3\xB7othersite.org" _wk_decodeHostName]);
 }
 
 TEST(WTF, URLExtras_Solidus)
@@ -268,7 +271,7 @@ TEST(WTF, URLExtras_Solidus)
 
     // Separate functions that deal with just a host name on its own.
     EXPECT_STREQ("site.com/othersite.org", [WTF::encodeHostName(@"site.com\xEF\xBC\x8Fothersite.org") UTF8String]);
-    EXPECT_STREQ("site.com/othersite.org", [WTF::decodeHostName(@"site.com\xEF\xBC\x8Fothersite.org") UTF8String]);
+    EXPECT_WK_STREQ("site.com/othersite.org", [@"site.com\xEF\xBC\x8Fothersite.org" _wk_decodeHostName]);
 }
 
 TEST(URLExtras, URLExtras_Space)
@@ -277,7 +280,7 @@ TEST(URLExtras, URLExtras_Space)
 
     // Code path similar to the one used when typing in a URL.
     EXPECT_STREQ("", originalDataAsString(WTF::URLWithUserTypedString(@"http://site.com\xE3\x80\x80othersite.org", nil)));
-    EXPECT_STREQ("", userVisibleString(WTF::URLWithUserTypedString(@"http://site.com\xE3\x80\x80othersite.org", nil)));
+    EXPECT_NULL(userVisibleString(WTF::URLWithUserTypedString(@"http://site.com\xE3\x80\x80othersite.org", nil)));
 
     // Code paths similar to the ones used for URLs found in webpages or HTTP responses.
     EXPECT_STREQ("http://site.com\xE3\x80\x80othersite.org", originalDataAsString(literalURL("http://site.com\xE3\x80\x80othersite.org")));
@@ -287,7 +290,7 @@ TEST(URLExtras, URLExtras_Space)
 
     // Separate functions that deal with just a host name on its own.
     EXPECT_STREQ("site.com othersite.org", [WTF::encodeHostName(@"site.com\xE3\x80\x80othersite.org") UTF8String]);
-    EXPECT_STREQ("site.com\xE3\x80\x80othersite.org", [WTF::decodeHostName(@"site.com\xE3\x80\x80othersite.org") UTF8String]);
+    EXPECT_WK_STREQ("site.com\xE3\x80\x80othersite.org", [@"site.com\xE3\x80\x80othersite.org" _wk_decodeHostName]);
 }
 
 TEST(URLExtras, URLExtras_File)

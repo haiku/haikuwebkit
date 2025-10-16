@@ -143,9 +143,6 @@ void UserMediaRequest::start()
         break;
     }
 
-    ASSERT(document.page());
-    if (RefPtr page = document.page())
-        page->mediaSessionManager().prepareToSendUserMediaPermissionRequestForPage(*page);
     controller->requestUserMediaAccess(*this);
 }
 
