@@ -132,6 +132,8 @@ GST_DEBUG_CATEGORY(webkit_media_player_debug);
 
 namespace WebCore {
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
+
 WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaPlayerPrivateGStreamer);
 
 static const FloatSize s_holePunchDefaultFrameSize(1280, 720);
@@ -4704,6 +4706,8 @@ MediaTelemetryReport::DrmType MediaPlayerPrivateGStreamer::getDrm() const
 #endif // ENABLE(MEDIA_TELEMETRY)
 
 #undef GST_CAT_DEFAULT
+
+IGNORE_CLANG_WARNINGS_END
 
 } // namespace WebCore
 

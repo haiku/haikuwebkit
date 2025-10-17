@@ -94,6 +94,7 @@ const String& RemoteInspectorHTTPServer::inspectorServerAddress() const
 
 unsigned RemoteInspectorHTTPServer::handleRequest(const char* path, SoupMessageHeaders* responseHeaders, SoupMessageBody* responseBody) const
 {
+    IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
     if (g_str_equal(path, "/")) {
         auto* html = m_client->buildTargetListPage(RemoteInspectorClient::InspectorType::HTTP);
         soup_message_headers_append(responseHeaders, "Content-Type", "text/html");
@@ -101,6 +102,7 @@ unsigned RemoteInspectorHTTPServer::handleRequest(const char* path, SoupMessageH
         soup_message_body_append(responseBody, SOUP_MEMORY_TAKE, g_string_free(html, FALSE), bodyLength);
         return SOUP_STATUS_OK;
     }
+    IGNORE_CLANG_WARNINGS_END
 
     GUniquePtr<char> resourcePath(g_build_filename("/org/webkit/inspector/UserInterface", path, nullptr));
 

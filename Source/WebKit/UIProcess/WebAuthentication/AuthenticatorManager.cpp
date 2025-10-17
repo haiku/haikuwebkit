@@ -331,9 +331,11 @@ void AuthenticatorManager::downgrade(Authenticator& id, Ref<Authenticator>&& dow
 
 void AuthenticatorManager::authenticatorStatusUpdated(WebAuthenticationStatus status)
 {
-    // Immediately invalidate the cache if the PIN is incorrect. A status update often means
-    // an error. We don't really care what kind of error it really is.
-    m_pendingRequestData.cachedPin = String();
+    if (status != WebAuthenticationStatus::PINSuccessful) {
+        // Immediately invalidate the cache if the PIN is incorrect. A status update often means
+        // an error. We don't really care what kind of error it really is.
+        m_pendingRequestData.cachedPin = String();
+    }
 
     // This is for the new UI.
     if (RefPtr presenter = m_presenter) {

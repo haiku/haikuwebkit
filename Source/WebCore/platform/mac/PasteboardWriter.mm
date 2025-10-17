@@ -63,7 +63,7 @@ RetainPtr<id <NSPasteboardWriting>> createPasteboardWriter(const PasteboardWrite
         [pasteboardItem setString:plainText->text.createNSString().get() forType:NSPasteboardTypeString];
         if (plainText->canSmartCopyOrDelete) {
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-            auto smartPasteType = bridge_cast(adoptCF(UTTypeCreatePreferredIdentifierForTag(kUTTagClassNSPboardType, bridge_cast(_NXSmartPaste), nullptr)));
+            auto smartPasteType = bridge_cast(adoptCF(UTTypeCreatePreferredIdentifierForTag(kUTTagClassNSPboardType, RetainPtr { bridge_cast(_NXSmartPaste) }.get(), nullptr)));
 ALLOW_DEPRECATED_DECLARATIONS_END
             [pasteboardItem setData:[NSData data] forType:smartPasteType.get()];
         }
@@ -106,27 +106,27 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (auto& webContent = data.webContent()) {
         if (webContent->canSmartCopyOrDelete) {
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-            auto smartPasteType = bridge_cast(adoptCF(UTTypeCreatePreferredIdentifierForTag(kUTTagClassNSPboardType, bridge_cast(_NXSmartPaste), nullptr)));
+            auto smartPasteType = bridge_cast(adoptCF(UTTypeCreatePreferredIdentifierForTag(kUTTagClassNSPboardType, RetainPtr { bridge_cast(_NXSmartPaste) }.get(), nullptr)));
 ALLOW_DEPRECATED_DECLARATIONS_END
             [pasteboardItem setData:[NSData data] forType:smartPasteType.get()];
         }
-        if (webContent->dataInWebArchiveFormat) {
+        if (RefPtr dataInWebArchiveFormat = webContent->dataInWebArchiveFormat) {
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
             auto webArchiveType = bridge_cast(adoptCF(UTTypeCreatePreferredIdentifierForTag(kUTTagClassNSPboardType, CFSTR("Apple Web Archive pasteboard type"), nullptr)));
 ALLOW_DEPRECATED_DECLARATIONS_END
-            [pasteboardItem setData:webContent->dataInWebArchiveFormat->createNSData().get() forType:webArchiveType.get()];
+            [pasteboardItem setData:dataInWebArchiveFormat->createNSData().get() forType:webArchiveType.get()];
         }
-        if (webContent->dataInRTFDFormat)
-            [pasteboardItem setData:webContent->dataInRTFDFormat->createNSData().get() forType:NSPasteboardTypeRTFD];
-        if (webContent->dataInRTFFormat)
-            [pasteboardItem setData:webContent->dataInRTFFormat->createNSData().get() forType:NSPasteboardTypeRTF];
+        if (RefPtr dataInRTFDFormat = webContent->dataInRTFDFormat)
+            [pasteboardItem setData:dataInRTFDFormat->createNSData().get() forType:NSPasteboardTypeRTFD];
+        if (RefPtr dataInRTFFormat = webContent->dataInRTFFormat)
+            [pasteboardItem setData:dataInRTFFormat->createNSData().get() forType:NSPasteboardTypeRTF];
         if (!webContent->dataInHTMLFormat.isNull())
             [pasteboardItem setString:webContent->dataInHTMLFormat.createNSString().get() forType:NSPasteboardTypeHTML];
         if (!webContent->dataInStringFormat.isNull())
             [pasteboardItem setString:webContent->dataInStringFormat.createNSString().get() forType:NSPasteboardTypeString];
 
         for (unsigned i = 0; i < webContent->clientTypesAndData.size(); ++i)
-            [pasteboardItem setData:webContent->clientTypesAndData[i].second->createNSData().get() forType:toUTIUnlessAlreadyUTI(webContent->clientTypesAndData[i].first.createNSString().get()).get()];
+            [pasteboardItem setData:RefPtr { webContent->clientTypesAndData[i].second }->createNSData().get() forType:toUTIUnlessAlreadyUTI(webContent->clientTypesAndData[i].first.createNSString().get()).get()];
 
         PasteboardCustomData customData;
         customData.setOrigin(webContent->contentOrigin);

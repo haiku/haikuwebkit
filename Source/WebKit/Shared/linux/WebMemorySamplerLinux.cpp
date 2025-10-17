@@ -84,6 +84,7 @@ do { \
     appendKeyValuePair(stats, key, value); \
 } while (0);
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 String WebMemorySampler::processName() const
 {
     char processPath[maxProcessPath];
@@ -99,6 +100,7 @@ String WebMemorySampler::processName() const
 
     return processName;
 }
+IGNORE_CLANG_WARNINGS_END
 
 WebMemoryStatistics WebMemorySampler::sampleWebKit() const
 {

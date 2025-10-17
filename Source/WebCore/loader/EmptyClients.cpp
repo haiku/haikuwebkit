@@ -674,6 +674,10 @@ void EmptyFrameLoaderClient::updateOpener(const Frame&)
 {
 }
 
+void EmptyFrameLoaderClient::setPrinting(bool, FloatSize, FloatSize, float, AdjustViewSize)
+{
+}
+
 void EmptyFrameLoaderClient::dispatchWillSendSubmitEvent(Ref<FormState>&&)
 {
 }

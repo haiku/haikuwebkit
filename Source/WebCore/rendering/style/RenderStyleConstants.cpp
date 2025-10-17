@@ -1106,7 +1106,6 @@ TextStream& operator<<(TextStream& ts, ScrollSnapAxisAlignType alignType)
 TextStream& operator<<(TextStream& ts, ScrollSnapStrictness strictness)
 {
     switch (strictness) {
-    case ScrollSnapStrictness::None: ts << "none"_s; break;
     case ScrollSnapStrictness::Proximity: ts << "proximity"_s; break;
     case ScrollSnapStrictness::Mandatory: ts << "mandatory"_s; break;
     }

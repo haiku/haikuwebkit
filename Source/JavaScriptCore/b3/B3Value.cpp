@@ -957,7 +957,9 @@ ValueKey Value::key() const
     case Equal:
     case NotEqual:
     case LessThan:
+    case LessEqual:
     case GreaterThan:
+    case GreaterEqual:
     case Above:
     case Below:
     case AboveEqual:
@@ -990,6 +992,8 @@ ValueKey Value::key() const
         return ValueKey(
             SlotBase, type(),
             static_cast<int64_t>(as<SlotBaseValue>()->slot()->index()));
+    case Extract:
+        return ValueKey(kind(), type(), child(0), as<ExtractValue>()->index());
     case VectorNot:
     case VectorSplat:
     case VectorAbs:
@@ -1068,9 +1072,44 @@ ValueKey Value::key() const
         if (numChildren() == 2)
             return ValueKey(kind(), type(), as<SIMDValue>()->simdInfo(), child(0), child(1), nullptr);
         return ValueKey(kind(), type(), as<SIMDValue>()->simdInfo(), child(0), child(1), child(2));
-    default:
+    case Nop:
+    case Set:
+    case Get:
+    case Load:
+    case Load8Z:
+    case Load16Z:
+    case Load8S:
+    case Load16S:
+    case Store:
+    case Store8:
+    case Store16:
+    case AtomicWeakCAS:
+    case AtomicStrongCAS:
+    case AtomicXchgAdd:
+    case AtomicXchgAnd:
+    case AtomicXchgOr:
+    case AtomicXchgSub:
+    case AtomicXchgXor:
+    case AtomicXchg:
+    case WasmAddress:
+    case WasmBoundsCheck:
+    case MemoryCopy:
+    case MemoryFill:
+    case Fence:
+    case CCall:
+    case Patchpoint:
+    case Upsilon:
+    case Phi:
+    case Jump:
+    case Branch:
+    case Switch:
+    case EntrySwitch:
+    case Return:
+    case Oops:
         return ValueKey();
     }
+    RELEASE_ASSERT_NOT_REACHED();
+    return ValueKey();
 }
 
 Value* Value::foldIdentity() const

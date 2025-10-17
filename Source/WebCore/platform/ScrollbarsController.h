@@ -48,9 +48,10 @@ public:
     WEBCORE_EXPORT static std::unique_ptr<ScrollbarsController> create(ScrollableArea&);
 
     WEBCORE_EXPORT explicit ScrollbarsController(ScrollableArea&);
-    virtual ~ScrollbarsController() = default;
+    WEBCORE_EXPORT virtual ~ScrollbarsController();
     
-    ScrollableArea& scrollableArea() const { return m_scrollableArea; }
+    inline ScrollableArea& scrollableArea() const; // Defined in ScrollbarsControllerInlines.h
+    inline CheckedRef<ScrollableArea> checkedScrollableArea() const; // Defined in ScrollbarsControllerInlines.h
 
     bool scrollbarAnimationsUnsuspendedByUserInteraction() const { return m_scrollbarAnimationsUnsuspendedByUserInteraction; }
     void setScrollbarAnimationsUnsuspendedByUserInteraction(bool unsuspended) { m_scrollbarAnimationsUnsuspendedByUserInteraction = unsuspended; }
@@ -120,7 +121,7 @@ public:
     WEBCORE_EXPORT virtual void scrollbarWidthChanged(WebCore::ScrollbarWidth) { }
 
 private:
-    ScrollableArea& m_scrollableArea;
+    WeakRef<ScrollableArea> m_scrollableArea;
     bool m_scrollbarAnimationsUnsuspendedByUserInteraction { true };
 };
 

@@ -213,6 +213,12 @@
 #define ALWAYS_INLINE_LAMBDA
 #endif
 
+/* COLD */
+
+#if !defined(COLD)
+#define COLD __attribute((__cold__))
+#endif
+
 /* WTF_EXTERN_C_{BEGIN, END} */
 
 #ifdef __cplusplus

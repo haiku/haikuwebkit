@@ -7,7 +7,5 @@ platform/graphics/cg/GradientRendererCG.cpp
 platform/graphics/cg/GraphicsContextCG.cpp
 platform/graphics/cg/ImageDecoderCG.cpp
 platform/graphics/cg/PatternCG.cpp
-platform/mac/CursorMac.mm
-platform/mac/ScrollbarsControllerMac.mm
 platform/mediastream/mac/AVVideoCaptureSource.mm
 platform/network/cf/DNSResolveQueueCFNet.cpp

@@ -5462,8 +5462,7 @@
                 "none"
             ],
             "codegen-properties": {
-                "render-style-name-for-methods": "MarkerEndResource",
-                "style-converter": "SVGURIReference",
+                "style-converter": "StyleType<SVGMarkerResource>",
                 "svg": true,
                 "parser-grammar": "none | <marker-ref>"
             },
@@ -5480,8 +5479,7 @@
                 "none"
             ],
             "codegen-properties": {
-                "render-style-name-for-methods": "MarkerMidResource",
-                "style-converter": "SVGURIReference",
+                "style-converter": "StyleType<SVGMarkerResource>",
                 "svg": true,
                 "parser-grammar": "none | <marker-ref>"
             },
@@ -5498,8 +5496,7 @@
                 "none"
             ],
             "codegen-properties": {
-                "render-style-name-for-methods": "MarkerStartResource",
-                "style-converter": "SVGURIReference",
+                "style-converter": "StyleType<SVGMarkerResource>",
                 "svg": true,
                 "parser-grammar": "none | <marker-ref>"
             },
@@ -11816,7 +11813,7 @@
                 "center"
             ],
             "codegen-properties": {
-                "style-converter": "ScrollSnapAlign",
+                "style-converter": "StyleType<ScrollSnapAlign>",
                 "parser-grammar": "[ none | start | end | center ]{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
@@ -11838,7 +11835,7 @@
                 "proximity"
             ],
             "codegen-properties": {
-                "style-converter": "ScrollSnapType",
+                "style-converter": "StyleType<ScrollSnapType>",
                 "parser-function": "consumeScrollSnapType",
                 "parser-grammar-unused": "none | [ [ x | y | block | inline | both ] [ mandatory | proximity ]? ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals."

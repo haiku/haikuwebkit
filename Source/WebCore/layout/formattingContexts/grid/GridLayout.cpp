@@ -40,6 +40,30 @@ GridLayout::GridLayout(const GridFormattingContext& gridFormattingContext)
 {
 }
 
+// 8.5. Grid Item Placement Algorithm.
+// https://drafts.csswg.org/css-grid-1/#auto-placement-algo
+auto GridLayout::placeGridItems(const UnplacedGridItems& unplacedGridItems, const Vector<Style::GridTrackSize>& gridTemplateColumnsTrackSizes,
+    const Vector<Style::GridTrackSize>& gridTemplateRowsTrackSizes)
+{
+    struct Result {
+        PlacedGridItems placedGridItems;
+        size_t implicitGridColumnsCount;
+        size_t implicitGridRowsCount;
+    };
+
+    ImplicitGrid implicitGrid(gridTemplateColumnsTrackSizes.size(), gridTemplateRowsTrackSizes.size());
+
+    // 1. Position anything that’s not auto-positioned.
+    auto& nonAutoPositionedGridItems = unplacedGridItems.nonAutoPositionedItems;
+    for (auto& nonAutoPositionedItem : nonAutoPositionedGridItems)
+        implicitGrid.insertUnplacedGridItem(nonAutoPositionedItem);
+
+    ASSERT(implicitGrid.columnsCount() == gridTemplateColumnsTrackSizes.size() && implicitGrid.rowsCount() == gridTemplateRowsTrackSizes.size(),
+        "Since we currently only support placing items which are explicitly placed and fit within the explicit grid, the size of the implicit grid should match the passed in sizes.");
+
+    return Result { implicitGrid.placedGridItems(), implicitGrid.columnsCount(), implicitGrid.rowsCount() };
+}
+
 // https://drafts.csswg.org/css-grid-1/#layout-algorithm
 void GridLayout::layout(GridFormattingContext::GridLayoutConstraints, const UnplacedGridItems& unplacedGridItems)
 {
@@ -48,23 +72,52 @@ void GridLayout::layout(GridFormattingContext::GridLayoutConstraints, const Unpl
     auto& gridTemplateRowsTrackSizes = gridContainerStyle->gridTemplateRows().sizes;
 
     // 1. Run the Grid Item Placement Algorithm to resolve the placement of all grid items in the grid.
-    auto placedGridItems = placeGridItems(unplacedGridItems, gridTemplateColumnsTrackSizes.size(), gridTemplateRowsTrackSizes.size());
-    UNUSED_VARIABLE(placedGridItems);
+    auto [ placedGridItems, implicitGridColumnsCount, implicitGridRowsCount ] = placeGridItems(unplacedGridItems, gridTemplateColumnsTrackSizes, gridTemplateRowsTrackSizes);
+
+    auto columnTrackSizingFunctions = trackSizingFunctions(implicitGridColumnsCount, gridTemplateColumnsTrackSizes);
+    auto rowTrackSizingFunctions = trackSizingFunctions(implicitGridRowsCount, gridTemplateRowsTrackSizes);
 }
 
-// 8.5. Grid Item Placement Algorithm.
-// https://drafts.csswg.org/css-grid-1/#auto-placement-algo
-GridLayout::PlacedGridItems GridLayout::placeGridItems(const UnplacedGridItems& unplacedGridItems, size_t gridTemplateColumnsTracksCount, size_t gridTemplateRowsTracksCount)
+GridLayout::TrackSizingFunctionsList GridLayout::trackSizingFunctions(size_t implicitGridTracksCount, const Vector<Style::GridTrackSize> gridTemplateTrackSizes)
 {
-    ImplicitGrid implicitGrid(gridTemplateColumnsTracksCount, gridTemplateRowsTracksCount);
+    ASSERT(implicitGridTracksCount == gridTemplateTrackSizes.size(), "Currently only support mapping track sizes from explicit grid from grid-template-{columns, rows}");
+    UNUSED_VARIABLE(implicitGridTracksCount);
 
-    // 1. Position anything that’s not auto-positioned.
-    auto& nonAutoPositionedGridItems = unplacedGridItems.nonAutoPositionedItems;
-    for (auto& nonAutoPositionedItem : nonAutoPositionedGridItems)
-        implicitGrid.insertUnplacedGridItem(nonAutoPositionedItem);
-    ASSERT(implicitGrid.columnsCount() == gridTemplateColumnsTracksCount && implicitGrid.rowsCount()== gridTemplateRowsTracksCount,
-        "Since we currently only support placing items which are explicitly placed and fit within the explicit grid, the size of the implicit grid should match the passed in sizes.");
-    return implicitGrid.placedGridItems();
+    // https://drafts.csswg.org/css-grid-1/#algo-terms
+    return gridTemplateTrackSizes.map([](const Style::GridTrackSize& gridTrackSize) {
+        auto minTrackSizingFunction = [&]() {
+            // If the track was sized with a minmax() function, this is the first argument to that function.
+            if (gridTrackSize.isMinMax())
+                return gridTrackSize.minTrackBreadth();
+
+            // If the track was sized with a <flex> value or fit-content() function, auto.
+            if (gridTrackSize.isFitContent() || gridTrackSize.minTrackBreadth().isFlex())
+                return Style::GridTrackBreadth { CSS::Keyword::Auto { } };
+
+            // Otherwise, the track’s sizing function.
+            return gridTrackSize.minTrackBreadth();
+        };
+
+        auto maxTrackSizingFunction = [&]() {
+            // If the track was sized with a minmax() function, this is the second argument to that function.
+            if (gridTrackSize.isMinMax())
+                return gridTrackSize.maxTrackBreadth();
+
+            // Otherwise, the track’s sizing function. In all cases, treat auto and fit-content() as max-content,
+            // except where specified otherwise for fit-content().
+            if (gridTrackSize.maxTrackBreadth().isAuto())
+                return Style::GridTrackBreadth { CSS::Keyword::MaxContent { } };
+
+            if (gridTrackSize.isFitContent()) {
+                ASSERT_NOT_IMPLEMENTED_YET();
+                return Style::GridTrackBreadth { CSS::Keyword::MaxContent { } };
+            }
+
+            return gridTrackSize.maxTrackBreadth();
+        };
+
+        return TrackSizingFunctions { minTrackSizingFunction(), maxTrackSizingFunction() };
+    });
 }
 
 const ElementBox& GridLayout::gridContainer() const

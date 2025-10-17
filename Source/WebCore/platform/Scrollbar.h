@@ -59,7 +59,8 @@ public:
     static int pageStep(int viewWidthOrHeight) { return pageStep(viewWidthOrHeight, viewWidthOrHeight); }
     static float pageStepDelta(int widthOrHeight) { return std::max(std::max(static_cast<float>(widthOrHeight) * Scrollbar::minFractionToStepWhenPaging(), static_cast<float>(widthOrHeight) - Scrollbar::maxOverlapBetweenPages()), 1.0f); }
 
-    ScrollableArea& scrollableArea() const { return m_scrollableArea; }
+    inline ScrollableArea& scrollableArea() const; // Defined in ScrollbarInlines.h.
+    inline CheckedRef<ScrollableArea> checkedScrollableArea() const; // Defined in ScrollbarInlines.h.
 
     bool isCustomScrollbar() const { return m_isCustomScrollbar; }
     WEBCORE_EXPORT bool isMockScrollbar() const;
@@ -162,7 +163,7 @@ protected:
     ScrollDirection pressedPartScrollDirection();
     ScrollGranularity pressedPartScrollGranularity();
 
-    ScrollableArea& m_scrollableArea;
+    WeakRef<ScrollableArea> m_scrollableArea;
     ScrollbarOrientation m_orientation;
     ScrollbarWidth m_widthStyle;
     ScrollbarTheme& m_theme;

@@ -99,6 +99,7 @@ static RuleFlatteningStrategy flatteningStrategyForStyleRuleType(StyleRuleType s
     case StyleRuleType::Container:
     case StyleRuleType::Scope:
     case StyleRuleType::StartingStyle:
+    case StyleRuleType::InternalBaseAppearance:
         // These rules MUST be handled by the following methods in order to provide functionality in
         // and avoid mismatched lists of source data and CSSOM wrappers:
         // - `isValidRuleHeaderText`

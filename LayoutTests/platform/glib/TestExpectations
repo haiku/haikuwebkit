@@ -886,7 +886,7 @@ accessibility/visible-character-range-height-changes.html [ Skip ]
 accessibility/visible-character-range-scrolling.html [ Skip ]
 accessibility/visible-character-range-vertical-rl.html [ Skip ]
 
-accessibility/display-contents/tree-and-treeitems.html [ Failure ]
+[ Release ] accessibility/display-contents/tree-and-treeitems.html [ Failure ]
 
 webkit.org/b/212805 accessibility/svg-text.html [ Failure ]
 
@@ -1867,7 +1867,7 @@ webkit.org/b/267218 webgl/webgl-worker.html [ Failure ]
 # PageOverlay-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
 
-webkit.org/b/168501 pageoverlay/overlay-remove-reinsert-view.html [ Failure ]
+webkit.org/b/168501 pageoverlay/overlay-remove-reinsert-view.html [ Failure Timeout ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of PageOverlay-related bugs
@@ -2642,7 +2642,6 @@ webkit.org/b/235885 webrtc/video-mute-vp8.html [ Skip ]
 webkit.org/b/235885 webrtc/video-replace-muted-track.html [ Skip ]
 webkit.org/b/235885 webrtc/video-stats.html [ Failure ]
 webkit.org/b/235885 webrtc/video-unmute.html [ Pass Timeout ]
-webkit.org/b/235885 webrtc/vp8-then-h264.html [ Failure Timeout Crash ]
 http/tests/webrtc/muted-video-mediastream-invisible-autoplay.html [ Failure Timeout Pass ]
 
 webkit.org/b/187064 webrtc/video-addTrack.html [ Failure Pass Timeout ]
@@ -2703,7 +2702,7 @@ imported/w3c/web-platform-tests/webrtc/protocol/handover-datachannel.html [ Fail
 
 # The first test here times out, we don't fire track events because there's no actual p2p streaming
 # set-up, so rtpbin doesn't create src pads and thus neither is webrtcbin.
-imported/w3c/web-platform-tests/webrtc/protocol/msid-parse.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/msid-parse.html [ Failure Timeout ]
 
 # Expected to pass when our SDK ships GStreamer 1.28. See also:
 # https://gitlab.freedesktop.org/gstreamer/gstreamer/-/commit/80e663d5605124fbd7e4b69e69060749a541e491
@@ -2787,7 +2786,7 @@ fast/mediastream/RTCPeerConnection-inspect-offer.html [ Failure ]
 # "Parameterless SLD() in 'have-remote-offer' sets transceiver.currentDirection" test times out
 # because the answerer is blocked waiting on the track event before the offerer has completed its
 # setup and unblocked data flow.
-imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-setLocalDescription-parameterless.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-setLocalDescription-parameterless.https.html [ Failure Timeout ]
 
 # Creates 256 PeerConnections. The test takes around 30 seconds to complete.
 webrtc/datachannel/multiple-connections.html [ Slow ]
@@ -2844,6 +2843,8 @@ webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrSession_input_events
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrSession_requestReferenceSpace_features.https.html [ Pass ]
 webkit.org/b/227086 imported/w3c/web-platform-tests/webxr/xrWebGLLayer_constructor.https.html [ Pass ]
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xr_viewport_scale.https.html [ Pass ]
+
+imported/w3c/web-platform-tests/webxr/exclusive_requestFrame_nolayer.https.html [ Pass ]
 
 imported/w3c/web-platform-tests/webxr/webGLCanvasContext_create_xrcompatible.https.html [ Failure ]
 
@@ -3425,12 +3426,8 @@ media/track/in-band/track-in-band-kate-ogg-track-order.html [ Skip ]
 # Skip tests that require the GPU process.
 webkit.org/b/279434 fast/canvas/image-buffer-resource-limits.html [ Skip ]
 webkit.org/b/279434 fast/mediastream/media-stream-video-track-interrupted-from-audio.html [ Skip ]
-webkit.org/b/279434 fast/mediastream/media-stream-video-track-interrupted.html [ Skip ]
-webkit.org/b/279434 fast/transforms/interleaved-2d-transforms-with-gpu-process.html [ Skip ]
 webkit.org/b/279434 webgl/offscreen-webgl-errors-to-console.html [ Skip ]
 webkit.org/b/279434 webgl/webgl-and-dom-in-gpup.html [ Skip ]
-webkit.org/b/279434 fast/mediastream/video-created-while-interrupted.html [ Skip ]
-webkit.org/b/279434 fast/text/glyph-display-lists/glyph-display-list-gpu-process-crash.html [ Skip ]
 
 # testRunner.webHistoryItemCount implementation is not implemented in WTR
 webkit.org/b/100238 fast/history/window-open.html [ Skip ]
@@ -3875,9 +3872,9 @@ webkit.org/b/143478 media/video-page-load-preload-none.html [ Failure ]
 
 webkit.org/b/145051 webkit.org/b/198830 [ Release ] media/video-rtl.html [ ImageOnlyFailure Pass Crash ]
 
-webkit.org/b/198827 media/media-fullscreen-return-to-inline.html [ Timeout ]
+webkit.org/b/198827 media/media-fullscreen-return-to-inline.html [ Skip ] # Timeout.
 
-media/media-fullscreen-inline.html [ Timeout ]
+media/media-fullscreen-inline.html [ Skip ] # Timeout.
 
 webkit.org/b/198830 media/video-size-intrinsic-scale.html [ Failure ]
 
@@ -4307,13 +4304,14 @@ webkit.org/b/206498 compositing/iframes/leave-compositing-iframe.html [ Failure 
 webkit.org/b/169918 compositing/iframes/overlapped-iframe.html [ Failure ]
 # The backing store is cleared when page cached in GTK
 webkit.org/b/135348 compositing/iframes/page-cache-layer-tree.html [ Failure ]
-webkit.org/b/192433 compositing/iframes/remove-reinsert-webview-with-iframe.html [ Failure ]
+webkit.org/b/192433 compositing/iframes/remove-reinsert-webview-with-iframe.html [ Timeout Failure ]
 webkit.org/b/169918 compositing/iframes/scrolling-iframe.html [ Failure ]
 webkit.org/b/169918 compositing/images/direct-image-object-fit.html [ Failure ]
 webkit.org/b/169918 compositing/layer-creation/deep-tree.html [ ImageOnlyFailure ]
 webkit.org/b/206498 compositing/layer-creation/fixed-position-change-out-of-view-in-view.html [ Failure ]
 webkit.org/b/202228 compositing/layer-creation/fixed-position-descendants-out-of-view.html [ Failure ]
-webkit.org/b/169918 compositing/layer-creation/fixed-position-out-of-view-scaled-scroll.html [ Failure ]
+webkit.org/b/169918 [ Release ] compositing/layer-creation/fixed-position-out-of-view-scaled-scroll.html [ Failure ]
+webkit.org/b/169918 [ Debug ] compositing/layer-creation/fixed-position-out-of-view-scaled-scroll.html [ Skip ] # Crash.
 webkit.org/b/169918 compositing/layer-creation/fixed-position-out-of-view-scaled.html [ Failure ]
 webkit.org/b/169918 compositing/layer-creation/spanOverlapsCanvas.html [ Failure ]
 webkit.org/b/169918 compositing/masks/clip-path-composited-descendent.html [ Failure ]
@@ -4879,6 +4877,20 @@ fast/text/glyph-display-lists [ Skip ]
 # Now that partial fonts are working, two characters previously rendered as a square are now showing correctly, which makes the test fail.
 # Probably the test should be updated.
 fast/text/text-combine-placement.html [ Failure ]
+
+# Tests crashing in Debug
+webkit.org/b/299092 [ Debug ] accessibility/aria-flowto.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/aria-selected.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/display-contents/element-roles.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/display-contents/list.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/display-contents/table-dynamic.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/display-contents/tree-and-treeitems.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/node-only-object-aria-owns-hang.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/node-only-object-element-rect.html [ Skip ]
+webkit.org/b/299092 [ Debug ] accessibility/url-test.html [ Skip ]
+
+# Depends on 'UIScriptController::singleTapAtPointWithModifiers', which is not implemented yet for GLIB.
+webkit.org/b/278719 fast/events/touch/touch-fractional-coordinates.html [ Skip ]
 
 # End: Common failures between GTK and WPE.
 

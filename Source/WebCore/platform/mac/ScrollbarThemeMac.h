@@ -62,6 +62,7 @@ public:
     void unregisterScrollbar(Scrollbar&) override;
 
     static NSScrollerImp *scrollerImpForScrollbar(Scrollbar&);
+    static RetainPtr<NSScrollerImp> protectedScrollerImpForScrollbar(Scrollbar&);
 
     void setPaintCharacteristicsForScrollbar(Scrollbar&);
 

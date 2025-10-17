@@ -45,6 +45,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "ScrollAnimator.h"
+#include "ScrollbarInlines.h"
 #include "ScrollbarsController.h"
 #include "ScrollingConstraints.h"
 #include "ScrollingStateFixedNode.h"

@@ -69,6 +69,7 @@ public:
     PlaybackSessionInterfaceMac& playbackSessionInterface() const { return m_playbackSessionInterface.get(); }
     RefPtr<VideoPresentationModel> videoPresentationModel() const { return m_videoPresentationModel.get(); }
     PlaybackSessionModel* playbackSessionModel() const { return m_playbackSessionInterface->playbackSessionModel(); }
+    CheckedPtr<PlaybackSessionModel> checkedPlaybackSessionModel() const { return playbackSessionModel(); }
     WEBCORE_EXPORT void setVideoPresentationModel(VideoPresentationModel*);
 
 #if HAVE(PIP_SKIP_PREROLL)
@@ -110,6 +111,7 @@ public:
     void applicationDidBecomeActive() { }
 
     WEBCORE_EXPORT WebVideoPresentationInterfaceMacObjC *videoPresentationInterfaceObjC();
+    WEBCORE_EXPORT RetainPtr<WebVideoPresentationInterfaceMacObjC> protectedVideoPresentationInterfaceObjC();
 
     WEBCORE_EXPORT void requestHideAndExitPiP();
 
@@ -128,15 +130,15 @@ public:
     WTFLogChannel& logChannel() const;
 #endif
 
-private:
-    WEBCORE_EXPORT VideoPresentationInterfaceMac(PlaybackSessionInterfaceMac&);
-
     // CheckedPtr interface
     uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
     uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
     void setDocumentBecameVisibleCallback(Function<void()>&& callback) { m_documentBecameVisibleCallback = WTFMove(callback); }
+
+private:
+    WEBCORE_EXPORT VideoPresentationInterfaceMac(PlaybackSessionInterfaceMac&);
 
     const Ref<PlaybackSessionInterfaceMac> m_playbackSessionInterface;
     std::optional<MediaPlayerIdentifier> m_playerIdentifier;

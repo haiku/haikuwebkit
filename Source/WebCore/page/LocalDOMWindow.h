@@ -296,6 +296,9 @@ public:
     void finalizeEventTimingEntry(PerformanceEventTimingCandidate&, const Event&, EventType);
     void dispatchPendingEventTimingEntries();
     uint64_t interactionCount() { return m_interactionCount; }
+    // Misleading function names that mirror the spec; see https://github.com/w3c/event-timing/issues/158 :
+    bool hasDispatchedInputEvent() const { return m_hasDispatchedInputEvent; }
+    void setDispatchedInputEvent() { m_hasDispatchedInputEvent = true; }
 
     // HTML 5 key/value storage
     ExceptionOr<Storage*> sessionStorage();
@@ -474,6 +477,7 @@ private:
 
     EventTimingInteractionID m_userInteractionValue;
     uint64_t m_interactionCount { 0 };
+    bool m_hasDispatchedInputEvent { false };
 
     String m_status;
 

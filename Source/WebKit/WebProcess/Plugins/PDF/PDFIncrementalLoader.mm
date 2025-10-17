@@ -33,6 +33,7 @@
 #import "PDFPluginBase.h"
 #import <WebCore/HTTPStatusCodes.h>
 #import <WebCore/NetscapePlugInStreamLoader.h>
+#import <WebCore/SharedBuffer.h>
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <wtf/CallbackAggregator.h>
 #import <wtf/Identified.h>

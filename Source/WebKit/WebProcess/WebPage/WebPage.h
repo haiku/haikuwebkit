@@ -224,6 +224,7 @@ class TextCheckingRequest;
 class VisiblePosition;
 
 enum class ActivityState : uint16_t;
+enum class AdjustViewSize : bool;
 enum class COEPDisposition : bool;
 enum class CaretAnimatorType : uint8_t;
 enum class CreateNewGroupForHighlight : bool;
@@ -2026,6 +2027,7 @@ public:
     void setObscuredContentInsets(const WebCore::FloatBoxExtent&);
 
     void updateOpener(WebCore::FrameIdentifier, WebCore::FrameIdentifier);
+    void setFramePrinting(WebCore::FrameIdentifier, bool printing, WebCore::FloatSize pageSize, WebCore::FloatSize originalPageSize, float maximumShrinkRatio, WebCore::AdjustViewSize shouldAdjustViewSize);
 
     WebHistoryItemClient& historyItemClient() const { return m_historyItemClient.get(); }
 
@@ -3077,13 +3079,14 @@ private:
     AtomString m_overriddenMediaType;
     String m_processDisplayName;
     WebCore::AllowsContentJavaScript m_allowsContentJavaScriptFromMostRecentNavigation { WebCore::AllowsContentJavaScript::Yes };
+#if ENABLE(GPU_PROCESS)
     struct RemoteSnapshotState {
         RemoteSnapshotIdentifier identifier;
         UniqueRef<RemoteSnapshotRecorderProxy> recorder;
         Ref<MainRunLoopSuccessCallbackAggregator> callback;
     };
     std::optional<RemoteSnapshotState> m_remoteSnapshotState;
-
+#endif
 #if PLATFORM(GTK)
     WebCore::Color m_accentColor;
 #endif

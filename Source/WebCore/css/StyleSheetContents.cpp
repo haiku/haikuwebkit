@@ -590,6 +590,7 @@ bool StyleSheetContents::traverseSubresources(NOESCAPE const Function<bool(const
         case StyleRuleType::PositionTry:
         case StyleRuleType::Function:
         case StyleRuleType::FunctionDeclarations:
+        case StyleRuleType::InternalBaseAppearance:
             return false;
         };
         ASSERT_NOT_REACHED();
@@ -669,6 +670,7 @@ bool StyleSheetContents::mayDependOnBaseURL() const
         case StyleRuleType::PositionTry:
         case StyleRuleType::Function:
         case StyleRuleType::FunctionDeclarations:
+        case StyleRuleType::InternalBaseAppearance:
             return false;
         };
         ASSERT_NOT_REACHED();

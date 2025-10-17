@@ -243,6 +243,7 @@ struct DepthRange {
 };
 
 struct RequestData {
+    bool isPassthroughFullyObscured;
     DepthRange depthRange;
 };
 

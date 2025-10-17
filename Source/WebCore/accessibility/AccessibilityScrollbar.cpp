@@ -32,7 +32,7 @@
 #include "AXObjectCache.h"
 #include "LocalFrameView.h"
 #include "ScrollView.h"
-#include "Scrollbar.h"
+#include "ScrollbarInlines.h"
 
 namespace WebCore {
 
@@ -82,7 +82,7 @@ float AccessibilityScrollbar::valueForRange() const
 bool AccessibilityScrollbar::setValue(float value)
 {
     float newValue = value * m_scrollbar->maximum();
-    m_scrollbar->scrollableArea().scrollToOffsetWithoutAnimation(m_scrollbar->orientation(), newValue);
+    m_scrollbar->checkedScrollableArea()->scrollToOffsetWithoutAnimation(m_scrollbar->orientation(), newValue);
     return true;
 }
 

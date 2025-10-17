@@ -30,6 +30,7 @@
 
 #include "AirCode.h"
 #include "AllowMacroScratchRegisterUsageIf.h"
+#include "B3AbstractHeapRepository.h"
 #include "B3BasicBlockInlines.h"
 #include "B3CCallValue.h"
 #include "B3Const128Value.h"
@@ -383,8 +384,8 @@ public:
         return m_callSiteIndex;
     }
 
-    OMGIRGenerator(CompilationContext&, Module&, CalleeGroup&, const ModuleInformation&, IPIntCallee&, OptimizingJITCallee&, Procedure&, Vector<UnlinkedWasmToWasmCall>&, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode, CompilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry);
-    OMGIRGenerator(CompilationContext&, OMGIRGenerator& inlineCaller, OMGIRGenerator& inlineRoot, Module&, CalleeGroup&, unsigned functionIndex, IPIntCallee&, BasicBlock* returnContinuation, Vector<Value*> args);
+    OMGIRGenerator(AbstractHeapRepository&, CompilationContext&, Module&, CalleeGroup&, const ModuleInformation&, IPIntCallee&, OptimizingJITCallee&, Procedure&, Vector<UnlinkedWasmToWasmCall>&, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode, CompilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry);
+    OMGIRGenerator(AbstractHeapRepository&, CompilationContext&, OMGIRGenerator& inlineCaller, OMGIRGenerator& inlineRoot, Module&, CalleeGroup&, unsigned functionIndex, IPIntCallee&, BasicBlock* returnContinuation, Vector<Value*> args);
 
     void computeStackCheckSize(bool& needsOverflowCheck, int32_t& checkSize);
 
@@ -759,9 +760,9 @@ public:
     PartialResult WARN_UNUSED_RETURN addCallRef(unsigned, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
     PartialResult WARN_UNUSED_RETURN addUnreachable();
     PartialResult WARN_UNUSED_RETURN addCrash();
-    void fillCallResults(Value* callResult, const TypeDefinition& signature, ResultList& results);
 
     using ValueResults = Vector<Value*, 16>;
+    void fillCallResults(Value* callResult, const TypeDefinition& signature, ValueResults&);
     PartialResult WARN_UNUSED_RETURN emitDirectCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, ArgumentList& args, ValueResults&, CallType = CallType::Call);
     PartialResult WARN_UNUSED_RETURN emitIndirectCall(Value* calleeInstance, Value* calleeCode, Value* boxedCalleeCallee, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
 
@@ -977,6 +978,7 @@ private:
     void traceCF(Args&&... info);
 
     FunctionParser<OMGIRGenerator>* m_parser { nullptr };
+    AbstractHeapRepository& m_heaps;
     CompilationContext& m_context;
     Module& m_module;
     CalleeGroup& m_calleeGroup;
@@ -1124,8 +1126,9 @@ void OMGIRGenerator::computeStackCheckSize(bool& needsOverflowCheck, int32_t& ch
     needsOverflowCheck = needsOverflowCheck || needUnderflowCheck;
 }
 
-OMGIRGenerator::OMGIRGenerator(CompilationContext& context, OMGIRGenerator& parentCaller, OMGIRGenerator& rootCaller, Module& module, CalleeGroup& calleeGroup, unsigned functionIndex, IPIntCallee& profiledCallee, BasicBlock* returnContinuation, Vector<Value*> args)
-    : m_context(context)
+OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext& context, OMGIRGenerator& parentCaller, OMGIRGenerator& rootCaller, Module& module, CalleeGroup& calleeGroup, unsigned functionIndex, IPIntCallee& profiledCallee, BasicBlock* returnContinuation, Vector<Value*> args)
+    : m_heaps(heaps)
+    , m_context(context)
     , m_module(module)
     , m_calleeGroup(calleeGroup)
     , m_info(rootCaller.m_info)
@@ -1161,8 +1164,9 @@ OMGIRGenerator::OMGIRGenerator(CompilationContext& context, OMGIRGenerator& pare
         m_hasExceptionHandlers = true;
 }
 
-OMGIRGenerator::OMGIRGenerator(CompilationContext& context, Module& module, CalleeGroup& calleeGroup, const ModuleInformation& info, IPIntCallee& profiledCallee, OptimizingJITCallee& callee, Procedure& procedure, Vector<UnlinkedWasmToWasmCall>& unlinkedWasmToWasmCalls, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode mode, CompilationMode compilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry)
-    : m_context(context)
+OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext& context, Module& module, CalleeGroup& calleeGroup, const ModuleInformation& info, IPIntCallee& profiledCallee, OptimizingJITCallee& callee, Procedure& procedure, Vector<UnlinkedWasmToWasmCall>& unlinkedWasmToWasmCalls, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode mode, CompilationMode compilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry)
+    : m_heaps(heaps)
+    , m_context(context)
     , m_module(module)
     , m_calleeGroup(calleeGroup)
     , m_info(info)
@@ -1746,6 +1750,29 @@ auto OMGIRGenerator::addCrash() -> PartialResult
     return { };
 }
 
+void OMGIRGenerator::fillCallResults(Value* callResult, const TypeDefinition& signature, ValueResults& results)
+{
+    B3::Type returnType = toB3ResultType(&signature);
+    ASSERT(returnType == callResult->type());
+
+    switch (returnType.kind()) {
+    case B3::Void: {
+        break;
+    }
+    case B3::Tuple: {
+        const Vector<B3::Type>& tuple = m_proc.tupleForType(returnType);
+        ASSERT(signature.as<FunctionSignature>()->returnCount() == tuple.size());
+        for (unsigned i = 0; i < signature.as<FunctionSignature>()->returnCount(); ++i)
+            results.append(m_currentBlock->appendNew<ExtractValue>(m_proc, origin(), tuple[i], callResult, i));
+        break;
+    }
+    default: {
+        results.append(callResult);
+        break;
+    }
+    }
+}
+
 auto OMGIRGenerator::emitIndirectCall(Value* calleeInstance, Value* calleeCode, Value* boxedCalleeCallee, const TypeDefinition& signature, const ArgumentList& args, ValueResults& results, CallType callType) -> PartialResult
 {
     const bool isTailCallRootCaller = callType == CallType::TailCall && !m_inlineParent;
@@ -1819,7 +1846,6 @@ auto OMGIRGenerator::emitIndirectCall(Value* calleeInstance, Value* calleeCode, 
         return { };
     }
 
-    B3::Type returnType = toB3ResultType(&signature);
     auto [patchpoint, handle, prepareForCall] = createCallPatchpoint(m_currentBlock, signature, wasmCalleeInfo, args);
     // We need to clobber all potential pinned registers since we might be leaving the instance.
     // We pessimistically assume we're always calling something that is bounds checking so
@@ -1844,23 +1870,7 @@ auto OMGIRGenerator::emitIndirectCall(Value* calleeInstance, Value* calleeCode, 
         // Restore the stack pointer since it may have been lowered if our callee did a tail call.
         jit.addPtr(CCallHelpers::TrustedImm32(-params.code().frameSize()), GPRInfo::callFrameRegister, MacroAssembler::stackPointerRegister);
     });
-    auto callResult = patchpoint;
-
-    switch (returnType.kind()) {
-    case B3::Void: {
-        break;
-    }
-    case B3::Tuple: {
-        const Vector<B3::Type>& tuple = m_proc.tupleForType(returnType);
-        for (unsigned i = 0; i < signature.as<FunctionSignature>()->returnCount(); ++i)
-            results.append(m_currentBlock->appendNew<ExtractValue>(m_proc, origin(), tuple[i], callResult, i));
-        break;
-    }
-    default: {
-        results.append(callResult);
-        break;
-    }
-    }
+    fillCallResults(patchpoint, signature, results);
 
     // The call could have been to another WebAssembly instance, and / or could have modified our Memory.
     restoreWebAssemblyGlobalState(m_info.memory, instanceValue(), m_currentBlock);
@@ -5777,7 +5787,7 @@ auto OMGIRGenerator::emitInlineDirectCall(FunctionCodeIndex calleeFunctionIndex,
 
     const FunctionData& function = m_info.functions[calleeFunctionIndex];
     Ref<IPIntCallee> profiledCallee = m_calleeGroup.ipintCalleeFromFunctionIndexSpace(m_calleeGroup.toSpaceIndex(calleeFunctionIndex));
-    m_protectedInlineeGenerators.append(makeUnique<OMGIRGenerator>(m_context, *this, *m_inlineRoot, m_module, m_calleeGroup, calleeFunctionIndex, profiledCallee.get(), continuation, WTFMove(getArgs)));
+    m_protectedInlineeGenerators.append(makeUnique<OMGIRGenerator>(m_heaps, m_context, *this, *m_inlineRoot, m_module, m_calleeGroup, calleeFunctionIndex, profiledCallee.get(), continuation, WTFMove(getArgs)));
     auto& irGenerator = *m_protectedInlineeGenerators.last();
     m_protectedInlineeParsers.append(makeUnique<FunctionParser<OMGIRGenerator>>(irGenerator, function.data, calleeSignature, m_info));
     auto& parser = *m_protectedInlineeParsers.last();
@@ -5866,27 +5876,6 @@ auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceInde
     if (callType == CallType::TailCall)
         m_makesTailCalls = true;
 
-    auto fillResults = [&] (Value* callResult) {
-        ASSERT(returnType == callResult->type());
-
-        switch (returnType.kind()) {
-        case B3::Void: {
-            break;
-        }
-        case B3::Tuple: {
-            const Vector<B3::Type>& tuple = m_proc.tupleForType(returnType);
-            ASSERT(signature.as<FunctionSignature>()->returnCount() == tuple.size());
-            for (unsigned i = 0; i < signature.as<FunctionSignature>()->returnCount(); ++i)
-                results.append(m_currentBlock->appendNew<ExtractValue>(m_proc, origin(), tuple[i], callResult, i));
-            break;
-        }
-        default: {
-            results.append(callResult);
-            break;
-        }
-        }
-    };
-
     m_proc.requestCallArgAreaSizeInBytes(calleeStackSize);
 
     if (m_info.isImportedFunctionFromFunctionIndexSpace(functionIndexSpace)) {
@@ -5933,7 +5922,7 @@ auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceInde
         emitCallToImport(patchpoint, handle, prepareForCall);
 
         if (returnType != B3::Void)
-            fillResults(patchpoint);
+            fillCallResults(patchpoint, signature, results);
 
         // The call could have been to another WebAssembly instance, and / or could have modified our Memory.
         restoreWebAssemblyGlobalState(m_info.memory, instanceValue(), m_currentBlock);
@@ -5991,7 +5980,7 @@ auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceInde
     if (useSignalingMemory() || m_info.memory.isShared())
         patchpoint->clobberLate(RegisterSetBuilder { GPRInfo::wasmBoundsCheckingSizeRegister });
 
-    fillResults(patchpoint);
+    fillCallResults(patchpoint, signature, results);
 
     if (m_info.callCanClobberInstance(functionIndexSpace)) {
         patchpoint->clobberLate(RegisterSetBuilder::wasmPinnedRegisters());
@@ -6384,6 +6373,7 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(Compilati
 
     auto result = makeUnique<InternalFunction>();
 
+    AbstractHeapRepository heaps;
     compilationContext.wasmEntrypointJIT = makeUnique<CCallHelpers>();
     compilationContext.procedure = makeUniqueWithoutFastMallocCheck<Procedure>(info.usesSIMD(functionIndex));
 
@@ -6408,12 +6398,18 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(Compilati
     procedure.code().setForceIRCRegisterAllocation();
 
     result->outgoingJITDirectCallees = FixedBitVector(info.internalFunctionCount());
-    OMGIRGenerator irGenerator(compilationContext, module, calleeGroup, info, profiledCallee, callee, procedure, unlinkedWasmToWasmCalls, result->outgoingJITDirectCallees, result->osrEntryScratchBufferSize, mode, compilationMode, functionIndex, loopIndexForOSREntry);
+    OMGIRGenerator irGenerator(heaps, compilationContext, module, calleeGroup, info, profiledCallee, callee, procedure, unlinkedWasmToWasmCalls, result->outgoingJITDirectCallees, result->osrEntryScratchBufferSize, mode, compilationMode, functionIndex, loopIndexForOSREntry);
     FunctionParser<OMGIRGenerator> parser(irGenerator, function.data, signature, info);
     WASM_FAIL_IF_HELPER_FAILS(parser.parse());
 
     irGenerator.insertEntrySwitch();
     irGenerator.insertConstants();
+
+    // Make sure everything is decorated. This does a bunch of deferred decorating. This has
+    // to happen last because our abstract heaps are generated lazily. They have to be
+    // generated lazily because we have an infinite number of numbered, indexed, and
+    // absolute heaps. We only become aware of the ones we actually mention while lowering.
+    heaps.computeRangesAndDecorateInstructions();
 
     procedure.resetReachability();
     if (ASSERT_ENABLED)

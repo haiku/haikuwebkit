@@ -51,18 +51,4 @@ struct ScrollEdgeEffectStyleContext {
     let edges: Edge.Set
 }
 
-struct WebPreferenceContext {
-    private var features: [String: Any] = [:]
-
-    mutating func set<Value>(_ key: WebView.WebPreferenceFeature<Value>, to value: Value) {
-        features[key.rawValue] = value
-    }
-
-    func get<Value>(_ key: String, as: Value.Type) -> Value? {
-        features[key] as? Value
-    }
-
-    var isEmpty: Bool { features.isEmpty }
-}
-
 #endif

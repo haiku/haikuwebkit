@@ -1,4 +1,4 @@
-PASS windowScrollendEventCount == 1 is true
+PASS windowScrollendEventCount is 1
 PASS successfullyParsed is true
 
 TEST COMPLETE

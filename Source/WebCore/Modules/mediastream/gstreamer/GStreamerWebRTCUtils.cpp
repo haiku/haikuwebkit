@@ -45,6 +45,8 @@ GST_DEBUG_CATEGORY_STATIC(webkit_webrtc_utils_debug);
 
 namespace WebCore {
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage")
+
 static inline RTCIceComponent toRTCIceComponent(int component)
 {
     return component == 1 ? RTCIceComponent::Rtp : RTCIceComponent::Rtcp;
@@ -1175,6 +1177,8 @@ bool validateRTPHeaderExtensions(const GstSDPMessage* previousSDP, const GstSDPM
     }
     return true;
 }
+
+IGNORE_CLANG_WARNINGS_END
 
 #undef GST_CAT_DEFAULT
 

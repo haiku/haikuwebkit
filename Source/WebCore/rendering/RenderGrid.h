@@ -82,6 +82,8 @@ public:
 
     bool canDropAnonymousBlockChild() const override { return false; }
 
+    bool isComputingTrackSizes() const { return m_isComputingTrackSizes; }
+
     bool hasDefiniteLogicalHeight() const;
     const std::optional<LayoutUnit> availableLogicalHeightForContentBox() const;
 
@@ -310,6 +312,8 @@ private:
     bool layoutUsingGridFormattingContext();
 
     std::optional<bool> m_hasGridFormattingContextLayout;
+
+    mutable bool m_isComputingTrackSizes { false };
 };
 
 } // namespace WebCore

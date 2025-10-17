@@ -48,7 +48,8 @@ public:
         AfterAnimation = 1 << 3,
         AfterTransition = 1 << 4,
         StartingStyle = 1 << 5,
-        NonCacheable = 1 << 6,
+        BaseAppearanceStyle = 1 << 6,
+        NonCacheable = 1 << 7,
     };
 
     enum class Origin : uint8_t {
@@ -107,6 +108,8 @@ public:
     const PropertyBitSet& propertyIsPresent() const { return m_propertyIsPresent; }
 
     bool applyLowPriorityOnly() const { return !m_includedProperties.ids.isEmpty(); }
+
+    void addBaseAppearanceStyles();
 
 private:
     void buildCascade();

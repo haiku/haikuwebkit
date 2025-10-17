@@ -253,13 +253,13 @@ void Pasteboard::write(const Color& color)
 static NSFileWrapper* fileWrapper(const PasteboardImage& pasteboardImage)
 {
     auto wrapper = adoptNS([[NSFileWrapper alloc] initRegularFileWithContents:Ref { *pasteboardImage.resourceData }->makeContiguous()->createNSData().get()]);
-    [wrapper setPreferredFilename:suggestedFilenameWithMIMEType(pasteboardImage.url.url.createNSURL().get(), pasteboardImage.resourceMIMEType)];
+    [wrapper setPreferredFilename:RetainPtr { suggestedFilenameWithMIMEType(pasteboardImage.url.url.createNSURL().get(), pasteboardImage.resourceMIMEType) }.get()];
     return wrapper.autorelease();
 }
 
 static void writeFileWrapperAsRTFDAttachment(NSFileWrapper *wrapper, const String& pasteboardName, int64_t& newChangeCount, const PasteboardContext* context)
 {
-    NSAttributedString *string = [NSAttributedString attributedStringWithAttachment:adoptNS([[NSTextAttachment alloc] initWithFileWrapper:wrapper]).get()];
+    RetainPtr string = [NSAttributedString attributedStringWithAttachment:adoptNS([[NSTextAttachment alloc] initWithFileWrapper:wrapper]).get()];
 
     NSData *RTFDData = [string RTFDFromRange:NSMakeRange(0, [string length]) documentAttributes:@{ }];
     if (!RTFDData)
@@ -270,7 +270,7 @@ static void writeFileWrapperAsRTFDAttachment(NSFileWrapper *wrapper, const Strin
 
 void Pasteboard::write(const PasteboardImage& pasteboardImage)
 {
-    CFDataRef imageData = Ref { *pasteboardImage.image }->adapter().tiffRepresentation();
+    RetainPtr imageData = Ref { *pasteboardImage.image }->adapter().tiffRepresentation();
     if (!imageData)
         return;
 
@@ -284,14 +284,14 @@ void Pasteboard::write(const PasteboardImage& pasteboardImage)
     }
 
     m_changeCount = writeURLForTypes(types, m_pasteboardName, pasteboardImage.url, context());
-    m_changeCount = platformStrategies()->pasteboardStrategy()->setBufferForType(SharedBuffer::create(imageData).ptr(), legacyTIFFPasteboardTypeSingleton(), m_pasteboardName, context());
+    m_changeCount = platformStrategies()->pasteboardStrategy()->setBufferForType(SharedBuffer::create(imageData.get()).ptr(), legacyTIFFPasteboardTypeSingleton(), m_pasteboardName, context());
     if (auto archiveData = pasteboardImage.dataInWebArchiveFormat) {
         m_changeCount = platformStrategies()->pasteboardStrategy()->setBufferForType(archiveData.get(), WebArchivePboardType, m_pasteboardName, context());
         m_changeCount = platformStrategies()->pasteboardStrategy()->setBufferForType(archiveData.get(), UTTypeWebArchive.identifier, m_pasteboardName, context());
     }
     if (!pasteboardImage.dataInHTMLFormat.isEmpty())
         m_changeCount = platformStrategies()->pasteboardStrategy()->setStringForType(pasteboardImage.dataInHTMLFormat, legacyHTMLPasteboardTypeSingleton(), m_pasteboardName, context());
-    writeFileWrapperAsRTFDAttachment(fileWrapper(pasteboardImage), m_pasteboardName, m_changeCount, context());
+    writeFileWrapperAsRTFDAttachment(RetainPtr { fileWrapper(pasteboardImage) }.get(), m_pasteboardName, m_changeCount, context());
 }
 
 void Pasteboard::write(const PasteboardBuffer& pasteboardBuffer)
@@ -763,7 +763,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 ALLOW_DEPRECATED_DECLARATIONS_END
     } else {
         flipImage = false;
-        bitmapImage = (NSBitmapImageRep *)imageRep;
+        bitmapImage = checked_objc_cast<NSBitmapImageRep>(imageRep);
     }
     ASSERT(bitmapImage);
 
@@ -816,11 +816,13 @@ void Pasteboard::setDragImage(DragImage image, const IntPoint& location)
     // This is the most innocuous event to use, per Kristin Forster.
     // This is only relevant in WK1. Do not execute in the WebContent process, since it is now using
     // NSRunLoop, and not the NSApplication run loop.
-    if ([NSApp isRunning]) {
+    // This is a safer cpp false positive (rdar://161068288).
+    SUPPRESS_UNRETAINED_ARG if ([NSApp isRunning]) {
         ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
         NSEvent* event = [NSEvent mouseEventWithType:NSEventTypeMouseMoved location:NSZeroPoint
             modifierFlags:0 timestamp:0 windowNumber:0 context:nil eventNumber:0 clickCount:0 pressure:0];
-        [NSApp postEvent:event atStart:YES];
+        // This is a safer cpp false positive (rdar://161068288).
+        SUPPRESS_UNRETAINED_ARG [NSApp postEvent:event atStart:YES];
     }
 }
 #endif

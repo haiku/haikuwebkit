@@ -1,7 +1,7 @@
 
 Test scroll over content
-PASS overflowScrollendEventCount == 1 is true
-PASS windowScrollendEventCount == 0 is true
+PASS overflowScrollendEventCount is 1
+PASS windowScrollendEventCount is 0
 PASS successfullyParsed is true
 
 TEST COMPLETE

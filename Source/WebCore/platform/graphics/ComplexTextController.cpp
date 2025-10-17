@@ -168,7 +168,7 @@ std::pair<float, float> ComplexTextController::enclosingGlyphBoundsForTextRun(co
         auto glyphs = complexTextRun.glyphs();
         ASSERT(glyphs.size() == complexTextRun.glyphCount());
 
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
         auto glyphBounds = font.boundsForGlyphs(glyphs);
         for (auto& bounds : glyphBounds) {
 #else
@@ -712,7 +712,7 @@ void ComplexTextController::adjustGlyphsAndAdvances()
         unsigned previousCharacterIndex = m_run->ltr() ? std::numeric_limits<unsigned>::min() : std::numeric_limits<unsigned>::max();
         bool isMonotonic = true;
 
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
         auto boundsForGlyphs = font.boundsForGlyphs(glyphs);
 #endif
 
@@ -736,20 +736,20 @@ void ComplexTextController::adjustGlyphsAndAdvances()
                 // Like simple text path in WidthIterator::applyCSSVisibilityRules,
                 // make tabCharacter glyph invisible after advancing.
                 glyph = deletedGlyph;
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
                 boundsForGlyphs[glyphIndex] = font.boundsForGlyph(glyph);
 #endif
             } else if (character == zeroWidthNonJoiner) {
                 // zeroWidthNonJoiner is rendered as deletedGlyph for compatibility with other engines: https://bugs.webkit.org/show_bug.cgi?id=285959
                 advance.setWidth(0);
                 glyph = deletedGlyph;
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
                 boundsForGlyphs[glyphIndex] = font.boundsForGlyph(glyph);
 #endif
             } else if (!treatAsSpace && FontCascade::treatAsZeroWidthSpace(character)) {
                 advance.setWidth(0);
                 glyph = font.spaceGlyph();
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
                 boundsForGlyphs[glyphIndex] = font.boundsForGlyph(glyph);
 #endif
             }
@@ -760,7 +760,7 @@ void ComplexTextController::adjustGlyphsAndAdvances()
             if (character != newlineCharacter && character != carriageReturn && character != noBreakSpace && character != tabCharacter && character != nullCharacter && isControlCharacter(character)) {
                 // Let's assume that .notdef is visible.
                 glyph = 0;
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
                 boundsForGlyphs[glyphIndex] = font.boundsForGlyph(glyph);
 #endif
                 advance.setWidth(font.widthForGlyph(glyph));
@@ -855,7 +855,7 @@ void ComplexTextController::adjustGlyphsAndAdvances()
                 // FIXME: Combining marks should receive a text emphasis mark if they are combine with a space.
                 if (!FontCascade::canReceiveTextEmphasis(ch32) || (U_GET_GC_MASK(character) & U_GC_M_MASK)) {
                     glyph = deletedGlyph;
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
                     boundsForGlyphs[glyphIndex] = font.boundsForGlyph(glyph);
 #endif
                 }
@@ -870,7 +870,7 @@ void ComplexTextController::adjustGlyphsAndAdvances()
             }
             m_adjustedGlyphs.append(glyph);
 
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
             auto& glyphBounds = boundsForGlyphs[glyphIndex];
 #else
             auto glyphBounds = font.boundsForGlyph(glyph);

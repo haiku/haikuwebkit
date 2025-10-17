@@ -292,6 +292,7 @@ void MemoryMappedGPUBuffer::updateContents(AccessScope& scope, const MemoryMappe
     updateContents(scope, srcBuffer.m_mappedData, targetRect, srcBuffer.primaryPlaneDmaBufStride());
 }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 void MemoryMappedGPUBuffer::updateContents(AccessScope& scope, const void* srcData, const IntRect& targetRect, unsigned bytesPerLine)
 {
     ASSERT_UNUSED(scope, &scope.buffer() == this);
@@ -317,13 +318,16 @@ void MemoryMappedGPUBuffer::updateContents(AccessScope& scope, const void* srcDa
     for (int32_t y = 0; y < targetRect.height(); ++y)
         memcpySpan(dstPixelSpan.subspan(y * dstPitch, dstPitch - targetRect.x()), srcPixelSpan.subspan(y * srcPitch, srcPitch));
 }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 std::span<uint32_t> MemoryMappedGPUBuffer::mappedDataSpan(AccessScope& scope) const
 {
     ASSERT_UNUSED(scope, &scope.buffer() == this);
     ASSERT(isMapped());
     ASSERT(isLinear());
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     return { static_cast<uint32_t*>(m_mappedData), primaryPlaneDmaBufStride() / 4 };
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 
 MemoryMappedGPUBuffer::AccessScope::AccessScope(MemoryMappedGPUBuffer& buffer, AccessScope::Mode mode)

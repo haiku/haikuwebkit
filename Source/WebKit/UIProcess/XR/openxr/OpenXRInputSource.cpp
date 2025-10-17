@@ -68,6 +68,7 @@ OpenXRInputSource::~OpenXRInputSource()
         xrDestroySpace(m_pointerSpace);
 }
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 XrResult OpenXRInputSource::initialize(OpenXRSystemProperties&& systemProperties)
 {
     String handednessName = handednessToString(m_handedness);
@@ -201,6 +202,7 @@ std::optional<PlatformXR::FrameData::HandJointsVector> OpenXRInputSource::collec
     }
 #endif
 
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     XrHandJointLocationsEXT locations = createOpenXRStruct<XrHandJointLocationsEXT, XR_TYPE_HAND_JOINT_LOCATIONS_EXT>();
     Vector<XrHandJointLocationEXT, XR_HAND_JOINT_COUNT_EXT> jointLocations;
     locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
@@ -222,6 +224,7 @@ std::optional<PlatformXR::FrameData::HandJointsVector> OpenXRInputSource::collec
         } else
             handJoints.append(std::nullopt);
     }
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     return handJoints;
 }
 #endif
@@ -337,6 +340,7 @@ XrResult OpenXRInputSource::createAction(XrActionType actionType, const String& 
 
     return xrCreateAction(m_actionSet, &createInfo, &action);
 }
+IGNORE_CLANG_WARNINGS_END
 
 XrResult OpenXRInputSource::createButtonActions(OpenXRButtonType type, const String& prefix, OpenXRButtonActions& actions) const
 {

@@ -171,7 +171,7 @@ public:
     void setAvgCharWidth(float avgCharWidth) { m_avgCharWidth = avgCharWidth; }
 
     FloatRect boundsForGlyph(Glyph) const;
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
     static constexpr size_t inlineGlyphRunCapacity = 128;
     Vector<FloatRect, inlineGlyphRunCapacity> boundsForGlyphs(std::span<const Glyph>) const;
 #endif
@@ -282,7 +282,7 @@ private:
     DerivedFonts& ensureDerivedFontData() const;
 
     FloatRect platformBoundsForGlyph(Glyph) const;
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
     Vector<FloatRect, inlineGlyphRunCapacity> platformBoundsForGlyphs(const Vector<Glyph, inlineGlyphRunCapacity>&) const;
 #endif
     float platformWidthForGlyph(Glyph) const;
@@ -439,7 +439,7 @@ ALWAYS_INLINE FloatRect Font::boundsForGlyph(Glyph glyph) const
     return bounds;
 }
 
-#if USE(CORE_TEXT)
+#if USE(CORE_TEXT) || USE(SKIA)
 ALWAYS_INLINE Vector<FloatRect, Font::inlineGlyphRunCapacity> Font::boundsForGlyphs(std::span<const Glyph> glyphs) const
 {
     const auto glyphCount = glyphs.size();

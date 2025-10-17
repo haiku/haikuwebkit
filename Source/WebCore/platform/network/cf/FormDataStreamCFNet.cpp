@@ -76,9 +76,13 @@ namespace WebCore {
 
 static void formEventCallback(CFReadStreamRef stream, CFStreamEventType type, void* context);
 
-static CFStringRef formDataPointerPropertyName = CFSTR("WebKitFormDataPointer");
+static CFStringRef formDataPointerPropertyNameSingleton()
+{
+    static CFStringRef formDataPointerPropertyName = CFSTR("WebKitFormDataPointer");
+    return formDataPointerPropertyName;
+}
 
-CFStringRef formDataStreamLengthPropertyName()
+CFStringRef formDataStreamLengthPropertyNameSingleton()
 {
     return CFSTR("WebKitFormDataStreamLength");
 }
@@ -174,7 +178,7 @@ static bool advanceCurrentStream(FormStreamFields* form)
 
     // Schedule with the current set of run loops.
     for (auto& pair : form->scheduledRunLoopPairs)
-        CFReadStreamScheduleWithRunLoop(form->currentStream.get(), pair->runLoop(), pair->mode());
+        CFReadStreamScheduleWithRunLoop(form->currentStream.get(), RetainPtr { pair->runLoop() }.get(), RetainPtr { pair->mode() }.get());
 
     return true;
 }
@@ -298,12 +302,12 @@ static CFTypeRef formCopyProperty(CFReadStreamRef, CFStringRef propertyName, voi
 {
     FormStreamFields* form = static_cast<FormStreamFields*>(context);
 
-    if (kCFCompareEqualTo == CFStringCompare(propertyName, formDataPointerPropertyName, 0)) {
+    if (kCFCompareEqualTo == CFStringCompare(propertyName, formDataPointerPropertyNameSingleton(), 0)) {
         long long formDataAsNumber = static_cast<long long>(reinterpret_cast<intptr_t>(&form->data.data()));
         return CFNumberCreate(0, kCFNumberLongLongType, &formDataAsNumber);
     }
 
-    if (kCFCompareEqualTo == CFStringCompare(propertyName, formDataStreamLengthPropertyName(), 0))
+    if (kCFCompareEqualTo == CFStringCompare(propertyName, formDataStreamLengthPropertyNameSingleton(), 0))
         return CFStringCreateWithFormat(0, 0, CFSTR("%llu"), form->streamLength);
 
     return 0;
@@ -330,20 +334,21 @@ static void formUnschedule(CFReadStreamRef, CFRunLoopRef runLoop, CFStringRef ru
 static void formEventCallback(CFReadStreamRef stream, CFStreamEventType type, void* context)
 {
     FormStreamFields* form = static_cast<FormStreamFields*>(context);
+    RetainPtr formStream = form->formStream;
 
     switch (type) {
     case kCFStreamEventHasBytesAvailable:
-        CFReadStreamSignalEvent(form->formStream, kCFStreamEventHasBytesAvailable, 0);
+        CFReadStreamSignalEvent(formStream.get(), kCFStreamEventHasBytesAvailable, 0);
         break;
     case kCFStreamEventErrorOccurred: {
         CFStreamError readStreamError = CFReadStreamGetError(stream);
-        CFReadStreamSignalEvent(form->formStream, kCFStreamEventErrorOccurred, &readStreamError);
+        CFReadStreamSignalEvent(formStream.get(), kCFStreamEventErrorOccurred, &readStreamError);
         break;
     }
     case kCFStreamEventEndEncountered:
         openNextStream(form);
         if (!form->currentStream)
-            CFReadStreamSignalEvent(form->formStream, kCFStreamEventEndEncountered, 0);
+            CFReadStreamSignalEvent(formStream.get(), kCFStreamEventEndEncountered, 0);
         break;
     case kCFStreamEventNone:
         LOG_ERROR("unexpected kCFStreamEventNone");
@@ -406,7 +411,7 @@ FormData* httpBodyFromStream(CFReadStreamRef stream)
     // so a side HashMap wouldn't work.
     // Even the stream's context pointer is different from the one we returned from formCreate().
 
-    RetainPtr<CFNumberRef> formDataPointerAsCFNumber = adoptCF(static_cast<CFNumberRef>(CFReadStreamCopyProperty(stream, formDataPointerPropertyName)));
+    RetainPtr<CFNumberRef> formDataPointerAsCFNumber = adoptCF(static_cast<CFNumberRef>(CFReadStreamCopyProperty(stream, formDataPointerPropertyNameSingleton())));
     if (!formDataPointerAsCFNumber)
         return nullptr;
 

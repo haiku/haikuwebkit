@@ -90,9 +90,9 @@ public:
     static constexpr Style::Opacity initialFloodOpacity();
     static Style::Color initialFloodColor() { return Color::black; }
     static Style::Color initialLightingColor() { return Color::white; }
-    static Style::URL initialMarkerStartResource() { return Style::URL::none(); }
-    static Style::URL initialMarkerMidResource() { return Style::URL::none(); }
-    static Style::URL initialMarkerEndResource() { return Style::URL::none(); }
+    static Style::SVGMarkerResource initialMarkerStart() { return CSS::Keyword::None { }; }
+    static Style::SVGMarkerResource initialMarkerMid() { return CSS::Keyword::None { }; }
+    static Style::SVGMarkerResource initialMarkerEnd() { return CSS::Keyword::None { }; }
     static MaskType initialMaskType() { return MaskType::Luminance; }
     static Style::SVGBaselineShift initialBaselineShift() { return CSS::Keyword::Baseline { }; }
 
@@ -135,9 +135,9 @@ public:
     void setBaselineShift(Style::SVGBaselineShift&&);
 
     // Setters for inherited resources
-    void setMarkerStartResource(Style::URL&&);
-    void setMarkerMidResource(Style::URL&&);
-    void setMarkerEndResource(Style::URL&&);
+    void setMarkerStart(Style::SVGMarkerResource&&);
+    void setMarkerMid(Style::SVGMarkerResource&&);
+    void setMarkerEnd(Style::SVGMarkerResource&&);
 
     // Read accessors for all the properties
     AlignmentBaseline alignmentBaseline() const { return static_cast<AlignmentBaseline>(m_nonInheritedFlags.flagBits.alignmentBaseline); }
@@ -172,15 +172,15 @@ public:
     const Style::SVGCoordinateComponent& x() const { return m_layoutData->x; }
     const Style::SVGCoordinateComponent& y() const { return m_layoutData->y; }
     const Style::SVGPathData& d() const { return m_layoutData->d; }
-    const Style::URL& markerStartResource() const { return m_inheritedResourceData->markerStart; }
-    const Style::URL& markerMidResource() const { return m_inheritedResourceData->markerMid; }
-    const Style::URL& markerEndResource() const { return m_inheritedResourceData->markerEnd; }
+    const Style::SVGMarkerResource& markerStart() const { return m_inheritedResourceData->markerStart; }
+    const Style::SVGMarkerResource& markerMid() const { return m_inheritedResourceData->markerMid; }
+    const Style::SVGMarkerResource& markerEnd() const { return m_inheritedResourceData->markerEnd; }
     MaskType maskType() const { return static_cast<MaskType>(m_nonInheritedFlags.flagBits.maskType); }
     const Style::SVGPaint& visitedLinkFill() const { return m_fillData->visitedLinkPaint; }
     const Style::SVGPaint& visitedLinkStroke() const { return m_strokeData->visitedLinkPaint; }
 
     // convenience
-    bool hasMarkers() const { return !markerStartResource().isNone() || !markerMidResource().isNone() || !markerEndResource().isNone(); }
+    bool hasMarkers() const { return !markerStart().isNone() || !markerMid().isNone() || !markerEnd().isNone(); }
     bool hasStroke() const { return !stroke().isNone(); }
     bool hasFill() const { return !fill().isNone(); }
 
@@ -450,19 +450,19 @@ inline void SVGRenderStyle::setBaselineShift(Style::SVGBaselineShift&& baselineS
         m_miscData.access().baselineShift = WTFMove(baselineShift);
 }
 
-inline void SVGRenderStyle::setMarkerStartResource(Style::URL&& resource)
+inline void SVGRenderStyle::setMarkerStart(Style::SVGMarkerResource&& resource)
 {
     if (!(m_inheritedResourceData->markerStart == resource))
         m_inheritedResourceData.access().markerStart = WTFMove(resource);
 }
 
-inline void SVGRenderStyle::setMarkerMidResource(Style::URL&& resource)
+inline void SVGRenderStyle::setMarkerMid(Style::SVGMarkerResource&& resource)
 {
     if (!(m_inheritedResourceData->markerMid == resource))
         m_inheritedResourceData.access().markerMid = WTFMove(resource);
 }
 
-inline void SVGRenderStyle::setMarkerEndResource(Style::URL&& resource)
+inline void SVGRenderStyle::setMarkerEnd(Style::SVGMarkerResource&& resource)
 {
     if (!(m_inheritedResourceData->markerEnd == resource))
         m_inheritedResourceData.access().markerEnd = WTFMove(resource);

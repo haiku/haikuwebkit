@@ -61,7 +61,6 @@ platform/graphics/filters/software/FEConvolveMatrixSoftwareApplier.h
 platform/graphics/filters/software/FELightingSoftwareApplier.h
 platform/graphics/filters/software/FEMorphologySoftwareApplier.h
 platform/graphics/filters/software/FETurbulenceSoftwareApplier.h
-platform/mac/VideoPresentationInterfaceMac.mm
 platform/mediarecorder/MediaRecorderPrivate.h
 platform/mediastream/AudioMediaStreamTrackRenderer.h
 platform/mediastream/mac/CoreAudioCaptureSource.h

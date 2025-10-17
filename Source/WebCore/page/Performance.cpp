@@ -318,9 +318,21 @@ void Performance::processEventEntry(const PerformanceEventTimingCandidate& candi
     static constexpr Seconds minDurationCutoffBeforeRounding = PerformanceEventTiming::minimumDurationThreshold - (PerformanceEventTiming::durationResolution / 2);
     static constexpr Seconds defaultDurationCutoffBeforeRounding = PerformanceEventTiming::defaultDurationThreshold - (PerformanceEventTiming::durationResolution / 2);
 
+    // The event timing spec requires us to set first-input and call
+    // setDispatchedInputEvent() when an entry with nonzero interactionID has
+    // its duration set, and only if hasDispatchedInputEvent() is false. This, however,
+    // causes inconsistent behavior: a pointerdown event that had its duration assigned
+    // before receiving an interactionID wouldn't qualify for first-input.
+    //
+    // We instead set first-input and call setDispatchedInputEvent() here; ongoing
+    // spec discussion at https://github.com/w3c/event-timing/issues/159 :
     if (!m_firstInput && !candidate.interactionID.isUnassigned()) {
         m_firstInput = PerformanceEventTiming::create(candidate, true);
         queueEntry(*m_firstInput);
+        if (RefPtr document = dynamicDowncast<Document>(*scriptExecutionContext())) {
+            if (RefPtr window = document->window())
+                window->setDispatchedInputEvent();
+        }
     }
 
     if (candidate.duration < minDurationCutoffBeforeRounding)

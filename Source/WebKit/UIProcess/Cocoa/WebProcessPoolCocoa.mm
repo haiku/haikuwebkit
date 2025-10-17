@@ -854,17 +854,6 @@ void WebProcessPool::registerNotificationObservers()
         textCheckerStateChanged();
     }];
 
-    // FIXME: This isn't that ideal since it listens to every user default change and not just the smart lists default.
-    m_smartListsNotificationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSUserDefaultsDidChangeNotification object:nil queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
-        TextChecker::didChangeSmartListsEnabled();
-
-        auto newValue = TextChecker::state().contains(TextCheckerState::SmartListsEnabled);
-        if (std::exchange(m_smartListsEnabled, newValue) == newValue)
-            return;
-
-        textCheckerStateChanged();
-    }];
-
     m_accessibilityDisplayOptionsNotificationObserver = [[NSWorkspace.sharedWorkspace notificationCenter] addObserverForName:NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification object:nil queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
         screenPropertiesChanged();
     }];
@@ -1023,7 +1012,6 @@ void WebProcessPool::unregisterNotificationObservers()
     [[NSNotificationCenter defaultCenter] removeObserver:m_automaticSpellingCorrectionNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_automaticQuoteSubstitutionNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_automaticDashSubstitutionNotificationObserver.get()];
-    [[NSNotificationCenter defaultCenter] removeObserver:m_smartListsNotificationObserver.get()];
     [[NSWorkspace.sharedWorkspace notificationCenter] removeObserver:m_accessibilityDisplayOptionsNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_scrollerStyleNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_deactivationObserver.get()];

@@ -759,13 +759,14 @@ public:
     UnwindFunctor(VM& vm, CallFrame*& callFrame, Exception* exception, JSValue thrownValue, CodeBlock*& codeBlock, CatchInfo& handler, JSRemoteFunction*& seenRemoteFunction)
         : m_vm(vm)
         , m_callFrame(callFrame)
-        , m_exception(exception)
         , m_isTermination(vm.isTerminationException(exception))
         , m_codeBlock(codeBlock)
         , m_handler(handler)
         , m_seenRemoteFunction(seenRemoteFunction)
-    {
 #if ENABLE(WEBASSEMBLY)
+        , m_exception(exception)
+    {
+
         if (!m_isTermination) {
             if (JSWebAssemblyException* wasmException = jsDynamicCast<JSWebAssemblyException*>(thrownValue)) {
                 m_catchableFromWasm = true;
@@ -781,10 +782,12 @@ public:
             if (!m_wasmTag)
                 m_wasmTag = &Wasm::Tag::jsExceptionTag();
         }
-#else
-        UNUSED_PARAM(thrownValue);
-#endif
     }
+#else
+    {
+        UNUSED_PARAM(thrownValue);
+    }
+#endif
 
     IterationStatus operator()(StackVisitor& visitor) const
     {
@@ -920,16 +923,16 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     VM& m_vm;
     CallFrame*& m_callFrame;
-    Exception* m_exception;
     bool m_isTermination;
     CodeBlock*& m_codeBlock;
     CatchInfo& m_handler;
+    JSRemoteFunction*& m_seenRemoteFunction;
+
 #if ENABLE(WEBASSEMBLY)
+    Exception* m_exception;
     mutable RefPtr<const Wasm::Tag> m_wasmTag;
     bool m_catchableFromWasm { false };
 #endif
-
-    JSRemoteFunction*& m_seenRemoteFunction;
 };
 
 // Replace an exception which passes across a marshalling boundary with a TypeError for its handler's global object.

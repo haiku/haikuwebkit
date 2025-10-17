@@ -760,6 +760,8 @@ void Adjuster::adjust(RenderStyle& style) const
         style.setTransformStyleForcedToFlat(forceToFlat);
     }
 
+    style.setIsEffectivelyTransparent(style.opacity().isTransparent() || m_parentStyle.isEffectivelyTransparent());
+
     if (RefPtr element = dynamicDowncast<SVGElement>(m_element))
         adjustSVGElementStyle(style, *element);
 

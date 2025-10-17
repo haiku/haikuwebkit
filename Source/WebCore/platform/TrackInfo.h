@@ -35,12 +35,15 @@
 #include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/Variant.h>
 
+namespace IPC {
+template<typename T, typename> struct ArgumentCoder;
+}
+
 namespace WebCore {
 
 using TrackID = uint64_t;
 struct AudioInfo;
 struct VideoInfo;
-class SharedBuffer;
 
 enum class TrackInfoTrackType : uint8_t {
     Unknown,
@@ -83,8 +86,19 @@ protected:
     virtual bool equalTo(const TrackInfo& other) const = 0;
     TrackInfo(TrackType type)
         : m_type(type) { }
+    TrackInfo(TrackType type, FourCC codecName, const String& codecString, TrackID trackID)
+        : codecName(codecName)
+        , codecString(codecString)
+        , trackID(trackID)
+        , m_type(type)
+    {
+    }
 
 private:
+    friend struct IPC::ArgumentCoder<TrackInfo, void>;
+    friend struct IPC::ArgumentCoder<AudioInfo, void>;
+    friend struct IPC::ArgumentCoder<VideoInfo, void>;
+    WEBCORE_EXPORT static Ref<TrackInfo> fromVariant(Variant<Ref<AudioInfo>, Ref<VideoInfo>>);
     const TrackType m_type { TrackType::Unknown };
 };
 
@@ -103,6 +117,24 @@ struct VideoInfo : public TrackInfo {
 private:
     VideoInfo()
         : TrackInfo(TrackType::Video) { }
+
+    // Used by IPC generator
+    friend struct IPC::ArgumentCoder<VideoInfo, void>;
+    static Ref<VideoInfo> create(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, RefPtr<SharedBuffer>&& atomData)
+    {
+        return adoptRef(*new VideoInfo(codecName, codecString, trackID, size, displaySize, bitDepth, colorSpace, WTFMove(atomData)));
+    }
+
+    VideoInfo(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, RefPtr<SharedBuffer>&& atomData)
+        : TrackInfo(TrackType::Video, codecName, codecString, trackID)
+        , size(size)
+        , displaySize(displaySize)
+        , bitDepth(bitDepth)
+        , colorSpace(colorSpace)
+        , atomData(WTFMove(atomData))
+    {
+    }
+
     bool equalTo(const TrackInfo& otherVideoInfo) const final
     {
         auto& other = downcast<const VideoInfo>(otherVideoInfo);
@@ -122,7 +154,25 @@ struct AudioInfo : public TrackInfo {
 
 private:
     AudioInfo()
-    : TrackInfo(TrackType::Audio) { }
+        : TrackInfo(TrackType::Audio) { }
+
+    // Used by IPC generator
+    friend struct IPC::ArgumentCoder<AudioInfo, void>;
+    static Ref<AudioInfo> create(FourCC codecName, const String& codecString, TrackID trackID, uint32_t rate, uint32_t channels, uint32_t framesPerPacket, uint8_t bitDepth, RefPtr<SharedBuffer>&& cookieData)
+    {
+        return adoptRef(*new AudioInfo(codecName, codecString, trackID, rate, channels, framesPerPacket, bitDepth, WTFMove(cookieData)));
+    }
+
+    AudioInfo(FourCC codecName, const String& codecString, TrackID trackID, uint32_t rate, uint32_t channels, uint32_t framesPerPacket, uint8_t bitDepth, RefPtr<SharedBuffer>&& cookieData)
+        : TrackInfo(TrackType::Audio, codecName, codecString, trackID)
+        , rate(rate)
+        , channels(channels)
+        , framesPerPacket(framesPerPacket)
+        , bitDepth(bitDepth)
+        , cookieData(WTFMove(cookieData))
+    {
+    }
+
     bool equalTo(const TrackInfo& otherAudioInfo) const final
     {
         auto& other = downcast<const AudioInfo>(otherAudioInfo);

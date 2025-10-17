@@ -126,6 +126,8 @@ static void runTest(NSString *input, NSString *expectedHTML, NSString *expectedS
 
 TEST(SmartLists, EnablementIsLogicallyConsistentWhenInterfacedThroughResponder)
 {
+    resetUserDefaults();
+
     RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:configuration.get()]);
     [webView synchronouslyLoadHTMLString:@"<div>hi</div>"];
@@ -134,7 +136,6 @@ TEST(SmartLists, EnablementIsLogicallyConsistentWhenInterfacedThroughResponder)
     // Case 1: user default => nil, preference => false
 
     setSmartListsPreference(configuration.get(), NO);
-    resetUserDefaults();
 
     EXPECT_FALSE([webView _isSmartListsEnabled]);
     EXPECT_NULL(userDefaultsValue());
@@ -143,22 +144,9 @@ TEST(SmartLists, EnablementIsLogicallyConsistentWhenInterfacedThroughResponder)
     EXPECT_FALSE([webView _isSmartListsEnabled]);
     EXPECT_NULL(userDefaultsValue());
 
-    // Case 2: user default => true, preference => false
-
-    setSmartListsPreference(configuration.get(), NO);
-    setUserDefaultsValue(YES);
-
-    EXPECT_FALSE([webView _isSmartListsEnabled]);
-    EXPECT_TRUE([userDefaultsValue() boolValue]);
-
-    [webView _setSmartListsEnabled:YES];
-    EXPECT_FALSE([webView _isSmartListsEnabled]);
-    EXPECT_TRUE([userDefaultsValue() boolValue]);
-
-    // Case 3: user default => nil, preference => true
+    // Case 2: user default => nil, preference => true
 
     setSmartListsPreference(configuration.get(), YES);
-    resetUserDefaults();
 
     EXPECT_TRUE([webView _isSmartListsEnabled]);
     EXPECT_NULL(userDefaultsValue());
@@ -169,6 +157,18 @@ TEST(SmartLists, EnablementIsLogicallyConsistentWhenInterfacedThroughResponder)
 
     [webView _toggleSmartLists:nil];
     EXPECT_TRUE([webView _isSmartListsEnabled]);
+    EXPECT_TRUE([userDefaultsValue() boolValue]);
+
+    // Case 3: user default => true, preference => false
+
+    setSmartListsPreference(configuration.get(), NO);
+    setUserDefaultsValue(YES);
+
+    EXPECT_FALSE([webView _isSmartListsEnabled]);
+    EXPECT_TRUE([userDefaultsValue() boolValue]);
+
+    [webView _setSmartListsEnabled:YES];
+    EXPECT_FALSE([webView _isSmartListsEnabled]);
     EXPECT_TRUE([userDefaultsValue() boolValue]);
 
     // Case 4: user default => true, preference => true

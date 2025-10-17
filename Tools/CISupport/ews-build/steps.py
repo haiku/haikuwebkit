@@ -3675,32 +3675,8 @@ class CompileJSC(CompileWebKit):
         return shell.CompileNewStyle.getResultSummary(self)
 
 
-class CompileJSC32(CompileWebKit):
-    name = 'compile-jsc-32bit'
-    descriptionDone = ['Compiled JSC']
-    build_command = ["linux32", "perl", "Tools/Scripts/build-jsc", "--32-bit", "--cmakeargs", "-DUSE_LIBBACKTRACE=OFF -DDEVELOPER_MODE=ON -DENABLE_OFFLINE_ASM_ALT_ENTRY=1 -DCMAKE_CXX_FLAGS='-fuse-ld=gold -Wl,--no-map-whole-files -Wl,--no-keep-memory -Wl,--no-keep-files-mapped -Wl,--no-mmap-output-file -fno-omit-frame-pointer' -DCMAKE_C_FLAGS='-fuse-ld=gold -Wl,--no-map-whole-files -Wl,--no-keep-memory -Wl,--no-keep-files-mapped -Wl,--no-mmap-output-file -fno-omit-frame-pointer' -DUSE_LD_LLD=OFF"]
-
-    @defer.inlineCallbacks
-    def run(self):
-        self.setProperty('group', 'jsc')
-        rc = yield super().run()
-        defer.returnValue(rc)
-
-    def getResultSummary(self):
-        if self.results == FAILURE:
-            return {'step': 'Failed to compile JSC'}
-        return shell.CompileNewStyle.getResultSummary(self)
-
-
 class CompileJSCWithoutChange(CompileJSC):
     name = 'compile-jsc-without-change'
-
-    def evaluateCommand(self, cmd):
-        return shell.CompileNewStyle.evaluateCommand(self, cmd)
-
-
-class CompileJSCWithoutChange32(CompileJSC32):
-    name = 'compile-jsc-32bit-without-change'
 
     def evaluateCommand(self, cmd):
         return shell.CompileNewStyle.evaluateCommand(self, cmd)
@@ -3833,7 +3809,7 @@ class RunJavaScriptCoreTests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
                 RevertAppliedChanges(),
                 CleanWorkingDirectory(),
                 ValidateChange(verifyBugClosed=False, addURLs=False),
-                CompileJSCWithoutChange() if self.bits() == 64 else CompileJSCWithoutChange32(),
+                CompileJSCWithoutChange(),
                 ValidateChange(verifyBugClosed=False, addURLs=False),
                 KillOldProcesses(),
                 RunJSCTestsWithoutChange(),
@@ -3923,16 +3899,6 @@ class RunJavaScriptCoreTests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
             count += int(match.group(1))
 
         return count
-
-    def bits(self):
-        return 64
-
-
-class RunJavaScriptCoreTests32(RunJavaScriptCoreTests):
-    name = 'jscore-test-32bit'
-
-    def bits(self):
-        return 32
 
 
 class RunJSCTestsWithoutChange(RunJavaScriptCoreTests):
@@ -5679,6 +5645,11 @@ class RunAPITests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
                            '--json-output={0}'.format(self.jsonFileName)]
         else:
             self.command = self.command + customBuildFlag(platform, self.getProperty('fullPlatform'))
+
+        additionalArguments = self.getProperty('additionalArguments')
+        if additionalArguments:
+            self.command += additionalArguments
+
         if self.name == RunAPITestsWithoutChange.name:
             first_results_failing_tests = set(self.getProperty('first_run_failures', set()))
             second_results_failing_tests = set(self.getProperty('second_run_failures', set()))
@@ -7118,13 +7089,12 @@ class ScanBuild(steps.ShellSequence, ShellMixin):
     description = ["scanning with static analyzer"]
     descriptionDone = ["scanned with static analyzer"]
     flunkOnFailure = True
-    analyzeFailed = False
+    analyze_failed = False
     bugs = 0
     output_directory = SCAN_BUILD_OUTPUT_DIR
 
     def __init__(self, **kwargs):
         super().__init__(logEnviron=False, timeout=2 * 60 * 60, **kwargs)
-        self.commandFailed = False
 
     @defer.inlineCallbacks
     def run(self):
@@ -7156,10 +7126,24 @@ class ScanBuild(steps.ShellSequence, ShellMixin):
 
         f_index = log_text.rfind('ANALYZE SUCCEEDED')
         if f_index == -1:
-            self.analyzeFailed = True
+            self.analyze_failed = True
             rc = FAILURE
 
-        steps_to_add = [
+        self.addFollowUpSteps(rc)
+
+        defer.returnValue(rc)
+
+    def addFollowUpSteps(self, rc):
+        steps_to_add = self.uploadLogsSteps()
+        if rc == SUCCESS:
+            steps_to_add += self.addResultsSteps()
+        else:
+            steps_to_add += [ValidateChange(verifyBugClosed=False, addURLs=False), RevertAppliedChanges(exclude=['new*', 'scan-build-output*']), ScanBuildWithoutChange(analyze_safercpp_results=False)]
+
+        self.build.addStepsAfterCurrentStep(steps_to_add)
+
+    def uploadLogsSteps(self):
+        return [
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
@@ -7171,18 +7155,12 @@ class ScanBuild(steps.ShellSequence, ShellMixin):
             )
         ]
 
-        if rc == SUCCESS:
-            steps_to_add += self.addResultsSteps()
-        self.build.addStepsAfterCurrentStep(steps_to_add)
-
-        defer.returnValue(rc)
-
     def addResultsSteps(self):
         return [ParseStaticAnalyzerResults(), FindUnexpectedStaticAnalyzerResults()]
 
     def getResultSummary(self):
         status = ''
-        if self.analyzeFailed or self.commandFailed:
+        if self.analyze_failed:
             status += 'Failed to build and analyze WebKit'
         if self.results == SUCCESS:
             status += f'Found {self.bugs} issues'
@@ -7193,8 +7171,53 @@ class ScanBuildWithoutChange(ScanBuild):
     name = 'scan-build-without-change'
     output_directory = SCAN_BUILD_OUTPUT_DIR + '-baseline'
 
+    def __init__(self, analyze_safercpp_results=True, **kwargs):
+        self.analyze_safercpp_results = analyze_safercpp_results
+        super().__init__(**kwargs)
+
+    def addFollowUpSteps(self, rc):
+        steps_to_add = self.uploadLogsSteps()
+        # If running this step after a successful build, proceed to analyze results.
+        if self.analyze_safercpp_results:
+            steps_to_add += self.addResultsSteps()
+        # If this step is run after a build failure, we need to either raise the PR failure or retry the build.
+        elif rc == SUCCESS:
+            patch_id = self.getProperty('patch_id', '')
+            pr_number = self.getProperty('github.number')
+            sha = self.getProperty('github.head.sha')
+            if sha and pr_number:
+                message = 'Hash {} for PR {} does not build'.format(sha[:HASH_LENGTH_TO_DISPLAY], pr_number)
+            else:
+                message = 'Patch {} does not build'.format(patch_id)
+            self.build.buildFinished([message], FAILURE)
+        elif rc == FAILURE:
+            message = 'Unable to build WebKit without change, retrying build'
+            self.descriptionDone = message
+            self.send_email_for_unexpected_build_failure()
+            self.build.buildFinished([message], RETRY)
+
+        self.build.addStepsAfterCurrentStep(steps_to_add)
+
     def addResultsSteps(self):
         return [ParseStaticAnalyzerResultsWithoutChange(), FindUnexpectedStaticAnalyzerResultsWithoutChange()]
+
+    def send_email_for_unexpected_build_failure(self):
+        try:
+            pr_number = self.getProperty('github.number')
+            sha = self.getProperty('github.head.sha', '')[:HASH_LENGTH_TO_DISPLAY]
+            owners = self.getProperty('owners', [])
+            author = owners[0] if owners else '?'
+            builder_name = self.getProperty('buildername', '')
+            worker_name = self.getProperty('workername', '')
+            build_url = f'{self.master.config.buildbotURL}#/builders/{self.build._builderid}/builds/{self.build.number}'
+            email_subject = f'{worker_name} might be in bad state, unable to build WebKit'
+            email_text = f'{worker_name} might be in bad state. It is unable to build WebKit.'
+            email_text += f' Same code was built successfuly on builder queue previously.'
+            email_text += f'\n\nBuild: {build_url}\n\nBuilder: {builder_name}'
+            email_text += f'\n\nPR: {pr_number}, Hash: {sha}, By: {author}\n'
+            send_email_to_bot_watchers(email_subject, email_text, builder_name, f'build-failure-{worker_name}')
+        except Exception as e:
+            print(f'Error in sending email for unexpected build failure: {e}')
 
 
 class ParseStaticAnalyzerResults(shell.ShellCommandNewStyle):

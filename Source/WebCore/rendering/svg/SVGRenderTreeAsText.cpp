@@ -259,7 +259,7 @@ void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, Opt
         writeIfNotDefault(ts, "clip rule"_s, svgStyle->clipRule(), WindRule::NonZero);
     }
 
-    auto writeMarker = [&](ASCIILiteral name, const Style::URL& value) {
+    auto writeMarker = [&](ASCIILiteral name, const Style::SVGMarkerResource& value) {
         auto* element = renderer.element();
         if (!element)
             return;
@@ -268,9 +268,9 @@ void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, Opt
         writeIfNotEmpty(ts, name, fragment);
     };
 
-    writeMarker("start marker"_s, svgStyle->markerStartResource());
-    writeMarker("middle marker"_s, svgStyle->markerMidResource());
-    writeMarker("end marker"_s, svgStyle->markerEndResource());
+    writeMarker("start marker"_s, svgStyle->markerStart());
+    writeMarker("middle marker"_s, svgStyle->markerMid());
+    writeMarker("end marker"_s, svgStyle->markerEnd());
 }
 
 static TextStream& writePositionAndStyle(TextStream& ts, const RenderElement& renderer, OptionSet<RenderAsTextFlag> behavior = { })
@@ -584,12 +584,9 @@ void writeResources(TextStream& ts, const RenderObject& renderer, OptionSet<Rend
     // FIXME: We want to use SVGResourcesCache to determine which resources are present, instead of quering the resource <-> id cache.
     // For now leave the DRT output as is, but later on we should change this so cycles are properly ignored in the DRT output.
     if (style.hasPositionedMask()) {
-        RefPtr maskImage = style.maskLayers().first().image().tryStyleImage();
-        auto maskImageURL = maskImage ? maskImage->url() : Style::URL::none();
-
-        if (!maskImageURL.isNone()) {
+        if (RefPtr maskImage = style.maskLayers().first().image().tryStyleImage()) {
             Ref document = renderer.document();
-            auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(maskImageURL, document);
+            auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(maskImage->url(), document);
             if (auto* masker = getRenderSVGResourceById<LegacyRenderSVGResourceMasker>(renderer.treeScopeForSVGReferences(), resourceID)) {
                 ts << indent << ' ';
                 writeNameAndQuotedValue(ts, "masker"_s, resourceID);

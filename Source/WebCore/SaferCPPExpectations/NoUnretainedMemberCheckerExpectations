@@ -8,8 +8,6 @@ platform/graphics/cg/CGSubimageCacheWithTimer.cpp
 platform/graphics/cocoa/WebSampleBufferVideoRendering.h
 platform/ios/WebAVPlayerController.h
 platform/ios/WebAVPlayerController.mm
-platform/mac/WebCoreFullScreenPlaceholderView.h
-platform/mac/WebPlaybackControlsManager.h
 platform/network/cf/FormDataStreamCFNet.cpp
 platform/network/cocoa/WebCoreNSURLSession.h
 platform/network/cocoa/WebCoreNSURLSession.mm

@@ -111,6 +111,8 @@ b3/air/AirTmp.cpp
 b3/air/AirTmpWidth.cpp
 b3/air/AirValidate.cpp
 
+b3/B3AbstractHeap.cpp
+b3/B3AbstractHeapRepository.cpp
 b3/B3ArgumentRegValue.cpp
 b3/B3AtomicValue.cpp
 b3/B3Bank.cpp
@@ -472,8 +474,6 @@ disassembler/zydis/Zydis.c
 domjit/DOMJITAbstractHeap.cpp
 domjit/DOMJITHeapRange.cpp
 
-ftl/FTLAbstractHeap.cpp
-ftl/FTLAbstractHeapRepository.cpp
 ftl/FTLAvailableRecovery.cpp
 ftl/FTLCapabilities.cpp
 ftl/FTLCommonValues.cpp

@@ -141,6 +141,7 @@ static void seatDevicesChangedCallback(GdkSeat* seat, GdkDevice*, WebProcessPool
 }
 #endif
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 void WebProcessPool::platformInitialize(NeedsGlobalStaticInitialization)
 {
     if (const char* forceComplexText = getenv("WEBKIT_FORCE_COMPLEX_TEXT"))
@@ -174,6 +175,7 @@ void WebProcessPool::platformInitialize(NeedsGlobalStaticInitialization)
     }
 #endif
 }
+IGNORE_CLANG_WARNINGS_END
 
 void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process, WebProcessCreationParameters& parameters)
 {
@@ -311,10 +313,12 @@ void WebProcessPool::setSandboxEnabled(bool enabled)
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 #endif
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
     if (const char* disableSandbox = getenv("WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS")) {
         if (strcmp(disableSandbox, "0"))
             return;
     }
+IGNORE_CLANG_WARNINGS_END
 
     m_sandboxEnabled = true;
 #if USE(ATSPI)

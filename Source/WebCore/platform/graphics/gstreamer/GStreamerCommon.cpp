@@ -389,7 +389,6 @@ bool ensureGStreamerInitialized()
         argv[0] = g_strdup(FileSystem::currentExecutableName().data());
         for (unsigned i = 0; i < parameters.size(); i++)
             argv[i + 1] = g_strdup(parameters[i].utf8().data());
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
         GUniqueOutPtr<GError> error;
         isGStreamerInitialized = gst_init_check(&argc, &argv, &error.outPtr());
@@ -403,6 +402,7 @@ bool ensureGStreamerInitialized()
             if (!disableFastMalloc || !strcmp(disableFastMalloc, "0"))
                 gst_allocator_set_default(GST_ALLOCATOR(g_object_new(gst_allocator_fast_malloc_get_type(), nullptr)));
         }
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 #if USE(GSTREAMER_MPEGTS)
         if (isGStreamerInitialized)
@@ -509,6 +509,7 @@ void registerWebKitGStreamerElements()
         if (auto factory = adoptGRef(gst_element_factory_find("isofmp4mux")))
             gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE_CAST(factory.get()), GST_RANK_PRIMARY + 1);
 
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port
         // The VAAPI plugin is not much maintained anymore and prone to rendering issues. In the
         // mid-term we will leverage the new stateless VA decoders. Disable the legacy plugin,
         // unless the WEBKIT_GST_ENABLE_LEGACY_VAAPI environment variable is set to 1.
@@ -518,6 +519,7 @@ void registerWebKitGStreamerElements()
             if (auto vaapiPlugin = adoptGRef(gst_registry_find_plugin(registry, "vaapi")))
                 gst_registry_remove_plugin(registry, vaapiPlugin.get());
         }
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
         // Make sure the quirks are created as early as possible.
         [[maybe_unused]] auto& quirksManager = GStreamerQuirksManager::singleton();

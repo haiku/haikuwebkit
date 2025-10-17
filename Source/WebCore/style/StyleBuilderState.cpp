@@ -29,6 +29,7 @@
 
 #include "config.h"
 #include "StyleBuilderState.h"
+#include "StyleBuilderStateInlines.h"
 
 #include "CSSCalcRandomCachingKey.h"
 #include "CSSCanvasValue.h"

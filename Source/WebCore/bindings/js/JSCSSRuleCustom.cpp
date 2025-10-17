@@ -142,6 +142,7 @@ JSValue toJSNewlyCreated(JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<C
     case StyleRuleType::Charset:
     case StyleRuleType::Margin:
     case StyleRuleType::FontFeatureValuesBlock:
+    case StyleRuleType::InternalBaseAppearance:
         return createWrapper<CSSRule>(globalObject, WTFMove(rule));
     }
     RELEASE_ASSERT_NOT_REACHED();

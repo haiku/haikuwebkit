@@ -46,4 +46,11 @@ String convertEnumerationToString(TrackInfoTrackType type)
     return values[static_cast<size_t>(type)];
 }
 
+Ref<TrackInfo> TrackInfo::fromVariant(Variant<Ref<AudioInfo>, Ref<VideoInfo>> variant)
+{
+    return WTF::visit(WTF::makeVisitor([](auto&& info) -> Ref<TrackInfo> {
+        return WTFMove(info);
+    }), WTFMove(variant));
+}
+
 } // namespace WebCore

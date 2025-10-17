@@ -146,7 +146,9 @@ void WebProcess::initializePlatformDisplayIfNeeded() const
         bool disabled = false;
 #if PLATFORM(GTK)
         const char* disableGBM = getenv("WEBKIT_DMABUF_RENDERER_DISABLE_GBM");
+        IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
         disabled = disableGBM && strcmp(disableGBM, "0");
+        IGNORE_CLANG_WARNINGS_END
 #endif
         if (!disabled) {
             if (auto device = DRMDeviceManager::singleton().mainGBMDevice(DRMDeviceManager::NodeType::Render)) {
@@ -177,8 +179,10 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 {
 #if USE(SKIA)
     const char* enableCPURendering = getenv("WEBKIT_SKIA_ENABLE_CPU_RENDERING");
+    IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
     if (enableCPURendering && strcmp(enableCPURendering, "0"))
         ProcessCapabilities::setCanUseAcceleratedBuffers(false);
+    IGNORE_CLANG_WARNINGS_END
 #endif
 
 #if ENABLE(MEDIA_STREAM)

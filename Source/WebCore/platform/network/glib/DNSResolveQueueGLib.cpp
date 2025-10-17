@@ -46,6 +46,7 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(DNSResolveQueueGLib);
 static bool isUsingHttpProxy = true;
 static bool isUsingHttpsProxy = true;
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 static bool didResolveProxy(char** uris)
 {
     // We have a list of possible proxies to use for the URI. If the first item in the list is
@@ -55,6 +56,7 @@ static bool didResolveProxy(char** uris)
     // to connect, merely to decide whether a proxy "should" be used.
     return uris && *uris && strcmp(*uris, "direct://");
 }
+IGNORE_CLANG_WARNINGS_END
 
 static void didResolveProxy(GProxyResolver* resolver, GAsyncResult* result, bool* isUsingProxyType, bool* isUsingProxy)
 {
@@ -98,6 +100,7 @@ void DNSResolveQueueGLib::platformResolve(const String& hostname)
     }, nullptr);
 }
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 void DNSResolveQueueGLib::resolve(const String& hostname, uint64_t identifier, DNSCompletionHandler&& completionHandler)
 {
     ASSERT(isMainThread());
@@ -152,6 +155,7 @@ void DNSResolveQueueGLib::resolve(const String& hostname, uint64_t identifier, D
 
     m_requestCancellables.add(identifier, WTFMove(cancellable));
 }
+IGNORE_CLANG_WARNINGS_END
 
 void DNSResolveQueueGLib::stopResolve(uint64_t identifier)
 {

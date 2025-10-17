@@ -72,7 +72,9 @@ void DragSource::begin(SelectionData&& selectionData, OptionSet<DragOperation> o
     if (m_selectionData->hasURL()) {
         CString urlString = m_selectionData->url().string().utf8();
         gchar* url = g_strdup_printf("%s\n%s", urlString.data(), m_selectionData->hasText() ? m_selectionData->text().utf8().data() : urlString.data());
+        IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
         GRefPtr<GBytes> bytes = adoptGRef(g_bytes_new_take(url, strlen(url)));
+        IGNORE_CLANG_WARNINGS_END
         providers.append(gdk_content_provider_new_for_bytes("_NETSCAPE_URL", bytes.get()));
     }
 

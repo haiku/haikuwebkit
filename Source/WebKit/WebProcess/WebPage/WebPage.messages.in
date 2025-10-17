@@ -898,6 +898,7 @@ messages -> WebPage WantsAsyncDispatchMessage {
 
     SimulateClickOverFirstMatchingTextInViewportWithUserInteraction(String targetText) -> (bool success)
     UpdateOpener(WebCore::FrameIdentifier frameID, WebCore::FrameIdentifier newOpener)
+    SetFramePrinting(WebCore::FrameIdentifier frameID, bool printing, WebCore::FloatSize pageSize, WebCore::FloatSize originalPageSize, float maximumShrinkRatio, enum:bool WebCore::AdjustViewSize shouldAdjustViewSize);
 
 #if HAVE(AUDIT_TOKEN)
     SetPresentingApplicationAuditTokenAndBundleIdentifier(struct WebKit::CoreIPCAuditToken auditToken, String bundleIdentifier)

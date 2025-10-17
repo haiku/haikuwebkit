@@ -100,9 +100,9 @@ void Widget::setFocus(bool focused)
     BEGIN_BLOCK_OBJC_EXCEPTIONS
  
     // Call this even when there is no platformWidget(). WK2 will focus on the widget in the UIProcess.
-    NSView *view = [platformWidget() _webcore_effectiveFirstResponder];
+    RetainPtr view = [protectedPlatformWidget() _webcore_effectiveFirstResponder];
     if (RefPtr page = frame->page())
-        page->chrome().focusNSView(view);
+        page->chrome().focusNSView(view.get());
 
     END_BLOCK_OBJC_EXCEPTIONS
 }
@@ -115,7 +115,7 @@ void Widget::show()
     setSelfVisible(true);
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    [getOuterView() setHidden:NO];
+    [protectedOuterView() setHidden:NO];
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
@@ -127,7 +127,7 @@ void Widget::hide()
     setSelfVisible(false);
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    [getOuterView() setHidden:YES];
+    [protectedOuterView() setHidden:YES];
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
@@ -137,7 +137,7 @@ IntRect Widget::frameRect() const
         return m_frame;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return enclosingIntRect([getOuterView() frame]);
+    return enclosingIntRect([protectedOuterView() frame]);
     END_BLOCK_OBJC_EXCEPTIONS
     
     return m_frame;
@@ -149,7 +149,7 @@ void Widget::setFrameRect(const IntRect& rect)
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
 
-    NSView *outerView = getOuterView();
+    RetainPtr outerView = this->outerView();
     if (!outerView)
         return;
 
@@ -158,38 +158,44 @@ void Widget::setFrameRect(const IntRect& rect)
     Ref<Widget> protectedThis(*this);
 
     NSRect frame = rect;
-    if (!NSEqualRects(frame, outerView.frame)) {
-        outerView.frame = frame;
-        outerView.needsDisplay = NO;
+    if (!NSEqualRects(frame, [outerView frame])) {
+        outerView.get().frame = frame;
+        outerView.get().needsDisplay = NO;
     }
 
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
-NSView *Widget::getOuterView() const
+NSView *Widget::outerView() const
 {
-    NSView *view = platformWidget();
+    RetainPtr view = platformWidget();
 
     // If this widget's view is a WebCoreFrameScrollView then we
     // resize its containing view, a WebFrameView.
-    if ([view conformsToProtocol:@protocol(WebCoreFrameScrollView)]) {
+    // No need to protect @protocol().
+    SUPPRESS_UNCOUNTED_ARG if ([view conformsToProtocol:@protocol(WebCoreFrameScrollView)]) {
         view = [view superview];
         ASSERT(view);
     }
 
-    return view;
+    return view.get();
+}
+
+RetainPtr<NSView> Widget::protectedOuterView() const
+{
+    return outerView();
 }
 
 void Widget::paint(GraphicsContext& p, const IntRect& r, SecurityOriginPaintPolicy, RegionContext*)
 {
     if (p.paintingDisabled())
         return;
-    NSView *view = getOuterView();
+    RetainPtr view = outerView();
 
     // We don't want to paint the view at all if it's layer backed, because then we'll end up
     // with multiple copies of the view contents, one in the view's layer itself and one in the
     // WebHTMLView's backing store (either a layer or the window backing store).
-    if (view.layer) {
+    if (view.get().layer) {
 #if PLATFORM(MAC)
         // However, Quicken Essentials has a plug-in that depends on drawing to update the layer (see <rdar://problem/15221231>).
         if (!WTF::MacApplication::isQuickenEssentials())
@@ -218,22 +224,20 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     // Transparent subframes are in fact implemented with scroll views that return YES from -drawsBackground (whenever the WebView
     // itself is in drawsBackground mode). In the normal drawing code path, the scroll views are never asked to draw the background,
     // so this is not an issue, but in this code path they are, so the following code temporarily turns background drwaing off.
-    NSView *innerView = platformWidget();
-    NSScrollView *scrollView = 0;
-    if ([innerView conformsToProtocol:@protocol(WebCoreFrameScrollView)]) {
-        NSScrollView *scrollView = checked_objc_cast<NSScrollView>(innerView);
+    RetainPtr innerView = platformWidget();
+    // No need to retain @protocol.
+    SUPPRESS_UNCOUNTED_ARG if ([innerView conformsToProtocol:@protocol(WebCoreFrameScrollView)]) {
+        RetainPtr scrollView = checked_objc_cast<NSScrollView>(innerView.get());
         // -copiesOnScroll will return NO whenever the content view is not fully opaque.
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         if ([scrollView drawsBackground] && ![[scrollView contentView] copiesOnScroll])
             [scrollView setDrawsBackground:NO];
-        else
-            scrollView = 0;
 ALLOW_DEPRECATED_DECLARATIONS_END
     }
 
-    CGContextRef cgContext = p.platformContext();
+    RetainPtr cgContext = p.platformContext();
     ASSERT(cgContext == [currentContext CGContext]);
-    CGContextSaveGState(cgContext);
+    CGContextSaveGState(cgContext.get());
 
     NSRect viewFrame = [view frame];
     NSRect viewBounds = [view bounds];
@@ -241,25 +245,22 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     // Set up the translation and (flipped) orientation of the graphics context. In normal drawing, AppKit does it as it descends down
     // the view hierarchy. Since Widget::paint is always called with a context that has a flipped coordinate system, and
     // -[NSView displayRectIgnoringOpacity:inContext:] expects an unflipped context we always flip here.
-    CGContextTranslateCTM(cgContext, viewFrame.origin.x - viewBounds.origin.x, viewFrame.origin.y + viewFrame.size.height + viewBounds.origin.y);
-    CGContextScaleCTM(cgContext, 1, -1);
+    CGContextTranslateCTM(cgContext.get(), viewFrame.origin.x - viewBounds.origin.x, viewFrame.origin.y + viewFrame.size.height + viewBounds.origin.y);
+    CGContextScaleCTM(cgContext.get(), 1, -1);
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
     {
-        NSGraphicsContext *nsContext = [NSGraphicsContext graphicsContextWithCGContext:cgContext flipped:NO];
+        NSGraphicsContext *nsContext = [NSGraphicsContext graphicsContextWithCGContext:cgContext.get() flipped:NO];
         [view displayRectIgnoringOpacity:[view convertRect:r fromView:[view superview]] inContext:nsContext];
     }
     END_BLOCK_OBJC_EXCEPTIONS
 
-    CGContextRestoreGState(cgContext);
-
-    if (scrollView)
-        [scrollView setDrawsBackground:YES];
+    CGContextRestoreGState(cgContext.get());
 }
 
 void Widget::setIsSelected(bool isSelected)
 {
-    NSView *view = platformWidget();
+    RetainPtr view = platformWidget();
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
     if ([view respondsToSelector:@selector(webPlugInSetIsSelected:)])
@@ -272,7 +273,7 @@ void Widget::setIsSelected(bool isSelected)
 void Widget::removeFromSuperview()
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    safeRemoveFromSuperview(getOuterView());
+    safeRemoveFromSuperview(protectedOuterView().get());
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
@@ -286,7 +287,7 @@ IntPoint Widget::convertFromRootToContainingWindow(const Widget* rootWidget, Int
         return point;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return IntPoint([rootWidget->platformWidget() convertPoint:point toView:nil]);
+    return IntPoint([rootWidget->protectedPlatformWidget() convertPoint:point toView:nil]);
     END_BLOCK_OBJC_EXCEPTIONS
     return point;
 }
@@ -297,7 +298,7 @@ FloatPoint Widget::convertFromRootToContainingWindow(const Widget* rootWidget, F
         return point;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return [rootWidget->platformWidget() convertPoint:point toView:nil];
+    return [rootWidget->protectedPlatformWidget() convertPoint:point toView:nil];
     END_BLOCK_OBJC_EXCEPTIONS
     return point;
 }
@@ -308,7 +309,7 @@ IntRect Widget::convertFromRootToContainingWindow(const Widget* rootWidget, cons
         return rect;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return enclosingIntRect([rootWidget->platformWidget() convertRect:rect toView:nil]);
+    return enclosingIntRect([rootWidget->protectedPlatformWidget() convertRect:rect toView:nil]);
     END_BLOCK_OBJC_EXCEPTIONS
 
     return rect;
@@ -320,7 +321,7 @@ FloatRect Widget::convertFromRootToContainingWindow(const Widget* rootWidget, co
         return rect;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return [rootWidget->platformWidget() convertRect:rect toView:nil];
+    return [rootWidget->protectedPlatformWidget() convertRect:rect toView:nil];
     END_BLOCK_OBJC_EXCEPTIONS
 
     return rect;
@@ -334,7 +335,7 @@ IntPoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, Int
         return point;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return IntPoint([rootWidget->platformWidget() convertPoint:point fromView:nil]);
+    return IntPoint([rootWidget->protectedPlatformWidget() convertPoint:point fromView:nil]);
     END_BLOCK_OBJC_EXCEPTIONS
 
     return point;
@@ -346,7 +347,7 @@ FloatPoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, F
         return point;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return [rootWidget->platformWidget() convertPoint:point fromView:nil];
+    return [rootWidget->protectedPlatformWidget() convertPoint:point fromView:nil];
     END_BLOCK_OBJC_EXCEPTIONS
 
     return point;
@@ -358,7 +359,7 @@ DoublePoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, 
         return point;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return [rootWidget->platformWidget() convertPoint:point fromView:nil];
+    return [rootWidget->protectedPlatformWidget() convertPoint:point fromView:nil];
     END_BLOCK_OBJC_EXCEPTIONS
 
     return point;
@@ -370,7 +371,7 @@ IntRect Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, cons
         return rect;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return enclosingIntRect([rootWidget->platformWidget() convertRect:rect fromView:nil]);
+    return enclosingIntRect([rootWidget->protectedPlatformWidget() convertRect:rect fromView:nil]);
     END_BLOCK_OBJC_EXCEPTIONS
 
     return rect;
@@ -382,7 +383,7 @@ FloatRect Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, co
         return rect;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return [rootWidget->platformWidget() convertRect:rect fromView:nil];
+    return [rootWidget->protectedPlatformWidget() convertRect:rect fromView:nil];
     END_BLOCK_OBJC_EXCEPTIONS
 
     return rect;
@@ -393,6 +394,11 @@ FloatRect Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, co
 NSView *Widget::platformWidget() const
 {
     return m_widget.get();
+}
+
+RetainPtr<NSView> Widget::protectedPlatformWidget() const
+{
+    return platformWidget();
 }
 
 void Widget::setPlatformWidget(NSView *widget)

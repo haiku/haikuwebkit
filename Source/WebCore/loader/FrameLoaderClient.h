@@ -27,7 +27,7 @@
 
 #include "CertificateInfo.h"
 
-#include <WebCore/DocumentLoader.h>
+#include <WebCore/FloatSize.h>
 #include <WebCore/FrameLoaderTypes.h>
 #include <WebCore/NavigationIdentifier.h>
 #include <WebCore/SandboxFlags.h>
@@ -41,6 +41,7 @@ class NavigationAction;
 class ResourceRequest;
 class ResourceResponse;
 
+enum class AdjustViewSize : bool;
 enum class PolicyDecisionMode;
 enum class SandboxFlag : uint16_t;
 
@@ -55,6 +56,7 @@ public:
     virtual bool dispatchDidReceiveInvalidCertificate(DocumentLoader*, const CertificateInfo&, const char*) { return false; }
     virtual void updateSandboxFlags(SandboxFlags) = 0;
     virtual void updateOpener(const Frame&) = 0;
+    virtual void setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize) = 0;
     virtual ~FrameLoaderClient() = default;
 };
 

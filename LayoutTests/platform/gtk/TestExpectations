@@ -756,7 +756,8 @@ webkit.org/b/158472 fast/text/international/system-language/han-quotes.html [ Im
 
 webkit.org/b/172283 inspector/worker/debugger-multiple-targets-pause.html [ Timeout Pass Failure ]
 
-webkit.org/b/186673 editing/spelling/spellcheck-async-mutation.html [ Failure Pass ]
+# TypeError: Argument 1 ('node') to Internals.markerCountForNode must be an instance of Node.
+webkit.org/b/186673 editing/spelling/spellcheck-async-mutation.html [ Skip ] # Timeout.
 
 webkit.org/b/179173 [ Release ] http/tests/inspector/network/har/har-page-aggressive-gc.html [ Failure ]
 
@@ -1586,7 +1587,6 @@ webkit.org/b/278719 fast/events/touch/touch-active-state.html [ Timeout ]
 webkit.org/b/278719 fast/events/touch/touch-coords-in-zoom-and-scroll.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/touch-event-frames.html [ Timeout ]
 webkit.org/b/278719 fast/events/touch/touch-event-pageXY.html [ Skip ]
-webkit.org/b/278719 fast/events/touch/touch-fractional-coordinates.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/touch-handler-count.html [ Failure ]
 webkit.org/b/278719 fast/events/touch/touch-inside-iframe.html [ Timeout ]
 webkit.org/b/278719 fast/events/touch/touch-inside-iframe-scrolled.html [ Timeout ]

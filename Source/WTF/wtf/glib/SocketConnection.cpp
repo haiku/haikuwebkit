@@ -109,6 +109,7 @@ static inline bool messageIsByteSwapped(MessageFlags flags)
 #endif
 }
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 bool SocketConnection::readMessage()
 {
     if (m_readBuffer.size() < sizeof(uint32_t))
@@ -203,6 +204,7 @@ void SocketConnection::sendMessage(const char* messageName, GVariant* parameters
 
     write();
 }
+IGNORE_CLANG_WARNINGS_END
 
 void SocketConnection::write()
 {

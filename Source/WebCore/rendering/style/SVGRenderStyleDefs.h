@@ -37,13 +37,13 @@
 #include <WebCore/StyleSVGBaselineShift.h>
 #include <WebCore/StyleSVGCenterCoordinateComponent.h>
 #include <WebCore/StyleSVGCoordinateComponent.h>
+#include <WebCore/StyleSVGMarkerResource.h>
 #include <WebCore/StyleSVGPaint.h>
 #include <WebCore/StyleSVGPathData.h>
 #include <WebCore/StyleSVGRadius.h>
 #include <WebCore/StyleSVGRadiusComponent.h>
 #include <WebCore/StyleSVGStrokeDasharray.h>
 #include <WebCore/StyleSVGStrokeDashoffset.h>
-#include <WebCore/StyleURL.h>
 #include <wtf/FixedVector.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>
@@ -262,9 +262,9 @@ public:
     void dumpDifferences(TextStream&, const StyleInheritedResourceData&) const;
 #endif
 
-    Style::URL markerStart;
-    Style::URL markerMid;
-    Style::URL markerEnd;
+    Style::SVGMarkerResource markerStart;
+    Style::SVGMarkerResource markerMid;
+    Style::SVGMarkerResource markerEnd;
 
 private:
     StyleInheritedResourceData();

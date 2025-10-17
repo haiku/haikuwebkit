@@ -33,10 +33,13 @@
 #include "NotImplemented.h"
 #include "OpenTypeTypes.h"
 #include "SkiaHarfBuzzFont.h"
-#include <skia/core/SkStream.h>
-#include <skia/core/SkTypeface.h>
 #include <wtf/Hasher.h>
 #include <wtf/VectorHash.h>
+
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
+#include <skia/core/SkStream.h>
+#include <skia/core/SkTypeface.h>
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 
 namespace WebCore {
 

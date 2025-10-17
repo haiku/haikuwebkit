@@ -166,7 +166,6 @@ struct ContentView: View {
                 .scrollBounceBehavior(scrollBounceBehaviorBasedOnSize == true ? .basedOnSize : .automatic)
                 .webViewContentBackground(backgroundHidden == true ? .hidden : .automatic)
                 .webViewScrollEdgeEffectStyle(showColorInTabBar ? .soft : .hard, for: .all)
-                .webViewWebPreference(.allowSmartLists, value: true)
                 .webContextMenu()
                 .webToolbar(findNavigatorIsPresented: $findNavigatorIsPresented)
         }

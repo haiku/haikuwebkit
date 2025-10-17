@@ -68,6 +68,8 @@ GST_DEBUG_CATEGORY(webkit_webrtc_endpoint_debug);
 
 namespace WebCore {
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
+
 GStreamerMediaEndpoint::GStreamerMediaEndpoint(GStreamerPeerConnectionBackend& peerConnection)
     : m_peerConnectionBackend(WeakPtr { &peerConnection })
     , m_statsCollector(GStreamerStatsCollector::create())
@@ -2745,6 +2747,8 @@ GUniquePtr<GstSDPMessage> GStreamerMediaEndpoint::completeSDPAnswer(const String
 
     return GUniquePtr<GstSDPMessage>(message.release());
 }
+
+IGNORE_CLANG_WARNINGS_END
 
 } // namespace WebCore
 

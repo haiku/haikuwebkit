@@ -439,7 +439,7 @@ static Color activeButtonTextColor()
 static SRGBA<uint8_t> menuBackgroundColor()
 {
     RetainPtr offscreenRep = adoptNS([[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil pixelsWide:1 pixelsHigh:1
-        bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:4 bitsPerPixel:32]);
+        bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:RetainPtr { NSDeviceRGBColorSpace }.get() bytesPerRow:4 bitsPerPixel:32]);
 
     {
         LocalCurrentCGContext localContext { [NSGraphicsContext graphicsContextWithBitmapImageRep:offscreenRep.get()].CGContext };
@@ -472,8 +472,8 @@ Color RenderThemeMac::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOpt
         auto systemAppearanceColor = [useDarkAppearance] (Color& color, SEL selector) -> Color {
             if (!color.isValid()) {
                 LocalDefaultSystemAppearance localAppearance(useDarkAppearance);
-                auto systemColor = wtfObjCMsgSend<NSColor *>([NSColor class], selector);
-                color = semanticColorFromNSColor(systemColor);
+                RetainPtr systemColor = wtfObjCMsgSend<NSColor *>([NSColor class], selector);
+                color = semanticColorFromNSColor(systemColor.get());
             }
 
             return color;
@@ -664,8 +664,8 @@ Color RenderThemeMac::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOpt
         };
 
         if (auto selector = selectCocoaColor()) {
-            if (auto color = wtfObjCMsgSend<NSColor *>([NSColor class], selector))
-                return semanticColorFromNSColor(color);
+            if (RetainPtr color = wtfObjCMsgSend<NSColor *>([NSColor class], selector))
+                return semanticColorFromNSColor(color.get());
         }
 
         auto textColorForActiveButton = [&] {
@@ -1262,7 +1262,7 @@ void RenderThemeMac::adjustImageControlsButtonStyle(RenderStyle& style, const El
 
 FloatSize RenderThemeMac::meterSizeForBounds(const RenderMeter& renderMeter, const FloatRect& bounds) const
 {
-    auto* control = const_cast<RenderMeter&>(renderMeter).ensureControlPartForRenderer();
+    RefPtr control = const_cast<RenderMeter&>(renderMeter).ensureControlPartForRenderer();
     if (!control)
         return bounds.size();
 
@@ -1299,7 +1299,7 @@ void RenderThemeMac::setColorWellSwatchBackground(HTMLElement& swatch, Color col
 
 IntRect RenderThemeMac::progressBarRectForBounds(const RenderProgress& renderProgress, const IntRect& bounds) const
 {
-    auto* control = const_cast<RenderProgress&>(renderProgress).ensureControlPartForRenderer();
+    RefPtr control = const_cast<RenderProgress&>(renderProgress).ensureControlPartForRenderer();
     if (!control)
         return bounds;
 

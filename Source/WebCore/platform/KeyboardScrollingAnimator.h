@@ -67,8 +67,9 @@ private:
     std::optional<KeyboardScroll> makeKeyboardScroll(ScrollDirection, ScrollGranularity) const;
     float scrollDistance(ScrollDirection, ScrollGranularity) const;
     RectEdges<bool> scrollingDirections() const;
+    CheckedRef<ScrollableArea> checkedScrollableArea() const;
 
-    ScrollableArea& m_scrollableArea;
+    WeakRef<ScrollableArea> m_scrollableArea;
     bool m_scrollTriggeringKeyIsPressed { false };
 };
 

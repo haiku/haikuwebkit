@@ -94,9 +94,9 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , viewTimelineNames(RenderStyle::initialViewTimelineNames())
     // timelineScope
     , scrollbarGutter(RenderStyle::initialScrollbarGutter())
-    // scrollSnapType
-    // scrollSnapAlign
-    // scrollSnapStop
+    , scrollSnapType(RenderStyle::initialScrollSnapType())
+    , scrollSnapAlign(RenderStyle::initialScrollSnapAlign())
+    , scrollSnapStop(RenderStyle::initialScrollSnapStop())
     , pseudoElementNameArgument(nullAtom())
     , anchorNames(RenderStyle::initialAnchorNames())
     , anchorScope(RenderStyle::initialAnchorScope())

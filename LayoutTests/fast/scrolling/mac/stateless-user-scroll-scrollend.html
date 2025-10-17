@@ -42,7 +42,7 @@ addEventListener("load", async () => {
     await UIHelper.statelessMouseWheelScrollAt(200, 200, 0, -1);
     await UIHelper.ensurePresentationUpdate();
     setTimeout(function() {
-        shouldBe('windowScrollendEventCount == 1', 'true');
+        shouldBe('windowScrollendEventCount', '1');
         finishJSTest();
     }, 100);
 });

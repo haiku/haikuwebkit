@@ -297,7 +297,7 @@ void ElementRuleCollector::transferMatchedRules(DeclarationOrigin declarationOri
             matchedRule.styleScopeOrdinal,
             FromStyleAttribute::No,
             matchedRule.cascadeLayerPriority,
-            matchedRule.ruleData->isStartingStyle()
+            matchedRule.ruleData->usedRuleTypes()
         }, declarationOrigin);
     }
 }
@@ -914,8 +914,11 @@ void ElementRuleCollector::addMatchedProperties(MatchedProperties&& matchedPrope
         // It might also be beneficial to overwrite the previous declaration (insteading of appending) if it affects the same exact properties.
         return;
     }
-    if (matchedProperties.isStartingStyle == IsStartingStyle::Yes)
-        m_result->hasStartingStyle = true;
+    if (matchedProperties.usedRuleTypes.contains(UsedRuleType::StartingStyle))
+        m_result->usedRuleTypes.add(UsedRuleType::StartingStyle);
+
+    if (matchedProperties.usedRuleTypes.contains(UsedRuleType::BaseAppearance))
+        m_result->usedRuleTypes.add(UsedRuleType::BaseAppearance);
 
     if (matchedProperties.isCacheable == IsCacheable::Partially && !m_result->isCompletelyNonCacheable) {
         for (auto property : matchedProperties.properties.get())

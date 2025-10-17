@@ -640,7 +640,6 @@ page/scrolling/mac/ScrollingCoordinatorMac.mm
 page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
 page/text-extraction/TextExtraction.cpp
 page/writing-tools/WritingToolsController.mm
-platform/Cursor.h
 platform/DragImage.cpp
 platform/Length.cpp
 platform/ScrollAnimationSmooth.cpp
@@ -716,10 +715,6 @@ platform/graphics/opentype/OpenTypeMathData.cpp
 platform/graphics/transforms/TransformOperations.cpp
 platform/graphics/transforms/TransformOperationsSharedPrimitivesPrefix.h
 platform/libwebrtc/LibWebRTCVPXVideoEncoder.cpp
-platform/mac/PasteboardWriter.mm
-platform/mac/ScrollbarsControllerMac.mm
-platform/mac/VideoPresentationInterfaceMac.mm
-platform/mac/WebPlaybackControlsManager.mm
 platform/mediarecorder/MediaRecorderPrivate.h
 platform/mediarecorder/MediaRecorderPrivateAVFImpl.cpp
 platform/mediarecorder/MediaRecorderPrivateMock.cpp
@@ -732,7 +727,6 @@ platform/mediastream/mac/MediaStreamTrackAudioSourceProviderCocoa.cpp
 platform/mediastream/mac/RealtimeOutgoingAudioSourceCocoa.cpp
 platform/mediastream/mac/WebAudioSourceProviderCocoa.mm
 platform/mock/GeolocationClientMock.cpp
-platform/mock/MockRealtimeMediaSourceCenter.cpp
 platform/mock/MockRealtimeVideoSource.cpp
 platform/mock/RTCNotifiersMock.cpp
 platform/mock/mediasource/MockMediaSourcePrivate.cpp

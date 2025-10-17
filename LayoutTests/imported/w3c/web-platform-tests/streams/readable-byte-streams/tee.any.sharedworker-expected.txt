@@ -37,4 +37,5 @@ FAIL ReadableStream teeing with byte source: read from branch2 with default read
 FAIL ReadableStream teeing with byte source: close when both branches have pending BYOB reads promise_test: Unhandled rejection with value: object "TypeError: ReadableByteStreamController is not implemented"
 FAIL ReadableStream teeing with byte source: enqueue() and close() while both branches are pulling promise_test: Unhandled rejection with value: object "TypeError: ReadableByteStreamController is not implemented"
 FAIL ReadableStream teeing with byte source: respond() and close() while both branches are pulling promise_test: Unhandled rejection with value: object "TypeError: ReadableByteStreamController is not implemented"
+FAIL ReadableStream teeing with byte source: reading an array with a byte offset should clone correctly promise_test: Unhandled rejection with value: object "TypeError: ReadableByteStreamController is not implemented"
 

@@ -26,9 +26,14 @@
 #pragma once
 
 #include "GridFormattingContext.h"
+#include "StyleGridTrackBreadth.h"
 
 namespace WebCore {
 class RenderStyle;
+
+namespace Style {
+struct GridTrackSize;
+};
 
 namespace Layout {
 
@@ -42,8 +47,16 @@ public:
 
     void layout(GridFormattingContext::GridLayoutConstraints, const UnplacedGridItems&);
 private:
+    struct TrackSizingFunctions {
+        Style::GridTrackBreadth min { CSS::Keyword::Auto { } };
+        Style::GridTrackBreadth max { CSS::Keyword::Auto { } };
+    };
     using PlacedGridItems = Vector<PlacedGridItem>;
-    static PlacedGridItems placeGridItems(const UnplacedGridItems&, size_t gridTemplateColumnsTracksCount, size_t gridTemplateRowsTracksCount);
+    using TrackSizingFunctionsList = Vector<TrackSizingFunctions>;
+
+    static auto placeGridItems(const UnplacedGridItems&, const Vector<Style::GridTrackSize>& gridTemplateColumnsTrackSizes,
+        const Vector<Style::GridTrackSize>& gridTemplateRowsTrackSizes);
+    static TrackSizingFunctionsList trackSizingFunctions(size_t implicitGridTracksCount, const Vector<Style::GridTrackSize> gridTemplateTrackSizes);
 
     const ElementBox& gridContainer() const;
     const RenderStyle& gridContainerStyle() const;

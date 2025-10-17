@@ -106,7 +106,7 @@ String WebRemoteFrameClient::renderTreeAsText(size_t baseIndent, OptionSet<Rende
     RefPtr page = m_frame->page();
     if (!page)
         return "Test Error - Missing page"_s;
-    auto sendResult = page->sendSync(Messages::WebPageProxy::RenderTreeAsTextForTesting(m_frame->frameID(), baseIndent, behavior));
+    auto sendResult = page->sendSync(Messages::WebPageProxy::RenderTreeAsTextForTesting(m_frame->frameID(), baseIndent, behavior), IPC::Timeout::infinity(), IPC::SendSyncOption::MaintainOrderingWithAsyncMessages);
     if (!sendResult.succeeded())
         return "Test Error - sending WebPageProxy::RenderTreeAsTextForTesting failed"_s;
     auto [result] = sendResult.takeReply();
@@ -206,6 +206,11 @@ void WebRemoteFrameClient::updateSandboxFlags(WebCore::SandboxFlags sandboxFlags
 void WebRemoteFrameClient::updateOpener(const WebCore::Frame& newOpener)
 {
     WebFrameLoaderClient::updateOpener(newOpener);
+}
+
+void WebRemoteFrameClient::setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize adjustViewSize)
+{
+    WebFrameLoaderClient::setPrinting(printing, pageSize, originalPageSize, maximumShrinkRatio, adjustViewSize);
 }
 
 void WebRemoteFrameClient::applyWebsitePolicies(WebsitePoliciesData&& websitePolicies)

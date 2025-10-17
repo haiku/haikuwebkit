@@ -106,7 +106,7 @@ public:
 #else
         , m_messageInfo(encoder.span().size(), m_attachments.size())
 #endif
-        , m_body(const_cast<uint8_t*>(encoder.span().data()), encoder.span().size())
+        , m_body(spanConstCast<uint8_t>(encoder.span()))
     {
     }
 

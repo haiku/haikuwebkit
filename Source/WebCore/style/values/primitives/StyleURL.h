@@ -37,9 +37,6 @@ struct URL {
     WTF::URL resolved;
     CSS::URLModifiers modifiers;
 
-    static URL none() { return { .resolved = { }, .modifiers = { } }; }
-    bool isNone() const { return resolved.isNull(); }
-
     bool operator==(const URL&) const = default;
 };
 
@@ -61,6 +58,7 @@ template<> struct ToStyle<CSS::URL> { auto operator()(const CSS::URL&, const Bui
 
 // `URL` is special-cased to return a `CSSURLValue`.
 template<> struct CSSValueCreation<URL> { Ref<CSSValue> operator()(CSSValuePool&, const RenderStyle&, const URL&); };
+template<> struct CSSValueConversion<URL> { auto operator()(BuilderState&, const CSSValue&) -> URL; };
 
 // MARK: Serialization
 
@@ -72,5 +70,15 @@ TextStream& operator<<(TextStream&, const URL&);
 
 } // namespace Style
 } // namespace WebCore
+
+namespace WTF {
+
+template<>
+struct MarkableTraits<WebCore::Style::URL> {
+    static bool isEmptyValue(const WebCore::Style::URL& value) { return value.resolved.isNull(); }
+    static WebCore::Style::URL emptyValue() { return { .resolved = { }, .modifiers = { } }; }
+};
+
+} // namespace WTF
 
 DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::Style::URL, 2)

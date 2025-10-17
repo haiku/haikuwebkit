@@ -722,14 +722,14 @@ static constexpr bool unreachableForValue = false;
 #define RELEASE_LOG_FAULT(channel, ...) SUPPRESS_UNCOUNTED_LOCAL os_log_fault(LOG_CHANNEL(channel).osLogChannel, __VA_ARGS__)
 #define RELEASE_LOG_INFO(channel, ...) SUPPRESS_UNCOUNTED_LOCAL os_log_info(LOG_CHANNEL(channel).osLogChannel, __VA_ARGS__)
 #define RELEASE_LOG_DEBUG(channel, ...) SUPPRESS_UNCOUNTED_LOCAL os_log_debug(LOG_CHANNEL(channel).osLogChannel, __VA_ARGS__)
-#define RELEASE_LOG_WITH_LEVEL(channel, logLevel, ...) do { \
+#define RELEASE_LOG_WITH_LEVEL(channel, logLevel, fmt, ...) do { \
     if (LOG_CHANNEL(channel).level >= (logLevel)) \
-        SUPPRESS_UNCOUNTED_LOCAL os_log(LOG_CHANNEL(channel).osLogChannel, __VA_ARGS__); \
+        SUPPRESS_UNCOUNTED_LOCAL os_log(LOG_CHANNEL(channel).osLogChannel, fmt __VA_OPT__(, SAFE_PRINTF_TYPE(__VA_ARGS__))); \
 } while (0)
 
-#define RELEASE_LOG_WITH_LEVEL_IF(isAllowed, channel, logLevel, ...) do { \
+#define RELEASE_LOG_WITH_LEVEL_IF(isAllowed, channel, logLevel, fmt, ...) do { \
     if ((isAllowed) && LOG_CHANNEL(channel).level >= (logLevel)) \
-        SUPPRESS_UNCOUNTED_LOCAL os_log(LOG_CHANNEL(channel).osLogChannel, __VA_ARGS__); \
+        SUPPRESS_UNCOUNTED_LOCAL os_log(LOG_CHANNEL(channel).osLogChannel, fmt __VA_OPT__(, SAFE_PRINTF_TYPE(__VA_ARGS__))); \
 } while (0)
 
 #elif OS(ANDROID)
@@ -741,7 +741,7 @@ static constexpr bool unreachableForValue = false;
 #define LOG_ANDROID_SEND(channel, priority, fmt, ...) do { \
     auto& logChannel = LOG_CHANNEL(channel); \
     if (logChannel.state != WTFLogChannelState::Off) \
-        __android_log_print(ANDROID_LOG_ ## priority, LOG_CHANNEL_WEBKIT_SUBSYSTEM, "[%s] " fmt, logChannel.name, ##__VA_ARGS__); \
+        __android_log_print(ANDROID_LOG_ ## priority, LOG_CHANNEL_WEBKIT_SUBSYSTEM, "[%s] " fmt, logChannel.name __VA__OPT__(, SAFE_PRINTF_TYPE(__VA_ARGS__))); \
 } while (0)
 
 #define RELEASE_LOG(channel, ...) LOG_ANDROID_SEND(channel, VERBOSE, __VA_ARGS__)
@@ -794,7 +794,7 @@ static constexpr bool unreachableForValue = false;
 #define LOGF(channel, priority, fmt, ...) do { \
     auto& logChannel = LOG_CHANNEL(channel); \
     if (logChannel.state != WTFLogChannelState::Off) \
-        fprintf(stderr, "[" LOG_CHANNEL_WEBKIT_SUBSYSTEM ":%s:%i] " fmt "\n", logChannel.name, priority, ##__VA_ARGS__); \
+        SAFE_FPRINTF(stderr, "[" LOG_CHANNEL_WEBKIT_SUBSYSTEM ":%s:%i] " fmt "\n", logChannel.name, priority, ##__VA_ARGS__); \
 } while (0)
 
 #define RELEASE_LOG(channel, ...) LOGF(channel, 4, __VA_ARGS__)

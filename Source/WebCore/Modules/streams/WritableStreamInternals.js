@@ -182,12 +182,16 @@ function setUpWritableStreamDefaultWriter(writer, stream)
 
 function writableStreamAbort(stream, reason)
 {
-    const state = @getByIdDirectPrivate(stream, "state");
+    let state = @getByIdDirectPrivate(stream, "state");
     if (state === "closed" || state === "errored")
         return @Promise.@resolve();
 
     const controller = @getByIdDirectPrivate(stream, "controller");
     @signalAbort(@getByIdDirectPrivate(controller, "signal"), reason);
+
+    state = @getByIdDirectPrivate(stream, "state");
+    if (state === "closed" || state === "errored")
+        return @Promise.@resolve();
 
     const pendingAbortRequest = @getByIdDirectPrivate(stream, "pendingAbortRequest");
     if (pendingAbortRequest !== @undefined)

@@ -274,7 +274,7 @@ inline auto Cursor::ipcData() const -> IPCData
     auto type = this->type();
     if (type != Type::Custom)
         return type;
-    if (m_image->isNull())
+    if (Ref { *m_image }->isNull())
         return std::nullopt;
     return CustomCursorIPCData {
         *m_image

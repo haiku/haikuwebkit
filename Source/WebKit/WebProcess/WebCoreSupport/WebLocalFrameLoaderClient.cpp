@@ -1071,6 +1071,11 @@ void WebLocalFrameLoaderClient::updateOpener(const WebCore::Frame& newOpener)
     WebFrameLoaderClient::updateOpener(newOpener);
 }
 
+void WebLocalFrameLoaderClient::setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize adjustViewSize)
+{
+    WebFrameLoaderClient::setPrinting(printing, pageSize, originalPageSize, maximumShrinkRatio, adjustViewSize);
+}
+
 void WebLocalFrameLoaderClient::cancelPolicyCheck()
 {
     m_frame->invalidatePolicyListeners();

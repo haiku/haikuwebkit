@@ -98,14 +98,14 @@ PASS XRRenderState interface: existence and properties of interface prototype ob
 PASS XRRenderState interface: existence and properties of interface prototype object's @@unscopables property
 PASS XRRenderState interface: attribute depthNear
 PASS XRRenderState interface: attribute depthFar
-FAIL XRRenderState interface: attribute passthroughFullyObscured assert_true: The prototype object must have a property "passthroughFullyObscured" expected true got false
+PASS XRRenderState interface: attribute passthroughFullyObscured
 PASS XRRenderState interface: attribute inlineVerticalFieldOfView
 PASS XRRenderState interface: attribute baseLayer
 PASS XRRenderState must be primary interface of xrRenderState
 PASS Stringification of xrRenderState
 PASS XRRenderState interface: xrRenderState must inherit property "depthNear" with the proper type
 PASS XRRenderState interface: xrRenderState must inherit property "depthFar" with the proper type
-FAIL XRRenderState interface: xrRenderState must inherit property "passthroughFullyObscured" with the proper type assert_inherits: property "passthroughFullyObscured" not found in prototype chain
+PASS XRRenderState interface: xrRenderState must inherit property "passthroughFullyObscured" with the proper type
 PASS XRRenderState interface: xrRenderState must inherit property "inlineVerticalFieldOfView" with the proper type
 PASS XRRenderState interface: xrRenderState must inherit property "baseLayer" with the proper type
 PASS XRFrame interface: existence and properties of interface object

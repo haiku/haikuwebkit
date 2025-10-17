@@ -52,11 +52,6 @@ RemoteRealtimeMediaSource::RemoteRealtimeMediaSource(RemoteRealtimeMediaSourcePr
 
 RemoteRealtimeMediaSource::~RemoteRealtimeMediaSource() = default;
 
-UserMediaCaptureManager& RemoteRealtimeMediaSource::manager()
-{
-    return m_manager.get();
-}
-
 void RemoteRealtimeMediaSource::createRemoteMediaSource()
 {
     m_proxy.createRemoteMediaSource(deviceIDHashSalts(), *pageIdentifier(), [this, protectedThis = Ref { *this }](WebCore::CaptureSourceError&& error, WebCore::RealtimeMediaSourceSettings&& settings, WebCore::RealtimeMediaSourceCapabilities&& capabilities) {

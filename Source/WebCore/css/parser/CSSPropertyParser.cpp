@@ -114,6 +114,9 @@ static bool consumePositionTryDescriptor(CSSParserTokenRange&, const CSSParserCo
 // @function descriptors.
 static bool consumeFunctionDescriptor(CSSParserTokenRange&, const CSSParserContext&, CSSPropertyID, CSS::PropertyParserResult&);
 
+// @-internal-base-appearance descriptors.
+static bool consumeInternalBaseAppearanceDescriptor(CSSParserTokenRange&, const CSSParserContext&, CSSPropertyID, IsImportant, CSS::PropertyParserResult&);
+
 // MARK: - CSSPropertyID parsing
 
 template<typename CharacterType> static CSSPropertyID cssPropertyID(std::span<const CharacterType> characters)
@@ -263,6 +266,9 @@ bool CSSPropertyParser::parseValue(CSSPropertyID property, IsImportant important
         break;
     case StyleRuleType::Function:
         parseSuccess = consumeFunctionDescriptor(range, context, property, result);
+        break;
+    case StyleRuleType::InternalBaseAppearance:
+        parseSuccess = consumeInternalBaseAppearanceDescriptor(range, context, property, important, result);
         break;
     default:
         parseSuccess = consumeStyleProperty(range, context, property, important, ruleType, result);
@@ -825,6 +831,16 @@ bool consumeFunctionDescriptor(CSSParserTokenRange& range, const CSSParserContex
 
     result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
     return true;
+}
+
+bool consumeInternalBaseAppearanceDescriptor(CSSParserTokenRange& range, const CSSParserContext& context, CSSPropertyID property, IsImportant important, CSS::PropertyParserResult& result)
+{
+    ASSERT(context.mode == UASheetMode);
+
+    if (property == CSSPropertyAppearance)
+        return false;
+
+    return consumeStyleProperty(range, context, property, important, StyleRuleType::InternalBaseAppearance, result);
 }
 
 } // namespace WebCore

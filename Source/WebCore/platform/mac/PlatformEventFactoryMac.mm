@@ -46,7 +46,7 @@ namespace WebCore {
 
 NSPoint globalPoint(const NSPoint& windowPoint, NSWindow *window)
 {
-    return flipScreenPoint([window convertPointToScreen:windowPoint], screen(window));
+    return flipScreenPoint([window convertPointToScreen:windowPoint], protectedScreen(window).get());
 }
 
 NSPoint globalPointForEvent(NSEvent *event)
@@ -688,9 +688,9 @@ UInt8 keyCharForEvent(NSEvent *event)
 
 DoublePoint unadjustedMovementForEvent(NSEvent *event)
 {
-    CGEventRef cgEvent = [event CGEvent];
-    auto dx = CGEventGetDoubleValueField(cgEvent, kCGEventUnacceleratedPointerMovementX);
-    auto dy = CGEventGetDoubleValueField(cgEvent, kCGEventUnacceleratedPointerMovementY);
+    RetainPtr cgEvent = [event CGEvent];
+    auto dx = CGEventGetDoubleValueField(cgEvent.get(), kCGEventUnacceleratedPointerMovementX);
+    auto dy = CGEventGetDoubleValueField(cgEvent.get(), kCGEventUnacceleratedPointerMovementY);
     return DoublePoint(dx, dy);
 }
 

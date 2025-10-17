@@ -28,6 +28,7 @@
 
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
 
+#include "RemoteRealtimeMediaSourceInlines.h"
 #include "UserMediaCaptureManager.h"
 #include "UserMediaCaptureManagerProxyMessages.h"
 

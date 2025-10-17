@@ -58,6 +58,28 @@ FloatRect Font::platformBoundsForGlyph(Glyph glyph) const
     return bounds;
 }
 
+Vector<FloatRect, Font::inlineGlyphRunCapacity> Font::platformBoundsForGlyphs(const Vector<Glyph, inlineGlyphRunCapacity>& glyphs) const
+{
+    if (!m_platformData.size())
+        return { };
+
+    static_assert(sizeof(Glyph) == sizeof(SkGlyphID));
+
+    Vector<SkRect, inlineGlyphRunCapacity> bounds(glyphs.size());
+    const auto& font = m_platformData.skFont();
+    font.getBounds(glyphs.span(), bounds.mutableSpan(), nullptr);
+    return bounds.map<Vector<FloatRect, inlineGlyphRunCapacity>>([&](const auto& boundsRect) -> auto {
+        if (font.isSubpixel())
+            return boundsRect;
+
+        SkRect returnValue = boundsRect;
+        SkIRect rect;
+        returnValue.roundOut(&rect);
+        returnValue.set(rect);
+        return returnValue;
+    });
+}
+
 float Font::platformWidthForGlyph(Glyph glyph) const
 {
     if (!m_platformData.size())

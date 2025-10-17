@@ -345,4 +345,16 @@ Ref<FrameInspectorController> Frame::protectedInspectorController()
     return m_inspectorController.get();
 }
 
+bool Frame::isPrinting() const
+{
+    return m_isPrinting;
+}
+
+void Frame::setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize shouldAdjustViewSize, NotifyUIProcess notifyUIProcess)
+{
+    m_isPrinting = printing;
+    if (notifyUIProcess == NotifyUIProcess::Yes && m_settings->siteIsolationEnabled())
+        loaderClient().setPrinting(printing, pageSize, originalPageSize, maximumShrinkRatio, shouldAdjustViewSize);
+}
+
 } // namespace WebCore

@@ -468,9 +468,11 @@ protected:
 #if PLATFORM(COCOA)
 public:
     WEBCORE_EXPORT NSView* documentView() const;
+    WEBCORE_EXPORT RetainPtr<NSView> protectedDocumentView() const;
 
 private:
     PlatformScrollView* scrollView() const;
+    RetainPtr<PlatformScrollView> protectedScrollView() const;
 #endif
 
 private:

@@ -85,6 +85,13 @@ Ref<CSSValue> CSSValueCreation<URL>::operator()(CSSValuePool&, const RenderStyle
     return CSSURLValue::create(toCSS(value, style));
 }
 
+auto CSSValueConversion<URL>::operator()(BuilderState& state, const CSSValue& value) -> URL
+{
+    if (auto url = requiredDowncast<CSSURLValue>(state, value))
+        return toStyle(url->url(), state);
+    return { .resolved = WTF::URL { emptyString() }, .modifiers = { } };
+}
+
 // MARK: - Serialization
 
 void Serialize<URL>::operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const URL& value)

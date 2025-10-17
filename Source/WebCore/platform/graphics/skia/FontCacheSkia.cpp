@@ -38,6 +38,7 @@
 #include "SystemSettings.h"
 #endif
 
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/ports/SkFontScanner_FreeType.h>
 
 #if OS(ANDROID)
@@ -48,6 +49,7 @@
 #else
 #include <skia/ports/SkFontMgr_fontconfig.h>
 #endif
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 
 namespace WebCore {
 

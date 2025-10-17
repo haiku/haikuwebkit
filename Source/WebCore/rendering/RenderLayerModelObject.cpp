@@ -60,7 +60,6 @@
 #include "SVGTextElement.h"
 #include "SVGURIReference.h"
 #include "Settings.h"
-#include "StyleScrollSnapPoints.h"
 #include "TransformOperationData.h"
 #include "TransformState.h"
 #include <wtf/MathExtras.h>
@@ -509,11 +508,10 @@ RenderSVGResourceMasker* RenderLayerModelObject::svgMaskerResourceFromStyle() co
         return nullptr;
 
     RefPtr maskImage = style().maskLayers().first().image().tryStyleImage();
-    auto maskImageURL = maskImage ? maskImage->url() : Style::URL::none();
-    if (maskImageURL.isNone())
+    if (!maskImage)
         return nullptr;
 
-    auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(maskImageURL, protectedDocument());
+    auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(maskImage->url(), protectedDocument());
 
     if (RefPtr referencedMaskElement = ReferencedSVGResources::referencedMaskElement(treeScopeForSVGReferences(), *maskImage)) {
         if (auto* referencedMaskerRenderer = dynamicDowncast<RenderSVGResourceMasker>(referencedMaskElement->renderer()))
@@ -528,31 +526,35 @@ RenderSVGResourceMasker* RenderLayerModelObject::svgMaskerResourceFromStyle() co
 
 RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerStartResourceFromStyle() const
 {
-    return svgMarkerResourceFromStyle(style().svgStyle().markerStartResource());
+    return svgMarkerResourceFromStyle(style().svgStyle().markerStart());
 }
 
 RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerMidResourceFromStyle() const
 {
-    return svgMarkerResourceFromStyle(style().svgStyle().markerMidResource());
+    return svgMarkerResourceFromStyle(style().svgStyle().markerMid());
 }
 
 RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerEndResourceFromStyle() const
 {
-    return svgMarkerResourceFromStyle(style().svgStyle().markerEndResource());
+    return svgMarkerResourceFromStyle(style().svgStyle().markerEnd());
 }
 
-RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerResourceFromStyle(const Style::URL& markerResource) const
+RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerResourceFromStyle(const Style::SVGMarkerResource& markerResource) const
 {
-    if (markerResource.isNone() || !document().settings().layerBasedSVGEngineEnabled())
+    if (!document().settings().layerBasedSVGEngineEnabled())
         return nullptr;
 
-    if (RefPtr referencedMarkerElement = ReferencedSVGResources::referencedMarkerElement(treeScopeForSVGReferences(), markerResource)) {
+    auto markerResourceURL = markerResource.tryURL();
+    if (!markerResourceURL)
+        return nullptr;
+
+    if (RefPtr referencedMarkerElement = ReferencedSVGResources::referencedMarkerElement(treeScopeForSVGReferences(), *markerResourceURL)) {
         if (auto* referencedMarkerRenderer = dynamicDowncast<RenderSVGResourceMarker>(referencedMarkerElement->renderer()))
             return referencedMarkerRenderer;
     }
 
     if (auto* element = dynamicDowncast<SVGElement>(this->element()))
-        document().addPendingSVGResource(AtomString(markerResource.resolved.string()), *element);
+        document().addPendingSVGResource(AtomString(markerResourceURL->resolved.string()), *element);
 
     return nullptr;
 }

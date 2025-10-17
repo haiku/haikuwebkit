@@ -59,9 +59,6 @@ extension EnvironmentValues {
 
     @Entry
     var webViewScrollEdgeEffectStyleContext: ScrollEdgeEffectStyleContext? = nil
-
-    @Entry
-    var webViewWebPreferenceContext = WebPreferenceContext()
 }
 
 #endif

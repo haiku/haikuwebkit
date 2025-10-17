@@ -2190,4 +2190,18 @@ TEST(WebpagePreferences, LoadHTMLString)
     [webView setNavigationDelegate:navigationDelegate.get()];
     [webView _loadAlternateHTMLString:html baseURL:nil forUnreachableURL:nil];
     EXPECT_WK_STREQ([webView _test_waitForAlert], "true");
+
+    navigationDelegate.get().decidePolicyForNavigationActionWithPreferences = ^(WKNavigationAction *action, WKWebpagePreferences *preferences, void (^completionHandler)(WKNavigationActionPolicy, WKWebpagePreferences *)) {
+        EXPECT_FALSE(true);
+    };
+    NSURL *url = [NSURL URLWithString:@"https://webkit.org/"];
+    [webView _loadAlternateHTMLString:html baseURL:url forUnreachableURL:url withWebpagePreferences:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "false");
+    RetainPtr preferences = adoptNS([WKWebpagePreferences new]);
+    preferences.get()._userContentController = replacement.get();
+    [webView _loadAlternateHTMLString:html baseURL:url forUnreachableURL:url withWebpagePreferences:preferences.get()];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "true");
+    [webView setNavigationDelegate:nil];
+    [webView loadHTMLString:html baseURL:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "false");
 }

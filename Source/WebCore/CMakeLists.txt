@@ -718,13 +718,21 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/streams/ByteLengthQueuingStrategy.idl
     Modules/streams/CountQueuingStrategy.idl
     Modules/streams/GenericTransformStream.idl
+    Modules/streams/QueuingStrategy.idl
+    Modules/streams/QueuingStrategySize.idl
     Modules/streams/ReadableStream.idl
     Modules/streams/ReadableStreamDefaultController.idl
     Modules/streams/ReadableStreamDefaultReader.idl
+    Modules/streams/ReadableStreamReadResult.idl
     Modules/streams/ReadableStreamSink.idl
     Modules/streams/ReadableStreamSource.idl
+    Modules/streams/ReadableStreamType.idl
     Modules/streams/TransformStream.idl
     Modules/streams/TransformStreamDefaultController.idl
+    Modules/streams/UnderlyingSource.idl
+    Modules/streams/UnderlyingSourceCancelCallback.idl
+    Modules/streams/UnderlyingSourcePullCallback.idl
+    Modules/streams/UnderlyingSourceStartCallback.idl
     Modules/streams/WritableStream.idl
     Modules/streams/WritableStreamDefaultController.idl
     Modules/streams/WritableStreamDefaultWriter.idl

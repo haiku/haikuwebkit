@@ -258,11 +258,8 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
 
         if (style.hasPositionedMask()) {
             // FIXME: We should support all the values in the CSS mask property, but for now just use the first mask-image if it's a reference.
-            RefPtr maskImage = style.maskLayers().first().image().tryStyleImage();
-            auto maskImageURL = maskImage ? maskImage->url() : Style::URL::none();
-
-            if (!maskImageURL.isNone()) {
-                auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(maskImageURL, document);
+            if (RefPtr maskImage = style.maskLayers().first().image().tryStyleImage()) {
+                auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(maskImage->url(), document);
                 if (auto* masker = getRenderSVGResourceById<LegacyRenderSVGResourceMasker>(treeScope, resourceID))
                     ensureResources(foundResources).setMasker(masker);
                 else
@@ -272,16 +269,16 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
     }
 
     if (markerTags().contains(tagName) && svgStyle.hasMarkers()) {
-        auto buildCachedMarkerResource = [&](const Style::URL& markerResource, bool (SVGResources::*setMarker)(LegacyRenderSVGResourceMarker*)) {
+        auto buildCachedMarkerResource = [&](const Style::SVGMarkerResource& markerResource, bool (SVGResources::*setMarker)(LegacyRenderSVGResourceMarker*)) {
             auto markerId = SVGURIReference::fragmentIdentifierFromIRIString(markerResource, document);
             if (auto* marker = getRenderSVGResourceById<LegacyRenderSVGResourceMarker>(treeScope, markerId))
                 (ensureResources(foundResources).*setMarker)(marker);
             else
                 treeScope->addPendingSVGResource(markerId, element);
         };
-        buildCachedMarkerResource(svgStyle.markerStartResource(), &SVGResources::setMarkerStart);
-        buildCachedMarkerResource(svgStyle.markerMidResource(), &SVGResources::setMarkerMid);
-        buildCachedMarkerResource(svgStyle.markerEndResource(), &SVGResources::setMarkerEnd);
+        buildCachedMarkerResource(svgStyle.markerStart(), &SVGResources::setMarkerStart);
+        buildCachedMarkerResource(svgStyle.markerMid(), &SVGResources::setMarkerMid);
+        buildCachedMarkerResource(svgStyle.markerEnd(), &SVGResources::setMarkerEnd);
     }
 
     if (fillAndStrokeTags().contains(tagName)) {

@@ -312,8 +312,6 @@ platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
 platform/graphics/cg/CGSubimageCacheWithTimer.cpp
 platform/ios/PlaybackSessionInterfaceIOS.mm
 platform/ios/WebAVPlayerController.mm
-platform/mac/VideoPresentationInterfaceMac.mm
-platform/mac/WebPlaybackControlsManager.mm
 platform/network/mac/ResourceHandleMac.mm
 rendering/AccessibilityRegionContext.cpp
 rendering/AncestorSubgridIterator.cpp

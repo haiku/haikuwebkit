@@ -133,10 +133,6 @@ public:
 
     template<CSSValueID> static Ref<CSSPrimitiveValue> convertCustomIdentAtomOrKeyword(ExtractorState&, const AtomString&);
 
-    // MARK: SVG conversions
-
-    static Ref<CSSValue> convertSVGURIReference(ExtractorState&, const URL&);
-
     // MARK: Transform conversions
 
     static Ref<CSSValue> convertTransformationMatrix(ExtractorState&, const TransformationMatrix&);
@@ -155,8 +151,6 @@ public:
     static Ref<CSSValue> convertPositionTryFallbacks(ExtractorState&, const FixedVector<PositionTryFallback>&);
     static Ref<CSSValue> convertWillChange(ExtractorState&, const WillChangeData*);
     static Ref<CSSValue> convertTabSize(ExtractorState&, const TabSize&);
-    static Ref<CSSValue> convertScrollSnapType(ExtractorState&, const ScrollSnapType&);
-    static Ref<CSSValue> convertScrollSnapAlign(ExtractorState&, const ScrollSnapAlign&);
     static Ref<CSSValue> convertLineBoxContain(ExtractorState&, OptionSet<Style::LineBoxContain>);
     static Ref<CSSValue> convertWebkitRubyPosition(ExtractorState&, RubyPosition);
     static Ref<CSSValue> convertPosition(ExtractorState&, const LengthPoint&);
@@ -275,15 +269,6 @@ template<CSSValueID keyword> Ref<CSSPrimitiveValue> ExtractorConverter::convertC
     if (string.isNull())
         return CSSPrimitiveValue::create(keyword);
     return CSSPrimitiveValue::createCustomIdent(string);
-}
-
-// MARK: - SVG conversions
-
-inline Ref<CSSValue> ExtractorConverter::convertSVGURIReference(ExtractorState& state, const URL& marker)
-{
-    if (marker.isNone())
-        return CSSPrimitiveValue::create(CSSValueNone);
-    return CSSURLValue::create(toCSS(marker, state.style));
 }
 
 // MARK: - Transform conversions
@@ -505,23 +490,6 @@ inline Ref<CSSValue> ExtractorConverter::convertWillChange(ExtractorState&, cons
 inline Ref<CSSValue> ExtractorConverter::convertTabSize(ExtractorState&, const TabSize& tabSize)
 {
     return CSSPrimitiveValue::create(tabSize.widthInPixels(1.0), tabSize.isSpaces() ? CSSUnitType::CSS_NUMBER : CSSUnitType::CSS_PX);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertScrollSnapType(ExtractorState& state, const ScrollSnapType& type)
-{
-    if (type.strictness == ScrollSnapStrictness::None)
-        return CSSValueList::createSpaceSeparated(CSSPrimitiveValue::create(CSSValueNone));
-    if (type.strictness == ScrollSnapStrictness::Proximity)
-        return CSSValueList::createSpaceSeparated(convert(state, type.axis));
-    return CSSValueList::createSpaceSeparated(convert(state, type.axis), convert(state, type.strictness));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertScrollSnapAlign(ExtractorState& state, const ScrollSnapAlign& alignment)
-{
-    return CSSValuePair::create(
-        convert(state, alignment.blockAlign),
-        convert(state, alignment.inlineAlign)
-    );
 }
 
 inline Ref<CSSValue> ExtractorConverter::convertLineBoxContain(ExtractorState&, OptionSet<Style::LineBoxContain> lineBoxContain)

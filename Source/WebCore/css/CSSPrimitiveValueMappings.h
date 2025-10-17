@@ -2246,7 +2246,7 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef FOR_EACH
 
 #define TYPE ScrollSnapStrictness
-#define FOR_EACH(CASE) CASE(None) CASE(Proximity) CASE(Mandatory)
+#define FOR_EACH(CASE) CASE(Proximity) CASE(Mandatory)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH

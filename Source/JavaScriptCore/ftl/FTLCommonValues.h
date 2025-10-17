@@ -64,8 +64,6 @@ public:
     const unsigned rangeKind { 0 };
     const unsigned profKind { 0 };
     const LValue branchWeights { nullptr };
-    
-    const ValueRange nonNegativeInt32;
 };
 
 } } // namespace JSC::FTL

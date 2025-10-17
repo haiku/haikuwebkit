@@ -254,7 +254,9 @@ public:
     WEBCORE_EXPORT IntSize scrollbarIntrusion() const;
 
     virtual Scrollbar* horizontalScrollbar() const { return nullptr; }
+    RefPtr<Scrollbar> protectedHorizontalScrollbar() const { return horizontalScrollbar(); }
     virtual Scrollbar* verticalScrollbar() const { return nullptr; }
+    RefPtr<Scrollbar> protectedVerticalScrollbar() const { return verticalScrollbar(); }
     virtual void scrollbarFrameRectChanged(const Scrollbar&) const { };
 
     Scrollbar* scrollbarForDirection(ScrollDirection direction) const

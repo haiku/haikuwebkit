@@ -231,9 +231,9 @@ void StyleShadowSVGData::dumpDifferences(TextStream& ts, const StyleShadowSVGDat
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleInheritedResourceData);
 
 StyleInheritedResourceData::StyleInheritedResourceData()
-    : markerStart(SVGRenderStyle::initialMarkerStartResource())
-    , markerMid(SVGRenderStyle::initialMarkerMidResource())
-    , markerEnd(SVGRenderStyle::initialMarkerEndResource())
+    : markerStart(SVGRenderStyle::initialMarkerStart())
+    , markerMid(SVGRenderStyle::initialMarkerMid())
+    , markerEnd(SVGRenderStyle::initialMarkerEnd())
 {
 }
 

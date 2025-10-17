@@ -49,10 +49,12 @@ using namespace WebCore;
 static Vector<String> clipboardFormats(WPEClipboard* clipboard)
 {
     Vector<String> types;
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     if (const auto* formats = wpe_clipboard_get_formats(clipboard)) {
         for (unsigned i = 0; formats[i]; ++i)
             types.append(String::fromUTF8(formats[i]));
     }
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     return types;
 }
 #endif
@@ -164,6 +166,7 @@ void WebPasteboardProxy::typesSafeForDOMToReadAndWrite(IPC::Connection&, const S
                     domTypes.add(type);
             }
 
+            WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
             if (const auto* formats = wpe_clipboard_get_formats(clipboard)) {
                 for (unsigned i = 0; formats[i]; ++i) {
                     String format = String::fromUTF8(formats[i]);
@@ -174,6 +177,7 @@ void WebPasteboardProxy::typesSafeForDOMToReadAndWrite(IPC::Connection&, const S
                         domTypes.add(format);
                 }
             }
+            WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
             completionHandler(copyToVector(domTypes));
             return;
         }

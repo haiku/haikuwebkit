@@ -1,3 +1,2 @@
 platform/graphics/avfoundation/objc/MediaPlayerPrivateAVFoundationObjC.mm
-platform/mac/WebCoreObjCExtras.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm

@@ -84,6 +84,8 @@ WebAuthenticationStatus toStatus(const CtapDeviceResponseCode& error)
         return WebAuthenticationStatus::PinAuthBlocked;
     case CtapDeviceResponseCode::kCtap2ErrPinBlocked:
         return WebAuthenticationStatus::PinBlocked;
+    case CtapDeviceResponseCode::kSuccess:
+        return WebAuthenticationStatus::PINSuccessful;
     default:
         ASSERT_NOT_REACHED();
         return WebAuthenticationStatus::PinInvalid;
@@ -545,9 +547,15 @@ void CtapAuthenticator::continueRequestAfterGetPinToken(Vector<uint8_t>&& data, 
                 return;
         }
 
+        if (RefPtr observer = this->observer())
+            observer->authenticatorStatusUpdated(toStatus(CtapDeviceResponseCode::kSuccess));
+
         receiveRespond(ExceptionData { ExceptionCode::UnknownError, makeString("Unknown internal error. Error code: "_s, static_cast<uint8_t>(error)) });
         return;
     }
+
+    if (RefPtr observer = this->observer())
+        observer->authenticatorStatusUpdated(toStatus(CtapDeviceResponseCode::kSuccess));
 
     m_pinAuth = token->pinAuth(requestData().hash);
     WTF::switchOn(requestData().options, [&](const PublicKeyCredentialCreationOptions& options) {

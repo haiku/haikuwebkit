@@ -216,8 +216,10 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
 #if ENABLE(DEVELOPER_MODE)
     if (m_supportsAsyncScrolling) {
         auto* disableAsyncScrolling = getenv("WEBKIT_DISABLE_ASYNC_SCROLLING");
+        IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
         if (disableAsyncScrolling && strcmp(disableAsyncScrolling, "0"))
             m_supportsAsyncScrolling = false;
+        IGNORE_CLANG_WARNINGS_END
     }
 #endif
 

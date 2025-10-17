@@ -84,6 +84,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     return true;
 }
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 void AuxiliaryProcess::platformInitialize(const AuxiliaryProcessInitializationParameters&)
 {
     struct sigaction signalAction;
@@ -92,5 +93,6 @@ void AuxiliaryProcess::platformInitialize(const AuxiliaryProcessInitializationPa
     signalAction.sa_handler = SIG_IGN;
     RELEASE_ASSERT(!sigaction(SIGPIPE, &signalAction, nullptr));
 }
+IGNORE_CLANG_WARNINGS_END
 
 } // namespace WebKit

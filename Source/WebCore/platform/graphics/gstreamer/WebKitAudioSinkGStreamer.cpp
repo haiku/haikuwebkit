@@ -56,6 +56,7 @@ WEBKIT_DEFINE_TYPE_WITH_CODE(WebKitAudioSink, webkit_audio_sink, GST_TYPE_BIN,
     GST_DEBUG_CATEGORY_INIT(webkit_audio_sink_debug, "webkitaudiosink", 0, "webkit audio sink element")
 )
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 static bool webKitAudioSinkConfigure(WebKitAudioSink* sink)
 {
     const char* value = g_getenv("WEBKIT_GST_ENABLE_AUDIO_MIXER");
@@ -105,6 +106,7 @@ static bool webKitAudioSinkConfigure(WebKitAudioSink* sink)
     }
     return false;
 }
+IGNORE_CLANG_WARNINGS_END
 
 static void webKitAudioSinkSetProperty(GObject* object, guint propID, const GValue* value, GParamSpec* pspec)
 {

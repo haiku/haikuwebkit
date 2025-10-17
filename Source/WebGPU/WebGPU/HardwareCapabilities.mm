@@ -169,6 +169,9 @@ bool isShaderValidationEnabled(id<MTLDevice> device)
 
 bool isWebGPUSwiftEnabled()
 {
+#if defined(ENABLE_LIBFUZZER) && ENABLE_LIBFUZZER && defined(ASAN_ENABLED) && ASAN_ENABLED
+    return true;
+#else
     static std::once_flag onceFlag;
     static bool isWebGPUSwiftEnabled;
     std::call_once(onceFlag, [&] {
@@ -177,6 +180,7 @@ bool isWebGPUSwiftEnabled()
             WTFLogAlways("WebGPU: using SWIFT backend"); // NOLINT
     });
     return isWebGPUSwiftEnabled;
+#endif
 }
 
 static HardwareCapabilities apple4(id<MTLDevice> device)

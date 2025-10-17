@@ -31,6 +31,7 @@
 #include "ProvisionalFrameProxy.h"
 #include "WebFrameMessages.h"
 #include "WebFrameProxy.h"
+#include "WebProcessProxy.h"
 #include <JavaScriptCore/InspectorTarget.h>
 #include <memory>
 #include <wtf/TZoneMallocInlines.h>

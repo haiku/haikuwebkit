@@ -606,6 +606,9 @@ public:
 
     // For hosting this GraphicsLayer in a native layer hierarchy.
     virtual PlatformLayer* platformLayer() const { return nullptr; }
+#if PLATFORM(COCOA)
+    RetainPtr<CALayer> protectedPlatformLayer() const;
+#endif
 
     enum class CompositingCoordinatesOrientation : uint8_t { TopDown, BottomUp };
 

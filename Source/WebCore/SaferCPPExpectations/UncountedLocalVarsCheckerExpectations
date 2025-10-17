@@ -369,7 +369,6 @@ platform/graphics/mac/controls/ProgressBarMac.mm
 platform/graphics/mac/controls/SliderTrackMac.mm
 platform/graphics/transforms/RotateTransformOperation.cpp
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
-platform/mock/MockRealtimeMediaSourceCenter.cpp
 platform/mock/MockRealtimeVideoSource.cpp
 platform/text/BidiContext.cpp
 platform/text/BidiResolver.h
@@ -409,7 +408,6 @@ rendering/RenderTheme.cpp
 rendering/RenderTreeAsText.cpp
 rendering/RenderWidget.cpp
 rendering/TextBoxPainter.cpp
-rendering/mac/RenderThemeMac.mm
 rendering/mathml/MathMLStyle.cpp
 rendering/style/RenderStyle.cpp
 rendering/style/RenderStyleSetters.h

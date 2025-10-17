@@ -32,8 +32,11 @@
 #include "FontPlatformData.h"
 #include "NotImplemented.h"
 #include "SkiaHarfBuzzFontCache.h"
-#include <skia/core/SkStream.h>
 #include <wtf/unicode/CharacterNames.h>
+
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
+#include <skia/core/SkStream.h>
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 
 namespace WebCore {
 

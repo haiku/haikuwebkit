@@ -499,9 +499,9 @@ class CompileLLINTCLoop(CompileWebKit):
     build_command = ["perl", "Tools/Scripts/build-jsc", "--cloop"]
 
 
-class CompileJSCOnly32(CompileWebKit):
+class Compile32bitJSC(CompileWebKit):
     name = 'compile-jsc-32bit'
-    build_command = ["linux32", "perl", "Tools/Scripts/build-jsc", "--32-bit", "--cmakeargs", "-DUSE_LIBBACKTRACE=OFF -DDEVELOPER_MODE=ON -DENABLE_OFFLINE_ASM_ALT_ENTRY=1 -DCMAKE_CXX_FLAGS='-fuse-ld=gold -Wl,--no-map-whole-files -Wl,--no-keep-memory -Wl,--no-keep-files-mapped -Wl,--no-mmap-output-file -fno-omit-frame-pointer' -DCMAKE_C_FLAGS='-fuse-ld=gold -Wl,--no-map-whole-files -Wl,--no-keep-memory -Wl,--no-keep-files-mapped -Wl,--no-mmap-output-file -fno-omit-frame-pointer' -DUSE_LD_LLD=OFF"]
+    build_command = ["perl", "Tools/Scripts/build-jsc", "--32-bit"]
 
 
 class CompileJSCOnly(CompileWebKit):
@@ -1038,7 +1038,7 @@ class RunWorldLeaksTests(RunWebKitTests):
 
 class RunAPITests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
     name = "run-api-tests"
-    VALID_ADDITIONAL_ARGUMENTS_LIST = ["--remote-layer-tree", "--use-gpu-process"]
+    VALID_ADDITIONAL_ARGUMENTS_LIST = ["--remote-layer-tree", "--use-gpu-process", "--child-processes"]
     description = ["api tests running"]
     descriptionDone = ["api-tests"]
     jsonFileName = "api_test_results.json"

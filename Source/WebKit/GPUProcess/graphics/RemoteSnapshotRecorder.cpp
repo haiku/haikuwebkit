@@ -28,6 +28,7 @@
 #if ENABLE(GPU_PROCESS)
 #include "RemoteSnapshotRecorder.h"
 
+#include "Logging.h"
 #include "RemoteGraphicsContextMessages.h"
 #include "RemoteSnapshot.h"
 #include "RemoteSnapshotRecorderMessages.h"

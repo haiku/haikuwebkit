@@ -43,7 +43,6 @@ accessibility/AccessibilityObjectInlines.h
 accessibility/AccessibilityProgressIndicator.cpp
 accessibility/AccessibilityRenderObject.cpp
 accessibility/AccessibilityScrollView.cpp
-accessibility/AccessibilityScrollbar.cpp
 accessibility/AccessibilitySlider.cpp
 accessibility/AccessibilitySpinButton.cpp
 accessibility/cocoa/AccessibilityObjectCocoa.mm
@@ -458,11 +457,7 @@ page/scrolling/ScrollingStateStickyNode.cpp
 page/text-extraction/TextExtraction.cpp
 page/writing-tools/WritingToolsController.mm
 platform/DragImage.cpp
-platform/KeyboardScrollingAnimator.cpp
-platform/ScrollAnimator.cpp
 platform/ScrollView.cpp
-platform/Scrollbar.cpp
-platform/ScrollbarsController.cpp
 platform/ScrollingEffectsController.cpp
 platform/Widget.cpp
 platform/audio/PlatformMediaSession.cpp
@@ -480,11 +475,6 @@ platform/graphics/ca/cocoa/WebTiledBackingLayer.mm
 platform/graphics/cg/CGSubimageCacheWithTimer.cpp
 platform/ios/PlaybackSessionInterfaceIOS.mm
 platform/ios/WebAVPlayerController.mm
-platform/mac/ScrollAnimatorMac.mm
-platform/mac/ScrollbarThemeMac.mm
-platform/mac/ScrollbarsControllerMac.mm
-platform/mac/VideoPresentationInterfaceMac.mm
-platform/mac/WebPlaybackControlsManager.mm
 platform/mock/DeviceOrientationClientMock.cpp
 platform/mock/MockRealtimeVideoSource.cpp
 platform/sql/SQLiteDatabase.cpp

@@ -97,17 +97,6 @@ struct WebViewRepresentable {
         }
         #endif
 
-        let preferencesContext = environment.webViewWebPreferenceContext
-        if !preferencesContext.isEmpty {
-            let wkPreferences = webView.configuration.preferences
-
-            for feature in WKPreferences._features() {
-                if let value = preferencesContext.get(feature.key, as: Bool.self) {
-                    wkPreferences._setEnabled(value, for: feature)
-                }
-            }
-        }
-
         if EquatableScrollBounceBehavior(environment.verticalScrollBounceBehavior) == .always
             || EquatableScrollBounceBehavior(environment.verticalScrollBounceBehavior) == .automatic
         {

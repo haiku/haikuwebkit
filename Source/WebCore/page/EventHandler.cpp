@@ -3023,15 +3023,17 @@ void EventHandler::updateMouseEventTargetNode(const AtomString& eventType, Node*
             Vector<Ref<Element>, 32> leftElementsChain;
             for (Element* element = m_lastElementUnderMouse.get(); element; element = element->parentElementInComposedTree())
                 leftElementsChain.append(*element);
-            Vector<Ref<Element>, 32> enteredElementsChain;
+            Vector<WeakPtr<Element, WeakPtrImplWithEventTargetData>, 32> elementsUnderMouse;
             for (Element* element = m_elementUnderMouse.get(); element; element = element->parentElementInComposedTree())
-                enteredElementsChain.append(*element);
+                elementsUnderMouse.append(element);
 
-            if (!leftElementsChain.isEmpty() && !enteredElementsChain.isEmpty() && leftElementsChain.last().ptr() == enteredElementsChain.last().ptr()) {
+            Vector enteredElementsChain = elementsUnderMouse;
+            if (!leftElementsChain.isEmpty() && !enteredElementsChain.isEmpty() && leftElementsChain.last().ptr() == enteredElementsChain.last().get()) {
                 size_t minHeight = std::min(leftElementsChain.size(), enteredElementsChain.size());
                 size_t i;
                 for (i = 0; i < minHeight; ++i) {
-                    if (leftElementsChain[leftElementsChain.size() - i - 1].ptr() != enteredElementsChain[enteredElementsChain.size() - i - 1].ptr())
+                    WeakPtr enteredElement = enteredElementsChain[enteredElementsChain.size() - i - 1];
+                    if (leftElementsChain[leftElementsChain.size() - i - 1].ptr() != enteredElement.get())
                         break;
                 }
                 leftElementsChain.shrink(leftElementsChain.size() - i);
@@ -3050,9 +3052,16 @@ void EventHandler::updateMouseEventTargetNode(const AtomString& eventType, Node*
                 elementUnderMouse->dispatchMouseEvent(platformMouseEvent, eventNames.mouseoverEvent, 0, m_lastElementUnderMouse.get());
 
             for (auto& chain : makeReversedRange(enteredElementsChain)) {
-                if (hasCapturingMouseEnterListener || chain->hasEventListeners(eventNames.pointerenterEvent) || chain->hasEventListeners(eventNames.mouseenterEvent))
+                if (!chain)
+                    continue;
+
+                if ((hasCapturingMouseEnterListener || chain->hasEventListeners(eventNames.pointerenterEvent) || chain->hasEventListeners(eventNames.mouseenterEvent))
+                    && !isElementAnAncestorOfLastElementUnderMouse(chain.get())) {
                     chain->dispatchMouseEvent(platformMouseEvent, eventNames.mouseenterEvent, 0, m_lastElementUnderMouse.get());
+                }
             }
+
+            m_ancestorsOfLastElementUnderMouse = WTFMove(elementsUnderMouse);
         }
 
         // Event handling may have moved the element to a different document.
@@ -3083,6 +3092,19 @@ void EventHandler::clearElementUnderMouse()
         return;
 
     imageOverlayController->elementUnderMouseDidChange(protectedFrame(), nullptr);
+}
+
+bool EventHandler::isElementAnAncestorOfLastElementUnderMouse(Element* element) const
+{
+    if (!element)
+        return false;
+
+    for (WeakPtr weakElement : m_ancestorsOfLastElementUnderMouse) {
+        if (weakElement == element)
+            return true;
+    }
+
+    return false;
 }
 
 void EventHandler::scheduleMouseEventTargetUpdateAfterLayout()

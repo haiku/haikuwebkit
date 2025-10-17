@@ -98,7 +98,6 @@
 #include "Settings.h"
 #include "StyleBoxShadow.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
-#include "StyleScrollSnapPoints.h"
 #include "TransformOperationData.h"
 #include "TransformState.h"
 #include <algorithm>
@@ -3181,6 +3180,13 @@ void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock
         // We need to let flexbox handle the margin adjustment - otherwise, flexbox
         // will think we're wider than we actually are and calculate line sizes
         // wrong. See also http://dev.w3.org/csswg/css-flexbox/#auto-margins
+        if (marginStartLength.isAuto())
+            marginStartLength = 0_css_px;
+        if (marginEndLength.isAuto())
+            marginEndLength = 0_css_px;
+    }
+
+    if (isGridItem() && downcast<RenderGrid>(containingBlock).isComputingTrackSizes()) {
         if (marginStartLength.isAuto())
             marginStartLength = 0_css_px;
         if (marginEndLength.isAuto())

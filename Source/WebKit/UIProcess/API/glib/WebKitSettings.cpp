@@ -343,7 +343,9 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
             webkit_settings_set_draw_compositing_indicators(settings, g_value_get_boolean(value));
         else {
             char* debugVisualsEnvironment = getenv("WEBKIT_SHOW_COMPOSITING_DEBUG_VISUALS");
+            IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
             bool showDebugVisuals = debugVisualsEnvironment && !strcmp(debugVisualsEnvironment, "1");
+            IGNORE_CLANG_WARNINGS_END
             webkit_settings_set_draw_compositing_indicators(settings, showDebugVisuals);
         }
         break;

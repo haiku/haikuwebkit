@@ -84,8 +84,8 @@
             await UIHelper.mouseWheelSequence(wheelEventSquence);
             await UIHelper.renderingUpdate();
 
-            shouldBe('overflowScrollendEventCount == 1', 'true');
-            shouldBe('windowScrollendEventCount == 0', 'true');
+            shouldBe('overflowScrollendEventCount', '1');
+            shouldBe('windowScrollendEventCount', '0');
         }
 
         async function testScrollOverDocument()
@@ -133,8 +133,8 @@
             await UIHelper.mouseWheelSequence(wheelEventSquence);
             await UIHelper.renderingUpdate();
 
-            shouldBe('overflowScrollendEventCount == 0', 'true');
-            shouldBe('windowScrollendEventCount == 1', 'true');
+            shouldBe('overflowScrollendEventCount', '0');
+            shouldBe('windowScrollendEventCount', '1');
         }
 
 

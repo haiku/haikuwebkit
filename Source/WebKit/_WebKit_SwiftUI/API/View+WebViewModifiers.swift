@@ -166,18 +166,6 @@ extension View {
             .ignoresSafeArea(edges: edges)
             .environment(\.webViewScrollEdgeEffectStyleContext, .init(style: style, edges: edges))
     }
-
-    // SPI for testing.
-    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    @_spi(Testing)
-    public nonisolated func webViewWebPreference<Value>(
-        _ feature: WebView.WebPreferenceFeature<Value>,
-        value: Value
-    ) -> some View where Value: Sendable, Value: Codable {
-        transformEnvironment(\.webViewWebPreferenceContext) { context in
-            context.set(feature, to: value)
-        }
-    }
 }
 
 #endif

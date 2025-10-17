@@ -430,10 +430,28 @@ std::optional<ElementUpdate> TreeResolver::resolvePseudoElement(Element& element
         return { };
     if (pseudoElementIdentifier.pseudoId == PseudoId::Marker && elementUpdate.style->display() != DisplayType::ListItem)
         return { };
-    if (pseudoElementIdentifier.pseudoId == PseudoId::FirstLine && !scope().resolver->usesFirstLineRules())
-        return { };
-    if (pseudoElementIdentifier.pseudoId == PseudoId::FirstLetter && !scope().resolver->usesFirstLetterRules())
-        return { };
+
+    auto userAgentShadowTreeEnclosingResolver = [&] -> Resolver* {
+        if (element.isInUserAgentShadowTree())
+            return scope().enclosingScope->resolver.ptr();
+        return nullptr;
+    };
+
+    if (pseudoElementIdentifier.pseudoId == PseudoId::FirstLine && !scope().resolver->usesFirstLineRules()) {
+        // For user-agent shadow tree elements, also check the enclosing (document) scope
+        // because user-agent pseudo-elements like details::details-content::first-line
+        // are defined in the document scope but target elements in the shadow tree
+        RefPtr resolver = userAgentShadowTreeEnclosingResolver();
+        if (!resolver || !resolver->usesFirstLineRules())
+            return { };
+    }
+
+    if (pseudoElementIdentifier.pseudoId == PseudoId::FirstLetter && !scope().resolver->usesFirstLetterRules()) {
+        RefPtr resolver = userAgentShadowTreeEnclosingResolver();
+        if (!resolver || !resolver->usesFirstLetterRules())
+            return { };
+    }
+
     if (pseudoElementIdentifier.pseudoId == PseudoId::WebKitScrollbar && elementUpdate.style->overflowX() != Overflow::Scroll && elementUpdate.style->overflowY() != Overflow::Scroll)
         return { };
 
@@ -874,7 +892,7 @@ ElementUpdate TreeResolver::createAnimatedElementUpdate(ResolvedStyle&& resolved
 
 std::unique_ptr<RenderStyle> TreeResolver::resolveStartingStyle(const ResolvedStyle& resolvedStyle, const Styleable& styleable, const ResolutionContext& resolutionContext)
 {
-    if (!resolvedStyle.matchResult || !resolvedStyle.matchResult->hasStartingStyle)
+    if (!resolvedStyle.matchResult || !resolvedStyle.matchResult->usedRuleTypes.contains(UsedRuleType::StartingStyle))
         return nullptr;
 
     // "Starting style inherits from the parent’s after-change style just like after-change style does."

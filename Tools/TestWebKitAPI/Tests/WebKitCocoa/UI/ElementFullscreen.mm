@@ -25,24 +25,26 @@
 
 #import "config.h"
 
-#if PLATFORM(IOS)
-
 #import "PlatformUtilities.h"
 #import "TestWKWebView.h"
 #import <WebKit/WKWebViewPrivate.h>
 #import <WebKit/WebKit.h>
 #import <WebKit/_WKFullscreenDelegate.h>
 
+#if PLATFORM(IOS_FAMILY)
 @interface UIScrollView ()
 @property (nonatomic, getter=isZoomEnabled) BOOL zoomEnabled;
 @end
+#endif
 
 @interface TestElementFullscreenDelegate : NSObject <_WKFullscreenDelegate>
 - (void)waitForDidEnterElementFullscreen;
+- (void)waitForWillEnterElementFullscreen;
 @end
 
 @implementation TestElementFullscreenDelegate {
     bool _didEnterElementFullscreen;
+    bool _willEnterElementFullscreen;
 }
 
 - (void)waitForDidEnterElementFullscreen
@@ -51,15 +53,35 @@
     TestWebKitAPI::Util::run(&_didEnterElementFullscreen);
 }
 
+- (void)waitForWillEnterElementFullscreen
+{
+    _willEnterElementFullscreen = false;
+    TestWebKitAPI::Util::run(&_willEnterElementFullscreen);
+}
+
 #pragma mark WKUIDelegate
 
+#if PLATFORM(IOS)
+- (void)_webViewWillEnterElementFullscreen:(WKWebView *)webView
+#else
+- (void)_webViewWillEnterFullscreen:(NSView *)webView
+#endif
+{
+    _willEnterElementFullscreen = true;
+}
+
+#if PLATFORM(IOS_FAMILY)
 - (void)_webViewDidEnterElementFullscreen:(WKWebView *)webView
+#else
+- (void)_webViewDidEnterFullscreen:(NSView *)webView
+#endif
 {
     _didEnterElementFullscreen = true;
 }
 
 @end
 
+#if PLATFORM(IOS_FAMILY)
 TEST(ElementFullscreen, ScrollViewSetToInitialScale)
 {
     // This test must run in TestWebKitAPI.app
@@ -91,5 +113,45 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     EXPECT_EQ([webView scrollView].maximumZoomScale, expectedScale);
     EXPECT_EQ([webView scrollView].isZoomEnabled, NO);
 }
+#endif
 
-#endif // PLATFORM(IOS)
+TEST(ElementFullscreen, EnterVideoFullscreenWhileAnimating)
+{
+    // This test must run in TestWebKitAPI.app
+    if (![NSBundle.mainBundle.bundleIdentifier isEqualToString:@"org.webkit.TestWebKitAPI"])
+        return;
+
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+#if PLATFORM(IOS_FAMILY)
+    [configuration setAllowsInlineMediaPlayback:YES];
+#endif
+    [configuration preferences].elementFullscreenEnabled = YES;
+    RetainPtr fullscreenDelegate = adoptNS([[TestElementFullscreenDelegate alloc] init]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView _setFullscreenDelegate:fullscreenDelegate.get()];
+
+    RetainPtr preferences = adoptNS([[WKWebpagePreferences alloc] init]);
+    [preferences setPreferredContentMode:WKContentModeDesktop];
+
+    NSString *htmlContent = @"<video src='video-with-audio.mp4' controls></video>";
+
+    [webView synchronouslyLoadHTMLString:htmlContent preferences:preferences.get()];
+
+    // Start element fullscreen animation
+    [webView evaluateJavaScript:@"document.querySelector('body').requestFullscreen()" completionHandler:nil];
+
+    // Wait for the fullscreen animation to begin
+    [fullscreenDelegate waitForWillEnterElementFullscreen];
+
+    // While the element fullscreen animation is in progress, try to enter video fullscreen
+    [webView objectByEvaluatingJavaScript:@"document.getElementById('video').webkitEnterFullscreen()"];
+
+    // Wait for the element fullscreen animation to complete
+    [fullscreenDelegate waitForDidEnterElementFullscreen];
+
+    sleep(0.1_s);
+
+    // Verify that the video element is NOT in fullscreen mode
+    NSNumber *isVideoFullscreen = [webView objectByEvaluatingJavaScript:@"document.getElementById('video').webkitDisplayingFullscreen"];
+    EXPECT_FALSE([isVideoFullscreen boolValue]);
+}

@@ -547,20 +547,24 @@ static bool isTreeAbidingPseudoElement(CSSSelector::PseudoElement pseudoElement)
     }
 }
 
-static bool isSimpleSelectorValidAfterPseudoElement(const MutableCSSSelector& simpleSelector, CSSSelector::PseudoElement compoundPseudoElement)
+static bool isSimpleSelectorValidAfterPseudoElement(const MutableCSSSelector& simpleSelector, const MutableCSSSelector& compoundPseudoElement)
 {
-    if (compoundPseudoElement == CSSSelector::PseudoElement::Part) {
+    if (compoundPseudoElement.pseudoElement() == CSSSelector::PseudoElement::UserAgentPart && compoundPseudoElement.value() == UserAgentParts::detailsContent()) {
+        if (simpleSelector.match() == CSSSelector::Match::PseudoElement)
+            return true;
+    }
+    if (compoundPseudoElement.pseudoElement() == CSSSelector::PseudoElement::Part) {
         if (simpleSelector.match() == CSSSelector::Match::PseudoElement && simpleSelector.pseudoElement() != CSSSelector::PseudoElement::Part)
             return true;
     }
-    if (compoundPseudoElement == CSSSelector::PseudoElement::Slotted) {
+    if (compoundPseudoElement.pseudoElement() == CSSSelector::PseudoElement::Slotted) {
         if (simpleSelector.match() == CSSSelector::Match::PseudoElement && isTreeAbidingPseudoElement(simpleSelector.pseudoElement()))
             return true;
     }
     if (simpleSelector.match() != CSSSelector::Match::PseudoClass)
         return false;
 
-    return isPseudoClassValidAfterPseudoElement(simpleSelector.pseudoClass(), compoundPseudoElement);
+    return isPseudoClassValidAfterPseudoElement(simpleSelector.pseudoClass(), compoundPseudoElement.pseudoElement());
 }
 
 static bool atEndIgnoringWhitespace(CSSParserTokenRange range)
@@ -583,12 +587,12 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumeCompoundSelector(C
         if (!compoundSelector)
             return nullptr;
         if (compoundSelector->match() == CSSSelector::Match::PseudoElement)
-            m_precedingPseudoElement = compoundSelector->pseudoElement();
+            m_precedingPseudoElement = compoundSelector.get();
     }
 
     while (auto simpleSelector = consumeSimpleSelector(range)) {
         if (simpleSelector->match() == CSSSelector::Match::PseudoElement)
-            m_precedingPseudoElement = simpleSelector->pseudoElement();
+            m_precedingPseudoElement = simpleSelector.get();
 
         if (compoundSelector)
             compoundSelector->prependInComplexSelector(CSSSelector::Relation::Subselector, WTFMove(simpleSelector));
@@ -597,7 +601,7 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumeCompoundSelector(C
     }
 
     if (!m_disallowPseudoElements)
-        m_precedingPseudoElement = { };
+        m_precedingPseudoElement = nullptr;
 
     // While inside a nested selector like :is(), the default namespace shall be ignored when [1]:
     // * The compound selector represents the subject [2], and

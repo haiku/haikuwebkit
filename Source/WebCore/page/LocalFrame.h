@@ -97,8 +97,6 @@ class UserScript;
 class VisiblePosition;
 class Widget;
 
-enum class AdjustViewSize : bool;
-
 #if PLATFORM(IOS_FAMILY)
 class VisibleSelection;
 struct ViewportArguments;
@@ -209,7 +207,7 @@ public:
 
     WEBCORE_EXPORT static LocalFrame* frameForWidget(const Widget&);
 
-    WEBCORE_EXPORT void setPrinting(bool printing, const FloatSize& pageSize, const FloatSize& originalPageSize, float maximumShrinkRatio, AdjustViewSize);
+    WEBCORE_EXPORT void setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize, NotifyUIProcess = NotifyUIProcess::Yes) final;
     bool shouldUsePrintingLayout() const;
     WEBCORE_EXPORT FloatSize resizePageRectsKeepingRatio(const FloatSize& originalSize, const FloatSize& expectedSize);
 

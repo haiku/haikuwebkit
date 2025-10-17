@@ -37,6 +37,7 @@ namespace WebCore {
 CSSAtRuleID cssAtRuleID(StringView name)
 {
     static constexpr std::pair<ComparableLettersLiteral, CSSAtRuleID> mappings[] = {
+        { "-internal-base-appearance"_s, CSSAtRuleInternalBaseAppearance },
         { "-webkit-keyframes"_s,     CSSAtRuleWebkitKeyframes },
         { "annotation"_s,            CSSAtRuleAnnotation },
         { "character-variant"_s,     CSSAtRuleCharacterVariant },

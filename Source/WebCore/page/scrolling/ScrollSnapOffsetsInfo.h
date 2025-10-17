@@ -29,8 +29,8 @@
 #include <WebCore/LayoutRect.h>
 #include <WebCore/LayoutUnit.h>
 #include <WebCore/NodeIdentifier.h>
+#include <WebCore/RenderStyleConstants.h>
 #include <WebCore/ScrollTypes.h>
-#include <WebCore/StyleScrollSnapPoints.h>
 #include <utility>
 #include <wtf/Vector.h>
 
@@ -54,7 +54,7 @@ struct SnapOffset {
 template <typename UnitType, typename RectType>
 struct ScrollSnapOffsetsInfo {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(ScrollSnapOffsetsInfo);
-    ScrollSnapStrictness strictness { ScrollSnapStrictness::None };
+    std::optional<ScrollSnapStrictness> strictness { };
     Vector<SnapOffset<UnitType>> horizontalSnapOffsets;
     Vector<SnapOffset<UnitType>> verticalSnapOffsets;
     Vector<RectType> snapAreas;

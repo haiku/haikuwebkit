@@ -16,6 +16,7 @@ FAIL ReadableStream with byte source: Test that closing a stream does not releas
 FAIL ReadableStream with byte source: Test that closing a stream does not release a BYOB reader automatically ReadableByteStreamController is not implemented
 FAIL ReadableStream with byte source: Test that erroring a stream does not release a reader automatically ReadableByteStreamController is not implemented
 FAIL ReadableStream with byte source: Test that erroring a stream does not release a BYOB reader automatically ReadableByteStreamController is not implemented
+FAIL ReadableStream with byte source: cannot use an already-released BYOB reader to unlock a stream again promise_test: Unhandled rejection with value: object "TypeError: ReadableByteStreamController is not implemented"
 FAIL ReadableStream with byte source: releaseLock() on ReadableStreamDefaultReader must reject pending read() promise_test: Unhandled rejection with value: object "TypeError: ReadableByteStreamController is not implemented"
 FAIL ReadableStream with byte source: releaseLock() on ReadableStreamBYOBReader must reject pending read() promise_test: Unhandled rejection with value: object "TypeError: ReadableByteStreamController is not implemented"
 FAIL ReadableStream with byte source: Automatic pull() after start() ReadableByteStreamController is not implemented
@@ -37,6 +38,7 @@ FAIL ReadableStream with byte source: read(view), then respond() ReadableByteStr
 FAIL ReadableStream with byte source: read(view), then respondWithNewView() with a transferred ArrayBuffer ReadableByteStreamController is not implemented
 FAIL ReadableStream with byte source: read(view), then respond() with too big value ReadableByteStreamController is not implemented
 FAIL ReadableStream with byte source: respond(3) to read(view) with 2 element Uint16Array enqueues the 1 byte remainder ReadableByteStreamController is not implemented
+FAIL ReadableStream with byte source: respond(3) to read(view) with 2 element Uint16Array fulfills second read(view) with the 1 byte remainder ReadableByteStreamController is not implemented
 FAIL ReadableStream with byte source: enqueue(), getReader(), then read(view) ReadableByteStreamController is not implemented
 FAIL ReadableStream with byte source: enqueue(), getReader(), then cancel() (mode = not BYOB) ReadableByteStreamController is not implemented
 FAIL ReadableStream with byte source: enqueue(), getReader(), then cancel() (mode = BYOB) ReadableByteStreamController is not implemented

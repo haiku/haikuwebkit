@@ -374,6 +374,7 @@ Modules/speech/SpeechSynthesisVoice.cpp
 Modules/storage/StorageManager.cpp
 Modules/storage/WorkerStorageConnection.cpp
 Modules/streams/ReadableStream.cpp
+Modules/streams/ReadableStreamDefaultReader.cpp
 Modules/streams/ReadableStreamSink.cpp
 Modules/streams/ReadableStreamSource.cpp
 Modules/streams/TransformStream.cpp
@@ -636,6 +637,7 @@ bindings/js/DOMWrapperWorld.cpp
 bindings/js/GarbageCollectionController.cpp
 bindings/js/IDBBindingUtilities.cpp
 bindings/js/InternalReadableStream.cpp
+bindings/js/InternalReadableStreamDefaultReader.cpp
 bindings/js/InternalWritableStream.cpp
 bindings/js/JSAbortSignalCustom.cpp
 bindings/js/JSAbstractRangeCustom.cpp
@@ -917,6 +919,7 @@ css/CSSImageSetOptionValue.cpp
 css/CSSImageSetValue.cpp
 css/CSSImageValue.cpp
 css/CSSImportRule.cpp
+css/CSSInternalBaseAppearanceRule.cpp
 css/CSSKeyframeRule.cpp
 css/CSSKeyframesRule.cpp
 css/CSSLayerBlockRule.cpp
@@ -2990,7 +2993,6 @@ rendering/style/StyleNonInheritedData.cpp
 rendering/style/StylePaintImage.cpp
 rendering/style/StyleRareInheritedData.cpp
 rendering/style/StyleRareNonInheritedData.cpp
-rendering/style/StyleScrollSnapPoints.cpp
 rendering/style/StyleSelfAlignmentData.cpp
 rendering/style/StyleSurroundData.cpp
 rendering/style/StyleTransformData.cpp
@@ -3253,6 +3255,8 @@ style/values/scroll-animations/StyleViewFunction.cpp
 style/values/scroll-animations/StyleViewTimelineInsets.cpp
 style/values/scroll-snap/StyleScrollMargin.cpp
 style/values/scroll-snap/StyleScrollPadding.cpp
+style/values/scroll-snap/StyleScrollSnapAlign.cpp
+style/values/scroll-snap/StyleScrollSnapType.cpp
 style/values/scrollbars/StyleScrollbarColor.cpp
 style/values/shapes/StyleBasicShape.cpp
 style/values/shapes/StyleCircleFunction.cpp
@@ -4548,6 +4552,8 @@ JSPushSubscriptionChangeEventInit.cpp
 JSPushSubscriptionJSON.cpp
 JSPushSubscriptionOptions.cpp
 JSPushSubscriptionOptionsInit.cpp
+JSQueuingStrategy.cpp
+JSQueuingStrategySize.cpp
 JSRTCAnswerOptions.cpp
 JSRTCCertificate.cpp
 JSRTCConfiguration.cpp
@@ -4618,8 +4624,10 @@ JSRange.cpp
 JSReadableStream.cpp
 JSReadableStreamDefaultController.cpp
 JSReadableStreamDefaultReader.cpp
+JSReadableStreamReadResult.cpp
 JSReadableStreamSink.cpp
 JSReadableStreamSource.cpp
+JSReadableStreamType.cpp
 JSRedEyeReduction.cpp
 JSReducerCallback.cpp
 JSRegistrationResponseJSON.cpp
@@ -4886,6 +4894,10 @@ JSURLPatternInit.cpp
 JSURLPatternOptions.cpp
 JSURLPatternResult.cpp
 JSURLSearchParams.cpp
+JSUnderlyingSource.cpp
+JSUnderlyingSourceCancelCallback.cpp
+JSUnderlyingSourcePullCallback.cpp
+JSUnderlyingSourceStartCallback.cpp
 JSUndoItem.cpp
 JSUndoManager.cpp
 JSUnknownCredentialOptions.cpp

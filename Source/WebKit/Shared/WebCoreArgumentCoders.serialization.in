@@ -1954,11 +1954,7 @@ enum class WTFLogChannelState : uint8_t {
     OnWithAccumulation
 };
 
-enum class WebCore::ScrollSnapStrictness : uint8_t {
-    None,
-    Proximity,
-    Mandatory
-};
+enum class WebCore::ScrollSnapStrictness : bool;
 
 enum class WebCore::LengthType : uint8_t {
     Auto,
@@ -2642,6 +2638,8 @@ enum class WebCore::PixelFormat : uint8_t {
     RGBA16F,
 #endif
 };
+
+enum class WebCore::AdjustViewSize : bool;
 
 enum class WebCore::UseLosslessCompression : bool;
 
@@ -4566,7 +4564,7 @@ enum class WebCore::ScrollType : bool;
 }
 
 [Alias=struct ScrollSnapOffsetsInfo<float,WebCore::FloatRect>, CustomHeader] alias WebCore::FloatScrollSnapOffsetsInfo {
-    WebCore::ScrollSnapStrictness strictness;
+    std::optional<WebCore::ScrollSnapStrictness> strictness;
     Vector<WebCore::FloatSnapOffset> horizontalSnapOffsets;
     Vector<WebCore::FloatSnapOffset> verticalSnapOffsets;
     Vector<WebCore::FloatRect> snapAreas;
@@ -9279,6 +9277,36 @@ header: <WebCore/TrackInfo.h>
     Audio,
     Video,
     Text
+};
+
+header: <WebCore/TrackInfo.h>
+[CustomHeader, RefCounted, DisableMissingMemberCheck] struct WebCore::AudioInfo {
+    WebCore::FourCC codecName;
+    String codecString;
+    WebCore::TrackID trackID;
+    [NotSerialized] WebCore::TrackInfoTrackType m_type;
+    uint32_t rate;
+    uint32_t channels;
+    uint32_t framesPerPacket;
+    uint8_t bitDepth;
+    RefPtr<WebCore::SharedBuffer> cookieData;
+};
+
+header: <WebCore/TrackInfo.h>
+[CustomHeader, RefCounted, DisableMissingMemberCheck] struct WebCore::VideoInfo {
+    WebCore::FourCC codecName;
+    String codecString;
+    WebCore::TrackID trackID;
+    [NotSerialized] WebCore::TrackInfoTrackType m_type;
+    WebCore::FloatSize size;
+    WebCore::FloatSize displaySize;
+    uint8_t bitDepth;
+    WebCore::PlatformVideoColorSpace colorSpace;
+    RefPtr<WebCore::SharedBuffer> atomData;
+};
+
+[RefCounted, CreateUsing=fromVariant] struct WebCore::TrackInfo {
+    Variant<Ref<WebCore::AudioInfo>, Ref<WebCore::VideoInfo>> toVariant();
 };
 
 header: <WebCore/MediaSamplesBlock.h>

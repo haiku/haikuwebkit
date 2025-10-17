@@ -79,6 +79,7 @@ enum class PlatformXR::XRTargetRayMode : uint8_t {
 
 header: <WebCore/PlatformXR.h>
 [CustomHeader] struct PlatformXR::RequestData {
+    bool isPassthroughFullyObscured;
     PlatformXR::DepthRange depthRange;
 };
 

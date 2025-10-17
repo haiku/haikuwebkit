@@ -705,7 +705,7 @@ template<typename Layer> BackgroundImageGeometry BackgroundPainter::calculateFil
     } else if (backgroundRepeatX == FillRepeat::Space && tileSize.width() > 0) {
         if (auto space = getSpace(positioningAreaSize.width(), tileSize.width())) {
             LayoutUnit actualWidth = tileSize.width() + *space;
-            computedXPosition = minimumValueForLength(Length(), availableWidth, 1.0f /* FIXME FIND ZOOM */);
+            computedXPosition = 0;
             spaceSize.setWidth(*space);
             spaceSize.setHeight(0);
             phase.setWidth(actualWidth ? actualWidth - fmodf((computedXPosition + left), actualWidth) : 0);
@@ -729,7 +729,7 @@ template<typename Layer> BackgroundImageGeometry BackgroundPainter::calculateFil
     } else if (backgroundRepeatY == FillRepeat::Space && tileSize.height() > 0) {
         if (auto space = getSpace(positioningAreaSize.height(), tileSize.height())) {
             LayoutUnit actualHeight = tileSize.height() + *space;
-            computedYPosition = minimumValueForLength(Length(), availableHeight, 1.0f /* FIXME FIND ZOOM */);
+            computedYPosition = 0;
             spaceSize.setHeight(*space);
             phase.setHeight(actualHeight ? actualHeight - fmodf((computedYPosition + top), actualHeight) : 0);
         } else

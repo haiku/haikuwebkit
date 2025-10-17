@@ -441,7 +441,7 @@ void RuleFeatureSet::collectFeatures(const RuleData& ruleData, const Vector<Ref<
         collectSelectorList(scopeRule->scopeEnd());
     }
 
-    if (ruleData.isStartingStyle() == IsStartingStyle::Yes)
+    if (ruleData.usedRuleTypes().contains(UsedRuleType::StartingStyle))
         hasStartingStyleRules = true;
 
     auto addToMap = [&]<typename HostAffectingNames>(auto& map, auto& entries, HostAffectingNames hostAffectingNames) {

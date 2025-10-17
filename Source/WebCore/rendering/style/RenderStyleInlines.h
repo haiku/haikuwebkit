@@ -202,6 +202,7 @@ inline AppleVisualEffect RenderStyle::usedAppleVisualEffectForSubtree() const { 
 #endif
 inline OptionSet<Containment> RenderStyle::usedContain() const { return m_nonInheritedData->rareData->usedContain(); }
 inline bool RenderStyle::effectiveInert() const { return m_rareInheritedData->effectiveInert; }
+inline bool RenderStyle::isEffectivelyTransparent() const { return m_rareInheritedData->effectivelyTransparent; }
 inline PointerEvents RenderStyle::usedPointerEvents() const { return effectiveInert() ? PointerEvents::None : pointerEvents(); }
 inline CSSPropertyID RenderStyle::usedStrokeColorProperty() const { return hasExplicitlySetStrokeColor() ? CSSPropertyStrokeColor : CSSPropertyWebkitTextStrokeColor; }
 inline OptionSet<TouchAction> RenderStyle::usedTouchActions() const { return m_rareInheritedData->usedTouchActions; }
@@ -488,6 +489,9 @@ constexpr RubyOverhang RenderStyle::initialRubyOverhang() { return RubyOverhang:
 constexpr Style::ScrollBehavior RenderStyle::initialScrollBehavior() { return Style::ScrollBehavior::Auto; }
 inline Style::ScrollMarginEdge RenderStyle::initialScrollMargin() { return 0_css_px; }
 inline Style::ScrollPaddingEdge RenderStyle::initialScrollPadding() { return CSS::Keyword::Auto { }; }
+constexpr Style::ScrollSnapAlign RenderStyle::initialScrollSnapAlign() { return CSS::Keyword::None { }; }
+constexpr ScrollSnapStop RenderStyle::initialScrollSnapStop() { return ScrollSnapStop::Normal; }
+constexpr Style::ScrollSnapType RenderStyle::initialScrollSnapType() { return CSS::Keyword::None { }; }
 inline Style::ProgressTimelineAxes RenderStyle::initialScrollTimelineAxes() { return CSS::Keyword::Block { }; }
 inline Style::ProgressTimelineNames RenderStyle::initialScrollTimelineNames() { return CSS::Keyword::None { }; }
 inline Style::ScrollbarColor RenderStyle::initialScrollbarColor() { return CSS::Keyword::Auto { }; }
@@ -716,6 +720,10 @@ inline RubyPosition RenderStyle::rubyPosition() const { return static_cast<RubyP
 inline RubyAlign RenderStyle::rubyAlign() const { return static_cast<RubyAlign>(m_rareInheritedData->rubyAlign); }
 inline RubyOverhang RenderStyle::rubyOverhang() const { return static_cast<RubyOverhang>(m_rareInheritedData->rubyOverhang); }
 inline const Style::Scale& RenderStyle::scale() const { return m_nonInheritedData->rareData->scale; }
+inline const Style::ScrollSnapAlign& RenderStyle::scrollSnapAlign() const { return m_nonInheritedData->rareData->scrollSnapAlign; }
+inline ScrollSnapStop RenderStyle::scrollSnapStop() const { return m_nonInheritedData->rareData->scrollSnapStop; }
+inline const Style::ScrollSnapType& RenderStyle::scrollSnapType() const { return m_nonInheritedData->rareData->scrollSnapType; }
+inline bool RenderStyle::hasSnapPosition() const { return !scrollSnapAlign().isNone(); }
 inline const Style::ScrollTimelines& RenderStyle::scrollTimelines() const { return m_nonInheritedData->rareData->scrollTimelines; }
 inline const Style::ProgressTimelineAxes& RenderStyle::scrollTimelineAxes() const { return m_nonInheritedData->rareData->scrollTimelineAxes; }
 inline const Style::ProgressTimelineNames& RenderStyle::scrollTimelineNames() const { return m_nonInheritedData->rareData->scrollTimelineNames; }

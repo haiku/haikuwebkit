@@ -1084,8 +1084,7 @@ enum class CSSBoxType : uint8_t {
     ViewBox
 };
 
-enum class ScrollSnapStrictness : uint8_t {
-    None,
+enum class ScrollSnapStrictness : bool {
     Proximity,
     Mandatory
 };

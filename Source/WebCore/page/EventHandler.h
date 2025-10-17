@@ -629,6 +629,8 @@ private:
     void clearLatchedState();
     void clearElementUnderMouse();
 
+    bool isElementAnAncestorOfLastElementUnderMouse(Element*) const;
+
     bool shouldSendMouseEventsToInactiveWindows() const;
 
     bool canMouseDownStartSelect(const MouseEventWithHitTestResults&);
@@ -677,6 +679,7 @@ private:
     RefPtr<Element> m_capturingMouseEventsElement;
     RefPtr<Element> m_elementUnderMouse;
     RefPtr<Element> m_lastElementUnderMouse;
+    Vector<WeakPtr<Element, WeakPtrImplWithEventTargetData>, 32> m_ancestorsOfLastElementUnderMouse;
     RefPtr<LocalFrame> m_lastMouseMoveEventSubframe;
     SingleThreadWeakPtr<Scrollbar> m_lastScrollbarUnderMouse;
     Cursor m_currentMouseCursor;

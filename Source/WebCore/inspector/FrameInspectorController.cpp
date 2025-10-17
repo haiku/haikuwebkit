@@ -31,11 +31,13 @@
 #include "FrameInspectorController.h"
 
 #include "CommonVM.h"
+#include "FrameInlines.h"
 #include "InspectorInstrumentation.h"
 #include "InstrumentingAgents.h"
 #include "JSDOMBindingSecurity.h"
 #include "JSDOMWindow.h"
 #include "JSExecState.h"
+#include "Settings.h"
 #include "WebInjectedScriptHost.h"
 #include "WebInjectedScriptManager.h"
 #include <JavaScriptCore/InspectorAgentBase.h>

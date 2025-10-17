@@ -55,6 +55,7 @@ struct OpenXRCoordinator::RenderState {
     bool pendingFrame { false };
     PlatformXR::Device::RequestFrameCallback onFrameUpdate;
     XrFrameState frameState;
+    bool passthroughFullyObscured { false };
 };
 
 OpenXRCoordinator::OpenXRCoordinator()
@@ -282,7 +283,7 @@ void OpenXRCoordinator::endSessionIfExists(WebPageProxy& page)
         });
 }
 
-void OpenXRCoordinator::scheduleAnimationFrame(WebPageProxy& page, std::optional<PlatformXR::RequestData>&&, PlatformXR::Device::RequestFrameCallback&& onFrameUpdateCallback)
+void OpenXRCoordinator::scheduleAnimationFrame(WebPageProxy& page, std::optional<PlatformXR::RequestData>&& requestData, PlatformXR::Device::RequestFrameCallback&& onFrameUpdateCallback)
 {
     WTF::switchOn(m_state,
         [&](Idle&) {
@@ -300,7 +301,8 @@ void OpenXRCoordinator::scheduleAnimationFrame(WebPageProxy& page, std::optional
                 onFrameUpdateCallback({ });
             }
 
-            active.renderQueue->dispatch([this, renderState = active.renderState, onFrameUpdateCallback = WTFMove(onFrameUpdateCallback)]() mutable {
+            active.renderQueue->dispatch([this, renderState = active.renderState, requestData = WTFMove(requestData), onFrameUpdateCallback = WTFMove(onFrameUpdateCallback)]() mutable {
+                renderState->passthroughFullyObscured = requestData ? requestData->isPassthroughFullyObscured : false;
                 renderState->onFrameUpdate = WTFMove(onFrameUpdateCallback);
                 renderLoop(renderState);
             });
@@ -825,7 +827,7 @@ void OpenXRCoordinator::endFrame(Box<RenderState> renderState, Vector<XRDeviceLa
 
     XrFrameEndInfo frameEndInfo = createOpenXRStruct<XrFrameEndInfo, XR_TYPE_FRAME_END_INFO>();
     frameEndInfo.displayTime = renderState->frameState.predictedDisplayTime;
-    frameEndInfo.environmentBlendMode = m_sessionMode == PlatformXR::SessionMode::ImmersiveAr ? m_arBlendMode : m_vrBlendMode;
+    frameEndInfo.environmentBlendMode = (m_sessionMode == PlatformXR::SessionMode::ImmersiveAr && !renderState->passthroughFullyObscured) ? m_arBlendMode : m_vrBlendMode;
     frameEndInfo.layerCount = static_cast<uint32_t>(frameEndLayers.size());
     frameEndInfo.layers = frameEndLayers.mutableSpan().data();
     CHECK_XRCMD(xrEndFrame(m_session, &frameEndInfo));

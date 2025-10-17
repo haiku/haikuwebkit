@@ -6601,15 +6601,22 @@ void WebPage::computePagesForPrintingImpl(FrameIdentifier frameID, const PrintIn
 
 void WebPage::paintRemoteFrameContents(FrameIdentifier frameID, const IntRect& rect, GraphicsContext& context)
 {
+#if ENABLE(GPU_PROCESS)
     // Painting remote frames supported only for snapshot purposes.
     if (!m_remoteSnapshotState || m_remoteSnapshotState->recorder.ptr() != &context)
         return;
     sendWithAsyncReply(Messages::WebPageProxy::DrawFrameToSnapshot(frameID, rect, m_remoteSnapshotState->identifier), Ref { m_remoteSnapshotState->callback }->chain());
     m_remoteSnapshotState->recorder->drawSnapshotFrame(frameID);
+#else
+    UNUSED_PARAM(frameID);
+    UNUSED_PARAM(rect);
+    UNUSED_PARAM(context);
+#endif
 }
 
 void WebPage::drawToSnapshot(const std::optional<FloatRect>& rect, bool allowTransparentBackground, RemoteSnapshotIdentifier snapshotIdentifier, CompletionHandler<void(std::optional<IntSize>)>&& completionHandler)
 {
+#if ENABLE(GPU_PROCESS)
     ASSERT(m_page->settings().remoteSnapshottingEnabled());
 
     RefPtr localMainFrame = this->localMainFrame();
@@ -6635,10 +6642,17 @@ void WebPage::drawToSnapshot(const std::optional<FloatRect>& rect, bool allowTra
 
     remoteRenderingBackend->sinkSnapshotRecorderIntoSnapshotFrame(WTFMove(m_remoteSnapshotState->recorder), localMainFrame->frameID(), Ref { m_remoteSnapshotState->callback }->chain());
     m_remoteSnapshotState = std::nullopt;
+#else
+    UNUSED_PARAM(rect);
+    UNUSED_PARAM(allowTransparentBackground);
+    UNUSED_PARAM(snapshotIdentifier);
+    UNUSED_PARAM(completionHandler);
+#endif
 }
 
 void WebPage::drawFrameToSnapshot(FrameIdentifier frameID, const IntRect& rect, RemoteSnapshotIdentifier snapshotIdentifier, CompletionHandler<void(bool)>&& completionHandler)
 {
+#if ENABLE(GPU_PROCESS)
     ASSERT(m_page->settings().siteIsolationEnabled());
 
     // FIXME: Error handling, so that the GPUP doesn't wait for something not coming.
@@ -6674,6 +6688,12 @@ void WebPage::drawFrameToSnapshot(FrameIdentifier frameID, const IntRect& rect, 
     remoteRenderingBackend->sinkSnapshotRecorderIntoSnapshotFrame(WTFMove(m_remoteSnapshotState->recorder), frameID, Ref { m_remoteSnapshotState->callback }->chain());
 
     m_remoteSnapshotState = std::nullopt;
+#else
+    UNUSED_PARAM(frameID);
+    UNUSED_PARAM(rect);
+    UNUSED_PARAM(snapshotIdentifier);
+    UNUSED_PARAM(completionHandler);
+#endif
 }
 
 void WebPage::drawMainFrameToPDF(LocalFrame& localMainFrame, GraphicsContext& context, IntRect& snapshotRect, bool allowTransparentBackground)
@@ -10608,6 +10628,17 @@ void WebPage::updateOpener(WebCore::FrameIdentifier frameID, WebCore::FrameIdent
     coreFrame->updateOpener(*coreNewOpener, WebCore::Frame::NotifyUIProcess::No);
     if (RefPtr provisionalFrame = frame->provisionalFrame())
         provisionalFrame->updateOpener(*coreNewOpener, WebCore::Frame::NotifyUIProcess::No);
+}
+
+void WebPage::setFramePrinting(WebCore::FrameIdentifier frameID, bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize shouldAdjustViewSize)
+{
+    RefPtr frame = WebProcess::singleton().webFrame(frameID);
+    if (!frame)
+        return;
+    RefPtr coreFrame = frame->coreFrame();
+    if (!coreFrame)
+        return;
+    coreFrame->setPrinting(printing, pageSize, originalPageSize, maximumShrinkRatio, shouldAdjustViewSize, WebCore::Frame::NotifyUIProcess::No);
 }
 
 bool WebPage::isAlwaysOnLoggingAllowed() const

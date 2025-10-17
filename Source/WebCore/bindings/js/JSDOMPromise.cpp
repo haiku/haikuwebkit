@@ -38,7 +38,7 @@ using namespace JSC;
 
 namespace WebCore {
 
-auto DOMPromise::whenSettled(std::function<void()>&& callback) -> IsCallbackRegistered
+auto DOMPromise::whenSettled(Function<void()>&& callback) -> IsCallbackRegistered
 {
     return whenPromiseIsSettled(globalObject(), promise(), WTFMove(callback));
 }

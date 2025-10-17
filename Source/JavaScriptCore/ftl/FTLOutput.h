@@ -29,19 +29,19 @@
 
 #if ENABLE(FTL_JIT)
 
+#include "B3AbstractHeapRepository.h"
 #include "B3BasicBlockInlines.h"
 #include "B3CCallValue.h"
 #include "B3FrequentedBlock.h"
 #include "B3Procedure.h"
 #include "B3SwitchValue.h"
+#include "B3TypedPointer.h"
 #include "B3Width.h"
 #include "FTLAbbreviatedTypes.h"
-#include "FTLAbstractHeapRepository.h"
 #include "FTLCommonValues.h"
 #include "FTLSelectPredictability.h"
 #include "FTLState.h"
 #include "FTLSwitchCase.h"
-#include "FTLTypedPointer.h"
 #include "FTLValueFromBlock.h"
 #include "FTLWeight.h"
 #include "FTLWeightedTarget.h"
@@ -309,10 +309,7 @@ public:
     {
         return TypedPointer(heap, baseIndex(base, index, scale, offset));
     }
-    TypedPointer baseIndex(IndexedAbstractHeap& heap, LValue base, LValue index, JSValue indexAsConstant = JSValue(), ptrdiff_t offset = 0, LValue mask = nullptr)
-    {
-        return heap.baseIndex(*this, base, index, indexAsConstant, offset, mask);
-    }
+    TypedPointer baseIndex(IndexedAbstractHeap&, LValue base, LValue index, JSValue indexAsConstant = JSValue(), ptrdiff_t offset = 0, LValue mask = nullptr);
 
     TypedPointer absolute(const void* address);
 

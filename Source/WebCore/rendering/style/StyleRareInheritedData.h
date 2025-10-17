@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include <WebCore/Length.h>
 #include <WebCore/RenderStyleConstants.h>
 #include <WebCore/StyleBlockEllipsis.h>
 #include <WebCore/StyleColor.h>
@@ -138,7 +137,6 @@ public:
     Style::TextBoxEdge textBoxEdge;
     Style::LineFitEdge lineFitEdge;
 
-    Length wordSpacing;
     Style::StrokeMiterlimit miterLimit;
 
     DataRef<Style::CustomPropertyData> customProperties;
@@ -189,6 +187,7 @@ public:
     PREFERRED_TYPE(bool) unsigned hasVisitedLinkAutoCaretColor : 1;
     PREFERRED_TYPE(bool) unsigned hasAutoAccentColor : 1;
     PREFERRED_TYPE(bool) unsigned effectiveInert : 1;
+    PREFERRED_TYPE(bool) unsigned effectivelyTransparent : 1;
     PREFERRED_TYPE(bool) unsigned isInSubtreeWithBlendMode : 1;
     PREFERRED_TYPE(bool) unsigned isForceHidden : 1;
     PREFERRED_TYPE(ContentVisibility) unsigned usedContentVisibility : 2;

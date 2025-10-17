@@ -38,7 +38,6 @@
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "ScrollableArea.h"
-#include "StyleScrollSnapPoints.h"
 #include <ranges>
 
 namespace WebCore {
@@ -202,7 +201,7 @@ static std::pair<LayoutType, std::optional<unsigned>> closestSnapOffsetWithInfoA
         return pairForNoSnapping;
 
     auto isNearEnoughToOffsetForProximity = [&](LayoutType candidateSnapOffset) {
-        if (info.strictness != ScrollSnapStrictness::Proximity)
+        if (!info.strictness || *info.strictness != ScrollSnapStrictness::Proximity)
             return true;
 
         // This is an arbitrary choice for what it means to be "in proximity" of a snap offset. We should play around with
@@ -283,9 +282,9 @@ static LayoutUnit computeScrollSnapAlignOffset(LayoutUnit minLocation, LayoutUni
 
 void updateSnapOffsetsForScrollableArea(ScrollableArea& scrollableArea, const RenderBox& scrollingElementBox, const RenderStyle& scrollingElementStyle, LayoutRect viewportRectInBorderBoxCoordinates, WritingMode writingMode, Element* focusedElement)
 {
-    auto scrollSnapType = scrollingElementStyle.scrollSnapType();
+    auto scrollSnapTypeContainer = scrollingElementStyle.scrollSnapType().tryContainer();
     const auto& boxesWithScrollSnapPositions = scrollingElementBox.view().boxesWithScrollSnapPositions();
-    if (scrollSnapType.strictness == ScrollSnapStrictness::None || boxesWithScrollSnapPositions.isEmptyIgnoringNullReferences()) {
+    if (!scrollSnapTypeContainer || boxesWithScrollSnapPositions.isEmptyIgnoringNullReferences()) {
         scrollableArea.clearSnapOffsets();
         return;
     }
@@ -319,13 +318,13 @@ void updateSnapOffsetsForScrollableArea(ScrollableArea& scrollableArea, const Re
     bool scrollerXAxisFlipped = !writingMode.isAnyLeftToRight();
     bool scrollerYAxisFlipped = !writingMode.isAnyTopToBottom();
     bool scrollerHasVerticalWritingMode = writingMode.isVertical();
-    bool hasHorizontalSnapOffsets = scrollSnapType.axis == ScrollSnapAxis::Both || scrollSnapType.axis == ScrollSnapAxis::XAxis;
-    bool hasVerticalSnapOffsets = scrollSnapType.axis == ScrollSnapAxis::Both || scrollSnapType.axis == ScrollSnapAxis::YAxis;
-    if (scrollSnapType.axis == ScrollSnapAxis::Block) {
+    bool hasHorizontalSnapOffsets = scrollSnapTypeContainer->axis == ScrollSnapAxis::Both || scrollSnapTypeContainer->axis == ScrollSnapAxis::XAxis;
+    bool hasVerticalSnapOffsets = scrollSnapTypeContainer->axis == ScrollSnapAxis::Both || scrollSnapTypeContainer->axis == ScrollSnapAxis::YAxis;
+    if (scrollSnapTypeContainer->axis == ScrollSnapAxis::Block) {
         hasHorizontalSnapOffsets = scrollerHasVerticalWritingMode;
         hasVerticalSnapOffsets = !scrollerHasVerticalWritingMode;
     }
-    if (scrollSnapType.axis == ScrollSnapAxis::Inline) {
+    if (scrollSnapTypeContainer->axis == ScrollSnapAxis::Inline) {
         hasHorizontalSnapOffsets = !scrollerHasVerticalWritingMode;
         hasVerticalSnapOffsets = scrollerHasVerticalWritingMode;
     }
@@ -414,7 +413,7 @@ void updateSnapOffsetsForScrollableArea(ScrollableArea& scrollableArea, const Re
     }
 
     scrollableArea.setScrollSnapOffsetInfo({
-        scrollSnapType.strictness,
+        scrollSnapTypeContainer->strictness,
         horizontalSnapOffsets,
         verticalSnapOffsets,
         snapAreas,

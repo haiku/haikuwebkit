@@ -97,7 +97,6 @@
 #include "StyleScale.h"
 #include "StyleScrollMargin.h"
 #include "StyleScrollPadding.h"
-#include "StyleScrollSnapPoints.h"
 #include "StyleTextEdge+CSSValueConversion.h"
 #include "StyleTranslate.h"
 #include "StyleURL.h"
@@ -133,8 +132,6 @@ public:
     static Resize convertResize(BuilderState&, const CSSValue&);
     static OptionSet<TextUnderlinePosition> convertTextUnderlinePosition(BuilderState&, const CSSValue&);
     static OptionSet<LineBoxContain> convertLineBoxContain(BuilderState&, const CSSValue&);
-    static ScrollSnapType convertScrollSnapType(BuilderState&, const CSSValue&);
-    static ScrollSnapAlign convertScrollSnapAlign(BuilderState&, const CSSValue&);
     // scrollbar-width converter is only needed for quirking.
     static ScrollbarWidth convertScrollbarWidth(BuilderState&, const CSSValue&);
     static GridAutoFlow convertGridAutoFlow(BuilderState&, const CSSValue&);
@@ -147,7 +144,6 @@ public:
     static FontFeatureSettings convertFontFeatureSettings(BuilderState&, const CSSValue&);
     static FontVariationSettings convertFontVariationSettings(BuilderState&, const CSSValue&);
     static PaintOrder convertPaintOrder(BuilderState&, const CSSValue&);
-    static URL convertSVGURIReference(BuilderState&, const CSSValue&);
     static StyleSelfAlignmentData convertSelfOrDefaultAlignmentData(BuilderState&, const CSSValue&);
     static StyleContentAlignmentData convertContentAlignmentData(BuilderState&, const CSSValue&);
     static GlyphOrientation convertGlyphOrientation(BuilderState&, const CSSValue&);
@@ -459,38 +455,6 @@ inline OptionSet<LineBoxContain> BuilderConverter::convertLineBoxContain(Builder
     return result;
 }
 
-inline ScrollSnapType BuilderConverter::convertScrollSnapType(BuilderState& builderState, const CSSValue& value)
-{
-    ScrollSnapType type;
-    auto list = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(builderState, value);
-    if (!list)
-        return { };
-
-    auto& firstValue = list->item(0);
-    if (firstValue.valueID() == CSSValueNone)
-        return type;
-
-    type.axis = fromCSSValue<ScrollSnapAxis>(firstValue);
-    if (list->size() == 2)
-        type.strictness = fromCSSValue<ScrollSnapStrictness>(list->item(1));
-    else
-        type.strictness = ScrollSnapStrictness::Proximity;
-
-    return type;
-}
-
-inline ScrollSnapAlign BuilderConverter::convertScrollSnapAlign(BuilderState& builderState, const CSSValue& value)
-{
-    auto pair = requiredPairDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!pair)
-        return { };
-
-    return {
-        fromCSSValue<ScrollSnapAxisAlignType>(pair->first),
-        fromCSSValue<ScrollSnapAxisAlignType>(pair->second)
-    };
-}
-
 inline ScrollbarWidth BuilderConverter::convertScrollbarWidth(BuilderState& builderState, const CSSValue& value)
 {
     auto scrollbarWidth = fromCSSValue<ScrollbarWidth>(value);
@@ -655,19 +619,6 @@ inline PaintOrder BuilderConverter::convertPaintOrder(BuilderState& builderState
         ASSERT_NOT_REACHED();
         return PaintOrder::Normal;
     }
-}
-
-inline URL BuilderConverter::convertSVGURIReference(BuilderState& builderState, const CSSValue& value)
-{
-    if (auto url = dynamicDowncast<CSSURLValue>(value))
-        return toStyle(url->url(), builderState);
-
-    auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return URL::none();
-
-    ASSERT(primitiveValue->valueID() == CSSValueNone);
-    return URL::none();
 }
 
 // Get the "opposite" ItemPosition to the provided ItemPosition.

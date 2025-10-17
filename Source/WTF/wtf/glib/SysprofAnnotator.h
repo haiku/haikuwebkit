@@ -67,11 +67,13 @@ public:
     {
         auto key = std::make_pair(pointer, static_cast<const void*>(name.data()));
 
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
         Vector<char> buffer(1024);
         va_list args;
         va_start(args, description);
         vsnprintf(buffer.mutableSpan().data(), buffer.size(), description, args);
         va_end(args);
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
         auto value = std::make_pair(SYSPROF_CAPTURE_CURRENT_TIME, WTFMove(buffer));
 

@@ -2414,7 +2414,7 @@ RefPtr<API::Navigation> WebPageProxy::loadSimulatedRequest(WebCore::ResourceRequ
     return navigation;
 }
 
-void WebPageProxy::loadAlternateHTML(Ref<WebCore::DataSegment>&& htmlData, const String& encoding, const URL& baseURL, const URL& unreachableURL, API::Object* userData)
+void WebPageProxy::loadAlternateHTML(Ref<WebCore::DataSegment>&& htmlData, const String& encoding, const URL& baseURL, const URL& unreachableURL, RefPtr<API::WebsitePolicies> policies)
 {
     WEBPAGEPROXY_RELEASE_LOG(Loading, "loadAlternateHTML");
 
@@ -2451,7 +2451,7 @@ void WebPageProxy::loadAlternateHTML(Ref<WebCore::DataSegment>&& htmlData, const
     // FIXME: This is an unnecessary copy.
     loadParameters.data = WebCore::SharedBuffer::create(htmlData->span());
     Ref process = m_legacyMainFrameProcess;
-    loadParameters.userData = UserData(process->transformObjectsToHandles(userData).get());
+    loadParameters.websitePolicies = policies ? std::optional(policies->dataForProcess(process)) : std::nullopt;
     prepareToLoadWebPage(process, loadParameters);
 
     auto continueLoad = [
@@ -6730,6 +6730,9 @@ void WebPageProxy::generatePageLoadingTimingSoon()
 
 void WebPageProxy::didEndNetworkRequestsForPageLoadTimingTimerFired()
 {
+    if (!m_pageLoadTiming)
+        return;
+
     didGeneratePageLoadTiming(*m_pageLoadTiming);
     m_pageLoadTiming = nullptr;
 }
@@ -6742,6 +6745,15 @@ void WebPageProxy::updateScrollingMode(IPC::Connection& connection, WebCore::Fra
         MESSAGE_CHECK(process, parentFrame && &parentFrame->process() == process.ptr());
         frame->updateScrollingMode(scrollingMode);
     }
+}
+
+void WebPageProxy::setFramePrinting(IPC::Connection& connection, WebCore::FrameIdentifier frameID, bool printing, const WebCore::FloatSize& pageSize, const WebCore::FloatSize& originalPageSize, float maximumShrinkRatio, WebCore::AdjustViewSize shouldAdjustViewSize)
+{
+    forEachWebContentProcess([&](auto& webProcess, auto pageID) {
+        if (webProcess.hasConnection(connection))
+            return;
+        webProcess.send(Messages::WebPage::SetFramePrinting(frameID, printing, pageSize, originalPageSize, maximumShrinkRatio, shouldAdjustViewSize), pageID);
+    });
 }
 
 void WebPageProxy::resolveAccessibilityHitTestForTesting(WebCore::FrameIdentifier frameID, WebCore::IntPoint point, CompletionHandler<void(String)>&& callback)
@@ -6842,7 +6854,8 @@ void WebPageProxy::didStartProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& 
     MESSAGE_CHECK_URL(process, unreachableURL);
 
     if (frame->isMainFrame()) {
-        m_pageLoadTiming = makeUnique<WebPageLoadTiming>(timestamp);
+        m_pageLoadTiming = nullptr;
+        m_pageLoadTimingPendingCommit = makeUnique<WebPageLoadTiming>(timestamp);
         m_generatePageLoadTimingTimer.stop();
     }
 
@@ -7234,6 +7247,9 @@ void WebPageProxy::didCommitLoadForFrame(IPC::Connection& connection, FrameIdent
     }
 
     WEBPAGEPROXY_RELEASE_LOG(Loading, "didCommitLoadForFrame: frameID=%" PRIu64 ", isMainFrame=%d", frameID.toUInt64(), frame->isMainFrame());
+
+    if (frame->isMainFrame())
+        m_pageLoadTiming = std::exchange(m_pageLoadTimingPendingCommit, nullptr);
 
     // FIXME: We should message check that navigationID is not zero here, but it's currently zero for some navigations through the back/forward cache.
     RefPtr<API::Navigation> navigation;
@@ -16417,11 +16433,11 @@ void WebPageProxy::sendToProcessContainingFrame(std::optional<FrameIdentifier> f
 }
 
 template<typename M>
-IPC::ConnectionSendSyncResult<M> WebPageProxy::sendSyncToProcessContainingFrame(std::optional<FrameIdentifier> frameID, M&& message, const IPC::Timeout& timeout)
+IPC::ConnectionSendSyncResult<M> WebPageProxy::sendSyncToProcessContainingFrame(std::optional<FrameIdentifier> frameID, M&& message, const IPC::Timeout& timeout, OptionSet<IPC::SendSyncOption> options)
 {
     return sendToWebPage(frameID,
-        [&message, &timeout] (auto& targetPage) {
-            return targetPage.siteIsolatedProcess().sendSync(std::forward<M>(message), targetPage.identifierInSiteIsolatedProcess(), timeout);
+        [&message, &timeout, options] (auto& targetPage) {
+            return targetPage.siteIsolatedProcess().sendSync(std::forward<M>(message), targetPage.identifierInSiteIsolatedProcess(), timeout, options);
         }
     );
 }
@@ -16429,7 +16445,13 @@ IPC::ConnectionSendSyncResult<M> WebPageProxy::sendSyncToProcessContainingFrame(
 template<typename M>
 IPC::ConnectionSendSyncResult<M> WebPageProxy::sendSyncToProcessContainingFrame(std::optional<FrameIdentifier> frameID, M&& message)
 {
-    return sendSyncToProcessContainingFrame(frameID, std::forward<M>(message), 1_s);
+    return sendSyncToProcessContainingFrame(frameID, std::forward<M>(message), 1_s, { });
+}
+
+template<typename M>
+IPC::ConnectionSendSyncResult<M> WebPageProxy::sendSyncToProcessContainingFrame(std::optional<FrameIdentifier> frameID, M&& message, const IPC::Timeout& timeout)
+{
+    return sendSyncToProcessContainingFrame(frameID, std::forward<M>(message), timeout, { });
 }
 
 #define INSTANTIATE_SEND_TO_PROCESS_CONTAINING_FRAME(message) \
@@ -16521,7 +16543,7 @@ void WebPageProxy::postMessageToRemote(WebCore::FrameIdentifier source, const St
 
 void WebPageProxy::renderTreeAsTextForTesting(WebCore::FrameIdentifier frameID, uint64_t baseIndent, OptionSet<WebCore::RenderAsTextFlag> behavior, CompletionHandler<void(String&&)>&& completionHandler)
 {
-    auto sendResult = sendSyncToProcessContainingFrame(frameID, Messages::WebPage::RenderTreeAsTextForTesting(frameID, baseIndent, behavior));
+    auto sendResult = sendSyncToProcessContainingFrame(frameID, Messages::WebPage::RenderTreeAsTextForTesting(frameID, baseIndent, behavior), 1_s, IPC::SendSyncOption::MaintainOrderingWithAsyncMessages);
     if (!sendResult.succeeded())
         return completionHandler("Test Error - sending WebPage::RenderTreeAsTextForTesting failed"_s);
 

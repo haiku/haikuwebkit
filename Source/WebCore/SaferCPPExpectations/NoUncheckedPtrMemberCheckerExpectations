@@ -38,12 +38,8 @@ loader/DocumentThreadableLoader.h
 loader/WorkerThreadableLoader.h
 page/FrameSnapshotting.cpp
 page/UndoManager.h
-platform/ScrollAnimator.h
-platform/Scrollbar.h
-platform/ScrollbarsController.h
 platform/graphics/TextRunIterator.h
 platform/graphics/ca/TileCoverageMap.h
-platform/mac/VideoPresentationInterfaceMac.mm
 platform/mock/DeviceOrientationClientMock.h
 rendering/BackgroundPainter.h
 rendering/GlyphDisplayListCache.cpp

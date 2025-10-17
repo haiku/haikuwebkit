@@ -71,6 +71,7 @@ static void drmForeachDevice(Function<bool(drmDevice*)>&& functor)
 }
 #endif
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage")
 static std::optional<std::pair<CString, CString>> drmFirstDeviceWithRenderNode()
 {
 #if USE(LIBDRM)
@@ -140,6 +141,7 @@ static CString drmRenderNodeDeviceFromPrimaryNodeDevice(const CString& primaryNo
     return { };
 #endif
 }
+IGNORE_CLANG_WARNINGS_END
 
 static EGLDisplay currentEGLDisplay()
 {

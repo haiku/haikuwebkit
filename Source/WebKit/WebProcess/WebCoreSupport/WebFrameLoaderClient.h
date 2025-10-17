@@ -33,9 +33,11 @@
 #include <wtf/Scope.h>
 
 namespace WebCore {
+enum class AdjustViewSize : bool;
 enum class PolicyAction : uint8_t;
 enum class PolicyDecisionMode;
 enum class IsPerformingHTTPFallback : bool;
+class FloatSize;
 class FormState;
 class Frame;
 class HitTestResult;
@@ -69,6 +71,7 @@ protected:
     void dispatchDecidePolicyForNavigationAction(const WebCore::NavigationAction&, const WebCore::ResourceRequest&, const WebCore::ResourceResponse& redirectResponse, WebCore::FormState*, const String&, std::optional<WebCore::NavigationIdentifier>, std::optional<WebCore::HitTestResult>&&, bool, WebCore::IsPerformingHTTPFallback, WebCore::SandboxFlags, WebCore::PolicyDecisionMode, WebCore::FramePolicyFunction&&);
     void updateSandboxFlags(WebCore::SandboxFlags);
     void updateOpener(const WebCore::Frame&);
+    void setPrinting(bool printing, WebCore::FloatSize pageSize, WebCore::FloatSize originalPageSize, float maximumShrinkRatio, WebCore::AdjustViewSize);
 
     const Ref<WebFrame> m_frame;
     ScopeExit<Function<void()>> m_frameInvalidator;

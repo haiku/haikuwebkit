@@ -394,6 +394,7 @@ void NetworkStorageSession::setTrackingPreventionEnabled(bool enabled)
     }
 }
 
+IGNORE_CLANG_WARNINGS_BEGIN("unsafe-buffer-usage-in-libc-call")
 static inline bool httpOnlyCookieExists(const GSList* cookies, const gchar* name, const gchar* path)
 {
     for (const GSList* iter = cookies; iter; iter = g_slist_next(iter)) {
@@ -407,6 +408,7 @@ static inline bool httpOnlyCookieExists(const GSList* cookies, const gchar* name
     }
     return false;
 }
+IGNORE_CLANG_WARNINGS_END
 
 void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameSiteInfo&, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, ApplyTrackingPrevention applyTrackingPrevention, RequiresScriptTrackingPrivacy requiresScriptTrackingPrivacy, const String& value, ShouldRelaxThirdPartyCookieBlocking relaxThirdPartyCookieBlocking, IsKnownCrossSiteTracker isKnownCrossSiteTracker) const
 {

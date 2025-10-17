@@ -48,6 +48,10 @@
 #include "AcceleratedEffectStack.h"
 #endif
 
+#if PLATFORM(COCOA)
+#include <QuartzCore/CALayer.h>
+#endif
+
 #ifndef NDEBUG
 #include <stdio.h>
 #endif
@@ -1173,6 +1177,14 @@ String GraphicsLayer::layerTreeAsText(OptionSet<LayerTreeAsTextOptions> options,
     dumpLayer(ts, options);
     return ts.release();
 }
+
+#if PLATFORM(COCOA)
+RetainPtr<CALayer> GraphicsLayer::protectedPlatformLayer() const
+{
+    // FIXME: CALayer.h is included but static analysis is still warning.
+    SUPPRESS_FORWARD_DECL_ARG return platformLayer();
+}
+#endif
 
 } // namespace WebCore
 

@@ -53,7 +53,6 @@
 #include "DFGOSRAvailabilityAnalysisPhase.h"
 #include "DFGOSRExitFuzz.h"
 #include "DirectArguments.h"
-#include "FTLAbstractHeapRepository.h"
 #include "FTLExceptionTarget.h"
 #include "FTLForOSREntryJITCode.h"
 #include "FTLFormattedValue.h"
@@ -65,6 +64,7 @@
 #include "FTLSnippetParams.h"
 #include "FTLThunks.h"
 #include "FTLWeightedTarget.h"
+#include "HasOwnPropertyCache.h"
 #include "JITAddGenerator.h"
 #include "JITBitAndGenerator.h"
 #include "JITBitOrGenerator.h"
@@ -94,6 +94,7 @@
 #include "JSPromiseAllContext.h"
 #include "JSRegExpStringIterator.h"
 #include "JSSetIterator.h"
+#include "JSWeakMap.h"
 #include "JSWebAssemblyInstance.h"
 #include "JSWrapForValidIterator.h"
 #include "LLIntThunks.h"
@@ -17744,6 +17745,18 @@ IGNORE_CLANG_WARNINGS_END
         case JSIteratorHelperType:
             compileMaterializeNewInternalFieldObjectImpl<JSIteratorHelper>(operationNewIteratorHelper);
             break;
+        case JSWrapForValidIteratorType:
+            compileMaterializeNewInternalFieldObjectImpl<JSWrapForValidIterator>(operationNewWrapForValidIterator);
+            break;
+        case JSAsyncFromSyncIteratorType:
+            compileMaterializeNewInternalFieldObjectImpl<JSAsyncFromSyncIterator>(operationNewAsyncFromSyncIterator);
+            break;
+        case JSRegExpStringIteratorType:
+            compileMaterializeNewInternalFieldObjectImpl<JSRegExpStringIterator>(operationNewRegExpStringIterator);
+            break;
+        case JSPromiseAllContextType:
+            compileMaterializeNewInternalFieldObjectImpl<JSPromiseAllContext>(operationNewPromiseAllContext);
+            break;
         case JSPromiseType:
             if (m_node->structure()->classInfoForCells() == JSInternalPromise::info())
                 compileMaterializeNewInternalFieldObjectImpl<JSInternalPromise>(operationNewInternalPromise);
@@ -20749,10 +20762,10 @@ IGNORE_CLANG_WARNINGS_END
                     pointerType()),
                 m_out.constIntPtr(3));
 
-        LValue butterflySize = m_out.add(
+        LValue allocationSizeInBytes = m_out.add(
             payloadSizeInBytes, m_out.constIntPtr(sizeof(IndexingHeader)));
 
-        LValue allocator = allocatorForSize(vm().auxiliarySpace(), butterflySize, slowBlock);
+        LValue allocator = allocatorForSize(vm().auxiliarySpace(), allocationSizeInBytes, slowBlock);
         LValue base = allocateHeapCell(allocator, slowBlock);
         ValueFromBlock fastBase = m_out.anchor(base);
         m_out.jump(continuation);
@@ -20765,7 +20778,7 @@ IGNORE_CLANG_WARNINGS_END
                     operationAllocateUnitializedAuxiliaryBase, locations[0].directGPR(), CCallHelpers::TrustedImmPtr(&vm),
                     locations[1].directGPR());
             },
-            payloadSizeInBytes);
+            allocationSizeInBytes);
         ValueFromBlock slowBase = m_out.anchor(slowButterflyBase);
         m_out.jump(continuation);
 

@@ -44,6 +44,12 @@ struct BrowserView: View {
                 viewModel.page.smartListsEnabled = smartListsEnabled
                 #endif
             }
+            .task {
+                for await _ in NotificationCenter.default.messages(of: UserDefaults.self, for: .didChange) {
+                    viewModel.updateWebPreferences()
+                }
+            }
+            .onAppear(perform: viewModel.updateWebPreferences)
     }
 }
 
