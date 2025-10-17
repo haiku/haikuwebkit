@@ -38,6 +38,7 @@
 #include <WebCore/ImageAdapter.h>
 #include <WebCore/Page.h>
 #include <WebCore/TextRun.h>
+#include <WebCore/Timer.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/StringConcatenateNumbers.h>
 

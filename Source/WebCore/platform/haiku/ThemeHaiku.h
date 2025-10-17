@@ -30,7 +30,6 @@
 #include "Color.h"
 #include "FloatRect.h"
 #include "FontCascade.h"
-#include "LengthSize.h"
 #include "StyleAppearance.h"
 
 #include <InterfaceDefs.h>

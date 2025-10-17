@@ -101,7 +101,7 @@ private:
     int m_dragStartOffset;
 };
 
-class FullscreenVideoController : public RefCounted<FullscreenVideoController> {
+class FullscreenVideoController : public RefCounted<FullscreenVideoController>, public CanMakeWeakPtr<FullscreenVideoController> {
     WTF_MAKE_ISO_ALLOCATED(FullscreenVideoController);
     WTF_MAKE_NONCOPYABLE(FullscreenVideoController);
 public:

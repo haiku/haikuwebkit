@@ -29,7 +29,6 @@
 #include "Color.h"
 #include "ColorBlending.h"
 #include "GraphicsContext.h"
-#include "LengthSize.h"
 
 #include <ControlLook.h>
 #include <private/interface/DefaultColors.h>

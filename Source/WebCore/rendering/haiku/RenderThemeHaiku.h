@@ -46,19 +46,19 @@ public:
 #endif
 protected:
     void adjustTextFieldStyle(RenderStyle&, const Element*) const override;
-    bool paintTextField(const RenderObject&, const PaintInfo&, const FloatRect&) override;
+    bool paintTextField(const RenderElement&, const PaintInfo&, const FloatRect&) override;
 
     void adjustTextAreaStyle(RenderStyle&, const Element*) const override;
-    bool paintTextArea(const RenderObject&, const PaintInfo&, const FloatRect&) override;
+    bool paintTextArea(const RenderElement&, const PaintInfo&, const FloatRect&) override;
 
     void adjustMenuListStyle(RenderStyle&, const Element*) const override;
-    bool paintMenuList(const RenderObject&, const PaintInfo&, const FloatRect&) override;
+    bool paintMenuList(const RenderElement&, const PaintInfo&, const FloatRect&) override;
 
     void adjustMenuListButtonStyle(RenderStyle&, const Element*) const override;
     void paintMenuListButtonDecorations(const RenderBox&, const PaintInfo&, const FloatRect&) override;
 
     void adjustSliderTrackStyle(RenderStyle&, const Element*) const override;
-    bool paintSliderTrack(const RenderObject&, const PaintInfo&, const FloatRect&) override;
+    bool paintSliderTrack(const RenderElement&, const PaintInfo&, const FloatRect&) override;
 
     void adjustSliderThumbStyle(RenderStyle&, const Element*) const override;
 
@@ -72,17 +72,17 @@ protected:
     int sliderTickOffsetFromTrackCenter() const override;
 #endif
 
-    bool paintSliderThumb(const RenderObject&, const PaintInfo&, const FloatRect&) override;
+    bool paintSliderThumb(const RenderElement&, const PaintInfo&, const FloatRect&) override;
 
     Color systemColor(CSSValueID, OptionSet<StyleColorOptions>) const override;
 
-    bool paintCheckbox(const RenderObject&, const PaintInfo&, const FloatRect&) override;
-    bool paintRadio(const RenderObject&, const PaintInfo&, const FloatRect&) override;
-    bool paintButton(const RenderObject&, const PaintInfo&, const FloatRect&) override;
+    bool paintCheckbox(const RenderElement&, const PaintInfo&, const FloatRect&) override;
+    bool paintRadio(const RenderElement&, const PaintInfo&, const FloatRect&) override;
+    bool paintButton(const RenderElement&, const PaintInfo&, const FloatRect&) override;
 
     Style::PreferredSizePair controlSize(StyleAppearance, const FontCascade&, const Style::PreferredSizePair&, float) const override;
 private:
-    uint32 flagsForObject(const RenderObject&) const;
+    uint32 flagsForObject(const RenderElement&) const;
     rgb_color colorForControl(const RenderObject&) const;
     rgb_color colorForValue(color_which, bool useDarkAppearance) const;
 

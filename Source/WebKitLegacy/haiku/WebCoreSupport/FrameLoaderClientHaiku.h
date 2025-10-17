@@ -77,7 +77,7 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
     void detachedFromParent2() override;
     void detachedFromParent3() override;
 
-    void assignIdentifierToInitialRequest(ResourceLoaderIdentifier identifier, WebCore::IsMainResourceLoad, DocumentLoader*, const ResourceRequest&) override;
+    void assignIdentifierToInitialRequest(ResourceLoaderIdentifier identifier, DocumentLoader*, const ResourceRequest&) override;
 
     void dispatchWillSendRequest(DocumentLoader*, ResourceLoaderIdentifier, ResourceRequest&,
                                          const ResourceResponse&) override;
@@ -93,8 +93,8 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
     void dispatchDidReceiveResponse(DocumentLoader*, ResourceLoaderIdentifier,
         const ResourceResponse&) override;
     void dispatchDidReceiveContentLength(DocumentLoader*, ResourceLoaderIdentifier, int) override;
-    void dispatchDidFinishLoading(DocumentLoader*, WebCore::IsMainResourceLoad, ResourceLoaderIdentifier) override;
-    void dispatchDidFailLoading(DocumentLoader*, WebCore::IsMainResourceLoad, ResourceLoaderIdentifier,
+    void dispatchDidFinishLoading(DocumentLoader*, ResourceLoaderIdentifier) override;
+    void dispatchDidFailLoading(DocumentLoader*, ResourceLoaderIdentifier,
                                         const ResourceError&) override;
 
     void dispatchDidDispatchOnloadEvents() override;

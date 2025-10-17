@@ -168,7 +168,6 @@ bool FrameLoaderClientHaiku::dispatchDidLoadResourceFromMemoryCache(DocumentLoad
 }
 
 void FrameLoaderClientHaiku::assignIdentifierToInitialRequest(ResourceLoaderIdentifier identifier,
-                                                              WebCore::IsMainResourceLoad, 
                                                               DocumentLoader* loader,
                                                               const ResourceRequest& request)
 {
@@ -314,12 +313,12 @@ void FrameLoaderClientHaiku::dispatchDidReceiveContentLength(DocumentLoader* /*l
     notImplemented();
 }
 
-void FrameLoaderClientHaiku::dispatchDidFinishLoading(DocumentLoader* /*loader*/, WebCore::IsMainResourceLoad, ResourceLoaderIdentifier /*identifier*/)
+void FrameLoaderClientHaiku::dispatchDidFinishLoading(DocumentLoader* /*loader*/, ResourceLoaderIdentifier /*identifier*/)
 {
     notImplemented();
 }
 
-void FrameLoaderClientHaiku::dispatchDidFailLoading(DocumentLoader* loader, WebCore::IsMainResourceLoad, ResourceLoaderIdentifier, const ResourceError& error)
+void FrameLoaderClientHaiku::dispatchDidFailLoading(DocumentLoader* loader, ResourceLoaderIdentifier, const ResourceError& error)
 {
     if (error.isCancellation())
         return;

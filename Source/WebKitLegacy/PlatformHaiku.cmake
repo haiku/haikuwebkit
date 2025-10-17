@@ -61,7 +61,6 @@ LIST(APPEND WebKitLegacy_SOURCES
     haiku/WebCoreSupport/PlatformStrategiesHaiku.cpp
     haiku/WebCoreSupport/ProgressTrackerHaiku.cpp
     haiku/WebCoreSupport/SocketStreamHandleHaiku.cpp
-    haiku/WebCoreSupport/WebApplicationCache.cpp
     haiku/WebCoreSupport/WebCryptoClient.cpp
     haiku/WebCoreSupport/WebDatabaseProvider.cpp
     haiku/WebCoreSupport/WebDiagnosticLoggingClient.cpp

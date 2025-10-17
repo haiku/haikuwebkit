@@ -64,7 +64,7 @@ RenderThemeHaiku::~RenderThemeHaiku()
 {
 }
 
-bool RenderThemeHaiku::paintSliderTrack(const RenderObject& object, const PaintInfo& info, const FloatRect& intRect)
+bool RenderThemeHaiku::paintSliderTrack(const RenderElement& object, const PaintInfo& info, const FloatRect& intRect)
 {
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     rgb_color background = base;
@@ -125,7 +125,7 @@ int RenderThemeHaiku::sliderTickOffsetFromTrackCenter() const
 
 #endif
 
-bool RenderThemeHaiku::paintSliderThumb(const RenderObject& object, const PaintInfo& info, const FloatRect& intRect)
+bool RenderThemeHaiku::paintSliderThumb(const RenderElement& object, const PaintInfo& info, const FloatRect& intRect)
 {
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     BRect rect = intRect;
@@ -158,7 +158,7 @@ void RenderThemeHaiku::adjustTextFieldStyle(RenderStyle&, const Element*) const
 {
 }
 
-bool RenderThemeHaiku::paintTextField(const RenderObject& object, const PaintInfo& info, const FloatRect& intRect)
+bool RenderThemeHaiku::paintTextField(const RenderElement& object, const PaintInfo& info, const FloatRect& intRect)
 {
     if (info.context().paintingDisabled())
         return true;
@@ -184,7 +184,7 @@ void RenderThemeHaiku::adjustTextAreaStyle(RenderStyle& style, const Element* el
 	adjustTextFieldStyle(style, element);
 }
 
-bool RenderThemeHaiku::paintTextArea(const RenderObject& object, const PaintInfo& info, const FloatRect& intRect)
+bool RenderThemeHaiku::paintTextArea(const RenderElement& object, const PaintInfo& info, const FloatRect& intRect)
 {
     return paintTextField(object, info, intRect);
 }
@@ -226,7 +226,7 @@ void RenderThemeHaiku::paintMenuListButtonDecorations(const RenderBox& object, c
         // TODO get the color from PaintInfo?
     BRect rect = floatRect;
     BView* view = info.context().platformContext();
-    uint32 flags = flagsForObject(*object.firstChild()) & ~BControlLook::B_CLICKED;
+    uint32 flags = flagsForObject(dynamic_cast<RenderElement&>(*object.firstChild())) & ~BControlLook::B_CLICKED;
 
     view->PushState();
     be_control_look->DrawMenuFieldFrame(view, rect, view->Bounds(), base, base, flags);
@@ -234,7 +234,7 @@ void RenderThemeHaiku::paintMenuListButtonDecorations(const RenderBox& object, c
     view->PopState();
 }
 
-bool RenderThemeHaiku::paintCheckbox(const RenderObject& object, const PaintInfo& info, const FloatRect& zoomedRect)
+bool RenderThemeHaiku::paintCheckbox(const RenderElement& object, const PaintInfo& info, const FloatRect& zoomedRect)
 {
     if (!be_control_look)
         return true;
@@ -249,7 +249,7 @@ bool RenderThemeHaiku::paintCheckbox(const RenderObject& object, const PaintInfo
     return false;
 }
 
-bool RenderThemeHaiku::paintRadio(const RenderObject& object, const PaintInfo& info, const FloatRect& zoomedRect)
+bool RenderThemeHaiku::paintRadio(const RenderElement& object, const PaintInfo& info, const FloatRect& zoomedRect)
 {
     if (!be_control_look)
         return true;
@@ -264,7 +264,7 @@ bool RenderThemeHaiku::paintRadio(const RenderObject& object, const PaintInfo& i
     return false;
 }
 
-bool RenderThemeHaiku::paintButton(const RenderObject& object, const PaintInfo& info, const FloatRect& zoomedRect)
+bool RenderThemeHaiku::paintButton(const RenderElement& object, const PaintInfo& info, const FloatRect& zoomedRect)
 {
     if (!be_control_look)
         return true;
@@ -301,13 +301,13 @@ Style::PreferredSizePair RenderThemeHaiku::controlSize(StyleAppearance appearanc
     }
 }
 
-bool RenderThemeHaiku::paintMenuList(const RenderObject&, const PaintInfo&, const FloatRect&)
+bool RenderThemeHaiku::paintMenuList(const RenderElement&, const PaintInfo&, const FloatRect&)
 {
     // This is never called: the list is handled natively as a BMenu.
     return true;
 }
 
-uint32 RenderThemeHaiku::flagsForObject(const RenderObject& object) const
+uint32 RenderThemeHaiku::flagsForObject(const RenderElement& object) const
 {
     uint32 flags = BControlLook::B_BLEND_FRAME;
     if (!isEnabled(object))

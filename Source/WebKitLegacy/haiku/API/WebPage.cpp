@@ -102,7 +102,6 @@
 
 #include "LegacySocketProvider.h"
 
-#include "WebApplicationCache.h"
 #include "WebBroadcastChannelRegistry.h"
 #include "WebCryptoClient.h"
 #include "WebDatabaseProvider.h"
@@ -230,7 +229,7 @@ void WebKitInitializeLogChannelsIfNecessary();
 	// There is a crash on exit if the font cache is not empty, so make sure it is
 	// Destroying the thread global data also helps cutting that dependency cycle
 	WebCore::FontCache::invalidateAllFontCaches(WebCore::FontCache::ShouldRunInvalidationCallback::No);
-	WebCore::threadGlobalData().destroy();
+	WebCore::threadGlobalDataSingleton().destroy();
 }
 
 /*static*/ void BWebPage::SetCacheModel(BWebKitCacheModel model)
@@ -330,7 +329,7 @@ BWebPage::BWebPage(BWebView* webView, BPrivate::Network::BUrlContext* context)
     pageClients.dragClient = std::make_unique<DragClientHaiku>(webView);
     pageClients.inspectorBackendClient = std::make_unique<InspectorClientHaiku>();
     pageClients.diagnosticLoggingClient = std::make_unique<WebKit::WebDiagnosticLoggingClient>();
-    pageClients.applicationCacheStorage = &WebApplicationCache::storage();
+    //pageClients.applicationCacheStorage = &WebApplicationCache::storage();
     pageClients.databaseProvider = &WebDatabaseProvider::singleton();
     // performanceLogging
     // pluginInClient

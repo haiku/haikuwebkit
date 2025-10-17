@@ -31,7 +31,6 @@
 #include "FrameNetworkingContextHaiku.h"
 #include "IconDatabase.h"
 
-#include "WebCore/ApplicationCacheStorage.h"
 #include "WebCore/BitmapImage.h"
 #include "WebCore/DatabaseTracker.h"
 #include "WebCore/FontPlatformData.h"
